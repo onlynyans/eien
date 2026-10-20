@@ -7,7 +7,9 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        registerPlugin(AllFilesPlugin.class); // Eien's own, before the bridge starts
+        // Eien's own, before the bridge starts.
+        registerPlugin(AllFilesPlugin.class);
+        registerPlugin(VaultFilesPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

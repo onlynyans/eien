@@ -13,20 +13,44 @@ export interface FileEntry {
   readonly mtime: number;
 }
 
+/** Thrown by `renameNew` when something is at the new name already. */
+export class TakenError extends Error {
+  constructor(path: string) {
+    super(`Something is already at ${path}.`);
+    this.name = 'TakenError';
+  }
+}
+
+/**
+ * Each call says what it does when it can't: null only means nothing is
+ * there; any other failure (to read, to look) throws, so a storage never
+ * takes "couldn't look" for "nothing there" and writes over a file.
+ */
 export interface FilesPort {
   /** The file's text (UTF-8), or null when there's no file there. */
   readText(path: string): Promise<string | null>;
   /** The file's bytes, or null when there's no file there. */
   readBytes(path: string): Promise<Uint8Array | null>;
-  /** Write `text` (UTF-8) to the file, replacing one there; its folder must exist. */
+  /**
+   * Write `text` (UTF-8; a lone surrogate as U+FFFD, as TextEncoder writes it) to the file,
+   * replacing one there, and flush it to the disk before resolving. Its folder must exist.
+   */
   writeText(path: string, text: string): Promise<void>;
   /** The file or folder at `path`, or null when there's nothing there. */
   stat(path: string): Promise<FileEntry | null>;
   /** What's directly in the folder at `folder`; null when there's no folder there. */
   list(folder: string): Promise<FileEntry[] | null>;
-  /** Rename a file or folder; a file at `to` is replaced, a folder at `to` refuses. */
+  /**
+   * Rename a file onto `to` in one step, replacing a file there: never deleting it first, so
+   * if the rename fails both are as they were. A folder at `to` refuses.
+   */
   rename(from: string, to: string): Promise<void>;
-  /** Make the folder and any above it; one already there is fine. */
+  /**
+   * Rename a file or folder to a name nothing has, by any case: TakenError when something is
+   * there, looked at as close to the rename as the system allows.
+   */
+  renameNew(from: string, to: string): Promise<void>;
+  /** Make the folder and any above it; one already there, or made at the same moment, is fine. */
   makeFolder(path: string): Promise<void>;
   /** Remove the file at `path`. */
   remove(path: string): Promise<void>;

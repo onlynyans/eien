@@ -4,19 +4,11 @@
 // the file's place; moves refuse what the desktop's refuse. A phone has no
 // trash for files, so the trash is .eien/trash in the vault (decided
 // 2026-10-20): the words come back from any device, as a system trash
-// keeps them, a folder for each moment. There's no watcher
-// either: the vault is looked at again every few seconds while the app is
-// in front, and at once when it comes back (lookNow).
+// keeps them, a folder for each moment. Moves, trash and renames back never
+// replace what arrived meanwhile (renameNew). There's no watcher either: the
+// vault is looked at every few seconds, and at once on lookNow (./poller.ts).
 
-import {
-  fitBytes,
-  isHiddenName,
-  isWatchedPath,
-  MAX_NAME_BYTES,
-  nameKey,
-  utf8Length,
-  vaultPath,
-} from '../../core/paths';
+import { isHiddenName, nameKey, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
 import {
   type FileState,
@@ -25,8 +17,9 @@ import {
   type Storage,
   type WriteResult,
 } from '../storage';
-import { TEMP_SUFFIX } from '../stray';
-import { type FilesPort, folderOf, nameOf } from './files';
+import { hiddenBeside, TEMP_SUFFIX } from '../stray';
+import { type FilesPort, folderOf, nameOf, TakenError } from './files';
+import { Poller } from './poller';
 
 /** Where trashed files go: in the vault, hidden, a folder for each moment something was trashed. */
 export const TRASH_FOLDER = '.eien/trash';
@@ -55,27 +48,12 @@ async function versionOf(text: string): Promise<string> {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-/** A short hash of a name (FNV-1a), so two long names cut alike never share a temp file. */
-function shortHash(text: string): string {
-  let hash = 0x811c9dc5;
-  for (const char of text) {
-    hash ^= char.codePointAt(0) ?? 0;
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash.toString(16).padStart(8, '0');
-}
-
-/** The hidden temp file a write to `path` goes through: ".<name>.eien.tmp" beside it. */
-function tempOf(path: string): string {
-  const name = nameOf(path);
-  let temp = `.${name}${TEMP_SUFFIX}`;
-  if (utf8Length(temp) > MAX_NAME_BYTES) {
-    const hash = shortHash(name);
-    temp = `.${fitBytes(name, MAX_NAME_BYTES - utf8Length(TEMP_SUFFIX) - hash.length - 2)}~${hash}${TEMP_SUFFIX}`;
-  }
+/** The hidden file beside `path` named for `suffix` (a write's temp file, a rename's step). */
+const besidePath = (path: string, suffix: string): string => {
   const folder = folderOf(path);
-  return folder ? `${folder}/${temp}` : temp;
-}
+  const name = hiddenBeside(nameOf(path), suffix);
+  return folder ? `${folder}/${name}` : name;
+};
 
 const addressable = (path: string): boolean => {
   try {
@@ -93,18 +71,14 @@ const stampOf = (ms: number) => new Date(ms).toISOString().replace(/[:.]/gu, '-'
 
 export class CapacitorStorage implements Storage {
   readonly #files: FilesPort;
-  readonly #pollMs: number;
-  readonly #active: () => boolean;
+  readonly #poller: Poller;
   readonly #now: () => number;
   /** The operation under way on each file, by its name key, so the next waits for it. */
   readonly #busy = new Map<string, Promise<void>>();
-  /** Each watcher's look, to be run now (the app back in front). */
-  readonly #lookers = new Set<() => void>();
 
   constructor(files: FilesPort, options: CapacitorStorageOptions = {}) {
     this.#files = files;
-    this.#pollMs = options.pollMs ?? 3000;
-    this.#active = options.active ?? (() => true);
+    this.#poller = new Poller(files, options.pollMs ?? 3000, options.active ?? (() => true));
     this.#now = options.now ?? Date.now;
   }
 
@@ -160,7 +134,7 @@ export class CapacitorStorage implements Storage {
       const current = await this.read(at);
       if ((current?.version ?? null) !== expected) return { ok: false, current };
       await this.#files.makeFolder(folderOf(at));
-      const temp = tempOf(at);
+      const temp = besidePath(at, TEMP_SUFFIX);
       await this.#files.writeText(temp, text);
       const now = await this.read(at);
       if ((now?.version ?? null) !== expected) {
@@ -170,7 +144,11 @@ export class CapacitorStorage implements Storage {
       try {
         await this.#files.rename(temp, at);
       } catch (error) {
-        await this.#files.remove(temp).catch(() => undefined); // the temp file, never the note
+        // The temp file goes only while the note is there as it was: if the rename took the
+        // note with it, the temp holds the only words, recovered when the vault next opens.
+        const after = await this.read(at).catch(() => undefined);
+        if (after !== undefined && (after?.version ?? null) === expected)
+          await this.#files.remove(temp).catch(() => undefined);
         throw error;
       }
       return { ok: true, version: await versionOf(text) };
@@ -188,16 +166,31 @@ export class CapacitorStorage implements Storage {
       const caseOnly = nameKey(source) === nameKey(target);
       if (await this.#taken(source, target, caseOnly)) return { ok: false, reason: 'taken' };
       await this.#files.makeFolder(folderOf(target));
-      if (caseOnly) {
-        // Through a name of its own: a file system that ignores case sees one name for both.
-        const step = joined(folderOf(source), `.${nameOf(source)}${CASE_STEP}`);
-        await this.#files.rename(source, step);
-        await this.#files.rename(step, target);
-      } else {
-        await this.#files.rename(source, target);
+      try {
+        if (caseOnly) await this.#renameCase(source, target);
+        else await this.#files.renameNew(source, target); // never over what arrived meanwhile
+      } catch (error) {
+        if (error instanceof TakenError) return { ok: false, reason: 'taken' };
+        throw error;
       }
       return { ok: true };
     });
+  }
+
+  /**
+   * Through a name of its own: a file system that ignores case sees one name for both. If the
+   * second step fails, the first is undone; a crash between them is undone when the vault
+   * next opens (./recover.ts).
+   */
+  async #renameCase(source: string, target: string): Promise<void> {
+    const step = besidePath(source, CASE_STEP);
+    await this.#files.renameNew(source, step);
+    try {
+      await this.#files.renameNew(step, target);
+    } catch (error) {
+      await this.#files.renameNew(step, source).catch(() => undefined);
+      throw error;
+    }
   }
 
   /** Whether something other than `source` is at `target` (for a case-only rename: another file). */
@@ -215,18 +208,24 @@ export class CapacitorStorage implements Storage {
     await this.#oneAtATime(nameKey(at), async () => {
       // What holds the trash (.eien, a file of that name, the trash itself) steps aside first.
       const holds = `${TRASH_FOLDER}/`.startsWith(`${at}/`);
-      const from = holds ? joined(folderOf(at), `.${nameOf(at)}${TRASH_STEP}`) : at;
-      if (holds) await this.#files.rename(at, from);
+      const from = holds ? besidePath(at, TRASH_STEP) : at;
+      if (holds) await this.#files.renameNew(at, from);
       try {
         const stamp = stampOf(this.#now());
-        let folder = `${TRASH_FOLDER}/${stamp}`;
-        for (let n = 2; await this.#files.stat(`${folder}/${nameOf(at)}`); n++) {
-          folder = `${TRASH_FOLDER}/${stamp}-${n}`; // the same name trashed in the same moment
+        for (let n = 1; ; n++) {
+          // The same name trashed in the same moment takes the next folder.
+          const into = `${TRASH_FOLDER}/${n === 1 ? stamp : `${stamp}-${n}`}/${nameOf(at)}`;
+          if (await this.#files.stat(into)) continue;
+          await this.#files.makeFolder(folderOf(into));
+          try {
+            await this.#files.renameNew(from, into);
+            return;
+          } catch (error) {
+            if (!(error instanceof TakenError)) throw error;
+          }
         }
-        await this.#files.makeFolder(folder);
-        await this.#files.rename(from, `${folder}/${nameOf(at)}`);
       } catch (error) {
-        if (holds) await this.#files.rename(from, at).catch(() => undefined); // back where it was
+        if (holds) await this.#files.renameNew(from, at).catch(() => undefined); // back where it was
         throw error;
       }
     });
@@ -240,62 +239,12 @@ export class CapacitorStorage implements Storage {
   }
 
   watch(onChange: (paths: string[]) => void): () => void {
-    let last: Map<string, string> | null = null;
-    let stopped = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let looking = false;
-    const look = async () => {
-      if (stopped || looking) return;
-      looking = true;
-      clearTimeout(timer);
-      try {
-        if (this.#active()) {
-          const now = await this.#snapshot().catch(() => null);
-          if (now && last) {
-            const changed = [...new Set([...last.keys(), ...now.keys()])].filter(
-              (path) => last?.get(path) !== now.get(path),
-            );
-            if (changed.length > 0 && !stopped) onChange(changed);
-          }
-          if (now) last = now;
-        }
-      } finally {
-        looking = false;
-        if (!stopped) timer = setTimeout(() => void look(), this.#pollMs);
-      }
-    };
-    const lookNow = () => void look();
-    this.#lookers.add(lookNow);
-    void look();
-    return () => {
-      stopped = true;
-      clearTimeout(timer);
-      this.#lookers.delete(lookNow);
-    };
+    return this.#poller.watch(onChange);
   }
 
   /** Look for changes now: the app is back in front, and another device may have written. */
   lookNow(): void {
-    for (const look of this.#lookers) look();
-  }
-
-  /** What a watcher reports changes in (isWatchedPath), each by its time and size. */
-  async #snapshot(): Promise<Map<string, string>> {
-    const seen = new Map<string, string>();
-    const walk = async (folder: string): Promise<void> => {
-      for (const entry of (await this.#files.list(folder)) ?? []) {
-        const path = joined(folder, entry.name);
-        if (entry.type === 'directory') {
-          // Into the vault's folders, and .eien's settings and seals; not its trash, nor other hidden folders.
-          const hidden = path.split('/').some(isHiddenName);
-          if (!hidden || path === '.eien' || path.startsWith('.eien/versions')) await walk(path);
-        } else if (isWatchedPath(path)) {
-          seen.set(path, `${entry.mtime}:${entry.size}`);
-        }
-      }
-    };
-    await walk('');
-    return seen;
+    this.#poller.lookNow();
   }
 
   /** Run `task` after every earlier one for `key` has finished. */

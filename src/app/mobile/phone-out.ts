@@ -6,8 +6,12 @@
 import { Clipboard } from '@capacitor/clipboard';
 import { freeName } from '../../core/paths';
 import type { OutBridge } from '../../platform/bridge';
-import type { FilesPort } from '../../platform/capacitor/files';
+import { type FilesPort, TakenError } from '../../platform/capacitor/files';
+import { hiddenBeside, TEMP_SUFFIX } from '../../platform/stray';
 import { EXPORT_FOLDER } from './vault-home';
+
+/** How many names an export tries while others are being saved under them. */
+const TRIES = 5;
 
 export function phoneOut(exports: FilesPort): OutBridge {
   return {
@@ -16,11 +20,23 @@ export function phoneOut(exports: FilesPort): OutBridge {
     },
     async saveAs(name, text) {
       await exports.makeFolder('');
-      const taken = ((await exports.list('')) ?? []).map((entry) => entry.name);
-      const file = freeName(name.replace(/\.html?$/iu, ''), taken, '.html');
+      const base = name.replace(/\.html?$/iu, '');
+      const temp = hiddenBeside(`${base}.html`, TEMP_SUFFIX);
       // A byte-order mark, as the desktop's: a browser reads its curly quotes as UTF-8.
-      await exports.writeText(file, `﻿${text}`);
-      return `${EXPORT_FOLDER}/${file}`;
+      await exports.writeText(temp, `﻿${text}`);
+      const taken = ((await exports.list('')) ?? []).map((entry) => entry.name);
+      for (let tries = 0; tries < TRIES; tries++) {
+        const file = freeName(base, taken, '.html');
+        try {
+          await exports.renameNew(temp, file);
+          return `${EXPORT_FOLDER}/${file}`;
+        } catch (error) {
+          if (!(error instanceof TakenError)) throw error;
+          taken.push(file); // saved just now by another export: the next name
+        }
+      }
+      await exports.remove(temp).catch(() => undefined);
+      throw new Error('Another export kept taking the name.');
     },
   };
 }

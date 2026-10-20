@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CapacitorStorage } from './capacitor-storage';
 import type { FilesPort } from './files';
+import { filesWith as withCalls } from './files-with';
 import { NodeFiles } from './node-files';
 import { recoverStrays } from './recover';
 
@@ -32,18 +33,7 @@ const put = async (path: string, text: string, mtime?: Date) => {
   await writeFile(full, text);
   if (mtime) await utimes(full, mtime, mtime);
 };
-/** The files, with some calls replaced (a disk that fills, a phone that dies). */
-const filesWith = (over: Partial<FilesPort>): FilesPort => ({
-  readText: (path) => files.readText(path),
-  readBytes: (path) => files.readBytes(path),
-  writeText: (path, words) => files.writeText(path, words),
-  stat: (path) => files.stat(path),
-  list: (folder) => files.list(folder),
-  rename: (from, to) => files.rename(from, to),
-  makeFolder: (path) => files.makeFolder(path),
-  remove: (path) => files.remove(path),
-  ...over,
-});
+const filesWith = (over: Partial<FilesPort>) => withCalls(files, over);
 const text = (path: string) => readFile(join(root, ...path.split('/')), 'utf8');
 const names = async (folder = '') => (await readdir(join(root, folder))).sort();
 
@@ -63,14 +53,21 @@ describe('a write cut short', () => {
     expect(await text(`Fic/Lost ${STAMP}.md`)).toBe('Only copy.');
   });
 
-  it('drops one older than its note, or holding the same words, or empty', async () => {
-    await put('Old.md', 'Current.');
-    await put('.Old.md.eien.tmp', 'Older draft.', OLD);
+  it('drops one holding its note’s own words, or none', async () => {
     await put('Same.md', 'Same.', OLD);
     await put('.Same.md.eien.tmp', 'Same.');
     await put('.Empty.md.eien.tmp', '');
     expect(await recoverStrays(files, storage, at)).toEqual([]);
-    expect(await names()).toEqual(['Old.md', 'Same.md']);
+    expect(await names()).toEqual(['Same.md']);
+  });
+
+  it('keeps one older than its note when its words are other', async () => {
+    // Its note was changed since by another device (this one's next save would have taken the
+    // same temp file): the temp's words are nowhere else.
+    await put('Old.md', 'Current.');
+    await put('.Old.md.eien.tmp', 'Older draft.', OLD);
+    expect(await recoverStrays(files, storage, at)).toEqual([`Old ${STAMP}.md`]);
+    expect(await text(`Old ${STAMP}.md`)).toBe('Older draft.');
   });
 
   it('leaves hidden folders alone, and a name that only looks like a temp', async () => {
@@ -152,22 +149,39 @@ describe('a rename cut between its steps', () => {
     await storage.write('Fic/tear.md', 'The scarf tore.', null);
     let renames = 0;
     const dying = filesWith({
-      rename: async (from: string, to: string) => {
+      renameNew: async (from: string, to: string) => {
         renames += 1;
-        if (renames === 2) throw new Error('The phone died.');
-        return files.rename(from, to);
+        if (renames === 2) return new Promise<void>(() => undefined); // the phone dies here
+        return files.renameNew(from, to);
       },
     });
-    await expect(new CapacitorStorage(dying).move('Fic/tear.md', 'Fic/Tear.md')).rejects.toThrow();
+    void new CapacitorStorage(dying).move('Fic/tear.md', 'Fic/Tear.md');
+    await expect.poll(() => names('Fic')).toEqual(['.tear.md.eien-case']);
     expect((await storage.list()).map((entry) => entry.path)).toEqual(['Fic']);
     expect(await recoverStrays(files, storage, at)).toEqual(['Fic/tear.md']);
     expect((await storage.read('Fic/tear.md'))?.text).toBe('The scarf tore.');
   });
 
+  it('a second step that fails puts the first back, while the app runs', async () => {
+    await storage.write('Fic/tear.md', 'The scarf tore.', null);
+    let renames = 0;
+    const refusing = filesWith({
+      renameNew: async (from: string, to: string) => {
+        renames += 1;
+        if (renames === 2) throw new Error('The disk is busy.');
+        return files.renameNew(from, to);
+      },
+    });
+    await expect(
+      new CapacitorStorage(refusing).move('Fic/tear.md', 'Fic/Tear.md'),
+    ).rejects.toThrow();
+    expect(await names('Fic')).toEqual(['tear.md']);
+  });
+
   it('a step it can’t move back is left for the next open', async () => {
     await put('.Tear.md.eien-case', 'Words.');
     const stuck = filesWith({
-      rename: async () => {
+      renameNew: async () => {
         throw new Error('Busy.');
       },
     });

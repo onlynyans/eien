@@ -17,16 +17,7 @@ import {
   unlink,
 } from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
-import {
-  fitBytes,
-  isHiddenName,
-  isWatchedPath,
-  MAX_NAME_BYTES,
-  nameKey,
-  utf8Length,
-  VaultPathError,
-  vaultPath,
-} from '../../core/paths';
+import { isHiddenName, isWatchedPath, nameKey, VaultPathError, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
 import {
   type FileState,
@@ -35,21 +26,10 @@ import {
   type Storage,
   type WriteResult,
 } from '../storage';
-import { TEMP_SUFFIX } from '../stray';
+import { hiddenBeside, TEMP_SUFFIX } from '../stray';
 
-/**
- * The hidden file a write goes through: ".<name>.eien.tmp" beside it. A
- * name near the system's limit is cut, with a hash of the whole name so two
- * long names never share a temp file; if a crash leaves it, it's recovered
- * under the cut name, its words kept.
- */
-export function tempNameOf(name: string): string {
-  const full = `.${name}${TEMP_SUFFIX}`;
-  if (utf8Length(full) <= MAX_NAME_BYTES) return full;
-  const hash = createHash('sha256').update(name).digest('hex').slice(0, 8);
-  const room = MAX_NAME_BYTES - utf8Length(TEMP_SUFFIX) - hash.length - 2;
-  return `.${fitBytes(name, room)}~${hash}${TEMP_SUFFIX}`;
-}
+/** The hidden file a write goes through: ".<name>.eien.tmp" beside it (../stray.ts). */
+export const tempNameOf = (name: string): string => hiddenBeside(name, TEMP_SUFFIX);
 
 /** Sends a file or folder (an absolute path) to the system's trash; throws when it can't. */
 export type TrashItem = (path: string) => Promise<void>;

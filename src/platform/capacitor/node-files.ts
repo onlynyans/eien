@@ -1,16 +1,21 @@
 // The phone storage's file system played by Node's fs on a folder, for the
-// storage contract tests (../storage.test.ts): the same calls Capacitor's
-// plugin makes on the phone, with the same answers.
+// storage contract tests (../storage.test.ts): the same calls the phone
+// makes, with the same answers.
 
-import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { link, mkdir, open, readdir, readFile, rename, rm, stat, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { FileEntry, FilesPort } from './files';
+import { type FileEntry, type FilesPort, TakenError } from './files';
 
-const missing = (error: unknown) =>
-  typeof error === 'object' &&
-  error !== null &&
-  'code' in error &&
-  ['ENOENT', 'ENOTDIR', 'EISDIR'].includes(String(error.code));
+const codeOf = (error: unknown) =>
+  typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+
+/** Null for "nothing there"; any other failure is thrown. */
+const orMissing =
+  <T>(...codes: string[]) =>
+  (error: unknown): T | null => {
+    if (['ENOENT', 'ENOTDIR', ...codes].includes(codeOf(error))) return null;
+    throw error;
+  };
 
 export class NodeFiles implements FilesPort {
   readonly #root: string;
@@ -23,27 +28,27 @@ export class NodeFiles implements FilesPort {
     return path === '' ? this.#root : join(this.#root, ...path.split('/'));
   }
 
-  async readText(path: string): Promise<string | null> {
-    return readFile(this.#at(path), 'utf8').catch((error) => {
-      if (missing(error)) return null;
-      throw error;
-    });
+  readText(path: string): Promise<string | null> {
+    return readFile(this.#at(path), 'utf8').catch(orMissing<string>('EISDIR'));
   }
 
   async readBytes(path: string): Promise<Uint8Array | null> {
-    const bytes = await readFile(this.#at(path)).catch((error) => {
-      if (missing(error)) return null;
-      throw error;
-    });
+    const bytes = await readFile(this.#at(path)).catch(orMissing<Buffer>('EISDIR'));
     return bytes ? new Uint8Array(bytes) : null;
   }
 
   async writeText(path: string, text: string): Promise<void> {
-    await writeFile(this.#at(path), text, 'utf8');
+    const file = await open(this.#at(path), 'w');
+    try {
+      await file.writeFile(text, 'utf8');
+      await file.sync();
+    } finally {
+      await file.close();
+    }
   }
 
   async stat(path: string): Promise<FileEntry | null> {
-    const stats = await stat(this.#at(path)).catch(() => null);
+    const stats = await stat(this.#at(path)).catch(orMissing<null>());
     if (!stats) return null;
     return {
       name: path.slice(path.lastIndexOf('/') + 1),
@@ -54,7 +59,7 @@ export class NodeFiles implements FilesPort {
   }
 
   async list(folder: string): Promise<FileEntry[] | null> {
-    const names = await readdir(this.#at(folder), { withFileTypes: true }).catch(() => null);
+    const names = await readdir(this.#at(folder), { withFileTypes: true }).catch(orMissing<null>());
     if (!names) return null;
     const entries: FileEntry[] = [];
     for (const dirent of names) {
@@ -67,6 +72,21 @@ export class NodeFiles implements FilesPort {
 
   async rename(from: string, to: string): Promise<void> {
     await rename(this.#at(from), this.#at(to));
+  }
+
+  /** A file by a hard link, which refuses a name that's taken, by any case the system ignores. */
+  async renameNew(from: string, to: string): Promise<void> {
+    const source = this.#at(from);
+    const target = this.#at(to);
+    if ((await stat(source)).isDirectory()) {
+      if (await this.stat(to)) throw new TakenError(to);
+      await rename(source, target);
+      return;
+    }
+    await link(source, target).catch((error) => {
+      throw codeOf(error) === 'EEXIST' ? new TakenError(to) : error;
+    });
+    await unlink(source);
   }
 
   async makeFolder(path: string): Promise<void> {

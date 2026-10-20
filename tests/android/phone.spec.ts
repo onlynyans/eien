@@ -122,6 +122,35 @@ test('a rename that only changes case, on Android’s shared storage', async ({ 
   expect(await readOnPhone(device, `${VAULT}/Tear.md`)).toBe('Words.');
 });
 
+test('a move never takes a name another file has, by any case', async ({ device }) => {
+  const page = await startEien(device);
+  await putOnPhone(device, `${VAULT}/Draft.md`, 'Mine.');
+  await putOnPhone(device, `${VAULT}/Chapter.md`, 'Synced in from the laptop.');
+  await expect(titles(page)).toHaveCount(2);
+  expect(await page.evaluate(() => window.eien.vault.move('Draft.md', 'chapter.md'))).toEqual({
+    ok: false,
+    reason: 'taken',
+  });
+  expect(await readOnPhone(device, `${VAULT}/Chapter.md`)).toBe('Synced in from the laptop.');
+  expect(await readOnPhone(device, `${VAULT}/Draft.md`)).toBe('Mine.');
+});
+
+test('a lone surrogate saved reads back as the version saved: no false conflict', async ({
+  device,
+}) => {
+  // Java writes a lone surrogate as "?"; the version is the hash of U+FFFD, as TextEncoder
+  // writes it. Unmatched, every later save would find the note "changed elsewhere".
+  const page = await startEien(device);
+  await expect(page.locator('.shell')).toBeVisible();
+  const versions = await page.evaluate(async () => {
+    const saved = await window.eien.vault.write('Odd.md', 'a\uD800b', null);
+    const read = await window.eien.vault.read('Odd.md');
+    return [saved.ok ? saved.version : 'refused', read?.version];
+  });
+  expect(versions[1]).toBe(versions[0]);
+  expect(await readOnPhone(device, `${VAULT}/Odd.md`)).toBe('a\uFFFDb');
+});
+
 test('trash goes to .eien/trash, where any device can take it back', async ({ device }) => {
   const page = await startEien(device);
   await putOnPhone(device, `${VAULT}/Tear.md`, 'Words to keep.');

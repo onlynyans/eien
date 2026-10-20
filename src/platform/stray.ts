@@ -1,27 +1,50 @@
 // What a crash can leave in a vault (spec §3), the same on every system: a
-// write's hidden temp file beside its note. Each system's storage writes
-// through one; each recovers what one holds when the vault opens.
+// hidden file beside a note for the moment of a write (its temp file) or a
+// rename made in two steps. Each system's storage makes them; each recovers
+// them when the vault opens.
+
+import { extensionOf, fitBytes, MAX_NAME_BYTES, utf8Length } from '../core/paths';
 
 /** The end of a write's temp file's name: ".<note name>.eien.tmp". */
 export const TEMP_SUFFIX = '.eien.tmp';
 
-/** Whether `name` is a write's temp file. */
-export const isTempName = (name: string): boolean =>
-  name.startsWith('.') && name.endsWith(TEMP_SUFFIX) && name.length > TEMP_SUFFIX.length + 1;
-
-/** The note a temp file was written for (a long name's cut, its hash kept). */
-export const noteOfTemp = (name: string): string => name.slice(1, -TEMP_SUFFIX.length);
-
-export interface Written {
-  readonly text: string;
-  /** Last modified, in milliseconds. */
-  readonly mtime: number;
+/** A short hash of a name (FNV-1a), so two long names cut alike never share a hidden name. */
+function shortHash(text: string): string {
+  let hash = 0x811c9dc5;
+  for (const char of text) {
+    hash ^= char.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
 }
 
 /**
- * Whether a temp file holds words its note doesn't: there's no note, or the
- * temp is newer and different — and it isn't empty (a write cut before any
- * words went in). Those are kept as a "(recovered …)" note beside it.
+ * The hidden name a file takes beside itself for a moment: ".<name><suffix>".
+ * A name too long for the system's limit is cut, keeping its extension, with
+ * a hash of the whole name so two cut alike differ: what a crash leaves is
+ * recovered under the cut name, and a note's words still come back as a note.
  */
-export const strayHoldsWords = (temp: Written, note: Written | null): boolean =>
-  temp.text.length > 0 && (note === null || (temp.mtime > note.mtime && temp.text !== note.text));
+export function hiddenBeside(name: string, suffix: string): string {
+  const whole = `.${name}${suffix}`;
+  if (utf8Length(whole) <= MAX_NAME_BYTES) return whole;
+  const extension = extensionOf(name);
+  const tail = `~${shortHash(name)}${extension}${suffix}`;
+  const base = name.slice(0, name.length - extension.length);
+  return `.${fitBytes(base, MAX_NAME_BYTES - 1 - utf8Length(tail))}${tail}`;
+}
+
+/** The name a hidden one made by hiddenBeside stands for, or null when it isn't one with `suffix`. */
+export function besideOf(hidden: string, suffix: string): string | null {
+  if (!hidden.startsWith('.') || !hidden.endsWith(suffix)) return null;
+  return hidden.length > suffix.length + 1 ? hidden.slice(1, -suffix.length) : null;
+}
+
+/**
+ * Whether a temp file holds words its note doesn't: any but the note's own
+ * (or none at all, a write cut before any words went in). Whatever their
+ * times: a temp file a crash left is never one this device saved over since
+ * (its next save of the note takes the same temp file), so a note newer than
+ * it was changed elsewhere, and the temp's words are nowhere else.
+ */
+export const strayHoldsWords = (temp: string, note: string | null): boolean =>
+  temp.length > 0 && temp !== note;

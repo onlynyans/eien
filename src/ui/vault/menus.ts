@@ -8,6 +8,18 @@ import { type MenuItem, openMenu } from '../menu/menu';
 import type { Organizer } from './organize';
 import type { VaultState } from './vault-state';
 
+/**
+ * Where a trashed note goes, as the writer finds it: the system's trash, or on a phone, which
+ * has none, the vault's own (.eien/trash, where any device can take it back).
+ */
+const TRASH_NAMES: Record<string, string> = {
+  win32: 'the Recycle Bin',
+  android: '.eien/trash',
+  ios: '.eien/trash',
+};
+
+export const trashNameOn = (platform: string): string => TRASH_NAMES[platform] ?? 'the trash';
+
 export interface NoteMenu {
   readonly pinned: boolean;
   /** The note can move up or down: the list is in its folder's own order. */

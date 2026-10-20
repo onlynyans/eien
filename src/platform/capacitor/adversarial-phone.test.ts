@@ -18,6 +18,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { renamedPath, utf8Length } from '../../core/paths';
 import { CapacitorStorage } from './capacitor-storage';
 import type { FilesPort } from './files';
+import { filesWith as withCalls } from './files-with';
 import { NodeFiles } from './node-files';
 import { recoverStrays } from './recover';
 
@@ -35,18 +36,7 @@ beforeEach(async () => {
 });
 afterEach(() => rm(root, { recursive: true, force: true }));
 
-/** The files, with some calls replaced. */
-const filesWith = (over: Partial<FilesPort>): FilesPort => ({
-  readText: (path) => files.readText(path),
-  readBytes: (path) => files.readBytes(path),
-  writeText: (path, words) => files.writeText(path, words),
-  stat: (path) => files.stat(path),
-  list: (folder) => files.list(folder),
-  rename: (from, to) => files.rename(from, to),
-  makeFolder: (path) => files.makeFolder(path),
-  remove: (path) => files.remove(path),
-  ...over,
-});
+const filesWith = (over: Partial<FilesPort>) => withCalls(files, over);
 
 const put = async (path: string, text: string, mtime?: Date) => {
   const full = join(root, ...path.split('/'));
@@ -121,12 +111,12 @@ describe('move, with something arriving at the new name', () => {
     await put('.Tear.md.eien-case', 'The phone’s words.');
     let syncing = true;
     const arriving = filesWith({
-      rename: async (from, to) => {
+      renameNew: async (from, to) => {
         if (syncing) {
           syncing = false;
           await files.writeText('Tear.md', 'The laptop’s words.');
         }
-        await files.rename(from, to);
+        await files.renameNew(from, to);
       },
     });
     await recoverStrays(arriving, new CapacitorStorage(arriving), at);
@@ -225,10 +215,10 @@ describe('a case-only rename', () => {
     let renames = 0;
     const phone = new CapacitorStorage(
       filesWith({
-        rename: async (from, to) => {
+        renameNew: async (from, to) => {
           renames += 1;
           if (renames === 2) throw new Error('DestinationDirectoryExists: Fic');
-          await files.rename(from, to);
+          await files.renameNew(from, to);
         },
       }),
     );

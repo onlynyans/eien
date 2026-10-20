@@ -115,8 +115,11 @@ so two devices never overwrite each other's state through Syncthing.
 - **Durable writes.** Write to a hidden `.name.md.eien.tmp` beside the note,
   flush it to disk, rename it over the note, and flush the folder. A crash
   leaves the old file or the new one, never a partial one. At the next launch
-  a stray temp file newer than its note, holding different words, is kept as
-  `Note (recovered 2026-10-19 16-40).md`; every other one is removed.
+  a stray temp file holding words its note doesn't is kept as
+  `Note (recovered 2026-10-19 16-40).md`, whatever its time: a newer note was
+  changed by another device meanwhile, since this one's next save would have
+  taken the same temp file. One holding the note's own words, or none, is
+  removed; one that can't be read is left for the next launch.
 - **One write at a time.** Writes to one file (case and accents aside) run one
   after another, so two can't both pass the version check. The version is
   checked again after the temp file is flushed, just before it takes the
@@ -281,7 +284,9 @@ CommonMark plus GitHub extensions, and three common additions:
   ago), and only then loses its old name. Folders, and disks without links,
   are looked at once more just before the rename.
 - Names Eien makes stop at 245 bytes, leaving room for a save's temp file; a
-  longer name made elsewhere saves through a shortened temp name.
+  longer name made elsewhere saves through a shortened temp name that keeps
+  its extension (a hash tells two cut alike apart), so a note's words a crash
+  leaves there come back as a note.
 - A folder's `.eien-folder.json` is watched, so an order from another device
   shows at once. Writing an order drops names that aren't there.
 - Every menu opens from the keyboard too (Shift+F10 or the menu key), and a
@@ -691,7 +696,10 @@ Compare or Restore finishes lands on a note opened meanwhile.
 
 - Android and iOS run the same `ui` and `core` with the Capacitor `Storage`.
 - **Android:** the vault is `Documents/Eien` in shared storage, synced by the
-  Syncthing app. Eien asks once for the file access it needs (All files
+  Syncthing app. Its writes and renames are Eien's own (a small plugin): a
+  write is flushed to the disk, a save's rename replaces the note in one step,
+  and a move, the trash and recovery never rename over a file that's there,
+  even one Syncthing brought a moment ago. Eien asks once for the file access it needs (All files
   access, from Android 11), after the welcome says why. Eien has no internet
   permission. Trash goes to `.eien/trash` in the vault, so any device can take
   it back; exports go to `Documents/Eien Exports`. Eien saves when the phone

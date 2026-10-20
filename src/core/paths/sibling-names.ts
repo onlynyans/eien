@@ -93,6 +93,9 @@ export function stampOf(date: Date): string {
 export const conflictName = (fileName: string, date: Date, taken: Iterable<string>): string =>
   freeNoteName(titleOf(fileName), taken, ` (conflict ${stampOf(date)})`);
 
+/** A file's extension (".md"), or "": a dot and up to 16 characters, neither a dot nor a space. */
+export const extensionOf = (name: string): string => /\.[^.\s]{1,16}$/u.exec(name)?.[0] ?? '';
+
 /**
  * "Note (recovered 2026-10-19 16-40).md": a draft found after a crash, or a
  * file or folder put back beside what's in its place now. A file keeps its
@@ -106,7 +109,7 @@ export function recoveredName(
 ): string {
   const hidden = name.startsWith('.');
   const bare = hidden ? name.slice(1) : name;
-  const extension = folder ? '' : (/\.[^.\s]{1,16}$/u.exec(bare)?.[0] ?? '');
+  const extension = folder ? '' : extensionOf(bare);
   const alike = [...taken]
     .filter((other) => other.startsWith('.') === hidden)
     .map((other) => (hidden ? other.slice(1) : other));
