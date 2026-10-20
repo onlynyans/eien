@@ -1,7 +1,7 @@
 /** What the preload exposes to the window as `window.eien`. Every capability
  * the window has beyond a web page is listed here, and nowhere else. */
 
-import type { SettingKey, SettingValues } from '../core/config';
+import type { SettingKey, SettingValues, ToggleKey } from '../core/config';
 import type { FormatCommandId } from '../core/format';
 import type { IndexedNote } from '../core/note';
 import type { SearchResult } from '../core/search';
@@ -78,7 +78,8 @@ export type MenuCommand =
   | 'compare'
   | 'versions'
   | 'copy-ao3'
-  | 'export-ao3';
+  | 'export-ao3'
+  | `toggle:${ToggleKey}`;
 
 export interface Bridge {
   /** The operating system: 'darwin', 'win32', 'linux', … */

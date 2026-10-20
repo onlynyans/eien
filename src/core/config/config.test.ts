@@ -7,6 +7,7 @@ import {
   SETTINGS,
   settingOf,
   stepped,
+  TOGGLES,
   valueProblem,
   withDefaults,
   withSetting,
@@ -32,6 +33,14 @@ describe('the schema', () => {
     for (const setting of SETTINGS) {
       if (setting.type === 'choice') expect(Object.keys(setting.choices).length).toBeGreaterThan(1);
       else expect(Number.isInteger((setting.max - setting.min) / setting.step)).toBe(true);
+    }
+  });
+
+  it('turns on and off from the menu only settings whose choices are "off" and "on"', () => {
+    for (const key of TOGGLES) {
+      const setting = settingOf(key);
+      expect(setting?.type === 'choice' && Object.keys(setting.choices)).toEqual(['off', 'on']);
+      expect(setting?.scope).toBe('device');
     }
   });
 

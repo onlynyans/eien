@@ -53,6 +53,7 @@ test('opens from the sidebar and the menu, and closes with Esc or a click outsid
   await expect(dialog(page)).toBeVisible();
   await expect(dialog(page).getByRole('heading', { level: 2 })).toHaveText([
     'Appearance',
+    'Editor',
     'Writing',
     'Layout',
     'AO3',

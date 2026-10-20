@@ -43,11 +43,15 @@ export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
   return page;
 }
 
-/** The page as the settings say: its zoom, and the quotes typed on it. Returns a function to stop. */
+/** The page as the settings say: its zoom, the quotes typed on it, its writing tools. Returns a function to stop. */
 export function followSettings(page: PageView, settings: SettingsState): () => void {
   const follow = (values: SettingsState['values']) => {
     page.showZoom(values['page.zoom']);
     page.editor.setQuotes(values['typography.quotes']);
+    page.editor.setTools({
+      focus: values['editor.focus'] === 'on',
+      typewriter: values['editor.typewriter'] === 'on',
+    });
   };
   follow(settings.values);
   return settings.onChange(follow);

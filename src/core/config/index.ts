@@ -8,6 +8,8 @@ export {
   type SettingKey,
   type SettingScope,
   type SettingValues,
+  TOGGLES,
+  type ToggleKey,
 } from './schema';
 export {
   checkSetting,

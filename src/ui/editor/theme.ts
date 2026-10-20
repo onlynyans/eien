@@ -23,6 +23,19 @@ export const editorTheme = EditorView.theme({
     minHeight: '40vh',
   },
   '.cm-line': { padding: '0' },
+  // Focus mode: every paragraph but the caret's fades back (ui/editor/writing-tools.ts).
+  '&.eien-focus .cm-line': {
+    opacity: 'var(--eien-dimmed)',
+    transition: 'opacity var(--eien-calm) var(--eien-ease)',
+  },
+  '&.eien-focus .cm-line.eien-current': { opacity: '1' },
+  // What Live draws as a block (a table) isn't a line, and is never where the caret writes.
+  '&.eien-focus .cm-content > :not(.cm-line)': {
+    opacity: 'var(--eien-dimmed)',
+    transition: 'opacity var(--eien-calm) var(--eien-ease)',
+  },
+  // Typewriter scrolling: room below the last line, so it too can come to the middle.
+  '&.eien-typewriter .cm-content': { paddingBottom: '50vh' },
   '.cm-cursor, .cm-dropCursor': {
     borderLeftColor: 'var(--eien-seal)',
     borderLeftWidth: 'var(--eien-mark-w)',
