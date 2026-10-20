@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { countWords, formatOf, fromEditor, frontMatterEnd, PLAIN_FORMAT, toEditor } from './index';
+import {
+  chapterNumber,
+  countWords,
+  formatOf,
+  fromEditor,
+  frontMatterEnd,
+  PLAIN_FORMAT,
+  toEditor,
+} from './index';
 
 describe('format: a file written back is the file read', () => {
   it.each([
@@ -86,5 +94,30 @@ describe('countWords', () => {
     expect(countWords('---\ntags: [fic, draft]\ntitle: Something long here\n---\nTwo words')).toBe(
       2,
     );
+  });
+});
+
+describe('chapterNumber', () => {
+  it.each([
+    [1, 'i'],
+    [3, 'iii'],
+    [4, 'iv'],
+    [9, 'ix'],
+    [14, 'xiv'],
+    [40, 'xl'],
+    [49, 'xlix'],
+    [90, 'xc'],
+    [400, 'cd'],
+    [1999, 'mcmxcix'],
+    [2026, 'mmxxvi'],
+  ])('%i is %s', (n, roman) => {
+    expect(chapterNumber(n)).toBe(roman);
+    expect(chapterNumber(n, 'arabic')).toBe(String(n));
+  });
+
+  it('writes anything that is not a positive whole number as it is', () => {
+    expect(chapterNumber(0)).toBe('0');
+    expect(chapterNumber(-3)).toBe('-3');
+    expect(chapterNumber(2.5)).toBe('2.5');
   });
 });

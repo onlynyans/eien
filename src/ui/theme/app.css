@@ -1,0 +1,11 @@
+/* Every style the window uses, in order: faces, tokens, shared pieces, then
+   one sheet per view. Linked from index.html, so it loads under the content
+   security policy in development as well as in a build. */
+@import "./fonts.css";
+@import "./tokens.css";
+@import "./base.css";
+@import "../shell/shell.css";
+@import "../sidebar/sidebar.css";
+@import "../list/list.css";
+@import "../page/page.css";
+@import "../welcome/welcome.css";

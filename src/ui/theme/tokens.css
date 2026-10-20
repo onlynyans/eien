@@ -1,0 +1,209 @@
+/* Eien's design tokens, from the approved design (docs/design/tokens.css).
+   This file is the source from now on; docs/design keeps the design pass as
+   it was approved. Phase 3 carries the default face, density and page frame;
+   the other faces, compact density, the full page and the Otaku palette come
+   back with the settings screen in phase 5. */
+
+/* Eien — design tokens. The theme contract (spec §7): every colour, face, size
+   and space the interface uses is one of these. A theme overrides these and
+   nothing else.
+
+   A book on a desk at night: the sidebar is the desk, the note list and the
+   note are washi paper, the sheet lies on a blotter, the words are sumi ink,
+   and one vermilion seal marks what is kept. Dark is inkstone, the same warm
+   hues darkened, never grey-blue.
+
+   Each colour is written once, as light-dark(day, night). The scheme follows
+   the system unless the root sets data-theme="light" or "dark". These values
+   are the Washi palette; another palette (themes/otaku.css, chosen with
+   data-palette on the root) overrides the colours and defines both schemes. */
+
+:root {
+  color-scheme: light dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root {
+  /* ── Surface: the desk and what lies on it ──────────────────────────── */
+  /* Darker is further back, by day and by night: desk, blotter, band, paper,
+     raised. Each step is big enough to see at a glance, not only side by side. */
+  --eien-desk: light-dark(#d9d2c8, #110e0b); /* the sidebar: navigation, the furthest back */
+  --eien-blotter: light-dark(#eae5dd, #1a1713); /* the ground the sheet lies on, in the page pane */
+  --eien-band: light-dark(
+    #f4f1ea,
+    #201d19
+  ); /* a header or strip: the list's head, the page's controls, the colophon */
+  --eien-paper: light-dark(
+    #fdfbf7,
+    #28241f
+  ); /* content: the note list and the sheet you write on */
+  --eien-paper-raised: light-dark(#ffffff, #312d28); /* what floats: a menu, the versions panel */
+  --eien-well: light-dark(#f9f7f3, #24201c); /* inside a field: a slip of paper let into the band */
+  --eien-hover: light-dark(
+    rgb(35 32 28 / 0.045),
+    rgb(233 226 212 / 0.05)
+  ); /* a row under the pointer */
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1)); /* a row being pressed */
+  --eien-selected: light-dark(
+    #ede9e3,
+    #38332e
+  ); /* the chosen row: a neutral fill, beside the seal's rule */
+  --eien-scrim: light-dark(
+    rgb(35 32 28 / 0.22),
+    rgb(0 0 0 / 0.5)
+  ); /* the window dimmed behind a sheet */
+
+  /* ── Depth: two shadows, and nothing else casts one ─────────────────── */
+  /* The sheet is the object on the blotter; what floats (a menu, the versions
+     panel, a row being dragged, the phone's bottom sheet) sits above it all.
+     Panes, bands and rows cast none. Night deepens both. */
+  --eien-shadow-sheet:
+    0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float:
+    0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+
+  /* ── Ink: four strengths of the same ink ────────────────────────────── */
+  --eien-ink: light-dark(#23201c, #e9e2d4); /* the writing, titles */
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7); /* rows, secondary text: iron-gall brown */
+  --eien-pencil: light-dark(#5d5348, #a7a095); /* counts, dates, labels */
+  --eien-faded: light-dark(#766d62, #837c73); /* placeholders, disabled */
+
+  /* ── Rules: hairlines in ink, never solid colour ────────────────────── */
+  /* By night the steps between surfaces are smaller, so the rules are stronger. */
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07)); /* inside a pane */
+  --eien-rule: light-dark(
+    rgb(35 32 28 / 0.13),
+    rgb(233 226 212 / 0.14)
+  ); /* between panes, under a band, the paper's edge */
+  --eien-rule-strong: light-dark(
+    rgb(35 32 28 / 0.26),
+    rgb(233 226 212 / 0.26)
+  ); /* a field's edge, a floating thing's edge */
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px; /* a mark, not a rule: the selected row's seal rule, the caret, the focus ring */
+
+  /* ── The seal: the one accent ───────────────────────────────────────── */
+  /* It appears in five places only: the app's mark, a sealed version, "sealed"
+     in the status line, the rule beside the selected row, and the caret with
+     the text selection it makes. */
+  --eien-seal: light-dark(#c4472d, #e0603f); /* the mark, the caret, the selected rule */
+  --eien-seal-wash: light-dark(
+    rgb(196 71 45 / 0.08),
+    rgb(224 96 63 / 0.12)
+  ); /* selected text only; rows use --eien-selected */
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714); /* a glyph pressed into the seal */
+  --eien-focus: var(--eien-ink-soft); /* keyboard focus ring: ink, so the seal stays rare */
+
+  /* ── Status: what changed, what needs a look ────────────────────────── */
+  --eien-added: light-dark(#485c2c, #9cb880); /* words added since the seal: moss */
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(
+    #93304a,
+    #e98aa0
+  ); /* words removed: the editor's carmine pencil, not the seal */
+  --eien-removed-wash: light-dark(rgb(147 48 74 / 0.1), rgb(233 138 160 / 0.14));
+  --eien-caution: light-dark(#6b501f, #d0a659); /* a sync conflict to look at: ochre */
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+  --eien-danger: var(--eien-removed); /* delete — always said in words too */
+
+  /* ── Type: two voices, one job each ─────────────────────────────────── */
+  /* Text: anything a person wrote — notes, titles, names in the tree. The face and
+     the sizes tuned to it are in "The text face" below. */
+  /* Machine: anything the machine counts or you press — numbers, dates, labels, buttons.
+     Always IBM Plex Mono, whatever the text face. */
+  --eien-face-mono: "IBM Plex Mono", ui-monospace, monospace;
+  /* The seal's glyph, 永. Mockups use the system's Mincho; the app ships the seal as SVG. */
+  --eien-face-seal: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Songti SC", serif;
+
+  /* The machine voice's sizes: the same whichever text face is chosen. */
+  --eien-size-meta: 11px; /* counts, dates, the status line */
+  --eien-size-label: 10px; /* section labels and buttons, set in capitals */
+  --eien-size-source: 14px; /* the Source view: the raw .md, in mono */
+
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em; /* letterspacing for capitals */
+
+  /* ── Space: a 4px grid ──────────────────────────────────────────────── */
+  --eien-space-1: 4px; /* icon gaps */
+  --eien-space-2: 8px; /* inside a control */
+  --eien-space-3: 12px; /* row padding */
+  --eien-space-4: 16px; /* pane gutters */
+  --eien-space-5: 24px; /* between groups */
+  --eien-space-6: 32px;
+  --eien-space-7: 48px;
+  --eien-space-8: 72px;
+
+  /* ── Layout ─────────────────────────────────────────────────────────── */
+  --eien-sidebar-w: 264px;
+  --eien-list-w: 316px;
+  --eien-panel-w: 284px; /* a side panel on the page: versions */
+  --eien-row-h: 30px; /* a tree or list row, desktop */
+  --eien-touch: 44px; /* the smallest thing a finger presses */
+  --eien-seal-size: 22px; /* the app's mark */
+  --eien-radius: 0; /* paper has square corners; only dots are round */
+
+  /* ── Motion: quick and quiet, no bounce ─────────────────────────────── */
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms; /* hover, press */
+  --eien-calm: 220ms; /* a pane opening, a view changing */
+}
+
+/* ── The text face ──────────────────────────────────────────────────────
+   Newsreader, with the sizes, leading and measure tuned to it (a page reads
+   at about 75 characters a line). The other faces, each tuned the same way,
+   arrive with the settings screen (phase 5; see docs/design/tokens.css). */
+:root {
+  --eien-face-text: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
+  --eien-size-prose: 22px; /* the writing */
+  --eien-size-title: 36px; /* a note's title on its page */
+  --eien-size-heading: 23px; /* the list's header: the folder or tag shown */
+  --eien-size-row: 16px; /* a row in the tree or list */
+  --eien-size-preview: 14px; /* the line of preview under a list row */
+  --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten));
+  --eien-measure: 29em; /* a reading line, in em of the prose */
+}
+
+/* ── Density: how much air around the writing ──────────────────────────
+   Comfortable. Compact (the same type, less space) arrives with the settings
+   screen; it changes only these tokens. */
+:root {
+  --eien-sheet-pad-x: var(--eien-space-8); /* the sheet's side margins */
+  --eien-sheet-pad-top: var(--eien-space-7); /* the sheet's top margin */
+  --eien-page-gutter: var(--eien-space-5); /* the blotter showing round the sheet */
+  --eien-title-gap: var(--eien-space-6); /* above and below a note's title */
+  --eien-paragraph-gap: var(--eien-space-4); /* between paragraphs */
+  --eien-scene-gap: 1.4em; /* above and below a scene break */
+  --eien-leading-tighten: 0;
+  --eien-row-pad-y: var(--eien-space-3); /* above and below a note-list row */
+  --eien-list-preview: block; /* the note list's line of preview: block, or none */
+}
+
+/* ── Frame: the page as a sheet on the blotter ─────────────────────────
+   The full-page frame (paper edge to edge) arrives with the settings screen;
+   it changes only these tokens. */
+:root {
+  --eien-page-ground: var(--eien-blotter); /* the page pane behind the sheet */
+  --eien-sheet-edge: var(--eien-hairline) solid var(--eien-rule);
+  --eien-sheet-lift: var(--eien-shadow-sheet);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --eien-quick: 0ms;
+    --eien-calm: 0ms;
+  }
+}
+
+/* Contrast, checked (WCAG), in both schemes: ink, ink-soft, pencil, added,
+   removed and caution reach 4.5:1 on every surface — desk, blotter, band,
+   well, paper, selected and raised, and the desk and paper under hover — so
+   small text stays legible; the status inks on their washes too. The seal
+   itself, as a mark, reaches 3:1. Faded is for placeholders and disabled
+   things only, and reaches 3:1. The specimen measures all of it live. */

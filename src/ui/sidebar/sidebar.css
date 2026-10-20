@@ -1,0 +1,124 @@
+/* The sidebar: the desk, darkest of the three; a contents page. */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--eien-desk);
+  border-right: var(--eien-hairline) solid var(--eien-rule);
+}
+
+.sidebar__head {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-3);
+  height: var(--band);
+  flex: none;
+  padding: 0 var(--eien-space-4);
+}
+.sidebar__vault {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  font-weight: 600;
+}
+
+.sidebar__tree {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--eien-space-5);
+}
+.sidebar__label {
+  margin: var(--eien-space-5) var(--eien-space-4) var(--eien-space-2);
+}
+
+.tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tree-row {
+  --indent: var(--eien-space-4);
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-left: calc(var(--eien-space-2) + var(--depth, 0) * var(--indent));
+}
+.tree-row__twist {
+  flex: none;
+  width: var(--eien-space-5);
+  height: var(--eien-row-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--eien-size-label);
+  color: var(--eien-faded);
+  cursor: pointer;
+}
+.tree-row__name {
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--eien-space-2);
+  height: var(--eien-row-h);
+  padding: 0 var(--eien-space-4) 0 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--eien-ink-soft);
+  cursor: pointer;
+}
+.tree-row__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--eien-row-h);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+}
+@media (hover: hover) {
+  .tree-row:hover {
+    background: var(--eien-hover);
+  }
+}
+.tree-row:active {
+  background: var(--eien-press);
+}
+.tree-row:has(.tree-row__name:focus-visible) {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}
+.tree-row__name:focus-visible {
+  outline: none;
+}
+/* Selected: a neutral fill, and the seal's rule beside it. */
+.tree-row:has([aria-current="true"]) {
+  background: var(--eien-selected);
+}
+.tree-row:has([aria-current="true"])::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--eien-mark-w);
+  background: var(--eien-seal);
+}
+.tree-row:has([aria-current="true"]) .tree-row__name {
+  color: var(--eien-ink);
+}
+
+.sidebar__foot {
+  flex: none;
+  padding: var(--eien-space-3) var(--eien-space-4);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+  text-transform: uppercase;
+  letter-spacing: var(--eien-track-label);
+}

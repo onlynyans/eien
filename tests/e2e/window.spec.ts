@@ -7,9 +7,9 @@ import { join } from 'node:path';
 import { _electron } from '@playwright/test';
 import { appEnv, closeApp, expect, ROOT, test } from './launch';
 
-test('opens one window showing Eien', async ({ app, page }) => {
+test('opens one window, welcoming the writer when no vault is open', async ({ app, page }) => {
   await expect(page).toHaveTitle('Eien');
-  await expect(page.locator('.app-name')).toHaveText('Eien');
+  await expect(page.locator('.welcome__name')).toHaveText('Eien');
   expect(app.windows()).toHaveLength(1);
 });
 
@@ -32,7 +32,7 @@ test('the window has no Node', async ({ page }) => {
 test('the window runs sandboxed', async ({ app, page }) => {
   test.skip(process.platform === 'linux', 'Electron reports sandboxing on macOS and Windows only');
   // The window's process exists once its page has loaded.
-  await expect(page.locator('.app-name')).toBeVisible();
+  await expect(page.locator('.welcome__name')).toBeVisible();
   const sandboxed = await app.evaluate(({ app, BrowserWindow }) => {
     const pid = BrowserWindow.getAllWindows()[0]?.webContents.getOSProcessId();
     return app.getAppMetrics().find((process) => process.pid === pid)?.sandboxed;
@@ -40,18 +40,30 @@ test('the window runs sandboxed', async ({ app, page }) => {
   expect(sandboxed).toBe(true);
 });
 
-test('the bridge exposes only the platform, and the page cannot change it', async ({ page }) => {
+test('the bridge exposes only its own calls, and the page cannot change them', async ({ page }) => {
   const bridge = await page.evaluate(() => {
     const eien = window.eien as unknown as Record<string, unknown>;
+    const vault = eien.vault as Record<string, unknown>;
     try {
       eien.platform = 'tampered';
       eien.extra = () => 'injected';
+      vault.read = () => 'replaced';
     } catch {
       // A frozen bridge may throw in strict code; either way nothing may change.
     }
-    return { keys: Object.keys(eien), platform: eien.platform };
+    return {
+      keys: Object.keys(eien).sort(),
+      vault: Object.keys(vault).sort(),
+      platform: eien.platform,
+      readIsOurs: vault.read !== undefined && String(vault.read).includes('replaced') === false,
+    };
   });
-  expect(bridge).toEqual({ keys: ['platform'], platform: process.platform });
+  expect(bridge).toEqual({
+    keys: ['onBeforeClose', 'onMenu', 'platform', 'vault'],
+    vault: ['choose', 'current', 'list', 'onChange', 'read', 'write'],
+    platform: process.platform,
+    readIsOurs: true,
+  });
   await expect(page.locator('html')).toHaveAttribute('data-platform', process.platform);
 });
 
@@ -153,7 +165,7 @@ test('a second launch exits and leaves the first window in place', async ({
   page,
   userData,
 }) => {
-  await expect(page.locator('.app-name')).toBeVisible();
+  await expect(page.locator('.welcome__name')).toBeVisible();
   const electronPath = await app.evaluate(() => process.execPath);
   const exitCode = await new Promise<number | null>((done) => {
     const second = spawn(electronPath, [ROOT], { cwd: ROOT, env: appEnv(userData) });
@@ -169,11 +181,11 @@ test('a second launch exits and leaves the first window in place', async ({
 });
 
 test('separate data folders run side by side', async ({ app, page }) => {
-  await expect(page.locator('.app-name')).toBeVisible();
+  await expect(page.locator('.welcome__name')).toBeVisible();
   const otherData = mkdtempSync(join(tmpdir(), 'eien-e2e-'));
   const other = await _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(otherData) });
   try {
-    await expect((await other.firstWindow()).locator('.app-name')).toHaveText('Eien');
+    await expect((await other.firstWindow()).locator('.welcome__name')).toHaveText('Eien');
     expect(app.windows()).toHaveLength(1);
   } finally {
     await closeApp(other);

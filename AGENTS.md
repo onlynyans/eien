@@ -30,12 +30,13 @@ when code and spec disagree, fix one of them in the same change.
 
 | Path | What |
 |---|---|
-| `src/core/` | Rules, pure TypeScript (from phase 3) |
-| `src/platform/` | The bridge and `Storage` interfaces, and their implementations |
-| `src/ui/` | The window: `index.html`, `main.ts`, styles |
-| `src/app/electron/` | Main process (`main.ts`, `window.ts`, `navigation.ts`) and the sandboxed `preload.ts` |
-| `tests/` | Architecture tests; `tests/e2e/` drives the built app with Playwright |
-| `tsconfig.{web,node,e2e}.json` | One per environment, so the window can't use Node and core can't use either |
+| `src/core/` | Rules, pure TypeScript: `paths`, `text`, `vault`, `saving` |
+| `src/platform/` | `bridge.ts` (all the window may ask), `storage.ts` (the Storage contract), and its `electron/` and `memory/` implementations |
+| `src/ui/` | The window: `app.ts` wires the views (`sidebar`, `list`, `page`, `welcome`) to the vault (`vault`) and the open note (`notes`); styles in `theme/` and beside each view |
+| `src/app/electron/` | Main process: window, menu, the vault session and its IPC, device settings; the sandboxed `preload.ts` |
+| `tests/` | Architecture tests; `tests/e2e/` drives the built app on real folders with Playwright |
+| `tsconfig.{core,web,node,e2e}.json` | One per environment: core can use neither DOM nor Node, the window can't use Node |
+| `docs/design/` | The approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on |
 
 Unit tests sit beside their module as `name.test.ts`.
 

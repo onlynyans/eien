@@ -112,10 +112,11 @@ so two devices never overwrite each other's state through Syncthing.
 
 - **Autosave.** Edits are written 800 ms after typing pauses, and on blur,
   switching notes and quitting. A note that hasn't changed is never rewritten.
-- **Durable writes.** Write to `name.md.tmp`, flush to disk, rename over the
-  original. A crash leaves the old file or the new one, never a partial one.
-  Stray `.tmp` files are cleaned up at the next launch, after checking they
-  are not newer than the note.
+- **Durable writes.** Write to a hidden `.name.md.eien.tmp` beside the note,
+  flush it to disk, rename it over the note, and flush the folder. A crash
+  leaves the old file or the new one, never a partial one. At the next launch
+  a stray temp file newer than its note, holding different words, is kept as
+  `Note (recovered 2026-10-19 16-40).md`; every other one is removed.
 - **External changes.** Eien watches the vault. When a note changes on disk:
   - If the open copy has no unsaved edits, the new text is loaded.
   - If both changed, Eien never overwrites the file. It saves the open text as
@@ -237,32 +238,39 @@ Each folder is one feature with one job, named for it. A module exposes a
 small `index.ts`; nothing reaches into another module's files.
 
 ```
-src/core/
+src/core/            (✓ = built)
+  paths/        ✓ name rules, reserved names, collisions, vault paths, sibling names
+  text/         ✓ BOM and line endings kept, front matter located, words, chapter numbers
+  vault/        ✓ entries, the folder tree, .eien-folder.json (order, book)
+  saving/       ✓ what to do when a note changes on disk
   config/        settings schema, defaults, validation (§6)
   theme/         theme schema, validation, token list (§7)
-  note/          front matter read/write, title, id
+  note/          front matter read/write, id
   tags/          tag extraction and the tag tree
-  folder/        .eien-folder.json: order and book settings
-  words/         word counting (Intl.Segmenter), today's tally
   typography/    quotes and dashes
   versions/      checkpoint naming, listing, retention, word diff
   ao3/           Markdown → AO3 HTML, HTML → Markdown
-  paths/         name rules, reserved names, collisions
 src/platform/
-  storage.ts     the Storage interface: read, write, list, watch, trash
-  electron/      Storage over Node fs, via IPC from the window
+  bridge.ts     ✓ what the window may ask of the system (window.eien)
+  storage.ts    ✓ the Storage interface: read, write, list, watch
+  electron/     ✓ Storage over Node fs: durable writes, the watcher, crash recovery
+  memory/       ✓ Storage in memory, for tests
   capacitor/     Storage over the phone's file system
-  memory/        Storage in memory, for tests
 src/ui/
-  shell/         the three panes, resizing, collapsing
-  sidebar/       tree: folders, tags, pinned
-  list/          note list
+  app.ts        ✓ the window: panes, vault and note kept in step
+  shell/        ✓ the three panes (resizing and collapsing: phase 5)
+  sidebar/      ✓ tree: library and folders (tags, pinned: phase 6)
+  list/         ✓ note list
+  page/         ✓ the sheet, a plain editor, the colophon
+  notes/        ✓ the open note: autosave, reload, conflict copies
+  vault/        ✓ the vault as the window knows it
+  welcome/      ✓ before a vault is open
+  theme/        ✓ tokens.css, base.css, fonts, from docs/design
   editor/        CodeMirror setup, the three views, writing tools
   versions/      the checkpoint cycle and named versions
   settings/      the settings screen, generated from the schema
-  theme/         tokens.css, built-in themes, theme switching
 src/app/
-  electron/      main process, preload, window, menus
+  electron/     ✓ main process, preload, window, menus, the vault session
   mobile/        Capacitor configuration
 ```
 
