@@ -14,6 +14,7 @@ import { Sidebar } from '../sidebar/sidebar';
 import { VersionsUI } from '../versions/versions-ui';
 import { ao3Out } from './ao3-out';
 import { runCommand } from './commands';
+import { counting } from './counting';
 import { onDiskChanges, touches } from './disk-changes';
 import { type MenuContext, showFolderMenu, showNoteMenu } from './menus';
 import { Navigation } from './navigation';
@@ -157,6 +158,7 @@ export async function showVault(
     tell,
     serial: (operation) => act(operation),
   });
+  const counts = counting({ page, note: () => note, state, tell });
 
   const drags = {
     moveTo: (path: string, folder: string) =>
@@ -201,6 +203,7 @@ export async function showVault(
   });
   const redraw = () => {
     versions.sync(); // another note open is seen here, whatever opened or closed it
+    void counts.sync();
     return draw.all();
   };
 
@@ -240,10 +243,7 @@ export async function showVault(
     page.focus();
   }
 
-  const refresh = async () => {
-    await state.refresh();
-    await redraw();
-  };
+  const refresh = () => state.refresh().then(redraw);
 
   const stopWatching = onDiskChanges(bridge.vault, (changed) => {
     if (note.path && touches(note.path, changed)) void note.session?.diskChanged();
@@ -276,13 +276,12 @@ export async function showVault(
       drawList: () => draw.list(),
       versions,
       ao3,
+      counters: counts.counters,
     }),
   );
   await refresh();
   return {
-    flush: async () => {
-      await note.flush();
-    },
+    flush: () => note.flush(),
     stop: async () => {
       await note.flush();
       stopWatching();
@@ -292,6 +291,7 @@ export async function showVault(
       panes.stop();
       notice.stop();
       versions.stop();
+      counts.stop();
       window.removeEventListener('blur', onBlur);
     },
   };

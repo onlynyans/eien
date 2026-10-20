@@ -45,3 +45,18 @@
   margin: var(--eien-space-1) 0;
   border-top: var(--eien-hairline) solid var(--eien-rule-soft);
 }
+
+/* A number asked for (a book's goal): a label, the field, and how to answer. */
+.ask {
+  gap: var(--eien-space-2);
+  padding: var(--eien-space-3);
+  min-width: calc(var(--eien-space-8) * 3);
+}
+.ask .field[aria-invalid="true"] {
+  border-color: var(--eien-danger);
+}
+.ask__hint {
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  color: var(--eien-pencil);
+}

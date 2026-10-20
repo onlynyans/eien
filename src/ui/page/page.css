@@ -191,3 +191,21 @@
 .colophon__state[data-state="failed"] {
   color: var(--eien-danger);
 }
+
+/* The counters (ui/counters): today's words, the book's, a sprint; each gone when it has nothing to say. */
+.counters {
+  display: contents;
+}
+.colophon__counters {
+  display: flex;
+  gap: var(--eien-space-3);
+}
+.colophon__book:empty,
+.colophon__sprint:empty,
+.colophon__counters:empty {
+  display: none;
+}
+/* Figures that change each second keep their width. */
+.colophon {
+  font-variant-numeric: tabular-nums;
+}

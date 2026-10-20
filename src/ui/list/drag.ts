@@ -137,7 +137,11 @@ export function watchDrags(
       if ('folder' in target) actions.moveTo(path, target.folder);
       else if (target.before !== path) actions.placeBefore(path, target.before);
     };
-    const up = () => finish(true);
+    // Where it was let go counts, though its last move may have come only with the release.
+    const up = (event: PointerEvent) => {
+      if (lifted) move(event);
+      finish(true);
+    };
     const cancel = () => finish(false);
     const key = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || !lifted) return;

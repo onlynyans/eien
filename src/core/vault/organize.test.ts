@@ -142,6 +142,25 @@ describe('withFolderSettings', () => {
     });
   });
 
+  it('sets or takes away a book’s goal, keeping the book’s other keys', () => {
+    const before = '{"book":{"goal":40000,"future":true},"order":["a.md"]}';
+    expect(JSON.parse(withFolderSettings(before, { goal: 90000 }) ?? '')).toEqual({
+      book: { goal: 90000, future: true },
+      order: ['a.md'],
+    });
+    expect(JSON.parse(withFolderSettings(before, { goal: null }) ?? '')).toEqual({
+      book: { future: true },
+      order: ['a.md'],
+    });
+    // A folder that isn't a book (any longer) gets no goal, and isn't made one.
+    expect(JSON.parse(withFolderSettings('{"book":true}', { goal: 5 }) ?? '')).toEqual({
+      book: true,
+    });
+    expect(JSON.parse(withFolderSettings('{"order":["a.md"]}', { goal: null }) ?? '')).toEqual({
+      order: ['a.md'],
+    });
+  });
+
   it('never writes over a file that isn’t a JSON object', () => {
     for (const text of ['{ "order": [', '[1,2]', '"text"', 'null']) {
       expect(withFolderSettings(text, { book: {} })).toBeNull();

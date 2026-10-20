@@ -18,6 +18,7 @@ import {
   FOLDER_SETTINGS_NAME,
   type FolderChange,
   movedPins,
+  parseFolderSettings,
   parsePins,
   pinsText,
   placedBefore,
@@ -127,6 +128,21 @@ export class Organizer {
   /** Make `folder` a book, or not (spec §2: ordered reading, numbered chapters). */
   setBook(folder: string, book: boolean): Promise<boolean> {
     return this.#changeFolder(folder, { book: book ? {} : null });
+  }
+
+  /**
+   * A book's word goal; null takes it away. A folder gone meanwhile (moved
+   * on another device) or no longer a book is left as it is: never made again.
+   */
+  setGoal(folder: string, goal: number | null): Promise<boolean> {
+    return this.#update(
+      joinPath(folder, FOLDER_SETTINGS_NAME),
+      (text) =>
+        text === null || parseFolderSettings(text).book === null
+          ? undefined
+          : withFolderSettings(text, { goal }),
+      folder,
+    );
   }
 
   /** Place the note at `path` just before `before` (last, for null) in its folder's own order. */
@@ -269,7 +285,7 @@ export class Organizer {
       if (next === undefined) return true;
       if (next === null) {
         this.#ctx.tell(
-          `${path} isn’t valid JSON, so the ${what === 'pins' ? 'pins' : 'folder’s order'} weren’t changed. Fix or remove it, then try again.`,
+          `${path} isn’t valid JSON, so the ${what === 'pins' ? 'pins' : 'folder’s settings'} weren’t changed. Fix or remove it, then try again.`,
         );
         return false;
       }

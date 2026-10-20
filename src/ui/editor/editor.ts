@@ -9,16 +9,11 @@
 
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { syntaxTree } from '@codemirror/language';
-import {
-  Compartment,
-  EditorSelection,
-  EditorState,
-  type Extension,
-  Transaction,
-} from '@codemirror/state';
+import { Compartment, EditorSelection, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { FORMAT_COMMANDS, type FormatCommand } from '../../core/format';
 import type { QuoteStyle } from '../../core/typography';
+import { eienChange, eienUndo, writtenBy } from './eien-change';
 import { hiddenFrontMatter, keepFrontMatter, livePreview, previewMode } from './live-preview';
 import { eienMarkdown } from './syntax';
 import { editorTheme, markdownColours } from './theme';
@@ -36,8 +31,12 @@ export type EditorMode = 'live' | 'source' | 'reading';
 export const EDITOR_MODES: readonly EditorMode[] = ['live', 'source', 'reading'];
 
 export interface EditorEvents {
-  /** The text changed by the writer (not by setText or replaceText). */
-  changed(text: string): void;
+  /**
+   * The text changed (not by setText or replaceText): `written` when the
+   * writer did it — typed, cut, pasted, formatted, undid — not Eien (a
+   * seal's id, a restore), which counts toward no one's words.
+   */
+  changed(text: string, written: boolean): void;
   /** A link was followed: a web address, or a [[note]] by its title. */
   follow(target: { readonly kind: 'url' | 'note'; readonly value: string }): void;
 }
@@ -127,7 +126,7 @@ export class NoteEditor {
     if (start === end && start === endNext) return true;
     this.#view.dispatch({
       changes: { from: start, to: end, insert: next.slice(start, endNext) },
-      annotations: undoable ? [] : [Transaction.addToHistory.of(false)],
+      ...eienChange(undoable),
     });
     return true;
   }
@@ -191,6 +190,7 @@ export class NoteEditor {
     }));
     const extensions: Extension[] = [
       this.#history.of(history()),
+      eienUndo,
       this.#lock.of(lockExtensions(this.#locked)),
       this.#quotes.of(quoteTyping(this.#quoteStyle)),
       this.#tools.of(writingTools(this.#toolsOn)),
@@ -214,7 +214,8 @@ export class NoteEditor {
       this.#images.of(imageLoader.of(loadImage)),
       this.#mode.of(modeExtensions(this.#current)),
       EditorView.updateListener.of((update) => {
-        if (update.docChanged && !this.#quiet) this.#events.changed(update.state.doc.toString());
+        if (!update.docChanged || this.#quiet) return;
+        this.#events.changed(update.state.doc.toString(), update.transactions.some(writtenBy));
       }),
       EditorView.domEventHandlers({
         // ⌘-click follows on the press, before the caret moves: in Live a caret on

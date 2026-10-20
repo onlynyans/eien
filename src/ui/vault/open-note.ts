@@ -87,8 +87,9 @@ export class OpenNote {
     this.#page.showNothing();
   }
 
-  /** Save whatever is unsaved. */
+  /** Save whatever is unsaved, and count what was just written (today's words) without a pause. */
   async flush(): Promise<void> {
+    this.#page.words.flush();
     await this.#session?.flush();
   }
 }

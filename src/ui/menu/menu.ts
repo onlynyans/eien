@@ -19,16 +19,60 @@ export type MenuItem =
 
 let open: { close(): void } | null = null;
 
-/** Show `items` at the pointer (`at`), or under `opener`. Only one menu is open at a time. */
-export function openMenu(
-  items: readonly MenuItem[],
-  place: { readonly at?: { x: number; y: number }; readonly opener?: HTMLElement },
-  label = 'Choices',
-): void {
+/** Where something floats: at the pointer, or under the element that opened it. */
+export interface Place {
+  readonly at?: { x: number; y: number };
+  readonly opener?: HTMLElement;
+}
+
+/**
+ * Float `panel` at `place`, kept inside the window, as the one thing open:
+ * whatever was open closes first. It closes on a click elsewhere, the
+ * window losing focus or changing size, or the close returned; then the
+ * keyboard goes back where it was, and `closed` runs.
+ */
+export function float(panel: HTMLElement, place: Place, closed?: () => void): () => void {
   open?.close();
   const back = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const close = () => {
+    if (open !== handle) return;
+    open = null;
+    panel.remove();
+    document.removeEventListener('pointerdown', outside, true);
+    window.removeEventListener('blur', close);
+    window.removeEventListener('resize', close);
+    back?.focus();
+    closed?.();
+  };
+  const handle = { close };
+  const outside = (event: Event) => {
+    if (!panel.contains(event.target as Node)) close();
+  };
+  document.body.append(panel);
+  open = handle;
+  const anchor = place.opener?.getBoundingClientRect();
+  const x = place.at?.x ?? anchor?.left ?? 0;
+  const y = place.at?.y ?? (anchor ? anchor.bottom + 4 : 0);
+  const size = panel.getBoundingClientRect();
+  panel.style.setProperty(
+    '--menu-x',
+    `${Math.max(4, Math.min(x, window.innerWidth - size.width - 4))}px`,
+  );
+  panel.style.setProperty(
+    '--menu-y',
+    `${Math.max(4, Math.min(y, window.innerHeight - size.height - 4))}px`,
+  );
+  document.addEventListener('pointerdown', outside, true);
+  window.addEventListener('blur', close);
+  window.addEventListener('resize', close);
+  return close;
+}
+
+/** Show `items` at the pointer (`at`), or under `opener`. Only one menu is open at a time. */
+export function openMenu(items: readonly MenuItem[], place: Place, label = 'Choices'): void {
   const buttons: HTMLButtonElement[] = [];
   const menu = h('div', { class: 'menu', attrs: { role: 'menu', 'aria-label': label } });
+  let close = () => {};
   for (const item of items) {
     if (item === 'separator') {
       menu.append(h('div', { class: 'menu__rule', attrs: { role: 'separator' } }));
@@ -54,20 +98,6 @@ export function openMenu(
     buttons.push(button);
     menu.append(button);
   }
-
-  const close = () => {
-    if (open !== handle) return;
-    open = null;
-    menu.remove();
-    document.removeEventListener('pointerdown', outside, true);
-    window.removeEventListener('blur', close);
-    window.removeEventListener('resize', close);
-    back?.focus();
-  };
-  const handle = { close };
-  const outside = (event: Event) => {
-    if (!menu.contains(event.target as Node)) close();
-  };
   menu.addEventListener('keydown', (event) => {
     const enabled = buttons.filter((button) => !button.disabled);
     const at = enabled.indexOf(document.activeElement as HTMLButtonElement);
@@ -81,25 +111,7 @@ export function openMenu(
     event.preventDefault();
     event.stopPropagation();
   });
-
-  document.body.append(menu);
-  open = handle;
-  // Where it goes: at the pointer, or under its opener; kept inside the window.
-  const anchor = place.opener?.getBoundingClientRect();
-  const x = place.at?.x ?? anchor?.left ?? 0;
-  const y = place.at?.y ?? (anchor ? anchor.bottom + 4 : 0);
-  const size = menu.getBoundingClientRect();
-  menu.style.setProperty(
-    '--menu-x',
-    `${Math.max(4, Math.min(x, window.innerWidth - size.width - 4))}px`,
-  );
-  menu.style.setProperty(
-    '--menu-y',
-    `${Math.max(4, Math.min(y, window.innerHeight - size.height - 4))}px`,
-  );
-  document.addEventListener('pointerdown', outside, true);
-  window.addEventListener('blur', close);
-  window.addEventListener('resize', close);
+  close = float(menu, place);
   (
     buttons.find((button) => button.getAttribute('aria-checked') === 'true') ??
     buttons.find((b) => !b.disabled)

@@ -34,7 +34,9 @@ export function parseFolderSettings(text: string | null): FolderSettings {
   let bookSettings: FolderSettings['book'] = null;
   if (typeof book === 'object' && book !== null && !Array.isArray(book)) {
     const { goal } = book as Record<string, unknown>;
-    bookSettings = typeof goal === 'number' && Number.isFinite(goal) && goal > 0 ? { goal } : {};
+    // A goal is a whole number of words, more than none; anything else is no goal.
+    bookSettings =
+      Number.isSafeInteger(goal) && (goal as number) > 0 ? { goal: goal as number } : {};
   }
   return { order: names, book: bookSettings };
 }
@@ -61,10 +63,12 @@ export function orderNames(names: readonly string[], order: readonly string[]): 
   return [...placed, ...names.filter((name) => !placed.has(name)).sort(byName)];
 }
 
-/** A change to a folder's settings: a new order, or the folder made a book (or not). */
+/** A change to a folder's settings: a new order, the folder made a book (or not), a book's goal. */
 export interface FolderChange {
   readonly order?: readonly string[];
   readonly book?: FolderSettings['book'];
+  /** A book's word goal; null takes it away. The book's other keys are kept. */
+  readonly goal?: number | null;
 }
 
 /**
@@ -92,6 +96,12 @@ export function withFolderSettings(text: string | null, change: FolderChange): s
   if ('book' in change) {
     if (change.book) next.book = change.book;
     else delete next.book;
+  }
+  // A goal is a book's: a folder that isn't one (any longer) is left as it is.
+  const book = next.book;
+  if ('goal' in change && typeof book === 'object' && book !== null && !Array.isArray(book)) {
+    const { goal: _, ...rest } = book as Record<string, unknown>;
+    next.book = change.goal ? { ...rest, goal: change.goal } : rest;
   }
   return `${JSON.stringify(next, null, 2)}\n`;
 }

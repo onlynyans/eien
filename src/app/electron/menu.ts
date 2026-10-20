@@ -1,5 +1,6 @@
 import { app, type BaseWindow, Menu, type MenuItemConstructorOptions } from 'electron';
 import { type SettingValues, TOGGLES, type ToggleKey } from '../../core/config';
+import { SPRINT_MINUTES } from '../../core/counters';
 import { acceleratorOf, FORMAT_COMMANDS, type FormatCommandId } from '../../core/format';
 import type { MenuCommand } from '../../platform/bridge';
 
@@ -127,6 +128,13 @@ export function buildMenu(send: SendCommand): Menu {
         // The writing tools (spec §4), this device's settings.
         toggle('Focus Mode', 'editor.focus', 'CmdOrCtrl+Shift+Return'),
         toggle('Typewriter Scrolling', 'editor.typewriter'),
+        { type: 'separator' },
+        // A sprint against the clock, counted in the colophon (spec §4).
+        {
+          label: 'Start Sprint',
+          submenu: SPRINT_MINUTES.map((minutes) => item(`${minutes} Minutes`, `sprint:${minutes}`)),
+        },
+        item('Stop Sprint', 'sprint:stop'),
         { type: 'separator' },
         item('Compare', 'compare', 'CmdOrCtrl+Shift+D'),
         item('Versions', 'versions'),

@@ -2,7 +2,7 @@
 // and the notes for whatever is selected in the sidebar or searched for.
 
 import type { IndexedNote } from '../../core/note';
-import { baseName, joinPath, nameKey, titleOf, VAULT_PINS } from '../../core/paths';
+import { baseName, joinPath, nameKey, parentOf, titleOf, VAULT_PINS } from '../../core/paths';
 import { buildTagTree, hasTag, type TagNode } from '../../core/tags';
 import { chapterNumber, type NumeralStyle } from '../../core/text';
 import {
@@ -53,6 +53,14 @@ export interface NoteList {
   readonly folder?: string;
 }
 
+/** A book's words, as the index has them. */
+export interface BookCount {
+  readonly words: number;
+  /** The words of the note asked about, counted in `words`. */
+  readonly note: number;
+  readonly goal?: number;
+}
+
 type VaultReader = Pick<VaultBridge, 'list' | 'notes' | 'read' | 'search'>;
 
 export class VaultState {
@@ -100,6 +108,23 @@ export class VaultState {
   async folderSettings(folder: string): Promise<FolderSettings> {
     const file = await this.#vault.read(joinPath(folder, FOLDER_SETTINGS_NAME)).catch(() => null);
     return parseFolderSettings(file?.text ?? null);
+  }
+
+  /**
+   * The book the note at `path` is a chapter of (its folder, when that's a
+   * book): its words, the note's own among them as last indexed, and its goal.
+   */
+  async bookOf(path: string): Promise<BookCount | null> {
+    const folder = parentOf(path);
+    const { book } = await this.folderSettings(folder);
+    if (!book) return null;
+    const notes = findFolder(this.#tree, folder)?.notes ?? [];
+    const wordsOf = (note: string) => this.#notes.get(note)?.words ?? 0;
+    return {
+      words: notes.reduce((sum, note) => sum + wordsOf(note), 0),
+      note: wordsOf(path),
+      ...(book.goal ? { goal: book.goal } : {}),
+    };
   }
 
   /** The names of a folder's notes, in its own order. */
