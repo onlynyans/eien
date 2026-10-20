@@ -199,6 +199,8 @@ export function toggleInline(text: string, selection: Selection, mark: InlineMar
   }
 
   const lines = lineSpans(text, selection);
+  // No words selected (spaces, a list's "-", a scene break): nothing to mark.
+  if (lines.length === 0) return { changes: [], selection };
   if (lines.length === 1) return toggleSpan(text, lines[0] as Selection, mark);
 
   // Several lines: all marked already → unmark all; otherwise mark the unmarked ones.
@@ -218,14 +220,20 @@ export function toggleInline(text: string, selection: Selection, mark: InlineMar
 }
 
 /**
- * A line's own marks at its start: a quote's ">", then a heading's "#", or a
- * list's "-" or "1." with a task's "[ ]". Marks go inside these, never
- * around them: "- **one**", not "**- one**".
+ * A line's own marks at its start: quotes' ">" and lists' "-" or "1." (a
+ * task's "[ ]" after one), nested in any order, then a heading's "#". Marks
+ * go inside these, never around them: "- **one**", not "**- one**".
  */
 const LINE_MARKS =
-  /^[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d{1,9}[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/;
+  /^(?:[ \t]*(?:>[ \t]?|(?:[-*+]|\d{1,9}[.)])(?:[ \t]+(?:\[[ xX]\](?:[ \t]+|$))?|$)))*[ \t]*(?:#{1,6}(?:[ \t]+|$))?/;
 
-/** The non-blank stretch of each line inside `selection`, ends trimmed of spaces and line marks. */
+/** A scene break ("***", "* * *", "---") or a heading's underline ("===", "--"): all marks. */
+const RULE = /^ {0,3}(?:([-*_])(?:[ \t]*\1){2,}|=+|-+)[ \t]*$/;
+
+/**
+ * The non-blank stretch of each line inside `selection`, ends trimmed of
+ * spaces and line marks; none in a scene break.
+ */
 function lineSpans(text: string, selection: Selection): Selection[] {
   const spans: Selection[] = [];
   let lineStart = selection.from;
@@ -235,8 +243,9 @@ function lineSpans(text: string, selection: Selection): Selection[] {
     let from = lineStart;
     let to = lineEnd;
     const realStart = text.lastIndexOf('\n', lineStart - 1) + 1;
-    const marks =
-      LINE_MARKS.exec(text.slice(realStart, newline === -1 ? text.length : newline))?.[0] ?? '';
+    const line = text.slice(realStart, newline === -1 ? text.length : newline);
+    const rule = RULE.test(line);
+    const marks = rule ? line : (LINE_MARKS.exec(line)?.[0] ?? '');
     from = Math.max(from, realStart + marks.length);
     while (from < to && /\s/.test(text[from] ?? '')) from++;
     while (to > from && /\s/.test(text[to - 1] ?? '')) to--;
@@ -244,6 +253,5 @@ function lineSpans(text: string, selection: Selection): Selection[] {
     if (newline === -1 || newline >= selection.to) break;
     lineStart = newline + 1;
   }
-  if (spans.length === 0) spans.push({ from: selection.from, to: selection.to });
   return spans;
 }

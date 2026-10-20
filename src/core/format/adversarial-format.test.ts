@@ -73,3 +73,29 @@ describe('a mark goes where the parser reads it', () => {
     expect(apply(marked, command.run(marked, once.selection).changes)).toBe('a永, aりa');
   });
 });
+
+describe('a mark never goes around a line’s own marks', () => {
+  it.each([
+    // A scene break holds no words: italic over a flashback that crosses one keeps it.
+    ['italic', 'One.\n\n***\n\nTwo.', '*One.*\n\n***\n\n*Two.*'],
+    ['strike', 'One.\n\n* * *\n\nTwo.', '~~One.~~\n\n* * *\n\n~~Two.~~'],
+    ['bold', 'One.\n\n---\n\nTwo.', '**One.**\n\n---\n\n**Two.**'],
+    // A heading's underline is its marks.
+    ['bold', 'Title\n--\nText', '**Title**\n--\n**Text**'],
+    // A list in a list, and an empty item.
+    ['bold', '- - one', '- - **one**'],
+    ['bold', 'one\n-\ntwo', '**one**\n-\n**two**'],
+  ])('%s over %j', (id, text, after) => {
+    expect(run(id, text, 0, text.length)).toBe(after);
+    expect(run(id, after, 0, after.length)).toBe(text);
+  });
+
+  it.each([
+    ['bold', '- item', 0, 2],
+    ['underline', '- item', 0, 2],
+    ['bold', 'a  b', 1, 3],
+    ['italic', '***', 0, 3],
+  ])('%s over no words in %j changes nothing', (id, text, from, to) => {
+    expect(run(id, text, from, to)).toBe(text);
+  });
+});
