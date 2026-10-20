@@ -62,8 +62,23 @@ export function buildMenu(send: SendCommand): Menu {
         mac ? { role: 'close' } : { role: 'quit' },
       ],
     },
-    // Cut, copy, paste, undo and select all: the editor needs them on macOS.
-    { role: 'editMenu' },
+    {
+      label: 'Edit',
+      // Cut, copy, paste, undo and select all: the editor needs them on macOS.
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        ...(mac ? [{ role: 'pasteAndMatchStyle' } as const] : []),
+        { role: 'delete' },
+        { role: 'selectAll' },
+        { type: 'separator' },
+        item('Search Notes…', 'search', 'CmdOrCtrl+Shift+F'),
+      ],
+    },
     {
       label: 'Format',
       // The editor's own command list: the menu, the keys and the selection bar can't disagree.

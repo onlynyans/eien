@@ -11,7 +11,9 @@ view: format by key, the Format menu or the bar over a selection; tick
 checkboxes; see images from the vault. Notes save as you type, a change from
 another device reloads, and when both sides changed, both are kept. Settings
 (⌘,) choose day or night, the Washi or Otaku palette, eight typefaces, text
-size, density, the page's frame, zoom and chapter numbers.
+size, density, the page's frame, zoom and chapter numbers. The note list
+previews each note; tags, from front matter or #inline, nest in the sidebar;
+search (⇧⌘F) finds words across the vault, accents aside.
 
 ## Develop
 

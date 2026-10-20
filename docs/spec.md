@@ -199,6 +199,25 @@ CommonMark plus GitHub extensions, and three common additions:
 - Basic inline HTML: `<p>`, `<br>`, `<hr>`, `<u>`, `<em>`, `<strong>`, `<s>`,
   `<sup>`, `<sub>`. Anything else is shown as text and never run.
 
+### Search and the index
+
+The main process keeps an index of the vault: every note's preview (its
+first words, marks taken out), its words and its tags, and its text for
+search. It reads only what changed, by time and size and by what the watcher
+names, sixteen files at a time; a note over 8 MB is listed but not read. A
+write updates the index before it returns, so a new note is listed at once.
+
+Search (⇧⌘F, or the field under the vault's name) finds the notes holding
+every word of the query, in the title or the text, with case, accents, curly
+quotes and full-width forms aside; "quoted words" are a phrase. Notes whose
+title holds the words come first, then the most recently changed; the first
+200 are listed, with the words around the match. Esc clears it.
+
+Tags follow the same Markdown as the editor: a "#" in code, a link, an
+address, HTML or after a "\\" is not a tag. A tag needs a letter; case aside,
+#Draft is #draft, and the sidebar shows the first spelling. Tags count as
+words, as on the page.
+
 ### Writing tools
 
 - **Scene break:** Enter on an empty line after an empty line inserts `***`,
@@ -250,8 +269,10 @@ src/core/            (✓ = built)
   format/       ✓ the formatting commands: inline marks, line formats, links, their keys
   config/       ✓ the settings schema, defaults, reading and writing settings files (§6)
   theme/         theme schema, validation, token list (§7)
-  note/          front matter read/write, id
-  tags/          tag extraction and the tag tree
+  markdown/     ✓ Eien's Markdown (==highlight==, [[wiki links]]) and a note's plain text
+  note/         ✓ a note's preview, words and tags (front matter writing and id: phase 7)
+  tags/         ✓ tag extraction and the tag tree
+  search/       ✓ folding (case, accents, quotes), query terms, snippets
   typography/    quotes and dashes
   versions/      checkpoint naming, listing, retention, word diff
   ao3/           Markdown → AO3 HTML, HTML → Markdown
@@ -260,15 +281,16 @@ src/platform/
   storage.ts    ✓ the Storage interface: read, write, list, watch
   electron/     ✓ Storage over Node fs: durable writes, the watcher, crash recovery
   memory/       ✓ Storage in memory, for tests
+  index/        ✓ the vault's index over any Storage: previews, words, tags, search
   capacitor/     Storage over the phone's file system
 src/ui/
   app.ts        ✓ the window: panes, vault and note kept in step
   shell/        ✓ the three panes (resizing, collapsing, two panes: phase 6)
-  sidebar/      ✓ tree: library and folders (tags, pinned: phase 6)
-  list/         ✓ note list
+  sidebar/      ✓ the search field; library, folders and tags (pinned: phase 6)
+  list/         ✓ note list: previews, a book's words, search results
   page/         ✓ the sheet, the view switch, the colophon
   notes/        ✓ the open note: autosave, reload, conflict copies
-  vault/        ✓ the vault as the window knows it
+  vault/        ✓ the vault as the window knows it, and its three panes
   welcome/      ✓ before a vault is open
   theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts
   editor/       ✓ CodeMirror, the three views, the selection bar, images (writing tools: phase 9)
@@ -525,7 +547,9 @@ On macOS, Windows and Linux, each with a fresh temporary vault:
 - paste the AO3 sample; Copy for AO3 matches the expected HTML
 - switch theme, quotes and pane layout; settings survive a restart
 - drag notes to reorder; the order survives a restart
-- a vault with 5,000 notes opens and searches within set time limits
+- a vault with 5,000 notes opens and searches within set time limits: listed
+  within 15 s of launch, a search answered within 2 s, a typed change in the
+  index within 5 s (on a 2024 Mac: 2.3 s, 0.4 s and 2.8 s)
 
 ### CI (GitHub Actions)
 
