@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { boxOf, clickMenu, expect, test } from './launch';
+import { ALONE, boxOf, clickMenu, expect, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -92,16 +92,20 @@ test('Alt and an arrow moves a card; the arrows move between cards', async ({
   await expect(page.locator('.board .card__number')).toHaveText(['i', 'ii', 'iii']);
 });
 
-test('dragging a card puts it before the card it’s dropped on', async ({ app, page, vault }) => {
-  await openBook(page);
-  await outline(app);
-  const from = await boxOf(cards(page).nth(2)); // Fire
-  const to = await boxOf(cards(page).first()); // Tear, its left half
-  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(to.x + 10, to.y + to.height / 2, { steps: 8 });
-  await expect(page.locator('.drop-marker--across')).toBeVisible();
-  await page.mouse.up();
-  await expect(titles(page)).toHaveText(['Fire', 'Tear', 'Mend']);
-  await expect.poll(() => order(vault)).toEqual(['Fire.md', 'Tear.md', 'Mend.md']);
-});
+test(
+  'dragging a card puts it before the card it’s dropped on',
+  ALONE,
+  async ({ app, page, vault }) => {
+    await openBook(page);
+    await outline(app);
+    const from = await boxOf(cards(page).nth(2)); // Fire
+    const to = await boxOf(cards(page).first()); // Tear, its left half
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(to.x + 10, to.y + to.height / 2, { steps: 8 });
+    await expect(page.locator('.drop-marker--across')).toBeVisible();
+    await page.mouse.up();
+    await expect(titles(page)).toHaveText(['Fire', 'Tear', 'Mend']);
+    await expect.poll(() => order(vault)).toEqual(['Fire.md', 'Tear.md', 'Mend.md']);
+  },
+);

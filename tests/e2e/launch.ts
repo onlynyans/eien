@@ -13,12 +13,13 @@ import {
 export const ROOT = resolve(import.meta.dirname, '../..');
 
 /**
- * A test that holds the app to a time (a draw, a search, a save, typing
- * without a stall). These run apart, one at a time, after the others
- * (npm run test:e2e, and CI): with other apps running beside them on the
- * same machine, they'd measure the machine's load, not Eien.
+ * A test that runs alone, one at a time, after the others (npm run test:e2e,
+ * and CI): one that holds the app to a time (a draw, a search, a save,
+ * typing without a stall), which other apps on the machine would slow; or
+ * one that drags with the pointer, which another test's window opening
+ * takes the focus from, cancelling the drag as it should.
  */
-export const TIMING = { tag: '@timing' };
+export const ALONE = { tag: '@alone' };
 
 /**
  * Environment for a launch with its own, throwaway data folder, and the

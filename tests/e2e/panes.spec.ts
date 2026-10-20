@@ -6,7 +6,7 @@
 import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
-import { boxOf, clickMenu, closeApp, expect, fakeTrash, launchApp, test } from './launch';
+import { ALONE, boxOf, clickMenu, closeApp, expect, fakeTrash, launchApp, test } from './launch';
 
 const BOOK = 'Fic/Scarf';
 test.use({
@@ -117,45 +117,46 @@ test.describe('resizing', () => {
     await expect.poll(() => sidebarWidth(page)).toBe(strip);
   });
 
-  test('an edge, dragged or stepped with ← →, resizes its pane within limits; a restart keeps it', async ({
-    app,
-    page,
-    userData,
-    vault,
-  }) => {
-    // Wide enough to show both at their widest: a runner's screen may be narrower.
-    await expect(page.locator('.note-row').first()).toBeVisible();
-    await setWindow(app, 1400, 800);
-    await expect.poll(() => listWidth(page)).toBe(await token(page, '--eien-list-w'));
-    const step = await token(page, '--eien-space-4');
-    const list = await listWidth(page);
-    await dragEdge(page, 'sidebar', 60);
-    await expect.poll(() => sidebarWidth(page)).toBe((await token(page, '--eien-sidebar-w')) + 60);
-    await dragEdge(page, 'sidebar', -1000); // past its narrowest
-    await expect.poll(() => sidebarWidth(page)).toBe(200);
-    await expect(page.locator('.pane-edge--sidebar')).toHaveAttribute('aria-valuenow', '200');
+  test(
+    'an edge, dragged or stepped with ← →, resizes its pane within limits; a restart keeps it',
+    ALONE,
+    async ({ app, page, userData, vault }) => {
+      // Wide enough to show both at their widest: a runner's screen may be narrower.
+      await expect(page.locator('.note-row').first()).toBeVisible();
+      await setWindow(app, 1400, 800);
+      await expect.poll(() => listWidth(page)).toBe(await token(page, '--eien-list-w'));
+      const step = await token(page, '--eien-space-4');
+      const list = await listWidth(page);
+      await dragEdge(page, 'sidebar', 60);
+      await expect
+        .poll(() => sidebarWidth(page))
+        .toBe((await token(page, '--eien-sidebar-w')) + 60);
+      await dragEdge(page, 'sidebar', -1000); // past its narrowest
+      await expect.poll(() => sidebarWidth(page)).toBe(200);
+      await expect(page.locator('.pane-edge--sidebar')).toHaveAttribute('aria-valuenow', '200');
 
-    const edge = page.locator('.pane-edge--list');
-    await edge.focus();
-    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowLeft');
-    await expect.poll(() => listWidth(page)).toBe(list + 2 * step);
-    await expect(edge).toHaveAttribute('aria-valuenow', String(list + 2 * step));
-    for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowRight'); // past its widest
-    await expect(edge).toHaveAttribute('aria-valuenow', '480');
+      const edge = page.locator('.pane-edge--list');
+      await edge.focus();
+      for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+      await page.keyboard.press('ArrowLeft');
+      await expect.poll(() => listWidth(page)).toBe(list + 2 * step);
+      await expect(edge).toHaveAttribute('aria-valuenow', String(list + 2 * step));
+      for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowRight'); // past its widest
+      await expect(edge).toHaveAttribute('aria-valuenow', '480');
 
-    await closeApp(app);
-    const again = await launchApp(userData, vault);
-    try {
-      const page2 = await again.firstWindow();
-      await expect(page2.locator('.note-row').first()).toBeVisible();
-      await setWindow(again, 1400, 800);
-      await expect.poll(() => sidebarWidth(page2)).toBe(200);
-      await expect.poll(() => listWidth(page2)).toBe(480);
-    } finally {
-      await closeApp(again);
-    }
-  });
+      await closeApp(app);
+      const again = await launchApp(userData, vault);
+      try {
+        const page2 = await again.firstWindow();
+        await expect(page2.locator('.note-row').first()).toBeVisible();
+        await setWindow(again, 1400, 800);
+        await expect.poll(() => sidebarWidth(page2)).toBe(200);
+        await expect.poll(() => listWidth(page2)).toBe(480);
+      } finally {
+        await closeApp(again);
+      }
+    },
+  );
 
   test('a narrow window gives the list, then the sidebar, way; a wide one gives them back', async ({
     app,
@@ -369,54 +370,54 @@ test.describe('two panes', () => {
     await expect(page.locator('.sidebar__label')).toHaveText(['Library', 'Folders', 'Tags']);
   });
 
-  test('the tree’s notes have the list’s menu, keys and drags; news shows at the sidebar’s foot', async ({
-    app,
-    page,
-    vault,
-  }) => {
-    const trash = await fakeTrash(app);
-    try {
-      await expect(page.locator('.note-row').first()).toBeVisible();
-      await twoPanes(page);
-      await treeNote(page, 'Ideas').click({ button: 'right' });
-      await page.getByRole('menuitem', { name: 'Pin' }).click();
-      await expect(folder(page, 'Pinned')).toBeVisible();
-      await expect.poll(() => read(vault, '.eien/pinned.json')).toContain('Ideas.md');
+  test(
+    'the tree’s notes have the list’s menu, keys and drags; news shows at the sidebar’s foot',
+    ALONE,
+    async ({ app, page, vault }) => {
+      const trash = await fakeTrash(app);
+      try {
+        await expect(page.locator('.note-row').first()).toBeVisible();
+        await twoPanes(page);
+        await treeNote(page, 'Ideas').click({ button: 'right' });
+        await page.getByRole('menuitem', { name: 'Pin' }).click();
+        await expect(folder(page, 'Pinned')).toBeVisible();
+        await expect.poll(() => read(vault, '.eien/pinned.json')).toContain('Ideas.md');
 
-      await folder(page, 'Fic').click();
-      await folder(page, 'Scarf').click();
-      await treeNote(page, 'Seventeen').focus();
-      await page.keyboard.press('F2');
-      await expect(page.locator('.title__field')).toBeFocused();
-      await page.keyboard.type('Eighteen');
-      await page.keyboard.press('Enter');
-      await expect(page.locator('.tree-row__ord')).toHaveText(['i', 'ii', 'iii']);
-      await expect(treeNotes(page)).toHaveText(['The Tear', 'Needle', 'Eighteen', 'Ideas']);
+        await folder(page, 'Fic').click();
+        await folder(page, 'Scarf').click();
+        await treeNote(page, 'Seventeen').focus();
+        await page.keyboard.press('F2');
+        await expect(page.locator('.title__field')).toBeFocused();
+        await page.keyboard.type('Eighteen');
+        await page.keyboard.press('Enter');
+        await expect(page.locator('.tree-row__ord')).toHaveText(['i', 'ii', 'iii']);
+        await expect(treeNotes(page)).toHaveText(['The Tear', 'Needle', 'Eighteen', 'Ideas']);
 
-      // Alt+↓ on a chapter in the tree moves it down the book's order.
-      await treeNote(page, 'The Tear').focus();
-      await page.keyboard.press('Alt+ArrowDown');
-      await expect(treeNotes(page)).toHaveText(['Needle', 'The Tear', 'Eighteen', 'Ideas']);
+        // Alt+↓ on a chapter in the tree moves it down the book's order.
+        await treeNote(page, 'The Tear').focus();
+        await page.keyboard.press('Alt+ArrowDown');
+        await expect(treeNotes(page)).toHaveText(['Needle', 'The Tear', 'Eighteen', 'Ideas']);
 
-      // Dragged onto a folder, a note moves into it.
-      const from = await boxOf(treeNote(page, 'Ideas'));
-      const to = await boxOf(folder(page, 'Research'));
-      await page.mouse.move(from.x + 30, from.y + from.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(from.x + 30, from.y + from.height / 2 + 12, { steps: 3 });
-      await page.mouse.move(to.x + 30, to.y + to.height / 2, { steps: 6 });
-      await page.mouse.up();
-      await expect.poll(() => existsSync(join(vault ?? '', 'Research', 'Ideas.md'))).toBe(true);
+        // Dragged onto a folder, a note moves into it.
+        const from = await boxOf(treeNote(page, 'Ideas'));
+        const to = await boxOf(folder(page, 'Research'));
+        await page.mouse.move(from.x + 30, from.y + from.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(from.x + 30, from.y + from.height / 2 + 12, { steps: 3 });
+        await page.mouse.move(to.x + 30, to.y + to.height / 2, { steps: 6 });
+        await page.mouse.up();
+        await expect.poll(() => existsSync(join(vault ?? '', 'Research', 'Ideas.md'))).toBe(true);
 
-      await folder(page, 'Research').click();
-      await treeNote(page, 'Wool').focus();
-      await page.keyboard.press(
-        process.platform === 'darwin' ? 'Meta+Backspace' : 'Control+Delete',
-      );
-      await expect(page.locator('.sidebar__notice')).toContainText('“Wool” is in the');
-      await expect.poll(() => readdirSync(trash)).toEqual(['Wool.md']);
-    } finally {
-      rmSync(trash, { recursive: true, force: true });
-    }
-  });
+        await folder(page, 'Research').click();
+        await treeNote(page, 'Wool').focus();
+        await page.keyboard.press(
+          process.platform === 'darwin' ? 'Meta+Backspace' : 'Control+Delete',
+        );
+        await expect(page.locator('.sidebar__notice')).toContainText('“Wool” is in the');
+        await expect.poll(() => readdirSync(trash)).toEqual(['Wool.md']);
+      } finally {
+        rmSync(trash, { recursive: true, force: true });
+      }
+    },
+  );
 });

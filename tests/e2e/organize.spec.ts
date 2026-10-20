@@ -5,7 +5,7 @@
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { closeApp, editorContent, expect, fakeTrash, launchApp, test } from './launch';
+import { ALONE, closeApp, editorContent, expect, fakeTrash, launchApp, test } from './launch';
 
 const BOOK = 'Fic/Scarf';
 test.use({
@@ -152,65 +152,83 @@ test.describe('renaming', () => {
 });
 
 test.describe('moving and ordering', () => {
-  test('dragging a note onto a folder moves it, and the open note carries on there', async ({
-    page,
-    vault,
-  }) => {
-    await row(page, 'Ideas').click();
-    await drag(page, 'Ideas', folder(page, 'Research'));
-    await expect.poll(() => existsSync(at(vault, 'Research/Ideas.md'))).toBe(true);
-    expect(existsSync(at(vault, 'Ideas.md'))).toBe(false);
-    await expect(page.locator('.crumbs')).toHaveText('Research');
-    await editorContent(page).click();
-    await page.keyboard.press('ControlOrMeta+End');
-    await page.keyboard.type(' And wind.');
-    await expect
-      .poll(() => read(vault, 'Research/Ideas.md'), { timeout: 5000 })
-      .toContain('And wind.');
-    expect(existsSync(at(vault, 'Ideas.md'))).toBe(false);
-  });
+  test(
+    'dragging a note onto a folder moves it, and the open note carries on there',
+    ALONE,
+    async ({ page, vault }) => {
+      await row(page, 'Ideas').click();
+      await drag(page, 'Ideas', folder(page, 'Research'));
+      await expect.poll(() => existsSync(at(vault, 'Research/Ideas.md'))).toBe(true);
+      expect(existsSync(at(vault, 'Ideas.md'))).toBe(false);
+      await expect(page.locator('.crumbs')).toHaveText('Research');
+      await editorContent(page).click();
+      await page.keyboard.press('ControlOrMeta+End');
+      await page.keyboard.type(' And wind.');
+      await expect
+        .poll(() => read(vault, 'Research/Ideas.md'), { timeout: 5000 })
+        .toContain('And wind.');
+      expect(existsSync(at(vault, 'Ideas.md'))).toBe(false);
+    },
+  );
 
-  test('a note dropped where its name is taken keeps both, numbered', async ({ page, vault }) => {
-    writeFileSync(at(vault, 'Research/Ideas.md'), 'Already here.\n');
-    await folder(page, 'Research').click();
-    await expect(row(page, 'Ideas')).toBeVisible();
-    await page.locator('.tree-row__label', { hasText: /^All Notes$/ }).click();
-    await expect(page.locator('.note-row__title', { hasText: /^Ideas$/ })).toHaveCount(2);
-    // The one at the top of the vault, by its words.
-    const top = page.locator('.note-row', { hasText: 'Snow on the walls.' });
-    const from = await top.boundingBox();
-    const to = await folder(page, 'Research').boundingBox();
-    if (!from || !to) throw new Error('nothing to drag');
-    await page.mouse.move(from.x + 30, from.y + 10);
-    await page.mouse.down();
-    await page.mouse.move(to.x + 30, to.y + 10, { steps: 6 });
-    await page.mouse.up();
-    await expect.poll(() => existsSync(at(vault, 'Research/Ideas 2.md'))).toBe(true);
-    expect(read(vault, 'Research/Ideas 2.md')).toBe('Snow on the walls.\n');
-    expect(read(vault, 'Research/Ideas.md')).toBe('Already here.\n');
-    expect(existsSync(at(vault, 'Ideas.md'))).toBe(false);
-  });
+  test(
+    'a note dropped where its name is taken keeps both, numbered',
+    ALONE,
+    async ({ page, vault }) => {
+      writeFileSync(at(vault, 'Research/Ideas.md'), 'Already here.\n');
+      await folder(page, 'Research').click();
+      await expect(row(page, 'Ideas')).toBeVisible();
+      await page.locator('.tree-row__label', { hasText: /^All Notes$/ }).click();
+      await expect(page.locator('.note-row__title', { hasText: /^Ideas$/ })).toHaveCount(2);
+      // The one at the top of the vault, by its words.
+      const top = page.locator('.note-row', { hasText: 'Snow on the walls.' });
+      const from = await top.boundingBox();
+      const to = await folder(page, 'Research').boundingBox();
+      if (!from || !to) throw new Error('nothing to drag');
+      await page.mouse.move(from.x + 30, from.y + 10);
+      await page.mouse.down();
+      await page.mouse.move(to.x + 30, to.y + 10, { steps: 6 });
+      await page.mouse.up();
+      await expect.poll(() => existsSync(at(vault, 'Research/Ideas 2.md'))).toBe(true);
+      expect(read(vault, 'Research/Ideas 2.md')).toBe('Snow on the walls.\n');
+      expect(read(vault, 'Research/Ideas.md')).toBe('Already here.\n');
+      expect(existsSync(at(vault, 'Ideas.md'))).toBe(false);
+    },
+  );
 
-  test('dragging between a book’s chapters puts them in order; Alt+↓ and the menu too', async ({
-    page,
-    vault,
-  }) => {
-    await openBook(page);
-    await drag(page, 'Seventeen', row(page, 'The Tear'), 'top');
-    await expect(page.locator('.note-row__title')).toHaveText(['Seventeen', 'The Tear', 'Needle']);
-    await expect.poll(() => order(vault)).toEqual(['Seventeen.md', 'The Tear.md', 'Needle.md']);
+  test(
+    'dragging between a book’s chapters puts them in order; Alt+↓ and the menu too',
+    ALONE,
+    async ({ page, vault }) => {
+      await openBook(page);
+      await drag(page, 'Seventeen', row(page, 'The Tear'), 'top');
+      await expect(page.locator('.note-row__title')).toHaveText([
+        'Seventeen',
+        'The Tear',
+        'Needle',
+      ]);
+      await expect.poll(() => order(vault)).toEqual(['Seventeen.md', 'The Tear.md', 'Needle.md']);
 
-    await row(page, 'Seventeen').focus();
-    await page.keyboard.press('Alt+ArrowDown');
-    await expect(page.locator('.note-row__title')).toHaveText(['The Tear', 'Seventeen', 'Needle']);
+      await row(page, 'Seventeen').focus();
+      await page.keyboard.press('Alt+ArrowDown');
+      await expect(page.locator('.note-row__title')).toHaveText([
+        'The Tear',
+        'Seventeen',
+        'Needle',
+      ]);
 
-    await row(page, 'Needle').click({ button: 'right' });
-    await menuItem(page, 'Move up').click();
-    await expect(page.locator('.note-row__title')).toHaveText(['The Tear', 'Needle', 'Seventeen']);
-    await expect.poll(() => order(vault)).toEqual(['The Tear.md', 'Needle.md', 'Seventeen.md']);
-  });
+      await row(page, 'Needle').click({ button: 'right' });
+      await menuItem(page, 'Move up').click();
+      await expect(page.locator('.note-row__title')).toHaveText([
+        'The Tear',
+        'Needle',
+        'Seventeen',
+      ]);
+      await expect.poll(() => order(vault)).toEqual(['The Tear.md', 'Needle.md', 'Seventeen.md']);
+    },
+  );
 
-  test('Esc during a drag puts the note back', async ({ page, vault }) => {
+  test('Esc during a drag puts the note back', ALONE, async ({ page, vault }) => {
     await openBook(page);
     const from = await row(page, 'Seventeen').boundingBox();
     const to = await folder(page, 'Research').boundingBox();

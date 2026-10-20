@@ -58,9 +58,10 @@ npm run test:mutation  # Stryker: the edits to core and platform no test catches
 CI (`.github/workflows/ci.yml`) runs lint, types and unit tests on Linux, and
 the end-to-end tests on macOS, Windows and Linux, on every push to `main` and
 every pull request. An end-to-end test that holds the app to a time (a draw,
-a search, typing without a stall) is tagged `TIMING` (`@timing`, from
-`tests/e2e/launch.ts`): those run after the rest, one at a time, so they
-measure Eien and not the tests running beside them.
+a search, typing without a stall), or drags with the pointer, is tagged
+`ALONE` (`@alone`, from `tests/e2e/launch.ts`): those run after the rest, one
+at a time, so they measure Eien and not the tests running beside them, and no
+other test's window takes the focus mid-drag.
 
 `.github/workflows/weekly.yml` runs mutation testing (report and score in the
 run) and the property tests with a new seed, every Monday and by hand. It never

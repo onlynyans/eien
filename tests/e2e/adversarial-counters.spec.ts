@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { clickMenu, closeApp, editorContent, expect, launchApp, test } from './launch';
+import { ALONE, clickMenu, closeApp, editorContent, expect, launchApp, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -92,7 +92,7 @@ test('words typed just before quitting are in today’s tally after the restart'
   }
 });
 
-test('opening, switching, renaming and moving notes is no one writing', async ({ page }) => {
+test('opening, switching, renaming and moving notes is no one writing', ALONE, async ({ page }) => {
   await open(page, 'Loose');
   await open(page, 'Other');
   // Typed, then another note opened inside the count's pause: counted, for the note typed in.
