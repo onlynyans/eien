@@ -6,8 +6,10 @@
     <title>Eien — desktop</title>
     <link rel="stylesheet" href="fonts.css" />
     <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="themes/otaku.css" />
     <link rel="stylesheet" href="base.css" />
     <link rel="stylesheet" href="desktop.css" />
+    <script src="palette.js"></script>
     <script src="desktop.js" defer></script>
   </head>
   <body>
@@ -19,6 +21,11 @@
         <button class="word-button" type="button" data-mock="theme" data-value="system">System</button>
         <button class="word-button" type="button" data-mock="theme" data-value="light">Day</button>
         <button class="word-button" type="button" data-mock="theme" data-value="dark">Night</button>
+      </div>
+      <div class="mockbar__group" role="group" aria-label="Palette">
+        <span class="mockbar__label">Palette</span>
+        <button class="word-button" type="button" data-palette-choice="washi">Washi</button>
+        <button class="word-button" type="button" data-palette-choice="otaku">Otaku</button>
       </div>
       <div class="mockbar__group" role="group" aria-label="Panes">
         <span class="mockbar__label">Panes</span>

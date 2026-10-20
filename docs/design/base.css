@@ -7,9 +7,10 @@
   box-sizing: border-box;
 }
 
+/* The ground is the blotter; each pane lays its own surface on it. */
 body {
   margin: 0;
-  background: var(--eien-desk);
+  background: var(--eien-blotter);
   color: var(--eien-ink);
   font-family: var(--eien-face-book);
   font-size: var(--eien-size-row);
@@ -103,7 +104,7 @@ body {
   cursor: default;
 }
 
-/* An inset field: pressed into the desk. */
+/* A field: a slip of paper let into the band or the desk, edged by a hairline. */
 .field {
   appearance: none;
   width: 100%;
