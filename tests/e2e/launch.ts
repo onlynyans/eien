@@ -153,6 +153,9 @@ type Fixtures = {
   page: Page;
 };
 
+/** Windows holds a closed app's files a moment longer: removing them tries again (EBUSY, EPERM). */
+const WINDOWS_LETS_GO = { maxRetries: 10, retryDelay: 200 };
+
 /** Each test gets a fresh app with a fresh data folder, closed afterwards. */
 export const test = base.extend<Fixtures>({
   vaultFiles: [null, { option: true }],
@@ -161,13 +164,13 @@ export const test = base.extend<Fixtures>({
     if (!vaultFiles) return use(null);
     const root = makeVault(vaultFiles);
     await use(root);
-    rmSync(root, { recursive: true, force: true });
+    rmSync(root, { recursive: true, force: true, ...WINDOWS_LETS_GO });
   },
   userData: async ({ deviceFile }, use) => {
     const dir = mkdtempSync(join(tmpdir(), 'eien-e2e-'));
     if (deviceFile) writeFileSync(join(dir, 'settings.json'), JSON.stringify(deviceFile));
     await use(dir);
-    rmSync(dir, { recursive: true, force: true });
+    rmSync(dir, { recursive: true, force: true, ...WINDOWS_LETS_GO });
   },
   app: async ({ userData, vault }, use) => {
     const app = await launchApp(userData, vault);

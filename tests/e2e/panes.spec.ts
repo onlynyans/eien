@@ -111,7 +111,10 @@ test.describe('resizing', () => {
     userData,
     vault,
   }) => {
+    // Wide enough to show both at their widest: a runner's screen may be narrower.
+    await setWindow(app, 1400, 900);
     await expect(page.locator('.note-row').first()).toBeVisible();
+    await expect.poll(() => listWidth(page)).toBe(await token(page, '--eien-list-w'));
     const step = await token(page, '--eien-space-4');
     const list = await listWidth(page);
     await dragEdge(page, 'sidebar', 60);
@@ -133,6 +136,7 @@ test.describe('resizing', () => {
     const again = await launchApp(userData, vault);
     try {
       const page2 = await again.firstWindow();
+      await setWindow(again, 1400, 900);
       await expect(page2.locator('.note-row').first()).toBeVisible();
       await expect.poll(() => sidebarWidth(page2)).toBe(200);
       await expect.poll(() => listWidth(page2)).toBe(480);

@@ -93,7 +93,14 @@ describe('dragged', () => {
     // 480 remembered, 292 shown: a step wider changes nothing on screen, and forgets nothing.
     expect(dragged(panes, 'list', 292, STEP).list).toBe(480);
     expect(dragged(panes, 'list', 292, 300).list).toBe(480);
-    expect(dragged({ ...DEFAULT_PANES, sidebar: 300 }, 'sidebar', 200, 150).sidebar).toBe(350);
+    expect(dragged({ ...DEFAULT_PANES, sidebar: 300 }, 'sidebar', 200, 100).sidebar).toBe(400);
+  });
+
+  it('adds every step wider to what’s remembered, though the window shows none of them', () => {
+    let panes: Panes = { ...DEFAULT_PANES, list: 300 };
+    // 276 shown: each step widens what's remembered, for a wider window to show.
+    for (let i = 0; i < 5; i++) panes = dragged(panes, 'list', 276, STEP);
+    expect(panes.list).toBe(300 + 5 * STEP);
   });
 
   it('narrows from what the writer sees, so the edge follows the pointer', () => {

@@ -77,13 +77,13 @@ export function resized(panes: Panes, edge: Edge, width: number): Panes {
 /**
  * `panes` with `edge` dragged (or stepped) `by` pixels from where it was:
  * `shown` wide on screen, which a narrow window may make less than what's
- * remembered. Narrower sets what the writer sees; wider never leaves the
- * remembered width narrower than it was, so widening the window still gives
- * it back.
+ * remembered. Narrower starts from what the writer sees, so the edge follows
+ * the pointer; wider adds to what's remembered, so it's never left narrower
+ * than it was, and a wider window shows the pane as wide as it was asked to be.
  */
 export function dragged(panes: Panes, edge: Edge, shown: number, by: number): Panes {
   if (!Number.isFinite(by) || !Number.isFinite(shown)) return panes;
-  return resized(panes, edge, by < 0 ? shown + by : Math.max(panes[edge], shown + by));
+  return resized(panes, edge, by < 0 ? shown + by : Math.max(panes[edge], shown) + by);
 }
 
 /** The sidebar's own edge in this layout. */
