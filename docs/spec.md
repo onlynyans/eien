@@ -518,7 +518,7 @@ Each phase ends with something you can try, and its tests in CI.
 | 2 | Scaffold and CI | The app opens an empty window on all three desktops; CI runs lint, types, unit and e2e. GitHub setup walkthrough |
 | 3 | Vault and saving | Open a folder; tree, list and page; autosave; external changes and conflicts |
 | 4 | Editor | Live, Source and Reading views; all Markdown in §4; formatting keys, the Format menu and the selection bar |
-| 5 | Design system | Tokens from `docs/design`; palettes and schemes; the six text faces; text size, density, page frame and zoom; the settings screen |
+| 5 | Design system | Tokens from `docs/design`; palettes and schemes; the eight text faces; text size, density, page frame and zoom; the settings screen |
 | 6 | Organizing | Tags, nesting, search, drag-and-drop order, books |
 | 7 | Versions | Checkpoints, the compare button, named versions |
 | 8 | AO3 and typography | Copy for AO3, paste from HTML, quote setting |

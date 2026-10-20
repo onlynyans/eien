@@ -125,13 +125,13 @@
 }
 
 /* ── The text face: the writer's choice ─────────────────────────────────
-   <html data-face="newsreader" | "literata" | "plex-sans" | "archivo" |
-   "source-sans" | "atkinson">; no
+   <html data-face="newsreader" | "literata" | "plex-sans" | "source-sans" |
+   "atkinson" | "schibsted" | "hanken" | "instrument">; no
    attribute is Newsreader. The same attribute on any element sets that face
    inside it alone (the specimen shows them side by side this way).
 
-   Faces of one size don't look one size: Newsreader's x-height runs small, Plex
-   Sans's and Archivo's large, and Archivo is narrow. So each face brings its own
+   Faces of one size don't look one size: Newsreader's x-height runs small and the
+   sans-serifs' large. So each face brings its own
    sizes and leading, tuned by eye until a page reads at the same apparent size,
    and its own measure, so a line holds about the same number of characters
    (about 75, measured) in each. Only the text voice changes; the mono never does. */
@@ -168,17 +168,6 @@
   --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten));
   --eien-measure: 32em;
 }
-:root[data-face='archivo'],
-[data-face='archivo'] {
-  --eien-face-text: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
-  --eien-size-prose: 18px;
-  --eien-size-title: 30px;
-  --eien-size-heading: 20px;
-  --eien-size-row: 14.5px;
-  --eien-size-preview: 13px;
-  --eien-leading-prose: calc(1.75 - var(--eien-leading-tighten));
-  --eien-measure: 31em;
-}
 :root[data-face='source-sans'],
 [data-face='source-sans'] {
   --eien-face-text: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
@@ -200,6 +189,39 @@
   --eien-size-preview: 12.5px;
   --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten));
   --eien-measure: 32em;
+}
+:root[data-face='schibsted'],
+[data-face='schibsted'] {
+  --eien-face-text: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif;
+  --eien-size-prose: 18px;
+  --eien-size-title: 31px;
+  --eien-size-heading: 21px;
+  --eien-size-row: 15px;
+  --eien-size-preview: 13px;
+  --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten));
+  --eien-measure: 33em;
+}
+:root[data-face='hanken'],
+[data-face='hanken'] {
+  --eien-face-text: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+  --eien-size-prose: 19px;
+  --eien-size-title: 31px;
+  --eien-size-heading: 21px;
+  --eien-size-row: 15px;
+  --eien-size-preview: 13px;
+  --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten));
+  --eien-measure: 32em;
+}
+:root[data-face='instrument'],
+[data-face='instrument'] {
+  --eien-face-text: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+  --eien-size-prose: 18.5px;
+  --eien-size-title: 30px;
+  --eien-size-heading: 20px;
+  --eien-size-row: 14.5px;
+  --eien-size-preview: 12.5px;
+  --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten));
+  --eien-measure: 31em;
 }
 
 /* ── Density: how much air around the writing ──────────────────────────

@@ -65,9 +65,11 @@
     newsreader: 'Newsreader',
     literata: 'Literata',
     'plex-sans': 'IBM Plex Sans',
-    archivo: 'Archivo',
     'source-sans': 'Source Sans 3',
     atkinson: 'Atkinson Hyperlegible Next',
+    schibsted: 'Schibsted Grotesk',
+    hanken: 'Hanken Grotesk',
+    instrument: 'Instrument Sans',
   };
   window.eienFaceName = (face) => FACES[face] ?? FACES.newsreader;
 

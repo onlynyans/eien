@@ -11,7 +11,7 @@ mockups here are how to see it; `tokens.css` is the source of every value.
 | [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night. Its colours are the Washi palette |
 | [themes/otaku.css](themes/otaku.css) | The Otaku palette: Otaku's colours on Eien's colour tokens, day and night |
 | [choices.js](choices.js) | The mockups' settings — FACE, PALETTE (Washi · Otaku), DENSITY (Comfortable · Compact), PAGE (Sheet · Full) and CHAPTERS (i ii iii · 1 2 3): sets `data-face`, `data-palette`, `data-density`, `data-frame` and `data-numerals` before the page draws and keeps each choice |
-| [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Archivo, Source Sans 3, Atkinson Hyperlegible Next and IBM Plex Mono, bundled (SIL Open Font License) |
+| [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Source Sans 3, Atkinson Hyperlegible Next, Schibsted Grotesk, Hanken Grotesk, Instrument Sans and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
 | [references.md](references.md) | The reference screenshots, what reads well in each, and the surface values that came of it |
 
@@ -84,7 +84,7 @@ Words: a checkpoint is a **seal**; a named version is a **named seal**.
 
 | Voice | Face | For |
 |---|---|---|
-| Text | Newsreader (the default), Literata, IBM Plex Sans, Archivo, Source Sans 3 or Atkinson Hyperlegible Next: the writer's choice | Anything a person wrote: note text, titles, folder and note names, previews |
+| Text | Newsreader (the default) or Literata; or the sans-serifs IBM Plex Sans, Source Sans 3, Atkinson Hyperlegible Next, Schibsted Grotesk, Hanken Grotesk or Instrument Sans: the writer's choice | Anything a person wrote: note text, titles, folder and note names, previews |
 | Machine | IBM Plex Mono, always | Anything the machine counts or you press: counts, dates, labels (in capitals), buttons, the status line, the Source view |
 
 The test: *could a person have written it?* The text face. *Did the machine
@@ -94,16 +94,18 @@ count it, or do you press it?* The mono.
   it, whichever it is; the machine voice is always mono and never changes
   with it.
 - The choice is `data-face` on `<html>`: `newsreader` (or no attribute),
-  `literata`, `plex-sans`, `archivo`, `source-sans`, `atkinson`. Each face
-  carries its own sizes, prose leading and measure in `tokens.css`, tuned by
-  eye so the page reads at the same size and line length in all six
-  (Newsreader's x-height is small, so it is set larger; Plex Sans's, Archivo's
-  and Atkinson's are large, so they are set smaller). Every mockup has a FACE
+  `literata`, `plex-sans`, `source-sans`, `atkinson`, `schibsted`, `hanken`,
+  `instrument`. Each face carries its own sizes, prose leading and measure in
+  `tokens.css`, tuned by eye so the page reads at the same size and line length
+  in all eight (Newsreader's x-height is small, so it is set larger; the
+  sans-serifs' are large, so they are set smaller). Every mockup has a FACE
   control; `choices.js` keeps it, with the faces' names in one list.
 - The sans-serifs, and why each: IBM Plex Sans (engineered, the mono's own
-  family), Archivo (narrow grotesque), Source Sans 3 (warm and open, made to sit
-  beside a book face; the widest language coverage), Atkinson Hyperlegible Next
-  (letters that can't be mistaken for each other, for tired eyes).
+  family), Source Sans 3 (warm and open, made to sit beside a book face; the
+  widest language coverage), Atkinson Hyperlegible Next (letters that can't be
+  mistaken for each other, for tired eyes), Schibsted Grotesk (a newspaper
+  sans, editorial, a partner to Newsreader), Hanken Grotesk (soft and rounded),
+  Instrument Sans (crisp and modern).
 
 ### Structure
 
