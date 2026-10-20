@@ -14,8 +14,9 @@ jobs:
   mutation:
     name: Mutation testing (core and platform)
     runs-on: ubuntu-latest
-    # The whole unit suite once per edit, about 3,000 edits: hours, not minutes.
-    timeout-minutes: 300
+    # The whole unit suite once per edit, about 3,000 edits: 77 minutes on an
+    # 8-core Mac, so some three and a half hours here. GitHub's limit is six.
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -25,8 +26,9 @@ jobs:
       - run: npm ci
 
       # Stryker edits the rules one at a time and runs the unit tests on each
-      # edit (stryker.config.mjs). The score is reported; no score fails the job.
-      - run: npm run test:mutation
+      # edit (stryker.config.mjs), on all four cores. The score is reported; no
+      # score fails the job.
+      - run: npm run test:mutation -- --concurrency 4
 
       - name: Score in the summary
         if: ${{ !cancelled() && hashFiles('reports/mutation/mutation.json') != '' }}
