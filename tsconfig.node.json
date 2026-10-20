@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024"],
+    "types": ["node"],
+    "tsBuildInfoFile": "node_modules/.cache/tsc/node.tsbuildinfo"
+  },
+  "include": [
+    "src/app/electron",
+    "src/platform/bridge.ts",
+    "tests/*.ts",
+    "electron.vite.config.ts",
+    "vitest.config.ts"
+  ]
+}

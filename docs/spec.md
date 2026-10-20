@@ -210,8 +210,10 @@ src/
   app/         Entry points: Electron main and preload, Capacitor shell.
 ```
 
-Dependencies point one way: `app → ui → core`, and `ui → platform → core`.
-`core` imports nothing outside itself. A lint rule enforces this.
+Imports point inward: `ui` and `app` may use `platform` and `core`; `platform`
+may use `core`; `core` uses nothing outside itself. `app` never imports `ui`
+code: it loads the built page. Only `app` and the platform implementations may
+import Node or Electron. `tests/layers.test.ts` enforces this.
 
 ### Modules
 
