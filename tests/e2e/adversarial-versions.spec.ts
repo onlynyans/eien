@@ -14,11 +14,11 @@ import {
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
 import {
+  ALONE,
   clickMenu,
   editorContent,
   expect,
   fakeTrash,
-  TIMING,
   test,
   type VaultFiles,
 } from './launch';
@@ -439,7 +439,7 @@ test.describe('many seals', () => {
 
   test(
     'hardening: a thousand seals are listed and counted, and ⌘S still seals, in good time',
-    TIMING,
+    ALONE,
     async ({ app, page, vault }) => {
       await open(page, 'Sealed');
       await expect(sealLine(page)).toHaveText('Sealed 1m ago');

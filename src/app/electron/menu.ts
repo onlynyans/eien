@@ -136,6 +136,9 @@ export function buildMenu(send: SendCommand): Menu {
         },
         item('Stop Sprint', 'sprint:stop'),
         { type: 'separator' },
+        // A book's chapters as cards in the page's place (spec §4).
+        item('Outline Cards', 'outline', 'CmdOrCtrl+Shift+O'),
+        { type: 'separator' },
         item('Compare', 'compare', 'CmdOrCtrl+Shift+D'),
         item('Versions', 'versions'),
         { type: 'separator' },

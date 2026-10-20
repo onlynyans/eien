@@ -7,6 +7,7 @@ import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
 import {
+  ALONE,
   boxOf,
   clickMenu,
   closeApp,
@@ -14,7 +15,6 @@ import {
   expect,
   fakeTrash,
   launchApp,
-  TIMING,
   test,
   type VaultFiles,
 } from './launch';
@@ -373,118 +373,132 @@ test.describe('widths in a narrow window', () => {
     await expect.poll(() => listWidth(page)).toBe(480);
   });
 
-  test('a drag the window can’t follow (a narrow window) doesn’t forget the sidebar’s width', async ({
-    app,
-    page,
-  }) => {
-    // Same cause, with the pointer: the sidebar's edge dragged wider in a small window (where it
-    // can't widen) remembers the narrowed width plus the drag, less than it was.
-    await ready(page);
-    await setWindow(app, 1400, 800);
-    const edge = page.locator('.pane-edge--sidebar');
-    await edge.focus();
-    for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowRight');
-    await expect(edge).toHaveAttribute('aria-valuenow', '420');
-    await setWindow(app, 800, 800);
-    await expect.poll(() => sidebarWidth(page)).toBe(200); // the slide done: the edge is still
-    const box = await boxOf(edge);
-    await page.mouse.move(box.x + box.width / 2, 300);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2 + 60, 300, { steps: 4 });
-    await page.mouse.up();
-    await setWindow(app, 1400, 800);
-    await expect.poll(() => sidebarWidth(page)).toBe(420);
-  });
+  test(
+    'a drag the window can’t follow (a narrow window) doesn’t forget the sidebar’s width',
+    ALONE,
+    async ({ app, page }) => {
+      // Same cause, with the pointer: the sidebar's edge dragged wider in a small window (where it
+      // can't widen) remembers the narrowed width plus the drag, less than it was.
+      await ready(page);
+      await setWindow(app, 1400, 800);
+      const edge = page.locator('.pane-edge--sidebar');
+      await edge.focus();
+      for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowRight');
+      await expect(edge).toHaveAttribute('aria-valuenow', '420');
+      await setWindow(app, 800, 800);
+      await expect.poll(() => sidebarWidth(page)).toBe(200); // the slide done: the edge is still
+      const box = await boxOf(edge);
+      await page.mouse.move(box.x + box.width / 2, 300);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 + 60, 300, { steps: 4 });
+      await page.mouse.up();
+      await setWindow(app, 1400, 800);
+      await expect.poll(() => sidebarWidth(page)).toBe(420);
+    },
+  );
 
-  test('hardening: an edge whose button was let go outside the window stops at the next move', async ({
-    page,
-  }) => {
-    await ready(page);
-    const before = await sidebarWidth(page);
-    const box = await boxOf(page.locator('.pane-edge--sidebar'));
-    const x = box.x + box.width / 2;
-    await page.mouse.move(x, 300);
-    await page.mouse.down();
-    await page.mouse.move(x + 40, 300, { steps: 4 });
-    await expect.poll(() => sidebarWidth(page)).toBe(before + 40);
-    // The button came up over another app: the window next hears a move with no button.
-    await page.evaluate(
-      ([x]) =>
-        document.dispatchEvent(
-          new PointerEvent('pointermove', { clientX: x, clientY: 300, buttons: 0, bubbles: true }),
-        ),
-      [x + 40] as const,
-    );
-    await expect(page.locator('.shell')).not.toHaveClass(/is-resizing/);
-    await page.mouse.move(x + 140, 300, { steps: 4 });
-    await page.mouse.up();
-    await expect.poll(() => sidebarWidth(page)).toBe(before + 40);
-  });
+  test(
+    'hardening: an edge whose button was let go outside the window stops at the next move',
+    ALONE,
+    async ({ page }) => {
+      await ready(page);
+      const before = await sidebarWidth(page);
+      const box = await boxOf(page.locator('.pane-edge--sidebar'));
+      const x = box.x + box.width / 2;
+      await page.mouse.move(x, 300);
+      await page.mouse.down();
+      await page.mouse.move(x + 40, 300, { steps: 4 });
+      await expect.poll(() => sidebarWidth(page)).toBe(before + 40);
+      // The button came up over another app: the window next hears a move with no button.
+      await page.evaluate(
+        ([x]) =>
+          document.dispatchEvent(
+            new PointerEvent('pointermove', {
+              clientX: x,
+              clientY: 300,
+              buttons: 0,
+              bubbles: true,
+            }),
+          ),
+        [x + 40] as const,
+      );
+      await expect(page.locator('.shell')).not.toHaveClass(/is-resizing/);
+      await page.mouse.move(x + 140, 300, { steps: 4 });
+      await page.mouse.up();
+      await expect.poll(() => sidebarWidth(page)).toBe(before + 40);
+    },
+  );
 
-  test('hardening: the window resized mid-drag keeps the page at its narrowest', async ({
-    app,
-    page,
-  }) => {
-    await ready(page);
-    const box = await boxOf(page.locator('.pane-edge--list'));
-    const x = box.x + box.width / 2;
-    await page.mouse.move(x, 300);
-    await page.mouse.down();
-    await page.mouse.move(x + 100, 300, { steps: 4 });
-    await setWindow(app, 700, 800);
-    await page.mouse.move(x + 50, 300, { steps: 4 });
-    await page.mouse.up();
-    const page_ = await width(page.locator('.page'));
-    expect(page_).toBeGreaterThanOrEqual(700 - 200 - 260 - 1);
-    await expect.poll(() => listWidth(page)).toBe(260);
-  });
+  test(
+    'hardening: the window resized mid-drag keeps the page at its narrowest',
+    ALONE,
+    async ({ app, page }) => {
+      await ready(page);
+      const box = await boxOf(page.locator('.pane-edge--list'));
+      const x = box.x + box.width / 2;
+      await page.mouse.move(x, 300);
+      await page.mouse.down();
+      await page.mouse.move(x + 100, 300, { steps: 4 });
+      await setWindow(app, 700, 800);
+      await page.mouse.move(x + 50, 300, { steps: 4 });
+      await page.mouse.up();
+      const page_ = await width(page.locator('.page'));
+      expect(page_).toBeGreaterThanOrEqual(700 - 200 - 260 - 1);
+      await expect.poll(() => listWidth(page)).toBe(260);
+    },
+  );
 });
 
 test.describe('two panes’ tree', () => {
-  test('a note dragged in the tree follows the pointer, as it does from the list', async ({
-    page,
-  }) => {
-    // The lifted copy has the list's .is-lifted look only on .note-row: in the tree it sits,
-    // unpositioned, at the bottom of the folders, and nothing follows the pointer.
-    await ready(page);
-    await twoPanes(page);
-    const from = await boxOf(treeNote(page, 'Ideas'));
-    await page.mouse.move(from.x + 30, from.y + from.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(from.x + 30, from.y + from.height / 2 + 12, { steps: 3 });
-    await page.mouse.move(900, 500, { steps: 6 });
-    const lifted = await page.locator('.is-lifted').boundingBox();
-    await page.keyboard.press('Escape');
-    await page.mouse.up();
-    expect(lifted, 'a lifted row').not.toBeNull();
-    expect(Math.abs((lifted?.y ?? 0) + (lifted?.height ?? 0) / 2 - 500)).toBeLessThan(40);
-    expect(lifted?.x ?? 0).toBeGreaterThan(700);
-  });
-
-  test('hardening: a tree note dropped on its own folder, or the vault’s name, stays put', async ({
-    page,
-    vault,
-  }) => {
-    await ready(page);
-    await twoPanes(page);
-    const drag = async (source: Locator, target: Locator) => {
-      const from = await boxOf(source);
-      const to = await boxOf(target);
+  test(
+    'a note dragged in the tree follows the pointer, as it does from the list',
+    ALONE,
+    async ({ page }) => {
+      // The lifted copy has the list's .is-lifted look only on .note-row: in the tree it sits,
+      // unpositioned, at the bottom of the folders, and nothing follows the pointer.
+      await ready(page);
+      await twoPanes(page);
+      const from = await boxOf(treeNote(page, 'Ideas'));
       await page.mouse.move(from.x + 30, from.y + from.height / 2);
       await page.mouse.down();
       await page.mouse.move(from.x + 30, from.y + from.height / 2 + 12, { steps: 3 });
-      await page.mouse.move(to.x + 20, to.y + to.height / 2, { steps: 6 });
+      await page.mouse.move(900, 500, { steps: 6 });
+      const lifted = await page.locator('.is-lifted').boundingBox();
+      await page.keyboard.press('Escape');
       await page.mouse.up();
-    };
-    await drag(treeNote(page, 'Ideas'), page.locator('.sidebar__vault'));
-    await folder(page, 'Research').click();
-    await drag(treeNote(page, 'Wool'), folder(page, 'Research'));
-    await page.waitForTimeout(300); // nothing to wait for: nothing should happen
-    expect(readdirSync(at(vault, 'Research'))).toEqual(['Wool.md']);
-    expect(readdirSync(at(vault, '')).filter((name) => name.endsWith('.md'))).toEqual(['Ideas.md']);
-    await expect(page.locator('.sidebar__notice')).toBeHidden();
-    await expect(treeNotes(page)).toHaveText(['Wool', 'Ideas']);
-  });
+      expect(lifted, 'a lifted row').not.toBeNull();
+      expect(Math.abs((lifted?.y ?? 0) + (lifted?.height ?? 0) / 2 - 500)).toBeLessThan(40);
+      expect(lifted?.x ?? 0).toBeGreaterThan(700);
+    },
+  );
+
+  test(
+    'hardening: a tree note dropped on its own folder, or the vault’s name, stays put',
+    ALONE,
+    async ({ page, vault }) => {
+      await ready(page);
+      await twoPanes(page);
+      const drag = async (source: Locator, target: Locator) => {
+        const from = await boxOf(source);
+        const to = await boxOf(target);
+        await page.mouse.move(from.x + 30, from.y + from.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(from.x + 30, from.y + from.height / 2 + 12, { steps: 3 });
+        await page.mouse.move(to.x + 20, to.y + to.height / 2, { steps: 6 });
+        await page.mouse.up();
+      };
+      await drag(treeNote(page, 'Ideas'), page.locator('.sidebar__vault'));
+      await folder(page, 'Research').click();
+      await drag(treeNote(page, 'Wool'), folder(page, 'Research'));
+      await page.waitForTimeout(300); // nothing to wait for: nothing should happen
+      expect(readdirSync(at(vault, 'Research'))).toEqual(['Wool.md']);
+      expect(readdirSync(at(vault, '')).filter((name) => name.endsWith('.md'))).toEqual([
+        'Ideas.md',
+      ]);
+      await expect(page.locator('.sidebar__notice')).toBeHidden();
+      await expect(treeNotes(page)).toHaveText(['Wool', 'Ideas']);
+    },
+  );
 
   test('hardening: one note under its folder, a tag, Pinned and All Notes is one note everywhere', async ({
     page,
@@ -661,42 +675,45 @@ test.describe('hostile stored state', () => {
       .toMatchObject({ sidebarShut: true });
   });
 
-  test('hardening: no style attribute is refused by the security policy while the panes move', async ({
-    app,
-    page,
-  }) => {
-    await ready(page);
-    const refused: string[] = [];
-    page.on('console', (message) => {
-      if (/Content Security Policy/i.test(message.text())) refused.push(message.text());
-    });
-    await page.evaluate(() => {
-      const w = window as unknown as { refused: string[] };
-      w.refused = [];
-      document.addEventListener('securitypolicyviolation', (event) =>
-        w.refused.push(`${event.violatedDirective} ${event.sample}`),
+  test(
+    'hardening: no style attribute is refused by the security policy while the panes move',
+    ALONE,
+    async ({ app, page }) => {
+      await ready(page);
+      const refused: string[] = [];
+      page.on('console', (message) => {
+        if (/Content Security Policy/i.test(message.text())) refused.push(message.text());
+      });
+      await page.evaluate(() => {
+        const w = window as unknown as { refused: string[] };
+        w.refused = [];
+        document.addEventListener('securitypolicyviolation', (event) =>
+          w.refused.push(`${event.violatedDirective} ${event.sample}`),
+        );
+      });
+      const box = await boxOf(page.locator('.pane-edge--sidebar'));
+      await page.mouse.move(box.x + 2, 300);
+      await page.mouse.down();
+      await page.mouse.move(box.x + 50, 300, { steps: 4 });
+      await page.mouse.up();
+      await twoPanes(page);
+      await folder(page, 'Fic').click();
+      await folder(page, 'Scarf').click();
+      const from = await boxOf(treeNote(page, 'Needle'));
+      const to = await boxOf(folder(page, 'Research'));
+      await page.mouse.move(from.x + 30, from.y + from.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(to.x + 30, to.y + to.height / 2, { steps: 8 });
+      await page.keyboard.press('Escape');
+      await page.mouse.up();
+      await clickMenu(app, 'View', 'Toggle Sidebar');
+      await clickMenu(app, 'View', 'Toggle Sidebar');
+      const inPage = await page.evaluate(
+        () => (window as unknown as { refused: string[] }).refused,
       );
-    });
-    const box = await boxOf(page.locator('.pane-edge--sidebar'));
-    await page.mouse.move(box.x + 2, 300);
-    await page.mouse.down();
-    await page.mouse.move(box.x + 50, 300, { steps: 4 });
-    await page.mouse.up();
-    await twoPanes(page);
-    await folder(page, 'Fic').click();
-    await folder(page, 'Scarf').click();
-    const from = await boxOf(treeNote(page, 'Needle'));
-    const to = await boxOf(folder(page, 'Research'));
-    await page.mouse.move(from.x + 30, from.y + from.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(to.x + 30, to.y + to.height / 2, { steps: 8 });
-    await page.keyboard.press('Escape');
-    await page.mouse.up();
-    await clickMenu(app, 'View', 'Toggle Sidebar');
-    await clickMenu(app, 'View', 'Toggle Sidebar');
-    const inPage = await page.evaluate(() => (window as unknown as { refused: string[] }).refused);
-    expect([...refused, ...inPage]).toEqual([]);
-  });
+      expect([...refused, ...inPage]).toEqual([]);
+    },
+  );
 });
 
 test.describe('the Layout setting in the device file', () => {
@@ -758,7 +775,7 @@ test.describe('three thousand notes', () => {
 
   test(
     'hardening: two panes with All Notes open draws them, and typing never stalls',
-    TIMING,
+    ALONE,
     async ({ page, vault }) => {
       test.setTimeout(90_000);
       await expect(page.locator('.note-row').first()).toBeVisible({ timeout: 30_000 });

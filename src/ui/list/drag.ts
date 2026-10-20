@@ -20,12 +20,15 @@ type Drop = { readonly folder: string } | { readonly before: string | null };
 
 /**
  * Let `list`'s rows (`rows`: the note list's, or the sidebar tree's notes)
- * be dragged onto `[data-folder]` targets anywhere, or between each other.
+ * be dragged onto `[data-folder]` targets anywhere, or between each other:
+ * above or below a row, or, for cards laid out `across` (the outline's),
+ * before or after one.
  */
 export function watchDrags(
   list: HTMLElement,
   actions: DragActions,
   rows = '.note-row[data-path]',
+  across = false,
 ): void {
   /** A drag ends in a click on the row it started from; that click isn't the writer's. */
   let swallowClick = false;
@@ -56,18 +59,22 @@ export function watchDrags(
       lit = target;
       lit?.classList.add('is-drop-target');
     };
-    const mark = (y: number | null, rect?: DOMRect) => {
-      if (y === null || !rect) {
+    /** The hairline where the row will go: along `rect`'s edge at `at` (across, down its side). */
+    const mark = (at: number | null, rect?: DOMRect) => {
+      if (at === null || !rect) {
         marker?.remove();
         marker = null;
         return;
       }
       marker ??= document.body.appendChild(
-        Object.assign(document.createElement('div'), { className: 'drop-marker' }),
+        Object.assign(document.createElement('div'), {
+          className: across ? 'drop-marker drop-marker--across' : 'drop-marker',
+        }),
       );
-      marker.style.setProperty('--marker-x', `${rect.left}px`);
-      marker.style.setProperty('--marker-y', `${y}px`);
+      marker.style.setProperty('--marker-x', `${across ? at : rect.left}px`);
+      marker.style.setProperty('--marker-y', `${across ? rect.top : at}px`);
       marker.style.setProperty('--marker-w', `${rect.width}px`);
+      marker.style.setProperty('--marker-h', `${rect.height}px`);
     };
 
     const move = (event: PointerEvent) => {
@@ -89,7 +96,9 @@ export function watchDrags(
         row.classList.add('is-left');
       }
       // A redraw mid-drag (a change on disk, news fading) takes the lifted row out with the rows.
-      if (!lifted.isConnected) (list.querySelector('ul') ?? document.body).append(lifted);
+      if (!lifted.isConnected) {
+        (list.matches('ul') ? list : (list.querySelector('ul') ?? document.body)).append(lifted);
+      }
       lifted.style.setProperty('--drag-x', `${event.clientX}px`);
       lifted.style.setProperty('--drag-y', `${event.clientY}px`);
 
@@ -102,15 +111,23 @@ export function watchDrags(
         return;
       }
       light(null);
-      const over = under?.closest<HTMLElement>(rows);
+      // Across, the gap between two cards is the place between them: the nearest card says which.
+      const over =
+        under?.closest<HTMLElement>(rows) ??
+        (across && under && list.contains(under) ? nearest(list, rows, event) : null);
       if (actions.orderable() && over && list.contains(over)) {
         const rect = over.getBoundingClientRect();
-        const below = event.clientY > rect.top + rect.height / 2;
-        const next = below
+        const after = across
+          ? event.clientX > rect.left + rect.width / 2
+          : event.clientY > rect.top + rect.height / 2;
+        const next = after
           ? (over.closest('li')?.nextElementSibling?.querySelector<HTMLElement>(rows) ?? null)
           : over;
         drop = { before: next?.dataset.path ?? null };
-        mark(below ? rect.bottom : rect.top, rect);
+        // Across, the line goes halfway into the gap: "after this" and "before the next" are one place.
+        const half = across ? Number.parseFloat(getComputedStyle(list).columnGap) / 2 || 0 : 0;
+        if (across) mark(after ? rect.right + half : rect.left - half, rect);
+        else mark(after ? rect.bottom : rect.top, rect);
         return;
       }
       drop = null;
@@ -135,7 +152,10 @@ export function watchDrags(
       const target = drop;
       if (!commit || !target) return;
       if ('folder' in target) actions.moveTo(path, target.folder);
-      else if (target.before !== path) actions.placeBefore(path, target.before);
+      // Before itself, or before the one already after it: where it is. Nothing to write.
+      else if (target.before !== path && target.before !== nextOf(row, rows)) {
+        actions.placeBefore(path, target.before);
+      }
     };
     // Where it was let go counts, though its last move may have come only with the release.
     const up = (event: PointerEvent) => {
@@ -154,4 +174,31 @@ export function watchDrags(
     document.addEventListener('pointercancel', cancel);
     document.addEventListener('keydown', key, true);
   });
+}
+
+/** The path of the row after `row`, or null for the last. */
+function nextOf(row: HTMLElement, rows: string): string | null {
+  return (
+    row.closest('li')?.nextElementSibling?.querySelector<HTMLElement>(rows)?.dataset.path ?? null
+  );
+}
+
+/** The row in `list` nearest the pointer: in its line of cards, then along it. */
+function nearest(list: HTMLElement, rows: string, at: PointerEvent): HTMLElement | null {
+  let best: HTMLElement | null = null;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (const row of list.querySelectorAll<HTMLElement>(rows)) {
+    if (row.classList.contains('is-lifted')) continue;
+    const rect = row.getBoundingClientRect();
+    const dy =
+      at.clientY < rect.top ? rect.top - at.clientY : Math.max(0, at.clientY - rect.bottom);
+    const dx =
+      at.clientX < rect.left ? rect.left - at.clientX : Math.max(0, at.clientX - rect.right);
+    const score = dy * 1000 + dx;
+    if (score < bestScore) {
+      best = row;
+      bestScore = score;
+    }
+  }
+  return best;
 }

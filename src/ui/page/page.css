@@ -209,3 +209,12 @@
 .colophon {
   font-variant-numeric: tabular-nums;
 }
+
+/* Outline cards lie on the blotter in the sheet's place (ui/outline, ./board-host.ts). */
+.page__scroll[data-board] > .sheet,
+.page__scroll[data-board] > .page__empty {
+  display: none;
+}
+.page__board[hidden] {
+  display: none;
+}

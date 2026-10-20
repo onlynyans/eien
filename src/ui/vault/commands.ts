@@ -6,11 +6,10 @@
 import { SPRINT_MINUTES } from '../../core/counters';
 import { formatCommand } from '../../core/format';
 import type { MenuCommand } from '../../platform/bridge';
-import type { Counters } from '../counters/counters';
 import type { PageView } from '../page/page';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
-import type { VersionsUI } from '../versions/versions-ui';
+import type { PageParts } from './page-parts';
 
 export interface CommandContext {
   readonly page: PageView;
@@ -20,11 +19,8 @@ export interface CommandContext {
   newNote(): void;
   /** Draw the list: a shut one isn't kept drawn. */
   drawList(): Promise<void>;
-  readonly versions: VersionsUI;
-  /** Copy for AO3, and Export → AO3 HTML (./ao3-out.ts). */
-  readonly ao3: { copy(): Promise<void>; export(): Promise<void> };
-  /** Today's words, the book's, a sprint (../counters). */
-  readonly counters: Counters;
+  /** The page's seals, counters, Copy for AO3 and outline cards (./page-parts.ts). */
+  readonly parts: PageParts;
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
@@ -48,17 +44,19 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     else if (!wasShut) focusList(ctx.list);
     else void ctx.drawList().then(() => focusList(ctx.list));
   } else if (command === 'focus:page') page.focus();
-  else if (command === 'seal') void ctx.versions.seal();
-  else if (command === 'compare') void ctx.versions.cycleCompare();
-  else if (command === 'versions') ctx.versions.togglePanel();
-  else if (command === 'copy-ao3') void ctx.ao3.copy();
-  else if (command === 'export-ao3') void ctx.ao3.export();
-  else if (command === 'sprint:stop') ctx.counters.stopSprint();
+  else if (command === 'seal') void ctx.parts.versions.seal();
+  else if (command === 'compare') void ctx.parts.versions.cycleCompare();
+  else if (command === 'versions') ctx.parts.versions.togglePanel();
+  else if (command === 'copy-ao3') void ctx.parts.ao3.copy();
+  else if (command === 'export-ao3') void ctx.parts.ao3.export();
+  else if (command === 'outline') void ctx.parts.outline.toggle();
+  else if (command === 'sprint:stop') ctx.parts.counters.stopSprint();
   else if (command.startsWith('sprint:')) {
     const minutes = Number(command.slice('sprint:'.length));
     const known = SPRINT_MINUTES.find((each) => each === minutes);
-    if (known) ctx.counters.startSprint(known);
-  } else if (command.startsWith('format:')) {
+    if (known) ctx.parts.counters.startSprint(known);
+  } else if (command.startsWith('format:') && !ctx.parts.outline.open) {
+    // Formats act on the page: never on one the outline cards are hiding.
     const format = formatCommand(command.slice('format:'.length));
     if (format) page.editor.format(format);
   }

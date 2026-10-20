@@ -1,0 +1,110 @@
+/* Outline cards: a book's chapters as index cards laid on the blotter
+   (docs/design: paper with a hairline edge; no shadow but a lifted card's). */
+
+.board {
+  display: grid;
+  gap: var(--eien-space-5);
+  max-width: calc(var(--eien-measure) + var(--eien-space-8) * 4);
+  margin: 0 auto;
+}
+.board[hidden] {
+  display: none;
+}
+.board__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--eien-space-3);
+}
+.board__head .label {
+  margin: 0;
+}
+.board__count {
+  flex: 1;
+  color: var(--eien-pencil);
+}
+.board__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--eien-space-8) * 3.5), 1fr));
+  gap: var(--eien-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--eien-space-1) var(--eien-space-2);
+  width: 100%;
+  min-height: calc(var(--eien-space-8) * 2.5);
+  padding: var(--eien-space-3) var(--eien-space-4);
+  text-align: left;
+  font: inherit;
+  color: var(--eien-ink);
+  background: var(--eien-paper);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  border-left: var(--eien-mark-w) solid transparent;
+  border-radius: var(--eien-radius);
+  cursor: pointer;
+  transition: border-color var(--eien-quick) var(--eien-ease);
+}
+.card:hover {
+  border-color: var(--eien-rule-strong);
+  border-left-color: transparent;
+}
+.card:active {
+  background: var(--eien-paper-raised);
+  border-color: var(--eien-rule-strong);
+}
+.card:focus-visible {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}
+/* The chapter open on the page: the seal's rule, as a chosen row has it. */
+.card[aria-current="true"] {
+  border-left-color: var(--eien-seal);
+}
+.card__number {
+  grid-row: 1;
+  color: var(--eien-pencil);
+}
+.card__title {
+  grid-row: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-heading);
+  line-height: 1.2;
+}
+.card__summary {
+  grid-column: 1 / -1;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  color: var(--eien-ink-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card__words {
+  grid-column: 1 / -1;
+  justify-self: end;
+  color: var(--eien-pencil);
+}
+.board__empty {
+  color: var(--eien-pencil);
+}
+/* A card being dragged: lifted, following the pointer (../list/drag.ts). */
+.board__cards .card.is-lifted {
+  position: fixed;
+  background: var(--eien-paper-raised);
+  left: calc(var(--drag-x) + var(--drag-dx));
+  top: calc(var(--drag-y) + var(--drag-dy));
+  width: var(--drag-w);
+  z-index: 25;
+  box-shadow: var(--eien-shadow-float);
+  pointer-events: none;
+}
+.board__cards .is-left {
+  opacity: 0.4;
+}

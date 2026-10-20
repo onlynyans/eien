@@ -82,7 +82,8 @@ export type MenuCommand =
   | 'export-ao3'
   | `toggle:${ToggleKey}`
   | `sprint:${SprintMinutes}`
-  | 'sprint:stop';
+  | 'sprint:stop'
+  | 'outline';
 
 export interface Bridge {
   /** The operating system: 'darwin', 'win32', 'linux', … */

@@ -11,18 +11,16 @@ import { listKey, rememberSort } from '../list/sorts';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
-import { VersionsUI } from '../versions/versions-ui';
-import { ao3Out } from './ao3-out';
 import { runCommand } from './commands';
-import { counting } from './counting';
 import { onDiskChanges, touches } from './disk-changes';
 import { type MenuContext, showFolderMenu, showNoteMenu } from './menus';
 import { Navigation } from './navigation';
-import { followSettings, notePage } from './note-page';
+import { notePage } from './note-page';
 import { Notice } from './notice';
 import { oneAtATime } from './one-at-a-time';
 import { OpenNote } from './open-note';
 import { Organizer } from './organize';
+import { pageParts } from './page-parts';
 import { PaneDrawer } from './pane-drawer';
 import { type Selection, VaultState } from './vault-state';
 
@@ -149,16 +147,19 @@ export async function showVault(
   };
 
   const note = new OpenNote(bridge.vault, page, () => void refresh());
-  const versions = new VersionsUI({
+  const parts = pageParts({
     page,
     note,
-    vault: bridge.vault,
-    notesWithId: (id) => state.notesWithId(id),
+    state,
+    bridge,
+    settings,
+    nav,
+    organizer,
     mac: keys.sidebar.startsWith('⌘'),
     tell,
-    serial: (operation) => act(operation),
+    act: (operation) => act(operation),
+    openNote: (path) => openNote(path),
   });
-  const counts = counting({ page, note: () => note, state, tell });
 
   const drags = {
     moveTo: (path: string, folder: string) =>
@@ -202,8 +203,7 @@ export async function showVault(
     },
   });
   const redraw = () => {
-    versions.sync(); // another note open is seen here, whatever opened or closed it
-    void counts.sync();
+    parts.sync();
     return draw.all();
   };
 
@@ -248,12 +248,10 @@ export async function showVault(
   const stopWatching = onDiskChanges(bridge.vault, (changed) => {
     if (note.path && touches(note.path, changed)) void note.session?.diskChanged();
     if (changed.has(VAULT_CONFIG)) void settings.reload(); // changed on another device
-    void versions.diskChanged(changed); // another device sealed the open note
+    parts.diskChanged(changed); // another device sealed the open note
     void refresh();
   });
 
-  const ao3 = ao3Out({ page, note, out: bridge.out, settings, tell });
-  const stopPageSettings = followSettings(page, settings);
   const stopSettings = settings.onChange((values, before) => {
     panes.setTwo(values['layout.panes'] === 'two'); // redraws when it changes
     if (
@@ -274,9 +272,7 @@ export async function showVault(
       list,
       newNote: () => void newNote(),
       drawList: () => draw.list(),
-      versions,
-      ao3,
-      counters: counts.counters,
+      parts,
     }),
   );
   await refresh();
@@ -286,12 +282,10 @@ export async function showVault(
       await note.flush();
       stopWatching();
       stopSettings();
-      stopPageSettings();
       onMenu();
       panes.stop();
       notice.stop();
-      versions.stop();
-      counts.stop();
+      parts.stop();
       window.removeEventListener('blur', onBlur);
     },
   };

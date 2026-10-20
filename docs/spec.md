@@ -350,6 +350,17 @@ words, as on the page.
 - **Text size:** a setting that scales the text face from its tuned size
   (90%–130%), separately from zoom.
 - **Outline cards:** a book's notes as cards on a board; drag to reorder.
+  View → Outline Cards (⌘⇧O) lays out, in the page's place, the book the open
+  note is a chapter of (or, with none open there, the book chosen): index
+  cards on the blotter in the book's order, each with its number, title, first
+  lines and words, the open chapter marked. A card opens its chapter; dragging
+  one, or Alt and an arrow, puts it elsewhere in the book (the folder's order,
+  as the list's drag does; dropped on a folder in the sidebar, it moves there);
+  the arrows move between cards; Esc, or the menu again, gives the page back,
+  where the writer was in it. Opening another note, choosing a view or Compare
+  gives it back too; the Format menu does nothing to a page the cards hide.
+  The keyboard is always on a card or Close, and goes to the page with it.
+  With no book to show, one line of news says so.
 - **Spellcheck:** off until turned on, using the platform's own checker.
 
 ---
@@ -414,6 +425,8 @@ src/ui/
   theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts
   editor/       ✓ CodeMirror, the three views, the selection bar, images, typed quotes, pasted HTML, the writing tools (scene breaks, focus, typewriter)
   versions/     ✓ sealing, Compare, the versions panel, the colophon's last seal
+  outline/      ✓ outline cards: a book's chapters as cards on the blotter, reordered by drag or keys
+  counters/     ✓ the colophon's today, book and sprint
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions
