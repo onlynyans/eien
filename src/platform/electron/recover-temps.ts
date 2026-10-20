@@ -5,7 +5,8 @@
 import { readdir, readFile, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { isHiddenName, recoveredName } from '../../core/paths';
-import { type DiskStorage, TEMP_SUFFIX } from './disk-storage';
+import { isTempName, noteOfTemp, strayHoldsWords } from '../stray';
+import type { DiskStorage } from './disk-storage';
 
 /** Names of the notes recovered, vault-relative. */
 export async function recoverStrayTemps(storage: DiskStorage, now = new Date()): Promise<string[]> {
@@ -22,16 +23,16 @@ export async function recoverStrayTemps(storage: DiskStorage, now = new Date()):
         await walk(path);
         continue;
       }
-      if (!dirent.isFile() || !dirent.name.startsWith('.') || !dirent.name.endsWith(TEMP_SUFFIX))
-        continue;
+      if (!dirent.isFile() || !isTempName(dirent.name)) continue;
       const temp = join(storage.root, path);
-      const noteName = dirent.name.slice(1, -TEMP_SUFFIX.length);
+      const noteName = noteOfTemp(dirent.name);
       const note = join(storage.root, folder, noteName);
       const [tempStats, noteStats] = await Promise.all([stat(temp), stat(note).catch(() => null)]);
       const text = await readFile(temp, 'utf8').catch(() => '');
       const noteText = noteStats ? await readFile(note, 'utf8').catch(() => null) : null;
-      const newer = !noteStats || tempStats.mtimeMs > noteStats.mtimeMs;
-      if (newer && text.length > 0 && text !== noteText) {
+      const written =
+        noteStats && noteText !== null ? { text: noteText, mtime: noteStats.mtimeMs } : null;
+      if (strayHoldsWords({ text, mtime: tempStats.mtimeMs }, written)) {
         const name = recoveredName(noteName, now, names);
         const target = folder ? `${folder}/${name}` : name;
         const result = await storage.write(target, text, null);

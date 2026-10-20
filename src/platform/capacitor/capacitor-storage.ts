@@ -25,13 +25,20 @@ import {
   type Storage,
   type WriteResult,
 } from '../storage';
+import { TEMP_SUFFIX } from '../stray';
 import { type FilesPort, folderOf, nameOf } from './files';
 
 /** Where trashed files go: in the vault, hidden, a folder for each moment something was trashed. */
 export const TRASH_FOLDER = '.eien/trash';
 
-/** The end of a write's temp file's name, as the desktop's (it recovers one a crash leaves). */
-const TEMP_SUFFIX = '.eien.tmp';
+/**
+ * The ends of the hidden names a file or folder takes between the two steps
+ * of a case-only rename, and while what holds the trash steps aside:
+ * ".<name>.eien-case", ".<name>.eien-trashing". A crash between the steps
+ * leaves one; the vault puts it back when it opens (./recover.ts).
+ */
+export const STEP_SUFFIXES = ['.eien-case', '.eien-trashing'] as const;
+const [CASE_STEP, TRASH_STEP] = STEP_SUFFIXES;
 
 export interface CapacitorStorageOptions {
   /** How often the vault is looked at for changes, in milliseconds. */
@@ -183,7 +190,7 @@ export class CapacitorStorage implements Storage {
       await this.#files.makeFolder(folderOf(target));
       if (caseOnly) {
         // Through a name of its own: a file system that ignores case sees one name for both.
-        const step = joined(folderOf(source), `.${nameOf(source)}.eien-case`);
+        const step = joined(folderOf(source), `.${nameOf(source)}${CASE_STEP}`);
         await this.#files.rename(source, step);
         await this.#files.rename(step, target);
       } else {
@@ -208,7 +215,7 @@ export class CapacitorStorage implements Storage {
     await this.#oneAtATime(nameKey(at), async () => {
       // What holds the trash (.eien, a file of that name, the trash itself) steps aside first.
       const holds = `${TRASH_FOLDER}/`.startsWith(`${at}/`);
-      const from = holds ? joined(folderOf(at), `.${nameOf(at)}.eien-trashing`) : at;
+      const from = holds ? joined(folderOf(at), `.${nameOf(at)}${TRASH_STEP}`) : at;
       if (holds) await this.#files.rename(at, from);
       try {
         const stamp = stampOf(this.#now());

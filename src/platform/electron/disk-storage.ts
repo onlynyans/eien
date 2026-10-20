@@ -35,8 +35,7 @@ import {
   type Storage,
   type WriteResult,
 } from '../storage';
-
-export const TEMP_SUFFIX = '.eien.tmp';
+import { TEMP_SUFFIX } from '../stray';
 
 /**
  * The hidden file a write goes through: ".<name>.eien.tmp" beside it. A

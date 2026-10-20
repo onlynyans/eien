@@ -142,6 +142,37 @@ describe('stampOf, conflictName, recoveredName', () => {
     );
   });
 
+  it('keeps a recovered file’s own extension, and a folder’s whole name', () => {
+    expect(recoveredName('Scarf.png', date, [])).toBe('Scarf (recovered 2026-10-09 07-05).png');
+    expect(recoveredName('Notes.MD', date, [])).toBe('Notes (recovered 2026-10-09 07-05).MD');
+    expect(recoveredName('Ch. 1', date, [], true)).toBe('Ch. 1 (recovered 2026-10-09 07-05)');
+    expect(recoveredName('Plain', date, [])).toBe('Plain (recovered 2026-10-09 07-05)');
+    // "Mr. Smith" has no extension: a space can't be in one.
+    expect(recoveredName('Mr. Smith', date, [])).toBe('Mr. Smith (recovered 2026-10-09 07-05)');
+  });
+
+  it('keeps a hidden name hidden, and free among the hidden ones', () => {
+    // A recovered ".eien-folder.json" shown as a note would put the app's JSON among the writing.
+    const stamp = '(recovered 2026-10-09 07-05)';
+    expect(recoveredName('.eien-folder.json', date, [])).toBe(`.eien-folder ${stamp}.json`);
+    expect(recoveredName('.eien', date, ['.eien'], true)).toBe(`.eien ${stamp}`);
+    expect(recoveredName('.eien', date, ['.eien', `.eien ${stamp}`], true)).toBe(
+      `.eien ${stamp} 2`,
+    );
+    // A visible "eien …" beside it isn't in the way of a hidden one, nor the other way round.
+    expect(recoveredName('.eien', date, [`eien ${stamp}`], true)).toBe(`.eien ${stamp}`);
+    expect(recoveredName('Seventeen.md', date, [`.Seventeen ${stamp}.md`])).toBe(
+      `Seventeen ${stamp}.md`,
+    );
+  });
+
+  it('never gives back a name already there, by any case', () => {
+    const taken = ['seventeen (RECOVERED 2026-10-09 07-05).md'];
+    expect(recoveredName('Seventeen.md', date, taken)).toBe(
+      'Seventeen (recovered 2026-10-09 07-05) 2.md',
+    );
+  });
+
   it('titleOf drops .md in any case, and only .md', () => {
     expect(titleOf('Note.md')).toBe('Note');
     expect(titleOf('Note.MD')).toBe('Note');
