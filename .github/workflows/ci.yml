@@ -47,6 +47,12 @@ jobs:
           cache: npm
       - run: npm ci
 
+      # Electron fetches its binary the first time it's asked for, not on
+      # install. Fetch it now: two test workers asking at once unpack it over
+      # each other, which fails on Windows.
+      - name: Electron's binary
+        run: npx install-electron
+
       # The disk storage's contract on this system's own file system: paths,
       # renames and watching differ between macOS, Windows and Linux.
       - name: Storage tests on this system
