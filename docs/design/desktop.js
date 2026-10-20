@@ -342,7 +342,6 @@ const token = (name) => parseFloat(css.getPropertyValue(name));
 
 const state = {
   theme: 'system',
-  face: 'newsreader', // the text face; read from storage at start
   panes: 3,
   sidebar: true,
   list: true,
@@ -1682,34 +1681,10 @@ function setTheme(theme) {
 }
 const effectiveTheme = () => (state.theme === 'system' ? (darkQuery.matches ? 'dark' : 'light') : state.theme);
 
-/* ═══ Text face ═════════════════════════════════════════════════════════ */
-// The writer's choice of text face (tokens.css, data-face). Kept across visits and mockups.
-const FACE_KEY = 'eien-mockup-face';
-const FACES = ['newsreader', 'literata', 'plex-sans', 'archivo'];
-function savedFace() {
-  try {
-    const face = localStorage.getItem(FACE_KEY);
-    return FACES.includes(face) ? face : 'newsreader';
-  } catch {
-    return 'newsreader';
-  }
-}
-function setFace(face) {
-  state.face = face;
-  document.documentElement.dataset.face = face;
-  try {
-    localStorage.setItem(FACE_KEY, face);
-  } catch {
-    // Private windows may refuse storage; the choice still holds for this visit.
-  }
-  syncMockbar();
-}
-
 /* ═══ Mockup bar ════════════════════════════════════════════════════════ */
 function syncMockbar() {
   const pressed = {
     theme: state.theme,
-    face: state.face,
     panes: String(state.panes),
     compare: state.compare,
   };
@@ -1726,7 +1701,6 @@ function bindMockbar() {
     b.addEventListener('click', () => {
       const { mock, value } = b.dataset;
       if (mock === 'theme') setTheme(value);
-      if (mock === 'face') setFace(value);
       if (mock === 'panes') setPanes(Number(value));
       if (mock === 'compare') {
         if (!current().versions.length) openNote('seventeen');
@@ -1806,8 +1780,6 @@ function bindKeys() {
 const BASE_NOTES = NOTES.length;
 for (const n of NOTES) n.counted0 = n.counted;
 
-state.face = savedFace();
-document.documentElement.dataset.face = state.face;
 buildStatus();
 bindSidebar();
 bindList();

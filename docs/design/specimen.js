@@ -40,47 +40,19 @@ document.querySelector('.theme').addEventListener('click', (event) => {
   }
 });
 
-/* ── Text face: Newsreader / Literata / Plex Sans / Archivo ────────────── */
-// The writer's choice (tokens.css, data-face). Kept across visits and mockups.
+/* ── Text face: kept by choices.js (data-face) ──────────────────────────── */
+// The specimen names the face in use, and re-reads its values when it changes.
 
-const FACE_KEY = 'eien-mockup-face';
-const FACES = {
-  newsreader: 'Newsreader',
-  literata: 'Literata',
-  'plex-sans': 'IBM Plex Sans',
-  archivo: 'Archivo',
-};
-
-function applyFace(face) {
-  root.setAttribute('data-face', face);
-  for (const button of document.querySelectorAll('[data-face-choice]')) {
-    button.setAttribute('aria-pressed', String(button.dataset.faceChoice === face));
-  }
-  for (const el of document.querySelectorAll('[data-face-name]')) el.textContent = FACES[face];
-}
-
-function savedFace() {
-  try {
-    const face = localStorage.getItem(FACE_KEY);
-    return Object.hasOwn(FACES, face) ? face : 'newsreader';
-  } catch {
-    return 'newsreader';
+function showFaceName() {
+  for (const el of document.querySelectorAll('[data-face-name]')) {
+    el.textContent = window.eienFaceName(root.dataset.face);
   }
 }
-
-applyFace(savedFace());
-
-document.addEventListener('click', (event) => {
-  const button = event.target.closest('[data-face-choice]');
-  if (!button) return;
-  const face = button.dataset.faceChoice;
-  applyFace(face);
+showFaceName();
+document.addEventListener('eien-choice', (event) => {
+  if (event.detail.name !== 'face') return;
+  showFaceName();
   readValues();
-  try {
-    localStorage.setItem(FACE_KEY, face);
-  } catch {
-    // Private windows may refuse storage; the choice still holds for this visit.
-  }
 });
 
 /* ── The colours, in the order tokens.css gives them ───────────────────── */

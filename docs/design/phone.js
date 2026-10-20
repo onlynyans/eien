@@ -303,37 +303,6 @@
     if (pick) setTheme(pick.dataset.themePick);
   });
 
-  /* ── Text face: Newsreader / Literata / Plex Sans / Archivo ──────────── */
-  // The writer's choice (tokens.css, data-face). Kept across visits and mockups.
-
-  const FACE_KEY = 'eien-mockup-face';
-  const FACES = ['newsreader', 'literata', 'plex-sans', 'archivo'];
-
-  function savedFace() {
-    try {
-      const face = localStorage.getItem(FACE_KEY);
-      return FACES.includes(face) ? face : 'newsreader';
-    } catch {
-      return 'newsreader';
-    }
-  }
-  function applyFace(face) {
-    root.dataset.face = face;
-    document.querySelectorAll('[data-face-choice]').forEach((b) =>
-      b.setAttribute('aria-pressed', String(b.dataset.faceChoice === face)));
-  }
-  document.addEventListener('click', (e) => {
-    const choice = e.target.closest('[data-face-choice]');
-    if (!choice) return;
-    applyFace(choice.dataset.faceChoice);
-    try {
-      localStorage.setItem(FACE_KEY, choice.dataset.faceChoice);
-    } catch {
-      // Private windows may refuse storage; the choice still holds for this visit.
-    }
-  });
-  root.dataset.face = savedFace();
-
   /* ── One phone ──────────────────────────────────────────────────────── */
 
   const TEMPLATE = document.getElementById('phone-template');
@@ -1140,5 +1109,4 @@
   document.execCommand('defaultParagraphSeparator', false, 'p');
   document.querySelectorAll('.phone').forEach((el) => makePhone(el, el.dataset.start));
   syncTheme();
-  applyFace(root.dataset.face);
 })();

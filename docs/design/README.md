@@ -10,8 +10,8 @@ mockups here are how to see it; `tokens.css` is the source of every value.
 | [phone.html](phone.html) | The phone: contents → index → page, one at a time, controls behind ⋯ |
 | [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night. Its colours are the Washi palette |
 | [themes/otaku.css](themes/otaku.css) | The Otaku palette: Otaku's colours on Eien's colour tokens, day and night |
-| [choices.js](choices.js) | The mockups' PALETTE (Washi · Otaku), DENSITY (Comfortable · Compact) and CHAPTERS (i ii iii · 1 2 3) switches: set `data-palette`, `data-density` and `data-numerals` before the page draws and keep the choice |
-| [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Archivo and IBM Plex Mono, bundled (SIL Open Font License) |
+| [choices.js](choices.js) | The mockups' settings — FACE, PALETTE (Washi · Otaku), DENSITY (Comfortable · Compact), PAGE (Sheet · Full) and CHAPTERS (i ii iii · 1 2 3): sets `data-face`, `data-palette`, `data-density`, `data-frame` and `data-numerals` before the page draws and keeps each choice |
+| [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Archivo, Source Sans 3, Atkinson Hyperlegible Next and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
 | [references.md](references.md) | The reference screenshots, what reads well in each, and the surface values that came of it |
 
@@ -84,7 +84,7 @@ Words: a checkpoint is a **seal**; a named version is a **named seal**.
 
 | Voice | Face | For |
 |---|---|---|
-| Text | Newsreader (the default), Literata, IBM Plex Sans or Archivo: the writer's choice | Anything a person wrote: note text, titles, folder and note names, previews |
+| Text | Newsreader (the default), Literata, IBM Plex Sans, Archivo, Source Sans 3 or Atkinson Hyperlegible Next: the writer's choice | Anything a person wrote: note text, titles, folder and note names, previews |
 | Machine | IBM Plex Mono, always | Anything the machine counts or you press: counts, dates, labels (in capitals), buttons, the status line, the Source view |
 
 The test: *could a person have written it?* The text face. *Did the machine
@@ -94,12 +94,16 @@ count it, or do you press it?* The mono.
   it, whichever it is; the machine voice is always mono and never changes
   with it.
 - The choice is `data-face` on `<html>`: `newsreader` (or no attribute),
-  `literata`, `plex-sans`, `archivo`. Each face carries its own sizes,
-  prose leading and measure in `tokens.css`, tuned by eye so the page reads
-  at the same size and about 75 characters a line in all four (Newsreader's
-  x-height is small, so it is set larger; the two sans-serifs' are large, so
-  they are set smaller). Every mockup has a FACE control, kept in
-  `localStorage`.
+  `literata`, `plex-sans`, `archivo`, `source-sans`, `atkinson`. Each face
+  carries its own sizes, prose leading and measure in `tokens.css`, tuned by
+  eye so the page reads at the same size and line length in all six
+  (Newsreader's x-height is small, so it is set larger; Plex Sans's, Archivo's
+  and Atkinson's are large, so they are set smaller). Every mockup has a FACE
+  control; `choices.js` keeps it, with the faces' names in one list.
+- The sans-serifs, and why each: IBM Plex Sans (engineered, the mono's own
+  family), Archivo (narrow grotesque), Source Sans 3 (warm and open, made to sit
+  beside a book face; the widest language coverage), Atkinson Hyperlegible Next
+  (letters that can't be mistaken for each other, for tired eyes).
 
 ### Structure
 
@@ -172,6 +176,15 @@ and the note list without its line of preview. It's expressed only in tokens
 `--eien-title-gap`, `--eien-paragraph-gap`, `--eien-leading-tighten`,
 `--eien-row-h`, `--eien-row-pad-y`, `--eien-list-preview`), so no component
 asks which density it's in.
+
+## Page frame
+
+A setting separate from density, so it works with either: **Sheet** (the
+default) lays the page on the blotter with a hairline edge and the sheet's
+shadow; **Full** (`data-frame="full"`) takes the frame away, so the third pane
+is paper from edge to edge, with no gap, edge or shadow, and the text keeps its
+line length, centred. Tokens: `--eien-page-ground`, `--eien-page-gutter`,
+`--eien-sheet-edge`, `--eien-sheet-lift`.
 
 ## Chapter numbers
 

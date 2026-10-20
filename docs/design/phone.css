@@ -145,7 +145,7 @@
   background: var(--eien-desk);
 }
 .view--page {
-  background: var(--eien-blotter);
+  background: var(--eien-page-ground);
 }
 .phone.is-still .view,
 .phone.is-still .bottom-sheet,
@@ -672,16 +672,16 @@
   flex-direction: column;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: var(--eien-space-2);
+  padding: min(var(--eien-space-2), var(--eien-page-gutter));
 }
 /* The sheet: washi paper on the blotter, square, lifted by tone, a hairline
    and the sheet's one soft shadow. */
 .paper {
   flex: 1 0 auto;
   padding: min(var(--eien-space-6), var(--eien-sheet-pad-top)) var(--eien-space-5) var(--eien-space-8);
-  border: var(--eien-hairline) solid var(--eien-rule);
+  border: var(--eien-sheet-edge);
   background: var(--eien-paper);
-  box-shadow: var(--eien-shadow-sheet);
+  box-shadow: var(--eien-sheet-lift);
   transition: border-color var(--eien-quick) var(--eien-ease);
 }
 .paper:focus-within {

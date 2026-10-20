@@ -169,6 +169,17 @@ The editor has three views of the same note, switched by a toolbar control and
 | **Source** | The raw `.md`, with syntax colored. |
 | **Reading** | The note rendered and read-only. |
 
+Live is the WYSIWYG view: you see the formatting, not the marks, and you
+format without typing them:
+
+- **Keys:** ⌘B bold, ⌘I italic, ⌘U underline, ⌘⇧X strikethrough, ⌘⇧H
+  highlight, ⌘K link, ⌘⌥1–3 headings, ⌘⇧. quote, ⌘⇧7 numbered list, ⌘⇧8 list,
+  ⌘⇧9 checklist. Each toggles: pressed again, it takes the formatting off.
+- **Format menu** in the menu bar with the same commands and their keys.
+- **Selection bar:** when text is selected, a small bar of the same commands
+  appears beside it. It appears only for a selection and never while typing.
+- Typing the Markdown marks works too, as in any Markdown editor.
+
 ### Markdown supported
 
 CommonMark plus GitHub extensions, and three common additions:
@@ -192,6 +203,11 @@ CommonMark plus GitHub extensions, and three common additions:
 - **Typewriter scrolling:** keeps the caret line at a fixed height.
 - **Counters:** words in the note, in the book, today; sprint timer with words
   gained; zoom.
+- **Zoom:** ⌘+ and ⌘− zoom the page in steps of 10%, ⌘0 returns to 100%. Zoom
+  is per device and shown in the status line; the panes and the note list keep
+  their size.
+- **Text size:** a setting that scales the text face from its tuned size
+  (90%–130%), separately from zoom.
 - **Outline cards:** a book's notes as cards on a board; drag to reorder.
 - **Spellcheck:** off until turned on, using the platform's own checker.
 
@@ -309,10 +325,12 @@ Every setting is defined once, in `src/core/config/schema.ts`:
 The settings screen, defaults, validation and storage all come from that one
 list. Adding a setting means adding one entry.
 
-- **Vault settings** live in `.eien/config.json`: quotes, AO3 options, scene
-  break style.
-- **Device settings** live in the app's storage: theme, light/dark, panes,
-  zoom, focus and typewriter modes, spellcheck.
+- **Vault settings** live in `.eien/config.json`: quotes, chapter numbers
+  (i ii iii or 1 2 3), AO3 options, scene break style.
+- **Device settings** live in the app's storage: palette, scheme (day, night or
+  the system's), text face, text size, density (comfortable or compact), page
+  frame (sheet or full), panes (three or two), zoom, focus and typewriter
+  modes, spellcheck.
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.
 
@@ -499,8 +517,8 @@ Each phase ends with something you can try, and its tests in CI.
 | 1 | Spec | This document, approved |
 | 2 | Scaffold and CI | The app opens an empty window on all three desktops; CI runs lint, types, unit and e2e. GitHub setup walkthrough |
 | 3 | Vault and saving | Open a folder; tree, list and page; autosave; external changes and conflicts |
-| 4 | Editor | Live, Source and Reading views; all Markdown in §4 |
-| 5 | Design system | Tokens, light and dark, themes, settings screen |
+| 4 | Editor | Live, Source and Reading views; all Markdown in §4; formatting keys, the Format menu and the selection bar |
+| 5 | Design system | Tokens from `docs/design`; palettes and schemes; the six text faces; text size, density, page frame and zoom; the settings screen |
 | 6 | Organizing | Tags, nesting, search, drag-and-drop order, books |
 | 7 | Versions | Checkpoints, the compare button, named versions |
 | 8 | AO3 and typography | Copy for AO3, paste from HTML, quote setting |

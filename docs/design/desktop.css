@@ -52,8 +52,9 @@ button {
   border-bottom: var(--eien-hairline) solid var(--eien-rule-strong);
   font-family: var(--eien-face-mono);
   white-space: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
+  /* More switches than one line holds: wrap, so none hide off the edge. */
+  flex-wrap: wrap;
+  row-gap: 0;
 }
 .mockbar__name,
 .mockbar__label {
@@ -775,7 +776,7 @@ button {
 /* The blotter, with the sheet lying on it between two bands. */
 .page {
   position: relative;
-  background: var(--eien-blotter);
+  background: var(--eien-page-ground);
   display: grid;
   grid-template-columns: minmax(0, 1fr) 0;
   min-width: 0;
@@ -880,7 +881,7 @@ button {
 .page__scroll {
   min-height: 0;
   overflow-y: auto;
-  padding: var(--eien-page-gutter) var(--eien-page-gutter) var(--eien-space-6);
+  padding: var(--eien-page-gutter);
 }
 
 /* The sheet: washi on the blotter, lifted by tone, a hairline edge and the
@@ -895,8 +896,8 @@ button {
   margin: 0 auto;
   padding: var(--pad-top) var(--pad-x) var(--eien-space-8);
   background: var(--eien-paper);
-  border: var(--eien-hairline) solid var(--eien-rule);
-  box-shadow: var(--eien-shadow-sheet);
+  border: var(--eien-sheet-edge);
+  box-shadow: var(--eien-sheet-lift);
 }
 @container pagearea (width < 760px) {
   .sheet {

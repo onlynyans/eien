@@ -125,7 +125,8 @@
 }
 
 /* ── The text face: the writer's choice ─────────────────────────────────
-   <html data-face="newsreader" | "literata" | "plex-sans" | "archivo">; no
+   <html data-face="newsreader" | "literata" | "plex-sans" | "archivo" |
+   "source-sans" | "atkinson">; no
    attribute is Newsreader. The same attribute on any element sets that face
    inside it alone (the specimen shows them side by side this way).
 
@@ -178,6 +179,28 @@
   --eien-leading-prose: calc(1.75 - var(--eien-leading-tighten));
   --eien-measure: 31em;
 }
+:root[data-face='source-sans'],
+[data-face='source-sans'] {
+  --eien-face-text: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
+  --eien-size-prose: 20px;
+  --eien-size-title: 32px;
+  --eien-size-heading: 21px;
+  --eien-size-row: 15px;
+  --eien-size-preview: 13px;
+  --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten));
+  --eien-measure: 31em;
+}
+:root[data-face='atkinson'],
+[data-face='atkinson'] {
+  --eien-face-text: 'Atkinson Hyperlegible Next', 'Helvetica Neue', Arial, sans-serif;
+  --eien-size-prose: 18px;
+  --eien-size-title: 30px;
+  --eien-size-heading: 20px;
+  --eien-size-row: 14.5px;
+  --eien-size-preview: 12.5px;
+  --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten));
+  --eien-measure: 32em;
+}
 
 /* ── Density: how much air around the writing ──────────────────────────
    Comfortable is the default (no attribute); <html data-density="compact">
@@ -208,6 +231,24 @@
   --eien-row-pad-y: var(--eien-space-2);
   --eien-list-preview: none;
   --eien-row-h: 26px;
+}
+
+/* ── Frame: the page as a sheet on the blotter, or the whole pane ───────
+   A setting of its own, with either density. Sheet is the default: paper
+   laid on the blotter with a hairline edge and the sheet's shadow. With
+   <html data-frame="full"> the frame goes: the page pane is paper from edge
+   to edge, the sheet has no edge, shadow or gap round it, and the text keeps
+   its line length, centred. */
+:root {
+  --eien-page-ground: var(--eien-blotter); /* the page pane behind the sheet */
+  --eien-sheet-edge: var(--eien-hairline) solid var(--eien-rule);
+  --eien-sheet-lift: var(--eien-shadow-sheet);
+}
+:root[data-frame='full'] {
+  --eien-page-ground: var(--eien-paper);
+  --eien-page-gutter: 0px;
+  --eien-sheet-edge: none;
+  --eien-sheet-lift: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

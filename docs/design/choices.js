@@ -1,7 +1,10 @@
 // Eien — choices kept on <html>, each a data attribute the tokens follow:
+//   data-face     newsreader (the default) or another text face — FACES below
 //   data-palette  washi (the default: no attribute) or otaku — which colours;
 //                 themes/otaku.css overrides the colour tokens
 //   data-density  comfortable (the default) or compact — how much air
+//   data-frame    sheet (the default) or full — the page as a sheet on the
+//                 blotter, or paper from edge to edge
 //   data-numerals roman (the default) or arabic — how a book numbers its
 //                 chapters: i, ii, iii or 1, 2, 3
 // The scheme (day, night, the system's) is separate; every palette has both.
@@ -57,8 +60,21 @@
     new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: [`data-${name}`] });
   }
 
+  // The text faces, in the order the pickers show them, with their names.
+  const FACES = {
+    newsreader: 'Newsreader',
+    literata: 'Literata',
+    'plex-sans': 'IBM Plex Sans',
+    archivo: 'Archivo',
+    'source-sans': 'Source Sans 3',
+    atkinson: 'Atkinson Hyperlegible Next',
+  };
+  window.eienFaceName = (face) => FACES[face] ?? FACES.newsreader;
+
+  keepChoice('face', Object.keys(FACES));
   keepChoice('palette', ['washi', 'otaku']);
   keepChoice('density', ['comfortable', 'compact']);
+  keepChoice('frame', ['sheet', 'full']);
   keepChoice('numerals', ['roman', 'arabic']);
 
   const ROMAN = [
