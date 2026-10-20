@@ -5,7 +5,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { _electron } from '@playwright/test';
-import { appEnv, expect, ROOT, test } from './launch';
+import { appEnv, closeApp, expect, ROOT, test } from './launch';
 
 test('opens one window showing Eien', async ({ app, page }) => {
   await expect(page).toHaveTitle('Eien');
@@ -176,7 +176,7 @@ test('separate data folders run side by side', async ({ app, page }) => {
     await expect((await other.firstWindow()).locator('.app-name')).toHaveText('Eien');
     expect(app.windows()).toHaveLength(1);
   } finally {
-    await other.close();
+    await closeApp(other);
     rmSync(otherData, { recursive: true, force: true });
   }
 });

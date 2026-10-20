@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Eien — design specimen</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="themes/otaku.css" />
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="specimen.css" />
+    <script src="choices.js"></script>
+  </head>
+  <body>
+    <div class="desk">
+      <!-- The running head: a quiet contents line, on the desk. -->
+      <nav class="running-head" aria-label="Contents">
+        <span class="label">Eien · design specimen</span>
+        <ol class="contents">
+          <li><a href="#colour"><span class="numeral">i</span>Colour</a></li>
+          <li><a href="#type"><span class="numeral">ii</span>Type</a></li>
+          <li><a href="#the-seal"><span class="numeral">iii</span>The seal</a></li>
+          <li><a href="#rows"><span class="numeral">iv</span>Rows and states</a></li>
+          <li><a href="#compare"><span class="numeral">v</span>Compare</a></li>
+          <li><a href="#space"><span class="numeral">vi</span>Space</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <!-- ── Title page ─────────────────────────────────────────────── -->
+        <header class="sheet title-page">
+          <span class="seal seal--large" aria-hidden="true">永</span>
+          <div class="title-words">
+            <h1 class="title-name">Eien</h1>
+            <p class="title-meaning">
+              <span class="title-kanji" lang="ja">永遠</span> <span class="title-gloss">“forever”</span>
+            </p>
+          </div>
+          <div class="title-controls">
+            <div class="palette" role="group" aria-label="Palette">
+              <button class="word-button" type="button" data-palette-choice="washi">Washi</button>
+              <button class="word-button" type="button" data-palette-choice="otaku">Otaku</button>
+            </div>
+            <div class="density" role="group" aria-label="Density">
+              <button class="word-button" type="button" data-density-choice="comfortable">Comfortable</button>
+              <button class="word-button" type="button" data-density-choice="compact">Compact</button>
+            </div>
+            <div class="theme" role="group" aria-label="Theme">
+              <button class="word-button" type="button" data-theme-choice="system">System</button>
+              <button class="word-button" type="button" data-theme-choice="light">Day</button>
+              <button class="word-button" type="button" data-theme-choice="dark">Night</button>
+            </div>
+            <div class="face-choice" role="group" aria-label="Text face">
+              <button class="word-button" type="button" data-face-choice="newsreader">Newsreader</button>
+              <button class="word-button" type="button" data-face-choice="literata">Literata</button>
+              <button class="word-button" type="button" data-face-choice="plex-sans">Plex Sans</button>
+              <button class="word-button" type="button" data-face-choice="source-sans">Source Sans</button>
+              <button class="word-button" type="button" data-face-choice="atkinson">Atkinson</button>
+              <button class="word-button" type="button" data-face-choice="schibsted">Schibsted</button>
+              <button class="word-button" type="button" data-face-choice="hanken">Hanken</button>
+              <button class="word-button" type="button" data-face-choice="instrument">Instrument</button>
+            </div>
+          </div>
+          <div class="title-body">
+            <p class="title-lede">
+              A book on a desk at night. The sidebar is the desk; each note is a sheet of washi
+              paper laid on a blotter, lifted by its tone, a hairline edge and one soft shadow.
+              The words are sumi ink, in four strengths. One vermilion seal marks what is kept,
+              and appears nowhere else. Two voices set every word: a text face of the writer’s
+              choosing for what a person wrote, a mono for what the machine counts or you press.
+              By night the desk is inkstone, the same warm hues darkened.
+            </p>
+            <p class="label title-colophon">
+              Design specimen <span>·</span> October 2026
+              <span>·</span> every value read live from tokens.css
+            </p>
+          </div>
+        </header>
+
+        <!-- ── i. Colour ──────────────────────────────────────────────── -->
+        <section class="sheet" id="colour" aria-labelledby="colour-title">
+          <header class="sheet-head">
+            <p class="sheet-numeral">i</p>
+            <h2 class="sheet-title" id="colour-title">Colour</h2>
+            <p class="sheet-lede">
+              Every colour in the <b data-palette-name>Washi</b> palette, by day and by night
+              (switch palettes at the top). Each sample is cut in two,
+              day and night, whatever this page is set to. Inks are set on the desk and on a sheet
+              of paper, and then on every surface, with their contrast measured from the tokens as
+              the page loads. 4.5&#8239;:&#8239;1 or more reads at any size (AA);
+              3&#8239;:&#8239;1 is enough for large type and marks.
+            </p>
+          </header>
+
+          <section class="family" aria-labelledby="fam-surface">
+            <div class="family-head">
+              <h3 class="label" id="fam-surface">Surface</h3>
+              <p class="family-note">
+                Darker is further back: desk, blotter, band, paper, raised. Each step is big enough
+                to see at a glance.
+              </p>
+            </div>
+            <div class="swatch-cards" data-family="surface"></div>
+          </section>
+
+          <section class="family" aria-labelledby="fam-depth">
+            <div class="family-head">
+              <h3 class="label" id="fam-depth">Depth</h3>
+              <p class="family-note">
+                The surfaces stacked as the window stacks them. Two shadows and no more: the sheet
+                (<code class="token">--eien-shadow-sheet</code>) and whatever floats
+                (<code class="token">--eien-shadow-float</code>).
+              </p>
+            </div>
+            <div class="depth-pair" data-depth></div>
+          </section>
+
+          <section class="family" aria-labelledby="fam-ink">
+            <div class="family-head">
+              <h3 class="label" id="fam-ink">Ink</h3>
+              <p class="family-note">Four strengths of one sumi ink, each in the voice it is used for.</p>
+            </div>
+            <div class="swatch-rows" data-family="ink"></div>
+          </section>
+
+          <section class="family" aria-labelledby="fam-rules">
+            <div class="family-head">
+              <h3 class="label" id="fam-rules">Rules</h3>
+              <p class="family-note">
+                Hairlines in ink, never a solid colour; you notice them only when you look. Keyboard
+                focus is a mark, not a rule: two pixels of iron-gall ink
+                (<code class="token">--eien-focus</code>), so the seal stays rare.
+              </p>
+            </div>
+            <div class="swatch-rows" data-family="rules"></div>
+          </section>
+
+          <section class="family" aria-labelledby="fam-seal">
+            <div class="family-head">
+              <h3 class="label" id="fam-seal">The seal</h3>
+              <p class="family-note">
+                The one accent, in five places only: the mark, a sealed version, “sealed” in the
+                status line, the rule beside the selected row, and the caret with its selection.
+              </p>
+            </div>
+            <div class="swatch-rows" data-family="seal"></div>
+          </section>
+
+          <section class="family" aria-labelledby="fam-status">
+            <div class="family-head">
+              <h3 class="label" id="fam-status">Status</h3>
+              <p class="family-note">
+                What changed, and what needs a look. Delete (<code class="token">--eien-danger</code>)
+                is the carmine pencil too, never the seal, and always says so in words.
+              </p>
+            </div>
+            <div class="swatch-rows" data-family="status"></div>
+          </section>
+
+          <section class="family" aria-labelledby="fam-contrast">
+            <div class="family-head">
+              <h3 class="label" id="fam-contrast">Contrast, everywhere</h3>
+              <p class="family-note">
+                Every ink on every surface it can sit on, each figure written in that ink on that
+                ground. Text needs 4.5; faded and the seal, 3.
+              </p>
+            </div>
+            <div class="contrast-grids" data-contrast></div>
+          </section>
+        </section>
+
+        <!-- ── ii. Type ───────────────────────────────────────────────── -->
+        <section class="sheet" id="type" aria-labelledby="type-title">
+          <header class="sheet-head">
+            <p class="sheet-numeral">ii</p>
+            <h2 class="sheet-title" id="type-title">Type</h2>
+            <p class="sheet-lede">
+              Two voices. Could a person have written it? The text face, which the writer
+              chooses: two serifs (Newsreader, Literata) or six sans-serifs. Did the machine count it,
+              or do you press it? IBM Plex Mono, always.
+            </p>
+          </header>
+
+          <section class="voice" aria-labelledby="voice-faces">
+            <div class="family-head">
+              <h3 class="label" id="voice-faces">The text face · the writer’s choice</h3>
+              <p class="family-note">
+                One passage in each, at that face’s own size, leading and measure, so all four
+                read at one size. Choose one here or at the top.
+              </p>
+            </div>
+            <div class="faces">
+              <figure class="face-sample" data-face="newsreader">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="newsreader">Newsreader</button>
+                  <span class="count">the default · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="literata">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="literata">Literata</button>
+                  <span class="count">bookish, sturdy · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="plex-sans">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="plex-sans">Plex Sans</button>
+                  <span class="count">sans-serif, open · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="source-sans">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="source-sans">Source Sans</button>
+                  <span class="count">sans-serif, warm · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="atkinson">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="atkinson">Atkinson</button>
+                  <span class="count">sans-serif, hyperlegible · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="schibsted">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="schibsted">Schibsted</button>
+                  <span class="count">sans-serif, editorial · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="hanken">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="hanken">Hanken</button>
+                  <span class="count">sans-serif, soft · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="instrument">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="instrument">Instrument</button>
+                  <span class="count">sans-serif, crisp · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample face-sample--mono">
+                <figcaption class="face-cap">
+                  <span class="wf-name">IBM Plex Mono</span>
+                  <span class="count">the machine voice, with every text face · the Source view, <span data-value-of="--eien-size-source"></span></span>
+                </figcaption>
+                <p class="face-source">It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                <p class="colophon colophon--framed">
+                  <span>1,204 words</span><span>·</span><span>today +809</span><span>·</span><span>sprint 12:40</span><span>·</span><span><span class="seal seal--small" aria-hidden="true"></span> <span>sealed 2h ago</span></span>
+                </p>
+              </figure>
+            </div>
+          </section>
+
+          <section class="voice" aria-labelledby="voice-book">
+            <div class="family-head">
+              <h3 class="label" id="voice-book">The text face in use · <span data-face-name>Newsreader</span></h3>
+              <p class="family-note">Anything a person wrote: the note, its title, names in the tree, previews. Set in the face chosen above, at its sizes.</p>
+            </div>
+
+            <table class="waterfall">
+              <thead>
+                <tr>
+                  <th scope="col"><span class="visually-hidden">Size</span></th>
+                  <th scope="col" class="label">Roman</th>
+                  <th scope="col" class="label">Italic</th>
+                  <th scope="col" class="label">Bold</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row" class="wf-meta">
+                    <span class="wf-name">Title</span>
+                    <span class="count"><span data-value-of="--eien-size-title"></span> · a note’s title on its page</span>
+                    <code class="token">--eien-size-title</code>
+                  </th>
+                  <td class="wf-title" data-style="Roman">Seventeen</td>
+                  <td class="wf-title" data-style="Italic"><i>Seventeen</i></td>
+                  <td class="wf-title" data-style="Bold"><b>Seventeen</b></td>
+                </tr>
+                <tr>
+                  <th scope="row" class="wf-meta">
+                    <span class="wf-name">Heading</span>
+                    <span class="count"><span data-value-of="--eien-size-heading"></span> · the list’s header</span>
+                    <code class="token">--eien-size-heading</code>
+                  </th>
+                  <td class="wf-heading" data-style="Roman">A Mended Scarf</td>
+                  <td class="wf-heading" data-style="Italic"><i>A Mended Scarf</i></td>
+                  <td class="wf-heading" data-style="Bold"><b>A Mended Scarf</b></td>
+                </tr>
+                <tr>
+                  <th scope="row" class="wf-meta">
+                    <span class="wf-name">Prose</span>
+                    <span class="count"><span data-value-of="--eien-size-prose"></span> · the writing</span>
+                    <code class="token">--eien-size-prose</code>
+                  </th>
+                  <td class="wf-prose" data-style="Roman">She takes it. The stitches are almost invisible.</td>
+                  <td class="wf-prose" data-style="Italic"><i>She takes it. The stitches are almost invisible.</i></td>
+                  <td class="wf-prose" data-style="Bold"><b>She takes it. The stitches are almost invisible.</b></td>
+                </tr>
+                <tr>
+                  <th scope="row" class="wf-meta">
+                    <span class="wf-name">Row</span>
+                    <span class="count"><span data-value-of="--eien-size-row"></span> · a name in the tree or list</span>
+                    <code class="token">--eien-size-row</code>
+                  </th>
+                  <td class="wf-row" data-style="Roman">Needle and Thread</td>
+                  <td class="wf-row" data-style="Italic"><i>Needle and Thread</i></td>
+                  <td class="wf-row" data-style="Bold"><b>Needle and Thread</b></td>
+                </tr>
+                <tr>
+                  <th scope="row" class="wf-meta">
+                    <span class="wf-name">Preview</span>
+                    <span class="count"><span data-value-of="--eien-size-preview"></span> · the line under a list row</span>
+                    <code class="token">--eien-size-preview</code>
+                  </th>
+                  <td class="wf-preview" data-style="Roman">The welling in her eyes has faded. The tension in her shoulders subsides.</td>
+                  <td class="wf-preview" data-style="Italic"><i>The welling in her eyes has faded. The tension in her shoulders subsides.</i></td>
+                  <td class="wf-preview" data-style="Bold"><b>The welling in her eyes has faded. The tension in her shoulders subsides.</b></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- A page of the open note: a sheet on the desk, set as the editor sets it. -->
+            <figure class="page-sample">
+              <div class="page">
+                <div class="page-col">
+                  <figcaption class="measure">
+                    <span class="label">
+                      Measure <span data-value-of="--eien-measure"></span> · prose
+                      <span data-value-of="--eien-size-prose"></span> · leading
+                      <span data-value-of="--eien-leading-prose"></span>
+                    </span>
+                  </figcaption>
+                  <p class="page-kicker count">iii · A Mended Scarf</p>
+                  <h4 class="page-title">Seventeen</h4>
+                  <p class="page-tags"><span><span class="hash">#</span>fic/aot</span> <span><span class="hash">#</span>draft</span></p>
+                  <div class="prose">
+                    <p>
+                      “Look,” he begins more softly. “I’m not going to let you ruin the mission when
+                      the only thing on your mind is this damn scarf. If you want it back so badly,
+                      hold it still.”
+                    </p>
+                    <p>
+                      It takes her a minute to collect herself. Then, she takes the end he’s holding
+                      out. The one that isn’t split.
+                    </p>
+                    <p>He drapes the broken one across his legs a moment later; threads the needle in; and starts.</p>
+                    <p class="scene-break" role="separator">***</p>
+                    <p>
+                      She watches as he mends the seams. She’s only known him for the merciless
+                      work, not the delicate kind.
+                    </p>
+                    <p>The stitches are neat and as he works his way through, they each hold taut.</p>
+                  </div>
+                  <p class="colophon">
+                    <span>1,204 words</span><span>·</span><span>today +809</span><span>·</span><span>sprint 12:40</span><span>·</span><span><span class="seal seal--small" aria-hidden="true"></span> <span>sealed 2h ago</span></span><span>·</span><span>110%</span>
+                  </p>
+                </div>
+              </div>
+            </figure>
+          </section>
+
+          <section class="voice" aria-labelledby="voice-type">
+            <div class="family-head">
+              <h3 class="label" id="voice-type">The machine voice · IBM Plex Mono</h3>
+              <p class="family-note">Anything the machine counts or you press: counts, dates, labels, buttons, the status line.</p>
+            </div>
+
+            <div class="mono-voice">
+              <div class="tw-block">
+                <p class="tw-spec">
+                  <span class="wf-name">Meta</span>
+                  <span class="count"><span data-value-of="--eien-size-meta"></span> · counts, dates, the status line · figures line up</span>
+                  <code class="token">--eien-size-meta</code>
+                </p>
+                <table class="chapters">
+                  <caption class="visually-hidden">Words in each chapter of A Mended Scarf</caption>
+                  <tbody>
+                    <tr><td class="count">i</td><th scope="row">The Tear</th><td class="count num">2,140</td><td class="count">Oct 3</td></tr>
+                    <tr><td class="count">ii</td><th scope="row">Needle and Thread</th><td class="count num">1,987</td><td class="count">Oct 12</td></tr>
+                    <tr><td class="count">iii</td><th scope="row">Seventeen</th><td class="count num">1,204</td><td class="count">2h</td></tr>
+                    <tr><td class="count">iv</td><th scope="row">Ash on the Wind <span class="label">draft</span></th><td class="count num">612</td><td class="count">yesterday</td></tr>
+                    <tr><td class="count">v</td><th scope="row" class="untitled">(untitled)</th><td class="count num">0</td><td class="count">today</td></tr>
+                  </tbody>
+                  <tfoot>
+                    <tr><td></td><th scope="row" class="label">A Mended Scarf</th><td class="count num">5,943</td><td class="count">words</td></tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div class="tw-block">
+                <p class="tw-spec">
+                  <span class="wf-name">Label</span>
+                  <span class="count"><span data-value-of="--eien-size-label"></span> · capitals, tracked <span data-value-of="--eien-track-label"></span></span>
+                  <code class="token">--eien-size-label</code>
+                </p>
+                <p class="tw-caption count">Section labels</p>
+                <p class="tw-labels">
+                  <span class="label">Library</span><span class="label">Pinned</span><span class="label">Folders</span><span class="label">Tags</span><span class="label">Versions</span>
+                </p>
+                <p class="tw-caption count">Word-buttons: a control is a word</p>
+                <p class="tw-buttons">
+                  <button class="word-button" type="button" aria-pressed="true">Live</button>
+                  <button class="word-button" type="button" aria-pressed="false">Source</button>
+                  <button class="word-button" type="button" aria-pressed="false">Reading</button>
+                </p>
+                <p class="tw-buttons">
+                  <button class="word-button" type="button">Compare</button>
+                  <button class="word-button" type="button">Seal</button>
+                  <button class="word-button" type="button">Versions</button>
+                  <button class="word-button" type="button">Copy for AO3</button>
+                </p>
+                <p class="tw-caption count">Shortcut hints</p>
+                <p class="tw-hints count">
+                  <span><kbd>⌘S</kbd> seal</span><span><kbd>⌘⇧D</kbd> compare</span><span><kbd>⌘E</kbd> view</span>
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section class="voice glyph-face" aria-labelledby="voice-seal">
+            <div class="family-head">
+              <h3 class="label" id="voice-seal">The seal’s glyph · Mincho</h3>
+              <p class="family-note">
+                Not a third voice: one character, pressed into the seal. Mockups borrow the
+                system’s Mincho; the app ships the seal as a drawing.
+              </p>
+            </div>
+            <div class="glyph-row">
+              <span class="seal seal--large" aria-hidden="true">永</span>
+              <p class="glyph-sample" lang="ja">永遠</p>
+              <p class="tw-spec">
+                <span class="wf-name">Seal face</span>
+                <span class="count">永 eternity · 永遠 forever · only in the seal and its name</span>
+                <code class="token">--eien-face-seal</code>
+              </p>
+            </div>
+          </section>
+        </section>
+
+        <!-- ── iii. The seal ──────────────────────────────────────────── -->
+        <section class="sheet" id="the-seal" aria-labelledby="seal-title">
+          <header class="sheet-head">
+            <p class="sheet-numeral">iii</p>
+            <h2 class="sheet-title" id="seal-title">The seal</h2>
+            <p class="sheet-lede">
+              A vermilion square with 永, eternity, pressed into it. ⌘S seals the note: this
+              version is kept for good, to compare against or return to. The seal marks those
+              moments, and nothing else.
+            </p>
+          </header>
+
+          <div class="seal-grid">
+            <div class="seal-marks">
+              <figure class="mark-figure">
+                <div class="mark-pair">
+                  <div class="mark-large">
+                    <span class="seal seal--large" aria-hidden="true">永</span>
+                    <p class="count">large · .seal--large</p>
+                  </div>
+                  <div class="mark-app">
+                    <div class="app-corner">
+                      <span class="seal" aria-hidden="true">永</span>
+                      <span class="app-vault">Ink &amp; Ash</span>
+                      <span class="count">312</span>
+                    </div>
+                    <p class="count">app size · <span data-value-of="--eien-seal-size"></span> · top-left</p>
+                  </div>
+                </div>
+                <figcaption class="figure-note">
+                  The app’s mark, top-left of the window; on the phone it is also the way home.
+                </figcaption>
+              </figure>
+
+              <figure class="mark-figure">
+                <p class="colophon colophon--framed">
+                  <span>1,204 words</span><span>·</span><span>today +809</span><span>·</span><span><span class="seal seal--small" aria-hidden="true"></span> <span>sealed 2h ago</span></span>
+                </p>
+                <figcaption class="figure-note">
+                  In the status line: <code class="token">.seal--small</code>, the square alone,
+                  beside the time of the last seal.
+                </figcaption>
+              </figure>
+            </div>
+
+            <figure class="mark-figure">
+              <div class="panel versions">
+                <p class="panel-label label">Versions · Seventeen</p>
+                <ol class="version-list">
+                  <li>
+                    <button class="version-row" type="button" aria-current="true">
+                      <span class="version-mark version-mark--draft" aria-hidden="true"></span>
+                      <span class="version-name">Draft</span>
+                      <span class="count version-meta">now · 1,204 words</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="version-row" type="button">
+                      <span class="seal seal--small" aria-hidden="true"></span>
+                      <span class="version-name version-name--plain">Sealed</span>
+                      <span class="count version-meta">2h ago · 1,191 words</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="version-row" type="button">
+                      <span class="seal seal--small" aria-hidden="true"></span>
+                      <span class="version-name">“before the rewrite”</span>
+                      <span class="count version-meta">yesterday 23:40 · named seal · 1,130 words</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="version-row" type="button">
+                      <span class="seal seal--small" aria-hidden="true"></span>
+                      <span class="version-name version-name--plain">Sealed</span>
+                      <span class="count version-meta">Oct 12 · 870 words</span>
+                    </button>
+                  </li>
+                </ol>
+                <p class="panel-actions">
+                  <button class="word-button" type="button">Compare</button>
+                  <button class="word-button" type="button">Restore</button>
+                  <button class="word-button" type="button">Name</button>
+                </p>
+              </div>
+              <figcaption class="figure-note">
+                A note’s versions, newest first, on raised paper that floats beside the page. Each
+                seal is marked; the draft is not. The open row has the short vermilion rule and the
+                neutral fill.
+              </figcaption>
+            </figure>
+          </div>
+
+          <div class="places">
+            <p class="places-title">
+              Five places, and nowhere else; its rarity is its meaning. The caret brings its
+              selection with it: selected text lies on the seal wash.
+            </p>
+            <ol class="place-list">
+              <li class="place">
+                <div class="place-show place-show--desk">
+                  <span class="seal" aria-hidden="true">永</span>
+                </div>
+                <p class="count"><span class="place-num">i</span> the mark</p>
+              </li>
+              <li class="place">
+                <div class="place-show place-show--desk">
+                  <span class="place-version"><span class="seal seal--small" aria-hidden="true"></span><span class="version-name">“before the rewrite”</span></span>
+                </div>
+                <p class="count"><span class="place-num">ii</span> each sealed version</p>
+              </li>
+              <li class="place">
+                <div class="place-show place-show--paper">
+                  <span class="colophon colophon--bare"><span class="seal seal--small" aria-hidden="true"></span> <span>sealed 2h ago</span></span>
+                </div>
+                <p class="count"><span class="place-num">iii</span> the status line</p>
+              </li>
+              <li class="place">
+                <div class="place-show place-show--desk place-show--row">
+                  <span class="tree-row tree-row--static" aria-current="true"><span class="count">iii</span> Seventeen</span>
+                </div>
+                <p class="count"><span class="place-num">iv</span> the selected row</p>
+              </li>
+              <li class="place">
+                <div class="place-show place-show--paper">
+                  <p class="caret-demo" contenteditable="true" spellcheck="false" aria-label="Type here: the caret is the seal">He doesn’t <span class="selection-demo">reply.</span></p>
+                </div>
+                <p class="count"><span class="place-num">v</span> the caret and its selection · type in it</p>
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- ── iv. Rows and states ────────────────────────────────────── -->
+        <section class="sheet" id="rows" aria-labelledby="rows-title">
+          <header class="sheet-head">
+            <p class="sheet-numeral">iv</p>
+            <h2 class="sheet-title" id="rows-title">Rows and states</h2>
+            <p class="sheet-lede">
+              The sidebar reads like a book’s contents page, the note list like its index. Every
+              state is drawn at once, labelled in the margin; the rows are live too, so point at
+              them or Tab through.
+            </p>
+          </header>
+
+          <div class="state-panels">
+            <figure class="state-figure">
+              <figcaption class="label state-caption">The sidebar · a contents page, on the desk</figcaption>
+              <div class="panel sidebar-panel">
+                <p class="panel-label label">Library</p>
+                <button class="tree-row" type="button" data-state="default">
+                  <span class="disclosure" aria-hidden="true"></span><span class="row-name">All Notes</span><span class="count">312</span>
+                </button>
+                <button class="tree-row" type="button">
+                  <span class="disclosure" aria-hidden="true">▾</span><span class="row-name">Pinned</span><span class="count">3</span>
+                </button>
+                <button class="tree-row tree-row--d1" type="button" data-state="pinned">
+                  <span class="disclosure" aria-hidden="true"><span class="ribbon"></span></span><span class="row-name">Character voice sheet</span><span class="visually-hidden">, pinned</span>
+                </button>
+                <p class="panel-label label">Folders</p>
+                <button class="tree-row is-hover" type="button" data-state="hover">
+                  <span class="disclosure" aria-hidden="true">▾</span><span class="row-name">Fic</span><span class="count">41</span>
+                </button>
+                <button class="tree-row tree-row--d1" type="button" aria-current="true" data-state="selected">
+                  <span class="disclosure" aria-hidden="true">▸</span><span class="row-name">A Mended Scarf</span><span class="label book-tag">book</span><span class="count">5</span>
+                </button>
+                <button class="tree-row tree-row--d1 is-focus" type="button" data-state="focus">
+                  <span class="disclosure" aria-hidden="true">▸</span><span class="row-name">Beneath the Walls</span><span class="label book-tag">book</span><span class="count">14</span>
+                </button>
+                <button class="tree-row tree-row--d1" type="button">
+                  <span class="disclosure" aria-hidden="true">▸</span><span class="row-name">One-shots</span><span class="count">22</span>
+                </button>
+                <button class="tree-row" type="button">
+                  <span class="disclosure" aria-hidden="true">▸</span><span class="row-name">Notes</span><span class="count">198</span>
+                </button>
+              </div>
+            </figure>
+
+            <figure class="state-figure">
+              <figcaption class="label state-caption">The note list · an index, on paper</figcaption>
+              <div class="panel list-panel">
+                <div class="list-head">
+                  <h3 class="list-title">A Mended Scarf</h3>
+                  <p class="count">5 chapters · 5,943 words · book order</p>
+                </div>
+                <button class="note-row" type="button" data-state="pinned">
+                  <span class="note-num"><span class="ribbon" aria-hidden="true"></span><span class="visually-hidden">pinned</span></span>
+                  <span class="note-title">A Mended Scarf — outline</span>
+                  <span class="count">Oct 14</span>
+                  <span class="note-preview">Five chapters. The scarf tears in i, is mended in iii; the thread runs out in v.</span>
+                </button>
+                <button class="note-row" type="button" data-state="default">
+                  <span class="note-num">i</span>
+                  <span class="note-title">The Tear</span>
+                  <span class="count">2,140 w</span>
+                  <span class="note-preview">It catches on the gate at Trost and splits along the fold, and she doesn’t notice until…</span>
+                </button>
+                <button class="note-row is-hover" type="button" data-state="hover">
+                  <span class="note-num">ii</span>
+                  <span class="note-title">Needle and Thread</span>
+                  <span class="count">1,987 w</span>
+                  <span class="note-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</span>
+                </button>
+                <button class="note-row" type="button" aria-current="true" data-state="selected">
+                  <span class="note-num">iii</span>
+                  <span class="note-title">Seventeen</span>
+                  <span class="count">1,204 w</span>
+                  <span class="note-preview">“Look,” he begins more softly. “I’m not going to let you ruin the mission…</span>
+                </button>
+                <button class="note-row is-focus" type="button" data-state="focus">
+                  <span class="note-num">iv</span>
+                  <span class="note-title">Ash on the Wind</span>
+                  <span class="count">612 w</span>
+                  <span class="note-preview">The fire is out by morning. She wears it under her collar now, where no one…</span>
+                </button>
+              </div>
+            </figure>
+          </div>
+
+          <div class="state-strips">
+            <figure class="state-strip">
+              <figcaption class="label state-caption">A field · on the band</figcaption>
+              <div class="strip panel">
+                <label class="strip-item">
+                  <input class="field" type="search" placeholder="Search 312 notes" />
+                  <span class="count">empty</span>
+                </label>
+                <label class="strip-item">
+                  <input class="field" type="search" value="scarf" />
+                  <span class="count">typed</span>
+                </label>
+                <label class="strip-item">
+                  <input class="field is-focus" type="search" value="#fic/aot" />
+                  <span class="count">focused</span>
+                </label>
+              </div>
+            </figure>
+
+            <figure class="state-strip">
+              <figcaption class="label state-caption">Word-buttons · on the page</figcaption>
+              <div class="strip strip--paper">
+                <span class="strip-item">
+                  <button class="word-button" type="button">Compare</button>
+                  <span class="count">default</span>
+                </span>
+                <span class="strip-item">
+                  <button class="word-button is-hover" type="button">Compare</button>
+                  <span class="count">hover</span>
+                </span>
+                <span class="strip-item">
+                  <button class="word-button is-active" type="button">Compare</button>
+                  <span class="count">pressing</span>
+                </span>
+                <span class="strip-item">
+                  <button class="word-button" type="button" aria-pressed="true">Compare</button>
+                  <span class="count">on</span>
+                </span>
+                <span class="strip-item">
+                  <button class="word-button is-focus" type="button">Compare</button>
+                  <span class="count">focus</span>
+                </span>
+                <span class="strip-item">
+                  <button class="word-button" type="button" disabled>Restore</button>
+                  <span class="count">disabled</span>
+                </span>
+              </div>
+            </figure>
+          </div>
+        </section>
+
+        <!-- ── v. Compare ─────────────────────────────────────────────── -->
+        <section class="sheet" id="compare" aria-labelledby="compare-title">
+          <header class="sheet-head">
+            <p class="sheet-numeral">v</p>
+            <h2 class="sheet-title" id="compare-title">Compare</h2>
+            <p class="sheet-lede">
+              The draft against its last seal, word by word. Colour is never the only sign: a
+              removed word is struck through, an added word underlined. The button cycles
+              changes, the seal alone, and back to the draft; so does ⌘⇧D.
+            </p>
+          </header>
+
+          <div class="compare">
+            <div class="compare-bar">
+              <button class="word-button" type="button" id="compare-cycle" aria-pressed="true">Compare: changes</button>
+              <p class="count" id="compare-status" aria-live="polite"></p>
+            </div>
+
+            <div class="passage" id="passage" data-view="changes">
+              <p>
+                It takes her a <del>long</del> minute to collect herself. Then, she takes the end
+                he’s holding out. The one that isn’t split.
+              </p>
+              <p>He drapes the broken one across his legs a moment later; threads the needle in; and starts.</p>
+              <p class="scene-break" role="separator">***</p>
+              <p>
+                She watches <del>him work.</del> <ins>as he mends the seams.</ins> She’s only known
+                him for the merciless work, not the delicate kind.
+              </p>
+              <p>The stitches are neat and as he works his way through, they each hold taut.</p>
+              <p><ins>The welling in her eyes has faded.</ins> The tension in her shoulders subsides.</p>
+              <p>Her eyes drift idly up to his face; then the hair.</p>
+              <p>“What are you staring at?”</p>
+              <p>The break in silence surprises her.</p>
+              <p>“You’re greying,” she replies honestly.</p>
+              <p>
+                <del>He pauses, just once.</del> <ins>It’s the one time he bothers to pause.</ins>
+                “Are you trying to pick a fight?”
+              </p>
+            </div>
+
+            <dl class="legend">
+              <div>
+                <dt><del>struck through</del></dt>
+                <dd class="count">removed since the seal · --eien-removed on --eien-removed-wash</dd>
+              </div>
+              <div>
+                <dt><ins>underlined</ins></dt>
+                <dd class="count">added since the seal · --eien-added on --eien-added-wash</dd>
+              </div>
+            </dl>
+
+            <div class="conflict" role="status">
+              <p class="label conflict-word">Conflict</p>
+              <div class="conflict-body">
+                <p>
+                  <b>Seventeen</b> changed on this Mac and on your phone while they were apart.
+                  Both are kept: this page, and <i>Seventeen (from phone)</i> beside it in A
+                  Mended Scarf. Nothing was lost.
+                </p>
+                <p class="conflict-actions">
+                  <button class="word-button" type="button">Compare the two</button>
+                  <button class="word-button" type="button">Later</button>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── vi. Space ──────────────────────────────────────────────── -->
+        <section class="sheet" id="space" aria-labelledby="space-title">
+          <header class="sheet-head">
+            <p class="sheet-numeral">vi</p>
+            <h2 class="sheet-title" id="space-title">Space</h2>
+            <p class="sheet-lede">
+              One grid, in steps of four pixels. Padding is the same on every side of a thing.
+              Corners are square (<code class="token">--eien-radius</code> is 0); a hairline is
+              <span data-value-of="--eien-hairline"></span> and a mark
+              <span data-value-of="--eien-mark-w"></span>.
+            </p>
+          </header>
+          <div class="space-scale" data-space-scale></div>
+
+          <section class="voice layout" aria-labelledby="layout-title">
+            <div class="family-head">
+              <h3 class="label" id="layout-title">Layout</h3>
+              <p class="family-note">The panes, and the smallest things, drawn at their size.</p>
+            </div>
+            <div class="space-scale" data-layout-scale></div>
+          </section>
+        </section>
+      </main>
+
+      <footer class="foot">
+        <p class="label">
+          Eien <span>·</span> set in <span data-face-name>Newsreader</span> and IBM Plex Mono
+          <span>·</span> tokens.css
+        </p>
+      </footer>
+    </div>
+
+    <script src="specimen.js"></script>
+  </body>
+</html>
