@@ -7,6 +7,7 @@ import { EDITOR_MODES, type EditorEvents, type EditorMode, NoteEditor } from '..
 import { SelectionBar } from '../editor/selection-bar';
 import type { ImageLoader } from '../editor/widgets';
 import type { SaveState } from '../notes/note-session';
+import { BoardHost } from './board-host';
 import { WordCount } from './word-count';
 
 export interface PageNote {
@@ -47,8 +48,8 @@ export class PageView {
   readonly #compareHost = h('div', { class: 'compare-host', attrs: { hidden: true } });
   /** The note's words, and what writing adds to them (./word-count.ts). */
   readonly words = new WordCount();
-  /** Where outline cards lie, in the sheet's place (ui/outline). */
-  readonly #board = h('div', { class: 'page__board', attrs: { hidden: true } });
+  /** Where outline cards lie, in the sheet's place (./board-host.ts). */
+  readonly board: BoardHost;
   /** In the colophon, after the save state: today's words, the book's, a sprint (ui/counters). */
   readonly #counters = h('span', { class: 'colophon__counters' });
   readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
@@ -119,6 +120,9 @@ export class PageView {
         on: { click: () => this.setMode(mode) },
       }),
     );
+    const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
+    this.board = new BoardHost(scroll);
+    scroll.append(this.board.element);
     container.replaceChildren(
       h(
         'div',
@@ -134,7 +138,7 @@ export class PageView {
           ),
           this.#tools,
         ),
-        h('div', { class: 'page__scroll' }, this.#sheet, this.#empty, this.#board),
+        scroll,
         h(
           'footer',
           { class: 'colophon count' },
@@ -162,13 +166,6 @@ export class PageView {
     this.#lead.replaceChildren(controls);
   }
 
-  /** Show `view` (outline cards) on the blotter in the sheet's place; null gives the sheet back. */
-  board(view: HTMLElement | null): void {
-    this.#board.replaceChildren(...(view ? [view] : []));
-    this.#board.hidden = view === null;
-    this.#board.parentElement?.toggleAttribute('data-board', view !== null);
-  }
-
   /** Today's words, the book's and a sprint, in the colophon. */
   counters(element: HTMLElement): void {
     this.#counters.replaceChildren(element);
@@ -187,6 +184,7 @@ export class PageView {
 
   /** Show `view` (read only) in the editor's place; null gives the editor back. */
   compare(view: HTMLElement | null): void {
+    if (view) this.board.hide();
     this.#compareHost.replaceChildren(...(view ? [view] : []));
     this.#compareHost.hidden = view === null;
     this.#editorHost.hidden = view !== null;
@@ -198,6 +196,7 @@ export class PageView {
   }
 
   show(note: PageNote): void {
+    this.board.hide();
     this.#sheet.hidden = false;
     this.#empty.hidden = true;
     this.#crumbs.textContent = note.crumbs;
@@ -210,10 +209,13 @@ export class PageView {
   }
 
   showNothing(): void {
+    // The note gone (closed, trashed, gone from disk) with the keyboard in it: the page takes it.
+    const had = this.#sheet.contains(document.activeElement);
     this.#sheet.hidden = true;
     this.#empty.hidden = false;
     this.words.clear();
     this.state('saved');
+    if (had && !this.board.shown) this.#empty.focus();
   }
 
   /** New text from elsewhere, keeping the selection near where it was. */
@@ -230,6 +232,7 @@ export class PageView {
   }
 
   setMode(mode: EditorMode): void {
+    this.board.hide(); // a view chosen is the page's: it comes back
     this.editor.setMode(mode);
     for (const button of this.#modes)
       button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
@@ -259,7 +262,8 @@ export class PageView {
 
   /** The keyboard to the note; with none open, to the page itself, never to nowhere. */
   focus(): void {
-    if (this.#sheet.hidden) this.#empty.focus();
+    if (this.board.shown) this.board.focus();
+    else if (this.#sheet.hidden) this.#empty.focus();
     else if (this.comparing) this.#compareHost.querySelector<HTMLElement>('[tabindex]')?.focus();
     else this.editor.focus();
   }

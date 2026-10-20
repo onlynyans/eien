@@ -158,7 +158,7 @@ export async function showVault(
     mac: keys.sidebar.startsWith('⌘'),
     tell,
     act: (operation) => act(operation),
-    openNote: (path) => void openNote(path),
+    openNote: (path) => openNote(path),
   });
 
   const drags = {

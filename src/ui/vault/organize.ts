@@ -150,6 +150,8 @@ export class Organizer {
     const folder = parentOf(path);
     const shown = await this.#ctx.state.folderOrder(folder);
     const order = placedBefore(shown, baseName(path), before === null ? null : baseName(before));
+    // Where it already is: nothing written (a book sorted by name stays so).
+    if (order.join('\n') === shown.join('\n')) return true;
     return this.#changeFolder(folder, { order });
   }
 

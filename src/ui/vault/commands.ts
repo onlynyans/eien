@@ -55,7 +55,8 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     const minutes = Number(command.slice('sprint:'.length));
     const known = SPRINT_MINUTES.find((each) => each === minutes);
     if (known) ctx.parts.counters.startSprint(known);
-  } else if (command.startsWith('format:')) {
+  } else if (command.startsWith('format:') && !ctx.parts.outline.open) {
+    // Formats act on the page: never on one the outline cards are hiding.
     const format = formatCommand(command.slice('format:'.length));
     if (format) page.editor.format(format);
   }

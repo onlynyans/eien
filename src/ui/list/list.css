@@ -219,7 +219,7 @@
 }
 /* Across cards (the outline's): down the side of the card it goes before or after. */
 .drop-marker--across {
-  left: calc(var(--marker-x) - var(--eien-space-2));
+  left: calc(var(--marker-x) - var(--eien-hairline) / 2);
   width: var(--eien-hairline);
   height: var(--marker-h);
 }

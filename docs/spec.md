@@ -355,9 +355,12 @@ words, as on the page.
   cards on the blotter in the book's order, each with its number, title, first
   lines and words, the open chapter marked. A card opens its chapter; dragging
   one, or Alt and an arrow, puts it elsewhere in the book (the folder's order,
-  as the list's drag does); the arrows move between cards; Esc, or the menu
-  again, gives the page back. Opening another note gives it back too. With no
-  book to show, one line of news says so.
+  as the list's drag does; dropped on a folder in the sidebar, it moves there);
+  the arrows move between cards; Esc, or the menu again, gives the page back,
+  where the writer was in it. Opening another note, choosing a view or Compare
+  gives it back too; the Format menu does nothing to a page the cards hide.
+  The keyboard is always on a card or Close, and goes to the page with it.
+  With no book to show, one line of news says so.
 - **Spellcheck:** off until turned on, using the platform's own checker.
 
 ---

@@ -52,6 +52,10 @@
   border-color: var(--eien-rule-strong);
   border-left-color: transparent;
 }
+.card:active {
+  background: var(--eien-paper-raised);
+  border-color: var(--eien-rule-strong);
+}
 .card:focus-visible {
   outline: var(--eien-mark-w) solid var(--eien-focus);
   outline-offset: calc(var(--eien-mark-w) * -1);
@@ -66,6 +70,8 @@
 }
 .card__title {
   grid-row: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-heading);
   line-height: 1.2;
@@ -91,6 +97,7 @@
 /* A card being dragged: lifted, following the pointer (../list/drag.ts). */
 .board__cards .card.is-lifted {
   position: fixed;
+  background: var(--eien-paper-raised);
   left: calc(var(--drag-x) + var(--drag-dx));
   top: calc(var(--drag-y) + var(--drag-dy));
   width: var(--drag-w);

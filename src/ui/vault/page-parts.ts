@@ -30,7 +30,7 @@ export interface PagePartsOf {
   tell(message: string): void;
   /** Run a file operation, then read the vault again (one at a time). */
   act(operation: () => Promise<unknown>): Promise<void>;
-  openNote(path: string): void;
+  openNote(path: string): Promise<void>;
 }
 
 export interface PageParts {
