@@ -3,7 +3,7 @@
 
 import { readMarkdown } from '../markdown';
 import { frontMatterTags, inlineTags, uniqueTags } from '../tags';
-import { countWords, frontMatterEnd, toEditor } from '../text';
+import { countPlainWords, frontMatterEnd, toEditor } from '../text';
 
 export interface NoteSummary {
   /** The first words, marks taken out; "" for an empty note. */
@@ -37,7 +37,7 @@ export function readNote(raw: string, title: string): ReadNote {
   const { plain, taggable } = readMarkdown(text.slice(end));
   return {
     preview: previewOf(plain, title),
-    words: countWords(text),
+    words: countPlainWords(plain),
     tags: uniqueTags([...frontMatterTags(yaml), ...inlineTags(taggable)]),
     plain,
   };

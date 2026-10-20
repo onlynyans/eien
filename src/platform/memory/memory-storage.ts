@@ -57,7 +57,13 @@ export class MemoryStorage implements Storage {
 
   async write(path: string, text: string, expected: string | null): Promise<WriteResult> {
     const at = vaultPath(path);
-    const current = await this.read(at);
+    for (let folder = parentOf(at); folder; folder = parentOf(folder)) {
+      if (this.#files.has(folder)) throw new Error(`Not a folder: ${folder}`);
+    }
+    if (this.#folders.has(at)) throw new Error(`A folder: ${at}`);
+    // Checked and written with no wait between, so two overlapping writes can't both pass.
+    const file = this.#files.get(at);
+    const current = file ? { text: file.text, version: versionOf(file.text) } : null;
     if ((current?.version ?? null) !== expected) return { ok: false, current };
     this.#files.set(at, { text, modified: ++this.#clock });
     this.#addParents(at);

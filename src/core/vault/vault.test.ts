@@ -110,6 +110,13 @@ describe('folder settings', () => {
     });
   });
 
+  it('reads a file saved with a byte-order mark, as some Windows editors save it', () => {
+    expect(parseFolderSettings('\uFEFF{"order":["a.md"],"book":{}}')).toEqual({
+      order: ['a.md'],
+      book: {},
+    });
+  });
+
   it.each([
     ['no file', null],
     ['empty', ''],

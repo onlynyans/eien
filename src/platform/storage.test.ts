@@ -15,7 +15,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { VaultPathError } from '../core/paths';
-import { type DiskStorage, openDiskStorage, tempNameOf } from './electron/disk-storage';
+import {
+  type DiskStorage,
+  openDiskStorage,
+  tempNameOf,
+  writeDurably,
+} from './electron/disk-storage';
 import { recoverStrayTemps } from './electron/recover-temps';
 import { MemoryStorage } from './memory/memory-storage';
 import type { Storage } from './storage';
@@ -144,9 +149,26 @@ for (const [name, make] of Object.entries(implementations)) {
       },
     );
 
+    /**
+     * Watch, and wait until the watcher is really listening: a system's
+     * watcher can miss what happens in its first moments (macOS's does), so a
+     * marker is written until it's heard. The app starts watching when a
+     * vault opens, long before anything is written.
+     */
+    async function listening(seen: string[]): Promise<() => void> {
+      const stop = subject.storage.watch((paths) => seen.push(...paths));
+      for (let attempt = 0; !seen.includes('Ready.md'); attempt++) {
+        if (attempt === 50) throw new Error('the watcher never heard anything');
+        await subject.putOutside('Ready.md', String(attempt));
+        await new Promise((settle) => setTimeout(settle, 100));
+      }
+      seen.length = 0;
+      return stop;
+    }
+
     it('tells a watcher what changed', async () => {
       const seen: string[] = [];
-      const stop = subject.storage.watch((paths) => seen.push(...paths));
+      const stop = await listening(seen);
       try {
         await subject.putOutside('Watched.md', 'changed');
         await expect.poll(() => seen, { timeout: 3000 }).toContain('Watched.md');
@@ -155,9 +177,44 @@ for (const [name, make] of Object.entries(implementations)) {
       }
     });
 
+    it('keeps telling a watcher while a file changes without pause', async () => {
+      const seen: string[] = [];
+      const stop = await listening(seen);
+      let writing = true;
+      const busy = (async () => {
+        for (let n = 0; writing; n++) {
+          await subject.putOutside('Busy.md', String(n));
+          await new Promise((settle) => setTimeout(settle, 30));
+        }
+      })();
+      try {
+        await new Promise((settle) => setTimeout(settle, 200));
+        await subject.putOutside('Other.md', 'changed meanwhile');
+        await expect.poll(() => seen, { timeout: 3000 }).toContain('Other.md');
+      } finally {
+        writing = false;
+        await busy;
+        stop();
+      }
+    });
+
+    it('reads a note under the name it was listed by, accents composed or not', async () => {
+      // As a Mac app (or a sync from one) may write it; Linux and Android keep the bytes.
+      await subject.putOutside('Cafe\u0301.md', 'decomposed');
+      const listed = (await subject.storage.list()).map((entry) => entry.path);
+      expect(listed).toHaveLength(1);
+      const name = listed[0] ?? '';
+      expect(name.normalize('NFC')).toBe('Café.md');
+      expect((await subject.storage.read(name))?.text).toBe('decomposed');
+      const read = await subject.storage.read(name);
+      const written = await subject.storage.write(name, 'changed', read?.version ?? null);
+      expect(written.ok).toBe(true);
+      expect((await subject.storage.list()).map((entry) => entry.path)).toEqual([name]); // no twin
+    });
+
     it('tells a watcher about the vault’s settings, and no other hidden file', async () => {
       const seen: string[] = [];
-      const stop = subject.storage.watch((paths) => seen.push(...paths));
+      const stop = await listening(seen);
       try {
         await subject.putOutside('.eien/other.json', '{}');
         await subject.putOutside('Fic/.hidden.md', 'x');
@@ -183,6 +240,15 @@ describe('disk only', () => {
     storage = await openDiskStorage(root);
   });
   afterEach(() => rm(root, { recursive: true, force: true }));
+
+  it('leaves a file as it is when it changed just before the new text took its place', async () => {
+    const file = join(storage.root, 'Note.md');
+    await writeFile(file, 'theirs');
+    const written = await writeDurably(file, 'mine', async () => false);
+    expect(written).toBe(false);
+    expect(await readFile(file, 'utf8')).toBe('theirs');
+    expect(await readdir(storage.root)).toEqual(['Note.md']); // and no temp file
+  });
 
   it('leaves no temp file behind after a write', async () => {
     await storage.write('Note.md', 'Words.', null);

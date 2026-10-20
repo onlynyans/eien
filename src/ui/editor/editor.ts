@@ -31,6 +31,7 @@ export class NoteEditor {
   readonly #view: EditorView;
   readonly #mode = new Compartment();
   readonly #images = new Compartment();
+  readonly #history = new Compartment();
   readonly #events: EditorEvents;
   #current: EditorMode = 'live';
   /** Changes we make ourselves aren't the writer's typing. */
@@ -58,7 +59,12 @@ export class NoteEditor {
     this.#view.scrollDOM.scrollTop = 0;
   }
 
-  /** The same note's text, changed elsewhere: keep the selection where it can stay. */
+  /**
+   * The same note's text, changed elsewhere: keep the selection where it can
+   * stay, and start the undo history afresh. A reload only comes when nothing
+   * here is unsaved, so the history holds nothing to lose; and an undo must
+   * never step back over the other device's words.
+   */
   replaceText(text: string): void {
     const { main } = this.#view.state.selection;
     this.#quiet = true;
@@ -68,7 +74,9 @@ export class NoteEditor {
         Math.min(main.anchor, text.length),
         Math.min(main.head, text.length),
       ),
+      effects: this.#history.reconfigure([]),
     });
+    this.#view.dispatch({ effects: this.#history.reconfigure(history()) });
     this.#quiet = false;
   }
 
@@ -103,7 +111,7 @@ export class NoteEditor {
       run: () => this.format(command),
     }));
     const extensions: Extension[] = [
-      history(),
+      this.#history.of(history()),
       keymap.of([...formatKeys, ...historyKeymap, ...defaultKeymap]),
       eienMarkdown(),
       markdownColours,

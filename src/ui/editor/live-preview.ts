@@ -6,6 +6,8 @@ import { syntaxTree } from '@codemirror/language';
 import { type EditorState, Facet, type Range, StateField } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
+import { isLink, referenceLabels } from '../../core/markdown';
+import { frontMatterEnd } from '../../core/text';
 import { CheckboxWidget, ImageWidget, SceneBreakWidget, TableWidget } from './widgets';
 
 export type PreviewMode = 'live' | 'reading';
@@ -60,10 +62,20 @@ function build(state: EditorState): DecorationSet {
       out.push(line(cls).range(doc.line(n).from));
   };
 
-  syntaxTree(state).iterate({
+  const tree = syntaxTree(state);
+  const slice = (from: number, to: number) => doc.sliceString(from, to);
+  const references = referenceLabels(tree, slice);
+
+  // Front matter is the note's data, not its Markdown: shown quietly, never drawn as a
+  // scene break and a heading. It's short; past 64 KB a "---" isn't front matter.
+  const frontMatter = frontMatterEnd(doc.sliceString(0, Math.min(doc.length, 65_536)));
+  if (frontMatter > 0) lineClass(0, Math.max(0, frontMatter - 1), 'eien-front-matter');
+
+  tree.iterate({
     enter(node: SyntaxNodeRef) {
       const { from, to } = node;
       const name = node.name;
+      if (from < frontMatter && name !== 'Document') return to <= frontMatter ? false : undefined;
       const active = isActive(from, to);
 
       const heading = /^ATXHeading(\d)$/.exec(name);
@@ -106,6 +118,7 @@ function build(state: EditorState): DecorationSet {
           out.push(mark('eien-link').range(from, to));
           return;
         case 'Link':
+          if (!isLink(node.node, slice, references)) return; // "[sic]": the writer's brackets
           linkDecorations(node, active, out);
           return false;
         case 'URL':
@@ -113,6 +126,7 @@ function build(state: EditorState): DecorationSet {
           out.push(mark('eien-link').range(from, to));
           return;
         case 'Image':
+          if (!isLink(node.node, slice, references)) return;
           if (!active) {
             const src = node.node.getChild('URL');
             const alt = /^!\[([^\]]*)\]/.exec(doc.sliceString(from, to))?.[1] ?? '';
@@ -158,6 +172,12 @@ function build(state: EditorState): DecorationSet {
         case 'HTMLTag':
           htmlTag(from, to);
           return;
+        case 'HTMLBlock':
+          // A line that starts with a tag, as AO3's "<p>…</p>" do: each tag, as mid-line.
+          for (const tag of doc.sliceString(from, to).matchAll(/<[^<>]*>/g)) {
+            htmlTag(from + tag.index, from + tag.index + tag[0].length);
+          }
+          return false;
       }
       return;
     },

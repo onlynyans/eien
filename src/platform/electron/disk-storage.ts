@@ -15,7 +15,7 @@ import {
   stat,
 } from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
-import { isHiddenName, isWatchedPath, VaultPathError, vaultPath } from '../../core/paths';
+import { isHiddenName, isWatchedPath, nameKey, VaultPathError, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
 import { type FileState, MAX_BYTES_READ, type Storage, type WriteResult } from '../storage';
 
@@ -28,6 +28,8 @@ const WATCH_SETTLE_MS = 120;
 
 export class DiskStorage implements Storage {
   readonly #root: string;
+  /** The write under way for each file, by its name key, so the next waits for it. */
+  readonly #writing = new Map<string, Promise<void>>();
 
   /** `root` must be a real, absolute folder path (see `openDiskStorage`). */
   constructor(root: string) {
@@ -75,14 +77,7 @@ export class DiskStorage implements Storage {
   }
 
   async read(path: string): Promise<FileState | null> {
-    const file = await this.#resolve(path);
-    try {
-      const text = await readFile(file, 'utf8');
-      return { text, version: versionOf(text) };
-    } catch (error) {
-      if (isNotFound(error)) return null;
-      throw error;
-    }
+    return this.#readFile(await this.#resolve(path));
   }
 
   async readBytes(path: string): Promise<Uint8Array | null> {
@@ -92,13 +87,53 @@ export class DiskStorage implements Storage {
     return new Uint8Array(await readFile(file));
   }
 
+  /**
+   * Writes to one file run one at a time, so two can't both pass the
+   * version check. The version is checked again just before the new text
+   * takes the file's place, so a change another program makes while the
+   * text is flushed to disk is refused, not overwritten.
+   */
   async write(path: string, text: string, expected: string | null): Promise<WriteResult> {
     const file = await this.#resolve(path);
-    const current = await this.read(path);
-    if ((current?.version ?? null) !== expected) return { ok: false, current };
-    await mkdir(dirname(file), { recursive: true });
-    await writeDurably(file, text);
-    return { ok: true, version: versionOf(text) };
+    return this.#oneAtATime(nameKey(vaultPath(path)), async () => {
+      const current = await this.#readFile(file);
+      if ((current?.version ?? null) !== expected) return { ok: false, current };
+      await mkdir(dirname(file), { recursive: true });
+      let changed: FileState | null = null;
+      const written = await writeDurably(file, text, async () => {
+        const now = await this.#readFile(file);
+        if ((now?.version ?? null) === expected) return true;
+        changed = now;
+        return false;
+      });
+      return written ? { ok: true, version: versionOf(text) } : { ok: false, current: changed };
+    });
+  }
+
+  /** Run `task` after every earlier one for `key` has finished. */
+  #oneAtATime<T>(key: string, task: () => Promise<T>): Promise<T> {
+    const before = this.#writing.get(key) ?? Promise.resolve();
+    const run = before.then(task, task);
+    const settled = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.#writing.set(key, settled);
+    void settled.then(() => {
+      if (this.#writing.get(key) === settled) this.#writing.delete(key);
+    });
+    return run;
+  }
+
+  /** A file's text, or null when there's no file there (or a folder, or something under a file). */
+  async #readFile(file: string): Promise<FileState | null> {
+    try {
+      const text = await readFile(file, 'utf8');
+      return { text, version: versionOf(text) };
+    } catch (error) {
+      if (isNoFile(error)) return null;
+      throw error;
+    }
   }
 
   watch(onChange: (paths: string[]) => void): () => void {
@@ -111,8 +146,12 @@ export class DiskStorage implements Storage {
         const path = name.split(sep).join('/');
         if (!isWatchedPath(path)) return; // our temp files, dot-files, .eien but its settings
         pending.add(path);
-        clearTimeout(timer);
+        // A burst is told WATCH_SETTLE_MS after its first change, with all that changed
+        // meanwhile. Waiting for quiet instead would let one file written without pause
+        // (a sync tool's download, another app's autosave) hold every report back.
+        if (timer !== undefined) return;
         timer = setTimeout(() => {
+          timer = undefined;
           const paths = [...pending];
           pending = new Set();
           onChange(paths);
@@ -164,14 +203,24 @@ const isInside = (root: string, path: string): boolean => {
   return rel === '' || (!rel.startsWith('..') && !rel.startsWith(sep) && !/^[a-zA-Z]:/.test(rel));
 };
 
-const isNotFound = (error: unknown): boolean =>
-  typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
+/** No file there: nothing, a folder, or a path through a file. */
+const isNoFile = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  (error.code === 'ENOENT' || error.code === 'ENOTDIR' || error.code === 'EISDIR');
 
 /**
  * Write through a hidden temp file: write, flush to disk, rename over the
  * file, then flush the folder. A crash leaves the old file or the new one.
+ * If `stillWanted` answers false just before the rename, the temp file is
+ * removed, the file is left as it is, and the answer is false.
  */
-export async function writeDurably(file: string, text: string): Promise<void> {
+export async function writeDurably(
+  file: string,
+  text: string,
+  stillWanted: () => Promise<boolean> = async () => true,
+): Promise<boolean> {
   // `file` is a system path ("\\" on Windows): its name comes from node:path, not the vault's "/" helpers.
   const temp = join(dirname(file), tempNameOf(basename(file)));
   const handle = await open(temp, 'w');
@@ -181,8 +230,13 @@ export async function writeDurably(file: string, text: string): Promise<void> {
   } finally {
     await handle.close();
   }
+  if (!(await stillWanted())) {
+    await rm(temp, { force: true });
+    return false;
+  }
   await renameWithRetry(temp, file);
   await syncFolder(dirname(file));
+  return true;
 }
 
 /** On Windows a file another program has open (a sync tool, a virus scan) can't be replaced for a moment. */

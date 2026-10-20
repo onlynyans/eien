@@ -14,6 +14,7 @@ import {
   withSetting,
 } from '../../core/config';
 import { VAULT_CONFIG } from '../../core/paths';
+import { withoutBom } from '../../core/text';
 import { CHANNEL } from '../../platform/bridge';
 import { readDeviceFile, updateDeviceFile } from './device-settings';
 import { answer } from './ipc';
@@ -42,7 +43,7 @@ async function readVaultConfig(vault: VaultSession) {
   const file = await vault.storage().read(VAULT_CONFIG);
   if (!file) return { raw: undefined, version: null };
   try {
-    return { raw: JSON.parse(file.text) as unknown, version: file.version };
+    return { raw: JSON.parse(withoutBom(file.text)) as unknown, version: file.version };
   } catch {
     return null;
   }

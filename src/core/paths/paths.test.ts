@@ -46,6 +46,8 @@ describe('nameProblems', () => {
     ['nul', 'reserved'],
     ['COM1.md', 'reserved'],
     ['lpt9', 'reserved'],
+    ['COM0.md', 'reserved'], // listed by Windows now, as LPT0 is
+    ['lpt0', 'reserved'],
     ['ends with dot.', 'trailing-dot-or-space'],
     ['ends with space ', 'trailing-dot-or-space'],
     [' starts with space', 'leading-space'],
@@ -152,7 +154,7 @@ describe('vaultPath', () => {
     ['', ''],
     ['Note.md', 'Note.md'],
     ['Fic/A Mended Scarf/Seventeen.md', 'Fic/A Mended Scarf/Seventeen.md'],
-    ['Cafe\u0301.md', 'Café.md'],
+    ['Cafe\u0301.md', 'Cafe\u0301.md'], // kept as written: the disk may hold it this way
   ])('accepts %j', (path, normal) => {
     expect(vaultPath(path)).toBe(normal);
   });

@@ -62,6 +62,12 @@ export const editorTheme = EditorView.theme({
     backgroundColor: 'var(--eien-well)',
     padding: '0.05em 0.25em',
   },
+  // Front matter: the note's data, in the machine's voice, set back.
+  '.eien-front-matter': {
+    fontFamily: 'var(--eien-face-mono)',
+    fontSize: 'var(--eien-size-meta)',
+    color: 'var(--eien-pencil)',
+  },
   '.eien-codeblock': {
     fontFamily: 'var(--eien-face-mono)',
     fontSize: 'var(--eien-size-source)',

@@ -2,7 +2,8 @@
 // syncs to: macOS, Windows, Linux, Android and iOS (spec §3, Paths).
 
 /** Windows refuses these as names, with or without an extension, in any case. */
-const RESERVED = /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(\..*)?$/i;
+const RESERVED_WORD = '(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])';
+const RESERVED = new RegExp(`^${RESERVED_WORD}(\\..*)?$`, 'i');
 
 /** Characters some system can't store in a name, and control characters. */
 // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what this refuses
@@ -25,7 +26,8 @@ export function nameProblems(name: string): NameProblem[] {
   if (name.length === 0) return ['empty'];
   if (name === '.' || name === '..') return ['dot-name'];
   const problems: NameProblem[] = [];
-  if (FORBIDDEN.test(name)) problems.push('forbidden-character');
+  // A lone half of a surrogate pair: the disk stores it as U+FFFD, under another name.
+  if (FORBIDDEN.test(name) || !name.isWellFormed()) problems.push('forbidden-character');
   if (RESERVED.test(name)) problems.push('reserved');
   if (/[. ]$/.test(name)) problems.push('trailing-dot-or-space');
   if (name.startsWith(' ')) problems.push('leading-space');
@@ -45,9 +47,13 @@ export const VAULT_CONFIG = '.eien/config.json';
 export const isWatchedPath = (path: string): boolean =>
   path === VAULT_CONFIG || !path.split('/').some(isHiddenName);
 
-/** Two names that one system would treat as the same file (macOS and Windows
- * ignore case; all of them ignore Unicode normalisation differences). */
-export const nameKey = (name: string): string => name.normalize('NFC').toLocaleLowerCase('en-US');
+/**
+ * Two names that one system would treat as the same file. macOS and Windows
+ * ignore case, folded fully as macOS does ("Straße" is "STRASSE", "ſ" is
+ * "s", a final "ς" is "σ"); all of them ignore Unicode normalisation.
+ */
+export const nameKey = (name: string): string =>
+  name.normalize('NFC').toUpperCase().toLowerCase().normalize('NFC');
 
 /**
  * A name made from what the writer typed: forbidden characters become
@@ -61,7 +67,9 @@ export function safeName(typed: string, fallback = 'Untitled', maxBytes = MAX_NA
     .replace(new RegExp(FORBIDDEN.source, 'g'), ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[. ]+|[. ]+$/g, '');
-  if (RESERVED.test(name)) name = `${name}-`;
+  // "con.txt" → "con-.txt": the "-" right after the reserved word, where neither an
+  // extension nor cutting to length can undo it.
+  if (RESERVED.test(name)) name = name.replace(new RegExp(`^${RESERVED_WORD}`, 'i'), '$1-');
   name = fitBytes(name, maxBytes).replace(/[. ]+$/, '');
   return name.length > 0 ? name : fallback;
 }

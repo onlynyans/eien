@@ -4,12 +4,15 @@
 // sibling copy and the file keeps the other. Words are never lost.
 
 import { baseName, conflictName, parentOf, titleOf } from '../../core/paths';
-import { diskChange } from '../../core/saving';
+import { type DiskChange, diskChange } from '../../core/saving';
 import { formatOf, fromEditor, type TextFormat, toEditor } from '../../core/text';
 import type { VaultBridge } from '../../platform/bridge';
 
 /** Typing stops this long before a save. */
 export const SAVE_AFTER_MS = 800;
+
+/** How many times one save writes while the file keeps changing only in its bytes. */
+const WRITE_TRIES = 3;
 
 export type SaveState = 'saved' | 'unsaved' | 'saving' | 'failed';
 
@@ -112,19 +115,24 @@ export class NoteSession {
     if (text === this.#base) return this.#setState('saved');
     this.#setState('saving');
     try {
-      const raw = fromEditor(text, this.#format);
-      const result = await this.#vault.write(this.#path, raw, this.#version);
-      if (result.ok) {
-        this.#base = text;
-        this.#version = result.version;
-      } else if (result.current === null) {
-        // Deleted elsewhere while there were edits here: put the note back.
-        const again = await this.#vault.write(this.#path, raw, null);
-        if (!again.ok) return this.#retryLater();
-        this.#base = text;
-        this.#version = again.version;
-      } else {
-        await this.#resolve(text, result.current.text, result.current.version);
+      for (let attempt = 0; attempt < WRITE_TRIES; attempt++) {
+        const raw = fromEditor(text, this.#format);
+        const result = await this.#vault.write(this.#path, raw, this.#version);
+        if (result.ok) {
+          this.#base = text;
+          this.#version = result.version;
+        } else if (result.current === null) {
+          // Deleted elsewhere while there were edits here: put the note back.
+          const again = await this.#vault.write(this.#path, raw, null);
+          if (!again.ok) return this.#retryLater();
+          this.#base = text;
+          this.#version = again.version;
+        } else if (
+          (await this.#resolve(text, result.current.text, result.current.version)) === 'none'
+        ) {
+          continue; // the same words in other bytes: write again, now at the file's version
+        }
+        break;
       }
       this.#setState(this.#text === this.#base ? 'saved' : 'unsaved');
       if (this.#state === 'unsaved') this.edit(this.#text); // typed during the save
@@ -146,10 +154,17 @@ export class NoteSession {
   }
 
   /** The file holds `diskRaw` at `version`; the editor holds `text`. */
-  async #resolve(text: string, diskRaw: string, version: string): Promise<void> {
+  async #resolve(text: string, diskRaw: string, version: string): Promise<DiskChange['kind']> {
     const disk = toEditor(diskRaw);
     const change = diskChange(this.#base, text, disk);
-    if (change.kind === 'none') return;
+    if (change.kind === 'none') {
+      // The same words, perhaps in other bytes: another editor's line endings or
+      // byte-order mark. Take its version, or every save after this is refused;
+      // and its format, which is what the file now is.
+      this.#version = version;
+      this.#format = formatOf(diskRaw);
+      return change.kind;
+    }
     if (change.kind === 'same' || change.kind === 'reload') {
       this.#base = disk;
       this.#version = version;
@@ -159,9 +174,10 @@ export class NoteSession {
         this.#events.replaced(disk);
       }
       this.#setState('saved');
-      return;
+      return change.kind;
     }
     await this.#keepAsCopy(text);
+    return change.kind;
   }
 
   /** Both changed: write the writer's text beside the note and carry on there. */

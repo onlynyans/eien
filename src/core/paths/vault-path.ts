@@ -11,9 +11,11 @@ export class VaultPathError extends Error {
 }
 
 /**
- * `path` checked and normalised: "/" separators, no empty parts, no "." or
- * "..", nothing absolute, every part a valid name. Throws VaultPathError.
- * The empty string is the vault itself.
+ * `path` checked: "/" separators, no empty parts, no "." or "..", nothing
+ * absolute, every part a valid name. Throws VaultPathError. The empty
+ * string is the vault itself. Names are kept exactly as written: on Linux
+ * and Android "Café" composed and decomposed are two different files, so
+ * a listed name must reach the disk unchanged. Compare names with nameKey.
  */
 export function vaultPath(path: string): string {
   if (typeof path !== 'string') throw new VaultPathError(String(path), 'not text');
@@ -25,7 +27,7 @@ export function vaultPath(path: string): string {
     if (part === '') throw new VaultPathError(path, 'empty part');
     if (!isValidName(part)) throw new VaultPathError(path, `invalid name "${part}"`);
   }
-  return parts.map((part) => part.normalize('NFC')).join('/');
+  return path;
 }
 
 /** The folder holding `path` ("" for the vault itself). */
