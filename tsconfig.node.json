@@ -6,6 +6,7 @@
     "tsBuildInfoFile": "node_modules/.cache/tsc/node.tsbuildinfo"
   },
   "include": [
+    "src/core",
     "src/app/electron",
     "src/platform/bridge.ts",
     "tests/*.ts",
