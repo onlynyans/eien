@@ -12,6 +12,12 @@ const FORBIDDEN = /[<>:"/\\|?*\u0000-\u001f\u007f]/;
 /** Most file systems cap a name at 255 bytes of UTF-8. */
 export const MAX_NAME_BYTES = 255;
 
+/**
+ * The longest name Eien makes: room is left for the 10 bytes a save's temp
+ * file adds (".<name>.eien.tmp"), so a note Eien named can always be saved.
+ */
+export const MAX_MADE_NAME_BYTES = MAX_NAME_BYTES - 10;
+
 export type NameProblem =
   | 'empty'
   | 'dot-name'
@@ -46,9 +52,21 @@ export const VAULT_CONFIG = '.eien/config.json';
 /** The vault's pinned notes, beside its settings, and watched as they are. */
 export const VAULT_PINS = '.eien/pinned.json';
 
-/** A change a watcher reports: nothing hidden (temp files, dot-files, .eien) but the vault's settings and pins. */
-export const isWatchedPath = (path: string): boolean =>
-  path === VAULT_CONFIG || path === VAULT_PINS || !path.split('/').some(isHiddenName);
+/** A folder's own settings (spec §2): its order, and whether it's a book. Watched, beside its notes. */
+export const FOLDER_SETTINGS_NAME = '.eien-folder.json';
+
+/**
+ * A change a watcher reports: nothing hidden (temp files, dot-files, .eien)
+ * but the vault's settings and pins, and a folder's settings.
+ */
+export function isWatchedPath(path: string): boolean {
+  if (path === VAULT_CONFIG || path === VAULT_PINS) return true;
+  const parts = path.split('/');
+  const last = parts.length - 1;
+  return parts.every(
+    (name, i) => !isHiddenName(name) || (i === last && name === FOLDER_SETTINGS_NAME),
+  );
+}
 
 /**
  * Two names that one system would treat as the same file. macOS and Windows
@@ -64,7 +82,11 @@ export const nameKey = (name: string): string =>
  * a reserved name gets a trailing "-", and it's cut to `maxBytes` (whole
  * characters only). Empty input gives `fallback`.
  */
-export function safeName(typed: string, fallback = 'Untitled', maxBytes = MAX_NAME_BYTES): string {
+export function safeName(
+  typed: string,
+  fallback = 'Untitled',
+  maxBytes = MAX_MADE_NAME_BYTES,
+): string {
   let name = typed
     .normalize('NFC')
     .replace(new RegExp(FORBIDDEN.source, 'g'), ' ')
@@ -88,7 +110,7 @@ export function utf8Length(text: string): number {
 }
 
 /** `text` cut to at most `max` bytes of UTF-8, never inside a character. */
-function fitBytes(text: string, max: number): string {
+export function fitBytes(text: string, max: number): string {
   let out = '';
   let bytes = 0;
   for (const char of text) {

@@ -1,11 +1,11 @@
 // A folder's own settings, in ".eien-folder.json" beside its notes
 // (spec §2): the drag-and-drop order, and whether the folder is a book.
 
-import { nameKey } from '../paths';
+import { FOLDER_SETTINGS_NAME, nameKey } from '../paths';
 import { withoutBom } from '../text';
 import { byName } from './tree';
 
-export const FOLDER_SETTINGS_NAME = '.eien-folder.json';
+export { FOLDER_SETTINGS_NAME };
 
 export interface FolderSettings {
   /** Note names in the writer's order. */
@@ -108,10 +108,27 @@ export function placedBefore(
   return [...rest.slice(0, index), name, ...rest.slice(index)];
 }
 
-/** `order` with the note `from` now called `to`. */
-export const renamedInOrder = (order: readonly string[], from: string, to: string): string[] =>
-  order.map((name) => (name === from ? to : name));
+/** Where `name` is listed in `order`: exactly, or else case and accents aside, as orderNames reads it. */
+function listedAt(order: readonly string[], name: string): number {
+  const exact = order.indexOf(name);
+  return exact >= 0 ? exact : order.findIndex((listed) => nameKey(listed) === nameKey(name));
+}
+
+/** `order` with the note `from` now called `to`, in its place. */
+export function renamedInOrder(order: readonly string[], from: string, to: string): string[] {
+  const at = listedAt(order, from);
+  return at < 0 ? [...order] : order.map((name, i) => (i === at ? to : name));
+}
 
 /** `order` without the note `name`. */
-export const withoutInOrder = (order: readonly string[], name: string): string[] =>
-  order.filter((other) => other !== name);
+export function withoutInOrder(order: readonly string[], name: string): string[] {
+  const at = listedAt(order, name);
+  return at < 0 ? [...order] : order.filter((_, i) => i !== at);
+}
+
+/** `order` with only the names that are there (spec §2: missing ones are dropped on the next write). */
+export function presentInOrder(order: readonly string[], names: readonly string[]): string[] {
+  // orderNames puts the listed names that are there first, spelled as the files are.
+  const listed = names.filter((name) => listedAt(order, name) >= 0).length;
+  return orderNames(names, order).slice(0, listed);
+}

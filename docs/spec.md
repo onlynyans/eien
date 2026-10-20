@@ -248,6 +248,18 @@ CommonMark plus GitHub extensions, and three common additions:
   sends a note or folder to the system's trash (the Recycle Bin on Windows),
   saving the open note first; the list says where it went. If the trash
   fails, nothing is deleted and the list says why.
+- While the open note is moved or trashed, the page holds still (typing isn't
+  taken) and its last words are saved first. If they can't be saved (the disk
+  is full), nothing moves: the words stay on the page and the list says why.
+  A note sent to the trash never saves again.
+- A move never replaces anything: a file is given its new name with a link,
+  which fails if something is there (even something that arrived a moment
+  ago), and only then loses its old name. Folders, and disks without links,
+  are looked at once more just before the rename.
+- Names Eien makes stop at 245 bytes, leaving room for a save's temp file; a
+  longer name made elsewhere saves through a shortened temp name.
+- A folder's `.eien-folder.json` is watched, so an order from another device
+  shows at once. Writing an order drops names that aren't there.
 - Every menu opens from the keyboard too (Shift+F10 or the menu key), and a
   redraw never takes the keyboard's place in the list or the sidebar.
 
@@ -260,14 +272,19 @@ names, sixteen files at a time; a note over 8 MB is listed but not read. A
 write updates the index before it returns, so a new note is listed at once.
 
 Search (⇧⌘F, or the field under the vault's name) finds the notes holding
-every word of the query, in the title or the text, with case, accents, curly
-quotes and full-width forms aside; "quoted words" are a phrase. Notes whose
+every word of the query, in the title or the text, with case, accents (the
+combining marks of Latin, Greek and Cyrillic, never another script's vowel
+signs), curly quotes and full-width forms aside; "quoted words" are a phrase. Notes whose
 title holds the words come first, then the most recently changed; the first
 200 are listed, with the words around the match. Esc clears it.
 
 Tags follow the same Markdown as the editor: a "#" in code, a link, an
 address, HTML or after a "\\" is not a tag. A tag needs a letter; case aside,
-#Draft is #draft, and the sidebar shows the first spelling. Tags count as
+#Draft is #draft (folded fully: #Straße is #STRASSE, #İstanbul is
+#istanbul), and the sidebar shows the first spelling. Previews and snippets
+are cut between whole characters: an emoji made of several is never split. A
+paragraph of more than 64 lines is read in pieces of 64, as the parser takes
+seconds over one long paragraph full of brackets. Tags count as
 words, as on the page.
 
 ### Writing tools

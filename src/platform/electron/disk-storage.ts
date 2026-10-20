@@ -4,6 +4,7 @@
 import { createHash } from 'node:crypto';
 import { type Dirent, type FSWatcher, watch } from 'node:fs';
 import {
+  link,
   lstat,
   mkdir,
   open,
@@ -13,9 +14,19 @@ import {
   rename,
   rm,
   stat,
+  unlink,
 } from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
-import { isHiddenName, isWatchedPath, nameKey, VaultPathError, vaultPath } from '../../core/paths';
+import {
+  fitBytes,
+  isHiddenName,
+  isWatchedPath,
+  MAX_NAME_BYTES,
+  nameKey,
+  utf8Length,
+  VaultPathError,
+  vaultPath,
+} from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
 import {
   type FileState,
@@ -25,9 +36,21 @@ import {
   type WriteResult,
 } from '../storage';
 
-/** The hidden file a write goes through: ".<name>.eien.tmp" beside it. */
-export const tempNameOf = (name: string): string => `.${name}.eien.tmp`;
 export const TEMP_SUFFIX = '.eien.tmp';
+
+/**
+ * The hidden file a write goes through: ".<name>.eien.tmp" beside it. A
+ * name near the system's limit is cut, with a hash of the whole name so two
+ * long names never share a temp file; if a crash leaves it, it's recovered
+ * under the cut name, its words kept.
+ */
+export function tempNameOf(name: string): string {
+  const full = `.${name}${TEMP_SUFFIX}`;
+  if (utf8Length(full) <= MAX_NAME_BYTES) return full;
+  const hash = createHash('sha256').update(name).digest('hex').slice(0, 8);
+  const room = MAX_NAME_BYTES - utf8Length(TEMP_SUFFIX) - hash.length - 2;
+  return `.${fitBytes(name, room)}~${hash}${TEMP_SUFFIX}`;
+}
 
 /** Sends a file or folder (an absolute path) to the system's trash; throws when it can't. */
 export type TrashItem = (path: string) => Promise<void>;
@@ -143,7 +166,21 @@ export class DiskStorage implements Storage {
       if (atTarget !== null && atTarget !== (await realpath(source)))
         return { ok: false, reason: 'taken' };
       await mkdir(dirname(target), { recursive: true });
-      await renameWithRetry(source, target);
+      const free = async () => (await lstat(target).catch(() => null)) === null;
+      if (atTarget !== null) {
+        await renameWithRetry(source, target); // the same file, under another case
+      } else if (there.isFile()) {
+        const linked = await linkInstead(source, target);
+        if (linked === 'taken') return { ok: false, reason: 'taken' }; // it appeared meanwhile: kept
+        if (linked === 'no links') {
+          if (!(await free())) return { ok: false, reason: 'taken' };
+          await renameWithRetry(source, target);
+        }
+      } else {
+        // A folder can't be linked: look once more, then rename.
+        if (!(await free())) return { ok: false, reason: 'taken' };
+        await renameWithRetry(source, target);
+      }
       await syncFolder(dirname(target));
       if (dirname(source) !== dirname(target)) await syncFolder(dirname(source));
       return { ok: true };
@@ -310,6 +347,31 @@ async function renameWithRetry(from: string, to: string): Promise<void> {
       await new Promise((done) => setTimeout(done, 50 * attempt));
     }
   }
+}
+
+/**
+ * Move a file by giving it its new name and then dropping the old: `link`
+ * never replaces anything, so a file that appeared at `to` meanwhile (a sync
+ * tool's) is safe. On a disk without links (FAT, exFAT, some network drives)
+ * nothing is done, for the caller to rename.
+ */
+async function linkInstead(from: string, to: string): Promise<'moved' | 'taken' | 'no links'> {
+  try {
+    await link(from, to);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'EEXIST') return 'taken';
+    if (['EPERM', 'ENOTSUP', 'EOPNOTSUPP', 'ENOSYS', 'EXDEV'].includes(code ?? ''))
+      return 'no links';
+    throw error;
+  }
+  try {
+    await unlink(from);
+  } catch (error) {
+    await unlink(to).catch(() => undefined); // back as it was: one name
+    throw error;
+  }
+  return 'moved';
 }
 
 /** So the rename itself survives a power cut. Windows can't open a folder for this; it isn't needed there. */

@@ -21,6 +21,7 @@ import {
   parsePins,
   pinsText,
   placedBefore,
+  presentInOrder,
   renamedInOrder,
   withFolderSettings,
   withoutInOrder,
@@ -41,6 +42,8 @@ export interface OrganizeContext {
   session(): NoteSession | null;
   /** The open note was sent to the trash: show nothing. */
   closed(): void;
+  /** Hold the page still while its note is moved or trashed (true), or let it go (false). */
+  freeze?(frozen: boolean): void;
   /** A quiet line in the list: what happened, or why it couldn't. */
   tell(message: string): void;
 }
@@ -100,9 +103,8 @@ export class Organizer {
    * it back. If the trash fails, nothing is deleted, and the writer is told.
    */
   async trash(path: string): Promise<boolean> {
-    const open = this.#ctx.session();
-    const holdsOpen = open !== null && (open.path === path || open.path.startsWith(`${path}/`));
-    if (holdsOpen) await open.flush(); // its last words go to the trash with it
+    const held = await this.#hold(path, `go to ${this.#ctx.trashName}`); // its last words go with it
+    if (held === 'refused') return false;
     try {
       await this.#ctx.vault.trash(path);
     } catch (error) {
@@ -110,8 +112,10 @@ export class Organizer {
         `“${nameOf(path)}” couldn’t go to ${this.#ctx.trashName}, so nothing was deleted: ${reasonOf(error)}`,
       );
       return false;
+    } finally {
+      if (held === 'held') this.#ctx.freeze?.(false);
     }
-    if (holdsOpen) this.#ctx.closed();
+    if (held === 'held') this.#ctx.closed();
     await this.#changePins((pins) => withoutPins(pins, path));
     await this.#changeOrder(parentOf(path), (order) => withoutInOrder(order, baseName(path)));
     this.#ctx.tell(`“${nameOf(path)}” is in ${this.#ctx.trashName}.`);
@@ -148,16 +152,37 @@ export class Organizer {
   }
 
   /** Move or rename `from` to `to`, keeping order, pins and the open note in step. */
+  /**
+   * If the open note is `path` or in it: hold the page still and save it, so
+   * its last words go where it goes. 'refused' when they couldn't be saved —
+   * then nothing happens, and the writer is told; the words stay on the page.
+   */
+  async #hold(path: string, doing: string): Promise<'held' | 'refused' | 'none'> {
+    const open = this.#ctx.session();
+    if (!open || (open.path !== path && !open.path.startsWith(`${path}/`))) return 'none';
+    this.#ctx.freeze?.(true);
+    await open.flush();
+    if (open.state === 'saved') return 'held';
+    this.#ctx.freeze?.(false);
+    this.#ctx.tell(
+      `“${nameOf(open.path)}” has words that couldn’t be saved yet, so it didn’t ${doing}. They’re still on the page.`,
+    );
+    return 'refused';
+  }
+
   async #move(from: string, to: string): Promise<string | null> {
     if (from === to) return to;
     const open = this.#ctx.session();
     const inside = (path: string) => path === from || path.startsWith(`${from}/`);
-    if (open && inside(open.path)) await open.flush(); // nothing half-saved at the old name
+    const held = await this.#hold(from, 'move'); // nothing half-saved at the old name
+    if (held === 'refused') return null;
     let result: Awaited<ReturnType<VaultBridge['move']>>;
     try {
       result = await this.#ctx.vault.move(from, to);
     } catch (error) {
       return this.#refuse(`“${nameOf(from)}” couldn’t be moved: ${reasonOf(error)}`);
+    } finally {
+      if (held === 'held') this.#ctx.freeze?.(false);
     }
     if (!result.ok) {
       const why = {
@@ -185,7 +210,8 @@ export class Organizer {
   async #changeOrder(folder: string, change: (order: string[]) => string[]): Promise<void> {
     const { order } = await this.#ctx.state.folderSettings(folder);
     if (order.length === 0) return;
-    const next = change([...order]);
+    // Names that aren't there any more go (spec §2), and listed ones are spelled as the files are.
+    const next = change(presentInOrder(order, this.#ctx.state.namesIn(folder)));
     if (next.join('\n') !== order.join('\n')) await this.#changeFolder(folder, { order: next });
   }
 

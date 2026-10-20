@@ -79,7 +79,10 @@ export class PageView {
       else return;
       event.preventDefault();
     });
-    this.#titleField.addEventListener('blur', () => this.#finishTitle(true));
+    // Switching to another app isn't leaving the field: the half-typed title waits.
+    this.#titleField.addEventListener('blur', () => {
+      if (document.hasFocus()) this.#finishTitle(true);
+    });
     this.editor = new NoteEditor(this.#editorHost, {
       changed: (text) => {
         this.#countLater(text);

@@ -32,6 +32,9 @@ export class NoteEditor {
   readonly #mode = new Compartment();
   readonly #images = new Compartment();
   readonly #history = new Compartment();
+  readonly #lock = new Compartment();
+  /** Held still while its note is moved or trashed: no typing reaches it. */
+  #locked = false;
   readonly #events: EditorEvents;
   #current: EditorMode = 'live';
   /** Changes we make ourselves aren't the writer's typing. */
@@ -105,6 +108,17 @@ export class NoteEditor {
     this.#view.focus();
   }
 
+  /** Where images come from: changed when the note moves to another folder. */
+  setImageLoader(loadImage: ImageLoader): void {
+    this.#view.dispatch({ effects: this.#images.reconfigure(imageLoader.of(loadImage)) });
+  }
+
+  /** Hold the text still (true) or let the writer type again (false). */
+  setLocked(locked: boolean): void {
+    this.#locked = locked;
+    this.#view.dispatch({ effects: this.#lock.reconfigure(lockExtensions(locked)) });
+  }
+
   #state(text: string, loadImage: ImageLoader): EditorState {
     const formatKeys = FORMAT_COMMANDS.map((command) => ({
       key: command.key,
@@ -112,6 +126,7 @@ export class NoteEditor {
     }));
     const extensions: Extension[] = [
       this.#history.of(history()),
+      this.#lock.of(lockExtensions(this.#locked)),
       keymap.of([...formatKeys, ...historyKeymap, ...defaultKeymap]),
       eienMarkdown(),
       markdownColours,
@@ -181,6 +196,9 @@ function linkAt(view: EditorView, event: MouseEvent): Parameters<EditorEvents['f
   }
   return null;
 }
+
+const lockExtensions = (locked: boolean): Extension =>
+  locked ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : [];
 
 function modeExtensions(mode: EditorMode): Extension {
   switch (mode) {

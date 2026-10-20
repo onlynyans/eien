@@ -83,6 +83,12 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
 
   const handle = (channel: string, fn: (...args: unknown[]) => unknown) =>
     answer(window, channel, fn);
+  /** The index catches up after a change; if it can't just now, the change still happened. */
+  const reindex = (paths: string[]) =>
+    session
+      .index()
+      .refresh(paths)
+      .catch((error: unknown) => console.error('Eien: the index couldn’t catch up:', error));
 
   handle(CHANNEL.current, () => session.info);
   handle(CHANNEL.choose, async () => {
@@ -113,25 +119,25 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
     const at = text(path, 'path');
     const result = await session.storage().write(at, text(body, 'text'), expected);
     // The index holds what was written before the window asks for the list again.
-    if (result.ok) await session.index().refresh([at]);
+    if (result.ok) await reindex([at]);
     return result;
   });
   handle(CHANNEL.move, async (from, to) => {
     const source = text(from, 'from');
     const target = text(to, 'to');
     const result = await session.storage().move(source, target);
-    if (result.ok) await session.index().refresh([source, target]);
+    if (result.ok) await reindex([source, target]);
     return result;
   });
   handle(CHANNEL.trash, async (path) => {
     const at = text(path, 'path');
     await session.storage().trash(at);
-    await session.index().refresh([at]);
+    await reindex([at]);
   });
   handle(CHANNEL.makeFolder, async (path) => {
     const at = text(path, 'path');
     await session.storage().makeFolder(at);
-    await session.index().refresh([at]);
+    await reindex([at]);
   });
 
   window.on('closed', () => session.close());

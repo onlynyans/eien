@@ -3,7 +3,7 @@
 
 import { readMarkdown } from '../markdown';
 import { frontMatterTags, inlineTags, uniqueTags } from '../tags';
-import { countPlainWords, frontMatterEnd, toEditor } from '../text';
+import { countPlainWords, firstGraphemes, frontMatterEnd, toEditor } from '../text';
 
 export interface NoteSummary {
   /** The first words, marks taken out; "" for an empty note. */
@@ -45,13 +45,21 @@ export function readNote(raw: string, title: string): ReadNote {
 
 /** The first words, after a first line that only repeats the title. */
 function previewOf(plain: string, title: string): string {
-  const lines = plain
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (lines[0]?.toLocaleLowerCase() === title.trim().toLocaleLowerCase()) lines.shift();
-  const preview = [...lines.join(' ').replace(/\s+/g, ' ')]; // by code point: an emoji stays whole
-  return preview.length > PREVIEW_LENGTH
-    ? preview.slice(0, PREVIEW_LENGTH).join('').trimEnd()
-    : preview.join('');
+  // Only the start is needed: lines are taken until there's enough of them.
+  const lines: string[] = [];
+  let length = 0;
+  let titleLine = title.trim().toLocaleLowerCase();
+  for (const raw of plain.split('\n', 4 * PREVIEW_LENGTH)) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (lines.length === 0 && line.toLocaleLowerCase() === titleLine) {
+      titleLine = ''; // the title's own line, skipped once
+      continue;
+    }
+    lines.push(line);
+    length += line.length + 1;
+    if (length > 4 * PREVIEW_LENGTH) break;
+  }
+  // Cut between whole characters: an emoji made of several code points stays whole.
+  return firstGraphemes(lines.join(' ').replace(/\s+/g, ' '), PREVIEW_LENGTH).trimEnd();
 }

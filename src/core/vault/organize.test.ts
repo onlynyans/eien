@@ -2,7 +2,7 @@
 // their order, books, and pins — the rules, without a disk.
 
 import { describe, expect, it } from 'vitest';
-import { movedPath, renamedPath } from '../paths';
+import { isWatchedPath, movedPath, renamedPath } from '../paths';
 import {
   movedPins,
   orderNames,
@@ -10,6 +10,7 @@ import {
   parsePins,
   pinsText,
   placedBefore,
+  presentInOrder,
   renamedInOrder,
   withFolderSettings,
   withoutInOrder,
@@ -187,5 +188,34 @@ describe('pins', () => {
       'Fic/c.md',
     ]);
     expect(withoutPins(pins, 'Fic')).toEqual(['Ficlet.md', 'c.md']);
+  });
+});
+
+describe('order and the watcher, as other devices see them', () => {
+  it('follows and forgets a note listed in another case, as orderNames places it', () => {
+    expect(renamedInOrder(['chapter two.md', 'One.md'], 'Chapter Two.md', 'Prologue.md')).toEqual([
+      'Prologue.md',
+      'One.md',
+    ]);
+    expect(withoutInOrder(['chapter two.md', 'One.md'], 'Chapter Two.md')).toEqual(['One.md']);
+    expect(renamedInOrder(['a.md'], 'gone.md', 'b.md')).toEqual(['a.md']);
+  });
+
+  it('keeps only the listed names that are there, spelled as the files are', () => {
+    expect(
+      presentInOrder(
+        ['Gone.md', 'chapter two.md', 'One.md'],
+        ['One.md', 'Chapter Two.md', 'Unlisted.md'],
+      ),
+    ).toEqual(['Chapter Two.md', 'One.md']);
+    expect(presentInOrder([], ['a.md'])).toEqual([]);
+  });
+
+  it('watches every folder’s settings, and still no other hidden file', () => {
+    expect(isWatchedPath('.eien-folder.json')).toBe(true);
+    expect(isWatchedPath('Fic/Scarf/.eien-folder.json')).toBe(true);
+    expect(isWatchedPath('.hidden/.eien-folder.json')).toBe(false);
+    expect(isWatchedPath('Fic/.eien-folder.json.eien.tmp')).toBe(false);
+    expect(isWatchedPath('Fic/.other.json')).toBe(false);
   });
 });

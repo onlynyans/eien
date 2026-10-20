@@ -61,8 +61,41 @@ const NO_TAGS = new Set([
   'URL',
 ]);
 
+/** How many lines a run without a blank line may have before it's read in pieces. */
+const RUN_LINES = 64;
+
+/**
+ * `text` with a blank line every RUN_LINES lines of a run that has none
+ * (fenced code aside). The parser's time grows with the square of the
+ * brackets in one paragraph: a pasted transcript, one line per turn with
+ * "[laughs]" in each, took seconds. Only whitespace is added, which the
+ * words, previews and search all collapse; a mark that crosses one of these
+ * cuts reads as text.
+ */
+export function inRuns(text: string): string {
+  const lines = text.split('\n');
+  if (lines.length <= RUN_LINES) return text;
+  let run = 0;
+  let fence: string | null = null;
+  const out: string[] = [];
+  for (const line of lines) {
+    const opens = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
+    if (fence) {
+      if (opens && opens[0] === fence[0] && opens.length >= fence.length) fence = null;
+    } else if (opens) fence = opens;
+    if (line.trim() === '') run = 0;
+    else if (!fence && ++run > RUN_LINES) {
+      out.push('');
+      run = 1;
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+}
+
 /** Read `text` (editor text, front matter already taken off). */
-export function readMarkdown(text: string): ReadMarkdown {
+export function readMarkdown(source: string): ReadMarkdown {
+  const text = inRuns(source);
   const dropped: [number, number][] = [];
   const blanked: [number, number][] = [];
   const both = (from: number, to: number) => {

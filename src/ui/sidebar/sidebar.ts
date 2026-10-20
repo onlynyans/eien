@@ -4,6 +4,7 @@
 // redraws. A folder takes a dropped note, and has its own menu.
 
 import type { SettingValues } from '../../core/config';
+import { joinPath, parentOf } from '../../core/paths';
 import type { TagNode } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import { h, wordButton } from '../dom';
@@ -52,7 +53,11 @@ export class Sidebar {
   #timer: ReturnType<typeof setTimeout> | undefined;
   #model: SidebarModel | null = null;
   /** The folder being renamed in place, and what's typed so far: kept across redraws. */
-  #editing: { path: string; typed: string } | null = null;
+  #editing: { path: string; typed: string; start: number; end: number } | null = null;
+  /** Set while redrawing: a field taken out by a redraw isn't the writer leaving it. */
+  #drawing = false;
+  /** The row to give the keyboard back to after the next redraw. */
+  #refocus: string | null = null;
 
   constructor(name: string, actions: SidebarActions) {
     this.#actions = actions;
@@ -124,11 +129,9 @@ export class Sidebar {
 
   /** Rename the folder at `path` in place: its name becomes a field; Enter keeps it, Esc doesn't. */
   editFolder(path: string): void {
-    this.#editing = { path, typed: path.slice(path.lastIndexOf('/') + 1) };
+    const name = path.slice(path.lastIndexOf('/') + 1);
+    this.#editing = { path, typed: name, start: 0, end: name.length };
     if (this.#model) this.draw(this.#model);
-    const field = this.#body.querySelector<HTMLInputElement>('.tree-row__field');
-    field?.focus();
-    field?.select();
   }
 
   draw(model: SidebarModel): void {
@@ -136,11 +139,11 @@ export class Sidebar {
     // A redraw mustn't take the keyboard's place: the row that had focus has it again.
     const active = document.activeElement;
     const focused =
-      active instanceof HTMLElement &&
-      this.#body.contains(active) &&
-      active.classList.contains('tree-row__name')
-        ? (active.dataset.folder ?? active.textContent)
-        : null;
+      this.#refocus ??
+      (active instanceof HTMLElement && this.#body.contains(active)
+        ? (active.dataset.key ?? null)
+        : null);
+    this.#refocus = null;
     const actions = this.#actions;
     const same = (a: Selection, b: Selection) =>
       a.kind === b.kind &&
@@ -204,6 +207,7 @@ export class Sidebar {
             attrs: {
               type: 'button',
               'aria-current': same(model.selection, selection) ? 'true' : undefined,
+              'data-key': keyOf(selection),
               'data-folder': folder,
               'aria-keyshortcuts': folder === undefined ? undefined : 'F2',
             },
@@ -232,12 +236,25 @@ export class Sidebar {
         if (this.#editing?.path !== folder.path) return;
         this.#editing = null;
         const value = field.value;
-        if (keep && value.trim() && value !== folder.name) actions.renameFolder(folder.path, value);
+        // The keyboard goes back to the folder, under its new name if it gets one.
+        const renaming = keep && value.trim() !== '' && value !== folder.name;
+        this.#refocus = keyOf({
+          kind: 'folder',
+          path: renaming ? joinPath(parentOf(folder.path), value.trim()) : folder.path,
+        });
+        if (renaming) actions.renameFolder(folder.path, value);
         else if (this.#model) this.draw(this.#model);
       };
-      field.addEventListener('input', () => {
-        if (this.#editing) this.#editing.typed = field.value;
-      });
+      // What's typed, and where the caret is, outlive a redraw.
+      const keep = () => {
+        if (!this.#editing) return;
+        this.#editing.typed = field.value;
+        this.#editing.start = field.selectionStart ?? field.value.length;
+        this.#editing.end = field.selectionEnd ?? field.value.length;
+      };
+      field.addEventListener('input', keep);
+      field.addEventListener('select', keep);
+      field.addEventListener('keyup', keep);
       field.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') finish(true);
         else if (event.key === 'Escape') finish(false);
@@ -245,9 +262,10 @@ export class Sidebar {
         event.preventDefault();
         event.stopPropagation();
       });
-      // A redraw replaces the field: that isn't the writer leaving it.
+      // Leaving the field keeps the name; a redraw replacing it, or the window losing
+      // focus to another app, isn't leaving it.
       field.addEventListener('blur', () => {
-        if (field.isConnected) finish(true);
+        if (!this.#drawing && field.isConnected && document.hasFocus()) finish(true);
       });
       const item = h('li', { class: 'tree-row' }, h('span', { class: 'tree-row__twist' }), field);
       item.style.setProperty('--depth', String(depth));
@@ -304,6 +322,7 @@ export class Sidebar {
     const library = [row('All Notes', model.tree.noteCount, { kind: 'all' })];
     if (model.pinned > 0) library.push(row('Pinned', model.pinned, { kind: 'pinned' }));
 
+    this.#drawing = true;
     this.#body.replaceChildren(
       h(
         'nav',
@@ -336,15 +355,27 @@ export class Sidebar {
         ),
       ),
     );
+    this.#drawing = false;
     if (focused !== null && !this.#editing) {
       [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')]
-        .find((row) => (row.dataset.folder ?? row.textContent) === focused)
+        .find((row) => row.dataset.key === focused)
         ?.focus();
     }
     // A redraw mustn't take the caret out of the name being typed.
     if (this.#editing) {
       const field = this.#body.querySelector<HTMLInputElement>('.tree-row__field');
-      if (field && document.activeElement !== field) field.focus();
+      if (field && document.activeElement !== field) {
+        field.focus();
+        field.setSelectionRange(this.#editing.start, this.#editing.end);
+      }
     }
   }
 }
+
+/** A row's lasting name, for giving it the keyboard back after a redraw. */
+const keyOf = (selection: Selection): string =>
+  selection.kind === 'folder'
+    ? `folder:${selection.path}`
+    : selection.kind === 'tag'
+      ? `tag:${selection.key}`
+      : selection.kind;

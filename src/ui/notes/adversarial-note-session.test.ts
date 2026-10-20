@@ -59,3 +59,24 @@ describe('NoteSession after a same-words rewrite elsewhere', () => {
     expect(texts.some((text) => text?.includes('Two.'))).toBe(true);
   });
 });
+
+describe('a closed note', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('never saves again: not a save that was waiting, nor a later edit (its note went to the trash)', async () => {
+    const { vault, session } = await open('Kept words.\n');
+    session.edit('Kept words.\nTyped as it went to the trash.\n');
+    session.close();
+    vault.remove('Note.md'); // in the trash now
+    await vi.advanceTimersByTimeAsync(SAVE_AFTER_MS * 10);
+    session.edit('And more.');
+    await session.flush();
+    await session.diskChanged();
+    expect(await vault.list()).toEqual([]); // never put back
+  });
+});

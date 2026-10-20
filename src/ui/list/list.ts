@@ -147,10 +147,12 @@ export function renderList(
         )
       : h('div', { class: 'list__empty' }, h('p', { text: 'Nothing here yet.' }));
   // A redraw mustn't take the keyboard's place: the row that had focus has it again.
+  const rowsBefore = [...container.querySelectorAll<HTMLElement>('.note-row[data-path]')];
   const focused =
     document.activeElement instanceof HTMLElement && container.contains(document.activeElement)
       ? document.activeElement.dataset.path
       : undefined;
+  const focusedAt = rowsBefore.findIndex((row) => row.dataset.path === focused);
   container.replaceChildren(
     h(
       'header',
@@ -170,8 +172,9 @@ export function renderList(
       : empty,
   );
   if (focused !== undefined) {
-    [...container.querySelectorAll<HTMLElement>('.note-row[data-path]')]
-      .find((row) => row.dataset.path === focused)
-      ?.focus();
+    const rows = [...container.querySelectorAll<HTMLElement>('.note-row[data-path]')];
+    // The same note; or, if it's gone (trashed, moved away), the one now in its place.
+    const same = rows.find((row) => row.dataset.path === focused);
+    (same ?? (focusedAt >= 0 ? rows[Math.min(focusedAt, rows.length - 1)] : undefined))?.focus();
   }
 }

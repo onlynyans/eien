@@ -14,6 +14,7 @@ export {
   orderNames,
   parseFolderSettings,
   placedBefore,
+  presentInOrder,
   renamedInOrder,
   withFolderSettings,
   withoutInOrder,

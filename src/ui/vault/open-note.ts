@@ -14,6 +14,8 @@ export const crumbsOf = (path: string): string =>
 export class OpenNote {
   #session: NoteSession | null = null;
   #images: NoteImages | null = null;
+  /** The folder the images are read from: the note's, when it was opened or last moved. */
+  #imagesFolder = '';
   readonly #vault: VaultBridge;
   readonly #page: PageView;
   /** The vault changed under it (its text kept as a copy): read the vault again. */
@@ -53,6 +55,7 @@ export class OpenNote {
     this.#images = this.#session
       ? noteImages(parentOf(path), (file) => this.#vault.readBytes(file))
       : null;
+    this.#imagesFolder = parentOf(path);
     if (this.#session && this.#images) {
       page.show({
         crumbs: crumbsOf(path),
@@ -63,8 +66,21 @@ export class OpenNote {
     } else page.showNothing();
   }
 
+  /** The note moved (renamed, or into another folder): the page names it, and finds its images, there. */
+  followMove(): void {
+    const path = this.path;
+    if (!path || !this.#session) return;
+    this.#page.retitle(titleOf(baseName(path)), crumbsOf(path));
+    if (this.#imagesFolder === parentOf(path)) return;
+    this.#images?.release();
+    this.#images = noteImages(parentOf(path), (file) => this.#vault.readBytes(file));
+    this.#imagesFolder = parentOf(path);
+    this.#page.editor.setImageLoader(this.#images.load);
+  }
+
   /** Nothing open: the note's gone (deleted elsewhere, or sent to the trash here). */
   close(): void {
+    this.#session?.close();
     this.#session = null;
     this.#images?.release();
     this.#images = null;

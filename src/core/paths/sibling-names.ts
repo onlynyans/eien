@@ -1,7 +1,7 @@
 // Names for new files beside existing ones: a fresh note, a conflict copy,
 // a recovered draft. None ever replaces a file that's there.
 
-import { MAX_NAME_BYTES, nameKey, safeName, utf8Length } from './names';
+import { MAX_MADE_NAME_BYTES, nameKey, safeName, utf8Length } from './names';
 import { baseName, joinPath, parentOf } from './vault-path';
 
 export const NOTE_EXTENSION = '.md';
@@ -31,7 +31,7 @@ export function freeName(
   const used = new Set([...taken].map(nameKey));
   for (let n = 1; ; n++) {
     const tail = `${suffix}${n === 1 ? '' : ` ${n}`}${extension}`;
-    const name = safeName(base, 'Untitled', MAX_NAME_BYTES - utf8Length(tail)) + tail;
+    const name = safeName(base, 'Untitled', MAX_MADE_NAME_BYTES - utf8Length(tail)) + tail;
     if (!used.has(nameKey(name))) return name;
   }
 }
@@ -54,7 +54,7 @@ export function renamedPath(
 ): Renamed {
   const name = baseName(path);
   const extension = isNote ? name.slice(titleOf(name).length) : '';
-  const base = safeName(typed, '', MAX_NAME_BYTES - utf8Length(extension));
+  const base = safeName(typed, '', MAX_MADE_NAME_BYTES - utf8Length(extension));
   if (!base) return { ok: false, problem: 'empty' };
   const next = base + extension;
   if (

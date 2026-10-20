@@ -21,8 +21,18 @@ export function tidyTag(raw: string): string | null {
   return LETTER.test(tag) ? tag : null;
 }
 
-/** Two tags are the same tag whatever their case: #Draft is #draft. */
-export const tagKey = (tag: string): string => tag.normalize('NFC').toLocaleLowerCase('en-US');
+/**
+ * Two tags are the same tag whatever their case: #Draft is #draft, folded
+ * fully (#Straße is #STRASSE) and with the dotted capital I (#İstanbul is
+ * #istanbul).
+ */
+export const tagKey = (tag: string): string =>
+  tag
+    .normalize('NFC')
+    .toUpperCase()
+    .toLowerCase()
+    .replace(/i\u0307/g, 'i')
+    .normalize('NFC');
 
 /** The inline tags in `taggable` text (see core/markdown: code and links already blanked). */
 export function inlineTags(taggable: string): string[] {

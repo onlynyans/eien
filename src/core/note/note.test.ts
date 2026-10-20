@@ -107,3 +107,48 @@ describe('readNote', () => {
     expect(performance.now() - started).toBeLessThan(3000);
   });
 });
+
+describe('long runs of lines', () => {
+  it('reads a pasted transcript, one paragraph of bracketed asides, quickly', () => {
+    const transcript = 'ANNA: I told him [laughs] that it was fine. #interview [pause]\n'.repeat(
+      26_000,
+    );
+    const started = performance.now();
+    const note = readNote(transcript, 'Interview');
+    expect(performance.now() - started).toBeLessThan(1500);
+    expect(note.tags).toEqual(['interview']);
+    expect(note.words).toBe(26_000 * 11);
+  });
+
+  it('never cuts into fenced code: a "#" in it is still no tag', () => {
+    const code = Array.from({ length: 200 }, (_, i) => `line ${i} #notatag`).join('\n');
+    const note = readNote(`\`\`\`\n${code}\n\`\`\`\n#real`, 'N');
+    expect(note.tags).toEqual(['real']);
+  });
+});
+
+describe('inRuns', () => {
+  it('leaves short text, and runs with blank lines, as they are', async () => {
+    const { inRuns } = await import('../markdown');
+    expect(inRuns('a\nb\nc')).toBe('a\nb\nc');
+    const paragraphs = Array.from({ length: 300 }, (_, i) => `para ${i}\n`).join('\n');
+    expect(inRuns(paragraphs)).toBe(paragraphs);
+  });
+
+  it('puts a blank line every 64 lines of a run, and adds nothing else', async () => {
+    const { inRuns } = await import('../markdown');
+    const run = Array.from({ length: 130 }, (_, i) => `l${i}`).join('\n');
+    const split = inRuns(run);
+    expect(split.split('\n').filter((line) => line === '')).toHaveLength(2);
+    expect(split.replace(/\n+/g, '\n')).toBe(run);
+  });
+});
+
+describe('previews cut between whole characters', () => {
+  it('never splits a family, a flag or a skin tone', () => {
+    for (const emoji of ['👨‍👩‍👧', '🇯🇵', '👍🏽']) {
+      const preview = readNote(emoji.repeat(PREVIEW_LENGTH + 5), 'N').preview;
+      expect(preview).toBe(emoji.repeat(PREVIEW_LENGTH));
+    }
+  });
+});

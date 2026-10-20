@@ -15,7 +15,7 @@ import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
 import { watchDrags } from '../list/drag';
 import { renderList } from '../list/list';
-import { listKey, rememberSort, sortFor } from '../list/sorts';
+import { followSorts, listKey, rememberSort, sortFor } from '../list/sorts';
 import { PageView } from '../page/page';
 import type { SettingsState } from '../settings/settings-state';
 import { Sidebar } from '../sidebar/sidebar';
@@ -69,6 +69,7 @@ export async function showVault(
     trashName,
     session: () => note.session,
     closed: () => note.close(),
+    freeze: (frozen) => page.editor.setLocked(frozen),
     tell,
   });
 
@@ -93,6 +94,7 @@ export async function showVault(
       }
     }
     if (selection.kind === 'folder') selection = { kind: 'folder', path: moved(selection.path) };
+    followSorts(from, to);
   };
 
   const sidebar = new Sidebar(name, {
@@ -175,8 +177,8 @@ export async function showVault(
   /** Run a file operation, then read the vault again and redraw. */
   async function act(operation: () => Promise<unknown>): Promise<void> {
     await operation();
-    // The open note may have moved, or been renamed: the page names it where it is now.
-    if (note.path) page.retitle(titleOf(baseName(note.path)), crumbsOf(note.path));
+    // The open note may have moved, or been renamed: the page names it, and finds its images, there.
+    note.followMove();
     await refresh();
   }
 

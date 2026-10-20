@@ -130,7 +130,9 @@ export class MemoryStorage implements Storage {
 
   async makeFolder(path: string): Promise<void> {
     const at = vaultPath(path);
-    if (this.#files.has(at)) throw new Error(`A file: ${at}`);
+    for (let folder = at; folder; folder = parentOf(folder)) {
+      if (this.#files.has(folder)) throw new Error(`A file: ${folder}`);
+    }
     this.#folders.add(at);
     this.#addParents(at);
     this.#notify([at]);

@@ -31,6 +31,20 @@ function remembered(): Record<string, NoteSort> {
 /** The sort chosen for a list, if one was. */
 export const sortFor = (list: string): NoteSort | undefined => remembered()[list];
 
+/** A folder renamed or moved: the sorts of it and the folders in it follow. */
+export function followSorts(from: string, to: string): void {
+  try {
+    const moved = Object.entries(remembered()).map(([key, sort]) => {
+      const path = key.startsWith('folder:') ? key.slice('folder:'.length) : null;
+      const inside = path !== null && (path === from || path.startsWith(`${from}/`));
+      return [inside ? `folder:${to}${path.slice(from.length)}` : key, sort];
+    });
+    localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(moved)));
+  } catch {
+    // Storage refused: the folder opens in its default sort.
+  }
+}
+
 export function rememberSort(list: string, sort: NoteSort): void {
   try {
     localStorage.setItem(KEY, JSON.stringify({ ...remembered(), [list]: sort }));
