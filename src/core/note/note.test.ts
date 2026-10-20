@@ -109,15 +109,22 @@ describe('readNote', () => {
 });
 
 describe('long runs of lines', () => {
-  it('reads a pasted transcript, one paragraph of bracketed asides, quickly', () => {
+  it('reads a pasted transcript, one paragraph of bracketed asides, as fast as plain text', () => {
+    // Timed against the same text without its brackets, on the same machine: a parse that
+    // grows with the square of the brackets took ~25 times as long; reading in pieces, ~1.3.
     const transcript = 'ANNA: I told him [laughs] that it was fine. #interview [pause]\n'.repeat(
       26_000,
     );
-    const started = performance.now();
-    const note = readNote(transcript, 'Interview');
-    expect(performance.now() - started).toBeLessThan(1500);
-    expect(note.tags).toEqual(['interview']);
-    expect(note.words).toBe(26_000 * 11);
+    const time = (text: string) => {
+      const started = performance.now();
+      const note = readNote(text, 'Interview');
+      return { note, took: performance.now() - started };
+    };
+    const plain = time(transcript.replace(/[[\]]/g, ''));
+    const bracketed = time(transcript);
+    expect(bracketed.took / plain.took).toBeLessThan(3);
+    expect(bracketed.note.tags).toEqual(['interview']);
+    expect(bracketed.note.words).toBe(26_000 * 11);
   });
 
   it('never cuts into fenced code: a "#" in it is still no tag', () => {
