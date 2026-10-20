@@ -4,6 +4,7 @@
 
 import { baseName, titleOf } from '../../core/paths';
 import { PageView } from '../page/page';
+import type { SettingsState } from '../settings/settings-state';
 import { crumbsOf, type OpenNote } from './open-note';
 import type { Organizer } from './organize';
 import type { VaultState } from './vault-state';
@@ -40,4 +41,14 @@ export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
     },
   });
   return page;
+}
+
+/** The page as the settings say: its zoom, and the quotes typed on it. Returns a function to stop. */
+export function followSettings(page: PageView, settings: SettingsState): () => void {
+  const follow = (values: SettingsState['values']) => {
+    page.showZoom(values['page.zoom']);
+    page.editor.setQuotes(values['typography.quotes']);
+  };
+  follow(settings.values);
+  return settings.onChange(follow);
 }

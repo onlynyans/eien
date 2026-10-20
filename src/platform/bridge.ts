@@ -47,6 +47,14 @@ export interface SettingsBridge {
   set<K extends SettingKey>(key: K, value: SettingValues[K]): Promise<SettingValues>;
 }
 
+/** What leaves the app (spec §8): the clipboard, and a file saved where the writer chooses. */
+export interface OutBridge {
+  /** Put `text` (plain) and `html` (rich) on the clipboard together. */
+  copy(text: string, html: string): Promise<void>;
+  /** Ask where to save `text`, offering `name` (an HTML file); the name saved as, or null if cancelled. */
+  saveAs(name: string, text: string): Promise<string | null>;
+}
+
 /** Menu items the window acts on. */
 export type MenuCommand =
   | 'open-vault'
@@ -68,13 +76,16 @@ export type MenuCommand =
   | 'focus:page'
   | 'seal'
   | 'compare'
-  | 'versions';
+  | 'versions'
+  | 'copy-ao3'
+  | 'export-ao3';
 
 export interface Bridge {
   /** The operating system: 'darwin', 'win32', 'linux', … */
   readonly platform: string;
   readonly vault: VaultBridge;
   readonly settings: SettingsBridge;
+  readonly out: OutBridge;
   onMenu(listener: (command: MenuCommand) => void): () => void;
   /**
    * Before the window closes, the main process asks it to save; `save`
@@ -100,6 +111,8 @@ export const CHANNEL = {
   changed: 'vault:changed',
   settingsRead: 'settings:read',
   settingsSet: 'settings:set',
+  outCopy: 'out:copy',
+  outSaveAs: 'out:save-as',
   menu: 'app:menu',
   beforeClose: 'app:before-close',
   closeReady: 'app:close-ready',

@@ -55,6 +55,7 @@ test('opens from the sidebar and the menu, and closes with Esc or a click outsid
     'Appearance',
     'Writing',
     'Layout',
+    'AO3',
   ]);
   await page.keyboard.press('Escape');
   await expect(dialog(page)).toBeHidden();

@@ -12,11 +12,12 @@ import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
 import { VersionsUI } from '../versions/versions-ui';
+import { ao3Out } from './ao3-out';
 import { runCommand } from './commands';
 import { onDiskChanges, touches } from './disk-changes';
 import { type MenuContext, showFolderMenu, showNoteMenu } from './menus';
 import { Navigation } from './navigation';
-import { notePage } from './note-page';
+import { followSettings, notePage } from './note-page';
 import { Notice } from './notice';
 import { oneAtATime } from './one-at-a-time';
 import { OpenNote } from './open-note';
@@ -44,6 +45,7 @@ export async function showVault(
   const keys = paneKeys(bridge.platform === 'darwin');
   const nav = new Navigation();
   const notice = new Notice(() => void redraw());
+  const tell = (message: string) => notice.tell(message);
 
   const organizer = new Organizer({
     vault: bridge.vault,
@@ -52,7 +54,7 @@ export async function showVault(
     session: () => note.session,
     closed: () => note.close(),
     freeze: (frozen) => page.editor.setLocked(frozen),
-    tell: (message) => notice.tell(message),
+    tell,
   });
 
   const choose = (next: Selection) => {
@@ -152,7 +154,7 @@ export async function showVault(
     vault: bridge.vault,
     notesWithId: (id) => state.notesWithId(id),
     mac: keys.sidebar.startsWith('⌘'),
-    tell: (message) => notice.tell(message),
+    tell,
     serial: (operation) => act(operation),
   });
 
@@ -250,9 +252,9 @@ export async function showVault(
     void refresh();
   });
 
-  page.showZoom(settings.values['page.zoom']);
+  const ao3 = ao3Out({ page, note, out: bridge.out, settings, tell });
+  const stopPageSettings = followSettings(page, settings);
   const stopSettings = settings.onChange((values, before) => {
-    page.showZoom(values['page.zoom']);
     panes.setTwo(values['layout.panes'] === 'two'); // redraws when it changes
     if (
       values['books.numerals'] !== before['books.numerals'] ||
@@ -273,6 +275,7 @@ export async function showVault(
       newNote: () => void newNote(),
       drawList: () => draw.list(),
       versions,
+      ao3,
     }),
   );
   await refresh();
@@ -284,6 +287,7 @@ export async function showVault(
       await note.flush();
       stopWatching();
       stopSettings();
+      stopPageSettings();
       onMenu();
       panes.stop();
       notice.stop();
