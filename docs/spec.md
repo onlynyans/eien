@@ -328,7 +328,19 @@ words, as on the page.
   they're changed.
 - **Counters:** words in the note (its words only: not the marks, link
   addresses, HTML tags or front matter), in the book, today; sprint timer with words
-  gained; zoom.
+  gained; zoom. In the colophon, in that order, with the last seal:
+  - **Today** is net (what's typed less what's cut, so it can fall below
+    nothing), on this device, counted from the writer's own changes only: a
+    note opened, reloaded from another device, sealed or restored is no one
+    writing. It starts again at midnight and is kept across a restart.
+  - **Book** shows when the open note is a chapter of a book: the book's words,
+    the open chapter's counted live, and its goal ("Book 54,210 / 90,000"). A
+    book's folder menu has **Word goal…**: a small field where Enter sets it
+    and an empty field takes it away.
+  - **Sprint:** View → Start Sprint (10, 15, 25, 30, 45 or 60 minutes) counts
+    down with the words gained; View → Stop Sprint ends it. When the time is
+    up the colophon says "Sprint done" and one line of news says how many
+    words: no sound, no window. A sprint under way survives a restart.
 - **Zoom:** ⌘+ and ⌘− zoom the page in steps of 10%, ⌘0 returns to 100%. Zoom
   is per device and shown in the status line when it isn't 100%; the panes and
   the note list keep their size.
@@ -370,6 +382,7 @@ src/core/            (✓ = built)
   saving/       ✓ what to do when a note changes on disk
   format/       ✓ the formatting commands: inline marks, line formats, links, their keys
   config/       ✓ the settings schema, defaults, reading and writing settings files (§6)
+  counters/     ✓ today's tally (net, per day) and a sprint's clock
   theme/         theme schema, validation, token list (§7)
   markdown/     ✓ Eien's Markdown (==highlight==, [[wiki links]]) and a note's plain text
   note/         ✓ a note's preview, words, tags and id
@@ -766,4 +779,5 @@ Each phase ends with something you can try, and its tests in CI.
 
 1. AO3 scene break: keep AO3's spacer, `<hr>`, spacer pattern as the default?
 2. Default sort for the note list: modified date, or title?
-3. Today's word count: words added only, or net (added minus deleted)?
+3. ~~Today's word count: words added only, or net (added minus deleted)?~~
+   Net, as the design shows it ("Today +809").

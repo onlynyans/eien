@@ -134,6 +134,11 @@ describe('folder settings', () => {
       book: {},
     });
     expect(parseFolderSettings('{"book":{"goal":-5}}').book).toEqual({});
+    // A goal is a whole number of words, more than none.
+    for (const goal of ['0', '1.5', '1e400', '9007199254740993']) {
+      expect(parseFolderSettings(`{"book":{"goal":${goal}}}`).book, goal).toEqual({});
+    }
+    expect(parseFolderSettings('{"book":{"goal":1}}').book).toEqual({ goal: 1 });
     expect(parseFolderSettings('{"book":true}').book).toBeNull();
   });
 

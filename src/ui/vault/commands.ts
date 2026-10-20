@@ -3,8 +3,10 @@
 // ⌘⇧\ shut or open the sidebar and the list, ⌘1/⌘2/⌘3 give one the keyboard,
 // opening it first if it's shut (spec §4). Zoom is the window's (../app.ts).
 
+import { SPRINT_MINUTES } from '../../core/counters';
 import { formatCommand } from '../../core/format';
 import type { MenuCommand } from '../../platform/bridge';
+import type { Counters } from '../counters/counters';
 import type { PageView } from '../page/page';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
@@ -21,6 +23,8 @@ export interface CommandContext {
   readonly versions: VersionsUI;
   /** Copy for AO3, and Export → AO3 HTML (./ao3-out.ts). */
   readonly ao3: { copy(): Promise<void>; export(): Promise<void> };
+  /** Today's words, the book's, a sprint (../counters). */
+  readonly counters: Counters;
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
@@ -49,7 +53,12 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   else if (command === 'versions') ctx.versions.togglePanel();
   else if (command === 'copy-ao3') void ctx.ao3.copy();
   else if (command === 'export-ao3') void ctx.ao3.export();
-  else if (command.startsWith('format:')) {
+  else if (command === 'sprint:stop') ctx.counters.stopSprint();
+  else if (command.startsWith('sprint:')) {
+    const minutes = Number(command.slice('sprint:'.length));
+    const known = SPRINT_MINUTES.find((each) => each === minutes);
+    if (known) ctx.counters.startSprint(known);
+  } else if (command.startsWith('format:')) {
     const format = formatCommand(command.slice('format:'.length));
     if (format) page.editor.format(format);
   }

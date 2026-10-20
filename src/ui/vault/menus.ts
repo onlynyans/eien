@@ -3,6 +3,7 @@
 
 import { baseName, parentOf, titleOf } from '../../core/paths';
 import type { FolderNode } from '../../core/vault';
+import { askNumber } from '../menu/ask-number';
 import { type MenuItem, openMenu } from '../menu/menu';
 import type { Organizer } from './organize';
 import type { VaultState } from './vault-state';
@@ -34,8 +35,13 @@ export const noteMenu = (note: NoteMenu): MenuItem[] => [
   { label: `Move to ${note.trashName}`, run: note.trash },
 ];
 
+/** The most words a goal may be: more than any book. */
+const MAX_GOAL = 10_000_000;
+
 export interface FolderMenu {
   readonly book: boolean;
+  /** A book's word goal: asked for in a small field. */
+  goal(): void;
   readonly trashName: string;
   newNote(): void;
   newFolder(): void;
@@ -51,6 +57,7 @@ export const folderMenu = (folder: FolderMenu): MenuItem[] => [
   'separator',
   { label: 'Rename', run: folder.rename },
   { label: folder.book ? 'Not a book' : 'Make it a book', run: () => folder.setBook(!folder.book) },
+  ...(folder.book ? [{ label: 'Word goal…', run: folder.goal }] : []),
   { label: 'Move to…', run: folder.moveTo },
   'separator',
   { label: `Move to ${folder.trashName}`, run: folder.trash },
@@ -134,10 +141,19 @@ export function showNoteMenu(ctx: MenuContext, path: string, at: At, ordered: bo
 }
 
 export async function showFolderMenu(ctx: MenuContext, path: string, at: At): Promise<void> {
-  const book = (await ctx.state.folderSettings(path)).book !== null;
+  const settings = (await ctx.state.folderSettings(path)).book;
   openMenu(
     folderMenu({
-      book,
+      book: settings !== null,
+      goal: () =>
+        void askNumber({
+          label: `Word goal for ${baseName(path)}`,
+          value: settings?.goal,
+          max: MAX_GOAL,
+          place: { at },
+        }).then((goal) => {
+          if (goal !== undefined) ctx.act(() => ctx.organizer.setGoal(path, goal));
+        }),
       trashName: ctx.trashName,
       newNote: () => ctx.newNote(path),
       newFolder: () => ctx.newFolder(path),

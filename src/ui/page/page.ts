@@ -1,12 +1,13 @@
 // The page: the open note on its sheet, the view switch above it, and the
 // colophon beneath.
 
-import { countWords, frontMatterEnd } from '../../core/text';
+import { frontMatterEnd } from '../../core/text';
 import { h } from '../dom';
 import { EDITOR_MODES, type EditorEvents, type EditorMode, NoteEditor } from '../editor/editor';
 import { SelectionBar } from '../editor/selection-bar';
 import type { ImageLoader } from '../editor/widgets';
 import type { SaveState } from '../notes/note-session';
+import { WordCount } from './word-count';
 
 export interface PageNote {
   readonly crumbs: string;
@@ -21,9 +22,6 @@ const STATE_WORDS: Record<SaveState, string> = {
   saving: '',
   failed: 'Not saved yet — trying again',
 };
-
-/** How long typing pauses before the word count catches up. */
-const COUNT_AFTER_MS = 250;
 
 const MODE_LABEL: Record<EditorMode, string> = {
   live: 'Live',
@@ -47,7 +45,10 @@ export class PageView {
   readonly #editorHost = h('div', { class: 'editor-host' });
   /** In the editor's place while a seal is compared or shown (read only). */
   readonly #compareHost = h('div', { class: 'compare-host', attrs: { hidden: true } });
-  readonly #words = h('span', { class: 'colophon__words' });
+  /** The note's words, and what writing adds to them (./word-count.ts). */
+  readonly words = new WordCount();
+  /** In the colophon, after the save state: today's words, the book's, a sprint (ui/counters). */
+  readonly #counters = h('span', { class: 'colophon__counters' });
   readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
   readonly #zoom = h('span', { class: 'colophon__zoom', attrs: { 'aria-label': 'Zoom' } });
   /** News from the last action, when neither the list nor the sidebar is there to show it. */
@@ -78,7 +79,6 @@ export class PageView {
   /** Beside the page: the versions panel. */
   readonly #aside = h('div', { class: 'page__aside' });
   #titleText = '';
-  #counting: ReturnType<typeof setTimeout> | undefined;
   readonly #rename: (typed: string) => void;
 
   /** `rename` hears a title the writer typed, different from the one there. */
@@ -102,10 +102,10 @@ export class PageView {
       if (document.hasFocus()) this.#finishTitle(true);
     });
     this.editor = new NoteEditor(this.#editorHost, {
-      changed: (text) => {
-        this.#countLater(text);
+      changed: (text, written) => {
+        this.words.edited(text, written);
         this.#showTitle(text);
-        events.changed(text);
+        events.changed(text, written);
       },
       follow: events.follow,
     });
@@ -136,8 +136,9 @@ export class PageView {
         h(
           'footer',
           { class: 'colophon count' },
-          this.#words,
+          this.words.element,
           this.#state,
+          this.#counters,
           this.#sealLine,
           this.#zoom,
           this.#news,
@@ -157,6 +158,11 @@ export class PageView {
   /** Put `controls` at the start of the bar. */
   lead(controls: HTMLElement): void {
     this.#lead.replaceChildren(controls);
+  }
+
+  /** Today's words, the book's and a sprint, in the colophon. */
+  counters(element: HTMLElement): void {
+    this.#counters.replaceChildren(element);
   }
 
   /** The seals' parts: controls after the views, a line in the colophon, a panel beside. */
@@ -191,21 +197,20 @@ export class PageView {
     this.editor.setText(note.text, note.loadImage);
     this.notice(null);
     this.state('saved');
-    this.#showWords(note.text);
+    this.words.show(note.text);
   }
 
   showNothing(): void {
-    clearTimeout(this.#counting);
     this.#sheet.hidden = true;
     this.#empty.hidden = false;
-    this.#words.textContent = '';
+    this.words.clear();
     this.state('saved');
   }
 
   /** New text from elsewhere, keeping the selection near where it was. */
   replaceText(text: string): void {
     this.editor.replaceText(text);
-    this.#showWords(text);
+    this.words.show(text);
     this.#showTitle(text);
   }
 
@@ -278,17 +283,5 @@ export class PageView {
     const same =
       first?.[1]?.trim().toLocaleLowerCase() === this.#titleText.trim().toLocaleLowerCase();
     this.#title.hidden = same;
-  }
-
-  /** Counting reads the whole note: while typing, once it pauses. */
-  #countLater(text: string): void {
-    clearTimeout(this.#counting);
-    this.#counting = setTimeout(() => this.#showWords(text), COUNT_AFTER_MS);
-  }
-
-  #showWords(text: string): void {
-    clearTimeout(this.#counting);
-    const words = countWords(text);
-    this.#words.textContent = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
   }
 }

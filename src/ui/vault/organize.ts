@@ -129,6 +129,11 @@ export class Organizer {
     return this.#changeFolder(folder, { book: book ? {} : null });
   }
 
+  /** A book's word goal; null takes it away. */
+  setGoal(folder: string, goal: number | null): Promise<boolean> {
+    return this.#changeFolder(folder, { goal });
+  }
+
   /** Place the note at `path` just before `before` (last, for null) in its folder's own order. */
   async placeBefore(path: string, before: string | null): Promise<boolean> {
     const folder = parentOf(path);
