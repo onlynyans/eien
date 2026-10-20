@@ -18,8 +18,15 @@ const DRAG_AFTER = 5;
 
 type Drop = { readonly folder: string } | { readonly before: string | null };
 
-/** Let `list`'s rows (`.note-row[data-path]`) be dragged onto `[data-folder]` targets anywhere, or between each other. */
-export function watchDrags(list: HTMLElement, actions: DragActions): void {
+/**
+ * Let `list`'s rows (`rows`: the note list's, or the sidebar tree's notes)
+ * be dragged onto `[data-folder]` targets anywhere, or between each other.
+ */
+export function watchDrags(
+  list: HTMLElement,
+  actions: DragActions,
+  rows = '.note-row[data-path]',
+): void {
   /** A drag ends in a click on the row it started from; that click isn't the writer's. */
   let swallowClick = false;
   list.addEventListener(
@@ -35,7 +42,7 @@ export function watchDrags(list: HTMLElement, actions: DragActions): void {
 
   list.addEventListener('pointerdown', (down) => {
     if (down.button !== 0 || down.altKey || down.metaKey || down.ctrlKey || down.shiftKey) return;
-    const row = (down.target as Element).closest<HTMLElement>('.note-row[data-path]');
+    const row = (down.target as Element).closest<HTMLElement>(rows);
     const path = row?.dataset.path;
     if (!row || path === undefined) return;
 
@@ -92,14 +99,12 @@ export function watchDrags(list: HTMLElement, actions: DragActions): void {
         return;
       }
       light(null);
-      const over = under?.closest<HTMLElement>('.note-row[data-path]');
+      const over = under?.closest<HTMLElement>(rows);
       if (actions.orderable() && over && list.contains(over)) {
         const rect = over.getBoundingClientRect();
         const below = event.clientY > rect.top + rect.height / 2;
         const next = below
-          ? (over
-              .closest('li')
-              ?.nextElementSibling?.querySelector<HTMLElement>('.note-row[data-path]') ?? null)
+          ? (over.closest('li')?.nextElementSibling?.querySelector<HTMLElement>(rows) ?? null)
           : over;
         drop = { before: next?.dataset.path ?? null };
         mark(below ? rect.bottom : rect.top, rect);

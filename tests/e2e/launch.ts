@@ -58,6 +58,31 @@ export async function clickMenu(
   );
 }
 
+/**
+ * The system's trash, played by a folder: what the app sends there is moved
+ * into it, after `delayMs` (a big folder, a network drive); or, when it
+ * doesn't `work`, refused. The caller removes the folder.
+ */
+export async function fakeTrash(
+  app: ElectronApplication,
+  { works = true, delayMs = 0 } = {},
+): Promise<string> {
+  const trash = mkdtempSync(join(tmpdir(), 'eien-trash-'));
+  await app.evaluate(
+    ({ shell }, [trash, works, delayMs]) => {
+      shell.trashItem = async (path: string) => {
+        await new Promise((done) => setTimeout(done, delayMs));
+        if (!works) throw new Error('The trash is full.');
+        const fs = process.getBuiltinModule('node:fs');
+        const { basename, join } = process.getBuiltinModule('node:path');
+        fs.renameSync(path, join(trash, basename(path)));
+      };
+    },
+    [trash, works, delayMs] as const,
+  );
+  return trash;
+}
+
 /** Apps closeApp has closed: Playwright can't be asked about them again. */
 const closed = new WeakSet<ElectronApplication>();
 

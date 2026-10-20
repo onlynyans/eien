@@ -2,11 +2,10 @@
 // trash — by drag, by menu and by key — with the open note, the folder's
 // order and the pins kept in step (spec §2–§4).
 
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { ElectronApplication, Page } from '@playwright/test';
-import { closeApp, editorContent, expect, launchApp, test } from './launch';
+import type { Page } from '@playwright/test';
+import { closeApp, editorContent, expect, fakeTrash, launchApp, test } from './launch';
 
 const BOOK = 'Fic/Scarf';
 test.use({
@@ -58,23 +57,6 @@ async function drag(
   await page.mouse.move(from.x + 30, from.y + from.height / 2 + 12, { steps: 3 });
   await page.mouse.move(to.x + 30, to.y + (half === 'top' ? 4 : to.height - 4), { steps: 6 });
   await page.mouse.up();
-}
-
-/** The system's trash, played by a folder: what the app sends there is moved into it. */
-async function fakeTrash(app: ElectronApplication, works = true): Promise<string> {
-  const trash = mkdtempSync(join(tmpdir(), 'eien-trash-'));
-  await app.evaluate(
-    ({ shell }, [trash, works]) => {
-      shell.trashItem = async (path: string) => {
-        if (!works) throw new Error('The trash is full.');
-        const fs = process.getBuiltinModule('node:fs');
-        const { basename, join } = process.getBuiltinModule('node:path');
-        fs.renameSync(path, join(trash, basename(path)));
-      };
-    },
-    [trash, works] as const,
-  );
-  return trash;
 }
 
 test.describe('renaming', () => {
@@ -390,7 +372,7 @@ test.describe('the trash', () => {
     page,
     vault,
   }) => {
-    const trash = await fakeTrash(app, false);
+    const trash = await fakeTrash(app, { works: false });
     try {
       await row(page, 'Ideas').click({ button: 'right' });
       await menuItem(

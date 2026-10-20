@@ -59,6 +59,8 @@ export class PageView {
     this.#editorHost,
   );
   readonly #empty = h('p', { class: 'page__empty', text: 'Choose a note, or make a new one.' });
+  /** The start of the bar: the panes' controls, when the window gives them. */
+  readonly #lead = h('div', { class: 'page__lead' });
   #titleText = '';
   #counting: ReturnType<typeof setTimeout> | undefined;
   readonly #rename: (typed: string) => void;
@@ -103,6 +105,7 @@ export class PageView {
       h(
         'div',
         { class: 'page__bar' },
+        this.#lead,
         h(
           'div',
           { class: 'page__views', attrs: { role: 'group', 'aria-label': 'View' } },
@@ -114,6 +117,11 @@ export class PageView {
     );
     new SelectionBar(container, this.editor);
     this.showNothing();
+  }
+
+  /** Put `controls` at the start of the bar. */
+  lead(controls: HTMLElement): void {
+    this.#lead.replaceChildren(controls);
   }
 
   show(note: PageNote): void {

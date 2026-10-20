@@ -2,11 +2,10 @@
 // changes underneath, names at the length limit, a book's order synced from
 // another device, and where the keyboard goes.
 
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { editorContent, expect, test } from './launch';
+import { editorContent, expect, fakeTrash, test } from './launch';
 
 const BOOK = 'Fic/Scarf';
 test.use({
@@ -114,16 +113,8 @@ test('a folder sent to a slow trash while its open note is typed in stays gone',
 }) => {
   // The system's trash, played by a folder, taking a second and a half (a big folder, a
   // network drive, Windows' Recycle Bin).
-  const trash = mkdtempSync(join(tmpdir(), 'eien-trash-'));
+  const trash = await fakeTrash(app, { delayMs: 1500 });
   try {
-    await app.evaluate(({ shell }, trash) => {
-      shell.trashItem = async (path: string) => {
-        await new Promise((done) => setTimeout(done, 1500));
-        const fs = process.getBuiltinModule('node:fs');
-        const { basename, join } = process.getBuiltinModule('node:path');
-        fs.renameSync(path, join(trash, basename(path)));
-      };
-    }, trash);
     await folder(page, 'Research').click();
     await row(page, 'Wool').click();
     await folder(page, 'Research').click({ button: 'right' });

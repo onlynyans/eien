@@ -92,8 +92,6 @@ export interface MenuContext {
   readonly organizer: Organizer;
   readonly vaultName: string;
   readonly trashName: string;
-  /** The list is in a folder's own order. */
-  ordered(): boolean;
   /** Run a file operation, then read the vault again and redraw. */
   act(operation: () => Promise<unknown>): void;
   renameNote(path: string): void;
@@ -108,13 +106,14 @@ export interface MenuContext {
 
 type At = { readonly x: number; readonly y: number };
 
-export function showNoteMenu(ctx: MenuContext, path: string, at: At): void {
+/** A note's menu; `ordered` when its row is in its folder's own order, so it can move up or down. */
+export function showNoteMenu(ctx: MenuContext, path: string, at: At, ordered: boolean): void {
   const pinned = ctx.state.pins.includes(path);
   const title = titleOf(baseName(path));
   openMenu(
     noteMenu({
       pinned,
-      ordered: ctx.ordered(),
+      ordered,
       trashName: ctx.trashName,
       rename: () => ctx.renameNote(path),
       pin: (pin) => ctx.act(() => ctx.organizer.pin(path, pin)),

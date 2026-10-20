@@ -12,10 +12,55 @@
 .sidebar__head {
   display: flex;
   align-items: center;
-  gap: var(--eien-space-3);
+  gap: var(--eien-space-2);
   height: var(--band);
   flex: none;
-  padding: 0 var(--eien-space-4);
+  /* The seal's button pads it by a space: the seal itself sits on the gutter. */
+  padding: 0 var(--eien-space-4) 0
+    calc(var(--eien-space-4) - var(--eien-space-1) - var(--eien-hairline));
+}
+
+/* The seal as a button: the mark that shuts the sidebar, and on the strip opens it again. */
+.seal-button {
+  appearance: none;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: var(--eien-space-1);
+  border: var(--eien-hairline) solid transparent;
+  border-radius: var(--eien-radius);
+  background: none;
+  cursor: pointer;
+  transition: border-color var(--eien-quick) var(--eien-ease);
+}
+@media (hover: hover) {
+  .seal-button:hover {
+    border-color: var(--eien-rule);
+  }
+}
+.seal-button:active {
+  background: var(--eien-press);
+}
+.seal-button .seal {
+  transition: transform var(--eien-quick) var(--eien-ease);
+}
+.seal-button:active .seal {
+  transform: scale(0.94);
+}
+
+/* Shut: the strip holds the seal alone; everything else waits. */
+.sidebar__strip {
+  display: none;
+  flex: none;
+  justify-content: center;
+  height: var(--band);
+  align-items: center;
+}
+.shell[data-sidebar-shut] .sidebar__strip {
+  display: flex;
+}
+.shell[data-sidebar-shut] .sidebar > :not(.sidebar__strip) {
+  display: none;
 }
 .sidebar__vault {
   overflow: hidden;
@@ -135,6 +180,14 @@
   color: var(--eien-ink-soft);
   cursor: pointer;
 }
+/* A note in the tree (two panes, or a search's results): a chapter's number
+   before it, in a column of its own so the titles line up. */
+.tree-row__ord {
+  flex: none;
+  min-width: var(--eien-space-5);
+  text-align: right;
+  color: var(--eien-pencil);
+}
 /* A tag's "#": the machine's mark, before the writer's word. */
 .tree-row__hash {
   margin-right: calc(var(--eien-hairline) * 2);
@@ -187,6 +240,23 @@
   padding: var(--eien-space-3) var(--eien-space-4);
   border-top: var(--eien-hairline) solid var(--eien-rule-soft);
 }
+/* News from the last action, when there's no note list to show it above. */
+.sidebar__notice {
+  margin: 0 0 var(--eien-space-2);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  color: var(--eien-pencil);
+}
+.sidebar__notice[hidden] {
+  display: none;
+}
+.sidebar__empty {
+  padding: 0 var(--eien-space-4);
+  color: var(--eien-pencil);
+}
+.sidebar__empty .word-button {
+  margin-left: calc(var(--eien-space-2) * -1);
+}
 .sidebar__count {
   margin: 0 0 var(--eien-space-2);
   text-transform: uppercase;
@@ -201,4 +271,7 @@
 .sidebar__pair {
   display: flex;
   gap: var(--eien-space-1);
+}
+.sidebar__foot-row + .sidebar__foot-row {
+  margin-top: var(--eien-space-1);
 }
