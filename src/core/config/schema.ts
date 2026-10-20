@@ -16,6 +16,8 @@ interface Common {
   readonly description: string;
   readonly scope: SettingScope;
   readonly group: SettingGroup;
+  /** Only on these systems (Node's process.platform names); on every one when absent. */
+  readonly platforms?: readonly string[];
 }
 
 export interface ChoiceSetting extends Common {
@@ -133,6 +135,19 @@ export const SETTINGS = [
     default: 'off',
   },
   {
+    key: 'editor.spellcheck',
+    label: 'Spellcheck',
+    description:
+      'Underlines the words macOS doesn’t know, with its own dictionary; right-click one for suggestions. Also Edit → Check Spelling While Typing.',
+    scope: 'device',
+    group: 'Editor',
+    type: 'choice',
+    choices: { off: 'Off', on: 'On' },
+    default: 'off',
+    // Only macOS has a checker of its own; elsewhere Electron would fetch dictionaries from Google.
+    platforms: ['darwin'],
+  },
+  {
     key: 'books.numerals',
     label: 'Chapter numbers',
     description: 'How a book numbers its chapters in the note list.',
@@ -198,5 +213,10 @@ export type SettingValues = { readonly [K in SettingKey]: ValueOf<Extract<Define
 export const TOGGLES = [
   'editor.focus',
   'editor.typewriter',
+  'editor.spellcheck',
 ] as const satisfies readonly SettingKey[];
 export type ToggleKey = (typeof TOGGLES)[number];
+
+/** Whether `setting` is offered on the system named `platform` (process.platform). */
+export const offeredOn = (setting: Setting, platform: string): boolean =>
+  setting.platforms === undefined || setting.platforms.includes(platform);

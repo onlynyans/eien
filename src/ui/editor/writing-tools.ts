@@ -18,9 +18,11 @@ import { isLiteralAt } from './typing';
 export interface WritingTools {
   readonly focus: boolean;
   readonly typewriter: boolean;
+  /** The system's spellcheck underlines words (macOS: the window allows it nowhere else). */
+  readonly spellcheck: boolean;
 }
 
-export const NO_TOOLS: WritingTools = { focus: false, typewriter: false };
+export const NO_TOOLS: WritingTools = { focus: false, typewriter: false, spellcheck: false };
 
 const SCENE_BREAK = '***';
 
@@ -163,6 +165,8 @@ export const typewriter: Extension = [
 export const writingTools = (tools: WritingTools): Extension => [
   tools.focus ? focusMode : [],
   tools.typewriter ? typewriter : [],
+  // Off until the writer asks for it (spec §1): nothing underlined while they write.
+  EditorView.contentAttributes.of({ spellcheck: tools.spellcheck ? 'true' : 'false' }),
 ];
 
 /** Bring the caret's line to the middle now: typewriter scrolling just turned on. */

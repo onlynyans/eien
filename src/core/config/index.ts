@@ -1,6 +1,7 @@
 export {
   type ChoiceSetting,
   type NumberSetting,
+  offeredOn,
   SETTING_GROUPS,
   SETTINGS,
   type Setting,

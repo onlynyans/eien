@@ -101,6 +101,13 @@ export function buildMenu(send: SendCommand): Menu {
         { type: 'separator' },
         // The note (or what's chosen in it) as the HTML AO3 takes (spec §8).
         item('Copy for AO3', 'copy-ao3', 'CmdOrCtrl+Shift+C'),
+        // macOS's own checker; elsewhere there's none without a download (spec §4).
+        ...(mac
+          ? [
+              { type: 'separator' } as const,
+              toggle('Check Spelling While Typing', 'editor.spellcheck'),
+            ]
+          : []),
         { type: 'separator' },
         item('Search Notes…', 'search', 'CmdOrCtrl+Shift+F'),
       ],

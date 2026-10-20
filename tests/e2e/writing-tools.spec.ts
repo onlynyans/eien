@@ -125,3 +125,34 @@ test('typewriter scrolling holds the line being written at the middle of the pag
   });
   expect(Math.abs(offset)).toBeLessThan(40);
 });
+
+test('spellcheck: macOS’s own checker, off until asked for; not offered elsewhere', async ({
+  app,
+  page,
+  userData,
+}) => {
+  const mac = process.platform === 'darwin';
+  await open(page, 'Scene');
+  await expect(editorContent(page)).toHaveAttribute('spellcheck', 'false');
+  // A checker only on macOS: elsewhere Electron would download dictionaries from Google.
+  const allowed = await app.evaluate(({ session }) =>
+    session.defaultSession.isSpellCheckerEnabled(),
+  );
+  expect(allowed).toBe(mac);
+  await page.getByRole('button', { name: 'Settings' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await expect(dialog.getByRole('group', { name: 'Spellcheck' })).toHaveCount(mac ? 1 : 0);
+  await page.keyboard.press('Escape');
+  const item = await app.evaluate(({ Menu }) =>
+    Boolean(Menu.getApplicationMenu()?.getMenuItemById('editor.spellcheck')),
+  );
+  expect(item).toBe(mac);
+  if (!mac) return;
+
+  await clickMenu(app, 'Edit', 'Check Spelling While Typing');
+  await expect(editorContent(page)).toHaveAttribute('spellcheck', 'true');
+  await expect.poll(() => checked(app, 'editor.spellcheck')).toBe(true);
+  expect(deviceSettings(userData)).toEqual({ 'editor.spellcheck': 'on' });
+  await clickMenu(app, 'Edit', 'Check Spelling While Typing');
+  await expect(editorContent(page)).toHaveAttribute('spellcheck', 'false');
+});

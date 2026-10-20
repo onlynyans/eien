@@ -33,6 +33,9 @@ if (!app.requestSingleInstanceLock()) {
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, allow) =>
       allow(false),
     );
+    // Spellcheck is macOS's own checker. Elsewhere Electron's would download dictionaries
+    // from Google, so there it's off for good, whatever a field asks.
+    session.defaultSession.setSpellCheckerEnabled(process.platform === 'darwin');
     Menu.setApplicationMenu(
       buildMenu((command, window) => {
         if (window instanceof BrowserWindow) window.webContents.send(CHANNEL.menu, command);

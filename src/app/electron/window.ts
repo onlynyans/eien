@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { BrowserWindow, type IpcMainEvent, ipcMain, shell } from 'electron';
 import { CHANNEL } from '../../platform/bridge';
+import { serveContextMenu } from './context-menu';
 import { isAppUrl, isExternalLink } from './navigation';
 import { serveOut } from './out-session';
 import { serveSettings } from './settings-session';
@@ -33,7 +34,9 @@ export async function createMainWindow(): Promise<BrowserWindow> {
       sandbox: true,
       nodeIntegration: false,
       webviewTag: false,
-      spellcheck: false,
+      // macOS's own spellchecker, used only where the note asks for it (Settings → Editor).
+      // Elsewhere Electron would download dictionaries from Google: none, so no spellcheck.
+      spellcheck: process.platform === 'darwin',
     },
   });
 
@@ -50,6 +53,7 @@ export async function createMainWindow(): Promise<BrowserWindow> {
   saveBeforeClose(window);
   serveSettings(window, await serveVault(window));
   serveOut(window);
+  serveContextMenu(window);
   window.once('ready-to-show', () => window.show());
   void window.loadURL(url);
   return window;
