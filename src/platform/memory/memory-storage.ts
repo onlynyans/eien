@@ -55,6 +55,13 @@ export class MemoryStorage implements Storage {
     return [...folders, ...files];
   }
 
+  async listFiles(folder: string): Promise<string[]> {
+    const at = folder === '' ? '' : vaultPath(folder);
+    return [...this.#files.keys()]
+      .filter((path) => parentOf(path) === at && !isHiddenName(baseName(path)))
+      .map(baseName);
+  }
+
   async read(path: string): Promise<FileState | null> {
     const file = this.#files.get(vaultPath(path));
     return file ? { text: file.text, version: versionOf(file.text) } : null;

@@ -32,6 +32,13 @@ export interface Storage {
   /** Every visible folder and file, at any depth. Hidden (dot) names are left out. */
   list(): Promise<VaultEntry[]>;
 
+  /**
+   * The names of the files directly in the folder at `folder` (a hidden one
+   * too, such as .eien/versions/<id>), leaving out hidden files (a write's
+   * temp file), folders and links; none when there's no folder there.
+   */
+  listFiles(folder: string): Promise<string[]>;
+
   /** The file at `path`, or null when there's none. */
   read(path: string): Promise<FileState | null>;
 

@@ -30,6 +30,9 @@ class BentStorage implements Storage {
     );
     return [...entries, ...ghosts].map((entry) => ({ ...entry, ...this.stamps.get(entry.path) }));
   }
+  listFiles(folder: string): Promise<string[]> {
+    return this.inner.listFiles(folder);
+  }
   async read(path: string): Promise<FileState | null> {
     this.reads++;
     this.readingNow++;

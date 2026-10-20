@@ -56,6 +56,8 @@ export function buildMenu(send: SendCommand): Menu {
       label: 'File',
       submenu: [
         item('New Note', 'new-note', 'CmdOrCtrl+N'),
+        // A seal keeps this version for good (spec §9); autosave keeps writing the note.
+        item('Seal', 'seal', 'CmdOrCtrl+S'),
         item('Open Vault…', 'open-vault', 'CmdOrCtrl+O'),
         { type: 'separator' },
         ...(mac ? [] : [settings, { type: 'separator' } as const]),
@@ -98,6 +100,9 @@ export function buildMenu(send: SendCommand): Menu {
         item('Reading', 'view:reading'),
         { type: 'separator' },
         item('Next View', 'view:next', 'CmdOrCtrl+E'),
+        { type: 'separator' },
+        item('Compare', 'compare', 'CmdOrCtrl+Shift+D'),
+        item('Versions', 'versions'),
         { type: 'separator' },
         // Shut or open a pane, and give one the keyboard (spec §4).
         item('Toggle Sidebar', 'panes:sidebar', 'CmdOrCtrl+\\'),

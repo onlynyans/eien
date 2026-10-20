@@ -31,6 +31,7 @@ async function vaultWith(
       await new Promise((done) => setTimeout(done, searchDelay(query)));
       return index.search(query);
     },
+    listFiles: (folder) => storage.listFiles(folder),
     read: (path) => storage.read(path),
     readBytes: (path) => storage.readBytes(path),
     write: async (path, text, expected) => {

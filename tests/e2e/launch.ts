@@ -13,6 +13,14 @@ import {
 export const ROOT = resolve(import.meta.dirname, '../..');
 
 /**
+ * A test that holds the app to a time (a draw, a search, a save, typing
+ * without a stall). These run apart, one at a time, after the others
+ * (npm run test:e2e, and CI): with other apps running beside them on the
+ * same machine, they'd measure the machine's load, not Eien.
+ */
+export const TIMING = { tag: '@timing' };
+
+/**
  * Environment for a launch with its own, throwaway data folder, and the
  * vault at `vault` (or, without one, the welcome screen).
  */

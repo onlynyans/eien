@@ -65,6 +65,7 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
       'choose',
       'current',
       'list',
+      'listFiles',
       'makeFolder',
       'move',
       'notes',

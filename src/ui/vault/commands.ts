@@ -8,6 +8,7 @@ import type { MenuCommand } from '../../platform/bridge';
 import type { PageView } from '../page/page';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
+import type { VersionsUI } from '../versions/versions-ui';
 
 export interface CommandContext {
   readonly page: PageView;
@@ -17,6 +18,7 @@ export interface CommandContext {
   newNote(): void;
   /** Draw the list: a shut one isn't kept drawn. */
   drawList(): Promise<void>;
+  readonly versions: VersionsUI;
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
@@ -40,6 +42,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     else if (!wasShut) focusList(ctx.list);
     else void ctx.drawList().then(() => focusList(ctx.list));
   } else if (command === 'focus:page') page.focus();
+  else if (command === 'seal') void ctx.versions.seal();
+  else if (command === 'compare') void ctx.versions.cycleCompare();
+  else if (command === 'versions') ctx.versions.togglePanel();
   else if (command.startsWith('format:')) {
     const format = formatCommand(command.slice('format:'.length));
     if (format) page.editor.format(format);

@@ -364,11 +364,11 @@ src/core/            (✓ = built)
   config/       ✓ the settings schema, defaults, reading and writing settings files (§6)
   theme/         theme schema, validation, token list (§7)
   markdown/     ✓ Eien's Markdown (==highlight==, [[wiki links]]) and a note's plain text
-  note/         ✓ a note's preview, words and tags (front matter writing and id: phase 7)
+  note/         ✓ a note's preview, words, tags and id
   tags/         ✓ tag extraction and the tag tree
   search/       ✓ folding (case, accents, quotes), query terms, snippets
   typography/    quotes and dashes
-  versions/      checkpoint naming, listing, retention, word diff
+  versions/     ✓ the note's id in its front matter, seal file names, retention, word diff
   ao3/           Markdown → AO3 HTML, HTML → Markdown
 src/platform/
   bridge.ts     ✓ what the window may ask of the system (window.eien)
@@ -389,7 +389,7 @@ src/ui/
   welcome/      ✓ before a vault is open
   theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts
   editor/       ✓ CodeMirror, the three views, the selection bar, images (writing tools: phase 9)
-  versions/      the checkpoint cycle and named versions
+  versions/     ✓ sealing, Compare, the versions panel, the colophon's last seal
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions
@@ -549,34 +549,71 @@ it, including on real AO3 output.
 
 ## 9. Versions
 
+The interface calls a checkpoint a **seal**, and a named version a **named
+seal** (docs/design).
+
 ### Checkpoints
 
-- ⌘S makes a checkpoint of the open note: a copy in
-  `.eien/versions/<id>/<UTC time>.md`. Nothing is made if the note matches its
-  last checkpoint.
+- ⌘S (File → Seal, the page's SEAL) makes a checkpoint of the open note: a
+  copy in `.eien/versions/<id>/<UTC time>.md`, the time to the second
+  (`2026-10-19T16-40-02Z.md`); a second one in the same second is
+  `2026-10-19T16-40-02Z~2.md`. Nothing is made if the note matches its last
+  checkpoint ("Nothing new to seal"); a checkpoint dated ahead (another
+  device's clock) isn't taken as the last. The note is saved as it's sealed,
+  a note that can't be saved isn't sealed, and a seal pressed while the note
+  is being renamed or moved waits for that, then seals. What can't be done is
+  said, never dropped.
 - Autosave keeps writing the note itself. A checkpoint is what "saved" means.
+  The colophon says when: "Sealed 2h ago", or "Not sealed yet".
+- **The id.** A note's first seal gives it an `id` (ten letters and digits,
+  the first a letter, so YAML reads it as text), added as the first key of its
+  front matter by one line: every other key, comment and space stays byte for
+  byte, and the caret, the undo history and anything typed meanwhile stay.
+  Front matter that isn't a map of keys, or an `id` another tool wrote that
+  can't name a folder, is never rewritten: the note isn't sealed, and the
+  writer is told why (an empty `id:` is filled in). A note that shares its
+  id with another (a copied file; Syncthing's conflict copies aren't
+  counted) is given a new one on its next seal, and takes the seals so far
+  with it, so neither loses its history.
+- Front matter holding only that `id` is Eien's bookkeeping: Live and Reading
+  keep it out of sight (Source shows it), the caret never rests in it, and the
+  writer's edits never reach into it (typing after a closing `---` that ends
+  the note starts a new line).
+- Another device's seal (synced into `.eien/versions/`) shows at once.
 
 ### The compare button
 
 One button (and ⌘⇧D) cycles through three states:
 
 1. **Changes** — the draft compared with the last checkpoint, word by word:
-   removed words struck through in red, added words underlined in green.
+   removed words struck through in red, added words underlined in green, and
+   how many of each. A new sentence before one that starts the same shows as
+   a sentence added whole.
 2. **Checkpoint** — the checkpoint alone, read-only.
 3. **Draft** — back to editing.
 
 The diff and the checkpoint view are read-only. Typing in them returns to the
-draft first.
+draft first, the key typed there (in Reading, only the draft comes back).
+Words are found as the word count finds them, in scripts with spaces or
+without, and compared in the note's text (its marks and front matter aside),
+within a bound: a rewrite too large to compare word by word is compared by
+lines. A sentence added is shown whole, its stop and all. Nothing a slow
+Compare or Restore finishes lands on a note opened meanwhile.
 
 ### Named versions ("savegames")
 
 - Any checkpoint can be named: `2026-10-19T17-02-11Z--before the rewrite.md`.
-- The versions panel lists a note's versions; compare any of them with the
-  draft, or restore one.
-- **Restoring** first checkpoints the current draft, so restoring is undoable.
+- The versions panel (VERSIONS) lists the draft and a note's versions, newest
+  first, with their words: compare any of them with the draft, restore one,
+  name it in place, or delete it.
+- **Restoring** first checkpoints the current draft, so restoring is undoable
+  (⌘Z too); words typed while it works are checkpointed before they're
+  replaced. The note keeps its own id.
 - **Retention:** named versions are kept until deleted. Unnamed checkpoints
-  older than 30 days are thinned to one per day, and the latest is always
-  kept. Deleting a version sends it to the trash.
+  older than 30 days are thinned to one per day (the day's last, in the
+  writer's own time zone), and the latest is always kept. Thinning happens
+  after a seal, and what it thins goes to the system trash. Deleting a
+  version sends it to the trash.
 
 ---
 

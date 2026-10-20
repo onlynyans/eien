@@ -1,7 +1,7 @@
 // The page: the open note on its sheet, the view switch above it, and the
 // colophon beneath.
 
-import { countWords } from '../../core/text';
+import { countWords, frontMatterEnd } from '../../core/text';
 import { h } from '../dom';
 import { EDITOR_MODES, type EditorEvents, type EditorMode, NoteEditor } from '../editor/editor';
 import { SelectionBar } from '../editor/selection-bar';
@@ -45,6 +45,8 @@ export class PageView {
   });
   readonly #notice = h('p', { class: 'notice', attrs: { role: 'status', hidden: true } });
   readonly #editorHost = h('div', { class: 'editor-host' });
+  /** In the editor's place while a seal is compared or shown (read only). */
+  readonly #compareHost = h('div', { class: 'compare-host', attrs: { hidden: true } });
   readonly #words = h('span', { class: 'colophon__words' });
   readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
   readonly #zoom = h('span', { class: 'colophon__zoom', attrs: { 'aria-label': 'Zoom' } });
@@ -59,6 +61,7 @@ export class PageView {
     this.#titleField,
     this.#notice,
     this.#editorHost,
+    this.#compareHost,
   );
   /** With no note open; it takes the keyboard when the page is given it. */
   readonly #empty = h('p', {
@@ -68,6 +71,12 @@ export class PageView {
   });
   /** The start of the bar: the panes' controls, when the window gives them. */
   readonly #lead = h('div', { class: 'page__lead' });
+  /** After the views: the seals' controls (Compare, Seal, Versions). */
+  readonly #tools = h('div', { class: 'page__tools' });
+  /** In the colophon, after the save state: the last seal. */
+  readonly #sealLine = h('span', { class: 'colophon__seal' });
+  /** Beside the page: the versions panel. */
+  readonly #aside = h('div', { class: 'page__aside' });
   #titleText = '';
   #counting: ReturnType<typeof setTimeout> | undefined;
   readonly #rename: (typed: string) => void;
@@ -111,16 +120,30 @@ export class PageView {
     container.replaceChildren(
       h(
         'div',
-        { class: 'page__bar' },
-        this.#lead,
+        { class: 'page__main' },
         h(
           'div',
-          { class: 'page__views', attrs: { role: 'group', 'aria-label': 'View' } },
-          ...this.#modes,
+          { class: 'page__bar' },
+          this.#lead,
+          h(
+            'div',
+            { class: 'page__views', attrs: { role: 'group', 'aria-label': 'View' } },
+            ...this.#modes,
+          ),
+          this.#tools,
+        ),
+        h('div', { class: 'page__scroll' }, this.#sheet, this.#empty),
+        h(
+          'footer',
+          { class: 'colophon count' },
+          this.#words,
+          this.#state,
+          this.#sealLine,
+          this.#zoom,
+          this.#news,
         ),
       ),
-      h('div', { class: 'page__scroll' }, this.#sheet, this.#empty),
-      h('footer', { class: 'colophon count' }, this.#words, this.#state, this.#zoom, this.#news),
+      this.#aside,
     );
     new SelectionBar(container, this.editor);
     this.showNothing();
@@ -134,6 +157,29 @@ export class PageView {
   /** Put `controls` at the start of the bar. */
   lead(controls: HTMLElement): void {
     this.#lead.replaceChildren(controls);
+  }
+
+  /** The seals' parts: controls after the views, a line in the colophon, a panel beside. */
+  attach(parts: {
+    readonly tools: HTMLElement;
+    readonly sealLine: HTMLElement;
+    readonly aside: HTMLElement;
+  }): void {
+    this.#tools.replaceChildren(parts.tools);
+    this.#sealLine.replaceChildren(parts.sealLine);
+    this.#aside.replaceChildren(parts.aside);
+  }
+
+  /** Show `view` (read only) in the editor's place; null gives the editor back. */
+  compare(view: HTMLElement | null): void {
+    this.#compareHost.replaceChildren(...(view ? [view] : []));
+    this.#compareHost.hidden = view === null;
+    this.#editorHost.hidden = view !== null;
+  }
+
+  /** Whether a seal is shown in the editor's place. */
+  get comparing(): boolean {
+    return !this.#compareHost.hidden;
   }
 
   show(note: PageNote): void {
@@ -200,6 +246,7 @@ export class PageView {
   /** The keyboard to the note; with none open, to the page itself, never to nowhere. */
   focus(): void {
     if (this.#sheet.hidden) this.#empty.focus();
+    else if (this.comparing) this.#compareHost.querySelector<HTMLElement>('[tabindex]')?.focus();
     else this.editor.focus();
   }
 
@@ -225,7 +272,9 @@ export class PageView {
   /** A note that opens with its own "# Title" heading needn't show the title twice. */
   #showTitle(text: string): void {
     if (!this.#titleField.hidden) return; // being renamed: the field stands in for it
-    const first = /^\s*#[ \t]+(.+?)[ \t#]*$/m.exec(text.trimStart().split('\n', 1)[0] ?? '');
+    // The writing's first line: front matter (a seal's id) isn't the note's start.
+    const writing = text.slice(frontMatterEnd(text)).trimStart();
+    const first = /^\s*#[ \t]+(.+?)[ \t#]*$/m.exec(writing.split('\n', 1)[0] ?? '');
     const same =
       first?.[1]?.trim().toLocaleLowerCase() === this.#titleText.trim().toLocaleLowerCase();
     this.#title.hidden = same;

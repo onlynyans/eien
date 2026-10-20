@@ -30,9 +30,9 @@ when code and spec disagree, fix one of them in the same change.
 
 | Path | What |
 |---|---|
-| `src/core/` | Rules, pure TypeScript: `paths`, `text`, `vault`, `saving`, `format` (the formatting commands), `config` (every setting, and its files), `markdown` (Eien's Markdown and a note's plain text, shared with the editor), `note`, `tags`, `search` |
+| `src/core/` | Rules, pure TypeScript: `paths`, `text`, `vault`, `saving`, `format` (the formatting commands), `config` (every setting, and its files), `markdown` (Eien's Markdown and a note's plain text, shared with the editor), `note`, `tags`, `search`, `versions` (ids, seal files, retention, the word diff) |
 | `src/platform/` | `bridge.ts` (all the window may ask), `storage.ts` (the Storage contract), and its `electron/` and `memory/` implementations; `index/`, the vault's index over any Storage |
-| `src/ui/` | The window: `app.ts` holds the settings, the menu and the vault shown; `vault/vault-view.ts` wires the panes (`sidebar`, `list`, `page`) to the vault and the open note (`vault/open-note.ts`), and `vault/pane-drawer.ts` draws them; `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`), and with two panes the sidebar's tree (`sidebar/tree.ts`) lists the notes; `vault/organize.ts` renames, moves and trashes, keeping order and pins in step; `menu/` is the floating menu; `welcome/` before a vault is open; `editor/` is CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows); `settings/` is the settings screen and the look it sets on `<html>`; styles in `theme/` and beside each view |
+| `src/ui/` | The window: `app.ts` holds the settings, the menu and the vault shown; `vault/vault-view.ts` wires the panes (`sidebar`, `list`, `page`) to the vault and the open note (`vault/open-note.ts`), and `vault/pane-drawer.ts` draws them; `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`), and with two panes the sidebar's tree (`sidebar/tree.ts`) lists the notes; `vault/organize.ts` renames, moves and trashes, keeping order and pins in step; `versions/` seals the open note (`note-versions.ts`, the rules in `core/versions`), compares it with a seal and lists its seals; `menu/` is the floating menu; `welcome/` before a vault is open; `editor/` is CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows); `settings/` is the settings screen and the look it sets on `<html>`; styles in `theme/` and beside each view |
 | `src/app/electron/` | Main process: window, menu, the vault and settings sessions and their IPC (`ipc.ts`: one window per handler), the device's own file; the sandboxed `preload.ts` |
 | `tests/` | Architecture tests; `tests/e2e/` drives the built app on real folders with Playwright |
 | `tsconfig.{core,web,node,e2e}.json` | One per environment: core can use neither DOM nor Node, the window can't use Node |
@@ -57,7 +57,10 @@ npm run test:mutation  # Stryker: the edits to core and platform no test catches
 
 CI (`.github/workflows/ci.yml`) runs lint, types and unit tests on Linux, and
 the end-to-end tests on macOS, Windows and Linux, on every push to `main` and
-every pull request.
+every pull request. An end-to-end test that holds the app to a time (a draw,
+a search, typing without a stall) is tagged `TIMING` (`@timing`, from
+`tests/e2e/launch.ts`): those run after the rest, one at a time, so they
+measure Eien and not the tests running beside them.
 
 `.github/workflows/weekly.yml` runs mutation testing (report and score in the
 run) and the property tests with a new seed, every Monday and by hand. It never

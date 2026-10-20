@@ -3,22 +3,23 @@
 // in ./organize.ts, the panes' widths and shutting in ../shell/panes.ts;
 // this wires the panes, menus and drags to them.
 
-import { baseName, freeNoteName, joinPath, titleOf, VAULT_CONFIG } from '../../core/paths';
+import { freeNoteName, joinPath, VAULT_CONFIG } from '../../core/paths';
 import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
 import { watchDrags } from '../list/drag';
 import { listKey, rememberSort } from '../list/sorts';
-import { PageView } from '../page/page';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
+import { VersionsUI } from '../versions/versions-ui';
 import { runCommand } from './commands';
 import { onDiskChanges, touches } from './disk-changes';
 import { type MenuContext, showFolderMenu, showNoteMenu } from './menus';
 import { Navigation } from './navigation';
+import { notePage } from './note-page';
 import { Notice } from './notice';
 import { oneAtATime } from './one-at-a-time';
-import { crumbsOf, OpenNote } from './open-note';
+import { OpenNote } from './open-note';
 import { Organizer } from './organize';
 import { PaneDrawer } from './pane-drawer';
 import { type Selection, VaultState } from './vault-state';
@@ -107,25 +108,12 @@ export async function showVault(
   const pageArea = h('main', { class: 'page' });
   const shell = h('div', { class: 'shell' }, sidebar.element, list, pageArea);
   root.replaceChildren(shell);
-  const page = new PageView(pageArea, {
-    changed: (text) => note.session?.edit(text),
-    follow: (target) => {
-      if (target.kind === 'url')
-        window.open(target.value); // the main process opens web addresses in the browser
-      else {
-        const path = state.findByTitle(target.value);
-        if (path) void openNote(path);
-      }
-    },
-    rename: (typed) => {
-      const path = note.path;
-      if (!path) return;
-      void act(async () => {
-        const to = await organizer.renameNote(path, typed);
-        page.retitle(titleOf(baseName(to ?? path)), crumbsOf(to ?? path));
-        page.focus();
-      });
-    },
+  const page = notePage(pageArea, {
+    note: () => note,
+    state,
+    organizer,
+    openNote: (path) => void openNote(path),
+    act: (operation) => void act(operation),
   });
   const panes = new PaneLayout(
     {
@@ -158,6 +146,15 @@ export async function showVault(
   };
 
   const note = new OpenNote(bridge.vault, page, () => void refresh());
+  const versions = new VersionsUI({
+    page,
+    note,
+    vault: bridge.vault,
+    notesWithId: (id) => state.notesWithId(id),
+    mac: keys.sidebar.startsWith('⌘'),
+    tell: (message) => notice.tell(message),
+    serial: (operation) => act(operation),
+  });
 
   const drags = {
     moveTo: (path: string, folder: string) =>
@@ -200,7 +197,10 @@ export async function showVault(
       },
     },
   });
-  const redraw = () => draw.all();
+  const redraw = () => {
+    versions.sync(); // another note open is seen here, whatever opened or closed it
+    return draw.all();
+  };
 
   /** Rename a note: open it, and its title becomes a field. */
   async function renameNote(path: string): Promise<void> {
@@ -246,6 +246,7 @@ export async function showVault(
   const stopWatching = onDiskChanges(bridge.vault, (changed) => {
     if (note.path && touches(note.path, changed)) void note.session?.diskChanged();
     if (changed.has(VAULT_CONFIG)) void settings.reload(); // changed on another device
+    void versions.diskChanged(changed); // another device sealed the open note
     void refresh();
   });
 
@@ -271,6 +272,7 @@ export async function showVault(
       list,
       newNote: () => void newNote(),
       drawList: () => draw.list(),
+      versions,
     }),
   );
   await refresh();
@@ -285,6 +287,7 @@ export async function showVault(
       onMenu();
       panes.stop();
       notice.stop();
+      versions.stop();
       window.removeEventListener('blur', onBlur);
     },
   };

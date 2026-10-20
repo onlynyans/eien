@@ -160,7 +160,7 @@ const unread = (
   size: number,
   title: string,
 ): Known => ({
-  note: { ...listed, preview: '', words: 0, tags: [] },
+  note: { ...listed, preview: '', words: 0, tags: [], id: null },
   size,
   plain: '',
   searchable: searchText(title, ''),

@@ -81,6 +81,22 @@ export class DiskStorage implements Storage {
     return this.#root;
   }
 
+  async listFiles(folder: string): Promise<string[]> {
+    const at = folder === '' ? this.#root : await this.#resolve(folder);
+    const names = await readdir(at, { withFileTypes: true }).catch(() => [] as Dirent[]);
+    const addressable = (name: string) => {
+      try {
+        vaultPath(folder ? `${folder}/${name}` : name);
+        return true;
+      } catch {
+        return false; // a name Eien can't read back on every system, as list() leaves out
+      }
+    };
+    return names
+      .filter((dirent) => dirent.isFile() && !isHiddenName(dirent.name) && addressable(dirent.name))
+      .map((dirent) => dirent.name);
+  }
+
   async list(): Promise<VaultEntry[]> {
     const entries: VaultEntry[] = [];
     const walk = async (folder: string): Promise<void> => {
