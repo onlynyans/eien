@@ -18,6 +18,7 @@ const bridge: Bridge = {
     choose: () => ipcRenderer.invoke(CHANNEL.choose),
     list: () => ipcRenderer.invoke(CHANNEL.list),
     read: (path) => ipcRenderer.invoke(CHANNEL.read, path),
+    readBytes: (path) => ipcRenderer.invoke(CHANNEL.readBytes, path),
     write: (path, text, expected) => ipcRenderer.invoke(CHANNEL.write, path, text, expected),
     onChange: (listener) => listen<string[]>(CHANNEL.changed, listener),
   },

@@ -9,8 +9,24 @@
   background: var(--eien-page-ground);
 }
 .page__bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 var(--eien-space-4);
   background: var(--eien-band);
   border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+/* The page's controls wait until the pointer is over the page, or focus is
+   in them: nothing interrupts the writer (spec §1). */
+.page__views {
+  display: flex;
+  gap: var(--eien-space-1);
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+.page:hover .page__views,
+.page__views:focus-within {
+  opacity: 1;
 }
 .page__scroll {
   min-height: 0;
@@ -64,23 +80,9 @@
   border-left: var(--eien-mark-w) solid var(--eien-caution);
 }
 
-/* The writing. A plain text area until the editor arrives (phase 4). */
-.editor {
+/* The writing: the editor, in its own shadow root (src/ui/editor). */
+.editor-host {
   display: block;
-  width: 100%;
-  min-height: 40vh;
-  field-sizing: content;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: none;
-  resize: none;
-  background: transparent;
-  font-family: var(--eien-face-text);
-  font-size: var(--eien-size-prose);
-  line-height: var(--eien-leading-prose);
-  color: var(--eien-ink);
-  caret-color: var(--eien-seal);
 }
 
 .page__empty {

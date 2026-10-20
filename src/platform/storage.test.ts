@@ -71,6 +71,14 @@ for (const [name, make] of Object.entries(implementations)) {
       expect((await subject.storage.read('Note.md'))?.text).toBe('One.');
     });
 
+    it('reads a file’s bytes, and nothing for a missing one', async () => {
+      await subject.putOutside('art/cover.png', 'PNG-bytes');
+      const bytes = await subject.storage.readBytes('art/cover.png');
+      expect(bytes && new TextDecoder().decode(bytes)).toBe('PNG-bytes');
+      expect(await subject.storage.readBytes('art/none.png')).toBeNull();
+      await expect(subject.storage.readBytes('../outside.png')).rejects.toThrow(VaultPathError);
+    });
+
     it('reads back exactly what it wrote, with a version that matches', async () => {
       const result = await subject.storage.write('Note.md', 'Words.', null);
       const read = await subject.storage.read('Note.md');
