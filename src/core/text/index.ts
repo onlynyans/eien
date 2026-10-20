@@ -8,4 +8,5 @@ export {
   withoutBom,
 } from './format';
 export { frontMatterEnd } from './front-matter';
+export { firstGraphemes, graphemeBoundary } from './graphemes';
 export { countPlainWords, countWords } from './words';

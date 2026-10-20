@@ -1,8 +1,10 @@
 // The sidebar: the vault's contents page. Its name and the search field,
-// then Library, Folders and Tags; at the foot, day or night, and the
-// settings. The name and search field stay put; the rest redraws.
+// then Library (All Notes, Pinned), Folders and Tags; at the foot, day or
+// night, and the settings. The name and search field stay put; the rest
+// redraws. A folder takes a dropped note, and has its own menu.
 
 import type { SettingValues } from '../../core/config';
+import { joinPath, parentOf } from '../../core/paths';
 import type { TagNode } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import { h, wordButton } from '../dom';
@@ -13,6 +15,8 @@ type Scheme = SettingValues['appearance.scheme'];
 export interface SidebarModel {
   readonly tree: FolderNode;
   readonly tags: readonly TagNode[];
+  /** How many notes are pinned (the row shows when there are some). */
+  readonly pinned: number;
   readonly selection: Selection;
   /** Folder paths, and tag keys, shown open. */
   readonly open: ReadonlySet<string>;
@@ -25,6 +29,11 @@ export interface SidebarActions {
   toggle(id: string): void;
   /** The search field's words, a moment after typing stops; "" when cleared. */
   search(query: string): void;
+  /** A folder's menu, at the pointer or under the row. */
+  folderMenu(path: string, at: { readonly x: number; readonly y: number }): void;
+  newFolder(): void;
+  /** The name typed for a folder being renamed. */
+  renameFolder(path: string, typed: string): void;
   scheme(scheme: Scheme): void;
   settings(): void;
 }
@@ -42,6 +51,13 @@ export class Sidebar {
   readonly #body = h('div', { class: 'sidebar__body' });
   readonly #actions: SidebarActions;
   #timer: ReturnType<typeof setTimeout> | undefined;
+  #model: SidebarModel | null = null;
+  /** The folder being renamed in place, and what's typed so far: kept across redraws. */
+  #editing: { path: string; typed: string; start: number; end: number } | null = null;
+  /** Set while redrawing: a field taken out by a redraw isn't the writer leaving it. */
+  #drawing = false;
+  /** The row to give the keyboard back to after the next redraw. */
+  #refocus: string | null = null;
 
   constructor(name: string, actions: SidebarActions) {
     this.#actions = actions;
@@ -87,7 +103,8 @@ export class Sidebar {
         'header',
         { class: 'sidebar__head' },
         h('span', { class: 'seal', text: '永', attrs: { 'aria-hidden': 'true' } }),
-        h('span', { class: 'sidebar__vault', text: name }),
+        // The vault itself takes a dropped note, out of whatever folder it was in.
+        h('span', { class: 'sidebar__vault', text: name, attrs: { 'data-folder': '' } }),
       ),
       h('div', { class: 'sidebar__search', attrs: { role: 'search' } }, this.#search, this.#clear),
       this.#body,
@@ -110,17 +127,30 @@ export class Sidebar {
     this.#clear.hidden = true;
   }
 
+  /** Rename the folder at `path` in place: its name becomes a field; Enter keeps it, Esc doesn't. */
+  editFolder(path: string): void {
+    const name = path.slice(path.lastIndexOf('/') + 1);
+    this.#editing = { path, typed: name, start: 0, end: name.length };
+    if (this.#model) this.draw(this.#model);
+  }
+
   draw(model: SidebarModel): void {
+    this.#model = model;
+    // A redraw mustn't take the keyboard's place: the row that had focus has it again.
+    const active = document.activeElement;
+    const focused =
+      this.#refocus ??
+      (active instanceof HTMLElement && this.#body.contains(active)
+        ? (active.dataset.key ?? null)
+        : null);
+    this.#refocus = null;
     const actions = this.#actions;
-    const selected = (selection: Selection) =>
-      model.selection.kind === selection.kind &&
-      (selection.kind === 'all' ||
-        (selection.kind === 'folder' &&
-          model.selection.kind === 'folder' &&
-          model.selection.path === selection.path) ||
-        (selection.kind === 'tag' &&
-          model.selection.kind === 'tag' &&
-          model.selection.key === selection.key));
+    const same = (a: Selection, b: Selection) =>
+      a.kind === b.kind &&
+      (a.kind === 'all' ||
+        a.kind === 'pinned' ||
+        (a.kind === 'folder' && b.kind === 'folder' && a.path === b.path) ||
+        (a.kind === 'tag' && b.kind === 'tag' && a.key === b.key));
 
     const twist = (id: string, name: string, hasChildren: boolean) => {
       if (!hasChildren) return h('span', { class: 'tree-row__twist' });
@@ -137,6 +167,27 @@ export class Sidebar {
       });
     };
 
+    /** A folder's own menu and keys: right-click or the menu key; F2 renames it. */
+    const folderEvents = (folder: string) => ({
+      contextmenu: (event: MouseEvent) => {
+        event.preventDefault();
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        const fromKeys = event.clientX === 0 && event.clientY === 0;
+        actions.folderMenu(
+          folder,
+          fromKeys ? { x: rect.left + 16, y: rect.bottom } : { x: event.clientX, y: event.clientY },
+        );
+      },
+      keydown: (event: KeyboardEvent) => {
+        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+          const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+          actions.folderMenu(folder, { x: rect.left + 16, y: rect.bottom });
+        } else if (event.key === 'F2') this.editFolder(folder);
+        else return;
+        event.preventDefault();
+      },
+    });
+
     const row = (
       label: Node | string,
       count: number,
@@ -144,6 +195,7 @@ export class Sidebar {
       depth = 0,
       opener?: HTMLElement,
     ) => {
+      const folder = selection.kind === 'folder' ? selection.path : undefined;
       const item = h(
         'li',
         { class: 'tree-row' },
@@ -152,8 +204,17 @@ export class Sidebar {
           'button',
           {
             class: 'tree-row__name',
-            attrs: { type: 'button', 'aria-current': selected(selection) ? 'true' : undefined },
-            on: { click: () => actions.select(selection) },
+            attrs: {
+              type: 'button',
+              'aria-current': same(model.selection, selection) ? 'true' : undefined,
+              'data-key': keyOf(selection),
+              'data-folder': folder,
+              'aria-keyshortcuts': folder === undefined ? undefined : 'F2',
+            },
+            on: {
+              click: () => actions.select(selection),
+              ...(folder === undefined ? {} : folderEvents(folder)),
+            },
           },
           h('span', { class: 'tree-row__label' }, label),
           h('span', { class: 'count', text: count.toLocaleString() }),
@@ -164,15 +225,65 @@ export class Sidebar {
       return item;
     };
 
+    /** A folder being renamed: its name as a field. */
+    const editRow = (folder: FolderNode, depth: number, typed: string) => {
+      const field = h('input', {
+        class: 'field tree-row__field',
+        attrs: { type: 'text', 'aria-label': `Rename ${folder.name}`, spellcheck: 'false' },
+      });
+      field.value = typed;
+      const finish = (keep: boolean) => {
+        if (this.#editing?.path !== folder.path) return;
+        this.#editing = null;
+        const value = field.value;
+        // The keyboard goes back to the folder, under its new name if it gets one.
+        const renaming = keep && value.trim() !== '' && value !== folder.name;
+        this.#refocus = keyOf({
+          kind: 'folder',
+          path: renaming ? joinPath(parentOf(folder.path), value.trim()) : folder.path,
+        });
+        if (renaming) actions.renameFolder(folder.path, value);
+        else if (this.#model) this.draw(this.#model);
+      };
+      // What's typed, and where the caret is, outlive a redraw.
+      const keep = () => {
+        if (!this.#editing) return;
+        this.#editing.typed = field.value;
+        this.#editing.start = field.selectionStart ?? field.value.length;
+        this.#editing.end = field.selectionEnd ?? field.value.length;
+      };
+      field.addEventListener('input', keep);
+      field.addEventListener('select', keep);
+      field.addEventListener('keyup', keep);
+      field.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') finish(true);
+        else if (event.key === 'Escape') finish(false);
+        else return;
+        event.preventDefault();
+        event.stopPropagation();
+      });
+      // Leaving the field keeps the name; a redraw replacing it, or the window losing
+      // focus to another app, isn't leaving it.
+      field.addEventListener('blur', () => {
+        if (!this.#drawing && field.isConnected && document.hasFocus()) finish(true);
+      });
+      const item = h('li', { class: 'tree-row' }, h('span', { class: 'tree-row__twist' }), field);
+      item.style.setProperty('--depth', String(depth));
+      return item;
+    };
+
     const folderRows = (node: FolderNode, depth: number): HTMLElement[] =>
       node.folders.flatMap((folder) => {
-        const own = row(
-          folder.name,
-          folder.noteCount,
-          { kind: 'folder', path: folder.path },
-          depth,
-          twist(folder.path, folder.name, folder.folders.length > 0),
-        );
+        const own =
+          this.#editing?.path === folder.path
+            ? editRow(folder, depth, this.#editing.typed)
+            : row(
+                folder.name,
+                folder.noteCount,
+                { kind: 'folder', path: folder.path },
+                depth,
+                twist(folder.path, folder.name, folder.folders.length > 0),
+              );
         return model.open.has(folder.path) ? [own, ...folderRows(folder, depth + 1)] : [own];
       });
 
@@ -195,20 +306,33 @@ export class Sidebar {
         'aria-pressed': String(model.scheme === scheme),
       });
 
-    const section = (label: string, rows: HTMLElement[]) =>
-      rows.length > 0
+    const section = (label: string, rows: HTMLElement[], control?: HTMLElement) =>
+      rows.length > 0 || control
         ? [
-            h('p', { class: 'label sidebar__label', text: label }),
+            h(
+              'div',
+              { class: 'sidebar__section' },
+              h('p', { class: 'label sidebar__label', text: label }),
+              control,
+            ),
             h('ul', { class: 'tree' }, ...rows),
           ]
         : [];
 
+    const library = [row('All Notes', model.tree.noteCount, { kind: 'all' })];
+    if (model.pinned > 0) library.push(row('Pinned', model.pinned, { kind: 'pinned' }));
+
+    this.#drawing = true;
     this.#body.replaceChildren(
       h(
         'nav',
         { class: 'sidebar__tree', attrs: { 'aria-label': 'Notes' } },
-        ...section('Library', [row('All Notes', model.tree.noteCount, { kind: 'all' })]),
-        ...section('Folders', folderRows(model.tree, 0)),
+        ...section('Library', library),
+        ...section(
+          'Folders',
+          folderRows(model.tree, 0),
+          wordButton('New folder', actions.newFolder, { class: 'word-button sidebar__new' }),
+        ),
         ...section('Tags', tagRows(model.tags, 0)),
       ),
       h(
@@ -231,5 +355,27 @@ export class Sidebar {
         ),
       ),
     );
+    this.#drawing = false;
+    if (focused !== null && !this.#editing) {
+      [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')]
+        .find((row) => row.dataset.key === focused)
+        ?.focus();
+    }
+    // A redraw mustn't take the caret out of the name being typed.
+    if (this.#editing) {
+      const field = this.#body.querySelector<HTMLInputElement>('.tree-row__field');
+      if (field && document.activeElement !== field) {
+        field.focus();
+        field.setSelectionRange(this.#editing.start, this.#editing.end);
+      }
+    }
   }
 }
+
+/** A row's lasting name, for giving it the keyboard back after a redraw. */
+const keyOf = (selection: Selection): string =>
+  selection.kind === 'folder'
+    ? `folder:${selection.path}`
+    : selection.kind === 'tag'
+      ? `tag:${selection.key}`
+      : selection.kind;

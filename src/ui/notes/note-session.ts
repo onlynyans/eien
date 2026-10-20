@@ -37,6 +37,8 @@ export class NoteSession {
   #version: string;
   #text: string;
   #state: SaveState = 'saved';
+  /** Closed: nothing is saved or checked any more (the note went to the trash). */
+  #closed = false;
   #timer: ReturnType<typeof setTimeout> | undefined;
   /** Saves and disk checks run one at a time, in order. */
   #queue: Promise<void> = Promise.resolve();
@@ -84,6 +86,7 @@ export class NoteSession {
 
   /** The writer typed: keep the text, and save once typing pauses. */
   edit(text: string): void {
+    if (this.#closed) return;
     this.#text = text;
     if (text === this.#base) {
       this.#setState('saved');
@@ -100,13 +103,28 @@ export class NoteSession {
     return this.#enqueue(() => this.#save());
   }
 
+  /**
+   * The note was renamed or moved by this window, to `path`: carry on there.
+   * Run it once saves under way are done (see `flush`), as the move is.
+   */
+  movedTo(path: string): void {
+    this.#path = path;
+  }
+
   /** The file may have changed on disk: look, and act (spec §3). */
   diskChanged(): Promise<void> {
     return this.#enqueue(() => this.#checkDisk());
   }
 
+  /** Done with this note: no save that's waiting will run, nor any later one. */
+  close(): void {
+    this.#closed = true;
+    clearTimeout(this.#timer);
+  }
+
   #enqueue(task: () => Promise<void>): Promise<void> {
-    this.#queue = this.#queue.then(task, task);
+    const run = () => (this.#closed ? Promise.resolve() : task());
+    this.#queue = this.#queue.then(run, run);
     return this.#queue;
   }
 

@@ -6,7 +6,7 @@ import type { FormatCommandId } from '../core/format';
 import type { IndexedNote } from '../core/note';
 import type { SearchResult } from '../core/search';
 import type { VaultEntry } from '../core/vault';
-import type { FileState, WriteResult } from './storage';
+import type { FileState, MoveResult, WriteResult } from './storage';
 
 export interface VaultInfo {
   /** The vault folder's name, as shown at the top of the sidebar. */
@@ -28,6 +28,11 @@ export interface VaultBridge {
   /** An image's bytes, to show it; null when it's missing or too big. */
   readBytes(path: string): Promise<Uint8Array | null>;
   write(path: string, text: string, expected: string | null): Promise<WriteResult>;
+  /** Move or rename a note or folder (see Storage.move). */
+  move(from: string, to: string): Promise<MoveResult>;
+  /** Send a note or folder to the system's trash; rejects, leaving it, when it can't. */
+  trash(path: string): Promise<void>;
+  makeFolder(path: string): Promise<void>;
   /** Paths that changed on disk, as they change. Returns a function to stop. */
   onChange(listener: (paths: string[]) => void): () => void;
 }
@@ -78,6 +83,9 @@ export const CHANNEL = {
   read: 'vault:read',
   readBytes: 'vault:read-bytes',
   write: 'vault:write',
+  move: 'vault:move',
+  trash: 'vault:trash',
+  makeFolder: 'vault:make-folder',
   changed: 'vault:changed',
   settingsRead: 'settings:read',
   settingsSet: 'settings:set',

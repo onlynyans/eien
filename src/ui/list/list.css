@@ -35,8 +35,34 @@
 }
 .list__head .word-button {
   grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: center;
+  grid-row: 1;
+  justify-self: end;
+  margin-right: calc(var(--eien-space-2) * -1);
+}
+/* The sort: a word under New note, shown like the other controls, on hover or focus. */
+.list__head .list__sort {
+  grid-row: 2;
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+.list:hover .list__sort,
+.list__sort:focus-visible,
+.list__sort[aria-expanded="true"] {
+  opacity: 1;
+}
+
+/* A quiet line under the head: where a note went. */
+.list__notice {
+  flex: none;
+  margin: 0;
+  padding: var(--eien-space-2) var(--eien-space-4);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  color: var(--eien-pencil);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.list__notice[hidden] {
+  display: none;
 }
 
 .rows {
@@ -144,4 +170,46 @@
 .list__empty .word-button {
   margin-left: calc(var(--eien-space-2) * -1);
   font-style: normal;
+}
+
+/* Dragging a row: it lifts off the paper and follows the pointer; where it
+   left is marked faintly; a hairline with a dot shows where it will go. */
+.note-row.is-lifted {
+  position: fixed;
+  left: calc(var(--drag-x) + var(--drag-dx));
+  top: calc(var(--drag-y) + var(--drag-dy));
+  z-index: 25;
+  width: var(--drag-w);
+  background: var(--eien-paper-raised);
+  outline: var(--eien-hairline) solid var(--eien-rule-strong);
+  outline-offset: calc(var(--eien-hairline) * -1);
+  box-shadow: var(--eien-shadow-float);
+  pointer-events: none;
+  transition: none;
+}
+.list.is-dragging .note-row {
+  cursor: grabbing;
+}
+.note-row.is-left {
+  opacity: 0.4;
+}
+.drop-marker {
+  position: fixed;
+  left: calc(var(--marker-x) + var(--eien-space-4));
+  top: var(--marker-y);
+  z-index: 24;
+  width: calc(var(--marker-w) - 2 * var(--eien-space-4));
+  height: var(--eien-hairline);
+  background: var(--eien-ink-soft);
+  pointer-events: none;
+}
+.drop-marker::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--eien-space-1) * -1);
+  top: calc(var(--eien-space-1) / -2);
+  width: var(--eien-space-1);
+  height: var(--eien-space-1);
+  border-radius: 50%;
+  background: var(--eien-ink-soft);
 }

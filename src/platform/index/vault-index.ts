@@ -20,6 +20,8 @@ export const SEARCH_LIMIT = 200;
 
 interface Known {
   readonly note: IndexedNote;
+  /** It couldn't be read (locked, unreadable): try again on the next refresh. */
+  readonly unreadable?: boolean;
   readonly size: number;
   /** The note's words, for snippets. */
   readonly plain: string;
@@ -112,7 +114,7 @@ export class VaultIndex {
         if (entry.kind !== 'note') continue;
         const known = this.#notes.get(entry.path);
         const same = known && known.note.modified === entry.modified && known.size === entry.size;
-        if (same && !dirty.has(entry.path)) next.set(entry.path, known);
+        if (same && !known.unreadable && !dirty.has(entry.path)) next.set(entry.path, known);
         else toRead.push(entry);
       }
       const vanished = new Set<string>();
@@ -140,7 +142,7 @@ export class VaultIndex {
       if (!file) return null;
       text = file.text;
     } catch {
-      return unread(listed, entry.size, title); // unreadable now; listed, and read again when it changes
+      return { ...unread(listed, entry.size, title), unreadable: true }; // listed, and read again next time
     }
     const { plain, ...summary } = readNote(text, title);
     return {

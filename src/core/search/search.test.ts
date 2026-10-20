@@ -103,3 +103,23 @@ describe('snippet', () => {
     );
   });
 });
+
+describe('folding keeps the letters of every script', () => {
+  it('drops Latin, Greek and Cyrillic accents, but never an Indic vowel sign', () => {
+    expect(fold('éÀöŇ ά й')).toBe('eaon α и');
+    expect(fold('काम')).not.toBe(fold('कम'));
+    expect(fold('কাজ')).not.toBe(fold('কজ'));
+  });
+
+  it('never cuts a snippet inside a character, spaces or not', () => {
+    const plain = `${'針🧵'.repeat(60)}針の音${'🧵👨‍👩‍👧'.repeat(60)}`;
+    const shown = snippet(plain, ['針の音']).replace(/…/g, '');
+    expect(shown).toContain('針の音');
+    expect(
+      [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(shown)]
+        .map((s) => s.segment)
+        .join(''),
+    ).toBe(shown);
+    expect(shown).not.toMatch(/^[\u200d\udc00-\udfff]|[\u200d\ud800-\udbff]$/);
+  });
+});

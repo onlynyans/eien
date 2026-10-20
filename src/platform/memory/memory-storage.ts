@@ -2,13 +2,25 @@
 
 import { baseName, isHiddenName, isWatchedPath, parentOf, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
-import { type FileState, MAX_BYTES_READ, type Storage, type WriteResult } from '../storage';
+import {
+  type FileState,
+  MAX_BYTES_READ,
+  type MoveResult,
+  type Storage,
+  type WriteResult,
+} from '../storage';
 
 export class MemoryStorage implements Storage {
   readonly #files = new Map<string, { text: string; modified: number }>();
   readonly #folders = new Set<string>();
   readonly #listeners = new Set<(paths: string[]) => void>();
+  readonly #trashed: string[] = [];
   #clock = 0;
+
+  /** What was sent to the trash, in order: the system trash a test can look in. */
+  get trashed(): readonly string[] {
+    return this.#trashed;
+  }
 
   /** Put a file in place as another program would (and tell watchers). */
   put(path: string, text: string): void {
@@ -69,6 +81,61 @@ export class MemoryStorage implements Storage {
     this.#addParents(at);
     this.#notify([at]);
     return { ok: true, version: versionOf(text) };
+  }
+
+  async move(from: string, to: string): Promise<MoveResult> {
+    const source = vaultPath(from);
+    const target = vaultPath(to);
+    const isFile = this.#files.has(source);
+    if (!isFile && !this.#folders.has(source)) return { ok: false, reason: 'missing' };
+    if (target === source) return { ok: true };
+    if (target.startsWith(`${source}/`)) return { ok: false, reason: 'into-itself' };
+    if (this.#files.has(target) || this.#folders.has(target)) return { ok: false, reason: 'taken' };
+    for (let folder = parentOf(target); folder; folder = parentOf(folder)) {
+      if (this.#files.has(folder)) throw new Error(`Not a folder: ${folder}`);
+    }
+    // Everything at or under `source` moves, kept as it was (a rename keeps the time).
+    const moved = (path: string) =>
+      path === source
+        ? target
+        : path.startsWith(`${source}/`)
+          ? target + path.slice(source.length)
+          : null;
+    for (const [path, file] of [...this.#files]) {
+      const next = moved(path);
+      if (next === null) continue;
+      this.#files.delete(path);
+      this.#files.set(next, file);
+    }
+    for (const folder of [...this.#folders]) {
+      const next = moved(folder);
+      if (next === null) continue;
+      this.#folders.delete(folder);
+      this.#folders.add(next);
+    }
+    this.#addParents(target);
+    this.#notify([source, target]);
+    return { ok: true };
+  }
+
+  async trash(path: string): Promise<void> {
+    const at = vaultPath(path);
+    const inside = (candidate: string) => candidate === at || candidate.startsWith(`${at}/`);
+    if (!this.#files.has(at) && !this.#folders.has(at)) throw new Error(`Nothing to trash: ${at}`);
+    for (const file of [...this.#files.keys()]) if (inside(file)) this.#files.delete(file);
+    for (const folder of [...this.#folders]) if (inside(folder)) this.#folders.delete(folder);
+    this.#trashed.push(at);
+    this.#notify([at]);
+  }
+
+  async makeFolder(path: string): Promise<void> {
+    const at = vaultPath(path);
+    for (let folder = at; folder; folder = parentOf(folder)) {
+      if (this.#files.has(folder)) throw new Error(`A file: ${folder}`);
+    }
+    this.#folders.add(at);
+    this.#addParents(at);
+    this.#notify([at]);
   }
 
   watch(onChange: (paths: string[]) => void): () => void {

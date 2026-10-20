@@ -6,13 +6,14 @@ import {
   mkdtemp,
   readdir,
   readFile,
+  rename,
   rm,
   symlink,
   utimes,
   writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { VaultPathError } from '../core/paths';
 import {
@@ -29,6 +30,8 @@ interface Subject {
   storage: Storage;
   /** Change a file as another program would. */
   putOutside(path: string, text: string): Promise<void>;
+  /** The names in the system's trash. */
+  trashed(): Promise<string[]>;
   cleanup(): Promise<void>;
 }
 
@@ -38,20 +41,29 @@ const implementations: Record<string, () => Promise<Subject>> = {
     return {
       storage,
       putOutside: async (path, text) => storage.put(path, text),
+      trashed: async () => storage.trashed.map((path) => path.slice(path.lastIndexOf('/') + 1)),
       cleanup: async () => {},
     };
   },
   disk: async () => {
     const root = await mkdtemp(join(tmpdir(), 'eien-storage-'));
-    const storage = await openDiskStorage(root);
+    // The system's trash, played by a folder beside the vault.
+    const trash = await mkdtemp(join(tmpdir(), 'eien-trash-'));
+    const storage = await openDiskStorage(root, (path) =>
+      rename(path, join(trash, basename(path))),
+    );
     return {
+      trashed: () => readdir(trash),
       storage,
       putOutside: async (path, text) => {
         const file = join(storage.root, ...path.split('/'));
         await mkdir(join(file, '..'), { recursive: true });
         await writeFile(file, text);
       },
-      cleanup: () => rm(root, { recursive: true, force: true }),
+      cleanup: async () => {
+        await rm(root, { recursive: true, force: true });
+        await rm(trash, { recursive: true, force: true });
+      },
     };
   },
 };
@@ -149,6 +161,89 @@ for (const [name, make] of Object.entries(implementations)) {
       },
     );
 
+    it('moves a note to a new name, words and all, and the old name is gone', async () => {
+      await subject.putOutside('Old.md', 'Words.');
+      expect(await subject.storage.move('Old.md', 'New.md')).toEqual({ ok: true });
+      expect((await subject.storage.read('New.md'))?.text).toBe('Words.');
+      expect(await subject.storage.read('Old.md')).toBeNull();
+      expect((await subject.storage.list()).map((entry) => entry.path)).toEqual(['New.md']);
+    });
+
+    it('renames a note by case alone: the same file', async () => {
+      await subject.putOutside('note.md', 'Words.');
+      expect(await subject.storage.move('note.md', 'Note.md')).toEqual({ ok: true });
+      expect((await subject.storage.list()).map((entry) => entry.path)).toEqual(['Note.md']);
+      expect((await subject.storage.read('Note.md'))?.text).toBe('Words.');
+    });
+
+    it('moves a note into a folder that isn’t there yet', async () => {
+      await subject.putOutside('Loose.md', 'x');
+      expect(await subject.storage.move('Loose.md', 'Fic/Deep/Loose.md')).toEqual({ ok: true });
+      expect(
+        (await subject.storage.list()).map((entry) => `${entry.kind}:${entry.path}`).sort(),
+      ).toEqual(['folder:Fic', 'folder:Fic/Deep', 'note:Fic/Deep/Loose.md']);
+    });
+
+    it('moves a folder with everything in it, its hidden settings too', async () => {
+      await subject.putOutside('Fic/A.md', 'a');
+      await subject.putOutside('Fic/Inner/B.md', 'b');
+      await subject.putOutside('Fic/.eien-folder.json', '{"book":{}}');
+      expect(await subject.storage.move('Fic', 'Fiction')).toEqual({ ok: true });
+      expect((await subject.storage.list()).map((entry) => entry.path).sort()).toEqual([
+        'Fiction',
+        'Fiction/A.md',
+        'Fiction/Inner',
+        'Fiction/Inner/B.md',
+      ]);
+      expect((await subject.storage.read('Fiction/.eien-folder.json'))?.text).toBe('{"book":{}}');
+    });
+
+    it('refuses a move from nothing, onto something else, or into itself, and changes nothing', async () => {
+      await subject.putOutside('A.md', 'a');
+      await subject.putOutside('B.md', 'b');
+      await subject.putOutside('Fic/C.md', 'c');
+      expect(await subject.storage.move('Nothing.md', 'X.md')).toEqual({
+        ok: false,
+        reason: 'missing',
+      });
+      expect(await subject.storage.move('A.md', 'B.md')).toEqual({ ok: false, reason: 'taken' });
+      expect(await subject.storage.move('A.md', 'Fic')).toEqual({ ok: false, reason: 'taken' });
+      expect(await subject.storage.move('Fic', 'Fic/Inside')).toEqual({
+        ok: false,
+        reason: 'into-itself',
+      });
+      expect((await subject.storage.read('A.md'))?.text).toBe('a');
+      expect((await subject.storage.read('B.md'))?.text).toBe('b');
+      expect((await subject.storage.read('Fic/C.md'))?.text).toBe('c');
+    });
+
+    it('never loses what it couldn’t move', async () => {
+      await subject.putOutside('A.md', 'a');
+      await subject.putOutside('File.md', 'f');
+      await expect(subject.storage.move('A.md', 'File.md/A.md')).rejects.toThrow();
+      expect((await subject.storage.read('A.md'))?.text).toBe('a');
+    });
+
+    it('sends a note or a whole folder to the trash, and refuses nothing', async () => {
+      await subject.putOutside('Gone.md', 'x');
+      await subject.putOutside('Old/One.md', '1');
+      await subject.storage.trash('Gone.md');
+      await subject.storage.trash('Old');
+      expect(await subject.storage.list()).toEqual([]);
+      expect((await subject.trashed()).sort()).toEqual(['Gone.md', 'Old']);
+      await expect(subject.storage.trash('Never.md')).rejects.toThrow();
+    });
+
+    it('makes folders, any depth; one already there is fine; a file there is not', async () => {
+      await subject.storage.makeFolder('A/B/C');
+      await subject.storage.makeFolder('A/B');
+      expect(
+        (await subject.storage.list()).map((entry) => `${entry.kind}:${entry.path}`).sort(),
+      ).toEqual(['folder:A', 'folder:A/B', 'folder:A/B/C']);
+      await subject.putOutside('Note.md', 'x');
+      await expect(subject.storage.makeFolder('Note.md')).rejects.toThrow();
+    });
+
     /**
      * Watch, and wait until the watcher is really listening: a system's
      * watcher can miss what happens in its first moments (macOS's does), so a
@@ -240,6 +335,21 @@ describe('disk only', () => {
     storage = await openDiskStorage(root);
   });
   afterEach(() => rm(root, { recursive: true, force: true }));
+
+  it('leaves a note where it is when the system’s trash fails', async () => {
+    const failing = await openDiskStorage(root, async () => {
+      throw new Error('the trash is full');
+    });
+    await writeFile(join(root, 'Kept.md'), 'words');
+    await expect(failing.trash('Kept.md')).rejects.toThrow('the trash is full');
+    expect(await readFile(join(root, 'Kept.md'), 'utf8')).toBe('words');
+  });
+
+  it('has no trash unless it was given one', async () => {
+    await writeFile(join(root, 'Kept.md'), 'words');
+    await expect(storage.trash('Kept.md')).rejects.toThrow(/no trash/);
+    expect(await readFile(join(root, 'Kept.md'), 'utf8')).toBe('words');
+  });
 
   it('leaves a file as it is when it changed just before the new text took its place', async () => {
     const file = join(storage.root, 'Note.md');

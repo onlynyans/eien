@@ -4,6 +4,7 @@
 import { createHash } from 'node:crypto';
 import { type Dirent, type FSWatcher, watch } from 'node:fs';
 import {
+  link,
   lstat,
   mkdir,
   open,
@@ -13,27 +14,67 @@ import {
   rename,
   rm,
   stat,
+  unlink,
 } from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
-import { isHiddenName, isWatchedPath, nameKey, VaultPathError, vaultPath } from '../../core/paths';
+import {
+  fitBytes,
+  isHiddenName,
+  isWatchedPath,
+  MAX_NAME_BYTES,
+  nameKey,
+  utf8Length,
+  VaultPathError,
+  vaultPath,
+} from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
-import { type FileState, MAX_BYTES_READ, type Storage, type WriteResult } from '../storage';
+import {
+  type FileState,
+  MAX_BYTES_READ,
+  type MoveResult,
+  type Storage,
+  type WriteResult,
+} from '../storage';
 
-/** The hidden file a write goes through: ".<name>.eien.tmp" beside it. */
-export const tempNameOf = (name: string): string => `.${name}.eien.tmp`;
 export const TEMP_SUFFIX = '.eien.tmp';
+
+/**
+ * The hidden file a write goes through: ".<name>.eien.tmp" beside it. A
+ * name near the system's limit is cut, with a hash of the whole name so two
+ * long names never share a temp file; if a crash leaves it, it's recovered
+ * under the cut name, its words kept.
+ */
+export function tempNameOf(name: string): string {
+  const full = `.${name}${TEMP_SUFFIX}`;
+  if (utf8Length(full) <= MAX_NAME_BYTES) return full;
+  const hash = createHash('sha256').update(name).digest('hex').slice(0, 8);
+  const room = MAX_NAME_BYTES - utf8Length(TEMP_SUFFIX) - hash.length - 2;
+  return `.${fitBytes(name, room)}~${hash}${TEMP_SUFFIX}`;
+}
+
+/** Sends a file or folder (an absolute path) to the system's trash; throws when it can't. */
+export type TrashItem = (path: string) => Promise<void>;
+
+const noTrash: TrashItem = async () => {
+  throw new Error('There is no trash to send it to on this system.');
+};
 
 /** Bursts of changes are reported together, this long after the last. */
 const WATCH_SETTLE_MS = 120;
 
 export class DiskStorage implements Storage {
   readonly #root: string;
+  readonly #trashItem: TrashItem;
   /** The write under way for each file, by its name key, so the next waits for it. */
   readonly #writing = new Map<string, Promise<void>>();
 
-  /** `root` must be a real, absolute folder path (see `openDiskStorage`). */
-  constructor(root: string) {
+  /**
+   * `root` must be a real, absolute folder path (see `openDiskStorage`).
+   * `trashItem` is the system's trash (Electron's, in the app).
+   */
+  constructor(root: string, trashItem: TrashItem = noTrash) {
     this.#root = root;
+    this.#trashItem = trashItem;
   }
 
   get root(): string {
@@ -108,6 +149,52 @@ export class DiskStorage implements Storage {
       });
       return written ? { ok: true, version: versionOf(text) } : { ok: false, current: changed };
     });
+  }
+
+  /** A write to the file being moved finishes first, so it can't land at the old name. */
+  async move(from: string, to: string): Promise<MoveResult> {
+    const source = await this.#resolve(from);
+    const target = await this.#resolve(to);
+    return this.#oneAtATime(nameKey(vaultPath(from)), async () => {
+      const there = await lstat(source).catch(() => null);
+      if (!there) return { ok: false, reason: 'missing' };
+      if (nameKey(vaultPath(to)).startsWith(`${nameKey(vaultPath(from))}/`)) {
+        return { ok: false, reason: 'into-itself' };
+      }
+      // Something at `to` is in the way, unless it's this very entry under another case.
+      const atTarget = await realpath(target).catch(() => null);
+      if (atTarget !== null && atTarget !== (await realpath(source)))
+        return { ok: false, reason: 'taken' };
+      await mkdir(dirname(target), { recursive: true });
+      const free = async () => (await lstat(target).catch(() => null)) === null;
+      if (atTarget !== null) {
+        await renameWithRetry(source, target); // the same file, under another case
+      } else if (there.isFile()) {
+        const linked = await linkInstead(source, target);
+        if (linked === 'taken') return { ok: false, reason: 'taken' }; // it appeared meanwhile: kept
+        if (linked === 'no links') {
+          if (!(await free())) return { ok: false, reason: 'taken' };
+          await renameWithRetry(source, target);
+        }
+      } else {
+        // A folder can't be linked: look once more, then rename.
+        if (!(await free())) return { ok: false, reason: 'taken' };
+        await renameWithRetry(source, target);
+      }
+      await syncFolder(dirname(target));
+      if (dirname(source) !== dirname(target)) await syncFolder(dirname(source));
+      return { ok: true };
+    });
+  }
+
+  async trash(path: string): Promise<void> {
+    const file = await this.#resolve(path);
+    if (!(await lstat(file).catch(() => null))) throw new Error(`Nothing to trash: ${path}`);
+    await this.#oneAtATime(nameKey(vaultPath(path)), () => this.#trashItem(file));
+  }
+
+  async makeFolder(path: string): Promise<void> {
+    await mkdir(await this.#resolve(path), { recursive: true });
   }
 
   /** Run `task` after every earlier one for `key` has finished. */
@@ -188,11 +275,11 @@ export class DiskStorage implements Storage {
 }
 
 /** A DiskStorage for the folder at `root` (resolved to its real path). */
-export async function openDiskStorage(root: string): Promise<DiskStorage> {
+export async function openDiskStorage(root: string, trashItem?: TrashItem): Promise<DiskStorage> {
   const real = await realpath(root);
   const stats = await lstat(real);
   if (!stats.isDirectory()) throw new Error(`Not a folder: ${root}`);
-  return new DiskStorage(real);
+  return new DiskStorage(real, trashItem);
 }
 
 /** Content hash: equal exactly when the text is. */
@@ -234,12 +321,21 @@ export async function writeDurably(
     await rm(temp, { force: true });
     return false;
   }
-  await renameWithRetry(temp, file);
+  try {
+    await renameWithRetry(temp, file);
+  } catch (error) {
+    await rm(temp, { force: true }); // the temp file, never the note
+    throw error;
+  }
   await syncFolder(dirname(file));
   return true;
 }
 
-/** On Windows a file another program has open (a sync tool, a virus scan) can't be replaced for a moment. */
+/**
+ * On Windows a file another program has open (a sync tool, a virus scan)
+ * can't be replaced for a moment: try a few times. On failure `from` is
+ * left as it is — it may be the writer's note, moving.
+ */
 async function renameWithRetry(from: string, to: string): Promise<void> {
   for (let attempt = 1; ; attempt++) {
     try {
@@ -247,13 +343,35 @@ async function renameWithRetry(from: string, to: string): Promise<void> {
       return;
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
-      if (attempt >= 5 || (code !== 'EPERM' && code !== 'EBUSY' && code !== 'EACCES')) {
-        await rm(from, { force: true });
-        throw error;
-      }
+      if (attempt >= 5 || (code !== 'EPERM' && code !== 'EBUSY' && code !== 'EACCES')) throw error;
       await new Promise((done) => setTimeout(done, 50 * attempt));
     }
   }
+}
+
+/**
+ * Move a file by giving it its new name and then dropping the old: `link`
+ * never replaces anything, so a file that appeared at `to` meanwhile (a sync
+ * tool's) is safe. On a disk without links (FAT, exFAT, some network drives)
+ * nothing is done, for the caller to rename.
+ */
+async function linkInstead(from: string, to: string): Promise<'moved' | 'taken' | 'no links'> {
+  try {
+    await link(from, to);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'EEXIST') return 'taken';
+    if (['EPERM', 'ENOTSUP', 'EOPNOTSUPP', 'ENOSYS', 'EXDEV'].includes(code ?? ''))
+      return 'no links';
+    throw error;
+  }
+  try {
+    await unlink(from);
+  } catch (error) {
+    await unlink(to).catch(() => undefined); // back as it was: one name
+    throw error;
+  }
+  return 'moved';
 }
 
 /** So the rename itself survives a power cut. Windows can't open a folder for this; it isn't needed there. */

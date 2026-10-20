@@ -16,6 +16,15 @@ export type WriteResult =
   /** The file isn't at the version the write expected: nothing was written. */
   | { readonly ok: false; readonly current: FileState | null };
 
+/** What a move did: done, or why it wasn't. */
+export type MoveResult =
+  | { readonly ok: true }
+  | {
+      readonly ok: false;
+      /** Nothing at `from`; something else at `to`; or a folder moving into itself. */
+      readonly reason: 'missing' | 'taken' | 'into-itself';
+    };
+
 /** The largest file readBytes returns (an image shown in a note). */
 export const MAX_BYTES_READ = 32 * 1024 * 1024;
 
@@ -35,6 +44,23 @@ export interface Storage {
    * a crash leaves the old content or the new, never a mix.
    */
   write(path: string, text: string, expected: string | null): Promise<WriteResult>;
+
+  /**
+   * Move or rename the file or folder at `from` to `to`, making the folders
+   * above `to`. Refused when there's nothing at `from`, something else is at
+   * `to`, or a folder would move into itself. A rename that changes only
+   * case is the same file, and allowed.
+   */
+  move(from: string, to: string): Promise<MoveResult>;
+
+  /**
+   * Send the file or folder at `path` to the system's trash, where the writer
+   * can take it back. Throws when it can't; then nothing is removed.
+   */
+  trash(path: string): Promise<void>;
+
+  /** Make the folder at `path`, and any above it. One already there is fine; a file there throws. */
+  makeFolder(path: string): Promise<void>;
 
   /** Call `onChange` with the paths that changed; returns a function to stop. */
   watch(onChange: (paths: string[]) => void): () => void;

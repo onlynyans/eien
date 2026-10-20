@@ -2,23 +2,30 @@
 // and the notes for whatever is selected in the sidebar or searched for.
 
 import type { IndexedNote } from '../../core/note';
-import { baseName, joinPath, nameKey, titleOf } from '../../core/paths';
+import { baseName, joinPath, nameKey, titleOf, VAULT_PINS } from '../../core/paths';
 import { buildTagTree, hasTag, type TagNode } from '../../core/tags';
 import { chapterNumber, type NumeralStyle } from '../../core/text';
 import {
   buildTree,
+  byName,
   FOLDER_SETTINGS_NAME,
   type FolderNode,
+  type FolderSettings,
   orderNames,
   parseFolderSettings,
+  parsePins,
   type VaultEntry,
 } from '../../core/vault';
 import type { VaultBridge } from '../../platform/bridge';
 
 export type Selection =
   | { readonly kind: 'all' }
+  | { readonly kind: 'pinned' }
   | { readonly kind: 'folder'; readonly path: string }
   | { readonly kind: 'tag'; readonly key: string };
+
+/** How a list is sorted: its own order (a folder's, or the pins'), by title, or newest first. */
+export type NoteSort = 'order' | 'title' | 'modified';
 
 export interface ListedNote {
   readonly path: string;
@@ -32,12 +39,17 @@ export interface ListedNote {
 }
 
 export interface NoteList {
-  /** What the list is: the library, a folder, a book, a tag, or a search. */
-  readonly kind: 'all' | 'folder' | 'book' | 'tag' | 'search';
+  /** What the list is: the library, the pins, a folder, a book, a tag, or a search. */
+  readonly kind: 'all' | 'pinned' | 'folder' | 'book' | 'tag' | 'search';
   readonly heading: string;
   readonly notes: readonly ListedNote[];
   /** How many there are; for a search, more than are listed when it hit the limit. */
   readonly total: number;
+  /** How it's sorted, and the sorts it offers (none for a search). */
+  readonly sort?: NoteSort;
+  readonly sorts: readonly NoteSort[];
+  /** A folder's path, when it shows one: where its rows can be dragged into order. */
+  readonly folder?: string;
 }
 
 type VaultReader = Pick<VaultBridge, 'list' | 'notes' | 'read' | 'search'>;
@@ -48,6 +60,7 @@ export class VaultState {
   #notes = new Map<string, IndexedNote>();
   #tree: FolderNode;
   #tags: readonly TagNode[] = [];
+  #pins: readonly string[] = [];
   readonly #vault: VaultReader;
 
   constructor(vault: VaultReader, name: string) {
@@ -64,12 +77,34 @@ export class VaultState {
     return this.#tags;
   }
 
+  /** The pinned notes that are there, in the order they were pinned. */
+  get pins(): readonly string[] {
+    return this.#pins.filter((path) => this.#notes.has(path));
+  }
+
   async refresh(): Promise<void> {
-    const [entries, notes] = await Promise.all([this.#vault.list(), this.#vault.notes()]);
+    const [entries, notes, pins] = await Promise.all([
+      this.#vault.list(),
+      this.#vault.notes(),
+      this.#vault.read(VAULT_PINS).catch(() => null),
+    ]);
     this.#entries = entries;
     this.#notes = new Map(notes.map((note) => [note.path, note]));
     this.#tree = buildTree(entries, this.name);
     this.#tags = buildTagTree(notes);
+    this.#pins = parsePins(pins?.text ?? null);
+  }
+
+  /** A folder's own settings: its order, and whether it's a book. */
+  async folderSettings(folder: string): Promise<FolderSettings> {
+    const file = await this.#vault.read(joinPath(folder, FOLDER_SETTINGS_NAME)).catch(() => null);
+    return parseFolderSettings(file?.text ?? null);
+  }
+
+  /** The names of a folder's notes, in its own order. */
+  async folderOrder(folder: string): Promise<string[]> {
+    const node = findFolder(this.#tree, folder);
+    return orderNames((node?.notes ?? []).map(baseName), (await this.folderSettings(folder)).order);
   }
 
   /** Names of everything in `folder`, for picking a free name there. */
@@ -98,47 +133,94 @@ export class VaultState {
     return this.#entries.some((entry) => entry.path === path);
   }
 
-  /** The notes to list for `selection`, in their order; a book's numbered in `numerals`. */
-  async notesFor(selection: Selection, numerals: NumeralStyle = 'roman'): Promise<NoteList> {
-    const newestFirst = (notes: IndexedNote[]) =>
-      notes
-        .sort((a, b) => b.modified - a.modified || (a.path < b.path ? -1 : 1))
-        .map((note) => this.#listed(note.path));
+  /**
+   * The notes to list for `selection`, sorted by `sort` (else the list's own
+   * default); a book's numbered in `numerals`, by the book's order however
+   * the list is sorted.
+   */
+  async notesFor(
+    selection: Selection,
+    numerals: NumeralStyle = 'roman',
+    sort?: NoteSort,
+  ): Promise<NoteList> {
+    const sorted = (notes: ListedNote[], by: NoteSort) => {
+      if (by === 'title') return notes.sort((a, b) => byName(a.title, b.title));
+      if (by === 'modified')
+        return notes.sort((a, b) => b.modified - a.modified || (a.path < b.path ? -1 : 1));
+      return notes;
+    };
+    const listed = (paths: Iterable<string>) => [...paths].map((path) => this.#listed(path));
 
     if (selection.kind === 'all') {
-      const notes = newestFirst([...this.#notes.values()]);
-      return { kind: 'all', heading: 'All Notes', notes, total: notes.length };
-    }
-    if (selection.kind === 'tag') {
-      const notes = newestFirst(
-        [...this.#notes.values()].filter((note) => hasTag(note.tags, selection.key)),
-      );
+      const by = sort === 'title' ? 'title' : 'modified';
+      const notes = sorted(listed(this.#notes.keys()), by);
       return {
-        kind: 'tag',
-        heading: `#${this.#tagNamed(selection.key)}`,
+        kind: 'all',
+        heading: 'All Notes',
         notes,
         total: notes.length,
+        sort: by,
+        sorts: ['title', 'modified'],
+      };
+    }
+    if (selection.kind === 'pinned') {
+      const by = sort ?? 'order';
+      const notes = sorted(listed(this.pins), by);
+      return {
+        kind: 'pinned',
+        heading: 'Pinned',
+        notes,
+        total: notes.length,
+        sort: by,
+        sorts: ['order', 'title', 'modified'],
+      };
+    }
+    if (selection.kind === 'tag') {
+      const by = sort === 'title' ? 'title' : 'modified';
+      const tagged = [...this.#notes.values()].filter((note) => hasTag(note.tags, selection.key));
+      const notes = sorted(listed(tagged.map((note) => note.path)), by);
+      const heading = `#${this.#tagNamed(selection.key)}`;
+      return {
+        kind: 'tag',
+        heading,
+        notes,
+        total: notes.length,
+        sort: by,
+        sorts: ['title', 'modified'],
       };
     }
 
     const folder = findFolder(this.#tree, selection.path) ?? this.#tree;
-    const settings = parseFolderSettings(
-      (await this.#vault.read(joinPath(folder.path, FOLDER_SETTINGS_NAME)).catch(() => null))
-        ?.text ?? null,
-    );
+    const settings = await this.folderSettings(folder.path);
     const book = settings.book !== null;
     const names = orderNames(folder.notes.map(baseName), settings.order);
-    const notes = names.map((name, i) =>
-      this.#listed(joinPath(folder.path, name), book ? chapterNumber(i + 1, numerals) : undefined),
+    // A book, or a folder put in order by hand, opens in its own order.
+    const by = sort ?? (book || settings.order.length > 0 ? 'order' : 'modified');
+    const notes = sorted(
+      names.map((name, i) =>
+        this.#listed(
+          joinPath(folder.path, name),
+          book ? chapterNumber(i + 1, numerals) : undefined,
+        ),
+      ),
+      by,
     );
-    return { kind: book ? 'book' : 'folder', heading: folder.name, notes, total: notes.length };
+    return {
+      kind: book ? 'book' : 'folder',
+      heading: folder.name,
+      notes,
+      total: notes.length,
+      sort: by,
+      sorts: ['order', 'title', 'modified'],
+      folder: folder.path,
+    };
   }
 
   /** The notes holding every word of `query`, with the words around the match. */
   async search(query: string): Promise<NoteList> {
     const result = await this.#vault.search(query);
     const notes = result.hits.map((hit) => ({ ...this.#listed(hit.path), preview: hit.snippet }));
-    return { kind: 'search', heading: `“${query.trim()}”`, notes, total: result.total };
+    return { kind: 'search', heading: `“${query.trim()}”`, notes, total: result.total, sorts: [] };
   }
 
   #listed(path: string, ordinal?: string): ListedNote {

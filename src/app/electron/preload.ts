@@ -22,6 +22,9 @@ const bridge: Bridge = {
     read: (path) => ipcRenderer.invoke(CHANNEL.read, path),
     readBytes: (path) => ipcRenderer.invoke(CHANNEL.readBytes, path),
     write: (path, text, expected) => ipcRenderer.invoke(CHANNEL.write, path, text, expected),
+    move: (from, to) => ipcRenderer.invoke(CHANNEL.move, from, to),
+    trash: (path) => ipcRenderer.invoke(CHANNEL.trash, path),
+    makeFolder: (path) => ipcRenderer.invoke(CHANNEL.makeFolder, path),
     onChange: (listener) => listen<string[]>(CHANNEL.changed, listener),
   },
   settings: {

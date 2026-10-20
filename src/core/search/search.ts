@@ -1,6 +1,8 @@
 // Search (spec §4): every word of the query, anywhere in a note's title or
 // words, with case, accents, curly quotes and full-width forms aside.
 
+import { graphemeBoundary } from '../text';
+
 /** Characters folded to another, after case and accents. */
 const MAP: Record<string, string> = {
   '‘': "'",
@@ -16,6 +18,13 @@ const MAP: Record<string, string> = {
   ß: 'ss',
   ς: 'σ', // a final sigma is a sigma
 };
+/**
+ * The accents NFKD splits off Latin, Greek and Cyrillic letters (the combining
+ * diacritical marks), and only those: Hindi's or Bengali's vowel signs are
+ * marks too, but they're part of the word.
+ */
+const DIACRITICS = /[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f]/g;
+
 const MAPPED = new RegExp(`[${Object.keys(MAP).join('')}]`, 'g');
 
 /**
@@ -27,7 +36,7 @@ export function fold(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFKD')
-    .replace(/\p{M}/gu, '')
+    .replace(DIACRITICS, '')
     .toLowerCase()
     .replace(MAPPED, (char) => MAP[char] ?? char);
 }
@@ -40,7 +49,8 @@ export interface SearchResult {
 
 /** What a note is searched by: its title and words, folded, whitespace as single spaces. */
 export const searchText = (title: string, plain: string): string =>
-  fold(`${title} ${plain}`.replace(/\s+/g, ' '));
+  // A character no query holds stands between them: a "phrase" can't run from the title into the text.
+  fold(`${title.replace(/\s+/g, ' ')}\u0000${plain.replace(/\s+/g, ' ')}`);
 
 /** The query's terms, folded: words, and "quoted phrases" kept whole. */
 export function queryTerms(query: string): string[] {
@@ -100,5 +110,8 @@ function cut(text: string, from: number, to: number): string {
     const space = text.lastIndexOf(' ', end);
     end = space > start ? space : end;
   }
+  // Where there's no space to cut at (Japanese, Chinese), cut between whole characters.
+  start = graphemeBoundary(text, start, 1);
+  end = Math.max(start, graphemeBoundary(text, end, -1));
   return `${start > 0 ? '…' : ''}${text.slice(start, end)}${end < text.length ? '…' : ''}`;
 }

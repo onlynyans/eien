@@ -174,3 +174,11 @@ describe('the tag tree', () => {
     expect(buildTagTree([{ path: 'x.md', tags: [] }])).toEqual([]);
   });
 });
+
+describe('tags, folded fully', () => {
+  it('is one tag for İ and i, ß and SS, ς and σ', () => {
+    expect(uniqueTags(['İstanbul', 'istanbul', 'ISTANBUL'])).toEqual(['İstanbul']);
+    expect(uniqueTags(['Straße', 'STRASSE', 'strasse'])).toEqual(['Straße']);
+    expect(tagKey('ΟΔΟΣ')).toBe(tagKey('οδος'));
+  });
+});

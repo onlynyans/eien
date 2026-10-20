@@ -1,11 +1,11 @@
 // A folder's own settings, in ".eien-folder.json" beside its notes
 // (spec §2): the drag-and-drop order, and whether the folder is a book.
 
-import { nameKey } from '../paths';
+import { FOLDER_SETTINGS_NAME, nameKey } from '../paths';
 import { withoutBom } from '../text';
 import { byName } from './tree';
 
-export const FOLDER_SETTINGS_NAME = '.eien-folder.json';
+export { FOLDER_SETTINGS_NAME };
 
 export interface FolderSettings {
   /** Note names in the writer's order. */
@@ -59,4 +59,76 @@ export function orderNames(names: readonly string[], order: readonly string[]): 
     if (name !== undefined) placed.add(name);
   }
   return [...placed, ...names.filter((name) => !placed.has(name)).sort(byName)];
+}
+
+/** A change to a folder's settings: a new order, or the folder made a book (or not). */
+export interface FolderChange {
+  readonly order?: readonly string[];
+  readonly book?: FolderSettings['book'];
+}
+
+/**
+ * The settings file's text with `change` made, every other key kept as it
+ * is; null when the file isn't a JSON object (it's never written over — the
+ * writer may be part-way through editing it). `text` null is no file yet.
+ */
+export function withFolderSettings(text: string | null, change: FolderChange): string | null {
+  let data: Record<string, unknown> = {};
+  if (text) {
+    try {
+      const parsed: unknown = JSON.parse(withoutBom(text));
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;
+      data = parsed as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+  // fromEntries keeps a "__proto__" in the file a plain key.
+  const next: Record<string, unknown> = Object.fromEntries(Object.entries(data));
+  if ('order' in change) {
+    if (change.order && change.order.length > 0) next.order = [...change.order];
+    else delete next.order;
+  }
+  if ('book' in change) {
+    if (change.book) next.book = change.book;
+    else delete next.book;
+  }
+  return `${JSON.stringify(next, null, 2)}\n`;
+}
+
+/** The order with `name` placed just before `before` (last, for null), from the order shown. */
+export function placedBefore(
+  shown: readonly string[],
+  name: string,
+  before: string | null,
+): string[] {
+  const rest = shown.filter((other) => other !== name);
+  const at = before === null ? -1 : rest.indexOf(before);
+  const index = at < 0 ? rest.length : at;
+  return [...rest.slice(0, index), name, ...rest.slice(index)];
+}
+
+/** Where `name` is listed in `order`: exactly, or else case and accents aside, as orderNames reads it. */
+function listedAt(order: readonly string[], name: string): number {
+  const exact = order.indexOf(name);
+  return exact >= 0 ? exact : order.findIndex((listed) => nameKey(listed) === nameKey(name));
+}
+
+/** `order` with the note `from` now called `to`, in its place. */
+export function renamedInOrder(order: readonly string[], from: string, to: string): string[] {
+  const at = listedAt(order, from);
+  return at < 0 ? [...order] : order.map((name, i) => (i === at ? to : name));
+}
+
+/** `order` without the note `name`. */
+export function withoutInOrder(order: readonly string[], name: string): string[] {
+  const at = listedAt(order, name);
+  return at < 0 ? [...order] : order.filter((_, i) => i !== at);
+}
+
+/** `order` with only the names that are there (spec §2: missing ones are dropped on the next write). */
+export function presentInOrder(order: readonly string[], names: readonly string[]): string[] {
+  // orderNames puts the listed names that are there first, spelled as the files are.
+  const listed = names.filter((name) => listedAt(order, name) >= 0).length;
+  return orderNames(names, order).slice(0, listed);
 }
