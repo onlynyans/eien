@@ -1,6 +1,7 @@
 // Inline marks: bold, italic, underline, strikethrough, highlight. Each
 // command toggles: on a marked selection it takes the mark off.
 
+import { flanking } from '../markdown';
 import type { Change, Edit, Selection } from './edit';
 
 export interface InlineMark {
@@ -91,8 +92,28 @@ function holds(text: string, span: Selection, mark: InlineMark): boolean {
   return true;
 }
 
-const isMarked = (text: string, span: Selection, mark: InlineMark) =>
-  wrappedIn(text, span.from, span.to, mark) || holds(text, span, mark);
+/**
+ * The part of `span` the parser can read `mark` around: its ends moved in
+ * past punctuation and spaces that would leave the marks showing ("a«, b»"
+ * gives "a, **b**", not "a**, b**"). <u> is a tag, read anywhere. Null when
+ * there's no word in it to move to.
+ */
+function markable(text: string, span: Selection, mark: InlineMark): Selection | null {
+  if (mark.open.startsWith('<')) return span;
+  // The mark's own characters are never moved past: a span holding its marks is unmarked whole.
+  const own = (char: string | undefined) => char !== undefined && mark.open.includes(char);
+  let { from, to } = span;
+  while (from < to && !own(text[from]) && !flanking(text[from - 1] ?? '', text[from] ?? '').open)
+    from++;
+  while (to > from && !own(text[to - 1]) && !flanking(text[to - 1] ?? '', text[to] ?? '').close)
+    to--;
+  return from < to ? { from, to } : null;
+}
+
+const isMarked = (text: string, span: Selection, mark: InlineMark) => {
+  const { from, to } = markable(text, span, mark) ?? span;
+  return wrappedIn(text, from, to, mark) || holds(text, { from, to }, mark);
+};
 
 /** Toggle `mark` on one span of a single line. */
 function toggleSpan(
@@ -100,7 +121,7 @@ function toggleSpan(
   span: Selection,
   mark: InlineMark,
 ): { changes: Change[]; selection: Selection } {
-  const { from, to } = span;
+  const { from, to } = markable(text, span, mark) ?? span;
   const inner = text.slice(from, to);
   if (wrappedIn(text, from, to, mark)) {
     return {
@@ -177,10 +198,12 @@ export function toggleInline(text: string, selection: Selection, mark: InlineMar
     return { changes: result.changes, selection: { from: caret, to: caret } };
   }
 
-  const spans = lineSpans(text, selection);
-  if (spans.length === 1) return toggleSpan(text, spans[0] as Selection, mark);
+  const lines = lineSpans(text, selection);
+  if (lines.length === 1) return toggleSpan(text, lines[0] as Selection, mark);
 
   // Several lines: all marked already → unmark all; otherwise mark the unmarked ones.
+  // A line whose part holds no word ("(" before the selection's end) is left as it is.
+  const spans = lines.filter((span) => markable(text, span, mark));
   const allMarked = spans.every((span) => isMarked(text, span, mark));
   const changes: Change[] = [];
   for (const span of spans) {

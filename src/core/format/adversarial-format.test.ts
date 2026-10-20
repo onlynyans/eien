@@ -48,3 +48,28 @@ describe('the word around the caret is the whole word', () => {
     expect(run('bold', text, caret)).toBe(after);
   });
 });
+
+// Found by the property tests (format.property.test.ts): marks the editor's
+// parser can't read, so their stars show on the page.
+
+describe('a mark goes where the parser reads it', () => {
+  it.each([
+    // "**" between a letter and "," can't open: the selection's ends move in to the words.
+    ['bold', 'a永, aりa', 2, 5, 'a永, **a**りa'],
+    // Japanese has no spaces: a quote's brackets stay outside, or the stars show.
+    ['bold', '彼は「こんにちは」と言った', 2, 9, '彼は「**こんにちは**」と言った'],
+    ['strike', 'x(one)y', 1, 6, 'x(~~one~~)y'],
+    // Over several lines, a line's part with no word in it is left as it is.
+    ['bold', 'one\n(two', 0, 5, '**one**\n(two'],
+  ])('%s over %j', (id, text, from, to, after) => {
+    expect(run(id, text, from, to)).toBe(after);
+  });
+
+  it('and pressed again, takes it off', () => {
+    const command = formatCommand('italic');
+    if (!command) throw new Error('italic');
+    const once = command.run('a永, aりa', { from: 2, to: 5 });
+    const marked = apply('a永, aりa', once.changes);
+    expect(apply(marked, command.run(marked, once.selection).changes)).toBe('a永, aりa');
+  });
+});
