@@ -6,8 +6,9 @@
     "tsBuildInfoFile": "node_modules/.cache/tsc/node.tsbuildinfo"
   },
   "include": [
+    "src/core",
+    "src/platform",
     "src/app/electron",
-    "src/platform/bridge.ts",
     "tests/*.ts",
     "electron.vite.config.ts",
     "vitest.config.ts"

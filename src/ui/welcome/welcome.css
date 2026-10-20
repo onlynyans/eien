@@ -1,0 +1,34 @@
+/* Before a vault is open: one sheet on the blotter, one choice. */
+
+.welcome {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: var(--eien-space-6);
+  background: var(--eien-blotter);
+}
+.welcome__sheet {
+  --eien-seal-size: var(--eien-space-7);
+  display: grid;
+  justify-items: start;
+  gap: var(--eien-space-4);
+  max-width: calc(var(--eien-measure) * 0.8);
+  padding: var(--eien-space-7) var(--eien-space-8);
+  font-size: var(--eien-size-prose);
+  background: var(--eien-paper);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  box-shadow: var(--eien-shadow-sheet);
+}
+.welcome__name {
+  margin: 0;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-title);
+  font-weight: 500;
+}
+.welcome__lede {
+  margin: 0 0 var(--eien-space-3);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-prose);
+  color: var(--eien-ink-soft);
+}

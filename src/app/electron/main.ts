@@ -1,4 +1,6 @@
-import { app, BrowserWindow, session } from 'electron';
+import { app, BrowserWindow, Menu, session } from 'electron';
+import { CHANNEL } from '../../platform/bridge';
+import { buildMenu } from './menu';
 import { createMainWindow } from './window';
 
 // Tests, and anyone running a separate copy, give Eien its own data folder,
@@ -17,18 +19,30 @@ if (!app.requestSingleInstanceLock()) {
     window.focus();
   });
 
-  app.whenReady().then(() => {
+  // A window waits to save before it closes, which cancels a quit under way;
+  // remember the quit so it goes ahead once the windows have closed.
+  let quitting = false;
+  app.on('before-quit', () => {
+    quitting = true;
+  });
+
+  app.whenReady().then(async () => {
     // Eien needs no camera, microphone, location or notifications.
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, allow) =>
       allow(false),
     );
-    createMainWindow();
+    Menu.setApplicationMenu(
+      buildMenu((command) =>
+        BrowserWindow.getFocusedWindow()?.webContents.send(CHANNEL.menu, command),
+      ),
+    );
+    await createMainWindow();
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+      if (BrowserWindow.getAllWindows().length === 0) void createMainWindow();
     });
   });
 
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit();
+    if (process.platform !== 'darwin' || quitting) app.quit();
   });
 }

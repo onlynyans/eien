@@ -1,0 +1,18 @@
+/* The window: three panes side by side on the desk (docs/design). */
+
+html,
+body,
+#app {
+  height: 100%;
+}
+body {
+  overflow: hidden;
+}
+
+.shell {
+  /* The top band all three panes share, so their heads line up. */
+  --band: calc(var(--eien-space-7) + var(--eien-space-2));
+  display: grid;
+  grid-template-columns: var(--eien-sidebar-w) var(--eien-list-w) minmax(0, 1fr);
+  height: 100%;
+}

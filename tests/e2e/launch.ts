@@ -1,12 +1,15 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { _electron, test as base, type ElectronApplication, type Page } from '@playwright/test';
 
 export const ROOT = resolve(import.meta.dirname, '../..');
 
-/** Environment for a launch with its own, throwaway data folder. */
-export function appEnv(userData: string): Record<string, string> {
+/**
+ * Environment for a launch with its own, throwaway data folder, and the
+ * vault at `vault` (or, without one, the welcome screen).
+ */
+export function appEnv(userData: string, vault?: string | null): Record<string, string> {
   const env = Object.fromEntries(
     Object.entries(process.env).filter(
       (entry): entry is [string, string] => entry[1] !== undefined,
@@ -14,8 +17,23 @@ export function appEnv(userData: string): Record<string, string> {
   );
   // A dev-server URL left in the shell would make the app load that instead of the build.
   delete env.ELECTRON_RENDERER_URL;
-  return { ...env, EIEN_USER_DATA: userData };
+  delete env.EIEN_VAULT;
+  return { ...env, EIEN_USER_DATA: userData, ...(vault ? { EIEN_VAULT: vault } : {}) };
 }
+
+/** A throwaway vault holding `files` (vault path → text). */
+export function makeVault(files: Record<string, string>): string {
+  const root = mkdtempSync(join(tmpdir(), 'eien-vault-'));
+  for (const [path, text] of Object.entries(files)) {
+    const file = join(root, ...path.split('/'));
+    mkdirSync(join(file, '..'), { recursive: true });
+    writeFileSync(file, text);
+  }
+  return root;
+}
+
+/** Apps closeApp has closed: Playwright can't be asked about them again. */
+const closed = new WeakSet<ElectronApplication>();
 
 /** How long a normal quit may take before the test kills the app. */
 const QUIT_LIMIT_MS = 10_000;
@@ -27,6 +45,9 @@ const QUIT_LIMIT_MS = 10_000;
  * warning in the log so a real hang can't hide.
  */
 export async function closeApp(app: ElectronApplication): Promise<void> {
+  // A test may close the app itself; the fixture's close afterwards is then a no-op.
+  if (closed.has(app)) return;
+  closed.add(app);
   const child = app.process();
   const exited = new Promise<void>((done) => {
     if (child.exitCode !== null || child.signalCode !== null) done();
@@ -47,18 +68,33 @@ export async function closeApp(app: ElectronApplication): Promise<void> {
   }
 }
 
-type Fixtures = { userData: string; app: ElectronApplication; page: Page };
+type Fixtures = {
+  /** Files for the test's vault; null (the default) opens no vault. */
+  vaultFiles: Record<string, string> | null;
+  /** The vault folder, when there is one. */
+  vault: string | null;
+  userData: string;
+  app: ElectronApplication;
+  page: Page;
+};
 
 /** Each test gets a fresh app with a fresh data folder, closed afterwards. */
 export const test = base.extend<Fixtures>({
+  vaultFiles: [null, { option: true }],
+  vault: async ({ vaultFiles }, use) => {
+    if (!vaultFiles) return use(null);
+    const root = makeVault(vaultFiles);
+    await use(root);
+    rmSync(root, { recursive: true, force: true });
+  },
   // biome-ignore lint/correctness/noEmptyPattern: Playwright's fixture signature
   userData: async ({}, use) => {
     const dir = mkdtempSync(join(tmpdir(), 'eien-e2e-'));
     await use(dir);
     rmSync(dir, { recursive: true, force: true });
   },
-  app: async ({ userData }, use) => {
-    const app = await _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(userData) });
+  app: async ({ userData, vault }, use) => {
+    const app = await _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(userData, vault) });
     await use(app);
     await closeApp(app);
   },

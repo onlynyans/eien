@@ -1,0 +1,111 @@
+/* The page: the blotter, a sheet of paper on it, a band above and the
+   colophon below. */
+
+.page {
+  display: grid;
+  grid-template-rows: var(--band) minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  background: var(--eien-page-ground);
+}
+.page__bar {
+  background: var(--eien-band);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.page__scroll {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--eien-page-gutter);
+}
+
+/* The sheet: lifted by tone, a hairline edge and the one soft shadow a
+   static thing may cast. */
+.sheet {
+  --pad-x: var(--eien-sheet-pad-x);
+  width: min(100%, calc(var(--eien-measure) + 2 * var(--eien-space-8)));
+  min-height: 100%;
+  margin: 0 auto;
+  padding: var(--eien-sheet-pad-top) var(--pad-x) var(--eien-space-8);
+  font-size: var(--eien-size-prose);
+  background: var(--eien-paper);
+  border: var(--eien-sheet-edge);
+  box-shadow: var(--eien-sheet-lift);
+}
+@container (width < 760px) {
+  .sheet {
+    --pad-x: min(var(--eien-space-6), var(--eien-sheet-pad-x));
+  }
+}
+.page__scroll {
+  container-type: inline-size;
+}
+
+.crumbs {
+  margin: 0;
+  min-height: 1lh;
+}
+.title {
+  margin: var(--eien-title-gap) 0;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-title);
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* A quiet line on the sheet: a conflict kept, said in words. */
+.notice {
+  margin: 0 0 var(--eien-space-5);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  color: var(--eien-caution);
+  background: var(--eien-caution-wash);
+  border-left: var(--eien-mark-w) solid var(--eien-caution);
+}
+
+/* The writing. A plain text area until the editor arrives (phase 4). */
+.editor {
+  display: block;
+  width: 100%;
+  min-height: 40vh;
+  field-sizing: content;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-prose);
+  line-height: var(--eien-leading-prose);
+  color: var(--eien-ink);
+  caret-color: var(--eien-seal);
+}
+
+.page__empty {
+  margin: var(--eien-space-8) auto;
+  max-width: var(--eien-measure);
+  text-align: center;
+  font-family: var(--eien-face-text);
+  font-style: italic;
+  color: var(--eien-pencil);
+}
+
+/* The colophon: the status line at the foot of the page. */
+.colophon {
+  display: flex;
+  justify-content: center;
+  gap: var(--eien-space-3);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-band);
+  border-top: var(--eien-hairline) solid var(--eien-rule);
+  text-transform: uppercase;
+  letter-spacing: var(--eien-track-label);
+}
+.colophon__state:empty {
+  display: none;
+}
+.colophon__state[data-state="failed"] {
+  color: var(--eien-danger);
+}
