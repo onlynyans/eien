@@ -14,6 +14,7 @@ import {
   expect,
   fakeTrash,
   launchApp,
+  TIMING,
   test,
   type VaultFiles,
 } from './launch';
@@ -755,36 +756,39 @@ const MANY: VaultFiles = Object.fromEntries(
 test.describe('three thousand notes', () => {
   test.use({ vaultFiles: { ...MANY, 'Chapter.md': 'The first line.\n' } });
 
-  test('hardening: two panes with All Notes open draws them, and typing never stalls', async ({
-    page,
-    vault,
-  }) => {
-    test.setTimeout(90_000);
-    await expect(page.locator('.note-row').first()).toBeVisible({ timeout: 30_000 });
-    await page.evaluate(() => {
-      const w = window as unknown as { long: number[] };
-      w.long = [];
-      new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) w.long.push(Math.round(entry.duration));
-      }).observe({ type: 'longtask' });
-    });
-    const longest = () =>
-      page.evaluate(() => Math.max(0, ...(window as unknown as { long: number[] }).long));
-    await twoPanes(page);
-    await folder(page, 'All Notes').click();
-    await expect(treeNotes(page)).toHaveCount(2 * 3001, { timeout: 30_000 });
-    expect(await longest()).toBeLessThan(500);
-    // A file arriving from another device redraws all six thousand rows.
-    writeFileSync(at(vault, 'From the phone.md'), 'synced\n');
-    await expect(page.locator('.sidebar__count')).toHaveText('3,002 notes', { timeout: 30_000 });
-    await page.evaluate(() => {
-      (window as unknown as { long: number[] }).long = [];
-    });
-    await treeNote(page, 'Chapter').first().click();
-    await editorContent(page).click();
-    await page.keyboard.press('ControlOrMeta+End');
-    await page.keyboard.type(' The writer keeps typing along here.', { delay: 60 });
-    await expect.poll(() => readFileSync(at(vault, 'Chapter.md'), 'utf8')).toContain('along here');
-    expect(await longest()).toBeLessThan(200);
-  });
+  test(
+    'hardening: two panes with All Notes open draws them, and typing never stalls',
+    TIMING,
+    async ({ page, vault }) => {
+      test.setTimeout(90_000);
+      await expect(page.locator('.note-row').first()).toBeVisible({ timeout: 30_000 });
+      await page.evaluate(() => {
+        const w = window as unknown as { long: number[] };
+        w.long = [];
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) w.long.push(Math.round(entry.duration));
+        }).observe({ type: 'longtask' });
+      });
+      const longest = () =>
+        page.evaluate(() => Math.max(0, ...(window as unknown as { long: number[] }).long));
+      await twoPanes(page);
+      await folder(page, 'All Notes').click();
+      await expect(treeNotes(page)).toHaveCount(2 * 3001, { timeout: 30_000 });
+      expect(await longest()).toBeLessThan(500);
+      // A file arriving from another device redraws all six thousand rows.
+      writeFileSync(at(vault, 'From the phone.md'), 'synced\n');
+      await expect(page.locator('.sidebar__count')).toHaveText('3,002 notes', { timeout: 30_000 });
+      await page.evaluate(() => {
+        (window as unknown as { long: number[] }).long = [];
+      });
+      await treeNote(page, 'Chapter').first().click();
+      await editorContent(page).click();
+      await page.keyboard.press('ControlOrMeta+End');
+      await page.keyboard.type(' The writer keeps typing along here.', { delay: 60 });
+      await expect
+        .poll(() => readFileSync(at(vault, 'Chapter.md'), 'utf8'))
+        .toContain('along here');
+      expect(await longest()).toBeLessThan(200);
+    },
+  );
 });

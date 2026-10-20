@@ -13,7 +13,15 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { clickMenu, editorContent, expect, fakeTrash, test, type VaultFiles } from './launch';
+import {
+  clickMenu,
+  editorContent,
+  expect,
+  fakeTrash,
+  TIMING,
+  test,
+  type VaultFiles,
+} from './launch';
 
 const ID = 'ABCDEFGHJK';
 const SEALED_TEXT = 'Words here.';
@@ -429,39 +437,39 @@ test.describe('many seals', () => {
     },
   });
 
-  test('hardening: a thousand seals are listed and counted, and ⌘S still seals, in good time', async ({
-    app,
-    page,
-    vault,
-  }) => {
-    await open(page, 'Sealed');
-    await expect(sealLine(page)).toHaveText('Sealed 1m ago');
-    let started = Date.now();
-    await clickMenu(app, 'View', 'Versions');
-    const panel = panelOf(page);
-    await expect(panel.locator('.version__when')).toHaveCount(1001, { timeout: 10_000 });
-    await expect
-      .poll(
-        () =>
-          panel
-            .locator('.version .count')
-            .evaluateAll((els) => els.filter((el) => !el.textContent).length),
-        {
-          timeout: 20_000,
-        },
-      )
-      .toBe(0);
-    const counted = Date.now() - started;
-    started = Date.now();
-    await typeAtEnd(page, ' More.');
-    await seal(app);
-    await expect(sealLine(page)).toHaveText('Sealed just now', { timeout: 10_000 });
-    const sealedIn = Date.now() - started;
-    expect(sealsOf(vault, ID)).toHaveLength(1001);
-    console.log(`1000 seals: listed and counted in ${counted} ms; sealed in ${sealedIn} ms`);
-    expect(counted).toBeLessThan(10_000);
-    expect(sealedIn).toBeLessThan(5_000);
-  });
+  test(
+    'hardening: a thousand seals are listed and counted, and ⌘S still seals, in good time',
+    TIMING,
+    async ({ app, page, vault }) => {
+      await open(page, 'Sealed');
+      await expect(sealLine(page)).toHaveText('Sealed 1m ago');
+      let started = Date.now();
+      await clickMenu(app, 'View', 'Versions');
+      const panel = panelOf(page);
+      await expect(panel.locator('.version__when')).toHaveCount(1001, { timeout: 10_000 });
+      await expect
+        .poll(
+          () =>
+            panel
+              .locator('.version .count')
+              .evaluateAll((els) => els.filter((el) => !el.textContent).length),
+          {
+            timeout: 20_000,
+          },
+        )
+        .toBe(0);
+      const counted = Date.now() - started;
+      started = Date.now();
+      await typeAtEnd(page, ' More.');
+      await seal(app);
+      await expect(sealLine(page)).toHaveText('Sealed just now', { timeout: 10_000 });
+      const sealedIn = Date.now() - started;
+      expect(sealsOf(vault, ID)).toHaveLength(1001);
+      console.log(`1000 seals: listed and counted in ${counted} ms; sealed in ${sealedIn} ms`);
+      expect(counted).toBeLessThan(10_000);
+      expect(sealedIn).toBeLessThan(5_000);
+    },
+  );
 });
 
 test.describe('the window', () => {
