@@ -5,11 +5,11 @@ mockups here are how to see it; `tokens.css` is the source of every value.
 
 | File | What it shows |
 |---|---|
-| [specimen.html](specimen.html) | Every colour, both typefaces, the seal, rows and their states, the diff style, the spacing scale — day and night side by side |
+| [specimen.html](specimen.html) | Every colour, the four text faces side by side and the mono, the seal, rows and their states, the diff style, the spacing scale — day and night side by side |
 | [desktop.html](desktop.html) | The app window: three panes, two-pane mode, collapsing and resizing, the page's views, Compare, Seal, Versions |
 | [phone.html](phone.html) | The phone: contents → index → page, one at a time, controls behind ⋯ |
 | [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night |
-| [fonts.css](fonts.css), [fonts/](fonts/) | Literata and Courier Prime, bundled (SIL Open Font License) |
+| [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Archivo and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
 
 To view them, serve this folder (fonts don't load from `file://`):
@@ -57,20 +57,31 @@ the seal.
 
 Words: a checkpoint is a **seal**; a named version is a **named seal**.
 
-### Two voices, no sans-serif
+### Two voices
 
 | Voice | Face | For |
 |---|---|---|
-| Book | Literata | Anything a person wrote: note text, titles, folder and note names, previews |
-| Typewriter | Courier Prime | Anything the machine counts or you press: counts, dates, labels (in capitals), buttons, the status line |
+| Text | Newsreader (the default), Literata, IBM Plex Sans or Archivo: the writer's choice | Anything a person wrote: note text, titles, folder and note names, previews |
+| Machine | IBM Plex Mono, always | Anything the machine counts or you press: counts, dates, labels (in capitals), buttons, the status line, the Source view |
 
-The test: *could a person have written it?* Book. *Did the machine count it,
-or do you press it?* Typewriter.
+The test: *could a person have written it?* The text face. *Did the machine
+count it, or do you press it?* The mono.
+
+- **The text face is the writer's choice.** Everything a person wrote uses
+  it, whichever it is; the machine voice is always mono and never changes
+  with it.
+- The choice is `data-face` on `<html>`: `newsreader` (or no attribute),
+  `literata`, `plex-sans`, `archivo`. Each face carries its own sizes,
+  prose leading and measure in `tokens.css`, tuned by eye so the page reads
+  at the same size and about 75 characters a line in all four (Newsreader's
+  x-height is small, so it is set larger; the two sans-serifs' are large, so
+  they are set smaller). Every mockup has a FACE control, kept in
+  `localStorage`.
 
 ### Structure
 
-- **The sidebar reads like a book's contents page**: names in the book face,
-  counts in typewriter figures, no folder or tag icons. A folder can be marked
+- **The sidebar reads like a book's contents page**: names in the text face,
+  counts in mono figures, no folder or tag icons. A folder can be marked
   as a book.
 - **The note list reads like an index.** In a book folder, notes are numbered
   i, ii, iii in chapter order, and dragging reorders them.
@@ -101,9 +112,12 @@ or do you press it?* Typewriter.
 
 ## Known gaps
 
-- Courier Prime has no `←`, `≡`, `⋯`, `▸` or `▾`; the mockups fall back to a
-  system face for them. The app will draw these marks (CSS or small SVGs in
-  ink), not rely on a fallback font.
+- IBM Plex Mono, as bundled (Latin and Latin Extended), has `·` but no `←`,
+  `≡`, `⋯`, `▸`, `▾` or `⁂` (checked in the font files' cmaps). `⁂` lies inside
+  the Latin file's range, so Plex Mono itself lacks it; the others lie outside
+  both files' ranges. None of the four text faces has them either. The
+  mockups fall back to a system face for them; the app will draw these marks
+  (CSS or small SVGs in ink), not rely on a fallback font.
 - The seal's 永 is set in the system's Mincho here (`--eien-face-seal`); the
   app ships the seal as an SVG so it looks the same on every system.
 

@@ -61,25 +61,23 @@
   --eien-danger: var(--eien-removed); /* delete — always said in words too */
 
   /* ── Type: two voices, one job each ─────────────────────────────────── */
-  /* Book: anything a person wrote — notes, titles, names in the tree. */
-  --eien-face-book: 'Literata', 'Iowan Old Style', Georgia, serif;
-  /* Typewriter: anything the machine counts or you press — numbers, dates, labels, buttons. */
-  --eien-face-type: 'Courier Prime', 'Courier New', ui-monospace, monospace;
+  /* Text: anything a person wrote — notes, titles, names in the tree. The face is the
+     writer's choice, so --eien-face-book and the sizes that follow it (prose, title,
+     heading, row, preview, the prose leading and the measure) are set per face in the
+     block after :root. Newsreader is the default. */
+  /* Machine: anything the machine counts or you press — numbers, dates, labels, buttons.
+     Always IBM Plex Mono, whatever the text face. */
+  --eien-face-type: 'IBM Plex Mono', ui-monospace, monospace;
   /* The seal's glyph, 永. Mockups use the system's Mincho; the app ships the seal as SVG. */
   --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', 'Songti SC', serif;
 
-  --eien-size-prose: 19px; /* the writing */
-  --eien-size-title: 32px; /* a note's title on its page */
-  --eien-size-heading: 21px; /* the list's header: the folder or tag shown */
-  --eien-size-row: 15px; /* a row in the tree or list */
-  --eien-size-preview: 13px; /* the line of preview under a list row */
-  --eien-size-meta: 12px; /* counts, dates, the status line */
-  --eien-size-label: 11px; /* section labels and buttons, set in capitals */
+  /* The machine voice's sizes: the same whichever text face is chosen. */
+  --eien-size-meta: 11px; /* counts, dates, the status line */
+  --eien-size-label: 10px; /* section labels and buttons, set in capitals */
+  --eien-size-source: 14px; /* the Source view: the raw .md, in mono */
 
-  --eien-leading-prose: 1.72;
   --eien-leading-row: 1.35;
-  --eien-track-label: 0.16em; /* letterspacing for capitals */
-  --eien-measure: 34em; /* a reading line: about 66 characters of prose */
+  --eien-track-label: 0.12em; /* letterspacing for capitals */
 
   /* ── Space: a 4px grid ──────────────────────────────────────────────── */
   --eien-space-1: 4px; /* icon gaps */
@@ -104,6 +102,61 @@
   --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --eien-quick: 120ms; /* hover, press */
   --eien-calm: 220ms; /* a pane opening, a view changing */
+}
+
+/* ── The text face: the writer's choice ─────────────────────────────────
+   <html data-face="newsreader" | "literata" | "plex-sans" | "archivo">; no
+   attribute is Newsreader. The same attribute on any element sets that face
+   inside it alone (the specimen shows them side by side this way).
+
+   Faces of one size don't look one size: Newsreader's x-height runs small, Plex
+   Sans's and Archivo's large, and Archivo is narrow. So each face brings its own
+   sizes and leading, tuned by eye until a page reads at the same apparent size,
+   and its own measure, so a line holds about the same number of characters
+   (about 75, measured) in each. Only the text voice changes; the mono never does. */
+:root,
+[data-face='newsreader'] {
+  --eien-face-book: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --eien-size-prose: 22px; /* the writing */
+  --eien-size-title: 36px; /* a note's title on its page */
+  --eien-size-heading: 23px; /* the list's header: the folder or tag shown */
+  --eien-size-row: 16px; /* a row in the tree or list */
+  --eien-size-preview: 14px; /* the line of preview under a list row */
+  --eien-leading-prose: 1.5;
+  --eien-measure: 29em; /* a reading line, in em of the prose */
+}
+:root[data-face='literata'],
+[data-face='literata'] {
+  --eien-face-book: 'Literata', 'Iowan Old Style', Georgia, serif;
+  --eien-size-prose: 19px;
+  --eien-size-title: 32px;
+  --eien-size-heading: 21px;
+  --eien-size-row: 15px;
+  --eien-size-preview: 13px;
+  --eien-leading-prose: 1.72;
+  --eien-measure: 34em;
+}
+:root[data-face='plex-sans'],
+[data-face='plex-sans'] {
+  --eien-face-book: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+  --eien-size-prose: 18px;
+  --eien-size-title: 31px;
+  --eien-size-heading: 20px;
+  --eien-size-row: 14.5px;
+  --eien-size-preview: 12.5px;
+  --eien-leading-prose: 1.76;
+  --eien-measure: 32em;
+}
+:root[data-face='archivo'],
+[data-face='archivo'] {
+  --eien-face-book: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --eien-size-prose: 18px;
+  --eien-size-title: 30px;
+  --eien-size-heading: 20px;
+  --eien-size-row: 14.5px;
+  --eien-size-preview: 13px;
+  --eien-leading-prose: 1.75;
+  --eien-measure: 31em;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -40,6 +40,49 @@ document.querySelector('.theme').addEventListener('click', (event) => {
   }
 });
 
+/* ── Text face: Newsreader / Literata / Plex Sans / Archivo ────────────── */
+// The writer's choice (tokens.css, data-face). Kept across visits and mockups.
+
+const FACE_KEY = 'eien-mockup-face';
+const FACES = {
+  newsreader: 'Newsreader',
+  literata: 'Literata',
+  'plex-sans': 'IBM Plex Sans',
+  archivo: 'Archivo',
+};
+
+function applyFace(face) {
+  root.setAttribute('data-face', face);
+  for (const button of document.querySelectorAll('[data-face-choice]')) {
+    button.setAttribute('aria-pressed', String(button.dataset.faceChoice === face));
+  }
+  for (const el of document.querySelectorAll('[data-face-name]')) el.textContent = FACES[face];
+}
+
+function savedFace() {
+  try {
+    const face = localStorage.getItem(FACE_KEY);
+    return Object.hasOwn(FACES, face) ? face : 'newsreader';
+  } catch {
+    return 'newsreader';
+  }
+}
+
+applyFace(savedFace());
+
+document.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-face-choice]');
+  if (!button) return;
+  const face = button.dataset.faceChoice;
+  applyFace(face);
+  readValues();
+  try {
+    localStorage.setItem(FACE_KEY, face);
+  } catch {
+    // Private windows may refuse storage; the choice still holds for this visit.
+  }
+});
+
 /* ── The colours, in the order tokens.css gives them ───────────────────── */
 // show: how one cell draws the colour. A cell is either on the desk or on paper.
 
@@ -349,11 +392,14 @@ document.querySelector('[data-layout-scale]').innerHTML = LAYOUT.map(
 
 /* ── Reading the tokens back ───────────────────────────────────────────── */
 
-// Token values as written (sizes, the measure, the leading).
-const rootStyle = getComputedStyle(root);
-for (const el of document.querySelectorAll('[data-value-of]')) {
-  el.textContent = rootStyle.getPropertyValue(el.dataset.valueOf).trim();
+// Token values as written (sizes, the measure, the leading), read where each
+// one is shown: inside a figure with its own data-face, that face's value.
+function readValues() {
+  for (const el of document.querySelectorAll('[data-value-of]')) {
+    el.textContent = getComputedStyle(el).getPropertyValue(el.dataset.valueOf).trim();
+  }
 }
+readValues();
 
 function parseColour(text) {
   const [r, g, b, a = 1] = text.match(/[\d.]+/g).map(Number);

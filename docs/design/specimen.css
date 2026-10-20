@@ -181,9 +181,21 @@ kbd {
   color: var(--eien-pencil);
 }
 .theme {
+  display: flex;
+  gap: var(--eien-space-1);
+}
+/* Theme above, text face below: both the reader's to set. */
+.title-controls {
   grid-area: theme;
   align-self: start;
+  display: grid;
+  justify-items: end;
+  gap: var(--eien-space-1);
+}
+.face-choice {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--eien-space-1);
 }
 .title-body {
@@ -219,7 +231,7 @@ kbd {
 }
 .family-head .label {
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--eien-ink-soft);
 }
 .family-note {
@@ -538,6 +550,72 @@ kbd {
   color: var(--eien-ink-soft);
 }
 
+/* The text faces side by side. Each figure sets its own data-face, so it
+   takes that face's sizes, leading and measure from tokens.css. */
+.faces {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--eien-space-7) var(--eien-space-6);
+  padding-top: var(--eien-space-4);
+}
+.face-sample {
+  min-width: 0;
+  font-family: var(--eien-face-book);
+}
+.face-cap {
+  display: grid;
+  justify-items: start;
+  gap: var(--eien-space-1);
+  margin: 0 0 var(--eien-space-5);
+}
+.face-cap .word-button {
+  margin-left: calc(var(--eien-space-2) * -1);
+}
+.face-title {
+  margin: 0 0 var(--eien-space-4);
+  font-size: var(--eien-size-title);
+  line-height: var(--eien-leading-row);
+  color: var(--eien-ink);
+}
+.face-prose {
+  max-width: var(--eien-measure);
+  font-size: var(--eien-size-prose);
+  line-height: var(--eien-leading-prose);
+  color: var(--eien-ink);
+  text-wrap: pretty;
+}
+.face-prose p {
+  margin: 0 0 var(--eien-space-3);
+}
+.face-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--eien-space-2);
+  margin: var(--eien-space-5) 0 0;
+  padding-top: var(--eien-space-3);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  color: var(--eien-ink-soft);
+}
+.face-preview {
+  margin: calc(var(--eien-hairline) * 2) 0 0;
+  font-size: var(--eien-size-preview);
+  line-height: var(--eien-leading-row);
+  color: var(--eien-pencil);
+}
+.face-sample--mono {
+  grid-column: 1 / -1;
+}
+.face-source {
+  max-width: var(--eien-measure);
+  margin: 0 0 var(--eien-space-4);
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-source);
+  line-height: var(--eien-leading-prose);
+  color: var(--eien-ink);
+}
+
 /* A page of the open note, on its own patch of desk */
 .page-sample {
   margin-top: var(--eien-space-6);
@@ -644,7 +722,7 @@ kbd {
   white-space: nowrap;
 }
 
-/* The typewriter */
+/* The machine voice */
 .typewriter {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1277,7 +1355,7 @@ del {
 }
 .conflict-word {
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--eien-caution);
 }
 .conflict-body p {
@@ -1385,8 +1463,18 @@ del {
     gap: var(--eien-space-6) var(--eien-space-4);
     padding-top: var(--eien-space-7);
   }
-  .theme {
+  .theme,
+  .face-choice {
     margin-left: calc(var(--eien-space-2) * -1);
+  }
+  .title-controls {
+    justify-items: start;
+  }
+  .face-choice {
+    justify-content: flex-start;
+  }
+  .faces {
+    grid-template-columns: minmax(0, 1fr);
   }
   .title-lede {
     margin-bottom: var(--eien-space-5);

@@ -63,7 +63,7 @@ button {
 }
 .mockbar__name {
   color: var(--eien-ink);
-  font-weight: 700;
+  font-weight: 600;
   padding-right: var(--eien-space-2);
   border-right: var(--eien-hairline) solid var(--eien-rule-strong);
 }
@@ -917,7 +917,7 @@ button {
   margin-top: calc(var(--eien-space-6) * -1);
 }
 .sheet__state strong {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--eien-ink-soft);
 }
 .sheet__state .word-button {
@@ -1110,7 +1110,7 @@ ins.diff,
 .source {
   margin: var(--eien-space-6) 0 0;
   font-family: var(--eien-face-type);
-  font-size: var(--eien-size-row);
+  font-size: var(--eien-size-source);
   line-height: var(--eien-leading-prose);
   color: var(--eien-ink);
   white-space: pre-wrap;
@@ -1129,7 +1129,7 @@ ins.diff,
   color: var(--eien-ink-soft);
 }
 .md-title {
-  font-weight: 700;
+  font-weight: 600;
 }
 .md-break {
   color: var(--eien-pencil);

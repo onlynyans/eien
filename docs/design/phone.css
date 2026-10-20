@@ -37,6 +37,12 @@
   line-height: var(--eien-leading-row);
   color: var(--eien-ink);
 }
+.show-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--eien-space-1) var(--eien-space-6);
+}
 .theme-switch {
   display: flex;
   align-items: center;
@@ -179,7 +185,7 @@
   max-width: 78%;
 }
 
-/* The colophon: what the machine counts, in the typewriter's small caps. */
+/* The colophon: what the machine counts, in the mono's capitals. */
 .colophon {
   margin: 0;
   font-family: var(--eien-face-type);
@@ -775,7 +781,7 @@
 /* Source: the raw .md, typewritten. */
 .prose.is-source {
   font-family: var(--eien-face-type);
-  font-size: var(--eien-size-row);
+  font-size: var(--eien-size-source);
   white-space: pre-wrap;
 }
 .md-mark {
@@ -920,6 +926,17 @@
 }
 .sheet-row__choices {
   display: flex;
+}
+/* Too many choices for one line (the typefaces): the key above, the words under it. */
+.sheet-row--stack {
+  padding-top: var(--eien-space-3);
+}
+.sheet-row--stack > .sheet-row__key {
+  flex-basis: 100%;
+}
+.sheet-row--stack > .sheet-row__choices {
+  flex-wrap: wrap;
+  margin-left: calc(var(--eien-space-3) * -1);
 }
 .sheet-row--compare {
   padding-top: var(--eien-space-3);
@@ -1074,6 +1091,10 @@ button.version:active {
   }
   .theme-switch .word-button {
     min-height: var(--eien-touch);
+  }
+  /* No room above the phone for both: the face is chosen in its Settings. */
+  .face-switch {
+    display: none;
   }
   .screens {
     gap: var(--eien-space-6);

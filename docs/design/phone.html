@@ -17,11 +17,20 @@
         <p class="label">Eien · phone</p>
         <h1 class="show-title">One pane at a time</h1>
       </div>
-      <div class="theme-switch" role="group" aria-label="Theme">
-        <span class="label theme-switch__label">Theme</span>
-        <button class="word-button" type="button" data-theme-choice="system">System</button>
-        <button class="word-button" type="button" data-theme-choice="day">Day</button>
-        <button class="word-button" type="button" data-theme-choice="night">Night</button>
+      <div class="show-controls">
+        <div class="theme-switch face-switch" role="group" aria-label="Text face">
+          <span class="label theme-switch__label">Face</span>
+          <button class="word-button" type="button" data-face-choice="newsreader">Newsreader</button>
+          <button class="word-button" type="button" data-face-choice="literata">Literata</button>
+          <button class="word-button" type="button" data-face-choice="plex-sans">Plex Sans</button>
+          <button class="word-button" type="button" data-face-choice="archivo">Archivo</button>
+        </div>
+        <div class="theme-switch" role="group" aria-label="Theme">
+          <span class="label theme-switch__label">Theme</span>
+          <button class="word-button" type="button" data-theme-choice="system">System</button>
+          <button class="word-button" type="button" data-theme-choice="day">Day</button>
+          <button class="word-button" type="button" data-theme-choice="night">Night</button>
+        </div>
       </div>
     </header>
 
@@ -174,6 +183,15 @@
               <button class="word-button word-button--touch" type="button" data-theme-choice="system">System</button>
               <button class="word-button word-button--touch" type="button" data-theme-choice="day">Day</button>
               <button class="word-button word-button--touch" type="button" data-theme-choice="night">Night</button>
+            </div>
+          </div>
+          <div class="sheet-row sheet-row--stack">
+            <span class="label sheet-row__key">Typeface</span>
+            <div class="sheet-row__choices" role="group" aria-label="Typeface for your writing">
+              <button class="word-button word-button--touch" type="button" data-face-choice="newsreader">Newsreader</button>
+              <button class="word-button word-button--touch" type="button" data-face-choice="literata">Literata</button>
+              <button class="word-button word-button--touch" type="button" data-face-choice="plex-sans">Plex Sans</button>
+              <button class="word-button word-button--touch" type="button" data-face-choice="archivo">Archivo</button>
             </div>
           </div>
           <div class="sheet-row">

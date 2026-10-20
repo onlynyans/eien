@@ -24,5 +24,8 @@ runtime.
 
 | Package | Why |
 |---|---|
-| `@fontsource-variable/literata` | The book face (SIL OFL): variable weight and optical size, roman and italic. Bundled, never fetched |
-| `@fontsource/courier-prime` | The typewriter face (SIL OFL), 400 and 700, roman and italic |
+| `@fontsource-variable/newsreader` | The default text face (SIL OFL): variable weight and optical size, roman and italic. Bundled, never fetched |
+| `@fontsource-variable/literata` | A text face the writer can choose (SIL OFL): variable weight and optical size, roman and italic |
+| `@fontsource-variable/ibm-plex-sans` | A sans-serif text face the writer can choose (SIL OFL): variable weight, roman and italic |
+| `@fontsource-variable/archivo` | A second, narrower sans-serif text face (SIL OFL): variable weight, roman and italic |
+| `@fontsource/ibm-plex-mono` | The machine voice, whatever the text face (SIL OFL): 400 and 600, and 400 italic |

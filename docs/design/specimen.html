@@ -34,19 +34,27 @@
               <span class="title-kanji" lang="ja">永遠</span> <span class="title-gloss">“forever”</span>
             </p>
           </div>
-          <div class="theme" role="group" aria-label="Theme">
-            <button class="word-button" type="button" data-theme-choice="system">System</button>
-            <button class="word-button" type="button" data-theme-choice="light">Day</button>
-            <button class="word-button" type="button" data-theme-choice="dark">Night</button>
+          <div class="title-controls">
+            <div class="theme" role="group" aria-label="Theme">
+              <button class="word-button" type="button" data-theme-choice="system">System</button>
+              <button class="word-button" type="button" data-theme-choice="light">Day</button>
+              <button class="word-button" type="button" data-theme-choice="dark">Night</button>
+            </div>
+            <div class="face-choice" role="group" aria-label="Text face">
+              <button class="word-button" type="button" data-face-choice="newsreader">Newsreader</button>
+              <button class="word-button" type="button" data-face-choice="literata">Literata</button>
+              <button class="word-button" type="button" data-face-choice="plex-sans">Plex Sans</button>
+              <button class="word-button" type="button" data-face-choice="archivo">Archivo</button>
+            </div>
           </div>
           <div class="title-body">
             <p class="title-lede">
               A book on a desk at night. The window is the desk; each note is a sheet of washi
               paper laid on it, lifted only by its tone and a hairline edge. The words are sumi
               ink, in four strengths. One vermilion seal marks what is kept, and appears nowhere
-              else. Two voices set every word: a book face for what a person wrote, a typewriter
-              for what the machine counts or you press. By night the desk is inkstone, the same
-              warm hues darkened.
+              else. Two voices set every word: a text face of the writer’s choosing for what a
+              person wrote, a mono for what the machine counts or you press. By night the desk
+              is inkstone, the same warm hues darkened.
             </p>
             <p class="label title-colophon">
               Design specimen <span>·</span> October 2026
@@ -125,15 +133,90 @@
             <p class="sheet-numeral">ii</p>
             <h2 class="sheet-title" id="type-title">Type</h2>
             <p class="sheet-lede">
-              Two voices, and no sans-serif anywhere. Could a person have written it? The book
-              face. Did the machine count it, or do you press it? The typewriter.
+              Two voices. Could a person have written it? The text face, which the writer
+              chooses: Newsreader, Literata, IBM Plex Sans or Archivo. Did the machine count it,
+              or do you press it? IBM Plex Mono, always.
             </p>
           </header>
 
+          <section class="voice" aria-labelledby="voice-faces">
+            <div class="family-head">
+              <h3 class="label" id="voice-faces">The text face · the writer’s choice</h3>
+              <p class="family-note">
+                One passage in each, at that face’s own size, leading and measure, so all four
+                read at one size. Choose one here or at the top.
+              </p>
+            </div>
+            <div class="faces">
+              <figure class="face-sample" data-face="newsreader">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="newsreader">Newsreader</button>
+                  <span class="count">the default · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="literata">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="literata">Literata</button>
+                  <span class="count">bookish, sturdy · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="plex-sans">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="plex-sans">Plex Sans</button>
+                  <span class="count">sans-serif, open · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample" data-face="archivo">
+                <figcaption class="face-cap">
+                  <button class="word-button" type="button" data-face-choice="archivo">Archivo</button>
+                  <span class="count">sans-serif, narrow · prose <span data-value-of="--eien-size-prose"></span> / <span data-value-of="--eien-leading-prose"></span></span>
+                </figcaption>
+                <p class="face-title">Seventeen</p>
+                <div class="face-prose">
+                  <p>It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                  <p>She watches as he mends the seams. She’s only known him for the merciless work, <i>not the delicate kind.</i></p>
+                </div>
+                <p class="face-row"><span class="count">ii</span> Needle and Thread</p>
+                <p class="face-preview">The quartermaster has thread but no needle; the needle comes from somewhere else.</p>
+              </figure>
+              <figure class="face-sample face-sample--mono">
+                <figcaption class="face-cap">
+                  <span class="wf-name">IBM Plex Mono</span>
+                  <span class="count">the machine voice, with every text face · the Source view, <span data-value-of="--eien-size-source"></span></span>
+                </figcaption>
+                <p class="face-source">It takes her a minute to collect herself. Then, she takes the end he’s holding out. The one that isn’t split.</p>
+                <p class="colophon colophon--framed">
+                  <span>1,204 words</span><span>·</span><span>today +809</span><span>·</span><span>sprint 12:40</span><span>·</span><span><span class="seal seal--small" aria-hidden="true"></span> <span>sealed 2h ago</span></span>
+                </p>
+              </figure>
+            </div>
+          </section>
+
           <section class="voice" aria-labelledby="voice-book">
             <div class="family-head">
-              <h3 class="label" id="voice-book">The book face · Literata</h3>
-              <p class="family-note">Anything a person wrote: the note, its title, names in the tree, previews.</p>
+              <h3 class="label" id="voice-book">The text face in use · <span data-face-name>Newsreader</span></h3>
+              <p class="family-note">Anything a person wrote: the note, its title, names in the tree, previews. Set in the face chosen above, at its sizes.</p>
             </div>
 
             <table class="waterfall">
@@ -241,7 +324,7 @@
 
           <section class="voice" aria-labelledby="voice-type">
             <div class="family-head">
-              <h3 class="label" id="voice-type">The typewriter · Courier Prime</h3>
+              <h3 class="label" id="voice-type">The machine voice · IBM Plex Mono</h3>
               <p class="family-note">Anything the machine counts or you press: counts, dates, labels, buttons, the status line.</p>
             </div>
 
@@ -680,7 +763,7 @@
 
       <footer class="foot">
         <p class="label">
-          Eien <span>·</span> set in Literata and Courier Prime
+          Eien <span>·</span> set in <span data-face-name>Newsreader</span> and IBM Plex Mono
           <span>·</span> tokens.css
         </p>
       </footer>
