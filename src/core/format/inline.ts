@@ -14,8 +14,9 @@ export const STRIKE: InlineMark = { open: '~~', close: '~~' };
 export const HIGHLIGHT: InlineMark = { open: '==', close: '==' };
 export const UNDERLINE: InlineMark = { open: '<u>', close: '</u>' };
 
+/** A word's letters, with the combining marks of Hindi, Thai or a decomposed "é" among them. */
 const isWordChar = (char: string | undefined) =>
-  char !== undefined && /[\p{L}\p{N}_'’-]/u.test(char);
+  char !== undefined && /[\p{L}\p{M}\p{N}_'’-]/u.test(char);
 
 /** The word around `pos`, or null when `pos` isn't in or touching one. */
 function wordAt(text: string, pos: number): Selection | null {
@@ -55,11 +56,33 @@ function wrappedIn(text: string, from: number, to: number, mark: InlineMark): bo
   );
 }
 
-/** The span carries `mark` inside it, at its two ends ("*one*" selected whole). */
+/**
+ * `text` holds a mark of this kind: a "**" for bold, an odd run of "*" for
+ * italic ("*" or "***"), the mark itself for the others.
+ */
+function containsMark(text: string, mark: InlineMark): boolean {
+  const runs = text.match(/\*+/g) ?? [];
+  if (mark.open === '*') return runs.some((run) => run.length % 2 === 1);
+  if (mark.open === '**') return runs.some((run) => run.length >= 2);
+  return text.includes(mark.open) || text.includes(mark.close);
+}
+
+/** `text` with every mark of this kind taken out. */
+function withoutMarks(text: string, mark: InlineMark): string {
+  if (mark.open === '*')
+    return text.replace(/\*+/g, (run) => (run.length % 2 === 1 ? run.slice(1) : run));
+  if (mark.open === '**')
+    return text.replace(/\*+/g, (run) => (run.length >= 2 ? run.slice(2) : run));
+  return text.split(mark.open).join('').split(mark.close).join('');
+}
+
+/** The span carries `mark` inside it, at its two ends, and nowhere between ("*one*" selected whole). */
 function holds(text: string, span: Selection, mark: InlineMark): boolean {
   const inner = text.slice(span.from, span.to);
   if (inner.length < mark.open.length + mark.close.length + 1) return false;
   if (!inner.startsWith(mark.open) || !inner.endsWith(mark.close)) return false;
+  if (containsMark(inner.slice(mark.open.length, inner.length - mark.close.length), mark))
+    return false;
   if (mark.open === '*') {
     // "*x*" or "***x***", never the stars of plain bold
     const lead = runAfter(inner, 0, '*');
@@ -97,12 +120,21 @@ function toggleSpan(
     const bare = inner.slice(mark.open.length, inner.length - mark.close.length);
     const wouldBreak =
       (mark.open === '*' && bare.startsWith('*') && !bare.startsWith('**')) || bare.length === 0;
-    if (!wouldBreak) {
+    if (!wouldBreak && !containsMark(bare, mark)) {
       return {
         changes: [{ from, to, insert: bare }],
         selection: { from, to: from + bare.length },
       };
     }
+  }
+  // Partly marked already ("**a** and **b**"): mark the whole, as a word
+  // processor's Bold does, rather than leave stray marks.
+  if (containsMark(inner, mark)) {
+    const bare = withoutMarks(inner, mark);
+    return {
+      changes: [{ from, to, insert: mark.open + bare + mark.close }],
+      selection: { from: from + mark.open.length, to: from + mark.open.length + bare.length },
+    };
   }
   return {
     changes: [
@@ -162,7 +194,15 @@ export function toggleInline(text: string, selection: Selection, mark: InlineMar
   return { changes, selection: { from: selection.from, to: selection.to + growth } };
 }
 
-/** The non-blank stretch of each line inside `selection`, ends trimmed of spaces. */
+/**
+ * A line's own marks at its start: a quote's ">", then a heading's "#", or a
+ * list's "-" or "1." with a task's "[ ]". Marks go inside these, never
+ * around them: "- **one**", not "**- one**".
+ */
+const LINE_MARKS =
+  /^[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d{1,9}[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/;
+
+/** The non-blank stretch of each line inside `selection`, ends trimmed of spaces and line marks. */
 function lineSpans(text: string, selection: Selection): Selection[] {
   const spans: Selection[] = [];
   let lineStart = selection.from;
@@ -171,6 +211,10 @@ function lineSpans(text: string, selection: Selection): Selection[] {
     const lineEnd = Math.min(newline === -1 ? text.length : newline, selection.to);
     let from = lineStart;
     let to = lineEnd;
+    const realStart = text.lastIndexOf('\n', lineStart - 1) + 1;
+    const marks =
+      LINE_MARKS.exec(text.slice(realStart, newline === -1 ? text.length : newline))?.[0] ?? '';
+    from = Math.max(from, realStart + marks.length);
     while (from < to && /\s/.test(text[from] ?? '')) from++;
     while (to > from && /\s/.test(text[to - 1] ?? '')) to--;
     if (from < to) spans.push({ from, to });

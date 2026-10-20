@@ -117,19 +117,40 @@ so two devices never overwrite each other's state through Syncthing.
   leaves the old file or the new one, never a partial one. At the next launch
   a stray temp file newer than its note, holding different words, is kept as
   `Note (recovered 2026-10-19 16-40).md`; every other one is removed.
+- **One write at a time.** Writes to one file (case and accents aside) run one
+  after another, so two can't both pass the version check. The version is
+  checked again after the temp file is flushed, just before it takes the
+  note's place: a change another program makes in that moment is refused, not
+  overwritten.
 - **External changes.** Eien watches the vault. When a note changes on disk:
   - If the open copy has no unsaved edits, the new text is loaded.
   - If both changed, Eien never overwrites the file. It saves the open text as
     a sibling, `Note (conflict 2026-10-19 16-40).md`, and shows one quiet
     notice. Both versions remain.
+  - If only the bytes changed (another editor's line endings or byte-order
+    mark, the same words), Eien takes the file's version and its format, and
+    the next save keeps them.
+  - After a reload, undo starts afresh: ⌘Z can't step back over the other
+    device's words.
+  - When a folder holding the open note changes (renamed or removed
+    elsewhere), the note is checked again; a save never makes the old folder
+    again.
+  - Changes are told in bursts, 120 ms after the first, so a file written
+    without pause can't hold the others' news back.
 - **Syncthing conflicts.** Files named `*.sync-conflict-*` are shown beside
   their note with a mark, so the writer can compare and merge them.
 - **Deleting** sends files to the system trash. If the trash fails, nothing is
   deleted and the writer is told.
 - **Paths.** Every path from the window is resolved inside the vault (real
   path, no symlink escape). Names are checked for characters and reserved
-  names that Windows, macOS or Android can't store (`CON`, `aux`, `:`, `?`,
-  trailing dots and spaces), and for case-only collisions.
+  names that Windows, macOS or Android can't store (`CON`, `aux`, `COM0`, `:`,
+  `?`, trailing dots and spaces, a broken character), and for collisions:
+  names are compared case and accents aside, folded as macOS folds them
+  (`Straße` is `STRASSE`). A name is kept exactly as written; on Linux and
+  Android a composed and a decomposed `Café` are two files.
+- **Settings files.** This device's file is written over only when it was
+  read; one that can't be read just now refuses the change (and the app opens
+  with the defaults). JSON files saved with a byte-order mark are read.
 
 ---
 
@@ -181,6 +202,11 @@ format without typing them:
   appears beside it. It appears only for a selection and never while typing.
 - Typing the Markdown marks works too, as in any Markdown editor.
 
+Square brackets are a link only with an address or a defined reference, as
+CommonMark has it: `[sic]` and `[...]` keep their brackets on the page. HTML at
+the start of a line (AO3's `<p>…</p>`) looks as it does mid-line. Front matter
+shows quietly, in the mono, never as a scene break.
+
 Links: ⌘-click (Ctrl-click on Windows and Linux) follows one. A web address
 opens in the browser; a `[[wiki link]]` opens the note with that title. In
 Reading a plain click follows.
@@ -225,7 +251,8 @@ words, as on the page.
 - **Quotes:** typed quotes follow the quote setting (curly or straight).
 - **Focus mode:** dims every paragraph but the current one.
 - **Typewriter scrolling:** keeps the caret line at a fixed height.
-- **Counters:** words in the note, in the book, today; sprint timer with words
+- **Counters:** words in the note (its words only: not the marks, link
+  addresses, HTML tags or front matter), in the book, today; sprint timer with words
   gained; zoom.
 - **Zoom:** ⌘+ and ⌘− zoom the page in steps of 10%, ⌘0 returns to 100%. Zoom
   is per device and shown in the status line when it isn't 100%; the panes and

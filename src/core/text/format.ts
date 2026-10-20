@@ -20,9 +20,11 @@ export function formatOf(raw: string): TextFormat {
   return { bom: raw.startsWith(BOM), eol: crlf > lf ? '\r\n' : '\n' };
 }
 
+/** `raw` without a byte-order mark: what JSON.parse and the editor need. */
+export const withoutBom = (raw: string): string => (raw.startsWith(BOM) ? raw.slice(1) : raw);
+
 /** The text the editor shows: no mark, every line ending "\n" (old Mac "\r" too). */
-export const toEditor = (raw: string): string =>
-  (raw.startsWith(BOM) ? raw.slice(1) : raw).replace(/\r\n?/g, '\n');
+export const toEditor = (raw: string): string => withoutBom(raw).replace(/\r\n?/g, '\n');
 
 /** The file's bytes for `text`, in `format`. */
 export const fromEditor = (text: string, format: TextFormat): string =>

@@ -169,7 +169,19 @@ export async function showVault(
     timer = setTimeout(() => {
       const changed = pending;
       pending = new Set();
-      if (session && changed.has(session.path)) void session.diskChanged();
+      // The note, or a folder it's in (renamed or removed elsewhere): look again.
+      // Composed, as a watcher may report a name in the other Unicode form.
+      const open = session?.path.normalize('NFC');
+      if (
+        session &&
+        open &&
+        [...changed].some((changedPath) => {
+          const path = changedPath.normalize('NFC');
+          return open === path || open.startsWith(`${path}/`);
+        })
+      ) {
+        void session.diskChanged();
+      }
       if (changed.has(VAULT_CONFIG)) void settings.reload(); // changed on another device
       void refresh();
     }, REDRAW_AFTER_MS);

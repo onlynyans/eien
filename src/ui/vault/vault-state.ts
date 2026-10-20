@@ -2,7 +2,7 @@
 // and the notes for whatever is selected in the sidebar or searched for.
 
 import type { IndexedNote } from '../../core/note';
-import { baseName, joinPath, titleOf } from '../../core/paths';
+import { baseName, joinPath, nameKey, titleOf } from '../../core/paths';
 import { buildTagTree, hasTag, type TagNode } from '../../core/tags';
 import { chapterNumber, type NumeralStyle } from '../../core/text';
 import {
@@ -84,12 +84,13 @@ export class VaultState {
 
   /** The note a [[wiki link]] names: titled `title`, case aside; the first by path if several are. */
   findByTitle(title: string): string | null {
-    const wanted = title.trim().toLocaleLowerCase();
+    // Compared as file names are: case and Unicode form aside ("Café" typed, "Cafe\u0301" on disk).
+    const wanted = nameKey(title.trim());
     const match = this.#entries
       .filter((entry) => entry.kind === 'note')
       .map((entry) => entry.path)
       .sort()
-      .find((path) => titleOf(baseName(path)).toLocaleLowerCase() === wanted);
+      .find((path) => nameKey(titleOf(baseName(path))) === wanted);
     return match ?? null;
   }
 

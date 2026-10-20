@@ -5,6 +5,7 @@
 import type { SyntaxNodeRef } from '@lezer/common';
 import { Emoji, GFM, parser, Subscript, Superscript } from '@lezer/markdown';
 import { Highlight, WikiLink } from './extensions';
+import { isLink, referenceLabels } from './links';
 
 /** The editor's Markdown (lang-markdown's GFM set) with Eien's two additions. */
 export const eienParser = parser.configure([
@@ -69,9 +70,23 @@ export function readMarkdown(text: string): ReadMarkdown {
     blanked.push([from, to]);
   };
 
-  eienParser.parse(text).iterate({
+  const tree = eienParser.parse(text);
+  const slice = (from: number, to: number) => text.slice(from, to);
+  const references = referenceLabels(tree, slice);
+  /** Where the brackets that aren't links start. */
+  const notLinks = new Set<number>();
+  tree.iterate({
     enter(node: SyntaxNodeRef) {
       const { name, from, to } = node;
+      // "[sic]": the writer's brackets, not a link. Brackets and words are read as text.
+      if ((name === 'Link' || name === 'Image') && !isLink(node.node, slice, references)) {
+        notLinks.add(from);
+        return undefined;
+      }
+      const parent = node.node.parent;
+      if ((name === 'LinkMark' || name === 'LinkLabel') && parent && notLinks.has(parent.from)) {
+        return false;
+      }
       if (MARKS.has(name) || name === 'Image') {
         both(from, to);
         return false;

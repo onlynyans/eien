@@ -22,6 +22,9 @@ const STATE_WORDS: Record<SaveState, string> = {
   failed: 'Not saved yet — trying again',
 };
 
+/** How long typing pauses before the word count catches up. */
+const COUNT_AFTER_MS = 250;
+
 const MODE_LABEL: Record<EditorMode, string> = {
   live: 'Live',
   source: 'Source',
@@ -48,11 +51,12 @@ export class PageView {
   );
   readonly #empty = h('p', { class: 'page__empty', text: 'Choose a note, or make a new one.' });
   #titleText = '';
+  #counting: ReturnType<typeof setTimeout> | undefined;
 
   constructor(container: HTMLElement, events: EditorEvents) {
     this.editor = new NoteEditor(this.#editorHost, {
       changed: (text) => {
-        this.#showWords(text);
+        this.#countLater(text);
         this.#showTitle(text);
         events.changed(text);
       },
@@ -96,6 +100,7 @@ export class PageView {
   }
 
   showNothing(): void {
+    clearTimeout(this.#counting);
     this.#sheet.hidden = true;
     this.#empty.hidden = false;
     this.#words.textContent = '';
@@ -155,7 +160,14 @@ export class PageView {
     this.#title.hidden = same;
   }
 
+  /** Counting reads the whole note: while typing, once it pauses. */
+  #countLater(text: string): void {
+    clearTimeout(this.#counting);
+    this.#counting = setTimeout(() => this.#showWords(text), COUNT_AFTER_MS);
+  }
+
   #showWords(text: string): void {
+    clearTimeout(this.#counting);
     const words = countWords(text);
     this.#words.textContent = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
   }

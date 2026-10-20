@@ -2,6 +2,7 @@
 // (spec §2): the drag-and-drop order, and whether the folder is a book.
 
 import { nameKey } from '../paths';
+import { withoutBom } from '../text';
 import { byName } from './tree';
 
 export const FOLDER_SETTINGS_NAME = '.eien-folder.json';
@@ -23,7 +24,7 @@ export function parseFolderSettings(text: string | null): FolderSettings {
   if (!text) return NO_FOLDER_SETTINGS;
   let data: unknown;
   try {
-    data = JSON.parse(text);
+    data = JSON.parse(withoutBom(text)); // a file saved by an editor that adds a byte-order mark
   } catch {
     return NO_FOLDER_SETTINGS;
   }
@@ -41,18 +42,21 @@ export function parseFolderSettings(text: string | null): FolderSettings {
 /**
  * `names` in the folder's order: those listed in `order` first, as listed
  * (each once; listed names that aren't there are skipped), then the rest by
- * name.
+ * name. A listed name matches its file exactly, or else case and accents
+ * aside (the order may come from another system). Every name is kept: on
+ * Linux and Android "Note.md" and "note.md" are two notes.
  */
 export function orderNames(names: readonly string[], order: readonly string[]): string[] {
-  const present = new Map(names.map((name) => [nameKey(name), name]));
-  const ordered: string[] = [];
+  const exact = new Set(names);
+  const byKey = new Map<string, string[]>();
+  for (const name of names) byKey.set(nameKey(name), [...(byKey.get(nameKey(name)) ?? []), name]);
+  const placed = new Set<string>();
   for (const listed of order) {
-    const key = nameKey(listed);
-    const name = present.get(key);
-    if (name !== undefined) {
-      ordered.push(name);
-      present.delete(key);
-    }
+    const name =
+      exact.has(listed) && !placed.has(listed)
+        ? listed
+        : byKey.get(nameKey(listed))?.find((candidate) => !placed.has(candidate));
+    if (name !== undefined) placed.add(name);
   }
-  return [...ordered, ...[...present.values()].sort(byName)];
+  return [...placed, ...names.filter((name) => !placed.has(name)).sort(byName)];
 }
