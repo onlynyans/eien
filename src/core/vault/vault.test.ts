@@ -23,9 +23,12 @@ describe('notes and other files', () => {
     expect(isNoteName(name)).toBe(true);
   });
 
-  it.each(['.hidden.md', 'image.png', 'notes.markdown', 'md', 'readme.md.txt'])('%s is not', (name) => {
-    expect(isNoteName(name)).toBe(false);
-  });
+  it.each(['.hidden.md', 'image.png', 'notes.markdown', 'md', 'readme.md.txt'])(
+    '%s is not',
+    (name) => {
+      expect(isNoteName(name)).toBe(false);
+    },
+  );
 
   it('kinds folders, notes and other files', () => {
     expect(kindOf('Fic', true)).toBe('folder');
@@ -90,7 +93,12 @@ describe('buildTree', () => {
   });
 
   it('is empty for an empty vault', () => {
-    expect(shape(buildTree([], 'Vault'))).toEqual({ name: 'Vault', count: 0, notes: [], folders: [] });
+    expect(shape(buildTree([], 'Vault'))).toEqual({
+      name: 'Vault',
+      count: 0,
+      notes: [],
+      folders: [],
+    });
   });
 });
 

@@ -83,6 +83,8 @@ describe('countWords', () => {
   });
 
   it('leaves front matter out', () => {
-    expect(countWords('---\ntags: [fic, draft]\ntitle: Something long here\n---\nTwo words')).toBe(2);
+    expect(countWords('---\ntags: [fic, draft]\ntitle: Something long here\n---\nTwo words')).toBe(
+      2,
+    );
   });
 });

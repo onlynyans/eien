@@ -43,7 +43,8 @@ export function buildTree(entries: readonly VaultEntry[], vaultName: string): Fo
   const finish = (node: FolderNode): number => {
     node.folders.sort((a, b) => byName(a.name, b.name));
     node.notes.sort((a, b) => byName(baseName(a), baseName(b)));
-    node.noteCount = node.notes.length + node.folders.reduce((sum, child) => sum + finish(child), 0);
+    node.noteCount =
+      node.notes.length + node.folders.reduce((sum, child) => sum + finish(child), 0);
     return node.noteCount;
   };
   finish(root);

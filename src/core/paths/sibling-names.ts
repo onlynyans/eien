@@ -7,7 +7,9 @@ const NOTE_EXTENSION = '.md';
 
 /** A note's title: its file name without ".md". */
 export const titleOf = (fileName: string): string =>
-  fileName.toLowerCase().endsWith(NOTE_EXTENSION) ? fileName.slice(0, -NOTE_EXTENSION.length) : fileName;
+  fileName.toLowerCase().endsWith(NOTE_EXTENSION)
+    ? fileName.slice(0, -NOTE_EXTENSION.length)
+    : fileName;
 
 /**
  * "<title><suffix>.md", or "<title><suffix> 2.md", " 3"… — the first not in

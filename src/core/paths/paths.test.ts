@@ -128,11 +128,15 @@ describe('stampOf, conflictName, recoveredName', () => {
 
   it('never reuses a name already there', () => {
     const taken = ['Seventeen.md', 'Seventeen (conflict 2026-10-09 07-05).md'];
-    expect(conflictName('Seventeen.md', date, taken)).toBe('Seventeen (conflict 2026-10-09 07-05) 2.md');
+    expect(conflictName('Seventeen.md', date, taken)).toBe(
+      'Seventeen (conflict 2026-10-09 07-05) 2.md',
+    );
   });
 
   it('names a recovered draft', () => {
-    expect(recoveredName('Seventeen.md', date, [])).toBe('Seventeen (recovered 2026-10-09 07-05).md');
+    expect(recoveredName('Seventeen.md', date, [])).toBe(
+      'Seventeen (recovered 2026-10-09 07-05).md',
+    );
   });
 
   it('titleOf drops .md in any case, and only .md', () => {

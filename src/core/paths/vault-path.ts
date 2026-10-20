@@ -35,4 +35,5 @@ export const parentOf = (path: string): string => path.slice(0, Math.max(0, path
 export const baseName = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
 
 /** `folder` and `name` joined. */
-export const joinPath = (folder: string, name: string): string => (folder ? `${folder}/${name}` : name);
+export const joinPath = (folder: string, name: string): string =>
+  folder ? `${folder}/${name}` : name;
