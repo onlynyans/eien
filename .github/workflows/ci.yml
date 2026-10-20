@@ -71,6 +71,8 @@ jobs:
         run: xvfb-run --auto-servernum npx playwright test --grep-invert @timing
       - name: End-to-end tests
         if: runner.os != 'Linux'
+        # bash on Windows too: PowerShell would read "@timing" as a variable.
+        shell: bash
         run: npx playwright test --grep-invert @timing
       # Tests that hold the app to a time run alone, so they measure Eien, not the other tests.
       - name: Timing tests, one at a time (Linux, virtual display)
@@ -78,6 +80,7 @@ jobs:
         run: xvfb-run --auto-servernum npx playwright test --grep @timing --workers=1
       - name: Timing tests, one at a time
         if: runner.os != 'Linux'
+        shell: bash
         run: npx playwright test --grep @timing --workers=1
 
       - name: Keep the report of a failed run
