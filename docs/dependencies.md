@@ -22,4 +22,7 @@ runtime.
 
 ## Shipped with the app
 
-None yet.
+| Package | Why |
+|---|---|
+| `@fontsource-variable/literata` | The book face (SIL OFL): variable weight and optical size, roman and italic. Bundled, never fetched |
+| `@fontsource/courier-prime` | The typewriter face (SIL OFL), 400 and 700, roman and italic |

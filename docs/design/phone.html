@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Eien — phone</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="phone.css" />
+    <script src="phone.js" defer></script>
+  </head>
+  <body>
+    <!-- Mockup only: three phones on the desk. Each runs the whole flow on its own. -->
+    <header class="show-head">
+      <div class="show-intro">
+        <p class="label">Eien · phone</p>
+        <h1 class="show-title">One pane at a time</h1>
+      </div>
+      <div class="theme-switch" role="group" aria-label="Theme">
+        <span class="label theme-switch__label">Theme</span>
+        <button class="word-button" type="button" data-theme-choice="system">System</button>
+        <button class="word-button" type="button" data-theme-choice="day">Day</button>
+        <button class="word-button" type="button" data-theme-choice="night">Night</button>
+      </div>
+    </header>
+
+    <main class="screens">
+      <figure class="screen">
+        <div class="phone" data-start="tree"></div>
+        <figcaption class="label">I · Contents</figcaption>
+      </figure>
+      <figure class="screen">
+        <div class="phone" data-start="list"></div>
+        <figcaption class="label">II · Index</figcaption>
+      </figure>
+      <figure class="screen">
+        <div class="phone" data-start="page"></div>
+        <figcaption class="label">III · Page</figcaption>
+      </figure>
+    </main>
+
+    <section class="rules" aria-labelledby="rules-label">
+      <p class="label" id="rules-label">On the phone</p>
+      <p class="rules__text">
+        One pane at a time: contents, then the index, then the page. The seal is home. The page
+        keeps its controls behind one ⋯, and what you reach for most sits at the bottom, under the
+        thumb. Nothing a finger presses is smaller than 44 points.
+      </p>
+    </section>
+
+    <!-- One phone. phone.js copies it into each frame above. -->
+    <template id="phone-template">
+      <div class="views">
+        <!-- I. Contents: the vault as a book's contents page -->
+        <section class="view view--tree" data-view="tree" aria-label="Contents">
+          <header class="tree-head">
+            <button class="home" type="button" data-act="home" aria-label="Home: the top of the contents">
+              <span class="seal" aria-hidden="true">永</span>
+            </button>
+            <div class="vault">
+              <h2 class="vault__name">Ink &amp; Ash</h2>
+              <p class="label vault__count">312 notes</p>
+            </div>
+          </header>
+          <form class="search" role="search">
+            <input class="field field--touch" type="search" name="q" placeholder="Search Ink &amp; Ash" aria-label="Search Ink &amp; Ash" autocomplete="off" spellcheck="false" enterkeyhint="search" />
+          </form>
+          <nav class="tree-scroll" aria-label="Library, folders and tags"></nav>
+          <footer class="tree-foot">
+            <p class="colophon">48,210 words · synced 2m ago</p>
+            <div class="foot-row">
+              <div class="foot-pair" role="group" aria-label="Day or night">
+                <button class="word-button word-button--touch" type="button" data-theme-pick="day">Day</button>
+                <button class="word-button word-button--touch" type="button" data-theme-pick="night">Night</button>
+              </div>
+              <button class="word-button word-button--touch" type="button" data-act="settings" aria-haspopup="dialog">Settings</button>
+            </div>
+          </footer>
+        </section>
+
+        <!-- II. Index: the notes in one folder or tag -->
+        <section class="view view--list" data-view="list" aria-label="Index">
+          <header class="bar">
+            <button class="word-button word-button--touch bar__back" type="button" data-act="back">← Ink &amp; Ash</button>
+          </header>
+          <div class="list-head">
+            <div class="list-head__text">
+              <h2 class="list-head__title"></h2>
+              <p class="label list-head__meta"></p>
+            </div>
+            <button class="word-button word-button--touch" type="button" data-act="sort"></button>
+          </div>
+          <div class="list-scroll">
+            <ol class="index"></ol>
+            <p class="label index-end"></p>
+          </div>
+          <footer class="list-foot">
+            <p class="count list-foot__total"></p>
+            <p class="label list-foot__hint" hidden>Drag ≡ to reorder</p>
+            <button class="word-button word-button--touch" type="button" data-act="new-note">New note</button>
+            <button class="word-button word-button--touch" type="button" data-act="done-reorder" hidden>Done</button>
+          </footer>
+        </section>
+
+        <!-- III. Page: the sheet of paper, controls behind ⋯ -->
+        <section class="view view--page" data-view="page" aria-label="Page">
+          <header class="bar">
+            <button class="word-button word-button--touch bar__back" type="button" data-act="back"></button>
+            <button class="word-button word-button--touch word-button--glyph" type="button" data-act="more" aria-haspopup="dialog" aria-label="Page controls">⋯</button>
+          </header>
+          <div class="compare-band" role="status" hidden>
+            <div class="compare-band__words">
+              <p class="label compare-band__state"></p>
+              <p class="count compare-band__key"></p>
+            </div>
+            <button class="word-button word-button--touch" type="button" data-act="draft">Draft</button>
+          </div>
+          <div class="page-scroll">
+            <article class="paper">
+              <p class="label paper__crumb"></p>
+              <p class="paper__tags"></p>
+              <h2 class="paper__title" spellcheck="false" data-placeholder="Untitled"></h2>
+              <div class="prose" role="textbox" aria-multiline="true" aria-label="Note text" spellcheck="false" data-placeholder="Begin."></div>
+            </article>
+          </div>
+          <footer class="page-foot">
+            <p class="colophon page-foot__colophon" aria-live="polite"></p>
+          </footer>
+        </section>
+      </div>
+
+      <div class="scrim" data-act="close-sheet"></div>
+      <div class="bottom-sheet" role="dialog" aria-modal="true" aria-label="Page controls">
+        <!-- The page's controls -->
+        <div class="sheet-body" data-sheet="page">
+          <div class="sheet-row">
+            <span class="label sheet-row__key">View</span>
+            <div class="sheet-row__choices" role="group" aria-label="View">
+              <button class="word-button word-button--touch" type="button" data-act="mode" data-mode="live">Live</button>
+              <button class="word-button word-button--touch" type="button" data-act="mode" data-mode="source">Source</button>
+              <button class="word-button word-button--touch" type="button" data-act="mode" data-mode="reading">Reading</button>
+            </div>
+          </div>
+          <button class="sheet-row sheet-row--button sheet-row--compare" type="button" data-act="compare">
+            <span class="label sheet-row__key">Compare</span>
+            <span class="cycle" aria-hidden="true"><span data-state="changes">Changes</span> · <span data-state="sealed">Sealed</span> · <span data-state="draft">Draft</span></span>
+            <span class="count sheet-row__note" data-compare-note></span>
+          </button>
+          <button class="sheet-row sheet-row--button" type="button" data-act="seal">
+            <span class="label sheet-row__key">Seal</span>
+            <span class="count sheet-row__value" data-seal-value></span>
+          </button>
+          <button class="sheet-row sheet-row--button" type="button" data-act="versions" aria-expanded="false">
+            <span class="label sheet-row__key">Versions</span>
+            <span class="count sheet-row__value" data-versions-value></span>
+          </button>
+          <ol class="versions" hidden></ol>
+          <button class="sheet-row sheet-row--button" type="button" data-act="ao3">
+            <span class="label sheet-row__key">Copy for AO3</span>
+            <span class="count sheet-row__value">HTML</span>
+          </button>
+          <div class="sheet-foot">
+            <button class="word-button word-button--touch" type="button" data-act="close-sheet">Done</button>
+          </div>
+        </div>
+
+        <!-- Settings (a few of them) -->
+        <div class="sheet-body" data-sheet="settings" hidden>
+          <p class="label sheet-title">Settings</p>
+          <div class="sheet-row">
+            <span class="label sheet-row__key">Theme</span>
+            <div class="sheet-row__choices" role="group" aria-label="Theme">
+              <button class="word-button word-button--touch" type="button" data-theme-choice="system">System</button>
+              <button class="word-button word-button--touch" type="button" data-theme-choice="day">Day</button>
+              <button class="word-button word-button--touch" type="button" data-theme-choice="night">Night</button>
+            </div>
+          </div>
+          <div class="sheet-row">
+            <span class="label sheet-row__key">Quotes</span>
+            <div class="sheet-row__choices" role="group" aria-label="Quotation marks">
+              <button class="word-button word-button--touch" type="button" data-act="quotes" data-quotes="curly">Curly “ ”</button>
+              <button class="word-button word-button--touch" type="button" data-act="quotes" data-quotes="straight">Straight " "</button>
+            </div>
+          </div>
+          <div class="sheet-row">
+            <span class="label sheet-row__key">Sync</span>
+            <span class="count sheet-row__value">Syncthing · 2m ago</span>
+          </div>
+          <div class="sheet-foot">
+            <button class="word-button word-button--touch" type="button" data-act="close-sheet">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="visually-hidden" aria-live="polite" data-say></p>
+    </template>
+  </body>
+</html>

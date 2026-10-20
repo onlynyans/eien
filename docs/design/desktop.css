@@ -1,0 +1,1298 @@
+/* Eien — the desktop window. A book on a desk at night.
+   Every colour, face, size, space and duration is a token from tokens.css;
+   the only lengths of our own are layout ones, derived from tokens. */
+
+:root {
+  --band: calc(var(--eien-space-7) + var(--eien-space-2)); /* the top band shared by all three panes */
+  --strip-w: var(--eien-space-7); /* the collapsed sidebar: the seal alone */
+  --row-line: calc(var(--eien-size-row) * var(--eien-leading-row));
+  --twisty: var(--eien-space-3);
+  --indent: var(--eien-space-4); /* one level deeper in the tree */
+}
+
+html,
+body {
+  height: 100%;
+}
+body {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Thin, quiet scrollbars everywhere. */
+.sidebar__scroll,
+.list__body,
+.page__scroll,
+.versions__inner {
+  scrollbar-width: thin;
+  scrollbar-color: var(--eien-rule-strong) transparent;
+}
+
+/* ═══ Mockup bar — outside the app, pressed into the table ═══════════════ */
+.mockbar {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-5);
+  padding: var(--eien-space-1) var(--eien-space-4);
+  background: var(--eien-well);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-strong);
+  font-family: var(--eien-face-type);
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mockbar__name,
+.mockbar__label {
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+}
+.mockbar__name {
+  color: var(--eien-ink);
+  font-weight: 700;
+  padding-right: var(--eien-space-2);
+  border-right: var(--eien-hairline) solid var(--eien-rule-strong);
+}
+.mockbar__label {
+  color: var(--eien-pencil);
+  margin-right: var(--eien-space-1);
+}
+.mockbar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-1);
+}
+
+/* ═══ The window: three panes on one desk ═══════════════════════════════ */
+.window {
+  --sb: var(--eien-sidebar-w);
+  --ls: var(--eien-list-w);
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--sb) var(--ls) minmax(0, 1fr);
+  min-height: 0;
+  transition: grid-template-columns var(--eien-calm) var(--eien-ease);
+}
+.window.is-resizing {
+  transition: none;
+  cursor: col-resize;
+  user-select: none;
+}
+.window.is-resizing * {
+  cursor: col-resize !important;
+}
+
+.sidebar,
+.list {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-right: var(--eien-hairline) solid var(--eien-rule);
+}
+
+/* Pane edges: drag the hairline to resize. */
+.resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 4;
+  width: var(--eien-space-2);
+  margin-left: calc(var(--eien-space-1) * -1);
+  cursor: col-resize;
+  transition: left var(--eien-calm) var(--eien-ease);
+}
+.resizer--sidebar {
+  left: var(--sb);
+}
+.resizer--list {
+  left: calc(var(--sb) + var(--ls));
+}
+.resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--eien-space-1) - var(--eien-hairline));
+  width: var(--eien-hairline);
+  background: transparent;
+  transition: background var(--eien-quick) var(--eien-ease);
+}
+@media (hover: hover) {
+  .resizer:hover::after {
+    background: var(--eien-rule-strong);
+  }
+}
+.resizer:focus-visible {
+  outline: none;
+}
+/* Dragging or focused: the edge darkens to ink and thickens to a mark. */
+.resizer:focus-visible::after,
+.resizer.is-dragging::after {
+  left: calc(var(--eien-space-1) - var(--eien-mark-w) / 2);
+  width: var(--eien-mark-w);
+  background: var(--eien-focus);
+}
+.window.is-resizing .resizer {
+  transition: none;
+}
+.window.no-sidebar .resizer--sidebar,
+.window.no-list .resizer--list,
+.window.two-panes .resizer--list {
+  display: none;
+}
+
+/* ═══ 1. Sidebar ════════════════════════════════════════════════════════ */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+.strip {
+  display: none;
+  justify-content: center;
+  padding-top: calc((var(--band) - var(--eien-seal-size)) / 2 - var(--eien-space-1));
+}
+.window.no-sidebar .strip {
+  display: flex;
+}
+.window.no-sidebar .sidebar__inner {
+  display: none;
+}
+
+.sidebar__inner {
+  display: flex;
+  flex-direction: column;
+  min-width: var(--sb-open);
+  height: 100%;
+  min-height: 0;
+}
+.window.two-panes .sidebar__inner {
+  min-width: 0;
+}
+
+.sidebar__head {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-3);
+  height: var(--band);
+  flex: none;
+  padding: 0 var(--eien-space-4) 0 calc(var(--eien-space-4) - var(--eien-space-1));
+}
+.vault-name {
+  font-family: var(--eien-face-book);
+  font-size: var(--eien-size-row);
+  font-weight: 600;
+  color: var(--eien-ink);
+  white-space: nowrap;
+}
+
+/* The seal as a button: the mark that hides and brings back the sidebar. */
+.seal-button {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  padding: var(--eien-space-1);
+  border: var(--eien-hairline) solid transparent;
+  border-radius: var(--eien-radius);
+  background: none;
+  cursor: pointer;
+  transition: border-color var(--eien-quick) var(--eien-ease);
+}
+@media (hover: hover) {
+  .seal-button:hover {
+    border-color: var(--eien-rule);
+  }
+}
+.seal-button:active {
+  background: var(--eien-press);
+}
+.seal-button:active .seal {
+  transform: scale(0.94);
+}
+.seal-button .seal {
+  transition: transform var(--eien-quick) var(--eien-ease);
+}
+
+.sidebar__search {
+  display: none;
+  padding: 0 var(--eien-space-4) var(--eien-space-3);
+}
+.window.two-panes .sidebar__search {
+  display: block;
+}
+
+.sidebar__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: var(--eien-space-5);
+}
+
+/* Sections: LIBRARY, FOLDERS, TAGS — a contents page's part titles. */
+.section + .section {
+  margin-top: var(--eien-space-5);
+}
+.section__label {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: var(--eien-row-h);
+  padding: 0 var(--eien-space-4);
+  border: 0;
+  background: none;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-pencil);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease);
+}
+@media (hover: hover) {
+  .section__label:hover {
+    color: var(--eien-ink-soft);
+  }
+}
+.section__label:active {
+  color: var(--eien-ink);
+  background: var(--eien-press);
+}
+.section__label:focus-visible {
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}
+.section__label .twisty {
+  opacity: 0;
+  transition:
+    opacity var(--eien-quick) var(--eien-ease),
+    transform var(--eien-quick) var(--eien-ease);
+}
+.section__label:hover .twisty,
+.section__label:focus-visible .twisty,
+.section__label[aria-expanded='false'] .twisty {
+  opacity: 1;
+}
+.section__count {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Disclosure: ▸ closed, ▾ open, drawn so it turns rather than swaps. */
+.twisty {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--twisty);
+  height: var(--twisty);
+  color: var(--eien-faded);
+}
+.twisty::before {
+  content: '';
+  width: calc(var(--eien-space-1) + var(--eien-hairline));
+  height: calc(var(--eien-space-2) - var(--eien-hairline));
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  transition: transform var(--eien-quick) var(--eien-ease);
+}
+[aria-expanded='true'] > .row .twisty::before,
+.section__label[aria-expanded='true'] .twisty::before {
+  transform: rotate(90deg);
+}
+.twisty--leaf::before {
+  content: none;
+}
+
+/* The tree */
+.tree,
+.tree [role='group'] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tree [role='group'] {
+  position: relative;
+}
+/* Faint hairline guides down each open branch. */
+.tree [role='group']::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: calc(var(--eien-row-h) / 2);
+  left: calc(var(--eien-space-4) + var(--depth) * var(--indent) + var(--twisty) / 2);
+  width: var(--eien-hairline);
+  background: var(--eien-rule);
+}
+[role='treeitem']:focus {
+  outline: none;
+}
+[role='treeitem']:focus-visible > .row {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: baseline; /* name, ordinal, BOOK and count share one baseline */
+  gap: var(--eien-space-2);
+  height: var(--eien-row-h);
+  padding: 0 var(--eien-space-4) 0 calc(var(--eien-space-4) + var(--depth) * var(--indent));
+  color: var(--eien-ink-soft);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--eien-quick) var(--eien-ease);
+}
+@media (hover: hover) {
+  .row:hover {
+    background: var(--eien-hover);
+  }
+}
+.row:active {
+  color: var(--eien-ink);
+  background: var(--eien-press);
+}
+.row .twisty {
+  align-self: center;
+  margin-right: calc(var(--eien-space-1) * -1);
+}
+.row__name {
+  line-height: var(--eien-row-h);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--eien-face-book);
+  font-size: var(--eien-size-row);
+}
+.row__hash {
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-pencil);
+  margin-right: calc(var(--eien-hairline) * 2);
+}
+.row__ord {
+  flex: none;
+  min-width: var(--eien-space-5);
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-pencil);
+}
+.row .count {
+  flex: none;
+}
+/* A folder marked as a book: the word in a hairline box, like a stamped label. */
+.book-mark {
+  flex: none;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--eien-pencil);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  /* the tracking after the last letter sits inside the box, so the right side gives it back */
+  padding: 0 calc(var(--eien-space-1) - var(--eien-hairline) - var(--eien-track-label)) 0
+    calc(var(--eien-space-1) - var(--eien-hairline));
+  margin-right: calc(var(--eien-space-1) * -1); /* sit close to the count */
+}
+.row--note.is-untitled .row__name,
+.note-row.is-untitled .note-row__title {
+  font-style: italic;
+  color: var(--eien-faded);
+}
+
+/* Selected: the seal's short rule, and the wash. Two signals, never one. */
+[aria-selected='true'] > .row,
+.note-row[aria-selected='true'] {
+  background: var(--eien-seal-wash);
+  color: var(--eien-ink);
+}
+[aria-selected='true'] > .row::before,
+.note-row[aria-selected='true']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: var(--eien-mark-w);
+  background: var(--eien-seal);
+}
+[aria-selected='true'] > .row::before {
+  top: var(--eien-space-2);
+  bottom: var(--eien-space-2);
+}
+
+/* The vault's colophon */
+.sidebar__foot {
+  flex: none;
+  display: grid;
+  gap: var(--eien-space-1);
+  padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-3);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.colophon {
+  margin: 0 0 var(--eien-space-2);
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  line-height: 1.7;
+  color: var(--eien-pencil);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.colophon__sync {
+  color: var(--eien-faded);
+}
+.colophon__sync::before {
+  content: '';
+  display: inline-block;
+  width: var(--eien-space-1);
+  height: var(--eien-space-1);
+  margin-right: var(--eien-space-2);
+  vertical-align: 0.15em;
+  border-radius: 50%;
+  background: var(--eien-added);
+}
+.foot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-inline: calc(var(--eien-space-2) * -1);
+}
+.foot-pair {
+  display: flex;
+  gap: var(--eien-space-1);
+}
+
+/* ═══ 2. Note list ══════════════════════════════════════════════════════ */
+.list {
+  display: flex;
+  flex-direction: column;
+}
+.window.two-panes .list {
+  visibility: hidden;
+  border-right: 0;
+}
+.window.no-list .list {
+  border-right: 0;
+}
+.list > * {
+  min-width: var(--ls-open);
+}
+
+.list__search {
+  display: flex;
+  align-items: center;
+  height: var(--band);
+  flex: none;
+  padding: 0 var(--eien-space-4);
+}
+.field[type='search']::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.list__head {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  row-gap: var(--eien-space-1);
+  padding: var(--eien-space-2) var(--eien-space-4) var(--eien-space-4);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.list__title {
+  margin: 0;
+  font-family: var(--eien-face-book);
+  font-size: var(--eien-size-heading);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--eien-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.list__meta {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-pencil);
+  font-variant-numeric: tabular-nums;
+}
+.sort {
+  position: relative;
+  margin-right: calc(var(--eien-space-2) * -1);
+}
+
+/* A small menu: one step above the desk, a hairline edge, no shadow. */
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--eien-space-1));
+  z-index: 6;
+  display: grid;
+  min-width: calc(var(--eien-space-8) * 2);
+  padding: var(--eien-space-1);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+}
+.menu[hidden] {
+  display: none;
+}
+.menu .word-button {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-2);
+  text-align: left;
+}
+/* The chosen order: a small ink dot, and the word in ink. */
+.menu .word-button::before {
+  content: '';
+  width: var(--eien-space-1);
+  height: var(--eien-space-1);
+  border-radius: 50%;
+  background: transparent;
+}
+.menu .word-button[aria-checked='true'] {
+  color: var(--eien-ink);
+}
+.menu .word-button[aria-checked='true']::before {
+  background: currentColor;
+}
+.menu__hint {
+  margin: var(--eien-space-1) 0 0;
+  padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-1);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-pencil);
+  white-space: nowrap;
+}
+
+.list__body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* A row of the index: ordinal · title · preview · count or date. */
+.note-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--eien-space-3);
+  row-gap: calc(var(--eien-hairline) * 2);
+  padding: var(--eien-space-3) var(--eien-space-4);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+  color: var(--eien-ink-soft);
+  cursor: default;
+  user-select: none;
+  transition: background var(--eien-quick) var(--eien-ease);
+}
+.rows--book .note-row {
+  grid-template-columns: var(--eien-space-6) minmax(0, 1fr) auto;
+  cursor: grab;
+}
+@media (hover: hover) {
+  .note-row:hover {
+    background: var(--eien-hover);
+  }
+  .note-row[aria-selected='true']:hover {
+    background: var(--eien-seal-wash);
+  }
+}
+.note-row:active {
+  color: var(--eien-ink);
+  background: var(--eien-press);
+}
+.note-row:focus {
+  outline: none;
+}
+.note-row:focus-visible {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}
+.note-row[aria-selected='true']::before {
+  top: var(--eien-space-3);
+  height: var(--row-line);
+}
+.note-row__ord {
+  grid-row: 1;
+  align-self: baseline;
+  text-align: right;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-pencil);
+}
+.note-row__title {
+  grid-row: 1;
+  align-self: baseline;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--eien-face-book);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+}
+.note-row[aria-selected='true'] .note-row__title {
+  font-weight: 500;
+}
+.note-row__meta {
+  grid-row: 1;
+  align-self: baseline;
+  justify-self: end;
+  white-space: nowrap;
+}
+.note-row__preview {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--eien-face-book);
+  font-size: var(--eien-size-preview);
+  line-height: var(--eien-leading-row);
+  color: var(--eien-pencil);
+}
+.rows--book .note-row__preview {
+  grid-column: 2 / -1;
+}
+.note-row:has(.note-row__flag) .note-row__preview {
+  grid-column: -3;
+}
+.note-row__preview.is-empty {
+  font-style: italic;
+  color: var(--eien-faded);
+}
+.note-row__flag {
+  grid-row: 2;
+  grid-column: -2;
+  align-self: center;
+  justify-self: end;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-pencil);
+}
+.note-row__flag--conflict {
+  color: var(--eien-caution);
+  background: var(--eien-caution-wash);
+  padding: 0 var(--eien-space-1);
+}
+
+/* Pinned: a small ribbon, cut from ink. */
+.ribbon {
+  display: inline-block;
+  width: calc(var(--eien-space-2) - var(--eien-hairline));
+  height: var(--eien-space-3);
+  background: var(--eien-pencil);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 70%, 0 100%);
+}
+
+/* Dragging a row: it lifts one surface step and follows the pointer. */
+.list__body .note-row.is-lifted,
+.list__body .note-row.is-lifted:hover {
+  z-index: 3;
+  background: var(--eien-paper-raised);
+  outline: var(--eien-hairline) solid var(--eien-rule-strong);
+  outline-offset: calc(var(--eien-hairline) * -1);
+  cursor: grabbing;
+  transition: none;
+}
+.list__body.is-dragging .note-row:not(.is-lifted) {
+  opacity: 0.72;
+}
+.drop-marker {
+  position: absolute;
+  left: var(--eien-space-4);
+  right: var(--eien-space-4);
+  z-index: 4;
+  height: var(--eien-hairline);
+  background: var(--eien-ink-soft);
+  pointer-events: none;
+}
+.drop-marker::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--eien-space-1) * -1);
+  top: calc(var(--eien-space-1) / -2);
+  width: var(--eien-space-1);
+  height: var(--eien-space-1);
+  border-radius: 50%;
+  background: var(--eien-ink-soft);
+}
+
+/* Nothing here yet. */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--eien-space-3);
+  padding: var(--eien-space-8) var(--eien-space-4);
+  text-align: center;
+}
+.empty__line {
+  margin: 0;
+  font-family: var(--eien-face-book);
+  font-size: var(--eien-size-row);
+  font-style: italic;
+  color: var(--eien-ink-soft);
+}
+
+/* ═══ 3. The page ═══════════════════════════════════════════════════════ */
+.page {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0;
+  min-width: 0;
+  min-height: 0;
+  transition: grid-template-columns var(--eien-calm) var(--eien-ease);
+}
+.page.has-versions {
+  grid-template-columns: minmax(0, 1fr) var(--eien-panel-w);
+}
+/* A narrow window: the panel lies over the page's right side instead of squeezing the sheet. */
+.page.has-versions.versions-over {
+  grid-template-columns: minmax(0, 1fr) 0;
+}
+.page.versions-over .versions {
+  position: absolute;
+  top: var(--band);
+  border-top: var(--eien-hairline) solid var(--eien-rule);
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  width: var(--eien-panel-w);
+}
+.page__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(var(--band), auto) minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  container: pagearea / inline-size;
+}
+
+/* Page controls: hidden until the pointer is over the page or a control has focus. */
+.page__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eien-space-1) var(--eien-space-4);
+  padding: 0 var(--eien-space-4);
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+.page:hover:not(.is-typing) .page__bar,
+.page__bar:focus-within,
+.page.show-controls .page__bar {
+  opacity: 1;
+}
+.bar__group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0 var(--eien-space-2);
+}
+.bar__group:first-child {
+  margin-left: calc(var(--eien-space-2) * -1);
+}
+.bar__group:last-child {
+  margin-right: calc(var(--eien-space-2) * -1);
+}
+.views {
+  display: flex;
+  align-items: center;
+  margin-right: var(--eien-space-2);
+}
+.dot {
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  color: var(--eien-faded);
+}
+.compare-state {
+  color: var(--eien-pencil);
+}
+.word-button[aria-pressed='true'] .compare-state {
+  color: inherit;
+}
+@container pagearea (width < 780px) {
+  .when-wide {
+    display: none;
+  }
+}
+@container pagearea (width < 620px) {
+  .bar__group:first-child {
+    display: none;
+  }
+  .page__bar {
+    justify-content: flex-end;
+  }
+  /* Compare says only its state: COMPARE in the draft, CHANGES or SEALED otherwise. */
+  .cmp-sep,
+  #compare-button[aria-pressed='false'] .cmp-state,
+  #compare-button[aria-pressed='true'] .cmp-word {
+    display: none;
+  }
+}
+
+.page__scroll {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--eien-space-5) var(--eien-space-6);
+}
+
+/* The sheet: washi on the desk, lifted by tone and a hairline alone. */
+.sheet {
+  --pad-x: var(--eien-space-8);
+  --pad-top: var(--eien-space-7);
+  font-size: var(--eien-size-prose);
+  width: min(100%, calc(var(--eien-measure) + 2 * var(--pad-x)));
+  min-height: 100%;
+  margin: 0 auto;
+  padding: var(--pad-top) var(--pad-x) var(--eien-space-8);
+  background: var(--eien-paper);
+  border: var(--eien-hairline) solid var(--eien-rule);
+}
+@container pagearea (width < 760px) {
+  .sheet {
+    --pad-x: var(--eien-space-6);
+  }
+}
+@container pagearea (width < 520px) {
+  .sheet {
+    --pad-x: var(--eien-space-5);
+  }
+  .page__scroll {
+    padding-inline: var(--eien-space-3);
+  }
+}
+
+/* A line across the top of the sheet that says what it's showing. */
+.sheet__state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--eien-space-1) var(--eien-space-3);
+  margin: calc(var(--pad-top) * -1) calc(var(--pad-x) * -1) var(--eien-space-6);
+  padding: var(--eien-space-2) var(--pad-x);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  line-height: 1.6;
+  color: var(--eien-pencil);
+}
+.sheet__state--changes > :last-child,
+.sheet__state--sealed > :last-child {
+  margin-left: auto;
+}
+.sheet__state + .sheet__state {
+  margin-top: calc(var(--eien-space-6) * -1);
+}
+.sheet__state strong {
+  font-weight: 700;
+  color: var(--eien-ink-soft);
+}
+.sheet__state .word-button {
+  margin-block: calc(var(--eien-space-1) * -1);
+}
+.sheet__actions {
+  white-space: nowrap;
+  margin-left: calc(var(--eien-space-2) * -1);
+}
+.sheet__state--conflict {
+  background: var(--eien-caution-wash);
+  color: var(--eien-caution);
+  border-bottom-color: var(--eien-rule);
+}
+.sheet__state--conflict strong {
+  color: var(--eien-caution);
+}
+.sheet__state--conflict .word-button {
+  color: var(--eien-caution);
+}
+@media (hover: hover) {
+  .sheet__state--conflict .word-button:hover {
+    color: var(--eien-ink);
+  }
+}
+.sheet__state .sep {
+  color: var(--eien-faded);
+}
+.legend del,
+.legend ins {
+  padding: 0 calc(var(--eien-hairline) * 2);
+}
+
+/* Running head: where this note lives, and its tags. */
+.sheet__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--eien-space-4);
+}
+.crumbs {
+  margin: 0;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-pencil);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crumbs .sep {
+  color: var(--eien-faded);
+  padding: 0 calc(var(--eien-space-1) / 2);
+}
+.tags {
+  display: flex;
+  gap: var(--eien-space-3);
+  margin: 0;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-pencil);
+  white-space: nowrap;
+}
+
+.title {
+  margin: var(--eien-space-6) 0 var(--eien-space-6);
+  font-family: var(--eien-face-book);
+  font-size: var(--eien-size-title);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--eien-ink);
+  caret-color: var(--eien-seal);
+  outline: none;
+}
+.title:empty::before {
+  content: attr(data-placeholder);
+  color: var(--eien-faded);
+  font-style: italic;
+}
+
+/* The writing */
+.prose {
+  font-family: var(--eien-face-book);
+  font-size: var(--eien-size-prose);
+  line-height: var(--eien-leading-prose);
+  color: var(--eien-ink);
+  caret-color: var(--eien-seal);
+  outline: none;
+  font-kerning: normal;
+  text-wrap: pretty;
+  hanging-punctuation: first;
+  min-height: calc(var(--eien-size-prose) * var(--eien-leading-prose) * 4);
+}
+.prose p {
+  margin: 0 0 var(--eien-space-4);
+}
+.prose:empty::before,
+.prose.is-blank::before {
+  content: attr(data-placeholder);
+  color: var(--eien-faded);
+  font-style: italic;
+  pointer-events: none;
+}
+.prose[contenteditable='false'] {
+  caret-color: transparent;
+}
+
+/* A checklist line: the box is a hairline square, ticked in ink. */
+.prose .check {
+  display: flex;
+  align-items: baseline;
+  gap: var(--eien-space-3);
+  margin-bottom: var(--eien-space-1);
+}
+.check__box {
+  flex: none;
+  display: inline-flex;
+}
+.check__box input {
+  appearance: none;
+  width: var(--eien-space-4);
+  height: var(--eien-space-4);
+  margin: 0;
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius);
+  background: var(--eien-paper);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transform: translateY(calc(var(--eien-space-1) / 2));
+  transition:
+    background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.check__box input::after {
+  content: '';
+  width: calc(var(--eien-space-1) + var(--eien-hairline));
+  height: var(--eien-space-2);
+  margin-top: calc(var(--eien-mark-w) * -1);
+  border: solid var(--eien-paper);
+  border-width: 0 var(--eien-mark-w) var(--eien-mark-w) 0;
+  transform: rotate(45deg);
+  opacity: 0;
+}
+@media (hover: hover) {
+  .check__box input:hover {
+    border-color: var(--eien-ink-soft);
+  }
+}
+.check__box input:checked {
+  background: var(--eien-ink-soft);
+  border-color: var(--eien-ink-soft);
+}
+.check__box input:checked::after {
+  opacity: 1;
+}
+.check__box input:disabled {
+  cursor: default;
+}
+.check.is-done .check__text {
+  color: var(--eien-pencil);
+}
+
+/* Compare: removed words struck and tinted; added words underlined and tinted. */
+del.diff,
+.legend del {
+  color: var(--eien-removed);
+  background: var(--eien-removed-wash);
+  text-decoration: line-through;
+  text-decoration-thickness: var(--eien-hairline);
+}
+ins.diff,
+.legend ins {
+  color: var(--eien-added);
+  background: var(--eien-added-wash);
+  text-decoration: underline;
+  text-decoration-thickness: var(--eien-hairline);
+  text-underline-offset: 0.22em;
+}
+.scene-break.diff--add {
+  color: var(--eien-added);
+}
+.scene-break.diff--del {
+  color: var(--eien-removed);
+  text-decoration: line-through;
+}
+
+/* Source: the raw .md, typewritten. */
+.source {
+  margin: var(--eien-space-6) 0 0;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-prose);
+  color: var(--eien-ink);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  caret-color: var(--eien-seal);
+  outline: none;
+}
+.md-fence,
+.md-mark {
+  color: var(--eien-faded);
+}
+.md-key {
+  color: var(--eien-pencil);
+}
+.md-value {
+  color: var(--eien-ink-soft);
+}
+.md-title {
+  font-weight: 700;
+}
+.md-break {
+  color: var(--eien-pencil);
+}
+
+/* The colophon: the status line at the foot of the page. */
+.status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  column-gap: var(--eien-space-2);
+  min-height: var(--eien-space-7);
+  padding: 0 var(--eien-space-4) var(--eien-space-2);
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-meta);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-pencil);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.st-item:not([hidden]) ~ .st-item::before {
+  content: '·';
+  margin-right: var(--eien-space-2);
+  color: var(--eien-faded);
+}
+.st-item[hidden] {
+  display: none;
+}
+@container pagearea (width < 680px) {
+  .st-item--optional {
+    display: none;
+  }
+}
+@container pagearea (width < 760px) {
+  .status.has-msg #st-today {
+    display: none;
+  }
+}
+.status__seal {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status__seal .seal {
+  margin-right: var(--eien-space-2);
+  vertical-align: calc(var(--eien-hairline) * -1);
+  transform-origin: center;
+}
+.status__seal .seal.is-stamping {
+  animation: stamp var(--eien-calm) var(--eien-ease);
+}
+@keyframes stamp {
+  from {
+    transform: scale(1.7);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.status__msg {
+  color: var(--eien-ink-soft);
+}
+.status__seal .seal[hidden] {
+  display: none;
+}
+
+/* ═══ Versions: a narrow raised panel beside the page ═══════════════════ */
+.versions {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--eien-paper-raised);
+  border-left: var(--eien-hairline) solid var(--eien-rule);
+}
+.versions[hidden] {
+  display: block;
+  visibility: hidden;
+  border-left-color: transparent;
+}
+.versions__inner {
+  width: var(--eien-panel-w);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.versions__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  height: var(--band);
+  padding: 0 calc(var(--eien-space-4) - var(--eien-space-2)) 0 var(--eien-space-4);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.versions__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.version {
+  display: grid;
+  grid-template-columns: var(--eien-space-5) minmax(0, 1fr) auto;
+  align-items: baseline;
+  row-gap: var(--eien-space-1);
+  padding: var(--eien-space-4);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.version.is-compared {
+  background: var(--eien-hover);
+}
+.version__mark {
+  grid-row: 1;
+  align-self: center;
+}
+.version__mark--draft {
+  display: inline-block;
+  width: calc(var(--eien-space-2) + var(--eien-hairline) * 2); /* the small seal's square, unpressed */
+  height: calc(var(--eien-space-2) + var(--eien-hairline) * 2);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+}
+.version__name {
+  grid-column: 2;
+  font-family: var(--eien-face-book);
+  font-size: var(--eien-size-row);
+  font-weight: 500;
+  color: var(--eien-ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.version__when {
+  grid-column: 2;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-ink-soft);
+}
+.version__name + .version__when {
+  grid-column: 2 / -1;
+  color: var(--eien-pencil);
+}
+.version .count {
+  grid-column: 3;
+  grid-row: 1;
+}
+.version__actions {
+  grid-column: 2 / -1;
+  display: flex;
+  gap: var(--eien-space-1);
+  margin: var(--eien-space-1) 0 0 calc(var(--eien-space-2) * -1);
+}
+.versions__note {
+  margin: 0;
+  padding: var(--eien-space-4);
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-meta);
+  line-height: 1.6;
+  color: var(--eien-pencil);
+}

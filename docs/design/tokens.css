@@ -1,0 +1,119 @@
+/* Eien — design tokens. The theme contract (spec §7): every colour, face, size
+   and space the interface uses is one of these. A theme overrides these and
+   nothing else.
+
+   A book on a desk at night: the window is the desk, the note is a sheet of
+   washi paper laid on it, the words are sumi ink, and one vermilion seal marks
+   what is kept. Light is the desk by day; dark is inkstone, the same warm
+   hues darkened, never grey-blue.
+
+   Each colour is written once, as light-dark(day, night). The scheme follows
+   the system unless the root sets data-theme="light" or "dark". */
+
+:root {
+  color-scheme: light dark;
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+:root {
+  /* ── Surface: the desk and what lies on it ──────────────────────────── */
+  --eien-desk: light-dark(#e8e2d6, #171513); /* the window: sidebar, list, around the page */
+  --eien-paper: light-dark(#f6f2ea, #201d19); /* the sheet you write on */
+  --eien-paper-raised: light-dark(#fbf8f2, #29251f); /* a menu or popover, one step above */
+  --eien-well: light-dark(#ded7c9, #110f0d); /* inside a field: pressed into the desk */
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05)); /* a row under the pointer */
+  --eien-press: light-dark(rgb(35 32 28 / 0.08), rgb(233 226 212 / 0.09)); /* a row being pressed */
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5)); /* the desk dimmed behind a sheet */
+
+  /* ── Ink: four strengths of the same ink ────────────────────────────── */
+  --eien-ink: light-dark(#23201c, #e9e2d4); /* the writing, titles */
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7); /* rows, secondary text: iron-gall brown */
+  --eien-pencil: light-dark(#685f53, #928a7c); /* counts, dates, labels */
+  --eien-faded: light-dark(#857d70, #716a5f); /* placeholders, disabled */
+
+  /* ── Rules: hairlines in ink, never solid colour ────────────────────── */
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.06)); /* inside a pane */
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.11)); /* between panes */
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.22)); /* a field's edge */
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px; /* a mark, not a rule: the selected row's seal rule, the caret, the focus ring */
+
+  /* ── The seal: the one accent ───────────────────────────────────────── */
+  /* It appears in five places only: the app's mark, a sealed version, "sealed"
+     in the status line, the rule beside the selected row, and the caret. */
+  --eien-seal: light-dark(#c4472d, #e0603f); /* the mark, the caret, the selected rule */
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12)); /* selected ground */
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714); /* a glyph pressed into the seal */
+  --eien-focus: var(--eien-ink-soft); /* keyboard focus ring: ink, so the seal stays rare */
+
+  /* ── Status: what changed, what needs a look ────────────────────────── */
+  --eien-added: light-dark(#4a6536, #9cb880); /* words added since the seal: moss */
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0); /* words removed: the editor's carmine pencil, not the seal */
+  --eien-removed-wash: light-dark(rgb(147 48 74 / 0.1), rgb(233 138 160 / 0.14));
+  --eien-caution: light-dark(#74531a, #d0a659); /* a sync conflict to look at: ochre */
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+  --eien-danger: var(--eien-removed); /* delete — always said in words too */
+
+  /* ── Type: two voices, one job each ─────────────────────────────────── */
+  /* Book: anything a person wrote — notes, titles, names in the tree. */
+  --eien-face-book: 'Literata', 'Iowan Old Style', Georgia, serif;
+  /* Typewriter: anything the machine counts or you press — numbers, dates, labels, buttons. */
+  --eien-face-type: 'Courier Prime', 'Courier New', ui-monospace, monospace;
+  /* The seal's glyph, 永. Mockups use the system's Mincho; the app ships the seal as SVG. */
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', 'Songti SC', serif;
+
+  --eien-size-prose: 19px; /* the writing */
+  --eien-size-title: 32px; /* a note's title on its page */
+  --eien-size-heading: 21px; /* the list's header: the folder or tag shown */
+  --eien-size-row: 15px; /* a row in the tree or list */
+  --eien-size-preview: 13px; /* the line of preview under a list row */
+  --eien-size-meta: 12px; /* counts, dates, the status line */
+  --eien-size-label: 11px; /* section labels and buttons, set in capitals */
+
+  --eien-leading-prose: 1.72;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.16em; /* letterspacing for capitals */
+  --eien-measure: 34em; /* a reading line: about 66 characters of prose */
+
+  /* ── Space: a 4px grid ──────────────────────────────────────────────── */
+  --eien-space-1: 4px; /* icon gaps */
+  --eien-space-2: 8px; /* inside a control */
+  --eien-space-3: 12px; /* row padding */
+  --eien-space-4: 16px; /* pane gutters */
+  --eien-space-5: 24px; /* between groups */
+  --eien-space-6: 32px;
+  --eien-space-7: 48px; /* the page's top margin */
+  --eien-space-8: 72px; /* the sheet's side margins */
+
+  /* ── Layout ─────────────────────────────────────────────────────────── */
+  --eien-sidebar-w: 264px;
+  --eien-list-w: 316px;
+  --eien-panel-w: 284px; /* a side panel on the page: versions */
+  --eien-row-h: 30px; /* a tree or list row, desktop */
+  --eien-touch: 44px; /* the smallest thing a finger presses */
+  --eien-seal-size: 22px; /* the app's mark */
+  --eien-radius: 0; /* paper has square corners; only dots are round */
+
+  /* ── Motion: quick and quiet, no bounce ─────────────────────────────── */
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms; /* hover, press */
+  --eien-calm: 220ms; /* a pane opening, a view changing */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --eien-quick: 0ms;
+    --eien-calm: 0ms;
+  }
+}
+
+/* Contrast, checked (WCAG): ink, ink-soft, pencil, added and caution
+   reach 4.5:1 on desk and paper in both schemes, so small text stays legible.
+   Removed (carmine) too. The seal itself, as a mark, reaches 3:1. Faded is for
+   placeholders and disabled things only, and reaches 3:1. */

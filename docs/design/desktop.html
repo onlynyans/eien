@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Eien — desktop</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="desktop.css" />
+    <script src="desktop.js" defer></script>
+  </head>
+  <body>
+    <!-- Mockup only: not part of the app. Jumps the client to the states worth seeing. -->
+    <header class="mockbar" aria-label="Mockup controls">
+      <span class="mockbar__name">Mockup</span>
+      <div class="mockbar__group" role="group" aria-label="Theme">
+        <span class="mockbar__label">Theme</span>
+        <button class="word-button" type="button" data-mock="theme" data-value="system">System</button>
+        <button class="word-button" type="button" data-mock="theme" data-value="light">Day</button>
+        <button class="word-button" type="button" data-mock="theme" data-value="dark">Night</button>
+      </div>
+      <div class="mockbar__group" role="group" aria-label="Panes">
+        <span class="mockbar__label">Panes</span>
+        <button class="word-button" type="button" data-mock="panes" data-value="3">3</button>
+        <button class="word-button" type="button" data-mock="panes" data-value="2">2</button>
+      </div>
+      <div class="mockbar__group" role="group" aria-label="Compare">
+        <span class="mockbar__label">Compare</span>
+        <button class="word-button" type="button" data-mock="compare" data-value="changes">Changes</button>
+        <button class="word-button" type="button" data-mock="compare" data-value="sealed">Sealed</button>
+        <button class="word-button" type="button" data-mock="compare" data-value="draft">Draft</button>
+      </div>
+      <div class="mockbar__group" role="group" aria-label="States">
+        <span class="mockbar__label">Show</span>
+        <button class="word-button" type="button" data-mock="conflict">Sync conflict</button>
+        <button class="word-button" type="button" data-mock="empty">Empty folder</button>
+      </div>
+    </header>
+
+    <div class="window" id="window">
+      <!-- 1. Sidebar: the vault's contents page -->
+      <nav class="sidebar" id="sidebar" aria-label="Ink &amp; Ash">
+        <div class="strip">
+          <button class="seal-button" type="button" data-action="toggle-sidebar" title="Show sidebar (⌘\)" aria-label="Show sidebar">
+            <span class="seal" aria-hidden="true">永</span>
+          </button>
+        </div>
+        <div class="sidebar__inner">
+          <div class="sidebar__head">
+            <button class="seal-button" type="button" data-action="toggle-sidebar" title="Hide sidebar (⌘\)" aria-label="Hide sidebar">
+              <span class="seal" aria-hidden="true">永</span>
+            </button>
+            <span class="vault-name">Ink &amp; Ash</span>
+          </div>
+          <div class="sidebar__search">
+            <input class="field" type="search" data-search placeholder="Search Ink &amp; Ash" aria-label="Search Ink &amp; Ash" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="sidebar__scroll" id="tree-root"></div>
+          <footer class="sidebar__foot">
+            <p class="colophon">
+              <span id="vault-count">312 notes · 48,210 words</span><br />
+              <span class="colophon__sync">Synced 4m ago</span>
+            </p>
+            <div class="foot-row">
+              <div class="foot-pair" role="group" aria-label="Day or night">
+                <button class="word-button" type="button" data-theme-pick="light">Day</button>
+                <button class="word-button" type="button" data-theme-pick="dark">Night</button>
+              </div>
+              <button class="word-button" type="button" title="Settings (not in this mockup)">Settings</button>
+            </div>
+            <div class="foot-row">
+              <div class="foot-pair" role="group" aria-label="Panes">
+                <button class="word-button" type="button" data-panes-pick="3">3 panes</button>
+                <button class="word-button" type="button" data-panes-pick="2">2 panes</button>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </nav>
+
+      <!-- 2. Note list: the index -->
+      <section class="list" id="list" aria-label="Notes">
+        <div class="list__search">
+          <input class="field" type="search" data-search placeholder="Search Ink &amp; Ash" aria-label="Search Ink &amp; Ash" autocomplete="off" spellcheck="false" />
+        </div>
+        <header class="list__head">
+          <h2 class="list__title" id="list-title">A Mended Scarf</h2>
+          <div class="sort">
+            <button class="word-button" type="button" id="sort-button" aria-haspopup="menu" aria-expanded="false">Order ▾</button>
+            <div class="menu" id="sort-menu" role="menu" aria-label="Sort notes by" hidden></div>
+          </div>
+          <p class="list__meta" id="list-meta"></p>
+        </header>
+        <div class="list__body" id="rows" role="listbox" aria-labelledby="list-title"></div>
+      </section>
+
+      <!-- 3. The page -->
+      <main class="page" id="page">
+        <div class="page__main">
+          <div class="page__bar" id="bar" role="toolbar" aria-label="Page">
+            <div class="bar__group">
+              <button class="word-button" type="button" data-action="toggle-sidebar" id="bar-sidebar" title="⌘\"><span class="when-wide">Hide </span>Sidebar</button>
+              <button class="word-button" type="button" data-action="toggle-list" id="bar-list" title="⌘⇧\"><span class="when-wide">Hide </span>List</button>
+            </div>
+            <div class="bar__group">
+              <div class="views" role="group" aria-label="View (⌘E)">
+                <button class="word-button" type="button" data-view="live">Live</button><span class="dot" aria-hidden="true">·</span><button class="word-button" type="button" data-view="source">Source</button><span class="dot" aria-hidden="true">·</span><button class="word-button" type="button" data-view="reading">Reading</button>
+              </div>
+              <button class="word-button" type="button" id="compare-button" title="Compare with the last seal (⌘⇧D)"></button>
+              <button class="word-button" type="button" id="seal-button" title="Seal this version (⌘S)">Seal</button>
+              <button class="word-button" type="button" id="versions-button" aria-controls="versions" aria-pressed="false">Versions</button>
+            </div>
+          </div>
+
+          <div class="page__scroll" id="scroll">
+            <article class="sheet" id="sheet" aria-label="Note"></article>
+          </div>
+
+          <footer class="status" id="status" aria-label="Status"></footer>
+        </div>
+
+        <aside class="versions" id="versions" aria-label="Versions" hidden>
+          <div class="versions__inner">
+            <div class="versions__head">
+              <span class="label">Versions</span>
+              <button class="word-button" type="button" id="versions-close">Close</button>
+            </div>
+            <ol class="versions__list" id="versions-list"></ol>
+            <p class="versions__note">Restoring seals the draft first, so nothing is lost. Named versions are kept until you delete them.</p>
+          </div>
+        </aside>
+      </main>
+
+      <div class="resizer resizer--sidebar" data-resize="sidebar" role="separator" aria-orientation="vertical" aria-label="Sidebar width" tabindex="0"></div>
+      <div class="resizer resizer--list" data-resize="list" role="separator" aria-orientation="vertical" aria-label="Note list width" tabindex="0"></div>
+    </div>
+
+    <p class="visually-hidden" id="announce" aria-live="polite"></p>
+  </body>
+</html>
