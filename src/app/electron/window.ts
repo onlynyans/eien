@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { BrowserWindow, type IpcMainEvent, ipcMain, shell } from 'electron';
 import { CHANNEL } from '../../platform/bridge';
 import { isAppUrl, isExternalLink } from './navigation';
+import { serveSettings } from './settings-session';
 import { serveVault } from './vault-session';
 
 /** How long the window gets to save before it closes anyway. */
@@ -46,7 +47,7 @@ export async function createMainWindow(): Promise<BrowserWindow> {
   });
 
   saveBeforeClose(window);
-  await serveVault(window);
+  serveSettings(window, await serveVault(window));
   window.once('ready-to-show', () => window.show());
   void window.loadURL(url);
   return window;

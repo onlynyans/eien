@@ -35,6 +35,29 @@ export function makeVault(files: VaultFiles): string {
   return root;
 }
 
+/** Launch the built app with its data in `userData`, and the vault at `vault` if given. */
+export const launchApp = (userData: string, vault?: string | null): Promise<ElectronApplication> =>
+  _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(userData, vault) });
+
+/** Click a menu item, as the window the click is for: no reliance on which window has focus. */
+export async function clickMenu(
+  app: ElectronApplication,
+  menu: string,
+  label: string,
+): Promise<void> {
+  await app.evaluate(
+    ({ BrowserWindow, Menu }, [menu, label]) => {
+      const window = BrowserWindow.getAllWindows()[0];
+      const item = Menu.getApplicationMenu()
+        ?.items.find((top) => top.label === menu)
+        ?.submenu?.items.find((entry) => entry.label === label);
+      if (!item || !window) throw new Error(`No menu item ${menu} → ${label}`);
+      item.click(undefined, window, window.webContents);
+    },
+    [menu, label] as const,
+  );
+}
+
 /** Apps closeApp has closed: Playwright can't be asked about them again. */
 const closed = new WeakSet<ElectronApplication>();
 
@@ -76,6 +99,8 @@ type Fixtures = {
   vaultFiles: VaultFiles | null;
   /** The vault folder, when there is one. */
   vault: string | null;
+  /** This device's settings file, as the app keeps it; null (the default) for none. */
+  deviceFile: Record<string, unknown> | null;
   userData: string;
   app: ElectronApplication;
   page: Page;
@@ -84,20 +109,21 @@ type Fixtures = {
 /** Each test gets a fresh app with a fresh data folder, closed afterwards. */
 export const test = base.extend<Fixtures>({
   vaultFiles: [null, { option: true }],
+  deviceFile: [null, { option: true }],
   vault: async ({ vaultFiles }, use) => {
     if (!vaultFiles) return use(null);
     const root = makeVault(vaultFiles);
     await use(root);
     rmSync(root, { recursive: true, force: true });
   },
-  // biome-ignore lint/correctness/noEmptyPattern: Playwright's fixture signature
-  userData: async ({}, use) => {
+  userData: async ({ deviceFile }, use) => {
     const dir = mkdtempSync(join(tmpdir(), 'eien-e2e-'));
+    if (deviceFile) writeFileSync(join(dir, 'settings.json'), JSON.stringify(deviceFile));
     await use(dir);
     rmSync(dir, { recursive: true, force: true });
   },
   app: async ({ userData, vault }, use) => {
-    const app = await _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(userData, vault) });
+    const app = await launchApp(userData, vault);
     await use(app);
     await closeApp(app);
   },

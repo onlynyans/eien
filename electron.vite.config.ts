@@ -22,6 +22,9 @@ export default defineConfig({
     root: resolve(import.meta.dirname, 'src/ui'),
     build: {
       rolldownOptions: { input: resolve(import.meta.dirname, 'src/ui/index.html') },
+      // Every asset stays a file: the security policy refuses data: fonts, and
+      // small font subsets would otherwise be inlined as data: URLs.
+      assetsInlineLimit: 0,
     },
   },
 });

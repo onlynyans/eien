@@ -54,13 +54,15 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
     return {
       keys: Object.keys(eien).sort(),
       vault: Object.keys(vault).sort(),
+      settings: Object.keys(eien.settings as Record<string, unknown>).sort(),
       platform: eien.platform,
       readIsOurs: vault.read !== undefined && String(vault.read).includes('replaced') === false,
     };
   });
   expect(bridge).toEqual({
-    keys: ['onBeforeClose', 'onMenu', 'platform', 'vault'],
+    keys: ['onBeforeClose', 'onMenu', 'platform', 'settings', 'vault'],
     vault: ['choose', 'current', 'list', 'onChange', 'read', 'readBytes', 'write'],
+    settings: ['read', 'set'],
     platform: process.platform,
     readIsOurs: true,
   });

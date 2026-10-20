@@ -1,0 +1,123 @@
+/* Eien — the Otaku palette, from the approved design (docs/design/themes/
+   otaku.css). A second set of colours for Eien's own token roles, chosen
+   with data-palette="otaku" on <html>. Eien's own palette, Washi, is the
+   default and needs no attribute.
+
+   The colours are Otaku's (its web tokens, read as values and converted from
+   OKLCH to sRGB): cool grey chrome around warm near-white paper, an ink with
+   a green cast, and a burnt-orange accent. Each line says which of Otaku's
+   roles it takes. Where Otaku has nothing for an Eien role, the value is
+   derived in its spirit and says so.
+
+   Otaku's own steps sit a few points apart; here they are spread to the same
+   depth model as Washi (darker is further back: desk, blotter, band, paper,
+   raised), so the sidebar, the list and the page read at a glance.
+
+   Colours only: faces, sizes and spaces stay Eien's. Every text ink reaches
+   4.5:1 on every surface it sits on, in both schemes; faded and the seal,
+   which are marks and placeholders, reach 3:1. */
+
+:root[data-palette="otaku"] {
+  /* ── Surface ────────────────────────────────────────────────────────── */
+  --eien-desk: light-dark(
+    #cfd4d2,
+    #0c0f0e
+  ); /* Otaku's rail (spine), one clear step darker by day and darkest by night */
+  --eien-blotter: light-dark(#e4e8e7, #141817); /* Otaku's desk: the cool grey the page lies on */
+  --eien-band: light-dark(
+    #f3f2ed,
+    #1f1e1a
+  ); /* Otaku's band (footers, the composer), set a little further from the paper */
+  --eien-paper: light-dark(#fbfaf6, #272521); /* Otaku's paper */
+  --eien-paper-raised: light-dark(#fefefb, #312f2b); /* Otaku's open field, its lightest ground */
+  --eien-well: light-dark(#efeee8, #1d1c18); /* Otaku's well, kept just under the band */
+  --eien-hover: light-dark(
+    rgb(25 26 22 / 0.045),
+    rgb(236 235 231 / 0.05)
+  ); /* derived: Otaku's ink, breathed on */
+  --eien-press: light-dark(
+    rgb(25 26 22 / 0.1),
+    rgb(236 235 231 / 0.1)
+  ); /* derived: the same ink, pressed */
+  --eien-selected: light-dark(
+    #e8eae7,
+    #353733
+  ); /* derived: a neutral between its cool chrome and warm paper (Otaku tints the row with its accent) */
+  --eien-scrim: light-dark(
+    rgb(228 232 231 / 0.82),
+    rgb(24 28 26 / 0.84)
+  ); /* Otaku's scrim: its desk, drawn over what lies behind */
+
+  /* ── Depth ──────────────────────────────────────────────────────────── */
+  /* Eien's two shadows in Otaku's colours: the sheet takes its page shadow, a
+     floating thing its slip shadow. By night Otaku drops the page shadow;
+     here it deepens instead, as Washi's does. */
+  --eien-shadow-sheet:
+    0 1px 2px light-dark(rgb(24 37 32 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(24 37 32 / 0.1), rgb(0 0 0 / 0.45));
+  --eien-shadow-float:
+    0 2px 6px light-dark(rgb(33 25 16 / 0.08), rgb(0 0 0 / 0.4)),
+    0 14px 36px light-dark(rgb(33 25 16 / 0.16), rgb(0 0 0 / 0.6));
+
+  /* ── Ink ────────────────────────────────────────────────────────────── */
+  --eien-ink: light-dark(#191a16, #ecebe7); /* Otaku's ink: titles */
+  --eien-ink-soft: light-dark(
+    #292620,
+    #d9d7d2
+  ); /* Otaku's body: running prose and list rows, so rows sit close to the ink */
+  --eien-pencil: light-dark(#525752, #9aa09b); /* Otaku's muted: labels, secondary text */
+  --eien-faded: light-dark(
+    #6d716e,
+    #808581
+  ); /* Otaku's faint, moved toward the ink so a placeholder reaches 3:1 on the desk and on raised paper */
+
+  /* ── Rules ──────────────────────────────────────────────────────────── */
+  /* Otaku draws its lines solid; Eien's are ink at a strength, so they hold on
+     every surface. These strengths give Otaku's lines where they lie on paper. */
+  --eien-rule-soft: light-dark(
+    rgb(41 38 32 / 0.12),
+    rgb(236 235 231 / 0.09)
+  ); /* Otaku's soft line: rules inside paper */
+  --eien-rule: light-dark(
+    rgb(24 38 33 / 0.18),
+    rgb(214 226 220 / 0.14)
+  ); /* Otaku's line: panel edges, cool like its chrome */
+  --eien-rule-strong: light-dark(
+    rgb(24 38 33 / 0.32),
+    rgb(214 226 220 / 0.26)
+  ); /* derived: Otaku's line, doubled for a field's edge */
+
+  /* ── The one accent ─────────────────────────────────────────────────── */
+  --eien-seal: light-dark(#aa5910, #d58042); /* Otaku's accent: its marks, its caret */
+  --eien-seal-wash: light-dark(
+    rgb(170 89 16 / 0.08),
+    rgb(213 128 66 / 0.14)
+  ); /* Otaku's accent tint: here, text selection only */
+  --eien-on-seal: light-dark(
+    #fbfaf6,
+    #171612
+  ); /* derived: the paper, or the night's darkest ground, showing through */
+
+  /* ── Status ─────────────────────────────────────────────────────────── */
+  --eien-added: light-dark(
+    #246135,
+    #6fb880
+  ); /* Otaku's ok green, darker by day and lighter by night to read as words */
+  --eien-added-wash: light-dark(
+    rgb(68 140 86 / 0.12),
+    rgb(111 184 128 / 0.14)
+  ); /* derived from the same green */
+  --eien-removed: light-dark(
+    #932c21,
+    #e68677
+  ); /* Otaku's danger, a shade deeper by day and lifted by night to read as words */
+  --eien-removed-wash: light-dark(
+    rgb(164 60 47 / 0.08),
+    rgb(230 134 119 / 0.14)
+  ); /* Otaku's danger tint */
+  --eien-caution: light-dark(
+    #694e00,
+    #d5b36a
+  ); /* derived: Otaku has no caution; an ochre between its accent and its green */
+  --eien-caution-wash: light-dark(rgb(125 94 7 / 0.11), rgb(213 179 106 / 0.12)); /* derived */
+}

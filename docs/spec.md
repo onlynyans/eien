@@ -209,8 +209,8 @@ CommonMark plus GitHub extensions, and three common additions:
 - **Counters:** words in the note, in the book, today; sprint timer with words
   gained; zoom.
 - **Zoom:** ⌘+ and ⌘− zoom the page in steps of 10%, ⌘0 returns to 100%. Zoom
-  is per device and shown in the status line; the panes and the note list keep
-  their size.
+  is per device and shown in the status line when it isn't 100%; the panes and
+  the note list keep their size.
 - **Text size:** a setting that scales the text face from its tuned size
   (90%–130%), separately from zoom.
 - **Outline cards:** a book's notes as cards on a board; drag to reorder.
@@ -248,7 +248,7 @@ src/core/            (✓ = built)
   vault/        ✓ entries, the folder tree, .eien-folder.json (order, book)
   saving/       ✓ what to do when a note changes on disk
   format/       ✓ the formatting commands: inline marks, line formats, links, their keys
-  config/        settings schema, defaults, validation (§6)
+  config/       ✓ the settings schema, defaults, reading and writing settings files (§6)
   theme/         theme schema, validation, token list (§7)
   note/          front matter read/write, id
   tags/          tag extraction and the tag tree
@@ -263,19 +263,19 @@ src/platform/
   capacitor/     Storage over the phone's file system
 src/ui/
   app.ts        ✓ the window: panes, vault and note kept in step
-  shell/        ✓ the three panes (resizing and collapsing: phase 5)
+  shell/        ✓ the three panes (resizing, collapsing, two panes: phase 6)
   sidebar/      ✓ tree: library and folders (tags, pinned: phase 6)
   list/         ✓ note list
   page/         ✓ the sheet, the view switch, the colophon
   notes/        ✓ the open note: autosave, reload, conflict copies
   vault/        ✓ the vault as the window knows it
   welcome/      ✓ before a vault is open
-  theme/        ✓ tokens.css, base.css, fonts, from docs/design
+  theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts
   editor/       ✓ CodeMirror, the three views, the selection bar, images (writing tools: phase 9)
   versions/      the checkpoint cycle and named versions
-  settings/      the settings screen, generated from the schema
+  settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
 src/app/
-  electron/     ✓ main process, preload, window, menus, the vault session
+  electron/     ✓ main process, preload, window, menus, the vault and settings sessions
   mobile/        Capacitor configuration
 ```
 
@@ -340,16 +340,32 @@ Every setting is defined once, in `src/core/config/schema.ts`:
 ```
 
 The settings screen, defaults, validation and storage all come from that one
-list. Adding a setting means adding one entry.
+list. Adding a setting means adding one entry. A setting joins the list in the
+phase that builds what it changes, so the screen never offers a switch that
+does nothing.
 
-- **Vault settings** live in `.eien/config.json`: quotes, chapter numbers
-  (i ii iii or 1 2 3), AO3 options, scene break style.
-- **Device settings** live in the app's storage: palette, scheme (day, night or
-  the system's), text face, text size, density (comfortable or compact), page
-  frame (sheet or full), panes (three or two), zoom, focus and typewriter
-  modes, spellcheck.
+- **Vault settings** live in `.eien/config.json`: chapter numbers (i ii iii or
+  1 2 3); later quotes, AO3 options, scene break style. The vault's watcher
+  reports this one hidden file, so a change from another device shows at once.
+- **Device settings** live in the app's data folder (`settings.json`): scheme
+  (day, night or the system's), palette, text face, text size (90–130%),
+  density (comfortable or compact), page frame (sheet or full) and zoom
+  (50–200%); later panes (three or two), focus and typewriter modes,
+  spellcheck.
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.
+- Writing a file changes one key and keeps every other key as it is, even ones
+  this version doesn't know, so an older Eien on another device never drops a
+  newer one's settings. A default is left out rather than written.
+- A vault file that isn't valid JSON is never written over: the setting isn't
+  saved, and the settings screen says why.
+- The main process checks every change against the schema. Day or night is
+  set there (`nativeTheme`) before the window first draws, and as
+  `data-theme` on the page; the other settings are data attributes and custom
+  properties on `<html>` that the tokens follow.
+- Zoom (⌘+, ⌘−, ⌘0, and the View menu) scales the sheet only, with its
+  margins and line; the panes keep their size. Text size scales the text
+  face everywhere.
 
 Settings are grouped and labeled on the settings screen: **Appearance**,
 **Editor**, **Writing**, **Layout**, **AO3**, **Sync**.
@@ -536,7 +552,7 @@ Each phase ends with something you can try, and its tests in CI.
 | 3 | Vault and saving | Open a folder; tree, list and page; autosave; external changes and conflicts |
 | 4 | Editor | Live, Source and Reading views; all Markdown in §4; formatting keys, the Format menu and the selection bar |
 | 5 | Design system | Tokens from `docs/design`; palettes and schemes; the eight text faces; text size, density, page frame and zoom; the settings screen |
-| 6 | Organizing | Tags, nesting, search, drag-and-drop order, books |
+| 6 | Organizing | Tags, nesting, search, drag-and-drop order, books; resizing and collapsing the panes, and two-pane mode |
 | 7 | Versions | Checkpoints, the compare button, named versions |
 | 8 | AO3 and typography | Copy for AO3, paste from HTML, quote setting |
 | 9 | Writing tools | Scene breaks, focus, typewriter, counters, sprint, goals, outline cards, spellcheck |

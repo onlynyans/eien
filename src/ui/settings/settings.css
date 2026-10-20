@@ -1,0 +1,96 @@
+/* The settings screen: raised paper over the dimmed window, one section per
+   group. A setting's name is the machine's voice; what it does, the text's. */
+
+.settings {
+  width: min(600px, calc(100vw - 2 * var(--eien-space-6)));
+  max-height: calc(100vh - 2 * var(--eien-space-7));
+  padding: 0;
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius);
+  background: var(--eien-paper-raised);
+  color: var(--eien-ink);
+  box-shadow: var(--eien-shadow-float);
+}
+.settings::backdrop {
+  background: var(--eien-scrim);
+}
+.settings__inner {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+.settings__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--eien-space-3) var(--eien-space-3) var(--eien-space-3) var(--eien-space-5);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.settings__title {
+  margin: 0;
+  color: var(--eien-ink);
+}
+.settings__problem {
+  margin: 0;
+  padding: var(--eien-space-2) var(--eien-space-5);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  color: var(--eien-removed);
+  background: var(--eien-removed-wash);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.settings__body {
+  overflow-y: auto;
+  padding: 0 var(--eien-space-5) var(--eien-space-5);
+}
+.settings__group {
+  padding-top: var(--eien-space-5);
+}
+.settings__group + .settings__group {
+  margin-top: var(--eien-space-2);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.settings__group > .label {
+  margin: 0 0 var(--eien-space-2);
+}
+
+.setting {
+  padding: var(--eien-space-3) 0;
+}
+.setting__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--eien-space-2);
+}
+.setting__label {
+  margin: 0;
+  color: var(--eien-ink);
+}
+.setting__about {
+  margin: var(--eien-space-1) 0 var(--eien-space-2);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  line-height: var(--eien-leading-row);
+  color: var(--eien-pencil);
+}
+/* The words line up with the text above: a button's padding hangs outside. */
+.setting__choices,
+.setting__stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--eien-space-1);
+  margin-left: calc(var(--eien-space-2) * -1);
+}
+/* A typeface, shown in itself. */
+.setting__face {
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  letter-spacing: normal;
+  text-transform: none;
+}
+.setting__value {
+  min-width: 5ch;
+  text-align: center;
+  color: var(--eien-ink);
+}

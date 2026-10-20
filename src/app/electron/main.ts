@@ -1,6 +1,8 @@
 import { app, BrowserWindow, Menu, session } from 'electron';
+import { withDefaults } from '../../core/config';
 import { CHANNEL } from '../../platform/bridge';
 import { buildMenu } from './menu';
+import { applyScheme, deviceSettings } from './settings-session';
 import { createMainWindow } from './window';
 
 // Tests, and anyone running a separate copy, give Eien its own data folder,
@@ -36,6 +38,8 @@ if (!app.requestSingleInstanceLock()) {
         if (window instanceof BrowserWindow) window.webContents.send(CHANNEL.menu, command);
       }),
     );
+    // Day or night is set before the window draws, so it never flashes the other.
+    applyScheme(withDefaults(await deviceSettings()));
     await createMainWindow();
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) void createMainWindow();

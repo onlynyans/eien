@@ -210,6 +210,7 @@ way; only the figures change. One helper makes every number
 ## Since phase 3
 
 The app's tokens, base styles and fonts live in `src/ui/theme/`, which is
-now their source; this folder keeps the design as it was approved. The
+now their source (since phase 5 with every face, compact density, the full
+page and the Otaku palette); this folder keeps the design as it was approved. The
 mockups' behaviour is a guide, not code to copy: the app's interface is
 built fresh, in modules, against the spec.

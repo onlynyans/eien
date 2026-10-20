@@ -154,6 +154,24 @@ for (const [name, make] of Object.entries(implementations)) {
         stop();
       }
     });
+
+    it('tells a watcher about the vault’s settings, and no other hidden file', async () => {
+      const seen: string[] = [];
+      const stop = subject.storage.watch((paths) => seen.push(...paths));
+      try {
+        await subject.putOutside('.eien/other.json', '{}');
+        await subject.putOutside('Fic/.hidden.md', 'x');
+        await subject.putOutside('.eien/config.json', '{}');
+        await subject.putOutside('Seen.md', 'x');
+        await expect
+          .poll(() => seen, { timeout: 3000 })
+          .toEqual(expect.arrayContaining(['.eien/config.json', 'Seen.md']));
+        const hidden = seen.filter((path) => path.split('/').some((name) => name.startsWith('.')));
+        expect(new Set(hidden)).toEqual(new Set(['.eien/config.json']));
+      } finally {
+        stop();
+      }
+    });
   });
 }
 

@@ -119,6 +119,19 @@
   flex: none;
   padding: var(--eien-space-3) var(--eien-space-4);
   border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.sidebar__count {
+  margin: 0 0 var(--eien-space-2);
   text-transform: uppercase;
   letter-spacing: var(--eien-track-label);
+}
+/* The words sit on the foot's edge: a button's own padding hangs outside it. */
+.sidebar__foot-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 calc(var(--eien-space-2) * -1);
+}
+.sidebar__pair {
+  display: flex;
+  gap: var(--eien-space-1);
 }

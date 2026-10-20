@@ -1,8 +1,6 @@
 /* Eien's design tokens, from the approved design (docs/design/tokens.css).
    This file is the source from now on; docs/design keeps the design pass as
-   it was approved. Phase 3 carries the default face, density and page frame;
-   the other faces, compact density, the full page and the Otaku palette come
-   back with the settings screen in phase 5. */
+   it was approved. The font families are the bundled packages' names. */
 
 /* Eien — design tokens. The theme contract (spec §7): every colour, face, size
    and space the interface uses is one of these. A theme overrides these and
@@ -144,7 +142,7 @@
   --eien-sidebar-w: 264px;
   --eien-list-w: 316px;
   --eien-panel-w: 284px; /* a side panel on the page: versions */
-  --eien-row-h: 30px; /* a tree or list row, desktop */
+  --eien-row-h: calc(30px * var(--eien-text-scale)); /* a tree or list row, desktop */
   --eien-touch: 44px; /* the smallest thing a finger presses */
   --eien-seal-size: 22px; /* the app's mark */
   --eien-radius: 0; /* paper has square corners; only dots are round */
@@ -156,23 +154,122 @@
 }
 
 /* ── The text face ──────────────────────────────────────────────────────
-   Newsreader, with the sizes, leading and measure tuned to it (a page reads
-   at about 75 characters a line). The other faces, each tuned the same way,
-   arrive with the settings screen (phase 5; see docs/design/tokens.css). */
+   The writer's choice: <html data-face="…">, Newsreader without one. The
+   same attribute on any element sets that face inside it alone (the settings
+   screen shows each face in itself this way).
+
+   Faces of one size don't look one size: Newsreader's x-height runs small and
+   the sans-serifs' large. So each face brings its own sizes and leading, tuned
+   by eye until a page reads at the same apparent size, and its own measure, so
+   a line holds about the same number of characters (about 75) in each. Every
+   size is multiplied by --eien-text-scale, the Text size setting. Only the
+   text voice changes; the mono never does. */
 :root {
+  --eien-text-scale: 1; /* Text size, 0.9 to 1.3: set from the settings */
+  --eien-zoom: 1; /* the page's zoom, 0.5 to 2: set from the settings */
+}
+:root,
+[data-face="newsreader"] {
   --eien-face-text: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
-  --eien-size-prose: 22px; /* the writing */
-  --eien-size-title: 36px; /* a note's title on its page */
-  --eien-size-heading: 23px; /* the list's header: the folder or tag shown */
-  --eien-size-row: 16px; /* a row in the tree or list */
-  --eien-size-preview: 14px; /* the line of preview under a list row */
+  --eien-size-prose: calc(22px * var(--eien-text-scale)); /* the writing */
+  --eien-size-title: calc(36px * var(--eien-text-scale)); /* a note's title on its page */
+  --eien-size-heading: calc(
+    23px *
+    var(--eien-text-scale)
+  ); /* the list's header: the folder or tag shown */
+  --eien-size-row: calc(16px * var(--eien-text-scale)); /* a row in the tree or list */
+  --eien-size-preview: calc(
+    14px *
+    var(--eien-text-scale)
+  ); /* the line of preview under a list row */
   --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten));
   --eien-measure: 29em; /* a reading line, in em of the prose */
 }
+:root[data-face="literata"],
+[data-face="literata"] {
+  --eien-face-text: "Literata Variable", "Iowan Old Style", Georgia, serif;
+  --eien-size-prose: calc(19px * var(--eien-text-scale));
+  --eien-size-title: calc(32px * var(--eien-text-scale));
+  --eien-size-heading: calc(21px * var(--eien-text-scale));
+  --eien-size-row: calc(15px * var(--eien-text-scale));
+  --eien-size-preview: calc(13px * var(--eien-text-scale));
+  --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten));
+  --eien-measure: 34em;
+}
+:root[data-face="plex-sans"],
+[data-face="plex-sans"] {
+  --eien-face-text: "IBM Plex Sans Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-size-prose: calc(18px * var(--eien-text-scale));
+  --eien-size-title: calc(31px * var(--eien-text-scale));
+  --eien-size-heading: calc(20px * var(--eien-text-scale));
+  --eien-size-row: calc(14.5px * var(--eien-text-scale));
+  --eien-size-preview: calc(12.5px * var(--eien-text-scale));
+  --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten));
+  --eien-measure: 32em;
+}
+:root[data-face="source-sans"],
+[data-face="source-sans"] {
+  --eien-face-text: "Source Sans 3 Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-size-prose: calc(20px * var(--eien-text-scale));
+  --eien-size-title: calc(32px * var(--eien-text-scale));
+  --eien-size-heading: calc(21px * var(--eien-text-scale));
+  --eien-size-row: calc(15px * var(--eien-text-scale));
+  --eien-size-preview: calc(13px * var(--eien-text-scale));
+  --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten));
+  --eien-measure: 31em;
+}
+:root[data-face="atkinson"],
+[data-face="atkinson"] {
+  --eien-face-text: "Atkinson Hyperlegible Next Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-size-prose: calc(18px * var(--eien-text-scale));
+  --eien-size-title: calc(30px * var(--eien-text-scale));
+  --eien-size-heading: calc(20px * var(--eien-text-scale));
+  --eien-size-row: calc(14.5px * var(--eien-text-scale));
+  --eien-size-preview: calc(12.5px * var(--eien-text-scale));
+  --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten));
+  --eien-measure: 32em;
+}
+:root[data-face="schibsted"],
+[data-face="schibsted"] {
+  --eien-face-text: "Schibsted Grotesk Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-size-prose: calc(18px * var(--eien-text-scale));
+  --eien-size-title: calc(31px * var(--eien-text-scale));
+  --eien-size-heading: calc(21px * var(--eien-text-scale));
+  --eien-size-row: calc(15px * var(--eien-text-scale));
+  --eien-size-preview: calc(13px * var(--eien-text-scale));
+  --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten));
+  --eien-measure: 33em;
+}
+:root[data-face="hanken"],
+[data-face="hanken"] {
+  --eien-face-text: "Hanken Grotesk Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-size-prose: calc(19px * var(--eien-text-scale));
+  --eien-size-title: calc(31px * var(--eien-text-scale));
+  --eien-size-heading: calc(21px * var(--eien-text-scale));
+  --eien-size-row: calc(15px * var(--eien-text-scale));
+  --eien-size-preview: calc(13px * var(--eien-text-scale));
+  --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten));
+  --eien-measure: 32em;
+}
+:root[data-face="instrument"],
+[data-face="instrument"] {
+  --eien-face-text: "Instrument Sans Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-size-prose: calc(18.5px * var(--eien-text-scale));
+  --eien-size-title: calc(30px * var(--eien-text-scale));
+  --eien-size-heading: calc(20px * var(--eien-text-scale));
+  --eien-size-row: calc(14.5px * var(--eien-text-scale));
+  --eien-size-preview: calc(12.5px * var(--eien-text-scale));
+  --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten));
+  --eien-measure: 31em;
+}
 
 /* ── Density: how much air around the writing ──────────────────────────
-   Comfortable. Compact (the same type, less space) arrives with the settings
-   screen; it changes only these tokens. */
+   Comfortable is the default (no attribute); <html data-density="compact">
+   is the setting. Compact keeps every face at its size and changes only the
+   space: the sheet stays the same size but its margins narrow, so the lines
+   run longer; the blotter round it thins; paragraphs, lines and scene breaks
+   close up; rows shorten; the note list drops its preview lines. Each face's
+   prose leading has --eien-leading-tighten taken off it. */
 :root {
   --eien-sheet-pad-x: var(--eien-space-8); /* the sheet's side margins */
   --eien-sheet-pad-top: var(--eien-space-7); /* the sheet's top margin */
@@ -184,14 +281,35 @@
   --eien-row-pad-y: var(--eien-space-3); /* above and below a note-list row */
   --eien-list-preview: block; /* the note list's line of preview: block, or none */
 }
+:root[data-density="compact"] {
+  --eien-sheet-pad-x: var(--eien-space-6);
+  --eien-sheet-pad-top: var(--eien-space-5);
+  --eien-page-gutter: var(--eien-space-2);
+  --eien-title-gap: var(--eien-space-4);
+  --eien-paragraph-gap: var(--eien-space-2);
+  --eien-scene-gap: 0.8em;
+  --eien-leading-tighten: 0.14;
+  --eien-row-pad-y: var(--eien-space-2);
+  --eien-list-preview: none;
+  --eien-row-h: calc(26px * var(--eien-text-scale));
+}
 
-/* ── Frame: the page as a sheet on the blotter ─────────────────────────
-   The full-page frame (paper edge to edge) arrives with the settings screen;
-   it changes only these tokens. */
+/* ── Frame: the page as a sheet on the blotter, or the whole pane ───────
+   A setting of its own, with either density. Sheet is the default: paper
+   laid on the blotter with a hairline edge and the sheet's shadow. With
+   <html data-frame="full"> the frame goes: the page pane is paper from edge
+   to edge, the sheet has no edge, shadow or gap round it, and the text keeps
+   its line length, centred. */
 :root {
   --eien-page-ground: var(--eien-blotter); /* the page pane behind the sheet */
   --eien-sheet-edge: var(--eien-hairline) solid var(--eien-rule);
   --eien-sheet-lift: var(--eien-shadow-sheet);
+}
+:root[data-frame="full"] {
+  --eien-page-ground: var(--eien-paper);
+  --eien-page-gutter: 0px;
+  --eien-sheet-edge: none;
+  --eien-sheet-lift: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

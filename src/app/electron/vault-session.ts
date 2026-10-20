@@ -2,11 +2,12 @@
 // from the window is checked here; the storage checks every path again.
 
 import { basename } from 'node:path';
-import { type BrowserWindow, dialog, type IpcMainInvokeEvent, ipcMain } from 'electron';
+import { type BrowserWindow, dialog } from 'electron';
 import { CHANNEL, type VaultInfo } from '../../platform/bridge';
 import { type DiskStorage, openDiskStorage } from '../../platform/electron/disk-storage';
 import { recoverStrayTemps } from '../../platform/electron/recover-temps';
-import { readDeviceSettings, writeDeviceSettings } from './device-settings';
+import { lastVault, readDeviceFile, updateDeviceFile } from './device-settings';
+import { answer, text } from './ipc';
 
 export class VaultSession {
   #storage: DiskStorage | null = null;
@@ -51,19 +52,11 @@ export class VaultSession {
  */
 export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
   const session = new VaultSession(window);
-  const start = process.env.EIEN_VAULT || (await readDeviceSettings()).vault;
+  const start = process.env.EIEN_VAULT || lastVault(await readDeviceFile());
   if (start) await session.open(start).catch(() => null); // gone or unreadable: the window asks for another
 
-  /** Only this window may ask, and only with the argument types each call takes. */
   const handle = (channel: string, fn: (...args: unknown[]) => unknown) =>
-    ipcMain.handle(channel, (event: IpcMainInvokeEvent, ...args: unknown[]) => {
-      if (event.sender !== window.webContents) throw new Error('Not this window.');
-      return fn(...args);
-    });
-  const text = (value: unknown, name: string): string => {
-    if (typeof value !== 'string') throw new TypeError(`${name} must be text.`);
-    return value;
-  };
+    answer(window, channel, fn);
 
   handle(CHANNEL.current, () => session.info);
   handle(CHANNEL.choose, async () => {
@@ -75,7 +68,8 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
     const root = picked.filePaths[0];
     if (picked.canceled || !root) return null;
     const info = await session.open(root);
-    await writeDeviceSettings({ vault: session.storage().root });
+    const vault = session.storage().root;
+    await updateDeviceFile((data) => ({ ...data, vault }));
     return info;
   });
   handle(CHANNEL.list, () => session.storage().list());
@@ -87,18 +81,6 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
     return session.storage().write(text(path, 'path'), text(body, 'text'), expected);
   });
 
-  window.on('closed', () => {
-    session.close();
-    for (const channel of [
-      CHANNEL.current,
-      CHANNEL.choose,
-      CHANNEL.list,
-      CHANNEL.read,
-      CHANNEL.readBytes,
-      CHANNEL.write,
-    ]) {
-      ipcMain.removeHandler(channel);
-    }
-  });
+  window.on('closed', () => session.close());
   return session;
 }

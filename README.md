@@ -5,11 +5,13 @@ with tags, checkpoints and named versions, and AO3-ready HTML on copy.
 
 For macOS, Windows, Linux, Android and iOS.
 
-Status: phase 4 of the [plan](docs/spec.md#12-phases). Open a folder as a
+Status: phase 5 of the [plan](docs/spec.md#12-phases). Open a folder as a
 vault, browse its folders and notes, and write in Live, Source or Reading
 view: format by key, the Format menu or the bar over a selection; tick
 checkboxes; see images from the vault. Notes save as you type, a change from
-another device reloads, and when both sides changed, both are kept.
+another device reloads, and when both sides changed, both are kept. Settings
+(⌘,) choose day or night, the Washi or Otaku palette, eight typefaces, text
+size, density, the page's frame, zoom and chapter numbers.
 
 ## Develop
 

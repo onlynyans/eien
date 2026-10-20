@@ -3,6 +3,7 @@
    security policy in development as well as in a build. */
 @import "./fonts.css";
 @import "./tokens.css";
+@import "./otaku.css";
 @import "./base.css";
 @import "../shell/shell.css";
 @import "../sidebar/sidebar.css";
@@ -10,3 +11,4 @@
 @import "../page/page.css";
 @import "../editor/editor.css";
 @import "../welcome/welcome.css";
+@import "../settings/settings.css";

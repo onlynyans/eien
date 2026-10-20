@@ -22,6 +22,10 @@ const bridge: Bridge = {
     write: (path, text, expected) => ipcRenderer.invoke(CHANNEL.write, path, text, expected),
     onChange: (listener) => listen<string[]>(CHANNEL.changed, listener),
   },
+  settings: {
+    read: () => ipcRenderer.invoke(CHANNEL.settingsRead),
+    set: (key, value) => ipcRenderer.invoke(CHANNEL.settingsSet, key, value),
+  },
   onMenu: (listener) => listen<MenuCommand>(CHANNEL.menu, listener),
   onBeforeClose: (save) => {
     ipcRenderer.on(CHANNEL.beforeClose, () => {

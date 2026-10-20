@@ -30,10 +30,10 @@ when code and spec disagree, fix one of them in the same change.
 
 | Path | What |
 |---|---|
-| `src/core/` | Rules, pure TypeScript: `paths`, `text`, `vault`, `saving`, `format` (the formatting commands) |
+| `src/core/` | Rules, pure TypeScript: `paths`, `text`, `vault`, `saving`, `format` (the formatting commands), `config` (every setting, and its files) |
 | `src/platform/` | `bridge.ts` (all the window may ask), `storage.ts` (the Storage contract), and its `electron/` and `memory/` implementations |
-| `src/ui/` | The window: `app.ts` wires the views (`sidebar`, `list`, `page`, `welcome`) to the vault (`vault`) and the open note (`notes`); `editor/` is CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows); styles in `theme/` and beside each view |
-| `src/app/electron/` | Main process: window, menu, the vault session and its IPC, device settings; the sandboxed `preload.ts` |
+| `src/ui/` | The window: `app.ts` wires the views (`sidebar`, `list`, `page`, `welcome`) to the vault (`vault`) and the open note (`notes`); `editor/` is CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows); `settings/` is the settings screen and the look it sets on `<html>`; styles in `theme/` and beside each view |
+| `src/app/electron/` | Main process: window, menu, the vault and settings sessions and their IPC (`ipc.ts`: one window per handler), the device's own file; the sandboxed `preload.ts` |
 | `tests/` | Architecture tests; `tests/e2e/` drives the built app on real folders with Playwright |
 | `tsconfig.{core,web,node,e2e}.json` | One per environment: core can use neither DOM nor Node, the window can't use Node |
 | `docs/design/` | The approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on |

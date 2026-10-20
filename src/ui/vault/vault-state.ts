@@ -2,7 +2,7 @@
 // whatever is selected in the sidebar.
 
 import { baseName, joinPath, titleOf } from '../../core/paths';
-import { chapterNumber } from '../../core/text';
+import { chapterNumber, type NumeralStyle } from '../../core/text';
 import {
   buildTree,
   FOLDER_SETTINGS_NAME,
@@ -77,8 +77,8 @@ export class VaultState {
     return this.#entries.some((entry) => entry.path === path);
   }
 
-  /** The notes to list for `selection`, in their order. */
-  async notesFor(selection: Selection): Promise<NoteList> {
+  /** The notes to list for `selection`, in their order; a book's numbered in `numerals`. */
+  async notesFor(selection: Selection, numerals: NumeralStyle = 'roman'): Promise<NoteList> {
     const modified = new Map(this.#entries.map((entry) => [entry.path, entry.modified]));
     const listed = (path: string, ordinal?: string): ListedNote => ({
       path,
@@ -103,7 +103,7 @@ export class VaultState {
     const book = settings.book !== null;
     const names = orderNames(folder.notes.map(baseName), settings.order);
     const notes = names.map((name, i) =>
-      listed(joinPath(folder.path, name), book ? chapterNumber(i + 1) : undefined),
+      listed(joinPath(folder.path, name), book ? chapterNumber(i + 1, numerals) : undefined),
     );
     return { heading: folder.name, book, notes };
   }
