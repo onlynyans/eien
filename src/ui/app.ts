@@ -16,7 +16,7 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
   const settings = await SettingsState.load(bridge.settings);
   applyLook(settings.values);
   settings.onChange((values) => applyLook(values));
-  const screen = new SettingsScreen(document.body, settings);
+  const screen = new SettingsScreen(document.body, settings, bridge.platform);
   let shown: ShownVault | null = null;
 
   const open = async () => {

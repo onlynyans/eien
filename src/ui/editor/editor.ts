@@ -168,10 +168,13 @@ export class NoteEditor {
     this.#view.dispatch({ effects: this.#quotes.reconfigure(quoteTyping(style)) });
   }
 
-  /** Focus mode and typewriter scrolling on or off (spec §4). */
+  /** Focus mode, typewriter scrolling and spellcheck on or off (spec §4). */
   setTools(tools: WritingTools): void {
     const before = this.#toolsOn;
-    if (tools.focus === before.focus && tools.typewriter === before.typewriter) return;
+    const same = (Object.keys(tools) as (keyof WritingTools)[]).every(
+      (k) => tools[k] === before[k],
+    );
+    if (same) return;
     this.#toolsOn = tools;
     this.#view.dispatch({ effects: this.#tools.reconfigure(writingTools(tools)) });
     if (tools.typewriter && !before.typewriter) centreCaret(this.#view);
@@ -206,7 +209,6 @@ export class NoteEditor {
       editorTheme,
       EditorView.lineWrapping,
       EditorView.contentAttributes.of({
-        spellcheck: 'false',
         autocorrect: 'off',
         autocapitalize: 'off',
         'aria-label': 'Note',

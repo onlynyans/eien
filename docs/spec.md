@@ -362,6 +362,12 @@ words, as on the page.
   The keyboard is always on a card or Close, and goes to the page with it.
   With no book to show, one line of news says so.
 - **Spellcheck:** off until turned on, using the platform's own checker.
+  That's macOS's: Settings → Editor → Spellcheck, or Edit → Check Spelling
+  While Typing. A right-click on a word it underlines offers its suggestions
+  and Learn Spelling, then Cut, Copy and Paste. Windows and Linux don't offer
+  it: Electron has no checker of their own there and would download
+  dictionaries from Google, so the checker is off for good (decided
+  2026-10-20; bundled dictionaries may come later).
 
 ---
 
@@ -504,8 +510,9 @@ does nothing.
 - **Device settings** live in the app's data folder (`settings.json`): scheme
   (day, night or the system's), palette, text face, text size (90–130%),
   density (comfortable or compact), page frame (sheet or full) and zoom
-  (50–200%), panes (three or two), focus mode and typewriter scrolling;
-  later spellcheck.
+  (50–200%), panes (three or two), focus mode, typewriter scrolling and
+  spellcheck (macOS). A setting may be one system's alone (`platforms` in the
+  schema): the screen shows it only there.
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.
 - Writing a file changes one key and keeps every other key as it is, even ones

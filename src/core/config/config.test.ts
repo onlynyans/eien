@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkSetting,
   DEFAULT_SETTINGS,
+  offeredOn,
   readSettings,
   SETTING_GROUPS,
   SETTINGS,
@@ -41,6 +42,17 @@ describe('the schema', () => {
       const setting = settingOf(key);
       expect(setting?.type === 'choice' && Object.keys(setting.choices)).toEqual(['off', 'on']);
       expect(setting?.scope).toBe('device');
+    }
+  });
+
+  it('offers spellcheck on macOS alone, and everything else everywhere', () => {
+    const spellcheck = settingOf('editor.spellcheck');
+    if (!spellcheck) throw new Error('missing spellcheck');
+    expect(offeredOn(spellcheck, 'darwin')).toBe(true);
+    expect(offeredOn(spellcheck, 'win32')).toBe(false);
+    expect(offeredOn(spellcheck, 'linux')).toBe(false);
+    for (const setting of SETTINGS) {
+      if (setting.key !== 'editor.spellcheck') expect(offeredOn(setting, 'linux')).toBe(true);
     }
   });
 

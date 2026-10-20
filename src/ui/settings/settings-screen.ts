@@ -5,6 +5,7 @@
 import {
   type ChoiceSetting,
   type NumberSetting,
+  offeredOn,
   SETTING_GROUPS,
   SETTINGS,
   type Setting,
@@ -28,12 +29,13 @@ export class SettingsScreen {
   /** Each control's way of showing the current values. */
   readonly #shows: ((values: SettingValues) => void)[] = [];
 
-  constructor(container: HTMLElement, settings: SettingsState) {
+  /** `platform` (process.platform's name) leaves out the settings another system alone has. */
+  constructor(container: HTMLElement, settings: SettingsState, platform: string) {
     this.#settings = settings;
     const groups = SETTING_GROUPS.map((group) => {
-      const rows = SETTINGS.filter((setting) => setting.group === group).map((setting) =>
-        this.#row(setting),
-      );
+      const rows = SETTINGS.filter(
+        (setting) => setting.group === group && offeredOn(setting, platform),
+      ).map((setting) => this.#row(setting));
       return rows.length > 0
         ? h(
             'section',

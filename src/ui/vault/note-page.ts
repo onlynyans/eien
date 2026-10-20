@@ -51,6 +51,7 @@ export function followSettings(page: PageView, settings: SettingsState): () => v
     page.editor.setTools({
       focus: values['editor.focus'] === 'on',
       typewriter: values['editor.typewriter'] === 'on',
+      spellcheck: values['editor.spellcheck'] === 'on',
     });
   };
   follow(settings.values);
