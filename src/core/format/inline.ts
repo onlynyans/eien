@@ -19,6 +19,24 @@ export const UNDERLINE: InlineMark = { open: '<u>', close: '</u>' };
 const isWordChar = (char: string | undefined) =>
   char !== undefined && /[\p{L}\p{M}\p{N}_'’-]/u.test(char);
 
+/** One of the characters `mark` is made of; none for <u>, a tag whose letters are a word's. */
+const isMarkChar = (mark: InlineMark, char: string | undefined) =>
+  char !== undefined && !mark.open.startsWith('<') && mark.open.includes(char);
+
+/**
+ * A caret among a mark's own characters ("*|*bold**") moved to the word
+ * they're on, so the mark is pressed on that word rather than taken for an
+ * empty pair. `pos` itself when they're on no word.
+ */
+function besideMarks(text: string, pos: number, mark: InlineMark): number {
+  let after = pos;
+  while (isMarkChar(mark, text[after])) after++;
+  if (after > pos && isWordChar(text[after])) return after;
+  let before = pos;
+  while (isMarkChar(mark, text[before - 1])) before--;
+  return before < pos && isWordChar(text[before - 1]) ? before : pos;
+}
+
 /** The word around `pos`, or null when `pos` isn't in or touching one. */
 function wordAt(text: string, pos: number): Selection | null {
   let from = pos;
@@ -41,15 +59,30 @@ const runAfter = (text: string, pos: number, char: string) => {
 };
 
 /**
+ * The marks runs of `before` and `after` stars put around what's between
+ * them, inside out, as CommonMark pairs them: "**" while both sides have two,
+ * else "*". "***x***" is bold in italic; "*x**" is italic and a star.
+ */
+function starLayers(before: number, after: number): number[] {
+  const layers: number[] = [];
+  for (let b = before, a = after; b > 0 && a > 0; ) {
+    const use = b >= 2 && a >= 2 ? 2 : 1;
+    layers.push(use);
+    b -= use;
+    a -= use;
+  }
+  return layers;
+}
+
+/**
  * Is the span [from, to] already wrapped in `mark` (its marks just outside)?
- * The "*" of italic and the "**" of bold share a character: italic is on when
- * an odd run of stars surrounds the span (* or ***), bold when two or more do.
+ * The "*" of italic and the "**" of bold share a character, so the stars
+ * around are paired as the parser pairs them.
  */
 function wrappedIn(text: string, from: number, to: number, mark: InlineMark): boolean {
   if (mark.open === '*' || mark.open === '**') {
-    const before = runBefore(text, from, '*');
-    const after = runAfter(text, to, '*');
-    return mark.open === '*' ? before % 2 === 1 && after % 2 === 1 : before >= 2 && after >= 2;
+    const layers = starLayers(runBefore(text, from, '*'), runAfter(text, to, '*'));
+    return layers.includes(mark.open.length);
   }
   return (
     text.slice(from - mark.open.length, from) === mark.open &&
@@ -86,8 +119,7 @@ function holds(text: string, span: Selection, mark: InlineMark): boolean {
     return false;
   if (mark.open === '*') {
     // "*x*" or "***x***", never the stars of plain bold
-    const lead = runAfter(inner, 0, '*');
-    return lead % 2 === 1;
+    return starLayers(runAfter(inner, 0, '*'), runBefore(inner, inner.length, '*')).includes(1);
   }
   return true;
 }
@@ -101,7 +133,7 @@ function holds(text: string, span: Selection, mark: InlineMark): boolean {
 function markable(text: string, span: Selection, mark: InlineMark): Selection | null {
   if (mark.open.startsWith('<')) return span;
   // The mark's own characters are never moved past: a span holding its marks is unmarked whole.
-  const own = (char: string | undefined) => char !== undefined && mark.open.includes(char);
+  const own = (char: string | undefined) => isMarkChar(mark, char);
   let { from, to } = span;
   while (from < to && !own(text[from]) && !flanking(text[from - 1] ?? '', text[from] ?? '').open)
     from++;
@@ -174,7 +206,7 @@ function toggleSpan(
  */
 export function toggleInline(text: string, selection: Selection, mark: InlineMark): Edit {
   if (selection.from === selection.to) {
-    const word = wordAt(text, selection.from);
+    const word = wordAt(text, besideMarks(text, selection.from, mark));
     if (!word) {
       const at = selection.from;
       if (
@@ -194,7 +226,7 @@ export function toggleInline(text: string, selection: Selection, mark: InlineMar
     const result = toggleSpan(text, word, mark);
     const offset = selection.from - word.from;
     const start = result.selection.from + offset;
-    const caret = Math.min(start, result.selection.to);
+    const caret = Math.max(result.selection.from, Math.min(start, result.selection.to));
     return { changes: result.changes, selection: { from: caret, to: caret } };
   }
 

@@ -99,3 +99,31 @@ describe('a mark never goes around a line’s own marks', () => {
     expect(run(id, text, from, to)).toBe(text);
   });
 });
+
+describe('stars are paired as the parser pairs them', () => {
+  /** `text` after `id` pressed at [from, to], and after it's pressed again where that left the selection. */
+  const twice = (id: string, text: string, from: number, to = from) => {
+    const command = formatCommand(id);
+    if (!command) throw new Error(id);
+    const once = command.run(text, { from, to });
+    const after = apply(text, once.changes);
+    return [after, apply(after, command.run(after, once.selection).changes)];
+  };
+
+  it.each([
+    // A footnote's star after a word: "*this**" is italic and the star; pressed again, plain.
+    ['italic', 'Read this* now', 5, 9, 'Read *this** now'],
+    ['bold', 'Read this* now', 5, 9, 'Read **this*** now'],
+    ['italic', 'Read *this now', 6, 10, 'Read **this* now'],
+  ])('%s on %j and back', (id, text, from, to, marked) => {
+    expect(twice(id, text, from, to)).toEqual([marked, text]);
+  });
+
+  it.each([
+    // The caret between a mark's characters is on the word they mark, not in an empty pair.
+    ['italic', '**bold**', 1, '***bold***'],
+    ['strike', '~~gone~~', 1, 'gone'],
+  ])('%s with the caret inside %j’s marks', (id, text, caret, marked) => {
+    expect(twice(id, text, caret)).toEqual([marked, text]);
+  });
+});
