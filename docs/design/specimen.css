@@ -37,7 +37,7 @@ figure {
 
 .token,
 kbd {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   color: var(--eien-ink-soft);
 }
@@ -71,7 +71,7 @@ kbd {
   align-items: baseline;
   gap: var(--eien-space-2);
   padding: var(--eien-space-1) 0;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
@@ -120,7 +120,7 @@ kbd {
 }
 .sheet-numeral {
   margin: 0 0 var(--eien-space-2);
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   color: var(--eien-pencil);
 }
@@ -295,7 +295,7 @@ kbd {
 }
 .half-word,
 .half-hex {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
@@ -328,7 +328,7 @@ kbd {
   border-color: var(--eien-rule);
 }
 .ratio {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   font-variant-numeric: tabular-nums;
   color: var(--eien-pencil);
@@ -346,18 +346,18 @@ kbd {
   font-size: var(--eien-size-row);
 }
 .sample--meta {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
 }
 .sample--colophon {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
 }
 .sample--label,
 .notice-chip .label {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
@@ -415,7 +415,7 @@ kbd {
 .focus-demo {
   margin-left: var(--eien-space-1);
   padding: var(--eien-space-1) var(--eien-space-2);
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
@@ -556,7 +556,7 @@ kbd {
 }
 .depth-tag {
   display: block;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
@@ -619,7 +619,7 @@ kbd {
   border-bottom: 0;
 }
 .depth-words {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
@@ -663,7 +663,7 @@ kbd {
   box-shadow: var(--eien-shadow-float);
 }
 .depth-item {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
@@ -685,7 +685,7 @@ kbd {
 .contrast-grid {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   font-variant-numeric: tabular-nums;
 }
@@ -751,7 +751,7 @@ kbd {
 }
 .wf-name {
   margin-bottom: var(--eien-space-1);
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
@@ -791,7 +791,7 @@ kbd {
 }
 .face-sample {
   min-width: 0;
-  font-family: var(--eien-face-book);
+  font-family: var(--eien-face-text);
 }
 .face-cap {
   display: grid;
@@ -841,7 +841,7 @@ kbd {
 .face-source {
   max-width: var(--eien-measure);
   margin: 0 0 var(--eien-space-4);
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-source);
   line-height: var(--eien-leading-prose);
   color: var(--eien-ink);
@@ -930,7 +930,7 @@ kbd {
   margin: var(--eien-space-7) 0 0;
   padding-top: var(--eien-space-3);
   border-top: var(--eien-hairline) solid var(--eien-rule-soft);
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   line-height: var(--eien-leading-prose);
   letter-spacing: var(--eien-track-label);
@@ -1163,7 +1163,7 @@ kbd {
 }
 .version-name {
   grid-area: name;
-  font-family: var(--eien-face-book);
+  font-family: var(--eien-face-text);
   font-size: var(--eien-size-row);
   color: var(--eien-ink);
 }
@@ -1329,7 +1329,7 @@ kbd {
   width: 100%;
   min-height: var(--eien-row-h);
   padding: 0 var(--eien-space-3);
-  font-family: var(--eien-face-book);
+  font-family: var(--eien-face-text);
   font-size: var(--eien-size-row);
   line-height: var(--eien-leading-row);
 }
@@ -1390,13 +1390,13 @@ kbd {
 }
 .note-num {
   grid-area: num;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   color: var(--eien-pencil);
 }
 .note-title {
   grid-area: title;
-  font-family: var(--eien-face-book);
+  font-family: var(--eien-face-text);
   font-size: var(--eien-size-row);
   line-height: var(--eien-leading-row);
   color: var(--eien-ink);
@@ -1410,7 +1410,7 @@ kbd {
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  font-family: var(--eien-face-book);
+  font-family: var(--eien-face-text);
   font-size: var(--eien-size-preview);
   line-height: var(--eien-leading-row);
   color: var(--eien-ink-soft);
@@ -1469,7 +1469,7 @@ kbd {
   top: 50%;
   right: calc(100% + var(--eien-space-4));
   translate: 0 -50%;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   font-style: normal;
   letter-spacing: var(--eien-track-label);

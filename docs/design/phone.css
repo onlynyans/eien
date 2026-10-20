@@ -164,7 +164,7 @@
   padding: 0 var(--eien-space-3);
 }
 .word-button--glyph {
-  font-family: var(--eien-face-book);
+  font-family: var(--eien-face-text);
   font-size: var(--eien-size-heading);
   letter-spacing: 0;
   line-height: 1;
@@ -201,7 +201,7 @@
 /* The colophon: what the machine counts, in the mono's capitals. */
 .colophon {
   margin: 0;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   font-variant-numeric: tabular-nums;
   line-height: var(--eien-leading-row);
@@ -367,7 +367,7 @@
   white-space: nowrap;
 }
 .tree-name__hash {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   color: var(--eien-pencil);
 }
@@ -392,7 +392,7 @@
   padding: 0;
   border: 0;
   background: none;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-row);
   color: var(--eien-pencil);
   cursor: pointer;
@@ -511,7 +511,7 @@
   background: var(--eien-press);
 }
 .ordinal {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   font-variant-numeric: tabular-nums;
   color: var(--eien-pencil);
@@ -579,7 +579,7 @@
   padding: 0;
   border: 0;
   background: none;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-heading);
   line-height: 1;
   color: var(--eien-pencil);
@@ -694,7 +694,7 @@
   flex-wrap: wrap;
   gap: 0 var(--eien-space-3);
   margin: var(--eien-space-2) 0 0;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   color: var(--eien-pencil);
 }
@@ -717,7 +717,7 @@
 
 /* The writing */
 .prose {
-  font-family: var(--eien-face-book);
+  font-family: var(--eien-face-text);
   font-size: var(--eien-size-prose);
   line-height: var(--eien-leading-prose);
   color: var(--eien-ink);
@@ -800,7 +800,7 @@
 
 /* Source: the raw .md, typewritten. */
 .prose.is-source {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-source);
   white-space: pre-wrap;
 }
@@ -969,13 +969,13 @@
 }
 .sheet-row__note {
   flex-basis: 100%;
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   text-transform: none;
 }
 
 /* The compare cycle, said in words: the state you're in is boxed in ink. */
 .cycle {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-label);
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
@@ -1043,7 +1043,7 @@ button.version:active {
   font-style: normal;
 }
 .version__when {
-  font-family: var(--eien-face-type);
+  font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   text-transform: uppercase;
   color: var(--eien-pencil);
