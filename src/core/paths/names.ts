@@ -77,10 +77,11 @@ export const nameKey = (name: string): string =>
   name.normalize('NFC').toUpperCase().toLowerCase().normalize('NFC');
 
 /**
- * A name made from what the writer typed: forbidden characters become
- * spaces, runs of space collapse, the ends are trimmed of dots and spaces,
- * a reserved name gets a trailing "-", and it's cut to `maxBytes` (whole
- * characters only). Empty input gives `fallback`.
+ * A name made from what the writer typed: forbidden characters (and a lone
+ * half of a surrogate pair) become spaces, runs of space collapse, the ends
+ * are trimmed of dots and spaces, a reserved name gets a trailing "-", and
+ * it's cut to `maxBytes` (whole characters only). Empty input gives
+ * `fallback`.
  */
 export function safeName(
   typed: string,
@@ -90,12 +91,15 @@ export function safeName(
   let name = typed
     .normalize('NFC')
     .replace(new RegExp(FORBIDDEN.source, 'g'), ' ')
+    .replace(/\p{Surrogate}/gu, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[. ]+|[. ]+$/g, '');
+  const cut = (text: string) => fitBytes(text, maxBytes).replace(/[. ]+$/, '');
+  name = cut(name);
   // "con.txt" → "con-.txt": the "-" right after the reserved word, where neither an
-  // extension nor cutting to length can undo it.
-  if (RESERVED.test(name)) name = name.replace(new RegExp(`^${RESERVED_WORD}`, 'i'), '$1-');
-  name = fitBytes(name, maxBytes).replace(/[. ]+$/, '');
+  // extension nor cutting to length can undo it. Checked after the cut, which can
+  // leave one ("con …" cut to "con").
+  if (RESERVED.test(name)) name = cut(name.replace(new RegExp(`^${RESERVED_WORD}`, 'i'), '$1-'));
   return name.length > 0 ? name : fallback;
 }
 

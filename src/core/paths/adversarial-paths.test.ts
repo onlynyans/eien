@@ -40,3 +40,18 @@ describe('names the disk cannot store as written', () => {
     expect(isValidName('a\uD800.md')).toBe(false);
   });
 });
+
+// Found by the property tests (paths.property.test.ts).
+describe('safeName always gives a name nameProblems accepts', () => {
+  it('turns half an emoji, as a broken paste leaves it, into a space', () => {
+    expect(safeName('a\uD83Eb')).toBe('a b');
+    expect(safeName('\uD83E')).toBe('Untitled');
+  });
+
+  it('adds the "-" to a reserved word the cut to length leaves', () => {
+    // "lpt¹ 永遠" isn't reserved, but cut to 8 bytes it's "lpt¹ ", trimmed to "lpt¹".
+    const name = safeName('lpt¹ 永遠', 'Untitled', 8);
+    expect(nameProblems(name)).toEqual([]);
+    expect(name).toBe('lpt¹-');
+  });
+});
