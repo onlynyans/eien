@@ -16,6 +16,8 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { VaultPathError } from '../core/paths';
+import { CapacitorStorage, TRASH_FOLDER } from './capacitor/capacitor-storage';
+import { NodeFiles } from './capacitor/node-files';
 import {
   type DiskStorage,
   openDiskStorage,
@@ -66,6 +68,26 @@ const implementations: Record<string, () => Promise<Subject>> = {
       },
     };
   },
+};
+
+// The phone's: Capacitor's file system played by Node's on a folder, looked at every 20 ms.
+implementations.capacitor = async () => {
+  const root = await mkdtemp(join(tmpdir(), 'eien-phone-'));
+  return {
+    storage: new CapacitorStorage(new NodeFiles(root), { pollMs: 20 }),
+    putOutside: async (path, text) => {
+      const file = join(root, ...path.split('/'));
+      await mkdir(join(file, '..'), { recursive: true });
+      await writeFile(file, text);
+    },
+    // .eien/trash/<moment>/<name>: the names, as a system's trash shows them.
+    trashed: async () => {
+      const trash = join(root, ...TRASH_FOLDER.split('/'));
+      const moments = await readdir(trash).catch(() => [] as string[]);
+      return (await Promise.all(moments.map((moment) => readdir(join(trash, moment))))).flat();
+    },
+    cleanup: () => rm(root, { recursive: true, force: true }),
+  };
 };
 
 for (const [name, make] of Object.entries(implementations)) {
