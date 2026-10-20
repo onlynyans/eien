@@ -158,9 +158,14 @@ async function subjects(): Promise<{ memory: Subject; disk: Subject; cleanup(): 
   };
 }
 
+// Each run is a vault on disk: a quarter as many runs as the pure properties, with
+// time for a slow disk (Windows takes over 0.2 s a run).
+const RUNS = Math.max(10, Math.round((fc.readConfigureGlobal().numRuns ?? 100) / 4));
+
 describe('Storage, memory and disk, over random runs', () => {
-  it('give the same answer to every step and leave the same vault', async () => {
-    const { numRuns } = fc.readConfigureGlobal();
+  it('give the same answer to every step and leave the same vault', {
+    timeout: RUNS * 2000,
+  }, async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.array(STEP, { minLength: 1, maxLength: 30, size: 'max' }),
@@ -183,8 +188,7 @@ describe('Storage, memory and disk, over random runs', () => {
           }
         },
       ),
-      // Each run is a vault on disk: a quarter as many as the pure properties.
-      { numRuns: Math.max(10, Math.round((numRuns ?? 100) / 4)) },
+      { numRuns: RUNS },
     );
   });
 });
