@@ -243,7 +243,8 @@ test.describe('a vault of 5,000 notes', () => {
       console.log(
         `5,000 notes: a typed tag in the sidebar ${saved} ms after the last key (800 ms of it the autosave pause)`,
       );
-      expect(saved).toBeLessThan(4_000);
+      // Spec §11: within 5 s. Windows' runners have taken 2.3–4.8 s here on main, under the other tests' load.
+      expect(saved).toBeLessThan(5_000);
     } finally {
       await closeApp(app);
     }
