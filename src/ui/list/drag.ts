@@ -20,12 +20,15 @@ type Drop = { readonly folder: string } | { readonly before: string | null };
 
 /**
  * Let `list`'s rows (`rows`: the note list's, or the sidebar tree's notes)
- * be dragged onto `[data-folder]` targets anywhere, or between each other.
+ * be dragged onto `[data-folder]` targets anywhere, or between each other:
+ * above or below a row, or, for cards laid out `across` (the outline's),
+ * before or after one.
  */
 export function watchDrags(
   list: HTMLElement,
   actions: DragActions,
   rows = '.note-row[data-path]',
+  across = false,
 ): void {
   /** A drag ends in a click on the row it started from; that click isn't the writer's. */
   let swallowClick = false;
@@ -56,18 +59,22 @@ export function watchDrags(
       lit = target;
       lit?.classList.add('is-drop-target');
     };
-    const mark = (y: number | null, rect?: DOMRect) => {
-      if (y === null || !rect) {
+    /** The hairline where the row will go: along `rect`'s edge at `at` (across, down its side). */
+    const mark = (at: number | null, rect?: DOMRect) => {
+      if (at === null || !rect) {
         marker?.remove();
         marker = null;
         return;
       }
       marker ??= document.body.appendChild(
-        Object.assign(document.createElement('div'), { className: 'drop-marker' }),
+        Object.assign(document.createElement('div'), {
+          className: across ? 'drop-marker drop-marker--across' : 'drop-marker',
+        }),
       );
-      marker.style.setProperty('--marker-x', `${rect.left}px`);
-      marker.style.setProperty('--marker-y', `${y}px`);
+      marker.style.setProperty('--marker-x', `${across ? at : rect.left}px`);
+      marker.style.setProperty('--marker-y', `${across ? rect.top : at}px`);
       marker.style.setProperty('--marker-w', `${rect.width}px`);
+      marker.style.setProperty('--marker-h', `${rect.height}px`);
     };
 
     const move = (event: PointerEvent) => {
@@ -105,12 +112,15 @@ export function watchDrags(
       const over = under?.closest<HTMLElement>(rows);
       if (actions.orderable() && over && list.contains(over)) {
         const rect = over.getBoundingClientRect();
-        const below = event.clientY > rect.top + rect.height / 2;
-        const next = below
+        const after = across
+          ? event.clientX > rect.left + rect.width / 2
+          : event.clientY > rect.top + rect.height / 2;
+        const next = after
           ? (over.closest('li')?.nextElementSibling?.querySelector<HTMLElement>(rows) ?? null)
           : over;
         drop = { before: next?.dataset.path ?? null };
-        mark(below ? rect.bottom : rect.top, rect);
+        if (across) mark(after ? rect.right : rect.left, rect);
+        else mark(after ? rect.bottom : rect.top, rect);
         return;
       }
       drop = null;

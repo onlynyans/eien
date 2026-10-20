@@ -217,3 +217,13 @@
   border-radius: 50%;
   background: var(--eien-ink-soft);
 }
+/* Across cards (the outline's): down the side of the card it goes before or after. */
+.drop-marker--across {
+  left: calc(var(--marker-x) - var(--eien-space-2));
+  width: var(--eien-hairline);
+  height: var(--marker-h);
+}
+.drop-marker--across::before {
+  left: calc(var(--eien-space-1) / -2);
+  top: calc(var(--eien-space-1) * -1);
+}

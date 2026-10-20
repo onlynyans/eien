@@ -47,6 +47,8 @@ export class PageView {
   readonly #compareHost = h('div', { class: 'compare-host', attrs: { hidden: true } });
   /** The note's words, and what writing adds to them (./word-count.ts). */
   readonly words = new WordCount();
+  /** Where outline cards lie, in the sheet's place (ui/outline). */
+  readonly #board = h('div', { class: 'page__board', attrs: { hidden: true } });
   /** In the colophon, after the save state: today's words, the book's, a sprint (ui/counters). */
   readonly #counters = h('span', { class: 'colophon__counters' });
   readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
@@ -132,7 +134,7 @@ export class PageView {
           ),
           this.#tools,
         ),
-        h('div', { class: 'page__scroll' }, this.#sheet, this.#empty),
+        h('div', { class: 'page__scroll' }, this.#sheet, this.#empty, this.#board),
         h(
           'footer',
           { class: 'colophon count' },
@@ -158,6 +160,13 @@ export class PageView {
   /** Put `controls` at the start of the bar. */
   lead(controls: HTMLElement): void {
     this.#lead.replaceChildren(controls);
+  }
+
+  /** Show `view` (outline cards) on the blotter in the sheet's place; null gives the sheet back. */
+  board(view: HTMLElement | null): void {
+    this.#board.replaceChildren(...(view ? [view] : []));
+    this.#board.hidden = view === null;
+    this.#board.parentElement?.toggleAttribute('data-board', view !== null);
   }
 
   /** Today's words, the book's and a sprint, in the colophon. */

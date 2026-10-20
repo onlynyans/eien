@@ -21,7 +21,13 @@ export interface Ao3Parts {
 const NOTHING = 'Nothing to copy: the note has no words yet.';
 const NOTHING_CHOSEN = 'Nothing to copy: what’s chosen has no words.';
 
-export function ao3Out(parts: Ao3Parts) {
+/** Copy for AO3 and Export → AO3 HTML, for the open note. */
+export interface Ao3Out {
+  copy(): Promise<void>;
+  export(): Promise<void>;
+}
+
+export function ao3Out(parts: Ao3Parts): Ao3Out {
   const html = (text: string, chosen?: { from: number; to: number }) =>
     toAo3Html(
       text,
