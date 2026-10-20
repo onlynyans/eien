@@ -4,8 +4,8 @@
 import { createHash } from 'node:crypto';
 import { type Dirent, type FSWatcher, watch } from 'node:fs';
 import { lstat, mkdir, open, readdir, readFile, realpath, rename, rm } from 'node:fs/promises';
-import { dirname, join, relative, sep } from 'node:path';
-import { baseName, isHiddenName, VaultPathError, vaultPath } from '../../core/paths';
+import { basename, dirname, join, relative, sep } from 'node:path';
+import { isHiddenName, VaultPathError, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
 import type { FileState, Storage, WriteResult } from '../storage';
 
@@ -155,7 +155,8 @@ const isNotFound = (error: unknown): boolean =>
  * file, then flush the folder. A crash leaves the old file or the new one.
  */
 export async function writeDurably(file: string, text: string): Promise<void> {
-  const temp = join(dirname(file), tempNameOf(baseName(file)));
+  // `file` is a system path ("\\" on Windows): its name comes from node:path, not the vault's "/" helpers.
+  const temp = join(dirname(file), tempNameOf(basename(file)));
   const handle = await open(temp, 'w');
   try {
     await handle.writeFile(text, 'utf8');

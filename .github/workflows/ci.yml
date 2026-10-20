@@ -46,6 +46,12 @@ jobs:
           node-version-file: package.json
           cache: npm
       - run: npm ci
+
+      # The disk storage's contract on this system's own file system: paths,
+      # renames and watching differ between macOS, Windows and Linux.
+      - name: Storage tests on this system
+        run: npx vitest run src/platform
+
       - run: npm run build
 
       # Ubuntu 24.04 stops Chromium's sandbox from creating namespaces. Allow it,

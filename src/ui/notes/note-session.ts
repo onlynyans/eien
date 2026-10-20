@@ -128,7 +128,9 @@ export class NoteSession {
       }
       this.#setState(this.#text === this.#base ? 'saved' : 'unsaved');
       if (this.#state === 'unsaved') this.edit(this.#text); // typed during the save
-    } catch {
+    } catch (error) {
+      // The words stay on screen and the save is retried; the cause goes to the log.
+      console.error(`Saving ${this.#path} failed:`, error);
       this.#retryLater();
     }
   }

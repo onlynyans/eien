@@ -164,6 +164,7 @@ describe('NoteSession', () => {
 
   it('retries a save that failed, and loses nothing meanwhile', async () => {
     const { vault, write, states, session } = await setup();
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
     write.mockRejectedValueOnce(new Error('disk unavailable'));
     session.edit('Typed while the disk was away.');
     await settle(session);
@@ -173,6 +174,8 @@ describe('NoteSession', () => {
     await session.flush();
     expect((await vault.read('Fic/Seventeen.md'))?.text).toBe('Typed while the disk was away.');
     expect(session.state).toBe('saved');
+    expect(logged).toHaveBeenCalledWith('Saving Fic/Seventeen.md failed:', expect.any(Error));
+    logged.mockRestore();
   });
 
   it('saves again what was typed during a save', async () => {
