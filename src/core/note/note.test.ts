@@ -99,13 +99,22 @@ describe('readNote', () => {
     expect(note.tags).toEqual(['tag']);
   });
 
-  it('reads a large note in reasonable time', () => {
-    const raw = `${'A line with **bold** and a #tag and [a link](x).\n\n'.repeat(20_000)}`;
-    const started = performance.now();
-    const note = readNote(raw, 'Big');
-    expect(note.tags).toEqual(['tag']);
-    expect(performance.now() - started).toBeLessThan(3000);
-  });
+  it('reads a large note in time that grows with its length, not with its square', () => {
+    // Timed against a tenth of it, on the same machine, so a busy runner can't fail it.
+    const text = (lines: number) =>
+      'A line with **bold** and a #tag and [a link](x).\n\n'.repeat(lines);
+    const time = (raw: string) => {
+      const started = performance.now();
+      const note = readNote(raw, 'Big');
+      return { note, took: performance.now() - started };
+    };
+    time(text(200)); // warmed up first
+    const tenth = time(text(2_000));
+    const whole = time(text(20_000));
+    expect(whole.note.tags).toEqual(['tag']);
+    // Ten times the text: about ten times as long read in one pass; a square would be ~100.
+    expect(whole.took / tenth.took).toBeLessThan(30);
+  }, 60_000);
 });
 
 describe('long runs of lines', () => {
