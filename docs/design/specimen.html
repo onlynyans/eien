@@ -6,8 +6,10 @@
     <title>Eien — design specimen</title>
     <link rel="stylesheet" href="fonts.css" />
     <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="themes/otaku.css" />
     <link rel="stylesheet" href="base.css" />
     <link rel="stylesheet" href="specimen.css" />
+    <script src="palette.js"></script>
   </head>
   <body>
     <div class="desk">
@@ -35,6 +37,10 @@
             </p>
           </div>
           <div class="title-controls">
+            <div class="palette" role="group" aria-label="Palette">
+              <button class="word-button" type="button" data-palette-choice="washi">Washi</button>
+              <button class="word-button" type="button" data-palette-choice="otaku">Otaku</button>
+            </div>
             <div class="theme" role="group" aria-label="Theme">
               <button class="word-button" type="button" data-theme-choice="system">System</button>
               <button class="word-button" type="button" data-theme-choice="light">Day</button>
@@ -46,15 +52,14 @@
               <button class="word-button" type="button" data-face-choice="plex-sans">Plex Sans</button>
               <button class="word-button" type="button" data-face-choice="archivo">Archivo</button>
             </div>
-          </div>
           <div class="title-body">
             <p class="title-lede">
-              A book on a desk at night. The window is the desk; each note is a sheet of washi
-              paper laid on it, lifted only by its tone and a hairline edge. The words are sumi
-              ink, in four strengths. One vermilion seal marks what is kept, and appears nowhere
-              else. Two voices set every word: a text face of the writer’s choosing for what a
-              person wrote, a mono for what the machine counts or you press. By night the desk
-              is inkstone, the same warm hues darkened.
+              A book on a desk at night. The sidebar is the desk; each note is a sheet of washi
+              paper laid on a blotter, lifted by its tone, a hairline edge and one soft shadow.
+              The words are sumi ink, in four strengths. One vermilion seal marks what is kept,
+              and appears nowhere else. Two voices set every word: a text face of the writer’s
+              choosing for what a person wrote, a mono for what the machine counts or you press.
+              By night the desk is inkstone, the same warm hues darkened.
             </p>
             <p class="label title-colophon">
               Design specimen <span>·</span> October 2026
@@ -69,9 +74,11 @@
             <p class="sheet-numeral">i</p>
             <h2 class="sheet-title" id="colour-title">Colour</h2>
             <p class="sheet-lede">
-              Every colour in Eien, by day and by night. Each sample is cut in two, the day desk
-              and the night inkstone, whatever this page is set to. Inks are set on the desk and on
-              a sheet of paper, with their contrast measured from the tokens as the page loads. 4.5&#8239;:&#8239;1 or more reads at any size (AA);
+              Every colour in the <b data-palette-name>Washi</b> palette, by day and by night
+              (switch palettes at the top). Each sample is cut in two,
+              day and night, whatever this page is set to. Inks are set on the desk and on a sheet
+              of paper, and then on every surface, with their contrast measured from the tokens as
+              the page loads. 4.5&#8239;:&#8239;1 or more reads at any size (AA);
               3&#8239;:&#8239;1 is enough for large type and marks.
             </p>
           </header>
@@ -79,9 +86,24 @@
           <section class="family" aria-labelledby="fam-surface">
             <div class="family-head">
               <h3 class="label" id="fam-surface">Surface</h3>
-              <p class="family-note">The desk and what lies on it. Depth is tone and a hairline, never a shadow.</p>
+              <p class="family-note">
+                Darker is further back: desk, blotter, band, paper, raised. Each step is big enough
+                to see at a glance.
+              </p>
             </div>
             <div class="swatch-cards" data-family="surface"></div>
+          </section>
+
+          <section class="family" aria-labelledby="fam-depth">
+            <div class="family-head">
+              <h3 class="label" id="fam-depth">Depth</h3>
+              <p class="family-note">
+                The surfaces stacked as the window stacks them. Two shadows and no more: the sheet
+                (<code class="token">--eien-shadow-sheet</code>) and whatever floats
+                (<code class="token">--eien-shadow-float</code>).
+              </p>
+            </div>
+            <div class="depth-pair" data-depth></div>
           </section>
 
           <section class="family" aria-labelledby="fam-ink">
@@ -109,7 +131,7 @@
               <h3 class="label" id="fam-seal">The seal</h3>
               <p class="family-note">
                 The one accent, in five places only: the mark, a sealed version, “sealed” in the
-                status line, the rule beside the selected row, and the caret.
+                status line, the rule beside the selected row, and the caret with its selection.
               </p>
             </div>
             <div class="swatch-rows" data-family="seal"></div>
@@ -124,6 +146,17 @@
               </p>
             </div>
             <div class="swatch-rows" data-family="status"></div>
+          </section>
+
+          <section class="family" aria-labelledby="fam-contrast">
+            <div class="family-head">
+              <h3 class="label" id="fam-contrast">Contrast, everywhere</h3>
+              <p class="family-note">
+                Every ink on every surface it can sit on, each figure written in that ink on that
+                ground. Text needs 4.5; faded and the seal, 3.
+              </p>
+            </div>
+            <div class="contrast-grids" data-contrast></div>
           </section>
         </section>
 
@@ -328,7 +361,7 @@
               <p class="family-note">Anything the machine counts or you press: counts, dates, labels, buttons, the status line.</p>
             </div>
 
-            <div class="typewriter">
+            <div class="mono-voice">
               <div class="tw-block">
                 <p class="tw-spec">
                   <span class="wf-name">Meta</span>
@@ -485,8 +518,9 @@
                 </p>
               </div>
               <figcaption class="figure-note">
-                A note’s versions, newest first. Each seal is marked; the draft is not. The open
-                row has the short vermilion rule and the seal wash.
+                A note’s versions, newest first, on raised paper that floats beside the page. Each
+                seal is marked; the draft is not. The open row has the short vermilion rule and the
+                neutral fill.
               </figcaption>
             </figure>
           </div>
@@ -545,7 +579,7 @@
 
           <div class="state-panels">
             <figure class="state-figure">
-              <figcaption class="label state-caption">The sidebar · a contents page</figcaption>
+              <figcaption class="label state-caption">The sidebar · a contents page, on the desk</figcaption>
               <div class="panel sidebar-panel">
                 <p class="panel-label label">Library</p>
                 <button class="tree-row" type="button" data-state="default">
@@ -577,7 +611,7 @@
             </figure>
 
             <figure class="state-figure">
-              <figcaption class="label state-caption">The note list · an index</figcaption>
+              <figcaption class="label state-caption">The note list · an index, on paper</figcaption>
               <div class="panel list-panel">
                 <div class="list-head">
                   <h3 class="list-title">A Mended Scarf</h3>
@@ -619,7 +653,7 @@
 
           <div class="state-strips">
             <figure class="state-strip">
-              <figcaption class="label state-caption">A field · pressed into the desk</figcaption>
+              <figcaption class="label state-caption">A field · on the band</figcaption>
               <div class="strip panel">
                 <label class="strip-item">
                   <input class="field" type="search" placeholder="Search 312 notes" />

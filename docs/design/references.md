@@ -52,7 +52,7 @@ the colophon; words for controls; the seal used sparingly.
 ## 5. Supabase docs — monospace labels on white
 
 - **Uppercase monospace section labels** (ENVIRONMENTS, ON THIS PAGE) — the
-  same idea as Eien's typewriter labels, and they read crisply because they sit
+  same idea as Eien's mono labels, and they read crisply because they sit
   on white with real contrast.
 - **The active item**: a vertical bar beside it plus darker or coloured text.
 - **Groups divided by hairlines** in the nav.
@@ -77,12 +77,36 @@ the colophon; words for controls; the seal used sparingly.
 
 The book-on-a-desk idea stays; the desk just becomes clearly *not* the paper.
 
-| Surface | Day | Night | Used for |
-|---|---|---|---|
-| Desk (darkest day tone) | warm grey, clearly below paper | darkest | the sidebar: navigation |
-| Blotter | light warm grey | dark | the ground around the page; bands |
-| Paper | near-white, warm | lightest panel | the note list and the sheet: content |
-| Raised paper | white | one step above paper | menus, the versions panel |
+| Surface | Token | Day | Night | Used for |
+|---|---|---|---|---|
+| Desk | `--eien-desk` | `#d9d2c8` warm grey, clearly below paper (OKLCH L 0.87) | `#110e0b` darkest (L 0.17) | the sidebar: navigation |
+| Blotter | `--eien-blotter` | `#eae5dd` light warm grey (L 0.92) | `#1a1713` (L 0.21) | the ground around the sheet |
+| Band | `--eien-band` | `#f4f1ea` between blotter and paper (L 0.96) | `#201d19` (L 0.23) | the list's head, the page's control strip, the colophon |
+| Paper | `--eien-paper` | `#fdfbf7` near-white, warm (L 0.99) | `#28241f` lightest panel (L 0.26) | the note list and the sheet: content |
+| Raised paper | `--eien-paper-raised` | `#ffffff` white | `#312d28` one step above paper (L 0.30) | menus, the versions panel |
+| Well | `--eien-well` | `#f9f7f3` | `#24201c` | inside a field, on the band |
+| Selected | `--eien-selected` | `#ede9e3` (darker than paper, lighter than desk) | `#38332e` | the chosen row, with the seal's rule |
+
+Shadows: `--eien-shadow-sheet` (1px/2px and 6px/24px, warm umber at 6% and
+8% by day; black at 40% and 45% by night) and `--eien-shadow-float` (2px/6px
+and 14px/36px, 8% and 16% by day; 45% and 60% by night). Night's hairlines are
+stronger than day's (`--eien-rule` at 14% against 13%), since its tone steps
+are smaller.
+
+Measured contrast (WCAG), lowest of each ink across every surface above plus
+the desk and paper under hover:
+
+| Ink | Day | Night |
+|---|---|---|
+| ink `#23201c` / `#e9e2d4` | 10.0 (desk, hovered) · 15.7 on paper | 9.7 (selected) · 12.0 on paper |
+| ink-soft `#51473c` / `#c3b9a7` | 5.6 (desk, hovered) · 8.8 on paper | 6.4 (selected) · 7.9 on paper |
+| pencil `#5d5348` / `#a7a095` | 4.6 (desk, hovered) · 5.0 on desk · 7.3 on paper | 4.8 (selected) · 6.0 on paper |
+| faded (3:1) `#766d62` / `#837c73` | 3.1 (desk, hovered) | 3.0 (selected) |
+
+The Otaku palette (`themes/otaku.css`) takes the same model: its rail becomes
+the desk (`#cfd4d2` / `#0c0f0e`), its desk the blotter (`#e4e8e7` /
+`#141817`), its band, paper and open-field tones the band, paper and raised
+paper, each step spread to read as clearly as these.
 
 - **The sidebar is the desk**: a clear step darker than everything else in day
   mode — enough to see at a glance (aim for a visible difference, not a hint).
@@ -101,5 +125,8 @@ The book-on-a-desk idea stays; the desk just becomes clearly *not* the paper.
 - **Contrast**: text stays ≥ 4.5:1 on every surface it appears on, including
   the desk.
 
-These are design decisions; exact values are tuned by eye against the
-references and checked by measurement.
+These are design decisions; the values in the table were tuned by eye against
+the references and checked by measurement. To keep pencil at 4.5:1 on the
+darker desk, pencil, faded, moss and ochre each moved a little toward the ink
+by day (pencil `#685f53` → `#5d5348`), and pencil and faded a little toward
+the light by night.

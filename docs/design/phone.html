@@ -6,8 +6,10 @@
     <title>Eien — phone</title>
     <link rel="stylesheet" href="fonts.css" />
     <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="themes/otaku.css" />
     <link rel="stylesheet" href="base.css" />
     <link rel="stylesheet" href="phone.css" />
+    <script src="palette.js"></script>
     <script src="phone.js" defer></script>
   </head>
   <body>
@@ -24,6 +26,11 @@
           <button class="word-button" type="button" data-face-choice="literata">Literata</button>
           <button class="word-button" type="button" data-face-choice="plex-sans">Plex Sans</button>
           <button class="word-button" type="button" data-face-choice="archivo">Archivo</button>
+        </div>
+        <div class="theme-switch" role="group" aria-label="Palette">
+          <span class="label theme-switch__label">Palette</span>
+          <button class="word-button" type="button" data-palette-choice="washi">Washi</button>
+          <button class="word-button" type="button" data-palette-choice="otaku">Otaku</button>
         </div>
         <div class="theme-switch" role="group" aria-label="Theme">
           <span class="label theme-switch__label">Theme</span>
@@ -192,6 +199,13 @@
               <button class="word-button word-button--touch" type="button" data-face-choice="literata">Literata</button>
               <button class="word-button word-button--touch" type="button" data-face-choice="plex-sans">Plex Sans</button>
               <button class="word-button word-button--touch" type="button" data-face-choice="archivo">Archivo</button>
+            </div>
+          </div>
+          <div class="sheet-row">
+            <span class="label sheet-row__key">Palette</span>
+            <div class="sheet-row__choices" role="group" aria-label="Palette">
+              <button class="word-button word-button--touch" type="button" data-palette-choice="washi">Washi</button>
+              <button class="word-button word-button--touch" type="button" data-palette-choice="otaku">Otaku</button>
             </div>
           </div>
           <div class="sheet-row">

@@ -91,26 +91,44 @@ const FAMILIES = {
     {
       token: '--eien-desk',
       name: 'Desk',
-      use: 'The window itself: sidebar, note list and the margin round the page.',
+      use: 'The sidebar: navigation, the furthest back. A clear step darker than the paper beside it.',
       show: 'ground',
+    },
+    {
+      token: '--eien-blotter',
+      name: 'Blotter',
+      use: 'The ground of the page pane, and of this specimen: the sheet lies on it.',
+      show: 'ground',
+    },
+    {
+      token: '--eien-band',
+      name: 'Band',
+      use: 'A header or strip: the list’s head, the page’s controls, the colophon. A hairline caps it.',
+      show: 'band',
     },
     {
       token: '--eien-paper',
       name: 'Washi paper',
-      use: 'The sheet you write on, and the brightest thing on screen.',
+      use: 'Content: the note list and the sheet you write on. Reading happens here.',
       show: 'sheet',
     },
     {
       token: '--eien-paper-raised',
-      name: 'Top sheet',
-      use: 'A menu or popover: one sheet above the page.',
-      show: 'sheet',
+      name: 'Raised paper',
+      use: 'What floats: a menu, the versions panel. It casts the float shadow.',
+      show: 'float',
     },
     {
       token: '--eien-well',
       name: 'Well',
-      use: 'Inside a field: pressed into the desk.',
+      use: 'Inside a field: a slip of paper let into the band.',
       show: 'sheet',
+    },
+    {
+      token: '--eien-selected',
+      name: 'Chosen',
+      use: 'The selected row: a neutral fill, always beside the seal’s rule.',
+      show: 'chosen',
     },
     {
       token: '--eien-hover',
@@ -127,7 +145,7 @@ const FAMILIES = {
     {
       token: '--eien-scrim',
       name: 'Scrim',
-      use: 'The desk dimmed behind a sheet laid over it.',
+      use: 'The window dimmed behind a sheet laid over it.',
       show: 'scrim',
     },
   ],
@@ -202,7 +220,7 @@ const FAMILIES = {
     {
       token: '--eien-seal-wash',
       name: 'Seal wash',
-      use: 'The ground of the selected row beside its rule, and of text you select.',
+      use: 'The ground of text you select: part of the caret, so it is the seal’s. Rows use the neutral fill.',
       show: 'selected',
     },
     {
@@ -273,7 +291,7 @@ function cellContent(c) {
     case 'glyph':
       return '<span class="seal seal--plate" data-measure="text">永</span>';
     case 'selected':
-      return '<span class="tree-row tree-row--static" aria-current="true"><span class="count">iii</span><span data-measure="text">Seventeen</span></span>';
+      return '<span class="sample sample--row">He doesn’t <span class="selection-demo" data-measure="text">reply.</span></span>';
     case 'ins':
       return '<span class="sample sample--row"><ins data-measure="text">as he mends</ins></span>';
     case 'del':
@@ -316,11 +334,16 @@ function info(c) {
     </div>`;
 }
 
-// A row: name on the left; day and night halves, each with a desk and a paper cell.
-function swatchRow(c) {
+// A row: name on the left; day and night halves, each with two cells: the
+// grounds the colour is used on. Status lives on the page (the sheet, and the
+// bands that carry Compare's legend), so it is shown there, not on the desk.
+const ROW_GROUNDS = { status: ['band', 'paper'] };
+
+function swatchRow(c, family) {
+  const [first, second] = ROW_GROUNDS[family] ?? ['desk', 'paper'];
   const halves = SCHEMES.map(
     ({ scheme, word }) =>
-      `<div class="half" data-scheme="${scheme}"><span class="half-word">${word}</span>${cell(c, 'desk')}${cell(c, 'paper')}</div>`,
+      `<div class="half" data-scheme="${scheme}"><span class="half-word">${word}</span>${cell(c, first)}${cell(c, second)}</div>`,
   ).join('');
   return `<article class="swatch-row">
     ${info(c)}
@@ -329,13 +352,25 @@ function swatchRow(c) {
   </article>`;
 }
 
-// A card, for surfaces: the colour laid on the desk, day beside night.
+// A plate: the colour itself. A row's fill (chosen, hover, pressed) is shown
+// across a slip of paper, between two plain rows, as it appears in the list.
+function plate(c) {
+  if (c.show === 'chosen' || c.show === 'wash') {
+    const row = (fill, words) =>
+      `<span class="plate-row${fill ? ' plate-row--fill' : ''}"${fill ? ` style="background: var(${c.token})"` : ''}>${words}</span>`;
+    return `<span class="plate plate--rows plate--${c.show}">${row(false, 'The Tear')}${row(true, 'Seventeen')}${row(false, 'Ash on the Wind')}</span>`;
+  }
+  const inner = c.show === 'scrim' ? '<span class="plate-sheet"></span>' : '';
+  return `<span class="plate plate--${c.show}" style="background: var(${c.token})">${inner}</span>`;
+}
+
+// A card, for surfaces: the colour laid on the blotter, day beside night.
 function swatchCard(c) {
   const halves = SCHEMES.map(
     ({ scheme, word }) =>
       `<div class="half half--plate" data-scheme="${scheme}">
         <span class="half-word">${word}</span>
-        <span class="plate plate--${c.show}" style="background: var(${c.token})">${c.show === 'scrim' ? '<span class="plate-sheet"></span>' : ''}</span>
+        ${plate(c)}
         <span class="half-hex" data-hex="${c.token}" data-in="${scheme}"></span>
       </div>`,
   ).join('');
@@ -344,9 +379,92 @@ function swatchCard(c) {
 
 for (const [family, colours] of Object.entries(FAMILIES)) {
   const box = document.querySelector(`[data-family="${family}"]`);
-  const draw = family === 'surface' ? swatchCard : swatchRow;
+  const draw = family === 'surface' ? swatchCard : (c) => swatchRow(c, family);
   box.innerHTML = colours.map(draw).join('');
 }
+
+/* ── Depth: the surfaces stacked as the window stacks them ─────────────── */
+// Desk, then the page pane: a band, the blotter with the sheet on it, a menu
+// floating over the sheet, and the colophon's band. Each layer names itself.
+
+const tag = (words) => `<span class="depth-tag">${words}</span>`;
+
+function depthFigure({ scheme, word }) {
+  return `<figure class="depth" data-scheme="${scheme}">
+    <figcaption class="half-word">${word}</figcaption>
+    <div class="depth-window">
+      <div class="depth-desk">
+        ${tag('desk')}
+        <span class="depth-row">Fic</span>
+        <span class="depth-row is-chosen">A Mended Scarf</span>
+        <span class="depth-row">Notes</span>
+        ${tag('chosen')}
+      </div>
+      <div class="depth-page">
+        <div class="depth-band">${tag('band')}<span class="depth-words">Live · Source</span></div>
+        <div class="depth-blotter">
+          ${tag('blotter')}
+          <div class="depth-sheet">
+            ${tag('paper · sheet shadow')}
+            <p class="depth-title">Seventeen</p>
+            <p class="depth-line">“Look,” he begins more softly.</p>
+            <p class="depth-line">It takes her a minute to collect herself.</p>
+            <div class="depth-menu">
+              ${tag('raised · float shadow')}
+              <span class="depth-item">Book order</span>
+              <span class="depth-item">Title</span>
+            </div>
+          </div>
+        </div>
+        <div class="depth-band depth-band--foot">${tag('band')}<span class="depth-words">1,204 words</span></div>
+      </div>
+    </div>
+  </figure>`;
+}
+
+document.querySelector('[data-depth]').innerHTML = SCHEMES.map(depthFigure).join('');
+
+/* ── Contrast, everywhere: every ink on every surface, measured ────────── */
+
+const GRID_INKS = [
+  ['--eien-ink', 'Ink', 4.5],
+  ['--eien-ink-soft', 'Iron-gall', 4.5],
+  ['--eien-pencil', 'Graphite', 4.5],
+  ['--eien-faded', 'Faded', 3],
+  ['--eien-added', 'Moss', 4.5],
+  ['--eien-removed', 'Carmine', 4.5],
+  ['--eien-caution', 'Ochre', 4.5],
+  ['--eien-seal', 'Seal', 3],
+];
+const GRID_GROUNDS = [
+  ['--eien-desk', 'Desk'],
+  ['--eien-blotter', 'Blotter'],
+  ['--eien-band', 'Band'],
+  ['--eien-well', 'Well'],
+  ['--eien-paper', 'Paper'],
+  ['--eien-selected', 'Chosen'],
+  ['--eien-paper-raised', 'Raised'],
+];
+
+function contrastGrid({ scheme, word }) {
+  const head = GRID_GROUNDS.map(([, name]) => `<th scope="col">${name}</th>`).join('');
+  const rows = GRID_INKS.map(
+    ([ink, name, min]) =>
+      `<tr><th scope="row">${name}</th>${GRID_GROUNDS.map(
+        ([ground]) =>
+          `<td style="background: var(${ground})"><span class="cg-ratio" style="color: var(${ink})" data-min="${min}"></span></td>`,
+      ).join('')}</tr>`,
+  ).join('');
+  return `<div class="contrast-scroll" data-scheme="${scheme}">
+    <table class="contrast-grid">
+      <caption class="half-word">${word}</caption>
+      <thead><tr><td></td>${head}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+document.querySelector('[data-contrast]').innerHTML = SCHEMES.map(contrastGrid).join('');
 
 /* ── Space ─────────────────────────────────────────────────────────────── */
 
@@ -431,10 +549,6 @@ function formatHex({ r, g, b, a }) {
   return a < 1 ? `${hex} at\u00a0${Math.round(a * 200) / 2}%` : hex;
 }
 
-for (const el of document.querySelectorAll('[data-hex]')) {
-  el.textContent = formatHex(resolve(el.dataset.hex, el.dataset.in));
-}
-
 /* ── Contrast, measured ────────────────────────────────────────────────── */
 
 // Lay one colour over another (for washes and hovers over the desk or paper).
@@ -493,7 +607,32 @@ function measureAll() {
   }
 }
 
-measureAll();
+// The grid: each figure is written in its ink on its ground, so it measures itself.
+function measureGrids() {
+  for (const el of document.querySelectorAll('.cg-ratio')) {
+    const ratio = contrast(parseColour(getComputedStyle(el).color), groundBehind(el));
+    const low = ratio < Number(el.dataset.min);
+    el.textContent = low ? `${ratio.toFixed(1)} low` : ratio.toFixed(1);
+    el.closest('td').classList.toggle('is-low', low);
+  }
+}
+
+// Everything the palette decides, read back from the live CSS. Runs again
+// whenever the palette changes, so the plates always show the one in use.
+const paletteName = { washi: 'Washi', otaku: 'Otaku' };
+function readBack() {
+  for (const el of document.querySelectorAll('[data-hex]')) {
+    el.textContent = formatHex(resolve(el.dataset.hex, el.dataset.in));
+  }
+  measureAll();
+  measureGrids();
+  for (const el of document.querySelectorAll('[data-palette-name]')) {
+    el.textContent = paletteName[root.dataset.palette] ?? paletteName.washi;
+  }
+}
+
+readBack();
+new MutationObserver(readBack).observe(root, { attributes: true, attributeFilter: ['data-palette'] });
 
 /* ── Compare: one button cycles changes → the seal alone → the draft ───── */
 

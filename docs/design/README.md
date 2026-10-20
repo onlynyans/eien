@@ -5,12 +5,15 @@ mockups here are how to see it; `tokens.css` is the source of every value.
 
 | File | What it shows |
 |---|---|
-| [specimen.html](specimen.html) | Every colour, the four text faces side by side and the mono, the seal, rows and their states, the diff style, the spacing scale — day and night side by side |
+| [specimen.html](specimen.html) | Every colour and surface, the depth stack, every ink's contrast on every surface, the four text faces side by side and the mono, the seal, rows and their states, the diff style, the spacing scale — day and night side by side |
 | [desktop.html](desktop.html) | The app window: three panes, two-pane mode, collapsing and resizing, the page's views, Compare, Seal, Versions |
 | [phone.html](phone.html) | The phone: contents → index → page, one at a time, controls behind ⋯ |
-| [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night |
+| [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night. Its colours are the Washi palette |
+| [themes/otaku.css](themes/otaku.css) | The Otaku palette: Otaku's colours on Eien's colour tokens, day and night |
+| [palette.js](palette.js) | The mockups' WASHI · OTAKU switch: sets `data-palette` before the page draws and keeps the choice |
 | [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Archivo and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
+| [references.md](references.md) | The reference screenshots, what reads well in each, and the surface values that came of it |
 
 To view them, serve this folder (fonts don't load from `file://`):
 
@@ -32,12 +35,30 @@ AO3. The interface must never be louder than the page.
 *Eien* (永遠) means "forever". Eien's first rule is that words are never lost,
 so permanence is the theme.
 
-- **The window is the desk.** Sidebar, note list and the space around the page
-  share one ground, divided only by hairlines.
-- **The note is a sheet of washi paper** laid on the desk: the brightest thing
-  on screen, square-cornered, lifted by tone alone.
+- **The sidebar is the desk**: navigation, a clear step darker than anything
+  else by day, so one glance tells you where you are.
+- **The note list and the note are washi paper**: near-white, with near-black
+  ink. Reading always happens on the lightest surface.
+- **The sheet lies on a blotter**, the light warm grey of the page pane. It is
+  square-cornered, with a hairline edge and one soft shadow: the object on the
+  desk.
+- **Bands** — the list's head, the page's control strip, the colophon — sit on
+  a tone between blotter and paper, capped by a hairline.
+- **What floats is raised paper**: menus and the versions panel, white, with
+  their own soft shadow.
 - **Words are sumi ink**, in four strengths: ink, iron-gall, graphite, faded.
-- **Night is inkstone**: the same warm hues darkened, never grey-blue.
+- **Night is inkstone**: the same warm hues darkened, never grey-blue, in the
+  same order — darker is further back.
+
+| Surface | Token | Where |
+|---|---|---|
+| Desk | `--eien-desk` | the sidebar (on the phone, the contents) |
+| Blotter | `--eien-blotter` | the page pane around the sheet; the ground of these mockups |
+| Band | `--eien-band` | the list's head, the page's control strip, the colophon, Compare's strip |
+| Paper | `--eien-paper` | the note list (the phone's index) and the sheet |
+| Raised paper | `--eien-paper-raised` | menus, the versions panel, the phone's bottom sheet, a row being dragged |
+| Well | `--eien-well` | inside a field |
+| Selected | `--eien-selected` | the chosen row, beside the seal's rule |
 
 ### The seal
 
@@ -48,12 +69,14 @@ places, and its rarity is its meaning:
 1. the app's mark, top-left (and the way home on the phone)
 2. each sealed version in a note's versions
 3. "▪ sealed 2h ago" in the status line
-4. the short rule beside the selected row
-5. the caret, and the text selection it makes
+4. the short rule beside the selected row (the row itself takes a neutral
+   fill, `--eien-selected`)
+5. the caret, and the text selection it makes (`--eien-seal-wash`, the one
+   use of the wash)
 
 Nothing else is vermilion: a chosen button is ink in a hairline, keyboard
-focus is an ink ring, and removed words are carmine (the editor's pencil), not
-the seal.
+focus is an ink ring, a selected row's ground is neutral, and removed words
+are carmine (the editor's pencil), not the seal.
 
 Words: a checkpoint is a **seal**; a named version is a **named seal**.
 
@@ -94,21 +117,49 @@ count it, or do you press it?* The mono.
 ## Rules for the interface code
 
 1. Every colour, face, size, space and duration is a token from `tokens.css`.
-   A theme overrides tokens and nothing else.
-2. Depth is surface tone plus hairlines. No shadows, no gradients, square
+   A theme or palette overrides tokens and nothing else.
+2. Depth is surface tone plus hairlines, and exactly two shadows: the sheet
+   casts `--eien-shadow-sheet`, because it is the object you work on and must
+   read as lying on the blotter; and whatever floats above the window — a
+   menu, the versions panel, the phone's bottom sheet, a row being dragged —
+   casts `--eien-shadow-float`, because it covers what is under it and must
+   read as above it. Panes, bands and rows cast none. No gradients, square
    corners (only dots are round).
 3. One accent: the seal, in its five places only. Status colours mean status:
    moss for added words, carmine for removed words and delete, ochre for a
    conflict.
-4. Colour is never the only signal. A selected row has the seal rule and the
-   wash; a removed word is struck through and tinted; a conflict says
+4. Colour is never the only signal. A selected row has the seal rule and a
+   neutral fill; a removed word is struck through and tinted; a conflict says
    "conflict".
-5. Text reaches 4.5:1 contrast on desk and paper in both schemes (checked;
-   see the specimen). Faded is only for placeholders and disabled things.
+5. Text reaches 4.5:1 contrast on every surface it sits on — desk, blotter,
+   band, well, paper, selected, raised — in both schemes and every palette
+   (checked; the specimen measures it live). Faded is only for placeholders
+   and disabled things, and reaches 3:1.
 6. Every control has hover, pressed, keyboard focus and disabled states, and
    works from the keyboard. Touch targets are at least 44px.
 7. Nothing moves the writer didn't ask to move. Transitions are quick and
    quiet, and none with reduced motion.
+
+## Palettes and schemes
+
+Two separate choices, and every combination works:
+
+- **A palette is a set of colours.** Washi, Eien's own, is the default:
+  `tokens.css` with no attribute. Otaku (`themes/otaku.css`) sets
+  `data-palette="otaku"` on `<html>` and overrides only the colour tokens —
+  surfaces, shadows, inks, rules, the seal and status. Faces, sizes, spaces
+  and motion stay Eien's.
+- **A scheme is day, night or the system's.** It is `color-scheme` on the root
+  (`data-theme="light"` or `"dark"`, or neither to follow the system), and each
+  colour token is written as `light-dark(day, night)`.
+- **Every palette defines both schemes**, keeps the same surface order (darker
+  is further back), and meets the same contrast rules. A palette borrowed from
+  elsewhere keeps its colours but takes Eien's depth: its steps are spread until
+  the sidebar, the list and the page read apart at a glance.
+
+In the mockups, WASHI · OTAKU sits beside the theme control (the desktop's
+mockup bar, the phone page's top and its Settings sheet, the specimen's title
+page) and is remembered in `localStorage`.
 
 ## Known gaps
 
@@ -123,7 +174,7 @@ count it, or do you press it?* The mono.
 
 ## In phase 3
 
-`tokens.css`, `fonts.css`, `base.css` and the fonts move into
+`tokens.css`, `themes/`, `fonts.css`, `base.css` and the fonts move into
 `src/ui/theme/`, and the token list becomes `docs/themes.md` (spec §7). The
 mockups' behaviour is a guide, not code to copy: the app's interface is built
 fresh, in modules, against the spec.

@@ -105,13 +105,14 @@ kbd {
   margin: 0;
 }
 
-/* ── Sheets of paper ──────────────────────────────────────────────────── */
+/* ── Sheets of paper, on the blotter ──────────────────────────────────── */
 
 .sheet {
   margin: 0 0 var(--eien-space-6);
   padding: var(--eien-space-7) var(--eien-space-8) var(--eien-space-8);
   background: var(--eien-paper);
   border: var(--eien-hairline) solid var(--eien-rule);
+  box-shadow: var(--eien-shadow-sheet);
   scroll-margin-top: var(--eien-space-4);
 }
 .sheet-head {
@@ -180,11 +181,7 @@ kbd {
   font-style: italic;
   color: var(--eien-pencil);
 }
-.theme {
-  display: flex;
-  gap: var(--eien-space-1);
-}
-/* Theme above, text face below: both the reader's to set. */
+/* The reader's own settings, top right: theme, palette, text face. */
 .title-controls {
   grid-area: theme;
   align-self: start;
@@ -192,6 +189,8 @@ kbd {
   justify-items: end;
   gap: var(--eien-space-1);
 }
+.theme,
+.palette,
 .face-choice {
   display: flex;
   flex-wrap: wrap;
@@ -324,6 +323,10 @@ kbd {
   background: var(--eien-paper);
   border-color: var(--eien-rule);
 }
+.cell--band {
+  background: var(--eien-band);
+  border-color: var(--eien-rule);
+}
 .ratio {
   font-family: var(--eien-face-type);
   font-size: var(--eien-size-label);
@@ -449,10 +452,10 @@ kbd {
   grid-area: show;
 }
 
-/* Cards, for surfaces: the colour laid on the desk */
+/* Cards, for surfaces: the colour laid on the blotter */
 .swatch-cards {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--eien-space-6) var(--eien-space-4);
   padding-top: var(--eien-space-4);
 }
@@ -465,9 +468,53 @@ kbd {
   gap: var(--eien-space-2);
   min-height: 176px;
   padding: var(--eien-space-2);
+  background: var(--eien-blotter);
 }
 .plate {
+  position: relative;
   flex: 1;
+  border: var(--eien-hairline) solid var(--eien-rule);
+}
+/* A row's fill, shown across a slip of paper between two plain rows. */
+.plate--rows {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--eien-paper);
+}
+.plate-row {
+  position: relative;
+  padding: var(--eien-space-1) var(--eien-space-2) var(--eien-space-1) var(--eien-space-3);
+  font-size: var(--eien-size-preview);
+  line-height: var(--eien-leading-row);
+  color: var(--eien-ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.plate-row--fill {
+  color: var(--eien-ink);
+}
+/* Chosen: the neutral fill with the seal's rule beside it. */
+.plate--chosen .plate-row--fill::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--eien-space-1);
+  bottom: var(--eien-space-1);
+  width: var(--eien-mark-w);
+  background: var(--eien-seal);
+}
+/* A band: capped by its hairline, the paper below it. */
+.plate--band {
+  flex: 0 0 40%;
+  border-width: 0 0 var(--eien-hairline);
+  margin-bottom: auto;
+}
+.plate--float {
+  margin: var(--eien-space-1) var(--eien-space-2) var(--eien-space-3);
+  border-color: var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
 }
 .plate--scrim {
   display: flex;
@@ -481,8 +528,192 @@ kbd {
   border: var(--eien-hairline) solid var(--eien-rule);
   border-bottom: 0;
 }
-.plate--sheet {
+.plate--scrim {
+  border-color: transparent;
+}
+
+/* Depth: the window's layers, stacked, day beside night */
+.depth-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--eien-space-4);
+  padding-top: var(--eien-space-4);
+}
+.depth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--eien-space-2);
+  margin: 0;
+  padding: var(--eien-space-3);
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+}
+.depth-window {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 5fr);
+  min-height: 320px;
   border: var(--eien-hairline) solid var(--eien-rule);
+}
+.depth-tag {
+  display: block;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  line-height: 1.6;
+  color: var(--eien-pencil);
+}
+.depth-desk {
+  display: grid;
+  align-content: start;
+  padding: var(--eien-space-3) 0;
+  background: var(--eien-desk);
+  border-right: var(--eien-hairline) solid var(--eien-rule);
+}
+.depth-desk > .depth-tag {
+  padding: 0 var(--eien-space-3) var(--eien-space-2);
+}
+.depth-desk > .depth-tag:last-child {
+  padding: var(--eien-space-1) var(--eien-space-3) 0;
+}
+.depth-row {
+  position: relative;
+  padding: var(--eien-space-1) var(--eien-space-3);
+  font-size: var(--eien-size-preview);
+  color: var(--eien-ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.depth-row.is-chosen {
+  background: var(--eien-selected);
+  color: var(--eien-ink);
+}
+.depth-row.is-chosen::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--eien-space-1);
+  bottom: var(--eien-space-1);
+  width: var(--eien-mark-w);
+  background: var(--eien-seal);
+}
+.depth-page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  background: var(--eien-blotter);
+}
+.depth-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 var(--eien-space-2);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  background: var(--eien-band);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.depth-band--foot {
+  border-top: var(--eien-hairline) solid var(--eien-rule);
+  border-bottom: 0;
+}
+.depth-words {
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-ink-soft);
+  white-space: nowrap;
+}
+.depth-blotter {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: var(--eien-space-2) var(--eien-space-4) var(--eien-space-4);
+}
+.depth-blotter > .depth-tag {
+  padding-bottom: var(--eien-space-2);
+}
+.depth-sheet {
+  position: relative;
+  padding: var(--eien-space-3) var(--eien-space-4);
+  background: var(--eien-paper);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  box-shadow: var(--eien-shadow-sheet);
+}
+.depth-title {
+  margin: var(--eien-space-3) 0 var(--eien-space-1);
+  font-size: var(--eien-size-heading);
+  line-height: var(--eien-leading-row);
+}
+.depth-line {
+  margin: 0;
+  font-size: var(--eien-size-preview);
+  color: var(--eien-ink);
+}
+.depth-menu {
+  position: absolute;
+  bottom: var(--eien-space-3);
+  right: calc(var(--eien-space-3) * -1);
+  display: grid;
+  gap: var(--eien-space-1);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+}
+.depth-item {
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-ink-soft);
+}
+
+/* Contrast, everywhere: one grid per scheme */
+.contrast-grids {
+  display: grid;
+  gap: var(--eien-space-5);
+  padding-top: var(--eien-space-4);
+}
+.contrast-scroll {
+  overflow-x: auto;
+  padding: var(--eien-space-3);
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+}
+.contrast-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--eien-face-type);
+  font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums;
+}
+.contrast-grid caption {
+  padding-bottom: var(--eien-space-2);
+  text-align: left;
+}
+.contrast-grid th {
+  padding: var(--eien-space-1) var(--eien-space-2);
+  font-weight: 400;
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-pencil);
+  text-align: left;
+  white-space: nowrap;
+}
+.contrast-grid td {
+  min-width: 4.5em;
+  padding: var(--eien-space-2);
+  border: var(--eien-hairline) solid var(--eien-rule-soft);
+  white-space: nowrap;
+}
+.contrast-grid thead td {
+  border: 0;
+}
+.contrast-grid td.is-low .cg-ratio {
+  text-decoration: line-through;
 }
 
 /* ── ii. Type ─────────────────────────────────────────────────────────── */
@@ -616,17 +847,18 @@ kbd {
   color: var(--eien-ink);
 }
 
-/* A page of the open note, on its own patch of desk */
+/* A page of the open note, on its own patch of blotter */
 .page-sample {
   margin-top: var(--eien-space-6);
   padding: var(--eien-space-7) var(--eien-space-6);
-  background: var(--eien-desk);
+  background: var(--eien-blotter);
   border: var(--eien-hairline) solid var(--eien-rule);
 }
 .page {
   padding: var(--eien-space-6) var(--eien-space-5) var(--eien-space-4);
   background: var(--eien-paper);
   border: var(--eien-hairline) solid var(--eien-rule);
+  box-shadow: var(--eien-shadow-sheet);
 }
 .page-col {
   max-width: var(--eien-measure);
@@ -723,7 +955,7 @@ kbd {
 }
 
 /* The machine voice */
-.typewriter {
+.mono-voice {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--eien-space-7);
@@ -853,8 +1085,12 @@ kbd {
 .mark-pair .count {
   margin: 0;
 }
-.versions {
+/* The versions panel floats: raised paper and the float shadow. */
+.panel.versions {
   width: min(var(--eien-panel-w), 100%);
+  background: var(--eien-paper-raised);
+  border-color: var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
 }
 .app-corner {
   display: flex;
@@ -884,7 +1120,7 @@ kbd {
   font-style: normal;
 }
 
-/* A desk-coloured pane, as in the window */
+/* A pane as in the window: the desk unless it says otherwise */
 .panel {
   padding: var(--eien-space-2) 0;
   background: var(--eien-desk);
@@ -1055,7 +1291,7 @@ kbd {
   background: var(--eien-press);
 }
 :is(.tree-row, .note-row, .version-row)[aria-current="true"] {
-  background: var(--eien-seal-wash);
+  background: var(--eien-selected);
   color: var(--eien-ink);
 }
 /* The short vermilion rule beside the selected row */
@@ -1180,7 +1416,8 @@ kbd {
   color: var(--eien-ink-soft);
 }
 .list-head {
-  padding: var(--eien-space-2) var(--eien-space-4) var(--eien-space-3);
+  padding: var(--eien-space-3) var(--eien-space-4);
+  background: var(--eien-band);
 }
 .list-title {
   margin: 0;
@@ -1191,8 +1428,14 @@ kbd {
 .list-head .count {
   margin: var(--eien-space-1) 0 0;
 }
+/* The list is paper, its head on the band; the band's hairline is the
+   first row's top rule. */
 .list-panel {
-  padding-bottom: 0;
+  padding: 0;
+  background: var(--eien-paper);
+}
+.list-panel .note-row:first-of-type {
+  border-top-color: var(--eien-rule);
 }
 
 /* The states, named in the margin */
@@ -1252,6 +1495,9 @@ kbd {
   align-items: flex-start;
   gap: var(--eien-space-4) var(--eien-space-5);
   padding: var(--eien-space-4);
+}
+.strip.panel {
+  background: var(--eien-band);
 }
 .strip--paper {
   border-block: var(--eien-hairline) solid var(--eien-rule-soft);
@@ -1429,7 +1675,8 @@ del {
       "show show";
   }
   .seal-grid,
-  .typewriter {
+  .mono-voice,
+  .depth-pair {
     grid-template-columns: minmax(0, 1fr);
   }
   .place-list {
@@ -1464,12 +1711,15 @@ del {
     padding-top: var(--eien-space-7);
   }
   .theme,
+  .palette,
   .face-choice {
     margin-left: calc(var(--eien-space-2) * -1);
   }
   .title-controls {
     justify-items: start;
   }
+  .theme,
+  .palette,
   .face-choice {
     justify-content: flex-start;
   }
