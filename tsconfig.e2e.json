@@ -7,6 +7,10 @@
   },
   "include": [
     "tests/e2e",
+    "tests/android",
+    "playwright.android.config.ts",
+    "tests/mobile",
+    "playwright.mobile.config.ts",
     "src/platform/bridge.ts",
     "playwright.config.ts",
     "src/platform/storage.ts",

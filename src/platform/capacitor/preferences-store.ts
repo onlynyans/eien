@@ -6,17 +6,14 @@ import type { DeviceStore } from '../settings-store';
 
 const KEY = 'eien.device';
 
+/** What's kept; throws when it can't be read, so a change never writes over it. */
 async function readExactly(): Promise<Record<string, unknown>> {
   const { value } = await Preferences.get({ key: KEY });
   if (value === null) return {};
-  try {
-    const data: unknown = JSON.parse(value);
-    return typeof data === 'object' && data !== null && !Array.isArray(data)
-      ? (data as Record<string, unknown>)
-      : {};
-  } catch {
-    return {};
-  }
+  const data: unknown = JSON.parse(value);
+  if (typeof data !== 'object' || data === null || Array.isArray(data))
+    throw new Error('This device’s settings aren’t readable.');
+  return data as Record<string, unknown>;
 }
 
 let queue: Promise<unknown> = Promise.resolve();

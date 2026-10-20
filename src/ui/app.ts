@@ -25,7 +25,7 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
     const info = await bridge.vault.current();
     await settings.reload(); // the vault's own settings come with it
     if (info) shown = await showVault(root, bridge, info.name, settings, () => screen.open());
-    else renderWelcome(root, chooseVault);
+    else renderWelcome(root, chooseVault, bridge.platform);
   };
   const chooseVault = async () => {
     const info = await bridge.vault.choose();

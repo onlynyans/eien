@@ -417,7 +417,7 @@ src/platform/
   electron/     ✓ Storage over Node fs: durable writes, the watcher, crash recovery
   memory/       ✓ Storage in memory, for tests
   index/        ✓ the vault's index over any Storage: previews, words, tags, search
-  capacitor/     Storage over the phone's file system
+  capacitor/    ✓ Storage over the phone's file system: writes through a temp file, case-only renames in two steps, trash in .eien/trash, polling for changes, recovery after a crash
 src/ui/
   app.ts        ✓ the window: panes, vault and note kept in step
   shell/        ✓ the panes: resizing, collapsing, three or two, kept per device
@@ -436,7 +436,7 @@ src/ui/
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions
-  mobile/        Capacitor configuration
+  mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access
 ```
 
 ### Rules for the code
@@ -690,9 +690,13 @@ Compare or Restore finishes lands on a note opened meanwhile.
 ## 10. Mobile and sync
 
 - Android and iOS run the same `ui` and `core` with the Capacitor `Storage`.
-- **Android:** the vault is a folder in shared storage (e.g. `Documents/Eien`),
-  synced by the Syncthing app. Eien asks for the file access it needs once,
-  with a plain explanation.
+- **Android:** the vault is `Documents/Eien` in shared storage, synced by the
+  Syncthing app. Eien asks once for the file access it needs (All files
+  access, from Android 11), after the welcome says why. Eien has no internet
+  permission. Trash goes to `.eien/trash` in the vault, so any device can take
+  it back; exports go to `Documents/Eien Exports`. Eien saves when the phone
+  sends it to the background, and looks at the vault again when it comes back
+  (and every few seconds while it's in front: a phone has no file watcher).
 - **iOS:** the vault lives in Eien's own Files folder, visible in the Files
   app. Syncthing on iOS (Möbius Sync) can sync it. Installing on a device needs
   Xcode and an Apple developer account.
@@ -753,6 +757,18 @@ On macOS, Windows and Linux, each with a fresh temporary vault:
   within 15 s of launch, a search answered within 2 s, a typed change in the
   index within 5 s (on a 2024 Mac: 2.3 s, 0.4 s and 2.8 s)
 
+### The phone
+
+- **In Chromium** (`npm run test:mobile`): the phone's page, with
+  Capacitor's web stand-ins for its plugins (the Filesystem in IndexedDB).
+  The bridge, the storage over the Filesystem's calls, recovery, settings,
+  trash and exports run as on the phone.
+- **On Android** (`npm run test:android`, by hand: it needs an emulator or a
+  phone over adb): Playwright drives Eien's WebView while adb plays Syncthing
+  and the system. The access asked for and refused; a note synced in; saving
+  when the app goes to the background; a restart; a crash's leftovers; a
+  case-only rename on the shared storage, which ignores case.
+
 ### CI (GitHub Actions)
 
 On every push and pull request:
@@ -760,7 +776,8 @@ On every push and pull request:
 1. Biome (lint and format) and TypeScript type check
 2. Unit and storage tests, with coverage reported
 3. End-to-end tests on macOS, Windows and Linux
-4. Android debug build
+4. The phone's page in Chromium
+5. Android debug build, kept for 14 days to install on a phone
 
 On a version tag: release builds for each platform. A pull request
 can't merge while any check fails.

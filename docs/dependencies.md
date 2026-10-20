@@ -20,7 +20,8 @@ runtime.
 | `@vitest/coverage-v8` | Test coverage report in CI |
 | `fast-check` | Property tests (`*.property.test.ts`): generated inputs by the thousand, shrunk to the smallest one a rule fails on (spec §11) |
 | `@stryker-mutator/core` | Mutation testing (`npm run test:mutation`, weekly in CI): edits the rules in core and platform one at a time, runs `vitest run` on each, and reports the edits no test catches |
-| `@playwright/test` | End-to-end tests that drive the real Electron app |
+| `@playwright/test` | End-to-end tests that drive the real Electron app, the phone's page in Chromium, and the Android app's WebView over adb |
+| `@capacitor/cli` | Copies the phone's page into the Android project (`npm run android`, `cap sync`) and adds its plugins there |
 
 ## Shipped with the app
 
@@ -40,3 +41,13 @@ runtime.
 | `@codemirror/language`, `@codemirror/lang-markdown` | Markdown parsing in the editor, with GitHub's extensions; the syntax tree Live and Reading are drawn from (MIT) |
 | `@lezer/markdown`, `@lezer/highlight`, `@lezer/common` | The parser under lang-markdown, used directly for `==highlight==` and `[[wiki links]]` and the styles of their parts (MIT) |
 | `@fontsource/ibm-plex-mono` | The machine voice, whatever the text face (SIL OFL): 400 and 600, and 400 italic |
+| `@capacitor/core` | The phone's runtime under the same window: the bridge to native code and each plugin's web stand-in (MIT) |
+| `@capacitor/android` | The Android shell: an activity holding a WebView that serves the page from the app itself, never the network (MIT) |
+| `@capacitor/filesystem` | The phone's files: the vault in the shared Documents/Eien on Android, Eien's own Files folder on iOS (MIT) |
+| `@capacitor/preferences` | This device's settings on the phone, kept apart from the vault as the desktop's are (MIT) |
+| `@capacitor/app` | When the phone sends Eien to the background (save now) and brings it back (look at the vault again) (MIT) |
+| `@capacitor/clipboard` | Copy for AO3 on the phone (MIT) |
+
+The Android build also needs a JDK (21) and the Android SDK, which are tools on
+the machine that builds it, not packages: CI has them, and on a Mac Homebrew
+gives them (`openjdk@21`, `android-commandlinetools`).
