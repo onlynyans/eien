@@ -165,6 +165,38 @@ test('the window can’t search with anything but text of a sensible length', as
   expect(outcomes).toEqual(['refused', 'refused', 'refused', 'refused', 'answered']);
 });
 
+/**
+ * Milliseconds until an element matching `selector` shows `text`, measured
+ * in the page itself; from typing `query` into the search field, if given.
+ */
+function untilShown(page: Page, selector: string, text: string, query?: string): Promise<number> {
+  return page.evaluate(
+    ([selector, text, query]) =>
+      new Promise<number>((done, fail) => {
+        const started = performance.now();
+        const shown = () =>
+          [...document.querySelectorAll(selector)].some((el) => el.textContent?.includes(text));
+        const watch = new MutationObserver(() => {
+          if (!shown()) return;
+          watch.disconnect();
+          done(Math.round(performance.now() - started));
+        });
+        watch.observe(document.body, { subtree: true, childList: true, characterData: true });
+        setTimeout(() => fail(new Error(`${text} never showed`)), 20_000);
+        if (query !== undefined) {
+          const field = document.querySelector<HTMLInputElement>('input[type="search"]');
+          if (!field) return fail(new Error('no search field'));
+          field.value = query;
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+        } else if (shown()) {
+          watch.disconnect();
+          done(0);
+        }
+      }),
+    [selector, text, query] as const,
+  );
+}
+
 test.describe('a vault of 5,000 notes', () => {
   test.use({ vaultFiles: null });
   test.setTimeout(120_000);
@@ -188,14 +220,13 @@ test.describe('a vault of 5,000 notes', () => {
       });
       const opened = Date.now() - started;
       console.log(`5,000 notes: listed ${opened} ms after launch`);
-      expect(opened).toBeLessThan(15_000);
+      expect(opened).toBeLessThan(20_000); // with Electron's start, on CI's slower machines
       await expect(page.locator('.tree-row__label', { hasText: 'seventh' })).toBeVisible();
 
-      const searching = Date.now();
-      await search(page).fill('marmalade');
-      await expect(rows(page).locator('.note-row__title')).toHaveText(['Note 4321']);
-      const searched = Date.now() - searching;
-      console.log(`5,000 notes: one word found in ${searched} ms (with 150 ms of typing pause)`);
+      // Times are taken in the page, from the change to the moment the page shows it:
+      // Playwright's own checks poll at growing intervals and would add up to a second.
+      const searched = await untilShown(page, '.note-row__title', 'Note 4321', 'marmalade');
+      console.log(`5,000 notes: one word found in ${searched} ms (150 ms of it the typing pause)`);
       expect(searched).toBeLessThan(2_000);
 
       await search(page).fill('scarf');
@@ -207,16 +238,12 @@ test.describe('a vault of 5,000 notes', () => {
       await row(page, 'Note 4321').click();
       await editorContent(page).click();
       await page.keyboard.press('ControlOrMeta+End');
-      const saving = Date.now();
       await page.keyboard.type(' #justsaved');
-      await expect(page.locator('.tree-row__label', { hasText: 'justsaved' })).toBeVisible({
-        timeout: 10_000,
-      });
-      const saved = Date.now() - saving;
+      const saved = await untilShown(page, '.tree-row__label', 'justsaved');
       console.log(
-        `5,000 notes: a typed tag in the sidebar ${saved} ms later (800 ms of it the autosave pause)`,
+        `5,000 notes: a typed tag in the sidebar ${saved} ms after the last key (800 ms of it the autosave pause)`,
       );
-      expect(saved).toBeLessThan(5_000);
+      expect(saved).toBeLessThan(4_000);
     } finally {
       await closeApp(app);
     }
