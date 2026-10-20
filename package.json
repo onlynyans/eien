@@ -34,6 +34,11 @@
     "vitest": "5.0.5"
   },
   "dependencies": {
+    "@codemirror/commands": "6.11.1",
+    "@codemirror/lang-markdown": "6.5.2",
+    "@codemirror/language": "6.13.1",
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.15",
     "@fontsource-variable/atkinson-hyperlegible-next": "5.3.0",
     "@fontsource-variable/hanken-grotesk": "5.3.0",
     "@fontsource-variable/ibm-plex-sans": "5.3.0",
@@ -42,6 +47,9 @@
     "@fontsource-variable/newsreader": "5.3.0",
     "@fontsource-variable/schibsted-grotesk": "5.3.0",
     "@fontsource-variable/source-sans-3": "5.3.1",
-    "@fontsource/ibm-plex-mono": "5.3.0"
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@lezer/common": "1.5.3",
+    "@lezer/highlight": "1.2.5",
+    "@lezer/markdown": "1.8.1"
   }
 }
