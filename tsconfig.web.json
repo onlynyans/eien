@@ -5,5 +5,11 @@
     "types": [],
     "tsBuildInfoFile": "node_modules/.cache/tsc/web.tsbuildinfo"
   },
-  "include": ["src/core", "src/ui", "src/platform/bridge.ts"]
+  "include": [
+    "src/core",
+    "src/ui",
+    "src/platform/bridge.ts",
+    "src/platform/storage.ts",
+    "src/platform/memory"
+  ]
 }
