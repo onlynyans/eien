@@ -21,7 +21,10 @@ export interface NoteImages {
 }
 
 /** Images for a note in `folder`, read with `readBytes`. */
-export function noteImages(folder: string, readBytes: (path: string) => Promise<Uint8Array | null>): NoteImages {
+export function noteImages(
+  folder: string,
+  readBytes: (path: string) => Promise<Uint8Array | null>,
+): NoteImages {
   const made = new Map<string, Promise<string | null>>();
   const load: ImageLoader = (src) => {
     const path = resolveLinkPath(folder, src);
@@ -30,7 +33,9 @@ export function noteImages(folder: string, readBytes: (path: string) => Promise<
     let url = made.get(path);
     if (!url) {
       url = readBytes(path)
-        .then((bytes) => (bytes ? URL.createObjectURL(new Blob([bytes.slice().buffer], { type })) : null))
+        .then((bytes) =>
+          bytes ? URL.createObjectURL(new Blob([bytes.slice().buffer], { type })) : null,
+        )
         .catch(() => null);
       made.set(path, url);
     }

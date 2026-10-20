@@ -1,4 +1,4 @@
-import { app, Menu, type MenuItemConstructorOptions } from 'electron';
+import { app, type BaseWindow, Menu, type MenuItemConstructorOptions } from 'electron';
 import { acceleratorOf, FORMAT_COMMANDS, type FormatCommandId } from '../../core/format';
 import type { MenuCommand } from '../../platform/bridge';
 
@@ -15,16 +15,28 @@ const DEVELOP: MenuItemConstructorOptions = {
   submenu: [{ role: 'reload' }, { role: 'toggleDevTools' }],
 };
 
+/** Sends a command to the window a menu click was for (none when no window has focus). */
+export type SendCommand = (command: MenuCommand, window: BaseWindow | undefined) => void;
+
 /** The menu bar. Commands the window acts on are sent to it with `send`. */
-export function buildMenu(send: (command: MenuCommand) => void): Menu {
+export function buildMenu(send: SendCommand): Menu {
   const mac = process.platform === 'darwin';
+  const item = (
+    label: string,
+    command: MenuCommand,
+    accelerator?: string,
+  ): MenuItemConstructorOptions => ({
+    label,
+    accelerator,
+    click: (_item, window) => send(command, window),
+  });
   const template: MenuItemConstructorOptions[] = [
     ...(mac ? [{ role: 'appMenu' } as const] : []),
     {
       label: 'File',
       submenu: [
-        { label: 'New Note', accelerator: 'CmdOrCtrl+N', click: () => send('new-note') },
-        { label: 'Open Vault…', accelerator: 'CmdOrCtrl+O', click: () => send('open-vault') },
+        item('New Note', 'new-note', 'CmdOrCtrl+N'),
+        item('Open Vault…', 'open-vault', 'CmdOrCtrl+O'),
         { type: 'separator' },
         mac ? { role: 'close' } : { role: 'quit' },
       ],
@@ -38,22 +50,18 @@ export function buildMenu(send: (command: MenuCommand) => void): Menu {
         ...(i > 0 ? [{ type: 'separator' } as const] : []),
         ...group.map((id): MenuItemConstructorOptions => {
           const command = FORMAT_COMMANDS.find((c) => c.id === id);
-          return {
-            label: command?.label ?? id,
-            accelerator: command ? acceleratorOf(command.key) : undefined,
-            click: () => send(`format:${id}`),
-          };
+          return item(command?.label ?? id, `format:${id}`, command && acceleratorOf(command.key));
         }),
       ]),
     },
     {
       label: 'View',
       submenu: [
-        { label: 'Live', click: () => send('view:live') },
-        { label: 'Source', click: () => send('view:source') },
-        { label: 'Reading', click: () => send('view:reading') },
+        item('Live', 'view:live'),
+        item('Source', 'view:source'),
+        item('Reading', 'view:reading'),
         { type: 'separator' },
-        { label: 'Next View', accelerator: 'CmdOrCtrl+E', click: () => send('view:next') },
+        item('Next View', 'view:next', 'CmdOrCtrl+E'),
       ],
     },
     // A reload would drop the last moment of typing, so it's for development only.

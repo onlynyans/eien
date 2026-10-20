@@ -32,6 +32,8 @@ export class CheckboxWidget extends WidgetType {
       const edit = toggleCheck(view.state.doc.toString(), view.posAtDOM(box));
       if (edit) view.dispatch({ changes: [...edit.changes] });
     });
+    // The text decides whether it's ticked, not the browser: in Reading a click changes nothing.
+    box.addEventListener('click', (event) => event.preventDefault());
     return box;
   }
   override ignoreEvent() {
@@ -75,18 +77,20 @@ export class ImageWidget extends WidgetType {
       return holder;
     }
     note(`[${this.alt || 'Image'}]`);
-    void view.state.facet(imageLoader)(this.src).then((url) => {
-      if (!url) {
-        note(`[Image not found: ${this.src}]`);
-        return;
-      }
-      const image = document.createElement('img');
-      image.className = 'eien-image';
-      image.alt = this.alt;
-      image.src = url;
-      holder.className = '';
-      holder.replaceChildren(image);
-    });
+    void view.state
+      .facet(imageLoader)(this.src)
+      .then((url) => {
+        if (!url) {
+          note(`[Image not found: ${this.src}]`);
+          return;
+        }
+        const image = document.createElement('img');
+        image.className = 'eien-image';
+        image.alt = this.alt;
+        image.src = url;
+        holder.className = '';
+        holder.replaceChildren(image);
+      });
     return holder;
   }
 }
@@ -121,6 +125,9 @@ export class TableWidget extends WidgetType {
 
 /** A table row's cells: split on "|" (not "\|"), the outer pipes optional. */
 function cellsOf(row: string): string[] {
-  const trimmed = row.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '');
+  const trimmed = row
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/(?<!\\)\|$/, '');
   return trimmed.split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, '|'));
 }

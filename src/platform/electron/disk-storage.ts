@@ -3,7 +3,17 @@
 
 import { createHash } from 'node:crypto';
 import { type Dirent, type FSWatcher, watch } from 'node:fs';
-import { lstat, mkdir, open, readdir, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
+import {
+  lstat,
+  mkdir,
+  open,
+  readdir,
+  readFile,
+  realpath,
+  rename,
+  rm,
+  stat,
+} from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
 import { isHiddenName, VaultPathError, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';

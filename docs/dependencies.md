@@ -32,4 +32,8 @@ runtime.
 | `@fontsource-variable/schibsted-grotesk` | An editorial, newspaper sans-serif text face (SIL OFL): variable weight, roman and italic |
 | `@fontsource-variable/hanken-grotesk` | A soft, rounded sans-serif text face (SIL OFL): variable weight, roman and italic |
 | `@fontsource-variable/instrument-sans` | A crisp, modern sans-serif text face (SIL OFL): variable weight, roman and italic |
+| `@codemirror/state`, `@codemirror/view` | The editor: its document, selection and transactions, and the view that draws them. Live and Reading are decorations on it (MIT) |
+| `@codemirror/commands` | Undo history and the standard editing keys (MIT) |
+| `@codemirror/language`, `@codemirror/lang-markdown` | Markdown parsing in the editor, with GitHub's extensions; the syntax tree Live and Reading are drawn from (MIT) |
+| `@lezer/markdown`, `@lezer/highlight`, `@lezer/common` | The parser under lang-markdown, used directly for `==highlight==` and `[[wiki links]]` and the styles of their parts (MIT) |
 | `@fontsource/ibm-plex-mono` | The machine voice, whatever the text face (SIL OFL): 400 and 600, and 400 italic |

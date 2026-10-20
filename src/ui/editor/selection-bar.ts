@@ -30,7 +30,11 @@ export class SelectionBar {
         },
       }),
     );
-    this.#bar = h('div', { class: 'selection-bar', attrs: { role: 'toolbar', 'aria-label': 'Format', hidden: true } }, ...buttons);
+    this.#bar = h(
+      'div',
+      { class: 'selection-bar', attrs: { role: 'toolbar', 'aria-label': 'Format', hidden: true } },
+      ...buttons,
+    );
     container.append(this.#bar);
 
     const dom = editor.view.dom;
@@ -60,7 +64,8 @@ export class SelectionBar {
   #show(): void {
     const view = this.#editor.view;
     const { main } = view.state.selection;
-    const start = main.empty || view.state.readOnly || !view.hasFocus ? null : view.coordsAtPos(main.from);
+    const start =
+      main.empty || view.state.readOnly || !view.hasFocus ? null : view.coordsAtPos(main.from);
     if (!start) {
       this.hide();
       return;

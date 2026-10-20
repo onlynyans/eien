@@ -64,7 +64,10 @@ export class NoteEditor {
     this.#quiet = true;
     this.#view.dispatch({
       changes: { from: 0, to: this.#view.state.doc.length, insert: text },
-      selection: EditorSelection.range(Math.min(main.anchor, text.length), Math.min(main.head, text.length)),
+      selection: EditorSelection.range(
+        Math.min(main.anchor, text.length),
+        Math.min(main.head, text.length),
+      ),
     });
     this.#quiet = false;
   }
@@ -95,7 +98,10 @@ export class NoteEditor {
   }
 
   #state(text: string, loadImage: ImageLoader): EditorState {
-    const formatKeys = FORMAT_COMMANDS.map((command) => ({ key: command.key, run: () => this.format(command) }));
+    const formatKeys = FORMAT_COMMANDS.map((command) => ({
+      key: command.key,
+      run: () => this.format(command),
+    }));
     const extensions: Extension[] = [
       history(),
       keymap.of([...formatKeys, ...historyKeymap, ...defaultKeymap]),
@@ -115,33 +121,57 @@ export class NoteEditor {
         if (update.docChanged && !this.#quiet) this.#events.changed(update.state.doc.toString());
       }),
       EditorView.domEventHandlers({
-        click: (event, view) => this.#follow(event, view),
+        // ⌘-click follows on the press, before the caret moves: in Live a caret on
+        // the link's line would show its marks and slide the words from under the pointer.
+        mousedown: (event, view) => modClick(event) && this.#follow(event, view),
+        // In Reading a plain click follows, as on a page; nothing there moves.
+        click: (event, view) =>
+          this.#current === 'reading' && !modClick(event) && this.#follow(event, view),
       }),
     ];
     return EditorState.create({ doc: text, extensions });
   }
 
-  /** ⌘-click (Ctrl-click) a link to follow it; in Reading a plain click does. */
+  /** Follow the link under the pointer, if there is one. */
   #follow(event: MouseEvent, view: EditorView): boolean {
-    if (this.#current !== 'reading' && !(event.metaKey || event.ctrlKey)) return false;
-    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-    if (pos === null) return false;
-    for (let node = syntaxTree(view.state).resolveInner(pos, 1); node.parent; node = node.parent) {
-      const text = (from: number, to: number) => view.state.doc.sliceString(from, to);
-      if (node.name === 'WikiLink') {
-        this.#events.follow({ kind: 'note', value: text(node.from + 2, node.to - 2).split('|')[0]?.trim() ?? '' });
-        return true;
-      }
-      if (node.name === 'Link' || node.name === 'Autolink' || node.name === 'URL') {
-        const url = node.name === 'URL' ? node : node.getChild('URL');
-        if (url) {
-          this.#events.follow({ kind: 'url', value: text(url.from, url.to) });
-          return true;
-        }
-      }
-    }
-    return false;
+    const target = linkAt(view, event);
+    if (!target) return false;
+    event.preventDefault();
+    this.#events.follow(target);
+    return true;
   }
+}
+
+const MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+
+/** A click with ⌘ on a Mac, or Ctrl elsewhere (Ctrl-click on a Mac is the context menu). */
+const modClick = (event: MouseEvent): boolean =>
+  event.button === 0 && (MAC ? event.metaKey : event.ctrlKey);
+
+/** The link under the pointer: a web address, or a [[note]] by its title. */
+function linkAt(view: EditorView, event: MouseEvent): Parameters<EditorEvents['follow']>[0] | null {
+  const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+  if (pos === null) return null;
+  const text = (from: number, to: number) => view.state.doc.sliceString(from, to);
+  for (let node = syntaxTree(view.state).resolveInner(pos, 1); node.parent; node = node.parent) {
+    if (node.name === 'WikiLink') {
+      return {
+        kind: 'note',
+        value:
+          text(node.from + 2, node.to - 2)
+            .split('|')[0]
+            ?.trim() ?? '',
+      };
+    }
+    const url =
+      node.name === 'URL'
+        ? node
+        : node.name === 'Link' || node.name === 'Autolink'
+          ? node.getChild('URL')
+          : null;
+    if (url) return { kind: 'url', value: text(url.from, url.to) };
+  }
+  return null;
 }
 
 function modeExtensions(mode: EditorMode): Extension {

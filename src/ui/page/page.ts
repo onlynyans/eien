@@ -22,7 +22,11 @@ const STATE_WORDS: Record<SaveState, string> = {
   failed: 'Not saved yet — trying again',
 };
 
-const MODE_LABEL: Record<EditorMode, string> = { live: 'Live', source: 'Source', reading: 'Reading' };
+const MODE_LABEL: Record<EditorMode, string> = {
+  live: 'Live',
+  source: 'Source',
+  reading: 'Reading',
+};
 
 export class PageView {
   readonly editor: NoteEditor;
@@ -33,7 +37,14 @@ export class PageView {
   readonly #words = h('span', { class: 'colophon__words' });
   readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
   readonly #modes: HTMLButtonElement[];
-  readonly #sheet = h('article', { class: 'sheet' }, this.#crumbs, this.#title, this.#notice, this.#editorHost);
+  readonly #sheet = h(
+    'article',
+    { class: 'sheet' },
+    this.#crumbs,
+    this.#title,
+    this.#notice,
+    this.#editorHost,
+  );
   readonly #empty = h('p', { class: 'page__empty', text: 'Choose a note, or make a new one.' });
   #titleText = '';
 
@@ -55,7 +66,15 @@ export class PageView {
       }),
     );
     container.replaceChildren(
-      h('div', { class: 'page__bar' }, h('div', { class: 'page__views', attrs: { role: 'group', 'aria-label': 'View' } }, ...this.#modes)),
+      h(
+        'div',
+        { class: 'page__bar' },
+        h(
+          'div',
+          { class: 'page__views', attrs: { role: 'group', 'aria-label': 'View' } },
+          ...this.#modes,
+        ),
+      ),
       h('div', { class: 'page__scroll' }, this.#sheet, this.#empty),
       h('footer', { class: 'colophon count' }, this.#words, this.#state),
     );
@@ -97,7 +116,8 @@ export class PageView {
 
   setMode(mode: EditorMode): void {
     this.editor.setMode(mode);
-    for (const button of this.#modes) button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
+    for (const button of this.#modes)
+      button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
   }
 
   /** Live → Source → Reading → Live (⌘E). */
@@ -124,7 +144,8 @@ export class PageView {
   /** A note that opens with its own "# Title" heading needn't show the title twice. */
   #showTitle(text: string): void {
     const first = /^\s*#[ \t]+(.+?)[ \t#]*$/m.exec(text.trimStart().split('\n', 1)[0] ?? '');
-    const same = first?.[1]?.trim().toLocaleLowerCase() === this.#titleText.trim().toLocaleLowerCase();
+    const same =
+      first?.[1]?.trim().toLocaleLowerCase() === this.#titleText.trim().toLocaleLowerCase();
     this.#title.hidden = same;
   }
 

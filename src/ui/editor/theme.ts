@@ -23,7 +23,10 @@ export const editorTheme = EditorView.theme({
     minHeight: '40vh',
   },
   '.cm-line': { padding: '0' },
-  '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--eien-seal)', borderLeftWidth: 'var(--eien-mark-w)' },
+  '.cm-cursor, .cm-dropCursor': {
+    borderLeftColor: 'var(--eien-seal)',
+    borderLeftWidth: 'var(--eien-mark-w)',
+  },
   '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, ::selection':
     { backgroundColor: 'var(--eien-seal-wash)' },
   '&.cm-focused .cm-selectionBackground': { backgroundColor: 'var(--eien-seal-wash)' },
@@ -65,7 +68,12 @@ export const editorTheme = EditorView.theme({
     backgroundColor: 'var(--eien-well)',
     padding: '0 var(--eien-space-3) !important',
   },
-  '.eien-link': { color: 'var(--eien-ink)', textDecoration: 'underline', textDecorationColor: 'var(--eien-rule-strong)', textUnderlineOffset: '0.18em' },
+  '.eien-link': {
+    color: 'var(--eien-ink)',
+    textDecoration: 'underline',
+    textDecorationColor: 'var(--eien-rule-strong)',
+    textUnderlineOffset: '0.18em',
+  },
   '.eien-mark': { color: 'var(--eien-faded)' },
   '.eien-scene-break': {
     display: 'block',
@@ -84,7 +92,11 @@ export const editorTheme = EditorView.theme({
     accentColor: 'var(--eien-ink-soft)',
     cursor: 'pointer',
   },
-  '.eien-done': { color: 'var(--eien-pencil)', textDecoration: 'line-through', textDecorationColor: 'var(--eien-rule-strong)' },
+  '.eien-done': {
+    color: 'var(--eien-pencil)',
+    textDecoration: 'line-through',
+    textDecorationColor: 'var(--eien-rule-strong)',
+  },
   '.eien-image': { display: 'block', maxWidth: '100%', margin: 'var(--eien-space-3) 0' },
   '.eien-image-note': {
     fontFamily: 'var(--eien-face-mono)',
@@ -107,12 +119,18 @@ export const editorTheme = EditorView.theme({
 /** Markdown's look in every view: marks quiet, words in ink. No seal, no colour for colour's sake. */
 const markdownHighlight = HighlightStyle.define([
   { tag: tags.processingInstruction, color: 'var(--eien-faded)' },
-  { tag: [tags.heading1, tags.heading2, tags.heading3, tags.heading4, tags.heading5, tags.heading6], fontWeight: '600' },
+  {
+    tag: [tags.heading1, tags.heading2, tags.heading3, tags.heading4, tags.heading5, tags.heading6],
+    fontWeight: '600',
+  },
   { tag: tags.emphasis, fontStyle: 'italic' },
   { tag: tags.strong, fontWeight: '600' },
   { tag: tags.strikethrough, textDecoration: 'line-through' },
   { tag: [tags.link, tags.url], textDecoration: 'underline', color: 'var(--eien-ink-soft)' },
-  { tag: [tags.monospace, tags.contentSeparator, tags.quote, tags.list, tags.meta], color: 'var(--eien-ink-soft)' },
+  {
+    tag: [tags.monospace, tags.contentSeparator, tags.quote, tags.list, tags.meta],
+    color: 'var(--eien-ink-soft)',
+  },
   { tag: [tags.angleBracket, tags.tagName, tags.attributeName], color: 'var(--eien-pencil)' },
 ]);
 

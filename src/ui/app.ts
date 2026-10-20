@@ -4,9 +4,9 @@ import { formatCommand } from '../core/format';
 import { baseName, freeNoteName, joinPath, parentOf, titleOf } from '../core/paths';
 import type { Bridge } from '../platform/bridge';
 import { h } from './dom';
+import { type NoteImages, noteImages } from './editor/image-loader';
 import { renderList } from './list/list';
 import { NoteSession } from './notes/note-session';
-import { noteImages, type NoteImages } from './editor/image-loader';
 import { PageView } from './page/page';
 import { renderSidebar } from './sidebar/sidebar';
 import { type Selection, VaultState } from './vault/vault-state';
@@ -61,7 +61,8 @@ async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promi
   const page = new PageView(pageArea, {
     changed: (text) => session?.edit(text),
     follow: (target) => {
-      if (target.kind === 'url') window.open(target.value); // the main process opens web addresses in the browser
+      if (target.kind === 'url')
+        window.open(target.value); // the main process opens web addresses in the browser
       else {
         const path = state.findByTitle(target.value);
         if (path) void openNote(path);
@@ -119,7 +120,12 @@ async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promi
     images?.release();
     images = session ? noteImages(parentOf(path), (file) => bridge.vault.readBytes(file)) : null;
     if (session && images) {
-      page.show({ crumbs: crumbsOf(path), title: session.title, text: session.text, loadImage: images.load });
+      page.show({
+        crumbs: crumbsOf(path),
+        title: session.title,
+        text: session.text,
+        loadImage: images.load,
+      });
     } else page.showNothing();
     await drawList();
   }

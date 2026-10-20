@@ -23,7 +23,9 @@ const Highlight: MarkdownConfig = {
     {
       name: 'Highlight',
       parse(cx, next, pos) {
-        if (next !== EQUALS || cx.char(pos + 1) !== EQUALS || cx.char(pos + 2) === EQUALS) return -1;
+        // Exactly two: "===" is not a highlight mark, from either end.
+        if (next !== EQUALS || cx.char(pos + 1) !== EQUALS) return -1;
+        if (cx.char(pos + 2) === EQUALS || cx.char(pos - 1) === EQUALS) return -1;
         const before = cx.slice(pos - 1, pos);
         const after = cx.slice(pos + 2, pos + 3);
         const spaceBefore = /\s|^$/.test(before);
@@ -60,7 +62,10 @@ const WikiLink: MarkdownConfig = {
         if (!title.trim() || title.includes('\n') || title.includes('[')) return -1;
         const end = pos + 2 + close + 2;
         return cx.addElement(
-          cx.elt('WikiLink', pos, end, [cx.elt('WikiLinkMark', pos, pos + 2), cx.elt('WikiLinkMark', end - 2, end)]),
+          cx.elt('WikiLink', pos, end, [
+            cx.elt('WikiLinkMark', pos, pos + 2),
+            cx.elt('WikiLinkMark', end - 2, end),
+          ]),
         );
       },
       before: 'Link',

@@ -41,11 +41,13 @@ function build(state: EditorState): DecorationSet {
   const activeLines = new Set<number>();
   if (mode === 'live') {
     for (const range of state.selection.ranges) {
-      for (let n = doc.lineAt(range.from).number; n <= doc.lineAt(range.to).number; n++) activeLines.add(n);
+      for (let n = doc.lineAt(range.from).number; n <= doc.lineAt(range.to).number; n++)
+        activeLines.add(n);
     }
   }
   const isActive = (from: number, to = from) => {
-    for (let n = doc.lineAt(from).number; n <= doc.lineAt(to).number; n++) if (activeLines.has(n)) return true;
+    for (let n = doc.lineAt(from).number; n <= doc.lineAt(to).number; n++)
+      if (activeLines.has(n)) return true;
     return false;
   };
   /** Hide [from, to), and a space right after it when `andSpace`. */
@@ -54,7 +56,8 @@ function build(state: EditorState): DecorationSet {
     if (end > from) out.push(hide.range(from, end));
   };
   const lineClass = (from: number, to: number, cls: string) => {
-    for (let n = doc.lineAt(from).number; n <= doc.lineAt(to).number; n++) out.push(line(cls).range(doc.line(n).from));
+    for (let n = doc.lineAt(from).number; n <= doc.lineAt(to).number; n++)
+      out.push(line(cls).range(doc.line(n).from));
   };
 
   syntaxTree(state).iterate({
@@ -70,7 +73,8 @@ function build(state: EditorState): DecorationSet {
       }
       switch (name) {
         case 'HeaderMark':
-          if (!isActive(from) && node.node.parent?.name.startsWith('ATXHeading')) hideMark(from, to, true);
+          if (!isActive(from) && node.node.parent?.name.startsWith('ATXHeading'))
+            hideMark(from, to, true);
           return;
         case 'EmphasisMark':
         case 'StrikethroughMark':
@@ -120,11 +124,17 @@ function build(state: EditorState): DecorationSet {
           }
           return false;
         case 'HorizontalRule':
-          if (!active) out.push(Decoration.replace({ widget: new SceneBreakWidget() }).range(from, to));
+          if (!active)
+            out.push(Decoration.replace({ widget: new SceneBreakWidget() }).range(from, to));
           return;
         case 'Table':
           if (!active) {
-            out.push(Decoration.replace({ widget: new TableWidget(doc.sliceString(from, to)), block: true }).range(from, to));
+            out.push(
+              Decoration.replace({
+                widget: new TableWidget(doc.sliceString(from, to)),
+                block: true,
+              }).range(from, to),
+            );
             return false;
           }
           return;
@@ -136,7 +146,12 @@ function build(state: EditorState): DecorationSet {
           if (!isActive(from)) {
             const listMark = node.node.parent?.getChild('ListMark');
             if (listMark) hideMark(listMark.from, listMark.to, true);
-            out.push(Decoration.replace({ widget: new CheckboxWidget(done) }).range(marker.from, marker.to));
+            out.push(
+              Decoration.replace({ widget: new CheckboxWidget(done) }).range(
+                marker.from,
+                marker.to,
+              ),
+            );
           }
           return;
         }
@@ -159,7 +174,8 @@ function build(state: EditorState): DecorationSet {
       return;
     }
     if (name === 'hr') {
-      if (!isActive(from)) out.push(Decoration.replace({ widget: new SceneBreakWidget() }).range(from, to));
+      if (!isActive(from))
+        out.push(Decoration.replace({ widget: new SceneBreakWidget() }).range(from, to));
       return;
     }
     const look = INLINE_HTML[name];

@@ -5,7 +5,7 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { _electron } from '@playwright/test';
-import { appEnv, closeApp, expect, ROOT, test } from './launch';
+import { appEnv, closeApp, editorContent, editorLines, expect, ROOT, test } from './launch';
 
 const SEVENTEEN = '"Look," he begins more softly.\r\n\r\nIt takes her a minute.\r\n';
 
@@ -54,9 +54,13 @@ test('shows the vault’s folders and notes, and a book’s chapters in order', 
 test('saves what is typed, in the file’s own line endings', async ({ page, vault }) => {
   await page.locator('.note-row', { hasText: 'Seventeen' }).click();
   await expect(page.locator('.title')).toHaveText('Seventeen');
-  const editor = page.locator('.editor');
-  await expect(editor).toHaveValue('"Look," he begins more softly.\n\nIt takes her a minute.\n');
-  await editor.click();
+  await expect(editorLines(page)).toHaveText([
+    '"Look," he begins more softly.',
+    '',
+    'It takes her a minute.',
+    '',
+  ]);
+  await editorContent(page).click();
   await page.keyboard.press('ControlOrMeta+End');
   await page.keyboard.type('She takes it.');
   await expect
@@ -67,7 +71,7 @@ test('saves what is typed, in the file’s own line endings', async ({ page, vau
 
 test('quitting straight after typing loses nothing', async ({ app, page, vault }) => {
   await page.locator('.note-row', { hasText: 'Ideas' }).click();
-  await page.locator('.editor').click();
+  await editorContent(page).click();
   await page.keyboard.press('ControlOrMeta+End');
   await page.keyboard.type(' And the scarf.');
   await closeApp(app); // well inside the 800 ms pause: only the save-before-close can have written it
@@ -77,15 +81,14 @@ test('quitting straight after typing loses nothing', async ({ app, page, vault }
 test('a change made elsewhere appears when nothing is unsaved here', async ({ page, vault }) => {
   await page.locator('.note-row', { hasText: 'Ideas' }).click();
   writeFileSync(fileIn(vault, 'Ideas.md'), 'Snow on the walls, and wind.\n');
-  await expect(page.locator('.editor')).toHaveValue('Snow on the walls, and wind.\n', {
+  await expect(editorLines(page)).toHaveText(['Snow on the walls, and wind.', ''], {
     timeout: 5000,
   });
 });
 
 test('when the file and the editor both changed, both are kept', async ({ page, vault }) => {
   await page.locator('.note-row', { hasText: 'Ideas' }).click();
-  const editor = page.locator('.editor');
-  await editor.click();
+  await editorContent(page).click();
   await page.keyboard.press('ControlOrMeta+End');
   // Change the file in the same moment, before this edit can save.
   writeFileSync(fileIn(vault, 'Ideas.md'), 'Their version.\n');
@@ -106,7 +109,7 @@ test('a new note is made in the folder shown, and saves', async ({ page, vault }
   await page.locator('.tree-row__label', { hasText: 'Fic' }).click();
   await page.getByRole('button', { name: 'New note' }).click();
   await expect(page.locator('.title')).toHaveText('Untitled');
-  await expect(page.locator('.editor')).toBeFocused();
+  await expect(editorContent(page)).toBeFocused();
   await page.keyboard.type('A first line.');
   await expect
     .poll(() => readIn(vault, 'Fic/Untitled.md'), { timeout: 5000 })

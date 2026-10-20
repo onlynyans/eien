@@ -1,3 +1,4 @@
+export { resolveLinkPath } from './link-path';
 export {
   isHiddenName,
   isValidName,
@@ -13,5 +14,4 @@ export {
   stampOf,
   titleOf,
 } from './sibling-names';
-export { resolveLinkPath } from './link-path';
 export { baseName, joinPath, parentOf, VaultPathError, vaultPath } from './vault-path';
