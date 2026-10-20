@@ -62,6 +62,7 @@ async function vaultWith(files: Record<string, string>) {
   await index.refresh();
   await state.refresh();
   return {
+    vault,
     storage,
     state,
     organizer,
@@ -128,4 +129,86 @@ describe('Organizer, adversarial', () => {
     const { order } = JSON.parse((await v.storage.read('Book/.eien-folder.json'))?.text ?? '{}');
     expect(order).toEqual(['A.md', 'Loose.md']);
   });
+
+  // The watcher's refresh can land between the move on disk and the order's rewrite, so the
+  // vault's list may show the folder as it was or as it is now. The order must come out the same.
+  for (const caughtUp of [false, true]) {
+    const when = caughtUp ? 'the list has caught up with the move' : 'the list hasn’t caught up';
+    const book = (order: string[]) => JSON.stringify({ order, book: {} });
+    const orderIn = async (v: Awaited<ReturnType<typeof vaultWith>>, folder: string) =>
+      JSON.parse((await v.storage.read(`${folder}/.eien-folder.json`))?.text ?? '{}').order;
+    const timed = async (files: Record<string, string>) => {
+      const v = await vaultWith(files);
+      const move = v.vault.move;
+      v.vault.move = async (from, to) => {
+        const result = await move(from, to);
+        if (caughtUp) await v.state.refresh();
+        return result;
+      };
+      const trash = v.vault.trash;
+      v.vault.trash = async (path) => {
+        await trash(path);
+        if (caughtUp) await v.state.refresh();
+      };
+      return v;
+    };
+
+    it(`keeps a renamed chapter in its place when ${when}`, async () => {
+      const v = await timed({
+        'Book/The Tear.md': '1',
+        'Book/Needle.md': '2',
+        'Book/Seventeen.md': '3',
+        'Book/.eien-folder.json': book(['The Tear.md', 'Needle.md', 'Seventeen.md']),
+      });
+      expect(await v.organizer.renameNote('Book/Needle.md', 'Needle and Thread')).toBe(
+        'Book/Needle and Thread.md',
+      );
+      expect(await orderIn(v, 'Book')).toEqual([
+        'The Tear.md',
+        'Needle and Thread.md',
+        'Seventeen.md',
+      ]);
+    });
+
+    it(`keeps a chapter renamed only in case in its place when ${when}`, async () => {
+      const v = await timed({
+        'Book/One.md': '1',
+        'Book/needle.md': '2',
+        'Book/Three.md': '3',
+        'Book/.eien-folder.json': book(['One.md', 'needle.md', 'Three.md']),
+      });
+      expect(await v.organizer.renameNote('Book/needle.md', 'Needle')).toBe('Book/Needle.md');
+      expect(await orderIn(v, 'Book')).toEqual(['One.md', 'Needle.md', 'Three.md']);
+    });
+
+    it(`puts a newcomer last, past a stale entry of its name, when ${when}`, async () => {
+      // "Ideas.md" was in the book once and deleted elsewhere; its name is still in the order.
+      const v = await timed({
+        'Ideas.md': 'new',
+        'Book/A.md': 'a',
+        'Book/B.md': 'b',
+        'Book/.eien-folder.json': book(['Ideas.md', 'A.md', 'B.md']),
+        'Other/X.md': 'x',
+        'Other/Ideas2.md': 'i',
+        'Other/.eien-folder.json': book(['Ideas2.md', 'X.md']),
+      });
+      expect(await v.organizer.moveInto('Ideas.md', 'Book', true)).toBe('Book/Ideas.md');
+      expect(await orderIn(v, 'Book')).toEqual(['A.md', 'B.md', 'Ideas.md']);
+      await v.refresh(); // as the window does after each action
+      expect(await v.organizer.moveInto('Other/X.md', 'Book', true)).toBe('Book/X.md');
+      expect(await orderIn(v, 'Other')).toEqual(['Ideas2.md']);
+      expect(await orderIn(v, 'Book')).toEqual(['A.md', 'B.md', 'Ideas.md', 'X.md']);
+    });
+
+    it(`takes a trashed chapter out of the order when ${when}`, async () => {
+      const v = await timed({
+        'Book/A.md': 'a',
+        'Book/B.md': 'b',
+        'Book/C.md': 'c',
+        'Book/.eien-folder.json': book(['A.md', 'B.md', 'C.md']),
+      });
+      expect(await v.organizer.trash('Book/B.md')).toBe(true);
+      expect(await orderIn(v, 'Book')).toEqual(['A.md', 'C.md']);
+    });
+  }
 });

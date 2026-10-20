@@ -94,8 +94,12 @@ test.describe('renaming', () => {
     await expect(page.locator('.title')).toHaveText('Needle and Thread');
     await expect.poll(() => existsSync(at(vault, `${BOOK}/Needle and Thread.md`))).toBe(true);
     expect(existsSync(at(vault, `${BOOK}/Needle.md`))).toBe(false);
-    expect(order(vault)).toEqual(['The Tear.md', 'Needle and Thread.md', 'Seventeen.md']);
-    expect(JSON.parse(read(vault, '.eien/pinned.json'))).toEqual([`${BOOK}/Needle and Thread.md`]);
+    await expect
+      .poll(() => order(vault))
+      .toEqual(['The Tear.md', 'Needle and Thread.md', 'Seventeen.md']);
+    await expect
+      .poll(() => JSON.parse(read(vault, '.eien/pinned.json')))
+      .toEqual([`${BOOK}/Needle and Thread.md`]);
     await expect(page.locator('.note-row__ord')).toHaveText(['i', 'ii', 'iii']);
 
     await editorContent(page).click();
@@ -212,7 +216,7 @@ test.describe('moving and ordering', () => {
     await openBook(page);
     await drag(page, 'Seventeen', row(page, 'The Tear'), 'top');
     await expect(page.locator('.note-row__title')).toHaveText(['Seventeen', 'The Tear', 'Needle']);
-    expect(order(vault)).toEqual(['Seventeen.md', 'The Tear.md', 'Needle.md']);
+    await expect.poll(() => order(vault)).toEqual(['Seventeen.md', 'The Tear.md', 'Needle.md']);
 
     await row(page, 'Seventeen').focus();
     await page.keyboard.press('Alt+ArrowDown');
@@ -221,7 +225,7 @@ test.describe('moving and ordering', () => {
     await row(page, 'Needle').click({ button: 'right' });
     await menuItem(page, 'Move up').click();
     await expect(page.locator('.note-row__title')).toHaveText(['The Tear', 'Needle', 'Seventeen']);
-    expect(order(vault)).toEqual(['The Tear.md', 'Needle.md', 'Seventeen.md']);
+    await expect.poll(() => order(vault)).toEqual(['The Tear.md', 'Needle.md', 'Seventeen.md']);
   });
 
   test('Esc during a drag puts the note back', async ({ page, vault }) => {
@@ -290,7 +294,9 @@ test.describe('books, folders and pins', () => {
     await menuItem(page, 'Make it a book').click();
     await folder(page, 'Research').click();
     await expect(page.locator('.list__count')).toHaveText('1 note · Book');
-    expect(JSON.parse(read(vault, 'Research/.eien-folder.json'))).toEqual({ book: {} });
+    await expect
+      .poll(() => JSON.parse(read(vault, 'Research/.eien-folder.json')))
+      .toEqual({ book: {} });
     await folder(page, 'Research').click({ button: 'right' });
     await menuItem(page, 'Not a book').click();
     await expect(page.locator('.list__count')).toHaveText('1 note');
@@ -303,7 +309,7 @@ test.describe('books, folders and pins', () => {
     await page.keyboard.type('Drafts');
     await page.keyboard.press('Enter');
     await expect(folder(page, 'Drafts')).toBeVisible();
-    expect(existsSync(at(vault, 'Drafts'))).toBe(true);
+    await expect.poll(() => existsSync(at(vault, 'Drafts'))).toBe(true);
     expect(existsSync(at(vault, 'New folder'))).toBe(false);
   });
 
@@ -320,7 +326,9 @@ test.describe('books, folders and pins', () => {
     await row(page, 'Ideas').click({ button: 'right' });
     await menuItem(page, 'Unpin').click();
     await expect(page.locator('.note-row__title')).toHaveText(['Seventeen']);
-    expect(JSON.parse(read(vault, '.eien/pinned.json'))).toEqual([`${BOOK}/Seventeen.md`]);
+    await expect
+      .poll(() => JSON.parse(read(vault, '.eien/pinned.json')))
+      .toEqual([`${BOOK}/Seventeen.md`]);
   });
 });
 

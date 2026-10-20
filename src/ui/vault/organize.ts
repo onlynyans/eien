@@ -117,7 +117,9 @@ export class Organizer {
     }
     if (held === 'held') this.#ctx.closed();
     await this.#changePins((pins) => withoutPins(pins, path));
-    await this.#changeOrder(parentOf(path), (order) => withoutInOrder(order, baseName(path)));
+    await this.#changeOrder(parentOf(path), (order) => withoutInOrder(order, baseName(path)), {
+      left: baseName(path),
+    });
     this.#ctx.tell(`“${nameOf(path)}” is in ${this.#ctx.trashName}.`);
     return true;
   }
@@ -151,7 +153,6 @@ export class Organizer {
     return this.#changePins((pins) => withPin(pins, path, pinned));
   }
 
-  /** Move or rename `from` to `to`, keeping order, pins and the open note in step. */
   /**
    * If the open note is `path` or in it: hold the page still and save it, so
    * its last words go where it goes. 'refused' when they couldn't be saved —
@@ -170,6 +171,7 @@ export class Organizer {
     return 'refused';
   }
 
+  /** Move or rename `from` to `to`, keeping order, pins and the open note in step. */
   async #move(from: string, to: string): Promise<string | null> {
     if (from === to) return to;
     const open = this.#ctx.session();
@@ -194,24 +196,39 @@ export class Organizer {
     }
     if (open && inside(open.path)) open.movedTo(to + open.path.slice(from.length));
     await this.#changePins((pins) => movedPins(pins, from, to));
+    const [left, came] = [baseName(from), baseName(to)];
     if (parentOf(from) === parentOf(to)) {
-      await this.#changeOrder(parentOf(from), (order) =>
-        renamedInOrder(order, baseName(from), baseName(to)),
-      );
+      await this.#changeOrder(parentOf(from), (order) => renamedInOrder(order, left, came), {
+        left,
+        came,
+      });
     } else {
-      await this.#changeOrder(parentOf(from), (order) => withoutInOrder(order, baseName(from)));
+      await this.#changeOrder(parentOf(from), (order) => withoutInOrder(order, left), { left });
       // A folder in its own order keeps it: the newcomer goes last.
-      await this.#changeOrder(parentOf(to), (order) => [...order, baseName(to)]);
+      await this.#changeOrder(parentOf(to), (order) => [...order, came], { came });
     }
     return to;
   }
 
-  /** Change a folder's order, if it has one: a folder in no order isn't given a settings file. */
-  async #changeOrder(folder: string, change: (order: string[]) => string[]): Promise<void> {
+  /**
+   * Change a folder's order, if it has one: a folder in no order isn't given a
+   * settings file. `left` and `came` are the names a move just took out of the
+   * folder and brought into it: the vault's list may or may not show the move
+   * yet (the watcher's refresh can land in between), and the order comes out
+   * the same either way.
+   */
+  async #changeOrder(
+    folder: string,
+    change: (order: string[]) => string[],
+    { left, came }: { left?: string; came?: string } = {},
+  ): Promise<void> {
     const { order } = await this.#ctx.state.folderSettings(folder);
     if (order.length === 0) return;
-    // Names that aren't there any more go (spec §2), and listed ones are spelled as the files are.
-    const next = change(presentInOrder(order, this.#ctx.state.namesIn(folder)));
+    const others = this.#ctx.state.namesIn(folder).filter((name) => name !== left && name !== came);
+    const before = left === undefined ? others : [...others, left];
+    const after = came === undefined ? others : [...others, came];
+    // Names that aren't there go (spec §2), and listed ones are spelled as the files are.
+    const next = presentInOrder(change(presentInOrder(order, before)), after);
     if (next.join('\n') !== order.join('\n')) await this.#changeFolder(folder, { order: next });
   }
 

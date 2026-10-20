@@ -175,11 +175,18 @@ export async function showVault(
   });
 
   /** Run a file operation, then read the vault again and redraw. */
-  async function act(operation: () => Promise<unknown>): Promise<void> {
-    await operation();
-    // The open note may have moved, or been renamed: the page names it, and finds its images, there.
-    note.followMove();
-    await refresh();
+  // One action at a time, each after the last one's refresh: two quick drags never work from
+  // a list that doesn't show the first yet.
+  let acting: Promise<void> = Promise.resolve();
+  function act(operation: () => Promise<unknown>): Promise<void> {
+    const run = acting.then(async () => {
+      await operation();
+      // The open note may have moved, or been renamed: the page names it, and finds its images, there.
+      note.followMove();
+      await refresh();
+    });
+    acting = run.catch(console.error);
+    return run;
   }
 
   const drawSidebar = () =>

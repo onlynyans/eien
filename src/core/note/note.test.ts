@@ -125,7 +125,7 @@ describe('long runs of lines', () => {
     expect(bracketed.took / plain.took).toBeLessThan(3);
     expect(bracketed.note.tags).toEqual(['interview']);
     expect(bracketed.note.words).toBe(26_000 * 11);
-  });
+  }, 60_000); // two 1.6 MB parses: seconds under coverage on a shared runner
 
   it('never cuts into fenced code: a "#" in it is still no tag', () => {
     const code = Array.from({ length: 200 }, (_, i) => `line ${i} #notatag`).join('\n');
