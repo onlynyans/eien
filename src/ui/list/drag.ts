@@ -78,6 +78,7 @@ export function watchDrags(
         lifted = row.cloneNode(true) as HTMLElement;
         lifted.classList.add('is-lifted');
         lifted.removeAttribute('data-path');
+        lifted.removeAttribute('data-key'); // a copy: the keyboard never goes back to it
         lifted.setAttribute('aria-hidden', 'true');
         lifted.style.setProperty('--drag-w', `${rect.width}px`);
         lifted.style.setProperty('--drag-dx', `${rect.left - down.clientX}px`);
@@ -87,6 +88,8 @@ export function watchDrags(
         list.classList.add('is-dragging');
         row.classList.add('is-left');
       }
+      // A redraw mid-drag (a change on disk, news fading) takes the lifted row out with the rows.
+      if (!lifted.isConnected) (list.querySelector('ul') ?? document.body).append(lifted);
       lifted.style.setProperty('--drag-x', `${event.clientX}px`);
       lifted.style.setProperty('--drag-y', `${event.clientY}px`);
 

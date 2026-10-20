@@ -170,6 +170,7 @@ export class TreeRows {
         type: 'button',
         'aria-expanded': String(open),
         'aria-label': `${open ? 'Close' : 'Open'} ${name}`,
+        'data-key': `twist:${id}`,
       },
       on: { click: () => this.#actions.toggle(id) },
     });

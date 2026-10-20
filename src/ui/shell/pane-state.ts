@@ -22,13 +22,13 @@ export const LIMITS: Readonly<Record<Edge, readonly [number, number]>> = {
 };
 
 /** The tokens' widths (--eien-sidebar-w, --eien-list-w; two panes add --eien-space-7). */
-export const DEFAULT_PANES: Panes = {
+export const DEFAULT_PANES: Panes = Object.freeze({
   sidebar: 264,
   sidebarTwo: 264 + 48,
   list: 316,
   sidebarShut: false,
   listShut: false,
-};
+});
 
 /** A shut sidebar: the seal alone, on a strip (--eien-space-7). */
 export const STRIP = 48;
@@ -72,6 +72,18 @@ export function readPanes(text: string | null): Panes {
 /** `panes` with `edge` dragged or stepped to `width`, kept within its limits. */
 export function resized(panes: Panes, edge: Edge, width: number): Panes {
   return Number.isFinite(width) ? { ...panes, [edge]: clamp(edge, width) } : panes;
+}
+
+/**
+ * `panes` with `edge` dragged (or stepped) `by` pixels from where it was:
+ * `shown` wide on screen, which a narrow window may make less than what's
+ * remembered. Narrower sets what the writer sees; wider never leaves the
+ * remembered width narrower than it was, so widening the window still gives
+ * it back.
+ */
+export function dragged(panes: Panes, edge: Edge, shown: number, by: number): Panes {
+  if (!Number.isFinite(by) || !Number.isFinite(shown)) return panes;
+  return resized(panes, edge, by < 0 ? shown + by : Math.max(panes[edge], shown + by));
 }
 
 /** The sidebar's own edge in this layout. */

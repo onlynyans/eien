@@ -25,6 +25,8 @@ export interface DrawnParts {
   readonly listActions: ListActions;
   /** The note on the page. */
   openNote(): string | null;
+  /** News for the page's status line, when no pane beside it is open to show it. */
+  pageNews(text: string | null): void;
 }
 
 export class PaneDrawer {
@@ -56,6 +58,8 @@ export class PaneDrawer {
       words && !listShown ? state.search(words) : null,
     ]);
     if (turn !== this.#sidebarTurn) return;
+    // The news shows above the list; with no list, at the sidebar's foot; with neither, on the page.
+    this.#parts.pageNews(!listShown && panes.isShut('sidebar') ? notice.text : null);
     this.#parts.sidebar.draw({
       tree: state.tree,
       tags: state.tags,

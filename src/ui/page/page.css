@@ -156,8 +156,15 @@
   letter-spacing: var(--eien-track-label);
 }
 .colophon__state:empty,
-.colophon__zoom:empty {
+.colophon__zoom:empty,
+.colophon__news:empty {
   display: none;
+}
+/* The writer's own words, not the machine's: in the text face, as the list's news is. */
+.colophon__news {
+  font-family: var(--eien-face-text);
+  text-transform: none;
+  letter-spacing: normal;
 }
 .colophon__state[data-state="failed"] {
   color: var(--eien-danger);

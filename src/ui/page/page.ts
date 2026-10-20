@@ -48,6 +48,8 @@ export class PageView {
   readonly #words = h('span', { class: 'colophon__words' });
   readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
   readonly #zoom = h('span', { class: 'colophon__zoom', attrs: { 'aria-label': 'Zoom' } });
+  /** News from the last action, when neither the list nor the sidebar is there to show it. */
+  readonly #news = h('span', { class: 'colophon__news', attrs: { role: 'status' } });
   readonly #modes: HTMLButtonElement[];
   readonly #sheet = h(
     'article',
@@ -58,7 +60,12 @@ export class PageView {
     this.#notice,
     this.#editorHost,
   );
-  readonly #empty = h('p', { class: 'page__empty', text: 'Choose a note, or make a new one.' });
+  /** With no note open; it takes the keyboard when the page is given it. */
+  readonly #empty = h('p', {
+    class: 'page__empty',
+    text: 'Choose a note, or make a new one.',
+    attrs: { tabindex: '-1' },
+  });
   /** The start of the bar: the panes' controls, when the window gives them. */
   readonly #lead = h('div', { class: 'page__lead' });
   #titleText = '';
@@ -113,10 +120,15 @@ export class PageView {
         ),
       ),
       h('div', { class: 'page__scroll' }, this.#sheet, this.#empty),
-      h('footer', { class: 'colophon count' }, this.#words, this.#state, this.#zoom),
+      h('footer', { class: 'colophon count' }, this.#words, this.#state, this.#zoom, this.#news),
     );
     new SelectionBar(container, this.editor);
     this.showNothing();
+  }
+
+  /** News from the last action in the status line; null takes it away. */
+  news(text: string | null): void {
+    this.#news.textContent = text ?? '';
   }
 
   /** Put `controls` at the start of the bar. */
@@ -185,8 +197,10 @@ export class PageView {
     this.#state.dataset.state = state;
   }
 
+  /** The keyboard to the note; with none open, to the page itself, never to nowhere. */
   focus(): void {
-    this.editor.focus();
+    if (this.#sheet.hidden) this.#empty.focus();
+    else this.editor.focus();
   }
 
   /** Rename the note: its title becomes a field, the words chosen; Enter keeps them, Esc doesn't. */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PANES,
+  dragged,
   LIMITS,
   PAGE_MIN,
   type Panes,
@@ -81,6 +82,32 @@ describe('resized', () => {
   });
 });
 
+describe('dragged', () => {
+  it('moves the remembered width with the edge when the pane shows all of it', () => {
+    expect(dragged(DEFAULT_PANES, 'list', 316, 40).list).toBe(356);
+    expect(dragged(DEFAULT_PANES, 'list', 316, -40).list).toBe(276);
+  });
+
+  it('in a window too narrow for the pane, never makes it narrower by widening it', () => {
+    const panes = { ...DEFAULT_PANES, list: 480 };
+    // 480 remembered, 292 shown: a step wider changes nothing on screen, and forgets nothing.
+    expect(dragged(panes, 'list', 292, STEP).list).toBe(480);
+    expect(dragged(panes, 'list', 292, 300).list).toBe(480);
+    expect(dragged({ ...DEFAULT_PANES, sidebar: 300 }, 'sidebar', 200, 150).sidebar).toBe(350);
+  });
+
+  it('narrows from what the writer sees, so the edge follows the pointer', () => {
+    const panes = { ...DEFAULT_PANES, list: 480 };
+    expect(dragged(panes, 'list', 292, -STEP).list).toBe(292 - STEP);
+    expect(dragged(panes, 'list', 292, -1000).list).toBe(LIMITS.list[0]);
+  });
+
+  it('ignores a move that isn’t a number', () => {
+    expect(dragged(DEFAULT_PANES, 'list', 316, Number.NaN)).toBe(DEFAULT_PANES);
+    expect(dragged(DEFAULT_PANES, 'list', Number.NaN, 10)).toBe(DEFAULT_PANES);
+  });
+});
+
 describe('shownWidths', () => {
   const wide = 1600;
 
@@ -141,6 +168,12 @@ describe('shownWidths', () => {
 // That the defaults are the design's tokens (--eien-sidebar-w and the rest) is checked in the
 // running window, where the tokens are computed: tests/e2e/panes.spec.ts.
 describe('the defaults', () => {
+  it('can’t be changed by whoever reads them', () => {
+    const read = readPanes('not json'); // garbage gives the defaults themselves
+    expect(() => Object.assign(read, { list: 1 })).toThrow();
+    expect(readPanes('not json').list).toBe(316);
+  });
+
   it('start every width inside its own limits', () => {
     for (const edge of ['sidebar', 'sidebarTwo', 'list'] as const) {
       expect(DEFAULT_PANES[edge]).toBeGreaterThanOrEqual(LIMITS[edge][0]);

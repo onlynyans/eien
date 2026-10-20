@@ -6,11 +6,11 @@
 
 import { h } from '../dom';
 import {
+  dragged,
   type Edge,
   LIMITS,
   type Panes,
   readPanes,
-  resized,
   STEP,
   shownWidths,
   sidebarEdge,
@@ -90,8 +90,10 @@ export class PaneLayout {
 
   setTwo(two: boolean): void {
     if (two === this.#two) return;
+    const hadFocus = this.#holds('list');
     this.#two = two;
     this.#apply();
+    if (two && hadFocus) this.#parts.leave(); // the list is gone, with the keyboard in it
     this.#parts.changed();
   }
 
@@ -99,9 +101,15 @@ export class PaneLayout {
     window.removeEventListener('resize', this.#onResize);
   }
 
-  #set(pane: Shuttable, shut: boolean): void {
+  /** Whether the keyboard is in `pane`, or on its edge. */
+  #holds(pane: Shuttable): boolean {
+    const active = document.activeElement;
     const element = pane === 'sidebar' ? this.#parts.sidebar : this.#parts.list;
-    const hadFocus = element.contains(document.activeElement);
+    return element.contains(active) || this.#edges[pane] === active;
+  }
+
+  #set(pane: Shuttable, shut: boolean): void {
+    const hadFocus = this.#holds(pane);
     this.#panes = { ...this.#panes, [pane === 'sidebar' ? 'sidebarShut' : 'listShut']: shut };
     this.#apply();
     this.#save();
@@ -139,8 +147,13 @@ export class PaneLayout {
     return pane === 'sidebar' ? sidebarEdge(this.#two) : 'list';
   }
 
-  #resize(pane: Shuttable, width: number): void {
-    this.#panes = resized(this.#panes, this.#edgeOf(pane), width);
+  /** Move `pane`'s edge `by` pixels from `shown`, its width on screen when the move began. */
+  #move(
+    pane: Shuttable,
+    from: { readonly panes: Panes; readonly shown: number },
+    by: number,
+  ): void {
+    this.#panes = dragged(from.panes, this.#edgeOf(pane), from.shown, by);
     this.#apply();
   }
 
@@ -167,7 +180,7 @@ export class PaneLayout {
     edge.addEventListener('pointerdown', (down) => {
       if (down.button !== 0) return;
       down.preventDefault(); // no text selected on the way
-      const from = { x: down.clientX, width: width() };
+      const from = { x: down.clientX, panes: this.#panes, shown: width() };
       this.#parts.shell.classList.add('is-resizing');
       edge.classList.add('is-dragging');
       // Followed on the document, as a note's drag is (../list/drag.ts): the edge moving out
@@ -175,7 +188,7 @@ export class PaneLayout {
       // A move with the button up was let go where the window didn't hear it.
       const move = (event: PointerEvent) => {
         if ((event.buttons & 1) === 0) end();
-        else this.#resize(pane, from.width + event.clientX - from.x);
+        else this.#move(pane, from, event.clientX - from.x);
       };
       const end = () => {
         document.removeEventListener('pointermove', move);
@@ -193,7 +206,7 @@ export class PaneLayout {
       const by = event.key === 'ArrowLeft' ? -STEP : event.key === 'ArrowRight' ? STEP : 0;
       if (by === 0 || event.altKey || event.metaKey || event.ctrlKey) return;
       event.preventDefault();
-      this.#resize(pane, width() + by);
+      this.#move(pane, { panes: this.#panes, shown: width() }, by);
       this.#save();
     });
     return edge;

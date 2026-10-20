@@ -64,8 +64,14 @@ export class Navigation {
     followSorts(from, to);
   }
 
-  /** A folder went to the trash: if it, or a folder in it, was chosen, All Notes is. */
+  /**
+   * A folder went to the trash: if it, or a folder in it, was chosen, All
+   * Notes is; and it isn't open, so a new folder of its name starts shut.
+   */
   unselect(path: string): void {
+    for (const id of [...this.open]) {
+      if (id === path || id.startsWith(`${path}/`)) this.open.delete(id);
+    }
     const chosen = this.#selection;
     if (chosen.kind === 'folder' && (chosen.path === path || chosen.path.startsWith(`${path}/`))) {
       this.#selection = { kind: 'all' };

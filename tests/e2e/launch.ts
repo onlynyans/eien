@@ -1,7 +1,14 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { _electron, test as base, type ElectronApplication, type Page } from '@playwright/test';
+import {
+  _electron,
+  test as base,
+  type ElectronApplication,
+  expect,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 export const ROOT = resolve(import.meta.dirname, '../..');
 
@@ -38,6 +45,21 @@ export function makeVault(files: VaultFiles): string {
 /** Launch the built app with its data in `userData`, and the vault at `vault` if given. */
 export const launchApp = (userData: string, vault?: string | null): Promise<ElectronApplication> =>
   _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(userData, vault) });
+
+/** Where a locator's element is on screen. */
+export type Box = NonNullable<Awaited<ReturnType<Locator['boundingBox']>>>;
+
+/** A locator's box, measured again if a redraw (the watcher's, after a save) replaced it. */
+export async function boxOf(locator: Locator): Promise<Box> {
+  let found: Box | null = null;
+  await expect
+    .poll(async () => {
+      found = await locator.boundingBox();
+      return found !== null;
+    })
+    .toBe(true);
+  return found as unknown as Box;
+}
 
 /** Click a menu item, as the window the click is for: no reliance on which window has focus. */
 export async function clickMenu(

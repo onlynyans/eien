@@ -2,19 +2,15 @@
 // the name typed, Esc doesn't; leaving the field keeps it. What's typed,
 // and where the caret is, outlive the sidebar's redraws.
 
-import { joinPath, parentOf } from '../../core/paths';
 import type { FolderNode } from '../../core/vault';
 import { h } from '../dom';
-import { atDepth, keyOf } from './tree';
+import { atDepth } from './tree';
 
 export interface FolderFieldEvents {
   /** Whether the sidebar is redrawing: a field it takes out isn't the writer leaving. */
   drawing(): boolean;
-  /**
-   * Done with `folder`: `typed` is the name to rename it to, or null to keep
-   * its own; `refocus` is the row to give the keyboard back to.
-   */
-  done(folder: FolderNode, typed: string | null, refocus: string): void;
+  /** Done with `folder`: `typed` is the name to rename it to, or null to keep its own. */
+  done(folder: FolderNode, typed: string | null): void;
 }
 
 export class FolderField {
@@ -49,9 +45,7 @@ export class FolderField {
       this.#editing = null;
       const value = field.value;
       const renaming = keep && value.trim() !== '' && value !== folder.name;
-      // The keyboard goes back to the folder, under its new name if it gets one.
-      const path = renaming ? joinPath(parentOf(folder.path), value.trim()) : folder.path;
-      this.#events.done(folder, renaming ? value : null, keyOf({ kind: 'folder', path }));
+      this.#events.done(folder, renaming ? value : null);
     };
     const keep = () => {
       if (!this.#editing) return;

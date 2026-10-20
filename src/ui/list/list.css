@@ -172,9 +172,11 @@
   font-style: normal;
 }
 
-/* Dragging a row: it lifts off the paper and follows the pointer; where it
-   left is marked faintly; a hairline with a dot shows where it will go. */
-.note-row.is-lifted {
+/* Dragging a row (a list's, or a note in the sidebar's tree): it lifts off
+   the paper and follows the pointer; where it left is marked faintly; a
+   hairline with a dot shows where it will go. */
+.note-row.is-lifted,
+.tree-row__name.is-lifted {
   position: fixed;
   left: calc(var(--drag-x) + var(--drag-dx));
   top: calc(var(--drag-y) + var(--drag-dy));
@@ -187,10 +189,12 @@
   pointer-events: none;
   transition: none;
 }
-.list.is-dragging .note-row {
+.list.is-dragging .note-row,
+.sidebar.is-dragging .tree-row__name {
   cursor: grabbing;
 }
-.note-row.is-left {
+.note-row.is-left,
+.tree-row__name.is-left {
   opacity: 0.4;
 }
 .drop-marker {

@@ -15,6 +15,8 @@ export interface CommandContext {
   readonly sidebar: Sidebar;
   readonly list: HTMLElement;
   newNote(): void;
+  /** Draw the list: a shut one isn't kept drawn. */
+  drawList(): Promise<void>;
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
@@ -33,8 +35,10 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     sidebar.focusTree();
   } else if (command === 'focus:list') {
     // With two panes there's no list: the second pane is the page.
-    if (panes.open('list')) focusList(ctx.list);
-    else page.focus();
+    const wasShut = panes.isShut('list');
+    if (!panes.open('list')) page.focus();
+    else if (!wasShut) focusList(ctx.list);
+    else void ctx.drawList().then(() => focusList(ctx.list));
   } else if (command === 'focus:page') page.focus();
   else if (command.startsWith('format:')) {
     const format = formatCommand(command.slice('format:'.length));

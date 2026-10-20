@@ -6,7 +6,7 @@
 import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
-import { clickMenu, closeApp, expect, fakeTrash, launchApp, test } from './launch';
+import { boxOf, clickMenu, closeApp, expect, fakeTrash, launchApp, test } from './launch';
 
 const BOOK = 'Fic/Scarf';
 test.use({
@@ -69,8 +69,7 @@ async function openBook(page: Page): Promise<void> {
 
 /** Drag a pane's edge `by` pixels, as a pointer would. */
 async function dragEdge(page: Page, pane: 'sidebar' | 'list', by: number): Promise<void> {
-  const box = await page.locator(`.pane-edge--${pane}`).boundingBox();
-  if (!box) throw new Error(`no ${pane} edge`);
+  const box = await boxOf(page.locator(`.pane-edge--${pane}`));
   const x = box.x + box.width / 2;
   await page.mouse.move(x, 300);
   await page.mouse.down();
@@ -219,6 +218,26 @@ test.describe('shutting and opening', () => {
     await expect.poll(() => focusIn(page, '.page')).toBe(true);
   });
 
+  test('with the sidebar and the list both shut, the news shows in the page’s status line', async ({
+    app,
+    page,
+  }) => {
+    await openBook(page);
+    await row(page, 'Needle').click();
+    await clickMenu(app, 'View', 'Toggle Sidebar');
+    await clickMenu(app, 'View', 'Toggle Note List');
+    await page.locator('.title').click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('Seventeen'); // taken: the rename is refused, and says why
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.colophon__news')).toHaveText(
+      'Something here already has that name.',
+    );
+    await barButton(page, 'list').click(); // a pane to show it again: it moves there
+    await expect(page.locator('.list__notice')).toHaveText('Something here already has that name.');
+    await expect(page.locator('.colophon__news')).toBeHidden();
+  });
+
   test('⌘1, ⌘2 and ⌘3 give the sidebar, the list and the page the keyboard, opening a shut one', async ({
     app,
     page,
@@ -364,9 +383,8 @@ test.describe('two panes', () => {
       await expect(treeNotes(page)).toHaveText(['Needle', 'The Tear', 'Eighteen', 'Ideas']);
 
       // Dragged onto a folder, a note moves into it.
-      const from = await treeNote(page, 'Ideas').boundingBox();
-      const to = await folder(page, 'Research').boundingBox();
-      if (!from || !to) throw new Error('nothing to drag');
+      const from = await boxOf(treeNote(page, 'Ideas'));
+      const to = await boxOf(folder(page, 'Research'));
       await page.mouse.move(from.x + 30, from.y + from.height / 2);
       await page.mouse.down();
       await page.mouse.move(from.x + 30, from.y + from.height / 2 + 12, { steps: 3 });

@@ -92,6 +92,8 @@ export async function showVault(
       renameFolder: (path, typed) =>
         void act(async () => {
           const to = await organizer.renameFolder(path, typed);
+          // Where it is now: under the name the disk took (cleaned, or refused and kept).
+          sidebar.refocusOn(to ?? path);
           if (to) nav.follow(path, to);
         }),
       scheme: (scheme) => void settings.set('appearance.scheme', scheme).catch(console.error),
@@ -150,7 +152,7 @@ export async function showVault(
       void newNote(folder);
     },
     newFolder: (parent) => void newFolder(parent),
-    editFolder: (path) => sidebar.editFolder(path),
+    editFolder: (path) => editFolder(path),
     followFolder: (from, to) => nav.follow(from, to),
     unselect: (path) => nav.unselect(path),
   };
@@ -183,6 +185,7 @@ export async function showVault(
     list,
     notice,
     openNote: () => note.path,
+    pageNews: (text) => page.news(text),
     listActions: {
       ...rowActions,
       newNote: () => void newNote(),
@@ -210,6 +213,12 @@ export async function showVault(
     if (!path) return;
     nav.openTo(parent);
     await refresh();
+    editFolder(path);
+  }
+
+  /** Rename a folder in place: in the sidebar, opened first if it's shut (a menu can outlive it). */
+  function editFolder(path: string): void {
+    panes.open('sidebar');
     sidebar.editFolder(path);
   }
 
@@ -255,7 +264,14 @@ export async function showVault(
   const onBlur = () => void note.flush();
   window.addEventListener('blur', onBlur);
   const onMenu = bridge.onMenu((command) =>
-    runCommand(command, { page, panes, sidebar, list, newNote: () => void newNote() }),
+    runCommand(command, {
+      page,
+      panes,
+      sidebar,
+      list,
+      newNote: () => void newNote(),
+      drawList: () => draw.list(),
+    }),
   );
   await refresh();
   return {

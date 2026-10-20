@@ -18,6 +18,8 @@ import type { SettingsState } from './settings-state';
 
 export class SettingsScreen {
   readonly #dialog: HTMLDialogElement;
+  /** The data-key of what had the keyboard when the screen opened: a redraw may replace it. */
+  #openerKey: string | null = null;
   readonly #problem = h('p', {
     class: 'settings__problem',
     attrs: { role: 'alert', hidden: true },
@@ -61,6 +63,18 @@ export class SettingsScreen {
         h('div', { class: 'settings__body' }, ...groups),
       ),
     );
+    // Closed, the dialog gives the keyboard back to what opened it; if a redraw replaced that
+    // (choosing two panes redraws the sidebar), to the control in its place.
+    this.#dialog.addEventListener('close', () => {
+      const key = this.#openerKey;
+      this.#openerKey = null;
+      const active = document.activeElement;
+      const lost = !active || active === document.body || this.#dialog.contains(active);
+      if (key === null || !lost) return;
+      [...document.querySelectorAll<HTMLElement>('[data-key]')]
+        .find((control) => control.dataset.key === key)
+        ?.focus();
+    });
     // The dialog's own box is only its backdrop: a click there closes it, as Esc does.
     this.#dialog.addEventListener('click', (event) => {
       if (event.target === this.#dialog) this.close();
@@ -77,6 +91,8 @@ export class SettingsScreen {
   open(): void {
     if (this.#dialog.open) return;
     this.#problem.hidden = true;
+    const opener = document.activeElement;
+    this.#openerKey = opener instanceof HTMLElement ? (opener.dataset.key ?? null) : null;
     this.#dialog.showModal();
   }
 
