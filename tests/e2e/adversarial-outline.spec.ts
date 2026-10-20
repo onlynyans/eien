@@ -421,6 +421,7 @@ test.describe('hundreds of chapters, and long names', () => {
 
 test.describe('dragging cards', () => {
   async function lift(page: Page, title: string) {
+    await card(page, title).scrollIntoViewIfNeeded(); // one card to a row: it may be further down
     const from = await boxOf(card(page, title));
     await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
     await page.mouse.down();
@@ -439,6 +440,7 @@ test.describe('dragging cards', () => {
       // the drop does nothing.
       await chooseBook(page);
       await showCards(app, page);
+      test.skip((await perRow(page)) < 2, 'one card to a row in this window');
       const tear = await boxOf(card(page, 'Tear'));
       const mend = await boxOf(card(page, 'Mend'));
       expect(mend.y).toBe(tear.y);
@@ -460,6 +462,7 @@ test.describe('dragging cards', () => {
       // gap for the other: it jumps as the pointer crosses the gap.
       await chooseBook(page);
       await showCards(app, page);
+      test.skip((await perRow(page)) < 2, 'one card to a row in this window');
       const tear = await boxOf(card(page, 'Tear'));
       const mend = await boxOf(card(page, 'Mend'));
       await lift(page, 'Snow');
