@@ -32,9 +32,9 @@ if (!app.requestSingleInstanceLock()) {
       allow(false),
     );
     Menu.setApplicationMenu(
-      buildMenu((command) =>
-        BrowserWindow.getFocusedWindow()?.webContents.send(CHANNEL.menu, command),
-      ),
+      buildMenu((command, window) => {
+        if (window instanceof BrowserWindow) window.webContents.send(CHANNEL.menu, command);
+      }),
     );
     await createMainWindow();
     app.on('activate', () => {

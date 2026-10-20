@@ -62,6 +62,17 @@ export class VaultState {
       .map((entry) => baseName(entry.path));
   }
 
+  /** The note a [[wiki link]] names: titled `title`, case aside; the first by path if several are. */
+  findByTitle(title: string): string | null {
+    const wanted = title.trim().toLocaleLowerCase();
+    const match = this.#entries
+      .filter((entry) => entry.kind === 'note')
+      .map((entry) => entry.path)
+      .sort()
+      .find((path) => titleOf(baseName(path)).toLocaleLowerCase() === wanted);
+    return match ?? null;
+  }
+
   has(path: string): boolean {
     return this.#entries.some((entry) => entry.path === path);
   }

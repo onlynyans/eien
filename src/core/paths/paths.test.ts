@@ -6,6 +6,7 @@ import {
   nameKey,
   nameProblems,
   recoveredName,
+  resolveLinkPath,
   safeName,
   stampOf,
   titleOf,
@@ -174,5 +175,38 @@ describe('vaultPath', () => {
 
   it('refuses something that is not text', () => {
     expect(() => vaultPath(42 as unknown as string)).toThrow(VaultPathError);
+  });
+});
+
+describe('resolveLinkPath', () => {
+  it.each([
+    ['Fic', 'cover.png', 'Fic/cover.png'],
+    ['Fic', './cover.png', 'Fic/cover.png'],
+    ['Fic/Scarf', '../art/cover.png', 'Fic/art/cover.png'],
+    ['Fic', '/attachments/cover.png', 'attachments/cover.png'],
+    ['', 'cover.png', 'cover.png'],
+    ['Fic', 'my%20cover.png', 'Fic/my cover.png'],
+    ['Fic', '<my cover.png>', 'Fic/my cover.png'],
+    ['Fic', 'cover.png#top', 'Fic/cover.png'],
+    ['Fic', 'cover.png?v=2', 'Fic/cover.png'],
+    ['Fic', 'Caf%C3%A9.png', 'Fic/Café.png'],
+  ])('from %j, %j is %j', (folder, ref, path) => {
+    expect(resolveLinkPath(folder, ref)).toBe(path);
+  });
+
+  it.each([
+    ['Fic', '../../outside.png'],
+    ['', '../outside.png'],
+    ['Fic', 'https://example.com/cover.png'],
+    ['Fic', 'data:image/png;base64,xyz'],
+    ['Fic', '//example.com/cover.png'],
+    ['Fic', 'file:///etc/passwd'],
+    ['Fic', 'C:/Windows/win.ini'],
+    ['Fic', '%E0%A4%A.png'],
+    ['Fic', 'CON.png'],
+    ['Fic', ''],
+    ['Fic', '/'],
+  ])('from %j, %j is nothing', (folder, ref) => {
+    expect(resolveLinkPath(folder, ref)).toBeNull();
   });
 });

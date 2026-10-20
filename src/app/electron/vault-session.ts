@@ -80,6 +80,7 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
   });
   handle(CHANNEL.list, () => session.storage().list());
   handle(CHANNEL.read, (path) => session.storage().read(text(path, 'path')));
+  handle(CHANNEL.readBytes, (path) => session.storage().readBytes(text(path, 'path')));
   handle(CHANNEL.write, (path, body, expected) => {
     if (expected !== null && typeof expected !== 'string')
       throw new TypeError('expected must be text or null.');
@@ -93,6 +94,7 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
       CHANNEL.choose,
       CHANNEL.list,
       CHANNEL.read,
+      CHANNEL.readBytes,
       CHANNEL.write,
     ]) {
       ipcMain.removeHandler(channel);

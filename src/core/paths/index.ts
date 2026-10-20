@@ -1,3 +1,4 @@
+export { resolveLinkPath } from './link-path';
 export {
   isHiddenName,
   isValidName,

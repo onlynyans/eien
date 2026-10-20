@@ -1,6 +1,7 @@
 /** What the preload exposes to the window as `window.eien`. Every capability
  * the window has beyond a web page is listed here, and nowhere else. */
 
+import type { FormatCommandId } from '../core/format';
 import type { VaultEntry } from '../core/vault';
 import type { FileState, WriteResult } from './storage';
 
@@ -17,13 +18,22 @@ export interface VaultBridge {
   choose(): Promise<VaultInfo | null>;
   list(): Promise<VaultEntry[]>;
   read(path: string): Promise<FileState | null>;
+  /** An image's bytes, to show it; null when it's missing or too big. */
+  readBytes(path: string): Promise<Uint8Array | null>;
   write(path: string, text: string, expected: string | null): Promise<WriteResult>;
   /** Paths that changed on disk, as they change. Returns a function to stop. */
   onChange(listener: (paths: string[]) => void): () => void;
 }
 
 /** Menu items the window acts on. */
-export type MenuCommand = 'open-vault' | 'new-note';
+export type MenuCommand =
+  | 'open-vault'
+  | 'new-note'
+  | `format:${FormatCommandId}`
+  | 'view:live'
+  | 'view:source'
+  | 'view:reading'
+  | 'view:next';
 
 export interface Bridge {
   /** The operating system: 'darwin', 'win32', 'linux', … */
@@ -43,6 +53,7 @@ export const CHANNEL = {
   choose: 'vault:choose',
   list: 'vault:list',
   read: 'vault:read',
+  readBytes: 'vault:read-bytes',
   write: 'vault:write',
   changed: 'vault:changed',
   menu: 'app:menu',

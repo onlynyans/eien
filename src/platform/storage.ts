@@ -16,12 +16,18 @@ export type WriteResult =
   /** The file isn't at the version the write expected: nothing was written. */
   | { readonly ok: false; readonly current: FileState | null };
 
+/** The largest file readBytes returns (an image shown in a note). */
+export const MAX_BYTES_READ = 32 * 1024 * 1024;
+
 export interface Storage {
   /** Every visible folder and file, at any depth. Hidden (dot) names are left out. */
   list(): Promise<VaultEntry[]>;
 
   /** The file at `path`, or null when there's none. */
   read(path: string): Promise<FileState | null>;
+
+  /** The bytes of the file at `path` (an image), or null when there's none or it's too big. */
+  readBytes(path: string): Promise<Uint8Array | null>;
 
   /**
    * Write `text` to `path`, only if the file is still at `expected`; with

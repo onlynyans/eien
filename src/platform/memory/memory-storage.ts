@@ -2,7 +2,7 @@
 
 import { baseName, isHiddenName, parentOf, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
-import type { FileState, Storage, WriteResult } from '../storage';
+import { type FileState, MAX_BYTES_READ, type Storage, type WriteResult } from '../storage';
 
 export class MemoryStorage implements Storage {
   readonly #files = new Map<string, { text: string; modified: number }>();
@@ -46,6 +46,13 @@ export class MemoryStorage implements Storage {
   async read(path: string): Promise<FileState | null> {
     const file = this.#files.get(vaultPath(path));
     return file ? { text: file.text, version: versionOf(file.text) } : null;
+  }
+
+  async readBytes(path: string): Promise<Uint8Array | null> {
+    const file = this.#files.get(vaultPath(path));
+    if (!file) return null;
+    const bytes = new TextEncoder().encode(file.text);
+    return bytes.length > MAX_BYTES_READ ? null : bytes;
   }
 
   async write(path: string, text: string, expected: string | null): Promise<WriteResult> {

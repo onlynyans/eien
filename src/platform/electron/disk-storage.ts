@@ -3,11 +3,21 @@
 
 import { createHash } from 'node:crypto';
 import { type Dirent, type FSWatcher, watch } from 'node:fs';
-import { lstat, mkdir, open, readdir, readFile, realpath, rename, rm } from 'node:fs/promises';
+import {
+  lstat,
+  mkdir,
+  open,
+  readdir,
+  readFile,
+  realpath,
+  rename,
+  rm,
+  stat,
+} from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
 import { isHiddenName, VaultPathError, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
-import type { FileState, Storage, WriteResult } from '../storage';
+import { type FileState, MAX_BYTES_READ, type Storage, type WriteResult } from '../storage';
 
 /** The hidden file a write goes through: ".<name>.eien.tmp" beside it. */
 export const tempNameOf = (name: string): string => `.${name}.eien.tmp`;
@@ -73,6 +83,13 @@ export class DiskStorage implements Storage {
       if (isNotFound(error)) return null;
       throw error;
     }
+  }
+
+  async readBytes(path: string): Promise<Uint8Array | null> {
+    const file = await this.#resolve(path);
+    const stats = await stat(file).catch(() => null);
+    if (!stats?.isFile() || stats.size > MAX_BYTES_READ) return null;
+    return new Uint8Array(await readFile(file));
   }
 
   async write(path: string, text: string, expected: string | null): Promise<WriteResult> {

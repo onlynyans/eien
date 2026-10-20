@@ -21,8 +21,11 @@ export function appEnv(userData: string, vault?: string | null): Record<string, 
   return { ...env, EIEN_USER_DATA: userData, ...(vault ? { EIEN_VAULT: vault } : {}) };
 }
 
-/** A throwaway vault holding `files` (vault path → text). */
-export function makeVault(files: Record<string, string>): string {
+/** What a test vault holds: vault path → text, or bytes for an image. */
+export type VaultFiles = Record<string, string | Uint8Array>;
+
+/** A throwaway vault holding `files`. */
+export function makeVault(files: VaultFiles): string {
   const root = mkdtempSync(join(tmpdir(), 'eien-vault-'));
   for (const [path, text] of Object.entries(files)) {
     const file = join(root, ...path.split('/'));
@@ -70,7 +73,7 @@ export async function closeApp(app: ElectronApplication): Promise<void> {
 
 type Fixtures = {
   /** Files for the test's vault; null (the default) opens no vault. */
-  vaultFiles: Record<string, string> | null;
+  vaultFiles: VaultFiles | null;
   /** The vault folder, when there is one. */
   vault: string | null;
   userData: string;
@@ -104,5 +107,11 @@ export const test = base.extend<Fixtures>({
     await use(page);
   },
 });
+
+/** The note editor's lines, as they show (Live hides the marks away from the caret). */
+export const editorLines = (page: Page) => page.locator('.cm-line');
+
+/** Where the writer types: CodeMirror's content, inside the editor's shadow root. */
+export const editorContent = (page: Page) => page.locator('.cm-content');
 
 export { expect } from '@playwright/test';

@@ -1,0 +1,17 @@
+/* The selection bar: raised paper over the page, the float shadow, the
+   inline commands as words. */
+.selection-bar {
+  position: fixed;
+  top: var(--bar-top, 0);
+  left: var(--bar-left, 0);
+  z-index: 20;
+  display: flex;
+  gap: var(--eien-space-1);
+  padding: var(--eien-space-1);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  box-shadow: var(--eien-shadow-float);
+}
+.selection-bar[hidden] {
+  display: none;
+}

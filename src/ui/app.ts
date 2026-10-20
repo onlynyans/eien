@@ -1,8 +1,10 @@
 // The window: a vault's three panes, kept in step with the disk.
 
+import { formatCommand } from '../core/format';
 import { baseName, freeNoteName, joinPath, parentOf, titleOf } from '../core/paths';
 import type { Bridge } from '../platform/bridge';
 import { h } from './dom';
+import { type NoteImages, noteImages } from './editor/image-loader';
 import { renderList } from './list/list';
 import { NoteSession } from './notes/note-session';
 import { PageView } from './page/page';
@@ -55,7 +57,18 @@ async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promi
   const list = h('section', { class: 'list', attrs: { 'aria-label': 'Notes' } });
   const pageArea = h('main', { class: 'page' });
   root.replaceChildren(h('div', { class: 'shell' }, sidebar, list, pageArea));
-  const page = new PageView(pageArea, (text) => session?.edit(text));
+  let images: NoteImages | null = null;
+  const page = new PageView(pageArea, {
+    changed: (text) => session?.edit(text),
+    follow: (target) => {
+      if (target.kind === 'url')
+        window.open(target.value); // the main process opens web addresses in the browser
+      else {
+        const path = state.findByTitle(target.value);
+        if (path) void openNote(path);
+      }
+    },
+  });
 
   const crumbsOf = (path: string) => parentOf(path).split('/').filter(Boolean).join(' / ');
 
@@ -104,8 +117,16 @@ async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promi
         page.showNothing();
       },
     });
-    if (session) page.show({ crumbs: crumbsOf(path), title: session.title, text: session.text });
-    else page.showNothing();
+    images?.release();
+    images = session ? noteImages(parentOf(path), (file) => bridge.vault.readBytes(file)) : null;
+    if (session && images) {
+      page.show({
+        crumbs: crumbsOf(path),
+        title: session.title,
+        text: session.text,
+        loadImage: images.load,
+      });
+    } else page.showNothing();
     await drawList();
   }
 
@@ -141,6 +162,13 @@ async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promi
   window.addEventListener('blur', onBlur);
   const onMenu = bridge.onMenu((command) => {
     if (command === 'new-note') void newNote();
+    else if (command === 'view:next') page.nextMode();
+    else if (command === 'view:live' || command === 'view:source' || command === 'view:reading') {
+      page.setMode(command.slice('view:'.length) as 'live' | 'source' | 'reading');
+    } else if (command.startsWith('format:')) {
+      const format = formatCommand(command.slice('format:'.length));
+      if (format) page.editor.format(format);
+    }
   });
   await refresh();
   return {

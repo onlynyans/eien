@@ -1,0 +1,137 @@
+// How the editor looks, from the design tokens alone. The editor lives in
+// a shadow root; the tokens reach it because custom properties inherit.
+
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { EditorView } from '@codemirror/view';
+import { tags } from '@lezer/highlight';
+
+export const editorTheme = EditorView.theme({
+  '&': {
+    color: 'var(--eien-ink)',
+    backgroundColor: 'transparent',
+    fontSize: 'var(--eien-size-prose)',
+  },
+  '&.cm-focused': { outline: 'none' },
+  '.cm-scroller': {
+    fontFamily: 'var(--eien-face-text)',
+    lineHeight: 'var(--eien-leading-prose)',
+    overflow: 'visible',
+  },
+  '.cm-content': {
+    padding: '0',
+    caretColor: 'var(--eien-seal)',
+    minHeight: '40vh',
+  },
+  '.cm-line': { padding: '0' },
+  '.cm-cursor, .cm-dropCursor': {
+    borderLeftColor: 'var(--eien-seal)',
+    borderLeftWidth: 'var(--eien-mark-w)',
+  },
+  '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, ::selection':
+    { backgroundColor: 'var(--eien-seal-wash)' },
+  '&.cm-focused .cm-selectionBackground': { backgroundColor: 'var(--eien-seal-wash)' },
+
+  // Source: the raw file, in the machine voice.
+  '&.eien-source .cm-scroller': {
+    fontFamily: 'var(--eien-face-mono)',
+    fontSize: 'var(--eien-size-source)',
+    lineHeight: 'var(--eien-leading-prose)',
+  },
+  // Reading: no caret, nothing to edit.
+  '&.eien-reading .cm-content': { caretColor: 'transparent', cursor: 'default' },
+
+  // Live and Reading: what the marks mean, without the marks.
+  '.eien-h1': { fontSize: 'var(--eien-size-title)', fontWeight: '500', lineHeight: '1.25' },
+  '.eien-h2': { fontSize: 'var(--eien-size-heading)', fontWeight: '600', lineHeight: '1.3' },
+  '.eien-h3, .eien-h4, .eien-h5, .eien-h6': { fontWeight: '600' },
+  '.eien-quote': {
+    borderLeft: 'var(--eien-mark-w) solid var(--eien-rule-strong)',
+    paddingLeft: 'var(--eien-space-4) !important',
+    color: 'var(--eien-ink-soft)',
+  },
+  '.eien-underline': { textDecoration: 'underline', textUnderlineOffset: '0.18em' },
+  '.eien-em': { fontStyle: 'italic' },
+  '.eien-strong': { fontWeight: '600' },
+  '.eien-strike': { textDecoration: 'line-through' },
+  '.eien-highlight': { backgroundColor: 'var(--eien-caution-wash)', color: 'inherit' },
+  '.eien-sup': { verticalAlign: 'super', fontSize: '0.75em' },
+  '.eien-sub': { verticalAlign: 'sub', fontSize: '0.75em' },
+  '.eien-code': {
+    fontFamily: 'var(--eien-face-mono)',
+    fontSize: '0.86em',
+    backgroundColor: 'var(--eien-well)',
+    padding: '0.05em 0.25em',
+  },
+  '.eien-codeblock': {
+    fontFamily: 'var(--eien-face-mono)',
+    fontSize: 'var(--eien-size-source)',
+    backgroundColor: 'var(--eien-well)',
+    padding: '0 var(--eien-space-3) !important',
+  },
+  '.eien-link': {
+    color: 'var(--eien-ink)',
+    textDecoration: 'underline',
+    textDecorationColor: 'var(--eien-rule-strong)',
+    textUnderlineOffset: '0.18em',
+  },
+  '.eien-mark': { color: 'var(--eien-faded)' },
+  '.eien-scene-break': {
+    display: 'block',
+    textAlign: 'center',
+    letterSpacing: '0.6em',
+    textIndent: '0.6em',
+    color: 'var(--eien-pencil)',
+    // The blank lines round "***" already give it room.
+    margin: '0',
+  },
+  '.eien-check': {
+    width: '0.9em',
+    height: '0.9em',
+    margin: '0 0.35em 0 0',
+    verticalAlign: '-0.1em',
+    accentColor: 'var(--eien-ink-soft)',
+    cursor: 'pointer',
+  },
+  '.eien-done': {
+    color: 'var(--eien-pencil)',
+    textDecoration: 'line-through',
+    textDecorationColor: 'var(--eien-rule-strong)',
+  },
+  '.eien-image': { display: 'block', maxWidth: '100%', margin: 'var(--eien-space-3) 0' },
+  '.eien-image-note': {
+    fontFamily: 'var(--eien-face-mono)',
+    fontSize: 'var(--eien-size-meta)',
+    color: 'var(--eien-pencil)',
+  },
+  '.eien-table': {
+    borderCollapse: 'collapse',
+    margin: 'var(--eien-space-3) 0',
+    fontSize: '0.9em',
+  },
+  '.eien-table th, .eien-table td': {
+    border: 'var(--eien-hairline) solid var(--eien-rule)',
+    padding: 'var(--eien-space-1) var(--eien-space-3)',
+    textAlign: 'left',
+  },
+  '.eien-table th': { backgroundColor: 'var(--eien-band)', fontWeight: '600' },
+});
+
+/** Markdown's look in every view: marks quiet, words in ink. No seal, no colour for colour's sake. */
+const markdownHighlight = HighlightStyle.define([
+  { tag: tags.processingInstruction, color: 'var(--eien-faded)' },
+  {
+    tag: [tags.heading1, tags.heading2, tags.heading3, tags.heading4, tags.heading5, tags.heading6],
+    fontWeight: '600',
+  },
+  { tag: tags.emphasis, fontStyle: 'italic' },
+  { tag: tags.strong, fontWeight: '600' },
+  { tag: tags.strikethrough, textDecoration: 'line-through' },
+  { tag: [tags.link, tags.url], textDecoration: 'underline', color: 'var(--eien-ink-soft)' },
+  {
+    tag: [tags.monospace, tags.contentSeparator, tags.quote, tags.list, tags.meta],
+    color: 'var(--eien-ink-soft)',
+  },
+  { tag: [tags.angleBracket, tags.tagName, tags.attributeName], color: 'var(--eien-pencil)' },
+]);
+
+export const markdownColours = syntaxHighlighting(markdownHighlight);

@@ -181,6 +181,10 @@ format without typing them:
   appears beside it. It appears only for a selection and never while typing.
 - Typing the Markdown marks works too, as in any Markdown editor.
 
+Links: ⌘-click (Ctrl-click on Windows and Linux) follows one. A web address
+opens in the browser; a `[[wiki link]]` opens the note with that title. In
+Reading a plain click follows.
+
 ### Markdown supported
 
 CommonMark plus GitHub extensions, and three common additions:
@@ -243,6 +247,7 @@ src/core/            (✓ = built)
   text/         ✓ BOM and line endings kept, front matter located, words, chapter numbers
   vault/        ✓ entries, the folder tree, .eien-folder.json (order, book)
   saving/       ✓ what to do when a note changes on disk
+  format/       ✓ the formatting commands: inline marks, line formats, links, their keys
   config/        settings schema, defaults, validation (§6)
   theme/         theme schema, validation, token list (§7)
   note/          front matter read/write, id
@@ -261,12 +266,12 @@ src/ui/
   shell/        ✓ the three panes (resizing and collapsing: phase 5)
   sidebar/      ✓ tree: library and folders (tags, pinned: phase 6)
   list/         ✓ note list
-  page/         ✓ the sheet, a plain editor, the colophon
+  page/         ✓ the sheet, the view switch, the colophon
   notes/        ✓ the open note: autosave, reload, conflict copies
   vault/        ✓ the vault as the window knows it
   welcome/      ✓ before a vault is open
   theme/        ✓ tokens.css, base.css, fonts, from docs/design
-  editor/        CodeMirror setup, the three views, writing tools
+  editor/       ✓ CodeMirror, the three views, the selection bar, images (writing tools: phase 9)
   versions/      the checkpoint cycle and named versions
   settings/      the settings screen, generated from the schema
 src/app/
@@ -291,8 +296,12 @@ src/app/
 - Electron window: `contextIsolation`, `sandbox`, no Node in the renderer, a
   strict Content Security Policy (`script-src 'self'`).
 - The preload exposes one narrow API. Every handler validates its arguments.
-- Markdown and pasted HTML are rendered through a sanitizer; scripts, event
-  handlers and remote content never run.
+- Notes are never put on the page as HTML. Live and Reading style the text in
+  place; only the tags in §4 get their look, and any other HTML stays as text.
+- Images come only from the vault, read through the bridge and shown as `blob:`
+  URLs; an image from the web shows as a note and is never fetched.
+- Pasted HTML (phase 8) goes through a sanitizer; scripts, event handlers and
+  remote content never run.
 
 ### Stack
 
@@ -303,7 +312,7 @@ src/app/
 | Language | TypeScript, strict | Catches mistakes before they run |
 | Build | Vite | Fast, small configuration |
 | Editor | CodeMirror 6 | Proven Markdown editing, live preview through decorations |
-| Rendering | markdown-it + a sanitizer | Reading view and AO3 export |
+| Rendering | The editor's own parse (Lezer) | Live and Reading style the text in place, so there is no second parser to disagree with the editor. AO3's HTML is phase 8 |
 | Diff | jsdiff (word level) | Inline strike/insert, like Google Docs |
 | Front matter | `yaml` | Keeps comments and formatting when writing back |
 | Lint and format | Biome | One tool for both |
