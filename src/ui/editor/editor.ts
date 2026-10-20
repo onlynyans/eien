@@ -24,6 +24,13 @@ import { eienMarkdown } from './syntax';
 import { editorTheme, markdownColours } from './theme';
 import { htmlPaste, quoteTyping } from './typing';
 import { type ImageLoader, imageLoader } from './widgets';
+import {
+  centreCaret,
+  NO_TOOLS,
+  sceneBreak,
+  type WritingTools,
+  writingTools,
+} from './writing-tools';
 
 export type EditorMode = 'live' | 'source' | 'reading';
 export const EDITOR_MODES: readonly EditorMode[] = ['live', 'source', 'reading'];
@@ -44,6 +51,9 @@ export class NoteEditor {
   /** Typed quotes, as the vault's setting asks. */
   readonly #quotes = new Compartment();
   #quoteStyle: QuoteStyle = 'curly';
+  /** Focus mode and typewriter scrolling, as this device's settings say. */
+  readonly #tools = new Compartment();
+  #toolsOn: WritingTools = NO_TOOLS;
   /** Held still while its note is moved or trashed: no typing reaches it. */
   #locked = false;
   readonly #events: EditorEvents;
@@ -152,7 +162,6 @@ export class NoteEditor {
     this.#view.dispatch({ effects: this.#images.reconfigure(imageLoader.of(loadImage)) });
   }
 
-  /** Hold the text still (true) or let the writer type again (false). */
   /** Typed quotes curly or straight (spec §4). */
   setQuotes(style: QuoteStyle): void {
     if (style === this.#quoteStyle) return;
@@ -160,6 +169,16 @@ export class NoteEditor {
     this.#view.dispatch({ effects: this.#quotes.reconfigure(quoteTyping(style)) });
   }
 
+  /** Focus mode and typewriter scrolling on or off (spec §4). */
+  setTools(tools: WritingTools): void {
+    const before = this.#toolsOn;
+    if (tools.focus === before.focus && tools.typewriter === before.typewriter) return;
+    this.#toolsOn = tools;
+    this.#view.dispatch({ effects: this.#tools.reconfigure(writingTools(tools)) });
+    if (tools.typewriter && !before.typewriter) centreCaret(this.#view);
+  }
+
+  /** Hold the text still (true) or let the writer type again (false). */
   setLocked(locked: boolean): void {
     this.#locked = locked;
     this.#view.dispatch({ effects: this.#lock.reconfigure(lockExtensions(locked)) });
@@ -174,8 +193,14 @@ export class NoteEditor {
       this.#history.of(history()),
       this.#lock.of(lockExtensions(this.#locked)),
       this.#quotes.of(quoteTyping(this.#quoteStyle)),
+      this.#tools.of(writingTools(this.#toolsOn)),
       htmlPaste,
-      keymap.of([...formatKeys, ...historyKeymap, ...defaultKeymap]),
+      keymap.of([
+        ...formatKeys,
+        { key: 'Enter', run: sceneBreak },
+        ...historyKeymap,
+        ...defaultKeymap,
+      ]),
       eienMarkdown(),
       markdownColours,
       editorTheme,

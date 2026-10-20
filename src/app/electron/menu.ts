@@ -1,4 +1,5 @@
 import { app, type BaseWindow, Menu, type MenuItemConstructorOptions } from 'electron';
+import { type SettingValues, TOGGLES, type ToggleKey } from '../../core/config';
 import { acceleratorOf, FORMAT_COMMANDS, type FormatCommandId } from '../../core/format';
 import type { MenuCommand } from '../../platform/bridge';
 
@@ -29,6 +30,18 @@ export function buildMenu(send: SendCommand): Menu {
     label,
     accelerator,
     click: (_item, window) => send(command, window),
+  });
+  /** A setting turned on and off: its check follows the setting (checkToggles), wherever it's changed. */
+  const toggle = (
+    label: string,
+    key: ToggleKey,
+    accelerator?: string,
+  ): MenuItemConstructorOptions => ({
+    id: key,
+    type: 'checkbox',
+    label,
+    accelerator,
+    click: (_item, window) => send(`toggle:${key}`, window),
   });
   const settings = item('Settings…', 'settings', 'CmdOrCtrl+,');
   const template: MenuItemConstructorOptions[] = [
@@ -106,6 +119,10 @@ export function buildMenu(send: SendCommand): Menu {
         { type: 'separator' },
         item('Next View', 'view:next', 'CmdOrCtrl+E'),
         { type: 'separator' },
+        // The writing tools (spec §4), this device's settings.
+        toggle('Focus Mode', 'editor.focus', 'CmdOrCtrl+Shift+Return'),
+        toggle('Typewriter Scrolling', 'editor.typewriter'),
+        { type: 'separator' },
         item('Compare', 'compare', 'CmdOrCtrl+Shift+D'),
         item('Versions', 'versions'),
         { type: 'separator' },
@@ -128,4 +145,13 @@ export function buildMenu(send: SendCommand): Menu {
     { role: 'windowMenu' },
   ];
   return Menu.buildFromTemplate(template);
+}
+
+/** The menu's checks as the settings have them. */
+export function checkToggles(values: SettingValues): void {
+  const menu = Menu.getApplicationMenu();
+  for (const key of TOGGLES) {
+    const item = menu?.getMenuItemById(key);
+    if (item) item.checked = values[key] === 'on';
+  }
 }

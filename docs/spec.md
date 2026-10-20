@@ -314,10 +314,18 @@ words, as on the page.
 ### Writing tools
 
 - **Scene break:** Enter on an empty line after an empty line inserts `***`,
-  shown as a centered `* * *` in Live and Reading.
+  shown as a centered `* * *` in Live and Reading, and starts a new paragraph
+  after it. Not at the note's start, not right after another scene break, and
+  never in code or the front matter. ⌘Z takes it back.
 - **Quotes:** typed quotes follow the quote setting (curly or straight).
-- **Focus mode:** dims every paragraph but the current one.
-- **Typewriter scrolling:** keeps the caret line at a fixed height.
+- **Focus mode:** dims every paragraph but the current one (the lines between
+  blank lines round the caret). View → Focus Mode (⌘⇧↵, Ctrl+Shift+Enter), or
+  Settings → Editor.
+- **Typewriter scrolling:** keeps the caret line at the middle of the page as
+  the writer types, deletes or moves with the keys; a click leaves the page
+  where it is. View → Typewriter Scrolling, or Settings → Editor.
+- Both are this device's settings; the View menu's checks follow them, wherever
+  they're changed.
 - **Counters:** words in the note (its words only: not the marks, link
   addresses, HTML tags or front matter), in the book, today; sprint timer with words
   gained; zoom.
@@ -388,7 +396,7 @@ src/ui/
   vault/        ✓ the vault as the window knows it, its panes drawn, the menu's commands, organizing (rename, move, trash)
   welcome/      ✓ before a vault is open
   theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts
-  editor/       ✓ CodeMirror, the three views, the selection bar, images, typed quotes, pasted HTML (writing tools: phase 9)
+  editor/       ✓ CodeMirror, the three views, the selection bar, images, typed quotes, pasted HTML, the writing tools (scene breaks, focus, typewriter)
   versions/     ✓ sealing, Compare, the versions panel, the colophon's last seal
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
 src/app/
@@ -467,8 +475,8 @@ does nothing.
 - **Device settings** live in the app's data folder (`settings.json`): scheme
   (day, night or the system's), palette, text face, text size (90–130%),
   density (comfortable or compact), page frame (sheet or full) and zoom
-  (50–200%) and panes (three or two); later focus and typewriter modes,
-  spellcheck.
+  (50–200%), panes (three or two), focus mode and typewriter scrolling;
+  later spellcheck.
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.
 - Writing a file changes one key and keeps every other key as it is, even ones

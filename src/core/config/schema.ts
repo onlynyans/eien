@@ -112,6 +112,27 @@ export const SETTINGS = [
     default: 'sheet',
   },
   {
+    key: 'editor.focus',
+    label: 'Focus',
+    description: 'Fades back every paragraph but the one you’re writing. Also View → Focus Mode.',
+    scope: 'device',
+    group: 'Editor',
+    type: 'choice',
+    choices: { off: 'Off', on: 'On' },
+    default: 'off',
+  },
+  {
+    key: 'editor.typewriter',
+    label: 'Typewriter scrolling',
+    description:
+      'Keeps the line you’re writing at the middle of the page as you type. Also in the View menu.',
+    scope: 'device',
+    group: 'Editor',
+    type: 'choice',
+    choices: { off: 'Off', on: 'On' },
+    default: 'off',
+  },
+  {
     key: 'books.numerals',
     label: 'Chapter numbers',
     description: 'How a book numbers its chapters in the note list.',
@@ -172,3 +193,10 @@ type ValueOf<D> = D extends { readonly choices: infer C } ? keyof C & string : n
 
 /** A value for every setting, typed by its key. */
 export type SettingValues = { readonly [K in SettingKey]: ValueOf<Extract<Defined, { key: K }>> };
+
+/** Settings the menu turns on and off (View → Focus Mode…): each a choice of "off" and "on". */
+export const TOGGLES = [
+  'editor.focus',
+  'editor.typewriter',
+] as const satisfies readonly SettingKey[];
+export type ToggleKey = (typeof TOGGLES)[number];

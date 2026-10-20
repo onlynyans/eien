@@ -72,6 +72,7 @@
   --eien-ink-soft: light-dark(#51473c, #c3b9a7); /* rows, secondary text: iron-gall brown */
   --eien-pencil: light-dark(#5d5348, #a7a095); /* counts, dates, labels */
   --eien-faded: light-dark(#766d62, #837c73); /* placeholders, disabled */
+  --eien-dimmed: 0.32; /* focus mode: the paragraphs not being written, faded back */
 
   /* ── Rules: hairlines in ink, never solid colour ────────────────────── */
   /* By night the steps between surfaces are smaller, so the rules are stronger. */

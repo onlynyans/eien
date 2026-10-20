@@ -18,6 +18,7 @@ import { withoutBom } from '../../core/text';
 import { CHANNEL } from '../../platform/bridge';
 import { readDeviceFile, updateDeviceFile } from './device-settings';
 import { answer } from './ipc';
+import { checkToggles } from './menu';
 import type { VaultSession } from './vault-session';
 
 const THEME_SOURCE = { system: 'system', day: 'light', night: 'dark' } as const;
@@ -93,6 +94,7 @@ export function serveSettings(window: BrowserWindow, vault: VaultSession): void 
     }
     const values = await allSettings(vault);
     applyScheme(values);
+    checkToggles(values);
     return values;
   });
 }

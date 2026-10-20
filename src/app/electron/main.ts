@@ -1,7 +1,7 @@
 import { app, BrowserWindow, Menu, session } from 'electron';
 import { withDefaults } from '../../core/config';
 import { CHANNEL } from '../../platform/bridge';
-import { buildMenu } from './menu';
+import { buildMenu, checkToggles } from './menu';
 import { applyScheme, deviceSettings } from './settings-session';
 import { createMainWindow } from './window';
 
@@ -39,7 +39,9 @@ if (!app.requestSingleInstanceLock()) {
       }),
     );
     // Day or night is set before the window draws, so it never flashes the other.
-    applyScheme(withDefaults(await deviceSettings()));
+    const settings = withDefaults(await deviceSettings());
+    applyScheme(settings);
+    checkToggles(settings);
     await createMainWindow();
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) void createMainWindow();

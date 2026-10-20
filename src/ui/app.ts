@@ -1,7 +1,7 @@
 // The window: the settings and the look, the menu, and the vault shown —
 // or the welcome, before one is chosen.
 
-import { numberSetting, stepped } from '../core/config';
+import { numberSetting, stepped, type ToggleKey } from '../core/config';
 import type { Bridge } from '../platform/bridge';
 import { applyLook } from './settings/look';
 import { SettingsScreen } from './settings/settings-screen';
@@ -42,6 +42,10 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
           ? ZOOM.default
           : stepped(ZOOM, now, command === 'zoom:in' ? 1 : -1);
       if (next !== now) void settings.set('page.zoom', next).catch(console.error);
+    } else if (command.startsWith('toggle:')) {
+      // Focus mode, typewriter scrolling: the menu's check follows the setting.
+      const key = command.slice('toggle:'.length) as ToggleKey;
+      void settings.set(key, settings.values[key] === 'on' ? 'off' : 'on').catch(console.error);
     }
   });
   bridge.onBeforeClose(async () => {
