@@ -634,6 +634,9 @@ On every push and pull request:
 On a version tag: release builds for each platform. A pull request
 can't merge while any check fails.
 
+Weekly, and never a check a change waits on: mutation testing of `core`
+and `platform` (Stryker), and the property tests with new inputs.
+
 ---
 
 ## 12. Phases

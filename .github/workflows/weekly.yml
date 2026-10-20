@@ -1,0 +1,60 @@
+name: Weekly
+
+# Slow, searching tests: never on a push or a pull request, and never a check
+# a change waits on. A finding here is a bug to fix, with a test, in its own PR.
+on:
+  schedule:
+    - cron: '0 5 * * 1' # Mondays, 05:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: Mutation testing (core and platform)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+
+      # Stryker edits the rules one at a time and runs the unit tests on each
+      # edit (stryker.config.mjs). The score is reported; no score fails the job.
+      - run: npm run test:mutation
+
+      - name: Score in the summary
+        if: ${{ !cancelled() && hashFiles('reports/mutation/mutation.json') != '' }}
+        run: node scripts/mutation-summary.mjs reports/mutation/mutation.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the report
+        if: ${{ !cancelled() && hashFiles('reports/mutation/mutation.html') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          retention-days: 30
+
+  properties:
+    name: Property tests, new inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+
+      # Every push tries the same inputs; this run tries 50 times as many new
+      # ones. A failure names its seed: FC_SEED=<seed> npm test reproduces it.
+      - name: Property tests with a new seed
+        run: |
+          seed=$((RANDOM * 32768 + RANDOM))
+          echo "Property tests: FC_SEED=$seed, FC_RUNS=5000" >> "$GITHUB_STEP_SUMMARY"
+          FC_SEED=$seed FC_RUNS=5000 npx vitest run property --testTimeout=1200000

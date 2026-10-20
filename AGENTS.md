@@ -38,7 +38,9 @@ when code and spec disagree, fix one of them in the same change.
 | `tsconfig.{core,web,node,e2e}.json` | One per environment: core can use neither DOM nor Node, the window can't use Node |
 | `docs/design/` | The approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on |
 
-Unit tests sit beside their module as `name.test.ts`.
+Unit tests sit beside their module as `name.test.ts`; property tests (fast-check)
+as `name.property.test.ts`. Those try the same generated inputs on every run;
+`FC_SEED=<n>` reproduces a failure from another seed, and `FC_RUNS` tries more.
 
 ## Commands
 
@@ -50,11 +52,16 @@ npm run typecheck    # tsc -b over every tsconfig
 npm test             # unit and architecture tests (Vitest)
 npm run test:e2e     # builds, then drives the real app (Playwright)
 npm run check        # all of the above, as CI runs them
+npm run test:mutation  # Stryker: the edits to core and platform no test catches
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint, types and unit tests on Linux, and
 the end-to-end tests on macOS, Windows and Linux, on every push to `main` and
 every pull request.
+
+`.github/workflows/weekly.yml` runs mutation testing (report and score in the
+run) and the property tests with a new seed, every Monday and by hand. It never
+runs on a push or a pull request, and no change waits on it.
 
 A test that guards a security or safety rule should be shown to fail when the
 rule is broken (turn the rule off, run the test, put it back).
