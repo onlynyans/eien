@@ -49,7 +49,7 @@ export class MemoryStorage implements Storage {
           path,
           kind: kindOf(baseName(path), false),
           modified: file.modified,
-          size: file.text.length,
+          size: new TextEncoder().encode(file.text).length,
         }),
       );
     return [...folders, ...files];
@@ -69,14 +69,16 @@ export class MemoryStorage implements Storage {
 
   async write(path: string, text: string, expected: string | null): Promise<WriteResult> {
     const at = vaultPath(path);
-    for (let folder = parentOf(at); folder; folder = parentOf(folder)) {
-      if (this.#files.has(folder)) throw new Error(`Not a folder: ${folder}`);
-    }
-    if (this.#folders.has(at)) throw new Error(`A folder: ${at}`);
     // Checked and written with no wait between, so two overlapping writes can't both pass.
     const file = this.#files.get(at);
     const current = file ? { text: file.text, version: versionOf(file.text) } : null;
     if ((current?.version ?? null) !== expected) return { ok: false, current };
+    // As on disk: where no file can be, there's none at the version expected (above), and
+    // a write expecting none fails.
+    for (let folder = parentOf(at); folder; folder = parentOf(folder)) {
+      if (this.#files.has(folder)) throw new Error(`Not a folder: ${folder}`);
+    }
+    if (this.#folders.has(at)) throw new Error(`A folder: ${at}`);
     this.#files.set(at, { text, modified: ++this.#clock });
     this.#addParents(at);
     this.#notify([at]);

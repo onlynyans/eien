@@ -48,3 +48,82 @@ describe('the word around the caret is the whole word', () => {
     expect(run('bold', text, caret)).toBe(after);
   });
 });
+
+// Found by the property tests (format.property.test.ts): marks the editor's
+// parser can't read, so their stars show on the page.
+
+describe('a mark goes where the parser reads it', () => {
+  it.each([
+    // "**" between a letter and "," can't open: the selection's ends move in to the words.
+    ['bold', 'a永, aりa', 2, 5, 'a永, **a**りa'],
+    // Japanese has no spaces: a quote's brackets stay outside, or the stars show.
+    ['bold', '彼は「こんにちは」と言った', 2, 9, '彼は「**こんにちは**」と言った'],
+    ['strike', 'x(one)y', 1, 6, 'x(~~one~~)y'],
+    // Over several lines, a line's part with no word in it is left as it is.
+    ['bold', 'one\n(two', 0, 5, '**one**\n(two'],
+  ])('%s over %j', (id, text, from, to, after) => {
+    expect(run(id, text, from, to)).toBe(after);
+  });
+
+  it('and pressed again, takes it off', () => {
+    const command = formatCommand('italic');
+    if (!command) throw new Error('italic');
+    const once = command.run('a永, aりa', { from: 2, to: 5 });
+    const marked = apply('a永, aりa', once.changes);
+    expect(apply(marked, command.run(marked, once.selection).changes)).toBe('a永, aりa');
+  });
+});
+
+describe('a mark never goes around a line’s own marks', () => {
+  it.each([
+    // A scene break holds no words: italic over a flashback that crosses one keeps it.
+    ['italic', 'One.\n\n***\n\nTwo.', '*One.*\n\n***\n\n*Two.*'],
+    ['strike', 'One.\n\n* * *\n\nTwo.', '~~One.~~\n\n* * *\n\n~~Two.~~'],
+    ['bold', 'One.\n\n---\n\nTwo.', '**One.**\n\n---\n\n**Two.**'],
+    // A heading's underline is its marks.
+    ['bold', 'Title\n--\nText', '**Title**\n--\n**Text**'],
+    // A list in a list, and an empty item.
+    ['bold', '- - one', '- - **one**'],
+    ['bold', 'one\n-\ntwo', '**one**\n-\n**two**'],
+  ])('%s over %j', (id, text, after) => {
+    expect(run(id, text, 0, text.length)).toBe(after);
+    expect(run(id, after, 0, after.length)).toBe(text);
+  });
+
+  it.each([
+    ['bold', '- item', 0, 2],
+    ['underline', '- item', 0, 2],
+    ['bold', 'a  b', 1, 3],
+    ['italic', '***', 0, 3],
+  ])('%s over no words in %j changes nothing', (id, text, from, to) => {
+    expect(run(id, text, from, to)).toBe(text);
+  });
+});
+
+describe('stars are paired as the parser pairs them', () => {
+  /** `text` after `id` pressed at [from, to], and after it's pressed again where that left the selection. */
+  const twice = (id: string, text: string, from: number, to = from) => {
+    const command = formatCommand(id);
+    if (!command) throw new Error(id);
+    const once = command.run(text, { from, to });
+    const after = apply(text, once.changes);
+    return [after, apply(after, command.run(after, once.selection).changes)];
+  };
+
+  it.each([
+    // A footnote's star after a word: "*this**" is italic and the star; pressed again, plain.
+    ['italic', 'Read this* now', 5, 9, 'Read *this** now'],
+    ['bold', 'Read this* now', 5, 9, 'Read **this*** now'],
+    ['italic', 'Read *this now', 6, 10, 'Read **this* now'],
+  ])('%s on %j and back', (id, text, from, to, marked) => {
+    expect(twice(id, text, from, to)).toEqual([marked, text]);
+  });
+
+  it.each([
+    // The caret between a mark's characters is on the word they mark, not in an empty pair.
+    ['italic', '**bold**', 1, '***bold***'],
+    ['strike', '~~gone~~', 1, 'gone'],
+  ])('%s with the caret inside %j’s marks', (id, text, caret, marked) => {
+    expect(twice(id, text, caret)).toEqual([marked, text]);
+  });
+});

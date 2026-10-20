@@ -1,6 +1,7 @@
 // Inline marks: bold, italic, underline, strikethrough, highlight. Each
 // command toggles: on a marked selection it takes the mark off.
 
+import { flanking } from '../markdown';
 import type { Change, Edit, Selection } from './edit';
 
 export interface InlineMark {
@@ -17,6 +18,24 @@ export const UNDERLINE: InlineMark = { open: '<u>', close: '</u>' };
 /** A word's letters, with the combining marks of Hindi, Thai or a decomposed "é" among them. */
 const isWordChar = (char: string | undefined) =>
   char !== undefined && /[\p{L}\p{M}\p{N}_'’-]/u.test(char);
+
+/** One of the characters `mark` is made of; none for <u>, a tag whose letters are a word's. */
+const isMarkChar = (mark: InlineMark, char: string | undefined) =>
+  char !== undefined && !mark.open.startsWith('<') && mark.open.includes(char);
+
+/**
+ * A caret among a mark's own characters ("*|*bold**") moved to the word
+ * they're on, so the mark is pressed on that word rather than taken for an
+ * empty pair. `pos` itself when they're on no word.
+ */
+function besideMarks(text: string, pos: number, mark: InlineMark): number {
+  let after = pos;
+  while (isMarkChar(mark, text[after])) after++;
+  if (after > pos && isWordChar(text[after])) return after;
+  let before = pos;
+  while (isMarkChar(mark, text[before - 1])) before--;
+  return before < pos && isWordChar(text[before - 1]) ? before : pos;
+}
 
 /** The word around `pos`, or null when `pos` isn't in or touching one. */
 function wordAt(text: string, pos: number): Selection | null {
@@ -40,15 +59,30 @@ const runAfter = (text: string, pos: number, char: string) => {
 };
 
 /**
+ * The marks runs of `before` and `after` stars put around what's between
+ * them, inside out, as CommonMark pairs them: "**" while both sides have two,
+ * else "*". "***x***" is bold in italic; "*x**" is italic and a star.
+ */
+function starLayers(before: number, after: number): number[] {
+  const layers: number[] = [];
+  for (let b = before, a = after; b > 0 && a > 0; ) {
+    const use = b >= 2 && a >= 2 ? 2 : 1;
+    layers.push(use);
+    b -= use;
+    a -= use;
+  }
+  return layers;
+}
+
+/**
  * Is the span [from, to] already wrapped in `mark` (its marks just outside)?
- * The "*" of italic and the "**" of bold share a character: italic is on when
- * an odd run of stars surrounds the span (* or ***), bold when two or more do.
+ * The "*" of italic and the "**" of bold share a character, so the stars
+ * around are paired as the parser pairs them.
  */
 function wrappedIn(text: string, from: number, to: number, mark: InlineMark): boolean {
   if (mark.open === '*' || mark.open === '**') {
-    const before = runBefore(text, from, '*');
-    const after = runAfter(text, to, '*');
-    return mark.open === '*' ? before % 2 === 1 && after % 2 === 1 : before >= 2 && after >= 2;
+    const layers = starLayers(runBefore(text, from, '*'), runAfter(text, to, '*'));
+    return layers.includes(mark.open.length);
   }
   return (
     text.slice(from - mark.open.length, from) === mark.open &&
@@ -85,14 +119,33 @@ function holds(text: string, span: Selection, mark: InlineMark): boolean {
     return false;
   if (mark.open === '*') {
     // "*x*" or "***x***", never the stars of plain bold
-    const lead = runAfter(inner, 0, '*');
-    return lead % 2 === 1;
+    return starLayers(runAfter(inner, 0, '*'), runBefore(inner, inner.length, '*')).includes(1);
   }
   return true;
 }
 
-const isMarked = (text: string, span: Selection, mark: InlineMark) =>
-  wrappedIn(text, span.from, span.to, mark) || holds(text, span, mark);
+/**
+ * The part of `span` the parser can read `mark` around: its ends moved in
+ * past punctuation and spaces that would leave the marks showing ("a«, b»"
+ * gives "a, **b**", not "a**, b**"). <u> is a tag, read anywhere. Null when
+ * there's no word in it to move to.
+ */
+function markable(text: string, span: Selection, mark: InlineMark): Selection | null {
+  if (mark.open.startsWith('<')) return span;
+  // The mark's own characters are never moved past: a span holding its marks is unmarked whole.
+  const own = (char: string | undefined) => isMarkChar(mark, char);
+  let { from, to } = span;
+  while (from < to && !own(text[from]) && !flanking(text[from - 1] ?? '', text[from] ?? '').open)
+    from++;
+  while (to > from && !own(text[to - 1]) && !flanking(text[to - 1] ?? '', text[to] ?? '').close)
+    to--;
+  return from < to ? { from, to } : null;
+}
+
+const isMarked = (text: string, span: Selection, mark: InlineMark) => {
+  const { from, to } = markable(text, span, mark) ?? span;
+  return wrappedIn(text, from, to, mark) || holds(text, { from, to }, mark);
+};
 
 /** Toggle `mark` on one span of a single line. */
 function toggleSpan(
@@ -100,7 +153,7 @@ function toggleSpan(
   span: Selection,
   mark: InlineMark,
 ): { changes: Change[]; selection: Selection } {
-  const { from, to } = span;
+  const { from, to } = markable(text, span, mark) ?? span;
   const inner = text.slice(from, to);
   if (wrappedIn(text, from, to, mark)) {
     return {
@@ -153,7 +206,7 @@ function toggleSpan(
  */
 export function toggleInline(text: string, selection: Selection, mark: InlineMark): Edit {
   if (selection.from === selection.to) {
-    const word = wordAt(text, selection.from);
+    const word = wordAt(text, besideMarks(text, selection.from, mark));
     if (!word) {
       const at = selection.from;
       if (
@@ -173,14 +226,18 @@ export function toggleInline(text: string, selection: Selection, mark: InlineMar
     const result = toggleSpan(text, word, mark);
     const offset = selection.from - word.from;
     const start = result.selection.from + offset;
-    const caret = Math.min(start, result.selection.to);
+    const caret = Math.max(result.selection.from, Math.min(start, result.selection.to));
     return { changes: result.changes, selection: { from: caret, to: caret } };
   }
 
-  const spans = lineSpans(text, selection);
-  if (spans.length === 1) return toggleSpan(text, spans[0] as Selection, mark);
+  const lines = lineSpans(text, selection);
+  // No words selected (spaces, a list's "-", a scene break): nothing to mark.
+  if (lines.length === 0) return { changes: [], selection };
+  if (lines.length === 1) return toggleSpan(text, lines[0] as Selection, mark);
 
   // Several lines: all marked already → unmark all; otherwise mark the unmarked ones.
+  // A line whose part holds no word ("(" before the selection's end) is left as it is.
+  const spans = lines.filter((span) => markable(text, span, mark));
   const allMarked = spans.every((span) => isMarked(text, span, mark));
   const changes: Change[] = [];
   for (const span of spans) {
@@ -195,14 +252,20 @@ export function toggleInline(text: string, selection: Selection, mark: InlineMar
 }
 
 /**
- * A line's own marks at its start: a quote's ">", then a heading's "#", or a
- * list's "-" or "1." with a task's "[ ]". Marks go inside these, never
- * around them: "- **one**", not "**- one**".
+ * A line's own marks at its start: quotes' ">" and lists' "-" or "1." (a
+ * task's "[ ]" after one), nested in any order, then a heading's "#". Marks
+ * go inside these, never around them: "- **one**", not "**- one**".
  */
 const LINE_MARKS =
-  /^[ \t]*(?:>[ \t]?)*[ \t]*(?:#{1,6}[ \t]+|(?:[-*+]|\d{1,9}[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/;
+  /^(?:[ \t]*(?:>[ \t]?|(?:[-*+]|\d{1,9}[.)])(?:[ \t]+(?:\[[ xX]\](?:[ \t]+|$))?|$)))*[ \t]*(?:#{1,6}(?:[ \t]+|$))?/;
 
-/** The non-blank stretch of each line inside `selection`, ends trimmed of spaces and line marks. */
+/** A scene break ("***", "* * *", "---") or a heading's underline ("===", "--"): all marks. */
+const RULE = /^ {0,3}(?:([-*_])(?:[ \t]*\1){2,}|=+|-+)[ \t]*$/;
+
+/**
+ * The non-blank stretch of each line inside `selection`, ends trimmed of
+ * spaces and line marks; none in a scene break.
+ */
 function lineSpans(text: string, selection: Selection): Selection[] {
   const spans: Selection[] = [];
   let lineStart = selection.from;
@@ -212,8 +275,9 @@ function lineSpans(text: string, selection: Selection): Selection[] {
     let from = lineStart;
     let to = lineEnd;
     const realStart = text.lastIndexOf('\n', lineStart - 1) + 1;
-    const marks =
-      LINE_MARKS.exec(text.slice(realStart, newline === -1 ? text.length : newline))?.[0] ?? '';
+    const line = text.slice(realStart, newline === -1 ? text.length : newline);
+    const rule = RULE.test(line);
+    const marks = rule ? line : (LINE_MARKS.exec(line)?.[0] ?? '');
     from = Math.max(from, realStart + marks.length);
     while (from < to && /\s/.test(text[from] ?? '')) from++;
     while (to > from && /\s/.test(text[to - 1] ?? '')) to--;
@@ -221,6 +285,5 @@ function lineSpans(text: string, selection: Selection): Selection[] {
     if (newline === -1 || newline >= selection.to) break;
     lineStart = newline + 1;
   }
-  if (spans.length === 0) spans.push({ from: selection.from, to: selection.to });
   return spans;
 }

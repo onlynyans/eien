@@ -4,6 +4,9 @@ dist/
 coverage/
 test-results/
 playwright-report/
+# Mutation testing: Stryker's copies of the code, and its report.
+.stryker-tmp/
+reports/
 .DS_Store
 # Claude Code keeps agents' worktrees here.
 .claude/worktrees/

@@ -4,10 +4,10 @@
 
 import { tags } from '@lezer/highlight';
 import type { DelimiterType, MarkdownConfig } from '@lezer/markdown';
+import { flanking } from './flanking';
 
 const EQUALS = 61;
 const OPEN_BRACKET = 91;
-const PUNCTUATION = /[\p{S}\p{P}]/u;
 
 const HighlightDelimiter: DelimiterType = { resolve: 'Highlight', mark: 'HighlightMark' };
 
@@ -24,19 +24,8 @@ export const Highlight: MarkdownConfig = {
         // Exactly two: "===" is not a highlight mark, from either end.
         if (next !== EQUALS || cx.char(pos + 1) !== EQUALS) return -1;
         if (cx.char(pos + 2) === EQUALS || cx.char(pos - 1) === EQUALS) return -1;
-        const before = cx.slice(pos - 1, pos);
-        const after = cx.slice(pos + 2, pos + 3);
-        const spaceBefore = /\s|^$/.test(before);
-        const spaceAfter = /\s|^$/.test(after);
-        const punctBefore = PUNCTUATION.test(before);
-        const punctAfter = PUNCTUATION.test(after);
-        return cx.addDelimiter(
-          HighlightDelimiter,
-          pos,
-          pos + 2,
-          !spaceAfter && (!punctAfter || spaceBefore || punctBefore),
-          !spaceBefore && (!punctBefore || spaceAfter || punctAfter),
-        );
+        const { open, close } = flanking(cx.slice(pos - 1, pos), cx.slice(pos + 2, pos + 3));
+        return cx.addDelimiter(HighlightDelimiter, pos, pos + 2, open, close);
       },
       after: 'Emphasis',
     },
