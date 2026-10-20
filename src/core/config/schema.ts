@@ -122,6 +122,16 @@ export const SETTINGS = [
     default: 'roman',
   },
   {
+    key: 'layout.panes',
+    label: 'Panes',
+    description: 'Two puts the notes in the sidebar’s tree, in place of the note list.',
+    scope: 'device',
+    group: 'Layout',
+    type: 'choice',
+    choices: { three: 'Three', two: 'Two' },
+    default: 'three',
+  },
+  {
     key: 'page.zoom',
     label: 'Zoom',
     description: 'The page only; the panes keep their size. Also in the View menu.',

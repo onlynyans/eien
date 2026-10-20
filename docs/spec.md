@@ -177,6 +177,30 @@ Three panes, each collapsible, with a two-pane option in settings:
 Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
 ⌘\ toggles the sidebar, ⌘⇧\ the note list.
 
+- **Resizing.** A pane's edge is a hairline that darkens under the pointer:
+  drag it, or give it the keyboard and step it with ← and →. Each width has
+  its limits: the sidebar 200–420 px (220–520 with two panes, where it holds
+  the notes), the list 260–480. In a window too narrow for all three, the
+  list and then the sidebar give way, down to their narrowest, so the page
+  keeps 360 px; widening the window gives them back.
+- **Collapsing.** The sidebar shuts to a strip holding the seal; the seal
+  shuts and opens it. The page bar's SIDEBAR and LIST words, and the View
+  menu, shut and open either. A pane shut with the keyboard in it gives the
+  keyboard to the page. ⌘1–3 open a shut pane before giving it the keyboard.
+- **Two panes** (Layout → Panes, or the pair at the sidebar's foot): the list
+  is gone and the tree lists the notes, under the vault, each open folder (in
+  the folder's own order and sort, a book's numbered), All Notes, Pinned and
+  each tag. Choosing a row opens it, and shuts it when chosen again. The
+  tree's notes have the list's menu, keys and drags. ⌘2 is the page.
+- Whenever no list is in sight (two panes, or the list shut), a search's
+  results take the tree's place, and the last action's news shows at the
+  sidebar's foot; with the sidebar shut too, in the page's status line.
+- The keyboard is never left on something hidden or gone: a shut pane gives
+  it to the page (to the page itself when no note is open), a redraw gives it
+  back to the control that had it, or to the row now in a removed row's place.
+- Widths, and which panes are shut, are per device (§2); three or two panes
+  is a device setting (§6).
+
 The visual design (type, color, spacing) is set in the design pass. This spec
 fixes only the token names it uses (§7).
 
@@ -355,13 +379,13 @@ src/platform/
   capacitor/     Storage over the phone's file system
 src/ui/
   app.ts        ✓ the window: panes, vault and note kept in step
-  shell/        ✓ the three panes (resizing, collapsing, two panes: phase 6)
-  sidebar/      ✓ the search field; library (all, pinned), folders, tags; folders renamed in place
+  shell/        ✓ the panes: resizing, collapsing, three or two, kept per device
+  sidebar/      ✓ the seal, the search field; library (all, pinned), folders, tags; with two panes the notes; folders renamed in place
   list/         ✓ note list: previews, a book's words, search results, sorts, dragging
   page/         ✓ the sheet, the title (renaming the note), the view switch, the colophon
   menu/         ✓ the small floating menu: right-click choices, sorts
   notes/        ✓ the open note: autosave, reload, conflict copies
-  vault/        ✓ the vault as the window knows it, its three panes, organizing (rename, move, trash)
+  vault/        ✓ the vault as the window knows it, its panes drawn, the menu's commands, organizing (rename, move, trash)
   welcome/      ✓ before a vault is open
   theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts
   editor/       ✓ CodeMirror, the three views, the selection bar, images (writing tools: phase 9)
@@ -443,7 +467,7 @@ does nothing.
 - **Device settings** live in the app's data folder (`settings.json`): scheme
   (day, night or the system's), palette, text face, text size (90–130%),
   density (comfortable or compact), page frame (sheet or full) and zoom
-  (50–200%); later panes (three or two), focus and typewriter modes,
+  (50–200%) and panes (three or two); later focus and typewriter modes,
   spellcheck.
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.

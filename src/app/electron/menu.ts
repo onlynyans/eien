@@ -99,6 +99,13 @@ export function buildMenu(send: SendCommand): Menu {
         { type: 'separator' },
         item('Next View', 'view:next', 'CmdOrCtrl+E'),
         { type: 'separator' },
+        // Shut or open a pane, and give one the keyboard (spec §4).
+        item('Toggle Sidebar', 'panes:sidebar', 'CmdOrCtrl+\\'),
+        item('Toggle Note List', 'panes:list', 'CmdOrCtrl+Shift+\\'),
+        item('Go to Sidebar', 'focus:sidebar', 'CmdOrCtrl+1'),
+        item('Go to Note List', 'focus:list', 'CmdOrCtrl+2'),
+        item('Go to Page', 'focus:page', 'CmdOrCtrl+3'),
+        { type: 'separator' },
         // The page's zoom, not the window's: the panes keep their size (spec §4).
         item('Zoom In', 'zoom:in', 'CmdOrCtrl+='),
         { ...item('Zoom In', 'zoom:in', 'CmdOrCtrl+Plus'), visible: false }, // ⌘+ with Shift, as well as ⌘=

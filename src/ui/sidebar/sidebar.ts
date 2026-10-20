@@ -1,48 +1,42 @@
-// The sidebar: the vault's contents page. Its name and the search field,
-// then Library (All Notes, Pinned), Folders and Tags; at the foot, day or
-// night, and the settings. The name and search field stay put; the rest
-// redraws. A folder takes a dropped note, and has its own menu.
+// The sidebar: the vault's contents page. The seal (which shuts the sidebar
+// to a strip, and opens it again), the vault's name and the search field,
+// then the tree (./tree.ts); at the foot, day or night, the panes and the
+// settings. The head and search field stay put; the rest redraws. A folder
+// takes a dropped note, and has its own menu.
 
 import type { SettingValues } from '../../core/config';
-import { joinPath, parentOf } from '../../core/paths';
-import type { TagNode } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
-import { h, wordButton } from '../dom';
-import type { Selection } from '../vault/vault-state';
+import { h, type Props, wordButton } from '../dom';
+import { isMenuKey, menuPoint } from '../list/row-events';
+import { FolderField } from './folder-field';
+import { sidebarFoot } from './foot';
+import { sidebarSignature } from './signature';
+import { keyOf, type TreeActions, type TreeModel, TreeRows } from './tree';
 
 type Scheme = SettingValues['appearance.scheme'];
 
-export interface SidebarModel {
-  readonly tree: FolderNode;
-  readonly tags: readonly TagNode[];
-  /** How many notes are pinned (the row shows when there are some). */
-  readonly pinned: number;
-  readonly selection: Selection;
-  /** Folder paths, and tag keys, shown open. */
-  readonly open: ReadonlySet<string>;
+export interface SidebarModel extends TreeModel {
   readonly scheme: Scheme;
+  /** News from the last action, when there's no note list to show it above. */
+  readonly notice: string | null;
 }
 
-export interface SidebarActions {
-  select(selection: Selection): void;
-  /** Open or close a folder (by path) or a tag (by "#" and its key). */
-  toggle(id: string): void;
+export interface SidebarActions extends TreeActions {
   /** The search field's words, a moment after typing stops; "" when cleared. */
   search(query: string): void;
-  /** A folder's menu, at the pointer or under the row. */
-  folderMenu(path: string, at: { readonly x: number; readonly y: number }): void;
   newFolder(): void;
   /** The name typed for a folder being renamed. */
   renameFolder(path: string, typed: string): void;
   scheme(scheme: Scheme): void;
+  /** Three panes, or two. */
+  panes(two: boolean): void;
   settings(): void;
+  /** The seal: shut the sidebar to a strip, or open it again. */
+  toggleSidebar(): void;
 }
 
 /** How long typing must pause before the search runs. */
 const SEARCH_AFTER_MS = 150;
-
-/** The id a tag is opened by, apart from folder paths. */
-export const tagId = (key: string): string => `#${key}`;
 
 export class Sidebar {
   readonly element: HTMLElement;
@@ -52,14 +46,25 @@ export class Sidebar {
   readonly #actions: SidebarActions;
   #timer: ReturnType<typeof setTimeout> | undefined;
   #model: SidebarModel | null = null;
-  /** The folder being renamed in place, and what's typed so far: kept across redraws. */
-  #editing: { path: string; typed: string; start: number; end: number } | null = null;
   /** Set while redrawing: a field taken out by a redraw isn't the writer leaving it. */
   #drawing = false;
-  /** The row to give the keyboard back to after the next redraw. */
+  /** The folder being renamed in place. */
+  readonly #folderField = new FolderField({
+    drawing: () => this.#drawing,
+    done: (folder, typed) => {
+      // The keyboard goes back to the folder: under its new name once the rename is done
+      // (refocusOn), under its own if the rename is refused.
+      this.#refocus = keyOf({ kind: 'folder', path: folder.path });
+      if (typed !== null) this.#actions.renameFolder(folder.path, typed);
+      else if (this.#model) this.draw(this.#model);
+    },
+  });
+  /** The control to give the keyboard back to after the next redraw, by its data-key. */
   #refocus: string | null = null;
+  /** What was last drawn (./signature.ts): the same again isn't rebuilt. */
+  #drawn = '';
 
-  constructor(name: string, actions: SidebarActions) {
+  constructor(name: string, actions: SidebarActions, keys: string) {
     this.#actions = actions;
     this.#search = h('input', {
       class: 'field',
@@ -87,22 +92,38 @@ export class Sidebar {
         },
       },
     });
-    this.#clear = wordButton(
-      'Clear',
-      () => {
-        this.clearSearch();
-        actions.search('');
-        this.#search.focus();
-      },
-      { 'aria-label': 'Clear search', hidden: true },
-    );
+    this.#clear = wordButton('Clear', () => this.#clearAndSearch(), {
+      'aria-label': 'Clear search',
+      hidden: true,
+    });
+    /** The seal as a button: it shuts the sidebar, and on the strip, opens it again. */
+    const seal = (label: string, extra: string) =>
+      h(
+        'button',
+        {
+          class: `seal-button ${extra}`,
+          attrs: { type: 'button', 'aria-label': label, title: `${label} (${keys})` },
+          on: {
+            click: () => {
+              const had = document.activeElement === (extra === 'sidebar__show' ? show : hide);
+              actions.toggleSidebar();
+              // The seal that had the keyboard is hidden now: the other one, in its place, takes it.
+              if (had) (extra === 'sidebar__show' ? hide : show).focus();
+            },
+          },
+        },
+        h('span', { class: 'seal', text: '永', attrs: { 'aria-hidden': 'true' } }),
+      );
+    const show = seal('Show sidebar', 'sidebar__show');
+    const hide = seal('Hide sidebar', 'sidebar__hide');
     this.element = h(
       'aside',
       { class: 'sidebar', attrs: { 'aria-label': 'Vault' } },
+      h('div', { class: 'sidebar__strip' }, show),
       h(
         'header',
         { class: 'sidebar__head' },
-        h('span', { class: 'seal', text: '永', attrs: { 'aria-hidden': 'true' } }),
+        hide,
         // The vault itself takes a dropped note, out of whatever folder it was in.
         h('span', { class: 'sidebar__vault', text: name, attrs: { 'data-folder': '' } }),
       ),
@@ -120,6 +141,26 @@ export class Sidebar {
     this.#search.select();
   }
 
+  /**
+   * Give the keyboard to the marked row (the selected one, or the open note),
+   * or the first; with no rows (a search that found nothing), the first
+   * control there, or the search field.
+   */
+  focusTree(): void {
+    const rows = [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')];
+    (
+      rows.find((row) => row.getAttribute('aria-current') === 'true') ??
+      rows[0] ??
+      this.#body.querySelector<HTMLElement>('.sidebar__tree button') ??
+      this.#search
+    ).focus();
+  }
+
+  /** After a folder's rename: the keyboard goes to it, at `path`, with the next redraw. */
+  refocusOn(path: string): void {
+    this.#refocus = keyOf({ kind: 'folder', path });
+  }
+
   /** Empty the field, without searching for nothing. */
   clearSearch(): void {
     clearTimeout(this.#timer);
@@ -129,185 +170,31 @@ export class Sidebar {
 
   /** Rename the folder at `path` in place: its name becomes a field; Enter keeps it, Esc doesn't. */
   editFolder(path: string): void {
-    const name = path.slice(path.lastIndexOf('/') + 1);
-    this.#editing = { path, typed: name, start: 0, end: name.length };
+    this.#folderField.start(path);
     if (this.#model) this.draw(this.#model);
   }
 
   draw(model: SidebarModel): void {
     this.#model = model;
-    // A redraw mustn't take the keyboard's place: the row that had focus has it again.
+    // Nothing new to show, and nothing to give the keyboard to: the rows stay as they are.
+    const signature = sidebarSignature(model, new Date().toDateString());
+    const settled = this.#refocus === null && !this.#folderField.active;
+    if (settled && signature === this.#drawn) return;
+    this.#drawn = signature;
+    // A redraw mustn't take the keyboard's place: the control that had it has it again; a
+    // row that's gone (trashed, moved away) leaves it on the row now in its place.
     const active = document.activeElement;
-    const focused =
-      this.#refocus ??
-      (active instanceof HTMLElement && this.#body.contains(active)
-        ? (active.dataset.key ?? null)
-        : null);
+    const inBody = active instanceof HTMLElement && this.#body.contains(active);
+    const focused = this.#refocus ?? (inBody ? (active.dataset.key ?? null) : null);
+    const rowsBefore = [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')];
+    const focusedAt = this.#refocus === null && inBody ? rowsBefore.indexOf(active) : -1;
     this.#refocus = null;
     const actions = this.#actions;
-    const same = (a: Selection, b: Selection) =>
-      a.kind === b.kind &&
-      (a.kind === 'all' ||
-        a.kind === 'pinned' ||
-        (a.kind === 'folder' && b.kind === 'folder' && a.path === b.path) ||
-        (a.kind === 'tag' && b.kind === 'tag' && a.key === b.key));
+    const rows = new TreeRows(model, actions, (folder) => this.#folderEvents(folder));
+    const edit = (folder: FolderNode, depth: number) => this.#folderField.row(folder, depth);
 
-    const twist = (id: string, name: string, hasChildren: boolean) => {
-      if (!hasChildren) return h('span', { class: 'tree-row__twist' });
-      const open = model.open.has(id);
-      return h('button', {
-        class: 'tree-row__twist',
-        text: open ? '▾' : '▸',
-        attrs: {
-          type: 'button',
-          'aria-expanded': String(open),
-          'aria-label': `${open ? 'Close' : 'Open'} ${name}`,
-        },
-        on: { click: () => actions.toggle(id) },
-      });
-    };
-
-    /** A folder's own menu and keys: right-click or the menu key; F2 renames it. */
-    const folderEvents = (folder: string) => ({
-      contextmenu: (event: MouseEvent) => {
-        event.preventDefault();
-        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-        const fromKeys = event.clientX === 0 && event.clientY === 0;
-        actions.folderMenu(
-          folder,
-          fromKeys ? { x: rect.left + 16, y: rect.bottom } : { x: event.clientX, y: event.clientY },
-        );
-      },
-      keydown: (event: KeyboardEvent) => {
-        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
-          const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-          actions.folderMenu(folder, { x: rect.left + 16, y: rect.bottom });
-        } else if (event.key === 'F2') this.editFolder(folder);
-        else return;
-        event.preventDefault();
-      },
-    });
-
-    const row = (
-      label: Node | string,
-      count: number,
-      selection: Selection,
-      depth = 0,
-      opener?: HTMLElement,
-    ) => {
-      const folder = selection.kind === 'folder' ? selection.path : undefined;
-      const item = h(
-        'li',
-        { class: 'tree-row' },
-        opener ?? h('span', { class: 'tree-row__twist' }),
-        h(
-          'button',
-          {
-            class: 'tree-row__name',
-            attrs: {
-              type: 'button',
-              'aria-current': same(model.selection, selection) ? 'true' : undefined,
-              'data-key': keyOf(selection),
-              'data-folder': folder,
-              'aria-keyshortcuts': folder === undefined ? undefined : 'F2',
-            },
-            on: {
-              click: () => actions.select(selection),
-              ...(folder === undefined ? {} : folderEvents(folder)),
-            },
-          },
-          h('span', { class: 'tree-row__label' }, label),
-          h('span', { class: 'count', text: count.toLocaleString() }),
-        ),
-      );
-      // Through the style API: the security policy refuses style attributes.
-      item.style.setProperty('--depth', String(depth));
-      return item;
-    };
-
-    /** A folder being renamed: its name as a field. */
-    const editRow = (folder: FolderNode, depth: number, typed: string) => {
-      const field = h('input', {
-        class: 'field tree-row__field',
-        attrs: { type: 'text', 'aria-label': `Rename ${folder.name}`, spellcheck: 'false' },
-      });
-      field.value = typed;
-      const finish = (keep: boolean) => {
-        if (this.#editing?.path !== folder.path) return;
-        this.#editing = null;
-        const value = field.value;
-        // The keyboard goes back to the folder, under its new name if it gets one.
-        const renaming = keep && value.trim() !== '' && value !== folder.name;
-        this.#refocus = keyOf({
-          kind: 'folder',
-          path: renaming ? joinPath(parentOf(folder.path), value.trim()) : folder.path,
-        });
-        if (renaming) actions.renameFolder(folder.path, value);
-        else if (this.#model) this.draw(this.#model);
-      };
-      // What's typed, and where the caret is, outlive a redraw.
-      const keep = () => {
-        if (!this.#editing) return;
-        this.#editing.typed = field.value;
-        this.#editing.start = field.selectionStart ?? field.value.length;
-        this.#editing.end = field.selectionEnd ?? field.value.length;
-      };
-      field.addEventListener('input', keep);
-      field.addEventListener('select', keep);
-      field.addEventListener('keyup', keep);
-      field.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') finish(true);
-        else if (event.key === 'Escape') finish(false);
-        else return;
-        event.preventDefault();
-        event.stopPropagation();
-      });
-      // Leaving the field keeps the name; a redraw replacing it, or the window losing
-      // focus to another app, isn't leaving it.
-      field.addEventListener('blur', () => {
-        if (!this.#drawing && field.isConnected && document.hasFocus()) finish(true);
-      });
-      const item = h('li', { class: 'tree-row' }, h('span', { class: 'tree-row__twist' }), field);
-      item.style.setProperty('--depth', String(depth));
-      return item;
-    };
-
-    const folderRows = (node: FolderNode, depth: number): HTMLElement[] =>
-      node.folders.flatMap((folder) => {
-        const own =
-          this.#editing?.path === folder.path
-            ? editRow(folder, depth, this.#editing.typed)
-            : row(
-                folder.name,
-                folder.noteCount,
-                { kind: 'folder', path: folder.path },
-                depth,
-                twist(folder.path, folder.name, folder.folders.length > 0),
-              );
-        return model.open.has(folder.path) ? [own, ...folderRows(folder, depth + 1)] : [own];
-      });
-
-    const tagRows = (nodes: readonly TagNode[], depth: number): HTMLElement[] =>
-      nodes.flatMap((tag) => {
-        const label = h('span', {}, h('span', { class: 'tree-row__hash', text: '#' }), tag.name);
-        const own = row(
-          label,
-          tag.count,
-          { kind: 'tag', key: tag.key },
-          depth,
-          twist(tagId(tag.key), `#${tag.tag}`, tag.children.length > 0),
-        );
-        return model.open.has(tagId(tag.key)) ? [own, ...tagRows(tag.children, depth + 1)] : [own];
-      });
-
-    /** Day or Night; pressed again, back to the system's. */
-    const schemeButton = (label: string, scheme: Scheme) =>
-      wordButton(label, () => actions.scheme(model.scheme === scheme ? 'system' : scheme), {
-        'aria-pressed': String(model.scheme === scheme),
-      });
-
-    const section = (label: string, rows: HTMLElement[], control?: HTMLElement) =>
-      rows.length > 0 || control
+    const section = (label: string, items: HTMLElement[], control?: HTMLElement) =>
+      items.length > 0 || control
         ? [
             h(
               'div',
@@ -315,67 +202,86 @@ export class Sidebar {
               h('p', { class: 'label sidebar__label', text: label }),
               control,
             ),
-            h('ul', { class: 'tree' }, ...rows),
+            h('ul', { class: 'tree' }, ...items),
           ]
         : [];
 
-    const library = [row('All Notes', model.tree.noteCount, { kind: 'all' })];
-    if (model.pinned > 0) library.push(row('Pinned', model.pinned, { kind: 'pinned' }));
+    const results = model.results;
+    const tree = results
+      ? [
+          ...section(
+            'Results',
+            rows.results(results),
+            h('span', { class: 'count', text: results.total.toLocaleString() }),
+          ),
+          results.total === 0
+            ? h(
+                'div',
+                { class: 'sidebar__empty' },
+                h('p', { text: 'No notes match.' }),
+                wordButton('Clear search', () => this.#clearAndSearch(), {
+                  'data-key': 'clear-search',
+                }),
+              )
+            : null,
+        ]
+      : [
+          ...section('Library', rows.library()),
+          ...section(
+            'Folders',
+            rows.folders(model.tree, 0, edit),
+            wordButton('New folder', actions.newFolder, {
+              class: 'word-button sidebar__new',
+              'data-key': 'new-folder',
+            }),
+          ),
+          ...section('Tags', rows.tags(model.tags, 0)),
+        ];
 
     this.#drawing = true;
     this.#body.replaceChildren(
-      h(
-        'nav',
-        { class: 'sidebar__tree', attrs: { 'aria-label': 'Notes' } },
-        ...section('Library', library),
-        ...section(
-          'Folders',
-          folderRows(model.tree, 0),
-          wordButton('New folder', actions.newFolder, { class: 'word-button sidebar__new' }),
-        ),
-        ...section('Tags', tagRows(model.tags, 0)),
-      ),
-      h(
-        'footer',
-        { class: 'sidebar__foot' },
-        h('p', {
-          class: 'count sidebar__count',
-          text: `${model.tree.noteCount.toLocaleString()} notes`,
-        }),
-        h(
-          'div',
-          { class: 'sidebar__foot-row' },
-          h(
-            'div',
-            { class: 'sidebar__pair', attrs: { role: 'group', 'aria-label': 'Day or night' } },
-            schemeButton('Day', 'day'),
-            schemeButton('Night', 'night'),
-          ),
-          wordButton('Settings', actions.settings, { 'aria-haspopup': 'dialog' }),
-        ),
+      h('nav', { class: 'sidebar__tree', attrs: { 'aria-label': 'Notes' } }, ...tree),
+      sidebarFoot(
+        {
+          notice: model.notice,
+          noteCount: model.tree.noteCount,
+          scheme: model.scheme,
+          two: model.two,
+        },
+        actions,
       ),
     );
     this.#drawing = false;
-    if (focused !== null && !this.#editing) {
-      [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')]
-        .find((row) => row.dataset.key === focused)
-        ?.focus();
+    if (focused !== null && !this.#folderField.active) {
+      const same = [...this.#body.querySelectorAll<HTMLElement>('[data-key]')].find(
+        (control) => control.dataset.key === focused,
+      );
+      const rows = [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')];
+      (same ?? (focusedAt >= 0 ? rows[Math.min(focusedAt, rows.length - 1)] : undefined))?.focus();
     }
     // A redraw mustn't take the caret out of the name being typed.
-    if (this.#editing) {
-      const field = this.#body.querySelector<HTMLInputElement>('.tree-row__field');
-      if (field && document.activeElement !== field) {
-        field.focus();
-        field.setSelectionRange(this.#editing.start, this.#editing.end);
-      }
-    }
+    this.#folderField.restore(this.#body);
+  }
+
+  #clearAndSearch(): void {
+    this.clearSearch();
+    this.#actions.search('');
+    this.#search.focus();
+  }
+
+  /** A folder's own menu and keys: right-click or the menu key; F2 renames it. */
+  #folderEvents(folder: string): Props['on'] {
+    return {
+      contextmenu: (event) => {
+        event.preventDefault();
+        this.#actions.folderMenu(folder, menuPoint(event));
+      },
+      keydown: (event) => {
+        if (isMenuKey(event)) this.#actions.folderMenu(folder, menuPoint(event));
+        else if (event.key === 'F2') this.editFolder(folder);
+        else return;
+        event.preventDefault();
+      },
+    };
   }
 }
-
-/** A row's lasting name, for giving it the keyboard back after a redraw. */
-const keyOf = (selection: Selection): string =>
-  selection.kind === 'folder'
-    ? `folder:${selection.path}`
-    : selection.kind === 'tag'
-      ? `tag:${selection.key}`
-      : selection.kind;

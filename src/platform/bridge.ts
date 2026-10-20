@@ -58,7 +58,12 @@ export type MenuCommand =
   | 'view:live'
   | 'view:source'
   | 'view:reading'
-  | 'view:next';
+  | 'view:next'
+  | 'panes:sidebar'
+  | 'panes:list'
+  | 'focus:sidebar'
+  | 'focus:list'
+  | 'focus:page';
 
 export interface Bridge {
   /** The operating system: 'darwin', 'win32', 'linux', … */

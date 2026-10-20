@@ -1,4 +1,5 @@
-/* The window: three panes side by side on the desk (docs/design). */
+/* The window: three panes side by side on the desk (docs/design). Their
+   widths come from ./panes.ts; a pane opening or shutting slides. */
 
 html,
 body,
@@ -12,7 +13,82 @@ body {
 .shell {
   /* The top band all three panes share, so their heads line up. */
   --band: calc(var(--eien-space-7) + var(--eien-space-2));
+  position: relative;
   display: grid;
-  grid-template-columns: var(--eien-sidebar-w) var(--eien-list-w) minmax(0, 1fr);
+  grid-template-columns:
+    var(--pane-sidebar, var(--eien-sidebar-w)) var(--pane-list, var(--eien-list-w))
+    minmax(0, 1fr);
   height: 100%;
+  transition: grid-template-columns var(--eien-calm) var(--eien-ease);
+}
+.shell > .sidebar,
+.shell > .list {
+  min-width: 0;
+  overflow: hidden;
+}
+/* While an edge is dragged: the panes follow the pointer at once, and nothing else takes it. */
+.shell.is-resizing {
+  transition: none;
+  cursor: col-resize;
+  user-select: none;
+}
+.shell.is-resizing * {
+  cursor: col-resize;
+}
+
+/* A shut list, or two panes: the list keeps its place in the grid at no width. */
+.shell[data-list-shut] > .list {
+  visibility: hidden;
+  border-right: 0;
+}
+
+/* Pane edges: drag the hairline to resize. */
+.pane-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 4;
+  width: var(--eien-space-2);
+  margin-left: calc(var(--eien-space-1) * -1);
+  cursor: col-resize;
+  touch-action: none;
+  transition: left var(--eien-calm) var(--eien-ease);
+}
+.pane-edge--sidebar {
+  left: var(--pane-sidebar);
+}
+.pane-edge--list {
+  left: calc(var(--pane-sidebar) + var(--pane-list));
+}
+.pane-edge::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--eien-space-1) - var(--eien-hairline));
+  width: var(--eien-hairline);
+  background: transparent;
+  transition: background var(--eien-quick) var(--eien-ease);
+}
+@media (hover: hover) {
+  .pane-edge:hover::after {
+    background: var(--eien-rule-strong);
+  }
+}
+.pane-edge:focus-visible {
+  outline: none;
+}
+/* Dragging or focused: the edge darkens to ink and thickens to a mark. */
+.pane-edge:focus-visible::after,
+.pane-edge.is-dragging::after {
+  left: calc(var(--eien-space-1) - var(--eien-mark-w) / 2);
+  width: var(--eien-mark-w);
+  background: var(--eien-focus);
+}
+.shell.is-resizing .pane-edge {
+  transition: none;
+}
+.shell[data-sidebar-shut] .pane-edge--sidebar,
+.shell[data-list-shut] .pane-edge--list {
+  display: none;
 }

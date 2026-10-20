@@ -18,8 +18,15 @@ const DRAG_AFTER = 5;
 
 type Drop = { readonly folder: string } | { readonly before: string | null };
 
-/** Let `list`'s rows (`.note-row[data-path]`) be dragged onto `[data-folder]` targets anywhere, or between each other. */
-export function watchDrags(list: HTMLElement, actions: DragActions): void {
+/**
+ * Let `list`'s rows (`rows`: the note list's, or the sidebar tree's notes)
+ * be dragged onto `[data-folder]` targets anywhere, or between each other.
+ */
+export function watchDrags(
+  list: HTMLElement,
+  actions: DragActions,
+  rows = '.note-row[data-path]',
+): void {
   /** A drag ends in a click on the row it started from; that click isn't the writer's. */
   let swallowClick = false;
   list.addEventListener(
@@ -35,7 +42,7 @@ export function watchDrags(list: HTMLElement, actions: DragActions): void {
 
   list.addEventListener('pointerdown', (down) => {
     if (down.button !== 0 || down.altKey || down.metaKey || down.ctrlKey || down.shiftKey) return;
-    const row = (down.target as Element).closest<HTMLElement>('.note-row[data-path]');
+    const row = (down.target as Element).closest<HTMLElement>(rows);
     const path = row?.dataset.path;
     if (!row || path === undefined) return;
 
@@ -71,6 +78,7 @@ export function watchDrags(list: HTMLElement, actions: DragActions): void {
         lifted = row.cloneNode(true) as HTMLElement;
         lifted.classList.add('is-lifted');
         lifted.removeAttribute('data-path');
+        lifted.removeAttribute('data-key'); // a copy: the keyboard never goes back to it
         lifted.setAttribute('aria-hidden', 'true');
         lifted.style.setProperty('--drag-w', `${rect.width}px`);
         lifted.style.setProperty('--drag-dx', `${rect.left - down.clientX}px`);
@@ -80,6 +88,8 @@ export function watchDrags(list: HTMLElement, actions: DragActions): void {
         list.classList.add('is-dragging');
         row.classList.add('is-left');
       }
+      // A redraw mid-drag (a change on disk, news fading) takes the lifted row out with the rows.
+      if (!lifted.isConnected) (list.querySelector('ul') ?? document.body).append(lifted);
       lifted.style.setProperty('--drag-x', `${event.clientX}px`);
       lifted.style.setProperty('--drag-y', `${event.clientY}px`);
 
@@ -92,14 +102,12 @@ export function watchDrags(list: HTMLElement, actions: DragActions): void {
         return;
       }
       light(null);
-      const over = under?.closest<HTMLElement>('.note-row[data-path]');
+      const over = under?.closest<HTMLElement>(rows);
       if (actions.orderable() && over && list.contains(over)) {
         const rect = over.getBoundingClientRect();
         const below = event.clientY > rect.top + rect.height / 2;
         const next = below
-          ? (over
-              .closest('li')
-              ?.nextElementSibling?.querySelector<HTMLElement>('.note-row[data-path]') ?? null)
+          ? (over.closest('li')?.nextElementSibling?.querySelector<HTMLElement>(rows) ?? null)
           : over;
         drop = { before: next?.dataset.path ?? null };
         mark(below ? rect.bottom : rect.top, rect);

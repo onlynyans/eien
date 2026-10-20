@@ -1,7 +1,14 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { _electron, test as base, type ElectronApplication, type Page } from '@playwright/test';
+import {
+  _electron,
+  test as base,
+  type ElectronApplication,
+  expect,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 export const ROOT = resolve(import.meta.dirname, '../..');
 
@@ -39,6 +46,21 @@ export function makeVault(files: VaultFiles): string {
 export const launchApp = (userData: string, vault?: string | null): Promise<ElectronApplication> =>
   _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(userData, vault) });
 
+/** Where a locator's element is on screen. */
+export type Box = NonNullable<Awaited<ReturnType<Locator['boundingBox']>>>;
+
+/** A locator's box, measured again if a redraw (the watcher's, after a save) replaced it. */
+export async function boxOf(locator: Locator): Promise<Box> {
+  let found: Box | null = null;
+  await expect
+    .poll(async () => {
+      found = await locator.boundingBox();
+      return found !== null;
+    })
+    .toBe(true);
+  return found as unknown as Box;
+}
+
 /** Click a menu item, as the window the click is for: no reliance on which window has focus. */
 export async function clickMenu(
   app: ElectronApplication,
@@ -56,6 +78,31 @@ export async function clickMenu(
     },
     [menu, label] as const,
   );
+}
+
+/**
+ * The system's trash, played by a folder: what the app sends there is moved
+ * into it, after `delayMs` (a big folder, a network drive); or, when it
+ * doesn't `work`, refused. The caller removes the folder.
+ */
+export async function fakeTrash(
+  app: ElectronApplication,
+  { works = true, delayMs = 0 } = {},
+): Promise<string> {
+  const trash = mkdtempSync(join(tmpdir(), 'eien-trash-'));
+  await app.evaluate(
+    ({ shell }, [trash, works, delayMs]) => {
+      shell.trashItem = async (path: string) => {
+        await new Promise((done) => setTimeout(done, delayMs));
+        if (!works) throw new Error('The trash is full.');
+        const fs = process.getBuiltinModule('node:fs');
+        const { basename, join } = process.getBuiltinModule('node:path');
+        fs.renameSync(path, join(trash, basename(path)));
+      };
+    },
+    [trash, works, delayMs] as const,
+  );
+  return trash;
 }
 
 /** Apps closeApp has closed: Playwright can't be asked about them again. */
@@ -106,6 +153,9 @@ type Fixtures = {
   page: Page;
 };
 
+/** Windows holds a closed app's files a moment longer: removing them tries again (EBUSY, EPERM). */
+const WINDOWS_LETS_GO = { maxRetries: 10, retryDelay: 200 };
+
 /** Each test gets a fresh app with a fresh data folder, closed afterwards. */
 export const test = base.extend<Fixtures>({
   vaultFiles: [null, { option: true }],
@@ -114,13 +164,13 @@ export const test = base.extend<Fixtures>({
     if (!vaultFiles) return use(null);
     const root = makeVault(vaultFiles);
     await use(root);
-    rmSync(root, { recursive: true, force: true });
+    rmSync(root, { recursive: true, force: true, ...WINDOWS_LETS_GO });
   },
   userData: async ({ deviceFile }, use) => {
     const dir = mkdtempSync(join(tmpdir(), 'eien-e2e-'));
     if (deviceFile) writeFileSync(join(dir, 'settings.json'), JSON.stringify(deviceFile));
     await use(dir);
-    rmSync(dir, { recursive: true, force: true });
+    rmSync(dir, { recursive: true, force: true, ...WINDOWS_LETS_GO });
   },
   app: async ({ userData, vault }, use) => {
     const app = await launchApp(userData, vault);

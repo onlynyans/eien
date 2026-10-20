@@ -1,25 +1,18 @@
 // The note list: the index of what's selected in the sidebar, or of a
 // search. Each row: the title, the date (a book's chapters: their words),
 // and a line of preview. A row is dragged, right-clicked, or worked from the
-// keyboard: F2 renames, ⌘⌫ (Ctrl+Delete) sends it to the trash, Alt+↑/↓
-// moves it in a folder's own order.
+// keyboard (./row-events.ts).
 
 import { h, wordButton } from '../dom';
 import { openMenu } from '../menu/menu';
 import type { ListedNote, NoteList, NoteSort } from '../vault/vault-state';
+import { type RowActions, rowEvents, rowKeys } from './row-events';
 import { when } from './when';
 
-export interface ListActions {
-  open(path: string): void;
+export interface ListActions extends RowActions {
   newNote(): void;
   clearSearch(): void;
   sort(sort: NoteSort): void;
-  /** The row's menu, at the pointer or the row. */
-  menu(path: string, at: { readonly x: number; readonly y: number }): void;
-  /** One place up or down, in a folder's own order. */
-  nudge(path: string, by: -1 | 1): void;
-  rename(path: string): void;
-  trash(path: string): void;
 }
 
 const notes = (n: number) => `${n.toLocaleString()} ${n === 1 ? 'note' : 'notes'}`;
@@ -44,8 +37,6 @@ export function listLabel(list: NoteList): string {
   return notes(list.total);
 }
 
-const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
-
 export function renderList(
   container: HTMLElement,
   list: NoteList,
@@ -67,38 +58,9 @@ export function renderList(
             type: 'button',
             'data-path': note.path,
             'aria-current': note.path === openPath ? 'true' : undefined,
-            'aria-keyshortcuts': ordered ? 'Alt+ArrowUp Alt+ArrowDown F2' : 'F2',
+            'aria-keyshortcuts': rowKeys(ordered),
           },
-          on: {
-            click: () => actions.open(note.path),
-            contextmenu: (event) => {
-              event.preventDefault();
-              const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-              // From the keyboard (the menu key, Shift+F10) there's no pointer: under the row's start.
-              const fromKeys = event.clientX === 0 && event.clientY === 0;
-              actions.menu(
-                note.path,
-                fromKeys
-                  ? { x: rect.left + 16, y: rect.bottom }
-                  : { x: event.clientX, y: event.clientY },
-              );
-            },
-            keydown: (event) => {
-              const mod = isMac ? event.metaKey : event.ctrlKey;
-              if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
-                const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-                actions.menu(note.path, { x: rect.left + 16, y: rect.bottom });
-              } else if (event.key === 'F2') actions.rename(note.path);
-              else if (mod && (event.key === 'Backspace' || event.key === 'Delete'))
-                actions.trash(note.path);
-              else if (ordered && event.altKey && event.key === 'ArrowUp')
-                actions.nudge(note.path, -1);
-              else if (ordered && event.altKey && event.key === 'ArrowDown')
-                actions.nudge(note.path, 1);
-              else return;
-              event.preventDefault();
-            },
-          },
+          on: rowEvents(note.path, actions, ordered),
         },
         note.ordinal ? h('span', { class: 'note-row__ord count', text: note.ordinal }) : null,
         h('span', { class: 'note-row__title', text: note.title }),
