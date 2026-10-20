@@ -2,10 +2,12 @@ export { resolveLinkPath } from './link-path';
 export {
   isHiddenName,
   isValidName,
+  isWatchedPath,
   type NameProblem,
   nameKey,
   nameProblems,
   safeName,
+  VAULT_CONFIG,
 } from './names';
 export {
   conflictName,

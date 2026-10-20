@@ -36,6 +36,7 @@ export class PageView {
   readonly #editorHost = h('div', { class: 'editor-host' });
   readonly #words = h('span', { class: 'colophon__words' });
   readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
+  readonly #zoom = h('span', { class: 'colophon__zoom', attrs: { 'aria-label': 'Zoom' } });
   readonly #modes: HTMLButtonElement[];
   readonly #sheet = h(
     'article',
@@ -76,7 +77,7 @@ export class PageView {
         ),
       ),
       h('div', { class: 'page__scroll' }, this.#sheet, this.#empty),
-      h('footer', { class: 'colophon count' }, this.#words, this.#state),
+      h('footer', { class: 'colophon count' }, this.#words, this.#state, this.#zoom),
     );
     new SelectionBar(container, this.editor);
     this.showNothing();
@@ -124,6 +125,11 @@ export class PageView {
   nextMode(): void {
     const at = EDITOR_MODES.indexOf(this.editor.mode);
     this.setMode(EDITOR_MODES[(at + 1) % EDITOR_MODES.length] ?? 'live');
+  }
+
+  /** The page's zoom, in the colophon when it isn't 100%. */
+  showZoom(percent: number): void {
+    this.#zoom.textContent = percent === 100 ? '' : `${percent}%`;
   }
 
   /** A quiet line on the sheet, or none. */

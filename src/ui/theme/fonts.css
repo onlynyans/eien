@@ -1,8 +1,24 @@
 /* The bundled faces (SIL Open Font License), from their npm packages: never
-   fetched from the web. Newsreader is the default text face; IBM Plex Mono
+   fetched from the web. A face's files load only when a page uses it, so
+   bundling all eight costs nothing until the writer picks one. The serifs
+   carry their optical sizes; the sans-serifs their weights. IBM Plex Mono is
    the machine voice. */
 @import "@fontsource-variable/newsreader/opsz.css";
 @import "@fontsource-variable/newsreader/opsz-italic.css";
+@import "@fontsource-variable/literata/opsz.css";
+@import "@fontsource-variable/literata/opsz-italic.css";
+@import "@fontsource-variable/ibm-plex-sans/wght.css";
+@import "@fontsource-variable/ibm-plex-sans/wght-italic.css";
+@import "@fontsource-variable/source-sans-3/wght.css";
+@import "@fontsource-variable/source-sans-3/wght-italic.css";
+@import "@fontsource-variable/atkinson-hyperlegible-next/wght.css";
+@import "@fontsource-variable/atkinson-hyperlegible-next/wght-italic.css";
+@import "@fontsource-variable/schibsted-grotesk/wght.css";
+@import "@fontsource-variable/schibsted-grotesk/wght-italic.css";
+@import "@fontsource-variable/hanken-grotesk/wght.css";
+@import "@fontsource-variable/hanken-grotesk/wght-italic.css";
+@import "@fontsource-variable/instrument-sans/wght.css";
+@import "@fontsource-variable/instrument-sans/wght-italic.css";
 @import "@fontsource/ibm-plex-mono/400.css";
 @import "@fontsource/ibm-plex-mono/400-italic.css";
 @import "@fontsource/ibm-plex-mono/600.css";

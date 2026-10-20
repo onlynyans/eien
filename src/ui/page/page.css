@@ -43,6 +43,8 @@
   margin: 0 auto;
   padding: var(--eien-sheet-pad-top) var(--pad-x) var(--eien-space-8);
   font-size: var(--eien-size-prose);
+  /* The page's zoom: the sheet, its margins and its line grow together. */
+  zoom: var(--eien-zoom);
   background: var(--eien-paper);
   border: var(--eien-sheet-edge);
   box-shadow: var(--eien-sheet-lift);
@@ -105,7 +107,8 @@
   text-transform: uppercase;
   letter-spacing: var(--eien-track-label);
 }
-.colophon__state:empty {
+.colophon__state:empty,
+.colophon__zoom:empty {
   display: none;
 }
 .colophon__state[data-state="failed"] {

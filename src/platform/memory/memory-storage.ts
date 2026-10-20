@@ -1,6 +1,6 @@
 // A vault in memory: the Storage contract without a disk, for tests.
 
-import { baseName, isHiddenName, parentOf, vaultPath } from '../../core/paths';
+import { baseName, isHiddenName, isWatchedPath, parentOf, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
 import { type FileState, MAX_BYTES_READ, type Storage, type WriteResult } from '../storage';
 
@@ -74,7 +74,9 @@ export class MemoryStorage implements Storage {
     for (let folder = parentOf(path); folder; folder = parentOf(folder)) this.#folders.add(folder);
   }
 
-  #notify(paths: string[]): void {
+  #notify(changed: string[]): void {
+    const paths = changed.filter(isWatchedPath);
+    if (paths.length === 0) return;
     for (const listener of this.#listeners) listener(paths);
   }
 }

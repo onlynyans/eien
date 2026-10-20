@@ -1,7 +1,9 @@
-// The sidebar: the vault's contents page. Library, then the folder tree.
+// The sidebar: the vault's contents page. Library, then the folder tree;
+// at the foot, day or night, and the settings.
 
+import type { SettingValues } from '../../core/config';
 import type { FolderNode } from '../../core/vault';
-import { h } from '../dom';
+import { h, wordButton } from '../dom';
 import type { Selection } from '../vault/vault-state';
 
 export interface SidebarModel {
@@ -10,11 +12,16 @@ export interface SidebarModel {
   readonly selection: Selection;
   /** Folder paths shown open. */
   readonly open: ReadonlySet<string>;
+  readonly scheme: Scheme;
 }
+
+type Scheme = SettingValues['appearance.scheme'];
 
 export interface SidebarActions {
   select(selection: Selection): void;
   toggle(path: string): void;
+  scheme(scheme: Scheme): void;
+  settings(): void;
 }
 
 export function renderSidebar(
@@ -53,6 +60,12 @@ export function renderSidebar(
     item.style.setProperty('--depth', String(depth));
     return item;
   };
+
+  /** Day or Night; pressed again, back to the system's. */
+  const schemeButton = (label: string, scheme: Scheme) =>
+    wordButton(label, () => actions.scheme(model.scheme === scheme ? 'system' : scheme), {
+      'aria-pressed': String(model.scheme === scheme),
+    });
 
   const folderRows = (node: FolderNode, depth: number): HTMLElement[] =>
     node.folders.flatMap((folder) => {
@@ -94,9 +107,24 @@ export function renderSidebar(
       model.tree.folders.length > 0 && h('p', { class: 'label sidebar__label', text: 'Folders' }),
       model.tree.folders.length > 0 && h('ul', { class: 'tree' }, ...folderRows(model.tree, 0)),
     ),
-    h('footer', {
-      class: 'sidebar__foot count',
-      text: `${model.tree.noteCount.toLocaleString()} notes`,
-    }),
+    h(
+      'footer',
+      { class: 'sidebar__foot' },
+      h('p', {
+        class: 'count sidebar__count',
+        text: `${model.tree.noteCount.toLocaleString()} notes`,
+      }),
+      h(
+        'div',
+        { class: 'sidebar__foot-row' },
+        h(
+          'div',
+          { class: 'sidebar__pair', attrs: { role: 'group', 'aria-label': 'Day or night' } },
+          schemeButton('Day', 'day'),
+          schemeButton('Night', 'night'),
+        ),
+        wordButton('Settings', actions.settings, { 'aria-haspopup': 'dialog' }),
+      ),
+    ),
   );
 }

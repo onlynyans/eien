@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { editorContent, editorLines, expect, test } from './launch';
+import { clickMenu, editorContent, editorLines, expect, test } from './launch';
 
 /** A 1×1 PNG. */
 const PIXEL = Buffer.from(
@@ -54,21 +54,6 @@ async function selectFirstWord(page: Page, length: number): Promise<void> {
   await editorContent(page).click();
   await page.keyboard.press('ControlOrMeta+Home');
   for (let i = 0; i < length; i++) await page.keyboard.press('Shift+ArrowRight');
-}
-
-/** Click a menu item, as the window the click is for: no reliance on which window has focus. */
-async function clickMenu(app: ElectronApplication, menu: string, label: string): Promise<void> {
-  await app.evaluate(
-    ({ BrowserWindow, Menu }, [menu, label]) => {
-      const window = BrowserWindow.getAllWindows()[0];
-      const item = Menu.getApplicationMenu()
-        ?.items.find((top) => top.label === menu)
-        ?.submenu?.items.find((entry) => entry.label === label);
-      if (!item || !window) throw new Error(`No menu item ${menu} → ${label}`);
-      item.click(undefined, window, window.webContents);
-    },
-    [menu, label] as const,
-  );
 }
 
 test.describe('Live', () => {

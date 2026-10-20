@@ -15,7 +15,7 @@ import {
   stat,
 } from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
-import { isHiddenName, VaultPathError, vaultPath } from '../../core/paths';
+import { isHiddenName, isWatchedPath, VaultPathError, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
 import { type FileState, MAX_BYTES_READ, type Storage, type WriteResult } from '../storage';
 
@@ -109,7 +109,7 @@ export class DiskStorage implements Storage {
       watcher = watch(this.#root, { recursive: true }, (_event, name) => {
         if (!name) return;
         const path = name.split(sep).join('/');
-        if (path.split('/').some(isHiddenName)) return; // our temp files, .eien, dot-files
+        if (!isWatchedPath(path)) return; // our temp files, dot-files, .eien but its settings
         pending.add(path);
         clearTimeout(timer);
         timer = setTimeout(() => {

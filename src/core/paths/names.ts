@@ -38,6 +38,13 @@ export const isValidName = (name: string): boolean => nameProblems(name).length 
 /** Names Eien keeps to itself or never shows: dot-files and dot-folders. */
 export const isHiddenName = (name: string): boolean => name.startsWith('.');
 
+/** The vault's own settings (spec §6): in the hidden .eien folder, but watched. */
+export const VAULT_CONFIG = '.eien/config.json';
+
+/** A change a watcher reports: nothing hidden (temp files, dot-files, .eien) but the vault's settings. */
+export const isWatchedPath = (path: string): boolean =>
+  path === VAULT_CONFIG || !path.split('/').some(isHiddenName);
+
 /** Two names that one system would treat as the same file (macOS and Windows
  * ignore case; all of them ignore Unicode normalisation differences). */
 export const nameKey = (name: string): string => name.normalize('NFC').toLocaleLowerCase('en-US');

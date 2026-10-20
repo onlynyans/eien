@@ -1,13 +1,17 @@
 // The window: a vault's three panes, kept in step with the disk.
 
+import { numberSetting, stepped } from '../core/config';
 import { formatCommand } from '../core/format';
-import { baseName, freeNoteName, joinPath, parentOf, titleOf } from '../core/paths';
+import { baseName, freeNoteName, joinPath, parentOf, titleOf, VAULT_CONFIG } from '../core/paths';
 import type { Bridge } from '../platform/bridge';
 import { h } from './dom';
 import { type NoteImages, noteImages } from './editor/image-loader';
 import { renderList } from './list/list';
 import { NoteSession } from './notes/note-session';
 import { PageView } from './page/page';
+import { applyLook } from './settings/look';
+import { SettingsScreen } from './settings/settings-screen';
+import { SettingsState } from './settings/settings-state';
 import { renderSidebar } from './sidebar/sidebar';
 import { type Selection, VaultState } from './vault/vault-state';
 import { renderWelcome } from './welcome/welcome';
@@ -22,14 +26,22 @@ interface ShownVault {
   stop(): Promise<void>;
 }
 
+const ZOOM = numberSetting('page.zoom');
+
 export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void> {
+  // The look is set before anything is drawn, so nothing shows in the wrong face.
+  const settings = await SettingsState.load(bridge.settings);
+  applyLook(settings.values);
+  settings.onChange((values) => applyLook(values));
+  const screen = new SettingsScreen(document.body, settings);
   let shown: ShownVault | null = null;
 
   const open = async () => {
     await shown?.stop();
     shown = null;
     const info = await bridge.vault.current();
-    if (info) shown = await showVault(root, bridge, info.name);
+    await settings.reload(); // the vault's own settings come with it
+    if (info) shown = await showVault(root, bridge, info.name, settings, () => screen.open());
     else renderWelcome(root, chooseVault);
   };
   const chooseVault = async () => {
@@ -39,6 +51,15 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
 
   bridge.onMenu((command) => {
     if (command === 'open-vault') void chooseVault();
+    else if (command === 'settings') screen.open();
+    else if (command === 'zoom:in' || command === 'zoom:out' || command === 'zoom:reset') {
+      const now = settings.values['page.zoom'];
+      const next =
+        command === 'zoom:reset'
+          ? ZOOM.default
+          : stepped(ZOOM, now, command === 'zoom:in' ? 1 : -1);
+      if (next !== now) void settings.set('page.zoom', next).catch(console.error);
+    }
   });
   bridge.onBeforeClose(async () => {
     await shown?.flush();
@@ -47,7 +68,13 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
 }
 
 /** Show the vault named `name`. */
-async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promise<ShownVault> {
+async function showVault(
+  root: HTMLElement,
+  bridge: Bridge,
+  name: string,
+  settings: SettingsState,
+  openSettings: () => void,
+): Promise<ShownVault> {
   const state = new VaultState(bridge.vault, name);
   let selection: Selection = { kind: 'all' };
   const openFolders = new Set<string>();
@@ -75,7 +102,13 @@ async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promi
   const drawSidebar = () =>
     renderSidebar(
       sidebar,
-      { name, tree: state.tree, selection, open: openFolders },
+      {
+        name,
+        tree: state.tree,
+        selection,
+        open: openFolders,
+        scheme: settings.values['appearance.scheme'],
+      },
       {
         select: (next) => {
           selection = next;
@@ -86,14 +119,21 @@ async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promi
           if (!openFolders.delete(path)) openFolders.add(path);
           drawSidebar();
         },
+        scheme: (scheme) => void settings.set('appearance.scheme', scheme).catch(console.error),
+        settings: openSettings,
       },
     );
 
   const drawList = async () =>
-    renderList(list, await state.notesFor(selection), session?.path ?? null, {
-      open: (path) => void openNote(path),
-      newNote: () => void newNote(),
-    });
+    renderList(
+      list,
+      await state.notesFor(selection, settings.values['books.numerals']),
+      session?.path ?? null,
+      {
+        open: (path) => void openNote(path),
+        newNote: () => void newNote(),
+      },
+    );
 
   const redraw = async () => {
     drawSidebar();
@@ -154,8 +194,20 @@ async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promi
       const changed = pending;
       pending = new Set();
       if (session && changed.has(session.path)) void session.diskChanged();
+      if (changed.has(VAULT_CONFIG)) void settings.reload(); // changed on another device
       void refresh();
     }, REDRAW_AFTER_MS);
+  });
+
+  page.showZoom(settings.values['page.zoom']);
+  const stopSettings = settings.onChange((values, before) => {
+    page.showZoom(values['page.zoom']);
+    if (
+      values['books.numerals'] !== before['books.numerals'] ||
+      values['appearance.scheme'] !== before['appearance.scheme']
+    ) {
+      void redraw();
+    }
   });
 
   const onBlur = () => void session?.flush();
@@ -178,6 +230,7 @@ async function showVault(root: HTMLElement, bridge: Bridge, name: string): Promi
     stop: async () => {
       await session?.flush();
       stopWatching();
+      stopSettings();
       onMenu();
       clearTimeout(timer);
       window.removeEventListener('blur', onBlur);

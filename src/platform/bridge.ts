@@ -1,6 +1,7 @@
 /** What the preload exposes to the window as `window.eien`. Every capability
  * the window has beyond a web page is listed here, and nowhere else. */
 
+import type { SettingKey, SettingValues } from '../core/config';
 import type { FormatCommandId } from '../core/format';
 import type { VaultEntry } from '../core/vault';
 import type { FileState, WriteResult } from './storage';
@@ -25,10 +26,22 @@ export interface VaultBridge {
   onChange(listener: (paths: string[]) => void): () => void;
 }
 
+/** Settings (spec §6): this device's and the open vault's, checked by the main process. */
+export interface SettingsBridge {
+  /** Every setting's value: this device's, the open vault's, and defaults for the rest. */
+  read(): Promise<SettingValues>;
+  /** Change one setting; resolves to every value after it, or rejects when it can't be kept. */
+  set<K extends SettingKey>(key: K, value: SettingValues[K]): Promise<SettingValues>;
+}
+
 /** Menu items the window acts on. */
 export type MenuCommand =
   | 'open-vault'
   | 'new-note'
+  | 'settings'
+  | 'zoom:in'
+  | 'zoom:out'
+  | 'zoom:reset'
   | `format:${FormatCommandId}`
   | 'view:live'
   | 'view:source'
@@ -39,6 +52,7 @@ export interface Bridge {
   /** The operating system: 'darwin', 'win32', 'linux', … */
   readonly platform: string;
   readonly vault: VaultBridge;
+  readonly settings: SettingsBridge;
   onMenu(listener: (command: MenuCommand) => void): () => void;
   /**
    * Before the window closes, the main process asks it to save; `save`
@@ -56,6 +70,8 @@ export const CHANNEL = {
   readBytes: 'vault:read-bytes',
   write: 'vault:write',
   changed: 'vault:changed',
+  settingsRead: 'settings:read',
+  settingsSet: 'settings:set',
   menu: 'app:menu',
   beforeClose: 'app:before-close',
   closeReady: 'app:close-ready',

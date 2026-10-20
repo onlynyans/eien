@@ -30,14 +30,35 @@ export function buildMenu(send: SendCommand): Menu {
     accelerator,
     click: (_item, window) => send(command, window),
   });
+  const settings = item('Settings…', 'settings', 'CmdOrCtrl+,');
   const template: MenuItemConstructorOptions[] = [
-    ...(mac ? [{ role: 'appMenu' } as const] : []),
+    ...(mac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              settings,
+              { type: 'separator' },
+              { role: 'services' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          } satisfies MenuItemConstructorOptions,
+        ]
+      : []),
     {
       label: 'File',
       submenu: [
         item('New Note', 'new-note', 'CmdOrCtrl+N'),
         item('Open Vault…', 'open-vault', 'CmdOrCtrl+O'),
         { type: 'separator' },
+        ...(mac ? [] : [settings, { type: 'separator' } as const]),
         mac ? { role: 'close' } : { role: 'quit' },
       ],
     },
@@ -62,6 +83,12 @@ export function buildMenu(send: SendCommand): Menu {
         item('Reading', 'view:reading'),
         { type: 'separator' },
         item('Next View', 'view:next', 'CmdOrCtrl+E'),
+        { type: 'separator' },
+        // The page's zoom, not the window's: the panes keep their size (spec §4).
+        item('Zoom In', 'zoom:in', 'CmdOrCtrl+='),
+        { ...item('Zoom In', 'zoom:in', 'CmdOrCtrl+Plus'), visible: false }, // ⌘+ with Shift, as well as ⌘=
+        item('Zoom Out', 'zoom:out', 'CmdOrCtrl+-'),
+        item('Actual Size', 'zoom:reset', 'CmdOrCtrl+0'),
       ],
     },
     // A reload would drop the last moment of typing, so it's for development only.
