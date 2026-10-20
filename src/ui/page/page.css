@@ -62,6 +62,31 @@
   margin: 0;
   min-height: 1lh;
 }
+/* The title is the note's name: a field when it's being renamed, looking just as it did. */
+.title[tabindex] {
+  cursor: text;
+}
+.title__field {
+  display: block;
+  width: 100%;
+  margin: var(--eien-title-gap) 0;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-title);
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 0;
+  border: 0;
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-strong);
+  background: none;
+  color: var(--eien-ink);
+}
+.title__field:focus {
+  outline: none;
+  border-bottom-color: var(--eien-focus);
+}
+.title__field[hidden] {
+  display: none;
+}
 .title {
   margin: var(--eien-title-gap) 0;
   font-family: var(--eien-face-text);

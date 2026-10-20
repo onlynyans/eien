@@ -4,8 +4,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SETTINGS, type SettingKey, type SettingValues } from '../../core/config';
 import type { SettingsBridge } from '../../platform/bridge';
+import { reasonOf } from '../reason';
 import { applyLook } from './look';
-import { reasonOf } from './settings-screen';
 import { SettingsState } from './settings-state';
 
 /** Enough of <html> for applyLook: its data attributes and custom properties. */

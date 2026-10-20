@@ -13,6 +13,7 @@ import {
   stepped,
 } from '../../core/config';
 import { h, wordButton } from '../dom';
+import { reasonOf } from '../reason';
 import type { SettingsState } from './settings-state';
 
 export class SettingsScreen {
@@ -159,9 +160,3 @@ export class SettingsScreen {
 
 const chosenIn = (values: SettingValues, key: string): unknown =>
   (values as Record<string, unknown>)[key];
-
-/** The main process's reason, without Electron's wrapping ("Error invoking remote method…"). */
-export function reasonOf(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  return message.replace(/^Error invoking remote method '[^']*': (?:\w*Error: )?/, '');
-}

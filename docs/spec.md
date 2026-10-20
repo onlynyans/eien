@@ -225,6 +225,32 @@ CommonMark plus GitHub extensions, and three common additions:
 - Basic inline HTML: `<p>`, `<br>`, `<hr>`, `<u>`, `<em>`, `<strong>`, `<s>`,
   `<sup>`, `<sub>`. Anything else is shown as text and never run.
 
+### Organizing
+
+- **Rename** a note by its title on the page (click it, or F2 on its row; Enter
+  keeps, Esc doesn't), a folder in place (F2, or its menu). Renaming changes
+  the file's name, and the folder's order and the pins follow. A name another
+  file has (case and accents aside) is refused, never numbered: the writer
+  chose it. A change of case alone is allowed.
+- **Move** a note by dragging it onto a folder (or the vault's name), or with
+  Move to… in its menu. Where its name is taken it's numbered ("Ideas 2"), so
+  nothing is replaced. The open note carries on at its new path. A folder
+  moves the same way, never into itself.
+- **Order:** in a folder's own order, drag a row between others, or Alt+↑/↓,
+  or Move up/down in its menu. The order is `.eien-folder.json`'s; a folder
+  never ordered gets no file. A note moved in goes last.
+- **Sort** a list by its own order, title or newest; the choice is kept per
+  list, on this device.
+- **Books:** Make it a book / Not a book, in a folder's menu.
+- **Pinned** notes are listed under Library, in the order pinned
+  (`.eien/pinned.json`, watched like the settings).
+- **The trash:** Move to the trash (⌘⌫ / Ctrl+Delete on a row, or the menu)
+  sends a note or folder to the system's trash (the Recycle Bin on Windows),
+  saving the open note first; the list says where it went. If the trash
+  fails, nothing is deleted and the list says why.
+- Every menu opens from the keyboard too (Shift+F10 or the menu key), and a
+  redraw never takes the keyboard's place in the list or the sidebar.
+
 ### Search and the index
 
 The main process keeps an index of the vault: every note's preview (its
@@ -291,7 +317,7 @@ small `index.ts`; nothing reaches into another module's files.
 src/core/            (✓ = built)
   paths/        ✓ name rules, reserved names, collisions, vault paths, sibling names
   text/         ✓ BOM and line endings kept, front matter located, words, chapter numbers
-  vault/        ✓ entries, the folder tree, .eien-folder.json (order, book)
+  vault/        ✓ entries, the folder tree, .eien-folder.json (order, book), pins
   saving/       ✓ what to do when a note changes on disk
   format/       ✓ the formatting commands: inline marks, line formats, links, their keys
   config/       ✓ the settings schema, defaults, reading and writing settings files (§6)
@@ -313,11 +339,12 @@ src/platform/
 src/ui/
   app.ts        ✓ the window: panes, vault and note kept in step
   shell/        ✓ the three panes (resizing, collapsing, two panes: phase 6)
-  sidebar/      ✓ the search field; library, folders and tags (pinned: phase 6)
-  list/         ✓ note list: previews, a book's words, search results
-  page/         ✓ the sheet, the view switch, the colophon
+  sidebar/      ✓ the search field; library (all, pinned), folders, tags; folders renamed in place
+  list/         ✓ note list: previews, a book's words, search results, sorts, dragging
+  page/         ✓ the sheet, the title (renaming the note), the view switch, the colophon
+  menu/         ✓ the small floating menu: right-click choices, sorts
   notes/        ✓ the open note: autosave, reload, conflict copies
-  vault/        ✓ the vault as the window knows it, and its three panes
+  vault/        ✓ the vault as the window knows it, its three panes, organizing (rename, move, trash)
   welcome/      ✓ before a vault is open
   theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts
   editor/       ✓ CodeMirror, the three views, the selection bar, images (writing tools: phase 9)
@@ -603,7 +630,7 @@ Each phase ends with something you can try, and its tests in CI.
 | 3 | Vault and saving | Open a folder; tree, list and page; autosave; external changes and conflicts |
 | 4 | Editor | Live, Source and Reading views; all Markdown in §4; formatting keys, the Format menu and the selection bar |
 | 5 | Design system | Tokens from `docs/design`; palettes and schemes; the eight text faces; text size, density, page frame and zoom; the settings screen |
-| 6 | Organizing | Tags, nesting, search, drag-and-drop order, books; resizing and collapsing the panes, and two-pane mode |
+| 6 | Organizing | Tags, nesting, search, drag-and-drop order, books, pins, rename, move, trash; then resizing and collapsing the panes, and two-pane mode |
 | 7 | Versions | Checkpoints, the compare button, named versions |
 | 8 | AO3 and typography | Copy for AO3, paste from HTML, quote setting |
 | 9 | Writing tools | Scene breaks, focus, typewriter, counters, sprint, goals, outline cards, spellcheck |

@@ -13,7 +13,9 @@ another device reloads, and when both sides changed, both are kept. Settings
 (⌘,) choose day or night, the Washi or Otaku palette, eight typefaces, text
 size, density, the page's frame, zoom and chapter numbers. The note list
 previews each note; tags, from front matter or #inline, nest in the sidebar;
-search (⇧⌘F) finds words across the vault, accents aside.
+search (⇧⌘F) finds words across the vault, accents aside. Rename a note by its
+title, drag notes into folders or into a book's order, pin them, make a folder
+a book, and send what you don't want to the system's trash.
 
 ## Develop
 

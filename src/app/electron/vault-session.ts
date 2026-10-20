@@ -2,7 +2,7 @@
 // from the window is checked here; the storage checks every path again.
 
 import { basename } from 'node:path';
-import { type BrowserWindow, dialog } from 'electron';
+import { type BrowserWindow, dialog, shell } from 'electron';
 import { CHANNEL, type VaultInfo } from '../../platform/bridge';
 import { type DiskStorage, openDiskStorage } from '../../platform/electron/disk-storage';
 import { recoverStrayTemps } from '../../platform/electron/recover-temps';
@@ -33,7 +33,8 @@ export class VaultSession {
    * holds it.
    */
   async open(root: string): Promise<VaultInfo> {
-    const storage = await openDiskStorage(root);
+    // The system's trash, looked up when it's used.
+    const storage = await openDiskStorage(root, (path) => shell.trashItem(path));
     await recoverStrayTemps(storage);
     const index = new VaultIndex(storage);
     await index.refresh();
@@ -114,6 +115,23 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
     // The index holds what was written before the window asks for the list again.
     if (result.ok) await session.index().refresh([at]);
     return result;
+  });
+  handle(CHANNEL.move, async (from, to) => {
+    const source = text(from, 'from');
+    const target = text(to, 'to');
+    const result = await session.storage().move(source, target);
+    if (result.ok) await session.index().refresh([source, target]);
+    return result;
+  });
+  handle(CHANNEL.trash, async (path) => {
+    const at = text(path, 'path');
+    await session.storage().trash(at);
+    await session.index().refresh([at]);
+  });
+  handle(CHANNEL.makeFolder, async (path) => {
+    const at = text(path, 'path');
+    await session.storage().makeFolder(at);
+    await session.index().refresh([at]);
   });
 
   window.on('closed', () => session.close());

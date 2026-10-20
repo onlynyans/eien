@@ -59,8 +59,41 @@
   overflow-y: auto;
   padding-bottom: var(--eien-space-5);
 }
-.sidebar__label {
+.sidebar__section {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   margin: var(--eien-space-5) var(--eien-space-4) var(--eien-space-2);
+}
+.sidebar__label {
+  margin: 0;
+}
+/* NEW FOLDER: shown like the other controls, on hover or focus. */
+.sidebar__new {
+  margin: calc(var(--eien-space-1) * -1) calc(var(--eien-space-2) * -1);
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+.sidebar:hover .sidebar__new,
+.sidebar__new:focus-visible {
+  opacity: 1;
+}
+/* A folder being renamed: its name as a field, in the text face. */
+.tree-row__field {
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--eien-row-h) - 4px);
+  margin-right: var(--eien-space-4);
+  padding: 0 var(--eien-space-2);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+}
+/* Where a dragged note will go: the folder (or the vault's name) lit, as if chosen. */
+.tree-row__name.is-drop-target,
+.sidebar__vault.is-drop-target {
+  background: var(--eien-selected);
+  outline: var(--eien-hairline) solid var(--eien-rule-strong);
+  outline-offset: calc(var(--eien-hairline) * -1);
 }
 
 .tree {

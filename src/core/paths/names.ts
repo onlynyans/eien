@@ -43,9 +43,12 @@ export const isHiddenName = (name: string): boolean => name.startsWith('.');
 /** The vault's own settings (spec §6): in the hidden .eien folder, but watched. */
 export const VAULT_CONFIG = '.eien/config.json';
 
-/** A change a watcher reports: nothing hidden (temp files, dot-files, .eien) but the vault's settings. */
+/** The vault's pinned notes, beside its settings, and watched as they are. */
+export const VAULT_PINS = '.eien/pinned.json';
+
+/** A change a watcher reports: nothing hidden (temp files, dot-files, .eien) but the vault's settings and pins. */
 export const isWatchedPath = (path: string): boolean =>
-  path === VAULT_CONFIG || !path.split('/').some(isHiddenName);
+  path === VAULT_CONFIG || path === VAULT_PINS || !path.split('/').some(isHiddenName);
 
 /**
  * Two names that one system would treat as the same file. macOS and Windows

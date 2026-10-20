@@ -8,9 +8,15 @@ export {
 } from './entries';
 export {
   FOLDER_SETTINGS_NAME,
+  type FolderChange,
   type FolderSettings,
   NO_FOLDER_SETTINGS,
   orderNames,
   parseFolderSettings,
+  placedBefore,
+  renamedInOrder,
+  withFolderSettings,
+  withoutInOrder,
 } from './folder-settings';
+export { movedPins, parsePins, pinsText, withoutPins, withPin } from './pins';
 export { buildTree, byName, type FolderNode } from './tree';

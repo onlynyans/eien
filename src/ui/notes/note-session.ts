@@ -100,6 +100,14 @@ export class NoteSession {
     return this.#enqueue(() => this.#save());
   }
 
+  /**
+   * The note was renamed or moved by this window, to `path`: carry on there.
+   * Run it once saves under way are done (see `flush`), as the move is.
+   */
+  movedTo(path: string): void {
+    this.#path = path;
+  }
+
   /** The file may have changed on disk: look, and act (spec §3). */
   diskChanged(): Promise<void> {
     return this.#enqueue(() => this.#checkDisk());

@@ -1,0 +1,47 @@
+/* A small menu floats: raised paper, a hairline edge, the float shadow
+   (docs/design). Its choices are words, the machine's voice. */
+
+.menu {
+  position: fixed;
+  left: var(--menu-x, 0);
+  top: var(--menu-y, 0);
+  z-index: 30;
+  display: grid;
+  min-width: calc(var(--eien-space-8) * 2);
+  max-height: calc(100vh - var(--eien-space-5));
+  overflow-y: auto;
+  padding: var(--eien-space-1);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+}
+.menu .word-button {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-2);
+  padding-left: calc(var(--eien-space-2) + var(--depth, 0) * var(--eien-space-3));
+  text-align: left;
+  white-space: nowrap;
+}
+/* A choice of several: the chosen one has a small ink dot, and is in ink. */
+.menu .word-button[role="menuitemradio"]::before {
+  content: "";
+  flex: none;
+  width: var(--eien-space-1);
+  height: var(--eien-space-1);
+  border-radius: 50%;
+  background: transparent;
+}
+.menu .word-button[aria-checked="true"] {
+  color: var(--eien-ink);
+}
+.menu .word-button[aria-checked="true"]::before {
+  background: currentColor;
+}
+.menu .word-button:focus-visible {
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}
+.menu__rule {
+  margin: var(--eien-space-1) 0;
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+}

@@ -48,6 +48,15 @@ class BentStorage implements Storage {
   write(path: string, text: string, expected: string | null): Promise<WriteResult> {
     return this.inner.write(path, text, expected);
   }
+  move(from: string, to: string) {
+    return this.inner.move(from, to);
+  }
+  trash(path: string) {
+    return this.inner.trash(path);
+  }
+  makeFolder(path: string) {
+    return this.inner.makeFolder(path);
+  }
   watch(onChange: (paths: string[]) => void): () => void {
     return this.inner.watch(onChange);
   }

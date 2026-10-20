@@ -34,7 +34,15 @@ const MODE_LABEL: Record<EditorMode, string> = {
 export class PageView {
   readonly editor: NoteEditor;
   readonly #crumbs = h('p', { class: 'crumbs label' });
-  readonly #title = h('h1', { class: 'title' });
+  readonly #title = h('h1', {
+    class: 'title',
+    attrs: { tabindex: '0', title: 'Rename', 'aria-keyshortcuts': 'Enter F2' },
+  });
+  /** The title as a field, while it's being renamed. */
+  readonly #titleField = h('input', {
+    class: 'title__field',
+    attrs: { type: 'text', 'aria-label': 'Title', spellcheck: 'false', hidden: true },
+  });
   readonly #notice = h('p', { class: 'notice', attrs: { role: 'status', hidden: true } });
   readonly #editorHost = h('div', { class: 'editor-host' });
   readonly #words = h('span', { class: 'colophon__words' });
@@ -46,14 +54,32 @@ export class PageView {
     { class: 'sheet' },
     this.#crumbs,
     this.#title,
+    this.#titleField,
     this.#notice,
     this.#editorHost,
   );
   readonly #empty = h('p', { class: 'page__empty', text: 'Choose a note, or make a new one.' });
   #titleText = '';
   #counting: ReturnType<typeof setTimeout> | undefined;
+  readonly #rename: (typed: string) => void;
 
-  constructor(container: HTMLElement, events: EditorEvents) {
+  /** `rename` hears a title the writer typed, different from the one there. */
+  constructor(container: HTMLElement, events: EditorEvents & { rename(typed: string): void }) {
+    this.#rename = events.rename;
+    // The title is the note's name: a click, Enter or F2 renames it (spec §2).
+    this.#title.addEventListener('click', () => this.editTitle());
+    this.#title.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== 'F2') return;
+      event.preventDefault();
+      this.editTitle();
+    });
+    this.#titleField.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') this.#finishTitle(true);
+      else if (event.key === 'Escape') this.#finishTitle(false);
+      else return;
+      event.preventDefault();
+    });
+    this.#titleField.addEventListener('blur', () => this.#finishTitle(true));
     this.editor = new NoteEditor(this.#editorHost, {
       changed: (text) => {
         this.#countLater(text);
@@ -152,8 +178,28 @@ export class PageView {
     this.editor.focus();
   }
 
+  /** Rename the note: its title becomes a field, the words chosen; Enter keeps them, Esc doesn't. */
+  editTitle(): void {
+    if (this.#sheet.hidden) return;
+    this.#titleField.value = this.#titleText;
+    this.#titleField.hidden = false;
+    this.#title.hidden = true;
+    this.#titleField.focus();
+    this.#titleField.select();
+  }
+
+  #finishTitle(keep: boolean): void {
+    if (this.#titleField.hidden) return;
+    const typed = this.#titleField.value;
+    this.#titleField.hidden = true;
+    this.#showTitle(this.editor.text);
+    if (keep && typed.trim() && typed !== this.#titleText) this.#rename(typed);
+    else this.editor.focus();
+  }
+
   /** A note that opens with its own "# Title" heading needn't show the title twice. */
   #showTitle(text: string): void {
+    if (!this.#titleField.hidden) return; // being renamed: the field stands in for it
     const first = /^\s*#[ \t]+(.+?)[ \t#]*$/m.exec(text.trimStart().split('\n', 1)[0] ?? '');
     const same =
       first?.[1]?.trim().toLocaleLowerCase() === this.#titleText.trim().toLocaleLowerCase();

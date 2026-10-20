@@ -60,3 +60,58 @@ export function orderNames(names: readonly string[], order: readonly string[]): 
   }
   return [...placed, ...names.filter((name) => !placed.has(name)).sort(byName)];
 }
+
+/** A change to a folder's settings: a new order, or the folder made a book (or not). */
+export interface FolderChange {
+  readonly order?: readonly string[];
+  readonly book?: FolderSettings['book'];
+}
+
+/**
+ * The settings file's text with `change` made, every other key kept as it
+ * is; null when the file isn't a JSON object (it's never written over — the
+ * writer may be part-way through editing it). `text` null is no file yet.
+ */
+export function withFolderSettings(text: string | null, change: FolderChange): string | null {
+  let data: Record<string, unknown> = {};
+  if (text) {
+    try {
+      const parsed: unknown = JSON.parse(withoutBom(text));
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;
+      data = parsed as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+  // fromEntries keeps a "__proto__" in the file a plain key.
+  const next: Record<string, unknown> = Object.fromEntries(Object.entries(data));
+  if ('order' in change) {
+    if (change.order && change.order.length > 0) next.order = [...change.order];
+    else delete next.order;
+  }
+  if ('book' in change) {
+    if (change.book) next.book = change.book;
+    else delete next.book;
+  }
+  return `${JSON.stringify(next, null, 2)}\n`;
+}
+
+/** The order with `name` placed just before `before` (last, for null), from the order shown. */
+export function placedBefore(
+  shown: readonly string[],
+  name: string,
+  before: string | null,
+): string[] {
+  const rest = shown.filter((other) => other !== name);
+  const at = before === null ? -1 : rest.indexOf(before);
+  const index = at < 0 ? rest.length : at;
+  return [...rest.slice(0, index), name, ...rest.slice(index)];
+}
+
+/** `order` with the note `from` now called `to`. */
+export const renamedInOrder = (order: readonly string[], from: string, to: string): string[] =>
+  order.map((name) => (name === from ? to : name));
+
+/** `order` without the note `name`. */
+export const withoutInOrder = (order: readonly string[], name: string): string[] =>
+  order.filter((other) => other !== name);
