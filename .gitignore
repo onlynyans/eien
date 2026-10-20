@@ -5,3 +5,5 @@ coverage/
 test-results/
 playwright-report/
 .DS_Store
+# Claude Code keeps agents' worktrees here.
+.claude/worktrees/

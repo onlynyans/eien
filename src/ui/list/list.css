@@ -47,12 +47,16 @@
   margin: 0;
   padding: 0;
 }
+/* A row: the title and its date on one line, a line of preview under them
+   (compact density hides it). A book's rows lead with the chapter number. */
 .note-row {
   appearance: none;
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
-  gap: var(--eien-space-3);
+  column-gap: var(--eien-space-3);
+  row-gap: calc(var(--eien-hairline) * 2);
   width: 100%;
   padding: var(--eien-row-pad-y) var(--eien-space-4);
   border: 0;
@@ -87,13 +91,13 @@
   width: var(--eien-mark-w);
   background: var(--eien-seal);
 }
+.rows--book .note-row {
+  grid-template-columns: var(--eien-space-5) minmax(0, 1fr) auto;
+}
 .note-row__ord {
-  flex: none;
-  min-width: var(--eien-space-5);
   text-align: right;
 }
 .note-row__title {
-  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,7 +110,26 @@
   font-weight: 500;
 }
 .note-row__meta {
-  flex: none;
+  white-space: nowrap;
+}
+.note-row__preview {
+  display: var(--eien-list-preview);
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  line-height: var(--eien-leading-row);
+  color: var(--eien-pencil);
+}
+.rows--book .note-row__preview {
+  grid-column: 2 / -1;
+}
+.note-row__preview.is-empty {
+  font-style: italic;
+  color: var(--eien-faded);
 }
 
 .list__empty {
@@ -114,4 +137,11 @@
   font-family: var(--eien-face-text);
   font-style: italic;
   color: var(--eien-pencil);
+}
+.list__empty p {
+  margin: 0 0 var(--eien-space-2);
+}
+.list__empty .word-button {
+  margin-left: calc(var(--eien-space-2) * -1);
+  font-style: normal;
 }

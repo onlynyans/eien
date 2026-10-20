@@ -32,6 +32,7 @@ runtime.
 | `@fontsource-variable/schibsted-grotesk` | An editorial, newspaper sans-serif text face (SIL OFL): variable weight, roman and italic |
 | `@fontsource-variable/hanken-grotesk` | A soft, rounded sans-serif text face (SIL OFL): variable weight, roman and italic |
 | `@fontsource-variable/instrument-sans` | A crisp, modern sans-serif text face (SIL OFL): variable weight, roman and italic |
+| `yaml` | Reads a note's front matter for its tags (spec §2); later writes it back with comments and formatting kept (ISC) |
 | `@codemirror/state`, `@codemirror/view` | The editor: its document, selection and transactions, and the view that draws them. Live and Reading are decorations on it (MIT) |
 | `@codemirror/commands` | Undo history and the standard editing keys (MIT) |
 | `@codemirror/language`, `@codemirror/lang-markdown` | Markdown parsing in the editor, with GitHub's extensions; the syntax tree Live and Reading are drawn from (MIT) |

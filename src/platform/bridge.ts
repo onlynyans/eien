@@ -3,6 +3,8 @@
 
 import type { SettingKey, SettingValues } from '../core/config';
 import type { FormatCommandId } from '../core/format';
+import type { IndexedNote } from '../core/note';
+import type { SearchResult } from '../core/search';
 import type { VaultEntry } from '../core/vault';
 import type { FileState, WriteResult } from './storage';
 
@@ -18,6 +20,10 @@ export interface VaultBridge {
   /** Ask the writer for a folder and open it; null if they cancel. */
   choose(): Promise<VaultInfo | null>;
   list(): Promise<VaultEntry[]>;
+  /** Every note with its preview, words and tags, from the vault's index. */
+  notes(): Promise<IndexedNote[]>;
+  /** The notes holding every word of `query` (spec §4). */
+  search(query: string): Promise<SearchResult>;
   read(path: string): Promise<FileState | null>;
   /** An image's bytes, to show it; null when it's missing or too big. */
   readBytes(path: string): Promise<Uint8Array | null>;
@@ -39,6 +45,7 @@ export type MenuCommand =
   | 'open-vault'
   | 'new-note'
   | 'settings'
+  | 'search'
   | 'zoom:in'
   | 'zoom:out'
   | 'zoom:reset'
@@ -66,6 +73,8 @@ export const CHANNEL = {
   current: 'vault:current',
   choose: 'vault:choose',
   list: 'vault:list',
+  notes: 'vault:notes',
+  search: 'vault:search',
   read: 'vault:read',
   readBytes: 'vault:read-bytes',
   write: 'vault:write',

@@ -1,12 +1,24 @@
 import { describe, expect, it } from 'vitest';
+import { VaultIndex } from '../../platform/index';
 import { MemoryStorage } from '../../platform/memory/memory-storage';
 import { when } from '../list/when';
 import { findFolder, VaultState } from './vault-state';
 
+/** A vault's state over the real index, as the main process serves it. */
 async function vault(files: Record<string, string>) {
   const storage = new MemoryStorage();
   for (const [path, text] of Object.entries(files)) storage.put(path, text);
-  const state = new VaultState(storage, 'Ink & Ash');
+  const index = new VaultIndex(storage);
+  await index.refresh();
+  const state = new VaultState(
+    {
+      list: async () => index.entries(),
+      notes: async () => index.notes(),
+      search: async (query) => index.search(query),
+      read: (path) => storage.read(path),
+    },
+    'Ink & Ash',
+  );
   await state.refresh();
   return state;
 }
@@ -32,7 +44,7 @@ describe('VaultState', () => {
       'Top.md': '',
     });
     const list = await state.notesFor({ kind: 'folder', path: 'Fic' });
-    expect(list).toMatchObject({ heading: 'Fic', book: false });
+    expect(list).toMatchObject({ heading: 'Fic', kind: 'folder' });
     expect(list.notes.map((n) => n.path)).toEqual(['Fic/A.md', 'Fic/b.md']);
   });
 
@@ -47,7 +59,7 @@ describe('VaultState', () => {
       }),
     });
     const list = await state.notesFor({ kind: 'folder', path: 'Scarf' });
-    expect(list.book).toBe(true);
+    expect(list.kind).toBe('book');
     expect(list.notes.map((n) => `${n.ordinal} ${n.title}`)).toEqual([
       'i The Tear',
       'ii Needle and Thread',
@@ -55,10 +67,56 @@ describe('VaultState', () => {
     ]);
   });
 
+  it('lists each note with its preview and words', async () => {
+    const state = await vault({ 'Seventeen.md': '# Seventeen\n\n"Look," he **begins**.' });
+    const list = await state.notesFor({ kind: 'all' });
+    expect(list.notes[0]).toMatchObject({
+      title: 'Seventeen',
+      preview: '"Look," he begins.',
+      words: 4,
+    });
+  });
+
+  it('builds the tag tree, and lists a tag’s notes and those under it, newest first', async () => {
+    const state = await vault({
+      'a.md': '#fic/aot first',
+      'b.md': '---\ntags: [Fic]\n---\nsecond',
+      'c.md': '#ficlet not the same',
+      'd.md': 'no tags',
+    });
+    expect(state.tags.map((tag) => `${tag.tag}:${tag.count}`)).toEqual(['fic:2', 'ficlet:1']);
+    const list = await state.notesFor({ kind: 'tag', key: 'fic' });
+    expect(list).toMatchObject({ kind: 'tag', heading: '#fic', total: 2 });
+    expect(list.notes.map((n) => n.path)).toEqual(['b.md', 'a.md']);
+    const nested = await state.notesFor({ kind: 'tag', key: 'fic/aot' });
+    expect(nested.notes.map((n) => n.path)).toEqual(['a.md']);
+  });
+
+  it('lists a tag that’s gone as empty, under its key', async () => {
+    const state = await vault({ 'a.md': 'no tags' });
+    const list = await state.notesFor({ kind: 'tag', key: 'vanished' });
+    expect(list).toMatchObject({ heading: '#vanished', total: 0, notes: [] });
+  });
+
+  it('searches, with the words around the match as the preview', async () => {
+    const state = await vault({
+      'Seventeen.md': 'He mends the scarf.',
+      'Ideas.md': 'Snow on the walls.',
+    });
+    const found = await state.search('  scarf ');
+    expect(found).toMatchObject({ kind: 'search', heading: '“scarf”', total: 1 });
+    expect(found.notes[0]).toMatchObject({
+      path: 'Seventeen.md',
+      preview: 'He mends the scarf.',
+      words: 4,
+    });
+    expect((await state.search('nothing-here')).total).toBe(0);
+  });
+
   it('opens a folder whose settings file is broken, as if it had none', async () => {
     const state = await vault({ 'F/a.md': '', 'F/.eien-folder.json': '{not json' });
     const list = await state.notesFor({ kind: 'folder', path: 'F' });
-    expect(list.book).toBe(false);
+    expect(list.kind).toBe('folder');
     expect(list.notes).toHaveLength(1);
   });
 

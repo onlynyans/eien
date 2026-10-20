@@ -61,7 +61,7 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
   });
   expect(bridge).toEqual({
     keys: ['onBeforeClose', 'onMenu', 'platform', 'settings', 'vault'],
-    vault: ['choose', 'current', 'list', 'onChange', 'read', 'readBytes', 'write'],
+    vault: ['choose', 'current', 'list', 'notes', 'onChange', 'read', 'readBytes', 'search', 'write'],
     settings: ['read', 'set'],
     platform: process.platform,
     readIsOurs: true,
