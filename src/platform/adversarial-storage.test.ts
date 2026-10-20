@@ -76,6 +76,28 @@ for (const [name, make] of Object.entries(implementations)) {
       await subject.storage.write('Note.md', 'Words.', null);
       expect(await subject.storage.read('Note.md/Inside.md')).toBeNull();
     });
+
+    // Found by the model test (storage.property.test.ts): the disk and the test double disagreed.
+
+    it('refuses a write at a version where no file can be, as where there is none', async () => {
+      await subject.storage.write('Note.md', 'Words.', null);
+      await subject.storage.write('Fic/One.md', 'One.', null);
+      // No file there, so none at that version: refused, not thrown.
+      expect(await subject.storage.write('Note.md/Inside.md', 'x', 'a version')).toEqual({
+        ok: false,
+        current: null,
+      });
+      expect(await subject.storage.write('Fic', 'x', 'a version')).toEqual({
+        ok: false,
+        current: null,
+      });
+    });
+
+    it('lists a file’s size in bytes, as the disk counts it', async () => {
+      await subject.storage.write('永遠.md', '永遠 🧣', null);
+      const [entry] = await subject.storage.list();
+      expect(entry?.size).toBe(new TextEncoder().encode('永遠 🧣').length);
+    });
   });
 }
 
