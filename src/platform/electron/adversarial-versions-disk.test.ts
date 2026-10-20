@@ -64,18 +64,22 @@ describe('hardening: listFiles stays inside the vault', () => {
 });
 
 describe('seals on disk', () => {
-  it('listFiles leaves out a seal file whose name Eien can’t address, as list() leaves out such a note', async () => {
-    // A seal named elsewhere with "?" in it is listed, then can't be read: when it's the newest, every ⌘S throws.
-    await mkdir(join(root, VERSIONS), { recursive: true });
-    await writeFile(join(root, VERSIONS, '2026-10-20T11-00-00Z--why?.md'), 'their seal');
-    await writeFile(join(root, VERSIONS, '2026-10-20T10-00-00Z.md'), 'an older seal');
-    await writeFile(join(root, 'Why?.md'), 'a note no system but this one can hold');
-    expect((await storage.list()).map((entry) => entry.path)).not.toContain('Why?.md');
-    const listed = await storage.listFiles(VERSIONS);
-    for (const file of listed) {
-      await expect(storage.read(`${VERSIONS}/${file}`), file).resolves.not.toBeNull();
-    }
-  });
+  // Windows can't hold such a name at all; the file comes from a Mac or a Linux machine.
+  it.skipIf(process.platform === 'win32')(
+    'listFiles leaves out a seal file whose name Eien can’t address, as list() leaves out such a note',
+    async () => {
+      // A seal named elsewhere with "?" in it is listed, then can't be read: when it's the newest, every ⌘S throws.
+      await mkdir(join(root, VERSIONS), { recursive: true });
+      await writeFile(join(root, VERSIONS, '2026-10-20T11-00-00Z--why?.md'), 'their seal');
+      await writeFile(join(root, VERSIONS, '2026-10-20T10-00-00Z.md'), 'an older seal');
+      await writeFile(join(root, 'Why?.md'), 'a note no system but this one can hold');
+      expect((await storage.list()).map((entry) => entry.path)).not.toContain('Why?.md');
+      const listed = await storage.listFiles(VERSIONS);
+      for (const file of listed) {
+        await expect(storage.read(`${VERSIONS}/${file}`), file).resolves.not.toBeNull();
+      }
+    },
+  );
 
   it('hardening: a seal’s name changed only in case is renamed, not refused as taken', async () => {
     const sealed = '2026-10-20T12-00-00Z.md';

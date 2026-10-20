@@ -71,7 +71,8 @@ async function open(page: Page, title: string): Promise<void> {
 }
 
 async function typeAtEnd(page: Page, words: string): Promise<void> {
-  await editorContent(page).click();
+  // At the text's start: on a narrow window the versions panel lies over the page's middle.
+  await editorContent(page).click({ position: { x: 4, y: 4 } });
   await page.keyboard.press('ControlOrMeta+End');
   await page.keyboard.type(words);
 }

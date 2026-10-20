@@ -38,10 +38,12 @@
   margin-left: auto;
 }
 /* The page's controls wait until the pointer is over the page, or focus is
-   in them: nothing interrupts the writer (spec §1). */
+   in them: nothing interrupts the writer (spec §1). Each is named by its
+   class: a selector ending in "*" after :hover makes every hover anywhere
+   restyle every row in the panes (tests/selectors.test.ts). */
 .page__views,
 .page__panes,
-.page__tools > * {
+.page__tools {
   display: flex;
   gap: var(--eien-space-1);
   opacity: 0;
@@ -51,8 +53,8 @@
 .page__views:focus-within,
 .page:hover .page__panes,
 .page__panes:focus-within,
-.page:hover .page__tools > *,
-.page__tools > :focus-within {
+.page:hover .page__tools,
+.page__tools:focus-within {
   opacity: 1;
 }
 /* HIDE or SHOW drops first when the page is narrow, then the panes' words. */
