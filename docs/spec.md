@@ -340,7 +340,10 @@ words, as on the page.
   - **Sprint:** View → Start Sprint (10, 15, 25, 30, 45 or 60 minutes) counts
     down with the words gained; View → Stop Sprint ends it. When the time is
     up the colophon says "Sprint done" and one line of news says how many
-    words: no sound, no window. A sprint under way survives a restart.
+    words: no sound, no window. The words typed right up to the end are the
+    sprint's. A sprint under way survives a restart; one found over for more
+    than an hour is gone. A clock set back never gives it more time.
+  - An undo or redo of Eien's own change (a restore) is no one writing either.
 - **Zoom:** ⌘+ and ⌘− zoom the page in steps of 10%, ⌘0 returns to 100%. Zoom
   is per device and shown in the status line when it isn't 100%; the panes and
   the note list keep their size.

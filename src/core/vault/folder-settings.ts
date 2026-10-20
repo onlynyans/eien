@@ -97,10 +97,10 @@ export function withFolderSettings(text: string | null, change: FolderChange): s
     if (change.book) next.book = change.book;
     else delete next.book;
   }
-  if ('goal' in change) {
-    const book = next.book;
-    const kept = typeof book === 'object' && book !== null && !Array.isArray(book) ? book : {};
-    const { goal: _, ...rest } = kept as Record<string, unknown>;
+  // A goal is a book's: a folder that isn't one (any longer) is left as it is.
+  const book = next.book;
+  if ('goal' in change && typeof book === 'object' && book !== null && !Array.isArray(book)) {
+    const { goal: _, ...rest } = book as Record<string, unknown>;
     next.book = change.goal ? { ...rest, goal: change.goal } : rest;
   }
   return `${JSON.stringify(next, null, 2)}\n`;

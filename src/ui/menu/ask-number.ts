@@ -13,11 +13,15 @@ export interface NumberAsked {
   readonly place: Place;
 }
 
-/** A whole number as typed, its thousands marked or not ("90,000", "90 000"); null for anything else. */
+/**
+ * A whole number as typed, its thousands marked or not ("90000", "90,000",
+ * "90.000", "90 000"); null for anything else. A mark between digits that
+ * aren't thousands ("1.5", "62,5") is a decimal, not a whole number.
+ */
 export function readWhole(typed: string): number | null {
-  const digits = typed.trim().replace(/[\s,.'’_]/gu, '');
-  if (!/^\d{1,15}$/u.test(digits)) return null;
-  return Number(digits);
+  const trimmed = typed.trim();
+  if (!/^(?:\d{1,15}|\d{1,3}(?:[,.'’_ \u00a0\u202f]\d{3}){1,4})$/u.test(trimmed)) return null;
+  return Number(trimmed.replace(/\D/gu, ''));
 }
 
 /** Resolves with the number, null for none, or undefined when the writer leaves it. */
@@ -38,7 +42,7 @@ export function askNumber(asked: NumberAsked): Promise<number | null | undefined
         autocomplete: 'off',
         spellcheck: 'false',
         'aria-label': asked.label,
-        value: asked.value === undefined ? '' : asked.value.toLocaleString('en'),
+        value: asked.value === undefined ? '' : asked.value.toLocaleString(),
       },
     });
     const panel = h(

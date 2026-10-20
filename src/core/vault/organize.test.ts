@@ -152,8 +152,12 @@ describe('withFolderSettings', () => {
       book: { future: true },
       order: ['a.md'],
     });
+    // A folder that isn't a book (any longer) gets no goal, and isn't made one.
     expect(JSON.parse(withFolderSettings('{"book":true}', { goal: 5 }) ?? '')).toEqual({
-      book: { goal: 5 },
+      book: true,
+    });
+    expect(JSON.parse(withFolderSettings('{"order":["a.md"]}', { goal: null }) ?? '')).toEqual({
+      order: ['a.md'],
     });
   });
 

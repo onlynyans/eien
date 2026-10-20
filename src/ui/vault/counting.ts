@@ -22,18 +22,25 @@ export interface Counting {
 }
 
 export function counting(parts: CountingParts): Counting {
-  const counters = new Counters({ tell: parts.tell });
+  const counters = new Counters({
+    tell: parts.tell,
+    flushWriting: () => parts.page.words.flush(),
+  });
   parts.page.counters(counters.element);
-  let book: BookCount | null = null;
-  // The book's words with the open note's as they are now, not as last indexed.
-  const show = () =>
+  /** The open note's book, and the note it was read for. */
+  let book: { readonly path: string; readonly count: BookCount } | null = null;
+  // The book's words with the open note's as they are now, not as last indexed; none while
+  // another note is open than the one the book was read for (until it's read for that one).
+  const show = () => {
+    const count = book && book.path === parts.note().path ? book.count : null;
     counters.showBook(
-      book && {
-        words: book.words - book.note + parts.page.words.words,
-        ...(book.goal ? { goal: book.goal } : {}),
+      count && {
+        words: count.words - count.note + parts.page.words.words,
+        ...(count.goal ? { goal: count.goal } : {}),
       },
     );
-  parts.page.words.onWrote((added) => counters.wrote(added));
+  };
+  parts.page.words.onWrote((added, when) => counters.wrote(added, when));
   parts.page.words.onCounted(show);
   let asked = 0;
   return {
@@ -43,7 +50,7 @@ export function counting(parts: CountingParts): Counting {
       const path = parts.note().path;
       const found = path ? await parts.state.bookOf(path) : null;
       if (ask !== asked) return; // a later one is on its way
-      book = found;
+      book = path && found ? { path, count: found } : null;
       show();
     },
     stop: () => counters.stop(),

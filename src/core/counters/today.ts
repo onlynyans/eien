@@ -15,6 +15,12 @@ export function dayOf(now: Date): string {
   return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
 }
 
+/** Milliseconds from `now` to the next midnight, on this device's clock. */
+export function untilMidnight(now: Date): number {
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return midnight.getTime() - now.getTime();
+}
+
 /** The words counted today, by `tally`: none when it counts another day. */
 export const todayWords = (tally: Tally | null, now: Date): number =>
   tally && tally.day === dayOf(now) ? tally.words : 0;
@@ -37,5 +43,5 @@ export function readTally(raw: unknown): Tally | null {
 /** A count with its sign: "+809", "−12", "0". */
 export function signed(words: number): string {
   if (words === 0) return '0';
-  return `${words > 0 ? '+' : '−'}${Math.abs(words).toLocaleString('en')}`;
+  return `${words > 0 ? '+' : '−'}${Math.abs(words).toLocaleString()}`;
 }

@@ -69,12 +69,16 @@ async function openBook(page: Page): Promise<void> {
 
 /** Drag a pane's edge `by` pixels, as a pointer would. */
 async function dragEdge(page: Page, pane: 'sidebar' | 'list', by: number): Promise<void> {
-  const box = await boxOf(page.locator(`.pane-edge--${pane}`));
+  const edge = page.locator(`.pane-edge--${pane}`);
+  const box = await boxOf(edge);
   const x = box.x + box.width / 2;
   await page.mouse.move(x, 300);
   await page.mouse.down();
+  // The edge has the press before the pointer moves: on a busy machine the moves could come first.
+  await expect(edge).toHaveClass(/is-dragging/);
   await page.mouse.move(x + by, 300, { steps: 6 });
   await page.mouse.up();
+  await expect(edge).not.toHaveClass(/is-dragging/);
 }
 
 async function twoPanes(page: Page): Promise<void> {

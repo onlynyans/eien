@@ -20,8 +20,16 @@ export const startSprint = (now: number, minutes: SprintMinutes): Sprint => ({
   words: 0,
 });
 
-/** The time left, in milliseconds: none once it's over. */
-export const sprintLeft = (sprint: Sprint, now: number): number => Math.max(0, sprint.ends - now);
+/** When it began. */
+export const sprintStart = (sprint: Sprint): number => sprint.ends - sprint.minutes * 60_000;
+
+/** The time left, in milliseconds: none once it's over, never more than its length (a clock set back). */
+export const sprintLeft = (sprint: Sprint, now: number): number =>
+  Math.min(sprint.minutes * 60_000, Math.max(0, sprint.ends - now));
+
+/** Whether writing from `from` to `to` (milliseconds) fell in the sprint, any of it. */
+export const inSprint = (sprint: Sprint, from: number, to: number): boolean =>
+  from < sprint.ends && to >= sprintStart(sprint);
 
 /** Time left as a clock: "24:59", "0:05"; a part second counts as a whole one. */
 export function clock(ms: number): string {

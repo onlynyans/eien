@@ -190,16 +190,21 @@ export class PaneLayout {
         if ((event.buttons & 1) === 0) end();
         else this.#move(pane, from, event.clientX - from.x);
       };
+      // Let go: where it was let go counts, though its last move may have come only with the release.
+      const up = (event: PointerEvent) => {
+        this.#move(pane, from, event.clientX - from.x);
+        end();
+      };
       const end = () => {
         document.removeEventListener('pointermove', move);
-        document.removeEventListener('pointerup', end);
+        document.removeEventListener('pointerup', up);
         document.removeEventListener('pointercancel', end);
         this.#parts.shell.classList.remove('is-resizing');
         edge.classList.remove('is-dragging');
         this.#save();
       };
       document.addEventListener('pointermove', move);
-      document.addEventListener('pointerup', end);
+      document.addEventListener('pointerup', up);
       document.addEventListener('pointercancel', end);
     });
     edge.addEventListener('keydown', (event) => {
