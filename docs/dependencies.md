@@ -18,6 +18,7 @@ runtime.
 | `@biomejs/biome` | Lint and format in one tool (`npm run lint`) |
 | `vitest` | Unit and architecture tests |
 | `@vitest/coverage-v8` | Test coverage report in CI |
+| `fast-check` | Property tests (`*.property.test.ts`): generated inputs by the thousand, shrunk to the smallest one a rule fails on (spec §11) |
 | `@playwright/test` | End-to-end tests that drive the real Electron app |
 
 ## Shipped with the app
