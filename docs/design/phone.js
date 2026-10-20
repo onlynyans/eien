@@ -225,12 +225,7 @@
     return el;
   }
 
-  const ROMAN = [['m', 1000], ['cm', 900], ['d', 500], ['cd', 400], ['c', 100], ['xc', 90], ['l', 50], ['xl', 40], ['x', 10], ['ix', 9], ['v', 5], ['iv', 4], ['i', 1]];
-  function roman(n) {
-    let out = '';
-    for (const [glyph, value] of ROMAN) for (; n >= value; n -= value) out += glyph;
-    return out;
-  }
+  const chapterNumber = (n) => window.eienChapterNumber(n); // i, ii… or 1, 2…, as chosen
 
   const fmt = (n) => n.toLocaleString('en-US');
   const TASK = /^- \[([ x])\] (.*)$/;
@@ -553,7 +548,7 @@
           'aria-keyshortcuts': m.book ? 'Shift+F10 Alt+ArrowUp Alt+ArrowDown' : null,
           'aria-description': m.book ? 'Long-press or Shift+F10 to reorder the chapters.' : null,
         },
-          m.book && h('span', { class: 'ordinal', text: roman(chapter) }),
+          m.book && h('span', { class: 'ordinal', text: chapterNumber(chapter) }),
           h('span', { class: `index-title${n.title ? '' : ' is-untitled'}` },
             n.pinned && h('span', { class: 'ribbon', role: 'img', 'aria-label': 'pinned' }),
             h('span', { class: 'index-title__text', text: name }),
@@ -562,7 +557,7 @@
           h('span', { class: `index-preview${preview ? '' : ' is-empty'}`, text: preview || 'Nothing written yet' })),
         st.reordering && h('button', {
           class: 'handle', type: 'button', 'data-act': 'handle', 'data-id': id,
-          'aria-label': `Move ${name}, chapter ${roman(chapter)}. Arrow keys move it.`,
+          'aria-label': `Move ${name}, chapter ${chapterNumber(chapter)}. Arrow keys move it.`,
         }, '≡'));
     }
 
@@ -591,7 +586,7 @@
       renderList();
       renderCrumb();
       q(`.handle[data-id="${id}"]`)?.focus({ preventScroll: true });
-      if (moved) say(`${notes[id].title || 'Untitled'} is now ${roman(to + 1)}.`);
+      if (moved) say(`${notes[id].title || 'Untitled'} is now ${chapterNumber(to + 1)}.`);
     }
 
     function startPress(e, row) {
@@ -639,7 +634,7 @@
           else if (from < to && i > from && i <= to) pos = i - 1;
           else if (from > to && i >= to && i < from) pos = i + 1;
           if (it !== item) it.style.transform = pos === i ? '' : `translateY(${(pos - i) * step}px)`;
-          it.querySelector('.ordinal').textContent = roman(pos + 1); // renumber as they move
+          it.querySelector('.ordinal').textContent = chapterNumber(pos + 1); // renumber as they move
         });
       };
       const up = () => {
@@ -680,7 +675,7 @@
     function renderCrumb() {
       const n = note();
       const path = findIn(FOLDERS, n.folder) || [];
-      const book = path.at(-1)?.book ? ` · ${roman(order[n.folder].indexOf(st.noteId) + 1)}` : '';
+      const book = path.at(-1)?.book ? ` · ${chapterNumber(order[n.folder].indexOf(st.noteId) + 1)}` : '';
       q('.paper__crumb').textContent = path.map((f) => f.name).join(' › ') + book;
     }
 
@@ -1131,6 +1126,12 @@
     renderTree();
     renderList();
     renderPage();
+    // Chapter numbers follow the numerals choice (choices.js): redraw what shows them.
+    document.addEventListener('eien-choice', (event) => {
+      if (event.detail.name !== 'numerals') return;
+      renderList();
+      renderCrumb();
+    });
     renderSheet();
     go(start);
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-still')));

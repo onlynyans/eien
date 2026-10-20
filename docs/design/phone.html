@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="themes/otaku.css" />
     <link rel="stylesheet" href="base.css" />
     <link rel="stylesheet" href="phone.css" />
-    <script src="palette.js"></script>
+    <script src="choices.js"></script>
     <script src="phone.js" defer></script>
   </head>
   <body>
@@ -31,6 +31,16 @@
           <span class="label theme-switch__label">Palette</span>
           <button class="word-button" type="button" data-palette-choice="washi">Washi</button>
           <button class="word-button" type="button" data-palette-choice="otaku">Otaku</button>
+        </div>
+        <div class="theme-switch" role="group" aria-label="Density">
+          <span class="label theme-switch__label">Density</span>
+          <button class="word-button" type="button" data-density-choice="comfortable">Comfortable</button>
+          <button class="word-button" type="button" data-density-choice="compact">Compact</button>
+        </div>
+        <div class="theme-switch" role="group" aria-label="Chapter numbers">
+          <span class="label theme-switch__label">Chapters</span>
+          <button class="word-button" type="button" data-numerals-choice="roman" aria-label="Roman numerals">i ii iii</button>
+          <button class="word-button" type="button" data-numerals-choice="arabic" aria-label="Numbers">1 2 3</button>
         </div>
         <div class="theme-switch" role="group" aria-label="Theme">
           <span class="label theme-switch__label">Theme</span>
@@ -206,6 +216,20 @@
             <div class="sheet-row__choices" role="group" aria-label="Palette">
               <button class="word-button word-button--touch" type="button" data-palette-choice="washi">Washi</button>
               <button class="word-button word-button--touch" type="button" data-palette-choice="otaku">Otaku</button>
+            </div>
+          </div>
+          <div class="sheet-row">
+            <span class="label sheet-row__key">Density</span>
+            <div class="sheet-row__choices" role="group" aria-label="Density">
+              <button class="word-button word-button--touch" type="button" data-density-choice="comfortable">Comfortable</button>
+              <button class="word-button word-button--touch" type="button" data-density-choice="compact">Compact</button>
+            </div>
+          </div>
+          <div class="sheet-row">
+            <span class="label sheet-row__key">Chapters</span>
+            <div class="sheet-row__choices" role="group" aria-label="Chapter numbers">
+              <button class="word-button word-button--touch" type="button" data-numerals-choice="roman" aria-label="Roman numerals">i ii iii</button>
+              <button class="word-button word-button--touch" type="button" data-numerals-choice="arabic" aria-label="Numbers">1 2 3</button>
             </div>
           </div>
           <div class="sheet-row">

@@ -131,6 +131,6 @@ body {
   color: var(--eien-pencil);
   letter-spacing: 0.6em;
   text-indent: 0.6em;
-  margin: 1.4em 0;
+  margin: var(--eien-scene-gap) 0;
   user-select: none;
 }

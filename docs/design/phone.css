@@ -490,7 +490,7 @@
   column-gap: var(--eien-space-3);
   row-gap: var(--eien-space-1);
   min-height: var(--eien-touch);
-  padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-3) var(--eien-space-2);
+  padding: var(--eien-row-pad-y) var(--eien-space-4) var(--eien-row-pad-y) var(--eien-space-2);
   border: 0;
   background: none;
   font: inherit;
@@ -540,6 +540,7 @@
   color: var(--eien-faded);
 }
 .index-preview {
+  display: var(--eien-list-preview);
   grid-column: 2 / -1;
   overflow: hidden;
   font-size: var(--eien-size-preview);
@@ -677,7 +678,7 @@
    and the sheet's one soft shadow. */
 .paper {
   flex: 1 0 auto;
-  padding: var(--eien-space-6) var(--eien-space-5) var(--eien-space-8);
+  padding: min(var(--eien-space-6), var(--eien-sheet-pad-top)) var(--eien-space-5) var(--eien-space-8);
   border: var(--eien-hairline) solid var(--eien-rule);
   background: var(--eien-paper);
   box-shadow: var(--eien-shadow-sheet);
@@ -699,7 +700,7 @@
   color: var(--eien-pencil);
 }
 .paper__title {
-  margin: var(--eien-space-5) 0;
+  margin: min(var(--eien-space-5), var(--eien-title-gap)) 0;
   font-size: var(--eien-size-title);
   font-weight: 600;
   line-height: 1.15;
@@ -729,7 +730,7 @@
   min-height: calc(var(--eien-size-prose) * var(--eien-leading-prose) * 4);
 }
 .prose p {
-  margin: 0 0 var(--eien-space-4);
+  margin: 0 0 var(--eien-paragraph-gap);
 }
 .prose:empty::before {
   content: attr(data-placeholder);

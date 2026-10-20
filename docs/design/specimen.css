@@ -191,6 +191,7 @@ kbd {
 }
 .theme,
 .palette,
+.density,
 .face-choice {
   display: flex;
   flex-wrap: wrap;
@@ -917,7 +918,7 @@ kbd {
 }
 .prose .scene-break,
 .passage .scene-break {
-  margin: 1.4em 0;
+  margin: var(--eien-scene-gap) 0;
 }
 
 /* The status line: a colophon */
@@ -1712,6 +1713,7 @@ del {
   }
   .theme,
   .palette,
+  .density,
   .face-choice {
     margin-left: calc(var(--eien-space-2) * -1);
   }
@@ -1720,6 +1722,7 @@ del {
   }
   .theme,
   .palette,
+  .density,
   .face-choice {
     justify-content: flex-start;
   }

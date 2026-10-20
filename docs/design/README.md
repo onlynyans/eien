@@ -10,7 +10,7 @@ mockups here are how to see it; `tokens.css` is the source of every value.
 | [phone.html](phone.html) | The phone: contents → index → page, one at a time, controls behind ⋯ |
 | [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night. Its colours are the Washi palette |
 | [themes/otaku.css](themes/otaku.css) | The Otaku palette: Otaku's colours on Eien's colour tokens, day and night |
-| [palette.js](palette.js) | The mockups' WASHI · OTAKU switch: sets `data-palette` before the page draws and keeps the choice |
+| [choices.js](choices.js) | The mockups' PALETTE (Washi · Otaku), DENSITY (Comfortable · Compact) and CHAPTERS (i ii iii · 1 2 3) switches: set `data-palette`, `data-density` and `data-numerals` before the page draws and keep the choice |
 | [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Archivo and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
 | [references.md](references.md) | The reference screenshots, what reads well in each, and the surface values that came of it |
@@ -160,6 +160,26 @@ Two separate choices, and every combination works:
 In the mockups, WASHI · OTAKU sits beside the theme control (the desktop's
 mockup bar, the phone page's top and its Settings sheet, the specimen's title
 page) and is remembered in `localStorage`.
+
+## Density
+
+A setting with two values: **Comfortable** (the default) and **Compact**,
+`data-density="compact"` on `<html>`. Compact keeps the type at its size and
+takes away space: narrower sheet margins, a thinner blotter round the sheet,
+tighter paragraphs and lines (each face's leading less 0.14), shorter rows,
+and the note list without its line of preview. It's expressed only in tokens
+(`--eien-sheet-pad-x`, `--eien-sheet-pad-top`, `--eien-page-gutter`,
+`--eien-title-gap`, `--eien-paragraph-gap`, `--eien-leading-tighten`,
+`--eien-row-h`, `--eien-row-pad-y`, `--eien-list-preview`), so no component
+asks which density it's in.
+
+## Chapter numbers
+
+A book numbers its chapters in the note list and the breadcrumb: roman
+(i, ii, iii — the default) or plain numbers (1, 2, 3), a setting
+(`data-numerals="arabic"` in the mockups). The words stay in the mono either
+way; only the figures change. One helper makes every number
+(`eienChapterNumber` in `choices.js`; in the app, one function in `core`).
 
 ## Known gaps
 

@@ -7,7 +7,7 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const fmt = (n) => n.toLocaleString('en-US');
 const countWords = (s) => (s.match(/\S+/g) || []).length;
-const ROMAN = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii', 'xiii', 'xiv', 'xv', 'xvi', 'xvii', 'xviii', 'xix', 'xx'];
+const chapterNumber = (n) => window.eienChapterNumber(n); // i, ii… or 1, 2…, as chosen
 const clone = (blocks) => blocks.map((b) => ({ ...b }));
 
 /** Make an element: h('p', { class: 'x', text: 'hi' }, child, child) */
@@ -445,7 +445,7 @@ function treeItem(node, depth) {
       'div',
       { class: `row${node.note ? ' row--note' : ''}${node.untitled ? ' is-untitled' : ''}`, style: `--depth:${depth}` },
       h('span', { class: `twisty${expandable ? '' : ' twisty--leaf'}`, 'data-twisty': '', 'aria-hidden': 'true' }),
-      node.ord >= 0 ? h('span', { class: 'row__ord', text: ROMAN[node.ord] }) : null,
+      node.ord >= 0 ? h('span', { class: 'row__ord', text: chapterNumber(node.ord + 1) }) : null,
       h('span', { class: 'row__name' }, node.hash ? h('span', { class: 'row__hash', text: '#' }) : null, node.name),
       node.book ? h('span', { class: 'book-mark', text: 'Book' }) : null,
       h('span', { class: 'count', text: node.count }),
@@ -662,7 +662,7 @@ function noteRow(n, ctx) {
       'data-id': n.id,
       'aria-selected': n.id === state.noteId ? 'true' : 'false',
     },
-    ord >= 0 ? h('span', { class: 'note-row__ord', text: ROMAN[ord] }) : null,
+    ord >= 0 ? h('span', { class: 'note-row__ord', text: chapterNumber(ord + 1) }) : null,
     h('span', { class: 'note-row__title', text: n.title || 'Untitled' }),
     h('span', { class: 'note-row__meta count', text: ctx.book ? `${fmt(noteWords(n))} w` : n.when }),
     h('span', { class: `note-row__preview${preview ? '' : ' is-empty'}`, text: preview || 'Empty' }),
@@ -714,7 +714,7 @@ function moveNote(id, toIndex) {
   if (state.panes === 2) renderSidebar();
   renderHead();
   const n = byId(id);
-  announce(`${n.title || 'Untitled'} moved to ${f.book ? ROMAN[order.indexOf(id)] : `place ${order.indexOf(id) + 1}`}`);
+  announce(`${n.title || 'Untitled'} moved to ${f.book ? chapterNumber(order.indexOf(id) + 1) : `place ${order.indexOf(id) + 1}`}`);
 }
 
 function bindList() {
@@ -870,7 +870,7 @@ function crumbsOf(n) {
     hit = hit.parent ? findFolder(hit.parent.id) : null;
   }
   const ord = ordinalOf(n);
-  if (ord >= 0) path.push(ROMAN[ord]);
+  if (ord >= 0) path.push(chapterNumber(ord + 1));
   return path;
 }
 function renderHead() {
@@ -1829,3 +1829,11 @@ setInterval(() => {
   if (state.sprint > 0) state.sprint--;
   renderStatus();
 }, 1000);
+
+// Chapter numbers follow the numerals choice (choices.js): redraw what shows them.
+document.addEventListener('eien-choice', (event) => {
+  if (event.detail.name !== 'numerals') return;
+  renderSidebar();
+  renderList();
+  renderHead();
+});

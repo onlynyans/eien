@@ -106,8 +106,8 @@
   --eien-space-4: 16px; /* pane gutters */
   --eien-space-5: 24px; /* between groups */
   --eien-space-6: 32px;
-  --eien-space-7: 48px; /* the page's top margin */
-  --eien-space-8: 72px; /* the sheet's side margins */
+  --eien-space-7: 48px;
+  --eien-space-8: 72px;
 
   /* ── Layout ─────────────────────────────────────────────────────────── */
   --eien-sidebar-w: 264px;
@@ -142,7 +142,7 @@
   --eien-size-heading: 23px; /* the list's header: the folder or tag shown */
   --eien-size-row: 16px; /* a row in the tree or list */
   --eien-size-preview: 14px; /* the line of preview under a list row */
-  --eien-leading-prose: 1.5;
+  --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten));
   --eien-measure: 29em; /* a reading line, in em of the prose */
 }
 :root[data-face='literata'],
@@ -153,7 +153,7 @@
   --eien-size-heading: 21px;
   --eien-size-row: 15px;
   --eien-size-preview: 13px;
-  --eien-leading-prose: 1.72;
+  --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten));
   --eien-measure: 34em;
 }
 :root[data-face='plex-sans'],
@@ -164,7 +164,7 @@
   --eien-size-heading: 20px;
   --eien-size-row: 14.5px;
   --eien-size-preview: 12.5px;
-  --eien-leading-prose: 1.76;
+  --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten));
   --eien-measure: 32em;
 }
 :root[data-face='archivo'],
@@ -175,8 +175,39 @@
   --eien-size-heading: 20px;
   --eien-size-row: 14.5px;
   --eien-size-preview: 13px;
-  --eien-leading-prose: 1.75;
+  --eien-leading-prose: calc(1.75 - var(--eien-leading-tighten));
   --eien-measure: 31em;
+}
+
+/* ── Density: how much air around the writing ──────────────────────────
+   Comfortable is the default (no attribute); <html data-density="compact">
+   is the setting. Compact keeps every face at its size and changes only the
+   space: the sheet stays the same size but its margins narrow, so the lines
+   run longer; the blotter round it thins; paragraphs, lines and scene breaks
+   close up; rows shorten; the note list drops its preview lines. Each face's
+   prose leading has --eien-leading-tighten taken off it. */
+:root {
+  --eien-sheet-pad-x: var(--eien-space-8); /* the sheet's side margins */
+  --eien-sheet-pad-top: var(--eien-space-7); /* the sheet's top margin */
+  --eien-page-gutter: var(--eien-space-5); /* the blotter showing round the sheet */
+  --eien-title-gap: var(--eien-space-6); /* above and below a note's title */
+  --eien-paragraph-gap: var(--eien-space-4); /* between paragraphs */
+  --eien-scene-gap: 1.4em; /* above and below a scene break */
+  --eien-leading-tighten: 0;
+  --eien-row-pad-y: var(--eien-space-3); /* above and below a note-list row */
+  --eien-list-preview: block; /* the note list's line of preview: block, or none */
+}
+:root[data-density='compact'] {
+  --eien-sheet-pad-x: var(--eien-space-6);
+  --eien-sheet-pad-top: var(--eien-space-5);
+  --eien-page-gutter: var(--eien-space-2);
+  --eien-title-gap: var(--eien-space-4);
+  --eien-paragraph-gap: var(--eien-space-2);
+  --eien-scene-gap: 0.8em;
+  --eien-leading-tighten: 0.14;
+  --eien-row-pad-y: var(--eien-space-2);
+  --eien-list-preview: none;
+  --eien-row-h: 26px;
 }
 
 @media (prefers-reduced-motion: reduce) {

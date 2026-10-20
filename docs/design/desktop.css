@@ -610,7 +610,7 @@ button {
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: var(--eien-space-3);
   row-gap: calc(var(--eien-hairline) * 2);
-  padding: var(--eien-space-3) var(--eien-space-4);
+  padding: var(--eien-row-pad-y) var(--eien-space-4);
   border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
   color: var(--eien-ink-soft);
   cursor: default;
@@ -641,7 +641,7 @@ button {
   outline-offset: calc(var(--eien-mark-w) * -1);
 }
 .note-row[aria-selected='true']::before {
-  top: var(--eien-space-3);
+  top: var(--eien-row-pad-y);
   height: var(--row-line);
 }
 .note-row__ord {
@@ -673,6 +673,7 @@ button {
   white-space: nowrap;
 }
 .note-row__preview {
+  display: var(--eien-list-preview);
   grid-row: 2;
   grid-column: 1 / -1;
   min-width: 0;
@@ -879,16 +880,17 @@ button {
 .page__scroll {
   min-height: 0;
   overflow-y: auto;
-  padding: var(--eien-space-5) var(--eien-space-5) var(--eien-space-6);
+  padding: var(--eien-page-gutter) var(--eien-page-gutter) var(--eien-space-6);
 }
 
 /* The sheet: washi on the blotter, lifted by tone, a hairline edge and the
    one soft shadow a static thing may cast. */
 .sheet {
-  --pad-x: var(--eien-space-8);
-  --pad-top: var(--eien-space-7);
+  --pad-x: var(--eien-sheet-pad-x);
+  --pad-top: var(--eien-sheet-pad-top);
   font-size: var(--eien-size-prose);
-  width: min(100%, calc(var(--eien-measure) + 2 * var(--pad-x)));
+  /* One size in both densities: compact narrows the margins, so the lines run longer. */
+  width: min(100%, calc(var(--eien-measure) + 2 * var(--eien-space-8)));
   min-height: 100%;
   margin: 0 auto;
   padding: var(--pad-top) var(--pad-x) var(--eien-space-8);
@@ -898,12 +900,12 @@ button {
 }
 @container pagearea (width < 760px) {
   .sheet {
-    --pad-x: var(--eien-space-6);
+    --pad-x: min(var(--eien-space-6), var(--eien-sheet-pad-x));
   }
 }
 @container pagearea (width < 520px) {
   .sheet {
-    --pad-x: var(--eien-space-5);
+    --pad-x: min(var(--eien-space-5), var(--eien-sheet-pad-x));
   }
   .page__scroll {
     padding-inline: var(--eien-space-3);
@@ -1002,7 +1004,7 @@ button {
 }
 
 .title {
-  margin: var(--eien-space-6) 0 var(--eien-space-6);
+  margin: var(--eien-title-gap) 0;
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-title);
   font-weight: 500;
@@ -1031,7 +1033,7 @@ button {
   min-height: calc(var(--eien-size-prose) * var(--eien-leading-prose) * 4);
 }
 .prose p {
-  margin: 0 0 var(--eien-space-4);
+  margin: 0 0 var(--eien-paragraph-gap);
 }
 .prose:empty::before,
 .prose.is-blank::before {
