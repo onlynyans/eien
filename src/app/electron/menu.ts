@@ -41,7 +41,12 @@ export function buildMenu(send: SendCommand): Menu {
     type: 'checkbox',
     label,
     accelerator,
-    click: (_item, window) => send(`toggle:${key}`, window),
+    click: (menuItem, window) => {
+      // Electron flips the check before this runs: put it back. It follows the setting once
+      // the setting is saved (checkToggles), and stays as it was when nothing could change it.
+      menuItem.checked = !menuItem.checked;
+      send(`toggle:${key}`, window);
+    },
   });
   const settings = item('Settings…', 'settings', 'CmdOrCtrl+,');
   const template: MenuItemConstructorOptions[] = [

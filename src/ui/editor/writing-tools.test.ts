@@ -53,6 +53,12 @@ describe('sceneBreakAt: Enter on an empty line after an empty line', () => {
     expect(sceneBreakAt(at('One.\n\n|', true))).toBeNull();
   });
 
+  it('never just above another scene break, or after a line with a no-break space', () => {
+    expect(enter('One.\n\n|\n\n***\n\nTwo.')).toBeNull();
+    expect(enter('One.\n\n|\n* * *')).toBeNull();
+    expect(enter('One.\n\u00a0\n|')).toBeNull(); // the no-break space is writing, not a blank line
+  });
+
   it('never in code or the front matter, where blank lines are the writer’s', () => {
     expect(enter('```\nlet x = 1\n\n|\n```')).toBeNull();
     expect(enter('---\ntitle: x\n\n|\n---\nBody')).toBeNull();
@@ -79,6 +85,16 @@ describe('currentParagraph: what focus mode keeps bright', () => {
   it('only the caret’s line when that line is blank', () => {
     expect(bright('One.\n|\nTwo.')).toEqual([2]);
   });
+
+  it('every paragraph the chosen words touch', () => {
+    const state = at('One.\n\nTwo.\n\nThree.\n\nFour.|');
+    const chosen = state.update({ selection: { anchor: 2, head: 13 } }).state; // "e." to "Thr"
+    const lines: number[] = [];
+    currentParagraph(chosen).between(0, chosen.doc.length, (from) => {
+      lines.push(chosen.doc.lineAt(from).number);
+    });
+    expect(lines).toEqual([1, 2, 3, 4, 5]);
+  });
 });
 
 describe('typewriter: what brings the caret’s line to the middle', () => {
@@ -94,8 +110,9 @@ describe('typewriter: what brings the caret’s line to the middle', () => {
     expect(scrolls({ selection: { anchor: 6 }, userEvent: 'select' })).toBe(true);
   });
 
-  it('never a click, or a change the writer didn’t make', () => {
+  it('never a click, a drop, or a change the writer didn’t make', () => {
     expect(scrolls({ selection: { anchor: 6 }, userEvent: 'select.pointer' })).toBe(false);
+    expect(scrolls({ changes: { from: 0, insert: 'x' }, userEvent: 'input.drop' })).toBe(false);
     expect(scrolls({ changes: { from: 0, insert: 'x' } })).toBe(false);
   });
 });

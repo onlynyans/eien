@@ -80,6 +80,12 @@ test('View → Focus Mode fades back every paragraph but the caret’s, and the 
   await page.keyboard.press('ArrowDown');
   await expect(page.locator('.cm-line', { hasText: 'Paragraph 4 of' })).toHaveCSS('opacity', '1');
 
+  // Reading is for reading: nothing fades there.
+  await clickMenu(app, 'View', 'Reading');
+  await expect(page.locator('.cm-editor')).not.toHaveClass(/eien-focus/);
+  await clickMenu(app, 'View', 'Live');
+  await expect(page.locator('.cm-editor')).toHaveClass(/eien-focus/);
+
   // Off from the settings screen: the menu's check follows.
   await page.getByRole('button', { name: 'Settings' }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
