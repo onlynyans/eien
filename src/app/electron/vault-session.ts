@@ -4,9 +4,9 @@
 import { basename } from 'node:path';
 import { type BrowserWindow, dialog, shell } from 'electron';
 import { CHANNEL, type VaultInfo } from '../../platform/bridge';
-import { type DiskStorage, openDiskStorage } from '../../platform/electron/disk-storage';
+import { openDiskStorage } from '../../platform/electron/disk-storage';
 import { recoverStrayTemps } from '../../platform/electron/recover-temps';
-import { VaultIndex } from '../../platform/index';
+import { OpenVault } from '../../platform/open-vault';
 import { lastVault, readDeviceFile, updateDeviceFile } from './device-settings';
 import { answer, text } from './ipc';
 
@@ -14,8 +14,8 @@ import { answer, text } from './ipc';
 const MAX_QUERY_LENGTH = 1000;
 
 export class VaultSession {
-  #storage: DiskStorage | null = null;
-  #index: VaultIndex | null = null;
+  #open: OpenVault | null = null;
+  #root: string | null = null;
   #stopWatching: (() => void) | null = null;
   readonly #window: BrowserWindow;
 
@@ -24,7 +24,17 @@ export class VaultSession {
   }
 
   get info(): VaultInfo | null {
-    return this.#storage ? { name: basename(this.#storage.root) } : null;
+    return this.#open ? { name: this.#open.name } : null;
+  }
+
+  /** The vault open now, or null. */
+  get open(): OpenVault | null {
+    return this.#open;
+  }
+
+  /** Its folder on disk. */
+  get root(): string | null {
+    return this.#root;
   }
 
   /**
@@ -32,43 +42,32 @@ export class VaultSession {
    * the index, then watch it. The window hears of a change once the index
    * holds it.
    */
-  async open(root: string): Promise<VaultInfo> {
+  async openAt(root: string): Promise<VaultInfo> {
     // The system's trash, looked up when it's used.
     const storage = await openDiskStorage(root, (path) => shell.trashItem(path));
     await recoverStrayTemps(storage);
-    const index = new VaultIndex(storage);
-    await index.refresh();
+    const vault = await OpenVault.open(basename(storage.root), storage);
     this.close();
-    this.#storage = storage;
-    this.#index = index;
-    this.#stopWatching = storage.watch((paths) => {
-      void index
-        .refresh(paths)
-        .catch((error: unknown) => console.error('Eien: the vault couldn’t be read again:', error))
-        .finally(() => {
-          if (this.#index === index && !this.#window.isDestroyed()) {
-            this.#window.webContents.send(CHANNEL.changed, paths);
-          }
-        });
+    this.#open = vault;
+    this.#root = storage.root;
+    this.#stopWatching = vault.watch((paths) => {
+      if (this.#open === vault && !this.#window.isDestroyed()) {
+        this.#window.webContents.send(CHANNEL.changed, paths);
+      }
     });
-    return { name: basename(storage.root) };
+    return { name: vault.name };
   }
 
   close(): void {
     this.#stopWatching?.();
     this.#stopWatching = null;
-    this.#storage = null;
-    this.#index = null;
+    this.#open = null;
+    this.#root = null;
   }
 
-  index(): VaultIndex {
-    if (!this.#index) throw new Error('No vault is open.');
-    return this.#index;
-  }
-
-  storage(): DiskStorage {
-    if (!this.#storage) throw new Error('No vault is open.');
-    return this.#storage;
+  vault(): OpenVault {
+    if (!this.#open) throw new Error('No vault is open.');
+    return this.#open;
   }
 }
 
@@ -79,16 +78,10 @@ export class VaultSession {
 export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
   const session = new VaultSession(window);
   const start = process.env.EIEN_VAULT || lastVault(await readDeviceFile());
-  if (start) await session.open(start).catch(() => null); // gone or unreadable: the window asks for another
+  if (start) await session.openAt(start).catch(() => null); // gone or unreadable: the window asks for another
 
   const handle = (channel: string, fn: (...args: unknown[]) => unknown) =>
     answer(window, channel, fn);
-  /** The index catches up after a change; if it can't just now, the change still happened. */
-  const reindex = (paths: string[]) =>
-    session
-      .index()
-      .refresh(paths)
-      .catch((error: unknown) => console.error('Eien: the index couldn’t catch up:', error));
 
   handle(CHANNEL.current, () => session.info);
   handle(CHANNEL.choose, async () => {
@@ -99,47 +92,29 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
     });
     const root = picked.filePaths[0];
     if (picked.canceled || !root) return null;
-    const info = await session.open(root);
-    const vault = session.storage().root;
+    const info = await session.openAt(root);
+    const vault = session.root;
     await updateDeviceFile((data) => ({ ...data, vault }));
     return info;
   });
-  handle(CHANNEL.list, () => session.index().entries());
-  handle(CHANNEL.notes, () => session.index().notes());
+  handle(CHANNEL.list, () => session.vault().list());
+  handle(CHANNEL.notes, () => session.vault().notes());
   handle(CHANNEL.search, (query) => {
     const words = text(query, 'query');
     if (words.length > MAX_QUERY_LENGTH) throw new RangeError('The search is too long.');
-    return session.index().search(words);
+    return session.vault().search(words);
   });
-  handle(CHANNEL.listFiles, (folder) => session.storage().listFiles(text(folder, 'folder')));
-  handle(CHANNEL.read, (path) => session.storage().read(text(path, 'path')));
-  handle(CHANNEL.readBytes, (path) => session.storage().readBytes(text(path, 'path')));
-  handle(CHANNEL.write, async (path, body, expected) => {
+  handle(CHANNEL.listFiles, (folder) => session.vault().listFiles(text(folder, 'folder')));
+  handle(CHANNEL.read, (path) => session.vault().read(text(path, 'path')));
+  handle(CHANNEL.readBytes, (path) => session.vault().readBytes(text(path, 'path')));
+  handle(CHANNEL.write, (path, body, expected) => {
     if (expected !== null && typeof expected !== 'string')
       throw new TypeError('expected must be text or null.');
-    const at = text(path, 'path');
-    const result = await session.storage().write(at, text(body, 'text'), expected);
-    // The index holds what was written before the window asks for the list again.
-    if (result.ok) await reindex([at]);
-    return result;
+    return session.vault().write(text(path, 'path'), text(body, 'text'), expected);
   });
-  handle(CHANNEL.move, async (from, to) => {
-    const source = text(from, 'from');
-    const target = text(to, 'to');
-    const result = await session.storage().move(source, target);
-    if (result.ok) await reindex([source, target]);
-    return result;
-  });
-  handle(CHANNEL.trash, async (path) => {
-    const at = text(path, 'path');
-    await session.storage().trash(at);
-    await reindex([at]);
-  });
-  handle(CHANNEL.makeFolder, async (path) => {
-    const at = text(path, 'path');
-    await session.storage().makeFolder(at);
-    await reindex([at]);
-  });
+  handle(CHANNEL.move, (from, to) => session.vault().move(text(from, 'from'), text(to, 'to')));
+  handle(CHANNEL.trash, (path) => session.vault().trash(text(path, 'path')));
+  handle(CHANNEL.makeFolder, (path) => session.vault().makeFolder(text(path, 'path')));
 
   window.on('closed', () => session.close());
   return session;
