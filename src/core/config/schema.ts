@@ -122,6 +122,27 @@ export const SETTINGS = [
     default: 'roman',
   },
   {
+    key: 'typography.quotes',
+    label: 'Quotation marks',
+    description: 'As you type them, and in what Copy for AO3 gives. Code keeps its own.',
+    scope: 'vault',
+    group: 'Writing',
+    type: 'choice',
+    choices: { curly: 'Curly “ ”', straight: 'Straight " "' },
+    default: 'curly',
+  },
+  {
+    key: 'ao3.sceneBreak',
+    label: 'Scene breaks',
+    description:
+      'How Copy for AO3 gives a *** line: AO3’s blank line, rule, blank line, or the rule alone.',
+    scope: 'vault',
+    group: 'AO3',
+    type: 'choice',
+    choices: { spacer: 'Spaced rule', rule: 'Rule alone' },
+    default: 'spacer',
+  },
+  {
     key: 'layout.panes',
     label: 'Panes',
     description: 'Two puts the notes in the sidebar’s tree, in place of the note list.',

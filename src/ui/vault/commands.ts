@@ -19,6 +19,8 @@ export interface CommandContext {
   /** Draw the list: a shut one isn't kept drawn. */
   drawList(): Promise<void>;
   readonly versions: VersionsUI;
+  /** Copy for AO3, and Export → AO3 HTML (./ao3-out.ts). */
+  readonly ao3: { copy(): Promise<void>; export(): Promise<void> };
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
@@ -45,6 +47,8 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   else if (command === 'seal') void ctx.versions.seal();
   else if (command === 'compare') void ctx.versions.cycleCompare();
   else if (command === 'versions') ctx.versions.togglePanel();
+  else if (command === 'copy-ao3') void ctx.ao3.copy();
+  else if (command === 'export-ao3') void ctx.ao3.export();
   else if (command.startsWith('format:')) {
     const format = formatCommand(command.slice('format:'.length));
     if (format) page.editor.format(format);

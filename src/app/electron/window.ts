@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { BrowserWindow, type IpcMainEvent, ipcMain, shell } from 'electron';
 import { CHANNEL } from '../../platform/bridge';
 import { isAppUrl, isExternalLink } from './navigation';
+import { serveOut } from './out-session';
 import { serveSettings } from './settings-session';
 import { serveVault } from './vault-session';
 
@@ -48,6 +49,7 @@ export async function createMainWindow(): Promise<BrowserWindow> {
 
   saveBeforeClose(window);
   serveSettings(window, await serveVault(window));
+  serveOut(window);
   window.once('ready-to-show', () => window.show());
   void window.loadURL(url);
   return window;

@@ -18,9 +18,11 @@ import {
 } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { FORMAT_COMMANDS, type FormatCommand } from '../../core/format';
+import type { QuoteStyle } from '../../core/typography';
 import { hiddenFrontMatter, keepFrontMatter, livePreview, previewMode } from './live-preview';
 import { eienMarkdown } from './syntax';
 import { editorTheme, markdownColours } from './theme';
+import { htmlPaste, quoteTyping } from './typing';
 import { type ImageLoader, imageLoader } from './widgets';
 
 export type EditorMode = 'live' | 'source' | 'reading';
@@ -39,6 +41,9 @@ export class NoteEditor {
   readonly #images = new Compartment();
   readonly #history = new Compartment();
   readonly #lock = new Compartment();
+  /** Typed quotes, as the vault's setting asks. */
+  readonly #quotes = new Compartment();
+  #quoteStyle: QuoteStyle = 'curly';
   /** Held still while its note is moved or trashed: no typing reaches it. */
   #locked = false;
   readonly #events: EditorEvents;
@@ -148,6 +153,13 @@ export class NoteEditor {
   }
 
   /** Hold the text still (true) or let the writer type again (false). */
+  /** Typed quotes curly or straight (spec §4). */
+  setQuotes(style: QuoteStyle): void {
+    if (style === this.#quoteStyle) return;
+    this.#quoteStyle = style;
+    this.#view.dispatch({ effects: this.#quotes.reconfigure(quoteTyping(style)) });
+  }
+
   setLocked(locked: boolean): void {
     this.#locked = locked;
     this.#view.dispatch({ effects: this.#lock.reconfigure(lockExtensions(locked)) });
@@ -161,6 +173,8 @@ export class NoteEditor {
     const extensions: Extension[] = [
       this.#history.of(history()),
       this.#lock.of(lockExtensions(this.#locked)),
+      this.#quotes.of(quoteTyping(this.#quoteStyle)),
+      htmlPaste,
       keymap.of([...formatKeys, ...historyKeymap, ...defaultKeymap]),
       eienMarkdown(),
       markdownColours,

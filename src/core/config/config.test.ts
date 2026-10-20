@@ -17,7 +17,7 @@ describe('the schema', () => {
     const keys = SETTINGS.map((setting) => setting.key);
     expect(new Set(keys).size).toBe(keys.length);
     for (const setting of SETTINGS) {
-      expect(setting.key).toMatch(/^[a-z]+\.[a-zA-Z]+$/);
+      expect(setting.key).toMatch(/^[a-z][a-z0-9]*\.[a-zA-Z]+$/);
       expect(SETTING_GROUPS).toContain(setting.group);
       expect(setting.label).not.toBe('');
       expect(setting.description).not.toBe('');

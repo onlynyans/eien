@@ -60,6 +60,8 @@ export function buildMenu(send: SendCommand): Menu {
         item('Seal', 'seal', 'CmdOrCtrl+S'),
         item('Open Vault…', 'open-vault', 'CmdOrCtrl+O'),
         { type: 'separator' },
+        item('Export AO3 HTML…', 'export-ao3'),
+        { type: 'separator' },
         ...(mac ? [] : [settings, { type: 'separator' } as const]),
         mac ? { role: 'close' } : { role: 'quit' },
       ],
@@ -77,6 +79,9 @@ export function buildMenu(send: SendCommand): Menu {
         ...(mac ? [{ role: 'pasteAndMatchStyle' } as const] : []),
         { role: 'delete' },
         { role: 'selectAll' },
+        { type: 'separator' },
+        // The note (or what's chosen in it) as the HTML AO3 takes (spec §8).
+        item('Copy for AO3', 'copy-ao3', 'CmdOrCtrl+Shift+C'),
         { type: 'separator' },
         item('Search Notes…', 'search', 'CmdOrCtrl+Shift+F'),
       ],

@@ -367,9 +367,9 @@ src/core/            (✓ = built)
   note/         ✓ a note's preview, words, tags and id
   tags/         ✓ tag extraction and the tag tree
   search/       ✓ folding (case, accents, quotes), query terms, snippets
-  typography/    quotes and dashes
+  typography/   ✓ quotation marks: curled by what's around them, an apostrophe once it shows, and back
   versions/     ✓ the note's id in its front matter, seal file names, retention, word diff
-  ao3/           Markdown → AO3 HTML, HTML → Markdown
+  ao3/          ✓ Markdown → AO3 HTML; HTML (AO3's, Google Docs', Word's, a page's) → Markdown
 src/platform/
   bridge.ts     ✓ what the window may ask of the system (window.eien)
   storage.ts    ✓ the Storage interface: read, write, list, watch
@@ -388,7 +388,7 @@ src/ui/
   vault/        ✓ the vault as the window knows it, its panes drawn, the menu's commands, organizing (rename, move, trash)
   welcome/      ✓ before a vault is open
   theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts
-  editor/       ✓ CodeMirror, the three views, the selection bar, images (writing tools: phase 9)
+  editor/       ✓ CodeMirror, the three views, the selection bar, images, typed quotes, pasted HTML (writing tools: phase 9)
   versions/     ✓ sealing, Compare, the versions panel, the colophon's last seal
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
 src/app/
@@ -448,7 +448,7 @@ Every setting is defined once, in `src/core/config/schema.ts`:
 {
   key: 'typography.quotes',
   label: 'Quotation marks',
-  description: 'Used when typing and when copying for AO3.',
+  description: 'As you type them, and in what Copy for AO3 gives. Code keeps its own.',
   scope: 'vault',              // 'vault' travels with the notes; 'device' stays on this device
   type: 'choice',
   choices: { curly: 'Curly “ ”', straight: 'Straight " "' },
@@ -529,7 +529,15 @@ AO3 accepts only HTML. Eien keeps notes in Markdown and converts at the edges.
 | `> quote` | `<blockquote>` |
 | headings | `<h2>`–`<h6>` |
 
-Quotes are converted to the quote setting on the way out.
+Quotes are converted to the quote setting on the way out. Lists, links (to
+web, mail and relative addresses only), images, code and tables go as AO3
+takes them; a highlight and a wiki link go as their words. The front matter is
+never posted.
+
+Edit → Copy for AO3 (⇧⌘C, Ctrl+Shift+C) copies what's chosen, or the whole
+note, as text (for AO3's HTML box) and as HTML (for its rich text box). File →
+Export AO3 HTML… saves the whole note through the system's save dialog, under
+the note's name. An empty note copies nothing and says so.
 
 **Paste from AO3** (or any HTML) turns it into Markdown:
 
@@ -541,6 +549,24 @@ Quotes are converted to the quote setting on the way out.
 - Other tags keep their text and drop the tag.
 - **Plain text that is really HTML** — text with literal `<p>` tags, as copied
   from some notes apps — is detected and converted the same way.
+- Styles count as their tags: Google Docs marks words with
+  `font-weight`, `font-style`, `text-decoration` and `vertical-align`, and
+  wraps the whole paste in `<b style="font-weight:normal">`, which is no bold.
+  A link's underline is the link's. An inline element round blocks goes inside
+  each block, so paragraphs stay paragraphs.
+- What would read as Markdown in the words is escaped, so the note shows what
+  the page showed.
+- A code editor's copy (all of it in one `<pre>`, or one block set in a
+  fixed-width face or `white-space: pre`) pastes as its plain text, and so
+  does anything pasted into code.
+
+**Typing:** with curly quotes, a quote opens at a line's start and after a
+space, bracket, dash or slash (emphasis marks and an opening tag before it
+don't count) and closes elsewhere; in a word it's an apostrophe. An opening
+single quote becomes an apostrophe once what's typed after it shows it is one:
+a year (`'90s`) or an elision (`'tis`, `'em`, `'cause`, `rock 'n' roll`). In
+code (or code being typed), an address, an HTML tag and the front matter,
+quotes stay as typed.
 
 A round trip, Markdown → AO3 → Markdown, gives back the same text. Tests prove
 it, including on real AO3 output.
