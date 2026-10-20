@@ -82,12 +82,20 @@ async function twoPanes(page: Page): Promise<void> {
   await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
 }
 
-const setWindow = (app: ElectronApplication, width: number, height: number) =>
-  app.evaluate(
+/**
+ * Size the window's page `width` × `height`, once the app is up (its own first
+ * sizing would undo an earlier one), and wait until it is that wide.
+ */
+async function setWindow(app: ElectronApplication, width: number, height: number): Promise<void> {
+  const page = await app.firstWindow();
+  await expect(page.locator('.shell')).toBeVisible();
+  await app.evaluate(
     ({ BrowserWindow }, [width, height]) =>
       BrowserWindow.getAllWindows()[0]?.setContentSize(width, height),
     [width, height] as const,
   );
+  await expect.poll(() => page.evaluate(() => window.innerWidth)).toBe(width);
+}
 
 test.describe('resizing', () => {
   test('the panes open at the design’s widths; two panes and a shut sidebar have their own', async ({
@@ -112,8 +120,8 @@ test.describe('resizing', () => {
     vault,
   }) => {
     // Wide enough to show both at their widest: a runner's screen may be narrower.
-    await setWindow(app, 1400, 900);
     await expect(page.locator('.note-row').first()).toBeVisible();
+    await setWindow(app, 1400, 800);
     await expect.poll(() => listWidth(page)).toBe(await token(page, '--eien-list-w'));
     const step = await token(page, '--eien-space-4');
     const list = await listWidth(page);
@@ -136,8 +144,8 @@ test.describe('resizing', () => {
     const again = await launchApp(userData, vault);
     try {
       const page2 = await again.firstWindow();
-      await setWindow(again, 1400, 900);
       await expect(page2.locator('.note-row').first()).toBeVisible();
+      await setWindow(again, 1400, 800);
       await expect.poll(() => sidebarWidth(page2)).toBe(200);
       await expect.poll(() => listWidth(page2)).toBe(480);
     } finally {

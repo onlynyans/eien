@@ -9,6 +9,8 @@ import type { FolderNode } from '../../core/vault';
 import { h, type Props, wordButton } from '../dom';
 import { isMenuKey, menuPoint } from '../list/row-events';
 import { FolderField } from './folder-field';
+import { sidebarFoot } from './foot';
+import { sidebarSignature } from './signature';
 import { keyOf, type TreeActions, type TreeModel, TreeRows } from './tree';
 
 type Scheme = SettingValues['appearance.scheme'];
@@ -59,6 +61,8 @@ export class Sidebar {
   });
   /** The control to give the keyboard back to after the next redraw, by its data-key. */
   #refocus: string | null = null;
+  /** What was last drawn (./signature.ts): the same again isn't rebuilt. */
+  #drawn = '';
 
   constructor(name: string, actions: SidebarActions, keys: string) {
     this.#actions = actions;
@@ -172,6 +176,11 @@ export class Sidebar {
 
   draw(model: SidebarModel): void {
     this.#model = model;
+    // Nothing new to show, and nothing to give the keyboard to: the rows stay as they are.
+    const signature = sidebarSignature(model, new Date().toDateString());
+    const settled = this.#refocus === null && !this.#folderField.active;
+    if (settled && signature === this.#drawn) return;
+    this.#drawn = signature;
     // A redraw mustn't take the keyboard's place: the control that had it has it again; a
     // row that's gone (trashed, moved away) leaves it on the row now in its place.
     const active = document.activeElement;
@@ -183,18 +192,6 @@ export class Sidebar {
     const actions = this.#actions;
     const rows = new TreeRows(model, actions, (folder) => this.#folderEvents(folder));
     const edit = (folder: FolderNode, depth: number) => this.#folderField.row(folder, depth);
-
-    /** Day or Night; pressed again, back to the system's. */
-    const schemeButton = (label: string, scheme: Scheme) =>
-      wordButton(label, () => actions.scheme(model.scheme === scheme ? 'system' : scheme), {
-        'aria-pressed': String(model.scheme === scheme),
-        'data-key': `scheme:${scheme}`,
-      });
-    const panesButton = (label: string, two: boolean) =>
-      wordButton(label, () => actions.panes(two), {
-        'aria-pressed': String(model.two === two),
-        'data-key': `panes:${two ? 'two' : 'three'}`,
-      });
 
     const section = (label: string, items: HTMLElement[], control?: HTMLElement) =>
       items.length > 0 || control
@@ -244,42 +241,14 @@ export class Sidebar {
     this.#drawing = true;
     this.#body.replaceChildren(
       h('nav', { class: 'sidebar__tree', attrs: { 'aria-label': 'Notes' } }, ...tree),
-      h(
-        'footer',
-        { class: 'sidebar__foot' },
-        h('p', {
-          class: 'sidebar__notice',
-          text: model.notice ?? '',
-          attrs: { role: 'status', hidden: !model.notice },
-        }),
-        h('p', {
-          class: 'count sidebar__count',
-          text: `${model.tree.noteCount.toLocaleString()} notes`,
-        }),
-        h(
-          'div',
-          { class: 'sidebar__foot-row' },
-          h(
-            'div',
-            { class: 'sidebar__pair', attrs: { role: 'group', 'aria-label': 'Day or night' } },
-            schemeButton('Day', 'day'),
-            schemeButton('Night', 'night'),
-          ),
-          wordButton('Settings', actions.settings, {
-            'aria-haspopup': 'dialog',
-            'data-key': 'settings',
-          }),
-        ),
-        h(
-          'div',
-          { class: 'sidebar__foot-row' },
-          h(
-            'div',
-            { class: 'sidebar__pair', attrs: { role: 'group', 'aria-label': 'Panes' } },
-            panesButton('3 panes', false),
-            panesButton('2 panes', true),
-          ),
-        ),
+      sidebarFoot(
+        {
+          notice: model.notice,
+          noteCount: model.tree.noteCount,
+          scheme: model.scheme,
+          two: model.two,
+        },
+        actions,
       ),
     );
     this.#drawing = false;
