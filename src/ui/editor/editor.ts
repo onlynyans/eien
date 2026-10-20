@@ -9,10 +9,16 @@
 
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { syntaxTree } from '@codemirror/language';
-import { Compartment, EditorSelection, EditorState, type Extension } from '@codemirror/state';
+import {
+  Compartment,
+  EditorSelection,
+  EditorState,
+  type Extension,
+  Transaction,
+} from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { FORMAT_COMMANDS, type FormatCommand } from '../../core/format';
-import { livePreview, previewMode } from './live-preview';
+import { hiddenFrontMatter, keepFrontMatter, livePreview, previewMode } from './live-preview';
 import { eienMarkdown } from './syntax';
 import { editorTheme, markdownColours } from './theme';
 import { type ImageLoader, imageLoader } from './widgets';
@@ -58,7 +64,10 @@ export class NoteEditor {
 
   /** A new note: new text, new undo history, images from `loadImage`. */
   setText(text: string, loadImage: ImageLoader): void {
-    this.#view.setState(this.#state(text, loadImage));
+    const state = this.#state(text, loadImage);
+    // The caret starts where the writing does, after any front matter kept out of sight.
+    const start = hiddenFrontMatter(state);
+    this.#view.setState(start > 0 ? state.update({ selection: { anchor: start } }).state : state);
     this.#view.scrollDOM.scrollTop = 0;
   }
 
@@ -81,6 +90,31 @@ export class NoteEditor {
     });
     this.#view.dispatch({ effects: this.#history.reconfigure(history()) });
     this.#quiet = false;
+  }
+
+  /**
+   * Change the text to `next` by the one stretch that differs, as a quiet
+   * edit: the caret moves with the words around it, and the undo history
+   * stays; `undoable` lets ⌘Z take this change back (a restore), or not (the
+   * id a seal adds). False, changing nothing, while the text is held still.
+   */
+  amend(next: string, undoable: boolean): boolean {
+    if (this.#locked) return false;
+    const doc = this.#view.state.doc.toString();
+    let start = 0;
+    while (start < doc.length && start < next.length && doc[start] === next[start]) start++;
+    let end = doc.length;
+    let endNext = next.length;
+    while (end > start && endNext > start && doc[end - 1] === next[endNext - 1]) {
+      end--;
+      endNext--;
+    }
+    if (start === end && start === endNext) return true;
+    this.#view.dispatch({
+      changes: { from: start, to: end, insert: next.slice(start, endNext) },
+      annotations: undoable ? [] : [Transaction.addToHistory.of(false)],
+    });
+    return true;
   }
 
   setMode(mode: EditorMode): void {
@@ -203,13 +237,14 @@ const lockExtensions = (locked: boolean): Extension =>
 function modeExtensions(mode: EditorMode): Extension {
   switch (mode) {
     case 'live':
-      return [previewMode.of('live'), livePreview];
+      return [previewMode.of('live'), livePreview, keepFrontMatter];
     case 'source':
       return [EditorView.editorAttributes.of({ class: 'eien-source' })];
     case 'reading':
       return [
         previewMode.of('reading'),
         livePreview,
+        keepFrontMatter,
         EditorState.readOnly.of(true),
         EditorView.editable.of(false),
         EditorView.editorAttributes.of({ class: 'eien-reading' }),

@@ -19,6 +19,7 @@ const bridge: Bridge = {
     list: () => ipcRenderer.invoke(CHANNEL.list),
     notes: () => ipcRenderer.invoke(CHANNEL.notes),
     search: (query) => ipcRenderer.invoke(CHANNEL.search, query),
+    listFiles: (folder) => ipcRenderer.invoke(CHANNEL.listFiles, folder),
     read: (path) => ipcRenderer.invoke(CHANNEL.read, path),
     readBytes: (path) => ipcRenderer.invoke(CHANNEL.readBytes, path),
     write: (path, text, expected) => ipcRenderer.invoke(CHANNEL.write, path, text, expected),

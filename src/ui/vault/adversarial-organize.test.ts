@@ -25,6 +25,7 @@ async function vaultWith(files: Record<string, string>) {
     list: async () => index.entries(),
     notes: async () => index.notes(),
     search: async (query) => index.search(query),
+    listFiles: (folder) => storage.listFiles(folder),
     read: (path) => storage.read(path),
     readBytes: (path) => storage.readBytes(path),
     write: async (path, text, expected) => {

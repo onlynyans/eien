@@ -3,11 +3,20 @@
 // you edit is what's in the file; in Reading nothing does.
 
 import { syntaxTree } from '@codemirror/language';
-import { type EditorState, Facet, type Range, StateField } from '@codemirror/state';
+import {
+  EditorSelection,
+  EditorState,
+  Facet,
+  type Range,
+  RangeSet,
+  StateField,
+  Transaction,
+} from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 import { isLink, referenceLabels } from '../../core/markdown';
 import { frontMatterEnd } from '../../core/text';
+import { noteIdOf } from '../../core/versions';
 import { CheckboxWidget, ImageWidget, SceneBreakWidget, TableWidget } from './widgets';
 
 export type PreviewMode = 'live' | 'reading';
@@ -18,6 +27,61 @@ export const previewMode = Facet.define<PreviewMode, PreviewMode | null>({
 });
 
 const hide = Decoration.replace({});
+/** Whole lines out of sight: the front matter that only holds the note's id. */
+const hideLines = Decoration.replace({ block: true });
+
+/** Front matter that is Eien's own and nothing else: the "id:" a note's first seal gave it. */
+const ID_ONLY = /^---\nid:[ \t]*([A-Za-z0-9_-]{1,64})[ \t]*\n(?:---|\.\.\.)[ \t]*(?:\n|$)/;
+
+/**
+ * Where the writing starts when the front matter only holds the note's id
+ * (spec §2: Eien adds it, and nothing else, on the first seal), which Live
+ * and Reading keep out of sight; 0 when there's none to hide. Source shows
+ * it, and front matter the writer wrote is shown wherever it is.
+ */
+export function hiddenFrontMatter(state: EditorState): number {
+  if (!state.facet(previewMode)) return 0;
+  const match = ID_ONLY.exec(state.doc.sliceString(0, 200));
+  // As YAML reads it: "id: null" or "id: true" isn't an id, and stays in sight.
+  return match && noteIdOf(match[0]) === match[1] ? match[0].length : 0;
+}
+
+/**
+ * The hidden front matter is kept whole: the caret never rests in it, and
+ * the writer's own edits never reach into it (a Backspace at the start of the
+ * writing would join it to the closing "---"). Eien's own changes — a reload,
+ * a seal giving the note its id, a restore — come with no user event, and pass.
+ */
+export const keepFrontMatter = [
+  EditorState.transactionFilter.of((tr) => {
+    const before = hiddenFrontMatter(tr.startState);
+    if (before > 0 && tr.docChanged && tr.annotation(Transaction.userEvent) !== undefined) {
+      let reaches = false;
+      let atEnd = false;
+      tr.changes.iterChangedRanges((from) => {
+        if (from < before) reaches = true;
+        if (from === before) atEnd = true;
+      });
+      if (reaches) return [];
+      // A note that ends with its closing "---": what's typed after it starts a line of its
+      // own, or it would join "---" and the front matter would be gone.
+      if (atEnd && tr.startState.doc.sliceString(before - 1, before) !== '\n') {
+        return [tr, { changes: { from: before, insert: '\n' }, sequential: true }];
+      }
+    }
+    const start = hiddenFrontMatter(tr.state);
+    const { ranges, mainIndex } = tr.newSelection;
+    if (start === 0 || ranges.every((range) => range.from >= start)) return tr;
+    const kept = ranges.map((range) =>
+      EditorSelection.range(Math.max(range.anchor, start), Math.max(range.head, start)),
+    );
+    return [tr, { selection: EditorSelection.create(kept, mainIndex), sequential: true }];
+  }),
+  EditorView.atomicRanges.of((view) => {
+    const start = hiddenFrontMatter(view.state);
+    return start > 0 ? RangeSet.of([hide.range(0, start)]) : RangeSet.empty;
+  }),
+];
 const mark = (cls: string) => Decoration.mark({ class: cls });
 const line = (cls: string) => Decoration.line({ class: cls });
 
@@ -69,7 +133,9 @@ function build(state: EditorState): DecorationSet {
   // Front matter is the note's data, not its Markdown: shown quietly, never drawn as a
   // scene break and a heading. It's short; past 64 KB a "---" isn't front matter.
   const frontMatter = frontMatterEnd(doc.sliceString(0, Math.min(doc.length, 65_536)));
-  if (frontMatter > 0) lineClass(0, Math.max(0, frontMatter - 1), 'eien-front-matter');
+  const hidden = hiddenFrontMatter(state);
+  if (hidden > 0) out.push(hideLines.range(0, doc.lineAt(hidden - 1).to));
+  else if (frontMatter > 0) lineClass(0, Math.max(0, frontMatter - 1), 'eien-front-matter');
 
   tree.iterate({
     enter(node: SyntaxNodeRef) {

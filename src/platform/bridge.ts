@@ -24,6 +24,8 @@ export interface VaultBridge {
   notes(): Promise<IndexedNote[]>;
   /** The notes holding every word of `query` (spec §4). */
   search(query: string): Promise<SearchResult>;
+  /** The files directly in a folder (a note's versions, .eien/versions/<id>). */
+  listFiles(folder: string): Promise<string[]>;
   read(path: string): Promise<FileState | null>;
   /** An image's bytes, to show it; null when it's missing or too big. */
   readBytes(path: string): Promise<Uint8Array | null>;
@@ -63,7 +65,10 @@ export type MenuCommand =
   | 'panes:list'
   | 'focus:sidebar'
   | 'focus:list'
-  | 'focus:page';
+  | 'focus:page'
+  | 'seal'
+  | 'compare'
+  | 'versions';
 
 export interface Bridge {
   /** The operating system: 'darwin', 'win32', 'linux', … */
@@ -85,6 +90,7 @@ export const CHANNEL = {
   list: 'vault:list',
   notes: 'vault:notes',
   search: 'vault:search',
+  listFiles: 'vault:list-files',
   read: 'vault:read',
   readBytes: 'vault:read-bytes',
   write: 'vault:write',

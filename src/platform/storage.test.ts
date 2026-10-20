@@ -161,6 +161,27 @@ for (const [name, make] of Object.entries(implementations)) {
       },
     );
 
+    it('lists the files in one folder, hidden ones such as .eien’s too, but not their temp files', async () => {
+      const id = '.eien/versions/01JB2X4Q7Z';
+      await subject.storage.write(`${id}/2026-10-19T16-40-02Z.md`, 'one', null);
+      await subject.storage.write(`${id}/2026-10-20T08-00-00Z--named.md`, 'two', null);
+      await subject.storage.write(`${id}/deeper/inside.md`, 'not this one', null);
+      await subject.putOutside(`${id}/.2026-10-19T16-40-02Z.md.eien.tmp`, 'a write cut short');
+      expect((await subject.storage.listFiles(id)).sort()).toEqual([
+        '2026-10-19T16-40-02Z.md',
+        '2026-10-20T08-00-00Z--named.md',
+      ]);
+      await subject.storage.write('Top.md', 'top', null);
+      expect(await subject.storage.listFiles('')).toEqual(['Top.md']);
+    });
+
+    it('lists nothing in a folder that isn’t there, or for a file, and refuses one outside the vault', async () => {
+      expect(await subject.storage.listFiles('.eien/versions/NONE')).toEqual([]);
+      await subject.storage.write('Note.md', 'x', null);
+      expect(await subject.storage.listFiles('Note.md')).toEqual([]);
+      await expect(subject.storage.listFiles('../outside')).rejects.toThrow();
+    });
+
     it('moves a note to a new name, words and all, and the old name is gone', async () => {
       await subject.putOutside('Old.md', 'Words.');
       expect(await subject.storage.move('Old.md', 'New.md')).toEqual({ ok: true });
@@ -307,19 +328,21 @@ for (const [name, make] of Object.entries(implementations)) {
       expect((await subject.storage.list()).map((entry) => entry.path)).toEqual([name]); // no twin
     });
 
-    it('tells a watcher about the vault’s settings, and no other hidden file', async () => {
+    it('tells a watcher about the vault’s settings and a note’s seals, and no other hidden file', async () => {
       const seen: string[] = [];
       const stop = await listening(seen);
       try {
+        const seal = '.eien/versions/01JB2X4Q7Z/2026-10-19T16-40-02Z.md';
         await subject.putOutside('.eien/other.json', '{}');
         await subject.putOutside('Fic/.hidden.md', 'x');
         await subject.putOutside('.eien/config.json', '{}');
+        await subject.putOutside(seal, 'sealed on another device');
         await subject.putOutside('Seen.md', 'x');
         await expect
           .poll(() => seen, { timeout: 3000 })
-          .toEqual(expect.arrayContaining(['.eien/config.json', 'Seen.md']));
+          .toEqual(expect.arrayContaining(['.eien/config.json', seal, 'Seen.md']));
         const hidden = seen.filter((path) => path.split('/').some((name) => name.startsWith('.')));
-        expect(new Set(hidden)).toEqual(new Set(['.eien/config.json']));
+        expect(new Set(hidden)).toEqual(new Set(['.eien/config.json', seal]));
       } finally {
         stop();
       }

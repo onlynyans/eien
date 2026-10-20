@@ -111,6 +111,7 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
     if (words.length > MAX_QUERY_LENGTH) throw new RangeError('The search is too long.');
     return session.index().search(words);
   });
+  handle(CHANNEL.listFiles, (folder) => session.storage().listFiles(text(folder, 'folder')));
   handle(CHANNEL.read, (path) => session.storage().read(text(path, 'path')));
   handle(CHANNEL.readBytes, (path) => session.storage().readBytes(text(path, 'path')));
   handle(CHANNEL.write, async (path, body, expected) => {

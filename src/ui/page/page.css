@@ -1,12 +1,24 @@
 /* The page: the blotter, a sheet of paper on it, a band above and the
    colophon below. */
 
+/* The page beside its versions panel, when that's open (ui/versions). */
 .page {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  background: var(--eien-page-ground);
+  container: page / inline-size;
+}
+.page__main {
   display: grid;
   grid-template-rows: var(--band) minmax(0, 1fr) auto;
   min-width: 0;
   min-height: 0;
-  background: var(--eien-page-ground);
+}
+.page__aside {
+  display: contents;
 }
 .page__bar {
   display: flex;
@@ -28,7 +40,8 @@
 /* The page's controls wait until the pointer is over the page, or focus is
    in them: nothing interrupts the writer (spec §1). */
 .page__views,
-.page__panes {
+.page__panes,
+.page__tools > * {
   display: flex;
   gap: var(--eien-space-1);
   opacity: 0;
@@ -37,7 +50,9 @@
 .page:hover .page__views,
 .page__views:focus-within,
 .page:hover .page__panes,
-.page__panes:focus-within {
+.page__panes:focus-within,
+.page:hover .page__tools > *,
+.page__tools > :focus-within {
   opacity: 1;
 }
 /* HIDE or SHOW drops first when the page is narrow, then the panes' words. */
@@ -133,6 +148,11 @@
 /* The writing: the editor, in its own shadow root (src/ui/editor). */
 .editor-host {
   display: block;
+}
+/* While a seal is compared or shown, its view stands in the editor's place. */
+.editor-host[hidden],
+.compare-host[hidden] {
+  display: none;
 }
 
 .page__empty {

@@ -11,6 +11,7 @@ import {
   FOLDER_SETTINGS_NAME,
   type FolderNode,
   type FolderSettings,
+  isSyncConflictName,
   orderNames,
   parseFolderSettings,
   parsePins,
@@ -105,6 +106,17 @@ export class VaultState {
   async folderOrder(folder: string): Promise<string[]> {
     const node = findFolder(this.#tree, folder);
     return orderNames((node?.notes ?? []).map(baseName), (await this.folderSettings(folder)).order);
+  }
+
+  /**
+   * The notes whose front matter holds `id`: one, unless a note was copied
+   * with its id. Syncthing's conflict copies aren't counted: the note they're
+   * beside keeps its id, and its history isn't split between two devices.
+   */
+  notesWithId(id: string): string[] {
+    return [...this.#notes.values()]
+      .filter((note) => note.id === id && !isSyncConflictName(baseName(note.path)))
+      .map((note) => note.path);
   }
 
   /** Names of everything in `folder`, for picking a free name there. */

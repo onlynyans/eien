@@ -1,0 +1,227 @@
+/* Seals (spec §9, docs/design): the bar's COMPARE · SEAL · VERSIONS, the
+   colophon's last seal, Compare in the editor's place, and the versions
+   panel — raised paper beside the page, over it when the page is narrow. */
+
+.page__seals {
+  display: flex;
+  gap: var(--eien-space-1);
+  margin-right: calc(var(--eien-space-2) * -1);
+}
+.compare-state {
+  color: var(--eien-pencil);
+}
+.word-button[aria-pressed="true"] .compare-state {
+  color: inherit;
+}
+
+/* The colophon's last seal: the small seal, pressed in when the note is sealed. */
+.seal-line:empty {
+  display: none;
+}
+.seal-line .seal {
+  margin-right: var(--eien-space-2);
+  vertical-align: calc(var(--eien-hairline) * -1);
+  transform-origin: center;
+}
+.seal-line .seal[hidden] {
+  display: none;
+}
+.seal-line .seal.is-stamping {
+  animation: stamp var(--eien-calm) var(--eien-ease);
+}
+@keyframes stamp {
+  from {
+    transform: scale(1.7);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* A line across the top of the sheet that says what it's showing. */
+.sheet__state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--eien-space-1) var(--eien-space-3);
+  margin: 0 calc(var(--pad-x) * -1) var(--eien-space-6);
+  padding: var(--eien-space-2) var(--pad-x);
+  background: var(--eien-band);
+  border-block: var(--eien-hairline) solid var(--eien-rule);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  line-height: 1.6;
+  color: var(--eien-pencil);
+}
+.sheet__state > :last-child {
+  margin-left: auto;
+}
+.sheet__state strong {
+  font-weight: 600;
+  color: var(--eien-ink-soft);
+}
+.sheet__state .sep {
+  color: var(--eien-faded);
+}
+
+/* Compare's text: the prose, read only, in the writer's face. */
+.compare {
+  font-family: var(--eien-face-text);
+  line-height: var(--eien-leading-prose);
+  color: var(--eien-ink);
+  overflow-wrap: break-word;
+}
+.compare:focus-visible {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: var(--eien-space-2);
+}
+.compare p {
+  margin: 0 0 calc(var(--eien-leading-prose) * 0.6em);
+}
+
+/* Removed words struck and tinted; added words underlined and tinted. */
+del.diff,
+.legend del {
+  color: var(--eien-removed);
+  background: var(--eien-removed-wash);
+  text-decoration: line-through;
+  text-decoration-thickness: var(--eien-hairline);
+}
+ins.diff,
+.legend ins {
+  color: var(--eien-added);
+  background: var(--eien-added-wash);
+  text-decoration: underline;
+  text-decoration-thickness: var(--eien-hairline);
+  text-underline-offset: 0.22em;
+}
+.legend del,
+.legend ins {
+  padding: 0 calc(var(--eien-hairline) * 2);
+}
+
+/* ═══ The versions panel: narrow raised paper beside the page ═══ */
+.versions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  width: var(--eien-panel-w);
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--eien-paper-raised);
+  border-left: var(--eien-hairline) solid var(--eien-rule);
+  box-shadow: var(--eien-shadow-float);
+}
+.versions[hidden] {
+  display: none;
+}
+/* A narrow page keeps its sheet readable: the panel lies over its right side instead. */
+@container page (width < 764px) {
+  .versions {
+    position: absolute;
+    top: var(--band);
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    border-top: var(--eien-hairline) solid var(--eien-rule);
+  }
+}
+.versions__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  height: var(--band);
+  padding: 0 calc(var(--eien-space-4) - var(--eien-space-2)) 0 var(--eien-space-4);
+  background: var(--eien-band);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.versions__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.version {
+  display: grid;
+  grid-template-columns: var(--eien-space-5) minmax(0, 1fr) auto;
+  align-items: baseline;
+  row-gap: var(--eien-space-1);
+  padding: var(--eien-space-4);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.version.is-compared {
+  background: var(--eien-hover);
+}
+.version__mark {
+  grid-row: 1;
+  align-self: center;
+}
+.version__mark--draft {
+  display: inline-block;
+  width: calc(
+    var(--eien-space-2) +
+    var(--eien-hairline) *
+    2
+  ); /* the small seal's square, unpressed */
+  height: calc(var(--eien-space-2) + var(--eien-hairline) * 2);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+}
+.version__name {
+  grid-column: 2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  font-weight: 500;
+  color: var(--eien-ink);
+}
+.version__field {
+  grid-column: 2 / -1;
+  min-width: 0;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+}
+.version__when {
+  grid-column: 2;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-ink-soft);
+}
+.version__name + .version__when,
+.version__field + .version__when {
+  grid-column: 2 / -1;
+  color: var(--eien-pencil);
+}
+.version .count {
+  grid-column: 3;
+  grid-row: 1;
+}
+.version__actions {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--eien-space-1);
+  margin: var(--eien-space-1) 0 0 calc(var(--eien-space-2) * -1);
+}
+/* Delete is said in words, and in the colour that means it (docs/design). */
+.version__delete {
+  color: var(--eien-danger);
+}
+.versions__empty,
+.versions__note {
+  margin: 0;
+  padding: var(--eien-space-4);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  line-height: 1.6;
+  color: var(--eien-pencil);
+}

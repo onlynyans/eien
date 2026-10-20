@@ -218,4 +218,16 @@ describe('order and the watcher, as other devices see them', () => {
     expect(isWatchedPath('Fic/.eien-folder.json.eien.tmp')).toBe(false);
     expect(isWatchedPath('Fic/.other.json')).toBe(false);
   });
+
+  it('watches a note’s seals, and not the temp files they’re written through', () => {
+    expect(isWatchedPath('.eien/versions/01JB2X4Q7Z/2026-10-19T16-40-02Z.md')).toBe(true);
+    expect(isWatchedPath('.eien/versions/01JB2X4Q7Z/2026-10-19T16-40-02Z--named.md')).toBe(true);
+    expect(isWatchedPath('.eien/versions/01JB2X4Q7Z/.2026-10-19T16-40-02Z.md.eien.tmp')).toBe(
+      false,
+    );
+    expect(isWatchedPath('.eien/versions/01JB2X4Q7Z')).toBe(false);
+    expect(isWatchedPath('.eien/versions/a/b/c.md')).toBe(false);
+    expect(isWatchedPath('.eien/versions/../x.md')).toBe(false);
+    expect(isWatchedPath('.eien/other/01JB2X4Q7Z/x.md')).toBe(false);
+  });
 });

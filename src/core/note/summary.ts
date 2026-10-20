@@ -4,6 +4,7 @@
 import { readMarkdown } from '../markdown';
 import { frontMatterTags, inlineTags, uniqueTags } from '../tags';
 import { countPlainWords, firstGraphemes, frontMatterEnd, toEditor } from '../text';
+import { noteIdOf } from '../versions';
 
 export interface NoteSummary {
   /** The first words, marks taken out; "" for an empty note. */
@@ -11,6 +12,8 @@ export interface NoteSummary {
   readonly words: number;
   /** As first written, each once (case aside). */
   readonly tags: readonly string[];
+  /** The id its versions are kept under (spec §2), once it's been sealed; else null. */
+  readonly id: string | null;
 }
 
 /** A note as the window lists it, without opening it. */
@@ -39,6 +42,7 @@ export function readNote(raw: string, title: string): ReadNote {
     preview: previewOf(plain, title),
     words: countPlainWords(plain),
     tags: uniqueTags([...frontMatterTags(yaml), ...inlineTags(taggable)]),
+    id: end > 0 ? noteIdOf(text.slice(0, end)) : null,
     plain,
   };
 }

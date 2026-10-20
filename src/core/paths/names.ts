@@ -55,12 +55,16 @@ export const VAULT_PINS = '.eien/pinned.json';
 /** A folder's own settings (spec §2): its order, and whether it's a book. Watched, beside its notes. */
 export const FOLDER_SETTINGS_NAME = '.eien-folder.json';
 
+/** Where a note's seals are kept: .eien/versions/<note id>/<file> (spec §9). */
+const SEAL_FILE = /^\.eien\/versions\/[A-Za-z0-9_-]{1,64}\/[^./][^/]*$/;
+
 /**
  * A change a watcher reports: nothing hidden (temp files, dot-files, .eien)
- * but the vault's settings and pins, and a folder's settings.
+ * but the vault's settings and pins, a folder's settings, and a note's seals
+ * (another device's seal shows in the versions at once).
  */
 export function isWatchedPath(path: string): boolean {
-  if (path === VAULT_CONFIG || path === VAULT_PINS) return true;
+  if (path === VAULT_CONFIG || path === VAULT_PINS || SEAL_FILE.test(path)) return true;
   const parts = path.split('/');
   const last = parts.length - 1;
   return parts.every(
