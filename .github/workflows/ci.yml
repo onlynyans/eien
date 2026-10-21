@@ -85,6 +85,37 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
 
+  ios:
+    name: iOS simulator
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      # Eien's own Swift file operations (ios/App/App/VaultFileOps.swift), on this Mac's Darwin.
+      - run: npm run test:ios-files
+      - name: The phone's page, copied into the iOS project
+        run: npm run ios
+      # Built for the simulator, started on one with a crash's leftovers in its vault: it must
+      # recover them (scripts/ios/smoke.sh). No signing, no Apple account.
+      - name: Build, run on a simulator, check what it did
+        run: bash scripts/ios/smoke.sh out/ios-smoke
+      - name: Keep the screen and logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-smoke
+          path: |
+            out/ios-smoke/eien.png
+            out/ios-smoke/build.log
+            out/ios-smoke/app.log
+          retention-days: 14
+          if-no-files-found: ignore
+
   e2e:
     name: End-to-end (${{ matrix.os }})
     strategy:

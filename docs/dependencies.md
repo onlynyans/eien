@@ -44,6 +44,7 @@ runtime.
 | `@fontsource/ibm-plex-mono` | The machine voice, whatever the text face (SIL OFL): 400 and 600, and 400 italic |
 | `@capacitor/core` | The phone's runtime under the same window: the bridge to native code and each plugin's web stand-in (MIT) |
 | `@capacitor/android` | The Android shell: an activity holding a WebView that serves the page from the app itself, never the network (MIT) |
+| `@capacitor/ios` | The iOS shell, the same over WKWebView; its Swift packages (Capacitor's and the plugins') are fetched by Xcode when it builds (MIT) |
 | `@capacitor/filesystem` | The phone's files: the vault in the shared Documents/Eien/Vault on Android, Eien's own Files folder on iOS (MIT) |
 | `@capacitor/preferences` | This device's settings on the phone, kept apart from the vault as the desktop's are (MIT) |
 | `@capacitor/app` | When the phone sends Eien to the background (save now) and brings it back (look at the vault again) (MIT) |

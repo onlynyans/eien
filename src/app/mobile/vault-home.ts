@@ -1,8 +1,9 @@
 // Where the phone's vault is (spec §10), and the access it needs. Everything
-// Eien keeps is in one folder, Documents/Eien: the vault (Vault, the folder
-// Syncthing syncs) and Exports beside it. Android: the shared Documents; Eien
-// asks once for the access, after the welcome has said why. iOS: Eien's own
-// Documents, which the Files app shows, and which needs no asking.
+// Eien keeps is in one folder: the vault (Vault, the folder Syncthing syncs)
+// and Exports beside it. Android: Documents/Eien in the shared Documents;
+// Eien asks once for the access, after the welcome has said why. iOS: the
+// app's own Documents, which the Files app shows as "Eien" and which needs
+// no asking.
 
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { HOME_EXPORTS, HOME_FOLDER, HOME_VAULT } from '../../core/vault';
@@ -10,10 +11,12 @@ import { CapacitorFiles } from '../../platform/capacitor/capacitor-files';
 import type { FilesPort } from '../../platform/capacitor/files';
 import { AllFiles } from './all-files';
 
+/** Eien's folder in the system's Documents: on iOS the app's Documents are its own already. */
+const homeOn = (platform: string) => (platform === 'ios' ? '' : `${HOME_FOLDER}/`);
 /** The vault's folder, in the system's Documents. */
-export const VAULT_FOLDER = `${HOME_FOLDER}/${HOME_VAULT}`;
+export const vaultFolderOn = (platform: string) => `${homeOn(platform)}${HOME_VAULT}`;
 /** Where exports are saved, beside it. */
-export const EXPORT_FOLDER = `${HOME_FOLDER}/${HOME_EXPORTS}`;
+export const exportFolderOn = (platform: string) => `${homeOn(platform)}${HOME_EXPORTS}`;
 /** The vault's name, as the sidebar shows it. */
 export const VAULT_NAME = 'Eien';
 
@@ -22,6 +25,10 @@ export interface VaultHome {
   readonly files: FilesPort;
   /** The files in the folder exports go to. */
   readonly exports: FilesPort;
+  /** That folder, as the writer is told it: "Eien/Exports", as Files or Documents shows it. */
+  readonly exportFolder: string;
+  /** Where the vault is, as the writer is told it. */
+  readonly vaultShown: string;
   /** Whether Eien may use the folder now. */
   allowed(): Promise<boolean>;
   /** Ask for the access on the system's screens; whether it was given. */
@@ -35,14 +42,27 @@ const granted = async (): Promise<boolean> => {
 };
 
 export function vaultHome(platform: string): VaultHome {
-  const files = new CapacitorFiles(Directory.Documents, VAULT_FOLDER);
-  const exports = new CapacitorFiles(Directory.Documents, EXPORT_FOLDER);
+  const files = new CapacitorFiles(Directory.Documents, vaultFolderOn(platform));
+  const exports = new CapacitorFiles(Directory.Documents, exportFolderOn(platform));
+  // On iOS the Files app shows the app's Documents as "Eien": the same names as Android's.
+  const exportFolder = `${HOME_FOLDER}/${HOME_EXPORTS}`;
   if (platform !== 'android') {
-    return { files, exports, allowed: async () => true, ask: async () => true };
+    const vaultShown =
+      platform === 'ios' ? 'Eien › Vault, in the Files app' : 'Documents/Eien/Vault';
+    return {
+      files,
+      exports,
+      exportFolder,
+      vaultShown,
+      allowed: async () => true,
+      ask: async () => true,
+    };
   }
   return {
     files,
     exports,
+    exportFolder,
+    vaultShown: 'Documents/Eien/Vault',
     allowed: () => granted().catch(() => false),
     async ask() {
       if ((await Filesystem.requestPermissions()).publicStorage !== 'granted') return false;

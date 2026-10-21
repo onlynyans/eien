@@ -22,7 +22,7 @@ const bytes = (text: string) => new TextEncoder().encode(text);
 
 describe('phoneOut', () => {
   it('saves two exports of one name made at once, each under its own name with its own bytes', async () => {
-    const out = phoneOut(new NodeFiles(folder));
+    const out = phoneOut(new NodeFiles(folder), 'Eien/Exports');
     const results = await Promise.allSettled([
       out.saveAs('Chapter 1', { kind: 'epub', bytes: bytes('first book') }),
       out.saveAs('Chapter 1', { kind: 'epub', bytes: bytes('second book') }),

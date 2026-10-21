@@ -36,7 +36,7 @@ function mobileBridge(): Bridge {
       },
       set: (key, value) => settings.set(key, value),
     },
-    out: phoneOut(home.exports),
+    out: phoneOut(home.exports, home.exportFolder),
     onMenu: () => () => undefined, // no menu bar on a phone: the page's ⋯ (ui/phone)
     onBack(handler) {
       backs.push(handler);

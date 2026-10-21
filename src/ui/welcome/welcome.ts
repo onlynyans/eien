@@ -17,6 +17,10 @@ const PHONE: Record<string, typeof DESKTOP> = {
     lede: 'Eien keeps your notes in Documents/Eien/Vault, where Syncthing can sync them with your other devices. Every note is a plain Markdown file. Android asks once to let Eien use the files there.',
     choice: 'Allow file access…',
   },
+  ios: {
+    lede: 'Eien keeps your notes in its own folder, which the Files app shows as Eien › Vault, where Möbius Sync can sync them with your other devices. Every note is a plain Markdown file.',
+    choice: 'Open the vault',
+  },
 };
 
 export function renderWelcome(container: HTMLElement, choose: () => void, platform = ''): void {
