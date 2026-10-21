@@ -780,15 +780,24 @@ test.describe('three thousand notes', () => {
     async ({ page, vault }) => {
       test.setTimeout(90_000);
       await expect(page.locator('.note-row').first()).toBeVisible({ timeout: 30_000 });
+      // Each long task with when it started: an entry comes to the observer after its task has
+      // ended, maybe after a later evaluate, so a window counts the tasks that started in it.
+      type Long = { long: { start: number; ms: number }[]; since: number };
       await page.evaluate(() => {
-        const w = window as unknown as { long: number[] };
+        const w = window as unknown as Long;
         w.long = [];
+        w.since = 0;
         new PerformanceObserver((list) => {
-          for (const entry of list.getEntries()) w.long.push(Math.round(entry.duration));
+          for (const entry of list.getEntries()) {
+            w.long.push({ start: entry.startTime, ms: Math.round(entry.duration) });
+          }
         }).observe({ type: 'longtask' });
       });
       const longest = () =>
-        page.evaluate(() => Math.max(0, ...(window as unknown as { long: number[] }).long));
+        page.evaluate(() => {
+          const { long, since } = window as unknown as Long;
+          return Math.max(0, ...long.filter((task) => task.start >= since).map((task) => task.ms));
+        });
       await twoPanes(page);
       await folder(page, 'All Notes').click();
       await expect(treeNotes(page)).toHaveCount(2 * 3001, { timeout: 30_000 });
@@ -796,12 +805,14 @@ test.describe('three thousand notes', () => {
       // A file arriving from another device redraws all six thousand rows.
       writeFileSync(at(vault, 'From the phone.md'), 'synced\n');
       await expect(page.locator('.sidebar__count')).toHaveText('3,002 notes', { timeout: 30_000 });
+      // From here on, typing: the redraw for the phone's note (which may be reported late) and
+      // this evaluate's own work are before the window.
       await page.evaluate(() => {
-        const w = window as unknown as { long: number[]; drawn: WeakSet<Element> };
-        w.long = [];
+        const w = window as unknown as Long & { drawn: WeakSet<Element> };
         // The note rows drawn now: opening a note and saving it should change two rows (the
         // note's, under the vault and under All Notes), and leave the other six thousand be.
         w.drawn = new WeakSet(document.querySelectorAll('.tree-row--note'));
+        w.since = performance.now();
       });
       // By its path, a selector the window answers itself: a locator that filters six thousand rows by
       // their text runs in the window too, and would be the long task measured.
