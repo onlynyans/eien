@@ -19,8 +19,11 @@ const ELEMENTS = 1500;
 const HEAP_GROWTH = 3 * 1024 * 1024;
 /** From the window's start to the first list of 3,000 notes drawn (measured: 150 to 190 ms). */
 const FIRST_LIST_MS = 1500;
-/** The built renderer's own code and styles, in bytes (measured: 1,574,453 and 120,787), +10%. */
-const RENDERER = { js: 1_730_000, css: 133_000 };
+/**
+ * The built renderer's own code and styles, in bytes, +10%. Measured again as features land:
+ * 1,614,848 and 137,409 with 3E's row menu and rename in place (#42).
+ */
+const RENDERER = { js: 1_780_000, css: 151_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);
@@ -110,7 +113,11 @@ test.describe('a long session', () => {
         const dialog = page.getByRole('dialog', { name: 'Settings' });
         for (let i = 0; i < times; i++) {
           const layout = (['slip', 'runhead', 'band'] as const)[i % 3];
-          await dialog.locator(`[data-value="${layout}"]`).click();
+          // The Layout choice: the Running head's strip ground has a swatch named Band too.
+          await dialog
+            .getByRole('group', { name: 'Layout' })
+            .locator(`[data-value="${layout}"]`)
+            .click();
           await expect(page.locator('html')).toHaveAttribute('data-layout', layout as string);
         }
         await page.keyboard.press('Escape');

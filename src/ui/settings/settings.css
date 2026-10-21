@@ -57,7 +57,8 @@
   display: grid;
   gap: 1px;
 }
-/* The category label (new in settings.md): the machine voice, faded, a 12px icon. */
+/* The category label (new in settings.md): the machine voice in pencil (faded doesn't reach
+   4.5:1 on the desk), a 12px icon. */
 .settings__category {
   display: flex;
   align-items: center;
@@ -69,7 +70,7 @@
   font-weight: 400;
   letter-spacing: var(--eien-track-label);
   text-transform: uppercase;
-  color: var(--eien-faded);
+  color: var(--eien-pencil);
 }
 .settings__part:first-child .settings__category {
   padding-top: 2px;
