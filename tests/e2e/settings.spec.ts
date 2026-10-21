@@ -5,7 +5,16 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { clickMenu, closeApp, editorLines, expect, launchApp, test } from './launch';
+import {
+  clickMenu,
+  closeApp,
+  editorContent,
+  editorLines,
+  expect,
+  launchApp,
+  test,
+  windowZoom,
+} from './launch';
 
 const BOOK = {
   'Book/One.md': 'alpha beta gamma delta\n',
@@ -233,6 +242,7 @@ test.describe('page zoom', () => {
   }) => {
     await openBook(page);
     await page.locator('.note-row', { hasText: 'One' }).click();
+    await editorContent(page).click(); // the keyboard in the page: its zoom, not the window's
     const rowSize = await style(page, '.tree-row__label', 'font-size');
     for (let i = 0; i < 5; i++) await clickMenu(app, 'View', 'Zoom In');
     await expect(page.locator('.colophon__zoom')).toHaveText('150%');
@@ -263,6 +273,7 @@ test.describe('page zoom', () => {
     await expect(page.locator('.sheet')).toHaveCSS('zoom', '1');
     for (let i = 0; i < 8; i++) await clickMenu(app, 'View', 'Zoom Out');
     await expect(page.locator('.colophon__zoom')).toHaveText('50%'); // and no further
+    expect(await windowZoom(app)).toBe(1);
   });
 });
 

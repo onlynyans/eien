@@ -5,6 +5,7 @@ import {
   type Edit,
   FORMAT_COMMANDS,
   formatCommand,
+  keyOn,
   toggleCheck,
 } from './index';
 
@@ -156,11 +157,33 @@ describe('toggleCheck', () => {
 });
 
 describe('the command list', () => {
-  it('has each command once, each key once', () => {
+  it('has each command once, each key once on each system', () => {
     const ids = FORMAT_COMMANDS.map((c) => c.id);
-    const keys = FORMAT_COMMANDS.map((c) => c.key);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(new Set(keys).size).toBe(keys.length);
+    for (const mac of [true, false]) {
+      const keys = FORMAT_COMMANDS.map((c) => keyOn(c, mac));
+      expect(new Set(keys).size).toBe(keys.length);
+    }
+  });
+
+  it('takes no key off a Mac that AltGr types with (Ctrl+Alt, spec §4)', () => {
+    const altGr = FORMAT_COMMANDS.map((c) => keyOn(c, false)).filter(
+      (key) => key.includes('Mod-') && key.includes('Alt-'),
+    );
+    expect(altGr).toEqual([]);
+  });
+
+  it('keeps ⌘⌥1–3 for headings on a Mac, and Ctrl+Shift+1–3 elsewhere', () => {
+    const headings = ['heading1', 'heading2', 'heading3'].map((id) => {
+      const command = FORMAT_COMMANDS.find((c) => c.id === id);
+      if (!command) throw new Error(id);
+      return [keyOn(command, true), keyOn(command, false)];
+    });
+    expect(headings).toEqual([
+      ['Mod-Alt-1', 'Mod-Shift-1'],
+      ['Mod-Alt-2', 'Mod-Shift-2'],
+      ['Mod-Alt-3', 'Mod-Shift-3'],
+    ]);
   });
 
   it('writes keys as Electron accelerators', () => {

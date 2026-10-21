@@ -11,7 +11,7 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { syntaxTree } from '@codemirror/language';
 import { Compartment, EditorSelection, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
-import { FORMAT_COMMANDS, type FormatCommand } from '../../core/format';
+import { FORMAT_COMMANDS, type FormatCommand, keyOn } from '../../core/format';
 import type { QuoteStyle } from '../../core/typography';
 import { eienChange, eienUndo, writtenBy } from './eien-change';
 import { hiddenFrontMatter, keepFrontMatter, livePreview, previewMode } from './live-preview';
@@ -187,8 +187,10 @@ export class NoteEditor {
   }
 
   #state(text: string, loadImage: ImageLoader): EditorState {
+    // CodeMirror takes `mac` on a Mac, `key` elsewhere.
     const formatKeys = FORMAT_COMMANDS.map((command) => ({
-      key: command.key,
+      key: keyOn(command, false),
+      mac: keyOn(command, true),
       run: () => this.format(command),
     }));
     const extensions: Extension[] = [

@@ -199,6 +199,12 @@ export const test = base.extend<Fixtures>({
   },
 });
 
+/** The whole window's zoom factor (Electron's, every pane): 1 at 100%. */
+export const windowZoom = (app: ElectronApplication): Promise<number> =>
+  app.evaluate(
+    ({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.getZoomFactor() ?? 0,
+  );
+
 /** The note editor's lines, as they show (Live hides the marks away from the caret). */
 export const editorLines = (page: Page) => page.locator('.cm-line');
 

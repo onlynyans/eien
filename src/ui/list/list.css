@@ -16,6 +16,8 @@
   gap: var(--eien-space-1) var(--eien-space-3);
   flex: none;
   padding: var(--eien-space-4);
+  /* Clear of macOS's traffic lights while the sidebar's shut (../shell/shell.css). */
+  padding-left: max(var(--eien-space-4), calc(var(--controls-left) - var(--pane-sidebar, 0px)));
   background: var(--eien-band);
   border-bottom: var(--eien-hairline) solid var(--eien-rule);
 }

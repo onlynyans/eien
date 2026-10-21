@@ -206,6 +206,20 @@ Three panes, each collapsible, with a two-pane option in settings:
 Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
 ⌘\ toggles the sidebar, ⌘⇧\ the note list.
 
+- **No title bar.** The panes take the title bar's space, as Claude's desktop
+  app does, and their top bands (the sidebar's head, the list's head, the
+  page's bar, the versions panel's head) drag the window; every control,
+  field and pane edge in them stays a control. On macOS the traffic lights
+  sit over the sidebar's head, in the middle of its band at any zoom, and the
+  head starts after them; with the sidebar shut, the strip's seal waits below
+  them and the next pane's head starts after them. On Windows and Linux the
+  system's own minimize, maximize and close are drawn over the page's band,
+  in the band's colours (they follow day, night and the palette) and at its
+  height, and the band keeps clear of them. Where the controls are comes from
+  the window controls overlay (`env(titlebar-area-*)`), so nothing is
+  measured by hand. What else goes in the strip is for a later design pass
+  ([backlog](backlog.md) #1). The phone keeps its own layout.
+
 - **Resizing.** A pane's edge is a hairline that darkens under the pointer:
   drag it, or give it the keyboard and step it with ← and →. Each width has
   its limits: the sidebar 200–420 px (220–520 with two panes, where it holds
@@ -249,7 +263,10 @@ format without typing them:
 
 - **Keys:** ⌘B bold, ⌘I italic, ⌘U underline, ⌘⇧X strikethrough, ⌘⇧H
   highlight, ⌘K link, ⌘⌥1–3 headings, ⌘⇧. quote, ⌘⇧7 numbered list, ⌘⇧8 list,
-  ⌘⇧9 checklist. Each toggles: pressed again, it takes the formatting off.
+  ⌘⇧9 checklist. Each toggles: pressed again, it takes the formatting off. On
+  Windows and Linux ⌘ is Ctrl, and the headings are Ctrl+Shift+1–3: there
+  Ctrl+Alt is AltGr, which types characters (², ³ and @ on a German keyboard),
+  so a Ctrl+Alt key would take them. macOS keeps ⌘⌥, as ⌘⇧3 is its screenshot.
 - **Format menu** in the menu bar with the same commands and their keys.
 - **Selection bar:** when text is selected, a small bar of the same commands
   appears beside it. It appears only for a selection and never while typing.
@@ -359,7 +376,7 @@ words, as on the page.
   they're changed.
 - **Counters:** words in the note (its words only: not the marks, link
   addresses, HTML tags or front matter), in the book, today; sprint timer with words
-  gained; zoom. In the colophon, in that order, with the last seal:
+  gained; the page's zoom. In the colophon, in that order, with the last seal:
   - **Today** is net (what's typed less what's cut, so it can fall below
     nothing), on this device, counted from the writer's own changes only: a
     note opened, reloaded from another device, sealed or restored is no one
@@ -375,9 +392,15 @@ words, as on the page.
     sprint's. A sprint under way survives a restart; one found over for more
     than an hour is gone. A clock set back never gives it more time.
   - An undo or redo of Eien's own change (a restore) is no one writing either.
-- **Zoom:** ⌘+ and ⌘− zoom the page in steps of 10%, ⌘0 returns to 100%. Zoom
-  is per device and shown in the status line when it isn't 100%; the panes and
-  the note list keep their size.
+- **Zoom:** ⌘+ and ⌘− (Ctrl elsewhere; also the View menu) zoom in steps of
+  10%, from 50% to 200%, and ⌘0 returns to 100%. With the keyboard in the page
+  (the editor, its sheet, bar or colophon), they zoom the page alone: the
+  sheet, its margins and its line, the panes keeping their size. Anywhere
+  else (the sidebar, the list, nothing chosen) they zoom the whole interface,
+  every pane, as a browser zooms (Electron's own zoom). ⌘0 puts back
+  whichever ⌘+ would change there. Both are per device. The colophon shows the
+  page's zoom when it isn't 100%, as it's the page's; the interface's shows in
+  its own size, and in Settings → Layout. The phone has the page's alone.
 - **Text size:** a setting that scales the text face from its tuned size
   (90%–130%), separately from zoom.
 - **Outline cards:** a book's notes as cards on a board; drag to reorder.
@@ -546,8 +569,8 @@ does nothing.
   `Documents/Eien` for an installed copy, in a portable copy's "Eien Data" beside
   it (`src/app/electron/data-folders.ts`). They hold the scheme
   (day, night or the system's), palette, text face, text size (90–130%),
-  density (comfortable or compact), page frame (sheet or full) and zoom
-  (50–200%), panes (three or two), focus mode, typewriter scrolling and
+  density (comfortable or compact), page frame (sheet or full), the page's
+  zoom and the interface's (each 50–200%), panes (three or two), focus mode, typewriter scrolling and
   spellcheck (macOS). A setting may be one system's alone (`platforms` in the
   schema): the screen shows it only there.
 - An unknown or invalid value in a file is ignored with a warning in the log,
@@ -561,9 +584,11 @@ does nothing.
   set there (`nativeTheme`) before the window first draws, and as
   `data-theme` on the page; the other settings are data attributes and custom
   properties on `<html>` that the tokens follow.
-- Zoom (⌘+, ⌘−, ⌘0, and the View menu) scales the sheet only, with its
-  margins and line; the panes keep their size. Text size scales the text
-  face everywhere.
+- Zoom (⌘+, ⌘−, ⌘0, and the View menu) is two settings, as §4 says: the
+  page's (Page zoom) scales the sheet only, with its margins and line, the
+  panes keeping their size; the interface's (Interface zoom, desktop only)
+  scales every pane, set by the main process on the window. Text size scales
+  the text face everywhere.
 
 Settings are grouped and labeled on the settings screen: **Appearance**,
 **Editor**, **Writing**, **Layout**, **AO3**, **Sync**.

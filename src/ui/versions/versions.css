@@ -137,7 +137,9 @@ ins.diff,
   justify-content: space-between;
   flex: none;
   height: var(--band);
-  padding: 0 calc(var(--eien-space-4) - var(--eien-space-2)) 0 var(--eien-space-4);
+  /* Clear of Windows' and Linux's window controls (../shell/shell.css). */
+  padding: 0 max(calc(var(--eien-space-4) - var(--eien-space-2)), var(--controls-right)) 0
+    var(--eien-space-4);
   background: var(--eien-band);
   border-bottom: var(--eien-hairline) solid var(--eien-rule);
 }

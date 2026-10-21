@@ -1,12 +1,14 @@
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { BrowserWindow, type IpcMainEvent, ipcMain, shell } from 'electron';
+import type { SettingValues } from '../../core/config';
 import { CHANNEL } from '../../platform/bridge';
 import { serveContextMenu } from './context-menu';
+import { frameOptions, serveFrame } from './frame';
 import { serveImport } from './import-session';
 import { isAppUrl, isExternalLink } from './navigation';
 import { serveOut } from './out-session';
-import { serveSettings } from './settings-session';
+import { serveSettings, zoomFactorOf } from './settings-session';
 import { serveVault } from './vault-session';
 
 /** How long the window gets to save before it closes anyway. */
@@ -20,7 +22,8 @@ function appUrl(): string {
   return pathToFileURL(join(import.meta.dirname, '../renderer/index.html')).href;
 }
 
-export async function createMainWindow(): Promise<BrowserWindow> {
+/** The window, as this device's `settings` have it: its zoom, from the first draw. */
+export async function createMainWindow(settings: SettingValues): Promise<BrowserWindow> {
   const url = appUrl();
   const window = new BrowserWindow({
     width: 1280,
@@ -29,7 +32,9 @@ export async function createMainWindow(): Promise<BrowserWindow> {
     minHeight: 480,
     show: false,
     title: 'Eien',
+    ...frameOptions(process.platform, zoomFactorOf(settings)),
     webPreferences: {
+      zoomFactor: zoomFactorOf(settings),
       preload: join(import.meta.dirname, '../preload/preload.cjs'),
       contextIsolation: true,
       sandbox: true,
@@ -57,6 +62,7 @@ export async function createMainWindow(): Promise<BrowserWindow> {
   serveImport(window, vault);
   serveOut(window);
   serveContextMenu(window);
+  serveFrame(window);
   window.once('ready-to-show', () => window.show());
   void window.loadURL(url);
   return window;

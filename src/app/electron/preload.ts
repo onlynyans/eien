@@ -45,6 +45,7 @@ const bridge: Bridge = {
       save().finally(() => ipcRenderer.send(CHANNEL.closeReady));
     });
   },
+  paintControls: (paint) => ipcRenderer.invoke(CHANNEL.paintControls, paint),
 };
 
 contextBridge.exposeInMainWorld('eien', bridge);

@@ -16,9 +16,17 @@ body {
   overflow: hidden;
 }
 
-.shell {
-  /* The top band all three panes share, so their heads line up. */
+/* The top band all three panes share, so their heads line up. */
+:root {
   --band: calc(var(--eien-space-7) + var(--eien-space-2));
+  /* The system's own window controls sit over the bands: macOS's traffic
+     lights at the left, Windows' and Linux's minimize, maximize and close at
+     the right. The window controls overlay says where (env(titlebar-area-*);
+     none on a phone), and the band at that edge keeps clear of them. */
+  --controls-left: env(titlebar-area-x, 0px);
+  --controls-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
+}
+.shell {
   position: relative;
   display: grid;
   grid-template-columns:
@@ -58,6 +66,7 @@ body {
   margin-left: calc(var(--eien-space-1) * -1);
   cursor: col-resize;
   touch-action: none;
+  -webkit-app-region: no-drag; /* it lies over the bands, which drag the window */
   transition: left var(--eien-calm) var(--eien-ease);
 }
 .pane-edge--sidebar {
@@ -97,4 +106,35 @@ body {
 .shell[data-sidebar-shut] .pane-edge--sidebar,
 .shell[data-list-shut] .pane-edge--list {
   display: none;
+}
+
+/* No title bar (spec §4): the panes' top bands take its place and drag the
+   window, and everything in them that's a control stays one. On a phone,
+   or in a browser, app-region means nothing. */
+.sidebar__head,
+.sidebar__strip,
+.list__head,
+.page__bar,
+.versions__head,
+.welcome {
+  -webkit-app-region: drag;
+}
+:is(.sidebar__head, .sidebar__strip, .list__head, .page__bar, .versions__head)
+  :is(button, input, select, textarea, a, [tabindex], [role="group"]),
+.welcome__sheet,
+.menu,
+dialog {
+  -webkit-app-region: no-drag;
+}
+
+/* An unseen band, read for the colours the system's controls are drawn in
+   (./window-controls.ts). */
+.band-probe {
+  position: fixed;
+  visibility: hidden;
+  pointer-events: none;
+  width: 0;
+  height: var(--band);
+  background: var(--eien-band);
+  color: var(--eien-ink-soft);
 }

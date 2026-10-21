@@ -121,6 +121,35 @@ test.describe('formatting', () => {
       .toBe('## *soft* words here\n');
   });
 
+  test('headings: ⌘⌥1–3 on a Mac; Ctrl+Shift+1–3 elsewhere, where Ctrl+Alt is AltGr', async ({
+    app,
+    page,
+    vault,
+  }) => {
+    const mac = process.platform === 'darwin';
+    await open(page, 'Plain');
+    await selectFirstWord(page, 4);
+    // AltGr (Ctrl+Alt) types characters off a Mac: it's no heading key there.
+    if (!mac) {
+      await page.keyboard.press('Control+Alt+2');
+      await page.waitForTimeout(300);
+      expect(readIn(vault, 'Plain.md')).toBe('soft words here\n');
+    }
+    await page.keyboard.press(mac ? 'Meta+Alt+2' : 'Control+Shift+2');
+    await expect
+      .poll(() => readIn(vault, 'Plain.md'), { timeout: 5000 })
+      .toBe('## soft words here\n');
+    // The Format menu shows the same keys.
+    const accelerators = await app.evaluate(({ Menu }) =>
+      Menu.getApplicationMenu()
+        ?.items.find((item) => item.label === 'Format')
+        ?.submenu?.items.filter((item) => item.label.startsWith('Heading'))
+        .map((item) => item.accelerator),
+    );
+    const held = mac ? 'CmdOrCtrl+Alt' : 'CmdOrCtrl+Shift';
+    expect(accelerators).toEqual([`${held}+1`, `${held}+2`, `${held}+3`]);
+  });
+
   test('the selection bar comes for a selection, formats it, and goes when typing', async ({
     page,
     vault,
