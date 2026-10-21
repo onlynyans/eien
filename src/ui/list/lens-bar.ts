@@ -62,7 +62,7 @@ const iconButton = (
   const button: HTMLButtonElement = h(
     'button',
     {
-      class: `icon-button list__${name}`,
+      class: `icon-button icon-button--quiet list__${name}`,
       attrs: { type: 'button', 'aria-label': label, 'data-tip': tip, ...extra },
       on: { click: () => run(button) },
     },
@@ -113,7 +113,7 @@ export function lensParts(
       ? h(
           'button',
           {
-            class: 'icon-button list__arrange',
+            class: 'icon-button icon-button--quiet list__arrange',
             attrs: {
               type: 'button',
               'aria-label': arrange.on ? 'Done arranging' : 'Arrange',

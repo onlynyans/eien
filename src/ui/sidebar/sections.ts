@@ -13,7 +13,7 @@ const part = (head: HTMLElement, control: HTMLElement | undefined, tree: HTMLEle
   h(
     'section',
     { class: 'sidebar__part' },
-    h('div', { class: 'sidebar__section' }, head, control),
+    h('div', { class: 'sidebar__section quiet-row' }, head, control),
     tree,
   );
 

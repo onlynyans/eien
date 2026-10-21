@@ -121,3 +121,42 @@ test('Pinned is always under Library: with nothing pinned, its list says how to 
   await pinned.click();
   await expect(page.locator('.list__empty')).toHaveText(/Nothing pinned yet/);
 });
+
+test('every quiet icon shows by one rule: the row it sits in hovered, in the list as in the sidebar', async ({
+  page,
+}) => {
+  const opacity = (selector: string) =>
+    page
+      .locator(selector)
+      .first()
+      .evaluate((control) => getComputedStyle(control).opacity);
+  const rest = async () => {
+    await page.mouse.move(1, 1);
+    await expect.poll(() => opacity('.list__head .add-button')).toBe('0');
+    await expect.poll(() => opacity('.sidebar__section .add-button')).toBe('0');
+  };
+  /** Hover `row` until its quiet icons have come in (a hover can miss its first move). */
+  const hover = async (row: string) => {
+    const box = await page.locator(row).first().boundingBox();
+    if (!box) throw new Error(`${row} has no box`);
+    await expect(async () => {
+      await page.mouse.move(box.x + box.width / 2, box.y + 4);
+      await page.mouse.move(box.x + box.width / 2 + 2, box.y + 6);
+      expect(await opacity(`${row} .icon-button--quiet`)).toBe('1');
+    }).toPass({ timeout: 5000 });
+  };
+  await rest();
+  // The list's head: the + (New note) and the lens's icons come in together; the sidebar's stay out.
+  await hover('.list__head');
+  expect(await opacity('.list__head [data-key="lens-filter:list"]')).toBe('1');
+  expect(await opacity('.sidebar__section .add-button')).toBe('0');
+  // A sidebar section: its + comes in; the list's stay out.
+  await rest();
+  await hover('.sidebar__section:has([data-key="new-folder"])');
+  expect(await opacity('.list__head .add-button')).toBe('0');
+  // The list's + is New note, with its key in the tooltip, from the keyboard too.
+  await page.keyboard.press('Shift');
+  await page.getByRole('button', { name: 'New note' }).focus();
+  await expect(page.locator('.tooltip__words')).toHaveText('New note');
+  await expect(page.locator('.tooltip__key')).not.toBeEmpty();
+});

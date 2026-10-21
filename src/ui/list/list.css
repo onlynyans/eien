@@ -90,14 +90,14 @@
   grid-column: 1;
   margin: 0;
 }
-.list__head .word-button {
+.list__head .add-button {
   grid-column: 2;
   grid-row: 1;
   justify-self: end;
   margin-right: calc(var(--eien-space-2) * -1);
 }
-/* The lens's controls (./lens-bar.ts): the filter and the sort, icons under New note, shown
-   like the other controls on hover or focus, and always while one is on (a dot says so). */
+/* The lens's controls (./lens-bar.ts): the filter and the sort, icons under New note, quiet
+   as every such control is (chrome/chrome.css), a dot on one that's on. */
 .list__tools {
   grid-column: 2;
   grid-row: 2;
@@ -107,15 +107,7 @@
   margin-right: calc(var(--eien-space-2) * -1);
 }
 .list__tools .icon-button {
-  position: relative;
-  opacity: 0;
-  transition: opacity var(--eien-calm) var(--eien-ease);
-}
-.list:hover .list__tools .icon-button,
-.list__tools .icon-button:focus-visible,
-.list__tools .icon-button[aria-expanded="true"],
-.list__tools .icon-button.is-on {
-  opacity: 1;
+  position: relative; /* for the dot that says it's on */
 }
 .list__tools .icon-button.is-on::after {
   content: "";
@@ -495,7 +487,6 @@
   cursor: grab;
 }
 .list__tools .list__arrange[aria-pressed="true"] {
-  opacity: 1;
   color: var(--eien-ink);
   background: var(--eien-selected);
 }

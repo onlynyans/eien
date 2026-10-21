@@ -296,9 +296,14 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   `--eien-focus` under it, caret in the seal; a note's `.md` after it in mono,
   meta size, faded. A problem shows under it: label size, mono,
   `--eien-caution` on `--eien-caution-wash`, `--eien-radius-s`.
-- **Section +** (`sidebar__add`): an icon button at the section label's right,
-  opacity 0 until the section is hovered or it has focus; always on
-  `hover: none`.
+- **Quiet controls** (`icon-button--quiet`, `chrome/chrome.css`): the + that
+  makes something (`ui/add-button.ts`: New folder and New tag at a section
+  label's right, New note in the list's head) and the lens's filter, sort and
+  Arrange. One rule for every pane: opacity 0 until the row they sit in
+  (`.quiet-row`: a sidebar section, the list's head, the sidebar's lens) is
+  hovered, or they have the keyboard, are open (`aria-expanded`), pressed or
+  on; always shown on `hover: none`. Their own hover, press and focus are the
+  icon button's.
 - **A tag no note carries**: the name faded and italic; under it a hint in
   meta size, italic, pencil, indented as the row's children are.
 - **Chips** (the lens): mono, meta size, ink-soft, a hairline in
