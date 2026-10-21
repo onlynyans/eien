@@ -22,7 +22,31 @@ export interface LensActions {
   filter(next: TagFilter): void;
   /** The vault's tags, for the filter, each with how many notes carry it. */
   tags(): readonly FilterTag[];
+  /** Start arranging the list (Arrange mode), or stop. */
+  arrange?(on: boolean): void;
 }
+
+/**
+ * How rows move (backlog #12, Settings / Writing / Lists, Arranging). `mode`:
+ * only while arranging, started from the list's head; else whenever your
+ * order shows. `on`: arranging now, the lens set aside, grips on the rows.
+ */
+export interface Arrange {
+  readonly mode: boolean;
+  readonly on: boolean;
+}
+
+export const NO_ARRANGE: Arrange = { mode: false, on: false };
+
+/** Whether the list shows your order, nothing filtered out: a folder's, or All Notes'. */
+export const inOwnOrder = (list: NoteList): boolean =>
+  list.sort === 'order' &&
+  !(list.filter !== undefined && filtering(list.filter)) &&
+  (list.folder !== undefined || list.kind === 'all');
+
+/** Whether rows can be dragged into place: in your order, and arranging if that's how it's set. */
+export const canDrag = (list: NoteList, arrange: Arrange): boolean =>
+  inOwnOrder(list) && (!arrange.mode || arrange.on);
 
 /** The sort a list has when none is chosen: its own order where it has one. */
 export const ownSort = (list: NoteList): NoteSort =>
@@ -74,10 +98,35 @@ export interface LensParts {
  * The lens's controls and chips for `list`; none for a search, which has no lens.
  * `where` names the pane it's drawn in, for the controls' lasting keys.
  */
-export function lensParts(list: NoteList, actions: LensActions, where = 'list'): LensParts {
+export function lensParts(
+  list: NoteList,
+  actions: LensActions,
+  where = 'list',
+  arrange: Arrange = NO_ARRANGE,
+): LensParts {
   if (list.kind === 'search' || list.sorts.length === 0 || !list.sort) {
     return { controls: [], chips: null };
   }
+  // Arrange mode: the grip starts arranging and Done stops it; while it's on, the lens waits.
+  const arranger =
+    arrange.mode && list.sorts.includes('order') && actions.arrange
+      ? h(
+          'button',
+          {
+            class: 'icon-button list__arrange',
+            attrs: {
+              type: 'button',
+              'aria-label': arrange.on ? 'Done arranging' : 'Arrange',
+              'data-tip': arrange.on ? 'Done arranging' : 'Arrange: drag rows into your order',
+              'aria-pressed': String(arrange.on),
+              'data-key': `lens-arrange:${where}`,
+            },
+            on: { click: () => actions.arrange?.(!arrange.on) },
+          },
+          icon('grip'),
+        )
+      : null;
+  if (arrange.on && arranger) return { controls: [arranger], chips: null };
   const sort = list.sort;
   const filter = list.filter;
   const own = ownSort(list);
@@ -135,18 +184,21 @@ export function lensParts(list: NoteList, actions: LensActions, where = 'list'):
     }
   }
   return {
-    controls: [filterButton, sortButton],
+    controls: arranger ? [arranger, filterButton, sortButton] : [filterButton, sortButton],
     chips: parts.length > 0 ? h('div', { class: 'list__lens' }, ...parts) : null,
   };
 }
 
-/** Under a folder's head while a lens is on: why its rows don't drag. */
-export const lensLine = (list: NoteList): HTMLElement | null =>
-  list.folder !== undefined &&
-  list.sorts.includes('order') &&
-  (list.sort !== 'order' || (list.filter !== undefined && filtering(list.filter)))
-    ? h('p', {
-        class: 'list__locked',
-        text: 'Sorted or filtered: your order is kept underneath. Clear it to drag.',
-      })
-    : null;
+/** Under the head, why rows don't drag: a lens is on, or (Arrange mode) arranging isn't. */
+export function lensLine(list: NoteList, arrange: Arrange = NO_ARRANGE): HTMLElement | null {
+  if (arrange.on || !list.sorts.includes('order')) return null;
+  const orderable = list.folder !== undefined || list.kind === 'all';
+  const text = !orderable
+    ? null
+    : !inOwnOrder(list)
+      ? 'Sorted or filtered: your order is kept underneath. Clear it to drag.'
+      : arrange.mode
+        ? 'Your order. Choose Arrange to move notes.'
+        : null;
+  return text ? h('p', { class: 'list__locked', text }) : null;
+}

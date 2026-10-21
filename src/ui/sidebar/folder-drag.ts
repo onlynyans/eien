@@ -18,9 +18,11 @@ const FOLDER = '.tree-row__name[data-folder]';
 /** Whether `inside` is the folder `path` or within it. */
 const within = (inside: string, path: string) => inside === path || inside.startsWith(`${path}/`);
 
+/** Watch `tree` for folders dragged; `allowed` says whether they drag now (not in Arrange mode). */
 export function watchFolderDrags(
   tree: HTMLElement,
   drop: (path: string, to: FolderDrop) => void,
+  allowed: () => boolean = () => true,
 ): void {
   let swallowClick = false;
   tree.addEventListener(
@@ -38,6 +40,7 @@ export function watchFolderDrags(
     swallowClick = false;
     if (down.button !== 0 || down.altKey || down.metaKey || down.ctrlKey || down.shiftKey) return;
     if (down.pointerType === 'touch') return; // on a phone, a folder moves by its menu
+    if (!allowed()) return;
     const row = (down.target as Element).closest<HTMLElement>(FOLDER);
     const path = row?.dataset.folder;
     if (!row || !path) return;

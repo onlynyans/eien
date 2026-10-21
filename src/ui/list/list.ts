@@ -6,10 +6,18 @@
 
 import { filtering } from '../../core/tags';
 import { h, wordButton } from '../dom';
+import { icon } from '../icons';
 import { WINDOW_FROM } from '../shell/window-range';
 import { WindowedRows } from '../shell/windowed-rows';
 import type { ListedNote, NoteList } from '../vault/vault-state';
-import { type LensActions, lensLine, lensParts } from './lens-bar';
+import {
+  type Arrange,
+  inOwnOrder,
+  type LensActions,
+  lensLine,
+  lensParts,
+  NO_ARRANGE,
+} from './lens-bar';
 import { noteCount as notes } from './note-count';
 import { type RowActions, rowEvents, rowKeys } from './row-events';
 import { when } from './when';
@@ -68,13 +76,13 @@ export function renderList(
   openPath: string | null,
   actions: ListActions,
   notice: string | null = null,
+  arrange: Arrange = NO_ARRANGE,
 ): void {
   const book = list.kind === 'book';
-  // In its own order, and nothing filtered out: rows can be moved between the others.
-  const ordered =
-    list.folder !== undefined &&
-    list.sort === 'order' &&
-    !(list.filter !== undefined && filtering(list.filter));
+  // Arranging: each row shows its grip.
+  const grips = arrange.on && inOwnOrder(list);
+  // In your order, nothing filtered out: ⌥↑ ⌥↓ move a row (a drag too, as Arranging says).
+  const ordered = inOwnOrder(list);
   const row = (note: ListedNote) =>
     h(
       'li',
@@ -91,6 +99,7 @@ export function renderList(
           },
           on: rowEvents(note.path, actions, ordered),
         },
+        grips ? h('span', { class: 'note-row__grip' }, icon('grip')) : null,
         note.ordinal ? h('span', { class: 'note-row__ord count', text: note.ordinal }) : null,
         h('span', { class: 'note-row__title', text: note.title }),
         h('span', {
@@ -104,7 +113,7 @@ export function renderList(
       ),
     );
 
-  const lens = lensParts(list, actions);
+  const lens = lensParts(list, actions, 'list', arrange);
   const empty =
     list.kind === 'search'
       ? h(
@@ -132,11 +141,11 @@ export function renderList(
   }
   const scrolled = windowed?.element.scrollTop ?? 0;
   if (long && windowed) {
-    windowed.element.className = book ? 'rows rows--book' : 'rows';
+    windowed.element.className = `${book ? 'rows rows--book' : 'rows'}${grips ? ' is-arranging' : ''}`;
     windowed.set(
       list.notes.map((note) => ({
         key: note.path,
-        shows: rowShows(note, book, ordered, note.path === openPath),
+        shows: rowShows(note, book, ordered, note.path === openPath) + (grips ? 'g' : ''),
         make: () => row(note),
       })),
     );
@@ -162,7 +171,7 @@ export function renderList(
       lens.controls.length > 0 ? h('span', { class: 'list__tools' }, ...lens.controls) : null,
       lens.chips,
     ),
-    ...[lensLine(list)].filter((line) => line !== null),
+    ...[lensLine(list, arrange)].filter((line) => line !== null),
     h('p', {
       class: 'list__notice',
       text: notice ?? '',
@@ -171,7 +180,11 @@ export function renderList(
     long && windowed
       ? windowed.element
       : list.notes.length > 0
-        ? h('ul', { class: book ? 'rows rows--book' : 'rows' }, ...list.notes.map(row))
+        ? h(
+            'ul',
+            { class: `${book ? 'rows rows--book' : 'rows'}${grips ? ' is-arranging' : ''}` },
+            ...list.notes.map(row),
+          )
         : empty,
   );
   if (long && windowed) {

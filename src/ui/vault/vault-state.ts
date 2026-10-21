@@ -8,6 +8,7 @@ import {
   nameKey,
   parentOf,
   titleOf,
+  VAULT_ORDER,
   VAULT_PINS,
   VAULT_TAGS,
 } from '../../core/paths';
@@ -29,6 +30,7 @@ import {
   FOLDER_SETTINGS_NAME,
   type FolderNode,
   type FolderSettings,
+  inYourOrder,
   isSyncConflictName,
   NO_FOLDER_SETTINGS,
   orderFolders,
@@ -95,6 +97,8 @@ export class VaultState {
   #tree: FolderNode;
   #tags: readonly TagNode[] = [];
   #pins: readonly string[] = [];
+  /** All Notes in your order, as stored (.eien/order.json). */
+  #allOrder: readonly string[] = [];
   /** The tags made with the sidebar's +, before any note carries them. */
   #made: readonly string[] = [];
   /** Whether each folder is a book, as its settings last read said (the sidebar's BOOK mark). */
@@ -139,12 +143,14 @@ export class VaultState {
    * whose settings are among them is read again; the rest, only when new.
    */
   async refresh(changed: Iterable<string> = []): Promise<void> {
-    const [entries, notes, pins, made] = await Promise.all([
+    const [entries, notes, pins, made, order] = await Promise.all([
       this.#vault.list(),
       this.#vault.notes(),
       this.#vault.read(VAULT_PINS).catch(() => null),
       this.#vault.read(VAULT_TAGS).catch(() => null),
+      this.#vault.read(VAULT_ORDER).catch(() => null),
     ]);
+    this.#allOrder = parsePins(order?.text ?? null);
     this.#entries = entries;
     this.#notes = new Map(notes.map((note) => [note.path, note]));
     this.#tree = buildTree(entries, this.name);
@@ -204,6 +210,11 @@ export class VaultState {
       note: wordsOf(path),
       ...(book.goal ? { goal: book.goal } : {}),
     };
+  }
+
+  /** Every note's path, in All Notes' own order (your order, new notes first). */
+  allOrder(): string[] {
+    return inYourOrder([...this.#notes.values()], this.#allOrder).map((note) => note.path);
   }
 
   /** The names of a folder's own folders, in its order (the vault's top ones for ""). */
@@ -288,15 +299,17 @@ export class VaultState {
     const listed = (paths: Iterable<string>) => [...paths].map((path) => this.#listed(path));
 
     if (selection.kind === 'all') {
-      const by = sort === 'title' ? 'title' : 'modified';
-      const notes = sorted(listed(this.#notes.keys()), by);
+      // Your order by default (backlog #12): new notes at the top until they're placed.
+      const by = sort ?? 'order';
+      const all = listed(this.#notes.keys());
+      const notes = by === 'order' ? inYourOrder(all, this.#allOrder) : sorted(all, by);
       return {
         kind: 'all',
         heading: this.nameOf(selection),
         notes,
         total: notes.length,
         sort: by,
-        sorts: ['title', 'modified'],
+        sorts: ['order', 'title', 'modified'],
       };
     }
     if (selection.kind === 'pinned') {

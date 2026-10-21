@@ -44,6 +44,7 @@ My Vault/
   .eien/
     config.json                vault settings (see §6)
     pinned.json                the pinned notes, in the order pinned (see §4)
+    order.json                 All Notes in your order: a list of paths (see §4)
     tags.json                  tags made before any note carries them (see Tags)
     themes/<name>.json         the writer's own themes, one file each (see §7)
     versions/<note id>/        checkpoints and named versions (see §9)
@@ -447,6 +448,18 @@ CommonMark plus GitHub extensions, and three common additions:
   to that folder first), to the top on the vault's name, and out of its
   folder to the left of its own row. The keyboard goes with it. A folder's
   notes keep their order as its folders move.
+- **All Notes in your order** (the list's default): notes not placed yet at
+  the top, newest first, then your order, kept as a list of paths in
+  `.eien/order.json` (watched, and following a note renamed, moved or
+  trashed, as the pins do). ⌥↑ ⌥↓ and a drag place a note there, as in a
+  folder.
+- **Arranging** (Settings → Writing → Lists): Drag anytime (the default): rows
+  drag whenever your order shows. In Arrange mode: the grip in the list's
+  head (Arrange) starts it, grips show on every row and any sort or filter is
+  set aside so your order shows; Done brings the lens back. Outside it no
+  row drags, and a line under the head says so; ⌥↑ ⌥↓ and the menus still
+  move rows, being on purpose, and the tree's folders move by their keys and
+  menus, not a drag. Not on a phone, which moves rows by their menu.
 - **Tags in your order:** ⌥↑ ⌥↓ on a tag's row move it among the tags beside
   it, kept as an `order` in `.eien/tags.json`, every level in one list.
 - **The lens** over a list (docs/design/explorations/order.md): a sort (its
