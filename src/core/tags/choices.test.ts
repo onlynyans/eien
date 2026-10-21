@@ -37,6 +37,11 @@ describe('the tag field’s choices', () => {
     expect(tagChoices(tree, [], 'new').at(-1)).toEqual({ tag: 'new', count: 0, made: true });
   });
 
+  it('offers a tag made in the sidebar before any note has it (#4), counted 0, not made again', () => {
+    const made = buildTagTree([{ path: 'a.md', tags: ['fic'] }], ['someday']);
+    expect(tagChoices(made, [], 'someday')).toEqual([{ tag: 'someday', count: 0 }]);
+  });
+
   it('lists eight at most, then the new one', () => {
     const many = buildTagTree([
       { path: 'm.md', tags: Array.from({ length: 12 }, (_, i) => `t${i}`) },

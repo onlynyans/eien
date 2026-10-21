@@ -43,6 +43,9 @@ These decide arguments. When a change conflicts with one, the principle wins.
 My Vault/
   .eien/
     config.json                vault settings (see §6)
+    pinned.json                the pinned notes, in the order pinned (see §4)
+    order.json                 All Notes in your order: a list of paths (see §4)
+    tags.json                  tags made before any note carries them (see Tags)
     themes/<name>.json         the writer's own themes, one file each (see §7)
     versions/<note id>/        checkpoints and named versions (see §9)
       2026-10-19T16-40-02Z.md
@@ -87,9 +90,13 @@ My Vault/
   { "order": ["Mending.md", "Fire.md"], "book": { "goal": 40000 } }
   ```
 
-  - `order` is the drag-and-drop order. Files not listed sort after it,
-    alphabetically. Names listed but missing are ignored and dropped on the
-    next write. Reordering never renames files.
+  - `order` is your order, by name: the folder's own folders first, then its
+    notes (`["Wall", "Scarf", "Mending.md", "Fire.md"]`). Names not listed sort
+    after, alphabetically. Names listed but missing are ignored and dropped on
+    the next write. Reordering never renames files. The vault's own
+    `.eien-folder.json` (at its top) holds the top folders' order, so every
+    folder's children are ordered the same way; the design's separate
+    `.eien/order.json` was folded into these files.
   - `book` marks the folder as a book (ordered reading, word goal, exports).
 - The file travels with its folder when the folder is moved or synced.
 
@@ -97,6 +104,12 @@ My Vault/
 
 - In front matter (`tags:`), or inline as `#tag` in the text.
 - Nested with a slash: `#fic/aot` appears under `fic` in the tree.
+- A tag can be made before any note carries it, with the + beside TAGS in the
+  sidebar. Tags are found in notes, so such a tag is kept in
+  `.eien/tags.json` (`{ "made": [...] }`, watched, so another device's shows at
+  once). It's listed faded, in italic, with a line saying how to give it
+  notes, and its menu takes it back out. A tag notes carry has no menu yet:
+  renaming one everywhere is still to be designed.
 - Not tags: `#` inside code, links, URLs, headings (`# Title`), or followed by
   digits only (`#1`).
 - **On the page** (§4): a note's tags show in the place its layout gives them,
@@ -199,16 +212,27 @@ Three panes, each collapsible, with a two-pane option in settings:
 
 1. **Sidebar** — a collapsible tree:
    - **All Notes**, with a count
-   - **Pinned**
-   - **Folders**, nested; a book marked BOOK beside its count
-   - **Tags**, nested by `/`
+   - **Pinned**, with its pin, always: with nothing pinned, its list says how
+     to pin
+   - **Folders**, nested; a book marked BOOK beside its count; a quiet + at
+     the label's right (on hover or keyboard focus; always on a phone) makes
+     a folder, named in place
+   - **Tags**, nested by `/`; the + beside its label makes a tag, named in
+     place (see §2, Tags)
    - Library, Folders and Tags fold and open from their labels (a click, Enter
      or Space), each remembered on this device (§2). An open folder or tag has
      a hairline guide down its children.
    - At the foot: the vault's count, then three icons: day or night (a sun
      or a moon, whichever shows; pressed, the other; System is in
-     Settings), three panes or two, and settings. The sync status's place
-     is beside them (not built yet: [backlog](backlog.md) #10)
+     Settings), three panes or two, and settings. Beside them, the sync
+     status: when Syncthing syncs the vault (a `.stfolder` marker in it, or,
+     on the desktop, in a folder it's in), a sync icon with a tooltip. In the
+     added ink it says "Synced · Syncthing"; for 15 minutes after a note
+     changes that this window didn't change, it's in pencil and says
+     "Changed on another device 4m ago". The window tells the two apart by
+     remembering its own writes for a moment (`ui/vault/own-writes.ts`). Eien
+     only listens: it never starts a sync, and the status writes nothing.
+     With no Syncthing, nothing shows
 2. **Note list** — the notes in the selected folder or tag: title, a line of
    preview, and the date or word count. Sortable by title, modified date or the
    folder's own order (drag to reorder). At its top, on its own band above the
@@ -283,38 +307,6 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   drawing a list, moving through it, switching layouts, a hundred notes
   arriving at once, a rename and a drag never hold it longer than 200 ms
   (the speed budgets, `tests/e2e/budgets.spec.ts`).
-
-### Layouts
-
-Three layouts, a device setting (`appearance.layout`, Settings → Appearance;
-`data-layout` on `<html>`). They differ only in where the controls sit, not
-in what they are or do ([overall.md](design/explorations/overall.md)):
-
-- **Band** (the default): the page's controls in a band above it (views,
-  Compare, Seal, Versions, Focus, and the strip's own control, which hides
-  the band to a lip and brings it back). Corners 2/4/8px.
-- **Slip**: no band; the page's tools float on a raised slip at the
-  blotter's top right, which folds away to its fold. The panes' chevrons are
-  tabs at their edges. Corners 4/8/14px; the sheet takes a 3px corner.
-- **Running head**: one 40px strip across the whole window, the traffic
-  lights in it, then the panes' icons, the breadcrumb and every page tool,
-  always in sight. The sidebar's head sits under it. Corners 3/6/10px.
-
-Every control is a command, defined once (`ui/chrome/commands.ts`): its icon,
-its name, its key, and the menu's command it runs. A layout names its hosts
-and the commands each holds (`ui/chrome/band.ts`, `slip.ts`, `runhead.ts`),
-each command in exactly one host; switching takes one layout's hosts out and
-puts the other's in, and nothing else changes. A host draws its commands as
-icon buttons (`ui/icons.ts`), each with an accessible name, a tooltip with
-its key (after a short hover, or at once from the keyboard) and its state
-(pressed, disabled); a host is a toolbar, its arrows moving along it, and Tab
-reaches every control. A switch leaves the keyboard on the same command in
-the new layout, or on the page. Whether the strip is hidden is per device.
-
-On a phone each layout has its own bottom for the page: Band the top bar
-(the view, Focus, ⋯), Slip a floating slip (the three views, Focus, ⋯),
-Running head a rail at the page's foot (the views, Focus, Seal, ⋯). The ⋯
-holds the rest, as the menu bar does on the desktop.
 
 ### Layouts
 
@@ -449,8 +441,50 @@ CommonMark plus GitHub extensions, and three common additions:
 - **Order:** in a folder's own order, drag a row between others, or Alt+↑/↓,
   or Move up/down in its menu. The order is `.eien-folder.json`'s; a folder
   never ordered gets no file. A note moved in goes last.
-- **Sort** a list by its own order, title or newest; the choice is kept per
-  list, on this device.
+- **Folders in your order** (backlog #12): in the sidebar's tree, ⌥↑ ⌥↓ move a
+  folder among those beside it, ⌥← out of the folder it's in (to just after
+  that folder), ⌥→ into the folder above it; its menu has Move up, Move down
+  and Move out of …. Dragged, a folder goes inside the folder it's let go
+  on, before or after one when let go at that row's top or foot edge (moving
+  to that folder first), to the top on the vault's name, and out of its
+  folder to the left of its own row. The keyboard goes with it. A folder's
+  notes keep their order as its folders move.
+- **All Notes in your order** (the list's default): notes not placed yet at
+  the top, newest first, then your order, kept as a list of paths in
+  `.eien/order.json` (watched, and following a note renamed, moved or
+  trashed, as the pins do). ⌥↑ ⌥↓ and a drag place a note there, as in a
+  folder.
+- **Arranging** (Settings → Writing → Lists): Drag anytime (the default): rows
+  drag whenever your order shows. In Arrange mode: the grip in the list's
+  head (Arrange) starts it, grips show on every row and any sort or filter is
+  set aside so your order shows; Done brings the lens back. Outside it no
+  row drags, and a line under the head says so; ⌥↑ ⌥↓ and the menus still
+  move rows, being on purpose, and the tree's folders move by their keys and
+  menus, not a drag. Not on a phone, which moves rows by their menu.
+- **Tags in your order:** ⌥↑ ⌥↓ on a tag's row move it among the tags beside
+  it, kept as an `order` in `.eien/tags.json`, every level in one list.
+- **The lens** over a list (docs/design/explorations/order.md): a sort (its
+  own order, title or newest) and a tag filter, laid over the list's own
+  order and never changing it. Each is an icon in the list's head; each part
+  that's on is a chip with its ×, and clearing it brings the order back.
+  Both are kept per list, on this device. While a lens is on, a folder's rows
+  don't move (no drag, no Alt+↑/↓), and a line under the head says why.
+  - **The tag filter:** the vault's tags, nested, each left alone, wanted (a
+    filled box, a tick) or kept out (a carmine box, a dash, the name struck
+    through). A press moves a tag on to the next state, and ⌥ with a press (or
+    ⌥Enter) keeps it out at once. With two or more wanted, All of (the
+    default) or Any of decides. A note shows if it has the wanted tags and
+    none of the kept-out ones; a tag counts with the tags under it (#fic
+    finds #fic/aot). Every note clears them all. The list's count says how
+    many of how many.
+  - **From the sidebar's TAGS** (#32): ⇧ and a click on a tag (or ⇧Enter)
+    moves it on in the filter of the list showing, ⌥ and a click (or ⌥Enter)
+    keeps it out at once; a plain click still chooses the tag. A tag in the
+    filter shows it on its row: a tick when wanted, struck in carmine with a
+    dash when kept out. With 3,000 notes it holds to the speed budget.
+  - **With two panes** the tree lists the notes, and the chosen row's lens is
+    in the sidebar, under the search field: the same controls and chips,
+    acting on that row's notes in the tree.
 - **Books:** Make it a book / Not a book, in a folder's menu.
 - **Pinned** notes are listed under Library, in the order pinned
   (`.eien/pinned.json`, watched like the settings). ⇧⌘P (Ctrl+Shift+P) on a

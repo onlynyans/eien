@@ -1,12 +1,16 @@
-// How each list is sorted, remembered on this device (spec §2: per-device
-// state stays out of the vault): in the window's own storage.
+// The lens over each list, remembered on this device (spec §2: per-device
+// state stays out of the vault), in the window's own storage: how it's
+// sorted, and the tag filter laid over it (docs/design/explorations/order.md).
+// Neither ever changes the list's own order.
 
+import { NO_FILTER, readFilter, type TagFilter } from '../../core/tags';
 import type { NoteSort, Selection } from '../vault/vault-state';
 
-const KEY = 'eien.sorts';
+const SORTS_KEY = 'eien.sorts';
+const FILTERS_KEY = 'eien.filters';
 const SORTS: readonly NoteSort[] = ['order', 'title', 'modified'];
 
-/** The list a selection shows, as sorts are remembered by. */
+/** The list a selection shows, as its lens is remembered by. */
 export const listKey = (selection: Selection): string =>
   selection.kind === 'folder'
     ? `folder:${selection.path}`
@@ -14,41 +18,51 @@ export const listKey = (selection: Selection): string =>
       ? `tag:${selection.key}`
       : selection.kind;
 
-function remembered(): Record<string, NoteSort> {
+function stored(key: string): Record<string, unknown> {
   try {
-    const data: unknown = JSON.parse(localStorage.getItem(KEY) ?? '{}');
-    if (typeof data !== 'object' || data === null) return {};
-    return Object.fromEntries(
-      Object.entries(data).filter((entry): entry is [string, NoteSort] =>
-        SORTS.includes(entry[1] as NoteSort),
-      ),
-    );
+    const data: unknown = JSON.parse(localStorage.getItem(key) ?? '{}');
+    return typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
   } catch {
     return {};
   }
 }
 
-/** The sort chosen for a list, if one was. */
-export const sortFor = (list: string): NoteSort | undefined => remembered()[list];
-
-/** A folder renamed or moved: the sorts of it and the folders in it follow. */
-export function followSorts(from: string, to: string): void {
+function store(key: string, values: Record<string, unknown>): void {
   try {
-    const moved = Object.entries(remembered()).map(([key, sort]) => {
-      const path = key.startsWith('folder:') ? key.slice('folder:'.length) : null;
-      const inside = path !== null && (path === from || path.startsWith(`${from}/`));
-      return [inside ? `folder:${to}${path.slice(from.length)}` : key, sort];
-    });
-    localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(moved)));
+    localStorage.setItem(key, JSON.stringify(values));
   } catch {
-    // Storage refused: the folder opens in its default sort.
+    // Storage refused: the lens holds until the window closes.
   }
 }
 
-export function rememberSort(list: string, sort: NoteSort): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify({ ...remembered(), [list]: sort }));
-  } catch {
-    // Storage refused: the sort holds until the window closes.
+/** The sort chosen for a list, if one was. */
+export function sortFor(list: string): NoteSort | undefined {
+  const sort = stored(SORTS_KEY)[list];
+  return SORTS.includes(sort as NoteSort) ? (sort as NoteSort) : undefined;
+}
+
+export function rememberSort(list: string, sort: NoteSort | undefined): void {
+  const { [list]: _, ...rest } = stored(SORTS_KEY);
+  store(SORTS_KEY, sort === undefined ? rest : { ...rest, [list]: sort });
+}
+
+/** The tag filter laid over a list; none if there isn't one. */
+export const filterFor = (list: string): TagFilter =>
+  list in stored(FILTERS_KEY) ? readFilter(stored(FILTERS_KEY)[list]) : NO_FILTER;
+
+export function rememberFilter(list: string, filter: TagFilter): void {
+  const { [list]: _, ...rest } = stored(FILTERS_KEY);
+  store(FILTERS_KEY, filter.tags.length === 0 ? rest : { ...rest, [list]: filter });
+}
+
+/** A folder renamed or moved: the lens of it and of the folders in it follows. */
+export function followSorts(from: string, to: string): void {
+  for (const key of [SORTS_KEY, FILTERS_KEY]) {
+    const moved = Object.entries(stored(key)).map(([list, value]) => {
+      const path = list.startsWith('folder:') ? list.slice('folder:'.length) : null;
+      const inside = path !== null && (path === from || path.startsWith(`${from}/`));
+      return [inside ? `folder:${to}${path.slice(from.length)}` : list, value];
+    });
+    store(key, Object.fromEntries(moved));
   }
 }

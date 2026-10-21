@@ -36,6 +36,8 @@ const actions = () =>
     newNote: vi.fn(),
     clearSearch: vi.fn(),
     sort: vi.fn(),
+    filter: vi.fn(),
+    tags: vi.fn(() => []),
   }) satisfies ListActions;
 
 let container: HTMLElement;
@@ -171,7 +173,8 @@ describe('renderList', () => {
     const run = actions();
     renderList(container, folder(['a.md']), null, run);
     const sort = container.querySelector<HTMLButtonElement>('.list__sort');
-    expect(sort?.textContent).toBe('Newest');
+    expect(sort?.querySelector('svg.icon')).not.toBeNull(); // controls are icons
+    expect(sort?.dataset.tip).toBe('Sort');
     expect(sort?.getAttribute('aria-label')).toBe('Sorted by newest');
     sort?.click();
     const choices = [...document.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]')];
@@ -217,8 +220,7 @@ describe('renderList', () => {
 
     // Fails today (docs/backlog.md, #35): `windowed.set` hands the keyboard to the list before
     // renderList reads which row had it, and putting the list back drops it to the body.
-    // When this passes, drop `.fails`.
-    it.fails('keeps the keyboard on the note a redraw moved out of sight', () => {
+    it('keeps the keyboard on the note a redraw moved out of sight', () => {
       long(many());
       row('n0.md').focus();
       const moved = folder([...Array.from({ length: 2999 }, (_, i) => `n${i + 1}.md`), 'n0.md']);

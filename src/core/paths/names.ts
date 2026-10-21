@@ -53,6 +53,12 @@ export const VAULT_CONFIG = '.eien/config.json';
 /** The vault's pinned notes, beside its settings, and watched as they are. */
 export const VAULT_PINS = '.eien/pinned.json';
 
+/** The tags made before any note carries them (core/tags/made.ts), beside the pins. */
+export const VAULT_TAGS = '.eien/tags.json';
+
+/** All Notes in your order (core/vault/pins.ts), a list of paths as the pins are. */
+export const VAULT_ORDER = '.eien/order.json';
+
 /** A folder's own settings (spec §2): its order, and whether it's a book. Watched, beside its notes. */
 export const FOLDER_SETTINGS_NAME = '.eien-folder.json';
 
@@ -65,12 +71,13 @@ const THEME_FILE = /^\.eien\/themes\/[^./][^/]*\.json$/i;
 
 /**
  * A change a watcher reports: nothing hidden (temp files, dot-files, .eien)
- * but the vault's settings and pins, a folder's settings, a note's seals
+ * but the vault's settings, pins, made tags and All Notes' order, a folder's settings, a note's seals
  * (another device's seal shows in the versions at once) and the writer's
  * themes (another device's change to one shows at once).
  */
 export function isWatchedPath(path: string): boolean {
-  if (path === VAULT_CONFIG || path === VAULT_PINS || SEAL_FILE.test(path)) return true;
+  if ([VAULT_CONFIG, VAULT_PINS, VAULT_TAGS, VAULT_ORDER].includes(path)) return true;
+  if (SEAL_FILE.test(path)) return true;
   if (THEME_FILE.test(path)) return true;
   const parts = path.split('/');
   const last = parts.length - 1;

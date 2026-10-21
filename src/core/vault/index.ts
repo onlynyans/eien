@@ -13,6 +13,7 @@ export {
   type FolderChange,
   type FolderSettings,
   NO_FOLDER_SETTINGS,
+  orderFolders,
   orderNames,
   parseFolderSettings,
   placedBefore,
@@ -22,5 +23,5 @@ export {
   withoutInOrder,
 } from './folder-settings';
 export { HOME_EXPORTS, HOME_FOLDER, HOME_VAULT } from './home';
-export { movedPins, parsePins, pinsText, withoutPins, withPin } from './pins';
+export { inYourOrder, movedPins, parsePins, pinsText, withoutPins, withPin } from './pins';
 export { buildTree, byName, type FolderNode } from './tree';

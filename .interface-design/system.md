@@ -282,8 +282,47 @@ the sync icon's place at the sidebar's foot (`SidebarFoot.sync`), and C's
 strip ground (`--runhead-ground`: the Running head setting, one of the
 theme's surfaces, the desk by default; built in 3G).
 
-Built in 3D (#13, #14): the tag set (`ui/page/tag-set.ts`, `tag-set.css`) in
-each layout's tag slot, slips under the title on a phone; the formatting bar
-as the `format` slot's host: Band's second row on the band ground, Slip's own
-raised slip at the blotter's top left, Running head's raised rail down the
-margin, each with the word button's states, pressed where its format is on.
+## Built patterns (stage 3, wave 2, 2026-10-21)
+
+As shipped; see `docs/design/explorations/specimen.html`, As built.
+
+- **Row menu** (`ui/menu/`): raised paper, `--eien-radius-m`; the row's name
+  as its head (mono, label size, tracked capitals, pencil, `aria-hidden`);
+  each choice a grid of icon (16px), word, key (mono, label size, pencil,
+  drawn from `data-keys` so the choice's name is its word alone); the trash
+  last after a rule, in `--eien-danger`. No keys on a coarse pointer.
+- **Name field** (`ui/list/name-field.ts`): laid over the row's name in its
+  own face, size and weight (copied from the name); a hairline in
+  `--eien-focus` under it, caret in the seal; a note's `.md` after it in mono,
+  meta size, faded. A problem shows under it: label size, mono,
+  `--eien-caution` on `--eien-caution-wash`, `--eien-radius-s`.
+- **Section +** (`sidebar__add`): an icon button at the section label's right,
+  opacity 0 until the section is hovered or it has focus; always on
+  `hover: none`.
+- **A tag no note carries**: the name faded and italic; under it a hint in
+  meta size, italic, pencil, indented as the row's children are.
+- **Chips** (the lens): mono, meta size, ink-soft, a hairline in
+  `--eien-rule-strong`, `--eien-radius-s`, an 18px × at the end; a kept-out
+  tag struck through in `--eien-removed`. A control that's on carries a 4px
+  ink-soft dot at its top right.
+- **Three-state box** (the tag filter): 18px, `--eien-radius-s`; left alone
+  an empty hairline box; wanted filled ink-soft with a paper tick; kept out a
+  carmine hairline with a dash, the name struck through.
+- **Locked line**: under a list's head, preview size, italic, pencil, a soft
+  rule under it: why rows don't move.
+- **Sync status**: a 14px sync icon in `--eien-added` while quiet, pencil
+  after another device's change; its words only in the tooltip.
+- **Grip**: 12px, pencil, at a row's own left edge (absolutely placed, out of
+  the row's columns, so it never covers a nested branch's guide).
+- **Tags on the page** (`ui/page/tag-set.ts`, `tag-set.css`): mono words in
+  pencil in each layout's tag slot (A's running head, B's slips under the
+  title, C's colophon pills; slips at a finger's size on a phone); a × for a
+  front-matter tag, on hover or focus, that takes no room till then (in A it
+  hangs in the gap after its tag, so the hovered tag never moves); a 4px
+  faded dot after a tag typed in the text; the + field's menu is a menu's
+  raised paper, the chosen choice on `--eien-selected`, "Make #…" after a
+  soft rule.
+- **Formatting bar**: the `format` slot's host. Band's second row on the
+  band ground; Slip's own raised slip at the blotter's top left; Running
+  head's raised rail down the margin. Its buttons have the icon control's
+  states, pressed where the format is on at the caret.

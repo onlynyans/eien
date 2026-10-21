@@ -3,12 +3,12 @@
 
 import { FOLDER_SETTINGS_NAME, nameKey } from '../paths';
 import { withoutBom } from '../text';
-import { byName } from './tree';
+import { byName, type FolderNode } from './tree';
 
 export { FOLDER_SETTINGS_NAME };
 
 export interface FolderSettings {
-  /** Note names in the writer's order. */
+  /** Names in the writer's order: the folder's notes, and its own folders (backlog #12). */
   readonly order: readonly string[];
   /** Present when the folder is a book. */
   readonly book: { readonly goal?: number } | null;
@@ -141,4 +141,23 @@ export function presentInOrder(order: readonly string[], names: readonly string[
   // orderNames puts the listed names that are there first, spelled as the files are.
   const listed = names.filter((name) => listedAt(order, name) >= 0).length;
   return orderNames(names, order).slice(0, listed);
+}
+
+/**
+ * Each folder's own folders in the writer's order (`orderOf` a folder's
+ * path: its settings' order, which names its notes and folders alike), the
+ * rest by name. The vault's own top folders take the vault's settings.
+ */
+export function orderFolders(node: FolderNode, orderOf: (path: string) => readonly string[]): void {
+  const order = orderOf(node.path);
+  if (order.length > 0 && node.folders.length > 1) {
+    const at = new Map(
+      orderNames(
+        node.folders.map((folder) => folder.name),
+        order,
+      ).map((name, i) => [name, i]),
+    );
+    node.folders.sort((a, b) => (at.get(a.name) ?? 0) - (at.get(b.name) ?? 0));
+  }
+  for (const folder of node.folders) orderFolders(folder, orderOf);
 }

@@ -368,6 +368,8 @@ test.describe('two panes', () => {
     // Three panes, the list shut: the tree shows them; the list opened, they go back to it.
     await page.getByRole('button', { name: 'Two panes', pressed: true }).click();
     await clickMenu(app, 'View', 'Toggle Note List');
+    // The field moves to the sidebar with the list shut: typed before it's there, it searches the list.
+    await expect(page.locator('.sidebar__search').getByRole('searchbox')).toBeVisible();
     await search.fill('wool');
     await expect(treeNotes(page)).toHaveText(['Wool']);
     await toggleOf(page, 'list').click();
@@ -385,7 +387,8 @@ test.describe('two panes', () => {
         await twoPanes(page);
         await treeNote(page, 'Ideas').click({ button: 'right' });
         await page.getByRole('menuitem', { name: 'Pin' }).click();
-        await expect(folder(page, 'Pinned')).toBeVisible();
+        // Pinned is always there: its count says the pin is in.
+        await expect(folder(page, 'Pinned').locator('.count')).toHaveText('1');
         await expect.poll(() => read(vault, '.eien/pinned.json')).toContain('Ideas.md');
 
         await folder(page, 'Fic').click();

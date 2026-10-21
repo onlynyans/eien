@@ -15,6 +15,10 @@ python3 -m http.server 4173 --directory docs/design
 
 Then open <http://127.0.0.1:4173/explorations/overall.html>.
 
+All of these are now built (stage 3, October 2026); each `.md` keeps the
+reasoning, and [specimen.html](specimen.html) ends with the components as
+they shipped.
+
 | Page | What it explores | Backlog |
 |---|---|---|
 | [overall.html](overall.html) · [md](overall.md) | The whole window, desktop and phone, in three explorations: A · Band, B · Slip, C · Running head. Focus mode, rename in place, and how one framework carries all three | #1, #3–#8, #10, #11, #13–#17, #25, #27 |
