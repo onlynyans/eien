@@ -66,7 +66,8 @@ test('F2 renames a note in its row: Enter keeps the name, and the file has it', 
   await page.keyboard.type('Frost');
   await page.keyboard.press('Enter');
   await expect.poll(() => existsSync(at(vault, 'Frost.md'))).toBe(true);
-  expect(existsSync(at(vault, 'Ideas.md'))).toBe(false);
+  // A move links the new name, then unlinks the old: the old one goes a moment after.
+  await expect.poll(() => existsSync(at(vault, 'Ideas.md'))).toBe(false);
   expect(readFileSync(at(vault, 'Frost.md'), 'utf8')).toBe('Snow on the walls.\n');
   await expect(row(page, 'Frost')).toBeFocused();
   await expect(field(page)).toHaveCount(0);
@@ -188,6 +189,6 @@ test.describe('in a long list', () => {
     await page.keyboard.type('The last one');
     await page.keyboard.press('Enter');
     await expect.poll(() => existsSync(at(vault, 'The last one.md'))).toBe(true);
-    expect(existsSync(at(vault, path ?? ''))).toBe(false);
+    await expect.poll(() => existsSync(at(vault, path ?? ''))).toBe(false);
   });
 });
