@@ -3,6 +3,7 @@
 
 import type { SettingValues } from '../../core/config';
 import { h, wordButton } from '../dom';
+import { noteCount } from '../list/note-count';
 
 type Scheme = SettingValues['appearance.scheme'];
 
@@ -41,7 +42,7 @@ export function sidebarFoot(model: FootModel, actions: FootActions): HTMLElement
       text: model.notice ?? '',
       attrs: { role: 'status', hidden: !model.notice },
     }),
-    h('p', { class: 'count sidebar__count', text: `${model.noteCount.toLocaleString()} notes` }),
+    h('p', { class: 'count sidebar__count', text: noteCount(model.noteCount) }),
     h(
       'div',
       { class: 'sidebar__foot-row' },

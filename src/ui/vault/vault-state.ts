@@ -72,6 +72,8 @@ export class VaultState {
   #tree: FolderNode;
   #tags: readonly TagNode[] = [];
   #pins: readonly string[] = [];
+  /** Whether each folder is a book, as its settings last read said (the sidebar's BOOK mark). */
+  #bookOf = new Map<string, boolean>();
   readonly #vault: VaultReader;
 
   constructor(vault: VaultReader, name: string) {
@@ -88,12 +90,21 @@ export class VaultState {
     return this.#tags;
   }
 
+  /** The folders that are books, by path. */
+  get books(): ReadonlySet<string> {
+    return new Set([...this.#bookOf].filter(([, book]) => book).map(([folder]) => folder));
+  }
+
   /** The pinned notes that are there, in the order they were pinned. */
   get pins(): readonly string[] {
     return this.#pins.filter((path) => this.#notes.has(path));
   }
 
-  async refresh(): Promise<void> {
+  /**
+   * Read the vault again. `changed` are the paths the watcher named: a folder
+   * whose settings are among them is read again; the rest, only when new.
+   */
+  async refresh(changed: Iterable<string> = []): Promise<void> {
     const [entries, notes, pins] = await Promise.all([
       this.#vault.list(),
       this.#vault.notes(),
@@ -104,6 +115,31 @@ export class VaultState {
     this.#tree = buildTree(entries, this.name);
     this.#tags = buildTagTree(notes);
     this.#pins = parsePins(pins?.text ?? null);
+    await this.#readBooks(changed);
+  }
+
+  /** Which folders are books: a folder's settings are read when it's new, or they changed. */
+  async #readBooks(changed: Iterable<string>): Promise<void> {
+    for (const path of changed) {
+      if (baseName(path) === FOLDER_SETTINGS_NAME) this.#bookOf.delete(parentOf(path));
+    }
+    const folders: string[] = [];
+    const walk = (node: FolderNode) => {
+      for (const folder of node.folders) {
+        folders.push(folder.path);
+        walk(folder);
+      }
+    };
+    walk(this.#tree);
+    const known = new Map(this.#bookOf);
+    await Promise.all(
+      folders
+        .filter((folder) => !known.has(folder))
+        .map(async (folder) =>
+          known.set(folder, (await this.folderSettings(folder)).book !== null),
+        ),
+    );
+    this.#bookOf = new Map(folders.map((folder) => [folder, known.get(folder) === true]));
   }
 
   /** A folder's own settings: its order, and whether it's a book. */

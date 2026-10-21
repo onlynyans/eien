@@ -7,6 +7,7 @@
 import { h, wordButton } from '../dom';
 import { openMenu } from '../menu/menu';
 import type { ListedNote, NoteList, NoteSort } from '../vault/vault-state';
+import { noteCount as notes } from './note-count';
 import { type RowActions, rowEvents, rowKeys } from './row-events';
 import { when } from './when';
 
@@ -15,8 +16,6 @@ export interface ListActions extends RowActions {
   clearSearch(): void;
   sort(sort: NoteSort): void;
 }
-
-const notes = (n: number) => `${n.toLocaleString()} ${n === 1 ? 'note' : 'notes'}`;
 
 export const SORT_NAMES: Record<NoteSort, string> = {
   order: 'Order',

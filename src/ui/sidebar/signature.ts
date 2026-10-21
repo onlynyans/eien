@@ -42,6 +42,7 @@ export function sidebarSignature(
     readonly notes: ReadonlyMap<string, NoteList>;
     readonly results: NoteList | null;
     readonly openNote: string | null;
+    readonly books: ReadonlySet<string>;
     readonly notice: string | null;
     readonly scheme: string;
   },
@@ -60,6 +61,7 @@ export function sidebarSignature(
       .map(([id, list]) => [id, listShown(list)]),
     listShown(model.results),
     model.openNote,
+    [...model.books].sort(),
     model.notice,
     model.scheme,
   ]);

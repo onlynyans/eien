@@ -260,7 +260,7 @@ export async function showVault(
     page.focus(true); // into the new note, to write
   }
 
-  const refresh = () => state.refresh().then(redraw);
+  const refresh = (changed?: Iterable<string>) => state.refresh(changed).then(redraw);
 
   const stopFollowing = follow({
     vault: bridge.vault,

@@ -7,6 +7,7 @@
 @import "./base.css";
 @import "../shell/shell.css";
 @import "../sidebar/sidebar.css";
+@import "../sidebar/tree.css";
 @import "../list/list.css";
 @import "../page/page.css";
 @import "../versions/versions.css";

@@ -24,8 +24,8 @@ export interface FollowOf {
   readonly organizer: Organizer;
   /** The sidebar's tree, where notes are dragged too. */
   readonly tree: HTMLElement;
-  /** Read the vault again, then draw. */
-  refresh(): Promise<void>;
+  /** Read the vault again (what the watcher named, read afresh), then draw. */
+  refresh(changed?: Iterable<string>): Promise<void>;
   redraw(): Promise<void>;
   /** Run a file operation, then read the vault again (one at a time). */
   act(operation: () => Promise<unknown>): Promise<void>;
@@ -42,7 +42,7 @@ export function follow(of: FollowOf): () => void {
     if (note.path && touches(note.path, changed)) void note.session?.diskChanged();
     if (changed.has(VAULT_CONFIG)) void settings.reload(); // changed on another device
     of.commands.parts.diskChanged(changed); // another device sealed the open note
-    void of.refresh();
+    void of.refresh(changed);
   });
   const stopSettings = settings.onChange((values, before) => {
     of.panes.setTwo(values['layout.panes'] === 'two'); // redraws when it changes

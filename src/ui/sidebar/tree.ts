@@ -26,6 +26,8 @@ export interface TreeModel {
   readonly results: NoteList | null;
   /** The note on the page. */
   readonly openNote: string | null;
+  /** The folders that are books, marked BOOK. */
+  readonly books: ReadonlySet<string>;
 }
 
 export interface TreeActions extends RowActions {
@@ -73,6 +75,20 @@ export function atDepth<T extends HTMLElement>(item: T, depth: number): T {
   return item;
 }
 
+/** The disclosure triangle, drawn so it turns (to its button's aria-expanded) rather than swaps. */
+export const twisty = (): HTMLElement =>
+  h('span', { class: 'twisty', attrs: { 'aria-hidden': 'true' } });
+
+/**
+ * An open row's rows, in a group of their own at the row's depth: the
+ * hairline guide down its children runs down the group (spec §4; the
+ * mockup's `.tree [role='group']`). Nothing under it, no group.
+ */
+const group = (depth: number, rows: HTMLElement[]): HTMLElement[] =>
+  rows.length > 0
+    ? [atDepth(h('li', { class: 'tree-group' }, h('ul', { class: 'tree' }, ...rows)), depth)]
+    : [];
+
 export class TreeRows {
   readonly #model: TreeModel;
   readonly #actions: TreeActions;
@@ -104,17 +120,16 @@ export class TreeRows {
       if (field) return [field];
       const selection: Selection = { kind: 'folder', path: folder.path };
       const parent = folder.folders.length > 0 || (this.#model.two && folder.notes.length > 0);
-      const [row] = this.#branch(
-        folder.name,
+      const row = this.#row(
         folder.name,
         folder.noteCount,
         selection,
         depth,
-        parent,
+        parent ? this.#twist(folder.path, folder.name) : undefined,
       );
       return this.#model.open.has(folder.path)
-        ? [row as HTMLElement, ...this.folders(folder, depth + 1, edit)]
-        : [row as HTMLElement];
+        ? [row, ...group(depth, this.folders(folder, depth + 1, edit))]
+        : [row];
     });
     return [...own, ...this.#notes(openId({ kind: 'folder', path: node.path }), depth)];
   }
@@ -124,17 +139,20 @@ export class TreeRows {
       const label = h('span', {}, h('span', { class: 'tree-row__hash', text: '#' }), tag.name);
       const selection: Selection = { kind: 'tag', key: tag.key };
       const parent = tag.children.length > 0 || (this.#model.two && tag.count > 0);
-      const [row, ...notes] = this.#branch(
+      const id = tagId(tag.key);
+      const row = this.#row(
         label,
-        `#${tag.tag}`,
         tag.count,
         selection,
         depth,
-        parent,
+        parent ? this.#twist(id, `#${tag.tag}`) : undefined,
       );
-      return this.#model.open.has(tagId(tag.key))
-        ? [row as HTMLElement, ...this.tags(tag.children, depth + 1), ...notes]
-        : [row as HTMLElement];
+      return this.#model.open.has(id)
+        ? [
+            row,
+            ...group(depth, [...this.tags(tag.children, depth + 1), ...this.#notes(id, depth + 1)]),
+          ]
+        : [row];
     });
   }
 
@@ -143,37 +161,30 @@ export class TreeRows {
     return list.notes.map((note) => this.#note(note, 0, list, 'results'));
   }
 
-  /** A row, and with two panes, the notes under it when it's open. */
-  #branch(
-    label: Node | string,
-    name: string,
-    count: number,
-    selection: Selection,
-    depth = 0,
-    // Library rows hold notes only with two panes; a folder or tag says whether it holds anything.
-    parent = this.#model.two,
-  ): HTMLElement[] {
+  /** A Library row (they hold notes only with two panes), and the notes under it when it's open. */
+  #branch(label: string, name: string, count: number, selection: Selection): HTMLElement[] {
     const id = openId(selection);
-    const opener = parent ? this.#twist(id, name) : undefined;
-    const row = this.#row(label, count, selection, depth, opener);
-    const under =
-      selection.kind === 'folder' || !this.#model.open.has(id) ? [] : this.#notes(id, depth + 1);
-    return [row, ...under];
+    const opener = this.#model.two ? this.#twist(id, name) : undefined;
+    const row = this.#row(label, count, selection, 0, opener);
+    return [row, ...(this.#model.open.has(id) ? group(0, this.#notes(id, 1)) : [])];
   }
 
   #twist(id: string, name: string): HTMLElement {
     const open = this.#model.open.has(id);
-    return h('button', {
-      class: 'tree-row__twist',
-      text: open ? '▾' : '▸',
-      attrs: {
-        type: 'button',
-        'aria-expanded': String(open),
-        'aria-label': `${open ? 'Close' : 'Open'} ${name}`,
-        'data-key': `twist:${id}`,
+    return h(
+      'button',
+      {
+        class: 'tree-row__twist',
+        attrs: {
+          type: 'button',
+          'aria-expanded': String(open),
+          'aria-label': `${open ? 'Close' : 'Open'} ${name}`,
+          'data-key': `twist:${id}`,
+        },
+        on: { click: () => this.#actions.toggle(id) },
       },
-      on: { click: () => this.#actions.toggle(id) },
-    });
+      twisty(),
+    );
   }
 
   #row(
@@ -212,6 +223,9 @@ export class TreeRows {
             },
           },
           h('span', { class: 'tree-row__label' }, label),
+          folder !== undefined && this.#model.books.has(folder)
+            ? h('span', { class: 'book-mark', text: 'Book' })
+            : null,
           h('span', { class: 'count', text: count.toLocaleString() }),
         ),
       ),
