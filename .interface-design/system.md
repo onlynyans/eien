@@ -187,20 +187,81 @@ Every control has hover, pressed, keyboard focus and disabled. Focus is a 2px
 ring in the focus ink (inset on rows). Hover styles apply only where a pointer
 hovers, so a tapped control doesn't stay lit on touch.
 
-## Open for the design pass
+## Decided patterns (design pass, 2026-10-21)
 
-Decisions the approved design doesn't settle yet, from `docs/backlog.md`:
+From the explorations in `docs/design/explorations` the owner chose; each
+page there shows them working.
 
-- **The icon set and its style** (#26), first: one set, drawn as inline
-  SVGs in ink (no icon font, no fetch), a stroke weight that sits with the
-  hairlines, and which controls keep a word. Then sun and moon for day or
-  night, settings and the panes (#8), chevrons to shut panes (#15), and the
-  three views (#17): edit, code, book.
-- **The radius scale** (#27): its steps, and which surfaces take which (a
-  button, a field, a menu, a panel, the sheet).
-- **Where the two type settings sit** (#24, #25), with the rest of Settings.
-- **Settings** (#18) has no mockup or pattern yet.
-- **The title bar's strip** (#1): what, if anything, sits beside the traffic
-  lights.
-- **Tags on the page** (#13), **the formatting bar** (#14) and **the strip
-  that hides** (#16) need places on the page.
+- **Icons** (#26): Eien's own set, drawn on a 16-unit grid with round ends
+  and joins, stroke `--eien-icon-stroke` (1.25), in `currentColor`, as
+  inline SVG (`ICONS` in `explorations/_src/shared.js`; `ui/icons.ts` in the
+  app). Controls are a 28px `.icon-button` square with the word button's
+  states; each has an accessible name and a tooltip with its key. The
+  formatting bar's bold, italic, underline and strikethrough are drawn too,
+  never letters. The seal stays itself as the Seal control.
+- **Tooltip:** raised paper, `--eien-radius-s`, the machine voice, the key
+  after the word in pencil, after a short hover.
+- **Seal button:** no background; a hairline border, transparent until
+  hover, then `--eien-rule`.
+- **Shut panes:** a pane's ‹ (on hover, at its head) shuts it; the way back
+  is a › in the same spot of the pane beside it. A shut sidebar leaves a
+  strip of desk with the traffic lights and the seal, which opens it.
+- **Page parts each have a row** (`.page`: bar, formatting bar, scroll,
+  status), and the status bar has a fixed height (`--status-h`, 40px), so
+  nothing grows into a hidden part's space.
+- **Focus mode** is a control in the page's toolbar: three lines, only the
+  middle one in full ink. It dims every paragraph but the caret's.
+- **Tags on the page** (#13): mono words at the right of the running head,
+  a + on hover and the # key to add, a field with the vault's tags and
+  "Make #…"; a tag typed in the text shows with a dot and no ×.
+- **Rename in place:** for notes, folders and tags alike. The name becomes
+  its own field (same face, size, weight; selected; a focus-ink hairline
+  under it; a note's `.md` faded after it). Enter keeps, Esc puts back,
+  leaving keeps; a taken name shows as an ochre line under the row. It
+  starts from the right-click menu, F2 or a double-click.
+- **Right-click menu:** raised paper, `--eien-radius-m`, the row's name as a
+  mono head, an icon and a word per choice, the key in pencil; the trash
+  last, in carmine, after a rule.
+- **Settings over the window** (#18): a sheet at `--settings-inset`
+  (64px 112px), `--eien-radius-l`, the float shadow, on the scrim. It moves
+  by its head and resizes by its right edge, bottom edge and corner, stays
+  in the window, is at least 560 × 380, keeps its box per device, and goes
+  back on a double-click of its head.
+  - **Breadcrumb head:** `SETTINGS / CATEGORY / TAB` in the machine voice,
+    slashes faded, the last part ink-soft.
+  - **Category label** (new element): mono capitals, tracked, faded, with a
+    12px icon: a part title. Its tabs sit under it in the text face; the
+    chosen tab has the selected fill and the seal's rule, as a row does.
+  - A setting is its name (text face), a description (pencil), then its
+    control: a segmented well of words or icons, face cards set in each
+    face, swatches of theme surfaces, or a stepper.
+- **Themes:** a category of two tabs.
+  - **Gallery:** Eien's own themes as cards: desk | paper with ink | night
+    paper with the seal, then the name, its kanji, a note.
+  - **Custom:** the writer's own, one named file each in `.eien/themes/`,
+    as the same cards, plus a dashed "New theme" card. The chosen one opens
+    a mix panel on the band: its name as an in-place field, its file in
+    mono, the trash; day and night strips (surfaces, the three inks, the
+    seal); four knobs (paper, warmth, ink, seal) whose tracks show the
+    colours they choose between (the one place a gradient carries meaning);
+    a contrast verdict; saved as it changes. Each ink is fitted to Eien's
+    contrast (`fitInk`), so every mix passes, by day and night.
+- **Your order and a lens over it** (#12): every list keeps your order; a
+  sort or the tag filter is a lens shown as a chip with ×. Arranging is a
+  setting: drag anytime (default) or only in Arrange mode (the grip icon in
+  a pane's head). The grip sits at a row's own left edge.
+  - **Drop line:** in the tree, a 2px ink-soft marker at the target's
+    depth (it steps out a level to leave a folder); in the list, a 2px
+    ink-soft line the list's full width.
+  - **Three-way tag filter:** each tag left alone (empty box), wanted
+    (filled, ticked) or kept out (carmine, struck through); one press moves
+    it on, ⌥ keeps it out; All of / Any of for two or more wanted.
+
+## Still open
+
+- **The window's layout:** A · Band, B · Slip or C · Running head (40px,
+  one strip across the window, the sidebar's head under the lights). One
+  framework can carry all three as a setting (`explorations/overall.md`).
+- **The radius scale's steps:** each exploration tries its own
+  (2/4/8, 4/8/14, 3/6/10).
+- **The phone's bottom** for the chosen layout, and the app's icon (#21).

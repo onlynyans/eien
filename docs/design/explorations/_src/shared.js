@@ -45,6 +45,17 @@ const ICONS = {
   folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
   palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
   type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+  bold: '<path d="M4.5 2.8h4.2a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 8h4.9a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 2.8v10.4"/>',
+  italic: '<path d="M7.2 2.8h5M3.8 13.2h5M10 2.8L6 13.2"/>',
+  underline: '<path d="M4.5 2.8v4.6a3.5 3.5 0 0 0 7 0V2.8"/><path d="M3.5 13.5h9"/>',
+  strike: '<path d="M2.5 8h11"/><path d="M11.2 4.4c-.6-1-1.8-1.6-3.2-1.6-1.8 0-3.2 1-3.2 2.4 0 .9.5 1.6 1.6 2.1"/><path d="M5 11.4c.6 1.1 1.8 1.8 3.3 1.8 1.9 0 3.3-1 3.3-2.5 0-.6-.2-1.1-.6-1.5"/>',
+  focus: '<path d="M2.5 4h11" opacity=".35"/><path d="M2.5 8h11"/><path d="M2.5 12h8" opacity=".35"/><path d="M1 6v4M15 6v4"/>',
+  rename: '<path d="M3 11.5h6.5"/><path d="M11.5 3v10M10 3h3M10 13h3"/>',
+  trash: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/>',
+  move: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/><path d="M6.5 9.5h4M9 8l1.5 1.5L9 11"/>',
+  include: '<path d="M8 4v8M4 8h8"/>',
+  exclude: '<path d="M4 8h8"/>',
+  resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
 };
 
 /** An icon as SVG markup, stroked in currentColor. */
@@ -100,4 +111,70 @@ function wireBar(onChange = () => {}) {
     for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
     pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
   }
+}
+
+// Themes: [day, night] for each colour token. The rules are the ink at low
+// strength, so they follow it. Washi is tokens.css's own; the rest are new.
+const THEME_TOKENS = ['desk', 'blotter', 'band', 'paper', 'selected', 'ink', 'ink-soft', 'pencil', 'faded', 'seal'];
+const THEMES = {
+  washi: { name: 'Washi', kanji: '和紙', note: 'Eien’s own: paper and sumi ink', t: {
+    desk: ['#d9d2c8', '#110e0b'], blotter: ['#eae5dd', '#1a1713'], band: ['#f4f1ea', '#201d19'], paper: ['#fdfbf7', '#28241f'], selected: ['#ede9e3', '#38332e'],
+    ink: ['#23201c', '#e9e2d4'], 'ink-soft': ['#51473c', '#c3b9a7'], pencil: ['#5d5348', '#a7a095'], faded: ['#766d62', '#837c73'], seal: ['#c4472d', '#e0603f'] } },
+  kinari: { name: 'Kinari', kanji: '生成り', note: 'Unbleached cloth: yellower paper, a persimmon seal', t: {
+    desk: ['#d8cfb8', '#14110a'], blotter: ['#e9e2cd', '#1c180f'], band: ['#f3eedd', '#231e14'], paper: ['#fcf9ee', '#2b251a'], selected: ['#ece5d1', '#3b3426'],
+    ink: ['#2a2418', '#ece3cc'], 'ink-soft': ['#574a33', '#c8bb9c'], pencil: ['#5f523d', '#ab9f86'], faded: ['#7b6d56', '#88806d'], seal: ['#b8432a', '#dc6a43'] } },
+  aizome: { name: 'Aizome', kanji: '藍染', note: 'Indigo dye: cool paper, blue-black ink', t: {
+    desk: ['#c9cfd8', '#0b0e14'], blotter: ['#dfe3e9', '#121620'], band: ['#edf0f4', '#181d28'], paper: ['#fbfcfd', '#1f2533'], selected: ['#e3e8ef', '#2e3648'],
+    ink: ['#17213a', '#dde4f0'], 'ink-soft': ['#34405c', '#b3bfd6'], pencil: ['#3f4b64', '#97a3ba'], faded: ['#5f6a80', '#7a8599'], seal: ['#c4472d', '#e3664a'] } },
+  koke: { name: 'Koke', kanji: '苔', note: 'A moss garden: green-grey desk, quiet ink', t: {
+    desk: ['#cdd2c4', '#0d100b'], blotter: ['#e1e5d9', '#141811'], band: ['#eef0e8', '#1a1f16'], paper: ['#fafbf6', '#21271c'], selected: ['#e5e9dc', '#30382a'],
+    ink: ['#1f2619', '#e2e8d6'], 'ink-soft': ['#3e4833', '#bcc6ab'], pencil: ['#48523c', '#a0aa90'], faded: ['#67705a', '#808a72'], seal: ['#a8432f', '#d76a4e'] } },
+  rosoku: { name: 'Rōsoku', kanji: '蝋燭', note: 'Candlelight: amber at night, no blue light', t: {
+    desk: ['#dccab2', '#120c06'], blotter: ['#ecdfcb', '#1b130b'], band: ['#f5ece0', '#22180e'], paper: ['#fdf8f0', '#2a1f13'], selected: ['#efe3d1', '#3c2d1e'],
+    ink: ['#2b1d10', '#f0dcc0'], 'ink-soft': ['#5a4129', '#d2b894'], pencil: ['#634d37', '#b39b7c'], faded: ['#7f6a53', '#8f7c64'], seal: ['#b9442b', '#e8763f'] } },
+  sumi: { name: 'Sumi', kanji: '墨', note: 'For tired eyes: the most contrast there is', t: {
+    desk: ['#cfcfcc', '#000000'], blotter: ['#e6e6e3', '#0a0a0a'], band: ['#f2f2ef', '#141414'], paper: ['#ffffff', '#1b1b1b'], selected: ['#e8e8e4', '#2c2c2c'],
+    ink: ['#000000', '#f5f5f2'], 'ink-soft': ['#262626', '#d9d9d4'], pencil: ['#3a3a3a', '#bdbdb8'], faded: ['#5e5e5e', '#8f8f8a'], seal: ['#c4361d', '#ff6a45'] } },
+  sakura: { name: 'Sakura-nezumi', kanji: '桜鼠', note: 'Cherry-grey: plum ink, a rose seal', t: {
+    desk: ['#d8cdcc', '#120d0e'], blotter: ['#e9e1e0', '#1b1415'], band: ['#f3eeed', '#221a1b'], paper: ['#fdfafa', '#2a2122'], selected: ['#eee6e5', '#3a2f30'],
+    ink: ['#2a1e20', '#efe1e2'], 'ink-soft': ['#573f43', '#cbb5b8'], pencil: ['#5f464a', '#ad989b'], faded: ['#7c6468', '#8d7b7d'], seal: ['#b2394a', '#e0697a'] } },
+};
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function luminance(h) {
+  return hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; })
+    .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+/**
+ * An ink of hue `h` and saturation `sat`, starting at lightness `l` and stepped
+ * darker by day (`dir` -1) or lighter by night (+1) until it reaches `min`
+ * contrast on every one of `grounds`: the hue stays, the contrast holds.
+ */
+function fitInk(h, sat, l, grounds, min, dir) {
+  let ink = hsl(h, sat, l);
+  while (grounds.some((g) => contrast(ink, g) < min + 0.1) && l > 0 && l < 100) { l += dir; ink = hsl(h, sat, l); }
+  return ink;
+}
+/** "Custom": four choices, and every token worked out from them, day and night. */
+function mixTheme({ paper: ph, warmth: w, ink: ih, seal: sh }, name = 'My Room') {
+  const surf = (dl, nl) => [hsl(ph, w, dl), hsl(ph, Math.min(w, 22), nl)];
+  const t = { desk: surf(83, 5), blotter: surf(89, 8), band: surf(94, 11), paper: surf(98.5, 14), selected: surf(91, 19), seal: [hsl(sh, 63, 47), hsl(sh, 72, 56)] };
+  const grounds = (s) => ['desk', 'band', 'paper', 'selected'].map((k) => t[k][s]);
+  // The inks carry their hue, saturated enough to see by day, each as light as Eien's contrast allows.
+  const ink = (sat, dl, nsat, nl, min) => [fitInk(ih, sat, dl, grounds(0), min, -1), fitInk(ih, nsat, nl, grounds(1), min, 1)];
+  Object.assign(t, { ink: ink(48, 16, 38, 88, 7), 'ink-soft': ink(38, 30, 30, 70, 4.5), pencil: ink(30, 34, 20, 62, 4.5), faded: ink(20, 46, 12, 52, 3) });
+  return { name, kanji: '', note: 'Your own', t };
+}
+/** A theme on the whole page: each token as light-dark(day, night); the rules from the ink. */
+function applyTheme(theme, el = document.documentElement) {
+  for (const k of THEME_TOKENS) el.style.setProperty(`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`);
+  const [d, n] = theme.t.ink.map((c) => hexRgb(c).join(' '));
+  el.style.setProperty('--eien-rule-soft', `light-dark(rgb(${d} / 0.07), rgb(${n} / 0.07))`);
+  el.style.setProperty('--eien-rule', `light-dark(rgb(${d} / 0.13), rgb(${n} / 0.14))`);
+  el.style.setProperty('--eien-rule-strong', `light-dark(rgb(${d} / 0.26), rgb(${n} / 0.26))`);
+  el.style.setProperty('--eien-paper-raised', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 45%, #fff), color-mix(in srgb, ${theme.t.paper[1]} 88%, #fff))`);
+  el.style.setProperty('--eien-well', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 70%, ${theme.t.band[0]}), color-mix(in srgb, ${theme.t.paper[1]} 60%, ${theme.t.blotter[1]}))`);
 }
