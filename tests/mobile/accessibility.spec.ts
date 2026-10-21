@@ -27,7 +27,11 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
 
       await openSettings(page);
       const settings = page.locator('dialog[open]');
-      await settings.locator(`[data-value="${layout}"]`).click();
+      // The Layout choice itself: the Running head's strip ground has a swatch called Band too.
+      await settings
+        .getByRole('group', { name: 'Layout' })
+        .locator(`[data-value="${layout}"]`)
+        .click();
       await settings.locator(`[data-value="${scheme}"]`).click();
       await expect(page.locator('html')).toHaveAttribute('data-layout', layout);
       expect(await seriousViolations(page), 'Settings').toEqual([]);
