@@ -4,7 +4,7 @@
 
 import type { FolderNode } from '../../core/vault';
 import { h } from '../dom';
-import { atDepth } from './tree';
+import { atDepth } from './depth';
 
 export interface FolderFieldEvents {
   /** Whether the sidebar is redrawing: a field it takes out isn't the writer leaving. */
