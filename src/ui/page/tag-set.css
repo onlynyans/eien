@@ -79,7 +79,7 @@
     color: var(--eien-ink);
   }
 }
-.tag__off:focus-visible {
+.tag__off:focus {
   width: calc(var(--eien-space-3) + var(--eien-space-1) / 2);
   opacity: 1;
 }

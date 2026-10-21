@@ -78,11 +78,17 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       await expect(tags.getByRole('button', { name: 'Add a tag' })).toBeFocused();
 
       // Take one off with its ×: only front matter changes; the words are as they were.
+      // Its × waits for the pointer, taking no room till then.
+      await tags.locator('.tag', { hasText: '#fic/aot' }).hover();
       await tags.getByRole('button', { name: 'Take #fic/aot off' }).click();
       await expect(tags.locator('.tag')).toHaveText(['#posted', '#draft']);
       await expect
         .poll(() => readIn(vault, 'Note.md'), { timeout: 5000 })
         .toBe(NOTE.replace('tags: [fic/aot]', 'tags: [posted]'));
+      // From the keyboard too: Tab reaches the next ×, which shows as it does.
+      const off = tags.getByRole('button', { name: 'Take #posted off' });
+      await off.focus();
+      await expect(off).toHaveCSS('opacity', '1');
       await expect(page.locator('.tree-row__name', { hasText: /^#fic/ })).toHaveCount(0);
     });
 
