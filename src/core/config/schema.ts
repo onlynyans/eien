@@ -3,12 +3,26 @@
 // adding one entry. A setting joins the list when what it changes exists.
 
 import { GALLERY, isMineChoice } from '../themes';
+import { faceChoices, MACHINE_FACES, TEXT_FACES } from './faces';
 
 /** 'vault' travels with the notes (.eien/config.json); 'device' stays on this device. */
 export type SettingScope = 'vault' | 'device';
 
-/** The settings screen's sections, in order. A section with no settings isn't shown. */
-export const SETTING_GROUPS = ['Appearance', 'Editor', 'Writing', 'Layout', 'AO3', 'Sync'] as const;
+/**
+ * The settings screen's tabs, in order. Each sits in a category of the
+ * screen's (ui/settings/places.ts); the vault's own settings are in tabs of
+ * their own, under This vault. A tab with no settings isn't shown.
+ */
+export const SETTING_GROUPS = [
+  'Appearance',
+  'Type',
+  'Page',
+  'Themes',
+  'Lists',
+  'Editor',
+  'Writing',
+  'AO3',
+] as const;
 export type SettingGroup = (typeof SETTING_GROUPS)[number];
 
 interface Common {
@@ -35,7 +49,7 @@ export interface ChoiceSetting extends Common {
 
 export interface NumberSetting extends Common {
   readonly type: 'number';
-  /** Whole steps of `step` from `min` to `max`, as a percentage. */
+  /** Whole steps of `step` from `min` to `max`: a percentage, or a weight. */
   readonly min: number;
   readonly max: number;
   readonly step: number;
@@ -62,7 +76,7 @@ export const SETTINGS = [
     description:
       'Eien’s own themes, then your own: each a file in the vault’s .eien/themes, so it travels with your notes.',
     scope: 'device',
-    group: 'Appearance',
+    group: 'Themes',
     type: 'choice',
     // The gallery's, in its order (core/themes); a theme of the writer's own is "mine:<name>".
     choices: Object.fromEntries(GALLERY.map((theme) => [theme.id, theme.name])),
@@ -81,36 +95,79 @@ export const SETTINGS = [
     default: 'band',
   },
   {
-    key: 'appearance.face',
-    label: 'Typeface',
+    key: 'appearance.runheadGround',
+    label: 'Running head',
     description:
-      'For everything a person wrote: notes, titles, names. Counts and buttons keep IBM Plex Mono.',
+      'The Running head layout’s strip across the top of the window. Its ground is one of the theme’s own surfaces, so it follows any theme.',
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
     choices: {
-      newsreader: 'Newsreader',
-      literata: 'Literata',
-      'plex-sans': 'IBM Plex Sans',
-      'source-sans': 'Source Sans 3',
-      atkinson: 'Atkinson Hyperlegible Next',
-      schibsted: 'Schibsted Grotesk',
-      hanken: 'Hanken Grotesk',
-      instrument: 'Instrument Sans',
+      desk: 'Desk',
+      blotter: 'Blotter',
+      band: 'Band',
+      paper: 'Paper',
+      selected: 'Selected',
     },
+    default: 'desk',
+  },
+  {
+    key: 'appearance.face',
+    label: 'Typeface',
+    description: 'For everything a person wrote: notes, titles, names.',
+    scope: 'device',
+    group: 'Type',
+    type: 'choice',
+    // One list of faces feeds both face settings (./faces.ts).
+    choices: faceChoices(TEXT_FACES),
     default: 'newsreader',
+  },
+  {
+    key: 'appearance.machineFace',
+    label: 'Machine voice',
+    description:
+      'For what the machine counts and what you press: counts, labels, the status line, the Source view.',
+    scope: 'device',
+    group: 'Type',
+    type: 'choice',
+    choices: faceChoices(MACHINE_FACES),
+    default: 'plex-mono',
   },
   {
     key: 'appearance.textSize',
     label: 'Text size',
     description: 'The typeface everywhere, from the size it’s tuned to.',
     scope: 'device',
-    group: 'Appearance',
+    group: 'Type',
     type: 'number',
     min: 90,
     max: 130,
     step: 10,
     default: 100,
+  },
+  {
+    key: 'appearance.nameWeight',
+    label: 'Sidebar names',
+    description: 'How heavy the names sit in the sidebar. The chosen one keeps this weight.',
+    scope: 'device',
+    group: 'Type',
+    type: 'number',
+    min: 400,
+    max: 700,
+    step: 100,
+    default: 400,
+  },
+  {
+    key: 'appearance.titleWeight',
+    label: 'List titles',
+    description: 'How heavy the titles sit in the note list. The chosen one is a step heavier.',
+    scope: 'device',
+    group: 'Type',
+    type: 'number',
+    min: 400,
+    max: 700,
+    step: 100,
+    default: 400,
   },
   {
     key: 'appearance.density',
@@ -127,7 +184,7 @@ export const SETTINGS = [
     label: 'Page',
     description: 'A sheet on the blotter, or paper from edge to edge.',
     scope: 'device',
-    group: 'Appearance',
+    group: 'Page',
     type: 'choice',
     choices: { sheet: 'Sheet', full: 'Full' },
     default: 'sheet',
@@ -182,7 +239,7 @@ export const SETTINGS = [
   {
     key: 'books.numerals',
     label: 'Chapter numbers',
-    description: 'How a book numbers its chapters in the note list.',
+    description: 'How a book numbers its chapters, in its list and its breadcrumb.',
     scope: 'vault',
     group: 'Writing',
     type: 'choice',
@@ -216,7 +273,7 @@ export const SETTINGS = [
     description: 'Two puts the notes in the sidebar’s tree, in place of the note list.',
     wide: true,
     scope: 'device',
-    group: 'Layout',
+    group: 'Lists',
     type: 'choice',
     choices: { three: 'Three', two: 'Two' },
     default: 'three',
@@ -229,7 +286,7 @@ export const SETTINGS = [
     // Electron's own zoom (webContents): a phone has none.
     platforms: ['darwin', 'win32', 'linux'],
     scope: 'device',
-    group: 'Layout',
+    group: 'Appearance',
     type: 'number',
     min: 50,
     max: 200,
@@ -242,7 +299,7 @@ export const SETTINGS = [
     description:
       'The page alone, the panes keeping their size: the same keys, with the keyboard in the page.',
     scope: 'device',
-    group: 'Layout',
+    group: 'Page',
     type: 'number',
     min: 50,
     max: 200,

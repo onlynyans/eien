@@ -1,4 +1,12 @@
 export {
+  FACES,
+  type Face,
+  faceOf,
+  MACHINE_FACES,
+  type MachineSizes,
+  TEXT_FACES,
+} from './faces';
+export {
   type ChoiceSetting,
   type NumberSetting,
   offeredOn,

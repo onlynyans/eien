@@ -91,8 +91,8 @@ The test: *could a person have written it?* The text face. *Did the machine
 count it, or do you press it?* The mono.
 
 - **The text face is the writer's choice.** Everything a person wrote uses
-  it, whichever it is; the machine voice is always mono and never changes
-  with it.
+  it, whichever it is; the machine voice keeps its own face (a setting of
+  its own) and never changes with it.
 - The choice is `data-face` on `<html>`: `newsreader` (or no attribute),
   `literata`, `plex-sans`, `source-sans`, `atkinson`, `schibsted`, `hanken`,
   `instrument`. Each face carries its own sizes, prose leading and measure in
@@ -239,6 +239,12 @@ and the design pass brings the mockups up to it. Each is in
   (`src/ui/chrome/*.css`); with them, the icons' tokens `--eien-icon`,
   `--eien-icon-stroke` and `--eien-control`.
 - **The machine voice's face is a setting** (#24), IBM Plex Mono by default.
+  Built: each bundled face's family is one token, `--eien-family-<id>`
+  (`plex-mono`, `newsreader` … `instrument`); `--eien-face-mono` and each
+  `[data-face]`'s `--eien-face-text` name one. The setting sets
+  `--eien-face-mono` and the three machine sizes (`--eien-size-meta`,
+  `-label`, `-source`) from the face's own (`src/core/config/faces.ts`).
 - **Row names' weight is a setting** (#25): the sidebar's names and the
   list's titles, 400–700 each. A selected list title is 100 heavier, at most
-  700.
+  700. Built: `--eien-weight-tree`, `--eien-weight-list` and
+  `--eien-weight-list-chosen` (400, 400, 500 in `tokens.css`).

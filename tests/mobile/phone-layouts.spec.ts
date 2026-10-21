@@ -26,7 +26,7 @@ async function chooseLayout(page: Page, layout: string): Promise<void> {
   await page.getByRole('button', { name: 'More' }).click();
   await page.locator('.menu [role^="menuitem"]', { hasText: /^Settings$/ }).click();
   const dialog = page.locator('dialog[open]');
-  await dialog.locator(`[data-value="${layout}"]`).click();
+  await dialog.getByRole('group', { name: 'Layout' }).locator(`[data-value="${layout}"]`).click();
   await expect(page.locator('html')).toHaveAttribute('data-layout', layout);
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
