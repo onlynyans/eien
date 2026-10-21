@@ -1,0 +1,166 @@
+// The layout's controls (../chrome) for a shown vault: the slots they're
+// drawn in, how each command looks now (a view chosen, Focus on, the list
+// shut, Compare showing the changes), the commands the window runs itself,
+// and the layout drawn again when the setting changes.
+
+import { Chrome } from '../chrome/chrome';
+import type { CommandId, LocalCommandId } from '../chrome/commands';
+import type { CommandLook } from '../chrome/host';
+import { rememberStrip, stripShut } from '../chrome/strip';
+import { watchTooltips } from '../chrome/tooltip';
+import { h } from '../dom';
+import type { MenuBus } from '../menu/menu-bus';
+import type { PageView } from '../page/page';
+import type { SettingsState } from '../settings/settings-state';
+import type { PaneLayout } from '../shell/panes';
+import type { Sidebar } from '../sidebar/sidebar';
+import { COMPARE_WORD } from '../versions/seal-line';
+import type { PageParts } from './page-parts';
+import type { PhoneView } from './phone-view';
+
+export interface VaultChromeOf {
+  readonly shell: HTMLElement;
+  readonly page: PageView;
+  readonly sidebar: Sidebar;
+  readonly panes: PaneLayout;
+  readonly phone: PhoneView;
+  readonly settings: SettingsState;
+  readonly menu: MenuBus;
+  readonly mac: boolean;
+  parts(): PageParts;
+}
+
+export interface VaultChrome {
+  /** Draw the layout chosen: once the page's parts are made. */
+  mount(): void;
+  /** Show every command as it is now. */
+  refresh(): void;
+  stop(): void;
+}
+
+const NAMES = { live: 'Live', source: 'Source', reading: 'Reading' } as const;
+const night = matchMedia('(prefers-color-scheme: dark)');
+
+export function vaultChrome(of: VaultChromeOf): VaultChrome {
+  const { shell, page, panes, settings } = of;
+  const slots = {
+    top: h('div', { class: 'window-head' }, page.runningCrumbs),
+    pageBar: page.slots.bar,
+    format: page.slots.format,
+    sidebarChevron: h('div', { class: 'chevron-slot chevron-slot--sidebar' }),
+    listChevron: h('div', { class: 'chevron-slot chevron-slot--list' }),
+    foot: of.sidebar.foot.controls,
+    phoneBar: of.phone.stack.controls,
+    phoneFoot: page.slots.phone,
+  };
+  shell.append(slots.top, slots.sidebarChevron, slots.listChevron);
+  let strip = stripShut();
+  shell.toggleAttribute('data-strip-shut', strip);
+  let mounted = false;
+
+  const isNight = () => {
+    const scheme = settings.values['appearance.scheme'];
+    return scheme === 'night' || (scheme === 'system' && night.matches);
+  };
+  const two = () => settings.values['layout.panes'] === 'two';
+
+  const look = (id: CommandId): CommandLook => {
+    const versions = of.parts().versions;
+    switch (id) {
+      case 'pane.sidebar': {
+        const shut = panes.isShut('sidebar');
+        return { pressed: !shut, tip: shut ? 'Show the sidebar' : 'Hide the sidebar' };
+      }
+      case 'pane.list': {
+        const shut = panes.isShut('list');
+        if (panes.two) return { disabled: true, tip: 'Two panes: the sidebar lists the notes' };
+        return { pressed: !shut, tip: shut ? 'Show the note list' : 'Hide the note list' };
+      }
+      case 'view.live':
+      case 'view.source':
+      case 'view.reading':
+        return { pressed: page.mode === id.slice('view.'.length) };
+      case 'view.next':
+        return { icon: page.mode, tip: `${NAMES[page.mode]} · next view` };
+      case 'compare': {
+        const word = COMPARE_WORD[versions.compareMode];
+        if (!versions.canCompare) return { disabled: true, pressed: false, tip: 'Not sealed yet' };
+        return { pressed: word !== '', tip: word ? `Compare · ${word}` : undefined };
+      }
+      case 'versions':
+        return { pressed: versions.panelOpen };
+      case 'focus':
+        return { pressed: settings.values['editor.focus'] === 'on' };
+      case 'strip': {
+        const slip = chrome.layout === 'slip';
+        return {
+          icon: slip ? (strip ? 'left' : 'right') : strip ? 'down' : 'up',
+          tip: strip ? 'Show the controls' : 'Hide the controls',
+          pressed: undefined,
+        };
+      }
+      case 'scheme':
+        return {
+          icon: isNight() ? 'moon' : 'sun',
+          pressed: isNight(),
+          tip: isNight() ? 'Night · switch to day' : 'Day · switch to night',
+        };
+      case 'panes':
+        return {
+          icon: two() ? 'panes2' : 'panes3',
+          pressed: two(),
+          tip: two() ? 'Two panes · switch to three' : 'Three panes · switch to two',
+        };
+      default:
+        return {};
+    }
+  };
+
+  const local = (id: LocalCommandId, opener: HTMLElement) => {
+    if (id === 'strip') {
+      strip = !strip;
+      rememberStrip(strip);
+      shell.toggleAttribute('data-strip-shut', strip);
+    } else if (id === 'scheme') {
+      void settings.set('appearance.scheme', isNight() ? 'day' : 'night').catch(console.error);
+    } else if (id === 'panes') {
+      void settings.set('layout.panes', two() ? 'three' : 'two').catch(console.error);
+    } else if (id === 'more') of.phone.more(opener);
+  };
+
+  const chrome = new Chrome({
+    mac: of.mac,
+    slots,
+    look,
+    local,
+    send: (command) => of.menu.run(command),
+    lost: () => page.focus(),
+  });
+  const refresh = () => {
+    if (mounted) chrome.refresh();
+  };
+  const stopTips = watchTooltips();
+  const stopSettings = settings.onChange((values) => {
+    if (!mounted) return;
+    chrome.mount(values['appearance.layout']); // nothing when it's the same
+    chrome.refresh();
+  });
+  // A command from the menu bar or a key (⌘E, ⇧⌘↵): its control shows it, once it's run.
+  const stopMenu = of.menu.on(() => queueMicrotask(refresh));
+  night.addEventListener('change', refresh);
+  return {
+    mount: () => {
+      mounted = true;
+      chrome.mount(settings.values['appearance.layout']);
+      chrome.refresh();
+    },
+    refresh,
+    stop: () => {
+      stopTips();
+      stopSettings();
+      stopMenu();
+      night.removeEventListener('change', refresh);
+      chrome.unmount();
+    },
+  };
+}

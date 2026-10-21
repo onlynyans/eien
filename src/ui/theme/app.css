@@ -16,4 +16,8 @@
 @import "../welcome/welcome.css";
 @import "../settings/settings.css";
 @import "../menu/menu.css";
+@import "../chrome/chrome.css";
+@import "../chrome/band.css";
+@import "../chrome/slip.css";
+@import "../chrome/runhead.css";
 @import "../phone/phone.css";

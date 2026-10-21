@@ -13,6 +13,7 @@
   padding: var(--eien-space-1);
   background: var(--eien-paper-raised);
   border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m);
   box-shadow: var(--eien-shadow-float);
 }
 .menu .word-button {

@@ -1,6 +1,7 @@
 // A phone shows one pane at a time (spec §10): the tree, then a folder's
 // notes, then the page. Choosing goes forward; back (the bar's word, or
-// Android's back gesture) goes the other way. A window narrower than any
+// Android's back gesture) goes the other way. The page's tools are the
+// layout's (../chrome): in the bar's `controls` (A's), or at the page's foot. A window narrower than any
 // desktop window can be is a phone's, whatever the system: an upright phone
 // (430 px at most), not a tablet; and the phone's page in tests.
 
@@ -17,8 +18,6 @@ export interface PhoneParts {
   readonly shell: HTMLElement;
   /** What the bar's back names: where it goes. */
   backName(to: PhonePane): string;
-  /** The ⋯ menu, under its button. */
-  more(opener: HTMLElement): void;
   /** The keyboard to the pane now shown (never left in one gone from sight). */
   focus(pane: PhonePane): void;
   /** The page goes from sight: what lay over it closes, so nothing waits there unseen. */
@@ -30,11 +29,12 @@ export interface PhoneParts {
 }
 
 export class PhoneStack {
-  /** Back, and the page's ⋯: over the pane shown, on a phone only. */
+  /** Back, and a layout's tools for the page: over the pane shown, on a phone only. */
   readonly bar: HTMLElement;
+  /** In the bar, after back: where a layout draws the page's tools (A's top bar). */
+  readonly controls = h('div', { class: 'phone-bar__controls' });
   readonly #parts: PhoneParts;
   readonly #back: HTMLButtonElement;
-  readonly #more: HTMLButtonElement;
   readonly #narrow = window.matchMedia(NARROW);
   readonly #onNarrow = () => {
     this.#apply();
@@ -53,13 +53,11 @@ export class PhoneStack {
     this.#parts = parts;
     this.#back = wordButton('', () => this.back());
     this.#back.classList.add('phone-bar__back');
-    this.#more = wordButton('⋯', () => parts.more(this.#more), { 'aria-label': 'More' });
-    this.#more.classList.add('phone-bar__more');
     this.bar = h(
       'nav',
       { class: 'phone-bar', attrs: { 'aria-label': 'Back' } },
       this.#back,
-      this.#more,
+      this.controls,
     );
     this.#narrow.addEventListener('change', this.#onNarrow);
     this.#apply();
@@ -106,7 +104,6 @@ export class PhoneStack {
     const before = ORDER[ORDER.indexOf(this.#shown) - 1];
     this.bar.hidden = !this.phone || !before;
     this.#back.textContent = before ? `‹ ${this.#parts.backName(before)}` : '';
-    this.#more.hidden = this.#shown !== 'page';
   }
 
   /** The back word, named anew (the list's heading changed). */

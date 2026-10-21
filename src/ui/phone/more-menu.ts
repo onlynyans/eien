@@ -1,7 +1,7 @@
 // The page's ⋯ on a phone (spec §10): what the menu bar offers the open
 // note on the desktop, as one menu under it. Each choice is the menu's own
-// command (../menu/menu-bus.ts). The page's views stay in its bar; the
-// formats are in the selection bar.
+// command (../menu/menu-bus.ts). The page's views are the layout's (../chrome);
+// the formats are in the selection bar.
 
 import type { SettingValues } from '../../core/config';
 import { SPRINT_MINUTES } from '../../core/counters';

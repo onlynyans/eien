@@ -1,5 +1,6 @@
-// The page: the open note on its sheet, the view switch above it, and the
-// colophon beneath.
+// The page: the open note on its sheet, the colophon beneath, and the slots
+// the layout draws its controls in (../chrome): the bar above, the
+// formatting bar's row under it, and a phone's foot.
 
 import { opensWithTitle } from '../../core/note';
 import { h } from '../dom';
@@ -20,15 +21,11 @@ export interface PageNote {
 /** What the colophon says of the save: only a failure is worth a word. */
 const STATE_WORDS: Partial<Record<SaveState, string>> = { failed: 'Not saved yet — trying again' };
 
-const MODE_LABEL: Record<EditorMode, string> = {
-  live: 'Live',
-  source: 'Source',
-  reading: 'Reading',
-};
-
 export class PageView {
   readonly editor: NoteEditor;
   readonly #crumbs = h('p', { class: 'crumbs label' });
+  /** The breadcrumb again, for a running head across the window (C's). */
+  readonly runningCrumbs = h('p', { class: 'crumbs label running-crumbs' });
   readonly #title = h('h1', {
     class: 'title',
     attrs: { tabindex: '0', title: 'Rename', 'aria-keyshortcuts': 'Enter F2' },
@@ -52,7 +49,6 @@ export class PageView {
   readonly #zoom = h('span', { class: 'colophon__zoom', attrs: { 'aria-label': 'Zoom' } });
   /** News from the last action, when neither the list nor the sidebar is there to show it. */
   readonly #news = h('span', { class: 'colophon__news', attrs: { role: 'status' } });
-  readonly #modes: HTMLButtonElement[];
   readonly #sheet = h(
     'article',
     { class: 'sheet' },
@@ -69,10 +65,14 @@ export class PageView {
     text: 'Choose a note, or make a new one.',
     attrs: { tabindex: '-1' },
   });
-  /** The start of the bar: the panes' controls, when the window gives them. */
-  readonly #lead = h('div', { class: 'page__lead' });
-  /** After the views: the seals' controls (Compare, Seal, Versions). */
-  readonly #tools = h('div', { class: 'page__tools' });
+  /** Where the layout draws its controls (../chrome/layout-spec.ts): each part has its own row. */
+  readonly slots = {
+    bar: h('div', { class: 'page__bar' }),
+    /** The formatting bar's row; empty until it's built. */
+    format: h('div', { class: 'page__format' }),
+    /** On a phone, the page's tools at its foot (B's slip, C's rail). */
+    phone: h('div', { class: 'page__phone' }),
+  };
   /** In the colophon, after the save state: the last seal. */
   readonly #sealLine = h('span', { class: 'colophon__seal' });
   /** Beside the page: the versions panel. */
@@ -108,14 +108,6 @@ export class PageView {
       },
       follow: events.follow,
     });
-    this.#modes = EDITOR_MODES.map((mode) =>
-      h('button', {
-        class: 'word-button',
-        text: MODE_LABEL[mode],
-        attrs: { type: 'button', 'aria-pressed': String(mode === 'live'), 'data-mode': mode },
-        on: { click: () => this.setMode(mode) },
-      }),
-    );
     const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
     this.board = new BoardHost(scroll);
     scroll.append(this.board.element);
@@ -123,17 +115,8 @@ export class PageView {
       h(
         'div',
         { class: 'page__main' },
-        h(
-          'div',
-          { class: 'page__bar' },
-          this.#lead,
-          h(
-            'div',
-            { class: 'page__views', attrs: { role: 'group', 'aria-label': 'View' } },
-            ...this.#modes,
-          ),
-          this.#tools,
-        ),
+        this.slots.bar,
+        this.slots.format,
         scroll,
         h(
           'footer',
@@ -145,6 +128,7 @@ export class PageView {
           this.#zoom,
           this.#news,
         ),
+        this.slots.phone,
       ),
       this.#aside,
     );
@@ -157,23 +141,13 @@ export class PageView {
     this.#news.textContent = text ?? '';
   }
 
-  /** Put `controls` at the start of the bar. */
-  lead(controls: HTMLElement): void {
-    this.#lead.replaceChildren(controls);
-  }
-
   /** Today's words, the book's and a sprint, in the colophon. */
   counters(element: HTMLElement): void {
     this.#counters.replaceChildren(element);
   }
 
-  /** The seals' parts: controls after the views, a line in the colophon, a panel beside. */
-  attach(parts: {
-    readonly tools: HTMLElement;
-    readonly sealLine: HTMLElement;
-    readonly aside: HTMLElement;
-  }): void {
-    this.#tools.replaceChildren(parts.tools);
+  /** The seals' parts: a line in the colophon, a panel beside. */
+  attach(parts: { readonly sealLine: HTMLElement; readonly aside: HTMLElement }): void {
     this.#sealLine.replaceChildren(parts.sealLine);
     this.#aside.replaceChildren(parts.aside);
   }
@@ -195,7 +169,7 @@ export class PageView {
     this.board.hide();
     this.#sheet.hidden = false;
     this.#empty.hidden = true;
-    this.#crumbs.textContent = note.crumbs;
+    this.#crumbs.textContent = this.runningCrumbs.textContent = note.crumbs;
     this.#title.textContent = this.#titleText = note.title;
     this.#showTitle(note.text);
     this.editor.setText(note.text, note.loadImage);
@@ -209,6 +183,7 @@ export class PageView {
     const had = this.#sheet.contains(document.activeElement);
     this.#sheet.hidden = true;
     this.#empty.hidden = false;
+    this.runningCrumbs.textContent = '';
     this.words.clear();
     this.state('saved');
     if (had && !this.board.shown) this.#empty.focus();
@@ -223,15 +198,18 @@ export class PageView {
 
   retitle(title: string, crumbs: string): void {
     this.#title.textContent = this.#titleText = title;
-    this.#crumbs.textContent = crumbs;
+    this.#crumbs.textContent = this.runningCrumbs.textContent = crumbs;
     this.#showTitle(this.editor.text);
   }
 
   setMode(mode: EditorMode): void {
     this.board.hide(); // a view chosen is the page's: it comes back
     this.editor.setMode(mode);
-    for (const button of this.#modes)
-      button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
+  }
+
+  /** The view shown: Live, Source or Reading. */
+  get mode(): EditorMode {
+    return this.editor.mode;
   }
 
   /** Live → Source → Reading → Live (⌘E). */

@@ -1,6 +1,7 @@
 // An open vault's panes (the sidebar, the note list, the page) kept in step with each other and
 // the disk: file operations in ./organize.ts, what it follows in ./follow.ts, the panes' widths
-// in ../shell/panes.ts, a phone's one at a time in ./phone-view.ts. This wires them together.
+// in ../shell/panes.ts, a phone's one at a time in ./phone-view.ts, the layout's controls in
+// ./chrome-wiring.ts. This wires them together.
 
 import { freeNoteName, joinPath } from '../../core/paths';
 import type { Bridge } from '../../platform/bridge';
@@ -11,6 +12,7 @@ import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
+import { vaultChrome } from './chrome-wiring';
 import { follow } from './follow';
 import { type MenuContext, showFolderMenu, showNoteMenu, trashNameOn } from './menus';
 import { Navigation } from './navigation';
@@ -39,7 +41,6 @@ export async function showVault(
   bridge: Bridge,
   name: string,
   settings: SettingsState,
-  openSettings: () => void,
   menu: MenuBus,
 ): Promise<ShownVault> {
   const state = new VaultState(bridge.vault, name);
@@ -102,9 +103,6 @@ export async function showVault(
           sidebar.refocusOn(to ?? path);
           if (to) nav.follow(path, to);
         }),
-      scheme: (scheme) => void settings.set('appearance.scheme', scheme).catch(console.error),
-      panes: (two) => void settings.set('layout.panes', two ? 'two' : 'three').catch(console.error),
-      settings: openSettings,
       toggleSidebar: () => panes.toggle('sidebar'),
     },
     keys.sidebar,
@@ -143,7 +141,6 @@ export async function showVault(
       shell,
       sidebar: sidebar.element,
       list,
-      keys,
       leave: () => page.focus(),
       changed: () => void redraw(),
       phone: () => phone.stack.shown,
@@ -151,7 +148,18 @@ export async function showVault(
     },
     settings.values['layout.panes'] === 'two',
   );
-  page.lead(panes.controls);
+  // Made before the page's parts, which tell it when a seal's controls change; drawn after.
+  const chrome = vaultChrome({
+    shell,
+    page,
+    sidebar,
+    panes,
+    phone,
+    settings,
+    menu,
+    mac: keys.sidebar.startsWith('⌘'),
+    parts: () => parts,
+  });
 
   const menus: MenuContext = {
     state,
@@ -184,9 +192,11 @@ export async function showVault(
     organizer,
     mac: keys.sidebar.startsWith('⌘'),
     tell,
+    changed: () => chrome.refresh(),
     act: (operation) => act(operation),
     openNote: (path) => openNote(path),
   });
+  chrome.mount();
 
   // Run a file operation, then read the vault again and redraw: one at a time, each after the
   // last one's refresh, so two quick drags never work from a list that doesn't show the first.
@@ -219,6 +229,7 @@ export async function showVault(
   });
   const redraw = () => {
     parts.sync();
+    chrome.refresh();
     return draw.all().then(() => phone.stack.rename());
   };
 
@@ -298,6 +309,7 @@ export async function showVault(
     stop: async () => {
       await note.flush();
       stopFollowing();
+      chrome.stop();
       panes.stop();
       phone.stack.stop();
       notice.stop();

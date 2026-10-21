@@ -1,0 +1,97 @@
+/* B · Slip (./slip.ts): the page loses its band; its tools float on a raised
+   slip at the blotter's top right, which folds away to its own fold; the
+   panes have tabs at their edges. Softer corners, and the sheet has one. */
+
+:root[data-layout="slip"] {
+  --eien-radius-s: 4px;
+  --eien-radius-m: 8px;
+  --eien-radius-l: 14px;
+  /* The system's window controls sit over the blotter's top. */
+  --controls-h: var(--band);
+  --controls-ground: var(--eien-page-ground);
+}
+
+/* The page's top row is blotter, the slip floating in it; it still drags the window. */
+[data-layout="slip"] .page__bar {
+  justify-content: flex-end;
+  height: var(--band);
+  padding: 0 max(var(--eien-space-3), var(--controls-right)) 0 var(--eien-space-3);
+}
+[data-layout="slip"] .host--slip {
+  padding: calc(var(--eien-space-1) / 2);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m);
+  box-shadow: var(--eien-shadow-float);
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+[data-layout="slip"] .page:hover .host--slip,
+[data-layout="slip"] .host--slip:focus-within {
+  opacity: 1;
+}
+/* Folded (#16): the slip keeps only its fold. */
+[data-layout="slip"] .shell[data-strip-shut] .host--slip > :not([data-command="strip"]) {
+  display: none;
+}
+
+/* Paper stays square, but for B's sheet: a corner a hairline under the smallest step. */
+[data-layout="slip"] .sheet {
+  border-radius: calc(var(--eien-radius-s) - var(--eien-hairline));
+}
+
+/* The panes' tabs (#15): at the pane's right edge, half its height down; the
+   way back, a tab on the next pane's left edge. */
+[data-layout="slip"] .chevron-slot {
+  top: 50%;
+  translate: 0 -50%;
+  opacity: 0;
+}
+[data-layout="slip"] .chevron-slot .icon-button {
+  width: var(--eien-space-4);
+  height: var(--eien-touch);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  border-right: 0;
+  border-radius: var(--eien-radius-m) 0 0 var(--eien-radius-m);
+  background: var(--eien-band);
+}
+[data-layout="slip"] .chevron-slot .icon {
+  width: var(--eien-space-3);
+  height: var(--eien-space-3);
+}
+[data-layout="slip"] .chevron-slot--sidebar {
+  left: calc(var(--pane-sidebar) - var(--eien-space-4));
+}
+[data-layout="slip"] .chevron-slot--list {
+  left: calc(var(--pane-sidebar) + var(--pane-list) - var(--eien-space-4));
+}
+[data-layout="slip"] .shell[data-list-shut] > .chevron-slot--list {
+  left: calc(var(--pane-sidebar) + var(--pane-list));
+}
+[data-layout="slip"] .shell[data-list-shut] > .chevron-slot--list .icon-button {
+  border-right: var(--eien-hairline) solid var(--eien-rule);
+  border-left: 0;
+  border-radius: 0 var(--eien-radius-m) var(--eien-radius-m) 0;
+}
+[data-layout="slip"] .sidebar:hover ~ .chevron-slot--sidebar,
+[data-layout="slip"] .list:hover ~ .chevron-slot--list,
+[data-layout="slip"] .shell[data-list-shut] > .page:hover ~ .chevron-slot--list,
+[data-layout="slip"] .chevron-slot:hover,
+[data-layout="slip"] .chevron-slot:focus-within {
+  opacity: 1;
+}
+
+/* On a phone: the page's tools float on a slip above its foot. */
+[data-layout="slip"] .page__phone {
+  position: absolute;
+  right: var(--eien-space-4);
+  bottom: calc(var(--status-h) + var(--eien-space-4));
+  z-index: 5;
+}
+[data-layout="slip"] .host--phone-slip {
+  padding: var(--eien-space-1);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-l);
+  box-shadow: var(--eien-shadow-float);
+}

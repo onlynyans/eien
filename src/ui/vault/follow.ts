@@ -46,12 +46,7 @@ export function follow(of: FollowOf): () => void {
   });
   const stopSettings = settings.onChange((values, before) => {
     of.panes.setTwo(values['layout.panes'] === 'two'); // redraws when it changes
-    if (
-      values['books.numerals'] !== before['books.numerals'] ||
-      values['appearance.scheme'] !== before['appearance.scheme']
-    ) {
-      void of.redraw();
-    }
+    if (values['books.numerals'] !== before['books.numerals']) void of.redraw();
   });
   const onBlur = () => void note.flush();
   window.addEventListener('blur', onBlur);

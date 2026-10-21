@@ -19,6 +19,8 @@ body {
 /* The top band all three panes share, so their heads line up. */
 :root {
   --band: calc(var(--eien-space-7) + var(--eien-space-2));
+  /* The page's status line: fixed, so it never grows into a short sheet's space. */
+  --status-h: calc(var(--eien-space-6) + var(--eien-space-2));
   /* The system's own window controls sit over the bands: macOS's traffic
      lights at the left, Windows' and Linux's minimize, maximize and close at
      the right. The window controls overlay says where (env(titlebar-area-*);
@@ -116,12 +118,22 @@ body {
 .list__search,
 .list__head,
 .page__bar,
+.window-head,
 .versions__head,
 .welcome {
   -webkit-app-region: drag;
 }
-:is(.sidebar__head, .sidebar__strip, .list__search, .list__head, .page__bar, .versions__head)
-  :is(button, input, select, textarea, a, [tabindex], [role="group"]),
+:is(
+    .sidebar__head,
+    .sidebar__strip,
+    .list__search,
+    .list__head,
+    .page__bar,
+    .window-head,
+    .versions__head
+  )
+  :is(button, input, select, textarea, a, [tabindex], [role="group"], [role="toolbar"]),
+.chevron-slot,
 .welcome__sheet,
 .menu,
 dialog {
@@ -129,13 +141,14 @@ dialog {
 }
 
 /* An unseen band, read for the colours the system's controls are drawn in
-   (./window-controls.ts). */
+   (./window-controls.ts): the strip they sit over, which each layout names
+   (../chrome/*.css) with --controls-h and --controls-ground. */
 .band-probe {
   position: fixed;
   visibility: hidden;
   pointer-events: none;
   width: 0;
-  height: var(--band);
-  background: var(--eien-band);
+  height: var(--controls-h, var(--band));
+  background: var(--controls-ground, var(--eien-band));
   color: var(--eien-ink-soft);
 }

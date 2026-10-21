@@ -23,6 +23,8 @@ export function applyLook(
   const theme = THEMES[values['appearance.scheme']];
   if (theme) root.dataset.theme = theme;
   else delete root.dataset.theme;
+  // Always set, the default too: each layout's stylesheet names its own (ui/chrome).
+  root.dataset.layout = values['appearance.layout'];
   for (const [key, name] of Object.entries(LOOK_ATTRIBUTES)) {
     const value = values[key as keyof typeof LOOK_ATTRIBUTES];
     if (value === DEFAULT_SETTINGS[key as keyof typeof LOOK_ATTRIBUTES]) delete root.dataset[name];

@@ -1,6 +1,6 @@
 // The vault on a phone (spec §10): one pane at a time (../phone/phone-stack.ts),
-// back to the one before, and the page's ⋯ for what the menu bar offers on
-// the desktop. Choosing a folder or tag shows its notes; opening a note
+// back to the one before, and the page's ⋯ (the `more` command the layout
+// draws, ../chrome) for what the menu bar offers on the desktop. Choosing a folder or tag shows its notes; opening a note
 // shows the page, with the keyboard on its title, so reading a note doesn't
 // bring up the phone's keyboard.
 
@@ -32,6 +32,8 @@ export interface PhoneView {
   readonly stack: PhoneStack;
   /** The system's back: a menu closes, else one pane back; false when there was nothing to do. */
   back(): boolean;
+  /** The page's ⋯ menu, under `opener`. */
+  more(opener: HTMLElement): void;
 }
 
 export function phoneView(of: PhoneViewOf): PhoneView {
@@ -42,27 +44,27 @@ export function phoneView(of: PhoneViewOf): PhoneView {
       : pane === 'list'
         ? focusList(of.list)
         : of.page.focus();
+  const more = (opener: HTMLElement) => {
+    const run = (command: MenuCommand) => of.menu.run(command);
+    // The same choices as the note's own menu, each the File menu's command.
+    const exportTo = () =>
+      openMenu(
+        exportMenu(of.parts().exports.kinds, false, (kind) =>
+          run(kind === 'html' ? 'export-ao3' : `export-note:${kind}`),
+        ),
+        { opener },
+        'Export',
+      );
+    const { values } = of.settings;
+    const state = { values, sprinting: of.parts().counters.sprinting, exportTo };
+    openMenu(moreItems(state, run), { opener }, 'More');
+  };
   const stack = new PhoneStack({
     shell: of.shell,
     backName: (to) =>
       to === 'sidebar'
         ? 'Library'
         : (of.list.querySelector('.list__heading')?.textContent ?? 'Notes'),
-    more: (opener) => {
-      const run = (command: MenuCommand) => of.menu.run(command);
-      // The same choices as the note's own menu, each the File menu's command.
-      const exportTo = () =>
-        openMenu(
-          exportMenu(of.parts().exports.kinds, false, (kind) =>
-            run(kind === 'html' ? 'export-ao3' : `export-note:${kind}`),
-          ),
-          { opener },
-          'Export',
-        );
-      const { values } = of.settings;
-      const state = { values, sprinting: of.parts().counters.sprinting, exportTo };
-      openMenu(moreItems(state, run), { opener }, 'More');
-    },
     focus: (pane: PhonePane) => focusPane(pane),
     changed: of.changed,
     leavingPage: () => {
@@ -85,7 +87,11 @@ export function phoneView(of: PhoneViewOf): PhoneView {
     else return false;
     return true;
   };
-  return { stack, back: () => closeMenu() || pressEsc() || closeOver() || stack.back() };
+  return {
+    stack,
+    back: () => closeMenu() || pressEsc() || closeOver() || stack.back(),
+    more,
+  };
 }
 
 /**

@@ -1,61 +1,38 @@
 // The sidebar's foot: the last action's news (when there's no list to show
-// it), how many notes, day or night, the settings, and three panes or two.
+// it), how many notes, and the window's controls, which the layout draws in
+// `controls` (../chrome: day or night, three panes or two, the settings).
+// Made once and kept: a redraw of the tree changes its words, not its
+// controls, so the keyboard stays where it was.
 
-import type { SettingValues } from '../../core/config';
-import { h, wordButton } from '../dom';
+import { h } from '../dom';
 import { noteCount } from '../list/note-count';
-
-type Scheme = SettingValues['appearance.scheme'];
 
 export interface FootModel {
   readonly notice: string | null;
   readonly noteCount: number;
-  readonly scheme: Scheme;
-  readonly two: boolean;
 }
 
-export interface FootActions {
-  scheme(scheme: Scheme): void;
-  panes(two: boolean): void;
-  settings(): void;
-}
+export class SidebarFoot {
+  readonly element: HTMLElement;
+  /** Where the layout draws the foot's controls. */
+  readonly controls = h('div', { class: 'sidebar__controls' });
+  /** Before the controls: the sync status's place (backlog #10). */
+  readonly sync = h('span', { class: 'sidebar__sync' });
+  readonly #notice = h('p', { class: 'sidebar__notice', attrs: { role: 'status', hidden: true } });
+  readonly #count = h('p', { class: 'count sidebar__count' });
 
-export function sidebarFoot(model: FootModel, actions: FootActions): HTMLElement {
-  /** Day or Night; pressed again, back to the system's. */
-  const schemeButton = (label: string, scheme: Scheme) =>
-    wordButton(label, () => actions.scheme(model.scheme === scheme ? 'system' : scheme), {
-      'aria-pressed': String(model.scheme === scheme),
-      'data-key': `scheme:${scheme}`,
-    });
-  const panesButton = (label: string, two: boolean) =>
-    wordButton(label, () => actions.panes(two), {
-      'aria-pressed': String(model.two === two),
-      'data-key': `panes:${two ? 'two' : 'three'}`,
-    });
-  const pair = (label: string, ...buttons: HTMLElement[]) =>
-    h('div', { class: 'sidebar__pair', attrs: { role: 'group', 'aria-label': label } }, ...buttons);
-  return h(
-    'footer',
-    { class: 'sidebar__foot' },
-    h('p', {
-      class: 'sidebar__notice',
-      text: model.notice ?? '',
-      attrs: { role: 'status', hidden: !model.notice },
-    }),
-    h('p', { class: 'count sidebar__count', text: noteCount(model.noteCount) }),
-    h(
-      'div',
-      { class: 'sidebar__foot-row' },
-      pair('Day or night', schemeButton('Day', 'day'), schemeButton('Night', 'night')),
-      wordButton('Settings', actions.settings, {
-        'aria-haspopup': 'dialog',
-        'data-key': 'settings',
-      }),
-    ),
-    h(
-      'div',
-      { class: 'sidebar__foot-row sidebar__panes' },
-      pair('Panes', panesButton('3 panes', false), panesButton('2 panes', true)),
-    ),
-  );
+  constructor() {
+    this.element = h(
+      'footer',
+      { class: 'sidebar__foot' },
+      this.#notice,
+      h('div', { class: 'sidebar__foot-row' }, this.#count, this.sync, this.controls),
+    );
+  }
+
+  draw(model: FootModel): void {
+    this.#notice.textContent = model.notice ?? '';
+    this.#notice.hidden = !model.notice;
+    this.#count.textContent = noteCount(model.noteCount);
+  }
 }

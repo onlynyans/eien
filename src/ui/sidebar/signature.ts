@@ -44,7 +44,6 @@ export function sidebarSignature(
     readonly openNote: string | null;
     readonly books: ReadonlySet<string>;
     readonly notice: string | null;
-    readonly scheme: string;
   },
   today: string,
 ): string {
@@ -63,6 +62,5 @@ export function sidebarSignature(
     model.openNote,
     [...model.books].sort(),
     model.notice,
-    model.scheme,
   ]);
 }

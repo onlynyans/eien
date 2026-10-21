@@ -32,7 +32,7 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
     shown = null;
     const info = await bridge.vault.current();
     await settings.reload(); // the vault's own settings come with it
-    if (info) shown = await showVault(root, bridge, info.name, settings, () => screen.open(), menu);
+    if (info) shown = await showVault(root, bridge, info.name, settings, menu);
     else renderWelcome(root, chooseVault, bridge.platform);
   };
   // One at a time: a second open (a double tap on Allow) waits, then stops the first view.

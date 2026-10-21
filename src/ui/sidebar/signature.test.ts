@@ -36,7 +36,6 @@ const model = (
   openNote: 'Chapter.md',
   books: new Set(),
   notice: null,
-  scheme: 'system',
 });
 const sign = (m: ReturnType<typeof model>, today = 'Tue Oct 20 2026') => sidebarSignature(m, today);
 

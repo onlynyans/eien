@@ -62,11 +62,11 @@ body {
   color: var(--eien-pencil);
 }
 
-/* A control is a word, not an icon. */
+/* A control that stays a word (system.md, "Word button"); most are icons (../chrome). */
 .word-button {
   appearance: none;
   border: var(--eien-hairline) solid transparent;
-  border-radius: var(--eien-radius);
+  border-radius: var(--eien-radius-s);
   background: none;
   padding: var(--eien-space-1) var(--eien-space-2);
   font-family: var(--eien-face-mono);
@@ -109,7 +109,7 @@ body {
   appearance: none;
   width: 100%;
   border: var(--eien-hairline) solid var(--eien-rule);
-  border-radius: var(--eien-radius);
+  border-radius: var(--eien-radius-s);
   background: var(--eien-well);
   padding: var(--eien-space-2) var(--eien-space-3);
   font-family: var(--eien-face-mono);

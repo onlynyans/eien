@@ -35,7 +35,7 @@
   place-items: center;
   padding: var(--eien-space-1);
   border: var(--eien-hairline) solid transparent;
-  border-radius: var(--eien-radius);
+  border-radius: var(--eien-radius-s);
   background: none;
   cursor: pointer;
   transition: border-color var(--eien-quick) var(--eien-ease);
@@ -182,12 +182,12 @@
 }
 .sidebar__foot {
   flex: none;
-  padding: var(--eien-space-3) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-2) var(--eien-space-4);
   border-top: var(--eien-hairline) solid var(--eien-rule-soft);
 }
 /* News from the last action, when there's no note list to show it above. */
 .sidebar__notice {
-  margin: 0 0 var(--eien-space-2);
+  margin: 0 var(--eien-space-2) var(--eien-space-2) 0;
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-preview);
   color: var(--eien-pencil);
@@ -202,21 +202,23 @@
 .sidebar__empty .word-button {
   margin-left: calc(var(--eien-space-2) * -1);
 }
+/* The count, the sync status's place, then the window's controls (../chrome). */
+.sidebar__foot-row {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-1);
+}
 .sidebar__count {
-  margin: 0 0 var(--eien-space-2);
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--eien-size-label);
   text-transform: uppercase;
   letter-spacing: var(--eien-track-label);
 }
-/* The words sit on the foot's edge: a button's own padding hangs outside it. */
-.sidebar__foot-row {
-  display: flex;
-  justify-content: space-between;
-  margin: 0 calc(var(--eien-space-2) * -1);
-}
-.sidebar__pair {
-  display: flex;
-  gap: var(--eien-space-1);
-}
-.sidebar__foot-row + .sidebar__foot-row {
-  margin-top: var(--eien-space-1);
+.sidebar__sync:empty {
+  display: none;
 }
