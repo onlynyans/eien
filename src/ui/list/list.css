@@ -284,3 +284,54 @@
   left: calc(var(--eien-space-1) / -2);
   top: calc(var(--eien-space-1) * -1);
 }
+
+/* Renaming in place (./name-field.ts): the name becomes its own field, in its face, size and
+   weight, laid over the row's own name, which hides beneath it. */
+.is-renamed {
+  visibility: hidden;
+}
+.name-field {
+  position: fixed;
+  left: var(--name-x, 0);
+  top: var(--name-y, 0);
+  z-index: 25;
+  width: var(--name-w, auto);
+}
+.name-field__line {
+  display: flex;
+  align-items: baseline;
+  min-height: var(--name-h, auto);
+}
+.name-field__input {
+  all: unset;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  color: var(--eien-ink);
+  caret-color: var(--eien-seal);
+  border-bottom: var(--eien-hairline) solid var(--eien-focus);
+}
+.name-field__input::selection {
+  background: var(--eien-seal-wash);
+}
+.name-field__suffix {
+  margin-left: 2px;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-faded);
+}
+/* A name that can't be kept: a small ochre line under the row. */
+.name-field__problem {
+  width: max-content;
+  max-width: calc(var(--eien-space-8) * 4);
+  margin: 2px 0 0;
+  padding: 2px var(--eien-space-2);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  color: var(--eien-caution);
+  background: var(--eien-caution-wash);
+  border-radius: var(--eien-radius-s);
+}
+.name-field__problem[hidden] {
+  display: none;
+}

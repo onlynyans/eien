@@ -266,7 +266,10 @@ export class Sidebar {
     );
   }
 
-  /** A folder's own menu and keys: right-click or the menu key; F2 renames it. */
+  /**
+   * A folder's own menu and keys: right-click or the menu key; F2 renames it. Not a
+   * double-click, as a note's name has: a click opens a folder and the next shuts it.
+   */
   #folderEvents(folder: string): Props['on'] {
     return {
       contextmenu: (event) => {

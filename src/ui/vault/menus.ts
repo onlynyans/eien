@@ -23,6 +23,11 @@ const TRASH_NAMES: Record<string, string> = {
 
 export const trashNameOn = (platform: string): string => TRASH_NAMES[platform] ?? 'the trash';
 
+/** The trash's key on a row: ⌘⌫ on a Mac, Ctrl+Delete elsewhere (./row-events.ts takes either). */
+const TRASH_KEY = /Mac|iPhone|iPad/.test(navigator.platform) ? 'Mod-Backspace' : 'Mod-Delete';
+/** Pin or unpin a focused row. */
+const PIN_KEY = 'Mod-Shift-p';
+
 export interface NoteMenu {
   readonly pinned: boolean;
   /** The note can move up or down: the list is in its folder's own order. */
@@ -38,19 +43,30 @@ export interface NoteMenu {
 }
 
 export const noteMenu = (note: NoteMenu): MenuItem[] => [
-  { label: 'Rename', run: note.rename },
-  { label: note.pinned ? 'Unpin' : 'Pin', run: () => note.pin(!note.pinned) },
+  { label: 'Rename', icon: 'rename', keys: 'F2', run: note.rename },
+  {
+    label: note.pinned ? 'Unpin' : 'Pin',
+    icon: 'pin',
+    keys: PIN_KEY,
+    run: () => note.pin(!note.pinned),
+  },
   'separator',
   ...(note.ordered
     ? ([
-        { label: 'Move up', run: () => note.nudge(-1) },
-        { label: 'Move down', run: () => note.nudge(1) },
+        { label: 'Move up', icon: 'up', keys: 'Alt-ArrowUp', run: () => note.nudge(-1) },
+        { label: 'Move down', icon: 'down', keys: 'Alt-ArrowDown', run: () => note.nudge(1) },
       ] as const)
     : []),
-  { label: 'Move to…', run: note.moveTo },
-  { label: 'Export…', run: note.exportTo },
+  { label: 'Move to…', icon: 'move', run: note.moveTo },
+  { label: 'Export…', icon: 'link', run: note.exportTo },
   'separator',
-  { label: `Move to ${note.trashName}`, run: note.trash },
+  {
+    label: `Move to ${note.trashName}`,
+    icon: 'trash',
+    keys: TRASH_KEY,
+    danger: true,
+    run: note.trash,
+  },
 ];
 
 /** The kinds `kinds` offers, as a menu that exports with `run`: a book's leaves out AO3's. */
@@ -82,16 +98,26 @@ export interface FolderMenu {
 }
 
 export const folderMenu = (folder: FolderMenu): MenuItem[] => [
-  { label: 'New note here', run: folder.newNote },
-  { label: 'New folder inside', run: folder.newFolder },
+  { label: 'New note here', icon: 'plus', run: folder.newNote },
+  { label: 'New folder inside', icon: 'folder', run: folder.newFolder },
   'separator',
-  { label: 'Rename', run: folder.rename },
-  { label: folder.book ? 'Not a book' : 'Make it a book', run: () => folder.setBook(!folder.book) },
-  ...(folder.book ? [{ label: 'Word goal…', run: folder.goal }] : []),
-  { label: 'Move to…', run: folder.moveTo },
-  ...(folder.book ? [{ label: 'Export…', run: folder.exportTo }] : []),
+  { label: 'Rename', icon: 'rename', keys: 'F2', run: folder.rename },
+  {
+    label: folder.book ? 'Not a book' : 'Make it a book',
+    icon: 'numbers',
+    run: () => folder.setBook(!folder.book),
+  },
+  ...(folder.book ? [{ label: 'Word goal…', icon: 'check', run: folder.goal } as const] : []),
+  { label: 'Move to…', icon: 'move', run: folder.moveTo },
+  ...(folder.book ? [{ label: 'Export…', icon: 'link', run: folder.exportTo } as const] : []),
   'separator',
-  { label: `Move to ${folder.trashName}`, run: folder.trash },
+  {
+    label: `Move to ${folder.trashName}`,
+    icon: 'trash',
+    keys: TRASH_KEY,
+    danger: true,
+    run: folder.trash,
+  },
 ];
 
 /**
@@ -175,6 +201,7 @@ export function showNoteMenu(ctx: MenuContext, path: string, at: At, ordered: bo
     }),
     { at },
     title,
+    true,
   );
 }
 
@@ -225,5 +252,6 @@ export async function showFolderMenu(ctx: MenuContext, path: string, at: At): Pr
     }),
     { at },
     baseName(path),
+    true,
   );
 }

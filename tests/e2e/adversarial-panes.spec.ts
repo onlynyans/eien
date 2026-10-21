@@ -528,9 +528,9 @@ test.describe('two panes’ tree', () => {
     await expect(page.locator('.sidebar__count')).toHaveText('6 notes');
     await expect(underTag).toBeFocused();
 
-    // F2 from the tag's row renames the note, and every row shows the new name.
+    // F2 from the tag's row renames the note in that row, and every row shows the new name.
     await page.keyboard.press('F2');
-    await expect(page.locator('.title__field')).toBeFocused();
+    await expect(page.locator('.name-field__input')).toBeFocused();
     await page.keyboard.type('Pin');
     await page.keyboard.press('Enter');
     await expect(treeNote(page, 'Pin')).toHaveCount(4);

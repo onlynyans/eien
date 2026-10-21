@@ -191,7 +191,7 @@ test.describe('three thousand notes', () => {
     const time = await stalls(page);
     await time.mark();
     await page.keyboard.press('F2');
-    await expect(page.locator('.title__field')).toBeFocused();
+    await expect(page.locator('.name-field__input')).toBeFocused();
     await page.keyboard.type('The Gate Holds');
     await page.keyboard.press('Enter');
     await expect.poll(() => readdirSync(vault ?? '')).toContain('The Gate Holds.md');

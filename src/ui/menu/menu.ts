@@ -1,9 +1,17 @@
 // A small menu that floats over the window (docs/design: raised paper, a
 // hairline edge, the float shadow): a right-click's choices, or a list's
-// sort. Arrows move, Enter chooses, Esc or a click elsewhere closes, and
-// focus goes back where it was.
+// sort. A row's menu is headed by the row's name, and each choice has an
+// icon, a word and its key in pencil; a choice that throws away is in
+// carmine, last (docs/design/explorations/overall.md). Arrows move, Enter
+// chooses, Esc or a click elsewhere closes, and focus goes back where it was.
 
+import { ariaKeys, keyText } from '../chrome/keys';
 import { h } from '../dom';
+import { type IconName, icon } from '../icons';
+
+const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+/** No keyboard to press them on: a phone's menu leaves the keys out. */
+const touch = () => window.matchMedia('(pointer: coarse)').matches;
 
 export type MenuItem =
   | {
@@ -16,6 +24,11 @@ export type MenuItem =
       readonly disabled?: boolean;
       /** Indented under the one before (a folder inside a folder). */
       readonly depth?: number;
+      readonly icon?: IconName;
+      /** Its key, as CodeMirror writes keys ("F2", "Mod-Backspace"): shown in pencil, and named to assistive tech. */
+      readonly keys?: string;
+      /** It throws something away (to the trash): carmine. */
+      readonly danger?: true;
     }
   | 'separator';
 
@@ -81,10 +94,26 @@ export function float(panel: HTMLElement, place: Place, closed?: () => void): ()
   return close;
 }
 
-/** Show `items` at the pointer (`at`), or under `opener`. Only one menu is open at a time. */
-export function openMenu(items: readonly MenuItem[], place: Place, label = 'Choices'): void {
+/**
+ * Show `items` at the pointer (`at`), or under `opener`. Only one menu is open at a time.
+ * `head`: the menu is a row's, headed by its name (`label`).
+ */
+export function openMenu(
+  items: readonly MenuItem[],
+  place: Place,
+  label = 'Choices',
+  head = false,
+): void {
   const buttons: HTMLButtonElement[] = [];
-  const menu = h('div', { class: 'menu', attrs: { role: 'menu', 'aria-label': label } });
+  const iconed = items.some((item) => item !== 'separator' && item.icon);
+  const keyed = !touch();
+  const menu = h('div', {
+    class: iconed ? 'menu menu--icons' : 'menu',
+    attrs: { role: 'menu', 'aria-label': label },
+  });
+  // The menu's name is already its label: the head is for the eye.
+  if (head)
+    menu.append(h('div', { class: 'menu__head', text: label, attrs: { 'aria-hidden': 'true' } }));
   let close = () => {};
   for (const item of items) {
     if (item === 'separator') {
@@ -92,9 +121,10 @@ export function openMenu(items: readonly MenuItem[], place: Place, label = 'Choi
       continue;
     }
     const button = h('button', {
-      class: 'word-button',
-      text: item.label,
+      class: item.danger ? 'word-button is-danger' : 'word-button',
+      text: iconed ? undefined : item.label,
       attrs: {
+        'aria-keyshortcuts': item.keys && keyed ? ariaKeys(item.keys, MAC) : undefined,
         type: 'button',
         role:
           item.checked === undefined
@@ -112,6 +142,20 @@ export function openMenu(items: readonly MenuItem[], place: Place, label = 'Choi
         },
       },
     });
+    if (iconed) {
+      button.append(
+        item.icon ? icon(item.icon) : h('span', { class: 'icon' }),
+        h('span', { class: 'menu__word', text: item.label }),
+        // Drawn by the style sheet (content: attr()), so a choice's words are its words alone.
+        h('span', {
+          class: 'menu__keys',
+          attrs: {
+            'aria-hidden': 'true',
+            'data-keys': item.keys && keyed ? keyText(item.keys, MAC) : undefined,
+          },
+        }),
+      );
+    }
     if (item.depth) button.style.setProperty('--depth', String(item.depth));
     buttons.push(button);
     menu.append(button);
