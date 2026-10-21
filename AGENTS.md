@@ -108,7 +108,10 @@ in this order: `EIEN_USER_DATA` (tests, separate copies: everything there); a
 portable copy ("Eien Data" beside the `.app`, or beside the `.exe` its
 launcher names in `PORTABLE_EXECUTABLE_DIR`; it says so and quits when it
 can't write there); else installed (or from source): Electron's data folder,
-with this device's `settings.json` in `Documents/Eien`. The first start moves
+with this device's `settings.json` in `Documents/Eien`. Each kind has its own
+vault to start in (`homeVault`: `Vault` inside `EIEN_USER_DATA`, beside a
+portable copy, or in `Documents/Eien`), opened when no other has been; so the
+desktop has no welcome screen unless the vault can't be opened. The first start moves
 a `settings.json` from the data folder there, never over one already there;
 while the vault last opened holds `Documents/Eien`, the file stays in the data
 folder, and Eien says so once.

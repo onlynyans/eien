@@ -12,6 +12,7 @@ const {
   DOCUMENTS_FOLDER,
   PORTABLE_FOLDER,
   dataFolder,
+  homeVault,
   isWithin,
   prepareDataFolder,
   settingsFolder,
@@ -59,6 +60,28 @@ describe('dataFolder', () => {
     expect(
       dataFolder(copy({ platform: 'win32', env: { PORTABLE_EXECUTABLE_DIR: root } })),
     ).toBeNull();
+  });
+});
+
+describe('homeVault', () => {
+  const documents = join(root, 'Documents');
+
+  it('is Documents/Eien/Vault for an installed copy, as on the phone, beside its settings', () => {
+    expect(homeVault(copy(), documents)).toBe(join(documents, 'Eien', 'Vault'));
+    const settings = join(settingsFolder(copy(), root, documents), 'settings.json');
+    expect(isWithin(homeVault(copy(), documents), settings, 'linux')).toBe(false);
+  });
+
+  it('is Vault beside a portable copy, by its “Eien Data”', () => {
+    const mac = copy({ platform: 'darwin', portable: true, exe: macApp });
+    expect(homeVault(mac, documents)).toBe(join(root, 'Writing', 'Vault'));
+  });
+
+  it('is inside a separate copy’s own folder, never in Documents', () => {
+    const own = join(root, 'tests');
+    expect(homeVault(copy({ env: { EIEN_USER_DATA: own }, portable: true }), documents)).toBe(
+      join(own, 'Vault'),
+    );
   });
 });
 

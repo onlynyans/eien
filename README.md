@@ -54,13 +54,16 @@ Eien isn't signed yet, so the first start asks once:
   `sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`.
 
 On a Mac, macOS asks once whether Eien may use your Documents folder, where
-it keeps this device's settings. Until Eien is signed, it may ask again after
+it keeps your notes and this device's settings. Until Eien is signed, it may ask again after
 an update.
 
 ### Where Eien keeps things
 
-- **Your notes**: plain Markdown files in your vault's folder. Nothing an
-  installer does touches them.
+- **Your notes**: plain Markdown files in your vault. Eien starts in
+  `Documents/Eien/Vault`, the same place as on the phone, and makes it the
+  first time; a portable copy starts in `Vault` beside itself. File → Open
+  Vault… (⌘O) opens any other folder, and Eien starts there from then on.
+  Nothing an installer does touches your notes.
 - **The vault's own data**: its hidden `.eien/` folder (seals, the vault's
   settings, pins) and each folder's `.eien-folder.json`, inside the vault.
 - **This device's settings** (the look, the panes, the vault last open):
@@ -73,7 +76,7 @@ an update.
     itself (or holds it), the settings stay in the data folder, so they never
     sync with your notes, and Eien says so. If something syncs your Documents
     folder (iCloud, OneDrive), your computers share this file.
-  - portable: all of it in "Eien Data" beside the app.
+  - portable: all of it in "Eien Data" beside the app, next to its `Vault`.
 
 ### Updating
 

@@ -1,22 +1,24 @@
-// Where this copy of Eien keeps its data, decided here and nowhere else.
-// Three kinds of copy, in this order:
+// Where this copy of Eien keeps its data, and its vault until the writer
+// opens another, decided here and nowhere else. Three kinds of copy, in this
+// order:
 // - its own folder (EIEN_USER_DATA): the tests', or anyone running a separate
-//   copy. Everything goes there.
-// - a portable copy (built marked; electron-builder.ts): everything goes in
-//   "Eien Data", beside the app.
+//   copy. Everything goes there, the vault in Vault inside it.
+// - a portable copy (built marked; electron-builder.ts): its data in
+//   "Eien Data", and its vault in Vault, both beside the app.
 // - installed (or run from source): Chromium's own storage stays in Electron's
-//   data folder, and this device's settings file goes in Documents/Eien, where
-//   the writer can see it.
+//   data folder; this device's settings file goes in Documents/Eien, where the
+//   writer can see it, beside the vault, Documents/Eien/Vault, as on the phone.
 
 import { accessSync, constants, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { app } from 'electron';
+import { HOME_FOLDER, HOME_VAULT } from '../../core/vault';
 
 /** A portable copy's folder, beside the app. */
 export const PORTABLE_FOLDER = 'Eien Data';
 
-/** The installed app's folder in Documents: this device's settings (the phone's vault is there too). */
-export const DOCUMENTS_FOLDER = 'Eien';
+/** The installed app's folder in Documents: this device's settings, and the vault. */
+export const DOCUMENTS_FOLDER = HOME_FOLDER;
 
 /** This device's settings file, in the settings folder. */
 export const SETTINGS_FILE = 'settings.json';
@@ -47,6 +49,13 @@ export function dataFolder(copy: Copy): string | null {
   if (copy.env.EIEN_USER_DATA) return copy.env.EIEN_USER_DATA;
   if (copy.portable) return join(portableHome(copy), PORTABLE_FOLDER);
   return null;
+}
+
+/** The vault opened when none has been yet, or the last one can't be: made if need be. */
+export function homeVault(copy: Copy, documents: string): string {
+  if (copy.env.EIEN_USER_DATA) return join(copy.env.EIEN_USER_DATA, HOME_VAULT);
+  if (copy.portable) return join(portableHome(copy), HOME_VAULT);
+  return join(documents, DOCUMENTS_FOLDER, HOME_VAULT);
 }
 
 /** Whether this copy keeps its settings file apart from its data folder (installed, or from source). */

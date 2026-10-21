@@ -4,12 +4,15 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { _electron } from '@playwright/test';
+import { _electron, type Page } from '@playwright/test';
 import { appEnv, closeApp, expect, ROOT, test } from './launch';
 
-test('opens one window, welcoming the writer when no vault is open', async ({ app, page }) => {
+/** The vault shown: Eien starts in one, its own when none was opened before. */
+const vaultShown = (page: Page) => page.locator('.tree-row__label', { hasText: 'All Notes' });
+
+test('opens one window, on a vault', async ({ app, page }) => {
   await expect(page).toHaveTitle('Eien');
-  await expect(page.locator('.welcome__name')).toHaveText('Eien');
+  await expect(vaultShown(page)).toBeVisible();
   expect(app.windows()).toHaveLength(1);
 });
 
@@ -32,7 +35,7 @@ test('the window has no Node', async ({ page }) => {
 test('the window runs sandboxed', async ({ app, page }) => {
   test.skip(process.platform === 'linux', 'Electron reports sandboxing on macOS and Windows only');
   // The window's process exists once its page has loaded.
-  await expect(page.locator('.welcome__name')).toBeVisible();
+  await expect(vaultShown(page)).toBeVisible();
   const sandboxed = await app.evaluate(({ app, BrowserWindow }) => {
     const pid = BrowserWindow.getAllWindows()[0]?.webContents.getOSProcessId();
     return app.getAppMetrics().find((process) => process.pid === pid)?.sandboxed;
@@ -184,7 +187,7 @@ test('a second launch exits and leaves the first window in place', async ({
   page,
   userData,
 }) => {
-  await expect(page.locator('.welcome__name')).toBeVisible();
+  await expect(vaultShown(page)).toBeVisible();
   const electronPath = await app.evaluate(() => process.execPath);
   const exitCode = await new Promise<number | null>((done) => {
     const second = spawn(electronPath, [ROOT], { cwd: ROOT, env: appEnv(userData) });
@@ -200,11 +203,11 @@ test('a second launch exits and leaves the first window in place', async ({
 });
 
 test('separate data folders run side by side', async ({ app, page }) => {
-  await expect(page.locator('.welcome__name')).toBeVisible();
+  await expect(vaultShown(page)).toBeVisible();
   const otherData = mkdtempSync(join(tmpdir(), 'eien-e2e-'));
   const other = await _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(otherData) });
   try {
-    await expect((await other.firstWindow()).locator('.welcome__name')).toHaveText('Eien');
+    await expect(vaultShown(await other.firstWindow())).toBeVisible();
     expect(app.windows()).toHaveLength(1);
   } finally {
     await closeApp(other);

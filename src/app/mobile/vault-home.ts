@@ -5,14 +5,15 @@
 // Documents, which the Files app shows, and which needs no asking.
 
 import { Directory, Filesystem } from '@capacitor/filesystem';
+import { HOME_EXPORTS, HOME_FOLDER, HOME_VAULT } from '../../core/vault';
 import { CapacitorFiles } from '../../platform/capacitor/capacitor-files';
 import type { FilesPort } from '../../platform/capacitor/files';
 import { AllFiles } from './all-files';
 
 /** The vault's folder, in the system's Documents. */
-export const VAULT_FOLDER = 'Eien/Vault';
+export const VAULT_FOLDER = `${HOME_FOLDER}/${HOME_VAULT}`;
 /** Where exports are saved, beside it. */
-export const EXPORT_FOLDER = 'Eien/Exports';
+export const EXPORT_FOLDER = `${HOME_FOLDER}/${HOME_EXPORTS}`;
 /** The vault's name, as the sidebar shows it. */
 export const VAULT_NAME = 'Eien';
 

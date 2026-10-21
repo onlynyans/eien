@@ -17,13 +17,14 @@ const launchPackaged = (userData: string, vault?: string): Promise<ElectronAppli
 const freshUserData = () => mkdtempSync(join(tmpdir(), 'eien-packaged-'));
 const WINDOWS_LETS_GO = { recursive: true, force: true, maxRetries: 10, retryDelay: 200 };
 
-test('starts as Eien, packaged, on the welcome screen', async () => {
+test('starts as Eien, packaged, on a vault', async () => {
   const userData = freshUserData();
   const app = await launchPackaged(userData);
   try {
     const page = await app.firstWindow();
     await expect(page).toHaveTitle('Eien');
-    await expect(page.locator('.welcome__name')).toHaveText('Eien');
+    // Its own, as none was opened before (with EIEN_USER_DATA: Vault, inside it).
+    await expect(page.locator('.tree-row__label', { hasText: 'All Notes' })).toBeVisible();
     // app.name names the settings folder (userData) of every installed copy.
     expect(await app.evaluate(({ app }) => ({ name: app.name, packaged: app.isPackaged }))).toEqual(
       { name: 'Eien', packaged: true },

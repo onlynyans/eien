@@ -1,17 +1,18 @@
-// A portable copy, as a writer carries it: everything it keeps (this device's
-// settings and the window's own storage) goes in "Eien Data" beside it.
+// A portable copy, as a writer carries it: its notes in Vault and everything
+// else it keeps (this device's settings, the window's own storage) in
+// "Eien Data", both beside it.
 // npm run package first, or EIEN_PORTABLE_APP=<its executable>.
 
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { _electron, test } from '@playwright/test';
-import { closeApp, expect, makeVault } from '../e2e/launch';
+import { closeApp, expect } from '../e2e/launch';
 import { ownFoldersEnv, portableApp } from './packaged';
 
 const WINDOWS_LETS_GO = { recursive: true, force: true, maxRetries: 10, retryDelay: 200 };
 
-test('keeps everything in “Eien Data”, beside itself', async () => {
+test('keeps its notes in Vault and everything else in “Eien Data”, beside itself', async () => {
   test.skip(!portableApp, 'Linux has no portable build: the AppImage is one already');
   const executable = portableApp ?? '';
   // Windows runs the portable .exe from a temp copy, and its launcher names the
@@ -21,9 +22,12 @@ test('keeps everything in “Eien Data”, beside itself', async () => {
     ? mkdtempSync(join(tmpdir(), 'eien-carried-'))
     : resolve(executable, '../../../..');
   const data = join(home, 'Eien Data');
+  const vault = join(home, 'Vault');
   rmSync(data, WINDOWS_LETS_GO);
-  const vault = makeVault({ 'Chapter One.md': 'It begins.\n' });
-  const env = ownFoldersEnv(vault);
+  rmSync(vault, WINDOWS_LETS_GO);
+  mkdirSync(vault);
+  writeFileSync(join(vault, 'Chapter One.md'), 'It begins.\n');
+  const env = ownFoldersEnv();
   if (windows) env.PORTABLE_EXECUTABLE_DIR = home;
   const app = await _electron.launch({ executablePath: executable, env });
   try {

@@ -851,8 +851,12 @@ Compare or Restore finishes lands on a note opened meanwhile.
 - Android and iOS run the same `ui` and `core` with the Capacitor `Storage`.
 - **One folder, `Documents/Eien`, on every device:** the vault in `Vault`
   (the folder Syncthing syncs), exports in `Exports`, and on a computer this
-  device's settings file beside them, never synced. The phone uses
-  `Documents/Eien/Vault` itself; a computer's Open Vault starts there.
+  device's settings file beside them, never synced. Every device starts in
+  `Documents/Eien/Vault`, made if need be; the phone has no other. A computer
+  opens the vault last opened instead, once the writer has chosen one with
+  Open Vault (which starts in `Documents/Eien`); when that one can't be opened
+  (a drive that isn't connected), it says so and asks, rather than show an
+  empty vault in its place. A portable copy starts in `Vault` beside itself.
 - **Android:** the vault is `Documents/Eien/Vault` in shared storage, synced
   by the Syncthing app. Its writes and renames are Eien's own (a small plugin): a
   write is flushed to the disk, a save's rename replaces the note in one step,
