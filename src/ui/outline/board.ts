@@ -1,12 +1,14 @@
 // Outline cards (spec §4): a book's chapters as index cards on the blotter,
 // in the book's order — each its number, title, first lines and words. A
-// card opens its chapter; dragging one, or Alt and an arrow, puts it in
-// another place in the book (or, dropped on a folder, moves it there). The
-// keyboard is always on a card or the Close button; Esc goes back to the page.
+// card opens its chapter; dragging one, Alt and an arrow, or its menu (a
+// right-click, a long press) puts it in another place in the book (or,
+// dropped on a folder, moves it there). The keyboard is always on a card or
+// the Close button; Esc goes back to the page.
 
 import { PREVIEW_LENGTH } from '../../core/note';
 import { h } from '../dom';
 import { watchDrags } from '../list/drag';
+import { openMenu } from '../menu/menu';
 import type { NoteList } from '../vault/vault-state';
 
 const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
@@ -92,7 +94,21 @@ export class OutlineBoard {
                 'data-path': note.path,
                 'aria-current': note.path === current ? 'true' : undefined,
               },
-              on: { click: () => this.#actions.open(note.path) },
+              on: {
+                click: () => this.#actions.open(note.path),
+                // A right-click, or a long press on a phone, where there's no dragging a card.
+                contextmenu: (event) => {
+                  event.preventDefault();
+                  openMenu(
+                    [
+                      { label: 'Move earlier', run: () => this.#actions.nudge(note.path, -1) },
+                      { label: 'Move later', run: () => this.#actions.nudge(note.path, 1) },
+                    ],
+                    { at: { x: event.clientX, y: event.clientY } },
+                    'Chapter',
+                  );
+                },
+              },
             },
             h('span', { class: 'card__number count', text: note.ordinal ?? '' }),
             h('span', { class: 'card__title', text: note.title }),

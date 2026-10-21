@@ -109,6 +109,11 @@ export class Counters {
       : '';
   }
 
+  /** Whether a sprint is under way: one over (still shown, "done") isn't. */
+  get sprinting(): boolean {
+    return this.#sprintOn !== null && this.#now() < this.#sprintOn.ends;
+  }
+
   /** A sprint of `minutes`, from now: one under way starts again. */
   startSprint(minutes: SprintMinutes): void {
     this.#sprintOn = startSprint(this.#now(), minutes);

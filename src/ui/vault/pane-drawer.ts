@@ -78,7 +78,7 @@ export class PaneDrawer {
   async list(): Promise<void> {
     const { state, nav, panes, settings } = this.#parts;
     const turn = ++this.#listTurn;
-    if (panes.isShut('list')) return; // out of sight: nothing to read for it
+    if (!panes.listKept) return; // out of sight: nothing to read for it
     const words = nav.query.trim();
     const notes = words
       ? await state.search(words)

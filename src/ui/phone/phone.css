@@ -1,0 +1,64 @@
+/* A phone: one pane at a time (spec §10, ./phone-stack.ts). The shell's
+   grid becomes one column, and the pane shown fills it under the bar that
+   goes back. */
+
+.phone-bar {
+  display: none;
+}
+.shell[data-phone] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.shell[data-phone] > .phone-bar:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-2);
+  min-height: var(--eien-space-7);
+  padding: 0 var(--eien-space-2);
+  background: var(--eien-desk);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.phone-bar__back {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.phone-bar__more {
+  margin-left: auto;
+  font-size: var(--eien-size-row);
+  letter-spacing: 0;
+}
+.shell[data-phone] > .sidebar,
+.shell[data-phone] > .list,
+.shell[data-phone] > .page {
+  grid-row: 2;
+  grid-column: 1;
+  border-right: 0;
+}
+.shell[data-phone]:not([data-shown="sidebar"]) > .sidebar,
+.shell[data-phone]:not([data-shown="list"]) > .list,
+.shell[data-phone]:not([data-shown="page"]) > .page {
+  display: none;
+}
+/* No edges to drag, no SIDEBAR or LIST to shut (back stands in for them), and
+   no three panes or two: one at a time. The page's bar keeps its views; Seal,
+   Compare and Versions are in the ⋯, where a narrow bar can't cut them off. */
+.shell[data-phone] .pane-edge,
+.shell[data-phone] .page__panes,
+.shell[data-phone] .page__tools,
+.shell[data-phone] .sidebar__panes {
+  display: none;
+}
+
+/* A finger can't hover: the controls that wait for the pointer stay in sight.
+   Each is named, as in its own sheet (tests/selectors.test.ts). */
+@media (hover: none) {
+  .page__views,
+  .page__panes,
+  .page__tools,
+  .list__head .list__sort,
+  .sidebar__new {
+    opacity: 1;
+  }
+}

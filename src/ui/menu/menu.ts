@@ -11,6 +11,8 @@ export type MenuItem =
       readonly run: () => void;
       /** A choice of several, this one chosen: drawn with the ink dot. */
       readonly checked?: boolean;
+      /** On or off by itself (Focus mode), not one of several: `checked` says which. */
+      readonly toggle?: true;
       readonly disabled?: boolean;
       /** Indented under the one before (a folder inside a folder). */
       readonly depth?: number;
@@ -28,7 +30,8 @@ export interface Place {
 /**
  * Float `panel` at `place`, kept inside the window, as the one thing open:
  * whatever was open closes first. It closes on a click elsewhere, the
- * window losing focus or changing size, or the close returned; then the
+ * window losing focus or changing width (a shorter window moves it to stay
+ * inside), or the close returned; then the
  * keyboard goes back where it was, and `closed` runs.
  */
 export function float(panel: HTMLElement, place: Place, closed?: () => void): () => void {
@@ -40,9 +43,16 @@ export function float(panel: HTMLElement, place: Place, closed?: () => void): ()
     panel.remove();
     document.removeEventListener('pointerdown', outside, true);
     window.removeEventListener('blur', close);
-    window.removeEventListener('resize', close);
+    window.removeEventListener('resize', resized);
     back?.focus();
     closed?.();
+  };
+  // A narrower or wider window moves things from under it: it closes. A taller or shorter one (a
+  // phone's keyboard coming or going) keeps it open, moved to stay inside.
+  const width = window.innerWidth;
+  const resized = () => {
+    if (window.innerWidth !== width) close();
+    else placeIn();
   };
   const handle = { close };
   const outside = (event: Event) => {
@@ -53,18 +63,21 @@ export function float(panel: HTMLElement, place: Place, closed?: () => void): ()
   const anchor = place.opener?.getBoundingClientRect();
   const x = place.at?.x ?? anchor?.left ?? 0;
   const y = place.at?.y ?? (anchor ? anchor.bottom + 4 : 0);
-  const size = panel.getBoundingClientRect();
-  panel.style.setProperty(
-    '--menu-x',
-    `${Math.max(4, Math.min(x, window.innerWidth - size.width - 4))}px`,
-  );
-  panel.style.setProperty(
-    '--menu-y',
-    `${Math.max(4, Math.min(y, window.innerHeight - size.height - 4))}px`,
-  );
+  const placeIn = () => {
+    const size = panel.getBoundingClientRect();
+    panel.style.setProperty(
+      '--menu-x',
+      `${Math.max(4, Math.min(x, window.innerWidth - size.width - 4))}px`,
+    );
+    panel.style.setProperty(
+      '--menu-y',
+      `${Math.max(4, Math.min(y, window.innerHeight - size.height - 4))}px`,
+    );
+  };
+  placeIn();
   document.addEventListener('pointerdown', outside, true);
   window.addEventListener('blur', close);
-  window.addEventListener('resize', close);
+  window.addEventListener('resize', resized);
   return close;
 }
 
@@ -83,7 +96,12 @@ export function openMenu(items: readonly MenuItem[], place: Place, label = 'Choi
       text: item.label,
       attrs: {
         type: 'button',
-        role: item.checked === undefined ? 'menuitem' : 'menuitemradio',
+        role:
+          item.checked === undefined
+            ? 'menuitem'
+            : item.toggle
+              ? 'menuitemcheckbox'
+              : 'menuitemradio',
         'aria-checked': item.checked === undefined ? undefined : String(item.checked),
         disabled: item.disabled ? true : undefined,
       },
@@ -112,11 +130,21 @@ export function openMenu(items: readonly MenuItem[], place: Place, label = 'Choi
     event.stopPropagation();
   });
   close = float(menu, place);
+
+  // The choice made, of several (a sort); never a toggle, which Enter would turn off.
   (
-    buttons.find((button) => button.getAttribute('aria-checked') === 'true') ??
-    buttons.find((b) => !b.disabled)
+    buttons.find(
+      (button) =>
+        button.getAttribute('role') === 'menuitemradio' &&
+        button.getAttribute('aria-checked') === 'true',
+    ) ?? buttons.find((b) => !b.disabled)
   )?.focus();
 }
 
 /** Close the menu that's open, if one is. */
-export const closeMenu = (): void => open?.close();
+/** Close the menu that's open; whether one was (the system's back closes it first). */
+export function closeMenu(): boolean {
+  if (!open) return false;
+  open.close();
+  return true;
+}

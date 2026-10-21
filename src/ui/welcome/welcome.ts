@@ -12,7 +12,7 @@ const DESKTOP = {
 /** Where the vault has one place, the words for it, by platform. */
 const PHONE: Record<string, typeof DESKTOP> = {
   android: {
-    lede: 'Eien keeps your notes in Documents/Eien, where Syncthing can sync them with your other devices. Every note is a plain Markdown file. Android asks once to let Eien use the files there.',
+    lede: 'Eien keeps your notes in Documents/Eien/Vault, where Syncthing can sync them with your other devices. Every note is a plain Markdown file. Android asks once to let Eien use the files there.',
     choice: 'Allow file access…',
   },
 };

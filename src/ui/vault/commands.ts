@@ -45,10 +45,12 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     if (!panes.open('list')) page.focus();
     else if (!wasShut) focusList(ctx.list);
     else void ctx.drawList().then(() => focusList(ctx.list));
-  } else if (command === 'focus:page') page.focus();
-  else if (command === 'seal') void ctx.parts.versions.seal();
+  } else if (command === 'focus:page') {
+    panes.openPage();
+    page.focus();
+  } else if (command === 'seal') void ctx.parts.versions.seal();
   else if (command === 'compare') void ctx.parts.versions.cycleCompare();
-  else if (command === 'versions') ctx.parts.versions.togglePanel();
+  else if (command === 'versions') ctx.parts.versions.showPanel(!ctx.parts.versions.panelOpen);
   else if (command === 'copy-ao3') void ctx.parts.ao3.copy();
   else if (command === 'export-ao3') void ctx.parts.exports.openNote('html');
   else if (command.startsWith('export-note:')) {
@@ -70,7 +72,7 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
 }
 
 /** The list's open note, or its first row, or (an empty list) its first control. */
-function focusList(list: HTMLElement): void {
+export function focusList(list: HTMLElement): void {
   const rows = [...list.querySelectorAll<HTMLElement>('.note-row')];
   const target =
     rows.find((row) => row.getAttribute('aria-current') === 'true') ??

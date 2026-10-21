@@ -53,7 +53,7 @@ export function sidebarFoot(model: FootModel, actions: FootActions): HTMLElement
     ),
     h(
       'div',
-      { class: 'sidebar__foot-row' },
+      { class: 'sidebar__foot-row sidebar__panes' },
       pair('Panes', panesButton('3 panes', false), panesButton('2 panes', true)),
     ),
   );
