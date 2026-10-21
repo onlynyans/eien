@@ -82,8 +82,13 @@
   gap: var(--eien-space-1);
   margin-left: calc(var(--eien-space-2) * -1);
 }
-/* A typeface, shown in itself. */
-.setting__face {
+/* The writer's own themes sit among the gallery's, in the same row. */
+.setting__mine {
+  display: contents;
+}
+/* A typeface, shown in itself; a theme's name, as the writer typed it. */
+.setting__face,
+.setting__own {
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-row);
   letter-spacing: normal;

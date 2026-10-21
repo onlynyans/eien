@@ -35,7 +35,6 @@ describe('applyLook', () => {
       {
         ...DEFAULT_SETTINGS,
         'appearance.scheme': 'night',
-        'appearance.palette': 'otaku',
         'appearance.face': 'atkinson',
         'appearance.density': 'compact',
         'appearance.frame': 'full',
@@ -46,7 +45,6 @@ describe('applyLook', () => {
     );
     expect(dataset).toEqual({
       theme: 'dark',
-      palette: 'otaku',
       face: 'atkinson',
       density: 'compact',
       frame: 'full',

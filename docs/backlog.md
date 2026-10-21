@@ -34,14 +34,20 @@ features that came after, and the plan for them (below the table).
 | 17 | View icons | tweak | Page | LIVE, SOURCE and READING as icons: a text-edit icon, a code icon, a book icon. | Words | yes | you |
 | 18 | Settings in Eien's voice | fix | Settings | The settings screen was built without a mockup (`docs/design` has none), and doesn't read as Eien: bold black headings where the design uses mono labels in graphite, and one long column in a box. Rework it in the design's voice. | A box over the window, one long column | yes | you, audit |
 | 19 | AltGr and the heading keys | fix | Keys | On Windows and Linux, Ctrl+Alt is AltGr, so Ctrl+Alt+1–3 (headings) may take characters that some layouts type with AltGr (², ³ on a German keyboard). Check what Electron does; keep ⌘⌥1–3 on macOS and choose other keys elsewhere, then update spec §4. | **Done** ([#29](https://github.com/onlynyans/eien/pull/29)): Ctrl+Shift+1–3 on Windows and Linux; ⌘⌥1–3 on macOS | – | review |
-| 20 | Writer themes | feature | Themes | Build them (spec §7): themes in `.eien/themes/`, a gallery of Eien's own beside Washi and Otaku, a maker, and files. | Not built; Washi and Otaku are built in | yes: [themes](design/explorations/themes.md) | audit, you |
+| 20 | Writer themes | feature | Themes | Build them (spec §7): themes in `.eien/themes/`, a gallery of Eien's own beside Washi and Otaku, a maker, and files. | **Done** ([#34](https://github.com/onlynyans/eien/pull/34)): the gallery (Washi, Kinari, Aizome, Koke, Rōsoku, Sumi, Sakura-nezumi, Otaku); your own themes as files in `.eien/themes/`, each mixed from four choices and fitted to Eien's contrast; listed under Settings → Palette. The Themes tabs and the mix panel come with 3G | yes: [themes](design/explorations/themes.md) | audit, you |
 | 21 | App icon | feature | Install | Eien's own icon for the installers and the phone (the seal would be the natural one). | Electron's and Capacitor's icons | yes | AGENTS.md |
 | 22 | Smaller downloads | tweak | Install | The Mac download is 546 MB: Chromium twice, for Apple Silicon and Intel. Separate Apple Silicon and Intel downloads, and Chromium's text in English only, would about halve it. Left as it is for now, by your choice. | One universal `.dmg` | – | installers session |
 | 23 | First release | chore | Install | No version is tagged yet, so there's nothing to download from Releases. Tag one (AGENTS.md → Releases), then publish the draft. | No release | – | docs check |
 | 24 | The machine voice's face | feature | Settings | The face for everything in the machine voice (counts, labels, buttons, the status line, the Source view) becomes a setting: IBM Plex Mono (the default) or any of the eight text faces. One list of faces feeds both face settings, so a face added later is one entry, not a change in two places. Each face gets its own machine sizes, as it has its own text sizes. | IBM Plex Mono, always | yes: [settings](design/explorations/settings.md) | you |
 | 25 | Row names' weight | feature | Settings | Two settings, 400 to 700 each: the sidebar's names and the list's titles. A selected list title is 100 heavier than its setting, at most 700 (so 500 at the default, as in the mockup). Whether the sidebar's chosen name is heavier too is the design pass's call (it recommends not). | 400; the selected list title isn't heavier (the mockup's is 500) | yes: [settings](design/explorations/settings.md) | you |
 | 26 | Icons for controls | tweak | Everywhere | Controls become icons: one set, one style, set by the design pass, then used by #8, #15, #16 and #17. Labels, counts and a menu's items stay words. | Every control is a word | yes, first | you |
-| 27 | Corners | tweak | Everywhere | Not everything square: a small radius scale, and which surfaces take which step. | Everything square (`--eien-radius: 0`) | yes, first | you |
+| 27 | Corners | tweak | Everywhere | Not everything square: a radius scale (`--eien-radius-s`, `-m`, `-l`) set by the layout chosen (#28), never fixed: A 2/4/8, B 4/8/14, C 3/6/10. Paper (panes, list, sheet) stays square, except B's sheet (3px). | Everything square (`--eien-radius: 0`) | done in design: [specimen](design/explorations/specimen.md) | you |
+| 28 | Three layouts, as a setting | feature | Window | A · Band, B · Slip and C · Running head, the writer's choice (Settings / Look / Appearance). One framework: commands once, hosts that draw them, a small module per layout ([overall.md](design/explorations/overall.md)). Each layout sets its own corners (#27), and its own phone bottom. | One layout | done in design: [overall](design/explorations/overall.md) | you |
+| 29 | Rename in place, and a right-click menu of Eien's own | fix | Sidebar, list | Notes, folders and tags rename the same way, in their row (F2, double-click, the menu); a taken name says so under the row. The menu: raised paper, an icon and a word each, its key, the trash last in carmine. | A note's rename jumps to its title; a folder's is in its row; a tag can't be renamed | done in design: [overall](design/explorations/overall.md) | you |
+| 30 | Focus mode in the toolbar | tweak | Page | A control for Focus mode (⇧⌘↵) in the page's toolbar, in every layout and on the phone. | In the View menu only | done in design | you |
+| 31 | This vault's settings | tweak | Settings | The vault's own settings (chapter numbers, AO3's scene break) in a category of their own, "This vault", apart from this device's. | Mixed in with the rest | yes | you |
+| 32 | The three-way filter on the sidebar's TAGS | feature | Sidebar | A tag row can be wanted or kept out (with a modifier click), as in the list's filter, if it costs nothing in speed with thousands of notes. | Choosing a tag shows its notes | yes | you |
+| 33 | A lens in the two-pane tree | feature | Sidebar | With two panes the tree lists notes; a sort or filter acts there as it does in the list. | Sorts apply to the list only | – | you |
 
 ## Plan
 
@@ -92,20 +98,32 @@ The phone's mockup changes wherever a change reaches the phone.
 
 ### Stage 3: build what's approved
 
-One pull request each, 3A first, since the rest use it:
+The designs are decided (`.interface-design/system.md`, "Decided patterns",
+and `docs/design/explorations`). Built in two waves, one session per step,
+each step's files apart from the others' in its wave.
+
+**Wave 1**, at once:
 
 | Step | Items |
 |---|---|
-| 3A Icons and corners | #26, #27: one icon module (inline SVGs), the radius tokens, the word buttons that become icons |
-| 3B The page | #13, #14, #15, #16, #17 |
-| 3C The sidebar | #4, #7, #8, #10 |
-| 3D Your own order | #12 |
-| 3E Settings | #18, with #24 and #25 moved into it |
-| 3F The app's icon, then the first release | #21, then #23 |
+| 3A The layouts | #28 the framework and all three layouts as a setting; #26 the icons; #27 corners per layout; #15 chevrons and the seal strip; #16 the strip that hides; #17 view icons; #30 Focus; #8 the foot's icons; #1 what goes in C's strip |
+| 3B Themes (done, [#34](https://github.com/onlynyans/eien/pull/34)) | #20: the gallery's themes, your own in `.eien/themes/`, the mix (fitted to Eien's contrast); the theme applied as tokens |
+| 3C The app's icon | #21: the seal, for the installers and both phones |
+
+**Wave 2**, once 3A has merged (they build on its framework and icons):
+
+| Step | Items |
+|---|---|
+| 3D The page | #13 tags in the running head (slips under the title on the phone); #14 the formatting bar, drawn icons |
+| 3E The sidebar | #4 the +; #7 Pinned; #10 sync status; #29 rename in place and the right-click menu; #32 the three-way filter on TAGS |
+| 3F Your order | #12 your order and the lens, Arrange mode, the list's three-way tag filter; #33 the lens in the two-pane tree |
+| 3G Settings | #18 over the window, categories and tabs; #31 This vault; #24 and #25; Themes' tabs (with 3B); C's strip ground |
+
+Then #23, the first release.
 
 ### Later
 
-#20 writer themes (your call) and #22 smaller downloads (left for now).
+#22 smaller downloads (left for now).
 
 ### Answers needed, and before what
 
@@ -124,13 +142,17 @@ explorations, before stage 3 builds each part.
 - **Not everything is square** (#27), decided 2026-10-20.
 - **Two type settings** (#24, #25), decided 2026-10-20. Two voices stay: the
   text face for what a person wrote, the machine voice for the rest.
+- **All three layouts, as a setting** (#28), each with its own corners (#27)
+  and phone bottom; **the seal is the app's icon** (#21); **a theme may
+  change the seal's colour**, one per theme; **this vault's settings get a
+  category** (#31); **tags on the phone are slips under the title**; **the
+  sidebar's TAGS take the three-way filter** if it costs no speed (#32);
+  **the two-pane tree takes the lens as the list does** (#33); **removing a
+  tag in the header never edits the text**. All decided 2026-10-21.
 
 ## Questions for you
 
-All answered on 2026-10-20 (the rows above say how). Now open: which
-exploration to take for each part of stage 2. See
-[the explorations](design/explorations/README.md), each with a
-recommendation.
+None open: every exploration is decided (2026-10-21).
 
 ## Design audit, 2026-10-20
 

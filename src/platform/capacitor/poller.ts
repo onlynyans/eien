@@ -3,7 +3,7 @@
 // (lookNow), each file by its time and size. What changed since the last
 // look is reported, as a watcher would report it.
 
-import { isHiddenName, isWatchedPath } from '../../core/paths';
+import { isHiddenName, isWatchedPath, THEMES_FOLDER } from '../../core/paths';
 import type { FilesPort } from './files';
 
 const joined = (folder: string, name: string) => (folder ? `${folder}/${name}` : name);
@@ -71,9 +71,11 @@ export class Poller {
       for (const entry of (await this.#files.list(folder)) ?? []) {
         const path = joined(folder, entry.name);
         if (entry.type === 'directory') {
-          // Into the vault's folders, and .eien's settings and seals; not its trash, nor other hidden folders.
+          // Into the vault's folders, and .eien's settings, seals and themes; not its trash, nor other hidden folders.
           const hidden = path.split('/').some(isHiddenName);
-          if (!hidden || path === '.eien' || path.startsWith('.eien/versions')) await walk(path);
+          const kept =
+            path === '.eien' || path.startsWith('.eien/versions') || path === THEMES_FOLDER;
+          if (!hidden || kept) await walk(path);
         } else if (isWatchedPath(path)) {
           seen.set(path, `${entry.mtime}:${entry.size}`);
         }

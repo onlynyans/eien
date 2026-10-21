@@ -78,9 +78,11 @@ describe('valueProblem', () => {
   if (!palette || !zoom) throw new Error('missing settings');
 
   it('accepts a listed choice and nothing else', () => {
-    expect(valueProblem(palette, 'otaku')).toBeNull();
+    const face = settingOf('appearance.face');
+    if (!face) throw new Error('missing settings');
+    expect(valueProblem(face, 'literata')).toBeNull();
     for (const bad of [
-      'Otaku',
+      'Literata',
       '',
       'toString',
       '__proto__',
@@ -88,9 +90,33 @@ describe('valueProblem', () => {
       1,
       null,
       undefined,
+      ['literata'],
+    ]) {
+      expect(valueProblem(face, bad)).toMatch(
+        /^must be one of newsreader, literata, .*instrument$/,
+      );
+    }
+  });
+
+  it('takes the gallery’s themes, and a theme of the writer’s own by a name its file can have', () => {
+    for (const good of ['washi', 'kinari', 'sakura', 'otaku', 'mine:Late Train']) {
+      expect(valueProblem(palette, good), good).toBeNull();
+    }
+    for (const bad of [
+      'Otaku',
+      '',
+      'toString',
+      '__proto__',
+      'mine:',
+      'mine:a/b',
+      'mine:.x',
+      1,
+      null,
       ['otaku'],
     ]) {
-      expect(valueProblem(palette, bad)).toMatch(/must be one of washi, otaku/);
+      expect(valueProblem(palette, bad)).toBe(
+        'must be one of washi, kinari, aizome, koke, rosoku, sumi, sakura, otaku, or a theme of your own (mine:<name>)',
+      );
     }
   });
 
