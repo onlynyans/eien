@@ -119,10 +119,9 @@ test.describe('a vault settings file saved with a byte-order mark', () => {
     await page.locator('.tree-row__label', { hasText: /^Book$/ }).click();
     await expect(page.locator('.note-row__ord')).toHaveText(['1', '2']); // a book, numbered as the file says
     await page.getByRole('button', { name: 'Settings' }).click();
-    await page
-      .getByRole('dialog', { name: 'Settings' })
-      .getByRole('button', { name: 'i ii iii' })
-      .click();
+    const dialog = page.getByRole('dialog', { name: 'Settings' });
+    await dialog.getByRole('navigation').getByRole('button', { name: 'Writing' }).click();
+    await dialog.getByRole('button', { name: 'i ii iii' }).click();
     await expect(page.locator('.note-row__ord')).toHaveText(['i', 'ii']);
     await expect.poll(() => readIn(vault, '.eien/config.json')).toBe('{}\n');
   });

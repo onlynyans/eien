@@ -9,7 +9,8 @@
   --eien-radius-l: 10px;
   --band: var(--eien-space-7);
   --runhead-h: calc(var(--eien-space-6) + var(--eien-space-2));
-  /* One of the theme's own surfaces, so it follows any theme (a setting later: backlog 3G). */
+  /* One of the theme's own surfaces, so it follows any theme: the desk, unless the Running
+     head setting sets another on <html> (ui/settings/look-properties.ts). */
   --runhead-ground: var(--eien-desk);
   /* The system's window controls sit in the strip, in its ground. */
   --controls-h: var(--runhead-h);

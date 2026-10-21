@@ -192,7 +192,11 @@ test('a vault set to straight quotes keeps them as typed', async ({ app, page, v
   await open(page, 'Blank');
   await clickMenu(app, settingsMenu, 'Settings…');
   const dialog = page.getByRole('dialog', { name: 'Settings' });
+  const tab = (name: string) =>
+    dialog.getByRole('navigation').getByRole('button', { name, exact: true }).click();
+  await tab('Writing'); // This vault's
   await dialog.getByRole('button', { name: 'Straight " "', exact: true }).click();
+  await tab('AO3');
   await dialog.getByRole('button', { name: 'Rule alone', exact: true }).click();
   await page.keyboard.press('Escape');
   await expect

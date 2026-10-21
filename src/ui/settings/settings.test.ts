@@ -13,7 +13,10 @@ function fakeRoot() {
   const properties = new Map<string, string>();
   const root = {
     dataset: {} as Record<string, string>,
-    style: { setProperty: (name: string, value: string) => void properties.set(name, value) },
+    style: {
+      setProperty: (name: string, value: string) => void properties.set(name, value),
+      removeProperty: (name: string) => void properties.delete(name),
+    },
   };
   return { root: root as unknown as HTMLElement, dataset: root.dataset, properties };
 }

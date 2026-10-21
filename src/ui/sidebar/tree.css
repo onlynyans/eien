@@ -130,6 +130,7 @@
   line-height: var(--eien-row-h);
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-row);
+  font-weight: var(--eien-weight-tree); /* a setting (#25); the chosen name isn't heavier */
 }
 @media (hover: hover) {
   .tree-row:hover {

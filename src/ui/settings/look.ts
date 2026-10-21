@@ -1,10 +1,11 @@
 // How the window shows the settings (spec §6): each is a data attribute on
-// <html> or a custom property, and the tokens follow. Day or night is also
+// <html> or a custom property (./look-properties.ts), and the tokens follow. Day or night is also
 // the main process's (nativeTheme), so the window's frame follows it and
 // it's right before the window first draws. The palette is worn by
 // ../theme/wear.ts, as it may be one of the vault's own themes.
 
 import { DEFAULT_SETTINGS, type SettingKey, type SettingValues } from '../../core/config';
+import { lookProperties } from './look-properties';
 
 /** Settings that are a data attribute on <html>; at the default, there's none. */
 const LOOK_ATTRIBUTES = {
@@ -35,4 +36,8 @@ export function applyLook(
   }
   root.style.setProperty('--eien-text-scale', String(values['appearance.textSize'] / 100));
   root.style.setProperty('--eien-zoom', String(values['page.zoom'] / 100));
+  for (const [name, value] of Object.entries(lookProperties(values))) {
+    if (value === null) root.style.removeProperty(name);
+    else root.style.setProperty(name, value);
+  }
 }

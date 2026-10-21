@@ -225,9 +225,14 @@ page there shows them working.
   last, in carmine, after a rule.
 - **Settings over the window** (#18): a sheet at `--settings-inset`
   (64px 112px), `--eien-radius-l`, the float shadow, on the scrim. It moves
-  by its head and resizes by its right edge, bottom edge and corner, stays
-  in the window, is at least 560 × 380, keeps its box per device, and goes
-  back on a double-click of its head.
+  by its head and resizes by its edges and corners (only the bottom-right
+  corner shows itself, and takes the arrow keys), stays in the window, is at
+  least 560 × 380, keeps its box per device, and goes back on a
+  double-click of its head. On a phone it's a full sheet, its tabs in a
+  strip under the head. Built: `src/ui/settings/` (3G).
+  - **Categories:** Look (Appearance, Type, Page), Themes (Gallery,
+    Custom), Writing (Lists, Editor), This vault (Writing, AO3): the
+    vault's own settings apart from this device's (#31).
   - **Breadcrumb head:** `SETTINGS / CATEGORY / TAB` in the machine voice,
     slashes faded, the last part ink-soft.
   - **Category label** (new element): mono capitals, tracked, faded, with a
@@ -274,4 +279,5 @@ layout's hosts in `ui/chrome/band.ts`, `slip.ts`, `runhead.ts` with a
 stylesheet each (its corners on `:root[data-layout=…]`). The slots wave 2
 fills: the formatting bar's row (`page.slots.format`, the `format` slot),
 the sync icon's place at the sidebar's foot (`SidebarFoot.sync`), and C's
-strip ground (`--runhead-ground`, the desk until it's a setting).
+strip ground (`--runhead-ground`: the Running head setting, one of the
+theme's surfaces, the desk by default; built in 3G).

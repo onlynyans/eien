@@ -150,12 +150,47 @@ test('the ⋯ exports the note as its own menu does, into Documents/Eien/Exports
   await expect.poll(() => listOutside(page, 'Eien/Exports')).toEqual(['Ideas.epub']);
 });
 
-test('the ⋯ opens the settings', async ({ page }) => {
+test('the ⋯ opens the settings, a full sheet: its tabs in a strip, nothing to drag', async ({
+  page,
+}) => {
   await withNotes(page);
   await titles(page).filter({ hasText: 'Ideas' }).click();
   await more(page).click();
   await menuItem(page, 'Settings').click();
-  await expect(page.locator('dialog[open]')).toBeVisible();
+  const sheet = page.getByRole('dialog', { name: 'Settings' });
+  await expect(sheet).toBeVisible();
+  const screen = page.viewportSize();
+  expect(await sheet.boundingBox()).toEqual({
+    x: 0,
+    y: 0,
+    width: screen?.width,
+    height: screen?.height,
+  });
+  await expect(sheet.locator('.settings__grip').first()).toBeHidden();
+  // A drag of its head moves nothing.
+  const head = await sheet.locator('.settings__crumbs').boundingBox();
+  if (!head) throw new Error('no head');
+  await page.mouse.move(head.x + 10, head.y + 5);
+  await page.mouse.down();
+  await page.mouse.move(head.x + 80, head.y + 120);
+  await page.mouse.up();
+  expect((await sheet.boundingBox())?.y).toBe(0);
+
+  // Its tabs in one strip under the head, each a touch target; the one shown in sight.
+  const nav = sheet.getByRole('navigation');
+  const custom = nav.getByRole('button', { name: 'Custom', exact: true });
+  await custom.click();
+  await expect(sheet.locator('.settings__crumbs')).toHaveText('Settings/Themes/Custom');
+  await expect(custom).toBeInViewport();
+  expect((await custom.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(sheet.getByRole('button', { name: 'New theme' })).toBeVisible();
+  await nav.getByRole('button', { name: 'AO3', exact: true }).click();
+  await expect(sheet.getByRole('group', { name: 'Scene breaks' })).toBeVisible();
+  // No panes to choose on a phone.
+  await expect(nav.getByRole('button', { name: 'Lists', exact: true })).toHaveCount(0);
+
+  await sheet.getByRole('button', { name: 'Close settings' }).click();
+  await expect(sheet).toBeHidden();
 });
 
 test('no three panes or two on a phone: always one at a time', async ({ page }) => {

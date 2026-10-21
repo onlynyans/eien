@@ -27,6 +27,10 @@ export class WriterThemes {
   #themes: readonly WriterTheme[] = [];
   /** Counts reads, so an older one's answer never replaces a newer one's. */
   #turn = 0;
+  /** Mixes shown but not yet written, by name: they stand over what the files say until written. */
+  readonly #pending = new Map<string, Mix>();
+  /** Saves, one after another, so two writes of one file never race. */
+  #saving: Promise<void> = Promise.resolve();
 
   constructor(vault: VaultBridge, settings: SettingsState) {
     this.#files = new ThemeFiles(vault);
@@ -52,6 +56,12 @@ export class WriterThemes {
     if (turn === this.#turn) this.#take(themes);
   }
 
+  /** Wear a mix as it's being chosen, before it's saved: a knob being dragged. */
+  preview(title: string, mix: Mix): void {
+    this.#pending.set(nameKey(title), mix);
+    this.#take(this.#themes);
+  }
+
   /** Hear every change; returns a function to stop. */
   onChange(listener: Listener): () => void {
     this.#listeners.add(listener);
@@ -67,12 +77,19 @@ export class WriterThemes {
 
   /** Save a theme's mix: worn at once, written after (throws, with the reason, when it can't be). */
   async save(title: string, mix: Mix): Promise<void> {
-    this.#take(this.#themes.map((theme) => (theme.title === title ? { ...theme, mix } : theme)));
-    try {
-      await this.#files.write(title, mix);
-    } finally {
-      await this.reload();
-    }
+    const key = nameKey(title);
+    this.#pending.set(key, mix);
+    this.#take(this.#themes);
+    const saved = this.#saving.then(async () => {
+      try {
+        await this.#files.write(title, mix);
+      } finally {
+        if (this.#pending.get(key) === mix) this.#pending.delete(key);
+        await this.reload();
+      }
+    });
+    this.#saving = saved.catch(() => undefined);
+    return saved;
   }
 
   /** Rename a theme (its file); the palette setting follows it when it's the one worn. */
@@ -80,6 +97,7 @@ export class WriterThemes {
     title: string,
     typed: string,
   ): Promise<{ readonly ok: true; readonly title: string } | NameRefused> {
+    await this.#saving; // the mix last chosen is in the file before it moves
     const renamed = await this.#files.rename(title, typed);
     if (renamed.ok && this.#worn(title)) {
       await this.reload(); // the new name is there before the setting names it
@@ -90,6 +108,8 @@ export class WriterThemes {
 
   /** Send a theme to the trash, where the writer can take it back; Washi is worn if it was. */
   async trash(title: string): Promise<void> {
+    await this.#saving;
+    this.#pending.delete(nameKey(title));
     await this.#files.trash(title);
     if (this.#worn(title)) await this.#settings.set('appearance.palette', 'washi');
     await this.reload();
@@ -110,7 +130,11 @@ export class WriterThemes {
     return choice.kind === 'mine' && nameKey(choice.title) === nameKey(title);
   }
 
-  #take(themes: readonly WriterTheme[]): void {
+  #take(read: readonly WriterTheme[]): void {
+    const themes = read.map((theme) => {
+      const mix = this.#pending.get(nameKey(theme.title));
+      return mix ? { ...theme, mix } : theme;
+    });
     this.#themes = themes;
     for (const listener of this.#listeners) listener(themes);
   }
