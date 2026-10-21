@@ -25,8 +25,8 @@ export interface VaultBridge {
   list(): Promise<VaultEntry[]>;
   /** Every note with its preview, words and tags, from the vault's index. */
   notes(): Promise<IndexedNote[]>;
-  /** The notes holding every word of `query` (spec §4). */
-  search(query: string): Promise<SearchResult>;
+  /** The notes holding every word of `query` (spec §4); given `within`, only among those. */
+  search(query: string, within?: readonly string[] | null): Promise<SearchResult>;
   /** The files directly in a folder (a note's versions, .eien/versions/<id>). */
   listFiles(folder: string): Promise<string[]>;
   read(path: string): Promise<FileState | null>;

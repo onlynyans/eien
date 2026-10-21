@@ -199,18 +199,18 @@ test.describe('shutting and opening', () => {
     page,
   }) => {
     await expect(page.locator('.note-row').first()).toBeVisible();
-    const search = page.getByRole('searchbox');
+    const vaultName = page.locator('.sidebar__vault');
     await clickMenu(app, 'View', 'Toggle Sidebar');
     await expect(page.locator('.sidebar__show')).toBeVisible();
-    await expect(search).toBeHidden();
+    await expect(vaultName).toBeHidden();
     await expect(barButton(page, 'sidebar')).toHaveText('Show Sidebar');
     await barButton(page, 'sidebar').click();
-    await expect(search).toBeVisible();
+    await expect(vaultName).toBeVisible();
     await expect(barButton(page, 'sidebar')).toHaveText('Hide Sidebar');
     await page.locator('.sidebar__hide').click();
-    await expect(search).toBeHidden();
+    await expect(vaultName).toBeHidden();
     await page.locator('.sidebar__show').click();
-    await expect(search).toBeVisible();
+    await expect(vaultName).toBeVisible();
 
     await clickMenu(app, 'View', 'Toggle Note List');
     await expect(page.locator('.list')).toBeHidden();
@@ -230,7 +230,7 @@ test.describe('shutting and opening', () => {
     await clickMenu(app, 'View', 'Toggle Note List');
     await expect.poll(() => focusIn(page, '.page')).toBe(true);
     await clickMenu(app, 'View', 'Toggle Note List');
-    await page.getByRole('searchbox').focus();
+    await folder(page, 'Research').focus();
     await clickMenu(app, 'View', 'Toggle Sidebar');
     await expect.poll(() => focusIn(page, '.page')).toBe(true);
   });

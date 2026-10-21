@@ -51,6 +51,8 @@ export interface NoteList {
   readonly sorts: readonly NoteSort[];
   /** A folder's path, when it shows one: where its rows can be dragged into order. */
   readonly folder?: string;
+  /** For a search narrowed to a list's notes, that list's name. */
+  readonly within?: string;
 }
 
 /** A book's words, as the index has them. */
@@ -193,7 +195,7 @@ export class VaultState {
       const notes = sorted(listed(this.#notes.keys()), by);
       return {
         kind: 'all',
-        heading: 'All Notes',
+        heading: this.nameOf(selection),
         notes,
         total: notes.length,
         sort: by,
@@ -205,7 +207,7 @@ export class VaultState {
       const notes = sorted(listed(this.pins), by);
       return {
         kind: 'pinned',
-        heading: 'Pinned',
+        heading: this.nameOf(selection),
         notes,
         total: notes.length,
         sort: by,
@@ -216,10 +218,9 @@ export class VaultState {
       const by = sort === 'title' ? 'title' : 'modified';
       const tagged = [...this.#notes.values()].filter((note) => hasTag(note.tags, selection.key));
       const notes = sorted(listed(tagged.map((note) => note.path)), by);
-      const heading = `#${this.#tagNamed(selection.key)}`;
       return {
         kind: 'tag',
-        heading,
+        heading: this.nameOf(selection),
         notes,
         total: notes.length,
         sort: by,
@@ -244,7 +245,7 @@ export class VaultState {
     );
     return {
       kind: book ? 'book' : 'folder',
-      heading: folder.name,
+      heading: this.nameOf(selection),
       notes,
       total: notes.length,
       sort: by,
@@ -253,11 +254,34 @@ export class VaultState {
     };
   }
 
-  /** The notes holding every word of `query`, with the words around the match. */
-  async search(query: string): Promise<NoteList> {
-    const result = await this.#vault.search(query);
+  /** A list's name: its heading, and what its search field says it searches. */
+  nameOf(selection: Selection): string {
+    if (selection.kind === 'all') return 'All Notes';
+    if (selection.kind === 'pinned') return 'Pinned';
+    if (selection.kind === 'tag') return `#${this.#tagNamed(selection.key)}`;
+    return (findFolder(this.#tree, selection.path) ?? this.#tree).name;
+  }
+
+  /**
+   * The notes holding every word of `query`, with the words around the
+   * match: the whole vault's, or, `within` a list, only the notes it holds.
+   */
+  async search(query: string, within: Selection | null = null): Promise<NoteList> {
+    // All Notes holds every note: the index needn't be told which.
+    const among =
+      within && within.kind !== 'all'
+        ? (await this.notesFor(within)).notes.map((note) => note.path)
+        : null;
+    const result = await this.#vault.search(query, among);
     const notes = result.hits.map((hit) => ({ ...this.#listed(hit.path), preview: hit.snippet }));
-    return { kind: 'search', heading: `“${query.trim()}”`, notes, total: result.total, sorts: [] };
+    return {
+      kind: 'search',
+      heading: `“${query.trim()}”`,
+      notes,
+      total: result.total,
+      sorts: [],
+      ...(within ? { within: this.nameOf(within) } : {}),
+    };
   }
 
   #listed(path: string, ordinal?: string): ListedNote {
