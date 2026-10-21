@@ -10,7 +10,7 @@ import { recoverStrays } from '../../platform/electron/recover-strays';
 import { OpenVault } from '../../platform/open-vault';
 import { DOCUMENTS_FOLDER, homeVault, thisCopy } from './data-folders';
 import { lastVault, readDeviceFile, updateDeviceFile } from './device-settings';
-import { answer, text } from './ipc';
+import { answer, text, texts } from './ipc';
 
 /** The longest search query the window may send. */
 const MAX_QUERY_LENGTH = 1000;
@@ -118,10 +118,11 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
   });
   handle(CHANNEL.list, () => session.vault().list());
   handle(CHANNEL.notes, () => session.vault().notes());
-  handle(CHANNEL.search, (query) => {
+  handle(CHANNEL.search, (query, within) => {
     const words = text(query, 'query');
     if (words.length > MAX_QUERY_LENGTH) throw new RangeError('The search is too long.');
-    return session.vault().search(words);
+    // A list's notes: the index looks each up, so a path that isn't a note finds nothing.
+    return session.vault().search(words, texts(within, 'within'));
   });
   handle(CHANNEL.listFiles, (folder) => session.vault().listFiles(text(folder, 'folder')));
   handle(CHANNEL.read, (path) => session.vault().read(text(path, 'path')));

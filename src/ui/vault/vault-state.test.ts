@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { VaultIndex } from '../../platform/index';
 import { MemoryStorage } from '../../platform/memory/memory-storage';
 import { when } from '../list/when';
-import { findFolder, VaultState } from './vault-state';
+import { findFolder, type Selection, VaultState } from './vault-state';
 
 /** A vault's state over the real index, as the main process serves it. */
 async function vault(files: Record<string, string>) {
@@ -14,7 +14,7 @@ async function vault(files: Record<string, string>) {
     {
       list: async () => index.entries(),
       notes: async () => index.notes(),
-      search: async (query) => index.search(query),
+      search: async (query, within) => index.search(query, undefined, within),
       read: (path) => storage.read(path),
     },
     'Ink & Ash',
@@ -111,6 +111,48 @@ describe('VaultState', () => {
       words: 4,
     });
     expect((await state.search('nothing-here')).total).toBe(0);
+  });
+
+  it('searches only the notes a list holds, when given that list', async () => {
+    const state = await vault({
+      'Scarf.md': 'A scarf.',
+      'Fic/Mended.md': 'The scarf, mended. #draft',
+      'Fic/Deeper/Knit.md': 'A scarf, knitted.',
+      'Other.md': 'Another scarf. #draft',
+      '.eien/pinned.json': '["Scarf.md", "Fic/Deeper/Knit.md"]',
+    });
+    const found = async (selection: Selection | null) => {
+      const list = await state.search('scarf', selection);
+      return { within: list.within, paths: list.notes.map((note) => note.path).sort() };
+    };
+    const everything = ['Fic/Deeper/Knit.md', 'Fic/Mended.md', 'Other.md', 'Scarf.md'];
+    // A folder's list holds its own notes, not its subfolders'.
+    expect(await found({ kind: 'folder', path: 'Fic' })).toEqual({
+      within: 'Fic',
+      paths: ['Fic/Mended.md'],
+    });
+    expect(await found({ kind: 'tag', key: 'draft' })).toEqual({
+      within: '#draft',
+      paths: ['Fic/Mended.md', 'Other.md'],
+    });
+    expect(await found({ kind: 'pinned' })).toEqual({
+      within: 'Pinned',
+      paths: ['Fic/Deeper/Knit.md', 'Scarf.md'],
+    });
+    expect(await found({ kind: 'all' })).toEqual({ within: 'All Notes', paths: everything });
+    // From the sidebar: the whole vault, narrowed to nothing.
+    expect(await found(null)).toEqual({ within: undefined, paths: everything });
+    expect((await state.search('knitted', { kind: 'folder', path: 'Fic' })).total).toBe(0);
+  });
+
+  it('names each list, as its heading and its search field say it', async () => {
+    const state = await vault({ 'Fic/a.md': '#Draft', 'b.md': '' });
+    expect(state.nameOf({ kind: 'all' })).toBe('All Notes');
+    expect(state.nameOf({ kind: 'pinned' })).toBe('Pinned');
+    expect(state.nameOf({ kind: 'tag', key: 'draft' })).toBe('#Draft');
+    expect(state.nameOf({ kind: 'folder', path: 'Fic' })).toBe('Fic');
+    expect(state.nameOf({ kind: 'folder', path: '' })).toBe('Ink & Ash');
+    expect(state.nameOf({ kind: 'folder', path: 'Gone' })).toBe('Ink & Ash');
   });
 
   it('opens a folder whose settings file is broken, as if it had none', async () => {

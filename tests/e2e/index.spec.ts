@@ -114,7 +114,7 @@ test('search finds every word, accents aside, and clearing goes back to what was
   await expect(row(page, 'Ideas').locator('.note-row__preview')).toContainText(
     'café closes early in winter',
   );
-  await expect(page.locator('.list__head .label')).toHaveText('1 note matches');
+  await expect(page.locator('.list__head .label')).toHaveText('1 note matches · All Notes');
 
   await search(page).fill('scarf');
   await expect(rows(page).locator('.note-row__title')).toHaveText(['The Tear']);
@@ -127,7 +127,7 @@ test('search finds every word, accents aside, and clearing goes back to what was
 
 test('search says when nothing matches, and Clear search comes back', async ({ page }) => {
   await search(page).fill('nothing like this');
-  await expect(page.locator('.list__head .label')).toHaveText('No notes match');
+  await expect(page.locator('.list__head .label')).toHaveText('No notes match · All Notes');
   await page.locator('.list__empty').getByRole('button', { name: 'Clear search' }).click();
   await expect(search(page)).toHaveValue('');
   await expect(rows(page)).toHaveCount(4);
@@ -172,6 +172,32 @@ test('the window can’t search with anything but text of a sensible length', as
     );
   });
   expect(outcomes).toEqual(['refused', 'refused', 'refused', 'refused', 'answered']);
+});
+
+test('the window can narrow a search only to a list of paths', async ({ page }) => {
+  const outcomes = await page.evaluate(async () => {
+    const find = window.eien.vault.search as (query: string, within: unknown) => Promise<unknown>;
+    return Promise.all(
+      [
+        42,
+        'Ideas.md',
+        [1],
+        ['Ideas.md', null],
+        { 0: 'Ideas.md' },
+        null,
+        undefined,
+        ['Ideas.md'],
+        ['Empty.md', '../Ideas.md'],
+      ].map((within) =>
+        find('winter', within).then(
+          (result) => (result as { total: number }).total,
+          () => 'refused',
+        ),
+      ),
+    );
+  });
+  // A path that isn't a note in the vault is never read: it just finds nothing.
+  expect(outcomes).toEqual(['refused', 'refused', 'refused', 'refused', 'refused', 1, 1, 1, 0]);
 });
 
 /**
@@ -240,7 +266,7 @@ test.describe('a vault of 5,000 notes', () => {
 
       await search(page).fill('scarf');
       await expect(page.locator('.list__head .label')).toHaveText(
-        '5,000 notes match · the first 200',
+        '5,000 notes match · the first 200 · All Notes',
       );
 
       await search(page).press('Escape');

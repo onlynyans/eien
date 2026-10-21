@@ -196,8 +196,9 @@ Three panes, each collapsible, with a two-pane option in settings:
      [backlog](backlog.md) #10), settings
 2. **Note list** — the notes in the selected folder or tag: title, a line of
    preview, and the date or word count. Sortable by title, modified date or the
-   folder's own order (drag to reorder). Hidden in two-pane mode, where the
-   tree lists the notes itself.
+   folder's own order (drag to reorder). At its top, on its own band above the
+   heading, the search field ("Search Fic"), which searches only the notes the
+   list holds. Hidden in two-pane mode, where the tree lists the notes itself.
 3. **Page** — the editor, on a paper sheet. A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
    and zoom. Controls show on hover or keyboard focus (on a touch screen,
@@ -221,9 +222,12 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   the folder's own order and sort, a book's numbered), All Notes, Pinned and
   each tag. Choosing a row opens it, and shuts it when chosen again. The
   tree's notes have the list's menu, keys and drags. ⌘2 is the page.
-- Whenever no list is in sight (two panes, or the list shut), a search's
-  results take the tree's place, and the last action's news shows at the
-  sidebar's foot; with the sidebar shut too, in the page's status line.
+- Whenever no list is in sight (two panes, or the list shut), the search
+  field is in the sidebar, under the vault's name, and searches the whole
+  vault; its results take the tree's place, and the last action's news shows
+  at the sidebar's foot; with the sidebar shut too, in the page's status
+  line. The field keeps its words as it moves: opened again, the list
+  searches its own notes for them.
 - The keyboard is never left on something hidden or gone: a shut pane gives
   it to the page (to the page itself when no note is open), a redraw gives it
   back to the control that had it, or to the row now in a removed row's place.
@@ -326,12 +330,19 @@ search. It reads only what changed, by time and size and by what the watcher
 names, sixteen files at a time; a note over 8 MB is listed but not read. A
 write updates the index before it returns, so a new note is listed at once.
 
-Search (⇧⌘F, or the field under the vault's name) finds the notes holding
+The search field is on the list's band, where it searches the notes that list holds (All Notes,
+Pinned, a folder's own notes, not its subfolders', or a tag's), and its
+count says which ("2 notes match · Fic"); with no list in sight (above) it's
+under the vault's name and searches the whole vault. On a phone it stays on
+the contents page, for the whole vault, as the phone's mockup has it.
+⇧⌘F (Edit → Search Notes…) gives the keyboard to whichever field is showing,
+opening a shut sidebar for its own. A search matches the notes holding
 every word of the query, in the title or the text, with case, accents (the
 combining marks of Latin, Greek and Cyrillic, never another script's vowel
 signs), curly quotes and full-width forms aside; "quoted words" are a phrase. Notes whose
 title holds the words come first, then the most recently changed; the first
-200 are listed, with the words around the match. Esc clears it.
+200 are listed, with the words around the match. Esc, or emptying the
+field, clears it and gives the list (or the tree) back.
 
 Tags follow the same Markdown as the editor: a "#" in code, a link, an
 address, HTML or after a "\\" is not a tag. A tag needs a letter; case aside,

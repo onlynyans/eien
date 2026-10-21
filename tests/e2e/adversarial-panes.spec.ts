@@ -127,7 +127,7 @@ test.describe('the keyboard is never lost', () => {
     await clickMenu(app, 'View', 'Toggle Sidebar');
     await page.locator('.sidebar__show').focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('searchbox')).toBeVisible();
+    await expect(page.locator('.sidebar__vault')).toBeVisible();
     await expect.poll(() => focused(page)).not.toBe('body');
     await expect.poll(() => focusIn(page, '.sidebar')).toBe(true);
   });
@@ -603,9 +603,10 @@ test.describe('search while the panes change', () => {
     await folder(page, 'Research').click();
     const search = page.getByRole('searchbox');
     await search.fill('snow');
-    await expect(page.locator('.note-row__title')).toHaveText(['Ideas']);
+    // From the list's band: only Research's notes, and Ideas isn't one.
+    await expect(page.locator('.list__empty')).toContainText('No notes match.');
     await clickMenu(app, 'View', 'Toggle Note List');
-    await expect(treeNotes(page)).toHaveText(['Ideas']);
+    await expect(treeNotes(page)).toHaveText(['Ideas']); // from the sidebar: the whole vault
     await page.locator('.sidebar__search').getByRole('button', { name: 'Clear search' }).click();
     await clickMenu(app, 'View', 'Toggle Note List');
     await expect(page.locator('.list__heading')).toHaveText('Research');
@@ -656,7 +657,7 @@ test.describe('hostile stored state', () => {
     await clickMenu(app, 'View', 'Toggle Sidebar');
     await expect(page.locator('.sidebar__show')).toBeVisible();
     await clickMenu(app, 'View', 'Toggle Sidebar');
-    await expect(page.getByRole('searchbox')).toBeVisible();
+    await expect(page.locator('.sidebar__vault')).toBeVisible();
     await page.locator('.pane-edge--list').focus();
     await page.keyboard.press('ArrowRight');
     await expect.poll(() => listWidth(page)).toBe(332);
