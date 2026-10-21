@@ -71,7 +71,10 @@ export async function showVault(
     tell,
   });
 
+  /** Arranging the list now (Arrange mode): until Done, or another list is chosen. */
+  let arranging = false;
   const choose = (next: Selection) => {
+    arranging = false;
     nav.choose(next);
     search.clear();
     void redraw();
@@ -95,7 +98,7 @@ export async function showVault(
     open: (path: string) => void openNote(path),
     menu: (path: string, at: { x: number; y: number }, ordered: boolean) =>
       showNoteMenu(menus, path, at, ordered),
-    nudge: (path: string, by: -1 | 1) => void act(() => organizer.nudge(path, by)),
+    nudge: (path: string, by: -1 | 1) => order.nudgeNote(path, by),
     rename: (path: string) => renameNote(path),
     pin: (path: string) => void act(() => organizer.pin(path, !state.pins.includes(path))),
     trash: (path: string) => void act(() => organizer.trash(path)),
@@ -268,6 +271,14 @@ export async function showVault(
         void redraw();
       },
       tags: () => filterTags(state.tags),
+      arrange: (on) => {
+        arranging = on;
+        void redraw();
+      },
+    },
+    arrange: () => {
+      const mode = settings.values['lists.arranging'] === 'mode';
+      return { mode, on: mode && arranging };
     },
   });
   const redraw = () => {
@@ -338,6 +349,8 @@ export async function showVault(
     organizer,
     tree: sidebar.element,
     dropFolder: (path, to) => order.dropFolder(path, to),
+    placeNote: (path, before) => order.placeNote(path, before),
+    folderDrags: () => settings.values['lists.arranging'] !== 'mode',
     act,
     listOrdered: () => draw.listOrdered,
     showFolder: (path) => choose({ kind: 'folder', path }),

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { orderFolders } from './folder-settings';
+import { inYourOrder } from './pins';
 import { buildTree } from './tree';
 
 const entries = (...folders: string[]) =>
@@ -23,5 +24,24 @@ describe('orderFolders', () => {
       'Chapter 2',
       'Chapter 10',
     ]);
+  });
+});
+
+describe('inYourOrder', () => {
+  const note = (path: string, modified: number) => ({ path, modified });
+
+  it('notes not placed yet first, newest first; then your order, those still there', () => {
+    const notes = [note('a.md', 1), note('b.md', 2), note('c.md', 3), note('d.md', 4)];
+    expect(inYourOrder(notes, ['b.md', 'gone.md', 'a.md']).map((n) => n.path)).toEqual([
+      'd.md',
+      'c.md',
+      'b.md',
+      'a.md',
+    ]);
+  });
+
+  it('with nothing placed, it’s newest first, as All Notes was', () => {
+    const notes = [note('a.md', 1), note('b.md', 2)];
+    expect(inYourOrder(notes, []).map((n) => n.path)).toEqual(['b.md', 'a.md']);
   });
 });

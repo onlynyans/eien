@@ -3,6 +3,7 @@
 // operation, then the keyboard goes with what moved, wherever it is now.
 
 import { parentOf } from '../../core/paths';
+import { placedBefore } from '../../core/vault';
 import type { FolderMove, Sidebar } from '../sidebar/sidebar';
 import {
   dropFolder,
@@ -51,6 +52,26 @@ export function orderActions(of: OrderActionsOf) {
     },
     dropFolder(path: string, to: FolderDrop): void {
       void act(async () => land(path, await dropFolder(files, path, to)));
+    },
+    /** A note moved one place in the list showing: All Notes' own order, or its folder's. */
+    nudgeNote(path: string, by: -1 | 1): void {
+      if (nav.selection.kind !== 'all') {
+        void act(() => organizer.nudge(path, by));
+        return;
+      }
+      const shown = state.allOrder();
+      const at = shown.indexOf(path);
+      if (at < 0 || at + by < 0 || at + by >= shown.length) return;
+      [shown[at], shown[at + by]] = [shown[at + by] as string, shown[at] as string];
+      void act(() => organizer.setAllOrder(shown));
+    },
+    /** A note dragged into place in the list showing, before `before` (last, for null). */
+    placeNote(path: string, before: string | null): void {
+      if (nav.selection.kind !== 'all') {
+        void act(() => organizer.placeBefore(path, before));
+        return;
+      }
+      void act(() => organizer.setAllOrder(placedBefore(state.allOrder(), path, before)));
     },
     moveTag(key: string, by: -1 | 1): void {
       const order = tagOrderAfter(state.tags, key, by);
