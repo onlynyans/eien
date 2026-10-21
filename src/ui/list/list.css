@@ -69,6 +69,12 @@
 .list__search:not(:empty) + .list__body .list__head {
   padding-top: var(--eien-space-2);
 }
+/* The list's top band, the search's or, with none, the head, keeps clear of macOS's
+   traffic lights while the sidebar's shut (../shell/shell.css). */
+.list__search,
+.list__search:empty + .list__body .list__head {
+  padding-left: max(var(--eien-space-4), calc(var(--controls-left) - var(--pane-sidebar, 0px)));
+}
 
 .list__heading {
   grid-column: 1;

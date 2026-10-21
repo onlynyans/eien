@@ -4,6 +4,7 @@ export {
   type FormatCommand,
   type FormatCommandId,
   formatCommand,
+  keyOn,
 } from './commands';
 export { apply, type Change, type Edit, type Selection } from './edit';
 export {

@@ -50,9 +50,9 @@ if (unwritable !== null) {
     const settings = await deviceSettings();
     applyScheme(settings);
     checkToggles(settings);
-    await createMainWindow();
+    await createMainWindow(settings);
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) void createMainWindow();
+      if (BrowserWindow.getAllWindows().length === 0) void deviceSettings().then(createMainWindow);
     });
   });
 

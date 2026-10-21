@@ -25,7 +25,12 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--eien-space-4);
-  padding: 0 var(--eien-space-4);
+  /* Clear of the system's window controls, at either edge (../shell/shell.css). */
+  padding: 0 max(var(--eien-space-4), var(--controls-right)) 0
+    max(
+      var(--eien-space-4),
+      calc(var(--controls-left) - var(--pane-sidebar, 0px) - var(--pane-list, 0px))
+    );
   background: var(--eien-band);
   border-bottom: var(--eien-hairline) solid var(--eien-rule);
   container: pagebar / inline-size;

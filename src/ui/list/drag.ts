@@ -136,7 +136,8 @@ export function watchDrags(
       mark(null);
     };
 
-    const finish = (commit: boolean) => {
+    /** `released`: the button is up; else (Esc) the click that comes with its release is still to come. */
+    const finish = (commit: boolean, released = true) => {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', up);
       document.removeEventListener('pointercancel', cancel);
@@ -148,9 +149,13 @@ export function watchDrags(
       if (!lifted) return;
       lifted.remove();
       swallowClick = true;
-      setTimeout(() => {
-        swallowClick = false; // in case no click came
-      }, 0);
+      // The click comes with the release, at once: forget it after, in case no click came.
+      const forget = () =>
+        setTimeout(() => {
+          swallowClick = false;
+        }, 0);
+      if (released) forget();
+      else document.addEventListener('pointerup', forget, { capture: true, once: true });
       const target = drop;
       if (!commit || !target) return;
       if ('folder' in target) actions.moveTo(path, target.folder);
@@ -169,7 +174,7 @@ export function watchDrags(
       if (event.key !== 'Escape' || !lifted) return;
       event.preventDefault();
       event.stopPropagation();
-      finish(false);
+      finish(false, false);
     };
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', up);

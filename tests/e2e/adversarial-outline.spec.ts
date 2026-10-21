@@ -501,6 +501,7 @@ test.describe('dragging cards', () => {
       await page.mouse.move(fire.x + fire.width / 2, fire.y + fire.height / 2, { steps: 6 });
       await page.keyboard.press('Escape');
       await expect(page.locator('.is-lifted')).toHaveCount(0);
+      await page.waitForTimeout(200); // a hand lets go a moment after Esc, not at once
       await page.mouse.up();
       await page.waitForTimeout(500);
       await expect(board(page)).toBeVisible();

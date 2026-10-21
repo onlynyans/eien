@@ -48,6 +48,7 @@ function mobileBridge(): Bridge {
     onBeforeClose(save) {
       void App.addListener('pause', () => void save().catch(console.error));
     },
+    paintControls: async () => undefined, // a phone has no window controls
   };
 }
 
