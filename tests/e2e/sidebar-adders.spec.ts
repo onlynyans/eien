@@ -102,11 +102,13 @@ test('the + beside FOLDERS names a folder in place, as New folder did', async ({
   await page.keyboard.press('Escape');
 });
 
-test('each + shows its name on hover', async ({ page }) => {
-  await page.locator('.sidebar__section', { has: newTag(page) }).hover();
-  await newTag(page).hover();
+test('each + has its tooltip, at once when the keyboard reaches it', async ({ page }) => {
+  await page.keyboard.press('Shift'); // a key first: the focus that follows is the keyboard's
+  await newTag(page).focus();
   await expect(page.locator('.tooltip')).toBeVisible();
-  await expect(page.locator('.tooltip')).toContainText('New tag');
+  await expect(page.locator('.tooltip__words')).toHaveText('New tag');
+  await page.getByRole('button', { name: 'New folder' }).focus();
+  await expect(page.locator('.tooltip__words')).toHaveText('New folder');
 });
 
 test('Pinned is always under Library: with nothing pinned, its list says how to pin', async ({
