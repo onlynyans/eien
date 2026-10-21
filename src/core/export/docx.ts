@@ -63,8 +63,8 @@ ${style('table', 'TableNormal', 'Normal Table', '<w:uiPriority w:val="99"/><w:se
 
 const BULLETS = ['•', '◦', '▪'];
 
-/** Bullets (list 1), and one numbering per numbered list, each starting at 1. */
-function numbering(numberedLevels: readonly number[]): string {
+/** Bullets (list 1), and one numbering per numbered list, each from its own first number. */
+function numbering(numbered: readonly { level: number; start: number }[]): string {
   const levels = (numbered: boolean) =>
     Array.from({ length: 9 }, (_, k) => {
       const format = numbered
@@ -72,9 +72,9 @@ function numbering(numberedLevels: readonly number[]): string {
         : `<w:numFmt w:val="bullet"/><w:lvlText w:val="${BULLETS[k % 3]}"/>`;
       return `<w:lvl w:ilvl="${k}"><w:start w:val="1"/>${format}<w:lvlJc w:val="left"/><w:pPr><w:ind w:left="${720 * (k + 1)}" w:hanging="360"/></w:pPr></w:lvl>`;
     }).join('');
-  const lists = numberedLevels.map(
-    (level, i) =>
-      `<w:num w:numId="${i + 2}"><w:abstractNumId w:val="1"/><w:lvlOverride w:ilvl="${Math.min(level, 8)}"><w:startOverride w:val="1"/></w:lvlOverride></w:num>`,
+  const lists = numbered.map(
+    ({ level, start }, i) =>
+      `<w:num w:numId="${i + 2}"><w:abstractNumId w:val="1"/><w:lvlOverride w:ilvl="${Math.min(level, 8)}"><w:startOverride w:val="${start}"/></w:lvlOverride></w:num>`,
   );
   return `${XML}<w:numbering xmlns:w="${W}">
 <w:abstractNum w:abstractNumId="0"><w:multiLevelType w:val="hybridMultilevel"/>${levels(false)}</w:abstractNum>

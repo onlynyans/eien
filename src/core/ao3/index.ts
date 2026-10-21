@@ -1,3 +1,4 @@
+export { NAMED_ENTITIES } from './entities';
 export { fromHtml, looksLikeHtml, pastedMarkdown } from './from-html';
 export {
   decodeEntities,

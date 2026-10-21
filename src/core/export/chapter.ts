@@ -4,9 +4,10 @@
 // Word and the PDF are each made from this.
 
 import { bookBlocks, decodeEntities, escapeHtml } from '../ao3';
-import { footnoteRefs, literalRanges, splitFootnotes } from '../markdown';
+import { footnoteRefs, inRuns, literalRanges, splitFootnotes } from '../markdown';
 import { frontMatterEnd, toEditor } from '../text';
 import type { QuoteStyle } from '../typography';
+import { xmlChars } from './xml';
 
 /** A note to export: its title (the file's name) and its text as stored. */
 export interface ExportNote {
@@ -55,6 +56,7 @@ export const wordsOf = (html: string): string =>
 
 /** `text` with its "[^label]" marks for the notes `number` knows as MARKs, and nothing else changed. */
 function withMarks(text: string, number: (key: string) => number | null): string {
+  if (!/\[\^|&#x0f/iu.test(text)) return text; // nothing to mark: no parse
   const literal = literalRanges(text);
   const edits: { from: number; to: number; with: string }[] = [];
   for (const own of text.matchAll(/&#x0f([0-9a-f]{4});/giu)) {
@@ -66,7 +68,7 @@ function withMarks(text: string, number: (key: string) => number | null): string
       with: `&#${0xf0000 + Number.parseInt(own[1] as string, 16)};`,
     });
   }
-  for (const ref of footnoteRefs(text)) {
+  for (const ref of footnoteRefs(text, literal)) {
     const n = number(ref.key);
     if (n !== null) edits.push({ from: ref.from, to: ref.to, with: markOf(n) });
   }
@@ -76,10 +78,47 @@ function withMarks(text: string, number: (key: string) => number | null): string
   return out;
 }
 
-/** The note's text (front matter left out) as a chapter; `ids` begins its footnotes' ids. */
+/**
+ * A footnote's Markdown, its first line as the page shows it after "[^1]: ":
+ * words, never a block of its own (a heading, a list, code, an HTML block).
+ */
+const asWords = (markdown: string): string =>
+  markdown.replace(/^(?:[#>+*\-=_|<`~]|\d{1,9}(?=[.)]))/u, (start) =>
+    /^\d/u.test(start) ? `${start}\\` : `\\${start}`,
+  );
+
+/** A link's words may hold no link: a mark among them goes just after it. */
+function marksAfterLinks(html: string, mark: (hex: string) => string): string {
+  let out = '';
+  let held = '';
+  let depth = 0;
+  for (const part of html.split(/(<a\b[^>]*>|<\/a>|&#x0F[0-9A-F]{4};)/u)) {
+    const hex = /^&#x0F([0-9A-F]{4});$/u.exec(part)?.[1];
+    if (hex !== undefined) {
+      if (depth > 0) held += mark(hex);
+      else out += mark(hex);
+      continue;
+    }
+    out += part;
+    if (part.startsWith('<a')) depth++;
+    else if (part === '</a>' && --depth === 0) {
+      out += held;
+      held = '';
+    }
+  }
+  return out + held;
+}
+
+/**
+ * The note's text (front matter left out) as a chapter; `ids` begins its
+ * footnotes' ids. A paragraph of more than 64 lines goes as paragraphs of
+ * 64, as the index reads it (spec §4): the parser takes seconds over one.
+ */
 export function chapterOf(note: ExportNote, quotes: QuoteStyle, ids = ''): Chapter {
   const text = toEditor(note.markdown);
-  const { text: body, notes: defined } = splitFootnotes(text.slice(frontMatterEnd(text)));
+  const split = splitFootnotes(text.slice(frontMatterEnd(text)));
+  const body = inRuns(split.text);
+  const defined = new Map([...split.notes].map(([key, md]) => [key, inRuns(asWords(md))]));
   const order: string[] = [];
   const numbers = new Map<string, number>();
   const number = (key: string): number | null => {
@@ -93,7 +132,7 @@ export function chapterOf(note: ExportNote, quotes: QuoteStyle, ids = ''): Chapt
   };
   const marked = new Set<number>();
   const link = (html: string) =>
-    html.replace(MARK, (_, hex: string) => {
+    marksAfterLinks(html, (hex) => {
       const n = Number.parseInt(hex, 16);
       // The first mark of a note is the one its number links back to.
       const id = marked.has(n) ? '' : ` id="${ids}fnref${n}"`;
@@ -122,11 +161,13 @@ export function chapterOf(note: ExportNote, quotes: QuoteStyle, ids = ''): Chapt
   for (const n of marksIn(blocks)) reach(n);
   const [first, ...rest] = blocks;
   // A note that begins with a top-level heading ("# …", written as <h2>) is headed by it, not twice.
-  const own = first !== undefined ? /^<h2>([\s\S]*)<\/h2>$/u.exec(first)?.[1] : undefined;
+  const found = first !== undefined ? /^<h2>([\s\S]*)<\/h2>$/u.exec(first)?.[1] : undefined;
+  // One with no words a file can hold ("# &#1;") heads nothing: the title does.
+  const own = found !== undefined && xmlChars(wordsOf(found)) !== '' ? found : undefined;
   const heading = own ?? escapeHtml(note.title);
   const linked = {
     heading: link(heading),
-    headingText: wordsOf(heading) || note.title,
+    headingText: xmlChars(wordsOf(heading)) || note.title,
     blocks: (own === undefined ? blocks : rest).map(link),
     notes: notes.map((note) => note.map(link)),
   };

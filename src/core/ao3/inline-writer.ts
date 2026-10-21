@@ -244,7 +244,9 @@ export class InlineWriter {
     const words = this.inline(node, open.to, close.from);
     // A book carries no images yet: an image is its description.
     if (!this.#follows(href) || (image && this.#book)) return words;
-    if (!image) return `<a href="${escapeAttr(href)}">${words}</a>`;
+    // A book's reader takes no space in an address (an EPUB checker, Word): written as %20.
+    const address = this.#book ? href.replace(/ /gu, '%20') : href;
+    if (!image) return `<a href="${escapeAttr(address)}">${words}</a>`;
     const alt = decodeEntities(words.replace(/<[^>]*>/g, ''));
     return `<img src="${escapeAttr(href)}" alt="${escapeAttr(alt)}" />`;
   }

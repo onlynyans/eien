@@ -2,7 +2,7 @@
 // characters XML 1.0 allows, and only its five named references. A reader
 // that meets anything else refuses the whole file.
 
-import { decodeEntities } from '../ao3';
+import { NAMED_ENTITIES } from '../ao3';
 
 /** Characters XML 1.0 can't hold, even as references: controls (but tab and line ends), lone surrogates, U+FFFE, U+FFFF. */
 // biome-ignore lint/suspicious/noControlCharactersInRegex: the control characters are what's removed
@@ -32,15 +32,26 @@ const OBSOLETE = /<\/?big>/gu;
 
 /**
  * The HTML core/ao3 writes, as XHTML: its references (the note's own
- * "&nbsp;", "&mdash;"…) as the characters they are, but XML's five; one
- * that names nothing as its words; what XML can't hold, gone.
+ * "&nbsp;", "&eacute;", "&#8212;"…) as the characters they are, but XML's
+ * five; a number past Unicode as U+FFFD, as a browser shows it; anything
+ * else the parser took for a reference ("R&D;", "&Q_A;") as its words; what
+ * XML can't hold, gone.
  */
 export function toXhtml(html: string): string {
   return xmlChars(html)
     .replace(OBSOLETE, '')
-    .replace(/&(#x[0-9a-f]{1,6}|#\d{1,7}|[a-z][a-z0-9]{1,31});/giu, (whole) => {
-      const char = decodeEntities(whole);
-      if (char === whole) return `&amp;${whole.slice(1)}`; // names nothing: its words
-      return XML_NAMED[char] ?? xmlChars(char);
-    });
+    .replace(
+      /&(?:#[xX]([0-9a-fA-F]+)|#([0-9]+)|([A-Za-z][A-Za-z0-9]*));|&/gu,
+      (whole, hex?: string, decimal?: string, name?: string) => {
+        if (hex !== undefined || decimal !== undefined) {
+          const code = hex !== undefined ? Number.parseInt(hex, 16) : Number(decimal);
+          const real = code > 0 && code <= 0x10ffff && (code < 0xd800 || code > 0xdfff);
+          const char = real ? String.fromCodePoint(code) : '\ufffd';
+          return XML_NAMED[char] ?? xmlChars(char);
+        }
+        const char = name === undefined ? undefined : NAMED_ENTITIES.get(name);
+        if (char !== undefined) return XML_NAMED[char] ?? char;
+        return `&amp;${whole.slice(1)}`; // names nothing: its words
+      },
+    );
 }

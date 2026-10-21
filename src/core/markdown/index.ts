@@ -1,4 +1,5 @@
 export { Highlight, WikiLink } from './extensions';
+export { closesFence, fenceOf } from './fences';
 export { flanking } from './flanking';
 export {
   type FootnoteRef,

@@ -636,7 +636,7 @@ it, including on real AO3 output.
 
 ### Exports: EPUB, Word, PDF
 
-- **What:** File → Export Note ▸ EPUB…, Word…, PDF… exports the open note.
+- **What:** File → Export Note ▸ EPUB…, Word (.docx)…, PDF… exports the open note.
   File → Export Book ▸ the same three exports the book the open note is a
   chapter of, or, with none open there, the book chosen in the sidebar (as
   Outline Cards finds it); with no book, one line of news says so. A note's
@@ -659,15 +659,26 @@ it, including on real AO3 output.
   - A scene break (`***`) is a centred `* * *`; the paragraph after it, or
     after a heading, isn't indented.
   - Links go to the web and mail only; a link to anything else (another note,
-    a file) is its words. An image is its description: images aren't carried
-    yet.
+    a file) is its words, and a `[[wiki link]]` is its words (after a `|`,
+    its alias, as Copy for AO3 has it). An image is its description: images
+    aren't carried yet.
+  - A numbered list keeps its first number (`1994.` stays 1994).
+  - A character reference is the character, whichever of HTML 4's names it
+    uses (`&eacute;`, `&euro;`); one that names nothing (`R&D;`) is its words.
+  - A paragraph of more than 64 lines (no blank line in it) goes as
+    paragraphs of 64, as the index reads it (§4): the parser takes seconds
+    over one.
 - **Footnotes,** as GitHub and Obsidian write them: `[^1]` in the text, and
   `[^1]: The note.` at a line's start, its later lines indented four spaces
   (or a lazy line carrying on its first paragraph). Labels are matched case
   aside; a label's first definition counts, a later one stays as words. A
   chapter's notes are numbered in the order they're first referred to; a note
   never referred to comes last, and a `[^x]` with no note is shown as written.
-  In code, a link's address or an HTML tag, `[^1]` is just text.
+  In code, a link's address, an HTML tag or a wiki link, `[^1]` is just text;
+  a mark in a link's words goes just after the link. A note's first line is
+  words, as the page shows it after `[^1]: ` (never a heading, a list or code
+  of its own). A note nothing leads to (no mark in the text, nor in a note
+  the text leads to) is shown in the text's flow, not hidden as a pop-up.
 - **EPUB 3:** a title page (a book's), a contents page, one file per chapter
   with its notes at its end, as pop-up notes where the reader has them (Apple
   Books, Kobo), and an EPUB 2 contents file for older readers. Its identifier
@@ -680,9 +691,11 @@ it, including on real AO3 output.
   own (each mark its own footnote), the page number at the foot (none on the
   title page). 12-point Times New Roman, the first line of each paragraph
   indented. For Word, Pages, LibreOffice and Google Docs.
-- **PDF:** Electron's own Chromium prints it: A4, or Letter where the
-  system's region uses it (the US, Canada, Mexico, the Philippines and the
-  rest of Unicode's list); the system's serif; each chapter from a new page,
+- **Paper and language:** the window's language, as the system sets it
+  (`en-US`), is the EPUB's language, and its region the paper for Word and
+  the PDF: Letter where that region uses it (the US, Canada, Mexico, the
+  Philippines and the rest of Unicode's list), A4 elsewhere and with none.
+- **PDF:** Electron's own Chromium prints it, on that paper; the system's serif; each chapter from a new page,
   its notes at its end; the page number at the foot; the headings as the
   PDF's bookmarks. It's printed in a hidden window that runs no script and
   loads nothing from anywhere.
@@ -712,8 +725,17 @@ Obsidian vault, iA Writer's library, a plain folder) into the vault.
   system (§3); a link, which is never followed; and every file that isn't a
   note (images, PDFs, which stay where they are). Hidden files and folders
   (`.obsidian`, `.git`, `.DS_Store`) are left out without a word. At most
-  10,000 notes come in at once; the rest are said to be left.
-- A folder that is the vault, is inside it, or holds it is refused.
+  10,000 notes come in at once; the rest are said to be left. One import
+  looks at 100,000 files and into folders 64 deep: where it stops, it says
+  so.
+- A link is never followed, even one put in a file's or a folder's place
+  while the import runs: each note is read only if neither it nor a folder
+  on its way is a link.
+- A folder that is the vault, is inside it, or holds it is refused, however
+  its path is spelled (macOS's `/System/Volumes/Data/…`, a bind mount): the
+  folders are compared as the disk has them.
+- The new folder's name is chosen against the vault's top as the disk has it
+  at that moment.
 - Afterwards the sidebar shows the new folder, and one line of news says how
   many notes came in. When anything was left out, a dialog lists what and
   why (the first 30, and how many more).

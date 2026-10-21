@@ -16,6 +16,8 @@ import { printPdf } from './print-pdf';
 const MAX_OUT_CHARS = 32 * 1024 * 1024;
 /** The most an EPUB or a Word file may be: a long novel's, stored, many times over. */
 const MAX_OUT_BYTES = 64 * 1024 * 1024;
+/** The most a name offered may be: a title, many times over. */
+const MAX_NAME_CHARS = 1000;
 
 function bounded(value: unknown, name: string): string {
   const out = text(value, name);
@@ -70,7 +72,9 @@ export function serveOut(window: BrowserWindow): void {
     const file = outFile(value);
     const kind = KINDS[file.kind];
     // Only a name is offered: the writer chooses the folder.
-    const typed = text(name, 'name').replace(new RegExp(`\\.${kind.extension}$`, 'iu'), '');
+    const named = text(name, 'name');
+    if (named.length > MAX_NAME_CHARS) throw new RangeError('name is too long.');
+    const typed = named.replace(new RegExp(`\\.${kind.extension}$`, 'iu'), '');
     const offered = `${safeName(typed, 'Untitled', 200)}.${kind.extension}`;
     const result = await dialog.showSaveDialog(window, {
       title: kind.title,

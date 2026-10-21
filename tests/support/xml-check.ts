@@ -87,3 +87,23 @@ export function assertWellFormedXml(xml: string): void {
   if (open.length) throw new Error(`<${open.at(-1)?.name}> is never closed`);
   if (roots !== 1) throw new Error('No root');
 }
+
+/**
+ * As assertWellFormedXml, and what an EPUB's checker asks of XHTML besides:
+ * no link inside a link, no id twice, no link without words.
+ */
+export function assertSoundXhtml(xhtml: string): void {
+  assertWellFormedXml(xhtml);
+  let depth = 0;
+  for (const tag of xhtml.matchAll(/<(\/?)a\b[^>]*>/gu)) {
+    depth += tag[1] ? -1 : 1;
+    if (depth > 1) throw new Error('A link inside a link');
+  }
+  const ids = [...xhtml.matchAll(/\sid="([^"]*)"/gu)].map((match) => match[1]);
+  const twice = ids.find((id, i) => ids.indexOf(id) !== i);
+  if (twice !== undefined) throw new Error(`The id ${twice} twice`);
+  for (const link of xhtml.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/gu)) {
+    if ((link[1] as string).replace(/<[^>]*>/gu, '').trim() === '')
+      throw new Error('A link with no words');
+  }
+}

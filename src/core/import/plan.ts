@@ -25,6 +25,8 @@ export type LeftReason =
   | 'too-large'
   | 'bad-name'
   | 'too-many'
+  | 'not-looked-at'
+  | 'too-deep'
   | 'link'
   | 'unreadable'
   | 'not-utf8'
@@ -151,6 +153,8 @@ export const LEFT_REASONS: Readonly<Record<LeftReason, string>> = {
   'too-large': 'over 8 MB, the most a note can be',
   'bad-name': 'a name some systems can’t hold',
   'too-many': `past the ${MAX_IMPORT_NOTES.toLocaleString('en-US')} notes one import brings`,
+  'not-looked-at': `not looked at, nor anything after it: one import looks at ${(10 * MAX_IMPORT_NOTES).toLocaleString('en-US')} files`,
+  'too-deep': 'in folders more than 64 deep, not looked into',
   link: 'a link, which isn’t followed',
   unreadable: 'couldn’t be read',
   'not-utf8': 'not UTF-8 text',

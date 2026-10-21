@@ -7,7 +7,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { shownText, xmlParts } from '../../../tests/support/export-parts';
 import { readZip } from '../../../tests/support/read-zip';
-import { assertWellFormedXml } from '../../../tests/support/xml-check';
+import { assertSoundXhtml, assertWellFormedXml } from '../../../tests/support/xml-check';
 import { readMarkdown } from '../markdown';
 import { frontMatterEnd } from '../text';
 import type { ExportRequest } from './book';
@@ -59,7 +59,15 @@ const token = fc.constantFrom(
   '[link](https://example.com/?a=1&b=2)',
   '![alt](x.png)',
   '[[Wiki]]',
+  '[[Wiki|alias]]',
+  '[[Wiki[^1]]]',
+  '[the link[^a]](https://example.org)',
   'www.example.com',
+  '&D;',
+  '&euro;',
+  '&#12345678;',
+  '<?',
+  '<!--',
 );
 const line = fc
   .array(fc.tuple(token, fc.constantFrom(' ', '', '\t')), { minLength: 1, maxLength: 8 })
@@ -78,11 +86,15 @@ const block = fc.oneof(
   fc.constant('***'),
   line.map((l) => `- ${l}`),
   line.map((l) => `1. ${l}\n   - ${l}`),
+  line.map((l) => `1994. ${l}\n1995. ${l}`),
+  line.map((l) => `<? ${l}`),
   line.map((l) => `| ${l} | b |\n|---|---|\n| c |`),
   line.map((l) => `\`\`\`\n${l}\n\`\`\``),
   line.map((l) => `<div>${l}</div>`),
   line.map((l) => `[^1]: ${l}`),
   line.map((l) => `[^a]: ${l}\n    ${l}`),
+  line.map((l) => `[^1]: ~~~ ${l}`),
+  line.map((l) => `[^a]: <!-- ${l}`),
 );
 const note = fc
   .tuple(fc.boolean(), fc.array(block, { minLength: 1, maxLength: 6 }))
@@ -114,7 +126,8 @@ describe('exports, over generated notes', () => {
         const zip = epub(request(markdowns));
         let shown = '';
         for (const [name, xml] of xmlParts(zip)) {
-          assertWellFormedXml(xml);
+          if (/\.xhtml$/u.test(name)) assertSoundXhtml(xml);
+          else assertWellFormedXml(xml);
           if (/chapter-\d+\.xhtml$/u.test(name)) shown += ` ${shownText(xml)}`;
         }
         const words = counted(wordsIn(markdowns));

@@ -21,8 +21,11 @@ const count = (n: number, one: string, many = `${one}s`) =>
 /** The news an import ends with. */
 export function importNews(report: ImportReport): string {
   const left = report.left.length ? ` ${count(report.left.length, 'file')} didn’t come in.` : '';
-  if (!report.folder) return `Nothing imported: no notes there.${left}`;
-  return `Imported ${count(report.copied, 'note')} into “${report.folder}”.${left}`;
+  if (report.folder)
+    return `Imported ${count(report.copied, 'note')} into “${report.folder}”.${left}`;
+  // "No notes there" only when that's so: notes that couldn't come in are notes.
+  const notes = report.left.some((each) => each.reason !== 'not-a-note');
+  return notes ? `Nothing imported.${left}` : `Nothing imported: no notes there.${left}`;
 }
 
 export async function importFolder(parts: ImportParts): Promise<void> {

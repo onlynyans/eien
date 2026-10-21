@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { shownText, xmlParts } from '../../../tests/support/export-parts';
 import { readZip } from '../../../tests/support/read-zip';
-import { assertWellFormedXml } from '../../../tests/support/xml-check';
+import { assertSoundXhtml, assertWellFormedXml } from '../../../tests/support/xml-check';
 import type { ExportRequest } from './book';
 import { epub } from './epub';
 
@@ -69,7 +69,8 @@ describe('epub', () => {
   it('is well-formed XML, every part', () => {
     expect([...parts.keys()]).toHaveLength(7); // container, package, nav, ncx, title, two chapters
     for (const [name, xml] of parts) {
-      expect(() => assertWellFormedXml(xml), name).not.toThrow();
+      const check = name.endsWith('.xhtml') ? assertSoundXhtml : assertWellFormedXml;
+      expect(() => check(xml), name).not.toThrow();
     }
   });
 

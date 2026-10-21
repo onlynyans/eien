@@ -29,7 +29,8 @@ describe('splitFootnotes', () => {
   it('matches labels case aside; the first definition counts, a later one stays as words', () => {
     const split = splitFootnotes('[^Note]: First.\n\n[^note]: Second.');
     expect([...split.notes]).toEqual([['note', 'First.']]);
-    expect(split.text).toBe('\n\n[^note]: Second.');
+    // Escaped, so it's neither a mark nor (one word after the colon) a link's reference.
+    expect(split.text).toBe('\n\n\\[^note]: Second.');
     expect(footnoteKey('ÉTÉ')).toBe('été');
   });
 

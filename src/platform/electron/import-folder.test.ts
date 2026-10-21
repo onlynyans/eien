@@ -4,13 +4,30 @@
 // out is said to be, with why.
 
 import { createHash } from 'node:crypto';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ImportPlan } from '../../core/import';
 import { OpenVault } from '../open-vault';
 import { openDiskStorage } from './disk-storage';
-import { ImportRefused, importFolder, listFolder } from './import-folder';
+import { ImportRefused, importFolder } from './import-folder';
+import { listFolder } from './outside-folder';
+
+/** Runs once the plan is made, before a note is written: Syncthing, at the worst moment. */
+const hooks = vi.hoisted(() => ({ afterPlan: null as null | ((plan: ImportPlan) => void) }));
+vi.mock('../../core/import', async (original) => {
+  const actual = await original<typeof import('../../core/import')>();
+  return {
+    ...actual,
+    planImport: (...args: Parameters<typeof actual.planImport>) => {
+      const plan = actual.planImport(...args);
+      hooks.afterPlan?.(plan);
+      return plan;
+    },
+  };
+});
 
 let base: string;
 let source: string;
@@ -52,6 +69,7 @@ beforeEach(async () => {
   vault = await OpenVault.open('Vault', await openDiskStorage(vaultRoot));
 });
 afterEach(async () => {
+  hooks.afterPlan = null;
   await rm(base, { recursive: true, force: true });
 });
 
@@ -98,10 +116,13 @@ describe('importFolder', () => {
     expect(await readFile(join(vaultRoot, 'Obsidian Notes 2/Ideas.md'), 'utf8')).toBe('Theirs.');
   });
 
-  it('never writes over a file the vault’s listing hasn’t caught up with', async () => {
+  it('never writes over a file that arrives once the plan names its place', async () => {
     await put(source, { 'Ideas.md': 'Imported.' });
-    // Written after the vault was read, before the watcher said: the plan thinks the name is free.
-    await put(vaultRoot, { 'Obsidian Notes/Ideas.md': 'Synced.' });
+    // Written after the plan was made, before the copy: the plan thinks the name is free.
+    hooks.afterPlan = (plan) => {
+      mkdirSync(join(vaultRoot, plan.folder));
+      writeFileSync(join(vaultRoot, plan.folder, 'Ideas.md'), 'Synced.');
+    };
     const report = await importFolder(source, vaultRoot, vault);
     expect(report.folder).toBe('Obsidian Notes');
     expect(await readFile(join(vaultRoot, 'Obsidian Notes/Ideas.md'), 'utf8')).toBe('Synced.');

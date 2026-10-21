@@ -34,10 +34,12 @@ const BLOCK_TAGS = new Set(['p', 'hr', 'blockquote', 'div', 'br', ...INLINE_TAGS
 /** A note's blocks as AO3's: paragraphs, headings, quotes, lists, code, tables, scene breaks. */
 class Writer extends InlineWriter {
   readonly #sceneBreak: SceneBreakStyle;
+  readonly #book: boolean;
 
   constructor(source: string, options: Ao3Options, references: References, book = false) {
     super(source, options.quotes, references, book);
     this.#sceneBreak = options.sceneBreak;
+    this.#book = book;
   }
 
   /**
@@ -119,7 +121,10 @@ class Writer extends InlineWriter {
           return visible(inner) ? `<li>${inner}</li>` : ''; // nothing to show: not posted
         });
         const kept = items.filter(Boolean); // an empty item isn't posted
-        return kept.length ? `<${tag}>${kept.join('\n')}</${tag}>` : '';
+        // A book keeps a numbered list's first number ("1994."); AO3 gets its plain list.
+        const first = Number.parseInt(this.slice(node.from, node.to), 10);
+        const start = this.#book && tag === 'ol' && first !== 1 ? ` start="${first}"` : '';
+        return kept.length ? `<${tag}${start}>${kept.join('\n')}</${tag}>` : '';
       }
       case 'FencedCode':
       case 'CodeBlock': {
@@ -134,8 +139,10 @@ class Writer extends InlineWriter {
         return this.htmlBlock(this.contained(node).replace(/<!--[\s\S]*?(?:-->|$)/gu, ''));
       case 'Table':
         return this.table(node);
-      case 'LinkReference':
       case 'ProcessingInstructionBlock':
+        // "<?" at a line's start, which runs to a "?>" or the note's end: shown as the words it is.
+        return this.htmlBlock(this.contained(node));
+      case 'LinkReference':
         return '';
       default: {
         const words = node.firstChild ? this.lines(node) : '';
@@ -202,7 +209,8 @@ export function toAo3Html(
   options: Ao3Options,
   chosen?: { readonly from: number; readonly to: number },
 ): string {
-  const source = markdown.replace(/\r\n?/g, '\n');
+  // A note read from the disk may begin with a byte-order mark: its front matter is still its front matter.
+  const source = markdown.replace(/^\uFEFF/u, '').replace(/\r\n?/g, '\n');
   const start = frontMatterEnd(source);
   const body = source.slice(start);
   const tree = eienParser.parse(body);
