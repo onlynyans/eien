@@ -4,26 +4,22 @@
 // and a line of preview. A row is dragged, right-clicked, or worked from the
 // keyboard (./row-events.ts).
 
+import { filtering } from '../../core/tags';
 import { h, wordButton } from '../dom';
-import { openMenu } from '../menu/menu';
 import { WINDOW_FROM } from '../shell/window-range';
 import { WindowedRows } from '../shell/windowed-rows';
-import type { ListedNote, NoteList, NoteSort } from '../vault/vault-state';
+import type { ListedNote, NoteList } from '../vault/vault-state';
+import { type LensActions, lensLine, lensParts } from './lens-bar';
 import { noteCount as notes } from './note-count';
 import { type RowActions, rowEvents, rowKeys } from './row-events';
 import { when } from './when';
 
-export interface ListActions extends RowActions {
+export interface ListActions extends RowActions, LensActions {
   newNote(): void;
   clearSearch(): void;
-  sort(sort: NoteSort): void;
 }
 
-export const SORT_NAMES: Record<NoteSort, string> = {
-  order: 'Order',
-  title: 'Title',
-  modified: 'Newest',
-};
+export { SORT_NAMES } from './lens-bar';
 
 /** What an empty list says, where there's a way to fill it. */
 const EMPTY: Partial<Record<NoteList['kind'], string>> = {
@@ -40,6 +36,11 @@ export function listLabel(list: NoteList): string {
     return list.total > list.notes.length
       ? `${matched} · the first ${list.notes.length.toLocaleString()}${within}`
       : `${matched}${within}`;
+  }
+  // Filtered: how many of how many.
+  if (list.of !== undefined) {
+    const of = `${list.total.toLocaleString()} of ${notes(list.of)}`;
+    return list.kind === 'book' ? `${of} · Book` : list.kind === 'tag' ? `${of} · Tag` : of;
   }
   if (list.kind === 'book') return `${notes(list.total)} · Book`;
   if (list.kind === 'tag') return `${notes(list.total)} · Tag`;
@@ -69,7 +70,11 @@ export function renderList(
   notice: string | null = null,
 ): void {
   const book = list.kind === 'book';
-  const ordered = list.folder !== undefined && list.sort === 'order';
+  // In its own order, and nothing filtered out: rows can be moved between the others.
+  const ordered =
+    list.folder !== undefined &&
+    list.sort === 'order' &&
+    !(list.filter !== undefined && filtering(list.filter));
   const row = (note: ListedNote) =>
     h(
       'li',
@@ -99,30 +104,7 @@ export function renderList(
       ),
     );
 
-  const sort =
-    list.sorts.length > 0 && list.sort
-      ? wordButton(
-          SORT_NAMES[list.sort],
-          () =>
-            openMenu(
-              list.sorts.map((choice) => ({
-                label: SORT_NAMES[choice],
-                checked: choice === list.sort,
-                run: () => actions.sort(choice),
-              })),
-              { opener: sortButton },
-              'Sort',
-            ),
-          {
-            class: 'word-button list__sort',
-            'aria-haspopup': 'menu',
-            'aria-label': `Sorted by ${SORT_NAMES[list.sort].toLowerCase()}`,
-            title: ordered ? 'In the folder’s own order: drag to reorder' : undefined,
-          },
-        )
-      : null;
-  const sortButton = sort as HTMLButtonElement;
-
+  const lens = lensParts(list, actions);
   const empty =
     list.kind === 'search'
       ? h(
@@ -134,7 +116,12 @@ export function renderList(
       : h(
           'div',
           { class: 'list__empty' },
-          h('p', { text: EMPTY[list.kind] ?? 'Nothing here yet.' }),
+          h('p', {
+            text:
+              list.filter !== undefined && filtering(list.filter)
+                ? 'No note here passes that filter.'
+                : (EMPTY[list.kind] ?? 'Nothing here yet.'),
+          }),
         );
   // Thousands of notes: one list that draws the rows in sight, kept with its scroll position.
   const long = list.notes.length >= WINDOW_FROM;
@@ -156,10 +143,14 @@ export function renderList(
   }
   // A redraw mustn't take the keyboard's place: the row that had focus has it again.
   const rowsBefore = [...container.querySelectorAll<HTMLElement>('.note-row[data-path]')];
-  const focused =
+  const active =
     document.activeElement instanceof HTMLElement && container.contains(document.activeElement)
-      ? document.activeElement.dataset.path
-      : undefined;
+      ? document.activeElement
+      : null;
+  const focused = active?.dataset.path;
+  // A lens control the keyboard was on; a chip's × goes with its chip, to the filter's button.
+  const focusedKey =
+    active?.dataset.key ?? (active?.closest('.list__lens') ? 'lens-filter:list' : undefined);
   const focusedAt = rowsBefore.findIndex((row) => row.dataset.path === focused);
   container.replaceChildren(
     h(
@@ -168,8 +159,10 @@ export function renderList(
       h('h2', { class: 'list__heading', text: list.heading }),
       h('p', { class: 'label list__count', text: listLabel(list) }),
       wordButton('New note', actions.newNote, { 'aria-keyshortcuts': 'Meta+N Control+N' }),
-      sort,
+      lens.controls.length > 0 ? h('span', { class: 'list__tools' }, ...lens.controls) : null,
+      lens.chips,
     ),
+    ...[lensLine(list)].filter((line) => line !== null),
     h('p', {
       class: 'list__notice',
       text: notice ?? '',
@@ -185,6 +178,9 @@ export function renderList(
     windowed.element.scrollTop = scrolled;
     windowed.render();
     if (focused !== undefined && windowed.focusKey(focused)) return;
+  }
+  if (focused === undefined && focusedKey !== undefined) {
+    container.querySelector<HTMLElement>(`[data-key="${CSS.escape(focusedKey)}"]`)?.focus();
   }
   if (focused !== undefined) {
     const rows = [...container.querySelectorAll<HTMLElement>('.note-row[data-path]')];

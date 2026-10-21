@@ -7,7 +7,8 @@ import { freeNoteName, joinPath } from '../../core/paths';
 import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
 import { SearchField } from '../list/search-field';
-import { listKey, rememberSort } from '../list/sorts';
+import { listKey, rememberFilter, rememberSort } from '../list/sorts';
+import { filterTags } from '../list/tag-filter-panel';
 import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
@@ -241,6 +242,11 @@ export async function showVault(
         rememberSort(listKey(nav.selection), sort);
         void redraw();
       },
+      filter: (next) => {
+        rememberFilter(listKey(nav.selection), next);
+        void redraw();
+      },
+      tags: () => filterTags(state.tags),
     },
   });
   const redraw = () => {

@@ -3,7 +3,7 @@
 // note list would show there, in the same sort.
 
 import type { NumeralStyle } from '../../core/text';
-import { listKey, sortFor } from '../list/sorts';
+import { filterFor, listKey, sortFor } from '../list/sorts';
 import { selectionOf } from '../sidebar/tree';
 import { findFolder, type NoteList, type VaultState } from './vault-state';
 
@@ -21,7 +21,8 @@ export async function treeNotes(
       if (!selection || (selection.kind === 'folder' && !findFolder(state.tree, selection.path))) {
         return null;
       }
-      return [id, await state.notesFor(selection, numerals, sortFor(listKey(selection)))];
+      const key = listKey(selection);
+      return [id, await state.notesFor(selection, numerals, sortFor(key), filterFor(key))];
     }),
   );
   return new Map(lists.filter((entry) => entry !== null));

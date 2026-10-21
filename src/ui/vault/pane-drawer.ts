@@ -6,11 +6,13 @@
 // list: in its band, it searches that list's notes; in the sidebar (no list
 // in sight, or a phone, whose contents page holds it), the whole vault.
 
+import { lensParts } from '../list/lens-bar';
 import { type ListActions, renderList } from '../list/list';
-import { listKey, sortFor } from '../list/sorts';
+import { filterFor, listKey, sortFor } from '../list/sorts';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
+import { openId } from '../sidebar/tree';
 import type { Navigation } from './navigation';
 import type { Notice } from './notice';
 import { treeNotes } from './tree-notes';
@@ -74,6 +76,13 @@ export class PaneDrawer {
     if (turn !== this.#sidebarTurn) return;
     // The news shows above the list; with no list, at the sidebar's foot; with neither, on the page.
     this.#parts.pageNews(!listShown && panes.isShut('sidebar') ? notice.text : null);
+    // With two panes the tree lists the notes: the chosen row's lens is in the sidebar (#33).
+    const chosen = panes.two && !results ? notes.get(openId(nav.selection)) : undefined;
+    this.#parts.sidebar.drawLens(
+      chosen
+        ? { name: chosen.heading, ...lensParts(chosen, this.#parts.listActions, 'tree') }
+        : null,
+    );
     this.#parts.sidebar.draw({
       tree: state.tree,
       tags: state.tags,
@@ -101,9 +110,11 @@ export class PaneDrawer {
           nav.selection,
           settings.values['books.numerals'],
           sortFor(listKey(nav.selection)),
+          filterFor(listKey(nav.selection)),
         );
     if (turn !== this.#listTurn) return;
-    this.#listOrdered = notes.folder !== undefined && notes.sort === 'order' && !words;
+    this.#listOrdered =
+      notes.folder !== undefined && notes.sort === 'order' && !notes.filter && !words;
     renderList(
       this.#parts.list,
       notes,

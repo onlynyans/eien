@@ -11,7 +11,16 @@ import {
   VAULT_PINS,
   VAULT_TAGS,
 } from '../../core/paths';
-import { buildTagTree, hasTag, parseMadeTags, type TagNode } from '../../core/tags';
+import {
+  buildTagTree,
+  filtering,
+  hasTag,
+  NO_FILTER,
+  parseMadeTags,
+  passes,
+  type TagFilter,
+  type TagNode,
+} from '../../core/tags';
 import { chapterNumber, type NumeralStyle } from '../../core/text';
 import {
   buildTree,
@@ -61,6 +70,9 @@ export interface NoteList {
   readonly folder?: string;
   /** For a search narrowed to a list's notes, that list's name. */
   readonly within?: string;
+  /** The tag filter laid over it, when one is; `of`, how many there were before it. */
+  readonly filter?: TagFilter;
+  readonly of?: number;
 }
 
 /** A book's words, as the index has them. */
@@ -230,9 +242,24 @@ export class VaultState {
    * default); a book's numbered in `numerals`, by the book's order however
    * the list is sorted.
    */
+  /** The notes `selection` lists, sorted by `sort` (else its own), through `filter` if one is laid over it. */
   async notesFor(
     selection: Selection,
     numerals: NumeralStyle = 'roman',
+    sort?: NoteSort,
+    filter: TagFilter = NO_FILTER,
+  ): Promise<NoteList> {
+    const list = await this.#notesFor(selection, numerals, sort);
+    if (!filtering(filter)) return list;
+    const notes = list.notes.filter((note) =>
+      passes(this.#notes.get(note.path)?.tags ?? [], filter),
+    );
+    return { ...list, notes, total: notes.length, filter, of: list.total };
+  }
+
+  async #notesFor(
+    selection: Selection,
+    numerals: NumeralStyle,
     sort?: NoteSort,
   ): Promise<NoteList> {
     const sorted = (notes: ListedNote[], by: NoteSort) => {

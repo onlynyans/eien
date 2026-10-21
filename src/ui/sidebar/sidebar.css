@@ -246,3 +246,35 @@
   width: 14px;
   height: 14px;
 }
+
+/* With two panes, the chosen row's lens: its name, the filter and the sort, and its chips. */
+.sidebar__lens {
+  display: grid;
+  gap: var(--eien-space-1);
+  padding: 0 var(--eien-space-2) var(--eien-space-2) var(--eien-space-4);
+}
+.sidebar__lens[hidden] {
+  display: none;
+}
+.sidebar__lens-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eien-space-2);
+  min-height: var(--eien-control);
+}
+.sidebar__lens-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar__lens .list__tools .icon-button {
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+.sidebar:hover .sidebar__lens .icon-button,
+.sidebar__lens .icon-button:focus-visible,
+.sidebar__lens .icon-button[aria-expanded="true"],
+.sidebar__lens .icon-button.is-on {
+  opacity: 1;
+}

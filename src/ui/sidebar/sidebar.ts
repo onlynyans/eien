@@ -43,6 +43,8 @@ export class Sidebar {
   readonly element: HTMLElement;
   /** Where the search field goes when there's no list in sight. */
   readonly searchSlot = h('div', { class: 'sidebar__search' });
+  /** With two panes, the chosen row's lens (../list/lens-bar.ts): its sort and tag filter. */
+  readonly lens = h('div', { class: 'sidebar__lens', attrs: { hidden: true } });
   /** The count, and the window's controls the layout draws there. */
   readonly foot = new SidebarFoot();
   readonly #search: SearchField;
@@ -166,6 +168,7 @@ export class Sidebar {
         h('span', { class: 'sidebar__vault', text: name, attrs: { 'data-folder': '' } }),
       ),
       this.searchSlot,
+      this.lens,
       this.#body,
       this.foot.element,
     );
@@ -196,6 +199,32 @@ export class Sidebar {
     this.#folds.set('folders', false); // a folder made under FOLDERS folded is named in sight
     this.#folderField.start(path);
     if (this.#model) this.draw(this.#model);
+  }
+
+  /** The chosen row's lens, with two panes; none (null) with three, or for a search. */
+  drawLens(
+    lens: { name: string; controls: readonly HTMLElement[]; chips: HTMLElement | null } | null,
+  ): void {
+    const active = document.activeElement;
+    const had =
+      active instanceof HTMLElement && this.lens.contains(active)
+        ? (active.dataset.key ?? (active.closest('.list__lens') ? 'lens-filter:tree' : null))
+        : null;
+    this.lens.hidden = lens === null;
+    this.lens.replaceChildren(
+      ...(lens
+        ? [
+            h(
+              'div',
+              { class: 'sidebar__lens-head' },
+              h('span', { class: 'label sidebar__lens-name', text: lens.name }),
+              h('span', { class: 'list__tools' }, ...lens.controls),
+            ),
+            ...(lens.chips ? [lens.chips] : []),
+          ]
+        : []),
+    );
+    if (had) this.lens.querySelector<HTMLElement>(`[data-key="${CSS.escape(had)}"]`)?.focus();
   }
 
   /** Name a new tag in place, at the end of TAGS (opened, if folded). */

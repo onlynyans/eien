@@ -435,8 +435,23 @@ CommonMark plus GitHub extensions, and three common additions:
 - **Order:** in a folder's own order, drag a row between others, or Alt+↑/↓,
   or Move up/down in its menu. The order is `.eien-folder.json`'s; a folder
   never ordered gets no file. A note moved in goes last.
-- **Sort** a list by its own order, title or newest; the choice is kept per
-  list, on this device.
+- **The lens** over a list (docs/design/explorations/order.md): a sort (its
+  own order, title or newest) and a tag filter, laid over the list's own
+  order and never changing it. Each is an icon in the list's head; each part
+  that's on is a chip with its ×, and clearing it brings the order back.
+  Both are kept per list, on this device. While a lens is on, a folder's rows
+  don't move (no drag, no Alt+↑/↓), and a line under the head says why.
+  - **The tag filter:** the vault's tags, nested, each left alone, wanted (a
+    filled box, a tick) or kept out (a carmine box, a dash, the name struck
+    through). A press moves a tag on to the next state, and ⌥ with a press (or
+    ⌥Enter) keeps it out at once. With two or more wanted, All of (the
+    default) or Any of decides. A note shows if it has the wanted tags and
+    none of the kept-out ones; a tag counts with the tags under it (#fic
+    finds #fic/aot). Every note clears them all. The list's count says how
+    many of how many.
+  - **With two panes** the tree lists the notes, and the chosen row's lens is
+    in the sidebar, under the search field: the same controls and chips,
+    acting on that row's notes in the tree.
 - **Books:** Make it a book / Not a book, in a folder's menu.
 - **Pinned** notes are listed under Library, in the order pinned
   (`.eien/pinned.json`, watched like the settings). ⇧⌘P (Ctrl+Shift+P) on a

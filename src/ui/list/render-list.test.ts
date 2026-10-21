@@ -36,6 +36,8 @@ const actions = () =>
     newNote: vi.fn(),
     clearSearch: vi.fn(),
     sort: vi.fn(),
+    filter: vi.fn(),
+    tags: vi.fn(() => []),
   }) satisfies ListActions;
 
 let container: HTMLElement;
@@ -171,7 +173,8 @@ describe('renderList', () => {
     const run = actions();
     renderList(container, folder(['a.md']), null, run);
     const sort = container.querySelector<HTMLButtonElement>('.list__sort');
-    expect(sort?.textContent).toBe('Newest');
+    expect(sort?.querySelector('svg.icon')).not.toBeNull(); // controls are icons
+    expect(sort?.dataset.tip).toBe('Sort');
     expect(sort?.getAttribute('aria-label')).toBe('Sorted by newest');
     sort?.click();
     const choices = [...document.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]')];
