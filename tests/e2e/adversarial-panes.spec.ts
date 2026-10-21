@@ -797,7 +797,11 @@ test.describe('three thousand notes', () => {
       writeFileSync(at(vault, 'From the phone.md'), 'synced\n');
       await expect(page.locator('.sidebar__count')).toHaveText('3,002 notes', { timeout: 30_000 });
       await page.evaluate(() => {
-        (window as unknown as { long: number[] }).long = [];
+        const w = window as unknown as { long: number[]; drawn: WeakSet<Element> };
+        w.long = [];
+        // The note rows drawn now: opening a note and saving it should change two rows (the
+        // note's, under the vault and under All Notes), and leave the other six thousand be.
+        w.drawn = new WeakSet(document.querySelectorAll('.tree-row--note'));
       });
       await treeNote(page, 'Chapter').first().click();
       await editorContent(page).click();
@@ -806,7 +810,17 @@ test.describe('three thousand notes', () => {
       await expect
         .poll(() => readFileSync(at(vault, 'Chapter.md'), 'utf8'))
         .toContain('along here');
+      // Saved, it's the newest: first under All Notes, moved there without a redraw.
+      await expect(page.locator('.tree-group .tree-row--note .tree-row__label').first()).toHaveText(
+        'Chapter',
+      );
       expect(await longest()).toBeLessThan(200);
+      const made = await page.evaluate(() => {
+        const { drawn } = window as unknown as { drawn: WeakSet<Element> };
+        return [...document.querySelectorAll('.tree-row--note')].filter((row) => !drawn.has(row))
+          .length;
+      });
+      expect(made).toBeLessThanOrEqual(4);
     },
   );
 });

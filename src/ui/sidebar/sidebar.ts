@@ -13,9 +13,10 @@ import type { SearchField } from '../list/search-field';
 import { FolderField } from './folder-field';
 import { Folds } from './folds';
 import { sidebarFoot } from './foot';
+import { RowCache } from './row-cache';
 import { foldingSection, plainSection } from './sections';
 import { sidebarSignature } from './signature';
-import { keyOf, type TreeActions, type TreeModel, TreeRows } from './tree';
+import { keyOf, RESULTS, type TreeActions, type TreeModel, TreeRows } from './tree';
 
 type Scheme = SettingValues['appearance.scheme'];
 
@@ -60,8 +61,10 @@ export class Sidebar {
   });
   /** The control to give the keyboard back to after the next redraw, by its data-key. */
   #refocus: string | null = null;
-  /** What was last drawn (./signature.ts): the same again isn't rebuilt. */
+  /** The frame last drawn (./signature.ts): the same again isn't rebuilt. */
   #drawn = '';
+  /** The notes' rows last drawn, kept where they show the same. */
+  readonly #rows = new RowCache();
   /** Which sections are folded, on this device. */
   readonly #folds = new Folds();
 
@@ -133,21 +136,19 @@ export class Sidebar {
 
   draw(model: SidebarModel): void {
     this.#model = model;
-    // Nothing new to show, and nothing to give the keyboard to: the rows stay as they are.
-    const signature = sidebarSignature(model, new Date().toDateString());
+    const frame = sidebarSignature(model);
     const settled = this.#refocus === null && !this.#folderField.active;
-    if (settled && signature === this.#drawn) return;
-    this.#drawn = signature;
-    // A redraw mustn't take the keyboard's place: the control that had it has it again; a
-    // row that's gone (trashed, moved away) leaves it on the row now in its place.
-    const active = document.activeElement;
-    const inBody = active instanceof HTMLElement && this.#body.contains(active);
-    const focused = this.#refocus ?? (inBody ? (active.dataset.key ?? null) : null);
-    const rowsBefore = this.#shown('.tree-row__name');
-    const focusedAt = this.#refocus === null && inBody ? rowsBefore.indexOf(active) : -1;
-    this.#refocus = null;
+    const giveBack = this.#holdKeyboard();
     const actions = this.#actions;
-    const rows = new TreeRows(model, actions, (folder) => this.#folderEvents(folder));
+    this.#rows.begin();
+    const rows = new TreeRows(model, actions, (folder) => this.#folderEvents(folder), this.#rows);
+    // The same frame, and nothing to give the keyboard to: only notes' rows change, in place.
+    if (settled && frame === this.#drawn && this.#rows.patch((id, at) => rows.noteRows(id, at))) {
+      giveBack();
+      return;
+    }
+    // A tree drawn with a folder's name as a field, or to give the keyboard to, is drawn whole again.
+    this.#drawn = settled ? frame : '';
     const edit = (folder: FolderNode, depth: number) => this.#folderField.row(folder, depth);
 
     const results = model.results;
@@ -155,7 +156,7 @@ export class Sidebar {
       ? [
           plainSection(
             'Results',
-            rows.results(results),
+            rows.noteRows(RESULTS, 0),
             h('span', { class: 'count', text: results.total.toLocaleString() }),
           ),
           results.total === 0
@@ -198,18 +199,37 @@ export class Sidebar {
       ),
     );
     this.#drawing = false;
-    if (focused !== null && !this.#folderField.active) {
+    this.#rows.settle();
+    giveBack();
+    // A redraw mustn't take the caret out of the name being typed.
+    this.#folderField.restore(this.#body);
+  }
+
+  /**
+   * Where the keyboard is, before a redraw; the function returned gives it
+   * back after. A redraw mustn't take the keyboard's place: the control that
+   * had it has it again; a row that's gone (trashed, moved away) leaves it on
+   * the row now in its place.
+   */
+  #holdKeyboard(): () => void {
+    const active = document.activeElement;
+    const inBody = active instanceof HTMLElement && this.#body.contains(active);
+    const asked = this.#refocus;
+    const focused = asked ?? (inBody ? (active.dataset.key ?? null) : null);
+    const focusedAt =
+      asked === null && inBody ? this.#shown('.tree-row__name').indexOf(active) : -1;
+    this.#refocus = null;
+    return () => {
+      if (focused === null || this.#folderField.active) return;
+      // Still on the control it was on: rows put right around it, or not touched at all.
+      if (asked === null && document.activeElement === active) return;
       const same = [...this.#body.querySelectorAll<HTMLElement>('[data-key]')].find(
         (control) => control.dataset.key === focused,
       );
-      const rows = this.#shown('.tree-row__name');
       const visible = same?.closest('[hidden]') ? undefined : same;
-      (
-        visible ?? (focusedAt >= 0 ? rows[Math.min(focusedAt, rows.length - 1)] : undefined)
-      )?.focus();
-    }
-    // A redraw mustn't take the caret out of the name being typed.
-    this.#folderField.restore(this.#body);
+      const rows = visible || focusedAt < 0 ? [] : this.#shown('.tree-row__name');
+      (visible ?? rows[Math.min(focusedAt, rows.length - 1)])?.focus();
+    };
   }
 
   /** The controls `selector` finds that are in sight: none in a folded section. */
