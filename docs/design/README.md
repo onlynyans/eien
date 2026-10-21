@@ -157,6 +157,13 @@ Two separate choices, and every combination works:
   `data-palette="otaku"` on `<html>` and overrides only the colour tokens —
   surfaces, shadows, inks, rules, the seal and status. Faces, sizes, spaces
   and motion stay Eien's.
+- **The app's gallery** (spec §7, `src/core/themes`) adds Kinari, Aizome,
+  Koke, Rōsoku, Sumi and Sakura-nezumi, and the writer's own themes in
+  `.eien/themes/`, mixed from four choices. Those are worn as overrides of
+  the colour tokens on `<html>` (`data-palette` is the theme's id, or
+  `mine`): the surfaces, inks, seal and status inks, with the rules,
+  washes, hover, press, raised and well worked out from them. Each theme
+  has its own seal colour, and still nothing else is that colour.
 - **A scheme is day, night or the system's.** It is `color-scheme` on the root
   (`data-theme="light"` or `"dark"`, or neither to follow the system), and each
   colour token is written as `light-dark(day, night)`.
