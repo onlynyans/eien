@@ -85,6 +85,12 @@ const MAX_GOAL = 10_000_000;
 
 export interface FolderMenu {
   readonly book: boolean;
+  /** The folder it's in, by name; null at the top. */
+  readonly parent: string | null;
+  /** Where it can move among the folders beside it. */
+  readonly canUp: boolean;
+  readonly canDown: boolean;
+  move(how: 'up' | 'down' | 'out'): void;
   /** A book's word goal: asked for in a small field. */
   goal(): void;
   readonly trashName: string;
@@ -109,6 +115,30 @@ export const folderMenu = (folder: FolderMenu): MenuItem[] => [
     run: () => folder.setBook(!folder.book),
   },
   ...(folder.book ? [{ label: 'Word goal…', icon: 'check', run: folder.goal } as const] : []),
+  'separator',
+  ...(folder.canUp
+    ? [{ label: 'Move up', icon: 'up', keys: 'Alt-ArrowUp', run: () => folder.move('up') } as const]
+    : []),
+  ...(folder.canDown
+    ? [
+        {
+          label: 'Move down',
+          icon: 'down',
+          keys: 'Alt-ArrowDown',
+          run: () => folder.move('down'),
+        } as const,
+      ]
+    : []),
+  ...(folder.parent !== null
+    ? [
+        {
+          label: `Move out of ${folder.parent}`,
+          icon: 'outdent',
+          keys: 'Alt-ArrowLeft',
+          run: () => folder.move('out'),
+        } as const,
+      ]
+    : []),
   { label: 'Move to…', icon: 'move', run: folder.moveTo },
   ...(folder.book ? [{ label: 'Export…', icon: 'link', run: folder.exportTo } as const] : []),
   'separator',
@@ -168,6 +198,8 @@ export interface MenuContext {
   followFolder(from: string, to: string): void;
   /** A folder went to the trash: if it, or a folder in it, was selected, select All Notes. */
   unselect(path: string): void;
+  /** Move a folder in your order, or out of its folder. */
+  moveFolder(path: string, how: 'up' | 'down' | 'out'): void;
 }
 
 type At = { readonly x: number; readonly y: number };
@@ -208,9 +240,15 @@ export function showNoteMenu(ctx: MenuContext, path: string, at: At, ordered: bo
 
 export async function showFolderMenu(ctx: MenuContext, path: string, at: At): Promise<void> {
   const settings = (await ctx.state.folderSettings(path)).book;
+  const beside = ctx.state.folderNames(parentOf(path));
+  const place = beside.indexOf(baseName(path));
   openMenu(
     folderMenu({
       book: settings !== null,
+      parent: parentOf(path) === '' ? null : baseName(parentOf(path)),
+      canUp: place > 0,
+      canDown: place >= 0 && place < beside.length - 1,
+      move: (how) => ctx.moveFolder(path, how),
       goal: () =>
         void askNumber({
           label: `Word goal for ${baseName(path)}`,

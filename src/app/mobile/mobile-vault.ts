@@ -17,6 +17,8 @@ export class MobileVault implements VaultBridge {
   #open: OpenVault | null = null;
   #storage: CapacitorStorage | null = null;
   #opening: Promise<VaultInfo | null> | null = null;
+  /** Syncthing syncs the vault: its `.stfolder` marker is in it. */
+  #syncthing = false;
 
   constructor(home: VaultHome, active: () => boolean) {
     this.#home = home;
@@ -29,7 +31,7 @@ export class MobileVault implements VaultBridge {
   }
 
   current(): Promise<VaultInfo | null> {
-    if (this.#open) return Promise.resolve({ name: this.#open.name });
+    if (this.#open) return Promise.resolve({ name: this.#open.name, syncthing: this.#syncthing });
     this.#opening ??= this.#openNow().finally(() => {
       this.#opening = null;
     });
@@ -54,7 +56,8 @@ export class MobileVault implements VaultBridge {
     });
     this.#open = vault;
     this.#storage = storage;
-    return { name: vault.name };
+    this.#syncthing = (await files.stat('.stfolder').catch(() => null)) !== null;
+    return { name: vault.name, syncthing: this.#syncthing };
   }
 
   /** Look for changes now: the app is back, and another device may have written. */

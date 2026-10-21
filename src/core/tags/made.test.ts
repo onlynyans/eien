@@ -80,3 +80,25 @@ describe('the tag tree with made tags', () => {
     expect(byName.fic?.children[0]?.name).toBe('aot');
   });
 });
+
+describe('the tags’ own order', () => {
+  it('is read from and written to the same file, beside the tags made', async () => {
+    const { parseTagOrder, withTagOrder } = await import('./made');
+    const text = withTagOrder('{"made":["x"]}', ['b', 'a']) ?? null;
+    expect(parseTagOrder(text)).toEqual(['b', 'a']);
+    expect(parseMadeTags(text)).toEqual(['x']);
+    expect(withTagOrder(text, ['b', 'a'])).toBeUndefined();
+    expect(withTagOrder('{ broken', ['a'])).toBeNull();
+    expect(parseTagOrder('{"order":["a",1,"",null,"a","b"]}')).toEqual(['a', 'b']);
+  });
+
+  it('orders each level of the tree; tags not placed follow, by name', () => {
+    const tree = buildTagTree(
+      [{ path: 'n.md', tags: ['alpha', 'beta', 'gamma', 'fic/b', 'fic/a'] }],
+      [],
+      ['gamma', 'fic', 'fic/b'],
+    );
+    expect(tree.map((node) => node.name)).toEqual(['gamma', 'fic', 'alpha', 'beta']);
+    expect(tree[1]?.children.map((node) => node.name)).toEqual(['b', 'a']);
+  });
+});

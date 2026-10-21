@@ -266,6 +266,19 @@ export const SETTINGS = [
     default: 'three',
   },
   {
+    key: 'lists.arranging',
+    label: 'Arranging',
+    description:
+      'Drag anytime: rows move whenever your order is showing. In Arrange mode: only after choosing Arrange in a list’s head, so nothing moves by accident.',
+    // A phone moves rows by their menu, never a drag.
+    wide: true,
+    scope: 'device',
+    group: 'Lists',
+    type: 'choice',
+    choices: { drag: 'Drag anytime', mode: 'In Arrange mode' },
+    default: 'drag',
+  },
+  {
     key: 'window.zoom',
     label: 'Interface zoom',
     description:

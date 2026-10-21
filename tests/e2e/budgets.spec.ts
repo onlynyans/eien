@@ -177,6 +177,24 @@ test.describe('three thousand notes', () => {
     },
   );
 
+  test(
+    'a tag kept out of three thousand from the sidebar never stalls (#32)',
+    ALONE,
+    async ({ page }) => {
+      test.setTimeout(90_000);
+      await expect(page.locator('.note-row').first()).toBeVisible({ timeout: 30_000 });
+      await library(page, 'All Notes').click();
+      await expect(page.locator('.rows > li[aria-setsize="3001"]').first()).toBeVisible();
+      const time = await stalls(page);
+      await time.mark();
+      await page.locator('.tree-row__name[data-key="tag:many"]').click({ modifiers: ['Alt'] });
+      await expect(page.locator('.list__count')).toHaveText('1 of 3,001 notes');
+      await page.locator('.tree-row__name[data-key="tag:many"]').click({ modifiers: ['Alt'] });
+      await expect(page.locator('.list__count')).toHaveText('3,001 notes');
+      expect(await time.longest()).toBeLessThan(STALL);
+    },
+  );
+
   test('a note renamed among three thousand never stalls', ALONE, async ({ page, vault }) => {
     test.setTimeout(90_000);
     await expect(page.locator('.note-row').first()).toBeVisible({ timeout: 30_000 });

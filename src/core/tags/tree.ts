@@ -31,7 +31,10 @@ interface Building {
 export function buildTagTree(
   notes: Iterable<{ readonly path: string; readonly tags: readonly string[] }>,
   made: readonly string[] = [],
+  order: readonly string[] = [],
 ): TagNode[] {
+  // Your order (keys, from .eien/tags.json): each level's tags as placed, the rest by name.
+  const placed = new Map(order.map((key, i) => [key, i]));
   const roots = new Map<string, Building>();
   const sorted = [...notes].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
   // A made tag is a note of no path: it adds its tag, and no count.
@@ -55,7 +58,11 @@ export function buildTagTree(
   }
   const finish = (level: Map<string, Building>): TagNode[] =>
     [...level.values()]
-      .sort((a, b) => byName(a.name, b.name))
+      .sort(
+        (a, b) =>
+          (placed.get(a.key) ?? Number.POSITIVE_INFINITY) -
+            (placed.get(b.key) ?? Number.POSITIVE_INFINITY) || byName(a.name, b.name),
+      )
       .map((node) => ({
         name: node.name,
         tag: node.tag,
