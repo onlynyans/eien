@@ -67,7 +67,8 @@ test.describe('renaming', () => {
     await openBook(page);
     await row(page, 'Needle').click({ button: 'right' });
     await menuItem(page, 'Pin').click();
-    await expect(page.locator('.tree-row__label', { hasText: /^Pinned$/ })).toBeVisible();
+    // Pinned is always there: its count says the pin is in.
+    await expect(page.locator('.tree-row__name[data-key="pinned"] .count')).toHaveText('1');
     await row(page, 'Needle').click();
     await page.locator('.title').click();
     await page.keyboard.press('ControlOrMeta+a');
