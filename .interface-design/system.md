@@ -12,6 +12,11 @@ everything is square; the machine voice's face is a setting; row names'
 weight is a setting. Each is marked below, and in `docs/backlog.md` (#24–#27).
 Where this file and the mockup disagree, this file wins.
 
+**Brought up to date on 2026-10-21, after stage 3:** the Tokens section below
+lists every token family as `src/ui/theme/tokens.css` and the layouts define
+them, and what the settings set at run time; the patterns describe what
+shipped.
+
 ## Direction
 
 - **Who:** a writer, often late at night, three scenes into a chapter, who also
@@ -112,14 +117,48 @@ machine count it, or do you press it?* The mono.
 view changing), easing `--eien-ease`, cubic-bezier(0.2, 0.7, 0.2, 1). Nothing
 moves the writer didn't ask to move. None with reduced motion.
 
+## Tokens
+
+Every value comes from a token. The source is `src/ui/theme/tokens.css`
+(`docs/design/tokens.css` mirrors it for the mockups). A **theme** overrides
+the colour tokens alone, each `light-dark(day, night)`
+(`THEME_TOKENS` and `safeTokens` in `src/core/themes/tokens.ts`): a theme
+can't touch sizes, faces, corners or space. A **setting** overrides a few
+others on `<html>` (`src/ui/settings/look-properties.ts`); a **layout**
+overrides the corners and its own lengths (`src/ui/chrome/*.css`).
+
+| Family | Tokens | Values | Set by |
+|---|---|---|---|
+| Surfaces | `--eien-desk`, `-blotter`, `-band`, `-paper`, `-paper-raised`, `-well`, `-selected`, `-hover`, `-press`, `-scrim` | light-dark pairs (Washi) | theme |
+| Inks | `--eien-ink`, `-ink-soft`, `-pencil`, `-faded`, `-focus` | four strengths; focus = ink-soft | theme |
+| Seal | `--eien-seal`, `-seal-wash` | vermilion | theme (one seal colour per theme) |
+| Status | `--eien-added`, `-removed` (= `-danger`), `-caution`, each `-wash` | moss, carmine, ochre | theme |
+| Lines | `--eien-rule-soft`, `-rule`, `-rule-strong`; `--eien-hairline` 1px; `--eien-mark-w` 2px | ink at three strengths | theme (colours) |
+| Depth | `--eien-shadow-sheet`, `--eien-shadow-float` | two shadows, no more | – |
+| Corners | `--eien-radius-s`, `-m`, `-l` | A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10 | layout |
+| Icons | `--eien-icon` 16px, `--eien-icon-stroke` 1.25, `--eien-control` 28px (desktop), `--eien-touch` 44px | | – |
+| Faces | `--eien-family-*` (nine: plex-mono, newsreader, literata, plex-sans, source-sans, atkinson, schibsted, hanken, instrument); `--eien-face-text`, `--eien-face-mono`, `--eien-face-seal` | the two voices point at a family | settings: Text face, Machine voice (both from one FACES list, `src/core/config/faces.ts`) |
+| Sizes | `--eien-size-prose`, `-title`, `-heading`, `-row`, `-preview` (each face's own, × `--eien-text-scale`); `--eien-size-label` 10px, `-meta` 11px, `-source` 14px (each machine face's own) | Newsreader: 22, 36, 23, 16, 14 | settings: Text size (`--eien-text-scale`, 0.9–1.3), the faces |
+| Weights | `--eien-weight-tree`, `--eien-weight-list`, `--eien-weight-list-chosen`; `--eien-track-label` 0.12em | 400, 400, 500 | settings: Row weights (chosen = list + 100, at most 700) |
+| Space | `--eien-space-1` … `-8` | 4, 8, 12, 16, 24, 32, 48, 72 | – |
+| Lengths | `--eien-row-h` 30px × text scale (26 compact), `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |
+| Page | `--eien-zoom` (0.5–2), `--eien-dimmed` 0.32 (focus mode's faded paragraphs), `--eien-sheet-edge` | | settings: Page zoom |
+| C's strip | `--runhead-ground` | one of the theme's surfaces, the desk by default | setting: Running head ground |
+| Motion | `--eien-quick` 120ms, `--eien-calm` 220ms, `--eien-ease` | cubic-bezier(0.2, 0.7, 0.2, 1) | – |
+
+A new token goes in `tokens.css` (and its mirror), named for its role in the
+desk-and-paper world, never for a value (`--eien-pencil`, not `--grey-500`);
+if a theme should change it, it joins `THEME_TOKENS`.
+
 ## Patterns
 
-- **Controls are icons** (changed 2026-10-20, #26): the page's views and
-  tools, the pane toggles, day or night, settings and the panes. Each has an
-  accessible name and a tooltip with its key. The icon set and its style
-  are the design pass's to set, in the machine voice: ink-soft, at a label's
-  size, with the word button's states. Words stay for labels, counts, a
-  menu's items, and wherever the design pass finds a word clearer.
+- **Controls are icons** (changed 2026-10-20, #26; built in stage 3): the
+  page's views and tools, the formatting bar, the pane toggles, day or night,
+  settings, the panes, the + that makes a folder, tag or note, and the lens's
+  filter, sort and Arrange. Each is an `.icon-button` (`--eien-control`
+  square) drawn from `ui/icons.ts`, with an accessible name and a tooltip
+  with its key. Words stay for labels, counts, a menu's items, and Settings'
+  choices.
 - **Word button** (`.word-button`), where a word stays: mono label type,
   ink-soft, padding 4px 8px,
   a transparent hairline border. Hover: ink, hover tone (only where a pointer
@@ -148,8 +187,11 @@ moves the writer didn't ask to move. None with reduced motion.
   colophon). The list's search band and the page's control strip share the
   height `--band`, so the three panes' tops line up.
 - **List head:** search on its own band; then the title (heading size, 500,
-  ink, one line), the sort as a word button with a menu (ORDER ▾), and a meta
-  line in label type ("14 NOTES · 33,206 WORDS · BOOK").
+  ink, one line) and, at its right, the quiet + (New note); under it a meta
+  line in label type ("14 NOTES · 33,206 WORDS · BOOK"; "2 OF 14 NOTES"
+  while filtered) and the lens's quiet icons (Arrange in Arrange mode, the
+  filter, the sort); the lens's chips under that, then the locked line when
+  rows can't move.
 - **Note row:** padding 12px above and below (`--eien-row-pad-y`, 8px compact)
   and 16px at the sides, a soft rule beneath; title in
   row size, count or date in mono at the right; a line of preview in pencil
@@ -171,8 +213,8 @@ moves the writer didn't ask to move. None with reduced motion.
   capitals, items joined by a faded "·", optional ones dropped in a narrow
   pane.
 - **Sidebar foot:** a soft rule above; the vault's count in label type,
-  then the sync status's place and three icons: day or night (sun or moon),
-  three panes or two, settings.
+  then the sync status (when Syncthing syncs the vault) and three icons: day
+  or night (sun or moon), three panes or two, settings.
 - **Panel** (versions): raised paper beside the page, a rule hairline on its
   left, the float shadow, a band head of `--band` height with a label and
   CLOSE.
