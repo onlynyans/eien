@@ -803,16 +803,21 @@ test.describe('three thousand notes', () => {
         // note's, under the vault and under All Notes), and leave the other six thousand be.
         w.drawn = new WeakSet(document.querySelectorAll('.tree-row--note'));
       });
-      await treeNote(page, 'Chapter').first().click();
+      // By its path, a selector the window answers itself: a locator that filters six thousand rows by
+      // their text runs in the window too, and would be the long task measured.
+      await page.locator('.tree-row__name[data-path="Chapter.md"]').first().click();
       await editorContent(page).click();
       await page.keyboard.press('ControlOrMeta+End');
       await page.keyboard.type(' The writer keeps typing along here.', { delay: 60 });
       await expect
         .poll(() => readFileSync(at(vault, 'Chapter.md'), 'utf8'))
         .toContain('along here');
-      // Saved, it's the newest: first under All Notes, moved there without a redraw.
-      await expect(page.locator('.tree-group .tree-row--note .tree-row__label').first()).toHaveText(
-        'Chapter',
+      // Saved, it's the newest: first under All Notes, moved there without a redraw. Asked with
+      // querySelector, which costs the window nothing, unlike a locator over six thousand rows.
+      await page.waitForFunction(
+        () =>
+          document.querySelector<HTMLElement>('.tree-group .tree-row--note .tree-row__name')
+            ?.dataset.path === 'Chapter.md',
       );
       expect(await longest()).toBeLessThan(200);
       const made = await page.evaluate(() => {
