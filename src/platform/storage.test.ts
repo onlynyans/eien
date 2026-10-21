@@ -25,7 +25,7 @@ import {
   tempNameOf,
   writeDurably,
 } from './electron/disk-storage';
-import { recoverStrayTemps } from './electron/recover-temps';
+import { recoverStrays } from './electron/recover-strays';
 import { MemoryStorage } from './memory/memory-storage';
 import type { Storage } from './storage';
 
@@ -305,6 +305,20 @@ for (const [name, make] of Object.entries(implementations)) {
       return stop;
     }
 
+    it('says when it’s listening, and tells what changes from then on', async () => {
+      const seen: string[] = [];
+      let stop: () => void = () => undefined;
+      await new Promise<void>((ready) => {
+        stop = subject.storage.watch((paths) => seen.push(...paths), ready);
+      });
+      try {
+        await subject.putOutside('After.md', 'changed');
+        await expect.poll(() => seen, { timeout: 3000 }).toContain('After.md');
+      } finally {
+        stop();
+      }
+    });
+
     it('tells a watcher what changed', async () => {
       const seen: string[] = [];
       const stop = await listening(seen);
@@ -432,7 +446,7 @@ describe('disk only', () => {
       const temp = join(storage.root, tempNameOf('Seventeen.md'));
       await writeFile(temp, 'Newer words, not yet renamed.');
       await utimes(join(storage.root, 'Seventeen.md'), new Date(2026, 0, 1), new Date(2026, 0, 1));
-      expect(await recoverStrayTemps(storage, at)).toEqual([
+      expect(await recoverStrays(storage, at)).toEqual([
         'Seventeen (recovered 2026-10-19 16-40).md',
       ]);
       expect(
@@ -445,7 +459,7 @@ describe('disk only', () => {
     it('keeps a temp file whose note is gone', async () => {
       await mkdir(join(storage.root, 'Fic'));
       await writeFile(join(storage.root, 'Fic', tempNameOf('Lost.md')), 'Only copy.');
-      expect(await recoverStrayTemps(storage, at)).toEqual([
+      expect(await recoverStrays(storage, at)).toEqual([
         'Fic/Lost (recovered 2026-10-19 16-40).md',
       ]);
     });
@@ -454,7 +468,7 @@ describe('disk only', () => {
       await storage.write('Same.md', 'Same.', null);
       await writeFile(join(storage.root, tempNameOf('Same.md')), 'Same.');
       await writeFile(join(storage.root, tempNameOf('Empty.md')), '');
-      expect(await recoverStrayTemps(storage, at)).toEqual([]);
+      expect(await recoverStrays(storage, at)).toEqual([]);
       expect((await readdir(storage.root)).sort()).toEqual(['Same.md']);
     });
 
@@ -465,7 +479,7 @@ describe('disk only', () => {
       const temp = join(storage.root, tempNameOf('Old.md'));
       await writeFile(temp, 'Older draft.');
       await utimes(temp, new Date(2026, 0, 1), new Date(2026, 0, 1));
-      expect(await recoverStrayTemps(storage, at)).toEqual(['Old (recovered 2026-10-19 16-40).md']);
+      expect(await recoverStrays(storage, at)).toEqual(['Old (recovered 2026-10-19 16-40).md']);
     });
 
     it.skipIf(process.platform === 'win32')(
@@ -476,7 +490,7 @@ describe('disk only', () => {
         await writeFile(temp, 'Words with nowhere else.');
         await chmod(temp, 0o000);
         try {
-          expect(await recoverStrayTemps(storage, at)).toEqual([]);
+          expect(await recoverStrays(storage, at)).toEqual([]);
           expect(await readdir(storage.root)).toEqual([tempNameOf('Draft.md')]);
         } finally {
           await chmod(temp, 0o600);
@@ -487,8 +501,55 @@ describe('disk only', () => {
     it('leaves hidden folders alone', async () => {
       await mkdir(join(storage.root, '.git'));
       await writeFile(join(storage.root, '.git', tempNameOf('x.md')), 'not ours');
-      expect(await recoverStrayTemps(storage, at)).toEqual([]);
+      expect(await recoverStrays(storage, at)).toEqual([]);
       expect(await readdir(join(storage.root, '.git'))).toEqual([tempNameOf('x.md')]);
+    });
+
+    describe('a phone’s rename cut between its steps, brought here by Syncthing', () => {
+      const STAMP = '(recovered 2026-10-19 16-40)';
+      const put = async (path: string, words: string) => {
+        const file = join(storage.root, ...path.split('/'));
+        await mkdir(join(file, '..'), { recursive: true });
+        await writeFile(file, words);
+      };
+      const words = (path: string) => readFile(join(storage.root, ...path.split('/')), 'utf8');
+
+      it('puts a note back under its name, and the vault shows it', async () => {
+        // Hidden under its step's name, the note is missing from this device until it's back.
+        await put('Fic/.tear.md.eien-case', 'The scarf tore.');
+        expect(await recoverStrays(storage, at)).toEqual(['Fic/tear.md']);
+        expect(await words('Fic/tear.md')).toBe('The scarf tore.');
+        expect((await storage.list()).map((entry) => entry.path)).toEqual(['Fic', 'Fic/tear.md']);
+      });
+
+      it('puts a book back, and recovers what’s inside it', async () => {
+        await put('.fic.eien-case/One.md', 'Chapter one.');
+        await put('.fic.eien-case/.Two.md.eien.tmp', 'Chapter two, never renamed.');
+        expect(await recoverStrays(storage, at)).toEqual(['fic', `fic/Two ${STAMP}.md`]);
+        expect((await readdir(join(storage.root, 'fic'))).sort()).toEqual([
+          'One.md',
+          `Two ${STAMP}.md`,
+        ]);
+      });
+
+      it('the phone finished meanwhile: both are kept, nothing written over', async () => {
+        // In flight, not crashed: Syncthing brought the step, then the finished name, before
+        // the step's removal. Put back beside it (by any case this system ignores), a duplicate
+        // to tidy is the worst there is: never a note written over.
+        await put('.tear.md.eien-case', 'The scarf tore.');
+        await put('Tear.md', 'The scarf tore. And the phone kept writing.');
+        const recovered = await recoverStrays(storage, at);
+        expect(recovered).toHaveLength(1);
+        expect(await words('Tear.md')).toBe('The scarf tore. And the phone kept writing.');
+        expect(await words(recovered[0] as string)).toBe('The scarf tore.');
+      });
+
+      it('leaves names that only look like a step', async () => {
+        await put('x.eien-case', 'visible, not a step');
+        await put('.eien-case', 'only the suffix');
+        expect(await recoverStrays(storage, at)).toEqual([]);
+        expect((await readdir(storage.root)).sort()).toEqual(['.eien-case', 'x.eien-case']);
+      });
     });
   });
 });

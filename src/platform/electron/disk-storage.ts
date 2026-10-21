@@ -41,6 +41,12 @@ const noTrash: TrashItem = async () => {
 /** Bursts of changes are reported together, this long after the last. */
 const WATCH_SETTLE_MS = 120;
 
+/**
+ * How long the system's watcher is given before it's taken to be listening:
+ * fs.watch says nothing when it is, and macOS's misses its first moments.
+ */
+const WATCH_WARM_MS = 1000;
+
 export class DiskStorage implements Storage {
   readonly #root: string;
   readonly #trashItem: TrashItem;
@@ -218,9 +224,10 @@ export class DiskStorage implements Storage {
     }
   }
 
-  watch(onChange: (paths: string[]) => void): () => void {
+  watch(onChange: (paths: string[]) => void, ready?: () => void): () => void {
     let pending = new Set<string>();
     let timer: ReturnType<typeof setTimeout> | undefined;
+    const warm = ready ? setTimeout(ready, WATCH_WARM_MS) : undefined;
     let watcher: FSWatcher | undefined;
     try {
       watcher = watch(this.#root, { recursive: true }, (_event, name) => {
@@ -245,6 +252,7 @@ export class DiskStorage implements Storage {
     }
     return () => {
       clearTimeout(timer);
+      clearTimeout(warm);
       watcher?.close();
     };
   }

@@ -69,6 +69,10 @@ export interface Storage {
   /** Make the folder at `path`, and any above it. One already there is fine; a file there throws. */
   makeFolder(path: string): Promise<void>;
 
-  /** Call `onChange` with the paths that changed; returns a function to stop. */
-  watch(onChange: (paths: string[]) => void): () => void;
+  /**
+   * Call `onChange` with the paths that changed; returns a function to stop.
+   * `ready` is called once, when what changes from then on will be told: a
+   * look at the vault after it misses nothing between it and the watcher.
+   */
+  watch(onChange: (paths: string[]) => void, ready?: () => void): () => void;
 }

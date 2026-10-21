@@ -1,5 +1,5 @@
 // The phone's recovery after a crash (./recover.ts): every case the desktop's
-// recover-temps covers, and the phone's own two-step renames cut between
+// recover-strays covers, and the phone's own two-step renames cut between
 // their steps — played on Node's file system, as the phone storage's tests are.
 
 import { mkdir, mkdtemp, readdir, readFile, rm, utimes, writeFile } from 'node:fs/promises';

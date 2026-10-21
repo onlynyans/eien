@@ -1,4 +1,4 @@
-// After a crash on the phone (spec §3), as the desktop's recover-temps: a
+// After a crash on the phone (spec §3), as the desktop's recover-strays: a
 // write's temp file holding words its note doesn't is kept as a
 // "(recovered …)" note beside it, and then it goes; one that can't be read
 // now waits for the next time. A rename the storage makes in two steps can
@@ -8,18 +8,13 @@
 
 import { isHiddenName, nameKey, recoveredName } from '../../core/paths';
 import type { Storage } from '../storage';
-import { besideOf, strayHoldsWords, TEMP_SUFFIX } from '../stray';
-import { STEP_SUFFIXES } from './capacitor-storage';
+import { besideOf, steppedFrom, strayHoldsWords, TEMP_SUFFIX } from '../stray';
 import { type FileEntry, type FilesPort, TakenError } from './files';
 
 const joined = (folder: string, name: string) => (folder ? `${folder}/${name}` : name);
 
 /** How many names are tried for a step put back while others keep arriving. */
 const PUT_BACK_TRIES = 5;
-
-/** The name a step's hidden name stands for, or null when `name` isn't one. */
-const stepped = (name: string): string | null =>
-  STEP_SUFFIXES.map((suffix) => besideOf(name, suffix)).find((back) => back !== null) ?? null;
 
 /** The vault paths recovered: notes made from temp files, and names put back. */
 export async function recoverStrays(
@@ -33,7 +28,7 @@ export async function recoverStrays(
     const names = entries.map((entry) => entry.name);
     for (const entry of entries) {
       const path = joined(folder, entry.name);
-      const back = stepped(entry.name);
+      const back = steppedFrom(entry.name);
       const noteName = entry.type === 'file' ? besideOf(entry.name, TEMP_SUFFIX) : null;
       if (back !== null) {
         const put = await putBack(files, folder, entry, back, names, now);

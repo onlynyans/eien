@@ -147,8 +147,9 @@ export class MemoryStorage implements Storage {
     this.#notify([at]);
   }
 
-  watch(onChange: (paths: string[]) => void): () => void {
+  watch(onChange: (paths: string[]) => void, ready?: () => void): () => void {
     this.#listeners.add(onChange);
+    if (ready) queueMicrotask(ready); // it hears every change made through it from now on
     return () => this.#listeners.delete(onChange);
   }
 
