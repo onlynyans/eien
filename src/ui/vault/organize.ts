@@ -13,7 +13,6 @@ import {
   renamedPath,
   titleOf,
 } from '../../core/paths';
-import { withMadeTag, withTagOrder } from '../../core/tags';
 import {
   FOLDER_SETTINGS_NAME,
   type FolderChange,
@@ -52,9 +51,6 @@ const PROBLEMS: Record<Exclude<Renamed, { ok: true }>['problem'], string> = {
   empty: 'A name needs a letter or a number.',
   taken: 'Something here already has that name.',
 };
-
-/** What a small file holds, as the writer reads it when it can't be changed. */
-const WHAT: Record<string, string> = { pins: 'pins', tags: 'tags made' };
 
 const nameOf = (path: string) => titleOf(baseName(path)) || path;
 
