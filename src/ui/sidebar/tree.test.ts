@@ -101,7 +101,7 @@ const rowsOf = (
   folderEvents: (path: string) => Props['on'],
   cache: RowCache,
   windowed: Windowed = noWindow,
-) => new TreeRows(of, run, folderEvents, cache, windowed);
+) => new TreeRows(of, run, { folder: folderEvents, tag: () => ({}) }, cache, windowed);
 
 const draw = (rows: TreeRows) => {
   const list = document.createElement('ul');
@@ -135,21 +135,27 @@ describe('openId and selectionOf', () => {
 });
 
 describe('TreeRows, three panes', () => {
-  it('lists All Notes, then Pinned only when something is pinned, with counts', () => {
+  it('lists All Notes, then Pinned always (so pinning can be found), with counts', () => {
     const none = rowsOf(model(), actions(), () => ({}), new RowCache());
-    expect(none.library().map((row) => row.textContent)).toEqual(['All Notes3']);
+    expect(none.library().map((row) => row.textContent)).toEqual(['All Notes3', 'Pinned0']);
     const some = rowsOf(model({ pinned: 2 }), actions(), () => ({}), new RowCache());
     expect(some.library().map((row) => row.textContent)).toEqual(['All Notes3', 'Pinned2']);
   });
 
   it('lists the folders, an open one’s own folders inside it, and no notes', () => {
     const shut = draw(rowsOf(model(), actions(), () => ({}), new RowCache()));
-    expect(names(shut)).toEqual(['all', 'folder:Drafts', 'folder:Book']);
+    expect(names(shut)).toEqual(['all', 'pinned', 'folder:Drafts', 'folder:Book']);
 
     const open = draw(
       rowsOf(model({ open: new Set(['Drafts']) }), actions(), () => ({}), new RowCache()),
     );
-    expect(names(open)).toEqual(['all', 'folder:Drafts', 'folder:Drafts/Old', 'folder:Book']);
+    expect(names(open)).toEqual([
+      'all',
+      'pinned',
+      'folder:Drafts',
+      'folder:Drafts/Old',
+      'folder:Book',
+    ]);
     expect(open.querySelectorAll('.tree-row--note')).toHaveLength(0);
     // The inner folder sits one deeper, in a group the guide line runs down.
     const inner = byKey(open, 'folder:Drafts/Old').closest('li') as HTMLElement;
@@ -236,6 +242,7 @@ describe('TreeRows, two panes', () => {
       'all',
       'note:/all:Drafts/a.md',
       'note:/all:Book/one.md',
+      'pinned',
       'folder:Drafts',
       'folder:Drafts/Old',
       'note:Drafts:Drafts/a.md',
