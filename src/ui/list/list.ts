@@ -5,8 +5,10 @@
 // keyboard (./row-events.ts).
 
 import { filtering } from '../../core/tags';
+import { addButton } from '../add-button';
 import { h, wordButton } from '../dom';
 import { icon } from '../icons';
+
 import { WINDOW_FROM } from '../shell/window-range';
 import { WindowedRows } from '../shell/windowed-rows';
 import type { ListedNote, NoteList } from '../vault/vault-state';
@@ -165,10 +167,11 @@ export function renderList(
   container.replaceChildren(
     h(
       'header',
-      { class: 'list__head' },
+      { class: 'list__head quiet-row' },
       h('h2', { class: 'list__heading', text: list.heading }),
       h('p', { class: 'label list__count', text: listLabel(list) }),
-      wordButton('New note', actions.newNote, { 'aria-keyshortcuts': 'Meta+N Control+N' }),
+      // A control is an icon (#26): the same quiet + as the sidebar's, its key in its tooltip.
+      addButton({ label: 'New note', key: 'new-note', keys: 'Mod-n', run: actions.newNote }),
       lens.controls.length > 0 ? h('span', { class: 'list__tools' }, ...lens.controls) : null,
       lens.chips,
     ),

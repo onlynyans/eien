@@ -237,7 +237,10 @@ Three panes, each collapsible, with a two-pane option in settings:
    preview, and the date or word count. Sortable by title, modified date or the
    folder's own order (drag to reorder). At its top, on its own band above the
    heading, the search field ("Search Fic"), which searches only the notes the
-   list holds. Hidden in two-pane mode, where the tree lists the notes itself.
+   list holds. Its head holds the quiet + (New note, ⌘N) and the lens's filter
+   and sort: like every quiet control, they show while the head is hovered or
+   one has the keyboard, the same rule as the + beside FOLDERS and TAGS.
+   Hidden in two-pane mode, where the tree lists the notes itself.
 3. **Page** — the editor, on a paper sheet. A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
    and zoom, at a fixed height (`--status-h`, 40px). Each part of the page

@@ -8,8 +8,8 @@
 
 import { tagKey } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
+import { addButton } from '../add-button';
 import { h, wordButton } from '../dom';
-import { icon } from '../icons';
 import type { SearchField } from '../list/search-field';
 import { FolderField } from './folder-field';
 import { Folds } from './folds';
@@ -53,7 +53,7 @@ export class Sidebar {
   /** Where the search field goes when there's no list in sight. */
   readonly searchSlot = h('div', { class: 'sidebar__search' });
   /** With two panes, the chosen row's lens (../list/lens-bar.ts): its sort and tag filter. */
-  readonly lens = h('div', { class: 'sidebar__lens', attrs: { hidden: true } });
+  readonly lens = h('div', { class: 'sidebar__lens quiet-row', attrs: { hidden: true } });
   /** The count, and the window's controls the layout draws there. */
   readonly foot = new SidebarFoot();
   readonly #search: SearchField;
@@ -112,18 +112,12 @@ export class Sidebar {
   constructor(name: string, actions: SidebarActions, keys: string, search: SearchField) {
     this.#actions = actions;
     this.#search = search;
-    const adder = (label: string, key: string, run: () => void) =>
-      h(
-        'button',
-        {
-          class: 'icon-button sidebar__add',
-          attrs: { type: 'button', 'aria-label': label, 'data-tip': label, 'data-key': key },
-          on: { click: run },
-        },
-        icon('plus'),
-      );
-    this.#addFolder = adder('New folder', 'new-folder', () => actions.newFolder());
-    this.#addTag = adder('New tag', 'new-tag', () => this.newTag());
+    this.#addFolder = addButton({
+      label: 'New folder',
+      key: 'new-folder',
+      run: () => actions.newFolder(),
+    });
+    this.#addTag = addButton({ label: 'New tag', key: 'new-tag', run: () => this.newTag() });
     this.adders = [this.#addFolder, this.#addTag];
     /** The seal as a button: it shuts the sidebar, and on the strip, opens it again. */
     const seal = (label: string, extra: string) =>

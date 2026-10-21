@@ -120,7 +120,10 @@ describe('renderList', () => {
     renderList(container, folder(['a.md', 'b.md']), null, run);
     row('b.md').click();
     expect(run.open).toHaveBeenCalledWith('b.md');
-    [...container.querySelectorAll('button')].find((b) => b.textContent === 'New note')?.click();
+    const plus = container.querySelector<HTMLButtonElement>('button[aria-label="New note"]');
+    expect(plus?.querySelector('svg.icon')).not.toBeNull(); // a control is an icon
+    expect(plus?.getAttribute('aria-keyshortcuts')).toMatch(/^(Meta|Control)\+N$/);
+    plus?.click();
     expect(run.newNote).toHaveBeenCalledOnce();
   });
 
