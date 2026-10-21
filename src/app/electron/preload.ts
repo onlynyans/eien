@@ -26,6 +26,7 @@ const bridge: Bridge = {
     move: (from, to) => ipcRenderer.invoke(CHANNEL.move, from, to),
     trash: (path) => ipcRenderer.invoke(CHANNEL.trash, path),
     makeFolder: (path) => ipcRenderer.invoke(CHANNEL.makeFolder, path),
+    importFolder: () => ipcRenderer.invoke(CHANNEL.importFolder),
     onChange: (listener) => listen<string[]>(CHANNEL.changed, listener),
   },
   settings: {
@@ -33,8 +34,9 @@ const bridge: Bridge = {
     set: (key, value) => ipcRenderer.invoke(CHANNEL.settingsSet, key, value),
   },
   out: {
+    kinds: ['html', 'epub', 'docx', 'pdf'],
     copy: (text, html) => ipcRenderer.invoke(CHANNEL.outCopy, text, html),
-    saveAs: (name, text) => ipcRenderer.invoke(CHANNEL.outSaveAs, name, text),
+    saveAs: (name, file) => ipcRenderer.invoke(CHANNEL.outSaveAs, name, file),
   },
   onMenu: (listener) => listen<MenuCommand>(CHANNEL.menu, listener),
   onBeforeClose: (save) => {

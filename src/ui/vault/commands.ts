@@ -5,7 +5,7 @@
 
 import { SPRINT_MINUTES } from '../../core/counters';
 import { formatCommand } from '../../core/format';
-import type { MenuCommand } from '../../platform/bridge';
+import type { ExportFormat, MenuCommand } from '../../platform/bridge';
 import type { PageView } from '../page/page';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
@@ -19,8 +19,10 @@ export interface CommandContext {
   newNote(): void;
   /** Draw the list: a shut one isn't kept drawn. */
   drawList(): Promise<void>;
-  /** The page's seals, counters, Copy for AO3 and outline cards (./page-parts.ts). */
+  /** The page's seals, counters, Copy for AO3, exports and outline cards (./page-parts.ts). */
   readonly parts: PageParts;
+  /** File → Import Markdown Folder… (./importing.ts). */
+  importFolder(): void;
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
@@ -48,7 +50,12 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   else if (command === 'compare') void ctx.parts.versions.cycleCompare();
   else if (command === 'versions') ctx.parts.versions.togglePanel();
   else if (command === 'copy-ao3') void ctx.parts.ao3.copy();
-  else if (command === 'export-ao3') void ctx.parts.ao3.export();
+  else if (command === 'export-ao3') void ctx.parts.exports.openNote('html');
+  else if (command.startsWith('export-note:')) {
+    void ctx.parts.exports.openNote(command.slice('export-note:'.length) as ExportFormat);
+  } else if (command.startsWith('export-book:')) {
+    void ctx.parts.exports.currentBook(command.slice('export-book:'.length) as ExportFormat);
+  } else if (command === 'import-folder') ctx.importFolder();
   else if (command === 'outline') void ctx.parts.outline.toggle();
   else if (command === 'sprint:stop') ctx.parts.counters.stopSprint();
   else if (command.startsWith('sprint:')) {

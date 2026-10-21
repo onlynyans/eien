@@ -5,6 +5,8 @@
 // closes an open paragraph; <script> and <style> are dropped with what's in
 // them; comments too.
 
+import { NAMED_ENTITIES } from './entities';
+
 export interface HtmlElement {
   readonly kind: 'element';
   readonly name: string;
@@ -69,46 +71,12 @@ const MAX_DEPTH = 512;
 /** Dropped with everything in them. */
 const DROPPED = new Set(['script', 'style', 'template', 'noscript', 'head', 'title']);
 
-/** Entities HTML writers use, by name; numeric ones are read by number. */
-const NAMED: Readonly<Record<string, string>> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-  nbsp: ' ',
-  ensp: ' ',
-  emsp: ' ',
-  thinsp: ' ',
-  mdash: '—',
-  ndash: '–',
-  hellip: '…',
-  lsquo: '‘',
-  rsquo: '’',
-  sbquo: '‚',
-  ldquo: '“',
-  rdquo: '”',
-  bdquo: '„',
-  laquo: '«',
-  raquo: '»',
-  lsaquo: '‹',
-  rsaquo: '›',
-  copy: '©',
-  reg: '®',
-  trade: '™',
-  deg: '°',
-  middot: '·',
-  bull: '•',
-  dagger: '†',
-  Dagger: '‡',
-  sect: '§',
-  para: '¶',
-  times: '×',
-  divide: '÷',
-  shy: '­',
-  zwj: '‍',
-  zwnj: '‌',
-};
+export const escapeHtml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export const escapeAttr = (text: string) => escapeHtml(text).replace(/"/g, '&quot;');
+
+/** What a page shows of `html`: its words (and images), without its tags. */
+export const visible = (html: string) => html.replace(/<(?!img\b)[^>]*>/gu, '').trim();
 
 /** Spaces, tabs and line ends trimmed: a no-break space is the writer's, and stays. */
 export const trimSpaces = (text: string): string => text.replace(/^[ \t\r\n]+|[ \t\r\n]+$/gu, '');
@@ -134,7 +102,7 @@ export function decodeEntities(text: string): string {
         }
         return String.fromCodePoint(code);
       }
-      return NAMED[body] ?? whole;
+      return NAMED_ENTITIES.get(body) ?? whole;
     },
   );
 }

@@ -419,13 +419,15 @@ src/core/            (✓ = built)
   config/       ✓ the settings schema, defaults, reading and writing settings files (§6)
   counters/     ✓ today's tally (net, per day) and a sprint's clock
   theme/         theme schema, validation, token list (§7)
-  markdown/     ✓ Eien's Markdown (==highlight==, [[wiki links]]) and a note's plain text
+  markdown/     ✓ Eien's Markdown (==highlight==, [[wiki links]], footnotes) and a note's plain text
   note/         ✓ a note's preview, words, tags and id
   tags/         ✓ tag extraction and the tag tree
   search/       ✓ folding (case, accents, quotes), query terms, snippets
   typography/   ✓ quotation marks: curled by what's around them, an apostrophe once it shows, and back
   versions/     ✓ the note's id in its front matter, seal file names, retention, word diff
-  ao3/          ✓ Markdown → AO3 HTML; HTML (AO3's, Google Docs', Word's, a page's) → Markdown
+  ao3/          ✓ Markdown → AO3 HTML (and a book's HTML); HTML (AO3's, Google Docs', Word's, a page's) → Markdown
+  export/       ✓ a note as a chapter (headings, footnotes); EPUB, Word and the PDF's page; a store-only zip
+  import/       ✓ which files of a folder from elsewhere come in, under what names, and why the rest don't
 src/platform/
   bridge.ts     ✓ what the window may ask of the system (window.eien)
   storage.ts    ✓ the Storage interface: read, write, list, watch
@@ -450,7 +452,7 @@ src/ui/
   counters/     ✓ the colophon's today, book and sprint
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
 src/app/
-  electron/     ✓ main process, preload, window, menus, the vault and settings sessions
+  electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access
 ```
 
@@ -574,7 +576,9 @@ Settings are grouped and labeled on the settings screen: **Appearance**,
 
 ---
 
-## 8. AO3
+## 8. What leaves the app, and what comes in
+
+### AO3
 
 AO3 accepts only HTML. Eien keeps notes in Markdown and converts at the edges.
 
@@ -631,6 +635,122 @@ quotes stay as typed.
 
 A round trip, Markdown → AO3 → Markdown, gives back the same text. Tests prove
 it, including on real AO3 output.
+
+### Exports: EPUB, Word, PDF
+
+- **What:** File → Export Note ▸ EPUB…, Word (.docx)…, PDF… exports the open note.
+  File → Export Book ▸ the same three exports the book the open note is a
+  chapter of, or, with none open there, the book chosen in the sidebar (as
+  Outline Cards finds it); with no book, one line of news says so. A note's
+  menu has Export… (AO3 HTML, EPUB, Word, PDF) for that note, open or not, and
+  a book's folder menu has Export… (EPUB, Word, PDF).
+- **Where:** saved where the writer chooses, through the system's save
+  dialog, offering the note's or the book's name, as Export AO3 HTML is. A
+  note with no words, or a book with no chapters, exports nothing and says so.
+- **A book** is its folder's notes in the book's order (§2), each a chapter;
+  notes in its subfolders and Syncthing's conflict copies aren't chapters.
+  The book's title is the folder's name. The open note goes as it is on the
+  page, words not yet saved included.
+- **A chapter's heading** is its note's title, unless the note begins with a
+  top-level heading (`# The Scarf`): then that heading is the chapter's, and
+  isn't shown twice. Each chapter starts a new page.
+- **The Markdown** converts as Copy for AO3 converts it (the table above,
+  quotes as the vault's setting, front matter left out, a note's own HTML as
+  AO3 takes it), with these differences, the same in all three formats:
+  - `==highlight==` is highlighted (`<mark>`; Word's yellow highlight).
+  - A scene break (`***`) is a centred `* * *`; the paragraph after it, or
+    after a heading, isn't indented.
+  - Links go to the web and mail only; a link to anything else (another note,
+    a file) is its words, and a `[[wiki link]]` is its words (after a `|`,
+    its alias, as Copy for AO3 has it). An image is its description: images
+    aren't carried yet.
+  - A numbered list keeps its first number (`1994.` stays 1994).
+  - A character reference is the character, whichever of HTML 4's names it
+    uses (`&eacute;`, `&euro;`); one that names nothing (`R&D;`) is its words.
+  - A paragraph of more than 64 lines (no blank line in it) goes as
+    paragraphs of 64, as the index reads it (§4): the parser takes seconds
+    over one.
+- **Footnotes,** as GitHub and Obsidian write them: `[^1]` in the text, and
+  `[^1]: The note.` at a line's start, its later lines indented four spaces
+  (or a lazy line carrying on its first paragraph). Labels are matched case
+  aside; a label's first definition counts, a later one stays as words. A
+  chapter's notes are numbered in the order they're first referred to; a note
+  never referred to comes last, and a `[^x]` with no note is shown as written.
+  In code, a link's address, an HTML tag or a wiki link, `[^1]` is just text;
+  a mark in a link's words goes just after the link. A note's first line is
+  words, as the page shows it after `[^1]: ` (never a heading, a list or code
+  of its own). A note nothing leads to (no mark in the text, nor in a note
+  the text leads to) is shown in the text's flow, not hidden as a pop-up.
+- **EPUB 3:** a title page (a book's), a contents page, one file per chapter
+  with its notes at its end, as pop-up notes where the reader has them (Apple
+  Books, Kobo), and an EPUB 2 contents file for older readers. Its identifier
+  is made from the vault's and the book's names, so a book exported again is
+  the same book to a reader. Its language is the system's. The styles are few,
+  so the reader's own font and size win.
+- **Word (.docx):** the book's title on its own page, each chapter from a new
+  page under Heading 1, the note's headings, quotes and lists in Word's own
+  styles (so Word's navigation and contents see them), footnotes as Word's
+  own (each mark its own footnote), the page number at the foot (none on the
+  title page). 12-point Times New Roman, the first line of each paragraph
+  indented. For Word, Pages, LibreOffice and Google Docs.
+- **Paper and language:** the window's language, as the system sets it
+  (`en-US`), is the EPUB's language, and its region the paper for Word and
+  the PDF: Letter where that region uses it (the US, Canada, Mexico, the
+  Philippines and the rest of Unicode's list), A4 elsewhere and with none.
+- **PDF:** Electron's own Chromium prints it, on that paper; the system's serif; each chapter from a new page,
+  its notes at its end; the page number at the foot; the headings as the
+  PDF's bookmarks. It's printed in a hidden window that runs no script and
+  loads nothing from anywhere.
+- EPUB and Word are zip archives. Eien writes them itself, stored without
+  compression (all EPUB needs, and a book's words are small), rather than
+  carry a package for it.
+
+### Import a folder of Markdown
+
+File → Import Markdown Folder… copies a folder of notes from elsewhere (an
+Obsidian vault, iA Writer's library, a plain folder) into the vault.
+
+- The writer chooses the folder with the system's dialog. Eien copies it into
+  a new folder at the vault's top, named for it ("Drafts", or "Drafts 2" when
+  that's taken). The original is never moved or changed, and nothing in the
+  vault is ever written over: each note is written only where nothing is.
+- A note is a `.md`, `.markdown`, `.mdown`, `.mkd` or `.txt` file. It comes in
+  as `.md`, its text exactly as it was (front matter, line endings, a
+  byte-order mark). Its folders come with it; a folder with no notes doesn't.
+- Two names one system would take for one file (`Notes.md` and `notes.md`,
+  or `Notes.md` and `Notes.txt`) keep the first and number the second
+  (`notes 2.md`, `Notes 2.md`), as a move numbers them (§4); folders too.
+  A note that arrives at a name while the import runs (Syncthing) is kept,
+  and the imported one is numbered.
+- Left out, and said so: a note over 8 MB (the most the index reads); one
+  that isn't UTF-8 text, or can't be read; a name that can't exist on every
+  system (§3); a link, which is never followed; and every file that isn't a
+  note (images, PDFs, which stay where they are). Hidden files and folders
+  (`.obsidian`, `.git`, `.DS_Store`) are left out without a word. At most
+  10,000 notes come in at once; the rest are said to be left. One import
+  looks at 100,000 files and into folders 64 deep: where it stops, it says
+  so.
+- A link is never followed, even one put in a file's or a folder's place
+  while the import runs: each note is read only if neither it nor a folder
+  on its way is a link.
+- A folder that is the vault, is inside it, or holds it is refused, however
+  its path is spelled (macOS's `/System/Volumes/Data/…`, a bind mount): the
+  folders are compared as the disk has them.
+- The new folder's name is chosen against the vault's top as the disk has it
+  at that moment.
+- Afterwards the sidebar shows the new folder, and one line of news says how
+  many notes came in. When anything was left out, a dialog lists what and
+  why (the first 30, and how many more).
+
+### On the phone
+
+The phone has no menu bar: a note's menu and a book's offer the exports.
+EPUB, Word and AO3 HTML go to `Eien Exports` beside the vault's folder
+(Documents on Android; Eien's folder in the Files app on iOS), under a free
+name, never over a file there. PDF isn't offered: the WebView can't print to
+a file without a plugin of Eien's own, which may come later. Import isn't
+offered either: a folder copied into Documents/Eien (by the Files app or
+Syncthing) is in the vault already.
 
 ---
 
@@ -749,6 +869,11 @@ Every rule, with the cases most likely to break it:
   quotes after a dash, toggling twice gives the same text.
 - **AO3:** the real sample from a fic; every table row both ways;
   property-based round trips over generated documents (fast-check).
+- **Exports:** footnotes, headings and the book's differences from AO3; over
+  generated notes, every EPUB part and every Word part is well-formed XML with
+  its prefixes declared, and every word of the note is in each; the zip read
+  back by a strict reader and by `unzip`.
+- **Import:** names kept, numbered or refused; sizes, kinds and limits.
 - **Versions:** naming, sorting, retention at day and month boundaries, time
   zones, names with forbidden characters.
 - **Settings and themes:** every invalid value falls back; unknown tokens and
@@ -771,6 +896,9 @@ On macOS, Windows and Linux, each with a fresh temporary vault:
 - another program edits the open note: it reloads, or a conflict copy appears
 - checkpoint, edit, cycle the compare button through all three states
 - paste the AO3 sample; Copy for AO3 matches the expected HTML
+- export a book and a note as EPUB, Word and PDF through the menus, read back
+  from the files saved; import a folder, and the notes appear beside the
+  vault's own, nothing written over
 - switch theme, quotes and pane layout; settings survive a restart
 - drag notes to reorder; the order survives a restart
 - a vault with 5,000 notes opens and searches within set time limits: listed

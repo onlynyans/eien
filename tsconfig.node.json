@@ -10,6 +10,7 @@
     "src/platform",
     "src/app/electron",
     "tests/*.ts",
+    "tests/support",
     "electron.vite.config.ts",
     "electron-builder.ts",
     "vite.mobile.config.ts",

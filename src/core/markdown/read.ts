@@ -5,6 +5,7 @@
 import type { SyntaxNodeRef } from '@lezer/common';
 import { Emoji, GFM, parser, Subscript, Superscript } from '@lezer/markdown';
 import { Highlight, WikiLink } from './extensions';
+import { closesFence, fenceOf } from './fences';
 import { isLink, referenceLabels } from './links';
 
 /** The editor's Markdown (lang-markdown's GFM set) with Eien's two additions. */
@@ -79,10 +80,9 @@ export function inRuns(text: string): string {
   let fence: string | null = null;
   const out: string[] = [];
   for (const line of lines) {
-    const opens = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
     if (fence) {
-      if (opens && opens[0] === fence[0] && opens.length >= fence.length) fence = null;
-    } else if (opens) fence = opens;
+      if (closesFence(line, fence)) fence = null;
+    } else fence = fenceOf(line);
     if (line.trim() === '') run = 0;
     else if (!fence && ++run > RUN_LINES) {
       out.push('');

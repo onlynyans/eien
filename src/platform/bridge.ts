@@ -3,7 +3,9 @@
 
 import type { SettingKey, SettingValues, ToggleKey } from '../core/config';
 import type { SprintMinutes } from '../core/counters';
+import type { PageSize } from '../core/export';
 import type { FormatCommandId } from '../core/format';
+import type { ImportReport } from '../core/import';
 import type { IndexedNote } from '../core/note';
 import type { SearchResult } from '../core/search';
 import type { VaultEntry } from '../core/vault';
@@ -36,6 +38,12 @@ export interface VaultBridge {
   /** Send a note or folder to the system's trash; rejects, leaving it, when it can't. */
   trash(path: string): Promise<void>;
   makeFolder(path: string): Promise<void>;
+  /**
+   * Ask for a folder of Markdown from elsewhere and copy its notes into the
+   * vault (spec §8); null if the writer cancels. Rejects where there's no
+   * importing (the phone) or the folder can't be (the vault itself).
+   */
+  importFolder(): Promise<ImportReport | null>;
   /** Paths that changed on disk, as they change. Returns a function to stop. */
   onChange(listener: (paths: string[]) => void): () => void;
 }
@@ -48,12 +56,25 @@ export interface SettingsBridge {
   set<K extends SettingKey>(key: K, value: SettingValues[K]): Promise<SettingValues>;
 }
 
+/** A note's or a book's exports (spec §8). */
+export type ExportFormat = 'epub' | 'docx' | 'pdf';
+
+/** A file to save: AO3's HTML as text; an EPUB or a Word file as bytes; a PDF as the page to print. */
+export type OutFile =
+  | { readonly kind: 'html'; readonly text: string }
+  | { readonly kind: 'epub' | 'docx'; readonly bytes: Uint8Array }
+  | { readonly kind: 'pdf'; readonly html: string; readonly page: PageSize };
+
+export type OutKind = OutFile['kind'];
+
 /** What leaves the app (spec §8): the clipboard, and a file saved where the writer chooses. */
 export interface OutBridge {
+  /** The kinds of file this device can save (a phone prints no PDF). */
+  readonly kinds: readonly OutKind[];
   /** Put `text` (plain) and `html` (rich) on the clipboard together. */
   copy(text: string, html: string): Promise<void>;
-  /** Ask where to save `text`, offering `name` (an HTML file); the name saved as, or null if cancelled. */
-  saveAs(name: string, text: string): Promise<string | null>;
+  /** Save `file`, offering `name` (no extension); where it was saved as the writer knows it, or null if cancelled. */
+  saveAs(name: string, file: OutFile): Promise<string | null>;
 }
 
 /** Menu items the window acts on. */
@@ -80,6 +101,9 @@ export type MenuCommand =
   | 'versions'
   | 'copy-ao3'
   | 'export-ao3'
+  | `export-note:${ExportFormat}`
+  | `export-book:${ExportFormat}`
+  | 'import-folder'
   | `toggle:${ToggleKey}`
   | `sprint:${SprintMinutes}`
   | 'sprint:stop'
@@ -113,6 +137,7 @@ export const CHANNEL = {
   move: 'vault:move',
   trash: 'vault:trash',
   makeFolder: 'vault:make-folder',
+  importFolder: 'vault:import-folder',
   changed: 'vault:changed',
   settingsRead: 'settings:read',
   settingsSet: 'settings:set',

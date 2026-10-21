@@ -3,11 +3,11 @@
 // as cards in the sheet's place. A card's chapter opening, another note
 // opening, or Esc gives the page back, the keyboard with it.
 
-import { parentOf } from '../../core/paths';
 import type { NumeralStyle } from '../../core/text';
 import { OutlineBoard } from '../outline/board';
 import type { Board } from '../page/board-host';
 import type { PageView } from '../page/page';
+import { currentBook, isBook } from './current-book';
 import type { Navigation } from './navigation';
 import type { OpenNote } from './open-note';
 import type { Organizer } from './organize';
@@ -64,22 +64,12 @@ export function outlineCards(parts: OutlineParts): Outline {
       if (hadKeyboard) queueMicrotask(() => page.focus());
     },
   };
-  const isBook = async (folder: string) => (await parts.state.folderSettings(folder)).book !== null;
-
-  /** The book to show: the open chapter's, else the folder chosen when it's a book. */
-  async function bookFolder(): Promise<string | null> {
-    const path = parts.note().path;
-    if (path && (await isBook(parentOf(path)))) return parentOf(path);
-    const chosen = parts.nav.selection;
-    return chosen.kind === 'folder' && (await isBook(chosen.path)) ? chosen.path : null;
-  }
-
   async function draw(): Promise<void> {
     const now = shown;
     if (!now) return;
     // The book gone (renamed, moved, trashed, no longer a book): the page comes back.
     const there = now.folder === '' || parts.state.has(now.folder);
-    if (!there || !(await isBook(now.folder))) return close();
+    if (!there || !(await isBook(parts.state, now.folder))) return close();
     const book = await parts.state.notesFor(
       { kind: 'folder', path: now.folder },
       parts.numerals(),
@@ -98,7 +88,8 @@ export function outlineCards(parts: OutlineParts): Outline {
         page.focus();
         return;
       }
-      const folder = await bookFolder();
+      // The open chapter's book, else the folder chosen when it's a book.
+      const folder = await currentBook(parts.state, parts.nav, parts.note().path);
       if (folder === null) {
         parts.tell('Outline cards show a book: choose one, or open one of its chapters.');
         return;

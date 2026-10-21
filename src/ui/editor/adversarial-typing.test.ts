@@ -130,7 +130,7 @@ async function copied(
   const out = ao3Out({
     page: { editor: { view: { state } } } as never,
     note: { session: { text: doc, path: 'Chapter.md' } } as never,
-    out: { copy, saveAs: vi.fn(async () => null) },
+    out: { kinds: ['html'], copy, saveAs: vi.fn(async () => null) },
     settings: { values: { 'typography.quotes': 'curly', 'ao3.sceneBreak': 'rule' } } as never,
     tell: () => {},
   });
