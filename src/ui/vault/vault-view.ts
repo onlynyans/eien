@@ -288,7 +288,11 @@ export async function showVault(
   );
   await refresh();
   return {
-    flush: () => note.flush(),
+    // The note's words first; then a seal or a move under way finishes (a quit waits for both).
+    flush: async () => {
+      await note.flush();
+      await act.idle();
+    },
     stop: async () => {
       await note.flush();
       stopWatching();
