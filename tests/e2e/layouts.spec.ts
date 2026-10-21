@@ -171,7 +171,7 @@ test('switching layouts in Settings loses no control, and gives the keyboard bac
     await page.keyboard.press('Enter');
     const dialog = page.getByRole('dialog', { name: 'Settings' });
     await expect(dialog).toBeVisible();
-    await dialog.locator(`[data-value="${layout}"]`).click();
+    await dialog.getByRole('group', { name: 'Layout' }).locator(`[data-value="${layout}"]`).click();
     await expect(page.locator('html')).toHaveAttribute('data-layout', layout);
     for (const command of commandsOf(layout)) {
       expect(await shownCount(page, command), `${layout}: ${command}`).toBe(1);

@@ -89,13 +89,8 @@ test('View → Focus Mode fades back every paragraph but the caret’s, and the 
   // Off from the settings screen: the menu's check follows.
   await page.getByRole('button', { name: 'Settings' }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
-  await expect(dialog.getByRole('heading', { level: 2 })).toHaveText([
-    'Appearance',
-    'Editor',
-    'Writing',
-    'Layout',
-    'AO3',
-  ]);
+  await dialog.getByRole('navigation').getByRole('button', { name: 'Editor' }).click();
+  await expect(dialog.locator('.settings__crumbs')).toHaveText('Settings/Writing/Editor');
   await dialog.getByRole('group', { name: 'Focus' }).getByRole('button', { name: 'Off' }).click();
   await expect(page.locator('.cm-editor')).not.toHaveClass(/eien-focus/);
   await expect.poll(() => checked(app, 'editor.focus')).toBe(false);
@@ -141,6 +136,7 @@ test('spellcheck: macOS’s own checker, off until asked for; not offered elsewh
   expect(allowed).toBe(mac);
   await page.getByRole('button', { name: 'Settings' }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByRole('navigation').getByRole('button', { name: 'Editor' }).click();
   await expect(dialog.getByRole('group', { name: 'Spellcheck' })).toHaveCount(mac ? 1 : 0);
   await page.keyboard.press('Escape');
   const item = await app.evaluate(({ Menu }) =>

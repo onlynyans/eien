@@ -187,10 +187,11 @@
   white-space: nowrap;
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-row);
+  font-weight: var(--eien-weight-list); /* a setting (#25) */
   line-height: var(--eien-leading-row);
 }
 .note-row[aria-current="true"] .note-row__title {
-  font-weight: 500;
+  font-weight: var(--eien-weight-list-chosen); /* a step heavier, at most 700 */
 }
 .note-row__meta {
   white-space: nowrap;

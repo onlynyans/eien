@@ -18,6 +18,8 @@ runtime.
 | `@biomejs/biome` | Lint and format in one tool (`npm run lint`) |
 | `vitest` | Unit and architecture tests |
 | `@vitest/coverage-v8` | Test coverage report in CI |
+| `happy-dom` | A DOM for the window's unit tests (`src/ui/**`, the `window` project in `vitest.config.ts`): lighter and quicker than jsdom, and enough for what the modules use (MIT) |
+| `@axe-core/playwright` | axe-core's accessibility rules (WCAG 2.2 A and AA, colour contrast) run over the app and the phone's page in the end-to-end tests (MPL-2.0, its axe-core too; a development tool only, never shipped) |
 | `fast-check` | Property tests (`*.property.test.ts`): generated inputs by the thousand, shrunk to the smallest one a rule fails on (spec §11) |
 | `@stryker-mutator/core` | Mutation testing (`npm run test:mutation`, weekly in CI): edits the rules in core and platform one at a time, runs `vitest run` on each, and reports the edits no test catches |
 | `@playwright/test` | End-to-end tests that drive the real Electron app, the phone's page in Chromium, and the Android app's WebView over adb |

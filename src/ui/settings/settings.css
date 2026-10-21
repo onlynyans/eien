@@ -1,101 +1,312 @@
-/* The settings screen: raised paper over the dimmed window, one section per
-   group. A setting's name is the machine's voice; what it does, the text's. */
+/* Settings over the window (settings.md, system.md "Settings over the
+   window"): raised paper at --settings-inset, the largest corner and the
+   float shadow, on the scrim. The categories in a side column of desk, the
+   breadcrumb at the head, a tab's settings beside them. On a phone it's a
+   full sheet, its tabs in a strip under the head. */
 
 .settings {
-  width: min(600px, calc(100vw - 2 * var(--eien-space-6)));
-  max-height: calc(100vh - 2 * var(--eien-space-7));
+  /* 64px above and below, 112px at the sides, until placed */
+  --settings-inset: calc(var(--eien-space-7) + var(--eien-space-4))
+    calc(var(--eien-space-8) + var(--eien-space-6) + var(--eien-space-2));
+  position: fixed;
+  inset: var(--settings-inset);
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
   padding: 0;
+  overflow: hidden;
   border: var(--eien-hairline) solid var(--eien-rule-strong);
   border-radius: var(--eien-radius-l); /* it covers the window */
   background: var(--eien-paper-raised);
   color: var(--eien-ink);
   box-shadow: var(--eien-shadow-float);
 }
+/* Placed (./frame.ts sets its box): its own left, top and size. */
+.settings[data-placed] {
+  inset: auto;
+}
 .settings::backdrop {
   background: var(--eien-scrim);
 }
-.settings__inner {
-  display: flex;
-  flex-direction: column;
-  max-height: inherit;
+.settings[data-moving] {
+  user-select: none;
 }
-.settings__head {
+.settings__frame {
+  display: grid;
+  grid-template:
+    "nav head" auto
+    "nav body" minmax(0, 1fr)
+    / calc(var(--eien-space-8) * 3 - var(--eien-space-2)) minmax(0, 1fr); /* 208px */
+  height: 100%;
+}
+
+/* The side column: categories as part titles, their tabs as chapters. */
+.settings__nav {
+  grid-area: nav;
+  display: grid;
+  align-content: start;
+  gap: var(--eien-space-1);
+  overflow: auto;
+  padding: var(--eien-space-4) var(--eien-space-2);
+  background: var(--eien-desk);
+  border-right: var(--eien-hairline) solid var(--eien-rule);
+}
+.settings__part {
+  display: grid;
+  gap: 1px;
+}
+/* The category label (new in settings.md): the machine voice in pencil (faded doesn't reach
+   4.5:1 on the desk), a 12px icon. */
+.settings__category {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--eien-space-3) var(--eien-space-3) var(--eien-space-3) var(--eien-space-5);
-  border-bottom: var(--eien-hairline) solid var(--eien-rule);
-}
-.settings__title {
+  gap: 6px;
   margin: 0;
+  padding: var(--eien-space-3) 10px 6px;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  font-weight: 400;
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-pencil);
+}
+.settings__part:first-child .settings__category {
+  padding-top: 2px;
+}
+.settings__category .icon {
+  width: 12px;
+  height: 12px;
+}
+.settings__tab {
+  appearance: none;
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 6px 10px 6px 28px;
+  border: 0;
+  border-radius: var(--eien-radius-s);
+  background: none;
+  text-align: left;
+  font-family: var(--eien-face-text);
+  font-size: calc(var(--eien-size-row) * 0.92);
+  color: var(--eien-ink-soft);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .settings__tab:hover {
+    background: var(--eien-hover);
+    color: var(--eien-ink);
+  }
+}
+/* The chosen tab as a chosen row: the selected fill and the seal's rule. */
+.settings__tab[aria-current="true"] {
+  background: var(--eien-selected);
   color: var(--eien-ink);
 }
-.settings__problem {
+.settings__tab[aria-current="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: var(--eien-mark-w);
+  background: var(--eien-seal);
+}
+
+/* The head: the breadcrumb, which moves the sheet, and Close. */
+.settings__head {
+  grid-area: head;
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-2);
+  height: var(--eien-space-7);
+  padding: 0 var(--eien-space-2) 0 28px;
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+  cursor: grab;
+  touch-action: none;
+}
+.settings[data-moving="move"] .settings__head {
+  cursor: grabbing;
+}
+.settings__crumbs {
+  flex: 1;
+  min-width: 0;
   margin: 0;
-  padding: var(--eien-space-2) var(--eien-space-5);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.settings__crumbs b {
+  font-weight: 400;
+  color: var(--eien-ink-soft);
+}
+.settings__slash {
+  padding: 0 3px;
+  color: var(--eien-faded);
+}
+
+.settings__body {
+  grid-area: body;
+  overflow: auto;
+  padding: var(--eien-space-5) 28px var(--eien-space-6);
+}
+.settings__problem {
+  margin: 0 0 var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  border-radius: var(--eien-radius-s);
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-preview);
   color: var(--eien-removed);
   background: var(--eien-removed-wash);
-  border-bottom: var(--eien-hairline) solid var(--eien-rule);
 }
-.settings__body {
-  overflow-y: auto;
-  padding: 0 var(--eien-space-5) var(--eien-space-5);
+.settings__sample {
+  max-width: 46em;
+  margin-bottom: 22px;
+  padding: var(--eien-space-3) 14px;
+  background: var(--eien-paper);
+  border: var(--eien-hairline) solid var(--eien-rule-soft);
+  border-radius: var(--eien-radius-s);
 }
-.settings__group {
-  padding-top: var(--eien-space-5);
+.settings__sample p {
+  margin: 0;
+  font-size: var(--eien-size-prose);
+  line-height: var(--eien-leading-prose);
 }
-.settings__group + .settings__group {
-  margin-top: var(--eien-space-2);
-  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+.settings__sample .count {
+  display: block;
+  margin-top: 6px;
 }
-.settings__group > .label {
-  margin: 0 0 var(--eien-space-2);
+.settings__scope {
+  margin-bottom: 22px;
 }
 
-.setting {
-  padding: var(--eien-space-3) 0;
+/* The grips: an edge or a corner resizes. Only the corner shows itself. */
+.settings__grip {
+  position: absolute;
+  z-index: 2;
 }
-.setting__head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--eien-space-2);
+.settings__grip--n,
+.settings__grip--s {
+  left: var(--eien-space-3);
+  right: var(--eien-space-3);
+  height: 7px;
+  cursor: ns-resize;
 }
-.setting__label {
-  margin: 0;
-  color: var(--eien-ink);
+.settings__grip--e,
+.settings__grip--w {
+  top: var(--eien-space-3);
+  bottom: var(--eien-space-3);
+  width: 7px;
+  cursor: ew-resize;
 }
-.setting__about {
-  margin: var(--eien-space-1) 0 var(--eien-space-2);
-  font-family: var(--eien-face-text);
-  font-size: var(--eien-size-preview);
-  line-height: var(--eien-leading-row);
-  color: var(--eien-pencil);
+.settings__grip--n {
+  top: -3px;
 }
-/* The words line up with the text above: a button's padding hangs outside. */
-.setting__choices,
-.setting__stepper {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--eien-space-1);
-  margin-left: calc(var(--eien-space-2) * -1);
+.settings__grip--s {
+  bottom: -3px;
 }
-/* The writer's own themes sit among the gallery's, in the same row. */
-.setting__mine {
-  display: contents;
+.settings__grip--e {
+  right: -3px;
 }
-/* A typeface, shown in itself; a theme's name, as the writer typed it. */
-.setting__face,
-.setting__own {
-  font-family: var(--eien-face-text);
-  font-size: var(--eien-size-row);
-  letter-spacing: normal;
-  text-transform: none;
+.settings__grip--w {
+  left: -3px;
 }
-.setting__value {
-  min-width: 5ch;
-  text-align: center;
-  color: var(--eien-ink);
+.settings__grip--ne,
+.settings__grip--nw,
+.settings__grip--se,
+.settings__grip--sw {
+  width: 18px;
+  height: 18px;
+}
+.settings__grip--ne {
+  top: -3px;
+  right: -3px;
+  cursor: nesw-resize;
+}
+.settings__grip--sw {
+  bottom: -3px;
+  left: -3px;
+  cursor: nesw-resize;
+}
+.settings__grip--nw {
+  top: -3px;
+  left: -3px;
+  cursor: nwse-resize;
+}
+.settings__grip--se {
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  color: var(--eien-faded);
+  cursor: nwse-resize;
+}
+.settings__grip--se .icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* A phone: a full sheet; the tabs in a strip under the head; nothing to move or resize. */
+@media (max-width: 599.98px) {
+  .settings,
+  .settings[data-placed] {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+  .settings__frame {
+    grid-template:
+      "head" auto
+      "nav" auto
+      "body" minmax(0, 1fr)
+      / minmax(0, 1fr);
+  }
+  .settings__head {
+    height: var(--eien-touch);
+    padding-left: var(--eien-space-4);
+    cursor: auto;
+  }
+  .settings__nav {
+    display: flex;
+    gap: var(--eien-space-1);
+    overflow-x: auto;
+    padding: var(--eien-space-1) var(--eien-space-2);
+    border-right: 0;
+    border-bottom: var(--eien-hairline) solid var(--eien-rule);
+  }
+  .settings__part {
+    display: flex;
+    align-items: center;
+    flex: none;
+  }
+  .settings__category {
+    padding: 0 6px 0 var(--eien-space-2);
+  }
+  .settings__part:first-child .settings__category {
+    padding-top: 0;
+  }
+  .settings__tab {
+    width: auto;
+    min-height: var(--eien-touch);
+    padding: 0 var(--eien-space-3);
+    white-space: nowrap;
+  }
+  .settings__tab[aria-current="true"]::before {
+    top: auto;
+    left: var(--eien-space-3);
+    right: var(--eien-space-3);
+    bottom: 6px;
+    width: auto;
+    height: var(--eien-mark-w);
+  }
+  .settings__body {
+    padding: var(--eien-space-4);
+  }
+  .settings__grip {
+    display: none;
+  }
 }

@@ -1,85 +1,112 @@
-// The settings screen (spec §6), drawn from the schema: one section per
-// group, a choice as a row of words, a number as a step down and up. Each
-// change is kept and shows at once, so there is nothing to save.
+// Settings (spec §6, settings.md): a sheet over the dimmed window, moved by
+// its head and resized by its edges (./frame.ts). Its side column holds the
+// categories, each a label in the machine voice over its tabs; its head is a
+// breadcrumb, SETTINGS / CATEGORY / TAB. Every change shows at once, so
+// there is nothing to save. Esc closes it and gives the keyboard back.
 
-import {
-  type ChoiceSetting,
-  type NumberSetting,
-  offeredOn,
-  SETTING_GROUPS,
-  SETTINGS,
-  type Setting,
-  type SettingKey,
-  type SettingValues,
-  stepped,
-} from '../../core/config';
-import { h, wordButton } from '../dom';
+import type { SettingKey, SettingValues } from '../../core/config';
+import { h } from '../dom';
+import { icon } from '../icons';
 import { NARROW } from '../phone/phone-stack';
 import { reasonOf } from '../reason';
 import type { WriterThemes } from '../theme/writer-themes';
-import { mineChoices } from './mine-choices';
+import { settingRow } from './controls';
+import { frame } from './frame';
+import { type Category, placesHere, settingsIn, type Tab } from './places';
 import type { SettingsState } from './settings-state';
+import { customTab, galleryTab, type ThemesTab } from './themes-tabs';
+
+/** A tab as drawn: its body, how it shows the values, and what it writes before Settings closes. */
+interface Drawn {
+  readonly category: Category;
+  readonly tab: Tab;
+  readonly button: HTMLButtonElement;
+  readonly body: HTMLElement;
+  show(values: SettingValues): void;
+  flush?(): Promise<void>;
+}
+
+/** The Type tab opens with running text, so a change of face, size or weight shows in prose too. */
+const sample = () =>
+  h(
+    'div',
+    { class: 'settings__sample', attrs: { 'aria-hidden': 'true' } },
+    h('p', {
+      text: 'They have a name for him in the barracks, and none of them will say it where he can hear.',
+    }),
+    h('span', { class: 'count', text: '3,051 words · today +809' }),
+  );
+
+const VAULT_ABOUT =
+  'This vault’s own settings, kept in its .eien/config.json: they travel with its notes to every device.';
 
 export class SettingsScreen {
   readonly #dialog: HTMLDialogElement;
-  /** The data-key of what had the keyboard when the screen opened: a redraw may replace it. */
-  #openerKey: string | null = null;
+  readonly #settings: SettingsState;
+  readonly #crumbs = h('p', { class: 'label settings__crumbs' });
   readonly #problem = h('p', {
     class: 'settings__problem',
     attrs: { role: 'alert', hidden: true },
   });
-  readonly #settings: SettingsState;
-  /** The writer's own themes, listed after the gallery's in the palette. */
-  readonly #themes: WriterThemes | null;
-  /** Each control's way of showing the current values. */
-  readonly #shows: ((values: SettingValues) => void)[] = [];
+  readonly #tabs: Drawn[] = [];
+  #shown: Drawn;
+  /** The data-key of what had the keyboard when Settings opened: a redraw may replace it. */
+  #openerKey: string | null = null;
 
   /** `platform` (process.platform's name) leaves out the settings another system alone has. */
   constructor(
     container: HTMLElement,
     settings: SettingsState,
     platform: string,
-    themes: WriterThemes | null = null,
+    themes: WriterThemes,
   ) {
     this.#settings = settings;
-    this.#themes = themes;
     const phone = matchMedia(NARROW).matches; // one pane at a time: no panes to choose
-    const groups = SETTING_GROUPS.map((group) => {
-      const rows = SETTINGS.filter(
-        (setting) => setting.group === group && offeredOn(setting, platform, phone),
-      ).map((setting) => this.#row(setting));
-      return rows.length > 0
-        ? h(
-            'section',
-            { class: 'settings__group' },
-            h('h2', { class: 'label', text: group }),
-            ...rows,
-          )
-        : null;
-    });
-    this.#dialog = h(
-      'dialog',
-      { class: 'settings', attrs: { 'aria-labelledby': 'settings-title' } },
-      h(
-        'div',
-        { class: 'settings__inner' },
+    const set = (key: SettingKey, value: string | number) => void this.#set(key, value);
+    const nav = h('nav', { class: 'settings__nav', attrs: { 'aria-label': 'Categories' } });
+    const body = h('div', { class: 'settings__body' }, this.#problem);
+    for (const category of placesHere(platform, phone)) {
+      const labelId = `settings-category-${category.name.toLowerCase().replace(' ', '-')}`;
+      const buttons = category.tabs.map((tab) => {
+        const drawn = this.#draw(category, tab, platform, phone, themes, set);
+        body.append(drawn.body);
+        this.#tabs.push(drawn);
+        return drawn.button;
+      });
+      nav.append(
         h(
-          'header',
-          { class: 'settings__head' },
-          h('h1', {
-            class: 'label settings__title',
-            text: 'Settings',
-            attrs: { id: 'settings-title' },
-          }),
-          wordButton('Close', () => this.close()),
+          'div',
+          { class: 'settings__part', attrs: { role: 'group', 'aria-labelledby': labelId } },
+          h(
+            'h2',
+            { class: 'settings__category', attrs: { id: labelId } },
+            icon(category.icon),
+            category.name,
+          ),
+          ...buttons,
         ),
-        this.#problem,
-        h('div', { class: 'settings__body' }, ...groups),
-      ),
+      );
+    }
+    this.#shown = this.#tabs[0] as Drawn;
+
+    const close = h(
+      'button',
+      {
+        class: 'icon-button settings__close',
+        attrs: { type: 'button', 'aria-label': 'Close settings', title: 'Close  Esc' },
+        on: { click: () => this.close() },
+      },
+      icon('close'),
     );
-    // Closed, the dialog gives the keyboard back to what opened it; if a redraw replaced that
+    const head = h('header', { class: 'settings__head' }, this.#crumbs, close);
+    this.#dialog = h('dialog', { class: 'settings', attrs: { 'aria-label': 'Settings' } });
+    const box = frame(this.#dialog, head);
+    this.#dialog.append(h('div', { class: 'settings__frame' }, nav, head, body), ...box.grips);
+
+    // Closed, Settings gives the keyboard back to what opened it; if a redraw replaced that
     // (choosing two panes redraws the sidebar), to the control in its place.
     this.#dialog.addEventListener('close', () => {
+      for (const tab of this.#tabs) void tab.flush?.();
       const key = this.#openerKey;
       this.#openerKey = null;
       const active = document.activeElement;
@@ -89,14 +116,23 @@ export class SettingsScreen {
         .find((control) => control.dataset.key === key)
         ?.focus();
     });
-    // The dialog's own box is only its backdrop: a click there closes it, as Esc does.
-    this.#dialog.addEventListener('click', (event) => {
-      if (event.target === this.#dialog) this.close();
+    // The dialog's own box, outside the sheet, is only its backdrop: a click there closes it,
+    // as Esc does. A press that began inside (a drag let go outside) isn't one.
+    let downOutside = false;
+    this.#dialog.addEventListener('pointerdown', (event) => {
+      downOutside = event.target === this.#dialog;
     });
+    this.#dialog.addEventListener('click', (event) => {
+      if (event.target === this.#dialog && downOutside && !box.dragging) this.close();
+    });
+    this.#place = box.place;
     container.append(this.#dialog);
     settings.onChange((values) => this.#show(values));
     this.#show(settings.values);
+    this.#choose(this.#shown);
   }
+
+  readonly #place: () => void;
 
   get isOpen(): boolean {
     return this.#dialog.open;
@@ -107,92 +143,106 @@ export class SettingsScreen {
     this.#problem.hidden = true;
     const opener = document.activeElement;
     this.#openerKey = opener instanceof HTMLElement ? (opener.dataset.key ?? null) : null;
+    this.#place();
     this.#dialog.showModal();
+    this.#shown.button.focus();
   }
 
   close(): void {
     this.#dialog.close();
   }
 
+  #draw(
+    category: Category,
+    tab: Tab,
+    platform: string,
+    phone: boolean,
+    themes: WriterThemes,
+    set: (key: SettingKey, value: string | number) => void,
+  ): Drawn {
+    const button = h('button', {
+      class: 'settings__tab',
+      text: tab.name,
+      attrs: { type: 'button', 'aria-current': 'false' },
+    });
+    const drawn = {
+      category,
+      tab,
+      button,
+      ...this.#bodyOf(category, tab, platform, phone, themes, set),
+    };
+    button.addEventListener('click', () => this.#choose(drawn));
+    return drawn;
+  }
+
+  #bodyOf(
+    category: Category,
+    tab: Tab,
+    platform: string,
+    phone: boolean,
+    themes: WriterThemes,
+    set: (key: SettingKey, value: string | number) => void,
+  ): Pick<Drawn, 'body' | 'show' | 'flush'> {
+    const label = `${category.name}: ${tab.name}`;
+    const body = h('section', {
+      class: 'settings__tab-body',
+      attrs: { 'aria-label': label, hidden: true },
+    });
+    if (tab.themes) {
+      const choose = (value: string) => set('appearance.palette', value);
+      const drawn: ThemesTab =
+        tab.themes === 'Gallery' ? galleryTab(choose) : customTab(themes, this.#settings, choose);
+      body.append(drawn.element);
+      return {
+        body,
+        show: (values) => drawn.show(values['appearance.palette']),
+        flush: drawn.flush,
+      };
+    }
+    const rows = settingsIn(tab, platform, phone).map((setting) => settingRow(setting, set));
+    body.append(
+      category.scope === 'vault'
+        ? h('p', { class: 'setting__about settings__scope', text: VAULT_ABOUT })
+        : '',
+      tab.name === 'Type' ? sample() : '',
+      ...rows.map((row) => row.element),
+    );
+    const show = (values: SettingValues) => {
+      for (const row of rows) row.show(values);
+    };
+    return { body, show };
+  }
+
+  #choose(drawn: Drawn): void {
+    this.#shown.body.hidden = true;
+    this.#shown.button.setAttribute('aria-current', 'false');
+    this.#shown = drawn;
+    drawn.body.hidden = false;
+    drawn.button.setAttribute('aria-current', 'true');
+    drawn.button.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); // a phone's strip
+    drawn.body.parentElement?.scrollTo?.({ top: 0 });
+    const slash = () => h('span', { class: 'settings__slash', text: '/' });
+    this.#crumbs.replaceChildren(
+      'Settings',
+      slash(),
+      drawn.category.name,
+      slash(),
+      h('b', { text: drawn.tab.name }),
+    );
+  }
+
   #show(values: SettingValues): void {
-    for (const show of this.#shows) show(values);
+    for (const tab of this.#tabs) tab.show(values);
   }
 
-  #row(setting: Setting): HTMLElement {
-    const labelId = `setting-${setting.key.replace('.', '-')}`;
-    return h(
-      'div',
-      { class: 'setting' },
-      h(
-        'div',
-        { class: 'setting__head' },
-        h('h3', { class: 'label setting__label', text: setting.label, attrs: { id: labelId } }),
-        setting.scope === 'vault' && h('span', { class: 'count', text: 'This vault' }),
-      ),
-      h('p', { class: 'setting__about', text: setting.description }),
-      setting.type === 'choice' ? this.#choices(setting, labelId) : this.#stepper(setting, labelId),
-    );
-  }
-
-  #choices(setting: ChoiceSetting, labelId: string): HTMLElement {
-    const face = setting.key === 'appearance.face';
-    const buttons = Object.entries(setting.choices).map(([value, name]) =>
-      wordButton(name, () => void this.#set(setting.key, value), {
-        'data-value': value,
-        // A face shows in itself: its tokens apply inside any element that names it.
-        ...(face ? { 'data-face': value, class: 'word-button setting__face' } : {}),
-      }),
-    );
-    this.#shows.push((values) => {
-      const chosen = chosenIn(values, setting.key);
-      for (const button of buttons)
-        button.setAttribute('aria-pressed', String(button.dataset.value === chosen));
-    });
-    const mine =
-      setting.key === 'appearance.palette' && this.#themes
-        ? mineChoices(this.#themes, (value) => void this.#set(setting.key, value))
-        : null;
-    if (mine) this.#shows.push((values) => mine.show(values['appearance.palette']));
-    return h(
-      'div',
-      { class: 'setting__choices', attrs: { role: 'group', 'aria-labelledby': labelId } },
-      ...buttons,
-      mine?.element,
-    );
-  }
-
-  #stepper(setting: NumberSetting, labelId: string): HTMLElement {
-    let current = setting.default;
-    const step = (by: number) => () => void this.#set(setting.key, stepped(setting, current, by));
-    const smaller = wordButton('Smaller', step(-1));
-    const larger = wordButton('Larger', step(1));
-    const shown = h('output', { class: 'count setting__value', attrs: { 'aria-live': 'polite' } });
-    this.#shows.push((values) => {
-      current = Number(chosenIn(values, setting.key));
-      shown.textContent = `${current}%`;
-      smaller.disabled = current <= setting.min;
-      larger.disabled = current >= setting.max;
-    });
-    return h(
-      'div',
-      { class: 'setting__stepper', attrs: { role: 'group', 'aria-labelledby': labelId } },
-      smaller,
-      shown,
-      larger,
-    );
-  }
-
-  async #set(key: string, value: string | number): Promise<void> {
+  async #set(key: SettingKey, value: string | number): Promise<void> {
     this.#problem.hidden = true;
     try {
       // The schema's own keys and values: the main process checks them again.
-      await this.#settings.set(key as SettingKey, value as never);
+      await this.#settings.set(key, value as never);
     } catch (error) {
       this.#problem.textContent = reasonOf(error);
       this.#problem.hidden = false;
     }
   }
 }
-
-const chosenIn = (values: SettingValues, key: string): unknown =>
-  (values as Record<string, unknown>)[key];

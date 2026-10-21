@@ -69,6 +69,12 @@
 .menu .word-button.is-danger {
   color: var(--eien-danger);
 }
+/* Pressed with a finger (a phone's ⋯): each choice a finger's height. */
+@media (pointer: coarse) {
+  .menu .word-button {
+    min-height: var(--eien-touch);
+  }
+}
 .menu__rule {
   margin: var(--eien-space-1) 0;
   border-top: var(--eien-hairline) solid var(--eien-rule-soft);

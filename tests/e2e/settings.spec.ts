@@ -36,8 +36,15 @@ const FACES = {
 };
 
 const dialog = (page: Page) => page.getByRole('dialog', { name: 'Settings' });
-const choose = (page: Page, name: string) =>
-  dialog(page).getByRole('button', { name, exact: true }).click();
+/** Go to a tab of Settings, by its name in the side column. */
+const goTo = (page: Page, tab: string) =>
+  dialog(page).getByRole('navigation').getByRole('button', { name: tab, exact: true }).click();
+/** In the tab shown, choose `name` for the setting labelled `setting`. */
+const control = (page: Page, setting: string, name: string) =>
+  dialog(page)
+    .getByRole('group', { name: setting, exact: true })
+    .getByRole('button', { name, exact: true });
+const choose = (page: Page, setting: string, name: string) => control(page, setting, name).click();
 const root = (page: Page) => page.locator('html');
 const style = (page: Page, selector: string, property: string) =>
   page
@@ -61,11 +68,10 @@ test('opens from the sidebar and the menu, and closes with Esc or a click outsid
   await page.getByRole('button', { name: 'Settings' }).click();
   await expect(dialog(page)).toBeVisible();
   await expect(dialog(page).getByRole('heading', { level: 2 })).toHaveText([
-    'Appearance',
-    'Editor',
+    'Look',
+    'Themes',
     'Writing',
-    'Layout',
-    'AO3',
+    'This vault',
   ]);
   await page.keyboard.press('Escape');
   await expect(dialog(page)).toBeHidden();
@@ -96,8 +102,9 @@ test('every typeface shows in itself and loads under the security policy', async
   await openBook(page);
   await page.locator('.note-row', { hasText: 'Two' }).click();
   await page.getByRole('button', { name: 'Settings' }).click();
+  await goTo(page, 'Type');
   for (const [name, family] of Object.entries(FACES)) {
-    await choose(page, name);
+    await choose(page, 'Typeface', name);
     await expect.poll(() => style(page, '.cm-content', 'font-family')).toContain(family);
     const fonts = await page.evaluate(async (wanted) => {
       await document.fonts.ready;
@@ -111,7 +118,7 @@ test('every typeface shows in itself and loads under the security policy', async
     }, family);
     expect(fonts, family).toEqual({ loaded: true, failed: 0 });
   }
-  await choose(page, 'Newsreader');
+  await choose(page, 'Typeface', 'Newsreader');
   await expect(root(page)).not.toHaveAttribute('data-face');
   expect(errors).toEqual([]);
 });
@@ -121,27 +128,33 @@ test('palette, density, page and text size change the look at once', async ({ pa
   await page.locator('.note-row', { hasText: 'One' }).click();
   await page.getByRole('button', { name: 'Settings' }).click();
 
-  await choose(page, 'Otaku');
+  await goTo(page, 'Gallery');
+  await choose(page, 'Gallery', 'Otaku');
   await expect(root(page)).toHaveAttribute('data-palette', 'otaku');
   await expect(page.locator('.sidebar')).toHaveCSS('background-color', 'rgb(207, 212, 210)'); // Otaku's desk, by day
 
   expect(await style(page, '.sheet', 'padding-top')).toBe('48px');
-  await choose(page, 'Compact');
+  await goTo(page, 'Appearance');
+  await choose(page, 'Density', 'Compact');
   await expect(page.locator('.sheet')).toHaveCSS('padding-top', '24px');
 
-  await choose(page, 'Full');
+  await goTo(page, 'Page');
+  await choose(page, 'Page', 'Full');
   await expect(page.locator('.sheet')).toHaveCSS('box-shadow', 'none');
   await expect(page.locator('.page__scroll')).toHaveCSS('padding-top', '0px');
 
   const rowSize = async () => Number.parseFloat(await style(page, '.note-row__title', 'font-size'));
   expect(await rowSize()).toBe(16);
-  await dialog(page).getByRole('button', { name: 'Larger' }).first().click();
-  await expect(dialog(page).locator('output').first()).toHaveText('110%');
+  await goTo(page, 'Type');
+  const larger = control(page, 'Text size', 'Larger');
+  const shown = dialog(page).getByRole('group', { name: 'Text size' }).locator('output');
+  await larger.click();
+  await expect(shown).toHaveText('110%');
   await expect.poll(rowSize).toBeCloseTo(17.6);
-  await dialog(page).getByRole('button', { name: 'Larger' }).first().click();
-  await dialog(page).getByRole('button', { name: 'Larger' }).first().click();
-  await expect(dialog(page).locator('output').first()).toHaveText('130%');
-  await expect(dialog(page).getByRole('button', { name: 'Larger' }).first()).toBeDisabled(); // the top of the range
+  await larger.click();
+  await larger.click();
+  await expect(shown).toHaveText('130%');
+  await expect(larger).toBeDisabled(); // the top of the range
 });
 
 test('day or night from the sidebar’s toggle: the sun or the moon, whichever shows', async ({
@@ -177,9 +190,12 @@ test('this device’s choices come back after a restart; chapter numbers travel 
   await openBook(page);
   await expect(page.locator('.note-row__ord')).toHaveText(['i', 'ii']);
   await page.getByRole('button', { name: 'Settings' }).click();
-  await choose(page, 'Literata');
-  await choose(page, 'Night');
-  await choose(page, '1 2 3');
+  await goTo(page, 'Type');
+  await choose(page, 'Typeface', 'Literata');
+  await goTo(page, 'Appearance');
+  await choose(page, 'Day or night', 'Night');
+  await goTo(page, 'Writing'); // This vault's
+  await choose(page, 'Chapter numbers', '1 2 3');
   await expect(page.locator('.note-row__ord')).toHaveText(['1', '2']);
 
   const deviceFile = join(userData, 'settings.json');
@@ -304,7 +320,8 @@ test.describe('a settings file that’s wrong', () => {
     await expect(page.locator('.note-row__ord')).toHaveText(['i', 'ii']); // the vault's file can't be read
 
     await page.getByRole('button', { name: 'Settings' }).click();
-    await choose(page, 'Hanken Grotesk');
+    await goTo(page, 'Type');
+    await choose(page, 'Typeface', 'Hanken Grotesk');
     await expect
       .poll(() => (readJson(join(userData, 'settings.json')) as { settings: unknown }).settings)
       // Every other key stays as written; a bad one is ignored when read, not erased.
@@ -319,9 +336,10 @@ test.describe('a settings file that’s wrong', () => {
   test('won’t write over a vault file it can’t read, and says why', async ({ page, vault }) => {
     const file = join(vault ?? '', '.eien', 'config.json');
     await page.getByRole('button', { name: 'Settings' }).click();
-    await choose(page, '1 2 3');
+    await goTo(page, 'Writing');
+    await choose(page, 'Chapter numbers', '1 2 3');
     await expect(dialog(page).getByRole('alert')).toContainText('isn’t valid JSON');
-    await expect(dialog(page).getByRole('button', { name: 'i ii iii' })).toHaveAttribute(
+    await expect(control(page, 'Chapter numbers', 'i ii iii')).toHaveAttribute(
       'aria-pressed',
       'true',
     );
