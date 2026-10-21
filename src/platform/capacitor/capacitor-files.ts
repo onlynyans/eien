@@ -1,17 +1,17 @@
 // The phone's file system for the vault (./files.ts), over Capacitor's
-// Filesystem plugin: a folder (`root`, "Eien") in one of the system's places
-// — on Android the shared Documents, which Syncthing syncs (spec §10); on
-// iOS the app's own Documents, which the Files app shows. On Android the
-// writes and renames are Eien's own plugin's (VaultFilesPlugin.java): the
-// Filesystem plugin's write is never flushed to the disk, and its rename
-// deletes the file it replaces before renaming, so a rename that fails
-// loses both.
+// Filesystem plugin: a folder (`root`) in one of the system's places — on
+// Android the shared Documents, which Syncthing syncs (spec §10); on iOS the
+// app's own Documents, which the Files app shows. On both, the writes and
+// renames are Eien's own plugin's (VaultFilesPlugin.java, VaultFilesPlugin.
+// swift): the Filesystem plugin's write is never flushed to the disk, and
+// its rename deletes the file it replaces before renaming, so a rename that
+// fails loses both. Elsewhere (the phone's page in tests) the Filesystem's.
 
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { type FileEntry, type FilesPort, TakenError } from './files';
 
-/** Paths are in the shared Documents. Rejects with the code "TAKEN" for a name that's taken. */
+/** Paths are in Documents. Rejects with the code "TAKEN" for a name that's taken. */
 interface VaultFilesPlugin {
   write(options: { path: string; text: string }): Promise<void>;
   rename(options: { from: string; to: string; replace: boolean }): Promise<void>;
@@ -28,7 +28,7 @@ const isMissing = (error: unknown): boolean => {
 export class CapacitorFiles implements FilesPort {
   readonly #directory: Directory;
   readonly #root: string;
-  /** Eien's own plugin for writes and renames: on Android, in the shared Documents. */
+  /** Eien's own plugin for writes and renames: on Android and iOS, in Documents. */
   readonly #native: boolean;
 
   constructor(directory: Directory, root: string) {
@@ -36,7 +36,7 @@ export class CapacitorFiles implements FilesPort {
     this.#root = root;
     this.#native =
       directory === Directory.Documents &&
-      Capacitor.getPlatform() === 'android' &&
+      ['android', 'ios'].includes(Capacitor.getPlatform()) &&
       Capacitor.isPluginAvailable('VaultFiles');
   }
 

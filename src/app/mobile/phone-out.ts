@@ -10,7 +10,6 @@ import { freeName } from '../../core/paths';
 import type { OutBridge, OutFile } from '../../platform/bridge';
 import { type FilesPort, TakenError } from '../../platform/capacitor/files';
 import { hiddenBeside, TEMP_SUFFIX } from '../../platform/stray';
-import { EXPORT_FOLDER } from './vault-home';
 
 /** How many names an export tries while others are being saved under them. */
 const TRIES = 5;
@@ -20,7 +19,8 @@ const EXTENSIONS = { html: '.html', epub: '.epub', docx: '.docx' } as const;
 /** Exports under way: each writes through a temp file of its own, so two of one name can't meet. */
 let serial = 0;
 
-export function phoneOut(exports: FilesPort): OutBridge {
+/** Exports into `exports`, named to the writer as in `folder` ("Eien/Exports"). */
+export function phoneOut(exports: FilesPort, folder: string): OutBridge {
   /** Write it through a hidden temp file, then give it the first free name. */
   async function save(base: string, extension: string, write: (temp: string) => Promise<void>) {
     await exports.makeFolder('');
@@ -32,7 +32,7 @@ export function phoneOut(exports: FilesPort): OutBridge {
       const file = freeName(base, taken, extension);
       try {
         await exports.renameNew(temp, file);
-        return `${EXPORT_FOLDER}/${file}`;
+        return `${folder}/${file}`;
       } catch (error) {
         if (!(error instanceof TakenError)) throw error;
         taken.push(file); // saved just now by another export: the next name
