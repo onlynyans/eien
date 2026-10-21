@@ -108,7 +108,7 @@ each step's files apart from the others' in its wave.
 |---|---|
 | 3A The layouts | #28 the framework and all three layouts as a setting; #26 the icons; #27 corners per layout; #15 chevrons and the seal strip; #16 the strip that hides; #17 view icons; #30 Focus; #8 the foot's icons; #1 what goes in C's strip |
 | 3B Themes (done, [#34](https://github.com/onlynyans/eien/pull/34)) | #20: the gallery's themes, your own in `.eien/themes/`, the mix (fitted to Eien's contrast); the theme applied as tokens |
-| 3C The app's icon | #21: the seal, for the installers and both phones |
+| 3C The app's icon (done, [#35](https://github.com/onlynyans/eien/pull/35)) | #21: the seal, for the installers and both phones |
 
 **Wave 2**, once 3A has merged (they build on its framework and icons):
 
