@@ -62,6 +62,29 @@ test('one pane at a time: the notes, back to the tree, a folder’s notes, a not
   await onlyShown(page, 'sidebar');
 });
 
+test('the tree’s sections fold at a tap, and a book is marked BOOK', async ({ page }) => {
+  await open(page);
+  // The book's settings come first, so the folder is a book when it first shows.
+  await putOutside(page, 'Eien/Vault/Fic/.eien-folder.json', JSON.stringify({ book: {} }));
+  await putOutside(page, 'Eien/Vault/Fic/Tear.md', 'The scarf caught on the gate.\n');
+  await putOutside(page, 'Eien/Vault/Ideas/Snow.md', 'Snow on the walls.\n');
+  await expect(titles(page)).toHaveCount(2, { timeout: 10_000 });
+  await back(page).click();
+  await onlyShown(page, 'sidebar');
+  const folder = (name: string) =>
+    page.locator('.sidebar .tree-row__name').filter({ hasText: new RegExp(`^${name}`) });
+  await expect(folder('Fic').locator('.book-mark')).toHaveText('Book');
+  await expect(folder('Ideas').locator('.book-mark')).toHaveCount(0);
+
+  const folders = page.locator('.section__label').filter({ hasText: /^Folders$/ });
+  await folders.click();
+  await expect(folders).toHaveAttribute('aria-expanded', 'false');
+  await expect(folder('Fic')).toBeHidden();
+  await folders.click();
+  await expect(folders).toHaveAttribute('aria-expanded', 'true');
+  await expect(folder('Fic')).toBeVisible();
+});
+
 test('a note opened to read keeps the phone’s keyboard down', async ({ page }) => {
   // The editor taking the keyboard brings up the phone's keyboard over half the note.
   await withNotes(page);

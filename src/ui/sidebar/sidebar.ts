@@ -1,6 +1,6 @@
 // The sidebar: the vault's contents page. The seal (which shuts the sidebar
 // to a strip, and opens it again), the vault's name and the search field,
-// then the tree (./tree.ts); at the foot, day or night, the panes and the
+// then the tree (./tree.ts), in sections that fold (./sections.ts); at the foot, day or night, the panes and the
 // settings. The head and search field stay put; the rest redraws. A folder
 // takes a dropped note, and has its own menu.
 
@@ -9,7 +9,9 @@ import type { FolderNode } from '../../core/vault';
 import { h, type Props, wordButton } from '../dom';
 import { isMenuKey, menuPoint } from '../list/row-events';
 import { FolderField } from './folder-field';
+import { Folds } from './folds';
 import { sidebarFoot } from './foot';
+import { foldingSection, plainSection } from './sections';
 import { sidebarSignature } from './signature';
 import { keyOf, type TreeActions, type TreeModel, TreeRows } from './tree';
 
@@ -63,6 +65,8 @@ export class Sidebar {
   #refocus: string | null = null;
   /** What was last drawn (./signature.ts): the same again isn't rebuilt. */
   #drawn = '';
+  /** Which sections are folded, on this device. */
+  readonly #folds = new Folds();
 
   constructor(name: string, actions: SidebarActions, keys: string) {
     this.#actions = actions;
@@ -147,11 +151,11 @@ export class Sidebar {
    * control there, or the search field.
    */
   focusTree(): void {
-    const rows = [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')];
+    const rows = this.#shown('.tree-row__name');
     (
       rows.find((row) => row.getAttribute('aria-current') === 'true') ??
       rows[0] ??
-      this.#body.querySelector<HTMLElement>('.sidebar__tree button') ??
+      this.#shown('.sidebar__tree button')[0] ??
       this.#search
     ).focus();
   }
@@ -170,6 +174,7 @@ export class Sidebar {
 
   /** Rename the folder at `path` in place: its name becomes a field; Enter keeps it, Esc doesn't. */
   editFolder(path: string): void {
+    this.#folds.set('folders', false); // a folder made under FOLDERS folded is named in sight
     this.#folderField.start(path);
     if (this.#model) this.draw(this.#model);
   }
@@ -186,30 +191,17 @@ export class Sidebar {
     const active = document.activeElement;
     const inBody = active instanceof HTMLElement && this.#body.contains(active);
     const focused = this.#refocus ?? (inBody ? (active.dataset.key ?? null) : null);
-    const rowsBefore = [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')];
+    const rowsBefore = this.#shown('.tree-row__name');
     const focusedAt = this.#refocus === null && inBody ? rowsBefore.indexOf(active) : -1;
     this.#refocus = null;
     const actions = this.#actions;
     const rows = new TreeRows(model, actions, (folder) => this.#folderEvents(folder));
     const edit = (folder: FolderNode, depth: number) => this.#folderField.row(folder, depth);
 
-    const section = (label: string, items: HTMLElement[], control?: HTMLElement) =>
-      items.length > 0 || control
-        ? [
-            h(
-              'div',
-              { class: 'sidebar__section' },
-              h('p', { class: 'label sidebar__label', text: label }),
-              control,
-            ),
-            h('ul', { class: 'tree' }, ...items),
-          ]
-        : [];
-
     const results = model.results;
     const tree = results
       ? [
-          ...section(
+          plainSection(
             'Results',
             rows.results(results),
             h('span', { class: 'count', text: results.total.toLocaleString() }),
@@ -226,16 +218,18 @@ export class Sidebar {
             : null,
         ]
       : [
-          ...section('Library', rows.library()),
-          ...section(
+          ...foldingSection('library', 'Library', rows.library(), this.#folds),
+          ...foldingSection(
+            'folders',
             'Folders',
             rows.folders(model.tree, 0, edit),
+            this.#folds,
             wordButton('New folder', actions.newFolder, {
               class: 'word-button sidebar__new',
               'data-key': 'new-folder',
             }),
           ),
-          ...section('Tags', rows.tags(model.tags, 0)),
+          ...foldingSection('tags', 'Tags', rows.tags(model.tags, 0), this.#folds),
         ];
 
     this.#drawing = true;
@@ -256,11 +250,21 @@ export class Sidebar {
       const same = [...this.#body.querySelectorAll<HTMLElement>('[data-key]')].find(
         (control) => control.dataset.key === focused,
       );
-      const rows = [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')];
-      (same ?? (focusedAt >= 0 ? rows[Math.min(focusedAt, rows.length - 1)] : undefined))?.focus();
+      const rows = this.#shown('.tree-row__name');
+      const visible = same?.closest('[hidden]') ? undefined : same;
+      (
+        visible ?? (focusedAt >= 0 ? rows[Math.min(focusedAt, rows.length - 1)] : undefined)
+      )?.focus();
     }
     // A redraw mustn't take the caret out of the name being typed.
     this.#folderField.restore(this.#body);
+  }
+
+  /** The controls `selector` finds that are in sight: none in a folded section. */
+  #shown(selector: string): HTMLElement[] {
+    return [...this.#body.querySelectorAll<HTMLElement>(selector)].filter(
+      (control) => !control.closest('[hidden]'),
+    );
   }
 
   #clearAndSearch(): void {

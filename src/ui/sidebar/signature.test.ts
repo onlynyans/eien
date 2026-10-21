@@ -34,6 +34,7 @@ const model = (
   notes: new Map([['/all', list(notes)]]),
   results: null,
   openNote: 'Chapter.md',
+  books: new Set(),
   notice: null,
   scheme: 'system',
 });
@@ -56,12 +57,13 @@ describe('sidebarSignature', () => {
     expect(sign(model(two))).not.toBe(sign(model([...two].reverse())));
   });
 
-  it('changes with the day, the open rows, the news and the open note', () => {
+  it('changes with the day, the open rows, the news, the open note and the books', () => {
     const base = model([note()]);
     expect(sign(base, 'Wed Oct 21 2026')).not.toBe(sign(base));
     expect(sign(model([note()], []))).not.toBe(sign(base));
     expect(sign({ ...base, notice: '“Ideas” is in the trash.' })).not.toBe(sign(base));
     expect(sign({ ...base, openNote: null })).not.toBe(sign(base));
+    expect(sign({ ...base, books: new Set(['Fic']) })).not.toBe(sign(base));
   });
 
   it('doesn’t care in what order the rows were opened', () => {

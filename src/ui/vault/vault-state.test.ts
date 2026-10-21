@@ -126,6 +126,56 @@ describe('VaultState', () => {
     expect(state.namesIn('').sort()).toEqual(['F', 'Top.md']);
   });
 
+  it('knows which folders are books, and sees one made or unmade', async () => {
+    const storage = new MemoryStorage();
+    const settings = (book: boolean) =>
+      JSON.stringify({ order: [], ...(book ? { book: {} } : {}) });
+    storage.put('Fic/Scarf/The Tear.md', '');
+    storage.put('Fic/Scarf/.eien-folder.json', settings(true));
+    storage.put('Fic/Walls/Gate.md', '');
+    storage.put('Fic/Walls/.eien-folder.json', settings(false));
+    storage.put('Research/Wool.md', '');
+    storage.put('Broken/.eien-folder.json', '{ not json');
+    const index = new VaultIndex(storage);
+    await index.refresh();
+    const state = new VaultState(
+      {
+        list: async () => index.entries(),
+        notes: async () => index.notes(),
+        search: async (query) => index.search(query),
+        read: (path) => {
+          if (path.endsWith('.eien-folder.json')) reads.push(path);
+          return storage.read(path);
+        },
+      },
+      'V',
+    );
+    const reads: string[] = [];
+    await state.refresh();
+    expect([...state.books]).toEqual(['Fic/Scarf']);
+
+    // Nothing named as changed: no folder's settings are read again.
+    reads.length = 0;
+    await state.refresh();
+    expect(reads).toEqual([]);
+
+    // The watcher names both settings files: both are read again, and nothing else.
+    storage.put('Fic/Scarf/.eien-folder.json', settings(false));
+    storage.put('Fic/Walls/.eien-folder.json', settings(true));
+    await index.refresh();
+    await state.refresh(['Fic/Scarf/.eien-folder.json', 'Fic/Walls/.eien-folder.json', 'X.md']);
+    expect([...state.books]).toEqual(['Fic/Walls']);
+    expect(reads.sort()).toEqual(['Fic/Scarf/.eien-folder.json', 'Fic/Walls/.eien-folder.json']);
+
+    // A folder renamed is a new folder: its settings are read there, and the old path forgotten.
+    expect((await storage.move('Fic/Walls', 'Fic/Gates')).ok).toBe(true);
+    await index.refresh();
+    reads.length = 0;
+    await state.refresh();
+    expect([...state.books]).toEqual(['Fic/Gates']);
+    expect(reads).toEqual(['Fic/Gates/.eien-folder.json']);
+  });
+
   it('finds folders at any depth, and nothing for a path that isn’t there', async () => {
     const state = await vault({ 'a/b/c/note.md': '' });
     expect(findFolder(state.tree, 'a/b/c')?.name).toBe('c');

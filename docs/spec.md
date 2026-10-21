@@ -102,8 +102,9 @@ My Vault/
 
 ### Per-device state
 
-Cursor positions, open notes, pane widths, zoom and today's word tally are kept
-in the app's own storage on each device. They are never written into the vault,
+Cursor positions, open notes, pane widths, which of the sidebar's sections are
+folded, zoom and today's word tally are kept in the app's own storage on each
+device. They are never written into the vault,
 so two devices never overwrite each other's state through Syncthing.
 
 ---
@@ -190,8 +191,11 @@ Three panes, each collapsible, with a two-pane option in settings:
 1. **Sidebar** — a collapsible tree:
    - **All Notes**, with a count
    - **Pinned**
-   - **Folders**, nested; books marked
+   - **Folders**, nested; a book marked BOOK beside its count
    - **Tags**, nested by `/`
+   - Library, Folders and Tags fold and open from their labels (a click, Enter
+     or Space), each remembered on this device (§2). An open folder or tag has
+     a hairline guide down its children.
    - At the foot: light/dark switch, sync status (not built yet:
      [backlog](backlog.md) #10), settings
 2. **Note list** — the notes in the selected folder or tag: title, a line of
@@ -225,8 +229,9 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   results take the tree's place, and the last action's news shows at the
   sidebar's foot; with the sidebar shut too, in the page's status line.
 - The keyboard is never left on something hidden or gone: a shut pane gives
-  it to the page (to the page itself when no note is open), a redraw gives it
-  back to the control that had it, or to the row now in a removed row's place.
+  it to the page (to the page itself when no note is open), a folded section
+  to its label, a redraw gives it back to the control that had it, or to the
+  row now in a removed row's place.
 - Widths, and which panes are shut, are per device (§2); three or two panes
   is a device setting (§6).
 

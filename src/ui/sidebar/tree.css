@@ -1,0 +1,162 @@
+/* The sidebar's tree (./tree.ts): its rows, the twisty, the guides down an open
+   branch, and the BOOK mark. */
+
+/* A folder being renamed: its name as a field, in the text face. */
+.tree-row__field {
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--eien-row-h) - 4px);
+  margin-right: var(--eien-space-4);
+  padding: 0 var(--eien-space-2);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+}
+/* Where a dragged note will go: the folder (or the vault's name) lit, as if chosen. */
+.tree-row__name.is-drop-target,
+.sidebar__vault.is-drop-target {
+  background: var(--eien-selected);
+  outline: var(--eien-hairline) solid var(--eien-rule-strong);
+  outline-offset: calc(var(--eien-hairline) * -1);
+}
+
+.tree {
+  --indent: var(--eien-space-4); /* one level deeper */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+/* An open row's rows, with a hairline guide down them from its twisty's centre. */
+.tree-group {
+  position: relative;
+}
+.tree-group::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: calc(var(--eien-row-h) / 2);
+  left: calc(var(--eien-space-2) + var(--depth, 0) * var(--indent) + var(--eien-space-5) / 2);
+  width: var(--eien-hairline);
+  background: var(--eien-rule);
+}
+.tree-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-left: calc(var(--eien-space-2) + var(--depth, 0) * var(--indent));
+}
+.tree-row__twist {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--eien-space-5);
+  height: var(--eien-row-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+/* Disclosure: ▸ closed, ▾ open, drawn so it turns rather than swaps. */
+.twisty {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--twisty);
+  height: var(--twisty);
+  color: var(--eien-faded);
+}
+.twisty::before {
+  content: "";
+  width: calc(var(--eien-space-1) + var(--eien-hairline));
+  height: calc(var(--eien-space-2) - var(--eien-hairline));
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  transition: transform var(--eien-quick) var(--eien-ease);
+}
+[aria-expanded="true"] > .twisty::before {
+  transform: rotate(90deg);
+}
+.tree-row__name {
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--eien-space-2);
+  height: var(--eien-row-h);
+  padding: 0 var(--eien-space-4) 0 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--eien-ink-soft);
+  cursor: pointer;
+}
+/* A note in the tree (two panes, or a search's results): a chapter's number
+   before it, in a column of its own so the titles line up. */
+.tree-row__ord {
+  flex: none;
+  min-width: var(--eien-space-5);
+  text-align: right;
+  color: var(--eien-pencil);
+}
+/* A folder that's a book: the word in a hairline box, like a stamped label, close to the count. */
+.book-mark {
+  flex: none;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--eien-pencil);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  /* the tracking after the last letter sits inside the box, so the right side gives it back */
+  padding: 0 calc(var(--eien-space-1) - var(--eien-hairline) - var(--eien-track-label)) 0
+    calc(var(--eien-space-1) - var(--eien-hairline));
+  margin-right: calc(var(--eien-space-1) * -1);
+}
+/* A tag's "#": the machine's mark, before the writer's word. */
+.tree-row__hash {
+  margin-right: calc(var(--eien-hairline) * 2);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-pencil);
+}
+.tree-row__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--eien-row-h);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+}
+@media (hover: hover) {
+  .tree-row:hover {
+    background: var(--eien-hover);
+  }
+}
+.tree-row:active {
+  background: var(--eien-press);
+}
+.tree-row:has(.tree-row__name:focus-visible) {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}
+.tree-row__name:focus-visible {
+  outline: none;
+}
+/* Selected: a neutral fill, and the seal's rule beside it. */
+.tree-row:has([aria-current="true"]) {
+  background: var(--eien-selected);
+}
+.tree-row:has([aria-current="true"])::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--eien-mark-w);
+  background: var(--eien-seal);
+}
+.tree-row:has([aria-current="true"]) .tree-row__name {
+  color: var(--eien-ink);
+}

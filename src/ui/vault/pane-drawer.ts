@@ -70,6 +70,7 @@ export class PaneDrawer {
       notes,
       results,
       openNote: this.#parts.openNote(),
+      books: state.books,
       notice: listShown ? null : notice.text,
       scheme: settings.values['appearance.scheme'],
     });
