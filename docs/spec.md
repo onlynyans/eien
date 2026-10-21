@@ -1031,7 +1031,9 @@ Compare or Restore finishes lands on a note opened meanwhile.
   name it in place, or delete it.
 - **Restoring** first checkpoints the current draft, so restoring is undoable
   (⌘Z too); words typed while it works are checkpointed before they're
-  replaced. The note keeps its own id.
+  replaced. The note keeps its own id. A Restore under way when another note
+  is opened (a slow disk) still finishes, in its own note's file, never on the
+  page; the news says so.
 - **Retention:** named versions are kept until deleted. Unnamed checkpoints
   older than 30 days are thinned to one per day (the day's last, in the
   writer's own time zone), and the latest is always kept. Thinning happens
