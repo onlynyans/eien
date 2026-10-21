@@ -385,7 +385,8 @@ test.describe('two panes', () => {
         await twoPanes(page);
         await treeNote(page, 'Ideas').click({ button: 'right' });
         await page.getByRole('menuitem', { name: 'Pin' }).click();
-        await expect(folder(page, 'Pinned')).toBeVisible();
+        // Pinned is always there: its count says the pin is in.
+        await expect(folder(page, 'Pinned').locator('.count')).toHaveText('1');
         await expect.poll(() => read(vault, '.eien/pinned.json')).toContain('Ideas.md');
 
         await folder(page, 'Fic').click();
