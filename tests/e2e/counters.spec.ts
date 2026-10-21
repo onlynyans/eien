@@ -48,15 +48,18 @@ test('today counts what the writer writes, net; a seal or another device’s cha
   for (let i = 0; i < ' six.'.length; i++) await page.keyboard.press('Backspace');
   await expect(today(page)).toHaveText('Today +2');
 
-  // A seal adds the note's id: no one's words.
+  // A seal adds the note's id: no one's words. The line reads "Not sealed yet" before it, so
+  // the wait is for what the seal says once it's done.
   await clickMenu(app, 'File', 'Seal');
-  await expect(page.locator('.seal-line')).not.toBeEmpty();
+  await expect(page.locator('.seal-line')).toHaveText(/^Sealed /u);
   await expect(today(page)).toHaveText('Today +2');
 
-  // Another device's words arrive: shown, not counted as written here.
+  // Another device's words arrive once the seal's own write is on disk (its id in the note):
+  // shown, not counted as written here. Before it, both would have changed, and the page's
+  // words would rightly go to a conflict copy.
   await expect
     .poll(() => readFileSync(join(vault ?? '', 'Loose.md'), 'utf8'))
-    .toContain('Four five');
+    .toMatch(/^---\nid: \w+\n---\n[\s\S]*Four five/u);
   const text = readFileSync(join(vault ?? '', 'Loose.md'), 'utf8');
   writeFileSync(join(vault ?? '', 'Loose.md'), `${text.trimEnd()} Seven eight nine ten.\n`);
   await expect(words(page)).toHaveText('9 words');
