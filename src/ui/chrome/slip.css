@@ -45,14 +45,15 @@
 }
 
 /* The panes' tabs (#15): at the pane's right edge, half its height down; the
-   way back, a tab on the next pane's left edge. */
+   way back, a tab on the next pane's left edge. 24px wide, WCAG 2.2's smallest
+   target: half the pane's height down can land beside a row of the tree. */
 [data-layout="slip"] .chevron-slot {
   top: 50%;
   translate: 0 -50%;
   opacity: 0;
 }
 [data-layout="slip"] .chevron-slot .icon-button {
-  width: var(--eien-space-4);
+  width: var(--eien-space-5);
   height: var(--eien-touch);
   border: var(--eien-hairline) solid var(--eien-rule);
   border-right: 0;
@@ -64,10 +65,10 @@
   height: var(--eien-space-3);
 }
 [data-layout="slip"] .chevron-slot--sidebar {
-  left: calc(var(--pane-sidebar) - var(--eien-space-4));
+  left: calc(var(--pane-sidebar) - var(--eien-space-5));
 }
 [data-layout="slip"] .chevron-slot--list {
-  left: calc(var(--pane-sidebar) + var(--pane-list) - var(--eien-space-4));
+  left: calc(var(--pane-sidebar) + var(--pane-list) - var(--eien-space-5));
 }
 [data-layout="slip"] .shell[data-list-shut] > .chevron-slot--list {
   left: calc(var(--pane-sidebar) + var(--pane-list));
