@@ -270,6 +270,51 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   row now in a removed row's place.
 - Widths, and which panes are shut, are per device (§2); three or two panes
   is a device setting (§6).
+- A long list draws only the rows in sight: the note list, or a list of the
+  two-pane tree, once it holds 200 notes or more. A spacer above and below
+  keeps the list its whole height, so the scrollbar and positions read as if
+  every row were there, and each row says where it stands among them all
+  (`aria-posinset` of `aria-setsize`). The keyboard still reaches every row:
+  ↑ ↓ move one, PageUp and PageDown a view's worth, Home and End the first
+  and last, drawn or not. A row with the keyboard that scrolls out of sight
+  leaves it with its list, which carries on from that row; a redraw (a
+  change on disk) gives it back to the same note, wherever it now stands.
+- Nothing a writer does stalls the window: with three thousand notes,
+  drawing a list, moving through it, switching layouts, a hundred notes
+  arriving at once, a rename and a drag never hold it longer than 200 ms
+  (the speed budgets, `tests/e2e/budgets.spec.ts`).
+
+### Layouts
+
+Three layouts, a device setting (`appearance.layout`, Settings → Appearance;
+`data-layout` on `<html>`). They differ only in where the controls sit, not
+in what they are or do ([overall.md](design/explorations/overall.md)):
+
+- **Band** (the default): the page's controls in a band above it (views,
+  Compare, Seal, Versions, Focus, and the strip's own control, which hides
+  the band to a lip and brings it back). Corners 2/4/8px.
+- **Slip**: no band; the page's tools float on a raised slip at the
+  blotter's top right, which folds away to its fold. The panes' chevrons are
+  tabs at their edges. Corners 4/8/14px; the sheet takes a 3px corner.
+- **Running head**: one 40px strip across the whole window, the traffic
+  lights in it, then the panes' icons, the breadcrumb and every page tool,
+  always in sight. The sidebar's head sits under it. Corners 3/6/10px.
+
+Every control is a command, defined once (`ui/chrome/commands.ts`): its icon,
+its name, its key, and the menu's command it runs. A layout names its hosts
+and the commands each holds (`ui/chrome/band.ts`, `slip.ts`, `runhead.ts`),
+each command in exactly one host; switching takes one layout's hosts out and
+puts the other's in, and nothing else changes. A host draws its commands as
+icon buttons (`ui/icons.ts`), each with an accessible name, a tooltip with
+its key (after a short hover, or at once from the keyboard) and its state
+(pressed, disabled); a host is a toolbar, its arrows moving along it, and Tab
+reaches every control. A switch leaves the keyboard on the same command in
+the new layout, or on the page. Whether the strip is hidden is per device.
+
+On a phone each layout has its own bottom for the page: Band the top bar
+(the view, Focus, ⋯), Slip a floating slip (the three views, Focus, ⋯),
+Running head a rail at the page's foot (the views, Focus, Seal, ⋯). The ⋯
+holds the rest, as the menu bar does on the desktop.
 
 ### Layouts
 
@@ -1019,7 +1064,9 @@ Compare or Restore finishes lands on a note opened meanwhile.
   name it in place, or delete it.
 - **Restoring** first checkpoints the current draft, so restoring is undoable
   (⌘Z too); words typed while it works are checkpointed before they're
-  replaced. The note keeps its own id.
+  replaced. The note keeps its own id. A Restore under way when another note
+  is opened (a slow disk) still finishes, in its own note's file, never on the
+  page; the news says so.
 - **Retention:** named versions are kept until deleted. Unnamed checkpoints
   older than 30 days are thinned to one per day (the day's last, in the
   writer's own time zone), and the latest is always kept. Thinning happens

@@ -18,6 +18,7 @@ import {
 } from '../../core/versions';
 import type { VaultBridge } from '../../platform/bridge';
 import { reasonOf } from '../reason';
+import { fileTarget } from './file-target';
 
 /** The note being sealed: the open one, through its page and session. */
 export interface SealTarget {
@@ -101,42 +102,49 @@ export class NoteVersions {
   /**
    * Put a seal's text back in the note. The draft is sealed first, so this
    * can be undone (⌘Z too); the note keeps its own id. Words typed while the
-   * draft is sealed are sealed as well before they're replaced.
+   * draft is sealed are sealed as well before they're replaced. Another note
+   * opened meanwhile (a slow disk) doesn't stop it: it finishes in the note's
+   * own file, off the page.
    */
   async restore(target: SealTarget, id: string, version: VersionFile): Promise<SealResult> {
     try {
       const text = await this.text(id, version);
       if (text === null) return refused('That seal isn’t there any more.');
-      for (let attempt = 0; attempt < TRIES; attempt++) {
-        const own = await this.#idFor(target);
-        if (typeof own !== 'string') return own;
-        const sealed = await this.#sealAs(target, own);
-        if (sealed.kind === 'refused') return sealed;
-        let typedSince = false;
-        const restored = await target.amend((now) => {
-          // Typed since the draft was sealed: sealed again before anything is replaced.
-          if (now !== sealed.text) {
-            typedSince = true;
-            return null;
-          }
-          return withNoteId(text, own) ?? text;
-        }, true);
-        if (restored) {
-          await this.#thin(own);
-          return sealed;
-        }
-        if (!typedSince) {
-          return refused(
-            target.open()
-              ? 'The seal couldn’t be put back just now (the note may be moving); try again.'
-              : 'Another note was opened, so the seal wasn’t restored.',
-          );
-        }
-      }
-      return refused('The note kept changing while it was being restored; try again.');
+      const result = await this.#restoreAs(target, text);
+      if (result.kind !== 'refused' || target.open()) return result;
+      const file = await fileTarget(this.#ctx.vault, target.path);
+      return file ? await this.#restoreAs(file, text) : refused('The note isn’t there any more.');
     } catch (error) {
       return refused(`The seal wasn’t restored: ${reasonOf(error)}`);
     }
+  }
+
+  async #restoreAs(target: SealTarget, text: string): Promise<SealResult> {
+    for (let attempt = 0; attempt < TRIES; attempt++) {
+      const own = await this.#idFor(target);
+      if (typeof own !== 'string') return own;
+      const sealed = await this.#sealAs(target, own);
+      if (sealed.kind === 'refused') return sealed;
+      let typedSince = false;
+      const restored = await target.amend((now) => {
+        // Typed since the draft was sealed: sealed again before anything is replaced.
+        if (now !== sealed.text) {
+          typedSince = true;
+          return null;
+        }
+        return withNoteId(text, own) ?? text;
+      }, true);
+      if (restored) {
+        await this.#thin(own);
+        return sealed;
+      }
+      if (!typedSince) {
+        return refused(
+          'The seal couldn’t be put back just now (the note may be moving); try again.',
+        );
+      }
+    }
+    return refused('The note kept changing while it was being restored; try again.');
   }
 
   /** Name a seal (an empty name takes it away); its file, or why it couldn't be named. */

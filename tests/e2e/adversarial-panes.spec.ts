@@ -784,26 +784,46 @@ test.describe('three thousand notes', () => {
       await expect(page.locator('.note-row').first()).toBeVisible({ timeout: 30_000 });
       // Each long task with when it started: an entry comes to the observer after its task has
       // ended, maybe after a later evaluate, so a window counts the tasks that started in it.
-      type Long = { long: { start: number; ms: number }[]; since: number };
+      // Chromium reports a task a little after it ends: `longest` waits a moment, then takes them.
+      type Long = {
+        long: { start: number; ms: number }[];
+        since: number;
+        observer: PerformanceObserver;
+      };
       await page.evaluate(() => {
         const w = window as unknown as Long;
         w.long = [];
         w.since = 0;
-        new PerformanceObserver((list) => {
+        w.observer = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
             w.long.push({ start: entry.startTime, ms: Math.round(entry.duration) });
           }
-        }).observe({ type: 'longtask' });
+        });
+        w.observer.observe({ type: 'longtask' });
       });
       const longest = () =>
-        page.evaluate(() => {
-          const { long, since } = window as unknown as Long;
-          return Math.max(0, ...long.filter((task) => task.start >= since).map((task) => task.ms));
+        page.evaluate(async () => {
+          const w = window as unknown as Long;
+          await new Promise((done) => setTimeout(done, 150));
+          for (const entry of w.observer.takeRecords()) {
+            w.long.push({ start: entry.startTime, ms: Math.round(entry.duration) });
+          }
+          return Math.max(
+            0,
+            ...w.long.filter((task) => task.start >= w.since).map((task) => task.ms),
+          );
         });
       await twoPanes(page);
       await folder(page, 'All Notes').click();
-      await expect(treeNotes(page)).toHaveCount(2 * 3001, { timeout: 30_000 });
-      expect(await longest()).toBeLessThan(500);
+      // Two lists of 3,001 notes (the vault's own, All Notes): each draws only the rows in sight,
+      // and each row says where it stands among them all.
+      await expect(page.locator('.tree-window')).toHaveCount(2, { timeout: 30_000 });
+      await expect(page.locator('.tree-window .tree-row--note').first()).toHaveAttribute(
+        'aria-setsize',
+        '3001',
+      );
+      expect(await page.locator('.tree-row--note').count()).toBeLessThan(200);
+      expect(await longest()).toBeLessThan(200);
       // A file arriving from another device redraws all six thousand rows.
       writeFileSync(at(vault, 'From the phone.md'), 'synced\n');
       await expect(page.locator('.sidebar__count')).toHaveText('3,002 notes', { timeout: 30_000 });

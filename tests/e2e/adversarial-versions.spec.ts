@@ -558,7 +558,12 @@ test.describe('the window', () => {
 });
 
 /** Slow the main process's `name` from node:fs/promises by `ms` for paths holding `part`. */
-const slowFs = (app: ElectronApplication, name: 'readFile' | 'link', part: string, ms: number) =>
+const slowFs = (
+  app: ElectronApplication,
+  name: 'readFile' | 'link' | 'open',
+  part: string,
+  ms: number,
+) =>
   app.evaluate(
     (_electron, [name, part, ms]) => {
       const fsp = process.getBuiltinModule('node:fs/promises') as unknown as Record<
@@ -605,6 +610,31 @@ test.describe('another note opened while a seal is at work', () => {
     await expect
       .poll(() => read(vault, 'Sealed.md'), { timeout: 20_000 })
       .toContain('The old ending.');
+    await typeAtEnd(page, ' Mine.');
+    await expect
+      .poll(() => read(vault, 'Draft.md'))
+      .toBe('One two three four five six seven eight nine ten. Mine.');
+  });
+
+  test('a Restore whose draft is slow to seal still restores its own note, never the one opened meanwhile', async ({
+    app,
+    page,
+    vault,
+  }) => {
+    // The draft's seal is slow to write (a virus scanner, a network drive): Draft opens before the
+    // restore reaches the page, and the Restore was dropped.
+    await fakeTrash(app);
+    await open(page, 'Sealed');
+    await clickMenu(app, 'View', 'Versions');
+    await slowFs(app, 'open', '.eien', 1000);
+    await panelOf(page).getByRole('button', { name: 'Restore “the old ending”' }).click();
+    await open(page, 'Draft');
+    await expect
+      .poll(() => read(vault, 'Sealed.md'), { timeout: 20_000 })
+      .toBe(`---\nid: ${ID}\n---\nThe old ending.`);
+    await expect(editorContent(page)).toHaveText(
+      'One two three four five six seven eight nine ten.',
+    );
     await typeAtEnd(page, ' Mine.');
     await expect
       .poll(() => read(vault, 'Draft.md'))

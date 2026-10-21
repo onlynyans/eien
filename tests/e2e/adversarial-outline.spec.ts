@@ -395,7 +395,8 @@ test.describe('hundreds of chapters, and long names', () => {
     ALONE,
     async ({ app, page }) => {
       await chooseBook(page, 'Saga');
-      await expect(page.locator('.note-row')).toHaveCount(300);
+      // The list draws only the rows in sight; each says it is one of 300.
+      await expect(page.locator('.rows > li[aria-setsize="300"]').first()).toBeVisible();
       const start = Date.now();
       await outline(app);
       await expect(titles(page)).toHaveCount(300);

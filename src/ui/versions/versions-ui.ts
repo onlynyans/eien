@@ -5,6 +5,7 @@
 // commands the layout draws (../chrome), as this says they are now.
 
 import { readNote } from '../../core/note';
+import { baseName, titleOf } from '../../core/paths';
 import { latestVersion, noteIdOf, type VersionFile, versionsFolderOf } from '../../core/versions';
 import type { VaultBridge } from '../../platform/bridge';
 import type { PageView } from '../page/page';
@@ -249,6 +250,12 @@ export class VersionsUI {
     this.#setMode('draft');
     const result = await this.#versions.restore(target, this.#id, version);
     if (result.kind === 'refused') return this.#parts.tell(result.reason);
+    // Another note is on the page now: the restore was finished in the note's own file.
+    if (!target.open()) {
+      return this.#parts.tell(
+        `“${titleOf(baseName(target.path))}” is restored; its draft was sealed first.`,
+      );
+    }
     this.#line.say('Restored — the draft was sealed first');
     await this.#load();
   }
