@@ -7,6 +7,7 @@ import { CHANNEL, type VaultInfo } from '../../platform/bridge';
 import { openDiskStorage } from '../../platform/electron/disk-storage';
 import { recoverStrays } from '../../platform/electron/recover-strays';
 import { OpenVault } from '../../platform/open-vault';
+import { DOCUMENTS_FOLDER } from './data-folders';
 import { lastVault, readDeviceFile, updateDeviceFile } from './device-settings';
 import { answer, text } from './ipc';
 
@@ -89,7 +90,7 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
       title: 'Open a vault',
       buttonLabel: 'Open',
       // Where the phone keeps its vault, Documents/Eien/Vault: the same layout on every device.
-      defaultPath: join(app.getPath('documents'), 'Eien'),
+      defaultPath: join(app.getPath('documents'), DOCUMENTS_FOLDER),
       properties: ['openDirectory', 'createDirectory'],
     });
     const root = picked.filePaths[0];
