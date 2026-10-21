@@ -21,5 +21,6 @@ export {
   withFolderSettings,
   withoutInOrder,
 } from './folder-settings';
+export { HOME_EXPORTS, HOME_FOLDER, HOME_VAULT } from './home';
 export { movedPins, parsePins, pinsText, withoutPins, withPin } from './pins';
 export { buildTree, byName, type FolderNode } from './tree';

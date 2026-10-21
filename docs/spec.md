@@ -526,7 +526,9 @@ does nothing.
 - **Vault settings** live in `.eien/config.json`: chapter numbers (i ii iii or
   1 2 3); later quotes, AO3 options, scene break style. The vault's watcher
   reports this one hidden file, so a change from another device shows at once.
-- **Device settings** live in the app's data folder (`settings.json`): scheme
+- **Device settings** live in `settings.json`, never in a vault: in
+  `Documents/Eien` for an installed copy, in a portable copy's "Eien Data" beside
+  it (`src/app/electron/data-folders.ts`). They hold the scheme
   (day, night or the system's), palette, text face, text size (90–130%),
   density (comfortable or compact), page frame (sheet or full) and zoom
   (50–200%), panes (three or two), focus mode, typewriter scrolling and
@@ -849,8 +851,12 @@ Compare or Restore finishes lands on a note opened meanwhile.
 - Android and iOS run the same `ui` and `core` with the Capacitor `Storage`.
 - **One folder, `Documents/Eien`, on every device:** the vault in `Vault`
   (the folder Syncthing syncs), exports in `Exports`, and on a computer this
-  device's settings file beside them, never synced. The phone uses
-  `Documents/Eien/Vault` itself; a computer's Open Vault starts there.
+  device's settings file beside them, never synced. Every device starts in
+  `Documents/Eien/Vault`, made if need be; the phone has no other. A computer
+  opens the vault last opened instead, once the writer has chosen one with
+  Open Vault (which starts in `Documents/Eien`); when that one can't be opened
+  (a drive that isn't connected), it says so and asks, rather than show an
+  empty vault in its place. A portable copy starts in `Vault` beside itself.
 - **Android:** the vault is `Documents/Eien/Vault` in shared storage, synced
   by the Syncthing app. Its writes and renames are Eien's own (a small plugin): a
   write is flushed to the disk, a save's rename replaces the note in one step,
@@ -980,7 +986,9 @@ On every push and pull request:
 4. The phone's page in Chromium
 5. Android debug build, kept for 14 days to install on a phone
 
-On a version tag: release builds for each platform. A pull request
+On a version tag: the installers (a universal `.dmg`, a Windows setup, a
+Linux AppImage), each built on its own system, installed and started there
+(`tests/packaged`), then attached to a draft release. A pull request
 can't merge while any check fails.
 
 Weekly, and never a check a change waits on: mutation testing of `core`

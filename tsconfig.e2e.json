@@ -14,6 +14,8 @@
     "playwright.mobile.config.ts",
     "src/platform/bridge.ts",
     "playwright.config.ts",
+    "tests/packaged",
+    "playwright.packaged.config.ts",
     "src/platform/storage.ts",
     "src/core"
   ]

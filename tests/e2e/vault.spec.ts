@@ -1,11 +1,29 @@
 // Phase 3 on the real app and a real folder: open, browse, write, save, and
 // keep both when a file changes in two places (spec §2–§3).
 
-import { mkdtempSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { _electron } from '@playwright/test';
-import { appEnv, closeApp, editorContent, editorLines, expect, ROOT, test } from './launch';
+import {
+  appEnv,
+  clickMenu,
+  closeApp,
+  editorContent,
+  editorLines,
+  expect,
+  ROOT,
+  test,
+} from './launch';
 
 const SEVENTEEN = '"Look," he begins more softly.\r\n\r\nIt takes her a minute.\r\n';
 
@@ -133,6 +151,50 @@ test('the window cannot reach outside its vault', async ({ page }) => {
   expect(outcomes).toEqual(['refused', 'refused', 'refused', 'refused']);
 });
 
+test.describe('the vault it starts in', () => {
+  test.use({ vaultFiles: null });
+
+  test('with none opened before, its own, made for it; what is already in it stays', async ({
+    userData,
+  }) => {
+    // A separate copy's own vault is Vault in its data folder (an installed copy's: Documents/Eien/Vault).
+    const own = join(userData, 'Vault');
+    mkdirSync(own);
+    writeFileSync(join(own, 'Waiting.md'), 'Already here.\n');
+    const app = await _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(userData) });
+    try {
+      await expect((await app.firstWindow()).locator('.note-row__title')).toHaveText(['Waiting']);
+      expect(readFileSync(join(own, 'Waiting.md'), 'utf8')).toBe('Already here.\n');
+    } finally {
+      await closeApp(app);
+    }
+  });
+
+  test.describe('when the vault last opened is gone', () => {
+    test.use({ deviceFile: { vault: join(tmpdir(), 'eien-unplugged-drive', 'Novel') } });
+
+    test('the window says so and asks, rather than show an empty vault in its place', async ({
+      page,
+      userData,
+    }) => {
+      await expect(page.locator('.welcome__lede')).toContainText('couldn’t open the folder');
+      await expect(page.getByRole('button', { name: 'Choose a folder…' })).toBeVisible();
+      expect(existsSync(join(userData, 'Vault'))).toBe(false);
+    });
+  });
+
+  test('when its own vault can’t be made, the window asks for a folder', async ({ userData }) => {
+    writeFileSync(join(userData, 'Vault'), ''); // a file where the folder would go
+    const app = await _electron.launch({ args: [ROOT], cwd: ROOT, env: appEnv(userData) });
+    try {
+      const page = await app.firstWindow();
+      await expect(page.getByRole('button', { name: 'Choose a folder…' })).toBeVisible();
+    } finally {
+      await closeApp(app);
+    }
+  });
+});
+
 test.describe('choosing a vault', () => {
   test.use({ vaultFiles: null });
 
@@ -151,7 +213,8 @@ test.describe('choosing a vault', () => {
           filePaths: [path],
         })) as typeof dialog.showOpenDialog;
       }, folder);
-      await page.getByRole('button', { name: 'Choose a folder…' }).click();
+      await expect(page.locator('.tree-row__label', { hasText: 'All Notes' })).toBeVisible();
+      await clickMenu(app, 'File', 'Open Vault…');
       await expect(page.locator('.note-row__title')).toHaveText(['Chosen']);
       await closeApp(app);
 
