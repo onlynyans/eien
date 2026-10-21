@@ -210,8 +210,15 @@ Three panes, each collapsible, with a two-pane option in settings:
      a hairline guide down its children.
    - At the foot: the vault's count, then three icons: day or night (a sun
      or a moon, whichever shows; pressed, the other; System is in
-     Settings), three panes or two, and settings. The sync status's place
-     is beside them (not built yet: [backlog](backlog.md) #10)
+     Settings), three panes or two, and settings. Beside them, the sync
+     status: when Syncthing syncs the vault (a `.stfolder` marker in it, or,
+     on the desktop, in a folder it's in), a sync icon with a tooltip. In the
+     added ink it says "Synced · Syncthing"; for 15 minutes after a note
+     changes that this window didn't change, it's in pencil and says
+     "Changed on another device 4m ago". The window tells the two apart by
+     remembering its own writes for a moment (`ui/vault/own-writes.ts`). Eien
+     only listens: it never starts a sync, and the status writes nothing.
+     With no Syncthing, nothing shows
 2. **Note list** — the notes in the selected folder or tag: title, a line of
    preview, and the date or word count. Sortable by title, modified date or the
    folder's own order (drag to reorder). At its top, on its own band above the

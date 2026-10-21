@@ -12,6 +12,7 @@ import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
+import { SyncStatus } from '../sidebar/sync-status';
 import { vaultChrome } from './chrome-wiring';
 import { follow } from './follow';
 import { type MenuContext, showFolderMenu, showNoteMenu, showTagMenu, trashNameOn } from './menus';
@@ -21,6 +22,7 @@ import { Notice } from './notice';
 import { oneAtATime } from './one-at-a-time';
 import { OpenNote } from './open-note';
 import { Organizer } from './organize';
+import { ownWrites } from './own-writes';
 import { pageParts } from './page-parts';
 import { PaneDrawer } from './pane-drawer';
 import { phoneView } from './phone-view';
@@ -36,14 +38,19 @@ export interface ShownVault {
   back(): boolean;
 }
 
-/** Show the vault named `name` in `root`. */
+/** Show the vault named `name` in `root`; `syncthing` when Syncthing syncs it (the sidebar's sync status). */
 export async function showVault(
   root: HTMLElement,
-  bridge: Bridge,
+  given: Bridge,
   name: string,
   settings: SettingsState,
   menu: MenuBus,
+  syncthing = false,
 ): Promise<ShownVault> {
+  // The vault, its writes remembered (./own-writes.ts): a change the disk reports that this
+  // window didn't make came from elsewhere. The rest of the bridge as it is, methods and all.
+  const own = ownWrites(given.vault);
+  const bridge: Bridge = Object.create(given, { vault: { value: own.vault, enumerable: true } });
   const state = new VaultState(bridge.vault, name);
   const trashName = trashNameOn(bridge.platform);
   const keys = paneKeys(bridge.platform === 'darwin');
@@ -112,6 +119,11 @@ export async function showVault(
     keys.sidebar,
     search,
   );
+  // The sync status at the sidebar's foot: a note changed that this window didn't change.
+  const sync = new SyncStatus(sidebar.foot.sync, syncthing);
+  const stopSync = bridge.vault.onChange((paths) => {
+    if (own.foreign(paths).length > 0) sync.changedElsewhere();
+  });
   const listSearch = h('div', { class: 'list__search' });
   const listBody = h('div', { class: 'list__body' });
   const list = h(
@@ -233,11 +245,11 @@ export async function showVault(
   });
   const redraw = () => {
     parts.sync();
+    sync.draw();
     chrome.refresh();
     return draw.all().then(() => phone.stack.rename());
   };
 
-  /** Rename a note: open it, and its title becomes a field. */
   /** Rename in the row the writer is at (./rename-in-row.ts); with none in sight, by the page's title. */
   function renameNote(path: string): void {
     // A phone, one pane at a time, keeps its rename on the page, where the title is in sight.
@@ -325,6 +337,7 @@ export async function showVault(
     stop: async () => {
       await note.flush();
       stopFollowing();
+      stopSync();
       chrome.stop();
       panes.stop();
       phone.stack.stop();

@@ -14,6 +14,8 @@ import type { FileState, MoveResult, WriteResult } from './storage';
 export interface VaultInfo {
   /** The vault folder's name, as shown at the top of the sidebar. */
   readonly name: string;
+  /** Syncthing syncs it: a `.stfolder` marker in it or a folder it's in (the sidebar's sync status). */
+  readonly syncthing?: boolean;
 }
 
 /** The vault this window has open: its files, through the main process. */

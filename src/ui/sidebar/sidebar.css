@@ -233,3 +233,16 @@
 .sidebar__sync:empty {
   display: none;
 }
+
+/* The sync status (./sync-status.ts): the added ink while quiet, pencil after another device's change. */
+.sync-status {
+  display: inline-flex;
+  color: var(--eien-added);
+}
+.sync-status.is-other {
+  color: var(--eien-pencil);
+}
+.sync-status .icon {
+  width: 14px;
+  height: 14px;
+}

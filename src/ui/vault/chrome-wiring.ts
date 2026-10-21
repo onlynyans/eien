@@ -133,6 +133,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   const tips = tooltips();
   // The sidebar's quiet + buttons have their tooltips too: watched alone, never the whole tree.
   for (const adder of of.sidebar.adders) tips.watch(adder);
+  tips.watch(of.sidebar.foot.sync);
   const chrome = new Chrome({
     mac: of.mac,
     slots,
