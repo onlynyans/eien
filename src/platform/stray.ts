@@ -5,8 +5,16 @@
 
 import { extensionOf, fitBytes, MAX_NAME_BYTES, utf8Length } from '../core/paths';
 
-/** The end of a write's temp file's name: ".<note name>.eien.tmp". */
+/**
+ * The end of a write's temp file's name: ".<note name>.<token>.eien.tmp".
+ * The token is the write's own, so a save never takes the temp file another
+ * write left: a crash's, or one Syncthing brought from another device, whose
+ * words may be nowhere else. Before tokens it was ".<note name>.eien.tmp".
+ */
 export const TEMP_SUFFIX = '.eien.tmp';
+
+/** A write's token: eight hex digits at the end of the note's name. */
+const TOKEN_END = /\.[0-9a-f]{8}$/u;
 
 /**
  * The end of a new file's temp name while its bytes go in (Storage.writeNew,
@@ -56,6 +64,23 @@ export function besideOf(hidden: string, suffix: string): string | null {
   return hidden.length > suffix.length + 1 ? hidden.slice(1, -suffix.length) : null;
 }
 
+/** A token for one write: random, so no two devices or writes share a temp file. */
+export function newToken(): string {
+  const [value = 0] = crypto.getRandomValues(new Uint32Array(1));
+  return value.toString(16).padStart(8, '0');
+}
+
+/** The temp file a write to `name` goes through: ".<name>.<token>.eien.tmp". */
+export const tempBeside = (name: string, token = newToken()): string =>
+  hiddenBeside(name, `.${token}${TEMP_SUFFIX}`);
+
+/** The name a write's temp file was for (with its token or from before them), or null. */
+export function tempFor(hidden: string): string | null {
+  const named = besideOf(hidden, TEMP_SUFFIX);
+  const name = named?.replace(TOKEN_END, '') ?? '';
+  return name === '' ? null : name;
+}
+
 /** The name a step's hidden name stands for, or null when `name` isn't one. */
 export const steppedFrom = (name: string): string | null =>
   besideOf(name, CASE_STEP) ?? besideOf(name, TRASH_STEP);
@@ -63,9 +88,9 @@ export const steppedFrom = (name: string): string | null =>
 /**
  * Whether a temp file holds words its note doesn't: any but the note's own
  * (or none at all, a write cut before any words went in). Whatever their
- * times: a temp file a crash left is never one this device saved over since
- * (its next save of the note takes the same temp file), so a note newer than
- * it was changed elsewhere, and the temp's words are nowhere else.
+ * times: a temp file is never saved over (each write takes one of its own),
+ * so one a crash left, here or on another device, holds words that may be
+ * nowhere else.
  */
 export const strayHoldsWords = (temp: string, note: string | null): boolean =>
   temp.length > 0 && temp !== note;

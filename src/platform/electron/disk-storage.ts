@@ -2,11 +2,12 @@
 // paths kept inside the vault, a watcher).
 
 import { createHash } from 'node:crypto';
-import { type Dirent, type FSWatcher, watch } from 'node:fs';
+import type { Dirent } from 'node:fs';
 import { lstat, mkdir, readdir, readFile, realpath, rm, stat } from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
-import { isHiddenName, isWatchedPath, nameKey, VaultPathError, vaultPath } from '../../core/paths';
+import { isHiddenName, nameKey, VaultPathError, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
+import { type CaseLook, caseTwin, twinError } from '../case-twin';
 import {
   type FileState,
   MAX_BYTES_READ,
@@ -15,6 +16,7 @@ import {
   type WriteResult,
 } from '../storage';
 import { hiddenBeside, NEW_SUFFIX } from '../stray';
+import { watchFolder } from './disk-watch';
 import {
   linkInstead,
   renameWithRetry,
@@ -23,7 +25,7 @@ import {
   writeFlushed,
 } from './disk-writes';
 
-export { tempNameOf, writeDurably } from './disk-writes';
+export { writeDurably } from './disk-writes';
 
 /** Sends a file or folder (an absolute path) to the system's trash; throws when it can't. */
 export type TrashItem = (path: string) => Promise<void>;
@@ -31,15 +33,6 @@ export type TrashItem = (path: string) => Promise<void>;
 const noTrash: TrashItem = async () => {
   throw new Error('There is no trash to send it to on this system.');
 };
-
-/** Bursts of changes are reported together, this long after the last. */
-const WATCH_SETTLE_MS = 120;
-
-/**
- * How long the system's watcher is given before it's taken to be listening:
- * fs.watch says nothing when it is, and macOS's misses its first moments.
- */
-const WATCH_WARM_MS = 1000;
 
 export class DiskStorage implements Storage {
   readonly #root: string;
@@ -58,6 +51,17 @@ export class DiskStorage implements Storage {
 
   get root(): string {
     return this.#root;
+  }
+
+  /** The disk's own rule for case: macOS's and Windows's ignore it, Linux's tells it apart. */
+  readonly #look: CaseLook = {
+    exists: async (path) => (await lstat(this.#file(path)).catch(() => null)) !== null,
+    names: (folder) => readdir(this.#file(folder)).catch(() => []),
+  };
+
+  /** The absolute path of a vault path that's been through vaultPath. */
+  #file(path: string): string {
+    return join(this.#root, ...path.split('/'));
   }
 
   async listFiles(folder: string): Promise<string[]> {
@@ -134,6 +138,8 @@ export class DiskStorage implements Storage {
     return this.#oneAtATime(nameKey(vaultPath(path)), async () => {
       const current = await this.#readFile(file);
       if ((current?.version ?? null) !== expected) return { ok: false, current };
+      const twin = current === null ? await caseTwin(this.#look, vaultPath(path)) : null;
+      if (twin !== null) return { ok: false, current: await this.#readFile(this.#file(twin)) };
       await mkdir(dirname(file), { recursive: true });
       let changed: FileState | null = null;
       const written = await writeDurably(file, text, async () => {
@@ -158,7 +164,7 @@ export class DiskStorage implements Storage {
     const file = await this.#resolve(path);
     return this.#oneAtATime(nameKey(vaultPath(path)), async () => {
       const free = async () => (await lstat(file).catch(() => null)) === null;
-      if (!(await free())) return false;
+      if (!(await free()) || (await caseTwin(this.#look, vaultPath(path))) !== null) return false;
       await mkdir(dirname(file), { recursive: true });
       const temp = join(dirname(file), hiddenBeside(basename(file), NEW_SUFFIX));
       try {
@@ -188,6 +194,8 @@ export class DiskStorage implements Storage {
       if (nameKey(vaultPath(to)).startsWith(`${nameKey(vaultPath(from))}/`)) {
         return { ok: false, reason: 'into-itself' };
       }
+      if ((await caseTwin(this.#look, vaultPath(to), vaultPath(from))) !== null)
+        return { ok: false, reason: 'taken' };
       // Something at `to` is in the way, unless it's this very entry under another case.
       const atTarget = await realpath(target).catch(() => null);
       if (atTarget !== null && atTarget !== (await realpath(source)))
@@ -221,7 +229,10 @@ export class DiskStorage implements Storage {
   }
 
   async makeFolder(path: string): Promise<void> {
-    await mkdir(await this.#resolve(path), { recursive: true });
+    const folder = await this.#resolve(path);
+    const twin = await caseTwin(this.#look, vaultPath(path));
+    if (twin !== null) throw twinError(twin);
+    await mkdir(folder, { recursive: true });
   }
 
   /** Run `task` after every earlier one for `key` has finished. */
@@ -251,42 +262,12 @@ export class DiskStorage implements Storage {
   }
 
   watch(onChange: (paths: string[]) => void, ready?: () => void): () => void {
-    let pending = new Set<string>();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const warm = ready ? setTimeout(ready, WATCH_WARM_MS) : undefined;
-    let watcher: FSWatcher | undefined;
-    try {
-      watcher = watch(this.#root, { recursive: true }, (_event, name) => {
-        if (!name) return;
-        const path = name.split(sep).join('/');
-        if (!isWatchedPath(path)) return; // our temp files, dot-files, .eien but its settings
-        pending.add(path);
-        // A burst is told WATCH_SETTLE_MS after its first change, with all that changed
-        // meanwhile. Waiting for quiet instead would let one file written without pause
-        // (a sync tool's download, another app's autosave) hold every report back.
-        if (timer !== undefined) return;
-        timer = setTimeout(() => {
-          timer = undefined;
-          const paths = [...pending];
-          pending = new Set();
-          onChange(paths);
-        }, WATCH_SETTLE_MS);
-      });
-      watcher.on('error', () => watcher?.close());
-    } catch {
-      // No watching on this system: changes are seen on the next read.
-    }
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(warm);
-      watcher?.close();
-    };
+    return watchFolder(this.#root, onChange, ready);
   }
 
   /** The absolute file for a vault path, refusing anything that escapes the vault. */
   async #resolve(path: string): Promise<string> {
-    const relativePath = vaultPath(path);
-    const file = join(this.#root, ...relativePath.split('/'));
+    const file = this.#file(vaultPath(path));
     // The nearest folder that exists, resolved through any symlinks, must be inside the vault.
     let folder = dirname(file);
     for (;;) {

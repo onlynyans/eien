@@ -1,6 +1,8 @@
 // The one interface to a vault's files (spec §5). Implemented over the
-// disk (platform/electron) and in memory (platform/memory, for tests); the
-// same contract tests run against both.
+// disk (platform/electron), the phone's (platform/capacitor) and in memory
+// (platform/memory, for tests); the same contract tests run against each.
+// None makes a case twin: a name its folder has in another case
+// (./case-twin.ts), which a system that ignores case couldn't hold.
 
 import { MAX_IMAGE_BYTES, type VaultEntry } from '../core/vault';
 
@@ -47,15 +49,17 @@ export interface Storage {
 
   /**
    * Write `text` to `path`, only if the file is still at `expected`; with
-   * `expected` null, only if there is no file there. The write is durable:
-   * a crash leaves the old content or the new, never a mix.
+   * `expected` null, only if there is no file there, nor a case twin (then
+   * `current` is what's there, or the twin). The write is durable: a crash
+   * leaves the old content or the new, never a mix.
    */
   write(path: string, text: string, expected: string | null): Promise<WriteResult>;
 
   /**
    * Write `bytes` as a new file at `path` (an imported image), making the
    * folders above it, only where nothing is: false, and nothing written, when
-   * something is there already, even something that arrived a moment before.
+   * something is there already (a case twin too), even something that arrived
+   * a moment before.
    * Durable as `write` is: a crash leaves no file or the whole one.
    */
   writeNew(path: string, bytes: Uint8Array): Promise<boolean>;
@@ -63,8 +67,8 @@ export interface Storage {
   /**
    * Move or rename the file or folder at `from` to `to`, making the folders
    * above `to`. Refused when there's nothing at `from`, something else is at
-   * `to`, or a folder would move into itself. A rename that changes only
-   * case is the same file, and allowed.
+   * `to` (a case twin too), or a folder would move into itself. A rename that
+   * changes only case is the same file, and allowed.
    */
   move(from: string, to: string): Promise<MoveResult>;
 
@@ -74,7 +78,10 @@ export interface Storage {
    */
   trash(path: string): Promise<void>;
 
-  /** Make the folder at `path`, and any above it. One already there is fine; a file there throws. */
+  /**
+   * Make the folder at `path`, and any above it. One already there is fine; a file there, or
+   * a case twin, throws.
+   */
   makeFolder(path: string): Promise<void>;
 
   /**

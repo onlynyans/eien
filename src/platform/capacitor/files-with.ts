@@ -12,6 +12,7 @@ export const filesWith = (files: FilesPort, over: Partial<FilesPort>): FilesPort
   stat: (path) => files.stat(path),
   list: (folder) => files.list(folder),
   rename: (from, to) => files.rename(from, to),
+  ...(files.replace && { replace: files.replace.bind(files) }),
   renameNew: (from, to) => files.renameNew(from, to),
   makeFolder: (path) => files.makeFolder(path),
   remove: (path) => files.remove(path),

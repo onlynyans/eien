@@ -2,6 +2,7 @@
 
 import { baseName, isHiddenName, isWatchedPath, parentOf, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
+import { type CaseLook, caseTwin, twinError } from '../case-twin';
 import {
   type FileState,
   MAX_BYTES_READ,
@@ -64,7 +65,11 @@ export class MemoryStorage implements Storage {
   }
 
   async read(path: string): Promise<FileState | null> {
-    const file = this.#files.get(vaultPath(path));
+    return this.#stateOf(vaultPath(path));
+  }
+
+  #stateOf(at: string): FileState | null {
+    const file = this.#files.get(at);
     return file ? { text: file.text, version: versionOf(file.text) } : null;
   }
 
@@ -75,8 +80,18 @@ export class MemoryStorage implements Storage {
     return bytes.length > MAX_BYTES_READ ? null : bytes;
   }
 
+  /** As a system that tells case apart: one Map key per exact name. */
+  readonly #look: CaseLook = {
+    exists: async (path) => path === '' || this.#files.has(path) || this.#folders.has(path),
+    names: async (folder) =>
+      [...this.#files.keys(), ...this.#folders]
+        .filter((path) => parentOf(path) === folder)
+        .map(baseName),
+  };
+
   async writeNew(path: string, bytes: Uint8Array): Promise<boolean> {
     const at = vaultPath(path);
+    if ((await caseTwin(this.#look, at)) !== null) return false;
     if (this.#files.has(at) || this.#folders.has(at)) return false;
     for (let folder = parentOf(at); folder; folder = parentOf(folder)) {
       if (this.#files.has(folder)) throw new Error(`Not a folder: ${folder}`);
@@ -90,10 +105,12 @@ export class MemoryStorage implements Storage {
 
   async write(path: string, text: string, expected: string | null): Promise<WriteResult> {
     const at = vaultPath(path);
+    const twin = await caseTwin(this.#look, at);
     // Checked and written with no wait between, so two overlapping writes can't both pass.
     const file = this.#files.get(at);
     const current = file ? { text: file.text, version: versionOf(file.text) } : null;
     if ((current?.version ?? null) !== expected) return { ok: false, current };
+    if (current === null && twin !== null) return { ok: false, current: this.#stateOf(twin) };
     // As on disk: where no file can be, there's none at the version expected (above), and
     // a write expecting none fails.
     for (let folder = parentOf(at); folder; folder = parentOf(folder)) {
@@ -109,11 +126,13 @@ export class MemoryStorage implements Storage {
   async move(from: string, to: string): Promise<MoveResult> {
     const source = vaultPath(from);
     const target = vaultPath(to);
+    const twin = await caseTwin(this.#look, target, source);
     const isFile = this.#files.has(source);
     if (!isFile && !this.#folders.has(source)) return { ok: false, reason: 'missing' };
     if (target === source) return { ok: true };
     if (target.startsWith(`${source}/`)) return { ok: false, reason: 'into-itself' };
-    if (this.#files.has(target) || this.#folders.has(target)) return { ok: false, reason: 'taken' };
+    if (twin !== null || this.#files.has(target) || this.#folders.has(target))
+      return { ok: false, reason: 'taken' };
     for (let folder = parentOf(target); folder; folder = parentOf(folder)) {
       if (this.#files.has(folder)) throw new Error(`Not a folder: ${folder}`);
     }
@@ -153,6 +172,8 @@ export class MemoryStorage implements Storage {
 
   async makeFolder(path: string): Promise<void> {
     const at = vaultPath(path);
+    const twin = await caseTwin(this.#look, at);
+    if (twin !== null) throw twinError(twin);
     for (let folder = at; folder; folder = parentOf(folder)) {
       if (this.#files.has(folder)) throw new Error(`A file: ${folder}`);
     }

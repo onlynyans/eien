@@ -180,12 +180,12 @@ describe('trash', () => {
 
 describe('a case-only rename', () => {
   it('renames a note whose title is the longest the rename allows', async () => {
-    // renamedPath leaves 10 bytes for ".<name>.eien.tmp"; the step's ".<name>.eien-case" takes
-    // 11, so the step's name is 256 bytes and the file system refuses it (ENAMETOOLONG). The
-    // desktop renames such a note; the phone throws, and the title can't be fixed.
+    // renamedPath leaves 19 bytes for ".<name>.<token>.eien.tmp"; the step's ".<name>.eien-case"
+    // takes 11. When it left only 10, the step's name was 256 bytes and the file system refused
+    // it (ENAMETOOLONG): the desktop renamed such a note; the phone threw.
     const long = renamedPath('Note.md', 'a'.repeat(300), [], true);
     if (!long.ok) throw new Error('refused');
-    expect(utf8Length(long.path)).toBe(245);
+    expect(utf8Length(long.path)).toBe(236);
     await storage.write(long.path, 'Words.', null);
     const capital = `A${long.path.slice(1)}`;
     expect(await storage.move(long.path, capital)).toEqual({ ok: true });

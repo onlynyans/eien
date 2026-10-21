@@ -2,10 +2,13 @@
 // Filesystem plugin falls short of the storage's contract: its write isn't
 // flushed to the disk; its rename deletes the file it replaces before
 // moving, so a rename that fails loses both; and its listing follows links,
-// so one link to nothing fails the whole folder as though it weren't there. Plain Foundation and Darwin, with nothing of
-// Capacitor's, so scripts/ios/vault-file-ops-test/main.swift tests them with
+// so one link to nothing fails the whole folder as though it weren't there.
+// A save's last step is a coordinated write, as apps that edit a note in
+// place through the Files app expect (`replace`). Plain Foundation, Darwin
+// and CryptoKit, with nothing of Capacitor's, so scripts/ios/ tests them with
 // swiftc alone (npm run test:ios-files). The plugin is VaultFilesPlugin.swift.
 
+import CryptoKit
 import Foundation
 
 enum VaultFileError: Error, Equatable {
@@ -13,6 +16,8 @@ enum VaultFileError: Error, Equatable {
     case taken
     /// No folder there to list.
     case missing
+    /// The note isn't at the version the save expected: it changed meanwhile.
+    case changed
     case system(String)
 }
 
@@ -64,6 +69,41 @@ enum VaultFileOps {
             _ = try? flush(folder)
             close(folder)
         }
+    }
+
+    /// A save's temp file `from` over its note at `to` (as `rename` replacing), only while the
+    /// note is at `expected`, its `version` (nil: no note there); `changed`, and nothing done,
+    /// when it isn't. A coordinated write (NSFileCoordinator): another app editing the note in
+    /// place saves its own changes first (`forMerging` asks that; `forReplacing` doesn't), so
+    /// they're looked at here and never written over, and it's told of this one, so it reads
+    /// the note again rather than save its old words over it.
+    static func replace(_ from: URL, to: URL, expected: String?) throws {
+        var coordination: NSError?
+        var outcome: Result<Void, Error> = .success(())
+        NSFileCoordinator(filePresenter: nil).coordinate(
+            writingItemAt: to, options: .forMerging, error: &coordination
+        ) { note in
+            outcome = Result {
+                guard try version(of: note) == expected else { throw VaultFileError.changed }
+                try rename(from, to: note, replace: true)
+            }
+        }
+        if let coordination { throw VaultFileError.system(coordination.localizedDescription) }
+        try outcome.get()
+    }
+
+    /// The note's version as the window counts it (capacitor-storage.ts): the SHA-256, in hex,
+    /// of its words as UTF-8, read with a broken character as U+FFFD and a byte-order mark
+    /// kept. Nil when there's no file.
+    static func version(of url: URL) throws -> String? {
+        let data: Data
+        do {
+            data = try Data(contentsOf: url)
+        } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
+            return nil
+        }
+        let words = String(decoding: data, as: UTF8.self)
+        return SHA256.hash(data: Data(words.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
     /// What's directly in `folder`: files and folders, each as itself (lstat). A link, which may

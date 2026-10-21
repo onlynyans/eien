@@ -91,13 +91,14 @@ test('a note renamed to a long title goes on saving', async ({ page, vault }) =>
   await row(page, 'Ideas').click();
   await page.locator('.title').click();
   await page.keyboard.press('ControlOrMeta+a');
-  // A long first sentence pasted as the title; the rename cuts it, leaving room for a save's temp file.
+  // A long first sentence pasted as the title; the rename cuts it, leaving room for a save's temp
+  // file (".<name>.<token>.eien.tmp", 19 bytes): 236 bytes.
   await page.keyboard.insertText('a'.repeat(300));
   await page.keyboard.press('Enter');
   const long = () => readdirSync(at(vault, '')).find((file) => /^a+\.md$/.test(file));
   await expect.poll(long).toBeTruthy();
   const name = long() ?? '';
-  expect(name.length).toBe(245);
+  expect(name.length).toBe(236);
   await editorContent(page).click();
   await page.keyboard.press('ControlOrMeta+End');
   await page.keyboard.type(' An hour of new words.');

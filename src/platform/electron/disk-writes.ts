@@ -4,16 +4,17 @@
 
 import { link, open, rename, rm, unlink } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
-import { hiddenBeside, TEMP_SUFFIX } from '../stray';
+import { tempBeside } from '../stray';
 
-/** The hidden file a write goes through: ".<name>.eien.tmp" beside it (../stray.ts). */
-export const tempNameOf = (name: string): string => hiddenBeside(name, TEMP_SUFFIX);
+/** How many tokens a write tries for its temp file: another one only if it was taken. */
+const TEMP_TRIES = 5;
 
 /**
- * Write through a hidden temp file: write, flush to disk, rename over the
- * file, then flush the folder. A crash leaves the old file or the new one.
- * If `stillWanted` answers false just before the rename, the temp file is
- * removed, the file is left as it is, and the answer is false.
+ * Write through a hidden temp file of this write's own (../stray.ts): write,
+ * flush to disk, rename over the file, then flush the folder. A crash leaves
+ * the old file or the new one. If `stillWanted` answers false just before
+ * the rename, the temp file is removed, the file is left as it is, and the
+ * answer is false.
  */
 export async function writeDurably(
   file: string,
@@ -21,8 +22,7 @@ export async function writeDurably(
   stillWanted: () => Promise<boolean> = async () => true,
 ): Promise<boolean> {
   // `file` is a system path ("\\" on Windows): its name comes from node:path, not the vault's "/" helpers.
-  const temp = join(dirname(file), tempNameOf(basename(file)));
-  await writeFlushed(temp, text);
+  const temp = await writeTemp(file, text);
   if (!(await stillWanted())) {
     await rm(temp, { force: true });
     return false;
@@ -37,9 +37,29 @@ export async function writeDurably(
   return true;
 }
 
-/** Write `data` to `file` (UTF-8 for text) and flush it to the disk. */
-export async function writeFlushed(file: string, data: string | Uint8Array): Promise<void> {
-  const handle = await open(file, 'w');
+/** A new temp file beside `file` holding `text`, flushed: never one that's there already. */
+async function writeTemp(file: string, text: string): Promise<string> {
+  for (let tries = 1; ; tries++) {
+    const temp = join(dirname(file), tempBeside(basename(file)));
+    try {
+      await writeFlushed(temp, text, 'wx');
+      return temp;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST' || tries >= TEMP_TRIES) throw error;
+    }
+  }
+}
+
+/**
+ * Write `data` to `file` (UTF-8 for text) and flush it to the disk. With the
+ * flag "wx", only where there's no file: EEXIST, and nothing written, if there is.
+ */
+export async function writeFlushed(
+  file: string,
+  data: string | Uint8Array,
+  flag: 'w' | 'wx' = 'w',
+): Promise<void> {
+  const handle = await open(file, flag);
   try {
     await handle.writeFile(data);
     await handle.sync();

@@ -10,6 +10,7 @@
     "src/ui",
     "src/platform/bridge.ts",
     "src/platform/storage.ts",
+    "src/platform/case-twin.ts",
     "src/platform/memory",
     "src/platform/index",
     "tests/support"

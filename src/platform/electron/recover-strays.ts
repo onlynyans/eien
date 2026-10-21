@@ -9,7 +9,7 @@
 import { readdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { isHiddenName, nameKey, recoveredName } from '../../core/paths';
-import { besideOf, NEW_SUFFIX, steppedFrom, strayHoldsWords, TEMP_SUFFIX } from '../stray';
+import { besideOf, NEW_SUFFIX, steppedFrom, strayHoldsWords, tempFor } from '../stray';
 import type { DiskStorage } from './disk-storage';
 
 /** How many names are tried for a step put back while others keep arriving. */
@@ -88,7 +88,7 @@ async function keepTemp(
   names: string[],
   now: Date,
 ): Promise<string | null> {
-  const noteName = besideOf(temp, TEMP_SUFFIX);
+  const noteName = tempFor(temp);
   if (noteName === null) return null;
   const file = join(storage.root, folder, temp);
   const text = await readFile(file, 'utf8').catch(() => null);
