@@ -50,8 +50,14 @@
 [data-layout="band"] .shell[data-list-shut]:not([data-panes="two"], [data-strip-shut]) .page__bar {
   padding-left: calc(var(--eien-control) + var(--eien-space-2) * 2);
 }
+/* Each named by its class, never a bare :not(): a rule ending in one restyles the whole window
+   whenever the layout, or the strip, changes. */
 [data-layout="band"] .shell[data-strip-shut] .host--band-views,
-[data-layout="band"] .shell[data-strip-shut] .host--band-tools > :not([data-command="strip"]) {
+[data-layout="band"] .shell[data-strip-shut] .host--band-tools > .host__rule,
+[data-layout="band"]
+  .shell[data-strip-shut]
+  .host--band-tools
+  > .icon-button:not([data-command="strip"]) {
   display: none;
 }
 [data-layout="band"] .shell[data-strip-shut] [data-command="strip"] {

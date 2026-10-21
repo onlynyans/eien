@@ -31,7 +31,11 @@
   opacity: 1;
 }
 /* Folded (#16): the slip keeps only its fold. */
-[data-layout="slip"] .shell[data-strip-shut] .host--slip > :not([data-command="strip"]) {
+[data-layout="slip"] .shell[data-strip-shut] .host--slip > .host__group,
+[data-layout="slip"]
+  .shell[data-strip-shut]
+  .host--slip
+  > .icon-button:not([data-command="strip"]) {
   display: none;
 }
 

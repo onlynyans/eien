@@ -25,7 +25,7 @@ export class PageView {
   readonly editor: NoteEditor;
   readonly #crumbs = h('p', { class: 'crumbs label' });
   /** The breadcrumb again, for a running head across the window (C's). */
-  readonly runningCrumbs = h('p', { class: 'crumbs label running-crumbs' });
+  readonly runningCrumbs = h('p', { class: 'label running-crumbs' });
   /** Where a layout puts the note's tags (../chrome/layout-spec.ts, TagSlot); empty until they're built. */
   readonly tagSlots = {
     runningHead: h('div', { class: 'sheet__tags' }),

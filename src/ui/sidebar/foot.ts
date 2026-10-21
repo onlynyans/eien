@@ -30,9 +30,12 @@ export class SidebarFoot {
     );
   }
 
+  /** Its words, written only where they changed: every redraw of the tree comes here. */
   draw(model: FootModel): void {
-    this.#notice.textContent = model.notice ?? '';
-    this.#notice.hidden = !model.notice;
-    this.#count.textContent = noteCount(model.noteCount);
+    const notice = model.notice ?? '';
+    if (this.#notice.textContent !== notice) this.#notice.textContent = notice;
+    if (this.#notice.hidden !== !model.notice) this.#notice.hidden = !model.notice;
+    const count = noteCount(model.noteCount);
+    if (this.#count.textContent !== count) this.#count.textContent = count;
   }
 }

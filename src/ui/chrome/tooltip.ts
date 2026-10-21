@@ -26,7 +26,7 @@ export function watchTooltips(root: Document = document): () => void {
 
   const hide = () => {
     clearTimeout(timer);
-    tip.hidden = true;
+    if (!tip.hidden) tip.hidden = true;
     shownFor = null;
   };
   const show = (control: HTMLElement) => {

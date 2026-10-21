@@ -70,7 +70,10 @@
 .shell[data-sidebar-shut] .sidebar__strip {
   display: flex;
 }
-.shell[data-sidebar-shut] .sidebar > :not(.sidebar__strip) {
+/* Each named: a bare :not() here would restyle the whole window as the sidebar shuts. */
+.shell[data-sidebar-shut]
+  .sidebar
+  > :is(.sidebar__head, .sidebar__search, .sidebar__body, .sidebar__foot) {
   display: none;
 }
 .sidebar__vault {

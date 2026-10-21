@@ -67,10 +67,16 @@ export class Host {
     for (const [id, button] of this.#buttons) {
       const def = commandOf(id);
       const look = this.#of.look(id);
-      if (look.pressed === undefined) button.removeAttribute('aria-pressed');
-      else button.setAttribute('aria-pressed', String(look.pressed));
-      button.disabled = look.disabled ?? false;
-      button.dataset.tip = look.tip ?? def.tip ?? def.label;
+      // Each written only when it changes: a redraw runs this, and a write restyles.
+      const pressed = look.pressed === undefined ? null : String(look.pressed);
+      if (button.getAttribute('aria-pressed') !== pressed) {
+        if (pressed === null) button.removeAttribute('aria-pressed');
+        else button.setAttribute('aria-pressed', pressed);
+      }
+      const disabled = look.disabled ?? false;
+      if (button.disabled !== disabled) button.disabled = disabled;
+      const tip = look.tip ?? def.tip ?? def.label;
+      if (button.dataset.tip !== tip) button.dataset.tip = tip;
       const name = this.spec.icons?.[id] ?? look.icon ?? def.icon;
       const drawn = button.querySelector<SVGElement>('svg')?.dataset.icon;
       if (name !== 'seal' && drawn !== name) button.replaceChildren(icon(name));
