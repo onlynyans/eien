@@ -82,6 +82,18 @@ export class CapacitorFiles implements FilesPort {
     else await Filesystem.writeFile({ ...this.#at(path), data: words, encoding: Encoding.UTF8 });
   }
 
+  /**
+   * Through the Filesystem plugin on every system, as base64: Eien's own plugin writes text.
+   * Only exports are written as bytes, and an export can be made again.
+   */
+  async writeBytes(path: string, bytes: Uint8Array): Promise<void> {
+    let binary = '';
+    for (let at = 0; at < bytes.length; at += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(at, at + 0x8000));
+    }
+    await Filesystem.writeFile({ ...this.#at(path), data: btoa(binary) });
+  }
+
   async stat(path: string): Promise<FileEntry | null> {
     try {
       const info = await Filesystem.stat(this.#at(path));

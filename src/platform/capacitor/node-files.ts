@@ -38,9 +38,13 @@ export class NodeFiles implements FilesPort {
   }
 
   async writeText(path: string, text: string): Promise<void> {
+    await this.writeBytes(path, new TextEncoder().encode(text));
+  }
+
+  async writeBytes(path: string, bytes: Uint8Array): Promise<void> {
     const file = await open(this.#at(path), 'w');
     try {
-      await file.writeFile(text, 'utf8');
+      await file.writeFile(bytes);
       await file.sync();
     } finally {
       await file.close();

@@ -22,6 +22,7 @@ async function vaultWith(files: Record<string, string>) {
   const vault: VaultBridge = {
     current: async () => ({ name: 'V' }),
     choose: async () => null,
+    importFolder: async () => null,
     list: async () => index.entries(),
     notes: async () => index.notes(),
     search: async (query) => index.search(query),

@@ -1,8 +1,12 @@
 import { app, type BaseWindow, Menu, type MenuItemConstructorOptions } from 'electron';
 import { type SettingValues, TOGGLES, type ToggleKey } from '../../core/config';
 import { SPRINT_MINUTES } from '../../core/counters';
+import { EXPORT_LABELS } from '../../core/export';
 import { acceleratorOf, FORMAT_COMMANDS, type FormatCommandId } from '../../core/format';
-import type { MenuCommand } from '../../platform/bridge';
+import type { ExportFormat, MenuCommand } from '../../platform/bridge';
+
+/** A note's or a book's exports, in the File menu's order (spec §8). */
+const EXPORTS: readonly ExportFormat[] = ['epub', 'docx', 'pdf'];
 
 /** Where the Format menu draws its lines: inline marks, then the link, then line formats. */
 const FORMAT_GROUPS: readonly (readonly FormatCommandId[])[] = [
@@ -80,6 +84,17 @@ export function buildMenu(send: SendCommand): Menu {
         item('Open Vault…', 'open-vault', 'CmdOrCtrl+O'),
         { type: 'separator' },
         item('Export AO3 HTML…', 'export-ao3'),
+        // The open note, or the book it's a chapter of (or the book chosen), as a file (spec §8).
+        {
+          label: 'Export Note',
+          submenu: EXPORTS.map((format) => item(EXPORT_LABELS[format], `export-note:${format}`)),
+        },
+        {
+          label: 'Export Book',
+          submenu: EXPORTS.map((format) => item(EXPORT_LABELS[format], `export-book:${format}`)),
+        },
+        { type: 'separator' },
+        item('Import Markdown Folder…', 'import-folder'),
         { type: 'separator' },
         ...(mac ? [] : [settings, { type: 'separator' } as const]),
         mac ? { role: 'close' } : { role: 'quit' },

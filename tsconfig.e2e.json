@@ -7,6 +7,7 @@
   },
   "include": [
     "tests/e2e",
+    "tests/support",
     "tests/android",
     "playwright.android.config.ts",
     "tests/mobile",

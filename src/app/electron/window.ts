@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { BrowserWindow, type IpcMainEvent, ipcMain, shell } from 'electron';
 import { CHANNEL } from '../../platform/bridge';
 import { serveContextMenu } from './context-menu';
+import { serveImport } from './import-session';
 import { isAppUrl, isExternalLink } from './navigation';
 import { serveOut } from './out-session';
 import { serveSettings } from './settings-session';
@@ -51,7 +52,9 @@ export async function createMainWindow(): Promise<BrowserWindow> {
   });
 
   saveBeforeClose(window);
-  serveSettings(window, await serveVault(window));
+  const vault = await serveVault(window);
+  serveSettings(window, vault);
+  serveImport(window, vault);
   serveOut(window);
   serveContextMenu(window);
   window.once('ready-to-show', () => window.show());

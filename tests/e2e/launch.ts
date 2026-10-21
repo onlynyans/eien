@@ -70,22 +70,28 @@ export async function boxOf(locator: Locator): Promise<Box> {
   return found as unknown as Box;
 }
 
-/** Click a menu item, as the window the click is for: no reliance on which window has focus. */
+/**
+ * Click a menu item, as the window the click is for: no reliance on which
+ * window has focus. `labels` go down through submenus (File → Export Note → EPUB…).
+ */
 export async function clickMenu(
   app: ElectronApplication,
   menu: string,
-  label: string,
+  ...labels: string[]
 ): Promise<void> {
   await app.evaluate(
-    ({ BrowserWindow, Menu }, [menu, label]) => {
+    ({ BrowserWindow, Menu }, path) => {
       const window = BrowserWindow.getAllWindows()[0];
-      const item = Menu.getApplicationMenu()
-        ?.items.find((top) => top.label === menu)
-        ?.submenu?.items.find((entry) => entry.label === label);
-      if (!item || !window) throw new Error(`No menu item ${menu} → ${label}`);
+      let items = Menu.getApplicationMenu()?.items;
+      let item: Electron.MenuItem | undefined;
+      for (const label of path) {
+        item = items?.find((entry) => entry.label === label);
+        items = item?.submenu?.items;
+      }
+      if (!item || !window) throw new Error(`No menu item ${path.join(' → ')}`);
       item.click(undefined, window, window.webContents);
     },
-    [menu, label] as const,
+    [menu, ...labels],
   );
 }
 

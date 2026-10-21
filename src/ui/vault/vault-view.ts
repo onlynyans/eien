@@ -13,6 +13,7 @@ import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
 import { runCommand } from './commands';
 import { onDiskChanges, touches } from './disk-changes';
+import { importFolder } from './importing';
 import { type MenuContext, showFolderMenu, showNoteMenu, trashNameOn } from './menus';
 import { Navigation } from './navigation';
 import { notePage } from './note-page';
@@ -132,6 +133,9 @@ export async function showVault(
   const menus: MenuContext = {
     state,
     organizer,
+    get exports() {
+      return parts.exports;
+    },
     vaultName: name,
     trashName,
     act: (operation) => void act(operation),
@@ -273,11 +277,22 @@ export async function showVault(
       newNote: () => void newNote(),
       drawList: () => draw.list(),
       parts,
+      importFolder: () =>
+        void importFolder({
+          vault: bridge.vault,
+          act,
+          showFolder: (path) => choose({ kind: 'folder', path }),
+          tell,
+        }),
     }),
   );
   await refresh();
   return {
-    flush: () => note.flush(),
+    // The note's words first; then a seal or a move under way finishes (a quit waits for both).
+    flush: async () => {
+      await note.flush();
+      await act.idle();
+    },
     stop: async () => {
       await note.flush();
       stopWatching();
