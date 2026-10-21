@@ -1,8 +1,8 @@
 // The vault a window has open, and the IPC that reaches it. Every argument
 // from the window is checked here; the storage checks every path again.
 
-import { basename } from 'node:path';
-import { type BrowserWindow, dialog, shell } from 'electron';
+import { basename, join } from 'node:path';
+import { app, type BrowserWindow, dialog, shell } from 'electron';
 import { CHANNEL, type VaultInfo } from '../../platform/bridge';
 import { openDiskStorage } from '../../platform/electron/disk-storage';
 import { recoverStrays } from '../../platform/electron/recover-strays';
@@ -88,6 +88,8 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
     const picked = await dialog.showOpenDialog(window, {
       title: 'Open a vault',
       buttonLabel: 'Open',
+      // Where the phone keeps its vault, Documents/Eien/Vault: the same layout on every device.
+      defaultPath: join(app.getPath('documents'), 'Eien'),
       properties: ['openDirectory', 'createDirectory'],
     });
     const root = picked.filePaths[0];

@@ -1,5 +1,5 @@
 // Eien on Android (spec §10): the access asked for once, the vault in the
-// shared Documents/Eien, what another device syncs in, saving when the app
+// shared Documents/Eien/Vault, what another device syncs in, saving when the app
 // goes to the background, a restart, and a crash's leftovers recovered.
 
 import type { AndroidDevice, Page } from '@playwright/test';
@@ -59,7 +59,7 @@ test('Allow opens Android’s own screen; back without it, the welcome stays', a
   await expect(page.locator('.shell')).toHaveCount(0);
 });
 
-test('typing writes the note in Documents/Eien', async ({ device }) => {
+test('typing writes the note in Documents/Eien/Vault', async ({ device }) => {
   const page = await startEien(device);
   await newNote(page);
   await page.keyboard.type('Written on the phone.');
@@ -240,13 +240,13 @@ test('this device’s settings are kept after a restart', async ({ device }) => 
   expect(await readOnPhone(device, `${VAULT}/.eien/config.json`)).toBeNull(); // not the vault’s
 });
 
-test('an export goes to Documents/Eien Exports', async ({ device }) => {
+test('an export goes to Documents/Eien/Exports', async ({ device }) => {
   const page = await startEien(device);
   await expect(page.locator('.shell')).toBeVisible();
   expect(
     await page.evaluate(() =>
       window.eien.out.saveAs('Tear', { kind: 'html', text: '<p>“One.”</p>' }),
     ),
-  ).toBe('Eien Exports/Tear.html');
+  ).toBe('Eien/Exports/Tear.html');
   expect(await readOnPhone(device, `${EXPORTS}/Tear.html`)).toBe('﻿<p>“One.”</p>');
 });

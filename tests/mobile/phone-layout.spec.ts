@@ -31,9 +31,9 @@ async function onlyShown(page: Page, name: Pane): Promise<void> {
 
 async function withNotes(page: Page): Promise<void> {
   await open(page);
-  await putOutside(page, 'Eien/Fic/Tear.md', 'The scarf caught on the gate, and tore.\n');
-  await putOutside(page, 'Eien/Fic/Mend.md', '# Mend\n\nShe mended it by the fire.\n');
-  await putOutside(page, 'Eien/Ideas.md', 'An idea.\n');
+  await putOutside(page, 'Eien/Vault/Fic/Tear.md', 'The scarf caught on the gate, and tore.\n');
+  await putOutside(page, 'Eien/Vault/Fic/Mend.md', '# Mend\n\nShe mended it by the fire.\n');
+  await putOutside(page, 'Eien/Vault/Ideas.md', 'An idea.\n');
   await expect(titles(page)).toHaveCount(3, { timeout: 10_000 });
 }
 
@@ -81,7 +81,7 @@ test('a new note goes straight into the editor', async ({ page }) => {
   await expect(page.locator('.cm-content')).toBeFocused();
   await page.keyboard.type('Written on the phone.');
   await expect
-    .poll(() => readOutside(page, 'Eien/Untitled.md'), { timeout: 5000 })
+    .poll(() => readOutside(page, 'Eien/Vault/Untitled.md'), { timeout: 5000 })
     .toBe('Written on the phone.');
 });
 
@@ -92,7 +92,7 @@ test('the ⋯ seals the note, as File → Seal does', async ({ page }) => {
   await more(page).click();
   await menuItem(page, 'Seal').click();
   await expect(page.locator('.seal-line')).toHaveText('Sealed just now');
-  await expect.poll(() => listOutside(page, 'Eien/.eien/versions')).toHaveLength(1);
+  await expect.poll(() => listOutside(page, 'Eien/Vault/.eien/versions')).toHaveLength(1);
 });
 
 test('the ⋯ turns focus mode on, and shows it chosen', async ({ page }) => {
@@ -109,6 +109,22 @@ test('the ⋯ turns focus mode on, and shows it chosen', async ({ page }) => {
   // On or off by itself, not one of several: a keyboard's Enter mustn't land on it to turn it off.
   await expect(menuItem(page, 'Focus mode')).toHaveAttribute('role', 'menuitemcheckbox');
   await expect(menuItem(page, 'Seal')).toBeFocused();
+});
+
+test('the ⋯ exports the note as its own menu does, into Documents/Eien/Exports', async ({
+  page,
+}) => {
+  await withNotes(page);
+  await titles(page).filter({ hasText: 'Ideas' }).click();
+  await more(page).click();
+  await menuItem(page, 'Export…').click();
+  await expect(page.locator('.menu [role="menuitem"]')).toHaveText([
+    'AO3 HTML…',
+    'EPUB…',
+    'Word (.docx)…',
+  ]);
+  await menuItem(page, 'EPUB…').click();
+  await expect.poll(() => listOutside(page, 'Eien/Exports')).toEqual(['Ideas.epub']);
 });
 
 test('the ⋯ opens the settings', async ({ page }) => {
@@ -182,7 +198,11 @@ test('a finger scrolls the list: touching never lifts a row', async ({ page }) =
 
 test('an outline card’s menu moves it, where a finger can’t drag it', async ({ page }) => {
   await withNotes(page);
-  await putOutside(page, 'Eien/Fic/.eien-folder.json', '{"book":{},"order":["Mend.md","Tear.md"]}');
+  await putOutside(
+    page,
+    'Eien/Vault/Fic/.eien-folder.json',
+    '{"book":{},"order":["Mend.md","Tear.md"]}',
+  );
   await back(page).click();
   await page.locator('.sidebar').getByText('Fic', { exact: true }).click();
   await titles(page).filter({ hasText: 'Mend' }).click();
@@ -193,7 +213,8 @@ test('an outline card’s menu moves it, where a finger can’t drag it', async 
   await menuItem(page, 'Move earlier').click();
   await expect
     .poll(
-      async () => JSON.parse((await readOutside(page, 'Eien/Fic/.eien-folder.json')) ?? '{}').order,
+      async () =>
+        JSON.parse((await readOutside(page, 'Eien/Vault/Fic/.eien-folder.json')) ?? '{}').order,
     )
     .toEqual(['Tear.md', 'Mend.md']);
 });

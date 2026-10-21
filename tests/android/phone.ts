@@ -6,8 +6,8 @@
 import { _android, type AndroidDevice, test as base, expect, type Page } from '@playwright/test';
 
 export const PKG = 'io.github.onlynyans.eien';
-export const VAULT = '/sdcard/Documents/Eien';
-export const EXPORTS = '/sdcard/Documents/Eien Exports';
+export const VAULT = '/sdcard/Documents/Eien/Vault';
+export const EXPORTS = '/sdcard/Documents/Eien/Exports';
 
 const quoted = (path: string) => `'${path.replaceAll("'", "'\\''")}'`;
 
@@ -45,7 +45,8 @@ export async function startEien(
   await stopEien(device);
   if (!keep) {
     await shell(device, `pm clear ${PKG}`);
-    await shell(device, `rm -rf ${quoted(VAULT)} ${quoted(EXPORTS)}`);
+    // Eien's whole folder: the vault, the exports, and anything the old layout left.
+    await shell(device, `rm -rf '/sdcard/Documents/Eien' '/sdcard/Documents/Eien Exports'`);
   }
   // For the app's uid as well: what Android's settings screen sets, which outranks the package's.
   const mode = allowed ? 'allow' : 'deny';

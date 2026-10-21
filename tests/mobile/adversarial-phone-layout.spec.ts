@@ -74,9 +74,9 @@ const keyboardAt = (page: Page) =>
 
 async function withNotes(page: Page): Promise<void> {
   await open(page);
-  await putOutside(page, 'Eien/Fic/Tear.md', 'The scarf caught on the gate, and tore.\n');
-  await putOutside(page, 'Eien/Fic/Mend.md', '# Mend\n\nShe mended it by the fire.\n');
-  await putOutside(page, 'Eien/Ideas.md', 'An idea.\n');
+  await putOutside(page, 'Eien/Vault/Fic/Tear.md', 'The scarf caught on the gate, and tore.\n');
+  await putOutside(page, 'Eien/Vault/Fic/Mend.md', '# Mend\n\nShe mended it by the fire.\n');
+  await putOutside(page, 'Eien/Vault/Ideas.md', 'An idea.\n');
   await expect(titles(page)).toHaveCount(3, { timeout: 10_000 });
 }
 
@@ -116,7 +116,7 @@ test.describe('back', () => {
     await expect(shell(page)).toHaveAttribute('data-shown', 'page');
     await expect(page.locator('.title__field')).toBeHidden();
     await page.waitForTimeout(1500); // a rename would have reached the disk by now
-    expect(await listOutside(page, 'Eien')).toEqual(['Fic', 'Ideas.md']);
+    expect(await listOutside(page, 'Eien/Vault')).toEqual(['Fic', 'Ideas.md']);
   });
 
   test('the system back while Compare shows a seal gives the draft back, on the page', async ({
@@ -161,7 +161,7 @@ test.describe('back', () => {
     await withNotes(page);
     await putOutside(
       page,
-      'Eien/Fic/.eien-folder.json',
+      'Eien/Vault/Fic/.eien-folder.json',
       '{"book":{},"order":["Mend.md","Tear.md"]}',
     );
     await back(page).click();
@@ -307,9 +307,9 @@ test.describe('a menu stays inside the window', () => {
   /** A book at the foot of a long tree: its menu opens near the bottom. */
   async function bookLow(page: Page): Promise<void> {
     for (let at = 0; at < 14; at++)
-      await putOutside(page, `Eien/F${String(at).padStart(2, '0')}/n.md`, 'x\n');
-    await putOutside(page, 'Eien/Zbook/.eien-folder.json', '{"book":{}}');
-    await putOutside(page, 'Eien/Zbook/a.md', 'x\n');
+      await putOutside(page, `Eien/Vault/F${String(at).padStart(2, '0')}/n.md`, 'x\n');
+    await putOutside(page, 'Eien/Vault/Zbook/.eien-folder.json', '{"book":{}}');
+    await putOutside(page, 'Eien/Vault/Zbook/a.md', 'x\n');
   }
 
   test('the word goal’s field stays in sight when the phone’s keyboard comes up', async ({
@@ -350,9 +350,9 @@ test.describe('the desktop', () => {
     // leaves the menu where it was, part of it below the window, its last choices out of reach.
     await open(page);
     for (let at = 0; at < 14; at++)
-      await putOutside(page, `Eien/F${String(at).padStart(2, '0')}/n.md`, 'x\n');
-    await putOutside(page, 'Eien/Zbook/.eien-folder.json', '{"book":{}}');
-    await putOutside(page, 'Eien/Zbook/a.md', 'x\n');
+      await putOutside(page, `Eien/Vault/F${String(at).padStart(2, '0')}/n.md`, 'x\n');
+    await putOutside(page, 'Eien/Vault/Zbook/.eien-folder.json', '{"book":{}}');
+    await putOutside(page, 'Eien/Vault/Zbook/a.md', 'x\n');
     const book = page.locator('.sidebar').getByText('Zbook', { exact: true });
     await expect(book).toBeVisible({ timeout: 10_000 });
     await book.scrollIntoViewIfNeeded();

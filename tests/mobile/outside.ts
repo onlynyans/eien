@@ -61,3 +61,14 @@ export async function open(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('.shell')).toBeVisible();
 }
+
+/** A file's bytes in Documents (the Filesystem gives them as base64), or null. */
+export const bytesOutside = (page: Page, path: string) =>
+  page.evaluate(
+    ([path, directory]) =>
+      window.Capacitor.Plugins.Filesystem.readFile({ path, directory }).then(
+        (file) => [...atob(file.data)].map((char) => char.charCodeAt(0)),
+        () => null,
+      ),
+    [path, DOCUMENTS] as const,
+  );

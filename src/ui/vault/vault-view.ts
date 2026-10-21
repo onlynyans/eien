@@ -1,19 +1,16 @@
-// An open vault's three panes — the sidebar, the note list and the page —
-// kept in step with each other and with the disk. The file operations are
-// in ./organize.ts, the panes' widths and shutting in ../shell/panes.ts;
-// this wires the panes, menus and drags to them.
+// An open vault's panes (the sidebar, the note list, the page) kept in step with each other and
+// the disk: file operations in ./organize.ts, what it follows in ./follow.ts, the panes' widths
+// in ../shell/panes.ts, a phone's one at a time in ./phone-view.ts. This wires them together.
 
 import { freeNoteName, joinPath } from '../../core/paths';
 import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
-import { watchDrags } from '../list/drag';
 import { listKey, rememberSort } from '../list/sorts';
 import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
 import { follow } from './follow';
-import { importFolder } from './importing';
 import { type MenuContext, showFolderMenu, showNoteMenu, trashNameOn } from './menus';
 import { Navigation } from './navigation';
 import { notePage } from './note-page';
@@ -130,10 +127,7 @@ export async function showVault(
     parts: () => parts,
     sidebar,
     page,
-    changed: () => {
-      panes.relayout();
-      void redraw();
-    },
+    changed: () => panes.relayout(),
   });
   const panes = new PaneLayout(
     {
@@ -184,15 +178,6 @@ export async function showVault(
     act: (operation) => act(operation),
     openNote: (path) => openNote(path),
   });
-
-  const drags = {
-    moveTo: (path: string, folder: string) =>
-      void act(() => organizer.moveInto(path, folder, true)),
-    placeBefore: (path: string, before: string | null) =>
-      void act(() => organizer.placeBefore(path, before)),
-  };
-  watchDrags(list, { ...drags, orderable: () => draw.listOrdered });
-  watchDrags(sidebar.element, { ...drags, orderable: () => false }, '.tree-row__name[data-path]');
 
   // Run a file operation, then read the vault again and redraw: one at a time, each after the
   // last one's refresh, so two quick drags never work from a list that doesn't show the first.
@@ -279,6 +264,12 @@ export async function showVault(
     menu,
     refresh,
     redraw,
+    organizer,
+    tree: sidebar.element,
+    act,
+    listOrdered: () => draw.listOrdered,
+    showFolder: (path) => choose({ kind: 'folder', path }),
+    tell,
     commands: {
       page,
       panes,
@@ -287,13 +278,6 @@ export async function showVault(
       newNote: () => void newNote(),
       drawList: () => draw.list(),
       parts,
-      importFolder: () =>
-        void importFolder({
-          vault: bridge.vault,
-          act,
-          showFolder: (path) => choose({ kind: 'folder', path }),
-          tell,
-        }),
     },
   });
   await refresh();

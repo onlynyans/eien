@@ -41,8 +41,8 @@ const values = Object.fromEntries(
 ) as unknown as SettingValues;
 
 const labels = (counters: Counters) =>
-  moreItems({ values, sprinting: counters.sprinting }, () => {}).flatMap((item) =>
-    item === 'separator' ? [] : [item.label],
+  moreItems({ values, sprinting: counters.sprinting, exportTo: () => {} }, () => {}).flatMap(
+    (item) => (item === 'separator' ? [] : [item.label]),
   );
 
 describe('the ⋯ menu’s sprint', () => {

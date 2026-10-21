@@ -112,9 +112,10 @@ export class PaneLayout {
     if (this.#parts.phone()) this.#parts.showPhone('page');
   }
 
-  /** Lay the panes out again: the window became a phone's, or the pane shown changed. */
+  /** Lay the panes out again, and draw them: the window became a phone's, or the pane shown changed. */
   relayout(): void {
     this.#apply();
+    this.#parts.changed();
   }
 
   setTwo(two: boolean): void {

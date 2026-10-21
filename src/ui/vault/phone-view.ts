@@ -4,6 +4,7 @@
 // shows the page, with the keyboard on its title, so reading a note doesn't
 // bring up the phone's keyboard.
 
+import type { MenuCommand } from '../../platform/bridge';
 import { closeMenu, openMenu } from '../menu/menu';
 import type { MenuBus } from '../menu/menu-bus';
 import type { PageView } from '../page/page';
@@ -12,6 +13,7 @@ import { type PhonePane, PhoneStack } from '../phone/phone-stack';
 import type { SettingsState } from '../settings/settings-state';
 import type { Sidebar } from '../sidebar/sidebar';
 import { focusList } from './commands';
+import { exportMenu } from './menus';
 import type { PageParts } from './page-parts';
 
 export interface PhoneViewOf {
@@ -46,15 +48,21 @@ export function phoneView(of: PhoneViewOf): PhoneView {
       to === 'sidebar'
         ? 'Library'
         : (of.list.querySelector('.list__heading')?.textContent ?? 'Notes'),
-    more: (opener) =>
-      openMenu(
-        moreItems(
-          { values: of.settings.values, sprinting: of.parts().counters.sprinting },
-          (command) => of.menu.run(command),
-        ),
-        { opener },
-        'More',
-      ),
+    more: (opener) => {
+      const run = (command: MenuCommand) => of.menu.run(command);
+      // The same choices as the note's own menu, each the File menu's command.
+      const exportTo = () =>
+        openMenu(
+          exportMenu(of.parts().exports.kinds, false, (kind) =>
+            run(kind === 'html' ? 'export-ao3' : `export-note:${kind}`),
+          ),
+          { opener },
+          'Export',
+        );
+      const { values } = of.settings;
+      const state = { values, sprinting: of.parts().counters.sprinting, exportTo };
+      openMenu(moreItems(state, run), { opener }, 'More');
+    },
     focus: (pane: PhonePane) => focusPane(pane),
     changed: of.changed,
     leavingPage: () => {
