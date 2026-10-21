@@ -126,7 +126,9 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
 
     test('the # key on the page opens the field, with the keyboard in it', async ({ page }) => {
       await page.locator('.note-row', { hasText: 'Other' }).click();
+      await expect(page.locator('.title')).toHaveText('Other'); // the note open, its title there
       await page.locator('.title').focus();
+      await expect(page.locator('.title')).toBeFocused();
       await page.keyboard.press('#');
       await expect(page.getByRole('combobox', { name: 'Add a tag' })).toBeFocused();
       // Typed in the words, # is a character, never the field.
