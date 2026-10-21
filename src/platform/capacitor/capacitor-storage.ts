@@ -17,7 +17,7 @@ import {
   type Storage,
   type WriteResult,
 } from '../storage';
-import { CASE_STEP, hiddenBeside, TEMP_SUFFIX, TRASH_STEP } from '../stray';
+import { CASE_STEP, hiddenBeside, NEW_SUFFIX, TEMP_SUFFIX, TRASH_STEP } from '../stray';
 import { type FilesPort, folderOf, nameOf, TakenError } from './files';
 import { Poller } from './poller';
 
@@ -143,6 +143,26 @@ export class CapacitorStorage implements Storage {
         throw error;
       }
       return { ok: true, version: await versionOf(text) };
+    });
+  }
+
+  /** Through a hidden temp file, given the name by renameNew, which refuses a name that's taken. */
+  async writeNew(path: string, bytes: Uint8Array): Promise<boolean> {
+    const at = vaultPath(path);
+    return this.#oneAtATime(nameKey(at), async () => {
+      if (await this.#files.stat(at)) return false;
+      await this.#files.makeFolder(folderOf(at));
+      const temp = besidePath(at, NEW_SUFFIX);
+      await this.#files.writeBytes(temp, bytes);
+      try {
+        await this.#files.renameNew(temp, at);
+        return true;
+      } catch (error) {
+        if (error instanceof TakenError) return false;
+        throw error;
+      } finally {
+        await this.#files.remove(temp).catch(() => undefined); // gone already once renamed
+      }
     });
   }
 

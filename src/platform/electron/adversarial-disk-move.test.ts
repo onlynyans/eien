@@ -1,4 +1,4 @@
-// Adversarial: DiskStorage.move checks that nothing is at `to`, then renames
+// Adversarial: DiskStorage.move (and writeNew) checks that nothing is at `to`, then renames
 // onto it. A file another program (a sync tool) puts at `to` in between is
 // replaced, its words gone and not in the trash. writeDurably checks again
 // just before its rename for exactly this reason; move doesn't. The moment
@@ -36,6 +36,14 @@ describe('DiskStorage.move, adversarial', () => {
   afterEach(async () => {
     between.run = null;
     await rm(root, { recursive: true, force: true });
+  });
+
+  it('never writes a new file’s bytes over one that appears while they go in', async () => {
+    // An import's image; Syncthing brings the other device's in just after the check.
+    between.run = () => writeFile(join(root, 'scarf.png'), 'theirs');
+    expect(await storage.writeNew('scarf.png', new Uint8Array([1, 2, 3]))).toBe(false);
+    expect(await readFile(join(root, 'scarf.png'), 'utf8')).toBe('theirs');
+    expect(await readdir(root)).toEqual(['scarf.png']); // and no temp file left
   });
 
   it('never replaces a file that appears at the new name while the move is under way', async () => {

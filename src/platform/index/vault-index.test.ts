@@ -33,6 +33,9 @@ class BentStorage implements Storage {
   listFiles(folder: string): Promise<string[]> {
     return this.inner.listFiles(folder);
   }
+  writeNew(path: string, bytes: Uint8Array): Promise<boolean> {
+    return this.inner.writeNew(path, bytes);
+  }
   async read(path: string): Promise<FileState | null> {
     this.reads++;
     this.readingNow++;

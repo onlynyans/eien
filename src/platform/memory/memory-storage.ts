@@ -11,7 +11,8 @@ import {
 } from '../storage';
 
 export class MemoryStorage implements Storage {
-  readonly #files = new Map<string, { text: string; modified: number }>();
+  /** Each file's text; a file written as bytes keeps them too, exactly. */
+  readonly #files = new Map<string, { text: string; bytes?: Uint8Array; modified: number }>();
   readonly #folders = new Set<string>();
   readonly #listeners = new Set<(paths: string[]) => void>();
   readonly #trashed: string[] = [];
@@ -49,7 +50,7 @@ export class MemoryStorage implements Storage {
           path,
           kind: kindOf(baseName(path), false),
           modified: file.modified,
-          size: new TextEncoder().encode(file.text).length,
+          size: (file.bytes ?? new TextEncoder().encode(file.text)).length,
         }),
       );
     return [...folders, ...files];
@@ -70,8 +71,21 @@ export class MemoryStorage implements Storage {
   async readBytes(path: string): Promise<Uint8Array | null> {
     const file = this.#files.get(vaultPath(path));
     if (!file) return null;
-    const bytes = new TextEncoder().encode(file.text);
+    const bytes = file.bytes?.slice() ?? new TextEncoder().encode(file.text);
     return bytes.length > MAX_BYTES_READ ? null : bytes;
+  }
+
+  async writeNew(path: string, bytes: Uint8Array): Promise<boolean> {
+    const at = vaultPath(path);
+    if (this.#files.has(at) || this.#folders.has(at)) return false;
+    for (let folder = parentOf(at); folder; folder = parentOf(folder)) {
+      if (this.#files.has(folder)) throw new Error(`Not a folder: ${folder}`);
+    }
+    const text = new TextDecoder().decode(bytes);
+    this.#files.set(at, { text, bytes: bytes.slice(), modified: ++this.#clock });
+    this.#addParents(at);
+    this.#notify([at]);
+    return true;
   }
 
   async write(path: string, text: string, expected: string | null): Promise<WriteResult> {

@@ -53,6 +53,14 @@ export interface Storage {
   write(path: string, text: string, expected: string | null): Promise<WriteResult>;
 
   /**
+   * Write `bytes` as a new file at `path` (an imported image), making the
+   * folders above it, only where nothing is: false, and nothing written, when
+   * something is there already, even something that arrived a moment before.
+   * Durable as `write` is: a crash leaves no file or the whole one.
+   */
+  writeNew(path: string, bytes: Uint8Array): Promise<boolean>;
+
+  /**
    * Move or rename the file or folder at `from` to `to`, making the folders
    * above `to`. Refused when there's nothing at `from`, something else is at
    * `to`, or a folder would move into itself. A rename that changes only

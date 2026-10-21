@@ -26,7 +26,7 @@ import {
   type Storage,
   type WriteResult,
 } from '../storage';
-import { hiddenBeside, TEMP_SUFFIX } from '../stray';
+import { hiddenBeside, NEW_SUFFIX, TEMP_SUFFIX } from '../stray';
 
 /** The hidden file a write goes through: ".<name>.eien.tmp" beside it (../stray.ts). */
 export const tempNameOf = (name: string): string => hiddenBeside(name, TEMP_SUFFIX);
@@ -149,6 +149,34 @@ export class DiskStorage implements Storage {
         return false;
       });
       return written ? { ok: true, version: versionOf(text) } : { ok: false, current: changed };
+    });
+  }
+
+  /**
+   * Through a hidden temp file, flushed, then given the name with a link,
+   * which fails if anything is there (on a disk without links, looked at once
+   * more just before the rename).
+   */
+  async writeNew(path: string, bytes: Uint8Array): Promise<boolean> {
+    const file = await this.#resolve(path);
+    return this.#oneAtATime(nameKey(vaultPath(path)), async () => {
+      const free = async () => (await lstat(file).catch(() => null)) === null;
+      if (!(await free())) return false;
+      await mkdir(dirname(file), { recursive: true });
+      const temp = join(dirname(file), hiddenBeside(basename(file), NEW_SUFFIX));
+      await writeFlushed(temp, bytes);
+      try {
+        const linked = await linkInstead(temp, file);
+        if (linked === 'taken') return false;
+        if (linked === 'no links') {
+          if (!(await free())) return false;
+          await renameWithRetry(temp, file);
+        }
+      } finally {
+        await rm(temp, { force: true });
+      }
+      await syncFolder(dirname(file));
+      return true;
     });
   }
 
@@ -313,13 +341,7 @@ export async function writeDurably(
 ): Promise<boolean> {
   // `file` is a system path ("\\" on Windows): its name comes from node:path, not the vault's "/" helpers.
   const temp = join(dirname(file), tempNameOf(basename(file)));
-  const handle = await open(temp, 'w');
-  try {
-    await handle.writeFile(text, 'utf8');
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
+  await writeFlushed(temp, text);
   if (!(await stillWanted())) {
     await rm(temp, { force: true });
     return false;
@@ -332,6 +354,17 @@ export async function writeDurably(
   }
   await syncFolder(dirname(file));
   return true;
+}
+
+/** Write `data` to `file` (UTF-8 for text) and flush it to the disk. */
+async function writeFlushed(file: string, data: string | Uint8Array): Promise<void> {
+  const handle = await open(file, 'w');
+  try {
+    await handle.writeFile(data);
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
 }
 
 /**
