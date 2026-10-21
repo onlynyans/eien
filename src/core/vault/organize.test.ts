@@ -238,6 +238,15 @@ describe('order and the watcher, as other devices see them', () => {
     expect(isWatchedPath('Fic/.other.json')).toBe(false);
   });
 
+  it('watches the writer’s themes, and not the temp files they’re written through', () => {
+    expect(isWatchedPath('.eien/themes/Late Train.json')).toBe(true);
+    expect(isWatchedPath('.eien/themes/Shouting.JSON')).toBe(true);
+    expect(isWatchedPath('.eien/themes/.Late Train.json.0a1b2c3d.eien.tmp')).toBe(false);
+    expect(isWatchedPath('.eien/themes/Late Train.md')).toBe(false);
+    expect(isWatchedPath('.eien/themes/deeper/Late Train.json')).toBe(false);
+    expect(isWatchedPath('.eien/themes')).toBe(false);
+  });
+
   it('watches a note’s seals, and not the temp files they’re written through', () => {
     expect(isWatchedPath('.eien/versions/01JB2X4Q7Z/2026-10-19T16-40-02Z.md')).toBe(true);
     expect(isWatchedPath('.eien/versions/01JB2X4Q7Z/2026-10-19T16-40-02Z--named.md')).toBe(true);

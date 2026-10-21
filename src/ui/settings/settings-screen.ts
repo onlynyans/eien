@@ -16,6 +16,8 @@ import {
 import { h, wordButton } from '../dom';
 import { NARROW } from '../phone/phone-stack';
 import { reasonOf } from '../reason';
+import type { WriterThemes } from '../theme/writer-themes';
+import { mineChoices } from './mine-choices';
 import type { SettingsState } from './settings-state';
 
 export class SettingsScreen {
@@ -27,12 +29,20 @@ export class SettingsScreen {
     attrs: { role: 'alert', hidden: true },
   });
   readonly #settings: SettingsState;
+  /** The writer's own themes, listed after the gallery's in the palette. */
+  readonly #themes: WriterThemes | null;
   /** Each control's way of showing the current values. */
   readonly #shows: ((values: SettingValues) => void)[] = [];
 
   /** `platform` (process.platform's name) leaves out the settings another system alone has. */
-  constructor(container: HTMLElement, settings: SettingsState, platform: string) {
+  constructor(
+    container: HTMLElement,
+    settings: SettingsState,
+    platform: string,
+    themes: WriterThemes | null = null,
+  ) {
     this.#settings = settings;
+    this.#themes = themes;
     const phone = matchMedia(NARROW).matches; // one pane at a time: no panes to choose
     const groups = SETTING_GROUPS.map((group) => {
       const rows = SETTINGS.filter(
@@ -138,10 +148,16 @@ export class SettingsScreen {
       for (const button of buttons)
         button.setAttribute('aria-pressed', String(button.dataset.value === chosen));
     });
+    const mine =
+      setting.key === 'appearance.palette' && this.#themes
+        ? mineChoices(this.#themes, (value) => void this.#set(setting.key, value))
+        : null;
+    if (mine) this.#shows.push((values) => mine.show(values['appearance.palette']));
     return h(
       'div',
       { class: 'setting__choices', attrs: { role: 'group', 'aria-labelledby': labelId } },
       ...buttons,
+      mine?.element,
     );
   }
 

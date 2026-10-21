@@ -25,9 +25,10 @@ export const DEFAULT_SETTINGS = Object.fromEntries(
 /** Why `value` can't be `setting`'s, or null when it can. */
 export function valueProblem(setting: Setting, value: unknown): string | null {
   if (setting.type === 'choice') {
-    return typeof value === 'string' && Object.hasOwn(setting.choices, value)
-      ? null
-      : `must be one of ${Object.keys(setting.choices).join(', ')}`;
+    if (typeof value === 'string' && Object.hasOwn(setting.choices, value)) return null;
+    if (typeof value === 'string' && setting.more?.accepts(value)) return null;
+    const listed = Object.keys(setting.choices).join(', ');
+    return `must be one of ${listed}${setting.more ? `, or ${setting.more.what}` : ''}`;
   }
   if (typeof value !== 'number' || !Number.isFinite(value)) return 'must be a number';
   const steps = (value - setting.min) / setting.step;

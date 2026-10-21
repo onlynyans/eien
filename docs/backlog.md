@@ -34,7 +34,7 @@ features that came after, and the plan for them (below the table).
 | 17 | View icons | tweak | Page | LIVE, SOURCE and READING as icons: a text-edit icon, a code icon, a book icon. | Words | yes | you |
 | 18 | Settings in Eien's voice | fix | Settings | The settings screen was built without a mockup (`docs/design` has none), and doesn't read as Eien: bold black headings where the design uses mono labels in graphite, and one long column in a box. Rework it in the design's voice. | A box over the window, one long column | yes | you, audit |
 | 19 | AltGr and the heading keys | fix | Keys | On Windows and Linux, Ctrl+Alt is AltGr, so Ctrl+Alt+1–3 (headings) may take characters that some layouts type with AltGr (², ³ on a German keyboard). Check what Electron does; keep ⌘⌥1–3 on macOS and choose other keys elsewhere, then update spec §4. | **Done** ([#29](https://github.com/onlynyans/eien/pull/29)): Ctrl+Shift+1–3 on Windows and Linux; ⌘⌥1–3 on macOS | – | review |
-| 20 | Writer themes | feature | Themes | Build them (spec §7): themes in `.eien/themes/`, a gallery of Eien's own beside Washi and Otaku, a maker, and files. | Not built; Washi and Otaku are built in | yes: [themes](design/explorations/themes.md) | audit, you |
+| 20 | Writer themes | feature | Themes | Build them (spec §7): themes in `.eien/themes/`, a gallery of Eien's own beside Washi and Otaku, a maker, and files. | **Done** ([#34](https://github.com/onlynyans/eien/pull/34)): the gallery (Washi, Kinari, Aizome, Koke, Rōsoku, Sumi, Sakura-nezumi, Otaku); your own themes as files in `.eien/themes/`, each mixed from four choices and fitted to Eien's contrast; listed under Settings → Palette. The Themes tabs and the mix panel come with 3G | yes: [themes](design/explorations/themes.md) | audit, you |
 | 21 | App icon | feature | Install | Eien's own icon for the installers and the phone (the seal would be the natural one). | **Done** ([#35](https://github.com/onlynyans/eien/pull/35)): the seal, from one SVG (`build/icons/seal.svg`, `npm run icons`): the macOS rounded template, Windows' `.ico`, Linux's PNGs, Android's adaptive and themed icons, iOS's 1024 px square | yes | AGENTS.md |
 | 22 | Smaller downloads | tweak | Install | The Mac download is 546 MB: Chromium twice, for Apple Silicon and Intel. Separate Apple Silicon and Intel downloads, and Chromium's text in English only, would about halve it. Left as it is for now, by your choice. | One universal `.dmg` | – | installers session |
 | 23 | First release | chore | Install | No version is tagged yet, so there's nothing to download from Releases. Tag one (AGENTS.md → Releases), then publish the draft. | No release | – | docs check |
@@ -107,7 +107,7 @@ each step's files apart from the others' in its wave.
 | Step | Items |
 |---|---|
 | 3A The layouts | #28 the framework and all three layouts as a setting; #26 the icons; #27 corners per layout; #15 chevrons and the seal strip; #16 the strip that hides; #17 view icons; #30 Focus; #8 the foot's icons; #1 what goes in C's strip |
-| 3B Themes | #20: the gallery's themes, your own in `.eien/themes/`, the mix (fitted to Eien's contrast); the theme applied as tokens |
+| 3B Themes (done, [#34](https://github.com/onlynyans/eien/pull/34)) | #20: the gallery's themes, your own in `.eien/themes/`, the mix (fitted to Eien's contrast); the theme applied as tokens |
 | 3C The app's icon | #21: the seal, for the installers and both phones |
 
 **Wave 2**, once 3A has merged (they build on its framework and icons):

@@ -11,6 +11,7 @@ export {
   nameKey,
   nameProblems,
   safeName,
+  THEMES_FOLDER,
   utf8Length,
   VAULT_CONFIG,
   VAULT_PINS,
