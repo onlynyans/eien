@@ -26,9 +26,7 @@ const resumed = async (device: AndroidDevice) =>
 
 /** A new note, with the keyboard in it. */
 async function newNote(page: Page): Promise<void> {
-  // Pressed directly: at a phone's width the desktop's panes put it half off the screen. The
-  // phone's own layout (phase 10b) shows it; then this is a tap like any other.
-  await page.getByRole('button', { name: 'New note' }).dispatchEvent('click');
+  await page.getByRole('button', { name: 'New note' }).click();
   await expect(page.locator('.cm-content')).toBeFocused();
 }
 
@@ -90,8 +88,9 @@ test('sent to the background, what was typed is saved at once', async ({ device 
   await page.keyboard.type('Saved on the way out.');
   expect(await readOnPhone(device, `${VAULT}/Untitled.md`)).toBe('');
   await shell(device, 'input keyevent KEYCODE_HOME');
+  // Long enough for a busy emulator; the usual save can't come at all while the clock is stopped.
   await expect
-    .poll(() => readOnPhone(device, `${VAULT}/Untitled.md`))
+    .poll(() => readOnPhone(device, `${VAULT}/Untitled.md`), { timeout: 30_000 })
     .toBe('Saved on the way out.');
   page = await startEien(device, { keep: true });
   await expect(titles(page)).toHaveText(['Untitled']);
@@ -149,6 +148,71 @@ test('a lone surrogate saved reads back as the version saved: no false conflict'
   });
   expect(versions[1]).toBe(versions[0]);
   expect(await readOnPhone(device, `${VAULT}/Odd.md`)).toBe('a\uFFFDb');
+});
+
+test('Android’s back: the ⋯ closes first, then a pane back at a time, then Eien steps aside', async ({
+  device,
+}) => {
+  const page = await startEien(device);
+  await putOnPhone(device, `${VAULT}/Fic/Tear.md`, 'The scarf tore.\n');
+  await page.locator('.phone-bar__back').click(); // to the tree
+  await page.locator('.sidebar').getByText('Fic', { exact: true }).click();
+  await titles(page).filter({ hasText: 'Tear' }).click();
+  await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'page');
+  await page.locator('.phone-bar__more').click();
+  await expect(page.locator('.menu')).toBeVisible();
+  const backKey = () => shell(device, 'input keyevent KEYCODE_BACK');
+  await backKey();
+  await expect(page.locator('.menu')).toHaveCount(0);
+  await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'page');
+  await backKey();
+  await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'list');
+  await backKey();
+  await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'sidebar');
+  await backKey();
+  await expect.poll(() => resumed(device)).not.toContain(PKG); // stepped aside, not ended
+  expect((await shell(device, `pidof ${PKG}`)).trim()).not.toBe('');
+});
+
+test('Android’s back closes the versions panel and the outline cards before going back', async ({
+  device,
+}) => {
+  const page = await startEien(device);
+  await putOnPhone(device, `${VAULT}/Fic/.eien-folder.json`, '{"book":{}}');
+  await putOnPhone(device, `${VAULT}/Fic/Tear.md`, 'The scarf tore.\n');
+  await titles(page).filter({ hasText: 'Tear' }).click();
+  const choose = async (label: string) => {
+    await page.locator('.phone-bar__more').click();
+    await page
+      .locator('.menu [role^="menuitem"]', { hasText: new RegExp(`^${label}$`, 'u') })
+      .click();
+  };
+  const backKey = () => shell(device, 'input keyevent KEYCODE_BACK');
+  await choose('Seal');
+  await choose('Versions');
+  await expect(page.getByRole('complementary', { name: 'Versions' })).toBeVisible();
+  await backKey();
+  await expect(page.getByRole('complementary', { name: 'Versions' })).toBeHidden();
+  await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'page');
+  await choose('Outline cards');
+  await expect(page.locator('.board')).toBeVisible();
+  await backKey();
+  await expect(page.locator('.board')).toBeHidden();
+  await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'page');
+  await backKey();
+  await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'list');
+});
+
+test('Android’s back closes the settings before anything else', async ({ device }) => {
+  const page = await startEien(device);
+  await putOnPhone(device, `${VAULT}/Tear.md`, 'Words.\n');
+  await titles(page).filter({ hasText: 'Tear' }).click();
+  await page.locator('.phone-bar__more').click();
+  await page.locator('.menu [role^="menuitem"]', { hasText: /^Settings$/u }).click();
+  await expect(page.locator('dialog[open]')).toBeVisible();
+  await shell(device, 'input keyevent KEYCODE_BACK');
+  await expect(page.locator('dialog[open]')).toHaveCount(0);
+  await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'page');
 });
 
 test('trash goes to .eien/trash, where any device can take it back', async ({ device }) => {

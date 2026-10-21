@@ -185,7 +185,8 @@ Three panes, each collapsible, with a two-pane option in settings:
    tree lists the notes itself.
 3. **Page** — the editor, on a paper sheet. A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
-   and zoom. Controls show on hover or keyboard focus.
+   and zoom. Controls show on hover or keyboard focus (on a touch screen,
+   which can't hover, they stay in sight).
 
 Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
 ⌘\ toggles the sidebar, ⌘⇧\ the note list.
@@ -451,9 +452,10 @@ src/ui/
   outline/      ✓ outline cards: a book's chapters as cards on the blotter, reordered by drag or keys
   counters/     ✓ the colophon's today, book and sprint
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
+  phone/        ✓ the phone's layout: one pane at a time, back, the page's ⋯
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
-  mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access
+  mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture
 ```
 
 ### Rules for the code
@@ -838,8 +840,26 @@ Compare or Restore finishes lands on a note opened meanwhile.
 - **iOS:** the vault lives in Eien's own Files folder, visible in the Files
   app. Syncthing on iOS (Möbius Sync) can sync it. Installing on a device needs
   Xcode and an Apple developer account.
-- The phone layout is one pane at a time: tree → list → page, with back
-  gestures.
+- **The phone layout** is one pane at a time: tree → list → page. A window
+  narrower than 600 px (narrower than any desktop window can be) is a
+  phone's, whatever the system; turned sideways, a phone wide enough shows
+  the three panes.
+  - It opens on the notes. Choosing a folder or tag shows its notes; opening
+    a note shows the page. A bar above the pane goes back, naming where
+    ("‹ Fic", "‹ Library"); so does Android's back gesture, which first
+    closes what's open over the page (a menu, the settings, the versions,
+    the outline cards), and at the tree leaves Eien in the background.
+  - The page's ⋯ offers what the menu bar does on the desktop: Seal,
+    Compare, Versions, Outline cards, Copy for AO3, Export, Focus mode,
+    Typewriter scrolling, a sprint, Settings. The page's bar keeps its
+    three views.
+  - Opening a note to read puts the keyboard on its title, so the phone's
+    keyboard stays down; a new note goes straight into the editor.
+  - A finger scrolls a list, and never lifts a row: a note moves by its menu
+    (a long press: Move up, Move down, Move to…), an outline card by its own
+    (Move earlier, Move later). Two panes aren't offered: one shows at a time.
+  - Controls that wait for the pointer on the desktop stay in sight on a
+    touch screen, which has no hover.
 
 ---
 

@@ -45,6 +45,8 @@ export function watchDrags(
 
   list.addEventListener('pointerdown', (down) => {
     if (down.button !== 0 || down.altKey || down.metaKey || down.ctrlKey || down.shiftKey) return;
+    // A finger scrolls the list; on touch a row moves by its menu (Move up, Move to…).
+    if (down.pointerType === 'touch') return;
     const row = (down.target as Element).closest<HTMLElement>(rows);
     const path = row?.dataset.path;
     if (!row || path === undefined) return;

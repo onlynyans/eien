@@ -16,8 +16,6 @@ import { sealTargetOf } from './seal-target';
 import { localDay, sealedWhen } from './seal-time';
 import { VersionsPanel } from './versions-panel';
 
-type Mode = CompareMode;
-
 export interface VersionsParts {
   readonly page: PageView;
   readonly note: OpenNote;
@@ -46,7 +44,7 @@ export class VersionsUI {
   #id: string | null = null;
   #seals: VersionFile[] = [];
   readonly #words = new Map<string, number>();
-  #mode: Mode = 'draft';
+  #mode: CompareMode = 'draft';
   /** The seal compared with, or shown: the newest unless one was chosen in the panel. */
   #against: VersionFile | null = null;
   readonly #ticker: ReturnType<typeof setInterval>;
@@ -138,13 +136,14 @@ export class VersionsUI {
   async cycleCompare(): Promise<void> {
     if (!this.#parts.note.session) return;
     if (this.#seals.length === 0) return this.#line.say('Not sealed yet');
-    const next: Mode =
+    const next: CompareMode =
       this.#mode === 'draft' ? 'changes' : this.#mode === 'changes' ? 'sealed' : 'draft';
     await this.#show(next);
   }
 
-  togglePanel(): void {
-    this.showPanel(!this.#panel.open);
+  /** Whether the versions panel is open. */
+  get panelOpen(): boolean {
+    return this.#panel.open;
   }
 
   showPanel(open: boolean): void {
@@ -195,7 +194,7 @@ export class VersionsUI {
     return this.#against ?? latestVersion(this.#seals, Date.now());
   }
 
-  async #show(mode: Mode): Promise<void> {
+  async #show(mode: CompareMode): Promise<void> {
     const show = ++this.#shows;
     const against = this.#compared();
     const session = this.#parts.note.session;
@@ -228,7 +227,7 @@ export class VersionsUI {
     }
   }
 
-  #setMode(mode: Mode): void {
+  #setMode(mode: CompareMode): void {
     if (mode === 'draft') this.#shows++; // a Compare still reading its seal isn't shown
     this.#mode = mode;
     if (mode === 'draft') this.#parts.page.compare(null);

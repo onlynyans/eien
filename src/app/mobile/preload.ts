@@ -19,6 +19,11 @@ function mobileBridge(): Bridge {
   const vault = new MobileVault(home, () => document.visibilityState === 'visible');
   const settings = new SettingsStore(preferencesStore, () => vault.open?.storage ?? null);
   void App.addListener('resume', () => vault.lookNow());
+  const backs: (() => boolean)[] = [];
+  void App.addListener('backButton', () => {
+    for (const handler of [...backs].reverse()) if (handler()) return;
+    void App.minimizeApp().catch(() => undefined); // nothing to go back to: step aside
+  });
   return {
     platform,
     vault,
@@ -32,7 +37,14 @@ function mobileBridge(): Bridge {
       set: (key, value) => settings.set(key, value),
     },
     out: phoneOut(home.exports),
-    onMenu: () => () => undefined, // no menu bar on a phone
+    onMenu: () => () => undefined, // no menu bar on a phone: the page's ⋯ (ui/phone)
+    onBack(handler) {
+      backs.push(handler);
+      return () => {
+        const at = backs.lastIndexOf(handler);
+        if (at >= 0) backs.splice(at, 1);
+      };
+    },
     onBeforeClose(save) {
       void App.addListener('pause', () => void save().catch(console.error));
     },

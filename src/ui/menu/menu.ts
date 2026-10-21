@@ -28,7 +28,7 @@ export interface Place {
 /**
  * Float `panel` at `place`, kept inside the window, as the one thing open:
  * whatever was open closes first. It closes on a click elsewhere, the
- * window losing focus or changing size, or the close returned; then the
+ * window losing focus or changing width, or the close returned; then the
  * keyboard goes back where it was, and `closed` runs.
  */
 export function float(panel: HTMLElement, place: Place, closed?: () => void): () => void {
@@ -40,9 +40,15 @@ export function float(panel: HTMLElement, place: Place, closed?: () => void): ()
     panel.remove();
     document.removeEventListener('pointerdown', outside, true);
     window.removeEventListener('blur', close);
-    window.removeEventListener('resize', close);
+    window.removeEventListener('resize', resized);
     back?.focus();
     closed?.();
+  };
+  // A narrower or wider window moves things from under it; only taller or shorter is a phone's
+  // keyboard coming or going, which leaves it where it is.
+  const width = window.innerWidth;
+  const resized = () => {
+    if (window.innerWidth !== width) close();
   };
   const handle = { close };
   const outside = (event: Event) => {
@@ -64,7 +70,7 @@ export function float(panel: HTMLElement, place: Place, closed?: () => void): ()
   );
   document.addEventListener('pointerdown', outside, true);
   window.addEventListener('blur', close);
-  window.addEventListener('resize', close);
+  window.addEventListener('resize', resized);
   return close;
 }
 
@@ -119,4 +125,9 @@ export function openMenu(items: readonly MenuItem[], place: Place, label = 'Choi
 }
 
 /** Close the menu that's open, if one is. */
-export const closeMenu = (): void => open?.close();
+/** Close the menu that's open; whether one was (the system's back closes it first). */
+export function closeMenu(): boolean {
+  if (!open) return false;
+  open.close();
+  return true;
+}
