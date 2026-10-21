@@ -7,7 +7,7 @@ import { Chrome } from '../chrome/chrome';
 import type { CommandId, LocalCommandId } from '../chrome/commands';
 import type { CommandLook } from '../chrome/host';
 import { rememberStrip, stripShut } from '../chrome/strip';
-import { watchTooltips } from '../chrome/tooltip';
+import { tooltips } from '../chrome/tooltip';
 import { h } from '../dom';
 import type { MenuBus } from '../menu/menu-bus';
 import type { PageView } from '../page/page';
@@ -130,6 +130,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     more: (opener) => of.phone.more(opener),
   };
 
+  const tips = tooltips();
   const chrome = new Chrome({
     mac: of.mac,
     slots,
@@ -137,11 +138,11 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     local: (id, opener) => local[id](opener),
     send: (command) => of.menu.run(command),
     lost: () => page.focus(),
+    watch: (host) => tips.watch(host),
   });
   const refresh = () => {
     if (mounted) chrome.refresh();
   };
-  const stopTips = watchTooltips();
   const stopSettings = settings.onChange((values) => {
     if (!mounted) return;
     chrome.mount(values['appearance.layout']); // nothing when it's the same
@@ -158,7 +159,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     },
     refresh,
     stop: () => {
-      stopTips();
+      tips.stop();
       stopSettings();
       stopMenu();
       night.removeEventListener('change', refresh);

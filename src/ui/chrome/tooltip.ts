@@ -4,6 +4,9 @@
 // control (over it near the window's foot) and kept inside the window. It
 // says what the control's name and aria-keyshortcuts already say, so screen
 // readers skip it. Typing takes it away: nothing interrupts the writer.
+// It listens on the hosts alone, never the whole document: a pointer
+// listener there makes the browser find what's under the pointer each time a
+// redraw changes it, and six thousand rows redrawn become one long task.
 
 import { h } from '../dom';
 
@@ -11,7 +14,13 @@ import { h } from '../dom';
 const HOVER_MS = 450;
 const GAP = 6;
 
-export function watchTooltips(root: Document = document): () => void {
+export interface Tooltips {
+  /** Show the tooltips of the controls in `area` (a host). */
+  watch(area: HTMLElement): void;
+  stop(): void;
+}
+
+export function tooltips(root: Document = document): Tooltips {
   const words = h('span', { class: 'tooltip__words' });
   const key = h('span', { class: 'tooltip__key' });
   const tip = h(
@@ -24,10 +33,14 @@ export function watchTooltips(root: Document = document): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let shownFor: HTMLElement | null = null;
 
+  // Listened for on the whole document only while a tooltip shows: a press, a key or a scroll anywhere hides it.
+  const AWAY = ['pointerdown', 'keydown', 'scroll'] as const;
   const hide = () => {
     clearTimeout(timer);
-    if (!tip.hidden) tip.hidden = true;
     shownFor = null;
+    if (tip.hidden) return;
+    tip.hidden = true;
+    for (const type of AWAY) root.removeEventListener(type, hide, true);
   };
   const show = (control: HTMLElement) => {
     // A control faded in by the focus itself is still at nothing: its place counts, not its ink.
@@ -36,6 +49,7 @@ export function watchTooltips(root: Document = document): () => void {
     words.textContent = control.dataset.tip ?? '';
     key.textContent = control.dataset.shortcut ?? '';
     tip.hidden = false;
+    for (const type of AWAY) root.addEventListener(type, hide, true);
     const at = control.getBoundingClientRect();
     const box = tip.getBoundingClientRect();
     const below = at.bottom + GAP + box.height <= window.innerHeight;
@@ -60,20 +74,16 @@ export function watchTooltips(root: Document = document): () => void {
     const control = controlOf(event.target);
     if (control?.matches(':focus-visible')) show(control);
   };
-  root.addEventListener('pointerover', over);
-  root.addEventListener('focusin', focused);
-  root.addEventListener('focusout', hide);
-  root.addEventListener('pointerdown', hide, true);
-  root.addEventListener('keydown', hide, true);
-  root.addEventListener('scroll', hide, true);
-  return () => {
-    hide();
-    tip.remove();
-    root.removeEventListener('pointerover', over);
-    root.removeEventListener('focusin', focused);
-    root.removeEventListener('focusout', hide);
-    root.removeEventListener('pointerdown', hide, true);
-    root.removeEventListener('keydown', hide, true);
-    root.removeEventListener('scroll', hide, true);
+  return {
+    watch(area) {
+      area.addEventListener('pointerover', over);
+      area.addEventListener('pointerleave', hide);
+      area.addEventListener('focusin', focused);
+      area.addEventListener('focusout', hide);
+    },
+    stop() {
+      hide();
+      tip.remove();
+    },
   };
 }

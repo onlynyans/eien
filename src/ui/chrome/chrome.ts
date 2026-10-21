@@ -17,6 +17,8 @@ export interface ChromeOf extends Omit<HostOf, 'press'> {
   local(id: LocalCommandId, opener: HTMLElement): void;
   /** The keyboard was on a control the new layout doesn't draw: give it a place. */
   lost(): void;
+  /** Show the tooltips of a host just drawn (./tooltip.ts). */
+  watch(host: HTMLElement): void;
 }
 
 export class Chrome {
@@ -53,6 +55,7 @@ export class Chrome {
       const slot = this.#of.slots[host.spec.slot];
       if (host.spec.first) slot.prepend(host.element);
       else slot.append(host.element);
+      this.#of.watch(host.element);
     }
     this.#layout = layout;
     if (active instanceof HTMLElement && !active.isConnected) {

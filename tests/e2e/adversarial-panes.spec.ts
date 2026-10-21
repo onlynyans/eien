@@ -92,7 +92,9 @@ async function ready(page: Page): Promise<void> {
 }
 
 async function twoPanes(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Two panes', pressed: false }).click();
+  // By a selector the window answers itself: a role locator works out the name of every control,
+  // thousands of rows among them, in the window, and would be a long task measured below.
+  await page.locator('.sidebar__foot [data-command="panes"][aria-pressed="false"]').click();
   await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
 }
 
