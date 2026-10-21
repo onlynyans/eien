@@ -4,7 +4,8 @@ import { defineConfig } from '@playwright/test';
 // web versions stand in for the phone's plugins — the Filesystem in IndexedDB,
 // Preferences in localStorage — so the phone's bridge, its storage over the
 // Filesystem's calls, its recovery and the window run as on the phone.
-const PORT = 4174;
+// Another port for a second checkout's run at the same time (a worktree's).
+const PORT = Number(process.env.EIEN_MOBILE_PORT ?? 4174);
 
 export default defineConfig({
   testDir: 'tests/mobile',

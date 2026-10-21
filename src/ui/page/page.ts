@@ -1,7 +1,7 @@
 // The page: the open note on its sheet, the view switch above it, and the
 // colophon beneath.
 
-import { frontMatterEnd } from '../../core/text';
+import { opensWithTitle } from '../../core/note';
 import { h } from '../dom';
 import { EDITOR_MODES, type EditorEvents, type EditorMode, NoteEditor } from '../editor/editor';
 import { SelectionBar } from '../editor/selection-bar';
@@ -17,12 +17,8 @@ export interface PageNote {
   readonly loadImage: ImageLoader;
 }
 
-const STATE_WORDS: Record<SaveState, string> = {
-  saved: '',
-  unsaved: '',
-  saving: '',
-  failed: 'Not saved yet — trying again',
-};
+/** What the colophon says of the save: only a failure is worth a word. */
+const STATE_WORDS: Partial<Record<SaveState, string>> = { failed: 'Not saved yet — trying again' };
 
 const MODE_LABEL: Record<EditorMode, string> = {
   live: 'Live',
@@ -256,16 +252,21 @@ export class PageView {
   }
 
   state(state: SaveState): void {
-    this.#state.textContent = STATE_WORDS[state];
+    this.#state.textContent = STATE_WORDS[state] ?? '';
     this.#state.dataset.state = state;
   }
 
-  /** The keyboard to the note; with none open, to the page itself, never to nowhere. */
-  focus(): void {
+  /**
+   * The keyboard to the note (on a touch screen only when `typing`: else to the title, so the
+   * phone's keyboard stays down); with none open, to the page itself, never to nowhere.
+   */
+  focus(typing = false): void {
     if (this.board.shown) this.board.focus();
     else if (this.#sheet.hidden) this.#empty.focus();
     else if (this.comparing) this.#compareHost.querySelector<HTMLElement>('[tabindex]')?.focus();
-    else this.editor.focus();
+    else if (typing || !matchMedia('(hover: none)').matches) this.editor.focus();
+    else if (!this.#title.hidden) this.#title.focus();
+    else (document.activeElement as HTMLElement | null)?.blur(); // the title is the note's own heading
   }
 
   /** Rename the note: its title becomes a field, the words chosen; Enter keeps them, Esc doesn't. */
@@ -290,11 +291,6 @@ export class PageView {
   /** A note that opens with its own "# Title" heading needn't show the title twice. */
   #showTitle(text: string): void {
     if (!this.#titleField.hidden) return; // being renamed: the field stands in for it
-    // The writing's first line: front matter (a seal's id) isn't the note's start.
-    const writing = text.slice(frontMatterEnd(text)).trimStart();
-    const first = /^\s*#[ \t]+(.+?)[ \t#]*$/m.exec(writing.split('\n', 1)[0] ?? '');
-    const same =
-      first?.[1]?.trim().toLocaleLowerCase() === this.#titleText.trim().toLocaleLowerCase();
-    this.#title.hidden = same;
+    this.#title.hidden = opensWithTitle(text, this.#titleText);
   }
 }

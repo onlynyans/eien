@@ -5,3 +5,4 @@ export {
   type ReadNote,
   readNote,
 } from './summary';
+export { opensWithTitle } from './title';

@@ -18,6 +18,8 @@ interface Common {
   readonly group: SettingGroup;
   /** Only on these systems (Node's process.platform names); on every one when absent. */
   readonly platforms?: readonly string[];
+  /** Only on a window wide enough for panes side by side: never a phone's (spec §10). */
+  readonly wide?: true;
 }
 
 export interface ChoiceSetting extends Common {
@@ -182,6 +184,7 @@ export const SETTINGS = [
     key: 'layout.panes',
     label: 'Panes',
     description: 'Two puts the notes in the sidebar’s tree, in place of the note list.',
+    wide: true,
     scope: 'device',
     group: 'Layout',
     type: 'choice',
@@ -217,6 +220,7 @@ export const TOGGLES = [
 ] as const satisfies readonly SettingKey[];
 export type ToggleKey = (typeof TOGGLES)[number];
 
-/** Whether `setting` is offered on the system named `platform` (process.platform). */
-export const offeredOn = (setting: Setting, platform: string): boolean =>
-  setting.platforms === undefined || setting.platforms.includes(platform);
+/** Whether `setting` is offered on the system named `platform` (process.platform), on a phone or not. */
+export const offeredOn = (setting: Setting, platform: string, phone = false): boolean =>
+  (setting.platforms === undefined || setting.platforms.includes(platform)) &&
+  !(phone && setting.wide);

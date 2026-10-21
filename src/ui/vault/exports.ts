@@ -1,6 +1,6 @@
 // Exports (spec §8): a note, or a book's chapters in its order, as AO3
 // HTML, EPUB, Word or a PDF, made here with core/export and saved where the
-// writer chooses (on the phone, in Eien Exports). The open note goes as it
+// writer chooses (on the phone, in Eien/Exports). The open note goes as it
 // is on the page, words not yet saved included.
 
 import { toAo3Html } from '../../core/ao3';

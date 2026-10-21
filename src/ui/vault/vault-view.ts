@@ -1,19 +1,16 @@
-// An open vault's three panes — the sidebar, the note list and the page —
-// kept in step with each other and with the disk. The file operations are
-// in ./organize.ts, the panes' widths and shutting in ../shell/panes.ts;
-// this wires the panes, menus and drags to them.
+// An open vault's panes (the sidebar, the note list, the page) kept in step with each other and
+// the disk: file operations in ./organize.ts, what it follows in ./follow.ts, the panes' widths
+// in ../shell/panes.ts, a phone's one at a time in ./phone-view.ts. This wires them together.
 
-import { freeNoteName, joinPath, VAULT_CONFIG } from '../../core/paths';
+import { freeNoteName, joinPath } from '../../core/paths';
 import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
-import { watchDrags } from '../list/drag';
 import { listKey, rememberSort } from '../list/sorts';
+import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
-import { runCommand } from './commands';
-import { onDiskChanges, touches } from './disk-changes';
-import { importFolder } from './importing';
+import { follow } from './follow';
 import { type MenuContext, showFolderMenu, showNoteMenu, trashNameOn } from './menus';
 import { Navigation } from './navigation';
 import { notePage } from './note-page';
@@ -23,6 +20,7 @@ import { OpenNote } from './open-note';
 import { Organizer } from './organize';
 import { pageParts } from './page-parts';
 import { PaneDrawer } from './pane-drawer';
+import { phoneView } from './phone-view';
 import { type Selection, VaultState } from './vault-state';
 
 export interface ShownVault {
@@ -30,6 +28,8 @@ export interface ShownVault {
   flush(): Promise<void>;
   /** Save, and stop following the vault. */
   stop(): Promise<void>;
+  /** The system's back (a phone's): whether it went back. */
+  back(): boolean;
 }
 
 /** Show the vault named `name` in `root`. */
@@ -39,6 +39,7 @@ export async function showVault(
   name: string,
   settings: SettingsState,
   openSettings: () => void,
+  menu: MenuBus,
 ): Promise<ShownVault> {
   const state = new VaultState(bridge.vault, name);
   const trashName = trashNameOn(bridge.platform);
@@ -77,6 +78,7 @@ export async function showVault(
     {
       ...rowActions,
       select: (next) => {
+        phone.stack.show('list'); // on a phone, the notes chosen
         if (!panes.two) return choose(next);
         nav.chooseAndToggle(next);
         sidebar.clearSearch();
@@ -117,6 +119,16 @@ export async function showVault(
     openNote: (path) => void openNote(path),
     act: (operation) => void act(operation),
   });
+  const phone = phoneView({
+    shell,
+    list,
+    menu,
+    settings,
+    parts: () => parts,
+    sidebar,
+    page,
+    changed: () => panes.relayout(),
+  });
   const panes = new PaneLayout(
     {
       shell,
@@ -125,6 +137,8 @@ export async function showVault(
       keys,
       leave: () => page.focus(),
       changed: () => void redraw(),
+      phone: () => phone.stack.shown,
+      showPhone: (pane) => phone.stack.show(pane),
     },
     settings.values['layout.panes'] === 'two',
   );
@@ -165,15 +179,6 @@ export async function showVault(
     openNote: (path) => openNote(path),
   });
 
-  const drags = {
-    moveTo: (path: string, folder: string) =>
-      void act(() => organizer.moveInto(path, folder, true)),
-    placeBefore: (path: string, before: string | null) =>
-      void act(() => organizer.placeBefore(path, before)),
-  };
-  watchDrags(list, { ...drags, orderable: () => draw.listOrdered });
-  watchDrags(sidebar.element, { ...drags, orderable: () => false }, '.tree-row__name[data-path]');
-
   // Run a file operation, then read the vault again and redraw: one at a time, each after the
   // last one's refresh, so two quick drags never work from a list that doesn't show the first.
   const act = oneAtATime(async () => {
@@ -208,12 +213,13 @@ export async function showVault(
   });
   const redraw = () => {
     parts.sync();
-    return draw.all();
+    return draw.all().then(() => phone.stack.rename());
   };
 
   /** Rename a note: open it, and its title becomes a field. */
   async function renameNote(path: string): Promise<void> {
     if (note.path !== path) await openNote(path);
+    else phone.stack.show('page'); // on a phone, from the list: the title's on the page
     page.editTitle();
   }
 
@@ -234,6 +240,7 @@ export async function showVault(
   async function openNote(path: string): Promise<void> {
     await note.open(path);
     await redraw();
+    phone.stack.show('page');
   }
 
   async function newNote(into?: string): Promise<void> {
@@ -244,32 +251,26 @@ export async function showVault(
     nav.openTo(folder); // with two panes, the new note shows where it was made
     await state.refresh();
     await openNote(path);
-    page.focus();
+    page.focus(true); // into the new note, to write
   }
 
   const refresh = () => state.refresh().then(redraw);
 
-  const stopWatching = onDiskChanges(bridge.vault, (changed) => {
-    if (note.path && touches(note.path, changed)) void note.session?.diskChanged();
-    if (changed.has(VAULT_CONFIG)) void settings.reload(); // changed on another device
-    parts.diskChanged(changed); // another device sealed the open note
-    void refresh();
-  });
-
-  const stopSettings = settings.onChange((values, before) => {
-    panes.setTwo(values['layout.panes'] === 'two'); // redraws when it changes
-    if (
-      values['books.numerals'] !== before['books.numerals'] ||
-      values['appearance.scheme'] !== before['appearance.scheme']
-    ) {
-      void redraw();
-    }
-  });
-
-  const onBlur = () => void note.flush();
-  window.addEventListener('blur', onBlur);
-  const onMenu = bridge.onMenu((command) =>
-    runCommand(command, {
+  const stopFollowing = follow({
+    vault: bridge.vault,
+    note,
+    settings,
+    panes,
+    menu,
+    refresh,
+    redraw,
+    organizer,
+    tree: sidebar.element,
+    act,
+    listOrdered: () => draw.listOrdered,
+    showFolder: (path) => choose({ kind: 'folder', path }),
+    tell,
+    commands: {
       page,
       panes,
       sidebar,
@@ -277,17 +278,11 @@ export async function showVault(
       newNote: () => void newNote(),
       drawList: () => draw.list(),
       parts,
-      importFolder: () =>
-        void importFolder({
-          vault: bridge.vault,
-          act,
-          showFolder: (path) => choose({ kind: 'folder', path }),
-          tell,
-        }),
-    }),
-  );
+    },
+  });
   await refresh();
   return {
+    back: () => phone.back(),
     // The note's words first; then a seal or a move under way finishes (a quit waits for both).
     flush: async () => {
       await note.flush();
@@ -295,13 +290,11 @@ export async function showVault(
     },
     stop: async () => {
       await note.flush();
-      stopWatching();
-      stopSettings();
-      onMenu();
+      stopFollowing();
       panes.stop();
+      phone.stack.stop();
       notice.stop();
       parts.stop();
-      window.removeEventListener('blur', onBlur);
     },
   };
 }
