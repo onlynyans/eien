@@ -14,6 +14,19 @@ control has a tooltip. Things to try:
 - right-clicking a row, or F2, or double-clicking a name;
 - the two weight sliders, and C's strip ground.
 
+## Third pass (2026-10-21)
+
+- **The sidebar's head is as it was** in all three: the seal and the
+  vault's name on the 56px band beside the traffic lights.
+- **The seal button** has no background, and its hairline shows only on
+  hover, in `--eien-rule`.
+- **C's running head is a single 40px strip** across the whole window
+  again, with the traffic lights in it. That compact strip is what sets C
+  apart. The sidebar's head sits under the lights, at the sidebar's left,
+  with no rule under it.
+- **The formatting bar is drawn icons:** bold, italic, underline and
+  strikethrough are pen-line icons like the rest, not letters.
+
 ## Second pass (2026-10-21)
 
 - **Fixed: the pane chevrons.** In A and B the ‹ that shuts a pane spanned

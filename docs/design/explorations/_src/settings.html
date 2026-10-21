@@ -115,6 +115,29 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .theme__name { font-size: var(--eien-size-row); } .theme__kanji { font-family: var(--eien-face-seal); color: var(--eien-pencil); margin-left: 6px; }
 .knob { display: grid; grid-template-columns: 110px 1fr 46px; align-items: center; gap: 8px; max-width: 520px; margin-bottom: 8px; }
 .knob output { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); text-align: right; }
+/* The Custom tab: a new-theme card, and the mix of the one chosen */
+.theme--new { place-content: center; justify-items: center; min-height: 104px; border-style: dashed; border-color: var(--eien-rule-strong); color: var(--eien-pencil); }
+.theme--new:hover { color: var(--eien-ink); border-color: var(--eien-focus); }
+.theme--new svg { width: 18px; height: 18px; }
+.mix { margin-top: 16px; padding: 16px 18px 12px; max-width: 640px; background: var(--eien-band); border: var(--eien-hairline) solid var(--eien-rule-soft); border-radius: var(--eien-radius-m); }
+.mix__head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.mix__name { all: unset; flex: 1; min-width: 0; font-family: var(--eien-face-text); font-size: var(--eien-size-heading); color: var(--eien-ink); caret-color: var(--eien-seal);
+  border-bottom: var(--eien-hairline) solid transparent; }
+.mix__name:hover { border-bottom-color: var(--eien-rule); }
+.mix__name:focus { border-bottom-color: var(--eien-focus); }
+.mix__file { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); color: var(--eien-pencil); white-space: nowrap; }
+.mix__head .icon-button:hover { color: var(--eien-removed); }
+.mix__preview { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; margin-bottom: 16px; }
+.mix__chips { display: flex; height: 26px; border-radius: var(--eien-radius-s); overflow: hidden; box-shadow: inset 0 0 0 1px var(--eien-rule); }
+.mix__chips i { flex: 1; }
+.mix__chips .chip-ink { flex: 2; display: grid; align-content: center; gap: 3px; padding: 0 10px; }
+.mix__chips .chip-ink b { height: 3px; border-radius: 2px; }
+.mix__chips .chip-ink b:nth-child(2) { width: 75%; } .mix__chips .chip-ink b:nth-child(3) { width: 50%; }
+.hue { appearance: none; width: 100%; height: 8px; border-radius: var(--eien-radius-dot); background: var(--track); box-shadow: inset 0 0 0 1px var(--eien-rule); cursor: pointer; }
+.hue::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); box-shadow: var(--eien-shadow-float); }
+.hue:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 4px; }
+.mix__saved { margin: 4px 0 0; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); color: var(--eien-faded); }
+.verdict { margin: 10px 0 0; }
 textarea { width: 100%; max-width: 640px; min-height: 260px; resize: vertical; font-family: var(--eien-face-mono); font-size: 12px; line-height: 1.5; color: var(--eien-ink);
   background: var(--eien-well); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); padding: 12px; }
 textarea:focus { outline: none; border-color: var(--eien-focus); }
@@ -191,8 +214,7 @@ const CATEGORIES = [
   ] },
   { name: 'Themes', icon: 'palette', tabs: [
     { name: 'Gallery', kind: 'gallery' },
-    { name: 'Mix your own', kind: 'mix' },
-    { name: 'From a file', kind: 'file' },
+    { name: 'Custom', kind: 'custom' },
   ] },
   { name: 'Writing', icon: 'live', tabs: [
     { name: 'Lists', settings: [
@@ -207,7 +229,13 @@ const CATEGORIES = [
 ];
 const v = { theme: 'light', ground: 'desk', density: 'comfortable', face: 'newsreader', machine: 'plex-mono', size: 100, weightTree: 400, weightList: 400,
   frame: 'sheet', numerals: 'roman', panes: '3', arrange: 'drag', typewriter: 'off', focus: 'off', themeId: 'washi' };
-const knobs = { paper: 38, warmth: 18, ink: 30, seal: 12 };
+// Your own themes: each a file in .eien/themes/ (its name, and the four choices it was mixed from).
+// The Custom tab lists whatever files are there; the Gallery lists Eien's own.
+const CUSTOM = [
+  { file: 'late-train.json', name: 'Late Train', knobs: { paper: 215, warmth: 10, ink: 225, seal: 8 } },
+  { file: 'orchard.json', name: 'Orchard', knobs: { paper: 42, warmth: 30, ink: 120, seal: 20 } },
+];
+let customShown = null; // the file whose mix is open
 let shown = ['Look', 'Appearance'];
 
 function apply() {
@@ -237,16 +265,37 @@ const KINDS = {
 };
 const settingHtml = (s) => `<div class="setting">${head(s)}${KINDS[s.kind](s)}</div>`;
 
+/** A theme as a card: its desk, its paper with the ink on it by day, its paper and seal by night. */
+const themeCard = (th, attrs) => `<button class="theme" ${attrs}><span class="theme__sw"><i style="background:${th.t.desk[0]}"></i><i style="background:${th.t.paper[0]}"><span class="ink" style="background:${th.t.ink[0]}"></span></i><i style="background:${th.t.paper[1]}"><span class="dot" style="background:${th.t.seal[1]}"></span></i></span>
+  <span><span class="theme__name">${th.name}</span>${th.kanji ? `<span class="theme__kanji">${th.kanji}</span>` : ''}</span><span class="label" style="font-size:9px">${th.note}</span></button>`;
+const slug = (name) => `${name.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-') || 'untitled'}.json`;
+const KNOBS = [['paper', 'Paper', 360], ['warmth', 'Warmth', 40], ['ink', 'Ink', 360], ['seal', 'Seal', 360]];
+/** The track of a knob shows what it chooses between: the hues themselves, or neutral to warm paper. */
+function track(k, kn) {
+  const stops = (f) => Array.from({ length: 13 }, (_, i) => f(i * 30)).join(', ');
+  if (k === 'warmth') return `linear-gradient(90deg, ${hsl(kn.paper, 0, 90)}, ${hsl(kn.paper, 40, 88)})`;
+  if (k === 'paper') return `linear-gradient(90deg, ${stops((h) => hsl(h, Math.max(kn.warmth, 18), 86))})`;
+  if (k === 'ink') return `linear-gradient(90deg, ${stops((h) => hsl(h, 48, 28))})`;
+  return `linear-gradient(90deg, ${stops((h) => hsl(h, 63, 47))})`;
+}
+const chips = (th, s) => ['desk', 'band', 'paper', 'selected'].map((k) => `<i style="background:${th.t[k][s]}"></i>`).join('')
+  + `<i class="chip-ink" style="background:${th.t.paper[s]}"><b style="background:${th.t.ink[s]}"></b><b style="background:${th.t['ink-soft'][s]}"></b><b style="background:${th.t.pencil[s]}"></b></i><i style="background:${th.t.seal[s]}"></i>`;
+
 function themeBody(kind) {
-  if (kind === 'gallery') return `<p class="setting__desc" style="margin-bottom:14px">Each keeps Eien’s order of surfaces and its contrast, by day and by night. Your own join these.</p>
-    <div class="gallery">${Object.entries(THEMES).map(([id, th]) => `<button class="theme" ${radio('themeId', id)}><span class="theme__sw"><i style="background:${th.t.desk[0]}"></i><i style="background:${th.t.paper[0]}"><span class="ink" style="background:${th.t.ink[0]}"></span></i><i style="background:${th.t.paper[1]}"><span class="dot" style="background:${th.t.seal[1]}"></span></i></span>
-      <span><span class="theme__name">${th.name}</span><span class="theme__kanji">${th.kanji}</span></span><span class="label" style="font-size:9px">${th.note}</span></button>`).join('')}</div>`;
-  if (kind === 'mix') return `<p class="setting__desc" style="margin-bottom:14px">Four choices, and every colour worked out from them, day and night. The surfaces keep their steps, so it stays legible whatever you pick.</p>
-    ${[['paper', 'Paper hue', 360], ['warmth', 'Warmth', 40], ['ink', 'Ink hue', 360], ['seal', 'Seal hue', 360]].map(([k, label, max]) =>
-      `<label class="knob"><span class="label">${label}</span><input type="range" min="0" max="${max}" value="${knobs[k]}" data-knob="${k}" /><output>${knobs[k]}</output></label>`).join('')}
-    <div class="verdict" id="verdict"></div><p><button class="word-button" id="to-file">Save to .eien/themes</button></p>`;
-  return `<p class="setting__desc" style="margin-bottom:10px">A theme is a JSON file in .eien/themes/, so it syncs with the vault. Only Eien’s tokens are taken, and only colours; anything else is named here and left out.</p>
-    <textarea id="json" spellcheck="false" aria-label="Theme file"></textarea><div class="errors" id="errors"></div>`;
+  if (kind === 'gallery') return `<p class="setting__desc" style="margin-bottom:14px">Eien’s own themes. Each keeps Eien’s order of surfaces and its contrast, by day and by night.</p>
+    <div class="gallery">${Object.entries(THEMES).map(([id, th]) => themeCard(th, radio('themeId', id))).join('')}</div>`;
+  const open = CUSTOM.find((c) => c.file === customShown);
+  const mixed = open && mixTheme(open.knobs, open.name);
+  return `<p class="setting__desc" style="margin-bottom:14px">Your own themes. Each is a file in <code>.eien/themes/</code>, so it travels with the vault to every device. Choose one to wear it and change it, or make a new one.</p>
+    <div class="gallery">${CUSTOM.map((c) => themeCard(mixTheme(c.knobs, c.name), `role="radio" aria-checked="${c.file === customShown}" data-custom="${c.file}"`)).join('')}
+      <button class="theme theme--new" data-new>${icon('plus')}<span class="theme__name">New theme</span><span class="label" style="font-size:9px">Mixed from four choices</span></button></div>
+    ${open ? `<section class="mix" aria-label="${open.name}">
+      <div class="mix__head"><input class="mix__name" id="mix-name" value="${open.name}" aria-label="Theme name" spellcheck="false" />
+        <span class="mix__file" id="mix-file">.eien/themes/${open.file}</span>
+        <button class="icon-button" data-trash-theme data-icon="trash" data-tip="Send to the trash" aria-label="Send ${open.name} to the trash"></button></div>
+      <div class="mix__preview"><span class="label">Day</span><span class="mix__chips" id="chips-day">${chips(mixed, 0)}</span><span class="label">Night</span><span class="mix__chips" id="chips-night">${chips(mixed, 1)}</span></div>
+      ${KNOBS.map(([k, label, max]) => `<label class="knob"><span class="label">${label}</span><input class="hue" type="range" min="0" max="${max}" value="${open.knobs[k]}" data-knob="${k}" style="--track:${track(k, open.knobs)}" /><output>${open.knobs[k]}</output></label>`).join('')}
+      <p class="verdict" id="verdict"></p><p class="mix__saved" id="saved">Saved as you go.</p></section>` : ''}`;
 }
 /** Whether a theme keeps Eien's contrast: text 4.5:1, faded 3:1, on every surface, day and night. */
 function verdict(theme) {
@@ -257,24 +306,6 @@ function verdict(theme) {
   }
   return bad;
 }
-function readFile() {
-  const errors = []; let data;
-  try { data = JSON.parse(document.getElementById('json').value); } catch (e) { document.getElementById('errors').textContent = `Not JSON yet: ${e.message}`; return; }
-  const t = {};
-  for (const [key, value] of Object.entries(data.tokens ?? {})) {
-    const k = key.replace(/^--eien-/, '');
-    if (!THEME_TOKENS.includes(k)) { errors.push(`${key}: not one of Eien's tokens, left out`); continue; }
-    const m = /^light-dark\(\s*(#[0-9a-f]{6})\s*,\s*(#[0-9a-f]{6})\s*\)$/i.exec(value);
-    if (!m) { errors.push(`${key}: write it as light-dark(#rrggbb, #rrggbb)`); continue; }
-    t[k] = [m[1], m[2]];
-  }
-  for (const k of THEME_TOKENS) t[k] ??= THEMES.washi.t[k];
-  const theme = { name: data.name ?? 'Untitled', t };
-  errors.push(...verdict(theme).map((b) => `under Eien's contrast: ${b}`));
-  document.getElementById('errors').textContent = errors.join('\n');
-  applyTheme(theme);
-}
-const fileOf = (theme) => JSON.stringify({ name: theme.name, tokens: Object.fromEntries(THEME_TOKENS.map((k) => [`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`])) }, null, 2);
 
 function draw() {
   const [cat, tabName] = shown;
@@ -295,14 +326,53 @@ function wire(tab) {
     apply(); draw();
   };
   for (const b of document.querySelectorAll('[data-step]')) b.onclick = () => { v.size = Math.max(90, Math.min(130, v.size + +b.dataset.step)); apply(); draw(); };
-  if (tab.kind === 'mix') {
-    const mix = () => { const th = mixTheme(knobs); applyTheme(th); const bad = verdict(th); const el = document.getElementById('verdict');
-      el.textContent = bad.length ? `Under Eien's contrast: ${bad[0]}` : 'Every ink keeps Eien’s contrast, by day and by night.'; el.classList.toggle('bad', bad.length > 0); };
-    for (const r of document.querySelectorAll('[data-knob]')) r.oninput = () => { knobs[r.dataset.knob] = +r.value; r.nextElementSibling.textContent = r.value; mix(); };
-    document.getElementById('to-file').onclick = () => { const th = mixTheme(knobs); shown = ['Themes', 'From a file']; draw(); document.getElementById('json').value = fileOf(th); readFile(); };
-    mix();
-  }
-  if (tab.kind === 'file') { const j = document.getElementById('json'); if (!j.value) j.value = fileOf(THEMES.kinari); j.oninput = readFile; readFile(); }
+  if (tab.kind === 'custom') wireCustom();
+}
+/** The Custom tab: choose a file to wear it; its mix changes in place, and is saved as it changes. */
+function wireCustom() {
+  for (const b of document.querySelectorAll('[data-custom]')) b.onclick = () => { customShown = b.dataset.custom; wear(); draw(); };
+  document.querySelector('[data-new]').onclick = () => {
+    let n = 1; while (CUSTOM.some((c) => c.name === (n === 1 ? 'Untitled' : `Untitled ${n}`))) n++;
+    const name = n === 1 ? 'Untitled' : `Untitled ${n}`;
+    CUSTOM.push({ file: slug(name), name, knobs: { paper: 38, warmth: 18, ink: 30, seal: 12 } });
+    customShown = slug(name); wear(); draw();
+    const field = document.getElementById('mix-name'); field.focus(); field.select();
+  };
+  const open = CUSTOM.find((c) => c.file === customShown);
+  if (!open) return;
+  const said = (text) => { document.getElementById('saved').textContent = text; };
+  const name = document.getElementById('mix-name');
+  name.onchange = () => {
+    const next = name.value.trim() || 'Untitled';
+    if (CUSTOM.some((c) => c !== open && slug(c.name) === slug(next))) { said(`“${next}” is a theme already: it keeps its name.`); name.value = open.name; return; }
+    open.name = next; open.file = slug(next); customShown = open.file; draw(); said(`Renamed: .eien/themes/${open.file}`);
+  };
+  name.onkeydown = (e) => { if (e.key === 'Enter') name.blur(); if (e.key === 'Escape') { name.value = open.name; name.blur(); } };
+  for (const r of document.querySelectorAll('[data-knob]')) r.oninput = () => {
+    open.knobs[r.dataset.knob] = +r.value; r.nextElementSibling.textContent = r.value;
+    for (const t of document.querySelectorAll('[data-knob]')) t.style.setProperty('--track', track(t.dataset.knob, open.knobs));
+    const th = wear();
+    document.getElementById('chips-day').innerHTML = chips(th, 0);
+    document.getElementById('chips-night').innerHTML = chips(th, 1);
+    const card = document.querySelector(`[data-custom="${open.file}"]`);
+    if (card) card.outerHTML = themeCard(th, `role="radio" aria-checked="true" data-custom="${open.file}"`);
+    for (const b of document.querySelectorAll('[data-custom]')) b.onclick = () => { customShown = b.dataset.custom; wear(); draw(); };
+    said(`Saved to .eien/themes/${open.file}`);
+  };
+  document.querySelector('[data-trash-theme]').onclick = () => {
+    CUSTOM.splice(CUSTOM.indexOf(open), 1); customShown = null; applyTheme(THEMES[v.themeId]); draw();
+  };
+  wear();
+}
+/** Wear the open custom theme on the whole window; say whether it keeps Eien's contrast. */
+function wear() {
+  const open = CUSTOM.find((c) => c.file === customShown);
+  if (!open) return null;
+  const th = mixTheme(open.knobs, open.name);
+  applyTheme(th);
+  const el = document.getElementById('verdict');
+  if (el) { const bad = verdict(th); el.textContent = bad.length ? `Under Eien's contrast: ${bad[0]}` : 'Every ink keeps Eien’s contrast, by day and by night.'; el.classList.toggle('bad', bad.length > 0); }
+  return th;
 }
 
 // Moving and resizing: within the window, never smaller than it can be used.
@@ -324,8 +394,8 @@ function drag(e, how) {
   const move = (m) => {
     const dx = m.clientX - x0, dy = m.clientY - y0, b = { ...start };
     if (how === 'move') { b.x += dx; b.y += dy; }
-    if (how.includes('e')) b.w += dx;
-    if (how.includes('s')) b.h += dy;
+    if (how === 'e' || how === 'se') b.w += dx;
+    if (how === 's' || how === 'se') b.h += dy;
     place(b);
   };
   const up = () => { over.classList.remove('is-moving'); removeEventListener('pointermove', move); removeEventListener('pointerup', up); };

@@ -62,6 +62,14 @@ const canDrag = (pane) => !lensOn(pane) && (setting === 'drag' || arranging[pane
   not two. Carmine and a strike for "kept out" are the same marks Compare
   uses for removed words, so they read at once.
 
+## Third pass
+
+- **The grip** sits at a row's own left edge, so it never covers the guide
+  line of a nested branch.
+- **The list has a drop line too:** a 2px line in ink-soft (`--eien-mark-w`,
+  `--eien-ink-soft`), the list's full width, above or below the row you're
+  over, as the tree's marker is.
+
 ## Open
 
 - **The two-pane tree** lists notes too. A lens there would act as it does

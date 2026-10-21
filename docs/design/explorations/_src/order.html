@@ -68,7 +68,9 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hi
 .row .tw.leaf::before { content: none; }
 .row .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row .hash { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
-.grip { width: 14px; height: 18px; color: var(--eien-faded); display: inline-grid; place-items: center; visibility: hidden; cursor: grab; flex: none; margin-left: -18px; }
+.grip { width: 14px; height: 18px; color: var(--eien-faded); display: inline-grid; place-items: center; visibility: hidden; cursor: grab; flex: none; }
+/* In the tree the grip sits at the row's own left edge, clear of the guide lines at every depth. */
+.row .grip { position: absolute; left: 1px; top: 50%; translate: 0 -50%; }
 .grip svg { width: 14px; height: 14px; }
 .can-drag .row:hover .grip, .can-drag .nrow:hover .grip, .is-arranging .grip { visibility: visible; }
 .is-arranging { background: color-mix(in srgb, var(--eien-selected) 40%, transparent); }
@@ -80,6 +82,10 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hi
 .marker__out { position: absolute; top: -18px; left: 0; white-space: nowrap; font-family: var(--eien-face-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--eien-ink-soft); background: var(--eien-paper-raised); padding: 0 4px; border-radius: var(--eien-radius-s); border: 1px solid var(--eien-rule); }
 .nrow { position: relative; display: grid; grid-template-columns: 14px 1fr auto; gap: 2px 10px; padding: 10px 16px 10px 12px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); color: var(--eien-ink-soft); }
 .nrow .grip { margin-left: 0; }
+/* Where a dragged note will land: a line the list's full width, in ink, as the tree's marker is. */
+.nrow.drop-before::after, .nrow.drop-after::after { content: ''; position: absolute; left: 0; right: 0; height: var(--eien-mark-w); background: var(--eien-ink-soft); pointer-events: none; z-index: 2; }
+.nrow.drop-before::after { top: calc(var(--eien-mark-w) / -2); }
+.nrow.drop-after::after { bottom: calc(var(--eien-mark-w) / -2); }
 .nrow .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nrow .p { grid-column: 2 / -1; font-size: var(--eien-size-preview); color: var(--eien-pencil); }
 .nrow .tg { font-family: var(--eien-face-mono); font-size: 10px; color: var(--eien-pencil); }
@@ -279,9 +285,25 @@ function wire() {
   }
   for (const row of document.querySelectorAll('.nrow')) {
     row.ondragstart = () => { dragging = { which: 'list', id: +row.dataset.note }; row.classList.add('is-dragging'); };
-    row.ondragend = () => row.classList.remove('is-dragging');
-    row.ondragover = (e) => { if (dragging?.which === 'list' && canDrag('list')) e.preventDefault(); };
-    row.ondrop = (e) => { e.preventDefault(); const from = NOTES.findIndex((n) => n.id === dragging.id); const [n] = NOTES.splice(from, 1); NOTES.splice(NOTES.findIndex((x) => x.id === +row.dataset.note), 0, n); log(`“${n.t}” moved, in your order.`); dragging = null; draw(); };
+    const unmark = () => { for (const r of document.querySelectorAll('.drop-before, .drop-after')) r.classList.remove('drop-before', 'drop-after'); };
+    row.ondragend = () => { row.classList.remove('is-dragging'); unmark(); };
+    row.ondragover = (e) => {
+      if (dragging?.which !== 'list' || !canDrag('list')) return;
+      e.preventDefault();
+      const r = row.getBoundingClientRect();
+      const place = e.clientY - r.top < r.height / 2 ? 'before' : 'after';
+      if (!row.classList.contains(`drop-${place}`)) { unmark(); row.classList.add(`drop-${place}`); }
+      row.dataset.place = place;
+    };
+    row.ondragleave = (e) => { if (!row.contains(e.relatedTarget)) row.classList.remove('drop-before', 'drop-after'); };
+    row.ondrop = (e) => {
+      e.preventDefault(); unmark();
+      if (!dragging || dragging.id === +row.dataset.note) return;
+      const [n] = NOTES.splice(NOTES.findIndex((x) => x.id === dragging.id), 1);
+      const at = NOTES.findIndex((x) => x.id === +row.dataset.note) + (row.dataset.place === 'after' ? 1 : 0);
+      NOTES.splice(at, 0, n);
+      log(`“${n.t}” placed ${row.dataset.place} “${row.querySelector('.t').textContent}”, in your order.`); dragging = null; draw();
+    };
   }
 }
 document.addEventListener('click', (e) => { if (!e.target.closest('.menu') && !e.target.closest('[data-open]')) for (const m of document.querySelectorAll('.menu')) m.hidden = true; });

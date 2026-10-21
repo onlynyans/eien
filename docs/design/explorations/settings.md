@@ -29,7 +29,7 @@
   | Category | Tabs |
   |---|---|
   | Look | Appearance, Type, Page |
-  | Themes | Gallery, Mix your own, From a file |
+  | Themes | Gallery, Custom |
   | Writing | Lists, Editor |
 
 - **The voice:**
@@ -45,13 +45,20 @@
   - **Arranging** (Writing / Lists): Drag anytime, or In Arrange mode (see
     [order.md](order.md)).
   - **Focus mode** (Writing / Editor).
-- **Themes** are three tabs, and choosing a theme paints the whole window
-  behind, live:
+- **Fixed:** moving the sheet by its head no longer widens it.
+- **Themes** are two tabs (decided 2026-10-21), and choosing a theme paints
+  the whole window behind, live:
   - **Gallery:** Eien's own themes, side by side.
-  - **Mix your own:** the four-knob maker, renamed, with a line that says
-    whether the mix keeps Eien's contrast.
-  - **From a file:** the JSON, checked as it's typed. A contrast shortfall
-    is named here too.
+  - **Custom:** your own themes, each a named file in `.eien/themes/`, as
+    the same swatch cards as the Gallery, plus a "New theme" card.
+    - The chosen one opens its mix: its name, editable in place; its file;
+      the trash; day and night strips; four knobs whose tracks show the
+      colours they choose between; and a contrast verdict.
+    - It's saved as it changes. Renaming renames the file.
+    - Several files make several themes. The tab lists whatever is in the
+      folder, and each card's colours are worked out from the file's mix.
+      The Gallery's cards are worked out the same way, from Eien's own
+      built-in list.
 - **Underneath, it's data:** categories, tabs and settings in one list, each
   setting drawn by its kind (choice, swatches, faces, stepper, weights). It's
   the same shape as `core/config/schema.ts` plus a `category` and `tab` per
@@ -59,9 +66,6 @@
 
 ## Open
 
-- **"Mix your own"** is the name for the maker. Others that fit Eien's
-  world: "Grind your own" (as ink is ground on the inkstone), or "Your own
-  colours". It's your call.
 - **Whether the vault's own settings** (chapter numbers, AO3 scene breaks)
   get their own category, "This vault". The spec keeps them apart from this
   device's settings, and the category label is where that could show.

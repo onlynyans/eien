@@ -14,7 +14,7 @@
 /* B · Slip: no page band; tools on a raised slip; softer corners. */
 :root[data-x='b'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; --sheet-radius: 3px; --band: 56px; --top: 0px; }
 /* C · Running head: one strip across the window, like a book's running head. */
-:root[data-x='c'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; --sheet-radius: 0; --band: 48px; --top: 48px; }
+:root[data-x='c'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; --sheet-radius: 0; --band: 48px; --top: 40px; }
 /* A shut sidebar keeps a strip of desk: the traffic lights and the seal, which opens it again. */
 :root { --strip: 76px; --runhead-ground: var(--eien-desk); }
 
@@ -38,17 +38,16 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .window.no-list, .window.two-panes { --ls: 0px; }
 .window.two-panes { --sb: 320px; }
 .lights { position: absolute; z-index: 30; top: 18px; left: 16px; display: flex; gap: 8px; }
-:root[data-x='c'] .lights { top: 18px; }
+:root[data-x='c'] .lights { top: 14px; }
 .lights i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.15); }
 .lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
 .drag-note { position: absolute; z-index: 29; top: 0; left: 0; right: 0; height: 10px; }
 
 /* C: the running head across the window */
-.runhead { display: none; grid-column: 2 / -1; grid-row: 1; align-items: center; gap: var(--eien-space-1);
-  padding: 0 var(--eien-space-3); background: var(--runhead-ground); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
-/* C: the sidebar keeps its own head at the top left, beside the running head. */
-:root[data-x='c'] .sidebar { grid-row: 1 / -1; }
-:root[data-x='c'] .sidebar__head { height: var(--top); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.runhead { display: none; grid-column: 1 / -1; grid-row: 1; align-items: center; gap: var(--eien-space-1);
+  padding: 0 var(--eien-space-3) 0 84px; background: var(--runhead-ground); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+/* C: the sidebar's head sits under the traffic lights, at the sidebar's left, with no rule under it. */
+:root[data-x='c'] .sidebar__head { height: 48px; padding-left: var(--eien-space-4); }
 :root[data-x='c'] .runhead { display: flex; }
 .runhead__crumbs { flex: 1; text-align: center; }
 .runhead .views { margin-right: var(--eien-space-2); }
@@ -65,11 +64,11 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .window.two-panes .sidebar__inner { min-width: 300px; }
 .sidebar__inner { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .strip { display: none; flex-direction: column; align-items: center; padding-top: calc(var(--top, 0px) + 48px); gap: var(--eien-space-2); }
-:root[data-x='c'] .strip { padding-top: 44px; }
+:root[data-x='c'] .strip { padding-top: var(--eien-space-3); }
 .window.no-sidebar .sidebar__inner { display: none; }
 .window.no-sidebar .strip { display: flex; }
-.strip .seal-button { appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; padding: 4px; cursor: pointer; }
-.strip .seal-button:hover { border-color: var(--eien-rule); }
+.seal-button { appearance: none; display: grid; place-items: center; padding: 4px; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; cursor: pointer; }
+@media (hover: hover) { .seal-button:hover { border-color: var(--eien-rule); } }
 .strip .icon-button { opacity: 0; } .sidebar:hover .strip .icon-button, .strip .icon-button:focus-visible { opacity: 1; }
 
 /* Pane chevrons (#15). A pane's ‹ shuts it; the way back is a › in the same
@@ -194,8 +193,6 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 /* Formatting bar (#14): A in the band's second row; B a slip at the sheet's top; C a rail in the margin. */
 .fmt { display: none; align-items: center; gap: 1px; }
 .fmt .icon-button { width: 26px; height: 26px; }
-.fmt .letter { font-family: var(--eien-face-text); font-size: 15px; line-height: 1; }
-.fmt .letter--i { font-style: italic; } .fmt .letter--b { font-weight: 700; } .fmt .letter--u { text-decoration: underline; text-underline-offset: 2px; } .fmt .letter--s { text-decoration: line-through; }
 .page.show-fmt .fmt { display: flex; }
 :root[data-x='a'] .fmt { grid-row: 1; justify-content: center; padding: 3px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
 :root[data-x='b'] .fmt { position: absolute; z-index: 6; top: 12px; left: 50%; translate: -50% 0; padding: 3px; background: var(--eien-paper-raised);
@@ -331,7 +328,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
         <button class="icon-button" data-icon="right" data-act="sidebar" data-tip="Show the sidebar ⌘\" data-tip-side="right" aria-label="Show the sidebar"></button>
       </div>
       <div class="sidebar__inner">
-      <div class="sidebar__head"><button class="seal-button" data-act="sidebar" data-tip="Hide the sidebar ⌘\" aria-label="Hide the sidebar"><span class="seal">永</span></button><span class="vault-name">Ink &amp; Ash</span></div>
+      <div class="sidebar__head"><span class="seal">永</span><span class="vault-name">Ink &amp; Ash</span></div>
       <div class="sidebar__search"><div class="search-wrap"><span data-icon="search"></span><input class="field" type="search" placeholder="Search Ink & Ash" /></div></div>
       <div class="sidebar__scroll" id="tree"></div>
       <footer class="sidebar__foot">
@@ -481,11 +478,10 @@ function viewsHtml() {
   return ['live', 'source', 'reading'].map((v) => `<button class="icon-button" data-icon="${v}" data-view="${v}" aria-pressed="${state.view === v}"
     data-tip="${{ live: 'Live: formatting shown', source: 'Source: the Markdown', reading: 'Reading: read only' }[v]} ⌘E" aria-label="${v}"></button>`).join('');
 }
-const FMT = [['b', 'B', 'Bold ⌘B'], ['i', 'I', 'Italic ⌘I'], ['u', 'U', 'Underline ⌘U'], ['s', 'S', 'Strikethrough ⇧⌘X'], ['|'], ['heading', '', 'Heading ⌘⌥1–3'], ['highlight', '', 'Highlight ⇧⌘H'], ['link', '', 'Link ⌘K'], ['|'], ['quote', '', 'Quote ⇧⌘.'], ['bullets', '', 'List ⇧⌘8'], ['numbers', '', 'Numbered ⇧⌘7'], ['checklist', '', 'Checklist ⇧⌘9']];
+const FMT = [['bold', 'Bold ⌘B'], ['italic', 'Italic ⌘I'], ['underline', 'Underline ⌘U'], ['strike', 'Strikethrough ⇧⌘X'], ['|'], ['heading', 'Heading ⌘⌥1–3'], ['highlight', 'Highlight ⇧⌘H'], ['link', 'Link ⌘K'], ['|'], ['quote', 'Quote ⇧⌘.'], ['bullets', 'List ⇧⌘8'], ['numbers', 'Numbered ⇧⌘7'], ['checklist', 'Checklist ⇧⌘9']];
 function drawFmt() {
   const side = document.documentElement.dataset.x === 'c' ? 'right' : '';
-  $('.fmt').innerHTML = FMT.map(([k, letter, tip]) => k === '|' ? '<span class="sep"></span>'
-    : letter ? `<button class="icon-button" data-tip="${tip}" ${side ? `data-tip-side="${side}"` : ''} aria-label="${tip}"><span class="letter letter--${k}">${letter}</span></button>`
+  $('.fmt').innerHTML = FMT.map(([k, tip]) => k === '|' ? '<span class="sep"></span>'
     : `<button class="icon-button" data-icon="${k}" data-tip="${tip}" ${side ? `data-tip-side="${side}"` : ''} aria-label="${tip}"></button>`).join('');
   drawIcons($('.fmt'));
 }

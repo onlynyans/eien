@@ -1,8 +1,9 @@
 # Writer themes
 
-The three approaches are kept, all of them, as the three tabs of the Themes
-category in Settings: **Gallery**, **Mix your own** (the maker, renamed) and
-**From a file**. They're in [settings.html](settings.html) under Settings /
+The Themes category in Settings has two tabs (decided 2026-10-21):
+**Gallery**, Eien's own, and **Custom**, your own named themes in
+`.eien/themes/`, each made from four choices. "From a file" is gone: Custom
+writes the files. They're in [settings.html](settings.html) under Settings /
 Themes, where choosing one paints the whole window; this page keeps the
 larger preview and the full contrast table.
 
@@ -35,23 +36,24 @@ Otaku stays as it is beside them.
 
 - **A · Gallery:** choose from the themes. It's the simplest, and what most
   writers need.
-- **B · Mix your own:** three choices (the paper's hue and warmth, the ink's hue,
+- **B · Custom:** four choices (the paper's hue and warmth, the ink's hue,
   the seal's hue), and Eien works out all ten colours for day and night.
-  - The surfaces keep their steps, so contrast holds whatever you pick. I
-    checked across the range of hues and warmth: every result passes.
-  - **Save to .eien/themes** writes it as a file (it opens approach C with
-    the result).
-- **C · From a file:** the spec's format (§7) as JSON, typed or pasted.
-  - It's checked as you type: only Eien's tokens, and only colours written
-    `light-dark(#day, #night)`.
-  - Anything else is named and left out, never applied. A missing token
-    falls back to Washi's.
-  - A theme in `.eien/themes/` syncs with the vault to every device.
+  - The inks keep their hue, saturated enough to see by day. Each is then
+    fitted to Eien's contrast (`fitInk`): it starts where it should sit and
+    steps darker by day, or lighter by night, until every surface reaches
+    4.5:1 (3:1 for faded).
+  - I checked 2,880 mixes (paper and ink hues in 15° steps, warmth 0 to 40
+    in steps of 10): every one passes, by day and night.
+  - Each custom theme is a named file in `.eien/themes/`, which syncs with
+    the vault. Settings / Themes / Custom lists them as cards and mixes
+    them (see [settings.md](settings.md)).
+- **"From a file" was dropped** on 2026-10-21: Custom writes the files, so
+  there's nothing to type by hand.
 
 ## Recommendation
 
-- **All three, as one category:** Settings / Themes, with Gallery, Mix your
-  own and From a file as its tabs (decided 2026-10-21).
+- **One category of two tabs:** Settings / Themes, with Gallery and Custom
+  (decided 2026-10-21).
 - **Ship the gallery's themes first.** They need nothing but tokens, the
   same mechanism Otaku already uses.
 

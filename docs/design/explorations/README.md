@@ -21,7 +21,7 @@ Then open <http://127.0.0.1:4173/explorations/overall.html>.
 | [specimen.html](specimen.html) · [md](specimen.md) | The icon set, the control's states, three corner scales, the machine voice in every face, row weights | #24–#27 |
 | [settings.html](settings.html) · [md](settings.md) | Settings over the window (chosen): moved and resized, a breadcrumb, category labels, Themes as a category | #18, #20, #24, #25 |
 | [tags.html](tags.html) · [md](tags.md) | Tags on the page: the running head (chosen), label slips, the note's card; a tag with no notes yet | #4, #13 |
-| [themes.html](themes.html) · [md](themes.md) | Six new themes beside Washi; Gallery, Mix your own, From a file; contrast checked live | #20 |
+| [themes.html](themes.html) · [md](themes.md) | Six new themes beside Washi; Gallery and Custom; contrast checked live | #20 |
 | [order.html](order.html) · [md](order.md) | Your order and a lens over it, across both panes; moving folders out; drag anytime or Arrange mode; a three-way tag filter | #12 |
 
 The pages are built from `_src/` by `python3 _build.py`, which puts the

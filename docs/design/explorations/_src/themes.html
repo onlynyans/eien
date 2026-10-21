@@ -71,7 +71,7 @@ textarea:focus { outline: none; border-color: var(--eien-focus); }
 <header class="xbar">
   <span class="xbar__name">Eien · Settings / Themes</span>
   <div class="xbar__group" data-x-set="a"><span class="xbar__label">Approach</span>
-    <button class="word-button" data-value="gallery">A · Gallery</button><button class="word-button" data-value="maker">B · Mix your own</button><button class="word-button" data-value="file">C · From a file</button></div>
+    <button class="word-button" data-value="gallery">A · Gallery</button><button class="word-button" data-value="maker">B · Custom</button></div>
   <div class="xbar__group" data-x-set="scheme"><span class="xbar__label">Preview</span>
     <button class="word-button" data-value="day">Day</button><button class="word-button" data-value="night">Night</button></div>
 </header>
@@ -94,14 +94,11 @@ textarea:focus { outline: none; border-color: var(--eien-focus); }
     <section class="panel only only--gallery"><h2>Choose a theme</h2>
       <p>Each is a palette in Eien's own order (darker is further back), day and night, and each keeps the contrast Eien keeps. Washi stays the default; the rest come with Eien, and your own join them.</p>
       <div class="gallery" id="gallery" style="display:grid"></div></section>
-    <section class="panel only only--maker"><h2>Mix your own</h2>
+    <section class="panel only only--maker"><h2>Custom</h2>
       <p>Three choices, the rest worked out: the paper's hue and warmth, the ink's hue, the seal's hue. Surfaces keep their steps and the inks their contrast, by day and by night.</p>
       <div id="knobs" style="display:grid;gap:10px"></div>
       <div class="field" style="display:flex;gap:8px;align-items:center"><span class="label">Name</span><input id="maker-name" value="My Room" style="border:0;background:none;flex:1;font:inherit;outline:none" /></div>
-      <button class="word-button" id="save-json" style="justify-self:start">Save to .eien/themes</button></section>
-    <section class="panel only only--file"><h2>From a file</h2>
-      <p>A theme is a JSON file in <code>.eien/themes/</code>, so it syncs with the vault. Only Eien's tokens are taken, and only colours; anything else is named below and left out.</p>
-      <textarea id="json" spellcheck="false"></textarea><div class="errors" id="errors"></div></section>
+      <p class="xnote">In Settings / Themes / Custom, each of your themes is a named file in .eien/themes/, shown as a card like the gallery's.</p></section>
     <section class="panel" style="margin-top:var(--eien-space-4)"><h2 style="font-size:var(--eien-size-row)">Contrast, checked</h2>
       <p>Text reaches 4.5:1 on every surface it sits on; faded, for placeholders only, reaches 3:1.</p><div class="checks" id="checks"></div></section>
   </div>
@@ -135,43 +132,16 @@ document.getElementById('gallery').innerHTML = Object.entries(THEMES).map(([id, 
   <span><span class="card__name">${th.name}</span><span class="card__kanji">${th.kanji}</span></span><span class="label">${th.note}</span></button>`).join('');
 for (const c of document.querySelectorAll('.card')) c.onclick = () => paint(THEMES[c.dataset.theme]);
 
-// B · Mix your own: hue and warmth for the paper, a hue for the ink, a hue for the seal.
+// B · Custom: hue and warmth for the paper, a hue for the ink, a hue for the seal.
 const knobs = { paper: 38, warmth: 18, ink: 30, seal: 12 };
 const made = () => mixTheme(knobs, document.getElementById('maker-name').value || 'My Room');
 document.getElementById('knobs').innerHTML = [['paper', 'Paper hue', 360], ['warmth', 'Warmth', 40], ['ink', 'Ink hue', 360], ['seal', 'Seal hue', 360]].map(([k, label, max]) =>
   `<label class="knob"><span class="label">${label}</span><input type="range" min="0" max="${max}" value="${knobs[k]}" data-knob="${k}" /><output>${knobs[k]}</output></label>`).join('');
 for (const r of document.querySelectorAll('[data-knob]')) r.oninput = () => { knobs[r.dataset.knob] = +r.value; r.nextElementSibling.textContent = r.value; paint(made()); };
 document.getElementById('maker-name').oninput = () => paint(made());
-document.getElementById('save-json').onclick = () => { document.querySelector('[data-value=file]').click(); fileFrom(made()); };
-
-// C · From a file: the spec's theme format, checked as it's typed.
-function fileFrom(theme) {
-  const tokens = {};
-  for (const k of TOKENS) tokens[`--eien-${k}`] = `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`;
-  document.getElementById('json').value = JSON.stringify({ name: theme.name, tokens }, null, 2);
-  readFile();
-}
-function readFile() {
-  const errors = [];
-  let data;
-  try { data = JSON.parse(document.getElementById('json').value); } catch (e) { document.getElementById('errors').textContent = `Not JSON yet: ${e.message}`; return; }
-  const t = {};
-  for (const [key, value] of Object.entries(data.tokens ?? {})) {
-    const k = key.replace(/^--eien-/, '');
-    if (!TOKENS.includes(k)) { errors.push(`${key}: not one of Eien's tokens, left out`); continue; }
-    const m = /^light-dark\(\s*(#[0-9a-f]{6})\s*,\s*(#[0-9a-f]{6})\s*\)$/i.exec(value);
-    if (!m) { errors.push(`${key}: write it as light-dark(#rrggbb, #rrggbb)`); continue; }
-    t[k] = [m[1], m[2]];
-  }
-  for (const k of TOKENS) if (!t[k]) t[k] = THEMES.washi.t[k];
-  document.getElementById('errors').textContent = errors.join('\n');
-  paint({ name: data.name ?? 'Untitled', t });
-}
-document.getElementById('json').oninput = readFile;
 
 wireBar((attr, value) => {
   if (attr === 'a' && value === 'maker') paint(made());
-  else if (attr === 'a' && value === 'file' && !document.getElementById('json').value) fileFrom(THEMES.kinari);
   else paint(current);
 });
 </script>
