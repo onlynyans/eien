@@ -133,11 +133,6 @@ export class VaultState {
     return this.#made;
   }
 
-  /** The tags made with the sidebar's + (./organize.ts makeTag), whether notes carry them yet or not. */
-  get made(): readonly string[] {
-    return this.#made;
-  }
-
   /** The pinned notes that are there, in the order they were pinned. */
   get pins(): readonly string[] {
     return this.#pins.filter((path) => this.#notes.has(path));
