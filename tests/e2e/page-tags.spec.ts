@@ -110,6 +110,18 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       await expect(tags.locator('.tag--text')).toHaveText('#kept');
     });
 
+    test('in the narrowest page, the tags stay on it, to be seen and pressed', async ({ page }) => {
+      await page.setViewportSize({ width: 900, height: 600 }); // the page at its 360 px
+      await page.locator('.note-row', { hasText: 'Note' }).click();
+      const first = page.locator(`${PLACES[layout]} .tag`).first();
+      await expect(first).toBeVisible();
+      const sheet = await page.locator('.page').boundingBox();
+      const tag = await first.boundingBox();
+      expect(tag?.x ?? 0).toBeGreaterThanOrEqual(sheet?.x ?? 0);
+      await first.hover(); // nothing lies over it
+      await expect(first.getByRole('button', { name: 'Take #fic/aot off' })).toBeVisible();
+    });
+
     test('the # key on the page opens the field, with the keyboard in it', async ({ page }) => {
       await page.locator('.note-row', { hasText: 'Other' }).click();
       await page.locator('.title').focus();

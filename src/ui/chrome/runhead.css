@@ -94,7 +94,8 @@
 [data-layout="runhead"] .shell[data-format-bar]:not([data-phone]) .page__scroll {
   padding-left: calc(var(--eien-control) + var(--eien-space-6));
 }
-/* The tags are pills at the colophon's left (./layout-spec.ts): the counts go right. */
+/* The tags are pills at the colophon's left (./layout-spec.ts), their auto margin sending the
+   counts right; too narrow for all, it's the tags that give way, never off the page's left. */
 [data-layout="runhead"] .colophon {
-  justify-content: flex-end;
+  justify-content: flex-start;
 }

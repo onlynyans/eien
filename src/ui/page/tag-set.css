@@ -112,13 +112,16 @@
 
 /* C · Pills in the colophon, before its counts, in the words' own case. */
 .colophon__tags {
+  flex: 0 1 auto;
   margin-right: auto;
   min-width: 0;
+  overflow: hidden;
   text-transform: none;
   letter-spacing: normal;
 }
 .colophon__tags .tag-set {
   flex-wrap: nowrap;
+  justify-content: flex-start; /* in one line, what doesn't fit goes past the right end, unseen */
   overflow: hidden;
   gap: var(--eien-space-2);
 }
