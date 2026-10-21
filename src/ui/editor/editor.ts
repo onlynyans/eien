@@ -11,8 +11,14 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { syntaxTree } from '@codemirror/language';
 import { Compartment, EditorSelection, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
-import { FORMAT_COMMANDS, type FormatCommand, keyOn } from '../../core/format';
+import {
+  FORMAT_COMMANDS,
+  type FormatCommand,
+  type FormatCommandId,
+  keyOn,
+} from '../../core/format';
 import type { QuoteStyle } from '../../core/typography';
+import { activeFormats } from './active-formats';
 import { eienChange, eienUndo, writtenBy } from './eien-change';
 import { hiddenFrontMatter, keepFrontMatter, livePreview, previewMode } from './live-preview';
 import { eienMarkdown } from './syntax';
@@ -39,6 +45,8 @@ export interface EditorEvents {
   changed(text: string, written: boolean): void;
   /** A link was followed: a web address, or a [[note]] by its title. */
   follow(target: { readonly kind: 'url' | 'note'; readonly value: string }): void;
+  /** The caret moved, or the text changed under it: what's on at the caret may differ. */
+  moved?(): void;
 }
 
 export class NoteEditor {
@@ -156,6 +164,23 @@ export class NoteEditor {
     this.#view.focus();
   }
 
+  /** The Format menu's commands on at the caret (./active-formats.ts). */
+  get formats(): ReadonlySet<FormatCommandId> {
+    return activeFormats(this.#view.state);
+  }
+
+  /** The caret's line, as written. */
+  get caretLine(): string {
+    const { state } = this.#view;
+    return state.doc.lineAt(state.selection.main.head).text;
+  }
+
+  /** Choose the words from `from` to `to`, in sight, with the keyboard on them (a tag in the text). */
+  reveal(from: number, to: number): void {
+    this.#view.dispatch({ selection: EditorSelection.range(from, to), scrollIntoView: true });
+    this.#view.focus();
+  }
+
   /** Where images come from: changed when the note moves to another folder. */
   setImageLoader(loadImage: ImageLoader): void {
     this.#view.dispatch({ effects: this.#images.reconfigure(imageLoader.of(loadImage)) });
@@ -218,6 +243,7 @@ export class NoteEditor {
       this.#images.of(imageLoader.of(loadImage)),
       this.#mode.of(modeExtensions(this.#current)),
       EditorView.updateListener.of((update) => {
+        if (update.docChanged || update.selectionSet) this.#events.moved?.();
         if (!update.docChanged || this.#quiet) return;
         this.#events.changed(update.state.doc.toString(), update.transactions.some(writtenBy));
       }),

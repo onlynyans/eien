@@ -4,6 +4,7 @@
 // (./layouts.ts); how it looks right now, the vault's (../vault/chrome-wiring.ts).
 
 import type { SettingValues } from '../../core/config';
+import { FORMAT_COMMANDS, type FormatCommandId } from '../../core/format';
 import type { MenuCommand } from '../../platform/bridge';
 import type { IconName } from '../icons';
 
@@ -21,6 +22,10 @@ export interface CommandDef {
   readonly tip?: string;
   /** Its key, as CodeMirror writes keys (./keys.ts). */
   readonly key?: string;
+  /** Its key on Windows and Linux, where it isn't `key` (core/format's headings). */
+  readonly keyOffMac?: string;
+  /** `key` is the first of a run of keys, through this last one: ⌘⌥1–3 for the headings. */
+  readonly keyThrough?: string;
   /** The menu's command it runs; without one, it's the window's own (`local` in ./chrome.ts). */
   readonly sends?: MenuCommand;
   /** Drawn on a phone only: on the desktop the menu bar holds it. */
@@ -28,6 +33,33 @@ export interface CommandDef {
   /** Drawn in these layouts only: C's running head never hides, so has no strip to hide. */
   readonly layouts?: readonly Layout[];
 }
+
+/** The formatting bar's commands (#14), each the Format menu's, in the bar's order. */
+const BAR_FORMATS = {
+  bold: 'bold',
+  italic: 'italic',
+  underline: 'underline',
+  strike: 'strike',
+  highlight: 'highlight',
+  link: 'link',
+  quote: 'quote',
+  bullet: 'bullets',
+  numbered: 'numbers',
+  checklist: 'checklist',
+} as const satisfies Partial<Record<FormatCommandId, IconName>>;
+type BarFormat = keyof typeof BAR_FORMATS;
+
+/** A Format menu command as a control: its name and key are the menu's own (core/format). */
+const formatControl = (id: BarFormat) => {
+  const command = FORMAT_COMMANDS.find((each) => each.id === id);
+  return {
+    id: `format.${id}` as `format.${BarFormat}`,
+    icon: BAR_FORMATS[id],
+    label: command?.label ?? id,
+    key: command?.key,
+    sends: `format:${id}` as const,
+  };
+};
 
 export const COMMANDS = [
   { id: 'pane.sidebar', icon: 'sidebar', label: 'Sidebar', key: 'Mod-\\', sends: 'panes:sidebar' },
@@ -90,6 +122,24 @@ export const COMMANDS = [
   { id: 'panes', icon: 'panes3', label: 'Two panes' },
   { id: 'settings', icon: 'settings', label: 'Settings', key: 'Mod-,', sends: 'settings' },
   { id: 'more', icon: 'more', label: 'More', phone: true },
+  {
+    id: 'format-bar',
+    icon: 'format',
+    label: 'Formatting bar',
+    key: 'Mod-Shift-b',
+    sends: 'toggle:editor.formatBar',
+  },
+  ...(Object.keys(BAR_FORMATS) as BarFormat[]).map(formatControl),
+  // One control for the three headings: each press a level down (core/format, nextHeading).
+  {
+    id: 'format.heading',
+    icon: 'heading',
+    label: 'Heading',
+    tip: 'Heading: 1, 2, 3, then none',
+    key: 'Mod-Alt-1',
+    keyOffMac: 'Mod-Shift-1',
+    keyThrough: '3',
+  },
 ] as const satisfies readonly CommandDef[];
 
 export type CommandId = (typeof COMMANDS)[number]['id'];

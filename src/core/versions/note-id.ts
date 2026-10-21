@@ -4,7 +4,7 @@
 // comments and their formatting stay byte for byte.
 
 import { parse } from 'yaml';
-import { frontMatterEnd } from '../text';
+import { frontMatterBlock } from '../text';
 
 /** Crockford's base 32: no I, L, O or U, so an id reads back as written. */
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -39,14 +39,6 @@ export function newNoteId(random: Uint8Array): string {
 /** Whether `id` can name a note's versions folder. */
 export const isUsableNoteId = (id: string): boolean => USABLE.test(id);
 
-/** The front matter's YAML, and where the text after it starts; null when there's none. */
-function frontMatterOf(text: string): { readonly yaml: string; readonly end: number } | null {
-  const end = frontMatterEnd(text);
-  if (end === 0) return null;
-  const yaml = text.slice(4, end).replace(/(?:^|\n)(?:---|\.\.\.)[ \t]*\n?$/, '');
-  return { yaml, end };
-}
-
 /** The front matter as data: a map (possibly empty), or undefined when it's anything else or broken. */
 function frontMatterData(yaml: string): Record<string, unknown> | undefined {
   let data: unknown;
@@ -67,7 +59,7 @@ function frontMatterData(yaml: string): Record<string, unknown> | undefined {
  * (see `withNoteId`).
  */
 export function noteIdOf(text: string): string | null {
-  const front = frontMatterOf(text);
+  const front = frontMatterBlock(text);
   const value = front ? frontMatterData(front.yaml)?.id : undefined;
   const id = typeof value === 'number' && Number.isSafeInteger(value) ? String(value) : value;
   return typeof id === 'string' && isUsableNoteId(id) ? id : null;
@@ -79,7 +71,7 @@ export function noteIdOf(text: string): string | null {
  * template's) isn't anyone's, and can be filled in.
  */
 export function hasForeignNoteId(text: string): boolean {
-  const front = frontMatterOf(text);
+  const front = frontMatterBlock(text);
   const data = front ? frontMatterData(front.yaml) : undefined;
   if (!data || !('id' in data)) return false;
   const value = data.id;
@@ -97,7 +89,7 @@ const ID_LINE = /^id[ \t]*:[ \t]*(?:"[^"\n]*"|'[^'\n]*'|[^#\n]*?)([ \t]+#[^\n]*)
  */
 export function withNoteId(text: string, id: string): string | null {
   if (!isUsableNoteId(id)) return null;
-  const front = frontMatterOf(text);
+  const front = frontMatterBlock(text);
   if (!front) return `---\nid: ${id}\n---\n${text}`;
   const data = frontMatterData(front.yaml);
   if (!data) return null;

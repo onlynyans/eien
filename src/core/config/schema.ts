@@ -200,6 +200,19 @@ export const SETTINGS = [
     default: 'off',
   },
   {
+    key: 'editor.formatBar',
+    label: 'Formatting bar',
+    description:
+      'A bar of the Format menu’s commands over the page: bold, italic, headings, lists and the rest. Also View → Formatting Bar.',
+    scope: 'device',
+    group: 'Editor',
+    type: 'choice',
+    choices: { off: 'Off', on: 'On' },
+    default: 'off',
+    // A phone formats from the bar over a selection, and has no room for another.
+    wide: true,
+  },
+  {
     key: 'editor.typewriter',
     label: 'Typewriter scrolling',
     description:
@@ -322,6 +335,7 @@ export type SettingValues = { readonly [K in SettingKey]: ValueOf<Extract<Define
 /** Settings the menu turns on and off (View → Focus Mode…): each a choice of "off" and "on". */
 export const TOGGLES = [
   'editor.focus',
+  'editor.formatBar',
   'editor.typewriter',
   'editor.spellcheck',
 ] as const satisfies readonly SettingKey[];

@@ -3,6 +3,7 @@
 // host, so switching layouts loses none.
 
 import { describe, expect, it } from 'vitest';
+import { FORMAT_COMMANDS } from '../../core/format';
 import { ICONS } from '../icons';
 import { COMMANDS, type CommandId, commandOf, LAYOUTS, onDesktopIn } from './commands';
 import { idsIn } from './layout-spec';
@@ -26,7 +27,7 @@ describe('the commands', () => {
 
   it('each run a menu command, or are among the few the window runs itself', () => {
     const local = COMMANDS.filter((command) => !('sends' in command)).map((command) => command.id);
-    expect(sorted(local)).toEqual(['more', 'panes', 'scheme', 'strip']);
+    expect(sorted(local)).toEqual(['format.heading', 'more', 'panes', 'scheme', 'strip']);
   });
 
   it('are each drawn in some layout', () => {
@@ -75,9 +76,25 @@ describe.each(LAYOUTS)('the %s layout', (layout) => {
     expect(foot).toEqual(['scheme', 'panes', 'settings']);
   });
 
-  it('puts Focus mode in the page’s toolbar (#30)', () => {
+  it('puts Focus mode, and the formatting bar’s switch, in the page’s toolbar (#30, #14)', () => {
     const page = spec.desktop.filter((host) => host.slot === 'pageBar' || host.slot === 'top');
     expect(page.flatMap((host) => idsIn(host.items))).toContain('focus');
+    expect(page.flatMap((host) => idsIn(host.items))).toContain('format-bar');
+  });
+
+  it('draws the formatting bar in its own row: every Format menu command, the headings as one', () => {
+    const bar = spec.desktop.filter((host) => host.slot === 'format');
+    expect(bar).toHaveLength(1);
+    const ids = idsIn(bar[0]?.items ?? []);
+    const formats = FORMAT_COMMANDS.map((command) =>
+      command.id.startsWith('heading') ? 'format.heading' : `format.${command.id}`,
+    );
+    expect(sorted(ids)).toEqual(sorted([...new Set(formats)]));
+    for (const id of ids) {
+      const command = commandOf(id);
+      const menu = FORMAT_COMMANDS.find((each) => `format:${each.id}` === command.sends);
+      if (menu) expect(command.key, id).toBe(menu.key); // the menu's own key
+    }
   });
 });
 

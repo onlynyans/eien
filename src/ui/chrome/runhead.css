@@ -67,3 +67,36 @@
   background: var(--eien-band);
   border-top: var(--eien-hairline) solid var(--eien-rule);
 }
+
+/* The formatting bar (#14): a rail down the page's left margin, centred on its height; the
+   blotter makes room for it while it shows. */
+[data-layout="runhead"] .page__format {
+  position: absolute;
+  /* Placed against the whole page, not its own row (an absolute grid item's box is its area). */
+  grid-row: 1 / -1;
+  z-index: 6;
+  top: 50%;
+  left: var(--eien-space-3);
+  translate: 0 -50%;
+}
+[data-layout="runhead"] .host--runhead-format {
+  flex-direction: column;
+  padding: calc(var(--eien-space-1) / 2);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m);
+  box-shadow: var(--eien-shadow-float);
+}
+[data-layout="runhead"] .host--runhead-format > .host__rule {
+  width: var(--eien-space-4);
+  height: var(--eien-hairline);
+  margin: var(--eien-space-1) 0;
+}
+[data-layout="runhead"] .shell[data-format-bar]:not([data-phone]) .page__scroll {
+  padding-left: calc(var(--eien-control) + var(--eien-space-6));
+}
+/* The tags are pills at the colophon's left (./layout-spec.ts), their auto margin sending the
+   counts right; too narrow for all, it's the tags that give way, never off the page's left. */
+[data-layout="runhead"] .colophon {
+  justify-content: flex-start;
+}

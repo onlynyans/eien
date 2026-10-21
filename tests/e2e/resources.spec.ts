@@ -21,9 +21,10 @@ const HEAP_GROWTH = 3 * 1024 * 1024;
 const FIRST_LIST_MS = 1500;
 /**
  * The built renderer's own code and styles, in bytes, +10%. Measured again as features land:
- * 1,614,848 and 137,409 with 3E's row menu and rename in place (#42).
+ * 1,614,848 and 137,409 with 3E's row menu and rename in place (#42); 1,688,127 and 152,698
+ * with 3D's tags and formatting bar (#41).
  */
-const RENDERER = { js: 1_780_000, css: 151_000 };
+const RENDERER = { js: 1_860_000, css: 168_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);

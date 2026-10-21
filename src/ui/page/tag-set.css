@@ -1,0 +1,213 @@
+/* The note's tags (./tag-set.ts; docs/design/explorations/tags.md): mono
+   words in pencil, a × on hover for those in front matter, a dot for those
+   typed in the text. Each layout's place gives them their look: A's running
+   head words, B's label slips under the title, C's pills in the colophon,
+   and a phone's slips. */
+
+.tag-set {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--eien-space-1) / 2) var(--eien-space-3);
+  min-width: 0;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  font-weight: 400;
+  color: var(--eien-pencil);
+}
+.tag-set[hidden],
+.tag-set__add[hidden],
+.tag-set__field[hidden] {
+  display: none;
+}
+.tag-set__tags {
+  display: contents;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--eien-space-1) / 2);
+  white-space: nowrap;
+  border-radius: var(--eien-radius-s);
+}
+/* A tag typed in the text: a word to press, with the dot that says it lives in the words. */
+.tag--text {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.tag--text::after {
+  content: "";
+  width: var(--eien-space-1);
+  height: var(--eien-space-1);
+  margin-left: calc(var(--eien-space-1) / 2);
+  border-radius: 50%;
+  background: var(--eien-faded);
+}
+/* Out of sight it takes no room, yet the keyboard still reaches it (display: none would not). */
+.tag__off {
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 0;
+  height: calc(var(--eien-space-3) + var(--eien-space-1) / 2);
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: var(--eien-radius-s);
+  background: none;
+  color: var(--eien-faded);
+  cursor: pointer;
+  opacity: 0;
+}
+.tag__off .icon {
+  width: var(--eien-space-3);
+  height: var(--eien-space-3);
+}
+@media (hover: hover) {
+  .tag:hover > .tag__off {
+    width: calc(var(--eien-space-3) + var(--eien-space-1) / 2);
+    opacity: 1;
+  }
+  .tag__off:hover,
+  .tag--text:hover {
+    color: var(--eien-ink);
+  }
+}
+.tag__off:focus {
+  width: calc(var(--eien-space-3) + var(--eien-space-1) / 2);
+  opacity: 1;
+}
+.tag-set__add {
+  --eien-control: calc(var(--eien-space-5) - var(--eien-space-1) / 2);
+  opacity: 0;
+}
+.tag-set__field {
+  width: 11em;
+  padding: calc(var(--eien-space-1) / 2) var(--eien-space-2);
+}
+
+/* B · Label slips under the title: band-coloured paper, the + slip faint. */
+.title-tags {
+  margin: calc(var(--eien-title-gap) * -0.6) 0 var(--eien-title-gap);
+}
+.title-tags .tag-set {
+  justify-content: flex-start;
+  gap: var(--eien-space-1);
+}
+.title-tags .tag {
+  padding: calc(var(--eien-space-1) / 4) var(--eien-space-2);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  background: var(--eien-band);
+  color: var(--eien-ink-soft);
+}
+.title-tags .tag-set__add {
+  opacity: 0.6;
+}
+
+/* C · Pills in the colophon, before its counts, in the words' own case. */
+.colophon__tags {
+  flex: 0 1 auto;
+  margin-right: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.colophon__tags .tag-set {
+  flex-wrap: nowrap;
+  justify-content: flex-start; /* in one line, what doesn't fit goes past the right end, unseen */
+  overflow: hidden;
+  gap: var(--eien-space-2);
+}
+.colophon__tags .tag {
+  padding: 0 var(--eien-space-2);
+  border-radius: var(--eien-radius-m);
+  background: var(--eien-press);
+  color: var(--eien-ink-soft);
+}
+.colophon__tags .tag-set__add {
+  opacity: 1;
+}
+
+/* A · In the running head the words end at the right: a × that took room would slide the tag
+   from under the pointer. It hangs in the gap after its tag instead, taking none. */
+.sheet__tags .tag-set {
+  column-gap: var(--eien-space-4);
+}
+.sheet__tags .tag {
+  position: relative;
+}
+.sheet__tags .tag > .tag__off {
+  position: absolute;
+  left: 100%;
+  width: calc(var(--eien-space-3) + var(--eien-space-1) / 2);
+}
+
+/* A · In the running head: the + on hover, or with the keyboard on it. */
+.sheet__head:hover .tag-set__add,
+.sheet__head .tag-set__add:focus-visible {
+  opacity: 1;
+}
+
+/* A finger can't hover, and needs room: the × and the + always in sight, at a finger's size. */
+@media (hover: none) {
+  .tag-set .tag__off,
+  .tag-set .tag-set__add,
+  .sheet__head .tag-set .tag-set__add {
+    width: var(--eien-control);
+    opacity: 1;
+  }
+  .title-tags .tag {
+    min-height: var(--eien-touch);
+    padding-right: 0;
+  }
+  .title-tags .tag-set .tag__off,
+  .title-tags .tag-set .tag-set__add {
+    --eien-control: var(--eien-touch);
+    width: var(--eien-touch);
+    height: var(--eien-touch);
+  }
+}
+
+/* The field's menu: a menu's raised paper (../menu/menu.css), the vault's tags and their counts. */
+.tag-menu {
+  min-width: calc(var(--eien-space-8) * 3);
+  gap: var(--eien-hairline);
+}
+.tag-menu[hidden] {
+  display: none;
+}
+.tag-menu__item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--eien-space-4);
+  padding: var(--eien-space-1) var(--eien-space-2);
+  border-radius: var(--eien-radius-s);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-ink-soft);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .tag-menu__item:hover {
+    background: var(--eien-hover);
+  }
+}
+.tag-menu__item[aria-selected="true"] {
+  background: var(--eien-selected);
+  color: var(--eien-ink);
+}
+.tag-menu__item--made {
+  margin-top: var(--eien-space-1);
+  padding-top: var(--eien-space-2);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.tag-menu .count {
+  font-size: var(--eien-size-label);
+}

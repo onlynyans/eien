@@ -2,9 +2,9 @@
 // a line of preview, its words and its tags (spec §2, §4).
 
 import { readMarkdown } from '../markdown';
-import { frontMatterTags, inlineTags, uniqueTags } from '../tags';
-import { countPlainWords, firstGraphemes, frontMatterEnd, toEditor } from '../text';
+import { countPlainWords, firstGraphemes, frontMatterBlock, toEditor } from '../text';
 import { noteIdOf } from '../versions';
+import { tagsFrom } from './note-tags';
 
 export interface NoteSummary {
   /** The first words, marks taken out; "" for an empty note. */
@@ -34,14 +34,14 @@ export const PREVIEW_LENGTH = 160;
 /** Read a note's file contents (any line endings, a byte-order mark or not) titled `title`. */
 export function readNote(raw: string, title: string): ReadNote {
   const text = toEditor(raw);
-  const end = frontMatterEnd(text);
-  // The YAML between the "---" lines: from after the first to before the closing one.
-  const yaml = end > 0 ? text.slice(4, end).replace(/(?:^|\n)(?:---|\.\.\.)[ \t]*\n?$/, '') : '';
+  const front = frontMatterBlock(text);
+  const end = front?.end ?? 0;
   const { plain, taggable } = readMarkdown(text.slice(end));
+  const tags = tagsFrom(front?.yaml ?? '', taggable);
   return {
     preview: previewOf(plain, title),
     words: countPlainWords(plain),
-    tags: uniqueTags([...frontMatterTags(yaml), ...inlineTags(taggable)]),
+    tags: [...tags.front, ...tags.inline],
     id: end > 0 ? noteIdOf(text.slice(0, end)) : null,
     plain,
   };

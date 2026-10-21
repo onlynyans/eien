@@ -361,3 +361,15 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   after another device's change; its words only in the tooltip.
 - **Grip**: 12px, pencil, at a row's own left edge (absolutely placed, out of
   the row's columns, so it never covers a nested branch's guide).
+- **Tags on the page** (`ui/page/tag-set.ts`, `tag-set.css`): mono words in
+  pencil in each layout's tag slot (A's running head, B's slips under the
+  title, C's colophon pills; slips at a finger's size on a phone); a × for a
+  front-matter tag, on hover or focus, that takes no room till then (in A it
+  hangs in the gap after its tag, so the hovered tag never moves); a 4px
+  faded dot after a tag typed in the text; the + field's menu is a menu's
+  raised paper, the chosen choice on `--eien-selected`, "Make #…" after a
+  soft rule.
+- **Formatting bar**: the `format` slot's host. Band's second row on the
+  band ground; Slip's own raised slip at the blotter's top left; Running
+  head's raised rail down the margin. Its buttons have the icon control's
+  states, pressed where the format is on at the caret.

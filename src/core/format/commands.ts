@@ -3,7 +3,7 @@
 
 import type { Edit, Selection } from './edit';
 import { BOLD, HIGHLIGHT, ITALIC, STRIKE, toggleInline, UNDERLINE } from './inline';
-import { type LineFormat, toggleLines } from './lines';
+import { headingLevel, type LineFormat, toggleLines } from './lines';
 import { insertLink } from './link';
 
 export type FormatCommandId =
@@ -132,3 +132,13 @@ export const acceleratorOf = (key: string): string =>
     .split('-')
     .map((part) => (part === 'Mod' ? 'CmdOrCtrl' : part.length === 1 ? part.toUpperCase() : part))
     .join('+');
+
+/**
+ * The formatting bar's one heading control: each press takes the caret's
+ * line a level down, 1, 2, 3, then off (Heading 3 again takes it off). A
+ * deeper heading (4 to 6) becomes 3.
+ */
+export function nextHeading(line: string): 'heading1' | 'heading2' | 'heading3' {
+  const level = headingLevel(line);
+  return level === 0 ? 'heading1' : level === 1 ? 'heading2' : 'heading3';
+}

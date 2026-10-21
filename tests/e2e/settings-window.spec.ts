@@ -161,7 +161,8 @@ test('This vault’s settings stand apart, and go to the vault’s own file', as
   await choose(page, 'Scene breaks', 'Rule alone');
   const vaultFile = join(vault ?? '', '.eien', 'config.json');
   await expect
-    .poll(() => JSON.parse(readFileSync(vaultFile, 'utf8')))
+    // Asked before the first write lands, the file isn't there yet: a read that throws ends a poll.
+    .poll(() => existsSync(vaultFile) && JSON.parse(readFileSync(vaultFile, 'utf8')))
     .toEqual({ 'typography.quotes': 'straight', 'ao3.sceneBreak': 'rule' });
   // None of this device's: nothing written to its own file.
   await goTo(page, 'Appearance');

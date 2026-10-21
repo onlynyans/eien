@@ -9,6 +9,7 @@ import { SelectionBar } from '../editor/selection-bar';
 import type { ImageLoader } from '../editor/widgets';
 import type { SaveState } from '../notes/note-session';
 import { BoardHost } from './board-host';
+import { PageTags, type PageTagsOf } from './page-tags';
 import { WordCount } from './word-count';
 
 export interface PageNote {
@@ -26,7 +27,7 @@ export class PageView {
   readonly #crumbs = h('p', { class: 'crumbs label' });
   /** The breadcrumb again, for a running head across the window (C's). */
   readonly runningCrumbs = h('p', { class: 'label running-crumbs' });
-  /** Where a layout puts the note's tags (../chrome/layout-spec.ts, TagSlot); empty until they're built. */
+  /** Where a layout puts the note's tags (../chrome/layout-spec.ts, TagSlot). */
   readonly tagSlots = {
     runningHead: h('div', { class: 'sheet__tags' }),
     underTitle: h('div', { class: 'title-tags' }),
@@ -85,10 +86,19 @@ export class PageView {
   /** Beside the page: the versions panel. */
   readonly #aside = h('div', { class: 'page__aside' });
   #titleText = '';
+  readonly #caret = new Set<() => void>();
   readonly #rename: (typed: string) => void;
+  /** The note's tags, in the slot the layout names (./page-tags.ts). */
+  readonly tags: PageTags;
 
-  /** `rename` hears a title the writer typed, different from the one there. */
-  constructor(container: HTMLElement, events: EditorEvents & { rename(typed: string): void }) {
+  /** `rename` hears a title the writer typed, different from the one there; `tags`, the tags' needs. */
+  constructor(
+    container: HTMLElement,
+    events: EditorEvents & {
+      rename(typed: string): void;
+      readonly tags: Omit<PageTagsOf, 'editable'>;
+    },
+  ) {
     this.#rename = events.rename;
     // The title is the note's name: a click, Enter or F2 renames it (spec §2).
     this.#title.addEventListener('click', () => this.editTitle());
@@ -111,10 +121,16 @@ export class PageView {
       changed: (text, written) => {
         this.words.edited(text, written);
         this.#showTitle(text);
+        this.tags.edited();
         events.changed(text, written);
       },
       follow: events.follow,
+      moved: () => {
+        for (const listener of this.#caret) listener();
+      },
     });
+    this.tags = new PageTags(this.editor, { ...events.tags, editable: () => !this.comparing });
+    this.tags.listen(container);
     const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
     this.board = new BoardHost(scroll);
     scroll.append(this.board.element);
@@ -142,6 +158,17 @@ export class PageView {
     );
     new SelectionBar(container, this.editor);
     this.showNothing();
+  }
+
+  /** Hear the caret move, or the text change under it; returns a function to stop. */
+  onCaret(listener: () => void): () => void {
+    this.#caret.add(listener);
+    return () => this.#caret.delete(listener);
+  }
+
+  /** Whether a note is on the page, its text there to change (not a seal compared). */
+  get writable(): boolean {
+    return !this.#sheet.hidden && !this.comparing && !this.board.shown;
   }
 
   /** News from the last action in the status line; null takes it away. */
@@ -184,6 +211,7 @@ export class PageView {
     this.notice(null);
     this.state('saved');
     this.words.show(note.text);
+    this.tags.show(note.text);
   }
 
   showNothing(): void {
@@ -193,6 +221,7 @@ export class PageView {
     this.#empty.hidden = false;
     this.runningCrumbs.textContent = '';
     this.words.clear();
+    this.tags.clear();
     this.state('saved');
     if (had && !this.board.shown) this.#empty.focus();
   }
@@ -201,6 +230,7 @@ export class PageView {
   replaceText(text: string): void {
     this.editor.replaceText(text);
     this.words.show(text);
+    this.tags.show(text);
     this.#showTitle(text);
   }
 

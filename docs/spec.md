@@ -112,6 +112,15 @@ My Vault/
   renaming one everywhere is still to be designed.
 - Not tags: `#` inside code, links, URLs, headings (`# Title`), or followed by
   digits only (`#1`).
+- **On the page** (§4): a note's tags show in the place its layout gives them,
+  and can be added and taken off there. The page writes only front matter's
+  `tags:`, in the shape the writer wrote it (a `[list]`, a `- list`, or
+  words), every other key, comment and line byte for byte; a note with no
+  front matter gets `tags: [tag]` in new front matter. It never edits the
+  text: a `#tag` typed in the words stays where the writer put it, and shows
+  with a dot and no ×. Front matter it can't change without rewriting it
+  (broken YAML, `tags:` twice, a block scalar) is left alone, and Eien says
+  so (`core/tags/front-tags.ts`).
 
 ### Per-device state
 
@@ -306,7 +315,7 @@ Three layouts, a device setting (`appearance.layout`, Settings → Look → Appe
 in what they are or do ([overall.md](design/explorations/overall.md)):
 
 - **Band** (the default): the page's controls in a band above it (views,
-  Compare, Seal, Versions, Focus, and the strip's own control, which hides
+  Compare, Seal, Versions, the formatting bar, Focus, and the strip's own control, which hides
   the band to a lip and brings it back). Corners 2/4/8px.
 - **Slip**: no band; the page's tools float on a raised slip at the
   blotter's top right, which folds away to its fold. The panes' chevrons are
@@ -325,6 +334,19 @@ its key (after a short hover, or at once from the keyboard) and its state
 (pressed, disabled); a host is a toolbar, its arrows moving along it, and Tab
 reaches every control. A switch leaves the keyboard on the same command in
 the new layout, or on the page. Whether the strip is hidden is per device.
+
+**Tags on the page** (backlog #13): Band shows them at the right of the
+sheet's running head, mono words with a + on hover; Slip as label slips under
+the title; Running head as pills at the colophon's left; a phone, in every
+layout, as slips under the title at a finger's size (`LayoutSpec.tags`,
+`PHONE_TAGS`). A front-matter tag has a × (on hover, or the keyboard on it); a
+tag typed in the text has a dot and no ×, and choosing it shows where it is
+in the words. The + (or # with the keyboard on the page, outside the words)
+opens a field: its menu lists the vault's tags with their counts, leaving out
+the note's, then "Make #…" for a new one; ↓ ↑ and Enter choose, ⌫ in the
+empty field takes the last front-matter tag off, Esc closes. A #tag typed in
+the words shows on the page once the typing pauses, so nothing on the page
+moves mid-word.
 
 On a phone each layout has its own bottom for the page: Band the top bar
 (the view, Focus, ⋯), Slip a floating slip (the three views, Focus, ⋯),
@@ -355,6 +377,17 @@ format without typing them:
   Ctrl+Alt is AltGr, which types characters (², ³ and @ on a German keyboard),
   so a Ctrl+Alt key would take them. macOS keeps ⌘⌥, as ⌘⇧3 is its screenshot.
 - **Format menu** in the menu bar with the same commands and their keys.
+- **Formatting bar:** the same commands drawn as Eien's icons (bold, italic,
+  underline, strikethrough; heading, highlight, link; quote, the lists),
+  shown or hidden by its control in the page's toolbar, View → Formatting
+  Bar or ⇧⌘B (a device setting, off at first). Each button runs the menu's
+  command, and shows pressed where its format is on at the caret (read from
+  the editor's syntax tree, at the caret alone). One heading control takes
+  the caret's line a level down each press: 1, 2, 3, then none. Band draws it
+  as the band's second row, Slip as a slip of its own at the blotter's top
+  left, Running head as a rail down the page's left margin. Its buttons are
+  off in Reading and with no note open. Not on a phone: there the selection
+  bar formats.
 - **Selection bar:** when text is selected, a small bar of the same commands
   appears beside it. It appears only for a selection and never while typing.
 - Typing the Markdown marks works too, as in any Markdown editor.
@@ -727,7 +760,7 @@ does nothing.
   density (comfortable or compact), page frame (sheet or full), the page's
   zoom and the interface's (each 50–200%), the machine voice's face, the
   weight of the sidebar's names and the list's titles, the Running head's
-  ground, panes (three or two), focus mode, typewriter scrolling and
+  ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar and
   spellcheck (macOS). A setting may be one system's alone (`platforms` in the
   schema): the screen shows it only there.
 - An unknown or invalid value in a file is ignored with a warning in the log,

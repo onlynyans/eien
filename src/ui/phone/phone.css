@@ -57,6 +57,7 @@
 .shell[data-phone] > .chevron-slot,
 .shell[data-phone] > .window-head,
 .shell[data-phone] .page__bar,
+.shell[data-phone] .page__format,
 .shell[data-phone] [data-command="panes"] {
   display: none;
 }

@@ -208,6 +208,8 @@ describe('Chrome', () => {
       );
     chrome.buttons('seal')[0]?.focus();
     arrow('ArrowRight');
+    expect(ids()).toBe('format-bar');
+    arrow('ArrowRight');
     expect(ids()).toBe('focus');
     arrow('ArrowRight');
     expect(ids()).toBe('view.live');

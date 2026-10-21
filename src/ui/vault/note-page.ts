@@ -3,6 +3,7 @@
 // renames the note.
 
 import { baseName, titleOf } from '../../core/paths';
+import { tagChoices } from '../../core/tags';
 import { PageView } from '../page/page';
 import type { SettingsState } from '../settings/settings-state';
 import { crumbsOf, type OpenNote } from './open-note';
@@ -10,6 +11,8 @@ import type { Organizer } from './organize';
 import type { VaultState } from './vault-state';
 
 export interface NotePageParts {
+  /** Say what happened, where the window says such things (./notice.ts). */
+  tell(message: string): void;
   /** The open note: made after the page, which it shows. */
   note(): OpenNote;
   readonly state: VaultState;
@@ -29,6 +32,10 @@ export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
         const path = parts.state.findByTitle(target.value);
         if (path) parts.openNote(path);
       }
+    },
+    tags: {
+      choices: (typed, has) => tagChoices(parts.state.tags, has, typed),
+      tell: (message) => parts.tell(message),
     },
     rename: (typed) => {
       const path = parts.note().path;

@@ -100,3 +100,33 @@
   border-radius: var(--eien-radius-l);
   box-shadow: var(--eien-shadow-float);
 }
+
+/* The formatting bar (#14): a slip of its own at the blotter's top left, across from the tools'
+   slip (clear of the system's controls there); under them, the page making room, where it's
+   too narrow for both side by side. */
+[data-layout="slip"] .page__format {
+  position: absolute;
+  /* Placed against the whole page, not its own row (an absolute grid item's box is its area). */
+  grid-row: 1 / -1;
+  z-index: 6;
+  top: calc((var(--band) - var(--eien-control)) / 2 - var(--eien-space-1) / 2);
+  left: max(
+    var(--eien-space-3),
+    calc(var(--controls-left) - var(--pane-sidebar, 0px) - var(--pane-list, 0px))
+  );
+}
+@container page (width < 720px) {
+  [data-layout="slip"] .page__format {
+    top: var(--band);
+  }
+  [data-layout="slip"] .shell[data-format-bar] .page__scroll {
+    padding-top: calc(var(--eien-control) + var(--eien-space-3));
+  }
+}
+[data-layout="slip"] .host--slip-format {
+  padding: calc(var(--eien-space-1) / 2);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m);
+  box-shadow: var(--eien-shadow-float);
+}
