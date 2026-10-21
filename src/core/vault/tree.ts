@@ -14,9 +14,15 @@ export interface FolderNode {
   noteCount: number;
 }
 
-/** Names sorted as people read them: "Chapter 2" before "Chapter 10", case aside. */
-export const byName = (a: string, b: string): number =>
-  a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+/**
+ * Names sorted as people read them: "Chapter 2" before "Chapter 10", case
+ * aside. One collator for every comparison: `localeCompare` with options
+ * makes one each time, and a vault of thousands of notes is sorted on every save.
+ */
+export const byName: (a: string, b: string) => number = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+}).compare;
 
 /**
  * The tree of folders, each with its notes. A note or folder whose parent

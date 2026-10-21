@@ -1,25 +1,18 @@
-// What the sidebar would draw, as a string: the same string, the same rows.
-// A save redraws the window (the watcher sees it), but a note typed in only
-// changes its time, and the sidebar shows times to the minute: with two panes
-// and thousands of notes open in the tree, rebuilding them on every save
-// would hold up the writer's typing, so an unchanged sidebar isn't rebuilt.
+// What the sidebar would draw, but for the notes' own rows, as a string:
+// the tree's frame. With two panes and thousands of notes open in the tree,
+// a note opened or typed in changes only its own rows (its mark, its time,
+// its place in a list by newest); rebuilding the whole tree for that held up
+// the writer's typing. While the frame is the same, the notes' rows are put
+// right in place (./row-cache.ts), each compared by what it shows.
 
 import type { FolderNode } from '../../core/vault';
-import type { ListedNote, NoteList } from '../vault/vault-state';
+import type { NoteList } from '../vault/vault-state';
 
-/** What a listed note shows: its title, number and words, and its time to the minute. */
-const shown = (note: ListedNote) => [
-  note.path,
-  note.title,
-  note.ordinal ?? '',
-  note.words,
-  Math.floor(note.modified / 60_000),
-];
-
+/** A list as the frame draws it: what it is and how it's sorted; its rows aside. */
 const listShown = (list: NoteList | null) =>
-  list && [list.kind, list.sort ?? '', list.folder ?? '', list.total, list.notes.map(shown)];
+  list && [list.kind, list.sort ?? '', list.folder ?? '', list.total];
 
-/** The folder tree as drawn: names, counts and, with two panes, which notes are in each. */
+/** The folder tree as drawn: names, counts and, with two panes, whether each has notes. */
 const treeShown = (node: FolderNode): unknown => [
   node.path,
   node.noteCount,
@@ -27,28 +20,20 @@ const treeShown = (node: FolderNode): unknown => [
   node.folders.map(treeShown),
 ];
 
-/**
- * The sidebar's model, as a string of what it draws. `today` is the day
- * drawn for: a note's "16:40" becomes "yesterday" at midnight.
- */
-export function sidebarSignature(
-  model: {
-    readonly tree: FolderNode;
-    readonly tags: unknown;
-    readonly pinned: number;
-    readonly selection: unknown;
-    readonly open: ReadonlySet<string>;
-    readonly two: boolean;
-    readonly notes: ReadonlyMap<string, NoteList>;
-    readonly results: NoteList | null;
-    readonly openNote: string | null;
-    readonly books: ReadonlySet<string>;
-    readonly notice: string | null;
-  },
-  today: string,
-): string {
+/** The sidebar's model as a string of what it draws, the notes' rows aside. */
+export function sidebarSignature(model: {
+  readonly tree: FolderNode;
+  readonly tags: unknown;
+  readonly pinned: number;
+  readonly selection: unknown;
+  readonly open: ReadonlySet<string>;
+  readonly two: boolean;
+  readonly notes: ReadonlyMap<string, NoteList>;
+  readonly results: NoteList | null;
+  readonly books: ReadonlySet<string>;
+  readonly notice: string | null;
+}): string {
   return JSON.stringify([
-    today,
     treeShown(model.tree),
     model.tags,
     model.pinned,
@@ -59,7 +44,6 @@ export function sidebarSignature(
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
       .map(([id, list]) => [id, listShown(list)]),
     listShown(model.results),
-    model.openNote,
     [...model.books].sort(),
     model.notice,
   ]);

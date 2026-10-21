@@ -6,9 +6,11 @@
 import type { TagNode } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import { h, type Props } from '../dom';
-import { type RowActions, rowEvents, rowKeys } from '../list/row-events';
-import { when } from '../list/when';
+import type { RowActions } from '../list/row-events';
 import type { ListedNote, NoteList, Selection } from '../vault/vault-state';
+import { atDepth } from './depth';
+import { lookOf, noteRow, noteRowKey, noteRowShows } from './note-row';
+import type { RowCache } from './row-cache';
 
 export interface TreeModel {
   readonly tree: FolderNode;
@@ -69,11 +71,8 @@ export const keyOf = (selection: Selection): string =>
 
 const same = (a: Selection, b: Selection) => keyOf(a) === keyOf(b);
 
-/** Sets a row's depth: through the style API, as the security policy refuses style attributes. */
-export function atDepth<T extends HTMLElement>(item: T, depth: number): T {
-  item.style.setProperty('--depth', String(depth));
-  return item;
-}
+/** The list id a search's results are drawn under (a row's data-key says "results" too). */
+export const RESULTS = 'results';
 
 /** The disclosure triangle, drawn so it turns (to its button's aria-expanded) rather than swaps. */
 export const twisty = (): HTMLElement =>
@@ -94,11 +93,21 @@ export class TreeRows {
   readonly #actions: TreeActions;
   /** A folder's own keys and menu, given by the sidebar (F2 renames it there). */
   readonly #folderEvents: (path: string) => Props['on'];
+  /** The note rows drawn before, kept where they show the same. */
+  readonly #cache: RowCache;
+  /** The day drawn for: a note's "16:40" becomes "yesterday" at midnight. */
+  readonly #today = new Date().toDateString();
 
-  constructor(model: TreeModel, actions: TreeActions, folderEvents: (path: string) => Props['on']) {
+  constructor(
+    model: TreeModel,
+    actions: TreeActions,
+    folderEvents: (path: string) => Props['on'],
+    cache: RowCache,
+  ) {
     this.#model = model;
     this.#actions = actions;
     this.#folderEvents = folderEvents;
+    this.#cache = cache;
   }
 
   library(): HTMLElement[] {
@@ -131,7 +140,7 @@ export class TreeRows {
         ? [row, ...group(depth, this.folders(folder, depth + 1, edit))]
         : [row];
     });
-    return [...own, ...this.#notes(openId({ kind: 'folder', path: node.path }), depth)];
+    return [...own, ...this.noteRows(openId({ kind: 'folder', path: node.path }), depth)];
   }
 
   tags(nodes: readonly TagNode[], depth: number): HTMLElement[] {
@@ -150,15 +159,13 @@ export class TreeRows {
       return this.#model.open.has(id)
         ? [
             row,
-            ...group(depth, [...this.tags(tag.children, depth + 1), ...this.#notes(id, depth + 1)]),
+            ...group(depth, [
+              ...this.tags(tag.children, depth + 1),
+              ...this.noteRows(id, depth + 1),
+            ]),
           ]
         : [row];
     });
-  }
-
-  /** A search's results, as note rows. */
-  results(list: NoteList): HTMLElement[] {
-    return list.notes.map((note) => this.#note(note, 0, list, 'results'));
   }
 
   /** A Library row (they hold notes only with two panes), and the notes under it when it's open. */
@@ -166,7 +173,7 @@ export class TreeRows {
     const id = openId(selection);
     const opener = this.#model.two ? this.#twist(id, name) : undefined;
     const row = this.#row(label, count, selection, 0, opener);
-    return [row, ...(this.#model.open.has(id) ? group(0, this.#notes(id, 1)) : [])];
+    return [row, ...(this.#model.open.has(id) ? group(0, this.noteRows(id, 1)) : [])];
   }
 
   #twist(id: string, name: string): HTMLElement {
@@ -233,42 +240,24 @@ export class TreeRows {
     );
   }
 
-  /** The notes listed under the open row `id`, with two panes. */
-  #notes(id: string, depth: number): HTMLElement[] {
-    const list = this.#model.two ? this.#model.notes.get(id) : undefined;
-    return list ? list.notes.map((note) => this.#note(note, depth, list, id)) : [];
+  /** The note rows under the open row `id` (with two panes), or a search's (RESULTS). */
+  noteRows(id: string, depth: number): HTMLElement[] {
+    const list =
+      id === RESULTS
+        ? this.#model.results
+        : this.#model.two
+          ? this.#model.notes.get(id)
+          : undefined;
+    const rows = list ? list.notes.map((note) => this.#note(note, depth, list, id)) : [];
+    this.#cache.listed(id, depth, rows);
+    return rows;
   }
 
+  /** A note's row: the one drawn before if it shows the same (./row-cache.ts). */
   #note(note: ListedNote, depth: number, list: NoteList, under: string): HTMLElement {
-    const ordered = list.folder !== undefined && list.sort === 'order';
-    return atDepth(
-      h(
-        'li',
-        { class: 'tree-row tree-row--note' },
-        h('span', { class: 'tree-row__twist' }),
-        h(
-          'button',
-          {
-            class: 'tree-row__name',
-            attrs: {
-              type: 'button',
-              'aria-current': note.path === this.#model.openNote ? 'true' : undefined,
-              // The same note can be under its folder, a tag and Pinned: each row has its own key.
-              'data-key': `note:${under}:${note.path}`,
-              'data-path': note.path,
-              'aria-keyshortcuts': rowKeys(ordered),
-            },
-            on: rowEvents(note.path, this.#actions, ordered),
-          },
-          note.ordinal ? h('span', { class: 'tree-row__ord count', text: note.ordinal }) : null,
-          h('span', { class: 'tree-row__label', text: note.title }),
-          h('span', {
-            class: 'count',
-            text: list.kind === 'book' ? `${note.words.toLocaleString()} w` : when(note.modified),
-          }),
-        ),
-      ),
-      depth,
+    const look = lookOf(note, list, under, depth, this.#model.openNote);
+    return this.#cache.row(noteRowKey(note, under), noteRowShows(note, look, this.#today), () =>
+      noteRow(note, look, this.#actions),
     );
   }
 }
