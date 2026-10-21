@@ -269,8 +269,10 @@ test.describe('a vault of 5,000 notes', () => {
         '5,000 notes match · the first 200 · All Notes',
       );
 
-      await search(page).press('Escape');
+      // Five thousand rows: the list draws those in sight, so the note is found to be opened.
+      await search(page).fill('marmalade');
       await row(page, 'Note 4321').click();
+      await search(page).press('Escape');
       await editorContent(page).click();
       await page.keyboard.press('ControlOrMeta+End');
       await page.keyboard.type(' #justsaved');

@@ -10,6 +10,7 @@ import type { FolderNode } from '../../core/vault';
 import { h, type Props, wordButton } from '../dom';
 import { isMenuKey, menuPoint } from '../list/row-events';
 import type { SearchField } from '../list/search-field';
+import { type WindowedRow, WindowedRows } from '../shell/windowed-rows';
 import { FolderField } from './folder-field';
 import { Folds } from './folds';
 import { SidebarFoot } from './foot';
@@ -62,6 +63,28 @@ export class Sidebar {
   readonly #rows = new RowCache();
   /** Which sections are folded, on this device. */
   readonly #folds = new Folds();
+  /** Long lists of notes, drawn by the rows in sight, kept from draw to draw by the list's id. */
+  #windows = new Map<string, { rows: WindowedRows; holder: HTMLElement; depth: number }>();
+  /** The lists a draw under way has drawn windowed. */
+  #windowsDrawn = new Map<string, { rows: WindowedRows; holder: HTMLElement; depth: number }>();
+  /** A list's windowed group: the one drawn before, given its rows now. */
+  readonly #windowed = (id: string, depth: number, rows: readonly WindowedRow[]) => {
+    let window = this.#windows.get(id);
+    if (!window || window.depth !== depth) {
+      const list = h('ul', { class: 'tree tree-window' });
+      const estimate =
+        parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--eien-row-h')) ||
+        30;
+      window = {
+        rows: new WindowedRows(list, estimate),
+        holder: h('li', { class: 'tree-notes' }, list),
+        depth,
+      };
+    }
+    this.#windowsDrawn.set(id, window);
+    window.rows.set(rows);
+    return window.holder;
+  };
 
   constructor(name: string, actions: SidebarActions, keys: string, search: SearchField) {
     this.#actions = actions;
@@ -138,9 +161,19 @@ export class Sidebar {
     const giveBack = this.#holdKeyboard();
     const actions = this.#actions;
     this.#rows.begin();
-    const rows = new TreeRows(model, actions, (folder) => this.#folderEvents(folder), this.#rows);
-    // The same frame, and nothing to give the keyboard to: only notes' rows change, in place.
+    this.#windowsDrawn = new Map();
+    const rows = new TreeRows(
+      model,
+      actions,
+      (folder) => this.#folderEvents(folder),
+      this.#rows,
+      this.#windowed,
+    );
+    // The same frame, and nothing to give the keyboard to: only notes' rows change, in place;
+    // a windowed list is given its rows again, and draws those in sight.
     if (settled && frame === this.#drawn && this.#rows.patch((id, at) => rows.noteRows(id, at))) {
+      for (const [id, { depth }] of this.#windows) rows.noteRows(id, depth);
+      this.#windows = this.#windowsDrawn;
       giveBack();
       return;
     }
@@ -188,6 +221,9 @@ export class Sidebar {
     );
     this.#drawing = false;
     this.#rows.settle();
+    // In the window now: each long list draws the rows in sight.
+    this.#windows = this.#windowsDrawn;
+    for (const { rows: windowed } of this.#windows.values()) windowed.render();
     giveBack();
     // A redraw mustn't take the caret out of the name being typed.
     this.#folderField.restore(this.#body);
@@ -215,6 +251,9 @@ export class Sidebar {
         (control) => control.dataset.key === focused,
       );
       const visible = same?.closest('[hidden]') ? undefined : same;
+      // A note's row in a long list may be out of sight, undrawn: its list brings it back.
+      if (!visible && [...this.#windows.values()].some(({ rows }) => rows.focusKey(focused)))
+        return;
       const rows = visible || focusedAt < 0 ? [] : this.#shown('.tree-row__name');
       (visible ?? rows[Math.min(focusedAt, rows.length - 1)])?.focus();
     };

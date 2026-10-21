@@ -7,10 +7,15 @@ import type { TagNode } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import { h, type Props } from '../dom';
 import type { RowActions } from '../list/row-events';
+import { WINDOW_FROM } from '../shell/window-range';
+import type { WindowedRow } from '../shell/windowed-rows';
 import type { ListedNote, NoteList, Selection } from '../vault/vault-state';
 import { atDepth } from './depth';
 import { lookOf, noteRow, noteRowKey, noteRowShows } from './note-row';
 import type { RowCache } from './row-cache';
+
+/** A long list of notes, drawn as one group that shows only the rows in sight (../shell/windowed-rows.ts). */
+export type Windowed = (id: string, depth: number, rows: readonly WindowedRow[]) => HTMLElement;
 
 export interface TreeModel {
   readonly tree: FolderNode;
@@ -97,17 +102,20 @@ export class TreeRows {
   readonly #cache: RowCache;
   /** The day drawn for: a note's "16:40" becomes "yesterday" at midnight. */
   readonly #today = new Date().toDateString();
+  readonly #windowed: Windowed;
 
   constructor(
     model: TreeModel,
     actions: TreeActions,
     folderEvents: (path: string) => Props['on'],
     cache: RowCache,
+    windowed: Windowed,
   ) {
     this.#model = model;
     this.#actions = actions;
     this.#folderEvents = folderEvents;
     this.#cache = cache;
+    this.#windowed = windowed;
   }
 
   library(): HTMLElement[] {
@@ -248,6 +256,23 @@ export class TreeRows {
         : this.#model.two
           ? this.#model.notes.get(id)
           : undefined;
+    // Thousands of notes: one group drawing those in sight, its rows kept by the group itself.
+    if (list && list.notes.length >= WINDOW_FROM) {
+      return [
+        this.#windowed(
+          id,
+          depth,
+          list.notes.map((note) => {
+            const look = lookOf(note, list, id, depth, this.#model.openNote);
+            return {
+              key: noteRowKey(note, id),
+              shows: noteRowShows(note, look, this.#today),
+              make: () => noteRow(note, look, this.#actions),
+            };
+          }),
+        ),
+      ];
+    }
     const rows = list ? list.notes.map((note) => this.#note(note, depth, list, id)) : [];
     this.#cache.listed(id, depth, rows);
     return rows;
