@@ -703,8 +703,10 @@ Obsidian vault, iA Writer's library, a plain folder) into the vault.
   as `.md`, its text exactly as it was (front matter, line endings, a
   byte-order mark). Its folders come with it; a folder with no notes doesn't.
 - Two names one system would take for one file (`Notes.md` and `notes.md`,
-  or `Notes.md` and `Notes.txt`) become `Notes.md` and `notes 2.md`, as a move
-  numbers them (§4).
+  or `Notes.md` and `Notes.txt`) keep the first and number the second
+  (`notes 2.md`, `Notes 2.md`), as a move numbers them (§4); folders too.
+  A note that arrives at a name while the import runs (Syncthing) is kept,
+  and the imported one is numbered.
 - Left out, and said so: a note over 8 MB (the most the index reads); one
   that isn't UTF-8 text, or can't be read; a name that can't exist on every
   system (§3); a link, which is never followed; and every file that isn't a
