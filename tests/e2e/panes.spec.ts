@@ -392,7 +392,7 @@ test.describe('two panes', () => {
         await folder(page, 'Scarf').click();
         await treeNote(page, 'Seventeen').focus();
         await page.keyboard.press('F2');
-        await expect(page.locator('.title__field')).toBeFocused();
+        await expect(page.locator('.name-field__input')).toBeFocused();
         await page.keyboard.type('Eighteen');
         await page.keyboard.press('Enter');
         await expect(page.locator('.tree-row__ord')).toHaveText(['i', 'ii', 'iii']);

@@ -143,7 +143,7 @@ describe('renderList', () => {
     renderList(container, folder(['a.md']), null, run);
     key(row('a.md'), { key: 'ArrowDown', altKey: true });
     expect(run.nudge).not.toHaveBeenCalled();
-    expect(row('a.md').getAttribute('aria-keyshortcuts')).toBe('F2');
+    expect(row('a.md').getAttribute('aria-keyshortcuts')).toMatch(/^F2 (Meta|Control)\+Shift\+P$/);
 
     renderList(container, folder(['a.md'], { sort: 'order' }), null, run);
     key(row('a.md'), { key: 'ArrowDown', altKey: true });
@@ -152,7 +152,9 @@ describe('renderList', () => {
       ['a.md', 1],
       ['a.md', -1],
     ]);
-    expect(row('a.md').getAttribute('aria-keyshortcuts')).toBe('Alt+ArrowUp Alt+ArrowDown F2');
+    expect(row('a.md').getAttribute('aria-keyshortcuts')).toMatch(
+      /^Alt\+ArrowUp Alt\+ArrowDown F2 (Meta|Control)\+Shift\+P$/,
+    );
   });
 
   it('a right-click gives the row’s menu at the pointer, and no system menu', () => {

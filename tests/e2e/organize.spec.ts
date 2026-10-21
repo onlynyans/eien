@@ -136,8 +136,9 @@ test.describe('renaming', () => {
   }) => {
     await row(page, 'Ideas').focus();
     await page.keyboard.press('F2');
-    await expect(page.locator('.title__field')).toBeFocused();
+    await expect(page.locator('.name-field__input')).toBeFocused();
     await page.keyboard.press('Escape');
+    await expect(row(page, 'Ideas')).toBeFocused();
 
     await folder(page, 'Research').click();
     await folder(page, 'Research').press('F2');

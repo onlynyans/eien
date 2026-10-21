@@ -24,6 +24,7 @@ import { Organizer } from './organize';
 import { pageParts } from './page-parts';
 import { PaneDrawer } from './pane-drawer';
 import { phoneView } from './phone-view';
+import { renameInRow } from './rename-in-row';
 import { type Selection, VaultState } from './vault-state';
 
 export interface ShownVault {
@@ -75,7 +76,8 @@ export async function showVault(
     menu: (path: string, at: { x: number; y: number }, ordered: boolean) =>
       showNoteMenu(menus, path, at, ordered),
     nudge: (path: string, by: -1 | 1) => void act(() => organizer.nudge(path, by)),
-    rename: (path: string) => void renameNote(path),
+    rename: (path: string) => renameNote(path),
+    pin: (path: string) => void act(() => organizer.pin(path, !state.pins.includes(path))),
     trash: (path: string) => void act(() => organizer.trash(path)),
   };
 
@@ -170,7 +172,7 @@ export async function showVault(
     vaultName: name,
     trashName,
     act: (operation) => void act(operation),
-    renameNote: (path) => void renameNote(path),
+    renameNote: (path) => renameNote(path),
     newNote: (folder) => {
       choose({ kind: 'folder', path: folder });
       void newNote(folder);
@@ -234,7 +236,19 @@ export async function showVault(
   };
 
   /** Rename a note: open it, and its title becomes a field. */
-  async function renameNote(path: string): Promise<void> {
+  /** Rename in the row the writer is at (./rename-in-row.ts); with none in sight, by the page's title. */
+  function renameNote(path: string): void {
+    // A phone, one pane at a time, keeps its rename on the page, where the title is in sight.
+    if (phone.stack.phone) return void renameOnPage(path);
+    renameInRow(path, {
+      namesIn: (folder) => state.namesIn(folder),
+      rename: (from, typed) => organizer.renameNote(from, typed),
+      act,
+      onPage: (at) => void renameOnPage(at),
+    });
+  }
+
+  async function renameOnPage(path: string): Promise<void> {
     if (note.path !== path) await openNote(path);
     else phone.stack.show('page'); // on a phone, from the list: the title's on the page
     page.editTitle();

@@ -5,7 +5,12 @@
 const MAC_SIGNS: Record<string, string> = { Ctrl: '⌃', Alt: '⌥', Shift: '⇧', Mod: '⌘' };
 /** The order a Mac writes its modifiers in. */
 const MAC_ORDER = ['Ctrl', 'Alt', 'Shift', 'Mod'];
-const MAC_KEYS: Record<string, string> = { Enter: '↵' };
+const MAC_KEYS: Record<string, string> = {
+  Enter: '↵',
+  Backspace: '⌫',
+  ArrowUp: '↑',
+  ArrowDown: '↓',
+};
 
 /** `key` split into its modifiers and the key itself ("-" alone is a key, as in "Mod--"). */
 function partsOf(key: string): { mods: string[]; key: string } {
