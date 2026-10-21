@@ -23,7 +23,7 @@ export const ALONE = { tag: '@alone' };
 
 /**
  * Environment for a launch with its own, throwaway data folder, and the
- * vault at `vault` (or, without one, the welcome screen).
+ * vault at `vault` (or, without one, its own: Vault, inside `userData`).
  */
 export function appEnv(userData: string, vault?: string | null): Record<string, string> {
   const env = Object.fromEntries(

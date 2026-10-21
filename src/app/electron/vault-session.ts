@@ -1,12 +1,14 @@
 // The vault a window has open, and the IPC that reaches it. Every argument
 // from the window is checked here; the storage checks every path again.
 
+import { mkdir } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { app, type BrowserWindow, dialog, shell } from 'electron';
 import { CHANNEL, type VaultInfo } from '../../platform/bridge';
 import { openDiskStorage } from '../../platform/electron/disk-storage';
 import { recoverStrays } from '../../platform/electron/recover-strays';
 import { OpenVault } from '../../platform/open-vault';
+import { DOCUMENTS_FOLDER, homeVault, thisCopy } from './data-folders';
 import { lastVault, readDeviceFile, updateDeviceFile } from './device-settings';
 import { answer, text } from './ipc';
 
@@ -71,14 +73,29 @@ export class VaultSession {
   }
 }
 
+/** This copy's own vault (./data-folders.ts), made if need be; when it can't be, the window asks for a folder. */
+async function openHome(session: VaultSession): Promise<void> {
+  const home = homeVault(thisCopy(), app.getPath('documents'));
+  try {
+    await mkdir(home, { recursive: true }); // what's already there stays as it is
+    await session.openAt(home);
+  } catch (error) {
+    console.warn(`Eien: ${home} couldn’t be opened; the window asks for a folder.`, error);
+  }
+}
+
 /**
  * Answer the window's vault requests. The vault to open first is
- * EIEN_VAULT (for tests and separate copies), else the one last opened.
+ * EIEN_VAULT (for tests and separate copies), else the one last opened, else
+ * this copy's own. When the one last opened can't be (a drive that isn't
+ * connected), the window says so and asks, rather than show an empty vault in
+ * its place.
  */
 export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
   const session = new VaultSession(window);
-  const start = process.env.EIEN_VAULT || lastVault(await readDeviceFile());
-  if (start) await session.openAt(start).catch(() => null); // gone or unreadable: the window asks for another
+  const remembered = process.env.EIEN_VAULT || lastVault(await readDeviceFile());
+  if (remembered) await session.openAt(remembered).catch(() => null);
+  else await openHome(session);
 
   const handle = (channel: string, fn: (...args: unknown[]) => unknown) =>
     answer(window, channel, fn);
@@ -88,8 +105,8 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
     const picked = await dialog.showOpenDialog(window, {
       title: 'Open a vault',
       buttonLabel: 'Open',
-      // Where the phone keeps its vault, Documents/Eien/Vault: the same layout on every device.
-      defaultPath: join(app.getPath('documents'), 'Eien'),
+      // Beside the vault Eien starts in, Documents/Eien/Vault: the same layout on every device.
+      defaultPath: join(app.getPath('documents'), DOCUMENTS_FOLDER),
       properties: ['openDirectory', 'createDirectory'],
     });
     const root = picked.filePaths[0];

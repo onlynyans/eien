@@ -1,16 +1,22 @@
-import { app, BrowserWindow, Menu, session } from 'electron';
+import { app, BrowserWindow, dialog, Menu, session } from 'electron';
 import { CHANNEL } from '../../platform/bridge';
+import { dataFolder, prepareDataFolder, thisCopy } from './data-folders';
 import { buildMenu, checkToggles } from './menu';
 import { applyScheme, deviceSettings } from './settings-session';
 import { createMainWindow } from './window';
 
-// Tests, and anyone running a separate copy, give Eien its own data folder,
-// so it never shares settings or the single-instance lock with the real one.
-const userData = process.env.EIEN_USER_DATA;
-if (userData) app.setPath('userData', userData);
+// Tests and separate copies (EIEN_USER_DATA), and a portable copy, keep their
+// data in their own folder, so they never share settings or the
+// single-instance lock with the installed one (./data-folders.ts).
+const userData = dataFolder(thisCopy());
+const unwritable = userData === null ? null : prepareDataFolder(userData);
+if (userData !== null && unwritable === null) app.setPath('userData', userData);
 
-// One Eien at a time: a second launch focuses the first window instead.
-if (!app.requestSingleInstanceLock()) {
+if (unwritable !== null) {
+  dialog.showErrorBox('Eien can’t keep its data here', unwritable);
+  app.exit(1);
+} else if (!app.requestSingleInstanceLock()) {
+  // One Eien at a time: a second launch focuses the first window instead.
   app.quit();
 } else {
   app.on('second-instance', () => {

@@ -1,11 +1,13 @@
-// Before any vault is open: one sheet, one choice. On the desktop, the
-// writer chooses a folder; on Android the vault has its one place, and the
-// sheet says why Eien asks for the access it needs there (spec §10).
+// Before any vault is open: one sheet, one choice. The desktop starts in its
+// vault (Documents/Eien/Vault, or the one last opened), so it shows this only
+// when that can't be opened, and asks for a folder; on Android the vault has
+// its one place, and the sheet says why Eien asks for the access it needs
+// there (spec §10).
 
 import { h, wordButton } from '../dom';
 
 const DESKTOP = {
-  lede: 'Choose a folder to keep your notes in. Every note is a plain Markdown file in it; Eien adds nothing else you can see.',
+  lede: 'Eien couldn’t open the folder your notes are in. If it’s on a drive that isn’t connected, connect it and open Eien again, or choose the folder your notes are in.',
   choice: 'Choose a folder…',
 };
 

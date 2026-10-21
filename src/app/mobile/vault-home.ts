@@ -6,16 +6,17 @@
 // no asking.
 
 import { Directory, Filesystem } from '@capacitor/filesystem';
+import { HOME_EXPORTS, HOME_FOLDER, HOME_VAULT } from '../../core/vault';
 import { CapacitorFiles } from '../../platform/capacitor/capacitor-files';
 import type { FilesPort } from '../../platform/capacitor/files';
 import { AllFiles } from './all-files';
 
 /** Eien's folder in the system's Documents: on iOS the app's Documents are its own already. */
-const homeOn = (platform: string) => (platform === 'ios' ? '' : 'Eien/');
+const homeOn = (platform: string) => (platform === 'ios' ? '' : `${HOME_FOLDER}/`);
 /** The vault's folder, in the system's Documents. */
-export const vaultFolderOn = (platform: string) => `${homeOn(platform)}Vault`;
+export const vaultFolderOn = (platform: string) => `${homeOn(platform)}${HOME_VAULT}`;
 /** Where exports are saved, beside it. */
-export const exportFolderOn = (platform: string) => `${homeOn(platform)}Exports`;
+export const exportFolderOn = (platform: string) => `${homeOn(platform)}${HOME_EXPORTS}`;
 /** The vault's name, as the sidebar shows it. */
 export const VAULT_NAME = 'Eien';
 
@@ -44,7 +45,7 @@ export function vaultHome(platform: string): VaultHome {
   const files = new CapacitorFiles(Directory.Documents, vaultFolderOn(platform));
   const exports = new CapacitorFiles(Directory.Documents, exportFolderOn(platform));
   // On iOS the Files app shows the app's Documents as "Eien": the same names as Android's.
-  const exportFolder = 'Eien/Exports';
+  const exportFolder = `${HOME_FOLDER}/${HOME_EXPORTS}`;
   if (platform !== 'android') {
     const vaultShown =
       platform === 'ios' ? 'Eien › Vault, in the Files app' : 'Documents/Eien/Vault';
