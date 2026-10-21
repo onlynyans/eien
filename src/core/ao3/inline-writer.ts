@@ -34,6 +34,12 @@ function shownLines(html: string): string {
 export interface BookFlavor {
   /** The address a book gives the image the note names `address`; null when it carries none. */
   image(address: string): string | null;
+  /**
+   * How a footnote's mark stands in the words (a book's own spelling): one in
+   * an image's description goes just after the image, where it still leads
+   * to its note.
+   */
+  readonly mark?: RegExp;
 }
 
 export class InlineWriter {
@@ -209,15 +215,24 @@ export class InlineWriter {
       return start + words + end;
     }
     const words = this.inline(node, open.to, close.from);
-    const alt = () => escapeAttr(decodeEntities(words.replace(/<[^>]*>/g, '')));
+    const alt = (from = words) => escapeAttr(decodeEntities(from.replace(/<[^>]*>/g, '')));
     if (image && this.#book) {
       // The book's own copy of the image; without one (from the web, not there), its description.
       const src = this.#book.image(href);
-      return src === null ? words : `<img src="${escapeAttr(src)}" alt="${alt()}" />`;
+      if (src === null) return words;
+      const mark = this.#book.mark ? new RegExp(this.#book.mark.source, 'gu') : null;
+      const marks = mark ? (words.match(mark) ?? []).join('') : '';
+      const described = mark ? words.replace(mark, '') : words;
+      return `<img src="${escapeAttr(src)}" alt="${alt(described)}" />${marks}`;
     }
     if (!this.#follows(href)) return words;
     // A book's reader takes no space in an address (an EPUB checker, Word): written as %20.
     const address = this.#book ? href.replace(/ /gu, '%20') : href;
+    // A link with nothing to read (an image with no description) is no link: the image stays.
+    const shown = words
+      .replace(/<img\b[^>]*\balt="([^"]*)"[^>]*>/gu, '$1')
+      .replace(/<[^>]*>/gu, '');
+    if (this.#book && !image && shown.trim() === '') return words;
     if (!image) return `<a href="${escapeAttr(address)}">${words}</a>`;
     return `<img src="${escapeAttr(href)}" alt="${alt()}" />`;
   }

@@ -146,15 +146,21 @@ export class CapacitorStorage implements Storage {
     });
   }
 
-  /** Through a hidden temp file, given the name by renameNew, which refuses a name that's taken. */
+  /**
+   * Through a hidden temp file, given the name by renameNew, which refuses a
+   * name that's taken. Its bytes go through the Filesystem plugin, which
+   * doesn't flush them: the phone imports nothing (spec §8), so nothing it
+   * holds now comes this way.
+   */
   async writeNew(path: string, bytes: Uint8Array): Promise<boolean> {
     const at = vaultPath(path);
     return this.#oneAtATime(nameKey(at), async () => {
       if (await this.#files.stat(at)) return false;
       await this.#files.makeFolder(folderOf(at));
       const temp = besidePath(at, NEW_SUFFIX);
-      await this.#files.writeBytes(temp, bytes);
       try {
+        // Inside the try: a write cut short (the disk full) leaves no temp file behind.
+        await this.#files.writeBytes(temp, bytes);
         await this.#files.renameNew(temp, at);
         return true;
       } catch (error) {

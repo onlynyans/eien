@@ -57,10 +57,9 @@ export async function importFolder(
   const fail = (why: LeftReason) => ({ ok: false, why }) as const;
   /** The file's bytes (a note's as UTF-8 text), or why it can't come in. */
   const read = async (copy: Copy): Promise<Outcome<Uint8Array | string>> => {
-    const bytes = await readNoLinks(from, copy.from);
-    if (bytes === 'link') return fail('link');
+    const bytes = await readNoLinks(from, copy.from, limits[copy.kind]);
+    if (bytes === 'link' || bytes === 'too-large') return fail(bytes);
     if (!bytes) return fail('unreadable');
-    if (bytes.length > limits[copy.kind]) return fail('too-large'); // grown since it was listed
     if (copy.kind === 'image') return { ok: true, value: bytes };
     try {
       return { ok: true, value: utf8.decode(bytes) }; // a byte-order mark kept, as the note had it

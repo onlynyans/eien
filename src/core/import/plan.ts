@@ -68,7 +68,7 @@ export interface ImportPlan {
 /** Extensions a note may have elsewhere; each comes in as ".md". */
 export const NOTE_EXTENSIONS = ['.md', '.markdown', '.mdown', '.mkd', '.txt'] as const;
 
-/** The most notes and images one import brings in. */
+/** The most notes one import brings in; and as many images besides. */
 export const MAX_IMPORT_NOTES = 10_000;
 
 /** The note's title when `name` is a note's name elsewhere, else null. */
@@ -121,6 +121,7 @@ export function planImport(
 
   const copies: Copy[] = [];
   const left: LeftOut[] = [];
+  const brought = { note: 0, image: 0 };
   for (const file of [...files].sort(byPath)) {
     const parts = file.path.split('/');
     if (parts.some(isHiddenName)) continue; // .obsidian, .git, .DS_Store: not the writer's notes
@@ -137,7 +138,7 @@ export function planImport(
           ? 'bad-name'
           : file.size > limits[kind]
             ? 'too-large'
-            : copies.length >= MAX_IMPORT_NOTES
+            : brought[kind] >= MAX_IMPORT_NOTES
               ? 'too-many'
               : null;
     if (reason !== null || kind === null) {
@@ -153,6 +154,7 @@ export function planImport(
       : named;
     names.add(nameKey(free));
     copies.push({ from: file.path, to: joinPath(at, free), kind });
+    brought[kind] += 1;
   }
   return { folder, copies, left };
 }
@@ -162,7 +164,7 @@ export const LEFT_REASONS: Readonly<Record<LeftReason, string>> = {
   'not-a-note': 'neither a note nor an image',
   'too-large': 'too large: a note may be 8 MB, an image 32 MB',
   'bad-name': 'a name some systems can’t hold',
-  'too-many': `past the ${MAX_IMPORT_NOTES.toLocaleString('en-US')} notes and images one import brings`,
+  'too-many': `past the ${MAX_IMPORT_NOTES.toLocaleString('en-US')} notes (or images) one import brings`,
   'not-looked-at': `not looked at, nor anything after it: one import looks at ${(10 * MAX_IMPORT_NOTES).toLocaleString('en-US')} files`,
   'too-deep': 'in folders more than 64 deep, not looked into',
   link: 'a link, which isn’t followed',

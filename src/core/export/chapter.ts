@@ -3,7 +3,7 @@
 // its footnotes, numbered in the order they're first referred to. EPUB,
 // Word and the PDF are each made from this.
 
-import { bookBlocks, decodeEntities, escapeHtml } from '../ao3';
+import { bookBlocks, decodeEntities, escapeHtml, imageAddresses } from '../ao3';
 import { footnoteRefs, inRuns, literalRanges, splitFootnotes } from '../markdown';
 import { frontMatterEnd, toEditor } from '../text';
 import type { QuoteStyle } from '../typography';
@@ -121,6 +121,24 @@ function marksAfterLinks(html: string, mark: (hex: string) => string): string {
 }
 
 /**
+ * A note's text as a chapter is written from it: its front matter left out,
+ * its footnotes taken out of it (each one's first line words), each read in
+ * runs of 64 lines.
+ */
+function prepared(markdown: string): { body: string; defined: Map<string, string> } {
+  const text = toEditor(markdown);
+  const split = splitFootnotes(text.slice(frontMatterEnd(text)));
+  const defined = new Map([...split.notes].map(([key, md]) => [key, inRuns(asWords(md))]));
+  return { body: inRuns(split.text), defined };
+}
+
+/** The addresses of the images a note's chapter shows, its footnotes' too, as its writer reads them. */
+export function chapterImages(markdown: string): string[] {
+  const { body, defined } = prepared(markdown);
+  return [...new Set([body, ...defined.values()].flatMap((text) => imageAddresses(text)))];
+}
+
+/**
  * The note's text (front matter left out) as a chapter; `ids` begins its
  * footnotes' ids. A paragraph of more than 64 lines goes as paragraphs of
  * 64, as the index reads it (spec §4): the parser takes seconds over one.
@@ -131,10 +149,8 @@ export function chapterOf(
   ids = '',
   image: (address: string) => string | null = () => null,
 ): Chapter {
-  const text = toEditor(note.markdown);
-  const split = splitFootnotes(text.slice(frontMatterEnd(text)));
-  const body = inRuns(split.text);
-  const defined = new Map([...split.notes].map(([key, md]) => [key, inRuns(asWords(md))]));
+  const { body, defined } = prepared(note.markdown);
+  const flavor = { image, mark: MARK };
   const order: string[] = [];
   const numbers = new Map<string, number>();
   const number = (key: string): number | null => {
@@ -155,7 +171,7 @@ export function chapterOf(
       marked.add(n);
       return `<sup><a class="noteref" epub:type="noteref"${id} href="#${ids}fn${n}">${n}</a></sup>`;
     });
-  const blocks = bookBlocks(withMarks(body, number), quotes, image);
+  const blocks = bookBlocks(withMarks(body, number), quotes, flavor);
   // The notes' own Markdown may refer to further notes; a note never referred to comes last.
   const notes: string[][] = [];
   for (let i = 0; ; i++) {
@@ -163,7 +179,9 @@ export function chapterOf(
       const next = [...defined.keys()].find((key) => !numbers.has(key));
       if (next === undefined || number(next) === null) break;
     }
-    notes.push(bookBlocks(withMarks(defined.get(order[i] as string) ?? '', number), quotes, image));
+    notes.push(
+      bookBlocks(withMarks(defined.get(order[i] as string) ?? '', number), quotes, flavor),
+    );
   }
   // A note is referred to when a mark leads to it from the text, or from a note that is.
   const marksIn = (html: readonly string[]) =>

@@ -18,8 +18,7 @@ export const IMAGE_KINDS: Readonly<Record<ImageKind, { type: string; extension: 
   gif: { type: 'image/gif', extension: 'gif' },
 };
 
-/** The most bytes one image may be, and all of an export's together. */
-export const MAX_IMAGE_BYTES = 32 * 1024 * 1024;
+/** The most bytes all of an export's images may be together (one may be core/vault's MAX_IMAGE_BYTES). */
 export const MAX_EXPORT_IMAGE_BYTES = 48 * 1024 * 1024;
 
 const at = (bytes: Uint8Array, i: number) => bytes[i] ?? 0;

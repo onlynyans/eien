@@ -665,10 +665,15 @@ it, including on real AO3 output.
     by a path from the note's folder or from the vault's top
     (`/attachments/scarf.png`), as the page finds it. PNG, JPEG and GIF, each
     up to 32 MB and 48 MB in all for one export, carried as the file has them
-    (never redrawn); shown at most as wide as the page (in Word, sized to fit
-    it). An image from the web is never fetched. One that isn't there, is of
-    another kind (WebP, SVG…) or is past those sizes is its description, and
-    one line of news after the export says how many were left out so.
+    (never redrawn), each file once however often it's shown; at most as wide
+    as the room it's in (in Word, sized to fit the page, a quote's indents, a
+    list's, a table's cell). An image in a footnote goes too. An image from
+    the web is never fetched. One the page doesn't show (a hidden name, a name
+    with no image's extension), one that isn't there, of another kind (WebP,
+    SVG…) or past those sizes is its description, and one line of news after
+    the export says how many were left out so. A footnote's mark in an
+    image's description goes just after the image; a link round an image with
+    no description is left off, the image kept.
   - A numbered list keeps its first number (`1994.` stays 1994).
   - A character reference is the character, whichever of HTML 4's names it
     uses (`&eacute;`, `&euro;`); one that names nothing (`R&D;`) is its words.
@@ -738,7 +743,8 @@ Obsidian vault, iA Writer's library, a plain folder) into the vault.
   followed; and every file that's neither a note nor an image (PDFs,
   documents, which stay where they are). Hidden files and folders
   (`.obsidian`, `.git`, `.DS_Store`) are left out without a word. At most
-  10,000 notes come in at once; the rest are said to be left. One import
+  10,000 notes, and 10,000 images, come in at once; the rest are said to be
+  left. One import
   looks at 100,000 files and into folders 64 deep: where it stops, it says
   so.
 - A link is never followed, even one put in a file's or a folder's place

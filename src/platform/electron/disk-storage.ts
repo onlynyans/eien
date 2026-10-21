@@ -152,14 +152,18 @@ export class DiskStorage implements Storage {
    * more just before the rename).
    */
   async writeNew(path: string, bytes: Uint8Array): Promise<boolean> {
+    // Anything at the name, a link too, is something there: false, before a link is refused.
+    const at = join(this.#root, ...vaultPath(path).split('/'));
+    if (await lstat(at).catch(() => null)) return false;
     const file = await this.#resolve(path);
     return this.#oneAtATime(nameKey(vaultPath(path)), async () => {
       const free = async () => (await lstat(file).catch(() => null)) === null;
       if (!(await free())) return false;
       await mkdir(dirname(file), { recursive: true });
       const temp = join(dirname(file), hiddenBeside(basename(file), NEW_SUFFIX));
-      await writeFlushed(temp, bytes);
       try {
+        // Inside the try: a write cut short (the disk full) leaves no temp file behind.
+        await writeFlushed(temp, bytes);
         const linked = await linkInstead(temp, file);
         if (linked === 'taken') return false;
         if (linked === 'no links') {

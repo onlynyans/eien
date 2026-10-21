@@ -107,13 +107,17 @@ describe('images in a Word file', () => {
 describe('images on the PDF’s page', () => {
   const html = printHtml(BOOK);
 
-  it('holds them as data, which its policy allows, and nothing else', () => {
+  it('holds each once, as data in its style, which its policy allows; nothing else', () => {
     expect(html).toContain(
       `content="default-src 'none'; style-src 'unsafe-inline'; img-src data:"`,
     );
-    expect(html).toMatch(
-      /<img src="data:image\/png;base64,iVBORw0KGgo[^"]+" alt="A wide view" \/>/u,
+    expect(html).toContain('<img class="eien-image-0" alt="A wide view" />');
+    expect(html).toContain('<img class="eien-image-0" alt="again" />'); // shown again: named again
+    const rules = html.match(
+      /img\.eien-image-0 \{ content: url\("data:image\/png;base64,iVBORw0KGgo/gu,
     );
-    expect(html).not.toContain('eien-image');
+    expect(rules).toHaveLength(1);
+    expect(html).not.toContain('eien-image:');
+    expect(html).not.toMatch(/<img src=/u);
   });
 });

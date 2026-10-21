@@ -4,6 +4,7 @@ export {
   isNoteName,
   isSyncConflictName,
   kindOf,
+  MAX_IMAGE_BYTES,
   syncConflictOf,
   type VaultEntry,
 } from './entries';

@@ -38,7 +38,7 @@ export type Piece =
   | { readonly kind: 'text'; text: string; readonly look: Look; readonly link: number | null }
   | { readonly kind: 'break'; readonly link: number | null }
   | { readonly kind: 'note'; readonly n: number }
-  | { readonly kind: 'image'; readonly drawing: Drawing };
+  | { readonly kind: 'image'; readonly drawing: Drawing; readonly link: number | null };
 
 /** An image drawn in the text: its relationship, its size in EMU, its own id and words. */
 export interface Drawing {
@@ -111,7 +111,7 @@ export function paragraph(pieces: readonly Piece[], look: ParagraphLook, keep = 
   let runs = '';
   let open: number | null = null;
   for (const piece of pieces) {
-    const link = piece.kind === 'note' || piece.kind === 'image' ? null : piece.link;
+    const link = piece.kind === 'note' ? null : piece.link;
     if (link !== open) {
       if (open !== null) runs += '</w:hyperlink>';
       if (link !== null) runs += `<w:hyperlink r:id="rIdLink${link}" w:history="1">`;

@@ -178,11 +178,11 @@ describe('exports, over generated notes', () => {
         const html = printHtml(request(markdowns));
         expect(html).not.toMatch(/<(?:script|iframe|object|embed|link|style(?! *>))\b/iu);
         expect(html.match(/<style>/gu)).toHaveLength(1);
+        // Images only as the page's own data: a class its style holds, never an address of their own.
         for (const image of html.matchAll(/<img\b[^>]*>/giu)) {
-          expect(image[0]).toMatch(
-            /^<img src="data:image\/gif;base64,R0lGODlh[^"]*" alt="[^"]*" \/>$/u,
-          );
+          expect(image[0]).toMatch(/^<img class="eien-image-0" alt="[^"]*" \/>$/u);
         }
+        expect(html).not.toMatch(/url\((?!"data:image\/gif;base64,)/u);
       }),
     );
   });

@@ -23,6 +23,8 @@ import { IMAGE_KINDS } from './images';
 
 /** A pixel at 96 to the inch, in English Metric Units (914,400 to the inch). */
 const EMU_PER_PIXEL = 9525;
+/** A twip (a twentieth of a point, Word's measure of the page), in EMU. */
+const TWIP = 635;
 
 const BLOCKS = new Set([
   'p',
@@ -53,6 +55,8 @@ export class DocxWriter {
   readonly #images: readonly ExportImage[];
   /** The text's width and height, in EMU: no picture is drawn larger. */
   readonly #area: { readonly cx: number; readonly cy: number };
+  /** The width a picture has where it's drawn now (a quote's, a list's, a cell's), in EMU. */
+  #room = Number.POSITIVE_INFINITY;
   /** The pictures drawn so far: each one's id in the document. */
   #drawn = 0;
 
@@ -67,9 +71,10 @@ export class DocxWriter {
     const image = n === undefined ? undefined : this.#images[Number(n)];
     if (!image) return null;
     const { width, height, kind } = image.info;
+    const room = Math.min(this.#area.cx, this.#room);
     const scale = Math.min(
       1,
-      this.#area.cx / (width * EMU_PER_PIXEL),
+      room / (width * EMU_PER_PIXEL),
       this.#area.cy / (height * EMU_PER_PIXEL),
     );
     this.#drawn += 1;
@@ -171,7 +176,9 @@ export class DocxWriter {
       } else if (name === 'p' || name === 'li') {
         out.push(paragraph(this.#inline(node.children), this.#bodyLook(style, quote, after)));
       } else if (name === 'blockquote') {
-        out.push(...this.#blocks(node.children, quote + 1, level, style));
+        // A quote's indents, left and right, are room a picture can't have.
+        const room = this.#area.cx - TWIP * 720 * (quote + 2);
+        out.push(...this.#within(room, () => this.#blocks(node.children, quote + 1, level, style)));
       } else if (name === 'ul' || name === 'ol') {
         out.push(...this.#list(node, quote, level, style));
       } else if (name === 'pre') {
@@ -197,7 +204,24 @@ export class DocxWriter {
     return { style: after ? 'FirstParagraph' : 'Normal' };
   }
 
+  /** `run`, with a picture drawn no wider than `room` (EMU) while it runs. */
+  #within<T>(room: number, run: () => T): T {
+    const before = this.#room;
+    this.#room = Math.min(before, Math.max(room, TWIP * 720));
+    try {
+      return run();
+    } finally {
+      this.#room = before;
+    }
+  }
+
   #list(list: HtmlElement, quote: number, level: number, style: string | null): string[] {
+    // An item is indented by its level: room a picture can't have.
+    const room = this.#area.cx - TWIP * 720 * (level + 1);
+    return this.#within(room, () => this.#items(list, quote, level, style));
+  }
+
+  #items(list: HtmlElement, quote: number, level: number, style: string | null): string[] {
     let id = 1; // the bullets'
     if (list.name === 'ol') {
       id = this.numberedLists.length + 2;
@@ -263,7 +287,9 @@ export class DocxWriter {
       const xmlCells = Array.from({ length: columns }, (_, i) => {
         const cell = cells[i];
         const look: Look = cell?.name === 'th' ? { b: true } : {};
-        const pieces = cell ? this.#inline(cell.children, look) : [];
+        const pieces = cell
+          ? this.#within(TWIP * (width - 216), () => this.#inline(cell.children, look))
+          : [];
         return `<w:tc><w:tcPr><w:tcW w:w="${width}" w:type="dxa"/></w:tcPr>${paragraph(pieces, { style: 'TableText' })}</w:tc>`;
       });
       return `<w:tr>${xmlCells.join('')}</w:tr>`;
@@ -284,7 +310,7 @@ export class DocxWriter {
       if (name === 'br') pieces.push({ kind: 'break', link });
       else if (name === 'img') {
         const drawing = this.#drawing(node.attrs.src ?? '', node.attrs.alt ?? '');
-        if (drawing) pieces.push({ kind: 'image', drawing });
+        if (drawing) pieces.push({ kind: 'image', drawing, link });
         else pieces.push({ kind: 'text', text: node.attrs.alt ?? '', look, link });
       } else if (name === 'a' && node.attrs.class === 'noteref') {
         const n = Number(text(node));

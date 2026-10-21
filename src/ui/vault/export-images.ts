@@ -4,10 +4,14 @@
 // fetched; one that isn't there, of another kind or past the most is left as
 // its description, and counted, so the news can say so.
 
-import { imageAddresses } from '../../core/ao3';
-import { type ExportImage, imageInfo, MAX_EXPORT_IMAGE_BYTES } from '../../core/export';
-import { parentOf, resolveLinkPath } from '../../core/paths';
-import { frontMatterEnd, toEditor } from '../../core/text';
+import {
+  chapterImages,
+  type ExportImage,
+  imageInfo,
+  MAX_EXPORT_IMAGE_BYTES,
+} from '../../core/export';
+import { baseName, parentOf, resolveLinkPath } from '../../core/paths';
+import { imageTypeOf } from '../../core/vault';
 
 /** A web address, mailto:, data:…: never read. */
 const ELSEWHERE = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/iu;
@@ -29,12 +33,14 @@ export class ExportImages {
 
   /** The images the note at `path`, holding `markdown`, shows that the export carries, by address. */
   async of(path: string, markdown: string): Promise<Map<string, ExportImage>> {
-    const text = toEditor(markdown);
     const carried = new Map<string, ExportImage>();
-    for (const address of imageAddresses(text.slice(frontMatterEnd(text)))) {
+    // As the chapter is written: its footnotes' images too.
+    for (const address of chapterImages(markdown)) {
       if (ELSEWHERE.test(address)) continue;
       const at = resolveLinkPath(parentOf(path), address);
-      const image = at === null ? null : await this.#image(at);
+      // A name the page shows as an image (not hidden, an image's extension); then its own header.
+      const shown = at !== null && imageTypeOf(baseName(at)) !== null;
+      const image = shown && at !== null ? await this.#image(at) : null;
       if (image) carried.set(address, image);
       else this.#left.add(at ?? `${path}#${address}`);
     }

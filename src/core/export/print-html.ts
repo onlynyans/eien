@@ -1,8 +1,9 @@
 // The page a PDF is printed from (spec §8): one HTML page holding the
 // title (a book's) and every chapter, each from a new page, its footnotes
-// at its end, its images in it as data. The system's serif sets it;
-// Chromium prints it. It runs no script and loads nothing: its policy
-// allows only its own styles and images held as data.
+// at its end, its images in it as data, each once (a style rule each; an
+// image shown again names the rule). The system's serif sets it; Chromium
+// prints it. It runs no script and loads nothing: its policy allows only its
+// own styles and images held as data.
 
 import { escapeHtml } from '../ao3';
 import { chaptersOf, type ExportRequest, languageTag } from './book';
@@ -62,15 +63,17 @@ export function printHtml(request: ExportRequest): string {
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">
 <title>${title}</title>
-<style>${STYLE}</style>
+<style>${STYLE}${images
+    .map(
+      (image, n) =>
+        `img.eien-image-${n} { content: url("${dataAddress(image.info.kind, image.bytes)}"); }`,
+    )
+    .join('\n')}</style>
 </head>
 <body>
 ${xmlChars([...titlePage, ...chapters].join('\n')).replace(
   /<img src="eien-image:(\d+)"/gu,
-  (whole, n: string) => {
-    const image = images[Number(n)];
-    return image ? `<img src="${dataAddress(image.info.kind, image.bytes)}"` : whole;
-  },
+  (whole, n: string) => (images[Number(n)] ? `<img class="eien-image-${n}"` : whole),
 )}
 </body>
 </html>

@@ -9,6 +9,7 @@ export {
 } from './book';
 export {
   type Chapter,
+  chapterImages,
   chapterOf,
   type ExportImage,
   type ExportNote,
@@ -24,7 +25,6 @@ export {
   type ImageKind,
   imageInfo,
   MAX_EXPORT_IMAGE_BYTES,
-  MAX_IMAGE_BYTES,
 } from './images';
 export { printHtml } from './print-html';
 export { utf8, zipStore } from './zip';

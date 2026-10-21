@@ -29,11 +29,18 @@ const IMAGE_TYPES: Readonly<Record<string, string>> = {
   svg: 'image/svg+xml',
 };
 
-/** The media type of the image `name` names (by its extension, case aside), or null for none. */
-export const imageTypeOf = (name: string): string | null =>
-  isHiddenName(name)
-    ? null
-    : (IMAGE_TYPES[name.slice(name.lastIndexOf('.') + 1).toLowerCase()] ?? null);
+/** The most bytes an image may be: one a note shows, an export carries or an import brings. */
+export const MAX_IMAGE_BYTES = 32 * 1024 * 1024;
+
+/**
+ * The media type of the image `name` names (by its extension, case aside), or
+ * null for none: a hidden name, or a name with no extension ("png").
+ */
+export function imageTypeOf(name: string): string | null {
+  const dot = name.lastIndexOf('.');
+  if (isHiddenName(name) || dot <= 0) return null;
+  return IMAGE_TYPES[name.slice(dot + 1).toLowerCase()] ?? null;
+}
 
 /** The kind a listed file or folder is. */
 export const kindOf = (name: string, isFolder: boolean): EntryKind =>
