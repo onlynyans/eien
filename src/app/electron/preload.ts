@@ -39,6 +39,7 @@ const bridge: Bridge = {
     saveAs: (name, file) => ipcRenderer.invoke(CHANNEL.outSaveAs, name, file),
   },
   onMenu: (listener) => listen<MenuCommand>(CHANNEL.menu, listener),
+  onBack: () => () => undefined, // a desktop window has no system back
   onBeforeClose: (save) => {
     ipcRenderer.on(CHANNEL.beforeClose, () => {
       save().finally(() => ipcRenderer.send(CHANNEL.closeReady));

@@ -5,6 +5,7 @@
 // Widths and what's shut are remembered on this device (./pane-state.ts).
 
 import { h } from '../dom';
+import type { PhonePane } from '../phone/phone-stack';
 import {
   dragged,
   type Edge,
@@ -31,6 +32,10 @@ export interface PaneParts {
   leave(): void;
   /** A pane shut or opened, or the panes changed from three to two. */
   changed(): void;
+  /** On a phone, the one pane in sight (../phone/phone-stack.ts); null on a wider window. */
+  phone(): PhonePane | null;
+  /** On a phone, bring a pane into sight. */
+  showPhone(pane: PhonePane): void;
 }
 
 const NAMES: Record<Shuttable, string> = { sidebar: 'Sidebar', list: 'List' };
@@ -66,26 +71,51 @@ export class PaneLayout {
     this.#apply();
   }
 
+  /** Two panes: the tree lists the notes. Never on a phone, which shows one pane at a time. */
   get two(): boolean {
-    return this.#two;
+    return this.#two && !this.#parts.phone();
   }
 
-  /** Whether `pane` is out of sight: shut, or, for the list, there are two panes. */
+  /** Whether `pane` is out of sight: shut, or, for the list, there are two panes; on a phone, not the one shown. */
   isShut(pane: Shuttable): boolean {
+    const phone = this.#parts.phone();
+    if (phone) return phone !== pane;
     return pane === 'list' ? this.#two || this.#panes.listShut : this.#panes.sidebarShut;
   }
 
   /** Shut `pane` if it's open, open it if it's shut. The list has nothing to do with two panes. */
   toggle(pane: Shuttable): void {
-    if (pane === 'list' && this.#two) return;
-    this.#set(pane, !this.isShut(pane));
+    const phone = this.#parts.phone();
+    // On a phone, "Hide sidebar" (the tree's seal) goes on to the notes.
+    if (phone === 'sidebar' && pane === 'sidebar') this.#parts.showPhone('list');
+    else if (!phone && !(pane === 'list' && this.two)) this.#set(pane, !this.isShut(pane));
   }
 
-  /** Open `pane` if it's shut; whether it's in sight now. */
+  /** Whether the list is drawn: in sight, or on a phone, a pane away (its back bar names it). */
+  get listKept(): boolean {
+    return !this.isShut('list') || this.#parts.phone() !== null;
+  }
+
+  /** Open `pane` if it's shut (on a phone, bring it into sight); whether it's in sight now. */
   open(pane: Shuttable): boolean {
-    if (pane === 'list' && this.#two) return false;
+    if (this.#parts.phone()) {
+      this.#parts.showPhone(pane);
+      return true;
+    }
+    if (pane === 'list' && this.two) return false;
     if (this.isShut(pane)) this.#set(pane, false);
     return true;
+  }
+
+  /** On a phone, bring the page into sight; elsewhere it always is. */
+  openPage(): void {
+    if (this.#parts.phone()) this.#parts.showPhone('page');
+  }
+
+  /** Lay the panes out again, and draw them: the window became a phone's, or the pane shown changed. */
+  relayout(): void {
+    this.#apply();
+    this.#parts.changed();
   }
 
   setTwo(two: boolean): void {
@@ -120,11 +150,11 @@ export class PaneLayout {
 
   #apply(): void {
     const { shell, list } = this.#parts;
-    const shown = shownWidths(this.#panes, this.#two, window.innerWidth);
+    const shown = shownWidths(this.#panes, this.two, window.innerWidth);
     // Through the style API: the security policy refuses style attributes.
     shell.style.setProperty('--pane-sidebar', `${shown.sidebar}px`);
     shell.style.setProperty('--pane-list', `${shown.list}px`);
-    shell.dataset.panes = this.#two ? 'two' : 'three';
+    shell.dataset.panes = this.two ? 'two' : 'three';
     shell.toggleAttribute('data-sidebar-shut', this.isShut('sidebar'));
     shell.toggleAttribute('data-list-shut', this.isShut('list'));
     list.inert = this.isShut('list');
@@ -139,12 +169,12 @@ export class PaneLayout {
       if (prefix) prefix.textContent = this.isShut(pane) ? 'Show ' : 'Hide ';
     }
     const listButton = this.#buttons.list;
-    listButton.disabled = this.#two;
-    listButton.title = this.#two ? 'Two panes: the sidebar lists the notes' : this.#parts.keys.list;
+    listButton.disabled = this.two;
+    listButton.title = this.two ? 'Two panes: the sidebar lists the notes' : this.#parts.keys.list;
   }
 
   #edgeOf(pane: Shuttable): Edge {
-    return pane === 'sidebar' ? sidebarEdge(this.#two) : 'list';
+    return pane === 'sidebar' ? sidebarEdge(this.two) : 'list';
   }
 
   /** Move `pane`'s edge `by` pixels from `shown`, its width on screen when the move began. */
@@ -176,7 +206,7 @@ export class PaneLayout {
         'aria-label': pane === 'sidebar' ? 'Sidebar width' : 'Note list width',
       },
     });
-    const width = () => shownWidths(this.#panes, this.#two, window.innerWidth)[pane];
+    const width = () => shownWidths(this.#panes, this.two, window.innerWidth)[pane];
     edge.addEventListener('pointerdown', (down) => {
       if (down.button !== 0) return;
       down.preventDefault(); // no text selected on the way

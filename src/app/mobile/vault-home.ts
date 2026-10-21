@@ -1,7 +1,8 @@
-// Where the phone's vault is (spec §10), and the access it needs. Android:
-// a folder in the shared Documents, synced by Syncthing; Eien asks once for
-// the access, after the welcome has said why. iOS: Eien's own folder, which
-// the Files app shows, and which needs no asking.
+// Where the phone's vault is (spec §10), and the access it needs. Everything
+// Eien keeps is in one folder, Documents/Eien: the vault (Vault, the folder
+// Syncthing syncs) and Exports beside it. Android: the shared Documents; Eien
+// asks once for the access, after the welcome has said why. iOS: Eien's own
+// Documents, which the Files app shows, and which needs no asking.
 
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { CapacitorFiles } from '../../platform/capacitor/capacitor-files';
@@ -9,9 +10,11 @@ import type { FilesPort } from '../../platform/capacitor/files';
 import { AllFiles } from './all-files';
 
 /** The vault's folder, in the system's Documents. */
-export const VAULT_FOLDER = 'Eien';
+export const VAULT_FOLDER = 'Eien/Vault';
 /** Where exports are saved, beside it. */
-export const EXPORT_FOLDER = 'Eien Exports';
+export const EXPORT_FOLDER = 'Eien/Exports';
+/** The vault's name, as the sidebar shows it. */
+export const VAULT_NAME = 'Eien';
 
 export interface VaultHome {
   /** The files in the vault's folder. */

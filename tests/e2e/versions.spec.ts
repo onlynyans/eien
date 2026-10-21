@@ -219,6 +219,36 @@ test('seals follow a renamed note, and another device’s seal shows at once', a
   await expect(panel.locator('.version__name')).toHaveText(['on the phone'], { timeout: 5000 });
 });
 
+test('Esc closes the versions panel and gives the page the keyboard', async ({ app, page }) => {
+  await row(page, 'Needle').click();
+  await seal(app);
+  await page.getByRole('button', { name: 'Versions', exact: true }).click();
+  const panel = page.getByRole('complementary', { name: 'Versions' });
+  await expect(panel).toBeVisible();
+  await expect
+    .poll(() => panel.evaluate((element) => element.contains(document.activeElement)))
+    .toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(page.locator('.cm-content')).toBeFocused();
+});
+
+test('Esc while naming a seal stops the naming, and leaves the panel open', async ({
+  app,
+  page,
+}) => {
+  await row(page, 'Needle').click();
+  await seal(app);
+  await page.getByRole('button', { name: 'Versions', exact: true }).click();
+  const panel = page.getByRole('complementary', { name: 'Versions' });
+  await panel.getByRole('button', { name: 'Name' }).first().click();
+  await page.keyboard.type('half a nam');
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+});
+
 test('seals are there after a restart', async ({ app, page, userData, vault }) => {
   await row(page, 'Needle').click();
   await seal(app);

@@ -3,11 +3,18 @@
 // drives Eien's WebView; adb plays everything outside it — Syncthing putting
 // files in Documents/Eien, Android's settings, the app sent to the background.
 
-import { _android, type AndroidDevice, test as base, expect, type Page } from '@playwright/test';
+import {
+  _android,
+  type AndroidDevice,
+  test as base,
+  expect,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 export const PKG = 'io.github.onlynyans.eien';
-export const VAULT = '/sdcard/Documents/Eien';
-export const EXPORTS = '/sdcard/Documents/Eien Exports';
+export const VAULT = '/sdcard/Documents/Eien/Vault';
+export const EXPORTS = '/sdcard/Documents/Eien/Exports';
 
 const quoted = (path: string) => `'${path.replaceAll("'", "'\\''")}'`;
 
@@ -45,7 +52,8 @@ export async function startEien(
   await stopEien(device);
   if (!keep) {
     await shell(device, `pm clear ${PKG}`);
-    await shell(device, `rm -rf ${quoted(VAULT)} ${quoted(EXPORTS)}`);
+    // Eien's whole folder: the vault, the exports, and anything the old layout left.
+    await shell(device, `rm -rf '/sdcard/Documents/Eien' '/sdcard/Documents/Eien Exports'`);
   }
   // For the app's uid as well: what Android's settings screen sets, which outranks the package's.
   const mode = allowed ? 'allow' : 'deny';
@@ -84,4 +92,22 @@ export async function listOnPhone(device: AndroidDevice, folder: string): Promis
     .filter((path) => path !== '')
     .map((path) => path.slice(folder.length + 1))
     .sort();
+}
+
+/** Where the WebView's top edge is on the screen, in device pixels (under the status bar). */
+async function webViewTop(device: AndroidDevice): Promise<number> {
+  await shell(device, 'uiautomator dump /sdcard/eien-ui.xml');
+  const tree = await shell(device, 'cat /sdcard/eien-ui.xml');
+  return Number(/class="android\.webkit\.WebView"[^>]*bounds="\[\d+,(\d+)\]/u.exec(tree)?.[1] ?? 0);
+}
+
+/** A finger held on `target`, as a writer's long press: Android makes it the page's contextmenu. */
+export async function longPress(device: AndroidDevice, page: Page, target: Locator): Promise<void> {
+  const box = await target.boundingBox();
+  if (!box) throw new Error('Nothing in sight to press.');
+  const ratio = await page.evaluate(() => devicePixelRatio);
+  const top = await webViewTop(device);
+  const x = Math.round((box.x + box.width / 2) * ratio);
+  const y = Math.round(top + (box.y + box.height / 2) * ratio);
+  await shell(device, `input swipe ${x} ${y} ${x} ${y} 900`);
 }

@@ -117,6 +117,13 @@ export interface Bridge {
   readonly out: OutBridge;
   onMenu(listener: (command: MenuCommand) => void): () => void;
   /**
+   * The system's back (Android's back button or gesture). Each handler is
+   * asked, the newest first, until one went back (true); when none did, the
+   * app steps aside, as Android apps do. The desktop has none. Returns a
+   * function to stop.
+   */
+  onBack(handler: () => boolean): () => void;
+  /**
    * Before the window closes, the main process asks it to save; `save`
    * runs, and the window closes when it's done (or after a short wait).
    */

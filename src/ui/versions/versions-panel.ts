@@ -1,7 +1,7 @@
 // The versions panel (spec §9, docs/design): raised paper beside the page,
 // the draft first, then each seal, newest first — its name, when it was
 // sealed and its words — with Compare, Restore, Name and Delete. A seal is
-// named in place: Enter keeps the name, Esc doesn't.
+// named in place: Enter keeps the name, Esc doesn't. Esc closes it.
 
 import type { VersionFile } from '../../core/versions';
 import { h, wordButton } from '../dom';
@@ -58,6 +58,13 @@ export class VersionsPanel {
         text: 'Restoring seals the draft first, so nothing is lost. Named seals are kept until you delete them; other seals older than 30 days are thinned to one a day.',
       }),
     );
+    // Esc closes it, as it does the outline cards. A name being typed has its own Esc first: it
+    // stops there.
+    this.element.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      event.preventDefault();
+      actions.close();
+    });
   }
 
   get open(): boolean {

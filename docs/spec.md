@@ -185,7 +185,8 @@ Three panes, each collapsible, with a two-pane option in settings:
    tree lists the notes itself.
 3. **Page** — the editor, on a paper sheet. A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
-   and zoom. Controls show on hover or keyboard focus.
+   and zoom. Controls show on hover or keyboard focus (on a touch screen,
+   which can't hover, they stay in sight).
 
 Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
 ⌘\ toggles the sidebar, ⌘⇧\ the note list.
@@ -451,9 +452,10 @@ src/ui/
   outline/      ✓ outline cards: a book's chapters as cards on the blotter, reordered by drag or keys
   counters/     ✓ the colophon's today, book and sprint
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
+  phone/        ✓ the phone's layout: one pane at a time, back, the page's ⋯
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
-  mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access
+  mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture
 ```
 
 ### Rules for the code
@@ -761,13 +763,14 @@ Obsidian vault, iA Writer's library, a plain folder) into the vault.
 
 ### On the phone
 
-The phone has no menu bar: a note's menu and a book's offer the exports.
-EPUB, Word (with their images) and AO3 HTML go to `Eien Exports` beside the vault's folder
-(Documents on Android; Eien's folder in the Files app on iOS), under a free
-name, never over a file there. PDF isn't offered: the WebView can't print to
+The phone has no menu bar: a note's menu and a book's offer the exports (a
+long press), and so does the page's ⋯ for the note open. EPUB, Word (with
+their images) and AO3 HTML go to `Eien/Exports` beside the vault's folder (Documents on Android;
+Eien's folder in the Files app on iOS), under a free name, never over a file
+there. PDF isn't offered: the WebView can't print to
 a file without a plugin of Eien's own, which may come later. Import isn't
-offered either: a folder copied into Documents/Eien (by the Files app or
-Syncthing) is in the vault already.
+offered either: a folder copied into Documents/Eien/Vault (by the Files app
+or Syncthing) is in the vault already.
 
 ---
 
@@ -844,21 +847,52 @@ Compare or Restore finishes lands on a note opened meanwhile.
 ## 10. Mobile and sync
 
 - Android and iOS run the same `ui` and `core` with the Capacitor `Storage`.
-- **Android:** the vault is `Documents/Eien` in shared storage, synced by the
-  Syncthing app. Its writes and renames are Eien's own (a small plugin): a
+- **One folder, `Documents/Eien`, on every device:** the vault in `Vault`
+  (the folder Syncthing syncs), exports in `Exports`, and on a computer this
+  device's settings file beside them, never synced. The phone uses
+  `Documents/Eien/Vault` itself; a computer's Open Vault starts there.
+- **Android:** the vault is `Documents/Eien/Vault` in shared storage, synced
+  by the Syncthing app. Its writes and renames are Eien's own (a small plugin): a
   write is flushed to the disk, a save's rename replaces the note in one step,
   and a move, the trash and recovery never rename over a file that's there,
   even one Syncthing brought a moment ago. Eien asks once for the file access it needs (All files
   access, from Android 11), after the welcome says why. Eien has no internet
   permission. Trash goes to `.eien/trash` in the vault, so any device can take
-  it back; exports go to `Documents/Eien Exports`. Eien saves when the phone
+  it back; exports go to `Documents/Eien/Exports`. Eien saves when the phone
   sends it to the background, and looks at the vault again when it comes back
   (and every few seconds while it's in front: a phone has no file watcher).
 - **iOS:** the vault lives in Eien's own Files folder, visible in the Files
   app. Syncthing on iOS (Möbius Sync) can sync it. Installing on a device needs
   Xcode and an Apple developer account.
-- The phone layout is one pane at a time: tree → list → page, with back
-  gestures.
+- **The phone layout** is one pane at a time: tree → list → page. A window
+  narrower than 600 px (narrower than any desktop window can be) is a
+  phone's, whatever the system; turned sideways, a phone wide enough shows
+  the three panes.
+  - It opens on the notes. Choosing a folder or tag shows its notes; opening
+    a note shows the page. A bar above the pane goes back, naming where
+    ("‹ Fic", "‹ Library"); leaving the page closes what lay over it.
+    Android's back gesture first closes a menu or the settings, then does
+    what Esc does where the keyboard is (a rename being typed stops, keeping
+    nothing), then closes what lies over the page (Compare gives the draft
+    back, the outline cards, the versions), then goes back a pane; at the
+    tree it leaves Eien in the background.
+  - The page's ⋯ offers what the menu bar does on the desktop: Seal,
+    Compare, Versions, Outline cards, Copy for AO3, Export… (the note's own
+    choices), Focus mode, Typewriter scrolling, a sprint (Stop while one is
+    under way), Settings. The page's bar keeps its
+    three views.
+  - On a touch screen, the page gives its title the keyboard rather than the
+    editor (opening a note to read, closing what lay over it), so the
+    phone's keyboard stays down; when the title is the note's own heading,
+    the keyboard leaves. A new note goes straight into the editor.
+  - Turned sideways or upright, the keyboard on something gone from sight
+    goes to the pane in sight, or to the page.
+  - A finger scrolls a list, and never lifts a row: a note moves by its menu
+    (a long press: Move up, Move down, Move to…), an outline card by its own
+    (Move earlier, Move later). Two panes aren't offered, here or in the
+    settings: one shows at a time. The tree's seal goes on to the notes.
+  - Controls that wait for the pointer on the desktop stay in sight on a
+    touch screen, which has no hover.
 
 ---
 

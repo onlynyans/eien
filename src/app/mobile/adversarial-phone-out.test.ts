@@ -1,4 +1,4 @@
-// Adversarial: the phone's exports into Eien Exports (spec §8), "under a
+// Adversarial: the phone's exports into Eien/Exports (spec §8), "under a
 // free name, never over a file there", when two are saved at once under one
 // name (two books' "Chapter 1", or a second tap). Fails on the code as it
 // stands. Node's files stand in for Capacitor's, as the storage tests do.

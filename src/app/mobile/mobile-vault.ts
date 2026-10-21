@@ -7,7 +7,7 @@ import type { VaultBridge, VaultInfo } from '../../platform/bridge';
 import { CapacitorStorage } from '../../platform/capacitor/capacitor-storage';
 import { recoverStrays } from '../../platform/capacitor/recover';
 import { OpenVault } from '../../platform/open-vault';
-import { VAULT_FOLDER, type VaultHome } from './vault-home';
+import { VAULT_NAME, type VaultHome } from './vault-home';
 
 export class MobileVault implements VaultBridge {
   readonly #home: VaultHome;
@@ -48,7 +48,7 @@ export class MobileVault implements VaultBridge {
     await files.makeFolder('');
     const storage = new CapacitorStorage(files, { active: this.#active });
     await recoverStrays(files, storage);
-    const vault = await OpenVault.open(VAULT_FOLDER, storage);
+    const vault = await OpenVault.open(VAULT_NAME, storage);
     vault.watch((paths) => {
       for (const listener of this.#listeners) listener(paths);
     });
@@ -80,10 +80,10 @@ export class MobileVault implements VaultBridge {
   trash = async (path: string) => this.#vault().trash(path);
   makeFolder = async (path: string) => this.#vault().makeFolder(path);
 
-  /** Not on the phone (spec §8): a folder copied into Documents/Eien is in the vault already. */
+  /** Not on the phone (spec §8): a folder copied into Documents/Eien/Vault is in the vault already. */
   importFolder = async (): Promise<never> => {
     throw new Error(
-      'Importing is on the computer: on the phone, copy the folder into Documents/Eien.',
+      'Importing is on the computer: on the phone, copy the folder into Documents/Eien/Vault.',
     );
   };
 
