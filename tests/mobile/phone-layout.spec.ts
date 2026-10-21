@@ -12,7 +12,7 @@ type Pane = 'sidebar' | 'list' | 'page';
 const PANES: readonly Pane[] = ['sidebar', 'list', 'page'];
 const pane = (page: Page, name: Pane) => page.locator(`.shell > .${name}`);
 const back = (page: Page) => page.locator('.phone-bar__back');
-const more = (page: Page) => page.locator('.phone-bar__more');
+const more = (page: Page) => page.getByRole('button', { name: 'More' });
 const menuItem = (page: Page, label: string) =>
   page.locator('.menu [role^="menuitem"]', { hasText: new RegExp(`^${label}$`, 'u') });
 

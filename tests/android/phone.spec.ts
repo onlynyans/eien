@@ -160,7 +160,7 @@ test('Android’s back: the ⋯ closes first, then a pane back at a time, then E
   await page.locator('.sidebar').getByText('Fic', { exact: true }).click();
   await titles(page).filter({ hasText: 'Tear' }).click();
   await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'page');
-  await page.locator('.phone-bar__more').click();
+  await page.getByRole('button', { name: 'More' }).click();
   await expect(page.locator('.menu')).toBeVisible();
   const backKey = () => shell(device, 'input keyevent KEYCODE_BACK');
   await backKey();
@@ -183,7 +183,7 @@ test('Android’s back closes the versions panel and the outline cards before go
   await putOnPhone(device, `${VAULT}/Fic/Tear.md`, 'The scarf tore.\n');
   await titles(page).filter({ hasText: 'Tear' }).click();
   const choose = async (label: string) => {
-    await page.locator('.phone-bar__more').click();
+    await page.getByRole('button', { name: 'More' }).click();
     await page
       .locator('.menu [role^="menuitem"]', { hasText: new RegExp(`^${label}$`, 'u') })
       .click();
@@ -208,7 +208,7 @@ test('Android’s back closes the settings before anything else', async ({ devic
   const page = await startEien(device);
   await putOnPhone(device, `${VAULT}/Tear.md`, 'Words.\n');
   await titles(page).filter({ hasText: 'Tear' }).click();
-  await page.locator('.phone-bar__more').click();
+  await page.getByRole('button', { name: 'More' }).click();
   await page.locator('.menu [role^="menuitem"]', { hasText: /^Settings$/u }).click();
   await expect(page.locator('dialog[open]')).toBeVisible();
   await shell(device, 'input keyevent KEYCODE_BACK');

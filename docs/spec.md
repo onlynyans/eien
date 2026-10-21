@@ -196,8 +196,10 @@ Three panes, each collapsible, with a two-pane option in settings:
    - Library, Folders and Tags fold and open from their labels (a click, Enter
      or Space), each remembered on this device (§2). An open folder or tag has
      a hairline guide down its children.
-   - At the foot: light/dark switch, sync status (not built yet:
-     [backlog](backlog.md) #10), settings
+   - At the foot: the vault's count, then three icons: day or night (a sun
+     or a moon, whichever shows; pressed, the other; System is in
+     Settings), three panes or two, and settings. The sync status's place
+     is beside them (not built yet: [backlog](backlog.md) #10)
 2. **Note list** — the notes in the selected folder or tag: title, a line of
    preview, and the date or word count. Sortable by title, modified date or the
    folder's own order (drag to reorder). At its top, on its own band above the
@@ -205,16 +207,18 @@ Three panes, each collapsible, with a two-pane option in settings:
    list holds. Hidden in two-pane mode, where the tree lists the notes itself.
 3. **Page** — the editor, on a paper sheet. A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
-   and zoom. Controls show on hover or keyboard focus (on a touch screen,
-   which can't hover, they stay in sight).
+   and zoom, at a fixed height (`--status-h`, 40px). Each part of the page
+   has its own row (bar, formatting bar, scroll, status), so a part hidden
+   never hands its space to another. Controls show on hover or keyboard
+   focus (on a touch screen, which can't hover, they stay in sight).
 
 Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
 ⌘\ toggles the sidebar, ⌘⇧\ the note list.
 
 - **No title bar.** The panes take the title bar's space, as Claude's desktop
   app does, and their top bands (the sidebar's head, the list's head, the
-  page's bar, the versions panel's head) drag the window; every control,
-  field and pane edge in them stays a control. On macOS the traffic lights
+  page's bar, the running head, the versions panel's head) drag the window;
+  every control, field and pane edge in them stays a control. On macOS the traffic lights
   sit over the sidebar's head, in the middle of its band at any zoom, and the
   head starts after them; with the sidebar shut, the strip's seal waits below
   them and the next pane's head starts after them. On Windows and Linux the
@@ -222,8 +226,10 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   in the band's colours (they follow day, night and the palette) and at its
   height, and the band keeps clear of them. Where the controls are comes from
   the window controls overlay (`env(titlebar-area-*)`), so nothing is
-  measured by hand. What else goes in the strip is for a later design pass
-  ([backlog](backlog.md) #1). The phone keeps its own layout.
+  measured by hand. Which strip they sit over is the layout's (below): the
+  page's band in Band, the blotter's top in Slip, the running head in
+  Running head (the traffic lights in the middle of its 40px). The phone
+  keeps its own layout.
 
 - **Resizing.** A pane's edge is a hairline that darkens under the pointer:
   drag it, or give it the keyboard and step it with ← and →. Each width has
@@ -232,8 +238,11 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   list and then the sidebar give way, down to their narrowest, so the page
   keeps 360 px; widening the window gives them back.
 - **Collapsing.** The sidebar shuts to a strip holding the seal; the seal
-  shuts and opens it. The page bar's SIDEBAR and LIST words, and the View
-  menu, shut and open either. A pane shut with the keyboard in it gives the
+  shuts and opens it. The layout's pane controls and the View menu shut and
+  open either: in Band and Slip a chevron at the pane's edge (‹ on hover
+  shuts it; the way back is a › in the same spot of the pane beside it, and
+  a shut sidebar's under the strip's seal), in Running head the strip's
+  sidebar and list icons, always in sight. A pane shut with the keyboard in it gives the
   keyboard to the page. ⌘1–3 open a shut pane before giving it the keyboard.
 - **Two panes** (Layout → Panes, or the pair at the sidebar's foot): the list
   is gone and the tree lists the notes, under the vault, each open folder (in
@@ -252,6 +261,38 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   row now in a removed row's place.
 - Widths, and which panes are shut, are per device (§2); three or two panes
   is a device setting (§6).
+
+### Layouts
+
+Three layouts, a device setting (`appearance.layout`, Settings → Appearance;
+`data-layout` on `<html>`). They differ only in where the controls sit, not
+in what they are or do ([overall.md](design/explorations/overall.md)):
+
+- **Band** (the default): the page's controls in a band above it (views,
+  Compare, Seal, Versions, Focus, and the strip's own control, which hides
+  the band to a lip and brings it back). Corners 2/4/8px.
+- **Slip**: no band; the page's tools float on a raised slip at the
+  blotter's top right, which folds away to its fold. The panes' chevrons are
+  tabs at their edges. Corners 4/8/14px; the sheet takes a 3px corner.
+- **Running head**: one 40px strip across the whole window, the traffic
+  lights in it, then the panes' icons, the breadcrumb and every page tool,
+  always in sight. The sidebar's head sits under it. Corners 3/6/10px.
+
+Every control is a command, defined once (`ui/chrome/commands.ts`): its icon,
+its name, its key, and the menu's command it runs. A layout names its hosts
+and the commands each holds (`ui/chrome/band.ts`, `slip.ts`, `runhead.ts`),
+each command in exactly one host; switching takes one layout's hosts out and
+puts the other's in, and nothing else changes. A host draws its commands as
+icon buttons (`ui/icons.ts`), each with an accessible name, a tooltip with
+its key (after a short hover, or at once from the keyboard) and its state
+(pressed, disabled); a host is a toolbar, its arrows moving along it, and Tab
+reaches every control. A switch leaves the keyboard on the same command in
+the new layout, or on the page. Whether the strip is hidden is per device.
+
+On a phone each layout has its own bottom for the page: Band the top bar
+(the view, Focus, ⋯), Slip a floating slip (the three views, Focus, ⋯),
+Running head a rail at the page's foot (the views, Focus, Seal, ⋯). The ⋯
+holds the rest, as the menu bar does on the desktop.
 
 The visual design (type, color, spacing) is set in the design pass. This spec
 fixes only the token names it uses (§7).
@@ -497,7 +538,9 @@ src/ui/
   shell/        ✓ the panes: resizing, collapsing, three or two, kept per device
   sidebar/      ✓ the seal, the search field; library (all, pinned), folders, tags; with two panes the notes; folders renamed in place
   list/         ✓ note list: previews, a book's words, search results, sorts, dragging
-  page/         ✓ the sheet, the title (renaming the note), the view switch, the colophon
+  page/         ✓ the sheet, the title (renaming the note), the colophon, the layout's slots
+  chrome/       ✓ the controls: commands once, hosts that draw them, the three layouts, tooltips
+  icons.ts      ✓ Eien's own icons, inline SVG
   menu/         ✓ the small floating menu: right-click choices, sorts
   notes/        ✓ the open note: autosave, reload, conflict copies
   vault/        ✓ the vault as the window knows it, its panes drawn, the menu's commands, organizing (rename, move, trash)
@@ -508,7 +551,7 @@ src/ui/
   outline/      ✓ outline cards: a book's chapters as cards on the blotter, reordered by drag or keys
   counters/     ✓ the colophon's today, book and sprint
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
-  phone/        ✓ the phone's layout: one pane at a time, back, the page's ⋯
+  phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture
@@ -585,7 +628,8 @@ does nothing.
 - **Device settings** live in `settings.json`, never in a vault: in
   `Documents/Eien` for an installed copy, in a portable copy's "Eien Data" beside
   it (`src/app/electron/data-folders.ts`). They hold the scheme
-  (day, night or the system's), palette, text face, text size (90–130%),
+  (day, night or the system's), palette, the layout (band, slip or running
+  head), text face, text size (90–130%),
   density (comfortable or compact), page frame (sheet or full), the page's
   zoom and the interface's (each 50–200%), panes (three or two), focus mode, typewriter scrolling and
   spellcheck (macOS). A setting may be one system's alone (`platforms` in the
@@ -995,8 +1039,9 @@ Compare or Restore finishes lands on a note opened meanwhile.
   - The page's ⋯ offers what the menu bar does on the desktop: Seal,
     Compare, Versions, Outline cards, Copy for AO3, Export… (the note's own
     choices), Focus mode, Typewriter scrolling, a sprint (Stop while one is
-    under way), Settings. The page's bar keeps its
-    three views.
+    under way), Settings. The views, Focus mode and the ⋯ itself are the
+    layout's phone bottom (§4, Layouts): in the top bar, on a floating slip,
+    or in a rail at the page's foot.
   - On a touch screen, the page gives its title the keyboard rather than the
     editor (opening a note to read, closing what lay over it), so the
     phone's keyboard stays down; when the title is the note's own heading,

@@ -200,14 +200,14 @@ test.describe('views', () => {
 
   test('View → Next View goes Live, Source, Reading, and round again', async ({ app, page }) => {
     await open(page, 'Marks');
-    const pressed = page.locator('.page__views [aria-pressed="true"]');
-    await expect(pressed).toHaveText('Live');
+    const pressed = page.getByRole('group', { name: 'View' }).locator('[aria-pressed="true"]');
+    await expect(pressed).toHaveAccessibleName('Live');
     for (const next of ['Source', 'Reading', 'Live']) {
       await clickMenu(app, 'View', 'Next View');
-      await expect(pressed).toHaveText(next);
+      await expect(pressed).toHaveAccessibleName(next);
     }
     await clickMenu(app, 'View', 'Reading');
-    await expect(pressed).toHaveText('Reading');
+    await expect(pressed).toHaveAccessibleName('Reading');
   });
 });
 

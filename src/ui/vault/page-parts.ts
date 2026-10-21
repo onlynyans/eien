@@ -29,6 +29,8 @@ export interface PagePartsOf {
   /** The Mac's keys, for the keys the versions panel names. */
   readonly mac: boolean;
   tell(message: string): void;
+  /** What a seal's controls show changed (Compare's state, the panel open). */
+  changed(): void;
   /** Run a file operation, then read the vault again (one at a time). */
   act(operation: () => Promise<unknown>): Promise<void>;
   openNote(path: string): Promise<void>;
@@ -57,6 +59,7 @@ export function pageParts(of: PagePartsOf): PageParts {
     mac: of.mac,
     tell,
     serial: of.act,
+    changed: of.changed,
   });
   const counts = counting({ page, note: () => note, state, tell });
   const outline = outlineCards({

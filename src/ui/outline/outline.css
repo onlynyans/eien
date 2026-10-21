@@ -44,7 +44,7 @@
   background: var(--eien-paper);
   border: var(--eien-hairline) solid var(--eien-rule);
   border-left: var(--eien-mark-w) solid transparent;
-  border-radius: var(--eien-radius);
+  border-radius: var(--eien-radius-s);
   cursor: pointer;
   transition: border-color var(--eien-quick) var(--eien-ease);
 }

@@ -46,8 +46,9 @@ const row = (page: Page, title: string) =>
   page
     .locator('.note-row')
     .filter({ has: page.locator('.note-row__title', { hasText: exactly(title) }) });
-const barButton = (page: Page, pane: 'sidebar' | 'list') =>
-  page.locator(`.page__panes [data-pane="${pane}"]`);
+/** A pane's toggle: in the default layout (A · Band), the chevron at its edge. */
+const toggleOf = (page: Page, pane: 'sidebar' | 'list') =>
+  page.locator(`[data-command="pane.${pane}"]`);
 /** Whether the keyboard is somewhere in `selector` (the editor's shadow root counts). */
 const focusIn = (page: Page, selector: string) =>
   page.evaluate((selector) => {
@@ -82,7 +83,7 @@ async function dragEdge(page: Page, pane: 'sidebar' | 'list', by: number): Promi
 }
 
 async function twoPanes(page: Page): Promise<void> {
-  await page.getByRole('button', { name: '2 panes' }).click();
+  await page.getByRole('button', { name: 'Two panes', pressed: false }).click();
   await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
 }
 
@@ -194,7 +195,7 @@ test.describe('shutting and opening', () => {
     );
   });
 
-  test('the menu, the page bar’s words and the seal shut and open the sidebar and the list', async ({
+  test('the menu, the chevrons and the seal shut and open the sidebar and the list', async ({
     app,
     page,
   }) => {
@@ -203,10 +204,12 @@ test.describe('shutting and opening', () => {
     await clickMenu(app, 'View', 'Toggle Sidebar');
     await expect(page.locator('.sidebar__show')).toBeVisible();
     await expect(vaultName).toBeHidden();
-    await expect(barButton(page, 'sidebar')).toHaveText('Show Sidebar');
-    await barButton(page, 'sidebar').click();
+    await expect(toggleOf(page, 'sidebar')).toHaveAttribute('aria-pressed', 'false');
+    await expect(toggleOf(page, 'sidebar')).toHaveAttribute('data-tip', 'Show the sidebar');
+    await toggleOf(page, 'sidebar').click();
     await expect(vaultName).toBeVisible();
-    await expect(barButton(page, 'sidebar')).toHaveText('Hide Sidebar');
+    await expect(toggleOf(page, 'sidebar')).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggleOf(page, 'sidebar')).toHaveAttribute('data-tip', 'Hide the sidebar');
     await page.locator('.sidebar__hide').click();
     await expect(vaultName).toBeHidden();
     await page.locator('.sidebar__show').click();
@@ -215,10 +218,12 @@ test.describe('shutting and opening', () => {
     await clickMenu(app, 'View', 'Toggle Note List');
     await expect(page.locator('.list')).toBeHidden();
     await expect(page.locator('.pane-edge--list')).toBeHidden();
-    await expect(barButton(page, 'list')).toHaveText('Show List');
-    await barButton(page, 'list').click();
+    await expect(toggleOf(page, 'list')).toHaveAttribute('aria-pressed', 'false');
+    await toggleOf(page, 'list').click();
     await expect(page.locator('.list')).toBeVisible();
-    await expect(barButton(page, 'list')).toHaveText('Hide List');
+    await expect(toggleOf(page, 'list')).toHaveAttribute('aria-pressed', 'true');
+    await toggleOf(page, 'list').click(); // ‹ at the list's head shuts it again
+    await expect(page.locator('.list')).toBeHidden();
   });
 
   test('a pane shut with the keyboard in it gives the keyboard to the page', async ({
@@ -250,7 +255,7 @@ test.describe('shutting and opening', () => {
     await expect(page.locator('.colophon__news')).toHaveText(
       'Something here already has that name.',
     );
-    await barButton(page, 'list').click(); // a pane to show it again: it moves there
+    await toggleOf(page, 'list').click(); // a pane to show it again: it moves there
     await expect(page.locator('.list__notice')).toHaveText('Something here already has that name.');
     await expect(page.locator('.colophon__news')).toBeHidden();
   });
@@ -293,7 +298,7 @@ test.describe('two panes', () => {
     await twoPanes(page);
     await expect(page.locator('.list')).toBeHidden();
     await expect(page.locator('.pane-edge--list')).toBeHidden();
-    await expect(barButton(page, 'list')).toBeDisabled();
+    await expect(toggleOf(page, 'list')).toBeDisabled();
     await expect(treeNotes(page)).toHaveText(['Ideas']); // the vault's own, after its folders
 
     await folder(page, 'Fic').click();
@@ -361,11 +366,11 @@ test.describe('two panes', () => {
     await expect(page.locator('.sidebar__label')).toHaveText(['Library', 'Folders', 'Tags']);
 
     // Three panes, the list shut: the tree shows them; the list opened, they go back to it.
-    await page.getByRole('button', { name: '3 panes' }).click();
+    await page.getByRole('button', { name: 'Two panes', pressed: true }).click();
     await clickMenu(app, 'View', 'Toggle Note List');
     await search.fill('wool');
     await expect(treeNotes(page)).toHaveText(['Wool']);
-    await barButton(page, 'list').click();
+    await toggleOf(page, 'list').click();
     await expect(page.locator('.note-row__title')).toHaveText(['Wool']);
     await expect(page.locator('.sidebar__label')).toHaveText(['Library', 'Folders', 'Tags']);
   });

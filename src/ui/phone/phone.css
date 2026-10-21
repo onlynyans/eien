@@ -24,10 +24,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.phone-bar__more {
+/* The layout's tools for the page (../chrome), at a finger's size: in the bar
+   (A), or at the page's foot (B's slip, C's rail); only while the page shows. */
+.phone-bar__controls {
+  display: none;
   margin-left: auto;
-  font-size: var(--eien-size-row);
-  letter-spacing: 0;
+}
+.shell[data-phone][data-shown="page"] .phone-bar__controls:not(:empty),
+.shell[data-phone][data-shown="page"] .page__phone:not(:empty) {
+  display: flex;
+}
+.phone-bar__controls .icon-button,
+.page__phone .icon-button {
+  --eien-control: var(--eien-touch);
 }
 .shell[data-phone] > .sidebar,
 .shell[data-phone] > .list,
@@ -41,22 +50,25 @@
 .shell[data-phone]:not([data-shown="page"]) > .page {
   display: none;
 }
-/* No edges to drag, no SIDEBAR or LIST to shut (back stands in for them), and
-   no three panes or two: one at a time. The page's bar keeps its views; Seal,
-   Compare and Versions are in the ⋯, where a narrow bar can't cut them off. */
+/* No edges to drag, no chevrons to shut a pane (back stands in for them), no
+   three panes or two: one at a time. The desktop's page controls give way to
+   the layout's phone tools; Seal, Compare and Versions are in the ⋯ too. */
 .shell[data-phone] .pane-edge,
-.shell[data-phone] .page__panes,
-.shell[data-phone] .page__tools,
-.shell[data-phone] .sidebar__panes {
+.shell[data-phone] > .chevron-slot,
+.shell[data-phone] > .window-head,
+.shell[data-phone] .page__bar,
+.shell[data-phone] [data-command="panes"] {
   display: none;
 }
 
 /* A finger can't hover: the controls that wait for the pointer stay in sight.
-   Each is named, as in its own sheet (tests/selectors.test.ts). */
+   Each is named, as in its own sheet (tests/selectors.test.ts); a layout's
+   with :root, to outweigh the layout's own [data-layout] rule. */
 @media (hover: none) {
-  .page__views,
-  .page__panes,
-  .page__tools,
+  :root .host--band-views,
+  :root .host--band-tools,
+  :root .host--slip,
+  :root .chevron-slot,
   .list__head .list__sort,
   .sidebar__new {
     opacity: 1;

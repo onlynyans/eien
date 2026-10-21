@@ -144,24 +144,27 @@ test('palette, density, page and text size change the look at once', async ({ pa
   await expect(dialog(page).getByRole('button', { name: 'Larger' }).first()).toBeDisabled(); // the top of the range
 });
 
-test('day or night from the sidebar; pressed again, back to the system’s', async ({
+test('day or night from the sidebar’s toggle: the sun or the moon, whichever shows', async ({
   app,
   page,
 }) => {
-  const night = page.locator('.sidebar__foot').getByRole('button', { name: 'Night' });
-  const day = page.locator('.sidebar__foot').getByRole('button', { name: 'Day' });
-  await night.click();
+  const toggle = page.locator('.sidebar__foot').getByRole('button', { name: 'Night' });
+  // It starts from the system's, day or night: by day first, whatever the machine's is.
+  if ((await toggle.getAttribute('aria-pressed')) === 'true') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(toggle.locator('svg')).toHaveAttribute('data-icon', 'sun');
+
+  await toggle.click();
   await expect(root(page)).toHaveAttribute('data-theme', 'dark');
-  await expect(night).toHaveAttribute('aria-pressed', 'true');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(toggle.locator('svg')).toHaveAttribute('data-icon', 'moon');
+  await expect(toggle).toHaveAttribute('data-tip', 'Night · switch to day');
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(26, 23, 19)'); // the night blotter
   await expect.poll(() => themeSource(app)).toBe('dark'); // the window's frame follows too
 
-  await night.click();
-  await expect(root(page)).not.toHaveAttribute('data-theme');
-  await expect.poll(() => themeSource(app)).toBe('system');
-
-  await day.click();
+  await toggle.click();
   await expect(root(page)).toHaveAttribute('data-theme', 'light');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
   await expect.poll(() => themeSource(app)).toBe('light');
 });
 

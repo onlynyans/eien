@@ -6,7 +6,7 @@
   max-height: calc(100vh - 2 * var(--eien-space-7));
   padding: 0;
   border: var(--eien-hairline) solid var(--eien-rule-strong);
-  border-radius: var(--eien-radius);
+  border-radius: var(--eien-radius-l); /* it covers the window */
   background: var(--eien-paper-raised);
   color: var(--eien-ink);
   box-shadow: var(--eien-shadow-float);

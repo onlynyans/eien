@@ -1,12 +1,12 @@
-// Seals on the page (spec §9): SEAL (⌘S) keeps the note as it is; COMPARE
+// Seals on the page (spec §9): Seal (⌘S) keeps the note as it is; Compare
 // (⌘⇧D) shows the changes since a seal, then the seal alone, then the draft
-// again; VERSIONS lists the note's seals, to compare, restore, name or
-// delete. The colophon says when the note was last sealed.
+// again; Versions lists the note's seals, to compare, restore, name or
+// delete. The colophon says when the note was last sealed. The three are
+// commands the layout draws (../chrome), as this says they are now.
 
 import { readNote } from '../../core/note';
 import { latestVersion, noteIdOf, type VersionFile, versionsFolderOf } from '../../core/versions';
 import type { VaultBridge } from '../../platform/bridge';
-import { h, wordButton } from '../dom';
 import type { PageView } from '../page/page';
 import type { OpenNote } from '../vault/open-note';
 import { compareView } from './compare-view';
@@ -30,6 +30,8 @@ export interface VersionsParts {
    * note still while it moves): a seal pressed meanwhile waits, then seals.
    */
   serial(operation: () => Promise<unknown>): Promise<void>;
+  /** What Compare and Versions show changed: the controls show it too. */
+  changed(): void;
 }
 
 const wordsOf = (text: string) => readNote(text, '').words;
@@ -38,7 +40,7 @@ export class VersionsUI {
   readonly #parts: VersionsParts;
   readonly #versions: NoteVersions;
   readonly #panel: VersionsPanel;
-  readonly #line = new SealLine(() => void this.cycleCompare(), 'Meta+Shift+D Control+Shift+D');
+  readonly #line = new SealLine();
   /** The open note's session, as last seen: a new one is another note. */
   #session: OpenNote['session'] = null;
   #id: string | null = null;
@@ -69,21 +71,7 @@ export class VersionsUI {
       name: (version, typed) => void this.#name(version, typed),
       remove: (version) => void this.#remove(version),
     });
-    const keys = parts.mac ? '⌘S' : 'Ctrl+S';
-    parts.page.attach({
-      tools: h(
-        'div',
-        { class: 'page__seals', attrs: { role: 'group', 'aria-label': 'Seals' } },
-        this.#line.compareButton,
-        wordButton('Seal', () => void this.seal(), { title: `Seal this version (${keys})` }),
-        wordButton('Versions', () => this.showPanel(!this.#panel.open), {
-          'aria-controls': 'versions',
-          'data-versions': '',
-        }),
-      ),
-      sealLine: this.#line.line,
-      aside: this.#panel.element,
-    });
+    parts.page.attach({ sealLine: this.#line.line, aside: this.#panel.element });
     this.#ticker = setInterval(() => this.#draw(), 60_000); // "2h ago" moves on
     this.#draw();
   }
@@ -145,6 +133,16 @@ export class VersionsUI {
   /** Whether the versions panel is open. */
   get panelOpen(): boolean {
     return this.#panel.open;
+  }
+
+  /** What Compare shows: the draft, the changes since a seal, or the seal alone. */
+  get compareMode(): CompareMode {
+    return this.#mode;
+  }
+
+  /** Whether Compare has anything to show: a note open, and sealed. */
+  get canCompare(): boolean {
+    return this.#parts.note.session !== null && this.#seals.length > 0;
   }
 
   showPanel(open: boolean): void {
@@ -282,7 +280,8 @@ export class VersionsUI {
     const now = Date.now();
     const session = this.#parts.note.session;
     const latest = latestVersion(this.#seals, now);
-    this.#line.draw(session !== null, latest?.at ?? null, this.#mode);
+    this.#line.draw(session !== null, latest?.at ?? null);
+    this.#parts.changed();
     if (!this.#panel.open) return;
     const draftWords = session ? wordsOf(session.text) : 0;
     this.#panel.draw({

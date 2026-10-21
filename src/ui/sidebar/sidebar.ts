@@ -1,27 +1,24 @@
 // The sidebar: the vault's contents page. The seal (which shuts the sidebar
 // to a strip, and opens it again), the vault's name and, with no list in
 // sight, the search field (../list/search-field.ts), then the tree
-// (./tree.ts), in sections that fold (./sections.ts); at the foot, day or
-// night, the panes and the settings. The head and search field stay put; the
-// rest redraws. A folder takes a dropped note, and has its own menu.
+// (./tree.ts), in sections that fold (./sections.ts); at the foot
+// (./foot.ts), the count and the window's controls. The head, search field
+// and foot stay put; the tree redraws. A folder takes a dropped note, and has
+// its own menu.
 
-import type { SettingValues } from '../../core/config';
 import type { FolderNode } from '../../core/vault';
 import { h, type Props, wordButton } from '../dom';
 import { isMenuKey, menuPoint } from '../list/row-events';
 import type { SearchField } from '../list/search-field';
 import { FolderField } from './folder-field';
 import { Folds } from './folds';
-import { sidebarFoot } from './foot';
+import { SidebarFoot } from './foot';
 import { RowCache } from './row-cache';
 import { foldingSection, plainSection } from './sections';
 import { sidebarSignature } from './signature';
 import { keyOf, RESULTS, type TreeActions, type TreeModel, TreeRows } from './tree';
 
-type Scheme = SettingValues['appearance.scheme'];
-
 export interface SidebarModel extends TreeModel {
-  readonly scheme: Scheme;
   /** News from the last action, when there's no note list to show it above. */
   readonly notice: string | null;
 }
@@ -30,10 +27,6 @@ export interface SidebarActions extends TreeActions {
   newFolder(): void;
   /** The name typed for a folder being renamed. */
   renameFolder(path: string, typed: string): void;
-  scheme(scheme: Scheme): void;
-  /** Three panes, or two. */
-  panes(two: boolean): void;
-  settings(): void;
   /** The seal: shut the sidebar to a strip, or open it again. */
   toggleSidebar(): void;
 }
@@ -42,6 +35,8 @@ export class Sidebar {
   readonly element: HTMLElement;
   /** Where the search field goes when there's no list in sight. */
   readonly searchSlot = h('div', { class: 'sidebar__search' });
+  /** The count, and the window's controls the layout draws there. */
+  readonly foot = new SidebarFoot();
   readonly #search: SearchField;
   readonly #body = h('div', { class: 'sidebar__body' });
   readonly #actions: SidebarActions;
@@ -104,6 +99,7 @@ export class Sidebar {
       ),
       this.searchSlot,
       this.#body,
+      this.foot.element,
     );
   }
 
@@ -136,6 +132,7 @@ export class Sidebar {
 
   draw(model: SidebarModel): void {
     this.#model = model;
+    this.foot.draw({ notice: model.notice, noteCount: model.tree.noteCount });
     const frame = sidebarSignature(model);
     const settled = this.#refocus === null && !this.#folderField.active;
     const giveBack = this.#holdKeyboard();
@@ -188,15 +185,6 @@ export class Sidebar {
     this.#drawing = true;
     this.#body.replaceChildren(
       h('nav', { class: 'sidebar__tree', attrs: { 'aria-label': 'Notes' } }, ...tree),
-      sidebarFoot(
-        {
-          notice: model.notice,
-          noteCount: model.tree.noteCount,
-          scheme: model.scheme,
-          two: model.two,
-        },
-        actions,
-      ),
     );
     this.#drawing = false;
     this.#rows.settle();

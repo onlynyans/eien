@@ -70,6 +70,17 @@ export const SETTINGS = [
     default: 'washi',
   },
   {
+    key: 'appearance.layout',
+    label: 'Layout',
+    description:
+      'Where the page’s controls sit. Band: in a band above the page. Slip: on a slip floating over it. Running head: in one strip across the window.',
+    scope: 'device',
+    group: 'Appearance',
+    type: 'choice',
+    choices: { band: 'Band', slip: 'Slip', runhead: 'Running head' },
+    default: 'band',
+  },
+  {
     key: 'appearance.face',
     label: 'Typeface',
     description:

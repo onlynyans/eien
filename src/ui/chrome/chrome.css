@@ -1,0 +1,155 @@
+/* The pieces every layout draws with (./host.ts, ./tooltip.ts): the icon
+   control, a host's run of them, its choice of views, the tooltip. Where the
+   hosts sit and how they ground is each layout's own sheet (./band.css,
+   ./slip.css, ./runhead.css). */
+
+/* The icon control (system.md, "Icons"): the word button's states, in a
+   square of --eien-control, its drawing in the ink it sits in. */
+.icon-button {
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--eien-control);
+  height: var(--eien-control);
+  padding: 0;
+  border: var(--eien-hairline) solid transparent;
+  border-radius: var(--eien-radius-s);
+  background: none;
+  color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition:
+    color var(--eien-quick) var(--eien-ease),
+    background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon {
+  display: block;
+  width: var(--eien-icon);
+  height: var(--eien-icon);
+  stroke-width: var(--eien-icon-stroke);
+}
+/* Only where a pointer can hover: on touch, a tapped control mustn't stay lit. */
+@media (hover: hover) {
+  .icon-button:not(:disabled):hover {
+    color: var(--eien-ink);
+    background: var(--eien-hover);
+  }
+}
+.icon-button:not(:disabled):active {
+  background: var(--eien-press);
+  border-color: var(--eien-rule-strong);
+}
+/* On (a view chosen, Focus mode): full ink in a hairline, never the seal's colour. */
+.icon-button[aria-pressed="true"] {
+  color: var(--eien-ink);
+  border-color: var(--eien-rule-strong);
+}
+.icon-button:disabled {
+  color: var(--eien-faded);
+  cursor: default;
+}
+
+/* The seal stays itself as the Seal control: no ground, a hairline on hover. */
+.icon-button--seal .seal {
+  --eien-seal-size: var(--eien-icon);
+  transition: transform var(--eien-quick) var(--eien-ease);
+}
+@media (hover: hover) {
+  .icon-button--seal:not(:disabled):hover {
+    background: none;
+    border-color: var(--eien-rule);
+  }
+}
+.icon-button--seal:not(:disabled):active {
+  background: none;
+}
+.icon-button--seal:active .seal {
+  transform: scale(0.94);
+}
+
+/* A host: its commands in a row, a hairline between runs. */
+.host {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--eien-space-1) / 2);
+  min-width: 0;
+}
+.host__rule {
+  flex: none;
+  width: var(--eien-hairline);
+  height: var(--eien-space-4);
+  margin: 0 var(--eien-space-1);
+  background: var(--eien-rule);
+}
+/* The views, one choice: a pressed well, the chosen one raised in it. */
+.host__group {
+  display: inline-flex;
+  flex: none;
+  padding: calc(var(--eien-space-1) / 2);
+  border-radius: var(--eien-radius-m);
+  background: var(--eien-press);
+}
+.host__group .icon-button {
+  width: calc(var(--eien-control) - var(--eien-space-1) / 2);
+  height: calc(var(--eien-control) - var(--eien-space-1));
+}
+.host__group .icon-button[aria-pressed="true"] {
+  background: var(--eien-paper-raised);
+  border-color: var(--eien-rule);
+}
+
+/* The tooltip: raised paper, the machine voice, the key after the words in pencil. */
+.tooltip {
+  position: fixed;
+  left: var(--tip-x, 0);
+  top: var(--tip-y, 0);
+  z-index: 60;
+  display: flex;
+  gap: var(--eien-space-2);
+  padding: var(--eien-space-1) var(--eien-space-2);
+  pointer-events: none;
+  white-space: nowrap;
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-s);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  color: var(--eien-ink-soft);
+}
+.tooltip[hidden] {
+  display: none;
+}
+.tooltip__key {
+  color: var(--eien-pencil);
+}
+.tooltip__key:empty {
+  display: none;
+}
+
+/* Slots a layout may leave empty: a strip across the window (C's), and a
+   chevron at each pane's edge (A's and B's), over the panes. */
+.window-head {
+  display: none;
+}
+.chevron-slot {
+  position: absolute;
+  z-index: 5;
+  transition:
+    left var(--eien-calm) var(--eien-ease),
+    opacity var(--eien-calm) var(--eien-ease);
+}
+.chevron-slot:empty,
+.shell[data-panes="two"] > .chevron-slot--list {
+  display: none;
+}
+/* A chevron is the pane's way out, and back: ‹ while it's open, › once it's shut. */
+.chevron-slot .icon-button[aria-pressed] {
+  color: var(--eien-ink-soft);
+  border-color: transparent;
+}
+.shell[data-sidebar-shut] > .chevron-slot--sidebar .icon,
+.shell[data-list-shut] > .chevron-slot--list .icon {
+  transform: scaleX(-1);
+}

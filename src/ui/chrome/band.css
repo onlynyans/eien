@@ -1,0 +1,117 @@
+/* A · Band (./band.ts): the page's controls in its band, shown while the
+   pointer is over the page or the keyboard is in them, the band hiding to a
+   lip; each pane's chevron at its head. Corners barely there. */
+
+:root[data-layout="band"] {
+  --eien-radius-s: 2px;
+  --eien-radius-m: 4px;
+  --eien-radius-l: 8px;
+  /* The system's window controls sit over the page's band (../shell/shell.css). */
+  --controls-h: var(--band);
+  --controls-ground: var(--eien-band);
+}
+
+[data-layout="band"] .page__bar {
+  position: relative;
+  justify-content: space-between;
+  gap: var(--eien-space-4);
+  height: var(--band);
+  /* Clear of the system's window controls, at either edge. */
+  padding: 0 max(var(--eien-space-3), var(--controls-right)) 0
+    max(
+      var(--eien-space-3),
+      calc(var(--controls-left) - var(--pane-sidebar, 0px) - var(--pane-list, 0px))
+    );
+  background: var(--eien-band);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+
+/* Nothing interrupts the writer: the controls wait for the pointer or the keyboard. */
+[data-layout="band"] .host--band-views,
+[data-layout="band"] .host--band-tools {
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+[data-layout="band"] .page:hover .host--band-views,
+[data-layout="band"] .page:hover .host--band-tools,
+[data-layout="band"] .host--band-views:focus-within,
+[data-layout="band"] .host--band-tools:focus-within {
+  opacity: 1;
+}
+
+/* Hidden (#16): the band goes, the sheet reaches the top, and a lip stays to bring it back. */
+[data-layout="band"] .shell[data-strip-shut] .page__bar {
+  height: 0;
+  padding: 0;
+  border: 0;
+  z-index: 3;
+}
+/* The list shut: its › stands at the band's left end, and the views make room. */
+[data-layout="band"] .shell[data-list-shut]:not([data-panes="two"], [data-strip-shut]) .page__bar {
+  padding-left: calc(var(--eien-control) + var(--eien-space-2) * 2);
+}
+/* Each named by its class, never a bare :not(): a rule ending in one restyles the whole window
+   whenever the layout, or the strip, changes. */
+[data-layout="band"] .shell[data-strip-shut] .host--band-views,
+[data-layout="band"] .shell[data-strip-shut] .host--band-tools > .host__rule,
+[data-layout="band"]
+  .shell[data-strip-shut]
+  .host--band-tools
+  > .icon-button:not([data-command="strip"]) {
+  display: none;
+}
+[data-layout="band"] .shell[data-strip-shut] [data-command="strip"] {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  width: calc(var(--eien-control) + var(--eien-space-4));
+  height: var(--eien-space-4);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  border-top: 0;
+  border-radius: 0 0 var(--eien-radius-m) var(--eien-radius-m);
+  background: var(--eien-band);
+  color: var(--eien-pencil);
+}
+[data-layout="band"] .shell[data-strip-shut] [data-command="strip"] .icon {
+  width: var(--eien-space-3);
+  height: var(--eien-space-3);
+}
+
+/* The chevrons (#15): each at its pane's head, on hover; the way back in the
+   same spot of the pane beside it. A shut sidebar's is under the strip's seal. */
+[data-layout="band"] .chevron-slot {
+  top: calc((var(--band) - var(--eien-control)) / 2);
+  opacity: 0;
+}
+[data-layout="band"] .chevron-slot--sidebar {
+  left: calc(var(--pane-sidebar) - var(--eien-control) - var(--eien-space-2));
+}
+[data-layout="band"] .shell[data-sidebar-shut] > .chevron-slot--sidebar {
+  top: var(--band);
+  left: calc((var(--pane-sidebar) - var(--eien-control)) / 2);
+}
+[data-layout="band"] .chevron-slot--list {
+  left: calc(var(--pane-sidebar) + var(--pane-list) - var(--eien-control) - var(--eien-space-2));
+}
+[data-layout="band"] .shell[data-list-shut] > .chevron-slot--list {
+  left: max(calc(var(--pane-sidebar) + var(--eien-space-2)), var(--controls-left));
+}
+[data-layout="band"] .sidebar:hover ~ .chevron-slot--sidebar,
+[data-layout="band"] .list:hover ~ .chevron-slot--list,
+[data-layout="band"] .shell[data-list-shut] > .page:hover ~ .chevron-slot--list,
+[data-layout="band"] .chevron-slot:hover,
+[data-layout="band"] .chevron-slot:focus-within {
+  opacity: 1;
+}
+/* The heads keep their right ends clear for the chevron that comes on hover. */
+[data-layout="band"] .sidebar__head,
+[data-layout="band"] .list__search {
+  padding-right: calc(var(--eien-control) + var(--eien-space-3));
+}
+/* macOS's lights are over the strip's top: its seal waits a band lower (../sidebar/sidebar.css). */
+:root[data-layout="band"][data-platform="darwin"]
+  .shell[data-sidebar-shut]
+  > .chevron-slot--sidebar {
+  top: calc(var(--band) * 2);
+}

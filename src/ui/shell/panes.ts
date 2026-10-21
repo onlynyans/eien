@@ -1,6 +1,7 @@
 // The three panes side by side (spec §4). A pane's edge is dragged, or
 // stepped with the arrow keys once it has the keyboard; the sidebar and the
-// note list shut and open again (⌘\, ⌘⇧\, the page bar's words, the seal).
+// note list shut and open again (⌘\, ⌘⇧\, the layout's chevrons or running
+// head (../chrome), the seal).
 // With two panes the list is gone and the sidebar's tree holds the notes.
 // Widths and what's shut are remembered on this device (./pane-state.ts).
 
@@ -26,8 +27,6 @@ export interface PaneParts {
   readonly shell: HTMLElement;
   readonly sidebar: HTMLElement;
   readonly list: HTMLElement;
-  /** The keys that shut each pane, as the menu shows them. */
-  readonly keys: Readonly<Record<Shuttable, string>>;
   /** Where the keyboard goes when the pane it was in shuts. */
   leave(): void;
   /** A pane shut or opened, or the panes changed from three to two. */
@@ -38,18 +37,13 @@ export interface PaneParts {
   showPhone(pane: PhonePane): void;
 }
 
-const NAMES: Record<Shuttable, string> = { sidebar: 'Sidebar', list: 'List' };
-
 /** The keys that shut and open each pane (../../app/electron/menu.ts), as this system writes them. */
 export const paneKeys = (mac: boolean): Readonly<Record<Shuttable, string>> =>
   mac ? { sidebar: '⌘\\', list: '⇧⌘\\' } : { sidebar: 'Ctrl+\\', list: 'Ctrl+Shift+\\' };
 
 export class PaneLayout {
-  /** SIDEBAR and LIST, for the start of the page's bar. */
-  readonly controls: HTMLElement;
   readonly #parts: PaneParts;
   readonly #edges: Record<Shuttable, HTMLElement>;
-  readonly #buttons: Record<Shuttable, HTMLButtonElement>;
   #panes: Panes;
   #two: boolean;
   readonly #onResize = () => this.#apply();
@@ -59,13 +53,6 @@ export class PaneLayout {
     this.#two = two;
     this.#panes = readPanes(stored());
     this.#edges = { sidebar: this.#edge('sidebar'), list: this.#edge('list') };
-    this.#buttons = { sidebar: this.#button('sidebar'), list: this.#button('list') };
-    this.controls = h(
-      'div',
-      { class: 'page__panes', attrs: { role: 'group', 'aria-label': 'Panes' } },
-      this.#buttons.sidebar,
-      this.#buttons.list,
-    );
     parts.shell.append(this.#edges.sidebar, this.#edges.list);
     window.addEventListener('resize', this.#onResize);
     this.#apply();
@@ -169,13 +156,7 @@ export class PaneLayout {
       edge.setAttribute('aria-valuenow', String(shown[pane]));
       edge.setAttribute('aria-valuemin', String(min));
       edge.setAttribute('aria-valuemax', String(max));
-      const button = this.#buttons[pane];
-      const prefix = button.querySelector('.when-wide');
-      if (prefix) prefix.textContent = this.isShut(pane) ? 'Show ' : 'Hide ';
     }
-    const listButton = this.#buttons.list;
-    listButton.disabled = this.two;
-    listButton.title = this.two ? 'Two panes: the sidebar lists the notes' : this.#parts.keys.list;
   }
 
   #edgeOf(pane: Shuttable): Edge {
@@ -250,20 +231,6 @@ export class PaneLayout {
       this.#save();
     });
     return edge;
-  }
-
-  /** HIDE SIDEBAR, SHOW LIST…: the verb drops when the page is narrow. */
-  #button(pane: Shuttable): HTMLButtonElement {
-    return h(
-      'button',
-      {
-        class: 'word-button',
-        attrs: { type: 'button', title: this.#parts.keys[pane], 'data-pane': pane },
-        on: { click: () => this.toggle(pane) },
-      },
-      h('span', { class: 'when-wide' }),
-      NAMES[pane],
-    );
   }
 }
 

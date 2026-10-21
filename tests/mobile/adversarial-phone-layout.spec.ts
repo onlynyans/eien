@@ -50,7 +50,7 @@ const systemBack = (page: Page) =>
 
 const shell = (page: Page) => page.locator('.shell');
 const back = (page: Page) => page.locator('.phone-bar__back');
-const more = (page: Page) => page.locator('.phone-bar__more');
+const more = (page: Page) => page.getByRole('button', { name: 'More' });
 const menuItem = (page: Page, label: string) =>
   page.locator('.menu [role^="menuitem"]', { hasText: new RegExp(`^${label}$`, 'u') });
 
@@ -289,17 +289,18 @@ test.describe('what a phone offers', () => {
     }
   });
 
-  test('a touch screen wide enough for three panes keeps the page’s SIDEBAR and LIST in sight', async ({
+  test('a touch screen wide enough for three panes keeps the panes’ chevrons and the page’s tools in sight', async ({
     page,
   }) => {
-    // phone.css's (hover: none) rule names the views, the seals' tools, the sort and New folder,
-    // but not .page__panes: on a tablet, or a phone on its side with the sidebar shut, the page's
-    // SIDEBAR and LIST stay at opacity 0, waiting for a hover a finger can't give.
+    // phone.css's (hover: none) rule must name every control that waits for a hover, or on a
+    // tablet, or a phone on its side, it stays at opacity 0, waiting for one a finger can't give.
     await page.setViewportSize({ width: 1100, height: 800 });
     await withNotes(page);
     await openNote(page, 'Ideas');
-    await expect(page.locator('.page__panes')).toBeVisible();
-    await expect(page.locator('.page__panes')).toHaveCSS('opacity', '1');
+    for (const slot of ['.chevron-slot--sidebar', '.chevron-slot--list', '.host--band-tools']) {
+      await expect(page.locator(slot)).toBeVisible();
+      await expect(page.locator(slot)).toHaveCSS('opacity', '1');
+    }
   });
 });
 

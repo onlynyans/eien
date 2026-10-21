@@ -37,7 +37,6 @@ const model = (
   results: null,
   books: new Set(),
   notice: null,
-  scheme: 'system',
 });
 const sign = sidebarSignature;
 

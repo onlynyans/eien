@@ -32,6 +32,8 @@ const row = (page: Page, title: string) =>
 const sealLine = (page: Page) => page.locator('.seal-line');
 const seal = (app: ElectronApplication) => clickMenu(app, 'File', 'Seal');
 const compare = (app: ElectronApplication) => clickMenu(app, 'View', 'Compare');
+/** The page's Compare control, which says what it shows in its tooltip. */
+const compareButton = (page: Page) => page.locator('[data-command="compare"]');
 
 async function typeAtEnd(page: Page, words: string): Promise<void> {
   // At the text's start: on a narrow window the versions panel lies over the page's middle.
@@ -119,7 +121,8 @@ test('Compare shows the changes since the seal, then the seal, then the draft; t
   await expect(page.locator('.compare ins.diff')).toHaveText(['bone']);
   await expect(page.locator('.legend')).toContainText('1 removed 1 added');
   await expect(editorContent(page)).toBeHidden();
-  await expect(page.locator('.page__seals .word-button').first()).toHaveText('Compare · Changes');
+  await expect(compareButton(page)).toHaveAttribute('data-tip', 'Compare · Changes');
+  await expect(compareButton(page)).toHaveAttribute('aria-pressed', 'true');
 
   await compare(app);
   await expect(page.locator('.sheet__state')).toContainText('Sealed just now — read only');
@@ -131,12 +134,14 @@ test('Compare shows the changes since the seal, then the seal, then the draft; t
   await page.keyboard.type('!');
   await expect(editorContent(page)).toBeVisible();
   await expect(editorContent(page)).toContainText('!');
-  await expect(page.locator('.page__seals .word-button').first()).toHaveText('Compare');
+  await expect(compareButton(page)).toHaveAttribute('data-tip', 'Compare with the last seal');
+  await expect(compareButton(page)).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('Compare can’t be used before the first seal', async ({ app, page }) => {
   await row(page, 'Needle').click();
-  await expect(page.locator('.page__seals .word-button').first()).toBeDisabled();
+  await expect(compareButton(page)).toBeDisabled();
+  await expect(compareButton(page)).toHaveAttribute('data-tip', 'Not sealed yet');
   await compare(app);
   await expect(sealLine(page)).toHaveText('Not sealed yet');
   await expect(editorContent(page)).toBeVisible();
@@ -259,7 +264,7 @@ test('seals are there after a restart', async ({ app, page, userData, vault }) =
     const page2 = await again.firstWindow();
     await row(page2, 'Needle').click();
     await expect(sealLine(page2)).toHaveText(/^Sealed (just now|\dm ago)$/);
-    await expect(page2.locator('.page__seals .word-button').first()).toBeEnabled();
+    await expect(compareButton(page2)).toBeEnabled();
   } finally {
     await closeApp(again);
   }

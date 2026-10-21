@@ -146,7 +146,16 @@
   --eien-row-h: calc(30px * var(--eien-text-scale)); /* a tree or list row, desktop */
   --eien-touch: 44px; /* the smallest thing a finger presses */
   --eien-seal-size: 22px; /* the app's mark */
-  --eien-radius: 0; /* paper has square corners; only dots are round */
+  /* Corners (#27): paper stays square; what you press takes -s, what floats -m,
+     what covers the window -l. Each layout sets its own scale (ui/chrome/*.css);
+     these are A · Band's. Dots stay round. */
+  --eien-radius-s: 2px;
+  --eien-radius-m: 4px;
+  --eien-radius-l: 8px;
+  /* Icons (ui/icons.ts): drawn on a 16-unit grid, stroked at a hairline's weight. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
 
   /* ── Motion: quick and quiet, no bounce ─────────────────────────────── */
   --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);

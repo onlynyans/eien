@@ -11,9 +11,15 @@
   background: var(--eien-page-ground);
   container: page / inline-size;
 }
+/* Each part of the page has its own row (system.md, "Page parts"): a part
+   hidden or empty never hands its row to the next, and the colophon keeps
+   its height, however short the sheet. The bar, the formatting bar's row and
+   a phone's foot are the layout's slots (../chrome): each layout's sheet
+   says how they look, and they take no room while empty. */
 .page__main {
+  position: relative;
   display: grid;
-  grid-template-rows: var(--band) minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) var(--status-h) auto;
   min-width: 0;
   min-height: 0;
 }
@@ -21,59 +27,25 @@
   display: contents;
 }
 .page__bar {
+  grid-row: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--eien-space-4);
-  /* Clear of the system's window controls, at either edge (../shell/shell.css). */
-  padding: 0 max(var(--eien-space-4), var(--controls-right)) 0
-    max(
-      var(--eien-space-4),
-      calc(var(--controls-left) - var(--pane-sidebar, 0px) - var(--pane-list, 0px))
-    );
-  background: var(--eien-band);
-  border-bottom: var(--eien-hairline) solid var(--eien-rule);
-  container: pagebar / inline-size;
+  min-width: 0;
 }
-/* A button's own padding hangs outside the band's gutter, as in the foot. */
-.page__lead {
-  margin-left: calc(var(--eien-space-2) * -1);
+.page__format {
+  grid-row: 2;
 }
-.page__views {
-  margin-left: auto;
+.page__phone {
+  grid-row: 5;
+  display: none; /* a phone's alone (../phone/phone.css) */
 }
-/* The page's controls wait until the pointer is over the page, or focus is
-   in them: nothing interrupts the writer (spec §1). Each is named by its
-   class: a selector ending in "*" after :hover makes every hover anywhere
-   restyle every row in the panes (tests/selectors.test.ts). */
-.page__views,
-.page__panes,
-.page__tools {
-  display: flex;
-  gap: var(--eien-space-1);
-  opacity: 0;
-  transition: opacity var(--eien-calm) var(--eien-ease);
-}
-.page:hover .page__views,
-.page__views:focus-within,
-.page:hover .page__panes,
-.page__panes:focus-within,
-.page:hover .page__tools,
-.page__tools:focus-within {
-  opacity: 1;
-}
-/* HIDE or SHOW drops first when the page is narrow, then the panes' words. */
-@container pagebar (width < 520px) {
-  .page__panes .when-wide {
-    display: none;
-  }
-}
-@container pagebar (width < 360px) {
-  .page__lead {
-    display: none;
-  }
+.page__bar:empty,
+.page__format:empty,
+.page__phone:empty {
+  display: none;
 }
 .page__scroll {
+  grid-row: 3;
   min-height: 0;
   overflow-y: auto;
   padding: var(--eien-page-gutter);
@@ -103,9 +75,22 @@
   container-type: inline-size;
 }
 
+/* The sheet's running head: the breadcrumb, and the tags' place at the right (A's). */
+.sheet__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--eien-space-4);
+}
 .crumbs {
   margin: 0;
   min-height: 1lh;
+}
+/* The tags' places (../chrome/layout-spec.ts, TagSlot): empty until they're built. */
+.sheet__tags:empty,
+.title-tags:empty,
+.colophon__tags:empty {
+  display: none;
 }
 /* The title is the note's name: a field when it's being renamed, looking just as it did. */
 .title[tabindex] {
@@ -173,10 +158,15 @@
 
 /* The colophon: the status line at the foot of the page. */
 .colophon {
+  grid-row: 4;
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: var(--eien-space-3);
-  padding: var(--eien-space-2) var(--eien-space-4);
+  height: var(--status-h);
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0 var(--eien-space-4);
   background: var(--eien-band);
   border-top: var(--eien-hairline) solid var(--eien-rule);
   text-transform: uppercase;
