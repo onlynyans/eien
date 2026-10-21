@@ -2,7 +2,7 @@
 // the window draws them: front matter's with a ×, the text's with none, the
 // field and its menu by keyboard and pointer.
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import type { TagChoice } from '../../core/tags';
 import { TagSet, type TagSetOf } from './tag-set';
 
@@ -11,20 +11,23 @@ const VAULT: TagChoice[] = [
   { tag: 'fic/aot', count: 2 },
 ];
 
-let of: TagSetOf & { [K in keyof TagSetOf]: ReturnType<typeof vi.fn> };
+type Mocked<T> = {
+  [K in keyof T]: T[K] extends (...args: infer A) => infer R ? Mock<(...args: A) => R> : never;
+};
+let of: Mocked<TagSetOf>;
 let set: TagSet;
 
 beforeEach(() => {
   of = {
-    choices: vi.fn((typed: string, has: readonly string[]) => {
+    choices: vi.fn((typed: string, has: readonly string[]): readonly TagChoice[] => {
       const open = VAULT.filter((c) => !has.includes(c.tag) && c.tag.includes(typed));
       return typed && !VAULT.some((c) => c.tag === typed)
         ? [...open, { tag: typed, count: 0, made: true as const }]
         : open;
     }),
-    add: vi.fn(),
-    remove: vi.fn(),
-    find: vi.fn(),
+    add: vi.fn<(tag: string) => void>(),
+    remove: vi.fn<(tag: string) => void>(),
+    find: vi.fn<(tag: string) => void>(),
   };
   set = new TagSet(of);
   document.body.append(set.element);

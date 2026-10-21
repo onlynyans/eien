@@ -2,22 +2,22 @@
 // text, changed in front matter alone as Eien's quiet edit, and a tag typed
 // in the words shown once the typing pauses.
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NoteEditor } from '../editor/editor';
 import { PageTags } from './page-tags';
 
 const NOTE = '---\ntags: [draft]\n---\nA scene. #wip\n';
 
-let changed: ReturnType<typeof vi.fn>;
-let tell: ReturnType<typeof vi.fn>;
+let changed: Mock<(text: string, written: boolean) => void>;
+let tell: Mock<(message: string) => void>;
 let editable = true;
 let editor: NoteEditor;
 let tags: PageTags;
 let page: HTMLElement;
 
 beforeEach(() => {
-  changed = vi.fn();
-  tell = vi.fn();
+  changed = vi.fn<(text: string, written: boolean) => void>();
+  tell = vi.fn<(message: string) => void>();
   editable = true;
   page = document.createElement('div');
   document.body.append(page);
@@ -93,7 +93,9 @@ describe('the page’s tags', () => {
   it('opens the field with # on the page, never from the words', () => {
     const title = page.appendChild(document.createElement('h1'));
     title.tabIndex = 0;
-    title.dispatchEvent(new KeyboardEvent('keydown', { key: '#', bubbles: true, cancelable: true }));
+    title.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '#', bubbles: true, cancelable: true }),
+    );
     expect(document.activeElement?.getAttribute('role')).toBe('combobox');
     tags.set.close(false);
     const words = page.querySelector('.editor-host, div') as HTMLElement;
