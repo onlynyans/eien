@@ -19,8 +19,12 @@ const ELEMENTS = 1500;
 const HEAP_GROWTH = 3 * 1024 * 1024;
 /** From the window's start to the first list of 3,000 notes drawn (measured: 150 to 190 ms). */
 const FIRST_LIST_MS = 1500;
-/** The built renderer's own code and styles, in bytes (measured: 1,574,453 and 120,787), +10%. */
-const RENDERER = { js: 1_730_000, css: 133_000 };
+/**
+ * The built renderer's own code and styles, in bytes (measured: 1,574,453 and 120,787), +10%.
+ * The styles measured again with Settings over the window (3G) and the page's tags and
+ * formatting bar (3D): 143,390.
+ */
+const RENDERER = { js: 1_730_000, css: 158_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);
