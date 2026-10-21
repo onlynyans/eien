@@ -120,12 +120,22 @@ so two devices never overwrite each other's state through Syncthing.
   changed by another device meanwhile, since this one's next save would have
   taken the same temp file. One holding the note's own words, or none, is
   removed; one that can't be read is left for the next launch.
+- **Renames in two steps.** The phone renames a note or folder whose name
+  changes only in case through a hidden step name (`.name.md.eien-case`), as
+  its storage ignores case. A crash between the steps leaves the step, which
+  Syncthing may bring to another device. Whichever device opens the vault next
+  puts it back under its name, or beside what's there now, never over it. A
+  step lasts a moment, so one found at launch was left by a crash; one caught
+  in flight at worst leaves a duplicate.
 - **One write at a time.** Writes to one file (case and accents aside) run one
   after another, so two can't both pass the version check. The version is
   checked again after the temp file is flushed, just before it takes the
   note's place: a change another program makes in that moment is refused, not
   overwritten.
-- **External changes.** Eien watches the vault. When a note changes on disk:
+- **External changes.** Eien watches the vault. What changes while the vault
+  is first read, before the watcher listens (Syncthing catching up as a phone
+  opens Eien), is caught by one more look once it listens, reading only what
+  changed. When a note changes on disk:
   - If the open copy has no unsaved edits, the new text is loaded.
   - If both changed, Eien never overwrites the file. It saves the open text as
     a sibling, `Note (conflict 2026-10-19 16-40).md`, and shows one quiet

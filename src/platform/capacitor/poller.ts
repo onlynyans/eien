@@ -22,7 +22,8 @@ export class Poller {
     this.#active = active;
   }
 
-  watch(onChange: (paths: string[]) => void): () => void {
+  /** `ready` once the first look is done: what changes after it is told. */
+  watch(onChange: (paths: string[]) => void, ready?: () => void): () => void {
     let last: Map<string, string> | null = null;
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -40,6 +41,7 @@ export class Poller {
             );
             if (changed.length > 0 && !stopped) onChange(changed);
           }
+          if (now && !last) ready?.();
           if (now) last = now;
         }
       } finally {

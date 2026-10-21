@@ -5,7 +5,7 @@ import { basename } from 'node:path';
 import { type BrowserWindow, dialog, shell } from 'electron';
 import { CHANNEL, type VaultInfo } from '../../platform/bridge';
 import { openDiskStorage } from '../../platform/electron/disk-storage';
-import { recoverStrayTemps } from '../../platform/electron/recover-temps';
+import { recoverStrays } from '../../platform/electron/recover-strays';
 import { OpenVault } from '../../platform/open-vault';
 import { lastVault, readDeviceFile, updateDeviceFile } from './device-settings';
 import { answer, text } from './ipc';
@@ -45,7 +45,7 @@ export class VaultSession {
   async openAt(root: string): Promise<VaultInfo> {
     // The system's trash, looked up when it's used.
     const storage = await openDiskStorage(root, (path) => shell.trashItem(path));
-    await recoverStrayTemps(storage);
+    await recoverStrays(storage);
     const vault = await OpenVault.open(basename(storage.root), storage);
     this.close();
     this.#open = vault;

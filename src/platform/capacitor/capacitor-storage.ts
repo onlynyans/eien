@@ -17,21 +17,12 @@ import {
   type Storage,
   type WriteResult,
 } from '../storage';
-import { hiddenBeside, TEMP_SUFFIX } from '../stray';
+import { CASE_STEP, hiddenBeside, TEMP_SUFFIX, TRASH_STEP } from '../stray';
 import { type FilesPort, folderOf, nameOf, TakenError } from './files';
 import { Poller } from './poller';
 
 /** Where trashed files go: in the vault, hidden, a folder for each moment something was trashed. */
 export const TRASH_FOLDER = '.eien/trash';
-
-/**
- * The ends of the hidden names a file or folder takes between the two steps
- * of a case-only rename, and while what holds the trash steps aside:
- * ".<name>.eien-case", ".<name>.eien-trashing". A crash between the steps
- * leaves one; the vault puts it back when it opens (./recover.ts).
- */
-export const STEP_SUFFIXES = ['.eien-case', '.eien-trashing'] as const;
-const [CASE_STEP, TRASH_STEP] = STEP_SUFFIXES;
 
 export interface CapacitorStorageOptions {
   /** How often the vault is looked at for changes, in milliseconds. */
@@ -238,8 +229,8 @@ export class CapacitorStorage implements Storage {
     await this.#files.makeFolder(at);
   }
 
-  watch(onChange: (paths: string[]) => void): () => void {
-    return this.#poller.watch(onChange);
+  watch(onChange: (paths: string[]) => void, ready?: () => void): () => void {
+    return this.#poller.watch(onChange, ready);
   }
 
   /** Look for changes now: the app is back in front, and another device may have written. */

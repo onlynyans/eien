@@ -4,6 +4,7 @@
 // process serves it over IPC (app/electron/vault-session.ts); the phone's
 // window calls it directly (app/mobile).
 
+import type { VaultEntry } from '../core/vault';
 import { VaultIndex } from './index';
 import type { FileState, MoveResult, Storage, WriteResult } from './storage';
 
@@ -55,14 +56,43 @@ export class OpenVault {
     await this.#reindex([path]);
   }
 
-  /** Changes on disk: `changed` hears of them once the index holds them. */
+  /**
+   * Changes on disk: `changed` hears of them once the index holds them. What
+   * changed while the vault was first read, before the watcher listened
+   * (Syncthing bringing a note in as a phone opens its vault), is told too:
+   * the index looks once more when the watcher is listening.
+   */
   watch(changed: (paths: string[]) => void): () => void {
-    return this.storage.watch((paths) => {
-      void this.index
-        .refresh(paths)
-        .catch((error: unknown) => console.error('Eien: the vault couldn’t be read again:', error))
-        .finally(() => changed(paths));
-    });
+    let stopped = false;
+    const stop = this.storage.watch(
+      (paths) => {
+        void this.index
+          .refresh(paths)
+          .catch((error: unknown) =>
+            console.error('Eien: the vault couldn’t be read again:', error),
+          )
+          .finally(() => changed(paths));
+      },
+      () =>
+        void this.#catchUp((paths) => {
+          if (!stopped) changed(paths);
+        }),
+    );
+    return () => {
+      stopped = true;
+      stop();
+    };
+  }
+
+  /** Read what changed since the index last looked (only that), and tell of it. */
+  async #catchUp(changed: (paths: string[]) => void): Promise<void> {
+    const before = stamps(this.index.entries());
+    await this.#reindex([]);
+    const after = stamps(this.index.entries());
+    const paths = [...new Set([...before.keys(), ...after.keys()])].filter(
+      (path) => before.get(path) !== after.get(path),
+    );
+    if (paths.length > 0) changed(paths);
   }
 
   /** The index catches up after a change; if it can't just now, the change still happened. */
@@ -72,3 +102,7 @@ export class OpenVault {
       .catch((error: unknown) => console.error('Eien: the index couldn’t catch up:', error));
   }
 }
+
+/** Each entry by what tells a change: its kind, time and size. */
+const stamps = (entries: readonly VaultEntry[]): Map<string, string> =>
+  new Map(entries.map((entry) => [entry.path, `${entry.kind}:${entry.modified}:${entry.size}`]));
