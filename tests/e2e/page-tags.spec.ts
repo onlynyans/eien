@@ -120,6 +120,8 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       expect(tag?.x ?? 0).toBeGreaterThanOrEqual(sheet?.x ?? 0);
       await first.hover(); // nothing lies over it
       await expect(first.getByRole('button', { name: 'Take #fic/aot off' })).toBeVisible();
+      // Its × showing never slides the tag from under the pointer.
+      expect((await first.boundingBox())?.x).toBe(tag?.x);
     });
 
     test('the # key on the page opens the field, with the keyboard in it', async ({ page }) => {

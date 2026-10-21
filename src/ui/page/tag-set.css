@@ -135,6 +135,20 @@
   opacity: 1;
 }
 
+/* A · In the running head the words end at the right: a × that took room would slide the tag
+   from under the pointer. It hangs in the gap after its tag instead, taking none. */
+.sheet__tags .tag-set {
+  column-gap: var(--eien-space-4);
+}
+.sheet__tags .tag {
+  position: relative;
+}
+.sheet__tags .tag > .tag__off {
+  position: absolute;
+  left: 100%;
+  width: calc(var(--eien-space-3) + var(--eien-space-1) / 2);
+}
+
 /* A · In the running head: the + on hover, or with the keyboard on it. */
 .sheet__head:hover .tag-set__add,
 .sheet__head .tag-set__add:focus-visible {
