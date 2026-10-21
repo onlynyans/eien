@@ -17,6 +17,7 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VaultPathError } from '../core/paths';
+import type { Mix } from '../core/themes';
 import { CapacitorStorage, TRASH_FOLDER } from './capacitor/capacitor-storage';
 import { NodeFiles } from './capacitor/node-files';
 import { type DiskStorage, openDiskStorage, writeDurably } from './electron/disk-storage';
@@ -24,6 +25,7 @@ import { recoverStrays } from './electron/recover-strays';
 import { MemoryStorage } from './memory/memory-storage';
 import type { Storage } from './storage';
 import { tempBeside } from './stray';
+import { ThemeFiles } from './theme-files';
 
 /** The temp file a crash left beside `name`: one write's, with its token. */
 const tempNameOf = (name: string) => tempBeside(name, '0a1b2c3d');
@@ -323,6 +325,109 @@ for (const [name, make] of Object.entries(implementations)) {
       await expect(subject.storage.trash('Never.md')).rejects.toThrow();
     });
 
+    describe('the writer’s themes, one file each in .eien/themes', () => {
+      const LATE: Mix = { paper: 215, warmth: 10, ink: 225, seal: 8 };
+      const themes = () => new ThemeFiles(subject.storage);
+      const titles = async () => (await themes().list()).map((theme) => theme.title);
+
+      it('makes one, lists it, and saves its mix, keeping the keys it doesn’t know', async () => {
+        const made = await themes().create('Late Train', LATE);
+        expect(made).toEqual({
+          title: 'Late Train',
+          path: '.eien/themes/Late Train.json',
+          mix: LATE,
+          problems: [],
+        });
+        const path = '.eien/themes/Late Train.json';
+        const file = JSON.parse((await subject.storage.read(path))?.text ?? '');
+        expect(file).toEqual({ name: 'Late Train', mix: LATE });
+        await subject.putOutside(path, JSON.stringify({ ...file, made: 'on the phone' }));
+        await themes().write('Late Train', { ...LATE, warmth: 30 });
+        expect(JSON.parse((await subject.storage.read(path))?.text ?? '')).toEqual({
+          name: 'Late Train',
+          made: 'on the phone',
+          mix: { ...LATE, warmth: 30 },
+        });
+        expect(await themes().list()).toEqual([
+          { title: 'Late Train', path, mix: { ...LATE, warmth: 30 }, problems: [] },
+        ]);
+      });
+
+      it('lists what another device put there, by name, and leaves out what isn’t a theme', async () => {
+        await subject.putOutside('.eien/themes/Orchard.json', JSON.stringify({ mix: LATE }));
+        await subject.putOutside('.eien/themes/broken.json', '{ "mix": ');
+        await subject.putOutside('.eien/themes/notes.md', 'not a theme');
+        await subject.putOutside('.eien/themes/.Orchard.json.0a1b2c3d.eien.tmp', '{}');
+        const listed = await themes().list();
+        expect(listed.map((theme) => [theme.title, theme.mix])).toEqual([
+          ['broken', null],
+          ['Orchard', LATE],
+        ]);
+        expect(await themes().list()).toEqual(listed); // and changes nothing
+        expect(await new ThemeFiles(subject.storage).read('Nothing')).toBeNull();
+      });
+
+      it('lists none, and makes the folder for the first', async () => {
+        expect(await themes().list()).toEqual([]);
+        await themes().create('First', LATE);
+        expect(await titles()).toEqual(['First']);
+      });
+
+      it('numbers a new theme whose name another has, in any case', async () => {
+        await themes().create('Untitled', LATE);
+        const second = await themes().create('untitled', LATE);
+        expect(second).toMatchObject({ title: 'untitled 2' });
+        expect(await themes().create('  ', LATE)).toEqual({ ok: false, problem: 'empty' });
+        expect(await titles()).toEqual(['Untitled', 'untitled 2']);
+      });
+
+      it('renames the file and the name inside; a change of case is the same theme', async () => {
+        await themes().create('late train', LATE);
+        expect(await themes().rename('late train', 'Late Train')).toEqual({
+          ok: true,
+          title: 'Late Train',
+        });
+        expect(await titles()).toEqual(['Late Train']);
+        expect(await themes().rename('Late Train', 'Night: Train?')).toEqual({
+          ok: true,
+          title: 'Night Train',
+        });
+        expect(await titles()).toEqual(['Night Train']);
+        const file = JSON.parse(
+          (await subject.storage.read('.eien/themes/Night Train.json'))?.text ?? '',
+        );
+        expect(file).toEqual({ name: 'Night Train', mix: LATE });
+      });
+
+      it('refuses a name another theme has, in any case, and an empty one, changing nothing', async () => {
+        await themes().create('Orchard', LATE);
+        await themes().create('Late Train', LATE);
+        expect(await themes().rename('Late Train', 'ORCHARD')).toEqual({
+          ok: false,
+          problem: 'taken',
+        });
+        expect(await themes().rename('Late Train', '...')).toEqual({ ok: false, problem: 'empty' });
+        expect(await titles()).toEqual(['Late Train', 'Orchard']);
+        await expect(themes().rename('Gone', 'Elsewhere')).rejects.toThrow('isn’t there any more');
+      });
+
+      it('sends one to the trash, where the writer can take it back', async () => {
+        await themes().create('Late Train', LATE);
+        await themes().trash('Late Train');
+        expect(await titles()).toEqual([]);
+        expect(await subject.trashed()).toEqual(['Late Train.json']);
+        await expect(themes().trash('Late Train')).rejects.toThrow();
+      });
+
+      it('never writes over a file it can’t read, nor brings back one that’s gone', async () => {
+        await subject.putOutside('.eien/themes/Half.json', '{ "mix": ');
+        await expect(themes().write('Half', LATE)).rejects.toThrow('isn’t valid JSON');
+        expect((await subject.storage.read('.eien/themes/Half.json'))?.text).toBe('{ "mix": ');
+        await expect(themes().write('Gone', LATE)).rejects.toThrow('isn’t there any more');
+        expect(await subject.storage.read('.eien/themes/Gone.json')).toBeNull();
+      });
+    });
+
     it('makes folders, any depth; one already there is fine; a file there is not', async () => {
       await subject.storage.makeFolder('A/B/C');
       await subject.storage.makeFolder('A/B');
@@ -410,21 +515,24 @@ for (const [name, make] of Object.entries(implementations)) {
       expect((await subject.storage.list()).map((entry) => entry.path)).toEqual([name]); // no twin
     });
 
-    it('tells a watcher about the vault’s settings and a note’s seals, and no other hidden file', async () => {
+    it('tells a watcher about the vault’s settings, a note’s seals and the writer’s themes, and no other hidden file', async () => {
       const seen: string[] = [];
       const stop = await listening(seen);
       try {
         const seal = '.eien/versions/01JB2X4Q7Z/2026-10-19T16-40-02Z.md';
+        const theme = '.eien/themes/Late Train.json';
         await subject.putOutside('.eien/other.json', '{}');
         await subject.putOutside('Fic/.hidden.md', 'x');
         await subject.putOutside('.eien/config.json', '{}');
         await subject.putOutside(seal, 'sealed on another device');
+        await subject.putOutside(theme, '{"mix":{}}');
+        await subject.putOutside('.eien/themes/.Late Train.json.0a1b2c3d.eien.tmp', '{}');
         await subject.putOutside('Seen.md', 'x');
         await expect
           .poll(() => seen, { timeout: 3000 })
-          .toEqual(expect.arrayContaining(['.eien/config.json', seal, 'Seen.md']));
+          .toEqual(expect.arrayContaining(['.eien/config.json', seal, theme, 'Seen.md']));
         const hidden = seen.filter((path) => path.split('/').some((name) => name.startsWith('.')));
-        expect(new Set(hidden)).toEqual(new Set(['.eien/config.json', seal]));
+        expect(new Set(hidden)).toEqual(new Set(['.eien/config.json', seal, theme]));
       } finally {
         stop();
       }

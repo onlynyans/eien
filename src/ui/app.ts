@@ -9,19 +9,30 @@ import { SettingsScreen } from './settings/settings-screen';
 import { SettingsState } from './settings/settings-state';
 import { isZoomCommand, keyboardInPage, zoomedBy, zoomKeyFor } from './settings/zoom';
 import { paintWindowControls } from './shell/window-controls';
+import { wear, wornFor } from './theme/wear';
+import { WriterThemes } from './theme/writer-themes';
 import { type ShownVault, showVault } from './vault/vault-view';
 import { renderWelcome } from './welcome/welcome';
 
 export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void> {
   // The look is set before anything is drawn, so nothing shows in the wrong face.
   const settings = await SettingsState.load(bridge.settings);
+  const themes = new WriterThemes(bridge.vault, settings);
+  // The vault's own themes come with the vault: until then, one of them is worn as Washi.
+  const wearChosen = () => wear(wornFor(settings.values['appearance.palette'], themes.list));
   applyLook(settings.values);
+  wearChosen();
   const repaintControls = paintWindowControls(bridge);
   settings.onChange((values) => {
     applyLook(values);
+    wearChosen();
     repaintControls();
   });
-  const screen = new SettingsScreen(document.body, settings, bridge.platform);
+  themes.onChange(() => {
+    wearChosen();
+    repaintControls();
+  });
+  const screen = new SettingsScreen(document.body, settings, bridge.platform, themes);
   const menu = new MenuBus(bridge);
   const whole = settingOf('window.zoom');
   const wholeZoom = whole !== undefined && offeredOn(whole, bridge.platform);
@@ -32,6 +43,7 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
     shown = null;
     const info = await bridge.vault.current();
     await settings.reload(); // the vault's own settings come with it
+    await themes.reload(); // and its own themes
     if (info) shown = await showVault(root, bridge, info.name, settings, menu);
     else renderWelcome(root, chooseVault, bridge.platform);
   };

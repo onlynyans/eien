@@ -1,13 +1,13 @@
-// How the window shows the settings (spec §6–§7): each is a data attribute
-// on <html> or a custom property, and the tokens follow. Day or night is
-// also the main process's (nativeTheme), so the window's frame follows it
-// and it's right before the window first draws.
+// How the window shows the settings (spec §6): each is a data attribute on
+// <html> or a custom property, and the tokens follow. Day or night is also
+// the main process's (nativeTheme), so the window's frame follows it and
+// it's right before the window first draws. The palette is worn by
+// ../theme/wear.ts, as it may be one of the vault's own themes.
 
 import { DEFAULT_SETTINGS, type SettingKey, type SettingValues } from '../../core/config';
 
 /** Settings that are a data attribute on <html>; at the default, there's none. */
 const LOOK_ATTRIBUTES = {
-  'appearance.palette': 'palette',
   'appearance.face': 'face',
   'appearance.density': 'density',
   'appearance.frame': 'frame',

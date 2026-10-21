@@ -2,6 +2,8 @@
 // validation and storage all come from this list: adding a setting means
 // adding one entry. A setting joins the list when what it changes exists.
 
+import { GALLERY, isMineChoice } from '../themes';
+
 /** 'vault' travels with the notes (.eien/config.json); 'device' stays on this device. */
 export type SettingScope = 'vault' | 'device';
 
@@ -27,6 +29,8 @@ export interface ChoiceSetting extends Common {
   /** Each value and its name on the settings screen, in the order shown. */
   readonly choices: Readonly<Record<string, string>>;
   readonly default: string;
+  /** Values no list can hold, also taken (a theme of the writer's own), and what they are. */
+  readonly more?: { readonly accepts: (value: string) => boolean; readonly what: string };
 }
 
 export interface NumberSetting extends Common {
@@ -56,11 +60,13 @@ export const SETTINGS = [
     key: 'appearance.palette',
     label: 'Palette',
     description:
-      'Washi is Eien’s paper and sumi ink. Otaku is cool grey round warm paper, with a burnt-orange accent.',
+      'Eien’s own themes, then your own: each a file in the vault’s .eien/themes, so it travels with your notes.',
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
-    choices: { washi: 'Washi', otaku: 'Otaku' },
+    // The gallery's, in its order (core/themes); a theme of the writer's own is "mine:<name>".
+    choices: Object.fromEntries(GALLERY.map((theme) => [theme.id, theme.name])),
+    more: { accepts: isMineChoice, what: 'a theme of your own (mine:<name>)' },
     default: 'washi',
   },
   {
@@ -234,7 +240,11 @@ export const SETTINGS = [
 
 type Defined = (typeof SETTINGS)[number];
 export type SettingKey = Defined['key'];
-type ValueOf<D> = D extends { readonly choices: infer C } ? keyof C & string : number;
+type ValueOf<D> = D extends { readonly more: object }
+  ? string
+  : D extends { readonly choices: infer C }
+    ? keyof C & string
+    : number;
 
 /** A value for every setting, typed by its key. */
 export type SettingValues = { readonly [K in SettingKey]: ValueOf<Extract<Defined, { key: K }>> };
