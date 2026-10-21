@@ -16,9 +16,15 @@
   gap: var(--eien-space-2);
   height: var(--band);
   flex: none;
-  /* The seal's button pads it by a space: the seal itself sits on the gutter. */
+  /* The seal's button pads it by a space: the seal itself sits on the gutter,
+     right of macOS's traffic lights (../shell/shell.css). */
   padding: 0 var(--eien-space-4) 0
-    calc(var(--eien-space-4) - var(--eien-space-1) - var(--eien-hairline));
+    calc(
+      var(--controls-left, 0px) +
+      var(--eien-space-4) -
+      var(--eien-space-1) -
+      var(--eien-hairline)
+    );
 }
 
 /* The seal as a button: the mark that shuts the sidebar, and on the strip opens it again. */
@@ -56,6 +62,10 @@
   justify-content: center;
   height: var(--band);
   align-items: center;
+}
+/* macOS's traffic lights are wider than the strip: the seal waits below them. */
+[data-platform="darwin"] .sidebar__strip {
+  margin-top: var(--band);
 }
 .shell[data-sidebar-shut] .sidebar__strip {
   display: flex;

@@ -15,8 +15,8 @@ features that came after, and the plan for them (below the table).
 
 | # | Task | Type | Area | What and why | Now | Design | From |
 |---|---|---|---|---|---|---|---|
-| 1 | No title bar | tweak | Window | The window takes the title bar's space, as Claude's does: the traffic lights sit over the app, and the strip drags the window. Icons may go there later. Do this first, before the other interface work. | A standard title bar saying "Eien" | yes, later (what goes in the strip) | you |
-| 2 | Zoom the whole interface | tweak | Window | ⌘+ and ⌘− scale every pane, as a browser zooms. With the keyboard in the page, they zoom the page alone, as now. | ⌘+ and ⌘− zoom the page only | – | you |
+| 1 | No title bar | tweak | Window | The window takes the title bar's space, as Claude's does: the traffic lights sit over the app, and the strip drags the window. Icons may go there later. Do this first, before the other interface work. | **Done** ([#29](https://github.com/onlynyans/eien/pull/29)): the traffic lights over the sidebar's head on macOS; the system's controls over the page's band, in its colours, on Windows and Linux; the top bands drag the window | yes, later (what goes in the strip) | you |
+| 2 | Zoom the whole interface | tweak | Window | ⌘+ and ⌘− scale every pane, as a browser zooms. With the keyboard in the page, they zoom the page alone, as now. | **Done** ([#29](https://github.com/onlynyans/eien/pull/29)): the whole window outside the page, the page alone inside it; Interface zoom in Settings → Layout | – | you |
 | 3 | Sections fold | fix | Sidebar | LIBRARY, FOLDERS and TAGS fold and open when their label is clicked, with the twisty, as the mockup's `.section__label` does. | **Done** in #28 | port | you, audit |
 | 4 | A quiet + for a new folder or tag | tweak | Sidebar | A + at the right of FOLDERS and TAGS, shown on hover or keyboard focus, in place of the NEW FOLDER word button. The + beside TAGS makes a tag with no notes yet, named in place (kept in `.eien/tags.json`). | A NEW FOLDER button; no way to make a tag here | yes: [tags](design/explorations/tags.md) | you |
 | 5 | Tree guide lines | fix | Sidebar | The hairline down an open folder's children (`.tree [role='group']::before` in `docs/design/desktop.css`). | **Done** in #28 | port | you, audit |
@@ -33,7 +33,7 @@ features that came after, and the plan for them (below the table).
 | 16 | The control strip hides | tweak | Page | The page's control strip (views, Compare, Seal, Versions) shows or hides, from a control near where the tags sit. Shown, it takes the space above the sheet; hidden, the sheet reaches the top of the pane. | Always there; its words show on hover | yes | you |
 | 17 | View icons | tweak | Page | LIVE, SOURCE and READING as icons: a text-edit icon, a code icon, a book icon. | Words | yes | you |
 | 18 | Settings in Eien's voice | fix | Settings | The settings screen was built without a mockup (`docs/design` has none), and doesn't read as Eien: bold black headings where the design uses mono labels in graphite, and one long column in a box. Rework it in the design's voice. | A box over the window, one long column | yes | you, audit |
-| 19 | AltGr and the heading keys | fix | Keys | On Windows and Linux, Ctrl+Alt is AltGr, so Ctrl+Alt+1–3 (headings) may take characters that some layouts type with AltGr (², ³ on a German keyboard). Check what Electron does; keep ⌘⌥1–3 on macOS and choose other keys elsewhere, then update spec §4. | Ctrl+Alt+1–3 on every system | – | review |
+| 19 | AltGr and the heading keys | fix | Keys | On Windows and Linux, Ctrl+Alt is AltGr, so Ctrl+Alt+1–3 (headings) may take characters that some layouts type with AltGr (², ³ on a German keyboard). Check what Electron does; keep ⌘⌥1–3 on macOS and choose other keys elsewhere, then update spec §4. | **Done** ([#29](https://github.com/onlynyans/eien/pull/29)): Ctrl+Shift+1–3 on Windows and Linux; ⌘⌥1–3 on macOS | – | review |
 | 20 | Writer themes | feature | Themes | Build them (spec §7): themes in `.eien/themes/`, a gallery of Eien's own beside Washi and Otaku, a maker, and files. | Not built; Washi and Otaku are built in | yes: [themes](design/explorations/themes.md) | audit, you |
 | 21 | App icon | feature | Install | Eien's own icon for the installers and the phone (the seal would be the natural one). | Electron's and Capacitor's icons | yes | AGENTS.md |
 | 22 | Smaller downloads | tweak | Install | The Mac download is 546 MB: Chromium twice, for Apple Silicon and Intel. Separate Apple Silicon and Intel downloads, and Chromium's text in English only, would about halve it. Left as it is for now, by your choice. | One universal `.dmg` | – | installers session |
@@ -58,7 +58,7 @@ overlap.
 
 | Step | Items | Where |
 |---|---|---|
-| 1A Window and keys | #1 no title bar, #2 zoom the whole interface, #19 AltGr | `src/app/electron` (the window, the menu), the panes' top bands |
+| 1A Window and keys (done, [#29](https://github.com/onlynyans/eien/pull/29)) | #1 no title bar, #2 zoom the whole interface, #19 AltGr | `src/app/electron` (the window, the menu), the panes' top bands |
 | 1B The sidebar, as the mockup has it | #3 sections fold, #5 guide lines, #6 BOOK mark, #9 "1 NOTES": **done** in #28 | `src/ui/sidebar` |
 | 1C Search in the list (done, [#30](https://github.com/onlynyans/eien/pull/30)) | #11 | `src/ui/list`, the sidebar's search, a search within one list's notes |
 | 1D Type settings, after 1B and 1C (they share the row styles) | #24 the machine voice's face, #25 row names' weight | `src/core/config` (two settings), the tokens, today's Settings screen |

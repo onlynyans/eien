@@ -192,9 +192,25 @@ export const SETTINGS = [
     default: 'three',
   },
   {
+    key: 'window.zoom',
+    label: 'Interface zoom',
+    description:
+      'Every pane, as a browser zooms: View → Zoom In and Zoom Out, with the keyboard outside the page.',
+    // Electron's own zoom (webContents): a phone has none.
+    platforms: ['darwin', 'win32', 'linux'],
+    scope: 'device',
+    group: 'Layout',
+    type: 'number',
+    min: 50,
+    max: 200,
+    step: 10,
+    default: 100,
+  },
+  {
     key: 'page.zoom',
-    label: 'Zoom',
-    description: 'The page only; the panes keep their size. Also in the View menu.',
+    label: 'Page zoom',
+    description:
+      'The page alone, the panes keeping their size: the same keys, with the keyboard in the page.',
     scope: 'device',
     group: 'Layout',
     type: 'number',

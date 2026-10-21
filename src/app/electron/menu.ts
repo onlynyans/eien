@@ -2,7 +2,7 @@ import { app, type BaseWindow, Menu, type MenuItemConstructorOptions } from 'ele
 import { type SettingValues, TOGGLES, type ToggleKey } from '../../core/config';
 import { SPRINT_MINUTES } from '../../core/counters';
 import { EXPORT_LABELS } from '../../core/export';
-import { acceleratorOf, FORMAT_COMMANDS, type FormatCommandId } from '../../core/format';
+import { acceleratorOf, FORMAT_COMMANDS, type FormatCommandId, keyOn } from '../../core/format';
 import type { ExportFormat, MenuCommand } from '../../platform/bridge';
 
 /** A note's or a book's exports, in the File menu's order (spec §8). */
@@ -134,7 +134,11 @@ export function buildMenu(send: SendCommand): Menu {
         ...(i > 0 ? [{ type: 'separator' } as const] : []),
         ...group.map((id): MenuItemConstructorOptions => {
           const command = FORMAT_COMMANDS.find((c) => c.id === id);
-          return item(command?.label ?? id, `format:${id}`, command && acceleratorOf(command.key));
+          return item(
+            command?.label ?? id,
+            `format:${id}`,
+            command && acceleratorOf(keyOn(command, mac)),
+          );
         }),
       ]),
     },
@@ -171,7 +175,7 @@ export function buildMenu(send: SendCommand): Menu {
         item('Go to Note List', 'focus:list', 'CmdOrCtrl+2'),
         item('Go to Page', 'focus:page', 'CmdOrCtrl+3'),
         { type: 'separator' },
-        // The page's zoom, not the window's: the panes keep their size (spec §4).
+        // With the keyboard in the page, the page's zoom; elsewhere the whole window's (spec §4).
         item('Zoom In', 'zoom:in', 'CmdOrCtrl+='),
         { ...item('Zoom In', 'zoom:in', 'CmdOrCtrl+Plus'), visible: false }, // ⌘+ with Shift, as well as ⌘=
         item('Zoom Out', 'zoom:out', 'CmdOrCtrl+-'),

@@ -7,6 +7,7 @@ import { type SettingValues, withDefaults } from '../../core/config';
 import { CHANNEL } from '../../platform/bridge';
 import { type DeviceStore, SettingsStore } from '../../platform/settings-store';
 import { readDeviceFile, updateDeviceFile } from './device-settings';
+import { zoomWindow } from './frame';
 import { answer } from './ipc';
 import { checkToggles } from './menu';
 import type { VaultSession } from './vault-session';
@@ -17,6 +18,9 @@ const THEME_SOURCE = { system: 'system', day: 'light', night: 'dark' } as const;
 export function applyScheme(values: SettingValues): void {
   nativeTheme.themeSource = THEME_SOURCE[values['appearance.scheme']];
 }
+
+/** The whole interface's zoom (spec §4), as a browser zooms: every pane, by Electron. */
+export const zoomFactorOf = (values: SettingValues): number => values['window.zoom'] / 100;
 
 /** This device's file in the app's data folder (./device-settings.ts). */
 const deviceFile: DeviceStore = { read: readDeviceFile, update: updateDeviceFile };
@@ -34,6 +38,7 @@ export function serveSettings(window: BrowserWindow, vault: VaultSession): void 
     const values = await store.set(key, value);
     applyScheme(values);
     checkToggles(values);
+    zoomWindow(window, zoomFactorOf(values));
     return values;
   });
 }

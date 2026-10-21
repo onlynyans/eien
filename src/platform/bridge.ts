@@ -109,6 +109,15 @@ export type MenuCommand =
   | 'sprint:stop'
   | 'outline';
 
+/** The page's top band as drawn: the system's window controls are drawn over it, to match. */
+export interface ControlsPaint {
+  /** Its colour and its ink, as Chromium computes them (rgb()). */
+  readonly band: string;
+  readonly ink: string;
+  /** Its height, in the page's pixels. */
+  readonly height: number;
+}
+
 export interface Bridge {
   /** The operating system: 'darwin', 'win32', 'linux', … */
   readonly platform: string;
@@ -128,6 +137,11 @@ export interface Bridge {
    * runs, and the window closes when it's done (or after a short wait).
    */
   onBeforeClose(save: () => Promise<void>): void;
+  /**
+   * Draw the system's window controls (Windows, Linux) as the band is.
+   * macOS's traffic lights take no colour, and a phone has none.
+   */
+  paintControls(paint: ControlsPaint): Promise<void>;
 }
 
 /** The IPC channel names, shared by the preload and the main process. */
@@ -153,6 +167,7 @@ export const CHANNEL = {
   menu: 'app:menu',
   beforeClose: 'app:before-close',
   closeReady: 'app:close-ready',
+  paintControls: 'app:paint-controls',
 } as const;
 
 declare global {

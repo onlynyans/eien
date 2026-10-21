@@ -1,24 +1,30 @@
 // The window: the settings and the look, the menu, and the vault shown —
 // or the welcome, before one is chosen.
 
-import { numberSetting, stepped, type ToggleKey } from '../core/config';
+import { offeredOn, settingOf, type ToggleKey } from '../core/config';
 import type { Bridge } from '../platform/bridge';
 import { MenuBus } from './menu/menu-bus';
 import { applyLook } from './settings/look';
 import { SettingsScreen } from './settings/settings-screen';
 import { SettingsState } from './settings/settings-state';
+import { isZoomCommand, keyboardInPage, zoomedBy, zoomKeyFor } from './settings/zoom';
+import { paintWindowControls } from './shell/window-controls';
 import { type ShownVault, showVault } from './vault/vault-view';
 import { renderWelcome } from './welcome/welcome';
-
-const ZOOM = numberSetting('page.zoom');
 
 export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void> {
   // The look is set before anything is drawn, so nothing shows in the wrong face.
   const settings = await SettingsState.load(bridge.settings);
   applyLook(settings.values);
-  settings.onChange((values) => applyLook(values));
+  const repaintControls = paintWindowControls(bridge);
+  settings.onChange((values) => {
+    applyLook(values);
+    repaintControls();
+  });
   const screen = new SettingsScreen(document.body, settings, bridge.platform);
   const menu = new MenuBus(bridge);
+  const whole = settingOf('window.zoom');
+  const wholeZoom = whole !== undefined && offeredOn(whole, bridge.platform);
   let shown: ShownVault | null = null;
 
   const openNow = async () => {
@@ -43,13 +49,11 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
   menu.on((command) => {
     if (command === 'open-vault') void chooseVault();
     else if (command === 'settings') screen.open();
-    else if (command === 'zoom:in' || command === 'zoom:out' || command === 'zoom:reset') {
-      const now = settings.values['page.zoom'];
-      const next =
-        command === 'zoom:reset'
-          ? ZOOM.default
-          : stepped(ZOOM, now, command === 'zoom:in' ? 1 : -1);
-      if (next !== now) void settings.set('page.zoom', next).catch(console.error);
+    else if (isZoomCommand(command)) {
+      const key = zoomKeyFor(keyboardInPage(), wholeZoom);
+      const now = settings.values[key];
+      const next = zoomedBy(command, key, now);
+      if (next !== now) void settings.set(key, next).catch(console.error);
     } else if (command.startsWith('toggle:')) {
       // Focus mode, typewriter scrolling: the menu's check follows the setting.
       const key = command.slice('toggle:'.length) as ToggleKey;

@@ -27,6 +27,11 @@ export interface FormatCommand {
   readonly label: string;
   /** Its key, as CodeMirror writes keys: "Mod" is ⌘ on a Mac, Ctrl elsewhere. */
   readonly key: string;
+  /**
+   * Its key on Windows and Linux, where it isn't `key`: there Ctrl+Alt is
+   * AltGr, which types characters (², ³ and @ on a German keyboard).
+   */
+  readonly keyOffMac?: string;
   /** Shown in the selection bar (the commonest inline ones). */
   readonly inBar: boolean;
   run(text: string, selection: Selection): Edit;
@@ -70,6 +75,7 @@ export const FORMAT_COMMANDS: readonly FormatCommand[] = [
     id: 'heading1',
     label: 'Heading 1',
     key: 'Mod-Alt-1',
+    keyOffMac: 'Mod-Shift-1',
     inBar: false,
     run: lines({ kind: 'heading', level: 1 }),
   },
@@ -77,6 +83,7 @@ export const FORMAT_COMMANDS: readonly FormatCommand[] = [
     id: 'heading2',
     label: 'Heading 2',
     key: 'Mod-Alt-2',
+    keyOffMac: 'Mod-Shift-2',
     inBar: false,
     run: lines({ kind: 'heading', level: 2 }),
   },
@@ -84,6 +91,7 @@ export const FORMAT_COMMANDS: readonly FormatCommand[] = [
     id: 'heading3',
     label: 'Heading 3',
     key: 'Mod-Alt-3',
+    keyOffMac: 'Mod-Shift-3',
     inBar: false,
     run: lines({ kind: 'heading', level: 3 }),
   },
@@ -113,6 +121,10 @@ export const FORMAT_COMMANDS: readonly FormatCommand[] = [
 
 export const formatCommand = (id: string): FormatCommand | undefined =>
   FORMAT_COMMANDS.find((command) => command.id === id);
+
+/** `command`'s key on a Mac, or on Windows and Linux. */
+export const keyOn = (command: FormatCommand, mac: boolean): string =>
+  (mac ? undefined : command.keyOffMac) ?? command.key;
 
 /** A CodeMirror key ("Mod-Shift-x") as an Electron accelerator ("CmdOrCtrl+Shift+X"). */
 export const acceleratorOf = (key: string): string =>
