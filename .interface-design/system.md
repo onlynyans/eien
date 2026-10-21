@@ -7,6 +7,11 @@ the same names, live in `src/ui/theme/tokens.css`, now their source. Every
 value below is a token or made from tokens; new work uses the tokens, never a
 raw value.
 
+**Changed on 2026-10-20, by the owner:** controls are icons, not words; not
+everything is square; the machine voice's face is a setting; row names'
+weight is a setting. Each is marked below, and in `docs/backlog.md` (#24–#27).
+Where this file and the mockup disagree, this file wins.
+
 ## Direction
 
 - **Who:** a writer, often late at night, three scenes into a chapter, who also
@@ -54,7 +59,9 @@ hairline borders, 4 shadows (the sheet's once, the float three times).
 - `--eien-shadow-sheet`: the sheet alone, the object lying on the blotter.
 - `--eien-shadow-float`: whatever floats above the window.
 - Panes, bands and rows cast none. No gradients.
-- Corners are square (`--eien-radius: 0`); only dots are round (50%).
+- **Corners: not everything is square** (changed 2026-10-20, #27). The
+  design pass sets a small radius scale and where each step applies. Dots
+  stay round. Until it's set, the app's `--eien-radius` is still 0.
 - A mark, not a rule, is `--eien-mark-w` (2px): the seal's rule, the caret,
   the focus ring.
 
@@ -85,12 +92,18 @@ machine count it, or do you press it?* The mono.
   Schibsted Grotesk, Hanken Grotesk, Instrument Sans). Each face sets its own
   sizes, leading and measure so all eight read alike. Newsreader's: prose
   22px, title 36px, list heading 23px, row 16px, preview 14px.
-- **Machine voice**, IBM Plex Mono always: labels 10px in capitals tracked
-  0.12em (`--eien-size-label`, `--eien-track-label`), counts and dates 11px
-  with tabular figures (`--eien-size-meta`).
-- Weights: 400; 500 for a note's title, the list's heading and the selected
-  row's title; 600 for the vault's name and `strong`. A label is never bold:
-  it's quiet by size, tracking and pencil ink.
+- **Machine voice**, IBM Plex Mono by default: labels 10px in capitals
+  tracked 0.12em (`--eien-size-label`, `--eien-track-label`), counts and
+  dates 11px with tabular figures (`--eien-size-meta`). Its face becomes the
+  writer's choice too (changed 2026-10-20, #24): `--eien-face-mono` is set
+  by that setting, so everything in the machine voice follows it.
+- Weights: 400; 500 for a note's title and the list's heading; 600 for the
+  vault's name and `strong`. A label is never bold: it's quiet by size,
+  tracking and pencil ink.
+- **Row names' weight is a setting** (changed 2026-10-20, #25): the
+  sidebar's names (`.row__name`) and the list's titles (`.note-row__title`),
+  each 400–700, apart. A selected list title is 100 heavier than its
+  setting, at most 700 (400 gives the mockup's 500).
 
 ## Motion
 
@@ -100,7 +113,14 @@ moves the writer didn't ask to move. None with reduced motion.
 
 ## Patterns
 
-- **Word button** (`.word-button`): mono label type, ink-soft, padding 4px 8px,
+- **Controls are icons** (changed 2026-10-20, #26): the page's views and
+  tools, the pane toggles, day or night, settings and the panes. Each has an
+  accessible name and a tooltip with its key. The icon set and its style
+  are the design pass's to set, in the machine voice: ink-soft, at a label's
+  size, with the word button's states. Words stay for labels, counts, a
+  menu's items, and wherever the design pass finds a word clearer.
+- **Word button** (`.word-button`), where a word stays: mono label type,
+  ink-soft, padding 4px 8px,
   a transparent hairline border. Hover: ink, hover tone (only where a pointer
   hovers). Pressed: press tone, rule-strong border. Chosen in a set
   (`aria-pressed` or `aria-current`): ink in a rule-strong hairline, never the
@@ -171,13 +191,14 @@ hovers, so a tapped control doesn't stay lit on touch.
 
 Decisions the approved design doesn't settle yet, from `docs/backlog.md`:
 
-- **Words or icons.** The approved design says "a control is a word, not an
-  icon" (the mockup has 39 word buttons and no icons). The owner now asks
-  for icons in some places: sun and moon for day or night, settings and the
-  panes (#8), chevrons to shut panes (#15), and the three views (#17). The
-  pass should set an icon style that keeps the machine voice, for example
-  hairline strokes in ink-soft at the label's size, chosen like a word button
-  is, and say which controls stay words.
+- **The icon set and its style** (#26), first: one set, drawn as inline
+  SVGs in ink (no icon font, no fetch), a stroke weight that sits with the
+  hairlines, and which controls keep a word. Then sun and moon for day or
+  night, settings and the panes (#8), chevrons to shut panes (#15), and the
+  three views (#17): edit, code, book.
+- **The radius scale** (#27): its steps, and which surfaces take which (a
+  button, a field, a menu, a panel, the sheet).
+- **Where the two type settings sit** (#24, #25), with the rest of Settings.
 - **Settings** (#18) has no mockup or pattern yet.
 - **The title bar's strip** (#1): what, if anything, sits beside the traffic
   lights.

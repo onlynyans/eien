@@ -2,7 +2,7 @@
 
 What to do next, collected after phase 11 (from 2026-10-20). Every phase in
 the [spec](spec.md#12-phases) is built; these are the fixes, tweaks and
-features that came after. When the list is long enough, it becomes a plan.
+features that came after, and the plan for them (below the table).
 
 - **Type**: *fix*, it's broken or not as designed; *gap*, the spec says it
   and it isn't built; *tweak*, a change to something that works; *feature*,
@@ -38,6 +38,77 @@ features that came after. When the list is long enough, it becomes a plan.
 | 21 | App icon | feature | Install | Eien's own icon for the installers and the phone (the seal would be the natural one). | Electron's and Capacitor's icons | yes | AGENTS.md |
 | 22 | Smaller downloads | tweak | Install | The Mac download is 546 MB: Chromium twice, for Apple Silicon and Intel. Separate Apple Silicon and Intel downloads, and Chromium's text in English only, would about halve it. Left as it is for now, by your choice. | One universal `.dmg` | – | installers session |
 | 23 | First release | chore | Install | No version is tagged yet, so there's nothing to download from Releases. Tag one (AGENTS.md → Releases), then publish the draft. | No release | – | docs check |
+| 24 | The machine voice's face | feature | Settings | The face for everything in the machine voice (counts, labels, buttons, the status line, the Source view) becomes a setting, as the text face is. IBM Plex Mono stays the default. | IBM Plex Mono, always | yes (its place in Settings, #18) | you |
+| 25 | Row names' weight | feature | Settings | Two settings, 400 to 700 each: the sidebar's names and the list's titles. A selected list title is 100 heavier than its setting, at most 700 (so 500 at the default, as in the mockup). | 400; the selected list title isn't heavier (the mockup's is 500) | yes (its place in Settings, #18) | you |
+| 26 | Icons for controls | tweak | Everywhere | Controls become icons: one set, one style, set by the design pass, then used by #8, #15, #16 and #17. Labels, counts and a menu's items stay words. | Every control is a word | yes, first | you |
+| 27 | Corners | tweak | Everywhere | Not everything square: a small radius scale, and which surfaces take which step. | Everything square (`--eien-radius: 0`) | yes, first | you |
+
+## Plan
+
+Drafted 2026-10-20. Three stages. Stage 1 and the design pass start
+together: stage 1 builds what needs no new design while the pass draws the
+rest. Nothing in stage 3 is built before you approve its design. Each step
+is one pull request with its tests; CI runs the suites; the spec changes in
+the pull request that changes the behaviour.
+
+### Stage 1: no new design needed (start now)
+
+Three sessions at once, each in a worktree of its own; their files don't
+overlap.
+
+| Step | Items | Where |
+|---|---|---|
+| 1A Window and keys | #1 no title bar, #2 zoom the whole interface, #19 AltGr | `src/app/electron` (the window, the menu), the panes' top bands |
+| 1B The sidebar, as the mockup has it | #3 sections fold, #5 guide lines, #6 BOOK mark, #9 "1 NOTES" | `src/ui/sidebar` |
+| 1C Search in the list | #11 | `src/ui/list`, the sidebar's search, a search within one list's notes |
+| 1D Type settings, after 1B and 1C (they share the row styles) | #24 the machine voice's face, #25 row names' weight | `src/core/config` (two settings), the tokens, today's Settings screen |
+
+1A on macOS: the traffic lights sit over the sidebar's head
+(`titleBarStyle: 'hiddenInset'`) and the panes' top bands drag the window.
+On Windows and Linux the system's own minimize, maximize and close are drawn
+over the page's band (`titleBarOverlay`), in the band's colours. The phone
+is untouched.
+
+### Stage 2: the design pass (alongside stage 1)
+
+The interface-design skill, working from `.interface-design/system.md`,
+brings `docs/design` up to the current design, a part at a time, each for
+you to approve:
+
+1. **The system:** the icon set and its style (#26), the radius scale (#27).
+2. **The page:** the strip that hides (#16), view icons (#17), tags on the
+   page (#13), the formatting bar (#14), chevrons to shut panes (#15).
+3. **The sidebar:** the foot's icons (#8), the + (#4), Pinned (#7), the sync
+   status (#10).
+4. **The list:** the sort laid over your order (#12).
+5. **Settings** (#18), with #24 and #25 in it.
+6. **The title bar's strip** (what goes there, #1) and **the app's icon** (#21).
+
+The phone's mockup changes wherever a change reaches the phone.
+
+### Stage 3: build what's approved
+
+One pull request each, 3A first, since the rest use it:
+
+| Step | Items |
+|---|---|
+| 3A Icons and corners | #26, #27: one icon module (inline SVGs), the radius tokens, the word buttons that become icons |
+| 3B The page | #13, #14, #15, #16, #17 |
+| 3C The sidebar | #4, #7, #8, #10 |
+| 3D Your own order | #12 |
+| 3E Settings | #18, with #24 and #25 moved into it |
+| 3F The app's icon, then the first release | #21, then #23 |
+
+### Later
+
+#20 writer themes (your call) and #22 smaller downloads (left for now).
+
+### Answers needed, and before what
+
+- #24 and #25: before 1D.
+- #4, #7 and #10: before the design pass reaches the sidebar (2.3).
+- #12: before 3D.
+- #20: any time.
 
 ## Decided
 
@@ -46,6 +117,11 @@ features that came after. When the list is long enough, it becomes a plan.
   rule so the sections breathe. It was already the default; decided
   2026-10-20.
 - **The note list's default order**: your own (#12), decided 2026-10-20.
+- **Controls are icons, not words** (#26), decided 2026-10-20: "a control is
+  a word" was approved by mistake.
+- **Not everything is square** (#27), decided 2026-10-20.
+- **Two type settings** (#24, #25), decided 2026-10-20. Two voices stay: the
+  text face for what a person wrote, the machine voice for the rest.
 
 ## Questions for you
 
@@ -55,6 +131,12 @@ features that came after. When the list is long enough, it becomes a plan.
 - #10: what should the sync status say? Eien doesn't talk to Syncthing; it
   can tell when a change last came from another device.
 - #20: keep writer themes, or drop them from the spec?
+- #12: what's "your own order" in All Notes, and in a tag, whose notes come
+  from many folders? One order for each, kept in the vault so it syncs? Or
+  your own order in folders only?
+- #24: which faces may the machine voice take: IBM Plex Mono and the eight
+  text faces? Counts keep their figures in columns where a face allows it.
+- #25: does the sidebar's chosen row get 100 heavier too, or only the list's?
 
 ## Design audit, 2026-10-20
 

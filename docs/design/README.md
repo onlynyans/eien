@@ -85,7 +85,7 @@ Words: a checkpoint is a **seal**; a named version is a **named seal**.
 | Voice | Face | For |
 |---|---|---|
 | Text | Newsreader (the default) or Literata; or the sans-serifs IBM Plex Sans, Source Sans 3, Atkinson Hyperlegible Next, Schibsted Grotesk, Hanken Grotesk or Instrument Sans: the writer's choice | Anything a person wrote: note text, titles, folder and note names, previews |
-| Machine | IBM Plex Mono, always | Anything the machine counts or you press: counts, dates, labels (in capitals), buttons, the status line, the Source view |
+| Machine | IBM Plex Mono (by default: a setting since 2026-10-20, see below) | Anything the machine counts or you press: counts, dates, labels (in capitals), buttons, the status line, the Source view |
 
 The test: *could a person have written it?* The text face. *Did the machine
 count it, or do you press it?* The mono.
@@ -118,7 +118,8 @@ count it, or do you press it?* The mono.
   zoom.
 - **Controls are words** — LIVE · SOURCE · READING, COMPARE, SEAL, VERSIONS —
   hidden until the pointer is over the page or focus is in it. On the phone
-  they live behind one ⋯.
+  they live behind one ⋯. (Changed 2026-10-20: controls are icons. See
+  "Changed since approval" below.)
 
 ## Rules for the interface code
 
@@ -130,7 +131,8 @@ count it, or do you press it?* The mono.
    menu, the versions panel, the phone's bottom sheet, a row being dragged —
    casts `--eien-shadow-float`, because it covers what is under it and must
    read as above it. Panes, bands and rows cast none. No gradients, square
-   corners (only dots are round).
+   corners (only dots are round). (Changed 2026-10-20: not everything is
+   square. See below.)
 3. One accent: the seal, in its five places only. Status colours mean status:
    moss for added words, carmine for removed words and delete, ochre for a
    conflict.
@@ -214,3 +216,19 @@ now their source (since phase 5 with every face, compact density, the full
 page and the Otaku palette); this folder keeps the design as it was approved. The
 mockups' behaviour is a guide, not code to copy: the app's interface is
 built fresh, in modules, against the spec.
+
+## Changed since approval
+
+On 2026-10-20 the owner changed four decisions. The mockups here still show
+the approved design; `.interface-design/system.md` holds the current one,
+and the design pass brings the mockups up to it. Each is in
+[the backlog](../backlog.md).
+
+- **Controls are icons, not words** (#26). "A control is a word" was approved
+  by mistake. Labels, counts and a menu's items stay words, in the mono.
+- **Not everything is square** (#27). A small radius scale, set by the
+  design pass. Dots stay round.
+- **The machine voice's face is a setting** (#24), IBM Plex Mono by default.
+- **Row names' weight is a setting** (#25): the sidebar's names and the
+  list's titles, 400–700 each. A selected list title is 100 heavier, at most
+  700.
