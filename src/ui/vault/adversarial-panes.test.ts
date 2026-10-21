@@ -185,6 +185,7 @@ function drawer(state: VaultState, nav: Navigation, two: boolean) {
     listActions: null,
     openNote: () => null,
     pageNews: () => {},
+    placeSearch: () => {},
   } as unknown as DrawnParts;
   return { draw: new PaneDrawer(parts), drawn };
 }
@@ -236,6 +237,7 @@ describe('the sidebar’s draws, when a slow search is overtaken', () => {
       notice: { text: null },
       openNote: () => null,
       pageNews: () => {},
+      placeSearch: () => {},
     } as unknown as DrawnParts);
     const first = draw.sidebar();
     parts.two = false;

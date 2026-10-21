@@ -1,5 +1,6 @@
 // The note list: the index of what's selected in the sidebar, or of a
-// search. Each row: the title, the date (a book's chapters: their words),
+// search (narrowed to that list's notes, from the field on the list's band,
+// ./search-field.ts). Each row: the title, the date (a book's chapters: their words),
 // and a line of preview. A row is dragged, right-clicked, or worked from the
 // keyboard (./row-events.ts).
 
@@ -25,11 +26,12 @@ export const SORT_NAMES: Record<NoteSort, string> = {
 /** The line under the heading: how many, and what kind of list. */
 export function listLabel(list: NoteList): string {
   if (list.kind === 'search') {
-    if (list.total === 0) return 'No notes match';
+    const within = list.within ? ` · ${list.within}` : '';
+    if (list.total === 0) return `No notes match${within}`;
     const matched = `${notes(list.total)} ${list.total === 1 ? 'matches' : 'match'}`;
     return list.total > list.notes.length
-      ? `${matched} · the first ${list.notes.length.toLocaleString()}`
-      : matched;
+      ? `${matched} · the first ${list.notes.length.toLocaleString()}${within}`
+      : `${matched}${within}`;
   }
   if (list.kind === 'book') return `${notes(list.total)} · Book`;
   if (list.kind === 'tag') return `${notes(list.total)} · Tag`;

@@ -2,7 +2,9 @@
 // it. Each draw reads what it needs, then draws only if no newer draw has
 // started meanwhile, so a slow search can't overwrite a newer list. With no
 // list in sight (two panes, or the list shut), the tree shows what the list
-// would: the notes, or what a search finds.
+// would: the notes, or what a search finds. The search field goes with the
+// list: in its band, it searches that list's notes; in the sidebar (no list
+// in sight, or a phone, whose contents page holds it), the whole vault.
 
 import { type ListActions, renderList } from '../list/list';
 import { listKey, sortFor } from '../list/sorts';
@@ -20,7 +22,10 @@ export interface DrawnParts {
   readonly panes: PaneLayout;
   readonly settings: SettingsState;
   readonly sidebar: Sidebar;
+  /** Where the list draws: under its search band. */
   readonly list: HTMLElement;
+  /** Put the search field in the list's band (`inList`) or the sidebar, searching what `name` names. */
+  placeSearch(inList: boolean, name: string): void;
   readonly notice: Notice;
   readonly listActions: ListActions;
   /** The note on the page. */
@@ -48,9 +53,18 @@ export class PaneDrawer {
     await Promise.all([this.sidebar(), this.list()]);
   }
 
+  /** Whether the search field is in the list's band, and so searches only that list's notes. */
+  #searchInList(): boolean {
+    const { state, nav, panes } = this.#parts;
+    const inList = !panes.isShut('list') && !panes.phone;
+    this.#parts.placeSearch(inList, inList ? state.nameOf(nav.selection) : state.name);
+    return inList;
+  }
+
   async sidebar(): Promise<void> {
     const { state, nav, panes, settings, notice } = this.#parts;
     const turn = ++this.#sidebarTurn;
+    this.#searchInList();
     const words = nav.query.trim();
     const listShown = !panes.isShut('list');
     const [notes, results] = await Promise.all([
@@ -79,10 +93,11 @@ export class PaneDrawer {
   async list(): Promise<void> {
     const { state, nav, panes, settings } = this.#parts;
     const turn = ++this.#listTurn;
+    const inList = this.#searchInList();
     if (!panes.listKept) return; // out of sight: nothing to read for it
     const words = nav.query.trim();
     const notes = words
-      ? await state.search(words)
+      ? await state.search(words, inList ? nav.selection : null)
       : await state.notesFor(
           nav.selection,
           settings.values['books.numerals'],

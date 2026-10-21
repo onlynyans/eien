@@ -193,6 +193,29 @@ test('a search from the tree shows what it finds there', async ({ page }) => {
   await expect(page.locator('.title')).toHaveText('Tear');
 });
 
+test('the search stays on the contents page, for the whole vault; sideways, it’s the list’s', async ({
+  page,
+}) => {
+  // As phone.html has it: the list's band holds no field on a phone (spec §4, backlog #11).
+  await withNotes(page);
+  await back(page).click();
+  await page.locator('.sidebar').getByText('Fic', { exact: true }).click();
+  await onlyShown(page, 'list');
+  await expect(page.locator('.list .search')).toHaveCount(0);
+  await back(page).click();
+  const field = page.locator('.sidebar').getByRole('searchbox');
+  await field.fill('idea');
+  await expect(page.locator('.sidebar').getByText('Ideas')).toBeVisible(); // not in Fic
+  // Turned sideways, the panes all show: the field moves to the list's band, for Fic's notes.
+  await page.setViewportSize({ width: 915, height: 412 });
+  const inList = page.locator('.list__search').getByRole('searchbox');
+  await expect(inList).toHaveValue('idea');
+  await expect(inList).toHaveAttribute('placeholder', 'Search Fic');
+  await expect(page.locator('.list__empty')).toContainText('No notes match.');
+  await page.setViewportSize({ width: 412, height: 915 });
+  await expect(page.locator('.list .search')).toHaveCount(0);
+});
+
 test('a finger scrolls the list: touching never lifts a row', async ({ page }) => {
   await withNotes(page);
   const row = page.locator('.note-row').first();
