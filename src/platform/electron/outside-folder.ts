@@ -68,9 +68,14 @@ const samePath = (a: string, b: string) =>
 
 /**
  * The bytes of the file at `path` in `root` (a real, absolute folder), or
- * 'link' when it or a folder on the way is one, or null when it can't be read.
+ * 'link' when it or a folder on the way is one, 'too-large' past `most`
+ * bytes (not read), or null when it can't be read.
  */
-export async function readNoLinks(root: string, path: string): Promise<Uint8Array | 'link' | null> {
+export async function readNoLinks(
+  root: string,
+  path: string,
+  most: number,
+): Promise<Uint8Array | 'link' | 'too-large' | null> {
   let at = root;
   for (const part of path.split('/')) {
     at = join(at, part);
@@ -92,6 +97,7 @@ export async function readNoLinks(root: string, path: string): Promise<Uint8Arra
     ]);
     const same = opened.ino === looked.ino && opened.dev === looked.dev;
     if (!same || !samePath(folder, dirname(at))) return 'link';
+    if (opened.size > BigInt(most)) return 'too-large'; // grown since it was listed: not read
     return new Uint8Array(await handle.readFile());
   } catch {
     return null;

@@ -85,11 +85,11 @@ describe('importFolder', () => {
     });
     const before = await snapshot(source);
     const report = await importFolder(source, vaultRoot, vault);
-    expect(report).toEqual({
-      folder: 'Obsidian Notes',
-      copied: 3,
-      left: [{ path: 'Sub/photo.png', reason: 'not-a-note' }],
-    });
+    expect(report).toEqual({ folder: 'Obsidian Notes', copied: 3, images: 1, left: [] });
+    // The image byte for byte, where the notes' links find it.
+    expect([...(await readFile(join(vaultRoot, 'Obsidian Notes/Sub/photo.png')))]).toEqual([
+      137, 80, 78, 71,
+    ]);
     expect(await readFile(join(vaultRoot, 'Obsidian Notes/Ideas.md'), 'utf8')).toBe(
       '# Ideas\n\nOne.',
     );
@@ -164,13 +164,28 @@ describe('importFolder', () => {
     if (linked) expect(report.left).toContainEqual({ path: 'Linked.md', reason: 'link' });
   });
 
-  it('makes nothing when no note comes in', async () => {
-    await put(source, { 'photo.png': 'png' });
+  it('never writes over an image that arrives once the plan names its place', async () => {
+    await put(source, { 'art/scarf.png': new Uint8Array([1, 2, 3]) });
+    hooks.afterPlan = (plan) => {
+      mkdirSync(join(vaultRoot, plan.folder, 'art'), { recursive: true });
+      writeFileSync(join(vaultRoot, plan.folder, 'art', 'scarf.png'), 'synced');
+    };
+    const report = await importFolder(source, vaultRoot, vault);
+    expect(report.images).toBe(1);
+    expect(await readFile(join(vaultRoot, 'Obsidian Notes/art/scarf.png'), 'utf8')).toBe('synced');
+    expect([...(await readFile(join(vaultRoot, 'Obsidian Notes/art/scarf 2.png')))]).toEqual([
+      1, 2, 3,
+    ]);
+  });
+
+  it('makes nothing when neither a note nor an image comes in', async () => {
+    await put(source, { 'paper.pdf': 'pdf' });
     const report = await importFolder(source, vaultRoot, vault);
     expect(report).toEqual({
       folder: null,
       copied: 0,
-      left: [{ path: 'photo.png', reason: 'not-a-note' }],
+      images: 0,
+      left: [{ path: 'paper.pdf', reason: 'not-a-note' }],
     });
     expect(await readdir(vaultRoot)).toEqual([]);
   });

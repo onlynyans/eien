@@ -6,11 +6,13 @@
 
 import { chaptersOf, type ExportRequest, languageTag, pageSizeOf, utcSeconds } from './book';
 import { DocxWriter } from './docx-body';
+import { IMAGE_KINDS } from './images';
 import { escapeXml } from './xml';
 import { zipStore } from './zip';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+const WP = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing';
 const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 
@@ -99,6 +101,9 @@ const TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml';
 const CONTENT_TYPES = `${XML}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
 <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
 <Default Extension="xml" ContentType="application/xml"/>
+<Default Extension="png" ContentType="image/png"/>
+<Default Extension="jpg" ContentType="image/jpeg"/>
+<Default Extension="gif" ContentType="image/gif"/>
 <Override PartName="/word/document.xml" ContentType="${TYPE}.document.main+xml"/>
 <Override PartName="/word/styles.xml" ContentType="${TYPE}.styles+xml"/>
 <Override PartName="/word/numbering.xml" ContentType="${TYPE}.numbering+xml"/>
@@ -119,23 +124,32 @@ const relationships = (rels: readonly string[]) =>
 /** The book (or note) as a Word document's bytes. */
 export function docx(request: ExportRequest): Uint8Array {
   const language = languageTag(request.language);
-  const writer = new DocxWriter();
+  const [width, height] = PAGES[pageSizeOf(request.language)];
+  const { chapters, images } = chaptersOf(request, false);
+  // The text's area: the page less its inch margins (a twip is 635 EMU).
+  const writer = new DocxWriter(images, { cx: (width - 2880) * 635, cy: (height - 2880) * 635 });
   const title = request.book
     ? [
         `<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t xml:space="preserve">${escapeXml(request.title)}</w:t></w:r></w:p>`,
       ]
     : [];
-  const body = chaptersOf(request, false).flatMap((chapter, i) =>
-    writer.chapter(chapter, i === 0 && !request.book),
+  const body = chapters.flatMap((chapter, i) => writer.chapter(chapter, i === 0 && !request.book));
+  const media = images.map(
+    (image, n) => `media/image-${n + 1}.${IMAGE_KINDS[image.info.kind].extension}`,
   );
-  const [width, height] = PAGES[pageSizeOf(request.language)];
   // A book's title page shows no page number (Word's "different first page", with no footer for it).
   const section = `<w:sectPr><w:footerReference w:type="default" r:id="rIdFooter"/><w:pgSz w:w="${width}" w:h="${height}"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>${request.book ? '<w:titlePg/>' : ''}</w:sectPr>`;
-  const document = `${XML}<w:document xmlns:w="${W}" xmlns:r="${R}"><w:body>${[...title, ...body].join('\n')}${section}</w:body></w:document>`;
-  const links = writer.links.map(
-    (href, i) =>
-      `<Relationship Id="rIdLink${i + 1}" Type="${REL}/hyperlink" Target="${escapeXml(href)}" TargetMode="External"/>`,
-  );
+  const document = `${XML}<w:document xmlns:w="${W}" xmlns:r="${R}" xmlns:wp="${WP}"><w:body>${[...title, ...body].join('\n')}${section}</w:body></w:document>`;
+  // Links and images, the body's and the footnotes': each part has them all.
+  const links = [
+    ...writer.links.map(
+      (href, i) =>
+        `<Relationship Id="rIdLink${i + 1}" Type="${REL}/hyperlink" Target="${escapeXml(href)}" TargetMode="External"/>`,
+    ),
+    ...media.map(
+      (target, n) => `<Relationship Id="rIdImage${n + 1}" Type="${REL}/image" Target="${target}"/>`,
+    ),
+  ];
   const parts = ['styles', 'numbering', 'footnotes', 'settings'].map(
     (part) => `<Relationship Id="rId${part}" Type="${REL}/${part}" Target="${part}.xml"/>`,
   );
@@ -152,10 +166,11 @@ export function docx(request: ExportRequest): Uint8Array {
       { path: 'word/numbering.xml', data: numbering(writer.numberedLists) },
       {
         path: 'word/footnotes.xml',
-        data: `${XML}<w:footnotes xmlns:w="${W}" xmlns:r="${R}">\n${SEPARATORS}\n${writer.footnotes.join('\n')}\n</w:footnotes>`,
+        data: `${XML}<w:footnotes xmlns:w="${W}" xmlns:r="${R}" xmlns:wp="${WP}">\n${SEPARATORS}\n${writer.footnotes.join('\n')}\n</w:footnotes>`,
       },
-      // A link in a footnote is the footnotes part's own relationship.
+      // A link or an image in a footnote is the footnotes part's own relationship.
       { path: 'word/_rels/footnotes.xml.rels', data: relationships(links) },
+      ...images.map((image, n) => ({ path: `word/${media[n]}`, data: image.bytes })),
       { path: 'word/settings.xml', data: SETTINGS },
       { path: 'word/footer1.xml', data: FOOTER },
       { path: 'docProps/core.xml', data: core },

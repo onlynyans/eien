@@ -664,8 +664,20 @@ it, including on real AO3 output.
     after a heading, isn't indented.
   - Links go to the web and mail only; a link to anything else (another note,
     a file) is its words, and a `[[wiki link]]` is its words (after a `|`,
-    its alias, as Copy for AO3 has it). An image is its description: images
-    aren't carried yet.
+    its alias, as Copy for AO3 has it).
+  - **Images** from the vault go in: `![A red scarf](attachments/scarf.png)`,
+    by a path from the note's folder or from the vault's top
+    (`/attachments/scarf.png`), as the page finds it. PNG, JPEG and GIF, each
+    up to 32 MB and 48 MB in all for one export, carried as the file has them
+    (never redrawn), each file once however often it's shown; at most as wide
+    as the room it's in (in Word, sized to fit the page, a quote's indents, a
+    list's, a table's cell). An image in a footnote goes too. An image from
+    the web is never fetched. One the page doesn't show (a hidden name, a name
+    with no image's extension), one that isn't there, of another kind (WebP,
+    SVG…) or past those sizes is its description, and one line of news after
+    the export says how many were left out so. A footnote's mark in an
+    image's description goes just after the image; a link round an image with
+    no description is left off, the image kept.
   - A numbered list keeps its first number (`1994.` stays 1994).
   - A character reference is the character, whichever of HTML 4's names it
     uses (`&eacute;`, `&euro;`); one that names nothing (`R&D;`) is its words.
@@ -718,18 +730,25 @@ Obsidian vault, iA Writer's library, a plain folder) into the vault.
   vault is ever written over: each note is written only where nothing is.
 - A note is a `.md`, `.markdown`, `.mdown`, `.mkd` or `.txt` file. It comes in
   as `.md`, its text exactly as it was (front matter, line endings, a
-  byte-order mark). Its folders come with it; a folder with no notes doesn't.
+  byte-order mark). Its folders come with it; a folder with no notes or
+  images doesn't.
+- **Images** (PNG, JPEG, GIF, WebP, AVIF and SVG: what a note shows) come in
+  too, byte for byte, in the same folders and under the same names, so a
+  note's `![…](scarf.png)` still finds them; each up to 32 MB, the most a
+  note shows. An image is written only where nothing is, as a note is.
 - Two names one system would take for one file (`Notes.md` and `notes.md`,
   or `Notes.md` and `Notes.txt`) keep the first and number the second
   (`notes 2.md`, `Notes 2.md`), as a move numbers them (§4); folders too.
   A note that arrives at a name while the import runs (Syncthing) is kept,
   and the imported one is numbered.
-- Left out, and said so: a note over 8 MB (the most the index reads); one
-  that isn't UTF-8 text, or can't be read; a name that can't exist on every
-  system (§3); a link, which is never followed; and every file that isn't a
-  note (images, PDFs, which stay where they are). Hidden files and folders
+- Left out, and said so: a note over 8 MB (the most the index reads); an
+  image over 32 MB; a note that isn't UTF-8 text; a file that can't be read;
+  a name that can't exist on every system (§3); a link, which is never
+  followed; and every file that's neither a note nor an image (PDFs,
+  documents, which stay where they are). Hidden files and folders
   (`.obsidian`, `.git`, `.DS_Store`) are left out without a word. At most
-  10,000 notes come in at once; the rest are said to be left. One import
+  10,000 notes, and 10,000 images, come in at once; the rest are said to be
+  left. One import
   looks at 100,000 files and into folders 64 deep: where it stops, it says
   so.
 - A link is never followed, even one put in a file's or a folder's place
@@ -741,14 +760,14 @@ Obsidian vault, iA Writer's library, a plain folder) into the vault.
 - The new folder's name is chosen against the vault's top as the disk has it
   at that moment.
 - Afterwards the sidebar shows the new folder, and one line of news says how
-  many notes came in. When anything was left out, a dialog lists what and
+  many notes and images came in. When anything was left out, a dialog lists what and
   why (the first 30, and how many more).
 
 ### On the phone
 
 The phone has no menu bar: a note's menu and a book's offer the exports (a
-long press), and so does the page's ⋯ for the note open. EPUB, Word and AO3
-HTML go to `Eien/Exports` beside the vault's folder (Documents on Android;
+long press), and so does the page's ⋯ for the note open. EPUB, Word (with
+their images) and AO3 HTML go to `Eien/Exports` beside the vault's folder (Documents on Android;
 Eien's folder in the Files app on iOS), under a free name, never over a file
 there. PDF isn't offered: the WebView can't print to
 a file without a plugin of Eien's own, which may come later. Import isn't
@@ -919,6 +938,8 @@ One test suite runs against every `Storage` implementation (memory, Electron's
 Node fs), so they behave the same:
 
 - durable write; a crash between write and rename; a leftover `.tmp`
+- a new file's bytes (an imported image) written only where nothing is,
+  even something that arrived a moment before
 - a file changed on disk while open; deleted while open; renamed while open
 - a read-only file; a full disk (simulated); a permission error
 

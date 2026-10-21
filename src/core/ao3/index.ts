@@ -1,3 +1,4 @@
+export { imageAddresses } from './addresses';
 export { NAMED_ENTITIES } from './entities';
 export { fromHtml, looksLikeHtml, pastedMarkdown } from './from-html';
 export {
@@ -9,4 +10,5 @@ export {
   type HtmlText,
   parseHtml,
 } from './html';
+export type { BookFlavor } from './inline-writer';
 export { type Ao3Options, bookBlocks, type SceneBreakStyle, toAo3Html } from './to-html';

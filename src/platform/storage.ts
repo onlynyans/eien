@@ -2,7 +2,7 @@
 // disk (platform/electron) and in memory (platform/memory, for tests); the
 // same contract tests run against both.
 
-import type { VaultEntry } from '../core/vault';
+import { MAX_IMAGE_BYTES, type VaultEntry } from '../core/vault';
 
 /** A file's text as stored (BOM and line endings as found) and its version. */
 export interface FileState {
@@ -26,7 +26,7 @@ export type MoveResult =
     };
 
 /** The largest file readBytes returns (an image shown in a note). */
-export const MAX_BYTES_READ = 32 * 1024 * 1024;
+export const MAX_BYTES_READ = MAX_IMAGE_BYTES;
 
 export interface Storage {
   /** Every visible folder and file, at any depth. Hidden (dot) names are left out. */
@@ -51,6 +51,14 @@ export interface Storage {
    * a crash leaves the old content or the new, never a mix.
    */
   write(path: string, text: string, expected: string | null): Promise<WriteResult>;
+
+  /**
+   * Write `bytes` as a new file at `path` (an imported image), making the
+   * folders above it, only where nothing is: false, and nothing written, when
+   * something is there already, even something that arrived a moment before.
+   * Durable as `write` is: a crash leaves no file or the whole one.
+   */
+  writeNew(path: string, bytes: Uint8Array): Promise<boolean>;
 
   /**
    * Move or rename the file or folder at `from` to `to`, making the folders

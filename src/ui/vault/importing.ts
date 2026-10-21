@@ -21,11 +21,16 @@ const count = (n: number, one: string, many = `${one}s`) =>
 /** The news an import ends with. */
 export function importNews(report: ImportReport): string {
   const left = report.left.length ? ` ${count(report.left.length, 'file')} didn’t come in.` : '';
-  if (report.folder)
-    return `Imported ${count(report.copied, 'note')} into “${report.folder}”.${left}`;
-  // "No notes there" only when that's so: notes that couldn't come in are notes.
+  if (report.folder) {
+    const brought = [
+      ...(report.copied || !report.images ? [count(report.copied, 'note')] : []),
+      ...(report.images ? [count(report.images, 'image')] : []),
+    ];
+    return `Imported ${brought.join(' and ')} into “${report.folder}”.${left}`;
+  }
+  // "No notes there" only when that's so: notes (or images) that couldn't come in were there.
   const notes = report.left.some((each) => each.reason !== 'not-a-note');
-  return notes ? `Nothing imported.${left}` : `Nothing imported: no notes there.${left}`;
+  return notes ? `Nothing imported.${left}` : `Nothing imported: no notes or images there.${left}`;
 }
 
 export async function importFolder(parts: ImportParts): Promise<void> {
