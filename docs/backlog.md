@@ -17,13 +17,13 @@ features that came after, and the plan for them (below the table).
 |---|---|---|---|---|---|---|---|
 | 1 | No title bar | tweak | Window | The window takes the title bar's space, as Claude's does: the traffic lights sit over the app, and the strip drags the window. Icons may go there later. Do this first, before the other interface work. | A standard title bar saying "Eien" | yes, later (what goes in the strip) | you |
 | 2 | Zoom the whole interface | tweak | Window | ⌘+ and ⌘− scale every pane, as a browser zooms. With the keyboard in the page, they zoom the page alone, as now. | ⌘+ and ⌘− zoom the page only | – | you |
-| 3 | Sections fold | fix | Sidebar | LIBRARY, FOLDERS and TAGS fold and open when their label is clicked, with the twisty, as the mockup's `.section__label` does. | Plain labels that don't fold | port | you, audit |
+| 3 | Sections fold | fix | Sidebar | LIBRARY, FOLDERS and TAGS fold and open when their label is clicked, with the twisty, as the mockup's `.section__label` does. | **Done** in #28 | port | you, audit |
 | 4 | A quiet + for a new folder or tag | tweak | Sidebar | A + at the right of FOLDERS and TAGS, shown on hover or keyboard focus, in place of the NEW FOLDER word button. | A NEW FOLDER button; no way to make a tag here | yes | you |
-| 5 | Tree guide lines | fix | Sidebar | The hairline down an open folder's children (`.tree [role='group']::before` in `docs/design/desktop.css`). | Missing | port | you, audit |
-| 6 | BOOK mark | fix | Sidebar | The BOOK mark beside a folder that's a book (`.book-mark`). | A book isn't marked in the sidebar | port | you, audit |
+| 5 | Tree guide lines | fix | Sidebar | The hairline down an open folder's children (`.tree [role='group']::before` in `docs/design/desktop.css`). | **Done** in #28 | port | you, audit |
+| 6 | BOOK mark | fix | Sidebar | The BOOK mark beside a folder that's a book (`.book-mark`). | **Done** in #28 | port | you, audit |
 | 7 | Pinned in sight | tweak | Sidebar | Pinned under Library as the mockup shows it, and a way to pin that can be found without right-clicking. | Pin and Unpin are on a note's right-click menu; the Pinned row appears only once a note is pinned | yes | you |
 | 8 | Icons at the sidebar's foot | tweak | Sidebar | DAY and NIGHT become one toggle with sun and moon icons, as Otaku's; SETTINGS, 3 PANES and 2 PANES become icons. | Words | yes | you |
-| 9 | "1 NOTES" | fix | Sidebar | The foot says "1 NOTES" for one note; the list's head already says "1 NOTE". | Always "notes" | – | review |
+| 9 | "1 NOTES" | fix | Sidebar | The foot says "1 NOTES" for one note; the list's head already says "1 NOTE". | **Done** in #28 | – | review |
 | 10 | Sync status | gap | Sidebar | Spec §4 puts a sync status at the sidebar's foot ("● SYNCED 4M AGO" in the mockup). | Not built | yes | audit |
 | 11 | Search in the list | tweak | List | The search field at the top of the list pane, above its heading, as in the mockup, searching only the notes that list holds. With two panes, or the list shut, it's in the sidebar and searches there. | In the sidebar, searching the whole vault (⇧⌘F) | yes | you |
 | 12 | Your own order; sorts as filters | feature | List | Notes keep the order you give them, by default. Newest, and title A–Z or Z–A, work like a spreadsheet's filter: laid over your order, and cleared to get it back. Dragging reorders only while no sort is on. | Each list sorts by Order (the default), Title or Modified; dragging reorders only in a folder sorted by Order | yes (the sort control) | you |
@@ -59,7 +59,7 @@ overlap.
 | Step | Items | Where |
 |---|---|---|
 | 1A Window and keys | #1 no title bar, #2 zoom the whole interface, #19 AltGr | `src/app/electron` (the window, the menu), the panes' top bands |
-| 1B The sidebar, as the mockup has it | #3 sections fold, #5 guide lines, #6 BOOK mark, #9 "1 NOTES" | `src/ui/sidebar` |
+| 1B The sidebar, as the mockup has it | #3 sections fold, #5 guide lines, #6 BOOK mark, #9 "1 NOTES": **done** in #28 | `src/ui/sidebar` |
 | 1C Search in the list | #11 | `src/ui/list`, the sidebar's search, a search within one list's notes |
 | 1D Type settings, after 1B and 1C (they share the row styles) | #24 the machine voice's face, #25 row names' weight | `src/core/config` (two settings), the tokens, today's Settings screen |
 
