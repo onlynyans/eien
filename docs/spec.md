@@ -192,7 +192,8 @@ Three panes, each collapsible, with a two-pane option in settings:
    - **Pinned**
    - **Folders**, nested; books marked
    - **Tags**, nested by `/`
-   - At the foot: light/dark switch, sync status, settings
+   - At the foot: light/dark switch, sync status (not built yet:
+     [backlog](backlog.md) #10), settings
 2. **Note list** — the notes in the selected folder or tag: title, a line of
    preview, and the date or word count. Sortable by title, modified date or the
    folder's own order (drag to reorder). Hidden in two-pane mode, where the
@@ -573,7 +574,8 @@ Settings are grouped and labeled on the settings screen: **Appearance**,
 
 - All colors, fonts and sizes are CSS custom properties named `--eien-*`,
   defined once in `src/ui/theme/tokens.css`. The list of names is the theme
-  contract, documented in `docs/themes.md`. A rename is a breaking change.
+  contract, documented in `docs/design/README.md`. A rename is a breaking
+  change.
 - Token groups, each clearly labeled: **surface** (desk, paper, panel),
   **ink** (text, muted, faint), **lines**, **accent**, **status**, **type**
   (prose, interface, mono), **size**, **space**.
@@ -589,6 +591,7 @@ Settings are grouped and labeled on the settings screen: **Appearance**,
 
   Only known `--eien-*` tokens with valid CSS values are accepted, so a theme
   can't break the layout or run code. Writer themes go in `.eien/themes/`.
+  (Not built yet: [backlog](backlog.md) #20. Washi and Otaku are built in.)
 - All fonts are bundled. Nothing is fetched from the web.
 
 ---
@@ -1026,7 +1029,8 @@ and `platform` (Stryker), and the property tests with new inputs.
 
 ## 12. Phases
 
-Each phase ends with something you can try, and its tests in CI.
+Each phase ends with something you can try, and its tests in CI. All eleven
+are built (2026-10-20); what comes next is in the [backlog](backlog.md).
 
 | # | Phase | Result |
 |---|---|---|
@@ -1054,7 +1058,11 @@ Each phase ends with something you can try, and its tests in CI.
 
 ## Open questions
 
-1. AO3 scene break: keep AO3's spacer, `<hr>`, spacer pattern as the default?
-2. Default sort for the note list: modified date, or title?
+1. ~~AO3 scene break: keep AO3's spacer, `<hr>`, spacer pattern as the
+   default?~~ Yes: `<p><br /></p><hr /><p><br /></p>`, so the sections
+   breathe (2026-10-20).
+2. ~~Default sort for the note list: modified date, or title?~~ Neither: your
+   own order, with the sorts laid over it like a filter ([backlog](backlog.md)
+   #12, 2026-10-20).
 3. ~~Today's word count: words added only, or net (added minus deleted)?~~
    Net, as the design shows it ("Today +809").

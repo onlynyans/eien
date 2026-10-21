@@ -1,25 +1,46 @@
 # Eien
 
 A local Markdown notes app for writers. Notes are plain `.md` files in folders,
-with tags, checkpoints and named versions, and AO3-ready HTML on copy.
+with tags, seals (the versions you keep) and named seals, and AO3-ready HTML
+on copy.
 
 For macOS, Windows, Linux, Android and iOS.
 
-Status: phase 5 of the [plan](docs/spec.md#12-phases). Open a folder as a
-vault, browse its folders and notes, and write in Live, Source or Reading
-view: format by key, the Format menu or the bar over a selection; tick
-checkboxes; see images from the vault. Notes save as you type, a change from
-another device reloads, and when both sides changed, both are kept. Settings
-(⌘,) choose day or night, the Washi or Otaku palette, eight typefaces, text
-size, density, the page's frame, zoom and chapter numbers. The note list
-previews each note; tags, from front matter or #inline, nest in the sidebar;
-search (⇧⌘F) finds words across the vault, accents aside. Rename a note by its
-title, drag notes into folders or into a book's order, pin them, make a folder
-a book, and send what you don't want to the system's trash.
+Status: every phase of the [plan](docs/spec.md#12-phases) is built. What
+comes next is in the [backlog](docs/backlog.md).
+
+- **Write** in Live, Source or Reading view. Format by key, from the Format
+  menu, or from the bar over a selection. Tick checkboxes; see the vault's
+  images on the page.
+- **Never lose words.** Notes save as you type. A change from another device
+  reloads; when both sides changed, both are kept. Words a crash caught
+  mid-save come back as a "(recovered …)" note.
+- **Organize.** Folders, and tags from `#inline` or front matter, nested in
+  the sidebar. Search (⇧⌘F) finds words across the vault, accents aside.
+  Rename a note by its title. Drag notes into folders or into a book's order.
+  Pin notes, make a folder a book, and send what you don't want to the
+  system's trash.
+- **Versions.** ⌘S seals the note. Compare it with a seal, word by word; name
+  a seal; restore one.
+- **AO3.** Copy for AO3 gives HTML ready to paste into AO3's box, and pasting
+  from AO3 or a web page gives Markdown back. Quotation marks are set as you
+  type.
+- **Writing tools.** Scene breaks, focus mode, typewriter scrolling, today's
+  and a book's word counts, sprints, goals, outline cards, and spellcheck on
+  macOS.
+- **In and out.** Export a note or a book as EPUB, Word or PDF. Import a
+  folder of Markdown from another app.
+- **Look.** Settings (⌘,) choose day or night, the Washi or Otaku palette,
+  eight typefaces, text size, density, the page's frame, zoom and chapter
+  numbers.
+- **Phones.** The same app on Android and iOS, one pane at a time, with the
+  vault synced by Syncthing.
 
 ## Install
 
-Download the installer for your computer from the
+No version has been released yet. Until the first one, build the installer
+on your computer from the source (`npm run package`, under Develop below).
+From then on, download it from the
 [latest release](https://github.com/onlynyans/eien/releases/latest):
 
 | Computer | File | Then |
@@ -78,6 +99,20 @@ an update.
     folder (iCloud, OneDrive), your computers share this file.
   - portable: all of it in "Eien Data" beside the app, next to its `Vault`.
 
+### On a phone
+
+- **Android:** every change to `main` builds a debug APK. Open the latest
+  [CI run on main](https://github.com/onlynyans/eien/actions/workflows/ci.yml?query=branch%3Amain),
+  download `eien-debug-apk` (kept for 14 days), unzip it and install
+  `app-debug.apk` (Android asks you to allow installs from your browser or
+  file manager). Eien asks once for access to all files, so it can keep the
+  vault in `Documents/Eien/Vault`, where a Syncthing app can sync it.
+- **iOS:** there's no download. Build it with Xcode on a Mac and install it on
+  your iPhone with your Apple ID (`npm run ios`, then `npx cap open ios`
+  opens the project in Xcode). With a free Apple ID, the app has to be installed again every seven
+  days. The vault is in the Files app under On My iPhone › Eien › Vault, where
+  Möbius Sync can sync it.
+
 ### Updating
 
 Eien doesn't update itself, and never goes online to look for a new version.
@@ -94,6 +129,9 @@ Needs Node 24.
 npm install
 npm run dev      # run the app with live reload
 npm run check    # lint, types, unit and end-to-end tests
+npm run package  # this computer's installer in dist/, and a portable copy
 ```
 
-See [AGENTS.md](AGENTS.md) for the layout and rules.
+See [AGENTS.md](AGENTS.md) for the layout, the rules, every command (the
+phones' too) and how to release, and [docs/spec.md](docs/spec.md) for how
+Eien behaves.
