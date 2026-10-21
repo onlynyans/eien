@@ -113,7 +113,11 @@ test.describe('a long session', () => {
         const dialog = page.getByRole('dialog', { name: 'Settings' });
         for (let i = 0; i < times; i++) {
           const layout = (['slip', 'runhead', 'band'] as const)[i % 3];
-          await dialog.locator(`[data-value="${layout}"]`).click();
+          // The Layout choice: the Running head's strip ground has a swatch named Band too.
+          await dialog
+            .getByRole('group', { name: 'Layout' })
+            .locator(`[data-value="${layout}"]`)
+            .click();
           await expect(page.locator('html')).toHaveAttribute('data-layout', layout as string);
         }
         await page.keyboard.press('Escape');
