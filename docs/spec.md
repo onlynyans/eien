@@ -797,7 +797,9 @@ On every push and pull request:
 4. The phone's page in Chromium
 5. Android debug build, kept for 14 days to install on a phone
 
-On a version tag: release builds for each platform. A pull request
+On a version tag: the installers (a universal `.dmg`, a Windows setup, a
+Linux AppImage), each built on its own system, installed and started there
+(`tests/packaged`), then attached to a draft release. A pull request
 can't merge while any check fails.
 
 Weekly, and never a check a change waits on: mutation testing of `core`

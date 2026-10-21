@@ -1,0 +1,145 @@
+name: Release
+
+# A version tag (v0.1.0) builds the installers, each on its own system, tries
+# each app as a writer gets it (tests/packaged), and attaches the installers to
+# a draft GitHub Release, to look over and publish by hand. Run by hand, it
+# builds and tries them with no release, keeping them as the run's artifacts.
+# Never on a pull request: no change waits on it.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    name: Installer (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            installer: dist/*.dmg
+          - os: windows-latest
+            installer: dist/*.exe
+          - os: ubuntu-latest
+            installer: dist/*.AppImage
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - name: The tag is package.json's version
+        if: github.ref_type == 'tag'
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::The tag is $GITHUB_REF_NAME, but package.json's version is $version."
+            exit 1
+          fi
+
+      - run: npm ci
+      # The test of a new build's storage also starts the development build.
+      - name: Electron's binary
+        run: npx install-electron
+      - run: npm run build
+
+      - name: Installer
+        env:
+          # Signing and notarizing, once these secrets exist (AGENTS.md → Releases).
+          CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CERTIFICATE || '' }}
+          CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.MAC_CERTIFICATE_PASSWORD || '' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          WIN_CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          # A secret that isn't set arrives as an empty string, which
+          # electron-builder would take for a certificate: leave those out.
+          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD \
+            APPLE_TEAM_ID WIN_CSC_LINK WIN_CSC_KEY_PASSWORD; do
+            [ -n "${!name}" ] || unset "$name"
+          done
+          npx electron-builder --publish never
+
+      # The app as a writer gets it: from the .dmg, as the setup installs it, or
+      # unpacked as the AppImage holds it (the tests' default).
+      - name: The app in the .dmg (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mount="$RUNNER_TEMP/eien-dmg"
+          hdiutil attach dist/*.dmg -nobrowse -readonly -mountpoint "$mount"
+          # A broken signature makes macOS call the download damaged, with no way to open it.
+          codesign --verify --deep --strict "$mount/Eien.app"
+          echo "EIEN_APP=$mount/Eien.app/Contents/MacOS/Eien" >> "$GITHUB_ENV"
+      - name: The app the setup installs, for this user only (Windows)
+        if: runner.os == 'Windows'
+        # PowerShell: Git's bash would turn the setup's /S into a path.
+        shell: pwsh
+        run: |
+          $setup = Get-Item dist/*-windows-setup.exe
+          Start-Process -FilePath $setup.FullName -ArgumentList '/S' -Wait
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\eien\Eien.exe'
+          if (-not (Test-Path $app)) { throw "The setup didn't install Eien at $app." }
+          "EIEN_APP=$app" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      # Ubuntu 24.04 stops Chromium's sandbox from creating namespaces (as in ci.yml).
+      - name: Allow Chromium's sandbox (Linux)
+        if: runner.os == 'Linux'
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Try the app (Linux, virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum npm run test:packaged
+      - name: Try the app
+        if: runner.os != 'Linux'
+        run: npm run test:packaged
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: installer-${{ runner.os }}
+          path: ${{ matrix.installer }}
+          if-no-files-found: error
+          retention-days: 14
+      - name: Keep the report of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: packaged-report-${{ runner.os }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  release:
+    name: Draft release
+    if: github.ref_type == 'tag'
+    needs: installer
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: installer-*
+          path: installers
+          merge-multiple: true
+      - name: A draft release with the installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" installers/* \
+            --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+            --title "Eien ${GITHUB_REF_NAME#v}" \
+            --notes "Not signed yet: macOS and Windows ask before the first start. [How to install](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/README.md#install)" \
+            --generate-notes

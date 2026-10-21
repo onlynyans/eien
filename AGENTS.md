@@ -57,6 +57,8 @@ npm run test:mutation  # Stryker: the edits to core and platform no test catches
 npm run test:mobile  # builds the phone's page, then tests it in Chromium (Playwright)
 npm run android      # builds the phone's page and copies it into android/
 npm run test:android # builds and installs the debug APK, then tests it on the device adb sees
+npm run package      # builds, then makes this system's installer in dist/ (electron-builder)
+npm run test:packaged  # starts the packaged app in dist/, or EIEN_APP=<an executable> (Playwright)
 ```
 
 The Android commands need a JDK and the Android SDK. On a Mac, from Homebrew:
@@ -86,3 +88,39 @@ runs on a push or a pull request, and no change waits on it.
 
 A test that guards a security or safety rule should be shown to fail when the
 rule is broken (turn the rule off, run the test, put it back).
+
+## Releases
+
+`electron-builder.ts` makes the installers: a universal `.dmg` (Apple Silicon
+and Intel), a Windows setup `.exe` (NSIS, one click, for this user only, so no
+admin rights) and a Linux AppImage. `tests/packaged/` starts the packaged app
+and checks that it opens, saves into a vault, and finds the window's storage
+that another build left.
+
+To release, set the version in `package.json` and merge, then tag `main` with
+it: `git fetch origin && git tag v0.2.0 origin/main && git push origin v0.2.0`.
+`.github/workflows/release.yml` checks the tag matches the version, builds
+each installer on its own system, installs and starts it there, and attaches
+all three to a draft release, which the owner publishes by hand. Run by hand
+(Actions → Release → Run workflow), it builds and tries the installers with no
+release, keeping them as the run's artifacts.
+
+- **Identity.** The product name `Eien` and app id `io.github.onlynyans.eien`
+  never change. Electron names the device's data folder (userData:
+  `settings.json`, the window's storage) after the first, and Windows finds
+  the install to update by the second. `tests/identity.test.ts` holds both.
+- **Not signed yet.** macOS gets an ad-hoc signature (without one, Apple
+  Silicon calls a downloaded app damaged and won't open it); Windows none.
+  README → Install tells the writer how to open them. To sign, add repository
+  secrets; the workflow passes them on, and `electron-builder.ts` turns on the
+  hardened runtime once there's a certificate. Untried until one exists, so
+  try a signed build by hand (Run workflow) before a tag.
+  - macOS: `MAC_CERTIFICATE` (a Developer ID Application certificate, `.p12`
+    in base64) and `MAC_CERTIFICATE_PASSWORD`; to notarize too, `APPLE_ID`,
+    `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID`.
+  - Windows: `WINDOWS_CERTIFICATE` (`.pfx` in base64) and
+    `WINDOWS_CERTIFICATE_PASSWORD`.
+- **No auto-update.** Eien never goes online to look for a version. On macOS,
+  an updater (electron-updater) would need the app signed; reconsider once it
+  is.
+- **No icon yet:** the installers use Electron's.
