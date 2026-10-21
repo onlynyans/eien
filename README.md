@@ -6,20 +6,24 @@ on copy.
 
 For macOS, Windows, Linux, Android and iOS.
 
-Status: every phase of the [plan](docs/spec.md#12-phases) is built. What
-comes next is in the [backlog](docs/backlog.md).
+Status: every phase of the [plan](docs/spec.md#12-phases) is built, and the
+interface work after it (stage 3) too. What's left is in the
+[backlog](docs/backlog.md); where the work stands, in
+[docs/progress.md](docs/progress.md); how it's built, in the
+[handbook](docs/handbook.md).
 
 - **Write** in Live, Source or Reading view. Format by key, from the Format
-  menu, or from the bar over a selection. Tick checkboxes; see the vault's
-  images on the page.
+  menu, the formatting bar, or the bar over a selection. Tick checkboxes; see
+  the vault's images on the page, and the note's tags in its head.
 - **Never lose words.** Notes save as you type. A change from another device
   reloads; when both sides changed, both are kept. Words a crash caught
   mid-save come back as a "(recovered …)" note.
 - **Organize.** Folders, and tags from `#inline` or front matter, nested in
   the sidebar. Search (⇧⌘F) finds words across the vault, accents aside.
-  Rename a note by its title. Drag notes into folders or into a book's order.
-  Pin notes, make a folder a book, and send what you don't want to the
-  system's trash.
+  Rename a note or folder in its row (F2). Every list keeps your order, which
+  syncs: drag notes, folders and tags (or ⌥ and the arrows), and lay a sort
+  or a tag filter over any list without losing it. Pin notes, make a folder a
+  book, and send what you don't want to the system's trash.
 - **Versions.** ⌘S seals the note. Compare it with a seal, word by word; name
   a seal; restore one.
 - **AO3.** Copy for AO3 gives HTML ready to paste into AO3's box, and pasting
@@ -30,11 +34,13 @@ comes next is in the [backlog](docs/backlog.md).
   macOS.
 - **In and out.** Export a note or a book as EPUB, Word or PDF. Import a
   folder of Markdown from another app.
-- **Look.** Settings (⌘,) choose day or night, the Washi or Otaku palette,
-  eight typefaces, text size, density, the page's frame, zoom and chapter
-  numbers.
+- **Look.** Three layouts (Band, Slip, Running head), day or night, a gallery
+  of themes or your own, eight typefaces for the text and nine for the
+  interface, text size, row weights, density, the page's frame and zoom, all
+  in Settings (⌘,).
 - **Phones.** The same app on Android and iOS, one pane at a time, with the
-  vault synced by Syncthing.
+  vault synced by Syncthing; the sidebar shows when another device's changes
+  arrive.
 
 ## Install
 
@@ -86,7 +92,9 @@ an update.
   Vault… (⌘O) opens any other folder, and Eien starts there from then on.
   Nothing an installer does touches your notes.
 - **The vault's own data**: its hidden `.eien/` folder (seals, the vault's
-  settings, pins) and each folder's `.eien-folder.json`, inside the vault.
+  settings, pins, your themes, tags made before notes carry them, All Notes'
+  order) and each folder's `.eien-folder.json` (its order, whether it's a
+  book), inside the vault.
 - **This device's settings** (the look, the panes, the vault last open):
   - installed, or run from source: `settings.json` in `Documents/Eien`, where
     you can see it, and the window's own storage (pane widths, sorts, today's
@@ -132,6 +140,7 @@ npm run check    # lint, types, unit and end-to-end tests
 npm run package  # this computer's installer in dist/, and a portable copy
 ```
 
-See [AGENTS.md](AGENTS.md) for the layout, the rules, every command (the
-phones' too) and how to release, and [docs/spec.md](docs/spec.md) for how
-Eien behaves.
+See [docs/handbook.md](docs/handbook.md) to find your way around,
+[AGENTS.md](AGENTS.md) for the layout, the rules, every command (the phones'
+too) and how to release, and [docs/spec.md](docs/spec.md) for how Eien
+behaves.

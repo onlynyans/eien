@@ -161,3 +161,56 @@
 .tree-row:has([aria-current="true"]) .tree-row__name {
   color: var(--eien-ink);
 }
+
+/* A tag made with the + that no note carries yet: faded italic, and how to give it some. */
+.tree-row--empty .tree-row__label {
+  color: var(--eien-faded);
+  font-style: italic;
+}
+.tree-hint {
+  display: block;
+  margin: 0 var(--eien-space-4) var(--eien-space-1) 0;
+  padding-left: calc(var(--eien-space-2) + var(--depth, 0) * var(--indent) + var(--eien-space-5));
+  font-size: var(--eien-size-meta);
+  font-style: italic;
+  color: var(--eien-pencil);
+}
+.tree-hint[hidden] {
+  display: none;
+}
+.tree-hint--problem {
+  font-style: normal;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  color: var(--eien-caution);
+}
+/* A Library row with its icon (Pinned). */
+.tree-row__iconed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--eien-space-2);
+}
+.tree-row__iconed .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--eien-pencil);
+}
+
+/* A tag laid over the list showing (#32): a tick for wanted; struck in carmine, a dash, kept out. */
+.tree-row__filter {
+  display: inline-flex;
+  margin-left: var(--eien-space-1);
+  vertical-align: middle;
+}
+.tree-row__filter .icon {
+  width: 12px;
+  height: 12px;
+}
+.tree-row__name[data-filter="in"] .tree-row__label {
+  color: var(--eien-ink);
+}
+.tree-row__name[data-filter="out"] .tree-row__label {
+  color: var(--eien-removed);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}

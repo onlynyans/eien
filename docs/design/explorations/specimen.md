@@ -52,3 +52,24 @@ large enough to judge. Switch day and night, and the icon stroke, in the bar.
 - At 700 it can't get heavier, and the seal's rule and the fill carry it
   alone. That's fine: colour was never the only signal, and weight wasn't
   either.
+
+## As built (stage 3, wave 2)
+
+The page ends with the components as they shipped, drawn with the same
+tokens and icons, to judge beside the explorations above:
+
+- **A row's menu** (#29): the row's name at its head in the machine voice;
+  an icon, a word and its key in pencil for each choice; the trash last, in
+  carmine, after a rule.
+- **Rename in place** (#29): the name becomes its own field, a hairline in
+  the focus ink under it and the `.md` faded after it; a taken name shows an
+  ochre line under the row.
+- **The sidebar's TAGS** (#4, #32): the quiet + at the label's right; a tag
+  wanted in the list's filter (a tick), one kept out (struck in carmine);
+  a tag made before notes carry it, faded and italic, with how to give it some.
+- **The list's head with a lens on** (#12): Arrange, the filter and the sort
+  as icons, a dot on those that are on; chips with their ×; the line saying
+  your order is kept underneath.
+- **The tag filter** (#12): left alone, wanted, kept out.
+- **The sync status and Arrange mode** (#10, #12): quiet in the added ink,
+  another device's change in pencil; grips at each row's left edge.

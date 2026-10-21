@@ -174,14 +174,22 @@
   opacity: 1;
 }
 /* NEW FOLDER: shown like the other controls, on hover or focus; its words on the gutter. */
-.sidebar__new {
-  margin: 0 calc(var(--eien-space-4) - var(--eien-space-2)) 0 calc(var(--eien-space-2) * -1);
+/* The quiet + beside FOLDERS and TAGS: in sight on hover or keyboard focus. */
+.sidebar__add {
+  flex: none;
+  margin-right: var(--eien-space-2);
   opacity: 0;
   transition: opacity var(--eien-calm) var(--eien-ease);
 }
-.sidebar:hover .sidebar__new,
-.sidebar__new:focus-visible {
+.sidebar__section:hover .sidebar__add,
+.sidebar__add:focus-visible {
   opacity: 1;
+}
+/* On a phone, with no hover, the + is always there. */
+@media (hover: none) {
+  .sidebar__add {
+    opacity: 1;
+  }
 }
 .sidebar__foot {
   flex: none;
@@ -224,4 +232,49 @@
 }
 .sidebar__sync:empty {
   display: none;
+}
+
+/* The sync status (./sync-status.ts): the added ink while quiet, pencil after another device's change. */
+.sync-status {
+  display: inline-flex;
+  color: var(--eien-added);
+}
+.sync-status.is-other {
+  color: var(--eien-pencil);
+}
+.sync-status .icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* With two panes, the chosen row's lens: its name, the filter and the sort, and its chips. */
+.sidebar__lens {
+  display: grid;
+  gap: var(--eien-space-1);
+  padding: 0 var(--eien-space-2) var(--eien-space-2) var(--eien-space-4);
+}
+.sidebar__lens[hidden] {
+  display: none;
+}
+.sidebar__lens-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eien-space-2);
+  min-height: var(--eien-control);
+}
+.sidebar__lens-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar__lens .list__tools .icon-button {
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+.sidebar:hover .sidebar__lens .icon-button,
+.sidebar__lens .icon-button:focus-visible,
+.sidebar__lens .icon-button[aria-expanded="true"],
+.sidebar__lens .icon-button.is-on {
+  opacity: 1;
 }

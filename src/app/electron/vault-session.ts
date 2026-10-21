@@ -11,6 +11,7 @@ import { OpenVault } from '../../platform/open-vault';
 import { DOCUMENTS_FOLDER, homeVault, thisCopy } from './data-folders';
 import { lastVault, readDeviceFile, updateDeviceFile } from './device-settings';
 import { answer, text, texts } from './ipc';
+import { syncedBySyncthing } from './syncthing';
 
 /** The longest search query the window may send. */
 const MAX_QUERY_LENGTH = 1000;
@@ -18,6 +19,7 @@ const MAX_QUERY_LENGTH = 1000;
 export class VaultSession {
   #open: OpenVault | null = null;
   #root: string | null = null;
+  #syncthing = false;
   #stopWatching: (() => void) | null = null;
   readonly #window: BrowserWindow;
 
@@ -26,7 +28,7 @@ export class VaultSession {
   }
 
   get info(): VaultInfo | null {
-    return this.#open ? { name: this.#open.name } : null;
+    return this.#open ? { name: this.#open.name, syncthing: this.#syncthing } : null;
   }
 
   /** The vault open now, or null. */
@@ -52,12 +54,13 @@ export class VaultSession {
     this.close();
     this.#open = vault;
     this.#root = storage.root;
+    this.#syncthing = await syncedBySyncthing(storage.root);
     this.#stopWatching = vault.watch((paths) => {
       if (this.#open === vault && !this.#window.isDestroyed()) {
         this.#window.webContents.send(CHANNEL.changed, paths);
       }
     });
-    return { name: vault.name };
+    return { name: vault.name, syncthing: this.#syncthing };
   }
 
   close(): void {

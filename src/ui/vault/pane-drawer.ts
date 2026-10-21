@@ -6,11 +6,13 @@
 // list: in its band, it searches that list's notes; in the sidebar (no list
 // in sight, or a phone, whose contents page holds it), the whole vault.
 
+import { type Arrange, canDrag, lensParts } from '../list/lens-bar';
 import { type ListActions, renderList } from '../list/list';
-import { listKey, sortFor } from '../list/sorts';
+import { filterFor, listKey, sortFor } from '../list/sorts';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
+import { openId } from '../sidebar/tree';
 import type { Navigation } from './navigation';
 import type { Notice } from './notice';
 import { treeNotes } from './tree-notes';
@@ -32,6 +34,8 @@ export interface DrawnParts {
   openNote(): string | null;
   /** News for the page's status line, when no pane beside it is open to show it. */
   pageNews(text: string | null): void;
+  /** How the list's rows move now (Arrange mode, and whether it's arranging). */
+  arrange(): Arrange;
 }
 
 export class PaneDrawer {
@@ -74,6 +78,13 @@ export class PaneDrawer {
     if (turn !== this.#sidebarTurn) return;
     // The news shows above the list; with no list, at the sidebar's foot; with neither, on the page.
     this.#parts.pageNews(!listShown && panes.isShut('sidebar') ? notice.text : null);
+    // With two panes the tree lists the notes: the chosen row's lens is in the sidebar (#33).
+    const chosen = panes.two && !results ? notes.get(openId(nav.selection)) : undefined;
+    this.#parts.sidebar.drawLens(
+      chosen
+        ? { name: chosen.heading, ...lensParts(chosen, this.#parts.listActions, 'tree') }
+        : null,
+    );
     this.#parts.sidebar.draw({
       tree: state.tree,
       tags: state.tags,
@@ -86,6 +97,7 @@ export class PaneDrawer {
       openNote: this.#parts.openNote(),
       books: state.books,
       notice: listShown ? null : notice.text,
+      filter: filterFor(listKey(nav.selection)),
     });
   }
 
@@ -95,21 +107,26 @@ export class PaneDrawer {
     const inList = this.#searchInList();
     if (!panes.listKept) return; // out of sight: nothing to read for it
     const words = nav.query.trim();
+    const arrange = this.#parts.arrange();
+    const key = listKey(nav.selection);
+    // Arranging: your order shows, the lens set aside until Done.
     const notes = words
       ? await state.search(words, inList ? nav.selection : null)
       : await state.notesFor(
           nav.selection,
           settings.values['books.numerals'],
-          sortFor(listKey(nav.selection)),
+          arrange.on ? 'order' : sortFor(key),
+          arrange.on ? undefined : filterFor(key),
         );
     if (turn !== this.#listTurn) return;
-    this.#listOrdered = notes.folder !== undefined && notes.sort === 'order' && !words;
+    this.#listOrdered = canDrag(notes, arrange) && !words;
     renderList(
       this.#parts.list,
       notes,
       this.#parts.openNote(),
       this.#parts.listActions,
       this.#parts.notice.text,
+      arrange,
     );
   }
 }

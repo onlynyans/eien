@@ -3,6 +3,7 @@
 
 import { EXPORT_LABELS } from '../../core/export';
 import { baseName, parentOf, titleOf } from '../../core/paths';
+import { type TagNode, tagKey } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import type { ExportFormat, OutKind } from '../../platform/bridge';
 import { askNumber } from '../menu/ask-number';
@@ -84,6 +85,12 @@ const MAX_GOAL = 10_000_000;
 
 export interface FolderMenu {
   readonly book: boolean;
+  /** The folder it's in, by name; null at the top. */
+  readonly parent: string | null;
+  /** Where it can move among the folders beside it. */
+  readonly canUp: boolean;
+  readonly canDown: boolean;
+  move(how: 'up' | 'down' | 'out'): void;
   /** A book's word goal: asked for in a small field. */
   goal(): void;
   readonly trashName: string;
@@ -108,6 +115,30 @@ export const folderMenu = (folder: FolderMenu): MenuItem[] => [
     run: () => folder.setBook(!folder.book),
   },
   ...(folder.book ? [{ label: 'Word goal…', icon: 'check', run: folder.goal } as const] : []),
+  'separator',
+  ...(folder.canUp
+    ? [{ label: 'Move up', icon: 'up', keys: 'Alt-ArrowUp', run: () => folder.move('up') } as const]
+    : []),
+  ...(folder.canDown
+    ? [
+        {
+          label: 'Move down',
+          icon: 'down',
+          keys: 'Alt-ArrowDown',
+          run: () => folder.move('down'),
+        } as const,
+      ]
+    : []),
+  ...(folder.parent !== null
+    ? [
+        {
+          label: `Move out of ${folder.parent}`,
+          icon: 'outdent',
+          keys: 'Alt-ArrowLeft',
+          run: () => folder.move('out'),
+        } as const,
+      ]
+    : []),
   { label: 'Move to…', icon: 'move', run: folder.moveTo },
   ...(folder.book ? [{ label: 'Export…', icon: 'link', run: folder.exportTo } as const] : []),
   'separator',
@@ -167,6 +198,8 @@ export interface MenuContext {
   followFolder(from: string, to: string): void;
   /** A folder went to the trash: if it, or a folder in it, was selected, select All Notes. */
   unselect(path: string): void;
+  /** Move a folder in your order, or out of its folder. */
+  moveFolder(path: string, how: 'up' | 'down' | 'out'): void;
 }
 
 type At = { readonly x: number; readonly y: number };
@@ -207,9 +240,15 @@ export function showNoteMenu(ctx: MenuContext, path: string, at: At, ordered: bo
 
 export async function showFolderMenu(ctx: MenuContext, path: string, at: At): Promise<void> {
   const settings = (await ctx.state.folderSettings(path)).book;
+  const beside = ctx.state.folderNames(parentOf(path));
+  const place = beside.indexOf(baseName(path));
   openMenu(
     folderMenu({
       book: settings !== null,
+      parent: parentOf(path) === '' ? null : baseName(parentOf(path)),
+      canUp: place > 0,
+      canDown: place >= 0 && place < beside.length - 1,
+      move: (how) => ctx.moveFolder(path, how),
       goal: () =>
         void askNumber({
           label: `Word goal for ${baseName(path)}`,
@@ -254,4 +293,36 @@ export async function showFolderMenu(ctx: MenuContext, path: string, at: At): Pr
     baseName(path),
     true,
   );
+}
+
+/**
+ * A tag's menu. A tag made with the + that no note carries yet can be taken
+ * back out (it's only in .eien/tags.json; no words are touched). A tag notes
+ * carry has no menu yet: renaming one everywhere is still to be designed.
+ */
+export function showTagMenu(ctx: MenuContext, key: string, at: At): void {
+  const made = ctx.state.made.find((tag) => tagKey(tag) === key);
+  const node = findTag(ctx.state.tags, key);
+  if (!made || !node || node.count > 0) return;
+  openMenu(
+    [
+      {
+        label: 'Remove this tag',
+        icon: 'close',
+        run: () => ctx.act(() => ctx.organizer.makeTag(made, false)),
+      },
+    ],
+    { at },
+    `#${node.tag}`,
+    true,
+  );
+}
+
+function findTag(nodes: readonly TagNode[], key: string): TagNode | undefined {
+  for (const node of nodes) {
+    if (node.key === key) return node;
+    const inner = findTag(node.children, key);
+    if (inner) return inner;
+  }
+  return undefined;
 }

@@ -32,6 +32,7 @@ export function sidebarSignature(model: {
   readonly results: NoteList | null;
   readonly books: ReadonlySet<string>;
   readonly notice: string | null;
+  readonly filter?: unknown;
 }): string {
   return JSON.stringify([
     treeShown(model.tree),
@@ -46,5 +47,6 @@ export function sidebarSignature(model: {
     listShown(model.results),
     [...model.books].sort(),
     model.notice,
+    model.filter ?? null,
   ]);
 }

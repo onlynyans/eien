@@ -21,7 +21,11 @@ test('the vault opens at once: on the phone there is no folder to choose', async
   await open(page);
   await expect(page.locator('.welcome')).toHaveCount(0);
   expect(await page.evaluate(() => window.eien.platform)).toBe('web');
-  expect(await page.evaluate(() => window.eien.vault.current())).toEqual({ name: 'Eien' });
+  // No Syncthing marker in the vault here: no sync status.
+  expect(await page.evaluate(() => window.eien.vault.current())).toEqual({
+    name: 'Eien',
+    syncthing: false,
+  });
 });
 
 test('a new note is written into Documents/Eien/Vault, and is there after a restart', async ({

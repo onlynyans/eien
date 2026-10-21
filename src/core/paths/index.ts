@@ -14,7 +14,9 @@ export {
   THEMES_FOLDER,
   utf8Length,
   VAULT_CONFIG,
+  VAULT_ORDER,
   VAULT_PINS,
+  VAULT_TAGS,
 } from './names';
 export {
   conflictName,
