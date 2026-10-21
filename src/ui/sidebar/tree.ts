@@ -247,7 +247,12 @@ export class TreeRows {
                   : undefined,
               'data-key': keyOf(selection),
               'data-folder': folder,
-              'aria-keyshortcuts': folder === undefined ? undefined : 'F2',
+              'aria-keyshortcuts':
+                folder !== undefined
+                  ? 'F2 Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight'
+                  : tag !== undefined
+                    ? 'Alt+ArrowUp Alt+ArrowDown'
+                    : undefined,
             },
             on: {
               click: () => this.#actions.select(selection),

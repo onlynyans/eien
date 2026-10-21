@@ -15,7 +15,7 @@ import {
   VAULT_PINS,
   VAULT_TAGS,
 } from '../../core/paths';
-import { withMadeTag } from '../../core/tags';
+import { withMadeTag, withTagOrder } from '../../core/tags';
 import {
   FOLDER_SETTINGS_NAME,
   type FolderChange,
@@ -157,6 +157,21 @@ export class Organizer {
     const order = placedBefore(shown, baseName(path), before === null ? null : baseName(before));
     // Where it already is: nothing written (a book sorted by name stays so).
     if (order.join('\n') === shown.join('\n')) return true;
+    return this.setOrder(folder, { notes: order });
+  }
+
+  /**
+   * Write a folder's own order: its folders, then its notes, each as given or
+   * else as shown now, so a change to one keeps the other (backlog #12).
+   */
+  async setOrder(
+    folder: string,
+    { folders, notes }: { folders?: readonly string[]; notes?: readonly string[] },
+  ): Promise<boolean> {
+    const order = [
+      ...(folders ?? this.#ctx.state.folderNames(folder)),
+      ...(notes ?? (await this.#ctx.state.folderOrder(folder))),
+    ];
     return this.#changeFolder(folder, { order });
   }
 
@@ -169,7 +184,7 @@ export class Organizer {
     if (at < 0 || to < 0 || to >= shown.length) return false;
     const order = [...shown];
     [order[at], order[to]] = [order[to] as string, order[at] as string];
-    return this.#changeFolder(folder, { order });
+    return this.setOrder(folder, { notes: order });
   }
 
   pin(path: string, pinned: boolean): Promise<boolean> {
@@ -269,6 +284,11 @@ export class Organizer {
    */
   makeTag(tag: string, made: boolean): Promise<boolean> {
     return this.#update(VAULT_TAGS, (text) => withMadeTag(text, tag, made), 'tags');
+  }
+
+  /** The tags in your order (their keys, every level), kept in .eien/tags.json. */
+  setTagOrder(order: readonly string[]): Promise<boolean> {
+    return this.#update(VAULT_TAGS, (text) => withTagOrder(text, order), 'tags');
   }
 
   #changePins(change: (pins: string[]) => string[]): Promise<boolean> {

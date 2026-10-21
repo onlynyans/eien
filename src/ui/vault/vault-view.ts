@@ -22,6 +22,7 @@ import { notePage } from './note-page';
 import { Notice } from './notice';
 import { oneAtATime } from './one-at-a-time';
 import { OpenNote } from './open-note';
+import { orderActions } from './order-actions';
 import { Organizer } from './organize';
 import { ownWrites } from './own-writes';
 import { pageParts } from './page-parts';
@@ -79,6 +80,16 @@ export async function showVault(
     void redraw();
   });
 
+  // The sidebar's moves in your order (./order-actions.ts); `sidebar` and `draw` come after.
+  const order = orderActions({
+    state,
+    organizer,
+    nav,
+    sidebar: () => sidebar,
+    act: (operation) => act(operation),
+    redrawTree: () => void draw.sidebar(),
+  });
+
   const rowActions = {
     open: (path: string) => void openNote(path),
     menu: (path: string, at: { x: number; y: number }, ordered: boolean) =>
@@ -106,6 +117,8 @@ export async function showVault(
       },
       folderMenu: (path, at) => void showFolderMenu(menus, path, at),
       tagMenu: (key, at) => showTagMenu(menus, key, at),
+      moveFolder: (path, how) => order.moveFolder(path, how),
+      moveTag: (key, by) => order.moveTag(key, by),
       newTag: (tag) => void act(() => organizer.makeTag(tag, true)),
       newFolder: () => void newFolder(nav.selection.kind === 'folder' ? nav.selection.path : ''),
       renameFolder: (path, typed) =>
@@ -196,6 +209,7 @@ export async function showVault(
     editFolder: (path) => editFolder(path),
     followFolder: (from, to) => nav.follow(from, to),
     unselect: (path) => nav.unselect(path),
+    moveFolder: (path, how) => order.moveFolder(path, how),
   };
 
   const note = new OpenNote(bridge.vault, page, () => void refresh());
@@ -256,17 +270,16 @@ export async function showVault(
     return draw.all().then(() => phone.stack.rename());
   };
 
-  /** Rename in the row the writer is at (./rename-in-row.ts); with none in sight, by the page's title. */
-  function renameNote(path: string): void {
-    // A phone, one pane at a time, keeps its rename on the page, where the title is in sight.
-    if (phone.stack.phone) return void renameOnPage(path);
-    renameInRow(path, {
-      namesIn: (folder) => state.namesIn(folder),
-      rename: (from, typed) => organizer.renameNote(from, typed),
-      act,
-      onPage: (at) => void renameOnPage(at),
-    });
-  }
+  /** Rename in the row the writer is at; on a phone, or with no row in sight, by the page's title. */
+  const renameNote = (path: string) =>
+    phone.stack.phone
+      ? void renameOnPage(path)
+      : renameInRow(path, {
+          namesIn: (folder) => state.namesIn(folder),
+          rename: (from, typed) => organizer.renameNote(from, typed),
+          act,
+          onPage: (at) => void renameOnPage(at),
+        });
 
   async function renameOnPage(path: string): Promise<void> {
     if (note.path !== path) await openNote(path);
@@ -317,6 +330,7 @@ export async function showVault(
     redraw,
     organizer,
     tree: sidebar.element,
+    dropFolder: (path, to) => order.dropFolder(path, to),
     act,
     listOrdered: () => draw.listOrdered,
     showFolder: (path) => choose({ kind: 'folder', path }),

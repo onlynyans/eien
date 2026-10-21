@@ -13,6 +13,7 @@ export {
   type FolderChange,
   type FolderSettings,
   NO_FOLDER_SETTINGS,
+  orderFolders,
   orderNames,
   parseFolderSettings,
   placedBefore,

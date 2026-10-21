@@ -17,6 +17,7 @@ import {
   hasTag,
   NO_FILTER,
   parseMadeTags,
+  parseTagOrder,
   passes,
   type TagFilter,
   type TagNode,
@@ -29,6 +30,8 @@ import {
   type FolderNode,
   type FolderSettings,
   isSyncConflictName,
+  NO_FOLDER_SETTINGS,
+  orderFolders,
   orderNames,
   parseFolderSettings,
   parsePins,
@@ -95,7 +98,7 @@ export class VaultState {
   /** The tags made with the sidebar's +, before any note carries them. */
   #made: readonly string[] = [];
   /** Whether each folder is a book, as its settings last read said (the sidebar's BOOK mark). */
-  #bookOf = new Map<string, boolean>();
+  #settingsOf = new Map<string, FolderSettings>();
   readonly #vault: VaultReader;
 
   constructor(vault: VaultReader, name: string) {
@@ -114,7 +117,11 @@ export class VaultState {
 
   /** The folders that are books, by path. */
   get books(): ReadonlySet<string> {
-    return new Set([...this.#bookOf].filter(([, book]) => book).map(([folder]) => folder));
+    return new Set(
+      [...this.#settingsOf]
+        .filter(([, settings]) => settings.book !== null)
+        .map(([folder]) => folder),
+    );
   }
 
   /** The tags made with the sidebar's + (./organize.ts makeTag), whether notes carry them yet or not. */
@@ -142,17 +149,22 @@ export class VaultState {
     this.#notes = new Map(notes.map((note) => [note.path, note]));
     this.#tree = buildTree(entries, this.name);
     this.#made = parseMadeTags(made?.text ?? null);
-    this.#tags = buildTagTree(notes, this.#made);
+    this.#tags = buildTagTree(notes, this.#made, parseTagOrder(made?.text ?? null));
     this.#pins = parsePins(pins?.text ?? null);
-    await this.#readBooks(changed);
+    await this.#readFolders(changed);
+    // Each folder's own folders in the writer's order, the vault's top ones in the vault's.
+    orderFolders(this.#tree, (path) => this.#settingsOf.get(path)?.order ?? []);
   }
 
-  /** Which folders are books: a folder's settings are read when it's new, or they changed. */
-  async #readBooks(changed: Iterable<string>): Promise<void> {
+  /**
+   * Every folder's settings (its order, whether it's a book), the vault's own
+   * too: read when a folder is new, or its settings changed.
+   */
+  async #readFolders(changed: Iterable<string>): Promise<void> {
     for (const path of changed) {
-      if (baseName(path) === FOLDER_SETTINGS_NAME) this.#bookOf.delete(parentOf(path));
+      if (baseName(path) === FOLDER_SETTINGS_NAME) this.#settingsOf.delete(parentOf(path));
     }
-    const folders: string[] = [];
+    const folders: string[] = [''];
     const walk = (node: FolderNode) => {
       for (const folder of node.folders) {
         folders.push(folder.path);
@@ -160,15 +172,15 @@ export class VaultState {
       }
     };
     walk(this.#tree);
-    const known = new Map(this.#bookOf);
+    const known = new Map(this.#settingsOf);
     await Promise.all(
       folders
         .filter((folder) => !known.has(folder))
-        .map(async (folder) =>
-          known.set(folder, (await this.folderSettings(folder)).book !== null),
-        ),
+        .map(async (folder) => known.set(folder, await this.folderSettings(folder))),
     );
-    this.#bookOf = new Map(folders.map((folder) => [folder, known.get(folder) === true]));
+    this.#settingsOf = new Map(
+      folders.map((folder) => [folder, known.get(folder) ?? NO_FOLDER_SETTINGS]),
+    );
   }
 
   /** A folder's own settings: its order, and whether it's a book. */
@@ -192,6 +204,11 @@ export class VaultState {
       note: wordsOf(path),
       ...(book.goal ? { goal: book.goal } : {}),
     };
+  }
+
+  /** The names of a folder's own folders, in its order (the vault's top ones for ""). */
+  folderNames(folder: string): string[] {
+    return (findFolder(this.#tree, folder)?.folders ?? []).map((node) => node.name);
   }
 
   /** The names of a folder's notes, in its own order. */

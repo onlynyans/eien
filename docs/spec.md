@@ -89,9 +89,13 @@ My Vault/
   { "order": ["Mending.md", "Fire.md"], "book": { "goal": 40000 } }
   ```
 
-  - `order` is the drag-and-drop order. Files not listed sort after it,
-    alphabetically. Names listed but missing are ignored and dropped on the
-    next write. Reordering never renames files.
+  - `order` is your order, by name: the folder's own folders first, then its
+    notes (`["Wall", "Scarf", "Mending.md", "Fire.md"]`). Names not listed sort
+    after, alphabetically. Names listed but missing are ignored and dropped on
+    the next write. Reordering never renames files. The vault's own
+    `.eien-folder.json` (at its top) holds the top folders' order, so every
+    folder's children are ordered the same way; the design's separate
+    `.eien/order.json` was folded into these files.
   - `book` marks the folder as a book (ordered reading, word goal, exports).
 - The file travels with its folder when the folder is moved or synced.
 
@@ -435,6 +439,16 @@ CommonMark plus GitHub extensions, and three common additions:
 - **Order:** in a folder's own order, drag a row between others, or Alt+↑/↓,
   or Move up/down in its menu. The order is `.eien-folder.json`'s; a folder
   never ordered gets no file. A note moved in goes last.
+- **Folders in your order** (backlog #12): in the sidebar's tree, ⌥↑ ⌥↓ move a
+  folder among those beside it, ⌥← out of the folder it's in (to just after
+  that folder), ⌥→ into the folder above it; its menu has Move up, Move down
+  and Move out of …. Dragged, a folder goes inside the folder it's let go
+  on, before or after one when let go at that row's top or foot edge (moving
+  to that folder first), to the top on the vault's name, and out of its
+  folder to the left of its own row. The keyboard goes with it. A folder's
+  notes keep their order as its folders move.
+- **Tags in your order:** ⌥↑ ⌥↓ on a tag's row move it among the tags beside
+  it, kept as an `order` in `.eien/tags.json`, every level in one list.
 - **The lens** over a list (docs/design/explorations/order.md): a sort (its
   own order, title or newest) and a tag filter, laid over the list's own
   order and never changing it. Each is an icon in the list's head; each part
