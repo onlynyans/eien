@@ -35,12 +35,6 @@ const EMPTY: Partial<Record<NoteList['kind'], string>> = {
   tag: 'No notes carry this tag yet. Add it to a note’s tags.',
 };
 
-/** What an empty list says, where there's a way to fill it. */
-const EMPTY: Partial<Record<NoteList['kind'], string>> = {
-  pinned: 'Nothing pinned yet. Pin a note from its menu, or with ⇧⌘P (Ctrl+Shift+P) on its row.',
-  tag: 'No notes carry this tag yet. Add it to a note’s tags.',
-};
-
 /** The line under the heading: how many, and what kind of list. */
 export function listLabel(list: NoteList): string {
   if (list.kind === 'search') {
