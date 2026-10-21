@@ -6,6 +6,8 @@
 
 import { h, wordButton } from '../dom';
 import { openMenu } from '../menu/menu';
+import { WINDOW_FROM } from '../shell/window-range';
+import { WindowedRows } from '../shell/windowed-rows';
 import type { ListedNote, NoteList, NoteSort } from '../vault/vault-state';
 import { noteCount as notes } from './note-count';
 import { type RowActions, rowEvents, rowKeys } from './row-events';
@@ -37,6 +39,21 @@ export function listLabel(list: NoteList): string {
   if (list.kind === 'tag') return `${notes(list.total)} · Tag`;
   return notes(list.total);
 }
+
+/** Each list pane's long list (../shell/windowed-rows.ts), kept from draw to draw. */
+const windows = new WeakMap<HTMLElement, WindowedRows>();
+
+/** What a row shows, as a string: the same string, the same element. */
+const rowShows = (note: ListedNote, book: boolean, ordered: boolean, open: boolean) =>
+  JSON.stringify([
+    note.title,
+    note.ordinal ?? '',
+    book ? note.words : Math.floor(note.modified / 60_000),
+    note.preview,
+    ordered,
+    open,
+    new Date().toDateString(),
+  ]);
 
 export function renderList(
   container: HTMLElement,
@@ -109,6 +126,24 @@ export function renderList(
           wordButton('Clear search', actions.clearSearch),
         )
       : h('div', { class: 'list__empty' }, h('p', { text: 'Nothing here yet.' }));
+  // Thousands of notes: one list that draws the rows in sight, kept with its scroll position.
+  const long = list.notes.length >= WINDOW_FROM;
+  let windowed = windows.get(container);
+  if (long && !windowed) {
+    windowed = new WindowedRows(h('ul', { class: 'rows' }), 64);
+    windows.set(container, windowed);
+  }
+  const scrolled = windowed?.element.scrollTop ?? 0;
+  if (long && windowed) {
+    windowed.element.className = book ? 'rows rows--book' : 'rows';
+    windowed.set(
+      list.notes.map((note) => ({
+        key: note.path,
+        shows: rowShows(note, book, ordered, note.path === openPath),
+        make: () => row(note),
+      })),
+    );
+  }
   // A redraw mustn't take the keyboard's place: the row that had focus has it again.
   const rowsBefore = [...container.querySelectorAll<HTMLElement>('.note-row[data-path]')];
   const focused =
@@ -130,10 +165,17 @@ export function renderList(
       text: notice ?? '',
       attrs: { role: 'status', hidden: !notice },
     }),
-    list.notes.length > 0
-      ? h('ul', { class: book ? 'rows rows--book' : 'rows' }, ...list.notes.map(row))
-      : empty,
+    long && windowed
+      ? windowed.element
+      : list.notes.length > 0
+        ? h('ul', { class: book ? 'rows rows--book' : 'rows' }, ...list.notes.map(row))
+        : empty,
   );
+  if (long && windowed) {
+    windowed.element.scrollTop = scrolled;
+    windowed.render();
+    if (focused !== undefined && windowed.focusKey(focused)) return;
+  }
   if (focused !== undefined) {
     const rows = [...container.querySelectorAll<HTMLElement>('.note-row[data-path]')];
     // The same note; or, if it's gone (trashed, moved away), the one now in its place.

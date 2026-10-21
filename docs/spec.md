@@ -261,6 +261,19 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   row now in a removed row's place.
 - Widths, and which panes are shut, are per device (§2); three or two panes
   is a device setting (§6).
+- A long list draws only the rows in sight: the note list, or a list of the
+  two-pane tree, once it holds 200 notes or more. A spacer above and below
+  keeps the list its whole height, so the scrollbar and positions read as if
+  every row were there, and each row says where it stands among them all
+  (`aria-posinset` of `aria-setsize`). The keyboard still reaches every row:
+  ↑ ↓ move one, PageUp and PageDown a view's worth, Home and End the first
+  and last, drawn or not. A row with the keyboard that scrolls out of sight
+  leaves it with its list, which carries on from that row; a redraw (a
+  change on disk) gives it back to the same note, wherever it now stands.
+- Nothing a writer does stalls the window: with three thousand notes,
+  drawing a list, moving through it, switching layouts, a hundred notes
+  arriving at once, a rename and a drag never hold it longer than 200 ms
+  (the speed budgets, `tests/e2e/budgets.spec.ts`).
 
 ### Layouts
 
