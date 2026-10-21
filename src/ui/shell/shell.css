@@ -6,6 +6,12 @@ body,
 #app {
   height: 100%;
 }
+/* The page covers the whole screen (viewport-fit=cover); the window keeps clear of a phone's
+   status bar, notch and home bar. Zero wherever there are none: the desktop, most Androids. */
+#app {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
 body {
   overflow: hidden;
 }
