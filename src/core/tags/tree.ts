@@ -24,13 +24,19 @@ interface Building {
   children: Map<string, Building>;
 }
 
-/** The tag tree for these notes. Spellings come from the first note by path. */
+/**
+ * The tag tree for these notes, and the tags `made` with no notes yet (./made.ts),
+ * counted 0. Spellings come from the first note by path, then the made tag's.
+ */
 export function buildTagTree(
   notes: Iterable<{ readonly path: string; readonly tags: readonly string[] }>,
+  made: readonly string[] = [],
 ): TagNode[] {
   const roots = new Map<string, Building>();
   const sorted = [...notes].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
-  for (const note of sorted) {
+  // A made tag is a note of no path: it adds its tag, and no count.
+  const all = [...sorted, ...(made.length > 0 ? [{ path: '', tags: made }] : [])];
+  for (const note of all) {
     for (const tag of note.tags) {
       let level = roots;
       const parts = tag.split('/');
@@ -42,7 +48,7 @@ export function buildTagTree(
           node = { name, tag: whole, key, notes: new Set(), children: new Map() };
           level.set(key, node);
         }
-        node.notes.add(note.path);
+        if (note.path) node.notes.add(note.path);
         level = node.children;
       });
     }

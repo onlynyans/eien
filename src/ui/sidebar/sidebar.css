@@ -174,14 +174,22 @@
   opacity: 1;
 }
 /* NEW FOLDER: shown like the other controls, on hover or focus; its words on the gutter. */
-.sidebar__new {
-  margin: 0 calc(var(--eien-space-4) - var(--eien-space-2)) 0 calc(var(--eien-space-2) * -1);
+/* The quiet + beside FOLDERS and TAGS: in sight on hover or keyboard focus. */
+.sidebar__add {
+  flex: none;
+  margin-right: var(--eien-space-2);
   opacity: 0;
   transition: opacity var(--eien-calm) var(--eien-ease);
 }
-.sidebar:hover .sidebar__new,
-.sidebar__new:focus-visible {
+.sidebar__section:hover .sidebar__add,
+.sidebar__add:focus-visible {
   opacity: 1;
+}
+/* On a phone, with no hover, the + is always there. */
+@media (hover: none) {
+  .sidebar__add {
+    opacity: 1;
+  }
 }
 .sidebar__foot {
   flex: none;

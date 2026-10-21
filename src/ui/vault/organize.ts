@@ -13,7 +13,9 @@ import {
   renamedPath,
   titleOf,
   VAULT_PINS,
+  VAULT_TAGS,
 } from '../../core/paths';
+import { withMadeTag } from '../../core/tags';
 import {
   FOLDER_SETTINGS_NAME,
   type FolderChange,
@@ -56,6 +58,9 @@ const PROBLEMS: Record<Exclude<Renamed, { ok: true }>['problem'], string> = {
   empty: 'A name needs a letter or a number.',
   taken: 'Something here already has that name.',
 };
+
+/** What a small file holds, as the writer reads it when it can't be changed. */
+const WHAT: Record<string, string> = { pins: 'pins', tags: 'tags made' };
 
 const nameOf = (path: string) => titleOf(baseName(path)) || path;
 
@@ -258,6 +263,14 @@ export class Organizer {
     );
   }
 
+  /**
+   * Make a tag no note carries yet (the sidebar's +), or take one made back out:
+   * kept in .eien/tags.json. Whether it was written.
+   */
+  makeTag(tag: string, made: boolean): Promise<boolean> {
+    return this.#update(VAULT_TAGS, (text) => withMadeTag(text, tag, made), 'tags');
+  }
+
   #changePins(change: (pins: string[]) => string[]): Promise<boolean> {
     return this.#update(
       VAULT_PINS,
@@ -287,7 +300,7 @@ export class Organizer {
       if (next === undefined) return true;
       if (next === null) {
         this.#ctx.tell(
-          `${path} isn’t valid JSON, so the ${what === 'pins' ? 'pins' : 'folder’s settings'} weren’t changed. Fix or remove it, then try again.`,
+          `${path} isn’t valid JSON, so the ${WHAT[what] ?? 'folder’s settings'} weren’t changed. Fix or remove it, then try again.`,
         );
         return false;
       }

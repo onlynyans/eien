@@ -2,8 +2,16 @@
 // and the notes for whatever is selected in the sidebar or searched for.
 
 import type { IndexedNote } from '../../core/note';
-import { baseName, joinPath, nameKey, parentOf, titleOf, VAULT_PINS } from '../../core/paths';
-import { buildTagTree, hasTag, type TagNode } from '../../core/tags';
+import {
+  baseName,
+  joinPath,
+  nameKey,
+  parentOf,
+  titleOf,
+  VAULT_PINS,
+  VAULT_TAGS,
+} from '../../core/paths';
+import { buildTagTree, hasTag, parseMadeTags, type TagNode } from '../../core/tags';
 import { chapterNumber, type NumeralStyle } from '../../core/text';
 import {
   buildTree,
@@ -72,6 +80,8 @@ export class VaultState {
   #tree: FolderNode;
   #tags: readonly TagNode[] = [];
   #pins: readonly string[] = [];
+  /** The tags made with the sidebar's +, before any note carries them. */
+  #made: readonly string[] = [];
   /** Whether each folder is a book, as its settings last read said (the sidebar's BOOK mark). */
   #bookOf = new Map<string, boolean>();
   readonly #vault: VaultReader;
@@ -95,6 +105,11 @@ export class VaultState {
     return new Set([...this.#bookOf].filter(([, book]) => book).map(([folder]) => folder));
   }
 
+  /** The tags made with the sidebar's + (./organize.ts makeTag), whether notes carry them yet or not. */
+  get made(): readonly string[] {
+    return this.#made;
+  }
+
   /** The pinned notes that are there, in the order they were pinned. */
   get pins(): readonly string[] {
     return this.#pins.filter((path) => this.#notes.has(path));
@@ -105,15 +120,17 @@ export class VaultState {
    * whose settings are among them is read again; the rest, only when new.
    */
   async refresh(changed: Iterable<string> = []): Promise<void> {
-    const [entries, notes, pins] = await Promise.all([
+    const [entries, notes, pins, made] = await Promise.all([
       this.#vault.list(),
       this.#vault.notes(),
       this.#vault.read(VAULT_PINS).catch(() => null),
+      this.#vault.read(VAULT_TAGS).catch(() => null),
     ]);
     this.#entries = entries;
     this.#notes = new Map(notes.map((note) => [note.path, note]));
     this.#tree = buildTree(entries, this.name);
-    this.#tags = buildTagTree(notes);
+    this.#made = parseMadeTags(made?.text ?? null);
+    this.#tags = buildTagTree(notes, this.#made);
     this.#pins = parsePins(pins?.text ?? null);
     await this.#readBooks(changed);
   }

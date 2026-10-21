@@ -25,6 +25,12 @@ export const SORT_NAMES: Record<NoteSort, string> = {
   modified: 'Newest',
 };
 
+/** What an empty list says, where there's a way to fill it. */
+const EMPTY: Partial<Record<NoteList['kind'], string>> = {
+  pinned: 'Nothing pinned yet. Pin a note from its menu, or with ⇧⌘P (Ctrl+Shift+P) on its row.',
+  tag: 'No notes carry this tag yet. Add it to a note’s tags.',
+};
+
 /** The line under the heading: how many, and what kind of list. */
 export function listLabel(list: NoteList): string {
   if (list.kind === 'search') {
@@ -125,7 +131,11 @@ export function renderList(
           h('p', { text: 'No notes match.' }),
           wordButton('Clear search', actions.clearSearch),
         )
-      : h('div', { class: 'list__empty' }, h('p', { text: 'Nothing here yet.' }));
+      : h(
+          'div',
+          { class: 'list__empty' },
+          h('p', { text: EMPTY[list.kind] ?? 'Nothing here yet.' }),
+        );
   // Thousands of notes: one list that draws the rows in sight, kept with its scroll position.
   const long = list.notes.length >= WINDOW_FROM;
   let windowed = windows.get(container);

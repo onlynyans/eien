@@ -160,3 +160,37 @@
 .tree-row:has([aria-current="true"]) .tree-row__name {
   color: var(--eien-ink);
 }
+
+/* A tag made with the + that no note carries yet: faded italic, and how to give it some. */
+.tree-row--empty .tree-row__label {
+  color: var(--eien-faded);
+  font-style: italic;
+}
+.tree-hint {
+  display: block;
+  margin: 0 var(--eien-space-4) var(--eien-space-1) 0;
+  padding-left: calc(var(--eien-space-2) + var(--depth, 0) * var(--indent) + var(--eien-space-5));
+  font-size: var(--eien-size-meta);
+  font-style: italic;
+  color: var(--eien-pencil);
+}
+.tree-hint[hidden] {
+  display: none;
+}
+.tree-hint--problem {
+  font-style: normal;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  color: var(--eien-caution);
+}
+/* A Library row with its icon (Pinned). */
+.tree-row__iconed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--eien-space-2);
+}
+.tree-row__iconed .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--eien-pencil);
+}

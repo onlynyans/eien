@@ -15,6 +15,7 @@ export {
   utf8Length,
   VAULT_CONFIG,
   VAULT_PINS,
+  VAULT_TAGS,
 } from './names';
 export {
   conflictName,

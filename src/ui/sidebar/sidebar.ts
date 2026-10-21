@@ -6,8 +6,10 @@
 // and foot stay put; the tree redraws. A folder takes a dropped note, and has
 // its own menu.
 
+import { tagKey } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import { h, type Props, wordButton } from '../dom';
+import { icon } from '../icons';
 import { isMenuKey, menuPoint } from '../list/row-events';
 import type { SearchField } from '../list/search-field';
 import { type WindowedRow, WindowedRows } from '../shell/windowed-rows';
@@ -17,6 +19,7 @@ import { SidebarFoot } from './foot';
 import { RowCache } from './row-cache';
 import { foldingSection, plainSection } from './sections';
 import { sidebarSignature } from './signature';
+import { TagField } from './tag-field';
 import { keyOf, RESULTS, type TreeActions, type TreeModel, TreeRows } from './tree';
 
 export interface SidebarModel extends TreeModel {
@@ -26,6 +29,10 @@ export interface SidebarModel extends TreeModel {
 
 export interface SidebarActions extends TreeActions {
   newFolder(): void;
+  /** Make a tag no note carries yet (the + beside TAGS). */
+  newTag(tag: string): void;
+  /** A tag's menu, at the pointer or under the row. */
+  tagMenu(key: string, at: { readonly x: number; readonly y: number }): void;
   /** The name typed for a folder being renamed. */
   renameFolder(path: string, typed: string): void;
   /** The seal: shut the sidebar to a strip, or open it again. */
@@ -55,6 +62,31 @@ export class Sidebar {
       else if (this.#model) this.draw(this.#model);
     },
   });
+  /** A tag being named in place, from the + beside TAGS. */
+  readonly #tagField = new TagField({
+    drawing: () => this.#drawing,
+    known: () => {
+      const keys = new Set<string>();
+      const walk = (nodes: SidebarModel['tags']) => {
+        for (const node of nodes) {
+          keys.add(node.key);
+          walk(node.children);
+        }
+      };
+      walk(this.#model?.tags ?? []);
+      return keys;
+    },
+    done: (tag) => {
+      // The keyboard goes to the tag made, once it's there; or back to the +.
+      this.#refocus = tag ? keyOf({ kind: 'tag', key: tagKey(tag) }) : 'new-tag';
+      if (tag) this.#actions.newTag(tag);
+      else if (this.#model) this.draw(this.#model);
+    },
+  });
+  /** The quiet + beside FOLDERS and TAGS (backlog #4): made once, so their tooltips are watched once. */
+  readonly adders: readonly HTMLButtonElement[];
+  readonly #addFolder: HTMLButtonElement;
+  readonly #addTag: HTMLButtonElement;
   /** The control to give the keyboard back to after the next redraw, by its data-key. */
   #refocus: string | null = null;
   /** The frame last drawn (./signature.ts): the same again isn't rebuilt. */
@@ -89,6 +121,19 @@ export class Sidebar {
   constructor(name: string, actions: SidebarActions, keys: string, search: SearchField) {
     this.#actions = actions;
     this.#search = search;
+    const adder = (label: string, key: string, run: () => void) =>
+      h(
+        'button',
+        {
+          class: 'icon-button sidebar__add',
+          attrs: { type: 'button', 'aria-label': label, 'data-tip': label, 'data-key': key },
+          on: { click: run },
+        },
+        icon('plus'),
+      );
+    this.#addFolder = adder('New folder', 'new-folder', () => actions.newFolder());
+    this.#addTag = adder('New tag', 'new-tag', () => this.newTag());
+    this.adders = [this.#addFolder, this.#addTag];
     /** The seal as a button: it shuts the sidebar, and on the strip, opens it again. */
     const seal = (label: string, extra: string) =>
       h(
@@ -153,11 +198,19 @@ export class Sidebar {
     if (this.#model) this.draw(this.#model);
   }
 
+  /** Name a new tag in place, at the end of TAGS (opened, if folded). */
+  newTag(): void {
+    this.#folds.set('tags', false);
+    this.#tagField.start();
+    this.#drawn = '';
+    if (this.#model) this.draw(this.#model);
+  }
+
   draw(model: SidebarModel): void {
     this.#model = model;
     this.foot.draw({ notice: model.notice, noteCount: model.tree.noteCount });
     const frame = sidebarSignature(model);
-    const settled = this.#refocus === null && !this.#folderField.active;
+    const settled = this.#refocus === null && !this.#folderField.active && !this.#tagField.active;
     const giveBack = this.#holdKeyboard();
     const actions = this.#actions;
     this.#rows.begin();
@@ -165,7 +218,7 @@ export class Sidebar {
     const rows = new TreeRows(
       model,
       actions,
-      (folder) => this.#folderEvents(folder),
+      { folder: (path) => this.#folderEvents(path), tag: (key) => this.#tagEvents(key) },
       this.#rows,
       this.#windowed,
     );
@@ -207,12 +260,15 @@ export class Sidebar {
             'Folders',
             rows.folders(model.tree, 0, edit),
             this.#folds,
-            wordButton('New folder', actions.newFolder, {
-              class: 'word-button sidebar__new',
-              'data-key': 'new-folder',
-            }),
+            this.#addFolder,
           ),
-          ...foldingSection('tags', 'Tags', rows.tags(model.tags, 0), this.#folds),
+          ...foldingSection(
+            'tags',
+            'Tags',
+            [...rows.tags(model.tags, 0), ...this.#tagField.rows()],
+            this.#folds,
+            this.#addTag,
+          ),
         ];
 
     this.#drawing = true;
@@ -227,6 +283,7 @@ export class Sidebar {
     giveBack();
     // A redraw mustn't take the caret out of the name being typed.
     this.#folderField.restore(this.#body);
+    this.#tagField.restore(this.#body);
   }
 
   /**
@@ -244,7 +301,7 @@ export class Sidebar {
       asked === null && inBody ? this.#shown('.tree-row__name').indexOf(active) : -1;
     this.#refocus = null;
     return () => {
-      if (focused === null || this.#folderField.active) return;
+      if (focused === null || this.#folderField.active || this.#tagField.active) return;
       // Still on the control it was on: rows put right around it, or not touched at all.
       if (asked === null && document.activeElement === active) return;
       const same = [...this.#body.querySelectorAll<HTMLElement>('[data-key]')].find(
@@ -280,6 +337,21 @@ export class Sidebar {
         if (isMenuKey(event)) this.#actions.folderMenu(folder, menuPoint(event));
         else if (event.key === 'F2') this.editFolder(folder);
         else return;
+        event.preventDefault();
+      },
+    };
+  }
+
+  /** A tag's menu: right-click or the menu key. */
+  #tagEvents(key: string): Props['on'] {
+    return {
+      contextmenu: (event) => {
+        event.preventDefault();
+        this.#actions.tagMenu(key, menuPoint(event));
+      },
+      keydown: (event) => {
+        if (!isMenuKey(event)) return;
+        this.#actions.tagMenu(key, menuPoint(event));
         event.preventDefault();
       },
     };

@@ -14,7 +14,7 @@ import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
 import { vaultChrome } from './chrome-wiring';
 import { follow } from './follow';
-import { type MenuContext, showFolderMenu, showNoteMenu, trashNameOn } from './menus';
+import { type MenuContext, showFolderMenu, showNoteMenu, showTagMenu, trashNameOn } from './menus';
 import { Navigation } from './navigation';
 import { notePage } from './note-page';
 import { Notice } from './notice';
@@ -97,6 +97,8 @@ export async function showVault(
         void draw.sidebar();
       },
       folderMenu: (path, at) => void showFolderMenu(menus, path, at),
+      tagMenu: (key, at) => showTagMenu(menus, key, at),
+      newTag: (tag) => void act(() => organizer.makeTag(tag, true)),
       newFolder: () => void newFolder(nav.selection.kind === 'folder' ? nav.selection.path : ''),
       renameFolder: (path, typed) =>
         void act(async () => {

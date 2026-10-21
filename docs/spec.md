@@ -43,6 +43,8 @@ These decide arguments. When a change conflicts with one, the principle wins.
 My Vault/
   .eien/
     config.json                vault settings (see §6)
+    pinned.json                the pinned notes, in the order pinned (see §4)
+    tags.json                  tags made before any note carries them (see Tags)
     themes/<name>.json         the writer's own themes, one file each (see §7)
     versions/<note id>/        checkpoints and named versions (see §9)
       2026-10-19T16-40-02Z.md
@@ -97,6 +99,12 @@ My Vault/
 
 - In front matter (`tags:`), or inline as `#tag` in the text.
 - Nested with a slash: `#fic/aot` appears under `fic` in the tree.
+- A tag can be made before any note carries it, with the + beside TAGS in the
+  sidebar. Tags are found in notes, so such a tag is kept in
+  `.eien/tags.json` (`{ "made": [...] }`, watched, so another device's shows at
+  once). It's listed faded, in italic, with a line saying how to give it
+  notes, and its menu takes it back out. A tag notes carry has no menu yet:
+  renaming one everywhere is still to be designed.
 - Not tags: `#` inside code, links, URLs, headings (`# Title`), or followed by
   digits only (`#1`).
 
@@ -190,9 +198,13 @@ Three panes, each collapsible, with a two-pane option in settings:
 
 1. **Sidebar** — a collapsible tree:
    - **All Notes**, with a count
-   - **Pinned**
-   - **Folders**, nested; a book marked BOOK beside its count
-   - **Tags**, nested by `/`
+   - **Pinned**, with its pin, always: with nothing pinned, its list says how
+     to pin
+   - **Folders**, nested; a book marked BOOK beside its count; a quiet + at
+     the label's right (on hover or keyboard focus; always on a phone) makes
+     a folder, named in place
+   - **Tags**, nested by `/`; the + beside its label makes a tag, named in
+     place (see §2, Tags)
    - Library, Folders and Tags fold and open from their labels (a click, Enter
      or Space), each remembered on this device (§2). An open folder or tag has
      a hairline guide down its children.

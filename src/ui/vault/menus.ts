@@ -3,6 +3,7 @@
 
 import { EXPORT_LABELS } from '../../core/export';
 import { baseName, parentOf, titleOf } from '../../core/paths';
+import { type TagNode, tagKey } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import type { ExportFormat, OutKind } from '../../platform/bridge';
 import { askNumber } from '../menu/ask-number';
@@ -254,4 +255,36 @@ export async function showFolderMenu(ctx: MenuContext, path: string, at: At): Pr
     baseName(path),
     true,
   );
+}
+
+/**
+ * A tag's menu. A tag made with the + that no note carries yet can be taken
+ * back out (it's only in .eien/tags.json; no words are touched). A tag notes
+ * carry has no menu yet: renaming one everywhere is still to be designed.
+ */
+export function showTagMenu(ctx: MenuContext, key: string, at: At): void {
+  const made = ctx.state.made.find((tag) => tagKey(tag) === key);
+  const node = findTag(ctx.state.tags, key);
+  if (!made || !node || node.count > 0) return;
+  openMenu(
+    [
+      {
+        label: 'Remove this tag',
+        icon: 'close',
+        run: () => ctx.act(() => ctx.organizer.makeTag(made, false)),
+      },
+    ],
+    { at },
+    `#${node.tag}`,
+    true,
+  );
+}
+
+function findTag(nodes: readonly TagNode[], key: string): TagNode | undefined {
+  for (const node of nodes) {
+    if (node.key === key) return node;
+    const inner = findTag(node.children, key);
+    if (inner) return inner;
+  }
+  return undefined;
 }

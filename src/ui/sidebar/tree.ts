@@ -6,6 +6,7 @@
 import type { TagNode } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import { h, type Props } from '../dom';
+import { icon } from '../icons';
 import type { RowActions } from '../list/row-events';
 import { WINDOW_FROM } from '../shell/window-range';
 import type { WindowedRow } from '../shell/windowed-rows';
@@ -14,13 +15,19 @@ import { atDepth } from './depth';
 import { lookOf, noteRow, noteRowKey, noteRowShows } from './note-row';
 import type { RowCache } from './row-cache';
 
+/** A folder's or a tag's own keys and menu, given by the sidebar. */
+export interface RowEvents {
+  folder(path: string): Props['on'];
+  tag(key: string): Props['on'];
+}
+
 /** A long list of notes, drawn as one group that shows only the rows in sight (../shell/windowed-rows.ts). */
 export type Windowed = (id: string, depth: number, rows: readonly WindowedRow[]) => HTMLElement;
 
 export interface TreeModel {
   readonly tree: FolderNode;
   readonly tags: readonly TagNode[];
-  /** How many notes are pinned (the row shows when there are some). */
+  /** How many notes are pinned (the row shows always, so pinning can be found). */
   readonly pinned: number;
   readonly selection: Selection;
   /** What's shown open: folder paths, tags (tagId) and, with two panes, All Notes and Pinned. */
@@ -76,6 +83,9 @@ export const keyOf = (selection: Selection): string =>
 
 const same = (a: Selection, b: Selection) => keyOf(a) === keyOf(b);
 
+/** Under a tag no note carries yet: how to give it some. */
+export const EMPTY_TAG = 'No notes yet: add it to a note’s tags.';
+
 /** The list id a search's results are drawn under (a row's data-key says "results" too). */
 export const RESULTS = 'results';
 
@@ -96,8 +106,8 @@ const group = (depth: number, rows: HTMLElement[]): HTMLElement[] =>
 export class TreeRows {
   readonly #model: TreeModel;
   readonly #actions: TreeActions;
-  /** A folder's own keys and menu, given by the sidebar (F2 renames it there). */
-  readonly #folderEvents: (path: string) => Props['on'];
+  /** A folder's or tag's own keys and menu, given by the sidebar (F2 renames a folder there). */
+  readonly #events: RowEvents;
   /** The note rows drawn before, kept where they show the same. */
   readonly #cache: RowCache;
   /** The day drawn for: a note's "16:40" becomes "yesterday" at midnight. */
@@ -107,23 +117,24 @@ export class TreeRows {
   constructor(
     model: TreeModel,
     actions: TreeActions,
-    folderEvents: (path: string) => Props['on'],
+    events: RowEvents,
     cache: RowCache,
     windowed: Windowed,
   ) {
     this.#model = model;
     this.#actions = actions;
-    this.#folderEvents = folderEvents;
+    this.#events = events;
     this.#cache = cache;
     this.#windowed = windowed;
   }
 
+  /** All Notes, then Pinned, always: an empty Pinned says how to pin (backlog #7). */
   library(): HTMLElement[] {
-    const rows = this.#branch('All Notes', 'All Notes', this.#model.tree.noteCount, {
-      kind: 'all',
-    });
-    if (this.#model.pinned === 0) return rows;
-    return [...rows, ...this.#branch('Pinned', 'Pinned', this.#model.pinned, { kind: 'pinned' })];
+    const pinned = h('span', { class: 'tree-row__iconed' }, icon('pin'), 'Pinned');
+    return [
+      ...this.#branch('All Notes', 'All Notes', this.#model.tree.noteCount, { kind: 'all' }),
+      ...this.#branch(pinned, 'Pinned', this.#model.pinned, { kind: 'pinned' }),
+    ];
   }
 
   /** A folder's folders (and, with two panes, its notes), each open one's within it. */
@@ -164,6 +175,11 @@ export class TreeRows {
         depth,
         parent ? this.#twist(id, `#${tag.tag}`) : undefined,
       );
+      // A tag made with the + that no note carries yet: faded, and how to give it some.
+      if (tag.count === 0 && tag.children.length === 0) {
+        row.classList.add('tree-row--empty');
+        return [row, atDepth(h('li', { class: 'tree-hint', text: EMPTY_TAG }), depth)];
+      }
       return this.#model.open.has(id)
         ? [
             row,
@@ -177,7 +193,7 @@ export class TreeRows {
   }
 
   /** A Library row (they hold notes only with two panes), and the notes under it when it's open. */
-  #branch(label: string, name: string, count: number, selection: Selection): HTMLElement[] {
+  #branch(label: Node | string, name: string, count: number, selection: Selection): HTMLElement[] {
     const id = openId(selection);
     const opener = this.#model.two ? this.#twist(id, name) : undefined;
     const row = this.#row(label, count, selection, 0, opener);
@@ -210,6 +226,7 @@ export class TreeRows {
     opener?: HTMLElement,
   ): HTMLElement {
     const folder = selection.kind === 'folder' ? selection.path : undefined;
+    const tag = selection.kind === 'tag' ? selection.key : undefined;
     // With two panes nothing is listed beside the tree: the open note is the one marked.
     const current = !this.#model.two && same(this.#model.selection, selection);
     return atDepth(
@@ -234,7 +251,8 @@ export class TreeRows {
             },
             on: {
               click: () => this.#actions.select(selection),
-              ...(folder === undefined ? {} : this.#folderEvents(folder)),
+              ...(folder === undefined ? {} : this.#events.folder(folder)),
+              ...(tag === undefined ? {} : this.#events.tag(tag)),
             },
           },
           h('span', { class: 'tree-row__label' }, label),
