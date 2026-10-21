@@ -42,9 +42,16 @@ how to carry on, see [handbook.md](handbook.md).
 | [#49](https://github.com/onlynyans/eien/pull/49) | All Notes in your order; Arrange mode; the organizer's small files in their own module; a long list's redraw keeps the keyboard | #12, #35 |
 | This PR | This summary, the handbook, the README, the specimen's As built section, the design tokens, the spec's duplicate Layouts section | – |
 
-#42 to #49 and this one are stacked, each on the one before, so each
-includes the ones below it until they merge; they're squash-merged in order
-as their checks pass.
+#42 to #49 and #50 were stacked, each on the one before. #42 merged first;
+then #50, at the top, passed all seven checks before the ones below it and
+carried all of them to main in one squash. #43–#46, #48 and #49 were closed
+as landed through it. Two more came after: #41 (3D, its own session) and #51
+(New note as the same quiet + as the sidebar's, and one rule for when quiet
+icons show). `system.md`'s Tokens section went straight to main.
+
+Still to do from this run: #41 and #51 to merge, then the `v0.1.0` tag (the
+owner publishes the draft), and the paused
+[flake hardening](flake-hardening.md).
 
 ## How it was run
 
@@ -123,6 +130,7 @@ the owner's. Signing isn't set up (see the handbook).
 - Publish the first release (#23), and if wanted, set up signing.
 - #22, smaller downloads (left by the owner's choice).
 - Renaming a tag across notes (needs a design), and dragging tags.
+- The paused [flake hardening](flake-hardening.md).
 - Visual QA by eye of everything stage 3 built, across the three layouts and
   both phones. The tests check structure, keyboard, files, accessibility and
   speed, not taste.
