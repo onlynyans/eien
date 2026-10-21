@@ -7,6 +7,7 @@ import {
   EXPORTS,
   expect,
   listOnPhone,
+  longPress,
   PKG,
   putOnPhone,
   readOnPhone,
@@ -213,6 +214,25 @@ test('Android’s back closes the settings before anything else', async ({ devic
   await shell(device, 'input keyevent KEYCODE_BACK');
   await expect(page.locator('dialog[open]')).toHaveCount(0);
   await expect(page.locator('.shell')).toHaveAttribute('data-shown', 'page');
+});
+
+test('a long press opens a note’s menu and a book’s, each with Export…', async ({ device }) => {
+  // The phone has no menu bar: these menus (and the page's ⋯) are how a writer exports.
+  const page = await startEien(device);
+  await putOnPhone(device, `${VAULT}/Fic/.eien-folder.json`, '{"book":{}}');
+  await putOnPhone(device, `${VAULT}/Fic/Tear.md`, 'The scarf tore.\n');
+  await expect(titles(page)).toHaveText(['Tear']);
+  await longPress(device, page, page.locator('.note-row', { hasText: 'Tear' }));
+  await expect(page.locator('.menu')).toBeVisible();
+  await expect(page.locator('.menu [role="menuitem"]', { hasText: /^Export…$/u })).toBeVisible();
+  await shell(device, 'input keyevent KEYCODE_BACK'); // the menu closes
+  await expect(page.locator('.menu')).toHaveCount(0);
+  await page.locator('.phone-bar__back').click(); // to the tree
+  await longPress(device, page, page.locator('.sidebar').getByText('Fic', { exact: true }));
+  await expect(page.locator('.menu [role="menuitem"]', { hasText: /^Export…$/u })).toBeVisible();
+  await page.locator('.menu [role="menuitem"]', { hasText: /^Export…$/u }).click();
+  await page.locator('.menu [role="menuitem"]', { hasText: /^EPUB…$/u }).click();
+  await expect.poll(() => listOnPhone(device, EXPORTS)).toEqual(['Fic.epub']);
 });
 
 test('trash goes to .eien/trash, where any device can take it back', async ({ device }) => {
