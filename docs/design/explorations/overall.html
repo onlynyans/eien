@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en" data-x="a">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — the whole window, three explorations</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/* Shared by every exploration (inlined into each page by _build.py).
+   The tokens are the approved ones from ../tokens.css (Washi, day and night),
+   plus what the design pass adds: a radius scale, icon sizes, the machine
+   face as a setting, and row weights. New tokens are marked NEW. */
+
+:root { color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+:root {
+  --eien-desk: light-dark(#d9d2c8, #110e0b);
+  --eien-blotter: light-dark(#eae5dd, #1a1713);
+  --eien-band: light-dark(#f4f1ea, #201d19);
+  --eien-paper: light-dark(#fdfbf7, #28241f);
+  --eien-paper-raised: light-dark(#ffffff, #312d28);
+  --eien-well: light-dark(#f9f7f3, #24201c);
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05));
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1));
+  --eien-selected: light-dark(#ede9e3, #38332e);
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5));
+  --eien-shadow-sheet: 0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float: 0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  --eien-ink: light-dark(#23201c, #e9e2d4);
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7);
+  --eien-pencil: light-dark(#5d5348, #a7a095);
+  --eien-faded: light-dark(#766d62, #837c73);
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07));
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.14));
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.26));
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px;
+  --eien-seal: light-dark(#c4472d, #e0603f);
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12));
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714);
+  --eien-focus: var(--eien-ink-soft);
+  --eien-added: light-dark(#485c2c, #9cb880);
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0);
+  --eien-caution: light-dark(#6b501f, #d0a659);
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+
+  /* The machine voice: IBM Plex Mono by default, now a setting (NEW: set from FACES). */
+  --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --eien-size-meta: 11px;
+  --eien-size-label: 10px;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em;
+  --eien-space-1: 4px; --eien-space-2: 8px; --eien-space-3: 12px; --eien-space-4: 16px;
+  --eien-space-5: 24px; --eien-space-6: 32px; --eien-space-7: 48px; --eien-space-8: 72px;
+  --eien-row-h: 30px;
+  --eien-touch: 44px;
+  --eien-seal-size: 22px;
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms;
+  --eien-calm: 220ms;
+  --eien-leading-tighten: 0;
+  --eien-sheet-pad-x: var(--eien-space-8);
+  --eien-sheet-pad-top: var(--eien-space-7);
+  --eien-page-gutter: var(--eien-space-5);
+  --eien-title-gap: var(--eien-space-6);
+  --eien-paragraph-gap: var(--eien-space-4);
+  --eien-row-pad-y: var(--eien-space-3);
+
+  /* NEW: corners. Not everything is square. A small scale: s for what you press
+     (buttons, fields, chips), m for what floats (menus, popovers, the tool slip),
+     l for what covers the window (a sheet over it, the phone's bottom sheet).
+     Paper itself (the sheet, the panes) stays square. Each exploration sets its own. */
+  --eien-radius-s: 3px;
+  --eien-radius-m: 6px;
+  --eien-radius-l: 10px;
+  --eien-radius-dot: 999px;
+
+  /* NEW: icons. Drawn on a 16-unit grid, stroked in the ink they sit in. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
+
+  /* NEW: row names' weight, two settings (400–700). A selected list title is 100 heavier. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+}
+
+/* The text voice: the writer's choice, sizes tuned per face (from ../tokens.css). */
+:root, [data-face='newsreader'] { --eien-face-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; --eien-size-prose: 22px; --eien-size-title: 36px; --eien-size-heading: 23px; --eien-size-row: 16px; --eien-size-preview: 14px; --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten)); --eien-measure: 29em; }
+[data-face='literata'] { --eien-face-text: 'Literata', Georgia, serif; --eien-size-prose: 19px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten)); --eien-measure: 34em; }
+[data-face='plex-sans'] { --eien-face-text: 'IBM Plex Sans', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='source-sans'] { --eien-face-text: 'Source Sans 3', Arial, sans-serif; --eien-size-prose: 20px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+[data-face='atkinson'] { --eien-face-text: 'Atkinson Hyperlegible Next', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='schibsted'] { --eien-face-text: 'Schibsted Grotesk', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 33em; }
+[data-face='hanken'] { --eien-face-text: 'Hanken Grotesk', Arial, sans-serif; --eien-size-prose: 19px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='instrument'] { --eien-face-text: 'Instrument Sans', Arial, sans-serif; --eien-size-prose: 18.5px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--eien-seal-wash); }
+:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+
+.seal {
+  display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-seal-size); height: var(--eien-seal-size);
+  background: var(--eien-seal); color: var(--eien-on-seal);
+  font-family: var(--eien-face-seal); font-size: calc(var(--eien-seal-size) * 0.68); line-height: 1;
+  border-radius: calc(var(--eien-radius-s) / 2);
+  user-select: none;
+}
+.seal--small { --eien-seal-size: 10px; font-size: 0; }
+
+.label {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil);
+}
+.count {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums; color: var(--eien-pencil);
+}
+
+/* Where a word stays (menus, choices of a setting). */
+.word-button {
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; padding: var(--eien-space-1) var(--eien-space-2);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.word-button[aria-pressed='true'], .word-button[aria-checked='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* NEW: the icon control. The word button's states, a square of --eien-control. */
+.icon-button {
+  appearance: none; display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-control); height: var(--eien-control); padding: 0;
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; position: relative;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon-button svg, .icon { width: var(--eien-icon); height: var(--eien-icon); display: block; }
+.icon { stroke-width: var(--eien-icon-stroke); }
+.icon-button[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.icon-button:disabled { color: var(--eien-faded); cursor: default; }
+@media (hover: hover) {
+  .word-button:hover, .icon-button:not(:disabled):hover { color: var(--eien-ink); background: var(--eien-hover); }
+}
+.word-button:active, .icon-button:not(:disabled):active { background: var(--eien-press); border-color: var(--eien-rule-strong); }
+
+/* NEW: a tooltip names an icon and its key: raised paper, the machine voice. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip); position: absolute; z-index: 50; pointer-events: none;
+  left: 50%; top: calc(100% + 6px); translate: -50% 0;
+  white-space: pre; padding: 3px 7px; border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em;
+  text-transform: none; color: var(--eien-ink-soft);
+  opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease);
+}
+[data-tip-side='up']::after { top: auto; bottom: calc(100% + 6px); }
+[data-tip-side='right']::after { left: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+[data-tip-side='left']::after { left: auto; right: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+@media (hover: hover) { [data-tip]:hover::after { opacity: 1; transition-delay: 450ms; } }
+[data-tip]:focus-visible::after { opacity: 1; }
+
+.field {
+  appearance: none; width: 100%; border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-s); background: var(--eien-well);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink);
+}
+.field::placeholder { color: var(--eien-faded); }
+.field:focus { outline: none; border-color: var(--eien-focus); }
+
+/* Explorations' own bar: outside the app, like the mockups' bar. */
+.xbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--eien-space-1) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-paper-raised); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.xbar__name { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); font-weight: 600; }
+.xbar__group { display: flex; align-items: center; gap: 2px; }
+.xbar__label { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); margin-right: var(--eien-space-1); }
+.xnote { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+
+
+/* ═══ Each exploration's own values ═══════════════════════════════════════ */
+/* A · Band: the mockup's bands become the title bar; corners barely there. */
+:root[data-x='a'] { --eien-radius-s: 2px; --eien-radius-m: 4px; --eien-radius-l: 8px; --sheet-radius: 0; --band: 56px; --top: 0px; }
+/* B · Slip: no page band; tools on a raised slip; softer corners. */
+:root[data-x='b'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; --sheet-radius: 3px; --band: 56px; --top: 0px; }
+/* C · Running head: one strip across the window, like a book's running head. */
+:root[data-x='c'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; --sheet-radius: 0; --band: 48px; --top: 40px; }
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; place-items: stretch; padding: var(--eien-space-4); background: light-dark(#cfc8bd, #0b0907); }
+:root[data-view='phone'] .stage { place-items: start center; overflow: auto; }
+:root[data-view='phone'] .window { display: none; }
+:root[data-view='desktop'] .phones { display: none; }
+
+/* ═══ The window ═══════════════════════════════════════════════════════ */
+.window {
+  --sb: 264px; --ls: 316px;
+  position: relative; display: grid; grid-template-rows: var(--top) minmax(0, 1fr);
+  grid-template-columns: var(--sb) var(--ls) minmax(0, 1fr);
+  min-height: 0; border-radius: 10px; overflow: hidden;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.18), 0 20px 50px rgb(0 0 0 / 0.25);
+  background: var(--eien-blotter);
+  transition: grid-template-columns var(--eien-calm) var(--eien-ease);
+}
+.window.no-sidebar { --sb: 0px; }
+.window.no-list, .window.two-panes { --ls: 0px; }
+.window.two-panes { --sb: 320px; }
+.lights { position: absolute; z-index: 30; top: 18px; left: 16px; display: flex; gap: 8px; }
+:root[data-x='c'] .lights { top: 14px; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.15); }
+.lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
+.drag-note { position: absolute; z-index: 29; top: 0; left: 0; right: 0; height: 10px; }
+
+/* C: the running head across the window */
+.runhead { display: none; grid-column: 1 / -1; grid-row: 1; align-items: center; gap: var(--eien-space-1);
+  padding: 0 var(--eien-space-3) 0 84px; background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+:root[data-x='c'] .runhead { display: flex; }
+.runhead__crumbs { flex: 1; text-align: center; }
+.runhead .views { margin-right: var(--eien-space-2); }
+
+.pane { grid-row: 2; min-width: 0; min-height: 0; position: relative; overflow: hidden; }
+.sidebar { grid-column: 1; background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; }
+.list { grid-column: 2; background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; }
+.page { grid-column: 3; background: var(--eien-blotter); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; container: page / inline-size; }
+.window.no-sidebar .sidebar, .window.no-list .list, .window.two-panes .list { border-right: 0; }
+.sidebar > *, .list > * { min-width: 240px; }
+.window.two-panes .sidebar > * { min-width: 300px; }
+
+/* Pane chevrons (#15): shown on hover at a pane's edge. */
+.pane-toggle { position: absolute; z-index: 20; opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease); }
+.pane:hover > .pane-toggle, .pane-toggle:focus-visible { opacity: 1; }
+:root[data-x='a'] .pane-toggle { top: calc((var(--band) - var(--eien-control)) / 2); right: var(--eien-space-2); }
+:root[data-x='b'] .pane-toggle { top: 50%; right: -1px; width: 16px; height: 44px; translate: 0 -50%;
+  border: var(--eien-hairline) solid var(--eien-rule); border-right: 0; border-radius: var(--eien-radius-m) 0 0 var(--eien-radius-m);
+  background: var(--eien-band); }
+:root[data-x='b'] .pane-toggle svg { width: 12px; }
+:root[data-x='c'] .pane-toggle { display: none; }
+.reopen { position: absolute; z-index: 25; left: 0; top: 0; bottom: 0; width: 14px; display: none; }
+.reopen .icon-button { position: absolute; top: calc(var(--top) + 64px); left: 2px; opacity: 0; background: var(--eien-paper-raised); border-color: var(--eien-rule); }
+.reopen:hover .icon-button, .reopen .icon-button:focus-visible { opacity: 1; }
+:root:not([data-x='c']) .window.no-sidebar .reopen--sidebar,
+:root:not([data-x='c']) .window.no-list:not(.two-panes) .reopen--list { display: block; }
+.reopen--list { left: var(--sb); }
+
+/* ═══ Sidebar ══════════════════════════════════════════════════════════ */
+.sidebar__head { display: flex; align-items: center; gap: var(--eien-space-3); height: var(--band); flex: none; padding: 0 var(--eien-space-4) 0 84px; }
+:root[data-x='c'] .sidebar__head { display: none; }
+.vault-name { font-weight: 600; white-space: nowrap; }
+.sidebar__search { display: none; padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2); }
+.window.two-panes .sidebar__search, .window.no-list .sidebar__search { display: block; }
+.sidebar__scroll { flex: 1; min-height: 0; overflow: auto; padding: var(--eien-space-2) 0 var(--eien-space-5); }
+:root[data-x='c'] .sidebar__scroll { padding-top: var(--eien-space-3); }
+.section + .section { margin-top: var(--eien-space-4); }
+.section__label { appearance: none; display: flex; align-items: center; gap: var(--eien-space-1); width: 100%; height: var(--eien-row-h);
+  padding: 0 var(--eien-space-3) 0 var(--eien-space-4); border: 0; background: none; cursor: pointer; text-align: left;
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+.section__label span:last-child { flex: 1; }
+.section__head { position: relative; }
+.section__add { position: absolute; right: var(--eien-space-2); top: 1px; width: 26px; height: 26px; opacity: 0; }
+.section__head:hover .section__add, .section__add:focus-visible { opacity: 1; }
+@media (hover: hover) { .section__label:hover { color: var(--eien-ink-soft); } }
+.twisty { width: 12px; height: 12px; display: inline-grid; place-items: center; color: var(--eien-faded); flex: none; }
+.twisty::before { content: ''; width: 5px; height: 7px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); transition: transform var(--eien-quick) var(--eien-ease); }
+[aria-expanded='true'] > .twisty::before, [aria-expanded='true'] > .row .twisty::before { transform: rotate(90deg); }
+.section__label .twisty { opacity: 0; }
+.section__label:hover .twisty, .section__label[aria-expanded='false'] .twisty { opacity: 1; }
+.section[data-folded] .tree { display: none; }
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; position: relative; }
+.tree ul::before { content: ''; position: absolute; top: 0; bottom: calc(var(--eien-row-h) / 2); width: var(--eien-hairline); background: var(--eien-rule);
+  left: calc(var(--eien-space-4) + var(--depth) * 16px + 6px); }
+.row { position: relative; display: flex; align-items: baseline; gap: var(--eien-space-2); height: var(--eien-row-h);
+  padding: 0 var(--eien-space-4) 0 calc(var(--eien-space-4) + var(--depth) * 16px); color: var(--eien-ink-soft); cursor: pointer; user-select: none; }
+@media (hover: hover) { .row:hover { background: var(--eien-hover); } }
+.row .twisty { align-self: center; margin-right: -4px; }
+.twisty--leaf::before { content: none; }
+.row__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: var(--eien-row-h);
+  font-size: var(--eien-size-row); font-weight: var(--eien-weight-tree); }
+.row__hash { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); margin-right: 2px; }
+.row__icon { align-self: center; color: var(--eien-pencil); }
+.row__icon svg { width: 13px; height: 13px; }
+.book-mark { flex: none; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase;
+  line-height: 1.4; color: var(--eien-pencil); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s);
+  padding: 0 calc(3px - var(--eien-track-label)) 0 3px; margin-right: -4px; }
+.row[aria-current='true'] { background: var(--eien-selected); color: var(--eien-ink); }
+.row[aria-current='true']::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: var(--eien-mark-w); background: var(--eien-seal); }
+/* B and C: the sidebar's chosen row is 100 heavier too (A: the seal rule and fill carry it). */
+:root:not([data-x='a']) .row[aria-current='true'] .row__name { font-weight: min(calc(var(--eien-weight-tree) + 100), 700); }
+.row__name input { width: 100%; font: inherit; border: 0; border-bottom: var(--eien-hairline) solid var(--eien-focus); background: none; outline: none; padding: 0; }
+.row--empty .row__name { color: var(--eien-faded); font-style: italic; }
+
+.sidebar__foot { flex: none; display: flex; align-items: center; gap: var(--eien-space-1); padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-2) var(--eien-space-4);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft); }
+.sidebar__foot .count { flex: 1; font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; white-space: nowrap; }
+.sync { color: var(--eien-added); }
+.sync[hidden] { display: none; }
+.sync.is-other { color: var(--eien-pencil); }
+
+/* ═══ Note list ════════════════════════════════════════════════════════ */
+.list__search { display: flex; align-items: center; height: var(--band); flex: none; padding: 0 var(--eien-space-4); background: var(--eien-band); }
+:root[data-x='c'] .list__search { height: auto; padding-top: var(--eien-space-3); }
+.window.no-sidebar .list__search { padding-left: 84px; }
+:root[data-x='c'] .window.no-sidebar .list__search { padding-left: var(--eien-space-4); }
+.search-wrap { position: relative; flex: 1; }
+.search-wrap .icon { position: absolute; left: 9px; top: 50%; translate: 0 -50%; color: var(--eien-faded); width: 13px; height: 13px; }
+.search-wrap .field { padding-left: 28px; }
+.list__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; row-gap: var(--eien-space-1);
+  padding: var(--eien-space-2) var(--eien-space-4) var(--eien-space-4); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); flex: none; }
+.list__title { margin: 0; font-size: var(--eien-size-heading); font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list__meta { grid-column: 1 / -1; margin: 0; }
+.list__body { flex: 1; min-height: 0; overflow: auto; }
+.note-row { position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; column-gap: var(--eien-space-3); row-gap: 2px;
+  padding: var(--eien-row-pad-y) var(--eien-space-4); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); color: var(--eien-ink-soft); cursor: default; }
+@media (hover: hover) { .note-row:hover { background: var(--eien-hover); } }
+.note-row[aria-selected='true'] { background: var(--eien-selected); color: var(--eien-ink); }
+.note-row[aria-selected='true']::before { content: ''; position: absolute; left: 0; top: var(--eien-row-pad-y); height: 22px; width: var(--eien-mark-w); background: var(--eien-seal); }
+.note-row__ord { text-align: right; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); align-self: baseline; }
+.note-row__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--eien-size-row); font-weight: var(--eien-weight-list); }
+.note-row[aria-selected='true'] .note-row__title { font-weight: min(calc(var(--eien-weight-list) + 100), 700); }
+.note-row__meta { justify-self: end; white-space: nowrap; }
+.note-row__preview { grid-column: 2 / -1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--eien-size-preview); color: var(--eien-pencil); }
+
+/* ═══ The page ═════════════════════════════════════════════════════════ */
+.page__bar { display: flex; align-items: center; gap: 2px; height: var(--band); padding: 0 var(--eien-space-3);
+  background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.page__bar > * { opacity: 0; transition: opacity var(--eien-calm) var(--eien-ease); }
+.page:hover .page__bar > *, .page__bar:focus-within > * { opacity: 1; }
+.page__bar .spacer { flex: 1; }
+.views { display: inline-flex; align-items: center; gap: 0; padding: 2px; border-radius: var(--eien-radius-m); background: var(--eien-press); }
+.views .icon-button { width: 26px; height: 24px; }
+.views .icon-button[aria-pressed='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); }
+.sep { width: var(--eien-hairline); height: 16px; background: var(--eien-rule); margin: 0 var(--eien-space-1); }
+.seal-control .seal { --eien-seal-size: 16px; }
+:root[data-x='b'] .page__bar, :root[data-x='c'] .page__bar { display: none; }
+/* A: the strip hides; a lip stays to bring it back. */
+.page.no-strip .page__bar { display: none; }
+.lip { display: none; position: absolute; z-index: 5; top: 0; left: 50%; translate: -50% 0; height: 14px; padding: 0 var(--eien-space-3);
+  border: var(--eien-hairline) solid var(--eien-rule); border-top: 0; border-radius: 0 0 var(--eien-radius-m) var(--eien-radius-m);
+  background: var(--eien-band); color: var(--eien-pencil); opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease); }
+.lip svg { width: 12px; height: 12px; }
+:root[data-x='a'] .page.no-strip .lip { display: grid; place-items: center; }
+.page:hover .lip { opacity: 1; }
+
+/* B: the tool slip, floating at the top right of the blotter */
+.slip { display: none; position: absolute; z-index: 6; top: 12px; right: 12px; align-items: center; gap: 2px; padding: 3px;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+:root[data-x='b'] .slip { display: flex; }
+.slip .is-folded-hide { display: contents; }
+.page.no-strip .slip .is-folded-hide { display: none; }
+.slip .views { background: var(--eien-press); }
+
+/* Formatting bar (#14): A in the band's second row; B a slip at the sheet's top; C a rail in the margin. */
+.fmt { display: none; align-items: center; gap: 1px; }
+.fmt .icon-button { width: 26px; height: 26px; }
+.fmt .letter { font-family: var(--eien-face-text); font-size: 15px; line-height: 1; }
+.fmt .letter--i { font-style: italic; } .fmt .letter--b { font-weight: 700; } .fmt .letter--u { text-decoration: underline; text-underline-offset: 2px; } .fmt .letter--s { text-decoration: line-through; }
+.page.show-fmt .fmt { display: flex; }
+:root[data-x='a'] .fmt { grid-row: 1; justify-content: center; padding: 3px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+:root[data-x='a'] .page { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+:root[data-x='b'] .fmt { position: absolute; z-index: 6; top: 12px; left: 50%; translate: -50% 0; padding: 3px; background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+:root[data-x='c'] .fmt { position: absolute; z-index: 6; left: 12px; top: 50%; translate: 0 -50%; flex-direction: column; padding: 3px;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.fmt .sep { width: 16px; height: var(--eien-hairline); margin: 3px auto; }
+:root:not([data-x='c']) .fmt .sep { width: var(--eien-hairline); height: 16px; margin: 0 3px; }
+
+.page__scroll { min-height: 0; overflow: auto; padding: var(--eien-page-gutter); position: relative; }
+:root[data-x='b'] .page__scroll { padding-top: 56px; }
+:root[data-x='c'] .page__scroll { padding-left: 56px; }
+.sheet { width: min(100%, calc(var(--eien-measure) + 2 * var(--eien-space-8))); min-height: 100%; margin: 0 auto;
+  padding: var(--eien-sheet-pad-top) var(--eien-sheet-pad-x) var(--eien-space-8); font-size: var(--eien-size-prose);
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet); border-radius: var(--sheet-radius); }
+@container page (width < 760px) { .sheet { --eien-sheet-pad-x: var(--eien-space-6); } }
+.sheet__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eien-space-4); min-height: 22px; }
+.crumbs { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crumbs .sl { color: var(--eien-faded); padding: 0 3px; }
+.tags { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 2px var(--eien-space-3); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+.tag { position: relative; cursor: default; white-space: nowrap; }
+.tag__x { display: none; margin-left: 2px; color: var(--eien-faded); cursor: pointer; }
+.tag:hover .tag__x { display: inline; }
+.tag-add { width: 22px; height: 22px; opacity: 0; }
+.sheet__head:hover .tag-add, .tag-add:focus-visible { opacity: 1; }
+.tag-field { width: 9em; padding: 1px 6px; font-size: var(--eien-size-meta); }
+/* B: tags are label slips under the title. C: tags in the colophon. */
+:root[data-x='b'] .sheet__head .tags, :root[data-x='c'] .sheet__head .tags { display: none; }
+.title-tags { display: none; margin: calc(var(--eien-title-gap) * -0.6) 0 var(--eien-title-gap); gap: var(--eien-space-1); flex-wrap: wrap; justify-content: flex-start; }
+:root[data-x='b'] .title-tags { display: flex; }
+:root[data-x='b'] .title-tags .tag { padding: 1px 7px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-band); }
+:root[data-x='b'] .title-tags .tag-add { opacity: 0.6; }
+.title { margin: var(--eien-title-gap) 0; font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; caret-color: var(--eien-seal); outline: none; }
+.prose { font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose); caret-color: var(--eien-seal); outline: none; text-wrap: pretty; }
+.prose p { margin: 0 0 var(--eien-paragraph-gap); }
+.prose .scene { text-align: center; color: var(--eien-pencil); letter-spacing: 0.6em; text-indent: 0.6em; margin: 1.4em 0; }
+.prose.is-source { font-family: var(--eien-face-mono); font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: var(--eien-ink-soft); }
+.prose.is-source .mk { color: var(--eien-faded); }
+
+.status { display: flex; justify-content: center; align-items: center; gap: var(--eien-space-2); min-height: 40px; padding: 0 var(--eien-space-4);
+  background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; }
+.status .dot { color: var(--eien-faded); }
+.status .seal { margin-right: 6px; }
+.status__tags { display: none; margin-right: auto; text-transform: none; letter-spacing: 0; }
+:root[data-x='c'] .status { justify-content: flex-end; }
+:root[data-x='c'] .status__tags { display: flex; gap: var(--eien-space-2); align-items: center; }
+:root[data-x='c'] .status__tags .tag { padding: 0 8px; border-radius: var(--eien-radius-dot); background: var(--eien-press); color: var(--eien-ink-soft); }
+
+/* ═══ Phone ════════════════════════════════════════════════════════════ */
+.phones { display: flex; gap: var(--eien-space-6); flex-wrap: wrap; justify-content: center; padding: var(--eien-space-4); }
+.phone { width: 375px; height: 760px; border-radius: 44px; overflow: hidden; position: relative; display: grid; grid-template-rows: 48px auto minmax(0, 1fr) auto;
+  background: var(--eien-paper); box-shadow: 0 0 0 10px #1b1915, 0 0 0 11px #3a362f, 0 30px 60px rgb(0 0 0 / 0.35); }
+.phone__status { display: flex; justify-content: space-between; align-items: end; padding: 0 28px 6px; font: 600 14px -apple-system, system-ui, sans-serif; color: var(--eien-ink); background: var(--eien-band); }
+.phone__bar { display: flex; align-items: center; gap: var(--eien-space-1); min-height: var(--eien-touch); padding: 0 var(--eien-space-2); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.phone .icon-button { --eien-control: var(--eien-touch); }
+.phone__back { display: flex; align-items: center; gap: 2px; color: var(--eien-ink-soft); font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; border: 0; background: none; height: var(--eien-touch); padding: 0 var(--eien-space-2) 0 0; }
+.phone__title { flex: 1; text-align: center; }
+.phone__body { overflow: auto; min-height: 0; }
+.phone__body .sheet { width: 100%; min-height: 100%; border: 0; box-shadow: none; border-radius: 0; padding: var(--eien-space-5) var(--eien-space-5) var(--eien-space-7); --eien-size-prose: 19px; --eien-size-title: 28px; }
+.phone__foot { display: flex; justify-content: space-around; align-items: center; padding: 4px var(--eien-space-3) 22px; background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); }
+:root[data-x='a'] .phone__foot { display: none; }
+.phone__fab { display: none; position: absolute; right: 18px; bottom: 34px; align-items: center; gap: 2px; padding: 4px; border-radius: var(--eien-radius-l);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); box-shadow: var(--eien-shadow-float); }
+:root[data-x='b'] .phone__fab { display: flex; }
+:root[data-x='b'] .phone__foot, :root[data-x='c'] .phone .phone__acts { display: none; }
+.phone__body .list__head { padding-top: var(--eien-space-3); }
+.phone__body .sheet__head .tags { display: flex; }
+</style>
+</head>
+<body>
+<header class="xbar" aria-label="Exploration controls">
+  <span class="xbar__name">Eien · the whole window</span>
+  <div class="xbar__group" data-x-set="x"><span class="xbar__label">Exploration</span>
+    <button class="word-button" data-value="a">A · Band</button><button class="word-button" data-value="b">B · Slip</button><button class="word-button" data-value="c">C · Running head</button></div>
+  <div class="xbar__group" data-x-set="view"><span class="xbar__label">Show</span>
+    <button class="word-button" data-value="desktop">Desktop</button><button class="word-button" data-value="phone">Phone</button></div>
+  <div class="xbar__group" data-x-set="sync"><span class="xbar__label">Syncthing</span>
+    <button class="word-button" data-value="on">Set up</button><button class="word-button" data-value="other">Changed elsewhere</button><button class="word-button" data-value="off">None</button></div>
+  <div class="xbar__group"><span class="xbar__label">Weights</span>
+    <span class="xnote">tree</span><input id="w-tree" type="range" min="400" max="700" step="100" value="400" aria-label="Sidebar names' weight" />
+    <span class="xnote">list</span><input id="w-list" type="range" min="400" max="700" step="100" value="400" aria-label="List titles' weight" />
+    <output id="w-out" class="xnote">400 · 400 (chosen 500)</output></div>
+</header>
+
+<main class="stage">
+  <div class="window" id="window">
+    <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+    <!-- C: the running head across the window -->
+    <div class="runhead" aria-label="Window">
+      <button class="icon-button" data-icon="sidebar" data-act="sidebar" data-tip="Sidebar ⌘\" aria-label="Sidebar"></button>
+      <button class="icon-button" data-icon="list" data-act="list" data-tip="List ⇧⌘\" aria-label="Note list"></button>
+      <p class="runhead__crumbs label crumbs"></p>
+      <div class="views" role="group" aria-label="View"></div>
+      <button class="icon-button" data-icon="compare" data-tip="Compare with the last seal ⇧⌘D" aria-label="Compare"></button>
+      <button class="icon-button seal-control" data-tip="Seal this version ⌘S" aria-label="Seal"><span class="seal seal--glyph">永</span></button>
+      <button class="icon-button" data-icon="versions" data-tip="Versions" aria-label="Versions"></button>
+      <span class="sep"></span>
+      <button class="icon-button" data-icon="format" data-act="fmt" data-tip="Formatting bar ⇧⌘B" aria-label="Formatting bar"></button>
+    </div>
+
+    <nav class="pane sidebar" aria-label="Ink & Ash">
+      <div class="sidebar__head"><span class="seal">永</span><span class="vault-name">Ink &amp; Ash</span></div>
+      <div class="sidebar__search"><div class="search-wrap"><span data-icon="search"></span><input class="field" type="search" placeholder="Search Ink & Ash" /></div></div>
+      <div class="sidebar__scroll" id="tree"></div>
+      <footer class="sidebar__foot">
+        <span class="count" id="vault-count">312 notes · 48,210 words</span>
+        <span class="sync" id="sync" data-icon="sync" data-tip-side="up"></span>
+        <button class="icon-button" id="daynight" data-tip-side="up"></button>
+        <button class="icon-button" id="panes" data-tip-side="up"></button>
+        <button class="icon-button" data-icon="settings" data-tip="Settings ⌘," data-tip-side="up" aria-label="Settings"></button>
+      </footer>
+      <button class="icon-button pane-toggle" data-icon="left" data-act="sidebar" data-tip="Hide the sidebar ⌘\" aria-label="Hide the sidebar"></button>
+    </nav>
+
+    <section class="pane list" aria-label="Notes">
+      <div class="list__search"><div class="search-wrap"><span data-icon="search"></span><input class="field" type="search" placeholder="Search Beneath the Walls" /></div></div>
+      <header class="list__head">
+        <h2 class="list__title">Beneath the Walls</h2>
+        <button class="icon-button" data-icon="sort" data-tip="Your order · sort or filter" aria-label="Sort and filter"></button>
+        <p class="list__meta label">14 notes · 33,206 words · book</p>
+      </header>
+      <div class="list__body" id="rows" role="listbox" aria-label="Chapters"></div>
+      <button class="icon-button pane-toggle" data-icon="left" data-act="list" data-tip="Hide the list ⇧⌘\" aria-label="Hide the list"></button>
+    </section>
+
+    <main class="pane page" id="page">
+      <div class="page__bar" role="toolbar" aria-label="Page">
+        <div class="views" role="group" aria-label="View"></div>
+        <span class="spacer"></span>
+        <button class="icon-button" data-icon="compare" data-tip="Compare with the last seal ⇧⌘D" aria-label="Compare"></button>
+        <button class="icon-button seal-control" data-tip="Seal this version ⌘S" aria-label="Seal"><span class="seal">永</span></button>
+        <button class="icon-button" data-icon="versions" data-tip="Versions" aria-label="Versions"></button>
+        <span class="sep"></span>
+        <button class="icon-button" data-icon="format" data-act="fmt" data-tip="Formatting bar ⇧⌘B" aria-label="Formatting bar"></button>
+        <button class="icon-button" data-icon="up" data-act="strip" data-tip="Hide this strip" aria-label="Hide the controls"></button>
+      </div>
+      <div class="fmt" role="toolbar" aria-label="Format"></div>
+      <div class="page__scroll">
+        <button class="lip" data-act="strip" aria-label="Show the controls" data-tip="Show the controls"><span data-icon="down"></span></button>
+        <div class="slip" role="toolbar" aria-label="Page">
+          <span class="is-folded-hide">
+            <span class="views" role="group" aria-label="View"></span>
+            <button class="icon-button" data-icon="compare" data-tip="Compare ⇧⌘D" aria-label="Compare"></button>
+            <button class="icon-button seal-control" data-tip="Seal ⌘S" aria-label="Seal"><span class="seal">永</span></button>
+            <button class="icon-button" data-icon="versions" data-tip="Versions" aria-label="Versions"></button>
+            <button class="icon-button" data-icon="format" data-act="fmt" data-tip="Formatting bar ⇧⌘B" aria-label="Formatting bar"></button>
+          </span>
+          <button class="icon-button" data-act="strip" id="slip-fold" data-tip="Fold the tools away" aria-label="Fold the tools"></button>
+        </div>
+        <article class="sheet" id="sheet"></article>
+      </div>
+      <footer class="status" id="status"></footer>
+    </main>
+
+    <div class="reopen reopen--sidebar"><button class="icon-button" data-icon="right" data-act="sidebar" data-tip="Show the sidebar ⌘\" data-tip-side="right" aria-label="Show the sidebar"></button></div>
+    <div class="reopen reopen--list"><button class="icon-button" data-icon="right" data-act="list" data-tip="Show the list ⇧⌘\" data-tip-side="right" aria-label="Show the list"></button></div>
+  </div>
+
+  <div class="phones" id="phones"></div>
+</main>
+
+<script>
+// Shared by every exploration (inlined into each page by _build.py).
+
+// Eien's icons: one set, drawn here on a 16-unit grid with round ends, stroked
+// in the ink of whatever they sit in. No icon font, nothing fetched. Each is
+// the inside of an <svg viewBox="0 0 16 16">.
+const ICONS = {
+  live: '<path d="M10.6 2.9l2.5 2.5-7.3 7.3-3.2.8.8-3.2z"/><path d="M9.2 4.3l2.5 2.5"/><path d="M8.5 13.5h5"/>',
+  source: '<path d="M5.5 4.5L2 8l3.5 3.5"/><path d="M10.5 4.5L14 8l-3.5 3.5"/><path d="M9.2 3l-2.4 10"/>',
+  reading: '<path d="M8 4.6C6.6 3.6 4.7 3.1 2.2 3.1v9.4c2.5 0 4.4.5 5.8 1.5 1.4-1 3.3-1.5 5.8-1.5V3.1c-2.5 0-4.4.5-5.8 1.5z"/><path d="M8 4.6V14"/>',
+  compare: '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
+  versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',
+  sidebar: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/>',
+  list: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/><path d="M8.5 6h3M8.5 8.5h3M8.5 11h2"/>',
+  panes3: '<path d="M2 3h12v10H2z"/><path d="M5.5 3v10M9 3v10"/>',
+  panes2: '<path d="M2 3h12v10H2z"/><path d="M6 3v10"/>',
+  left: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  right: '<path d="M6 3.5l4.5 4.5L6 12.5"/>',
+  up: '<path d="M3.5 10L8 5.5l4.5 4.5"/>',
+  down: '<path d="M3.5 6L8 10.5 12.5 6"/>',
+  sun: '<circle cx="8" cy="8" r="2.6"/><path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1"/>',
+  moon: '<path d="M13.2 9.6A5.4 5.4 0 1 1 6.4 2.8a4.3 4.3 0 0 0 6.8 6.8z"/>',
+  settings: '<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><path d="M5.5 3v3M10.5 6.5v3M7 10v3"/>',
+  plus: '<path d="M8 3.5v9M3.5 8h9"/>',
+  tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
+  pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
+  sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
+  search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
+  close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  sort: '<path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3"/>',
+  strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
+  format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',
+  link: '<path d="M6.8 9.2l2.4-2.4"/><path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/>',
+  quote: '<path d="M3 8.5h3.5v4H3zM3 8.5c0-2.5.8-4 3-5M9.5 8.5H13v4H9.5zM9.5 8.5c0-2.5.8-4 3-5"/>',
+  bullets: '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
+  numbers: '<path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7"/><path d="M2.5 3.5l1-.7v3.2M2.4 9.2c.2-.6 1.6-.7 1.6.2 0 .7-1.6 1.2-1.6 1.8h1.7"/>',
+  checklist: '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
+  highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
+  heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
+  grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
+  more: '<circle cx="3.5" cy="8" r=".8"/><circle cx="8" cy="8" r=".8"/><circle cx="12.5" cy="8" r=".8"/>',
+  outdent: '<path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h10"/><path d="M13.5 3v10"/>',
+  filter: '<path d="M2.5 3.5h11l-4.3 5.2v4l-2.4 1.3V8.7z"/>',
+  check: '<path d="M3 8.5l3 3 7-7"/>',
+  back: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
+  palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
+  type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+};
+
+/** An icon as SVG markup, stroked in currentColor. */
+function icon(name, label) {
+  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
+  return `<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" ${a11y}>${ICONS[name]}</svg>`;
+}
+
+/** Fill every [data-icon] with its icon. */
+function drawIcons(root = document) {
+  for (const el of root.querySelectorAll('[data-icon]')) {
+    el.innerHTML = icon(el.dataset.icon) + (el.dataset.iconText ?? '');
+  }
+}
+
+// One list of faces drives every face setting: the text face and the machine
+// voice both choose from it. A face added later is one more entry here (in the
+// app: one entry in core/config, its fonts and its tuning in tokens.css).
+const FACES = [
+  { id: 'plex-mono', name: 'IBM Plex Mono', family: "'IBM Plex Mono', ui-monospace, monospace", mono: true },
+  { id: 'newsreader', name: 'Newsreader', family: "'Newsreader', Georgia, serif" },
+  { id: 'literata', name: 'Literata', family: "'Literata', Georgia, serif" },
+  { id: 'plex-sans', name: 'IBM Plex Sans', family: "'IBM Plex Sans', Arial, sans-serif" },
+  { id: 'source-sans', name: 'Source Sans 3', family: "'Source Sans 3', Arial, sans-serif" },
+  { id: 'atkinson', name: 'Atkinson Hyperlegible Next', family: "'Atkinson Hyperlegible Next', Arial, sans-serif" },
+  { id: 'schibsted', name: 'Schibsted Grotesk', family: "'Schibsted Grotesk', Arial, sans-serif" },
+  { id: 'hanken', name: 'Hanken Grotesk', family: "'Hanken Grotesk', Arial, sans-serif" },
+  { id: 'instrument', name: 'Instrument Sans', family: "'Instrument Sans', Arial, sans-serif" },
+];
+/** The faces the text voice offers (all but the mono), and the machine voice (all). */
+const TEXT_FACES = FACES.filter((face) => !face.mono);
+const MACHINE_FACES = FACES;
+
+function setMachineFace(id) {
+  const face = FACES.find((each) => each.id === id) ?? FACES[0];
+  document.documentElement.style.setProperty('--eien-face-mono', face.family);
+}
+function setTextFace(id) {
+  if (id === 'newsreader') delete document.documentElement.dataset.face;
+  else document.documentElement.dataset.face = id;
+}
+
+/** The explorations' bar: [data-x-set="attr"] groups set data-<attr> on <html>. */
+function wireBar(onChange = () => {}) {
+  for (const group of document.querySelectorAll('[data-x-set]')) {
+    const attr = group.dataset.xSet;
+    const buttons = [...group.querySelectorAll('button[data-value]')];
+    const pick = (value) => {
+      document.documentElement.dataset[attr] = value;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.value === value));
+      onChange(attr, value);
+    };
+    for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
+    pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
+  }
+}
+
+
+const CHAPTERS = [
+  ['The Last Bell', 3412, 'The bell over the inner gate rings three times at dusk, and then once more, which it never does.'],
+  ['Wall Rose, at Dusk', 2876, 'From the top of the wall the farmland is a quilt someone forgot to finish.'],
+  ['Rations', 2204, 'Half a loaf, a strip of dried meat, and a promise from the quartermaster.'],
+  ['What the Recruits Say', 3051, 'They have a name for him in the barracks, and none of them will say it where he can hear.'],
+  ['Night Watch', 2388, 'Two lanterns, one blanket, and eleven hours until the relief comes up the stair.'],
+  ['A Borrowed Coat', 2642, 'The coat is too big in the shoulders and smells of someone else’s pipe.'],
+  ['The Gate Holds', 3980, 'Nobody cheers when the gate holds. They are too tired, and it is too early to know.'],
+  ['Smoke Signals', 2115, 'Green smoke from the east ridge: come home. Red: don’t.'],
+  ['Before the Thaw', 2730, 'The river is still frozen at the edges, and the middle runs black and fast.'],
+  ['The Ledger', 1906, 'Every name is written twice: once when they come, once when they don’t.'],
+];
+const ROMAN = ['i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii','xiii','xiv'];
+const TREE = [
+  { section: 'Library', rows: [{ name: 'All Notes', count: 312 }, { name: 'Pinned', count: 3, icon: 'pin' }] },
+  { section: 'Folders', add: 'New folder', rows: [
+    { name: 'Fic', count: 41, open: true, children: [
+      { name: 'A Mended Scarf', count: 5, book: true }, { name: 'Beneath the Walls', count: 14, book: true, current: true }, { name: 'One-shots', count: 22 } ] },
+    { name: 'Notes', count: 198, open: true, children: [ { name: 'Characters', count: 37 }, { name: 'Places', count: 19 }, { name: 'Research', count: 64 }, { name: 'Scraps', count: 78 } ] },
+    { name: 'Checklists', count: 12 }, { name: 'Reading', count: 61 } ] },
+  { section: 'Tags', add: 'New tag', rows: [
+    { name: 'fic', count: 41, tag: true, open: true, children: [{ name: 'aot', count: 33, tag: true }] },
+    { name: 'draft', count: 14, tag: true }, { name: 'posted', count: 22, tag: true }, { name: 'ideas', count: 57, tag: true } ] },
+];
+const state = { note: 3, view: 'live', tags: ['fic/aot', 'posted'], theme: null, panes: 3 };
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const win = $('#window');
+
+function rowHtml(row, depth) {
+  const kids = row.children ? `<ul style="--depth:${depth}">${row.children.map((c) => rowHtml(c, depth + 1)).join('')}</ul>` : '';
+  const twisty = row.children ? '<span class="twisty"></span>' : '<span class="twisty twisty--leaf"></span>';
+  const name = row.tag ? `<span class="row__hash">#</span>${row.name}` : row.name;
+  return `<li aria-expanded="${row.open ? 'true' : 'false'}"><div class="row${row.empty ? ' row--empty' : ''}" style="--depth:${depth}" ${row.current ? 'aria-current="true"' : ''}>
+    ${twisty}${row.icon ? `<span class="row__icon" data-icon="${row.icon}"></span>` : ''}<span class="row__name">${name}</span>${row.book ? '<span class="book-mark">Book</span>' : ''}<span class="count">${row.count}</span></div>${kids}</li>`;
+}
+function drawTree() {
+  $('#tree').innerHTML = TREE.map((s, i) => `<div class="section" data-i="${i}">
+      <div class="section__head"><button class="section__label" aria-expanded="true"><span class="twisty"></span><span>${s.section}</span></button>
+      ${s.add ? `<button class="icon-button section__add" data-icon="plus" data-tip="${s.add}" aria-label="${s.add}"></button>` : ''}</div>
+      <ul class="tree">${s.rows.map((r) => rowHtml(r, 0)).join('')}</ul></div>`).join('');
+  drawIcons($('#tree'));
+  for (const label of $$('.section__label')) label.onclick = () => {
+    const open = label.getAttribute('aria-expanded') === 'true';
+    label.setAttribute('aria-expanded', String(!open));
+    label.closest('.section').toggleAttribute('data-folded', open);
+  };
+  for (const li of $$('#tree li')) {
+    const row = li.firstElementChild;
+    row.onclick = () => {
+      if (li.querySelector(':scope > ul')) li.setAttribute('aria-expanded', li.getAttribute('aria-expanded') === 'true' ? 'false' : 'true');
+      for (const r of $$('#tree .row')) r.removeAttribute('aria-current');
+      row.setAttribute('aria-current', 'true');
+    };
+  }
+  for (const add of $$('.section__add')) add.onclick = () => {
+    const section = TREE[add.closest('.section').dataset.i];
+    const ul = add.closest('.section').querySelector('.tree');
+    const li = document.createElement('li');
+    li.innerHTML = `<div class="row" style="--depth:0">${section.section === 'Tags' ? '<span class="row__hash">#</span>' : ''}<span class="row__name"><input value="" placeholder="${section.section === 'Tags' ? 'a tag, no notes yet' : 'New folder'}" /></span><span class="count">0</span></div>`;
+    ul.append(li);
+    const input = li.querySelector('input');
+    input.focus();
+    input.onkeydown = (e) => {
+      if (e.key === 'Escape') li.remove();
+      if (e.key !== 'Enter') return;
+      const name = input.value.trim() || 'untitled';
+      li.querySelector('.row__name').textContent = name;
+      li.firstElementChild.classList.add('row--empty');
+    };
+  };
+}
+
+function drawRows() {
+  $('#rows').innerHTML = CHAPTERS.map(([t, w, p], i) => `<div class="note-row" role="option" aria-selected="${i === state.note}" data-i="${i}">
+    <span class="note-row__ord">${ROMAN[i]}</span><span class="note-row__title">${t}</span><span class="note-row__meta count">${w.toLocaleString()} w</span>
+    <span class="note-row__preview">${p}</span></div>`).join('');
+  for (const r of $$('#rows .note-row')) r.onclick = () => { state.note = +r.dataset.i; drawRows(); drawPage(); };
+}
+
+function viewsHtml() {
+  return ['live', 'source', 'reading'].map((v) => `<button class="icon-button" data-icon="${v}" data-view="${v}" aria-pressed="${state.view === v}"
+    data-tip="${{ live: 'Live: formatting shown', source: 'Source: the Markdown', reading: 'Reading: read only' }[v]} ⌘E" aria-label="${v}"></button>`).join('');
+}
+const FMT = [['b', 'B', 'Bold ⌘B'], ['i', 'I', 'Italic ⌘I'], ['u', 'U', 'Underline ⌘U'], ['s', 'S', 'Strikethrough ⇧⌘X'], ['|'], ['heading', '', 'Heading ⌘⌥1–3'], ['highlight', '', 'Highlight ⇧⌘H'], ['link', '', 'Link ⌘K'], ['|'], ['quote', '', 'Quote ⇧⌘.'], ['bullets', '', 'List ⇧⌘8'], ['numbers', '', 'Numbered ⇧⌘7'], ['checklist', '', 'Checklist ⇧⌘9']];
+function drawFmt() {
+  const side = document.documentElement.dataset.x === 'c' ? 'right' : '';
+  $('.fmt').innerHTML = FMT.map(([k, letter, tip]) => k === '|' ? '<span class="sep"></span>'
+    : letter ? `<button class="icon-button" data-tip="${tip}" ${side ? `data-tip-side="${side}"` : ''} aria-label="${tip}"><span class="letter letter--${k}">${letter}</span></button>`
+    : `<button class="icon-button" data-icon="${k}" data-tip="${tip}" ${side ? `data-tip-side="${side}"` : ''} aria-label="${tip}"></button>`).join('');
+  drawIcons($('.fmt'));
+}
+
+function tagsHtml() {
+  return state.tags.map((t, i) => `<span class="tag">#${t}<span class="tag__x" data-untag="${i}" title="Take the tag off">×</span></span>`).join('')
+    + `<button class="icon-button tag-add" data-icon="plus" data-tip="Add a tag #" aria-label="Add a tag"></button>`;
+}
+function sheetHtml(i) {
+  const [title, , first] = CHAPTERS[i];
+  const crumbs = `Fic<span class="sl">/</span>Beneath the Walls<span class="sl">/</span>${ROMAN[i].toUpperCase()}`;
+  const body = state.view === 'source'
+    ? `<div class="prose is-source"><span class="mk">---\ntags: [${state.tags.join(', ')}]\n---</span>\n\n${first} *He* does not ask.\n\n<span class="mk">***</span>\n\nThe recruits learn the wall’s moods the way sailors learn weather.</div>`
+    : `<div class="prose" contenteditable="${state.view === 'live'}" spellcheck="false"><p>${first} <em>He</em> does not ask.</p><p>Instead he takes the late watch, every night of the week, and lets them talk around the brazier as if he were part of the stone.</p><p class="scene">***</p><p>The recruits learn the wall’s moods the way sailors learn weather.</p></div>`;
+  return `<div class="sheet__head"><p class="label crumbs">${crumbs}</p><div class="tags">${tagsHtml()}</div></div>
+    <h1 class="title" contenteditable="${state.view === 'live'}" spellcheck="false">${title}</h1>
+    <div class="tags title-tags">${tagsHtml()}</div>${body}`;
+}
+function wireTags(root) {
+  for (const x of $$('[data-untag]', root)) x.onclick = () => { state.tags.splice(+x.dataset.untag, 1); drawPage(); };
+  for (const add of $$('.tag-add', root)) add.onclick = () => {
+    const field = document.createElement('input');
+    field.className = 'field tag-field'; field.placeholder = '#tag';
+    add.replaceWith(field); field.focus();
+    field.onkeydown = (e) => {
+      if (e.key === 'Escape') drawPage();
+      if (e.key === 'Enter' && field.value.trim()) { state.tags.push(field.value.trim().replace(/^#/, '')); drawPage(); }
+    };
+    field.onblur = () => setTimeout(drawPage, 100);
+  };
+}
+function drawPage() {
+  $('#sheet').innerHTML = sheetHtml(state.note);
+  drawIcons($('#sheet'));
+  wireTags($('#sheet'));
+  for (const v of $$('.views')) v.innerHTML = viewsHtml();
+  drawIcons(win);
+  for (const b of $$('[data-view]')) b.onclick = () => { state.view = b.dataset.view; drawPage(); };
+  $('.runhead__crumbs').innerHTML = $('.crumbs').innerHTML;
+  $('#status').innerHTML = `<span class="status__tags">${state.tags.map((t) => `<span class="tag">#${t}</span>`).join('')}<button class="icon-button tag-add" data-icon="plus" data-tip="Add a tag" data-tip-side="up" aria-label="Add a tag" style="opacity:1"></button></span>
+    <span>${CHAPTERS[state.note][1].toLocaleString()} words</span><span class="dot">·</span><span>Today +809</span><span class="dot">·</span><span><span class="seal seal--small"></span>Sealed Sep 9</span><span class="dot">·</span><span>100%</span>`;
+  drawIcons($('#status'));
+  wireTags($('#status'));
+  $('#slip-fold').innerHTML = icon($('#page').classList.contains('no-strip') ? 'left' : 'right');
+  drawPhones();
+}
+
+function drawFoot() {
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = state.theme ? state.theme === 'dark' : dark;
+  const dn = $('#daynight');
+  dn.innerHTML = icon(isDark ? 'moon' : 'sun');
+  dn.dataset.tip = isDark ? 'Night · switch to day' : 'Day · switch to night';
+  dn.setAttribute('aria-label', dn.dataset.tip);
+  const p = $('#panes');
+  p.innerHTML = icon(state.panes === 3 ? 'panes3' : 'panes2');
+  p.dataset.tip = state.panes === 3 ? 'Three panes · switch to two' : 'Two panes · switch to three';
+  p.setAttribute('aria-label', p.dataset.tip);
+  const sync = document.documentElement.dataset.sync;
+  const s = $('#sync');
+  s.hidden = sync === 'off';
+  s.classList.toggle('is-other', sync === 'other');
+  s.dataset.tip = sync === 'other' ? 'Changed on another device 4m ago' : 'Synced · Syncthing, 4m ago';
+}
+
+function wireActions() {
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const act = b.dataset.act;
+    if (act === 'sidebar') win.classList.toggle('no-sidebar');
+    if (act === 'list') { if (state.panes === 2) return; win.classList.toggle('no-list'); }
+    if (act === 'strip') { $('#page').classList.toggle('no-strip'); drawPage(); }
+    if (act === 'fmt') { $('#page').classList.toggle('show-fmt'); for (const f of $$('[data-act="fmt"]')) f.setAttribute('aria-pressed', String($('#page').classList.contains('show-fmt'))); }
+  });
+  $('#daynight').onclick = () => {
+    const now = $('#daynight').innerHTML.includes('M13.2') ? 'dark' : 'light';
+    state.theme = now === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = state.theme;
+    drawFoot();
+  };
+  $('#panes').onclick = () => { state.panes = state.panes === 3 ? 2 : 3; win.classList.toggle('two-panes', state.panes === 2); drawFoot(); };
+  const weights = () => {
+    const t = $('#w-tree').value, l = $('#w-list').value;
+    document.documentElement.style.setProperty('--eien-weight-tree', t);
+    document.documentElement.style.setProperty('--eien-weight-list', l);
+    $('#w-out').textContent = `${t} · ${l} (chosen ${Math.min(+l + 100, 700)})`;
+  };
+  $('#w-tree').oninput = weights; $('#w-list').oninput = weights;
+}
+
+function drawPhones() {
+  const x = document.documentElement.dataset.x;
+  const acts = `<span class="phone__acts"><button class="icon-button" data-icon="${state.view}" aria-label="View"></button><button class="icon-button" data-icon="more" aria-label="More"></button></span>`;
+  const foot = `<div class="phone__foot">${['live', 'source', 'reading'].map((v) => `<button class="icon-button" data-icon="${v}" aria-pressed="${state.view === v}" aria-label="${v}"></button>`).join('')}<button class="icon-button" data-icon="format" aria-label="Format"></button><button class="icon-button seal-control" aria-label="Seal"><span class="seal" style="--eien-seal-size:18px">永</span></button><button class="icon-button" data-icon="more" aria-label="More"></button></div>`;
+  const fab = `<div class="phone__fab">${['live', 'source', 'reading'].map((v) => `<button class="icon-button" style="--eien-control:40px" data-icon="${v}" aria-pressed="${state.view === v}" aria-label="${v}"></button>`).join('')}<button class="icon-button" style="--eien-control:40px" data-icon="more" aria-label="More"></button></div>`;
+  const status = '<div class="phone__status"><span>9:41</span><span>●●●</span></div>';
+  const index = `<div class="phone">${status}<div class="phone__bar"><button class="phone__back">${icon('back')}Fic</button><span class="phone__title"></span><button class="icon-button" data-icon="search" aria-label="Search"></button><button class="icon-button" data-icon="sort" aria-label="Sort"></button></div>
+    <div class="phone__body"><header class="list__head"><h2 class="list__title">Beneath the Walls</h2><span></span><p class="list__meta label">14 notes · 33,206 words · book</p></header>${$('#rows').innerHTML}</div><div class="phone__foot" style="justify-content:space-between"><span class="sync" data-icon="sync"></span><button class="icon-button" data-icon="plus" aria-label="New note"></button><button class="icon-button" data-icon="settings" aria-label="Settings"></button></div></div>`;
+  const page = `<div class="phone">${status}<div class="phone__bar"><button class="phone__back">${icon('back')}Walls</button><span class="phone__title label">${ROMAN[state.note].toUpperCase()}</span>${x === 'a' ? acts : '<span style="width:44px"></span>'}</div>
+    <div class="phone__body"><article class="sheet">${sheetHtml(state.note)}</article></div>${x === 'c' ? foot : ''}${x === 'b' ? fab : ''}</div>`;
+  $('#phones').innerHTML = index + page;
+  drawIcons($('#phones'));
+}
+
+drawTree(); drawRows(); drawFmt(); wireActions();
+wireBar((attr) => { if (attr === 'x') drawFmt(); drawFoot(); drawPage(); });
+</script>
+</body>
+</html>

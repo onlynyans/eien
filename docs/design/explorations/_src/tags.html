@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en" data-a="head">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Tags on the page</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: 264px minmax(0, 1fr); background: var(--eien-blotter); }
+
+/* The sidebar's Tags, to see a tag made from the + and counts change */
+.sb { background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); padding: var(--eien-space-4) 0; overflow: auto; }
+.sec { position: relative; display: flex; align-items: center; height: var(--eien-row-h); padding: 0 var(--eien-space-3) 0 var(--eien-space-4); }
+.sec .label { flex: 1; }
+.sec .icon-button { width: 26px; height: 26px; opacity: 0; }
+.sec:hover .icon-button, .sec .icon-button:focus-visible { opacity: 1; }
+.trow { display: flex; align-items: baseline; gap: 8px; height: var(--eien-row-h); padding: 0 var(--eien-space-4) 0 calc(28px + var(--d, 0) * 16px); color: var(--eien-ink-soft); }
+.trow .n { flex: 1; line-height: var(--eien-row-h); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trow .h { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+.trow.is-empty .n { color: var(--eien-faded); font-style: italic; }
+.trow.is-new { background: var(--eien-selected); }
+.trow input { font: inherit; border: 0; border-bottom: var(--eien-hairline) solid var(--eien-focus); background: none; outline: none; width: 100%; padding: 0; color: var(--eien-ink); }
+.hint { margin: 2px var(--eien-space-4) 0 28px; font-size: var(--eien-size-preview); color: var(--eien-pencil); font-style: italic; }
+.trow.is-drop { outline: var(--eien-hairline) dashed var(--eien-rule-strong); outline-offset: -3px; }
+
+.page { overflow: auto; padding: var(--eien-space-5); }
+.sheet { width: min(100%, 760px); margin: 0 auto; min-height: 100%; padding: var(--eien-space-7) var(--eien-space-8) var(--eien-space-8); background: var(--eien-paper);
+  border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet); font-size: var(--eien-size-prose); position: relative; }
+.head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eien-space-4); min-height: 24px; }
+.title { font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; margin: var(--eien-space-6) 0; }
+.prose p { line-height: var(--eien-leading-prose); margin: 0 0 var(--eien-space-4); }
+.inline-tag { font-family: var(--eien-face-mono); font-size: 0.68em; color: var(--eien-pencil); background: var(--eien-press); padding: 1px 4px; border-radius: var(--eien-radius-s); }
+.inline-tag.flash { outline: var(--eien-mark-w) solid var(--eien-seal); }
+
+/* The tag, wherever it shows */
+.tagset { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+.t { position: relative; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; cursor: pointer; border-radius: var(--eien-radius-s); }
+.t .x { width: 14px; height: 14px; display: none; color: var(--eien-faded); }
+.t .x svg { width: 10px; height: 10px; }
+.t:hover .x { display: inline-grid; place-items: center; }
+.t.from-text::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--eien-faded); margin-left: 2px; }
+.t.from-text:hover .x { display: none; }
+.add { width: 22px; height: 22px; }
+.tagset .entry { position: relative; }
+.entry input { width: 11em; padding: 2px 8px; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); }
+.suggest { position: absolute; z-index: 20; top: calc(100% + 4px); right: 0; min-width: 220px; padding: 4px; display: grid; gap: 1px;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.suggest button { appearance: none; display: flex; justify-content: space-between; gap: 16px; padding: 5px 8px; border: 0; border-radius: var(--eien-radius-s); background: none; cursor: pointer;
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); text-align: left; }
+.suggest button[aria-selected='true'] { background: var(--eien-selected); color: var(--eien-ink); }
+.suggest .new { border-top: var(--eien-hairline) solid var(--eien-rule-soft); margin-top: 3px; padding-top: 7px; }
+.suggest .count { font-size: 10px; }
+
+/* A · In the running head, right of the breadcrumb */
+:root:not([data-a='head']) .head .tagset { display: none; }
+/* B · Label slips under the title */
+.slips { display: none; margin: calc(var(--eien-space-6) * -0.6) 0 var(--eien-space-6); }
+:root[data-a='slips'] .slips { display: flex; }
+.slips .t { padding: 2px 8px; border: var(--eien-hairline) solid var(--eien-rule); background: var(--eien-band); color: var(--eien-ink-soft); }
+.slips .t:hover { border-color: var(--eien-rule-strong); }
+.slips .suggest { left: 0; right: auto; }
+/* C · The note's card, folded to one line above the title */
+.card { display: none; margin: 0 0 var(--eien-space-2); border: var(--eien-hairline) solid var(--eien-rule-soft); border-radius: var(--eien-radius-s); background: var(--eien-band); }
+:root[data-a='card'] .card { display: block; }
+:root[data-a='card'] .head { display: none; }
+.card__fold { appearance: none; display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px; border: 0; background: none; cursor: pointer; text-align: left; color: var(--eien-pencil); }
+.card__fold .tw { width: 12px; transition: rotate var(--eien-quick) var(--eien-ease); }
+.card[aria-expanded='true'] .card__fold .tw { rotate: 90deg; }
+.card__summary { flex: 1; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card__body { display: none; grid-template-columns: 90px 1fr; gap: 8px 12px; padding: 4px 12px 12px 30px; align-items: baseline; }
+.card[aria-expanded='true'] .card__body { display: grid; }
+.card__body .val { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); }
+.card .suggest { left: 0; right: auto; }
+.keys { margin: var(--eien-space-5) auto 0; width: min(100%, 760px); color: var(--eien-pencil); font-size: var(--eien-size-preview); line-height: 1.6; }
+.keys kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-paper); }
+</style>
+</head>
+<body>
+<header class="xbar">
+  <span class="xbar__name">Eien · Tags on the page</span>
+  <div class="xbar__group" data-x-set="a"><span class="xbar__label">Approach</span>
+    <button class="word-button" data-value="head">A · Running head</button><button class="word-button" data-value="slips">B · Label slips</button><button class="word-button" data-value="card">C · The note's card</button></div>
+  <span class="xnote">Add with + or the # key on the page's head; the sidebar's + makes a tag with no notes yet.</span>
+</header>
+<main class="stage">
+  <aside class="sb">
+    <div class="sec"><span class="label">Tags</span><button class="icon-button" id="new-tag" data-icon="plus" data-tip="New tag" aria-label="New tag"></button></div>
+    <div id="tag-tree"></div>
+  </aside>
+  <div class="page">
+    <article class="sheet">
+      <div class="card" id="card" aria-expanded="false"></div>
+      <div class="head"><span class="label">Fic / Beneath the Walls / iv</span><span class="tagset" data-tags></span></div>
+      <h1 class="title">What the Recruits Say</h1>
+      <div class="tagset slips" data-tags></div>
+      <div class="prose"><p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p>
+        <p>Instead he takes the late watch, every night of the week, and lets them talk around the brazier as if he were part of the stone. <span class="inline-tag" id="inline">#draft</span></p></div>
+    </article>
+    <p class="keys">Tags in the note's front matter (<code>tags:</code>) are the ones added here. A tag typed in the text, like <span class="inline-tag">#draft</span> above, shows with a small dot: it lives in the words, so its × is gone, and choosing it shows where it is. <kbd>#</kbd> on the page's head opens the field; <kbd>↓</kbd> <kbd>↑</kbd> pick, <kbd>Enter</kbd> adds, <kbd>⌫</kbd> in an empty field takes the last tag off, <kbd>Esc</kbd> closes.</p>
+  </div>
+</main>
+<script>
+/*@shared-js*/
+const ALL = { 'fic': 41, 'fic/aot': 33, 'draft': 14, 'posted': 22, 'ideas': 57, 'research': 9 };
+let note = ['fic/aot', 'posted'];
+const inText = ['draft'];
+let folded = true;
+
+function tagHtml(t, fromText) {
+  return `<span class="t${fromText ? ' from-text' : ''}" data-tag="${t}" title="${fromText ? 'In the text: show where' : ''}">#${t}${fromText ? '' : `<button class="icon-button x" data-off="${t}" aria-label="Take #${t} off">${icon('close')}</button>`}</span>`;
+}
+function setHtml() {
+  return note.map((t) => tagHtml(t)).join('') + inText.map((t) => tagHtml(t, true)).join('') +
+    `<span class="entry"><button class="icon-button add" data-add data-icon="plus" data-tip="Add a tag  #" aria-label="Add a tag"></button></span>`;
+}
+function drawTree(newName) {
+  const rows = Object.entries(ALL).map(([t, n]) => `<div class="trow${n === 0 ? ' is-empty' : ''}${t === newName ? ' is-new' : ''}" style="--d:${t.split('/').length - 1}" data-drop="${t}"><span class="h">#</span><span class="n">${t.split('/').pop()}</span><span class="count">${n}</span></div>`);
+  document.getElementById('tag-tree').innerHTML = rows.join('');
+}
+function draw() {
+  for (const el of document.querySelectorAll('[data-tags]')) el.innerHTML = setHtml();
+  const card = document.getElementById('card');
+  card.setAttribute('aria-expanded', String(!folded));
+  card.innerHTML = `<button class="card__fold" data-fold><span class="tw">${icon('right')}</span><span class="card__summary">${[...note, ...inText].map((t) => '#' + t).join('  ')} · Beneath the Walls · 3,051 words</span></button>
+    <div class="card__body"><span class="label">Tags</span><span class="tagset">${setHtml()}</span>
+    <span class="label">Folder</span><span class="val">Fic / Beneath the Walls</span><span class="label">Words</span><span class="val">3,051</span>
+    <span class="label">Sealed</span><span class="val">Sep 9, 21:40</span></div>`;
+  drawIcons();
+  wire();
+}
+function openEntry(entry) {
+  entry.innerHTML = `<input class="field" placeholder="#tag" aria-label="Add a tag" autocomplete="off" /><div class="suggest" role="listbox"></div>`;
+  const input = entry.querySelector('input');
+  const list = entry.querySelector('.suggest');
+  let pick = 0;
+  const options = () => {
+    const q = input.value.trim().replace(/^#/, '').toLowerCase();
+    const have = new Set([...note, ...inText]);
+    const found = Object.entries(ALL).filter(([t]) => !have.has(t) && t.includes(q));
+    const exact = q && Object.hasOwn(ALL, q);
+    return [...found.map(([t, n]) => ({ t, n })), ...(q && !exact ? [{ t: q, n: 'new' }] : [])];
+  };
+  const show = () => {
+    const opts = options();
+    pick = Math.min(pick, Math.max(0, opts.length - 1));
+    list.innerHTML = opts.map((o, i) => `<button role="option" aria-selected="${i === pick}" class="${o.n === 'new' ? 'new' : ''}" data-pick="${o.t}">${o.n === 'new' ? `Make #${o.t}` : '#' + o.t}<span class="count">${o.n === 'new' ? 'new tag' : o.n}</span></button>`).join('');
+    list.hidden = !opts.length;
+    for (const b of list.querySelectorAll('[data-pick]')) b.onmousedown = (e) => { e.preventDefault(); add(b.dataset.pick); };
+  };
+  const add = (t) => { if (!t) return; if (!Object.hasOwn(ALL, t)) ALL[t] = 0; ALL[t] += 1; note.push(t); drawTree(); draw(); };
+  input.oninput = () => { pick = 0; show(); };
+  input.onkeydown = (e) => {
+    const opts = options();
+    if (e.key === 'ArrowDown') { pick = Math.min(pick + 1, opts.length - 1); show(); e.preventDefault(); }
+    if (e.key === 'ArrowUp') { pick = Math.max(pick - 1, 0); show(); e.preventDefault(); }
+    if (e.key === 'Enter') add(opts[pick]?.t);
+    if (e.key === 'Escape') draw();
+    if (e.key === 'Backspace' && !input.value && note.length) { const off = note.pop(); ALL[off] -= 1; drawTree(); draw(); }
+  };
+  input.onblur = () => setTimeout(draw, 120);
+  input.focus(); show();
+}
+function wire() {
+  for (const b of document.querySelectorAll('[data-add]')) b.onclick = () => openEntry(b.parentElement);
+  for (const b of document.querySelectorAll('[data-off]')) b.onclick = (e) => { e.stopPropagation(); const t = b.dataset.off; note = note.filter((x) => x !== t); ALL[t] -= 1; drawTree(); draw(); };
+  for (const t of document.querySelectorAll('.t.from-text')) t.onclick = () => { const el = document.getElementById('inline'); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 900); };
+  for (const b of document.querySelectorAll('[data-fold]')) b.onclick = () => { folded = !folded; draw(); };
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === '#' && !(e.target instanceof HTMLInputElement)) {
+    const shown = [...document.querySelectorAll('[data-add]')].find((b) => b.offsetParent !== null);
+    if (shown) { e.preventDefault(); if (document.documentElement.dataset.a === 'card') folded = false; shown.click(); }
+  }
+});
+// The sidebar's +: a tag with no notes yet, named in place.
+document.getElementById('new-tag').onclick = () => {
+  const tree = document.getElementById('tag-tree');
+  const row = document.createElement('div');
+  row.className = 'trow is-new';
+  row.innerHTML = '<span class="h">#</span><span class="n"><input placeholder="a new tag" aria-label="New tag" /></span><span class="count">0</span>';
+  tree.append(row);
+  const input = row.querySelector('input');
+  input.focus();
+  input.onkeydown = (e) => {
+    if (e.key === 'Escape') drawTree();
+    if (e.key === 'Enter' && input.value.trim()) {
+      const name = input.value.trim().replace(/^#/, '');
+      ALL[name] = 0; drawTree(name);
+      tree.insertAdjacentHTML('beforeend', `<p class="hint">#${name} has no notes yet. Add it from a note’s head, or drop notes on it.</p>`);
+    }
+  };
+};
+drawTree(); draw(); drawIcons();
+wireBar(() => draw());
+</script>
+</body>
+</html>
