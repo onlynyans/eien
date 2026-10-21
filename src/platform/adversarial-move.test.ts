@@ -7,6 +7,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { isValidName, renamedPath } from '../core/paths';
 import { utf8Length } from '../core/paths/names';
+import { CapacitorStorage } from './capacitor/capacitor-storage';
+import { NodeFiles } from './capacitor/node-files';
 import { openDiskStorage } from './electron/disk-storage';
 import { MemoryStorage } from './memory/memory-storage';
 import type { Storage } from './storage';
@@ -18,6 +20,14 @@ interface Subject {
 
 const implementations: Record<string, () => Promise<Subject>> = {
   memory: async () => ({ storage: new MemoryStorage(), cleanup: async () => {} }),
+  // The phone's: Capacitor's file system played by Node's on a folder.
+  capacitor: async () => {
+    const root = await mkdtemp(join(tmpdir(), 'eien-adv-move-phone-'));
+    return {
+      storage: new CapacitorStorage(new NodeFiles(root), { pollMs: 20 }),
+      cleanup: () => rm(root, { recursive: true, force: true }),
+    };
+  },
   disk: async () => {
     const root = await mkdtemp(join(tmpdir(), 'eien-adv-move-'));
     return {

@@ -115,8 +115,11 @@ so two devices never overwrite each other's state through Syncthing.
 - **Durable writes.** Write to a hidden `.name.md.eien.tmp` beside the note,
   flush it to disk, rename it over the note, and flush the folder. A crash
   leaves the old file or the new one, never a partial one. At the next launch
-  a stray temp file newer than its note, holding different words, is kept as
-  `Note (recovered 2026-10-19 16-40).md`; every other one is removed.
+  a stray temp file holding words its note doesn't is kept as
+  `Note (recovered 2026-10-19 16-40).md`, whatever its time: a newer note was
+  changed by another device meanwhile, since this one's next save would have
+  taken the same temp file. One holding the note's own words, or none, is
+  removed; one that can't be read is left for the next launch.
 - **One write at a time.** Writes to one file (case and accents aside) run one
   after another, so two can't both pass the version check. The version is
   checked again after the temp file is flushed, just before it takes the
@@ -281,7 +284,9 @@ CommonMark plus GitHub extensions, and three common additions:
   ago), and only then loses its old name. Folders, and disks without links,
   are looked at once more just before the rename.
 - Names Eien makes stop at 245 bytes, leaving room for a save's temp file; a
-  longer name made elsewhere saves through a shortened temp name.
+  longer name made elsewhere saves through a shortened temp name that keeps
+  its extension (a hash tells two cut alike apart), so a note's words a crash
+  leaves there come back as a note.
 - A folder's `.eien-folder.json` is watched, so an order from another device
   shows at once. Writing an order drops names that aren't there.
 - Every menu opens from the keyboard too (Shift+F10 or the menu key), and a
@@ -417,7 +422,7 @@ src/platform/
   electron/     ✓ Storage over Node fs: durable writes, the watcher, crash recovery
   memory/       ✓ Storage in memory, for tests
   index/        ✓ the vault's index over any Storage: previews, words, tags, search
-  capacitor/     Storage over the phone's file system
+  capacitor/    ✓ Storage over the phone's file system: writes through a temp file, case-only renames in two steps, trash in .eien/trash, polling for changes, recovery after a crash
 src/ui/
   app.ts        ✓ the window: panes, vault and note kept in step
   shell/        ✓ the panes: resizing, collapsing, three or two, kept per device
@@ -436,7 +441,7 @@ src/ui/
   settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions
-  mobile/        Capacitor configuration
+  mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access
 ```
 
 ### Rules for the code
@@ -690,9 +695,16 @@ Compare or Restore finishes lands on a note opened meanwhile.
 ## 10. Mobile and sync
 
 - Android and iOS run the same `ui` and `core` with the Capacitor `Storage`.
-- **Android:** the vault is a folder in shared storage (e.g. `Documents/Eien`),
-  synced by the Syncthing app. Eien asks for the file access it needs once,
-  with a plain explanation.
+- **Android:** the vault is `Documents/Eien` in shared storage, synced by the
+  Syncthing app. Its writes and renames are Eien's own (a small plugin): a
+  write is flushed to the disk, a save's rename replaces the note in one step,
+  and a move, the trash and recovery never rename over a file that's there,
+  even one Syncthing brought a moment ago. Eien asks once for the file access it needs (All files
+  access, from Android 11), after the welcome says why. Eien has no internet
+  permission. Trash goes to `.eien/trash` in the vault, so any device can take
+  it back; exports go to `Documents/Eien Exports`. Eien saves when the phone
+  sends it to the background, and looks at the vault again when it comes back
+  (and every few seconds while it's in front: a phone has no file watcher).
 - **iOS:** the vault lives in Eien's own Files folder, visible in the Files
   app. Syncthing on iOS (Möbius Sync) can sync it. Installing on a device needs
   Xcode and an Apple developer account.
@@ -753,6 +765,18 @@ On macOS, Windows and Linux, each with a fresh temporary vault:
   within 15 s of launch, a search answered within 2 s, a typed change in the
   index within 5 s (on a 2024 Mac: 2.3 s, 0.4 s and 2.8 s)
 
+### The phone
+
+- **In Chromium** (`npm run test:mobile`): the phone's page, with
+  Capacitor's web stand-ins for its plugins (the Filesystem in IndexedDB).
+  The bridge, the storage over the Filesystem's calls, recovery, settings,
+  trash and exports run as on the phone.
+- **On Android** (`npm run test:android`, by hand: it needs an emulator or a
+  phone over adb): Playwright drives Eien's WebView while adb plays Syncthing
+  and the system. The access asked for and refused; a note synced in; saving
+  when the app goes to the background; a restart; a crash's leftovers; a
+  case-only rename on the shared storage, which ignores case.
+
 ### CI (GitHub Actions)
 
 On every push and pull request:
@@ -760,7 +784,8 @@ On every push and pull request:
 1. Biome (lint and format) and TypeScript type check
 2. Unit and storage tests, with coverage reported
 3. End-to-end tests on macOS, Windows and Linux
-4. Android debug build
+4. The phone's page in Chromium
+5. Android debug build, kept for 14 days to install on a phone
 
 On a version tag: release builds for each platform. A pull request
 can't merge while any check fails.

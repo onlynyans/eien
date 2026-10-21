@@ -13,7 +13,7 @@ import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
 import { runCommand } from './commands';
 import { onDiskChanges, touches } from './disk-changes';
-import { type MenuContext, showFolderMenu, showNoteMenu } from './menus';
+import { type MenuContext, showFolderMenu, showNoteMenu, trashNameOn } from './menus';
 import { Navigation } from './navigation';
 import { notePage } from './note-page';
 import { Notice } from './notice';
@@ -40,7 +40,7 @@ export async function showVault(
   openSettings: () => void,
 ): Promise<ShownVault> {
   const state = new VaultState(bridge.vault, name);
-  const trashName = bridge.platform === 'win32' ? 'the Recycle Bin' : 'the trash';
+  const trashName = trashNameOn(bridge.platform);
   const keys = paneKeys(bridge.platform === 'darwin');
   const nav = new Navigation();
   const notice = new Notice(() => void redraw());

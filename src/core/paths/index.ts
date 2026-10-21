@@ -17,6 +17,7 @@ export {
 } from './names';
 export {
   conflictName,
+  extensionOf,
   freeName,
   freeNoteName,
   movedPath,

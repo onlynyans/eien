@@ -93,6 +93,27 @@ export function stampOf(date: Date): string {
 export const conflictName = (fileName: string, date: Date, taken: Iterable<string>): string =>
   freeNoteName(titleOf(fileName), taken, ` (conflict ${stampOf(date)})`);
 
-/** "Note (recovered 2026-10-19 16-40).md": a draft found after a crash. */
-export const recoveredName = (fileName: string, date: Date, taken: Iterable<string>): string =>
-  freeNoteName(titleOf(fileName), taken, ` (recovered ${stampOf(date)})`);
+/** A file's extension (".md"), or "": a dot and up to 16 characters, neither a dot nor a space. */
+export const extensionOf = (name: string): string => /\.[^.\s]{1,16}$/u.exec(name)?.[0] ?? '';
+
+/**
+ * "Note (recovered 2026-10-19 16-40).md": a draft found after a crash, or a
+ * file or folder put back beside what's in its place now. A file keeps its
+ * extension, and a hidden name (".eien-folder.json") stays hidden.
+ */
+export function recoveredName(
+  name: string,
+  date: Date,
+  taken: Iterable<string>,
+  folder = false,
+): string {
+  const hidden = name.startsWith('.');
+  const bare = hidden ? name.slice(1) : name;
+  const extension = folder ? '' : extensionOf(bare);
+  const alike = [...taken]
+    .filter((other) => other.startsWith('.') === hidden)
+    .map((other) => (hidden ? other.slice(1) : other));
+  const base = bare.slice(0, bare.length - extension.length);
+  const free = freeName(base, alike, extension, ` (recovered ${stampOf(date)})`);
+  return hidden ? `.${free}` : free;
+}

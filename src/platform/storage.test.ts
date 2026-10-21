@@ -2,6 +2,7 @@
 // implementation, so the disk and the test double can't drift apart.
 
 import {
+  chmod,
   mkdir,
   mkdtemp,
   readdir,
@@ -16,6 +17,8 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { VaultPathError } from '../core/paths';
+import { CapacitorStorage, TRASH_FOLDER } from './capacitor/capacitor-storage';
+import { NodeFiles } from './capacitor/node-files';
 import {
   type DiskStorage,
   openDiskStorage,
@@ -66,6 +69,26 @@ const implementations: Record<string, () => Promise<Subject>> = {
       },
     };
   },
+};
+
+// The phone's: Capacitor's file system played by Node's on a folder, looked at every 20 ms.
+implementations.capacitor = async () => {
+  const root = await mkdtemp(join(tmpdir(), 'eien-phone-'));
+  return {
+    storage: new CapacitorStorage(new NodeFiles(root), { pollMs: 20 }),
+    putOutside: async (path, text) => {
+      const file = join(root, ...path.split('/'));
+      await mkdir(join(file, '..'), { recursive: true });
+      await writeFile(file, text);
+    },
+    // .eien/trash/<moment>/<name>: the names, as a system's trash shows them.
+    trashed: async () => {
+      const trash = join(root, ...TRASH_FOLDER.split('/'));
+      const moments = await readdir(trash).catch(() => [] as string[]);
+      return (await Promise.all(moments.map((moment) => readdir(join(trash, moment))))).flat();
+    },
+    cleanup: () => rm(root, { recursive: true, force: true }),
+  };
 };
 
 for (const [name, make] of Object.entries(implementations)) {
@@ -427,20 +450,39 @@ describe('disk only', () => {
       ]);
     });
 
-    it('drops a temp file older than its note, or holding the same words, or empty', async () => {
-      await writeFile(join(storage.root, tempNameOf('Old.md')), 'Older draft.');
-      await utimes(
-        join(storage.root, tempNameOf('Old.md')),
-        new Date(2026, 0, 1),
-        new Date(2026, 0, 1),
-      );
-      await storage.write('Old.md', 'Current.', null);
+    it('drops a temp file holding its note’s own words, or none', async () => {
       await storage.write('Same.md', 'Same.', null);
       await writeFile(join(storage.root, tempNameOf('Same.md')), 'Same.');
       await writeFile(join(storage.root, tempNameOf('Empty.md')), '');
       expect(await recoverStrayTemps(storage, at)).toEqual([]);
-      expect((await readdir(storage.root)).sort()).toEqual(['Old.md', 'Same.md']);
+      expect((await readdir(storage.root)).sort()).toEqual(['Same.md']);
     });
+
+    it('keeps a temp file older than its note when its words are other', async () => {
+      // The note was changed since by another device: this one's next save would have taken
+      // the same temp file, so the temp's words are nowhere else.
+      await storage.write('Old.md', 'Current.', null);
+      const temp = join(storage.root, tempNameOf('Old.md'));
+      await writeFile(temp, 'Older draft.');
+      await utimes(temp, new Date(2026, 0, 1), new Date(2026, 0, 1));
+      expect(await recoverStrayTemps(storage, at)).toEqual(['Old (recovered 2026-10-19 16-40).md']);
+    });
+
+    it.skipIf(process.platform === 'win32')(
+      'leaves a temp file it can’t read now, for the next time',
+      async () => {
+        // Its words unread: removing it would lose them unseen.
+        const temp = join(storage.root, tempNameOf('Draft.md'));
+        await writeFile(temp, 'Words with nowhere else.');
+        await chmod(temp, 0o000);
+        try {
+          expect(await recoverStrayTemps(storage, at)).toEqual([]);
+          expect(await readdir(storage.root)).toEqual([tempNameOf('Draft.md')]);
+        } finally {
+          await chmod(temp, 0o600);
+        }
+      },
+    );
 
     it('leaves hidden folders alone', async () => {
       await mkdir(join(storage.root, '.git'));

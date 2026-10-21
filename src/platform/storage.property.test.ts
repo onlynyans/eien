@@ -9,6 +9,8 @@ import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { CapacitorStorage } from './capacitor/capacitor-storage';
+import { NodeFiles } from './capacitor/node-files';
 import { openDiskStorage } from './electron/disk-storage';
 import { MemoryStorage } from './memory/memory-storage';
 import type { Storage } from './storage';
@@ -137,9 +139,25 @@ class Subject {
   }
 }
 
-/** Both storages, the disk's in a temp folder with its system trash played by another. */
-async function subjects(): Promise<{ memory: Subject; disk: Subject; cleanup(): Promise<void> }> {
+/**
+ * The three storages: the disk's in a temp folder with its system trash
+ * played by another, and the phone's over Node's fs in a third.
+ */
+async function subjects(): Promise<{
+  memory: Subject;
+  disk: Subject;
+  phone: Subject;
+  cleanup(): Promise<void>;
+}> {
   const root = await mkdtemp(join(tmpdir(), 'eien-model-'));
+  const phoneRoot = await mkdtemp(join(tmpdir(), 'eien-model-phone-'));
+  const onPhone = new CapacitorStorage(new NodeFiles(phoneRoot));
+  const trashedOnPhone: string[] = [];
+  const trashOnPhone = onPhone.trash.bind(onPhone);
+  onPhone.trash = async (path) => {
+    await trashOnPhone(path);
+    trashedOnPhone.push(path); // in .eien/trash, hidden: the vault no longer shows it
+  };
   const trash = await mkdtemp(join(tmpdir(), 'eien-model-trash-'));
   const trashedOnDisk: string[] = [];
   const onDisk = await openDiskStorage(root, async (file) => {
@@ -151,18 +169,24 @@ async function subjects(): Promise<{ memory: Subject; disk: Subject; cleanup(): 
   return {
     memory: new Subject(inMemory, () => inMemory.trashed),
     disk: new Subject(onDisk, () => trashedOnDisk),
+    phone: new Subject(onPhone, () => trashedOnPhone),
     cleanup: async () => {
       await rm(root, { recursive: true, force: true });
       await rm(trash, { recursive: true, force: true });
+      await rm(phoneRoot, { recursive: true, force: true });
     },
   };
 }
+
+/** Whether a step writes, moves, trashes or makes the vault's own .eien, or something in it. */
+const touchesOwnFolder = (step: object): boolean =>
+  Object.values(step).some((value) => typeof value === 'string' && /^\.eien(?:\/|$)/u.test(value));
 
 // Each run is a vault on disk: a quarter as many runs as the pure properties, with
 // time for a slow disk (Windows takes over 0.2 s a run).
 const RUNS = Math.max(10, Math.round((fc.readConfigureGlobal().numRuns ?? 100) / 4));
 
-describe('Storage, memory and disk, over random runs', () => {
+describe('Storage, memory, disk and phone, over random runs', () => {
   it('give the same answer to every step and leave the same vault', {
     timeout: RUNS * 2000,
   }, async () => {
@@ -170,19 +194,27 @@ describe('Storage, memory and disk, over random runs', () => {
       fc.asyncProperty(
         fc.array(STEP, { minLength: 1, maxLength: 30, size: 'max' }),
         async (steps) => {
-          const { memory, disk, cleanup } = await subjects();
+          const { memory, disk, phone, cleanup } = await subjects();
+          // The phone's trash lives in .eien: a run that writes or moves .eien itself (Eien never
+          // does) leaves it nowhere, so from that step on the phone is left out of the comparison.
+          let phoneToo = true;
           try {
             for (const [i, generated] of steps.entries()) {
               const step = await resolved(generated, memory.storage);
-              const [inMemory, onDisk] = [await memory.run(step), await disk.run(step)];
-              expect({ step: i, ...step, result: onDisk }).toEqual({
-                step: i,
-                ...step,
-                result: inMemory,
-              });
+              if (touchesOwnFolder(step)) phoneToo = false;
+              const inMemory = await memory.run(step);
+              for (const other of phoneToo ? [disk, phone] : [disk]) {
+                expect({ step: i, ...step, result: await other.run(step) }).toEqual({
+                  step: i,
+                  ...step,
+                  result: inMemory,
+                });
+              }
             }
-            expect(await disk.vault()).toEqual(await memory.vault());
-            expect(disk.trashed()).toEqual(memory.trashed());
+            for (const other of phoneToo ? [disk, phone] : [disk]) {
+              expect(await other.vault()).toEqual(await memory.vault());
+              expect(other.trashed()).toEqual(memory.trashed());
+            }
           } finally {
             await cleanup();
           }

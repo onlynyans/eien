@@ -10,12 +10,16 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "build:mobile": "vite build --config vite.mobile.config.ts",
+    "android": "npm run build:mobile && cap sync android",
     "start": "electron-vite preview",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:e2e": "install-electron && npm run build && playwright test --grep-invert @alone && playwright test --grep @alone --workers=1",
+    "test:mobile": "npm run build:mobile && playwright test --config playwright.mobile.config.ts",
+    "test:android": "npm run android && cd android && ./gradlew installDebug -q && cd .. && playwright test --config playwright.android.config.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run test:e2e",
     "test:coverage": "vitest run --coverage",
     "test:mutation": "stryker run"
@@ -25,6 +29,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "@capacitor/cli": "8.5.3",
     "@playwright/test": "1.64.1",
     "@stryker-mutator/core": "10.0.0",
     "@types/node": "24.19.2",
@@ -37,6 +42,12 @@
     "vitest": "5.0.5"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/clipboard": "8.0.1",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/preferences": "8.0.1",
     "@codemirror/commands": "6.11.1",
     "@codemirror/lang-markdown": "6.5.2",
     "@codemirror/language": "6.13.1",

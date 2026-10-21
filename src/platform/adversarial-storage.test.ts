@@ -5,6 +5,8 @@ import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { CapacitorStorage } from './capacitor/capacitor-storage';
+import { NodeFiles } from './capacitor/node-files';
 import { openDiskStorage } from './electron/disk-storage';
 import { MemoryStorage } from './memory/memory-storage';
 import type { Storage, WriteResult } from './storage';
@@ -16,6 +18,14 @@ interface Subject {
 
 const implementations: Record<string, () => Promise<Subject>> = {
   memory: async () => ({ storage: new MemoryStorage(), cleanup: async () => {} }),
+  // The phone's: Capacitor's file system played by Node's on a folder.
+  capacitor: async () => {
+    const root = await mkdtemp(join(tmpdir(), 'eien-adversarial-phone-'));
+    return {
+      storage: new CapacitorStorage(new NodeFiles(root), { pollMs: 20 }),
+      cleanup: () => rm(root, { recursive: true, force: true }),
+    };
+  },
   disk: async () => {
     const root = await mkdtemp(join(tmpdir(), 'eien-adversarial-'));
     return {

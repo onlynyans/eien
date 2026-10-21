@@ -31,6 +31,60 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:coverage
 
+  phone-page:
+    name: Phone page (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # The phone's page with Capacitor's web plugins standing in for the phone's
+      # (playwright.mobile.config.ts). On a device: npm run test:android, by hand.
+      - run: npm run test:mobile
+      - name: Keep the report of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: phone-page-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  android:
+    name: Android debug build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      # The runner has the Android SDK; Gradle needs a JDK it supports.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - run: npm ci
+      - name: The phone's page, copied into the Android project
+        run: npm run android
+      - name: Build the debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      # To try on a phone: Settings → install unknown apps for the browser or Files.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: eien-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
   e2e:
     name: End-to-end (${{ matrix.os }})
     strategy:

@@ -1,11 +1,13 @@
 // After a crash: a write's hidden temp file may be left beside its note
-// (spec §3). One newer than the note, holding different words, is kept as
-// a "(recovered …)" sibling; then every temp file goes. Words never lost.
+// (spec §3). One holding words the note doesn't is kept as a "(recovered …)"
+// sibling; then the temp file goes. One that can't be read now is left for
+// the next time. Words never lost.
 
-import { readdir, readFile, rm, stat } from 'node:fs/promises';
+import { readdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { isHiddenName, recoveredName } from '../../core/paths';
-import { type DiskStorage, TEMP_SUFFIX } from './disk-storage';
+import { besideOf, strayHoldsWords, TEMP_SUFFIX } from '../stray';
+import type { DiskStorage } from './disk-storage';
 
 /** Names of the notes recovered, vault-relative. */
 export async function recoverStrayTemps(storage: DiskStorage, now = new Date()): Promise<string[]> {
@@ -22,16 +24,15 @@ export async function recoverStrayTemps(storage: DiskStorage, now = new Date()):
         await walk(path);
         continue;
       }
-      if (!dirent.isFile() || !dirent.name.startsWith('.') || !dirent.name.endsWith(TEMP_SUFFIX))
-        continue;
+      const noteName = dirent.isFile() ? besideOf(dirent.name, TEMP_SUFFIX) : null;
+      if (noteName === null) continue;
       const temp = join(storage.root, path);
-      const noteName = dirent.name.slice(1, -TEMP_SUFFIX.length);
-      const note = join(storage.root, folder, noteName);
-      const [tempStats, noteStats] = await Promise.all([stat(temp), stat(note).catch(() => null)]);
-      const text = await readFile(temp, 'utf8').catch(() => '');
-      const noteText = noteStats ? await readFile(note, 'utf8').catch(() => null) : null;
-      const newer = !noteStats || tempStats.mtimeMs > noteStats.mtimeMs;
-      if (newer && text.length > 0 && text !== noteText) {
+      const text = await readFile(temp, 'utf8').catch(() => null);
+      if (text === null) continue; // can't be read now: its words unread, it waits for next time
+      const noteText = await readFile(join(storage.root, folder, noteName), 'utf8').catch(
+        () => null,
+      );
+      if (strayHoldsWords(text, noteText)) {
         const name = recoveredName(noteName, now, names);
         const target = folder ? `${folder}/${name}` : name;
         const result = await storage.write(target, text, null);
