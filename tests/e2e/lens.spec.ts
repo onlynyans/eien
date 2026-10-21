@@ -142,3 +142,30 @@ test('with two panes, the chosen row’s lens is in the sidebar, and acts on the
   await lens.locator('.chip').getByRole('button').click();
   await expect(notes).toHaveText(['Thaw', 'Needle', 'Gate', 'Fire']);
 });
+
+test('the sidebar’s TAGS: ⇧ and a click wants a tag in the list’s filter, ⌥ keeps it out (#32)', async ({
+  page,
+}) => {
+  await openFic(page);
+  const tagRow = (tag: string) => page.locator(`.tree-row__name[data-key="tag:${tag}"]`);
+  await tagRow('posted').click({ modifiers: ['Shift'] });
+  await expect(titles(page)).toHaveText(['Thaw', 'Gate']);
+  await expect(page.locator('.list__heading')).toHaveText('Fic'); // still the folder's list
+  await expect(tagRow('posted')).toHaveAttribute('data-filter', 'in');
+  await expect(tagRow('posted').locator('.tree-row__filter')).toHaveAttribute(
+    'aria-label',
+    'wanted',
+  );
+  await tagRow('draft').click({ modifiers: ['Alt'] });
+  await expect(titles(page)).toHaveText(['Thaw']);
+  await expect(tagRow('draft')).toHaveAttribute('data-filter', 'out');
+  await expect(chips(page)).toHaveText(['#posted', '#draft']);
+  // From the keyboard: ⌥Enter keeps out, again, leaves it alone.
+  await tagRow('draft').focus();
+  await page.keyboard.press('Alt+Enter');
+  await expect(tagRow('draft')).not.toHaveAttribute('data-filter', /./);
+  await expect(titles(page)).toHaveText(['Thaw', 'Gate']);
+  // A plain click still chooses the tag.
+  await tagRow('draft').click();
+  await expect(page.locator('.list__heading')).toHaveText('#draft');
+});

@@ -463,6 +463,11 @@ CommonMark plus GitHub extensions, and three common additions:
     none of the kept-out ones; a tag counts with the tags under it (#fic
     finds #fic/aot). Every note clears them all. The list's count says how
     many of how many.
+  - **From the sidebar's TAGS** (#32): ⇧ and a click on a tag (or ⇧Enter)
+    moves it on in the filter of the list showing, ⌥ and a click (or ⌥Enter)
+    keeps it out at once; a plain click still chooses the tag. A tag in the
+    filter shows it on its row: a tick when wanted, struck in carmine with a
+    dash when kept out. With 3,000 notes it holds to the speed budget.
   - **With two panes** the tree lists the notes, and the chosen row's lens is
     in the sidebar, under the search field: the same controls and chips,
     acting on that row's notes in the tree.

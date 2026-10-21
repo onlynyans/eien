@@ -95,6 +95,7 @@ export class PaneDrawer {
       openNote: this.#parts.openNote(),
       books: state.books,
       notice: listShown ? null : notice.text,
+      filter: filterFor(listKey(nav.selection)),
     });
   }
 

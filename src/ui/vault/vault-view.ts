@@ -4,10 +4,11 @@
 // ./chrome-wiring.ts. This wires them together.
 
 import { freeNoteName, joinPath } from '../../core/paths';
+import { nextState, stateOf, withTagState } from '../../core/tags';
 import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
 import { SearchField } from '../list/search-field';
-import { listKey, rememberFilter, rememberSort } from '../list/sorts';
+import { filterFor, listKey, rememberFilter, rememberSort } from '../list/sorts';
 import { filterTags } from '../list/tag-filter-panel';
 import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
@@ -119,6 +120,12 @@ export async function showVault(
       tagMenu: (key, at) => showTagMenu(menus, key, at),
       moveFolder: (path, how) => order.moveFolder(path, how),
       moveTag: (key, by) => order.moveTag(key, by),
+      filterTag: (key, out) => {
+        const list = listKey(nav.selection);
+        const filter = filterFor(list);
+        rememberFilter(list, withTagState(filter, key, nextState(stateOf(filter, key), out)));
+        void redraw();
+      },
       newTag: (tag) => void act(() => organizer.makeTag(tag, true)),
       newFolder: () => void newFolder(nav.selection.kind === 'folder' ? nav.selection.path : ''),
       renameFolder: (path, typed) =>
