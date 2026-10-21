@@ -37,6 +37,28 @@ const filesWith = (over: Partial<FilesPort>) => withCalls(files, over);
 const text = (path: string) => readFile(join(root, ...path.split('/')), 'utf8');
 const names = async (folder = '') => (await readdir(join(root, folder))).sort();
 
+describe('a new file’s write cut short (an import’s image)', () => {
+  it('is removed: what it held is still where it was copied from', async () => {
+    await put('Art/.scarf.png.eien-new', 'PNG');
+    expect(await recoverStrays(files, storage)).toEqual([]);
+    expect(await files.list('Art')).toEqual([]);
+  });
+
+  it('never goes over a file that arrived while its bytes went in', async () => {
+    const racing = new CapacitorStorage(
+      filesWith({
+        writeBytes: async (path, bytes) => {
+          await put('Art/scarf.png', 'theirs'); // Syncthing, a moment after the check
+          await files.writeBytes(path, bytes);
+        },
+      }),
+    );
+    expect(await racing.writeNew('Art/scarf.png', new Uint8Array([1]))).toBe(false);
+    expect(await text('Art/scarf.png')).toBe('theirs');
+    expect((await files.list('Art'))?.map((entry) => entry.name)).toEqual(['scarf.png']);
+  });
+});
+
 describe('a write cut short', () => {
   it('keeps a temp file’s newer words beside its note, and the note as it was', async () => {
     await put('Seventeen.md', 'Old words.', OLD);

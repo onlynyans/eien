@@ -33,6 +33,14 @@ export const putOutside = (page: Page, path: string, text: string) =>
     [path, text, DOCUMENTS] as const,
   );
 
+/** Write a file's bytes (given as base64) in Documents as another app would: an image. */
+export const putBytesOutside = (page: Page, path: string, base64: string) =>
+  page.evaluate(
+    ([path, data, directory]) =>
+      window.Capacitor.Plugins.Filesystem.writeFile({ path, data, directory, recursive: true }),
+    [path, base64, DOCUMENTS] as const,
+  );
+
 /** A file's text in Documents, or null. */
 export const readOutside = (page: Page, path: string) =>
   page.evaluate(

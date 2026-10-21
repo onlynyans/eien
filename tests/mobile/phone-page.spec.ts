@@ -5,7 +5,15 @@
 // would put them on the phone.
 
 import { expect, test } from '@playwright/test';
-import { bytesOutside, listOutside, open, putOutside, readOutside, titles } from './outside';
+import {
+  bytesOutside,
+  listOutside,
+  open,
+  putBytesOutside,
+  putOutside,
+  readOutside,
+  titles,
+} from './outside';
 
 test.use({ viewport: { width: 1100, height: 800 } });
 
@@ -155,6 +163,22 @@ test('a note’s menu exports it as EPUB or Word into Eien/Exports; no PDF on th
   expect(String.fromCharCode(...(epub ?? []).slice(30, 58))).toBe('mimetypeapplication/epub+zip');
   const docx = await bytesOutside(page, 'Eien/Exports/Tear.docx');
   expect(String.fromCharCode(...(docx ?? []).slice(30, 49))).toBe('[Content_Types].xml');
+});
+
+test('the phone’s EPUB carries the note’s image from the vault', async ({ page }) => {
+  await open(page);
+  // A 1×1 GIF, as Syncthing would bring it.
+  const gif = 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+  await putBytesOutside(page, 'Eien/Vault/art/dot.gif', gif);
+  await putOutside(page, 'Eien/Vault/Dot.md', 'A dot: ![dot](art/dot.gif)\n');
+  await expect(titles(page)).toHaveText(['Dot'], { timeout: 10_000 });
+  await page.locator('.note-row', { hasText: 'Dot' }).click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Export…' }).click();
+  await page.getByRole('menuitem', { name: 'EPUB…' }).click();
+  await expect(page.locator('.list__notice')).toHaveText('Saved as “Eien/Exports/Dot.epub”.');
+  const epub = String.fromCharCode(...((await bytesOutside(page, 'Eien/Exports/Dot.epub')) ?? []));
+  expect(epub).toContain('OEBPS/images/image-1.gif');
+  expect(epub).toContain('<img src="images/image-1.gif" alt="dot" />');
 });
 
 test('the phone makes no PDF and imports no folder, and says so', async ({ page }) => {

@@ -9,6 +9,13 @@ import { extensionOf, fitBytes, MAX_NAME_BYTES, utf8Length } from '../core/paths
 export const TEMP_SUFFIX = '.eien.tmp';
 
 /**
+ * The end of a new file's temp name while its bytes go in (Storage.writeNew,
+ * an imported image): ".<name>.eien-new". It holds nothing that isn't still
+ * where it was copied from, so one a crash leaves is simply removed.
+ */
+export const NEW_SUFFIX = '.eien-new';
+
+/**
  * The ends of the hidden names the phone gives a file or folder between the
  * two steps of a case-only rename, and while what holds the trash steps
  * aside: ".<name>.eien-case", ".<name>.eien-trashing". They last a moment; a

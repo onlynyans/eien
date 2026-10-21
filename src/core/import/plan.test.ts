@@ -4,6 +4,7 @@ import { baseName, nameKey, nameProblems, parentOf } from '../paths';
 import { MAX_IMPORT_NOTES, noteTitle, planImport, type SourceFile } from './plan';
 
 const MB8 = 8 * 1024 * 1024;
+const LIMITS = { note: MB8, image: 32 * 1024 * 1024 };
 const files = (...paths: string[]): SourceFile[] => paths.map((path) => ({ path, size: 10 }));
 
 describe('noteTitle', () => {
@@ -21,19 +22,24 @@ describe('noteTitle', () => {
 
 describe('planImport', () => {
   it('copies notes into a new folder named for the one chosen, as ".md", folders and all', () => {
-    const plan = planImport(files('A.md', 'Sub/B.markdown', 'Sub/Deeper/C.txt'), 'Drafts', [], MB8);
+    const plan = planImport(
+      files('A.md', 'Sub/B.markdown', 'Sub/Deeper/C.txt'),
+      'Drafts',
+      [],
+      LIMITS,
+    );
     expect(plan.folder).toBe('Drafts');
     expect(plan.copies).toEqual([
-      { from: 'A.md', to: 'Drafts/A.md' },
-      { from: 'Sub/B.markdown', to: 'Drafts/Sub/B.md' },
-      { from: 'Sub/Deeper/C.txt', to: 'Drafts/Sub/Deeper/C.md' },
+      { from: 'A.md', to: 'Drafts/A.md', kind: 'note' },
+      { from: 'Sub/B.markdown', to: 'Drafts/Sub/B.md', kind: 'note' },
+      { from: 'Sub/Deeper/C.txt', to: 'Drafts/Sub/Deeper/C.md', kind: 'note' },
     ]);
     expect(plan.left).toEqual([]);
   });
 
   it('numbers its folder when the vault has one by that name, case aside', () => {
-    expect(planImport([], 'Drafts', ['drafts', 'Drafts 2'], MB8).folder).toBe('Drafts 3');
-    expect(planImport([], 'Notes', ['Notes.md'], MB8).folder).toBe('Notes');
+    expect(planImport([], 'Drafts', ['drafts', 'Drafts 2'], LIMITS).folder).toBe('Drafts 3');
+    expect(planImport([], 'Notes', ['Notes.md'], LIMITS).folder).toBe('Notes');
   });
 
   it('gives a second name one system would take for the first a number', () => {
@@ -41,7 +47,7 @@ describe('planImport', () => {
       files('notes.md', 'Notes.md', 'Notes.txt', 'Café.md', 'Café.md'),
       'F',
       [],
-      MB8,
+      LIMITS,
     );
     expect(plan.copies.map((copy) => copy.to)).toEqual([
       'F/Café.md',
@@ -53,14 +59,40 @@ describe('planImport', () => {
   });
 
   it('numbers a folder another folder’s name takes, case aside, and keeps their notes apart', () => {
-    const plan = planImport(files('Part/A.md', 'part/A.md'), 'F', [], MB8);
+    const plan = planImport(files('Part/A.md', 'part/A.md'), 'F', [], LIMITS);
     expect(plan.copies.map((copy) => copy.to)).toEqual(['F/Part/A.md', 'F/part 2/A.md']);
+  });
+
+  it('brings images as they are named, in their folders; numbers one another name takes', () => {
+    const plan = planImport(
+      [
+        { path: 'art/Scarf.PNG', size: 10 },
+        { path: 'art/scarf.png', size: 10 },
+        { path: 'art/cover.webp', size: 10 },
+        { path: 'Chapter.md', size: 10 },
+        { path: 'big.jpg', size: 32 * 1024 * 1024 + 1 },
+        { path: 'doc.pdf', size: 10 },
+      ],
+      'F',
+      [],
+      LIMITS,
+    );
+    expect(plan.copies).toEqual([
+      { from: 'Chapter.md', to: 'F/Chapter.md', kind: 'note' },
+      { from: 'art/Scarf.PNG', to: 'F/art/Scarf.PNG', kind: 'image' },
+      { from: 'art/cover.webp', to: 'F/art/cover.webp', kind: 'image' },
+      { from: 'art/scarf.png', to: 'F/art/scarf 2.png', kind: 'image' },
+    ]);
+    expect(plan.left).toEqual([
+      { path: 'big.jpg', reason: 'too-large' },
+      { path: 'doc.pdf', reason: 'not-a-note' },
+    ]);
   });
 
   it('leaves out what isn’t a note, what’s too big, and names some system can’t hold', () => {
     const plan = planImport(
       [
-        { path: 'photo.png', size: 1 },
+        { path: 'paper.pdf', size: 1 },
         { path: 'Big.md', size: MB8 + 1 },
         { path: 'Fits.md', size: MB8 },
         { path: 'CON.md', size: 1 },
@@ -70,7 +102,7 @@ describe('planImport', () => {
       ],
       'F',
       [],
-      MB8,
+      LIMITS,
     );
     expect(plan.copies.map((copy) => copy.from)).toEqual(['Fits.md']);
     expect(plan.left).toEqual([
@@ -79,7 +111,7 @@ describe('planImport', () => {
       { path: 'Trailing. /x.md', reason: 'bad-name' },
       { path: 'a:b.md', reason: 'bad-name' },
       { path: 'aux/x.md', reason: 'bad-name' },
-      { path: 'photo.png', reason: 'not-a-note' },
+      { path: 'paper.pdf', reason: 'not-a-note' },
     ]);
   });
 
@@ -88,7 +120,7 @@ describe('planImport', () => {
       files('.obsidian/app.md', '.DS_Store', 'a/.hidden.md', 'Seen.md'),
       'F',
       [],
-      MB8,
+      LIMITS,
     );
     expect(plan.copies.map((copy) => copy.from)).toEqual(['Seen.md']);
     expect(plan.left).toEqual([]);
@@ -99,7 +131,7 @@ describe('planImport', () => {
       path: `n${String(i).padStart(5, '0')}.md`,
       size: 1,
     }));
-    const plan = planImport(many, 'F', [], MB8);
+    const plan = planImport(many, 'F', [], LIMITS);
     expect(plan.copies).toHaveLength(MAX_IMPORT_NOTES);
     expect(plan.left).toEqual([
       { path: 'n10000.md', reason: 'too-many' },
@@ -121,7 +153,16 @@ describe('planImport', () => {
       'n ',
       '.h',
     );
-    const extension = fc.constantFrom('.md', '.MD', '.txt', '.markdown', '.png', '');
+    const extension = fc.constantFrom(
+      '.md',
+      '.MD',
+      '.txt',
+      '.markdown',
+      '.png',
+      '.PNG',
+      '.pdf',
+      '',
+    );
     const path = fc
       .tuple(fc.array(name, { maxLength: 2 }), name, extension)
       .map(([folders, base, ext]) => [...folders, base + ext].join('/'));
@@ -130,13 +171,13 @@ describe('planImport', () => {
         fc.uniqueArray(path, { maxLength: 12 }),
         fc.array(name, { maxLength: 3 }),
         (paths, vault) => {
-          const plan = planImport(files(...paths), 'Import', vault, MB8);
+          const plan = planImport(files(...paths), 'Import', vault, LIMITS);
           expect(vault.map(nameKey)).not.toContain(nameKey(plan.folder));
           const targets = plan.copies.map((copy) => copy.to);
           expect(new Set(targets.map(nameKey)).size).toBe(targets.length);
           for (const target of targets) {
             expect(target.startsWith(`${plan.folder}/`)).toBe(true);
-            expect(target.endsWith('.md')).toBe(true);
+            expect(/\.(?:md|png)$/iu.test(target)).toBe(true);
             for (const part of target.split('/')) expect(nameProblems(part), target).toEqual([]);
           }
           // A note and a folder beside it never share a name either.

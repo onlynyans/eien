@@ -20,7 +20,7 @@ describe('printHtml', () => {
 
   it('runs nothing and loads nothing', () => {
     expect(html).toContain(
-      `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">`,
+      `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">`,
     );
     expect(html).not.toMatch(/<script|<img|<link|url\(/iu);
   });

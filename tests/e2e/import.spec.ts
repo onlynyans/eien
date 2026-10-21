@@ -75,13 +75,14 @@ test.describe('import', () => {
       'Old.txt': 'Plain text.',
       'Part/Chapter.markdown': 'Chapter words.',
       'photo.png': new Uint8Array([137, 80, 78, 71]),
+      'paper.pdf': '%PDF-',
       '.obsidian/app.json': '{}',
     });
     await choose(app, source);
     await expect(page.locator('.note-row').first()).toBeVisible();
     await clickMenu(app, 'File', 'Import Markdown Folder…');
     await expect(notice(page)).toHaveText(
-      'Imported 3 notes into “Drafts 2”. 1 file didn’t come in.',
+      'Imported 3 notes and 1 image into “Drafts 2”. 1 file didn’t come in.',
     );
     // The new folder is shown, its notes listed.
     await expect(page.locator('.list__heading')).toHaveText('Drafts 2');
@@ -98,7 +99,7 @@ test.describe('import', () => {
     expect(existsSync(join(vault ?? '', 'Drafts 2/.obsidian'))).toBe(false);
     expect(readFileSync(join(source, 'Ideas.md'), 'utf8')).toBe('# Ideas\n\nOne.'); // the original stays
     expect(await boxes(app)).toEqual([
-      { message: '1 file didn’t come in.', detail: 'photo.png: not a note' },
+      { message: '1 file didn’t come in.', detail: 'paper.pdf: neither a note nor an image' },
     ]);
   });
 
@@ -120,15 +121,19 @@ test.describe('import', () => {
     expect(readdirSync(vault ?? '')).toEqual(['Drafts']);
   });
 
-  test('a folder with no notes makes nothing, and says so', async ({ app, page, vault }) => {
-    const source = join(base, 'Pictures');
-    put(source, { 'a.png': 'png', 'b.jpg': 'jpg' });
+  test('a folder with neither notes nor images makes nothing, and says so', async ({
+    app,
+    page,
+    vault,
+  }) => {
+    const source = join(base, 'Papers');
+    put(source, { 'a.pdf': 'pdf', 'b.docx': 'docx' });
     await choose(app, source);
     await expect(page.locator('.note-row').first()).toBeVisible();
     await clickMenu(app, 'File', 'Import Markdown Folder…');
     await expect(notice(page)).toHaveText(
-      'Nothing imported: no notes there. 2 files didn’t come in.',
+      'Nothing imported: no notes or images there. 2 files didn’t come in.',
     );
-    expect(existsSync(join(vault ?? '', 'Pictures'))).toBe(false);
+    expect(existsSync(join(vault ?? '', 'Papers'))).toBe(false);
   });
 });

@@ -11,7 +11,7 @@ import { frontMatterEnd } from '../text';
 import type { QuoteStyle } from '../typography';
 import { References } from './addresses';
 import { escapeHtml, trimSpaces, visible } from './html';
-import { INLINE_TAGS, InlineWriter } from './inline-writer';
+import { type BookFlavor, INLINE_TAGS, InlineWriter } from './inline-writer';
 
 /** AO3's two (the setting's), and a book's centred stars. */
 export type SceneBreakStyle = 'spacer' | 'rule' | 'stars';
@@ -34,9 +34,14 @@ const BLOCK_TAGS = new Set(['p', 'hr', 'blockquote', 'div', 'br', ...INLINE_TAGS
 /** A note's blocks as AO3's: paragraphs, headings, quotes, lists, code, tables, scene breaks. */
 class Writer extends InlineWriter {
   readonly #sceneBreak: SceneBreakStyle;
-  readonly #book: boolean;
+  readonly #book: BookFlavor | null;
 
-  constructor(source: string, options: Ao3Options, references: References, book = false) {
+  constructor(
+    source: string,
+    options: Ao3Options,
+    references: References,
+    book: BookFlavor | null = null,
+  ) {
     super(source, options.quotes, references, book);
     this.#sceneBreak = options.sceneBreak;
     this.#book = book;
@@ -224,16 +229,17 @@ export function toAo3Html(
 /**
  * A note's body (its front matter already left out) as a book's blocks of
  * HTML (spec §8): as AO3's, but a highlight is <mark>, a scene break centred
- * stars, an image its words, and links go to the web or mail only.
+ * stars, an image the address `flavor.image` gives it (or its words), and
+ * links go to the web or mail only.
  */
-export function bookBlocks(body: string, quotes: QuoteStyle): string[] {
+export function bookBlocks(
+  body: string,
+  quotes: QuoteStyle,
+  flavor: BookFlavor = { image: () => null },
+): string[] {
   const source = body.replace(/\r\n?/g, '\n');
   const tree = eienParser.parse(source);
-  const writer = new Writer(
-    source,
-    { quotes, sceneBreak: 'stars' },
-    new References(tree, source),
-    true,
-  );
+  const references = new References(tree, source);
+  const writer = new Writer(source, { quotes, sceneBreak: 'stars' }, references, flavor);
   return writer.blocks(tree.topNode);
 }

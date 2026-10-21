@@ -4,11 +4,11 @@
 // now waits for the next time. A rename the storage makes in two steps can
 // be cut between them too; what's left under its step's hidden name is put
 // back under its own, or, if that's taken now, beside it as "(recovered …)".
-// Words never lost.
+// A new file's temp (an import's image) is removed. Words never lost.
 
 import { isHiddenName, nameKey, recoveredName } from '../../core/paths';
 import type { Storage } from '../storage';
-import { besideOf, steppedFrom, strayHoldsWords, TEMP_SUFFIX } from '../stray';
+import { besideOf, NEW_SUFFIX, steppedFrom, strayHoldsWords, TEMP_SUFFIX } from '../stray';
 import { type FileEntry, type FilesPort, TakenError } from './files';
 
 const joined = (folder: string, name: string) => (folder ? `${folder}/${name}` : name);
@@ -36,6 +36,9 @@ export async function recoverStrays(
         if (put !== null && entry.type === 'directory' && !isHiddenName(back)) await walk(put);
       } else if (entry.type === 'directory') {
         if (!isHiddenName(entry.name)) await walk(path); // .eien, .git and the like
+      } else if (entry.type === 'file' && besideOf(entry.name, NEW_SUFFIX) !== null) {
+        // A new file's bytes cut short (an import's image): still where they were copied from.
+        await files.remove(path).catch(() => undefined);
       } else if (noteName !== null) {
         const made = await keepTemp(files, storage, folder, entry, noteName, names, now);
         if (made !== null) recovered.push(made);

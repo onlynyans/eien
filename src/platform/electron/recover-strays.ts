@@ -3,12 +3,13 @@
 // as a "(recovered …)" sibling, then removed; one that can't be read now is
 // left for the next time. A phone's rename cut between its two steps, brought
 // here by Syncthing, is put back under its own name, or beside what's there
-// now, never over it (Storage.move). Words never lost.
+// now, never over it (Storage.move). A new file's temp (an import's image) is
+// removed: what it held is still where it was copied from. Words never lost.
 
 import { readdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { isHiddenName, nameKey, recoveredName } from '../../core/paths';
-import { besideOf, steppedFrom, strayHoldsWords, TEMP_SUFFIX } from '../stray';
+import { besideOf, NEW_SUFFIX, steppedFrom, strayHoldsWords, TEMP_SUFFIX } from '../stray';
 import type { DiskStorage } from './disk-storage';
 
 /** How many names are tried for a step put back while others keep arriving. */
@@ -42,6 +43,9 @@ export async function recoverStrays(storage: DiskStorage, now = new Date()): Pro
         if (put !== null && dirent.isDirectory() && !isHiddenName(back)) await walk(put);
       } else if (dirent.isDirectory()) {
         if (!isHiddenName(dirent.name)) await walk(path); // .eien, .git and the like
+      } else if (dirent.isFile() && besideOf(dirent.name, NEW_SUFFIX) !== null) {
+        // A new file's bytes cut short (an import's image): still where they were copied from.
+        await rm(join(storage.root, folder, dirent.name), { force: true });
       } else if (dirent.isFile()) {
         const made = await keepTemp(storage, folder, dirent.name, names, now);
         if (made !== null) recovered.push(made);

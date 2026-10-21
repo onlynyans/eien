@@ -1,6 +1,6 @@
 // A model-based test of the Storage contract: random runs of writes (at the
-// version each file is at, and at wrong ones), moves, trashing and new
-// folders, against the test double and the disk. They must give the same
+// version each file is at, and at wrong ones), new files' bytes, moves,
+// trashing and new folders, against the test double and the disk. They must give the same
 // answer to every step, send the same things to the trash, and leave the
 // same vault.
 
@@ -41,6 +41,7 @@ type Expect = 'current' | 'none' | 'earlier' | 'wrong';
 type Step<At = Target> =
   | { readonly kind: 'write'; readonly path: At; readonly text: string; readonly expect: Expect }
   | { readonly kind: 'move'; readonly path: At; readonly to: At }
+  | { readonly kind: 'writeNew'; readonly path: At; readonly bytes: Uint8Array }
   | { readonly kind: 'read' | 'trash' | 'makeFolder'; readonly path: At };
 
 const STEP: fc.Arbitrary<Step> = fc.oneof(
@@ -69,6 +70,14 @@ const STEP: fc.Arbitrary<Step> = fc.oneof(
     }),
   },
   { weight: 1, arbitrary: fc.record({ kind: fc.constant('makeFolder' as const), path: PATH }) },
+  {
+    weight: 1,
+    arbitrary: fc.record({
+      kind: fc.constant('writeNew' as const),
+      path: TARGET,
+      bytes: fc.uint8Array({ maxLength: 8 }),
+    }),
+  },
 );
 
 /** `step` with its targets as paths, picked from what `storage` lists now. */
@@ -103,6 +112,8 @@ class Subject {
           return await this.storage.makeFolder(step.path).then(() => 'made');
         case 'write':
           return await this.#write(step.path, step.text, step.expect);
+        case 'writeNew':
+          return await this.storage.writeNew(step.path, step.bytes);
       }
     } catch {
       return 'threw';
@@ -125,14 +136,14 @@ class Subject {
     return (await this.storage.read(path))?.version ?? null;
   }
 
-  /** Every entry, with each file's text: what a writer would find in the vault. */
+  /** Every entry, with each file's bytes: what a writer would find in the vault. */
   async vault(): Promise<string[]> {
     const entries = await this.storage.list();
     const shown = await Promise.all(
       entries.map(async ({ path, kind, size }) =>
         kind === 'folder'
           ? `${kind} ${path}`
-          : `${kind} ${path} ${size} ${JSON.stringify((await this.storage.read(path))?.text)}`,
+          : `${kind} ${path} ${size} ${[...((await this.storage.readBytes(path)) ?? [])].join(',')}`,
       ),
     );
     return shown.sort();

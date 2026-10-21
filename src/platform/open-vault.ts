@@ -40,6 +40,12 @@ export class OpenVault {
     return result;
   }
 
+  async writeNew(path: string, bytes: Uint8Array): Promise<boolean> {
+    const written = await this.storage.writeNew(path, bytes);
+    if (written) await this.#reindex([path]);
+    return written;
+  }
+
   async move(from: string, to: string): Promise<MoveResult> {
     const result = await this.storage.move(from, to);
     if (result.ok) await this.#reindex([from, to]);

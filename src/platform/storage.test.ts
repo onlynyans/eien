@@ -119,6 +119,27 @@ for (const [name, make] of Object.entries(implementations)) {
       await expect(subject.storage.readBytes('../outside.png')).rejects.toThrow(VaultPathError);
     });
 
+    it('writes a new file’s bytes exactly, making its folders, only where nothing is', async () => {
+      const { storage } = subject;
+      const bytes = Uint8Array.from({ length: 256 }, (_, i) => i);
+      expect(await storage.writeNew('Art/Deep/scarf.png', bytes)).toBe(true);
+      expect([...((await storage.readBytes('Art/Deep/scarf.png')) ?? [])]).toEqual([...bytes]);
+      expect(await storage.listFiles('Art/Deep')).toEqual(['scarf.png']);
+      const listed = (await storage.list()).find((entry) => entry.path === 'Art/Deep/scarf.png');
+      expect(listed).toMatchObject({ kind: 'file', size: 256 });
+      // Something there: a file, a folder, or one put there a moment ago. Never written over.
+      // (Case aside is the system's: Linux keeps two; the import numbers names case aside itself.)
+      expect(await storage.writeNew('Art/Deep/scarf.png', new Uint8Array([1]))).toBe(false);
+      expect([...((await storage.readBytes('Art/Deep/scarf.png')) ?? [])]).toEqual([...bytes]);
+      expect(await storage.writeNew('Art', new Uint8Array([1]))).toBe(false);
+      await subject.putOutside('Art/synced.png', 'from another device');
+      expect(await storage.writeNew('Art/synced.png', new Uint8Array([1]))).toBe(false);
+      expect((await storage.read('Art/synced.png'))?.text).toBe('from another device');
+      await expect(storage.writeNew('../outside.png', new Uint8Array([1]))).rejects.toThrow();
+      expect(await storage.writeNew('Art/empty.png', new Uint8Array())).toBe(true);
+      expect(await storage.readBytes('Art/empty.png')).toEqual(new Uint8Array());
+    });
+
     it('reads back exactly what it wrote, with a version that matches', async () => {
       const result = await subject.storage.write('Note.md', 'Words.', null);
       const read = await subject.storage.read('Note.md');
@@ -440,6 +461,13 @@ describe('disk only', () => {
 
   describe('after a crash', () => {
     const at = new Date(2026, 9, 19, 16, 40);
+
+    it('removes what a new file’s write left (an import’s image, still where it came from)', async () => {
+      await mkdir(join(storage.root, 'Art'));
+      await writeFile(join(storage.root, 'Art', '.scarf.png.eien-new'), new Uint8Array([137, 80]));
+      expect(await recoverStrays(storage, at)).toEqual([]);
+      expect(await readdir(join(storage.root, 'Art'))).toEqual([]);
+    });
 
     it('keeps a temp file newer than its note, with different words, as a recovered note', async () => {
       await storage.write('Seventeen.md', 'Old words.', null);
