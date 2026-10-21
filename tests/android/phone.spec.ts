@@ -179,8 +179,10 @@ test('this device’s settings are kept after a restart', async ({ device }) => 
 test('an export goes to Documents/Eien Exports', async ({ device }) => {
   const page = await startEien(device);
   await expect(page.locator('.shell')).toBeVisible();
-  expect(await page.evaluate(() => window.eien.out.saveAs('Tear', '<p>“One.”</p>'))).toBe(
-    'Eien Exports/Tear.html',
-  );
+  expect(
+    await page.evaluate(() =>
+      window.eien.out.saveAs('Tear', { kind: 'html', text: '<p>“One.”</p>' }),
+    ),
+  ).toBe('Eien Exports/Tear.html');
   expect(await readOnPhone(device, `${EXPORTS}/Tear.html`)).toBe('﻿<p>“One.”</p>');
 });

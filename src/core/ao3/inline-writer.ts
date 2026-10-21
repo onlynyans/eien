@@ -1,11 +1,13 @@
 // Copy for AO3, inline: a block's words, marks and the note's own HTML as
 // AO3 takes them. Quotes follow the vault's setting; code keeps its own.
-// ./to-html.ts writes the blocks round them.
+// ./to-html.ts writes the blocks round them. A book's exports (EPUB, Word,
+// PDF; spec §8) differ only where AO3 has no tag or no place: a highlight
+// is <mark>, an image its words, and a link goes to the web or mail only.
 
 import type { SyntaxNode } from '@lezer/common';
 import { CONTEXT, curlyQuotes, type QuoteStyle, straightQuotes } from '../typography';
-import { bareAddress, destination, type References, safeAddress } from './addresses';
-import { decodeEntities, trimSpaces } from './html';
+import { bareAddress, destination, type References, safeAddress, webAddress } from './addresses';
+import { decodeEntities, escapeAttr, escapeHtml, trimSpaces, visible } from './html';
 
 /** Inline HTML a note may hold (spec §4) that AO3 takes as it is. */
 export const INLINE_TAGS = new Set([
@@ -26,9 +28,6 @@ export const INLINE_TAGS = new Set([
   'q',
 ]);
 
-/** What a page shows of `html`: its words (and images), without its tags. */
-export const visible = (html: string) => html.replace(/<(?!img\b)[^>]*>/gu, '').trim();
-
 /**
  * Lines of a block's HTML (parted by line breaks) without the ones that show
  * nothing (a line of only a note's own tags): their tags join the line before.
@@ -45,10 +44,6 @@ function shownLines(html: string): string {
   }
   return lines.join('<br />\n');
 }
-
-export const escapeHtml = (text: string) =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const escapeAttr = (text: string) => escapeHtml(text).replace(/"/g, '&quot;');
 
 const INLINE_CONTAINERS: Readonly<Record<string, string>> = {
   Emphasis: 'em',
@@ -83,6 +78,8 @@ export class InlineWriter {
   readonly #source: string;
   readonly #quotes: QuoteStyle;
   readonly #references: References;
+  /** Written for a book's exports, not for AO3 (see the top of this file). */
+  readonly #book: boolean;
   /** The last character of text written: what a quote after it opens or closes by. */
   #before = '';
   /** The note's own HTML tags opened in this block and not yet closed. */
@@ -92,10 +89,16 @@ export class InlineWriter {
   /** How many of them were opened outside the element being written: those it can't close. */
   #floor = 0;
 
-  constructor(source: string, quotes: QuoteStyle, references: References) {
+  constructor(source: string, quotes: QuoteStyle, references: References, book = false) {
     this.#source = source;
     this.#quotes = quotes;
     this.#references = references;
+    this.#book = book;
+  }
+
+  /** Whether a link to `href` is kept: one AO3 may follow; in a book, only to the web or mail. */
+  #follows(href: string): boolean {
+    return this.#book ? webAddress(href) : safeAddress(href);
   }
 
   /** Words, escaped, their quotes as the setting asks. */
@@ -157,7 +160,7 @@ export class InlineWriter {
   inlineNode(node: SyntaxNode): string {
     const name = node.name;
     if (MARKS.has(name)) return '';
-    const tag = INLINE_CONTAINERS[name];
+    const tag = INLINE_CONTAINERS[name] ?? (this.#book && name === 'Highlight' ? 'mark' : null);
     if (tag) {
       // Italic inside italic is italic once.
       const nested = (this.#active.get(tag) ?? 0) > 0;
@@ -200,7 +203,7 @@ export class InlineWriter {
       case 'URL': {
         const url = this.slice(node.from, node.to).replace(/^<|>$/g, '');
         const href = bareAddress(url);
-        return safeAddress(href)
+        return this.#follows(href)
           ? `<a href="${escapeAttr(href)}">${this.text(url)}</a>`
           : this.text(url);
       }
@@ -239,7 +242,8 @@ export class InlineWriter {
       return start + words + end;
     }
     const words = this.inline(node, open.to, close.from);
-    if (!safeAddress(href)) return words;
+    // A book carries no images yet: an image is its description.
+    if (!this.#follows(href) || (image && this.#book)) return words;
     if (!image) return `<a href="${escapeAttr(href)}">${words}</a>`;
     const alt = decodeEntities(words.replace(/<[^>]*>/g, ''));
     return `<img src="${escapeAttr(href)}" alt="${escapeAttr(alt)}" />`;

@@ -19,6 +19,10 @@ const SAFE_URL = /^(?:https?:|mailto:|#|\/|\.{0,2}\/|[^:/?#]+(?:[/?#]|$))/iu;
 export const safeAddress = (url: string): boolean =>
   url !== '' && SAFE_URL.test(url.replace(/[\s\p{Cc}]/gu, ''));
 
+/** Whether `url` goes to the web or to mail: all a book's links may go to (spec §8). */
+export const webAddress = (url: string): boolean =>
+  /^(?:https?:\/\/|mailto:)/iu.test(url.replace(/[\s\p{Cc}]/gu, ''));
+
 /** A reference's label as CommonMark matches it: case and runs of spaces don't count. */
 const labelKey = (label: string) => label.trim().replace(/\s+/gu, ' ').toLowerCase();
 

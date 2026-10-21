@@ -80,6 +80,13 @@ export class MobileVault implements VaultBridge {
   trash = async (path: string) => this.#vault().trash(path);
   makeFolder = async (path: string) => this.#vault().makeFolder(path);
 
+  /** Not on the phone (spec §8): a folder copied into Documents/Eien is in the vault already. */
+  importFolder = async (): Promise<never> => {
+    throw new Error(
+      'Importing is on the computer: on the phone, copy the folder into Documents/Eien.',
+    );
+  };
+
   onChange(listener: (paths: string[]) => void): () => void {
     this.#listeners.add(listener);
     return () => this.#listeners.delete(listener);

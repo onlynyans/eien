@@ -8,6 +8,7 @@ export const filesWith = (files: FilesPort, over: Partial<FilesPort>): FilesPort
   readText: (path) => files.readText(path),
   readBytes: (path) => files.readBytes(path),
   writeText: (path, text) => files.writeText(path, text),
+  writeBytes: (path, bytes) => files.writeBytes(path, bytes),
   stat: (path) => files.stat(path),
   list: (folder) => files.list(folder),
   rename: (from, to) => files.rename(from, to),

@@ -10,10 +10,11 @@ import { eienParser } from '../markdown';
 import { frontMatterEnd } from '../text';
 import type { QuoteStyle } from '../typography';
 import { References } from './addresses';
-import { trimSpaces } from './html';
-import { escapeHtml, INLINE_TAGS, InlineWriter, visible } from './inline-writer';
+import { escapeHtml, trimSpaces, visible } from './html';
+import { INLINE_TAGS, InlineWriter } from './inline-writer';
 
-export type SceneBreakStyle = 'spacer' | 'rule';
+/** AO3's two (the setting's), and a book's centred stars. */
+export type SceneBreakStyle = 'spacer' | 'rule' | 'stars';
 
 export interface Ao3Options {
   readonly quotes: QuoteStyle;
@@ -24,6 +25,7 @@ export interface Ao3Options {
 const SCENE_BREAK: Record<SceneBreakStyle, string> = {
   spacer: '<p><br /></p><hr /><p><br /></p>',
   rule: '<hr />',
+  stars: '<p class="scene-break">* * *</p>',
 };
 
 /** Block HTML that may stand alone in a note, and AO3 takes. */
@@ -33,8 +35,8 @@ const BLOCK_TAGS = new Set(['p', 'hr', 'blockquote', 'div', 'br', ...INLINE_TAGS
 class Writer extends InlineWriter {
   readonly #sceneBreak: SceneBreakStyle;
 
-  constructor(source: string, options: Ao3Options, references: References) {
-    super(source, options.quotes, references);
+  constructor(source: string, options: Ao3Options, references: References, book = false) {
+    super(source, options.quotes, references, book);
     this.#sceneBreak = options.sceneBreak;
   }
 
@@ -209,4 +211,21 @@ export function toAo3Html(
   const part = source.slice(Math.max(chosen.from, start), Math.max(chosen.to, start));
   const writer = new Writer(part, options, references);
   return writer.blocks(eienParser.parse(part).topNode).join('\n');
+}
+
+/**
+ * A note's body (its front matter already left out) as a book's blocks of
+ * HTML (spec §8): as AO3's, but a highlight is <mark>, a scene break centred
+ * stars, an image its words, and links go to the web or mail only.
+ */
+export function bookBlocks(body: string, quotes: QuoteStyle): string[] {
+  const source = body.replace(/\r\n?/g, '\n');
+  const tree = eienParser.parse(source);
+  const writer = new Writer(
+    source,
+    { quotes, sceneBreak: 'stars' },
+    new References(tree, source),
+    true,
+  );
+  return writer.blocks(tree.topNode);
 }

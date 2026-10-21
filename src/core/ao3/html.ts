@@ -110,6 +110,13 @@ const NAMED: Readonly<Record<string, string>> = {
   zwnj: '‌',
 };
 
+export const escapeHtml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export const escapeAttr = (text: string) => escapeHtml(text).replace(/"/g, '&quot;');
+
+/** What a page shows of `html`: its words (and images), without its tags. */
+export const visible = (html: string) => html.replace(/<(?!img\b)[^>]*>/gu, '').trim();
+
 /** Spaces, tabs and line ends trimmed: a no-break space is the writer's, and stays. */
 export const trimSpaces = (text: string): string => text.replace(/^[ \t\r\n]+|[ \t\r\n]+$/gu, '');
 

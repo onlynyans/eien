@@ -181,11 +181,61 @@ test('the window cannot reach outside its vault', async ({ page }) => {
 test('an export goes to Eien Exports, never over another', async ({ page }) => {
   await open(page);
   const saved = await page.evaluate(async () => [
-    await window.eien.out.saveAs('Tear', '<p>One.</p>'),
-    await window.eien.out.saveAs('Tear.html', '<p>Two.</p>'),
+    await window.eien.out.saveAs('Tear', { kind: 'html', text: '<p>One.</p>' }),
+    await window.eien.out.saveAs('Tear.html', { kind: 'html', text: '<p>Two.</p>' }),
   ]);
   expect(saved).toEqual(['Eien Exports/Tear.html', 'Eien Exports/Tear 2.html']);
   expect(await readOutside(page, 'Eien Exports/Tear.html')).toBe('﻿<p>One.</p>');
+});
+
+/** A file's bytes in Documents (the Filesystem gives them as base64), or null. */
+const bytesOutside = (page: Page, path: string) =>
+  page.evaluate(
+    ([path, directory]) =>
+      window.Capacitor.Plugins.Filesystem.readFile({ path, directory }).then(
+        (file) => [...atob(file.data)].map((char) => char.charCodeAt(0)),
+        () => null,
+      ),
+    [path, DOCUMENTS] as const,
+  );
+
+test('a note’s menu exports it as EPUB or Word into Eien Exports; no PDF on the phone', async ({
+  page,
+}) => {
+  await open(page);
+  await putOutside(page, 'Eien/Tear.md', 'The scarf ==caught== on the gate.\n');
+  await expect(titles(page)).toHaveText(['Tear'], { timeout: 10_000 });
+  for (const label of ['EPUB…', 'Word (.docx)…']) {
+    await page.locator('.note-row', { hasText: 'Tear' }).click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Export…' }).click();
+    await expect(page.getByRole('menuitem')).toHaveText(['AO3 HTML…', 'EPUB…', 'Word (.docx)…']);
+    await page.getByRole('menuitem', { name: label }).click();
+  }
+  await expect(page.locator('.list__notice')).toHaveText('Saved as “Eien Exports/Tear.docx”.');
+  expect(await listOutside(page, 'Eien Exports')).toEqual(['Tear.docx', 'Tear.epub']);
+  // Zips: an EPUB's first file is its mimetype, stored.
+  const epub = await bytesOutside(page, 'Eien Exports/Tear.epub');
+  expect(String.fromCharCode(...(epub ?? []).slice(0, 4))).toBe('PK\u0003\u0004');
+  expect(String.fromCharCode(...(epub ?? []).slice(30, 58))).toBe('mimetypeapplication/epub+zip');
+  const docx = await bytesOutside(page, 'Eien Exports/Tear.docx');
+  expect(String.fromCharCode(...(docx ?? []).slice(30, 49))).toBe('[Content_Types].xml');
+});
+
+test('the phone makes no PDF and imports no folder, and says so', async ({ page }) => {
+  await open(page);
+  const outcomes = await page.evaluate(async () => ({
+    kinds: window.eien.out.kinds,
+    pdf: await window.eien.out
+      .saveAs('Book', { kind: 'pdf', html: '<p>x</p>', page: 'a4' })
+      .then(String, (error: Error) => error.message),
+    imported: await window.eien.vault.importFolder().then(String, (error: Error) => error.message),
+  }));
+  expect(outcomes).toEqual({
+    kinds: ['html', 'epub', 'docx'],
+    pdf: 'A PDF isn’t made on the phone yet: export it on a computer.',
+    imported: 'Importing is on the computer: on the phone, copy the folder into Documents/Eien.',
+  });
+  expect(await listOutside(page, 'Eien Exports')).toEqual([]);
 });
 
 test('Copy for AO3 puts the HTML on the clipboard', async ({ page, context }) => {

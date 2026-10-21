@@ -1,7 +1,7 @@
 // What the open note's page has besides the note: its seals (../versions),
-// its counters (./counting.ts), Copy for AO3 (./ao3-out.ts), outline cards
-// (./outline.ts) and the settings it follows (./note-page.ts) — made
-// together, kept in step together, stopped together.
+// its counters (./counting.ts), Copy for AO3 (./ao3-out.ts), its exports
+// (./exports.ts), outline cards (./outline.ts) and the settings it follows
+// (./note-page.ts) — made together, kept in step together, stopped together.
 
 import type { Bridge } from '../../platform/bridge';
 import type { Counters } from '../counters/counters';
@@ -10,6 +10,7 @@ import type { SettingsState } from '../settings/settings-state';
 import { VersionsUI } from '../versions/versions-ui';
 import { type Ao3Out, ao3Out } from './ao3-out';
 import { counting } from './counting';
+import { type Exports, exportsOf } from './exports';
 import type { Navigation } from './navigation';
 import { followSettings } from './note-page';
 import type { OpenNote } from './open-note';
@@ -37,6 +38,7 @@ export interface PageParts {
   readonly versions: VersionsUI;
   readonly counters: Counters;
   readonly ao3: Ao3Out;
+  readonly exports: Exports;
   readonly outline: Outline;
   /** Another note open, or the vault read again. */
   sync(): void;
@@ -73,6 +75,15 @@ export function pageParts(of: PagePartsOf): PageParts {
     versions,
     counters: counts.counters,
     ao3: ao3Out({ page, note, out: of.bridge.out, settings, tell }),
+    exports: exportsOf({
+      state,
+      nav: of.nav,
+      note,
+      vault: of.bridge.vault,
+      out: of.bridge.out,
+      settings,
+      tell,
+    }),
     outline,
     sync() {
       versions.sync(); // another note open is seen here, whatever opened or closed it

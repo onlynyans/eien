@@ -36,6 +36,8 @@ export interface FilesPort {
    * replacing one there, and flush it to the disk before resolving. Its folder must exist.
    */
   writeText(path: string, text: string): Promise<void>;
+  /** Write `bytes` to the file, replacing one there (an export: an EPUB, a Word file). Its folder must exist. */
+  writeBytes(path: string, bytes: Uint8Array): Promise<void>;
   /** The file or folder at `path`, or null when there's nothing there. */
   stat(path: string): Promise<FileEntry | null>;
   /** What's directly in the folder at `folder`; null when there's no folder there. */
