@@ -501,6 +501,9 @@ test.describe('dragging cards', () => {
       await page.mouse.move(fire.x + fire.width / 2, fire.y + fire.height / 2, { steps: 6 });
       await page.keyboard.press('Escape');
       await expect(page.locator('.is-lifted')).toHaveCount(0);
+      // A window out of sight holds its timers back; one of the page's own run first makes the
+      // release come after whatever the Esc set going, as it does in a window in front.
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 50)));
       await page.mouse.up();
       await page.waitForTimeout(500);
       await expect(board(page)).toBeVisible();

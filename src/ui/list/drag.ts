@@ -44,6 +44,7 @@ export function watchDrags(
   );
 
   list.addEventListener('pointerdown', (down) => {
+    swallowClick = false; // a new press: a release missed (let go outside the window) is over
     if (down.button !== 0 || down.altKey || down.metaKey || down.ctrlKey || down.shiftKey) return;
     // A finger scrolls the list; on touch a row moves by its menu (Move up, Move to…).
     if (down.pointerType === 'touch') return;
@@ -136,7 +137,8 @@ export function watchDrags(
       mark(null);
     };
 
-    const finish = (commit: boolean) => {
+    /** `released`: the button is up. Esc ends a drag with it still down, and its click to come. */
+    const finish = (commit: boolean, released = true) => {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', up);
       document.removeEventListener('pointercancel', cancel);
@@ -148,9 +150,12 @@ export function watchDrags(
       if (!lifted) return;
       lifted.remove();
       swallowClick = true;
-      setTimeout(() => {
-        swallowClick = false; // in case no click came
-      }, 0);
+      const settle = () =>
+        setTimeout(() => {
+          swallowClick = false; // in case no click came
+        }, 0);
+      if (released) settle();
+      else document.addEventListener('pointerup', settle, { once: true, capture: true });
       const target = drop;
       if (!commit || !target) return;
       if ('folder' in target) actions.moveTo(path, target.folder);
@@ -169,7 +174,7 @@ export function watchDrags(
       if (event.key !== 'Escape' || !lifted) return;
       event.preventDefault();
       event.stopPropagation();
-      finish(false);
+      finish(false, false);
     };
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', up);
