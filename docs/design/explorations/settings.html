@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" data-a="popover">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Eien — Settings, three placements</title>
+<title>Eien — Settings, over the window</title>
 <link rel="stylesheet" href="../fonts.css" />
 <style>
 /* Shared by every exploration (inlined into each page by _build.py).
@@ -206,13 +206,13 @@ button, input { font: inherit; color: inherit; }
 body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
 .stage { min-height: 0; padding: var(--eien-space-4); background: light-dark(#cfc8bd, #0b0907); display: grid; }
 
-/* A small window, so the settings are seen against what they change. */
-.win { position: relative; display: grid; grid-template-columns: 248px 290px minmax(0, 1fr); min-height: 0; border-radius: 10px; overflow: hidden;
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.18), 0 20px 50px rgb(0 0 0 / 0.25); background: var(--eien-blotter); }
+/* A small window, C's frame, so every choice is seen against what it changes. */
+.win { --top: 48px; position: relative; display: grid; grid-template-columns: 248px 290px minmax(0, 1fr); grid-template-rows: var(--top) minmax(0, 1fr);
+  min-height: 0; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.18), 0 20px 50px rgb(0 0 0 / 0.25); background: var(--eien-blotter); }
 .lights { position: absolute; z-index: 30; top: 18px; left: 16px; display: flex; gap: 8px; }
 .lights i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; } .lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
-.sb { background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; }
-.sb__head { height: 56px; display: flex; align-items: center; gap: 12px; padding-left: 84px; font-weight: 600; flex: none; }
+.sb { grid-row: 1 / -1; background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; }
+.sb__head { height: var(--top); display: flex; align-items: center; gap: 12px; padding-left: 84px; font-weight: 600; flex: none; border-bottom: var(--eien-hairline) solid var(--eien-rule); }
 .sb__body { flex: 1; overflow: hidden; padding: 8px 0; }
 .sb .label { display: block; padding: 8px 16px 4px; }
 .r { display: flex; justify-content: space-between; align-items: baseline; height: var(--eien-row-h); padding: 0 16px 0 28px; color: var(--eien-ink-soft); font-weight: var(--eien-weight-tree); }
@@ -220,6 +220,8 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .r.cur::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: var(--eien-seal); }
 .sb__foot { display: flex; align-items: center; gap: 4px; padding: 8px 8px 8px 16px; border-top: var(--eien-hairline) solid var(--eien-rule-soft); flex: none; }
 .sb__foot .count { flex: 1; font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; }
+.runhead { grid-column: 2 / -1; display: flex; align-items: center; gap: 4px; padding: 0 12px; background: var(--runhead-ground, var(--eien-desk)); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.runhead .label { flex: 1; text-align: center; }
 .ls { background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; }
 .ls__head { padding: 12px 16px 16px; background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
 .ls__title { margin: 0 0 4px; font-size: var(--eien-size-heading); font-weight: 500; }
@@ -230,28 +232,60 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .nr .p { grid-column: 2 / -1; font-size: var(--eien-size-preview); color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :root[data-density='compact'] { --eien-row-pad-y: 8px; --eien-sheet-pad-x: 32px; --eien-sheet-pad-top: 24px; --eien-page-gutter: 8px; --eien-title-gap: 16px; --eien-paragraph-gap: 8px; }
 :root[data-density='compact'] .nr .p { display: none; }
-.pg { position: relative; display: grid; grid-template-rows: 56px minmax(0, 1fr) 40px; min-height: 0; }
-.pg__bar { background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); display: flex; align-items: center; justify-content: flex-end; gap: 2px; padding: 0 12px; }
+.pg { position: relative; display: grid; grid-template-rows: minmax(0, 1fr) 40px; min-height: 0; }
 .pg__scroll { overflow: auto; padding: var(--eien-page-gutter); }
 .sheet { max-width: calc(var(--eien-measure) + 144px); margin: 0 auto; min-height: 100%; padding: var(--eien-sheet-pad-top) var(--eien-sheet-pad-x) 48px;
   background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet); font-size: var(--eien-size-prose); }
 :root[data-frame='full'] .pg__scroll { padding: 0; } :root[data-frame='full'] .sheet { border: 0; box-shadow: none; max-width: none; }
 .sheet h1 { font-size: var(--eien-size-title); font-weight: 500; margin: var(--eien-title-gap) 0; line-height: 1.2; }
 .sheet p { line-height: var(--eien-leading-prose); margin: 0 0 var(--eien-paragraph-gap); }
-.status { display: flex; justify-content: center; align-items: center; gap: 8px; background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule);
+.crumbs .sl, .over__crumbs .sl { color: var(--eien-faded); padding: 0 3px; }
+.status { display: flex; justify-content: center; align-items: center; gap: 8px; height: 40px; overflow: hidden; background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule);
   font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
 
-/* ═══ The settings themselves: one renderer, three placements ═══════════ */
-.set { display: grid; gap: var(--eien-space-5); }
-.set__group > .label { display: block; padding-bottom: var(--eien-space-2); margin-bottom: var(--eien-space-3); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
-.setting { display: grid; gap: var(--eien-space-1) var(--eien-space-4); margin-bottom: var(--eien-space-4); }
+/* ═══ Settings: a sheet over the window ═══════════════════════════════════ */
+.scrim { position: absolute; inset: 0; z-index: 35; background: var(--eien-scrim); }
+.win:not(.is-open) .scrim, .win:not(.is-open) .over { display: none; }
+/* NEW: --settings-inset, larger than before; once moved or resized it keeps its own box. */
+.over { --settings-inset: 64px 112px; position: absolute; z-index: 40; inset: var(--settings-inset); display: grid; grid-template-columns: 208px minmax(0, 1fr); overflow: hidden;
+  min-width: 560px; min-height: 380px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-l); box-shadow: var(--eien-shadow-float); }
+.over.is-placed { inset: auto; }
+.over.is-moving { user-select: none; }
+.over__nav { background: var(--eien-desk); padding: 16px 8px 16px; display: grid; align-content: start; gap: 1px; overflow: auto; }
+/* NEW: the category label, in the machine voice: a part title above its tabs. */
+.category { display: flex; align-items: center; gap: 6px; padding: 14px 10px 6px; font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); }
+.category:first-child { padding-top: 2px; }
+.category svg { width: 12px; height: 12px; }
+.tab { appearance: none; display: block; width: 100%; padding: 6px 10px 6px 28px; border: 0; border-radius: var(--eien-radius-s); background: none; cursor: pointer; text-align: left;
+  font-family: var(--eien-face-text); font-size: calc(var(--eien-size-row) * 0.92); color: var(--eien-ink-soft); position: relative; }
+.tab:hover { background: var(--eien-hover); color: var(--eien-ink); }
+.tab[aria-current='true'] { background: var(--eien-selected); color: var(--eien-ink); }
+.tab[aria-current='true']::before { content: ''; position: absolute; left: 0; top: 7px; bottom: 7px; width: var(--eien-mark-w); background: var(--eien-seal); }
+.over__main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.over__head { display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 8px 0 28px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); cursor: grab; }
+.over.is-moving .over__head { cursor: grabbing; }
+.over__crumbs { flex: 1; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.over__crumbs b { font-weight: 400; color: var(--eien-ink-soft); }
+.over__body { overflow: auto; padding: 24px 28px 32px; }
+.grip { position: absolute; z-index: 2; }
+.grip--e { top: 0; right: -3px; bottom: 0; width: 7px; cursor: ew-resize; }
+.grip--s { left: 0; right: 0; bottom: -3px; height: 7px; cursor: ns-resize; }
+.grip--se { right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; color: var(--eien-faded); display: grid; place-items: center; }
+.grip--se svg { width: 14px; height: 14px; }
+
+.setting { display: grid; gap: 4px; margin-bottom: 22px; max-width: 46em; }
 .setting__name { font-size: var(--eien-size-row); color: var(--eien-ink); }
-.setting__desc { margin: 0; font-size: var(--eien-size-preview); color: var(--eien-pencil); line-height: 1.45; max-width: 34em; }
-.choices { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px; justify-self: start; border-radius: var(--eien-radius-m); background: var(--eien-press); margin-top: var(--eien-space-1); }
-.choices .word-button[aria-checked='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); }
+.setting__desc { margin: 0; font-size: var(--eien-size-preview); color: var(--eien-pencil); line-height: 1.45; }
+.choices { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px; justify-self: start; border-radius: var(--eien-radius-m); background: var(--eien-press); margin-top: 4px; }
+.choices .word-button[aria-checked='true'], .choices .icon-button[aria-checked='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); color: var(--eien-ink); }
 .choices .icon-button { width: 34px; height: 26px; }
-.choices .icon-button[aria-checked='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); color: var(--eien-ink); }
-.faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--eien-space-1); margin-top: var(--eien-space-1); }
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.swatch { appearance: none; display: grid; gap: 4px; justify-items: center; padding: 4px; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; cursor: pointer; }
+.swatch i { width: 54px; height: 22px; border-radius: var(--eien-radius-s); box-shadow: inset 0 0 0 1px var(--eien-rule-strong); }
+.swatch span { font-family: var(--eien-face-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--eien-pencil); }
+.swatch[aria-checked='true'] { border-color: var(--eien-rule-strong); }
+.faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; margin-top: 4px; }
 .face { appearance: none; display: grid; gap: 2px; text-align: left; padding: 8px 10px; border: var(--eien-hairline) solid var(--eien-rule-soft); border-radius: var(--eien-radius-s); background: var(--eien-paper); cursor: pointer; color: var(--eien-ink-soft); }
 .face:hover { border-color: var(--eien-rule-strong); }
 .face[aria-checked='true'] { border-color: var(--eien-rule-strong); color: var(--eien-ink); box-shadow: inset 0 0 0 1px var(--eien-rule-strong); }
@@ -260,62 +294,38 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .face__name { font-family: var(--eien-face-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--eien-pencil); }
 .stepper { display: inline-flex; align-items: center; gap: 2px; justify-self: start; }
 .stepper output { min-width: 4.5em; text-align: center; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink); }
-.weight-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--eien-space-3); }
+.weight-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .weight { display: grid; gap: 4px; }
-.weight__sample { padding: 6px 10px; border-radius: var(--eien-radius-s); background: var(--eien-selected); position: relative; }
-.toggle { justify-self: start; }
+.weight__sample { padding: 6px 10px; border-radius: var(--eien-radius-s); background: var(--eien-selected); }
+.sample { padding: 12px 14px; margin-bottom: 22px; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule-soft); border-radius: var(--eien-radius-s); }
+.sample p { margin: 0; font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose); }
+.sample .count { display: block; margin-top: 6px; }
 
-/* A · Popover: anchored to the settings icon, above the sidebar's foot */
-.pop { display: none; position: absolute; z-index: 40; left: 12px; bottom: 52px; width: 420px; max-height: calc(100% - 80px);
-  grid-template-rows: auto auto minmax(0, 1fr); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
-  border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
-:root[data-a='popover'] .win.is-open .pop { display: grid; }
-.pop::after { content: ''; position: absolute; bottom: -6px; left: 197px; width: 10px; height: 10px; rotate: 45deg; background: var(--eien-paper-raised);
-  border-right: var(--eien-hairline) solid var(--eien-rule-strong); border-bottom: var(--eien-hairline) solid var(--eien-rule-strong); }
-.pop__head { display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 16px; }
-.tabs { display: flex; gap: 2px; padding: 0 12px 8px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
-.pop__body { overflow: auto; padding: 16px; }
-.pop .set__group > .label { display: none; }
-
-/* B · In the page: the third pane becomes Settings, as a page you read */
-:root[data-a='page'] .win.is-open .pg__scroll > .sheet { display: none; }
-.inpage { display: none; }
-:root[data-a='page'] .win.is-open .inpage { display: block; }
-.inpage .sheet { max-width: 760px; }
-.inpage__nav { display: flex; gap: 2px; margin: 0 0 var(--eien-space-5); padding-bottom: var(--eien-space-2); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); position: sticky; top: calc(var(--eien-page-gutter) * -1); background: var(--eien-paper); z-index: 2; }
-.inpage__title { font-size: var(--eien-size-title); font-weight: 500; margin: 0 0 var(--eien-space-2); }
-.inpage .setting { grid-template-columns: 200px minmax(0, 1fr); align-items: start; }
-.inpage .setting__desc { grid-column: 1; }
-.inpage .setting > :not(.setting__name):not(.setting__desc) { grid-column: 2; grid-row: 1 / span 2; }
-:root[data-a='page'] .win.is-open .pg__bar .close-page { display: inline-grid; }
-.close-page { display: none; }
-
-/* C · A sheet over the window, with its contents beside it */
-.scrim { display: none; position: absolute; inset: 0; z-index: 35; background: var(--eien-scrim); }
-.over { display: none; position: absolute; z-index: 40; inset: 48px 72px; grid-template-columns: 200px minmax(0, 1fr); overflow: hidden;
-  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-l); box-shadow: var(--eien-shadow-float); }
-:root[data-a='over'] .win.is-open .scrim { display: block; }
-:root[data-a='over'] .win.is-open .over { display: grid; }
-.over__nav { background: var(--eien-desk); padding: 20px 8px; display: grid; align-content: start; gap: 2px; }
-.over__nav .word-button { text-align: left; padding: 6px 10px; }
-.over__nav .word-button[aria-current='true'] { background: var(--eien-selected); color: var(--eien-ink); }
-.over__main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
-.over__head { display: flex; justify-content: space-between; align-items: center; padding: 12px 12px 12px 28px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
-.over__body { overflow: auto; padding: 24px 28px; }
-.over .set__group > .label { display: none; }
-.preview-strip { display: flex; align-items: baseline; gap: 16px; padding: 12px 14px; margin-bottom: 20px; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule-soft); border-radius: var(--eien-radius-s); }
-.preview-strip .big { font-size: var(--eien-size-prose); }
+/* Themes, as three tabs */
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.theme { appearance: none; display: grid; gap: 6px; padding: 8px; border: var(--eien-hairline) solid var(--eien-rule-soft); border-radius: var(--eien-radius-m); background: none; cursor: pointer; text-align: left; color: var(--eien-ink-soft); }
+.theme[aria-checked='true'] { border-color: var(--eien-rule-strong); box-shadow: inset 0 0 0 1px var(--eien-rule-strong); color: var(--eien-ink); }
+.theme__sw { display: grid; grid-template-columns: 1fr 1.3fr 2fr; height: 46px; border-radius: var(--eien-radius-s); overflow: hidden; border: 1px solid rgb(0 0 0 / 0.08); }
+.theme__sw i { display: grid; place-items: center; }
+.theme__sw .ink { width: 60%; height: 3px; border-radius: 2px; } .theme__sw .dot { width: 8px; height: 8px; }
+.theme__name { font-size: var(--eien-size-row); } .theme__kanji { font-family: var(--eien-face-seal); color: var(--eien-pencil); margin-left: 6px; }
+.knob { display: grid; grid-template-columns: 110px 1fr 46px; align-items: center; gap: 8px; max-width: 520px; margin-bottom: 8px; }
+.knob output { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); text-align: right; }
+textarea { width: 100%; max-width: 640px; min-height: 260px; resize: vertical; font-family: var(--eien-face-mono); font-size: 12px; line-height: 1.5; color: var(--eien-ink);
+  background: var(--eien-well); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); padding: 12px; }
+textarea:focus { outline: none; border-color: var(--eien-focus); }
+.errors { color: var(--eien-removed); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: pre-wrap; margin-top: 6px; }
+.verdict { margin-top: 12px; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-added); }
+.verdict.bad { color: var(--eien-caution); }
 </style>
 </head>
 <body>
 <header class="xbar">
-  <span class="xbar__name">Eien · Settings</span>
-  <div class="xbar__group" data-x-set="a"><span class="xbar__label">Approach</span>
-    <button class="word-button" data-value="popover">A · Popover</button><button class="word-button" data-value="page">B · In the page</button><button class="word-button" data-value="over">C · Over the window</button></div>
-  <span class="xnote">Click the settings icon at the sidebar's foot. Every choice changes the window behind, live.</span>
+  <span class="xbar__name">Eien · Settings, over the window</span>
+  <span class="xnote">⌘, or the settings icon. Drag the head to move it, an edge or the corner to resize it; double-click the head to put it back. Every choice changes the window behind, live.</span>
 </header>
 <main class="stage">
-  <div class="win" id="win">
+  <div class="win is-open" id="win">
     <div class="lights"><i></i><i></i><i></i></div>
     <aside class="sb">
       <div class="sb__head"><span class="seal">永</span>Ink &amp; Ash</div>
@@ -323,9 +333,11 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
         <span class="label">Folders</span><div class="r">Fic<span class="count">41</span></div><div class="r cur">Beneath the Walls<span class="count">14</span></div><div class="r">One-shots<span class="count">22</span></div><div class="r">Notes<span class="count">198</span></div></div>
       <div class="sb__foot"><span class="count">312 notes · 48,210 words</span>
         <button class="icon-button" data-icon="sun" aria-label="Day or night"></button>
-        <button class="icon-button" data-icon="panes3" aria-label="Panes"></button>
         <button class="icon-button" id="open" data-icon="settings" data-tip="Settings ⌘," data-tip-side="up" aria-label="Settings"></button></div>
     </aside>
+    <div class="runhead"><button class="icon-button" data-icon="sidebar" aria-label="Sidebar"></button><button class="icon-button" data-icon="list" aria-label="List"></button>
+      <span class="label crumbs">Fic<span class="sl">/</span>Beneath the Walls<span class="sl">/</span>iii</span>
+      <button class="icon-button" data-icon="live" aria-label="Live"></button><button class="icon-button" data-icon="compare" aria-label="Compare"></button><button class="icon-button" data-icon="versions" aria-label="Versions"></button><button class="icon-button" data-icon="focus" aria-label="Focus"></button></div>
     <section class="ls">
       <div class="ls__head"><h2 class="ls__title">Beneath the Walls</h2><span class="label">14 notes · 33,206 words · book</span></div>
       <div class="nr"><span class="count">i</span><span class="t">The Last Bell</span><span class="count">3,412 w</span><span class="p">The bell over the inner gate rings three times.</span></div>
@@ -334,27 +346,20 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
       <div class="nr"><span class="count">iv</span><span class="t">Night Watch</span><span class="count">2,388 w</span><span class="p">Two lanterns, one blanket, and eleven hours.</span></div>
     </section>
     <main class="pg">
-      <div class="pg__bar"><button class="icon-button close-page" data-close data-icon="close" data-tip="Back to the note Esc" aria-label="Close settings"></button></div>
-      <div class="pg__scroll">
-        <article class="sheet"><span class="label">Fic / Beneath the Walls / iii</span><h1>What the Recruits Say</h1>
-          <p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p>
-          <p>Instead he takes the late watch, every night of the week, and lets them talk around the brazier as if he were part of the stone.</p></article>
-        <div class="inpage"><article class="sheet"><span class="label">Eien</span><h1 class="inpage__title">Settings</h1>
-          <nav class="inpage__nav" id="inpage-nav"></nav><div class="set" id="inpage-set"></div></article></div>
-      </div>
+      <div class="pg__scroll"><article class="sheet"><span class="label crumbs">Fic<span class="sl">/</span>Beneath the Walls<span class="sl">/</span>iii</span><h1>What the Recruits Say</h1>
+        <p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p>
+        <p>Instead he takes the late watch, every night of the week, and lets them talk around the brazier as if he were part of the stone.</p></article></div>
       <footer class="status">3,051 words · today +809 · sealed sep 9 · 100%</footer>
     </main>
 
-    <div class="pop" role="dialog" aria-label="Settings">
-      <div class="pop__head"><span class="label">Settings</span><button class="icon-button" data-close data-icon="close" aria-label="Close"></button></div>
-      <div class="tabs" id="pop-tabs"></div>
-      <div class="pop__body"><div class="set" id="pop-set"></div></div>
-    </div>
     <div class="scrim" data-close></div>
-    <div class="over" role="dialog" aria-label="Settings">
-      <nav class="over__nav" id="over-nav"></nav>
-      <div class="over__main"><div class="over__head"><span class="label" id="over-title">Appearance</span><button class="icon-button" data-close data-icon="close" aria-label="Close"></button></div>
-        <div class="over__body"><div class="preview-strip"><span class="big">Aa · They have a name for him</span><span class="count">3,051 words · today +809</span></div><div class="set" id="over-set"></div></div></div>
+    <div class="over" id="over" role="dialog" aria-label="Settings">
+      <nav class="over__nav" id="nav"></nav>
+      <div class="over__main">
+        <div class="over__head" id="head"><p class="label over__crumbs" id="crumbs"></p><button class="icon-button" data-close data-icon="close" data-tip="Close  Esc" aria-label="Close settings"></button></div>
+        <div class="over__body" id="body"></div>
+      </div>
+      <span class="grip grip--e" data-grip="e"></span><span class="grip grip--s" data-grip="s"></span><span class="grip grip--se" data-grip="se" data-icon="resize"></span>
     </div>
   </div>
 </main>
@@ -406,6 +411,13 @@ const ICONS = {
   folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
   palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
   type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+  focus: '<path d="M2.5 4h11" opacity=".35"/><path d="M2.5 8h11"/><path d="M2.5 12h8" opacity=".35"/><path d="M1 6v4M15 6v4"/>',
+  rename: '<path d="M3 11.5h6.5"/><path d="M11.5 3v10M10 3h3M10 13h3"/>',
+  trash: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/>',
+  move: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/><path d="M6.5 9.5h4M9 8l1.5 1.5L9 11"/>',
+  include: '<path d="M8 4v8M4 8h8"/>',
+  exclude: '<path d="M4 8h8"/>',
+  resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
 };
 
 /** An icon as SVG markup, stroked in currentColor. */
@@ -463,83 +475,234 @@ function wireBar(onChange = () => {}) {
   }
 }
 
-// The settings as data, as src/core/config/schema.ts keeps them: each kind is
-// drawn by one function, wherever the settings are shown.
-const GROUPS = [
-  { name: 'Appearance', settings: [
-    { key: 'theme', name: 'Day or night', desc: 'Night is inkstone: the same warm colours, darkened. System follows this computer.', kind: 'choice',
-      options: [['system', 'System'], ['light', 'Day', 'sun'], ['dark', 'Night', 'moon']], value: 'light' },
-    { key: 'palette', name: 'Palette', desc: 'Washi is Eien’s paper and sumi ink; Otaku is cool grey round warm paper. Your own themes join these.', kind: 'choice',
-      options: [['washi', 'Washi'], ['otaku', 'Otaku'], ['kinari', 'Kinari']], value: 'washi' },
-    { key: 'face', name: 'Typeface', desc: 'For everything a person wrote: notes, titles, names.', kind: 'faces', faces: () => TEXT_FACES, value: 'newsreader' },
-    { key: 'machine', name: 'Machine voice', desc: 'For what the machine counts and what you press: counts, labels, the status line.', kind: 'faces', faces: () => MACHINE_FACES, machine: true, value: 'plex-mono' },
-    { key: 'size', name: 'Text size', desc: 'The typeface everywhere, from the size it’s tuned to.', kind: 'stepper', value: 100 },
+// Themes: [day, night] for each colour token. The rules are the ink at low
+// strength, so they follow it. Washi is tokens.css's own; the rest are new.
+const THEME_TOKENS = ['desk', 'blotter', 'band', 'paper', 'selected', 'ink', 'ink-soft', 'pencil', 'faded', 'seal'];
+const THEMES = {
+  washi: { name: 'Washi', kanji: '和紙', note: 'Eien’s own: paper and sumi ink', t: {
+    desk: ['#d9d2c8', '#110e0b'], blotter: ['#eae5dd', '#1a1713'], band: ['#f4f1ea', '#201d19'], paper: ['#fdfbf7', '#28241f'], selected: ['#ede9e3', '#38332e'],
+    ink: ['#23201c', '#e9e2d4'], 'ink-soft': ['#51473c', '#c3b9a7'], pencil: ['#5d5348', '#a7a095'], faded: ['#766d62', '#837c73'], seal: ['#c4472d', '#e0603f'] } },
+  kinari: { name: 'Kinari', kanji: '生成り', note: 'Unbleached cloth: yellower paper, a persimmon seal', t: {
+    desk: ['#d8cfb8', '#14110a'], blotter: ['#e9e2cd', '#1c180f'], band: ['#f3eedd', '#231e14'], paper: ['#fcf9ee', '#2b251a'], selected: ['#ece5d1', '#3b3426'],
+    ink: ['#2a2418', '#ece3cc'], 'ink-soft': ['#574a33', '#c8bb9c'], pencil: ['#5f523d', '#ab9f86'], faded: ['#7b6d56', '#88806d'], seal: ['#b8432a', '#dc6a43'] } },
+  aizome: { name: 'Aizome', kanji: '藍染', note: 'Indigo dye: cool paper, blue-black ink', t: {
+    desk: ['#c9cfd8', '#0b0e14'], blotter: ['#dfe3e9', '#121620'], band: ['#edf0f4', '#181d28'], paper: ['#fbfcfd', '#1f2533'], selected: ['#e3e8ef', '#2e3648'],
+    ink: ['#17213a', '#dde4f0'], 'ink-soft': ['#34405c', '#b3bfd6'], pencil: ['#3f4b64', '#97a3ba'], faded: ['#5f6a80', '#7a8599'], seal: ['#c4472d', '#e3664a'] } },
+  koke: { name: 'Koke', kanji: '苔', note: 'A moss garden: green-grey desk, quiet ink', t: {
+    desk: ['#cdd2c4', '#0d100b'], blotter: ['#e1e5d9', '#141811'], band: ['#eef0e8', '#1a1f16'], paper: ['#fafbf6', '#21271c'], selected: ['#e5e9dc', '#30382a'],
+    ink: ['#1f2619', '#e2e8d6'], 'ink-soft': ['#3e4833', '#bcc6ab'], pencil: ['#48523c', '#a0aa90'], faded: ['#67705a', '#808a72'], seal: ['#a8432f', '#d76a4e'] } },
+  rosoku: { name: 'Rōsoku', kanji: '蝋燭', note: 'Candlelight: amber at night, no blue light', t: {
+    desk: ['#dccab2', '#120c06'], blotter: ['#ecdfcb', '#1b130b'], band: ['#f5ece0', '#22180e'], paper: ['#fdf8f0', '#2a1f13'], selected: ['#efe3d1', '#3c2d1e'],
+    ink: ['#2b1d10', '#f0dcc0'], 'ink-soft': ['#5a4129', '#d2b894'], pencil: ['#634d37', '#b39b7c'], faded: ['#7f6a53', '#8f7c64'], seal: ['#b9442b', '#e8763f'] } },
+  sumi: { name: 'Sumi', kanji: '墨', note: 'For tired eyes: the most contrast there is', t: {
+    desk: ['#cfcfcc', '#000000'], blotter: ['#e6e6e3', '#0a0a0a'], band: ['#f2f2ef', '#141414'], paper: ['#ffffff', '#1b1b1b'], selected: ['#e8e8e4', '#2c2c2c'],
+    ink: ['#000000', '#f5f5f2'], 'ink-soft': ['#262626', '#d9d9d4'], pencil: ['#3a3a3a', '#bdbdb8'], faded: ['#5e5e5e', '#8f8f8a'], seal: ['#c4361d', '#ff6a45'] } },
+  sakura: { name: 'Sakura-nezumi', kanji: '桜鼠', note: 'Cherry-grey: plum ink, a rose seal', t: {
+    desk: ['#d8cdcc', '#120d0e'], blotter: ['#e9e1e0', '#1b1415'], band: ['#f3eeed', '#221a1b'], paper: ['#fdfafa', '#2a2122'], selected: ['#eee6e5', '#3a2f30'],
+    ink: ['#2a1e20', '#efe1e2'], 'ink-soft': ['#573f43', '#cbb5b8'], pencil: ['#5f464a', '#ad989b'], faded: ['#7c6468', '#8d7b7d'], seal: ['#b2394a', '#e0697a'] } },
+};
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function luminance(h) {
+  return hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; })
+    .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+/** "Mix your own": four choices, and every token worked out from them, day and night. */
+function mixTheme({ paper: ph, warmth: w, ink: ih, seal: sh }, name = 'My Room') {
+  const surf = (dl, nl) => [hsl(ph, w, dl), hsl(ph, Math.min(w, 22), nl)];
+  return { name, kanji: '', note: 'Mixed here', t: {
+    desk: surf(83, 5), blotter: surf(89, 8), band: surf(94, 11), paper: surf(98.5, 14), selected: surf(91, 19),
+    ink: [hsl(ih, 22, 12), hsl(ih, 25, 88)], 'ink-soft': [hsl(ih, 18, 27), hsl(ih, 16, 72)], pencil: [hsl(ih, 12, 31), hsl(ih, 9, 62)],
+    faded: [hsl(ih, 9, 43), hsl(ih, 6, 52)], seal: [hsl(sh, 63, 47), hsl(sh, 72, 56)] } };
+}
+/** A theme on the whole page: each token as light-dark(day, night); the rules from the ink. */
+function applyTheme(theme, el = document.documentElement) {
+  for (const k of THEME_TOKENS) el.style.setProperty(`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`);
+  const [d, n] = theme.t.ink.map((c) => hexRgb(c).join(' '));
+  el.style.setProperty('--eien-rule-soft', `light-dark(rgb(${d} / 0.07), rgb(${n} / 0.07))`);
+  el.style.setProperty('--eien-rule', `light-dark(rgb(${d} / 0.13), rgb(${n} / 0.14))`);
+  el.style.setProperty('--eien-rule-strong', `light-dark(rgb(${d} / 0.26), rgb(${n} / 0.26))`);
+  el.style.setProperty('--eien-paper-raised', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 45%, #fff), color-mix(in srgb, ${theme.t.paper[1]} 88%, #fff))`);
+  el.style.setProperty('--eien-well', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 70%, ${theme.t.band[0]}), color-mix(in srgb, ${theme.t.paper[1]} 60%, ${theme.t.blotter[1]}))`);
+}
+
+// The settings as data: categories (machine-voice part titles) and their tabs,
+// each tab a list of settings drawn by kind. A setting added is one entry.
+const CATEGORIES = [
+  { name: 'Look', icon: 'type', tabs: [
+    { name: 'Appearance', settings: [
+      { key: 'theme', name: 'Day or night', desc: 'Night is inkstone: the same warm colours, darkened. System follows this computer.', kind: 'choice', options: [['system', 'System'], ['light', 'Day', 'sun'], ['dark', 'Night', 'moon']] },
+      { key: 'ground', name: 'Running head', desc: 'The strip across the top of the window. Its ground is one of the theme’s own surfaces, so it follows any theme.', kind: 'swatches', options: ['desk', 'blotter', 'band', 'paper', 'selected'] },
+      { key: 'density', name: 'Density', desc: 'Compact keeps the type at its size and takes away space.', kind: 'choice', options: [['comfortable', 'Comfortable'], ['compact', 'Compact']] },
+    ] },
+    { name: 'Type', sample: true, settings: [
+      { key: 'face', name: 'Typeface', desc: 'For everything a person wrote: notes, titles, names.', kind: 'faces', faces: () => TEXT_FACES },
+      { key: 'machine', name: 'Machine voice', desc: 'For what the machine counts and what you press: counts, labels, the status line.', kind: 'faces', faces: () => MACHINE_FACES, machine: true },
+      { key: 'size', name: 'Text size', desc: 'The typeface everywhere, from the size it’s tuned to.', kind: 'stepper' },
+      { key: 'weights', name: 'Weight of names', desc: 'How heavy names sit in the sidebar and titles in the list. A chosen title is a step heavier.', kind: 'weights' },
+    ] },
+    { name: 'Page', settings: [
+      { key: 'frame', name: 'Page', desc: 'A sheet on the blotter, or paper from edge to edge.', kind: 'choice', options: [['sheet', 'Sheet'], ['full', 'Full']] },
+      { key: 'numerals', name: 'Chapter numbers', desc: 'In a book’s list and its breadcrumb.', kind: 'choice', options: [['roman', 'i ii iii'], ['arabic', '1 2 3']] },
+    ] },
   ] },
-  { name: 'Lists', settings: [
-    { key: 'weights', name: 'Weight of names', desc: 'How heavy names sit in the sidebar and titles in the list. A chosen title is a step heavier.', kind: 'weights' },
-    { key: 'density', name: 'Density', desc: 'Compact keeps the type at its size and takes away space.', kind: 'choice', options: [['comfortable', 'Comfortable'], ['compact', 'Compact']], value: 'comfortable' },
-    { key: 'panes', name: 'Panes', desc: 'Two panes put the notes in the sidebar’s tree.', kind: 'choice', options: [['3', 'Three', 'panes3'], ['2', 'Two', 'panes2']], value: '3' },
+  { name: 'Themes', icon: 'palette', tabs: [
+    { name: 'Gallery', kind: 'gallery' },
+    { name: 'Mix your own', kind: 'mix' },
+    { name: 'From a file', kind: 'file' },
   ] },
-  { name: 'Page', settings: [
-    { key: 'frame', name: 'Page', desc: 'A sheet on the blotter, or paper from edge to edge.', kind: 'choice', options: [['sheet', 'Sheet'], ['full', 'Full']], value: 'sheet' },
-    { key: 'numerals', name: 'Chapter numbers', desc: 'In a book’s list and its breadcrumb.', kind: 'choice', options: [['roman', 'i ii iii'], ['arabic', '1 2 3']], value: 'roman' },
-    { key: 'typewriter', name: 'Typewriter scrolling', desc: 'The line you write stays at the middle of the page.', kind: 'choice', options: [['off', 'Off'], ['on', 'On']], value: 'off' },
+  { name: 'Writing', icon: 'live', tabs: [
+    { name: 'Lists', settings: [
+      { key: 'panes', name: 'Panes', desc: 'Two panes put the notes in the sidebar’s tree.', kind: 'choice', options: [['3', 'Three', 'panes3'], ['2', 'Two', 'panes2']] },
+      { key: 'arrange', name: 'Arranging', desc: 'Drag to reorder whenever no sort is laid over your order, or only after choosing Arrange, so nothing moves by accident.', kind: 'choice', options: [['drag', 'Drag anytime'], ['mode', 'In Arrange mode']] },
+    ] },
+    { name: 'Editor', settings: [
+      { key: 'typewriter', name: 'Typewriter scrolling', desc: 'The line you write stays at the middle of the page.', kind: 'choice', options: [['off', 'Off'], ['on', 'On']] },
+      { key: 'focus', name: 'Focus mode', desc: 'Every paragraph but the one you’re in recedes. ⇧⌘↵ turns it on and off.', kind: 'choice', options: [['off', 'Off'], ['on', 'On']] },
+    ] },
   ] },
 ];
-const values = Object.fromEntries(GROUPS.flatMap((g) => g.settings.map((s) => [s.key, s.value])));
-values.weightTree = 400; values.weightList = 400;
+const v = { theme: 'light', ground: 'desk', density: 'comfortable', face: 'newsreader', machine: 'plex-mono', size: 100, weightTree: 400, weightList: 400,
+  frame: 'sheet', numerals: 'roman', panes: '3', arrange: 'drag', typewriter: 'off', focus: 'off', themeId: 'washi' };
+const knobs = { paper: 38, warmth: 18, ink: 30, seal: 12 };
+let shown = ['Look', 'Appearance'];
 
 function apply() {
   const root = document.documentElement;
-  if (values.theme === 'system') delete root.dataset.theme; else root.dataset.theme = values.theme;
-  setTextFace(values.face); setMachineFace(values.machine);
-  root.style.fontSize = `${values.size}%`;
-  root.dataset.density = values.density; root.dataset.frame = values.frame;
-  root.style.setProperty('--eien-weight-tree', values.weightTree); root.style.setProperty('--eien-weight-list', values.weightList);
+  if (v.theme === 'system') delete root.dataset.theme; else root.dataset.theme = v.theme;
+  setTextFace(v.face); setMachineFace(v.machine);
+  root.style.fontSize = `${v.size}%`;
+  root.dataset.density = v.density; root.dataset.frame = v.frame;
+  root.style.setProperty('--eien-weight-tree', v.weightTree); root.style.setProperty('--eien-weight-list', v.weightList);
+  root.style.setProperty('--runhead-ground', `var(--eien-${v.ground})`);
 }
-
-function settingHtml(s) {
-  const head = `<span class="setting__name">${s.name}</span><p class="setting__desc">${s.desc}</p>`;
-  if (s.kind === 'choice') return `<div class="setting">${head}<div class="choices" role="radiogroup" aria-label="${s.name}">${s.options.map(([v, label, ic]) =>
-    ic ? `<button class="icon-button" role="radio" aria-checked="${values[s.key] === v}" data-key="${s.key}" data-v="${v}" data-tip="${label}" aria-label="${label}">${icon(ic)}</button>`
-       : `<button class="word-button" role="radio" aria-checked="${values[s.key] === v}" data-key="${s.key}" data-v="${v}">${label}</button>`).join('')}</div></div>`;
-  if (s.kind === 'faces') return `<div class="setting">${head}<div class="faces" role="radiogroup" aria-label="${s.name}">${s.faces().map((f) =>
-    `<button class="face" role="radio" aria-checked="${values[s.key] === f.id}" data-key="${s.key}" data-v="${f.id}">
-      <span class="face__sample${s.machine ? ' face__sample--machine' : ''}" style="font-family:${f.family}">${s.machine ? '312 notes' : 'Aa Gg'}</span><span class="face__name">${f.name}</span></button>`).join('')}</div></div>`;
-  if (s.kind === 'stepper') return `<div class="setting">${head}<div class="stepper"><button class="icon-button" data-step="-10" data-icon="down" aria-label="Smaller"></button><output>${values.size}%</output><button class="icon-button" data-step="10" data-icon="up" aria-label="Larger"></button></div></div>`;
-  if (s.kind === 'weights') return `<div class="setting">${head}<div class="weight-pair">${[['weightTree', 'Sidebar names', 'Beneath the Walls'], ['weightList', 'List titles', 'What the Recruits Say']].map(([k, label, sample]) =>
+const head = (s) => `<span class="setting__name">${s.name}</span><p class="setting__desc">${s.desc}</p>`;
+const radio = (key, val, inner, extra = '') => `role="radio" aria-checked="${String(v[key]) === String(val)}" data-key="${key}" data-v="${val}" ${extra}`;
+const KINDS = {
+  choice: (s) => `<div class="choices" role="radiogroup" aria-label="${s.name}">${s.options.map(([val, label, ic]) => ic
+    ? `<button class="icon-button" ${radio(s.key, val)} data-tip="${label}" aria-label="${label}">${icon(ic)}</button>`
+    : `<button class="word-button" ${radio(s.key, val)}>${label}</button>`).join('')}</div>`,
+  swatches: (s) => `<div class="swatches" role="radiogroup" aria-label="${s.name}">${s.options.map((t) =>
+    `<button class="swatch" ${radio(s.key, t)} data-tip="--eien-${t}"><i style="background:var(--eien-${t})"></i><span>${t}</span></button>`).join('')}</div>`,
+  faces: (s) => `<div class="faces" role="radiogroup" aria-label="${s.name}">${s.faces().map((f) => `<button class="face" ${radio(s.key, f.id)}>
+    <span class="face__sample${s.machine ? ' face__sample--machine' : ''}" style="font-family:${f.family}">${s.machine ? '312 notes' : 'Aa Gg'}</span><span class="face__name">${f.name}</span></button>`).join('')}</div>`,
+  stepper: () => `<div class="stepper"><button class="icon-button" data-step="-10" aria-label="Smaller">${icon('down')}</button><output>${v.size}%</output><button class="icon-button" data-step="10" aria-label="Larger">${icon('up')}</button></div>`,
+  weights: () => `<div class="weight-pair">${[['weightTree', 'Sidebar names', 'Beneath the Walls'], ['weightList', 'List titles', 'What the Recruits Say']].map(([k, label, sample]) =>
     `<div class="weight"><span class="label">${label}</span><div class="choices" role="radiogroup" aria-label="${label}">${[400, 500, 600, 700].map((w) =>
-      `<button class="word-button" role="radio" aria-checked="${values[k] === w}" data-key="${k}" data-v="${w}" style="font-weight:${w}">${w}</button>`).join('')}</div>
-      <span class="weight__sample" style="font-weight:${k === 'weightList' ? Math.min(values[k] + 100, 700) : values[k]}">${sample}</span></div>`).join('')}</div></div>`;
-  return '';
-}
-const groupHtml = (g) => `<section class="set__group" data-group="${g.name}"><span class="label">${g.name}</span>${g.settings.map(settingHtml).join('')}</section>`;
+      `<button class="word-button" ${radio(k, w)} style="font-weight:${w}">${w}</button>`).join('')}</div>
+      <span class="weight__sample" style="font-weight:${k === 'weightList' ? Math.min(v[k] + 100, 700) : v[k]}">${sample}</span></div>`).join('')}</div>`,
+};
+const settingHtml = (s) => `<div class="setting">${head(s)}${KINDS[s.kind](s)}</div>`;
 
-let groupShown = 'Appearance';
-function draw() {
-  const a = document.documentElement.dataset.a;
-  const one = GROUPS.find((g) => g.name === groupShown);
-  const tabs = (cls) => GROUPS.map((g) => `<button class="word-button" ${cls}="${g.name === groupShown}" data-group-pick="${g.name}">${g.name}</button>`).join('');
-  document.getElementById('pop-tabs').innerHTML = tabs('aria-pressed');
-  document.getElementById('pop-set').innerHTML = groupHtml(one);
-  document.getElementById('over-nav').innerHTML = tabs('aria-current');
-  document.getElementById('over-title').textContent = groupShown;
-  document.getElementById('over-set').innerHTML = groupHtml(one);
-  document.getElementById('inpage-nav').innerHTML = GROUPS.map((g) => `<a class="word-button" href="#g-${g.name}">${g.name}</a>`).join('');
-  document.getElementById('inpage-set').innerHTML = GROUPS.map((g) => groupHtml(g).replace('<section', `<section id="g-${g.name}"`)).join('');
-  drawIcons(document.getElementById('win'));
-  for (const b of document.querySelectorAll('[data-key]')) b.onclick = () => {
-    const v = b.dataset.v; values[b.dataset.key] = /^\d+$/.test(v) && b.dataset.key.startsWith('weight') ? +v : v; apply(); draw();
-  };
-  for (const b of document.querySelectorAll('[data-step]')) b.onclick = () => { values.size = Math.max(90, Math.min(130, values.size + +b.dataset.step)); apply(); draw(); };
-  for (const b of document.querySelectorAll('[data-group-pick]')) b.onclick = () => { groupShown = b.dataset.groupPick; draw(); };
+function themeBody(kind) {
+  if (kind === 'gallery') return `<p class="setting__desc" style="margin-bottom:14px">Each keeps Eien’s order of surfaces and its contrast, by day and by night. Your own join these.</p>
+    <div class="gallery">${Object.entries(THEMES).map(([id, th]) => `<button class="theme" ${radio('themeId', id)}><span class="theme__sw"><i style="background:${th.t.desk[0]}"></i><i style="background:${th.t.paper[0]}"><span class="ink" style="background:${th.t.ink[0]}"></span></i><i style="background:${th.t.paper[1]}"><span class="dot" style="background:${th.t.seal[1]}"></span></i></span>
+      <span><span class="theme__name">${th.name}</span><span class="theme__kanji">${th.kanji}</span></span><span class="label" style="font-size:9px">${th.note}</span></button>`).join('')}</div>`;
+  if (kind === 'mix') return `<p class="setting__desc" style="margin-bottom:14px">Four choices, and every colour worked out from them, day and night. The surfaces keep their steps, so it stays legible whatever you pick.</p>
+    ${[['paper', 'Paper hue', 360], ['warmth', 'Warmth', 40], ['ink', 'Ink hue', 360], ['seal', 'Seal hue', 360]].map(([k, label, max]) =>
+      `<label class="knob"><span class="label">${label}</span><input type="range" min="0" max="${max}" value="${knobs[k]}" data-knob="${k}" /><output>${knobs[k]}</output></label>`).join('')}
+    <div class="verdict" id="verdict"></div><p><button class="word-button" id="to-file">Save to .eien/themes</button></p>`;
+  return `<p class="setting__desc" style="margin-bottom:10px">A theme is a JSON file in .eien/themes/, so it syncs with the vault. Only Eien’s tokens are taken, and only colours; anything else is named here and left out.</p>
+    <textarea id="json" spellcheck="false" aria-label="Theme file"></textarea><div class="errors" id="errors"></div>`;
 }
-const win = document.getElementById('win');
-document.getElementById('open').onclick = () => win.classList.toggle('is-open');
+/** Whether a theme keeps Eien's contrast: text 4.5:1, faded 3:1, on every surface, day and night. */
+function verdict(theme) {
+  const bad = [];
+  for (const s of [0, 1]) for (const ink of ['ink-soft', 'pencil', 'faded']) for (const surf of ['desk', 'band', 'paper', 'selected']) {
+    const c = contrast(theme.t[ink][s], theme.t[surf][s]);
+    if (c < (ink === 'faded' ? 3 : 4.5)) bad.push(`${ink} on ${surf} ${s ? 'by night' : 'by day'} ${c.toFixed(1)}:1`);
+  }
+  return bad;
+}
+function readFile() {
+  const errors = []; let data;
+  try { data = JSON.parse(document.getElementById('json').value); } catch (e) { document.getElementById('errors').textContent = `Not JSON yet: ${e.message}`; return; }
+  const t = {};
+  for (const [key, value] of Object.entries(data.tokens ?? {})) {
+    const k = key.replace(/^--eien-/, '');
+    if (!THEME_TOKENS.includes(k)) { errors.push(`${key}: not one of Eien's tokens, left out`); continue; }
+    const m = /^light-dark\(\s*(#[0-9a-f]{6})\s*,\s*(#[0-9a-f]{6})\s*\)$/i.exec(value);
+    if (!m) { errors.push(`${key}: write it as light-dark(#rrggbb, #rrggbb)`); continue; }
+    t[k] = [m[1], m[2]];
+  }
+  for (const k of THEME_TOKENS) t[k] ??= THEMES.washi.t[k];
+  const theme = { name: data.name ?? 'Untitled', t };
+  errors.push(...verdict(theme).map((b) => `under Eien's contrast: ${b}`));
+  document.getElementById('errors').textContent = errors.join('\n');
+  applyTheme(theme);
+}
+const fileOf = (theme) => JSON.stringify({ name: theme.name, tokens: Object.fromEntries(THEME_TOKENS.map((k) => [`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`])) }, null, 2);
+
+function draw() {
+  const [cat, tabName] = shown;
+  const category = CATEGORIES.find((c) => c.name === cat);
+  const tab = category.tabs.find((t) => t.name === tabName);
+  document.getElementById('nav').innerHTML = CATEGORIES.map((c) => `<span class="category">${icon(c.icon)}${c.name}</span>${c.tabs.map((t) =>
+    `<button class="tab" aria-current="${c.name === cat && t.name === tabName}" data-tab="${c.name}|${t.name}">${t.name}</button>`).join('')}`).join('');
+  document.getElementById('crumbs').innerHTML = `Settings<span class="sl">/</span>${cat}<span class="sl">/</span><b>${tabName}</b>`;
+  const sample = tab.sample ? `<div class="sample"><p>They have a name for him in the barracks, and none of them will say it where he can hear.</p><span class="count">3,051 words · today +809</span></div>` : '';
+  document.getElementById('body').innerHTML = sample + (tab.kind ? themeBody(tab.kind) : tab.settings.map(settingHtml).join(''));
+  wire(tab);
+}
+function wire(tab) {
+  for (const b of document.querySelectorAll('[data-tab]')) b.onclick = () => { shown = b.dataset.tab.split('|'); draw(); };
+  for (const b of document.querySelectorAll('#body [data-key]')) b.onclick = () => {
+    const k = b.dataset.key; v[k] = k.startsWith('weight') ? +b.dataset.v : b.dataset.v;
+    if (k === 'themeId') applyTheme(THEMES[v.themeId]);
+    apply(); draw();
+  };
+  for (const b of document.querySelectorAll('[data-step]')) b.onclick = () => { v.size = Math.max(90, Math.min(130, v.size + +b.dataset.step)); apply(); draw(); };
+  if (tab.kind === 'mix') {
+    const mix = () => { const th = mixTheme(knobs); applyTheme(th); const bad = verdict(th); const el = document.getElementById('verdict');
+      el.textContent = bad.length ? `Under Eien's contrast: ${bad[0]}` : 'Every ink keeps Eien’s contrast, by day and by night.'; el.classList.toggle('bad', bad.length > 0); };
+    for (const r of document.querySelectorAll('[data-knob]')) r.oninput = () => { knobs[r.dataset.knob] = +r.value; r.nextElementSibling.textContent = r.value; mix(); };
+    document.getElementById('to-file').onclick = () => { const th = mixTheme(knobs); shown = ['Themes', 'From a file']; draw(); document.getElementById('json').value = fileOf(th); readFile(); };
+    mix();
+  }
+  if (tab.kind === 'file') { const j = document.getElementById('json'); if (!j.value) j.value = fileOf(THEMES.kinari); j.oninput = readFile; readFile(); }
+}
+
+// Moving and resizing: within the window, never smaller than it can be used.
+const over = document.getElementById('over'), win = document.getElementById('win');
+function place(box) {
+  const W = win.clientWidth, H = win.clientHeight;
+  box.w = Math.min(Math.max(box.w, 560), W - 16); box.h = Math.min(Math.max(box.h, 380), H - 16);
+  box.x = Math.min(Math.max(box.x, 8), W - box.w - 8); box.y = Math.min(Math.max(box.y, 8), H - box.h - 8);
+  over.classList.add('is-placed');
+  Object.assign(over.style, { left: `${box.x}px`, top: `${box.y}px`, width: `${box.w}px`, height: `${box.h}px` });
+  try { localStorage.setItem('eien.settingsBox', JSON.stringify(box)); } catch {}
+}
+function boxNow() { const r = over.getBoundingClientRect(), w = win.getBoundingClientRect(); return { x: r.left - w.left, y: r.top - w.top, w: r.width, h: r.height }; }
+function drag(e, how) {
+  if (e.button !== 0 || e.target.closest('button')) return;
+  e.preventDefault();
+  const start = boxNow(), x0 = e.clientX, y0 = e.clientY;
+  over.classList.add('is-moving');
+  const move = (m) => {
+    const dx = m.clientX - x0, dy = m.clientY - y0, b = { ...start };
+    if (how === 'move') { b.x += dx; b.y += dy; }
+    if (how.includes('e')) b.w += dx;
+    if (how.includes('s')) b.h += dy;
+    place(b);
+  };
+  const up = () => { over.classList.remove('is-moving'); removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
+  addEventListener('pointermove', move); addEventListener('pointerup', up);
+}
+document.getElementById('head').addEventListener('pointerdown', (e) => drag(e, 'move'));
+for (const g of document.querySelectorAll('[data-grip]')) g.addEventListener('pointerdown', (e) => drag(e, g.dataset.grip));
+document.getElementById('head').addEventListener('dblclick', (e) => { if (e.target.closest('button')) return; over.classList.remove('is-placed'); over.removeAttribute('style'); try { localStorage.removeItem('eien.settingsBox'); } catch {} });
+try { const saved = JSON.parse(localStorage.getItem('eien.settingsBox')); if (saved) requestAnimationFrame(() => place(saved)); } catch {}
+
+document.getElementById('open').onclick = () => win.classList.add('is-open');
 document.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) win.classList.remove('is-open'); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') win.classList.remove('is-open'); });
-wireBar(() => { win.classList.add('is-open'); draw(); });
-apply(); drawIcons(); draw(); win.classList.add('is-open');
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') win.classList.remove('is-open');
+  if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); win.classList.add('is-open'); }
+});
+apply(); drawIcons(); draw();
 </script>
 </body>
 </html>

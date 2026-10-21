@@ -14,7 +14,9 @@
 /* B · Slip: no page band; tools on a raised slip; softer corners. */
 :root[data-x='b'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; --sheet-radius: 3px; --band: 56px; --top: 0px; }
 /* C · Running head: one strip across the window, like a book's running head. */
-:root[data-x='c'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; --sheet-radius: 0; --band: 48px; --top: 40px; }
+:root[data-x='c'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; --sheet-radius: 0; --band: 48px; --top: 48px; }
+/* A shut sidebar keeps a strip of desk: the traffic lights and the seal, which opens it again. */
+:root { --strip: 76px; --runhead-ground: var(--eien-desk); }
 
 body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
 .stage { min-height: 0; display: grid; place-items: stretch; padding: var(--eien-space-4); background: light-dark(#cfc8bd, #0b0907); }
@@ -32,18 +34,21 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
   background: var(--eien-blotter);
   transition: grid-template-columns var(--eien-calm) var(--eien-ease);
 }
-.window.no-sidebar { --sb: 0px; }
+.window.no-sidebar { --sb: var(--strip); }
 .window.no-list, .window.two-panes { --ls: 0px; }
 .window.two-panes { --sb: 320px; }
 .lights { position: absolute; z-index: 30; top: 18px; left: 16px; display: flex; gap: 8px; }
-:root[data-x='c'] .lights { top: 14px; }
+:root[data-x='c'] .lights { top: 18px; }
 .lights i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.15); }
 .lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
 .drag-note { position: absolute; z-index: 29; top: 0; left: 0; right: 0; height: 10px; }
 
 /* C: the running head across the window */
-.runhead { display: none; grid-column: 1 / -1; grid-row: 1; align-items: center; gap: var(--eien-space-1);
-  padding: 0 var(--eien-space-3) 0 84px; background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.runhead { display: none; grid-column: 2 / -1; grid-row: 1; align-items: center; gap: var(--eien-space-1);
+  padding: 0 var(--eien-space-3); background: var(--runhead-ground); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+/* C: the sidebar keeps its own head at the top left, beside the running head. */
+:root[data-x='c'] .sidebar { grid-row: 1 / -1; }
+:root[data-x='c'] .sidebar__head { height: var(--top); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
 :root[data-x='c'] .runhead { display: flex; }
 .runhead__crumbs { flex: 1; text-align: center; }
 .runhead .views { margin-right: var(--eien-space-2); }
@@ -51,30 +56,40 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .pane { grid-row: 2; min-width: 0; min-height: 0; position: relative; overflow: hidden; }
 .sidebar { grid-column: 1; background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; }
 .list { grid-column: 2; background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; }
-.page { grid-column: 3; background: var(--eien-blotter); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; container: page / inline-size; }
+.page { grid-column: 3; background: var(--eien-blotter); display: grid; grid-template-rows: auto auto minmax(0, 1fr) var(--status-h); container: page / inline-size; }
+/* Each part in its own row, so a part that's hidden never hands its row to the next. */
+:root { --status-h: 40px; }
+.page__bar { grid-row: 1; } .page > .fmt { grid-row: 2; } .page__scroll { grid-row: 3; } .status { grid-row: 4; }
 .window.no-sidebar .sidebar, .window.no-list .list, .window.two-panes .list { border-right: 0; }
-.sidebar > *, .list > * { min-width: 240px; }
-.window.two-panes .sidebar > * { min-width: 300px; }
+.sidebar__inner, .list > :not(.pane-toggle):not(.pane-reopen) { min-width: 240px; }
+.window.two-panes .sidebar__inner { min-width: 300px; }
+.sidebar__inner { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.strip { display: none; flex-direction: column; align-items: center; padding-top: calc(var(--top, 0px) + 48px); gap: var(--eien-space-2); }
+:root[data-x='c'] .strip { padding-top: 44px; }
+.window.no-sidebar .sidebar__inner { display: none; }
+.window.no-sidebar .strip { display: flex; }
+.strip .seal-button { appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; padding: 4px; cursor: pointer; }
+.strip .seal-button:hover { border-color: var(--eien-rule); }
+.strip .icon-button { opacity: 0; } .sidebar:hover .strip .icon-button, .strip .icon-button:focus-visible { opacity: 1; }
 
-/* Pane chevrons (#15): shown on hover at a pane's edge. */
-.pane-toggle { position: absolute; z-index: 20; opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease); }
-.pane:hover > .pane-toggle, .pane-toggle:focus-visible { opacity: 1; }
+/* Pane chevrons (#15). A pane's ‹ shuts it; the way back is a › in the same
+   spot of the pane beside it. Both show on hover, as every control does. */
+.pane-toggle, .pane-reopen { position: absolute; z-index: 20; opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease); }
+.pane:hover > .pane-toggle, .pane:hover > .pane-reopen, .pane-toggle:focus-visible, .pane-reopen:focus-visible { opacity: 1; }
+.pane-reopen { display: none; }
+.window.no-list:not(.two-panes) .page > .pane-reopen { display: inline-grid; }
 :root[data-x='a'] .pane-toggle { top: calc((var(--band) - var(--eien-control)) / 2); right: var(--eien-space-2); }
-:root[data-x='b'] .pane-toggle { top: 50%; right: -1px; width: 16px; height: 44px; translate: 0 -50%;
-  border: var(--eien-hairline) solid var(--eien-rule); border-right: 0; border-radius: var(--eien-radius-m) 0 0 var(--eien-radius-m);
-  background: var(--eien-band); }
-:root[data-x='b'] .pane-toggle svg { width: 12px; }
-:root[data-x='c'] .pane-toggle { display: none; }
-.reopen { position: absolute; z-index: 25; left: 0; top: 0; bottom: 0; width: 14px; display: none; }
-.reopen .icon-button { position: absolute; top: calc(var(--top) + 64px); left: 2px; opacity: 0; background: var(--eien-paper-raised); border-color: var(--eien-rule); }
-.reopen:hover .icon-button, .reopen .icon-button:focus-visible { opacity: 1; }
-:root:not([data-x='c']) .window.no-sidebar .reopen--sidebar,
-:root:not([data-x='c']) .window.no-list:not(.two-panes) .reopen--list { display: block; }
-.reopen--list { left: var(--sb); }
+:root[data-x='a'] .pane-reopen { top: calc((var(--band) - var(--eien-control)) / 2); left: var(--eien-space-2); z-index: 21; }
+:root[data-x='b'] .pane-toggle, :root[data-x='b'] .pane-reopen { top: 50%; width: 16px; height: 44px; translate: 0 -50%;
+  border: var(--eien-hairline) solid var(--eien-rule); background: var(--eien-band); }
+:root[data-x='b'] .pane-toggle { right: -1px; border-right: 0; border-radius: var(--eien-radius-m) 0 0 var(--eien-radius-m); }
+:root[data-x='b'] .pane-reopen { left: -1px; border-left: 0; border-radius: 0 var(--eien-radius-m) var(--eien-radius-m) 0; }
+:root[data-x='b'] .pane-toggle svg, :root[data-x='b'] .pane-reopen svg { width: 12px; }
+:root[data-x='c'] .pane-toggle, :root[data-x='c'] .pane-reopen { display: none !important; }
+:root[data-x='a'] .window.no-list .page__bar { padding-left: calc(var(--eien-space-2) + var(--eien-control) + var(--eien-space-2)); }
 
 /* ═══ Sidebar ══════════════════════════════════════════════════════════ */
 .sidebar__head { display: flex; align-items: center; gap: var(--eien-space-3); height: var(--band); flex: none; padding: 0 var(--eien-space-4) 0 84px; }
-:root[data-x='c'] .sidebar__head { display: none; }
 .vault-name { font-weight: 600; white-space: nowrap; }
 .sidebar__search { display: none; padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2); }
 .window.two-panes .sidebar__search, .window.no-list .sidebar__search { display: block; }
@@ -128,8 +143,6 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 /* ═══ Note list ════════════════════════════════════════════════════════ */
 .list__search { display: flex; align-items: center; height: var(--band); flex: none; padding: 0 var(--eien-space-4); background: var(--eien-band); }
 :root[data-x='c'] .list__search { height: auto; padding-top: var(--eien-space-3); }
-.window.no-sidebar .list__search { padding-left: 84px; }
-:root[data-x='c'] .window.no-sidebar .list__search { padding-left: var(--eien-space-4); }
 .search-wrap { position: relative; flex: 1; }
 .search-wrap .icon { position: absolute; left: 9px; top: 50%; translate: 0 -50%; color: var(--eien-faded); width: 13px; height: 13px; }
 .search-wrap .field { padding-left: 28px; }
@@ -185,7 +198,6 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .fmt .letter--i { font-style: italic; } .fmt .letter--b { font-weight: 700; } .fmt .letter--u { text-decoration: underline; text-underline-offset: 2px; } .fmt .letter--s { text-decoration: line-through; }
 .page.show-fmt .fmt { display: flex; }
 :root[data-x='a'] .fmt { grid-row: 1; justify-content: center; padding: 3px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
-:root[data-x='a'] .page { grid-template-rows: auto auto minmax(0, 1fr) auto; }
 :root[data-x='b'] .fmt { position: absolute; z-index: 6; top: 12px; left: 50%; translate: -50% 0; padding: 3px; background: var(--eien-paper-raised);
   border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
 :root[data-x='c'] .fmt { position: absolute; z-index: 6; left: 12px; top: 50%; translate: 0 -50%; flex-direction: column; padding: 3px;
@@ -223,7 +235,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .prose.is-source { font-family: var(--eien-face-mono); font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: var(--eien-ink-soft); }
 .prose.is-source .mk { color: var(--eien-faded); }
 
-.status { display: flex; justify-content: center; align-items: center; gap: var(--eien-space-2); min-height: 40px; padding: 0 var(--eien-space-4);
+.status { display: flex; justify-content: center; align-items: center; gap: var(--eien-space-2); height: var(--status-h); overflow: hidden; padding: 0 var(--eien-space-4);
   background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
   letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; }
 .status .dot { color: var(--eien-faded); }
@@ -232,6 +244,32 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 :root[data-x='c'] .status { justify-content: flex-end; }
 :root[data-x='c'] .status__tags { display: flex; gap: var(--eien-space-2); align-items: center; }
 :root[data-x='c'] .status__tags .tag { padding: 0 8px; border-radius: var(--eien-radius-dot); background: var(--eien-press); color: var(--eien-ink-soft); }
+
+/* Focus mode: every paragraph but the one you're in recedes. */
+.prose p { transition: opacity var(--eien-calm) var(--eien-ease); }
+.page.is-focus .prose p:not(.is-here) { opacity: 0.32; }
+[data-act='focus'][aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* The right-click menu: raised paper, an icon and a word for each, its key in pencil. */
+.ctx { position: fixed; z-index: 60; min-width: 210px; padding: 4px; display: grid; gap: 1px;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.ctx[hidden] { display: none; }
+.ctx button { appearance: none; display: grid; grid-template-columns: 16px 1fr auto; gap: 10px; align-items: center; padding: 5px 8px; border: 0; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; text-align: left; font-family: var(--eien-face-text); font-size: calc(var(--eien-size-row) * 0.9); }
+.ctx button:hover, .ctx button:focus-visible { background: var(--eien-selected); color: var(--eien-ink); outline: none; }
+.ctx button kbd { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); color: var(--eien-pencil); }
+.ctx button.is-danger { color: var(--eien-removed); }
+.ctx hr { border: 0; border-top: var(--eien-hairline) solid var(--eien-rule-soft); margin: 3px 4px; }
+.ctx__head { padding: 4px 8px 6px; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+
+/* Renaming in place: the name itself becomes the field, same face, size and weight. */
+.renaming { position: relative; }
+.rename-field { all: unset; box-sizing: border-box; width: 100%; font: inherit; color: var(--eien-ink); caret-color: var(--eien-seal);
+  border-bottom: var(--eien-hairline) solid var(--eien-focus); line-height: inherit; }
+.rename-field::selection { background: var(--eien-seal-wash); }
+.rename-ext { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-faded); margin-left: 2px; }
+.rename-say { position: absolute; z-index: 5; left: 0; top: 100%; padding: 2px 6px; white-space: nowrap;
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); color: var(--eien-caution); background: var(--eien-caution-wash); border-radius: var(--eien-radius-s); }
 
 /* ═══ Phone ════════════════════════════════════════════════════════════ */
 .phones { display: flex; gap: var(--eien-space-6); flex-wrap: wrap; justify-content: center; padding: var(--eien-space-4); }
@@ -263,6 +301,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
     <button class="word-button" data-value="desktop">Desktop</button><button class="word-button" data-value="phone">Phone</button></div>
   <div class="xbar__group" data-x-set="sync"><span class="xbar__label">Syncthing</span>
     <button class="word-button" data-value="on">Set up</button><button class="word-button" data-value="other">Changed elsewhere</button><button class="word-button" data-value="off">None</button></div>
+  <div class="xbar__group" id="ground"><span class="xbar__label">C's strip</span></div>
   <div class="xbar__group"><span class="xbar__label">Weights</span>
     <span class="xnote">tree</span><input id="w-tree" type="range" min="400" max="700" step="100" value="400" aria-label="Sidebar names' weight" />
     <span class="xnote">list</span><input id="w-list" type="range" min="400" max="700" step="100" value="400" aria-label="List titles' weight" />
@@ -283,10 +322,16 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
       <button class="icon-button" data-icon="versions" data-tip="Versions" aria-label="Versions"></button>
       <span class="sep"></span>
       <button class="icon-button" data-icon="format" data-act="fmt" data-tip="Formatting bar ⇧⌘B" aria-label="Formatting bar"></button>
+      <button class="icon-button" data-icon="focus" data-act="focus" data-tip="Focus: only the paragraph you’re in ⇧⌘↵" aria-label="Focus mode"></button>
     </div>
 
     <nav class="pane sidebar" aria-label="Ink & Ash">
-      <div class="sidebar__head"><span class="seal">永</span><span class="vault-name">Ink &amp; Ash</span></div>
+      <div class="strip">
+        <button class="seal-button" data-act="sidebar" data-tip="Show the sidebar ⌘\" data-tip-side="right" aria-label="Show the sidebar"><span class="seal">永</span></button>
+        <button class="icon-button" data-icon="right" data-act="sidebar" data-tip="Show the sidebar ⌘\" data-tip-side="right" aria-label="Show the sidebar"></button>
+      </div>
+      <div class="sidebar__inner">
+      <div class="sidebar__head"><button class="seal-button" data-act="sidebar" data-tip="Hide the sidebar ⌘\" aria-label="Hide the sidebar"><span class="seal">永</span></button><span class="vault-name">Ink &amp; Ash</span></div>
       <div class="sidebar__search"><div class="search-wrap"><span data-icon="search"></span><input class="field" type="search" placeholder="Search Ink & Ash" /></div></div>
       <div class="sidebar__scroll" id="tree"></div>
       <footer class="sidebar__foot">
@@ -296,6 +341,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
         <button class="icon-button" id="panes" data-tip-side="up"></button>
         <button class="icon-button" data-icon="settings" data-tip="Settings ⌘," data-tip-side="up" aria-label="Settings"></button>
       </footer>
+      </div>
       <button class="icon-button pane-toggle" data-icon="left" data-act="sidebar" data-tip="Hide the sidebar ⌘\" aria-label="Hide the sidebar"></button>
     </nav>
 
@@ -311,6 +357,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
     </section>
 
     <main class="pane page" id="page">
+      <button class="icon-button pane-reopen" data-icon="right" data-act="list" data-tip="Show the list ⇧⌘\" data-tip-side="right" aria-label="Show the list"></button>
       <div class="page__bar" role="toolbar" aria-label="Page">
         <div class="views" role="group" aria-label="View"></div>
         <span class="spacer"></span>
@@ -319,6 +366,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
         <button class="icon-button" data-icon="versions" data-tip="Versions" aria-label="Versions"></button>
         <span class="sep"></span>
         <button class="icon-button" data-icon="format" data-act="fmt" data-tip="Formatting bar ⇧⌘B" aria-label="Formatting bar"></button>
+        <button class="icon-button" data-icon="focus" data-act="focus" data-tip="Focus: only the paragraph you’re in ⇧⌘↵" aria-label="Focus mode"></button>
         <button class="icon-button" data-icon="up" data-act="strip" data-tip="Hide this strip" aria-label="Hide the controls"></button>
       </div>
       <div class="fmt" role="toolbar" aria-label="Format"></div>
@@ -331,6 +379,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
             <button class="icon-button seal-control" data-tip="Seal ⌘S" aria-label="Seal"><span class="seal">永</span></button>
             <button class="icon-button" data-icon="versions" data-tip="Versions" aria-label="Versions"></button>
             <button class="icon-button" data-icon="format" data-act="fmt" data-tip="Formatting bar ⇧⌘B" aria-label="Formatting bar"></button>
+            <button class="icon-button" data-icon="focus" data-act="focus" data-tip="Focus: only the paragraph you’re in ⇧⌘↵" aria-label="Focus mode"></button>
           </span>
           <button class="icon-button" data-act="strip" id="slip-fold" data-tip="Fold the tools away" aria-label="Fold the tools"></button>
         </div>
@@ -339,11 +388,10 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
       <footer class="status" id="status"></footer>
     </main>
 
-    <div class="reopen reopen--sidebar"><button class="icon-button" data-icon="right" data-act="sidebar" data-tip="Show the sidebar ⌘\" data-tip-side="right" aria-label="Show the sidebar"></button></div>
-    <div class="reopen reopen--list"><button class="icon-button" data-icon="right" data-act="list" data-tip="Show the list ⇧⌘\" data-tip-side="right" aria-label="Show the list"></button></div>
   </div>
 
   <div class="phones" id="phones"></div>
+  <div class="ctx" id="ctx" role="menu" hidden></div>
 </main>
 
 <script>
@@ -482,6 +530,7 @@ function drawPage() {
   drawIcons($('#status'));
   wireTags($('#status'));
   $('#slip-fold').innerHTML = icon($('#page').classList.contains('no-strip') ? 'left' : 'right');
+  if ($('#page').classList.contains('is-focus')) markHere();
   drawPhones();
 }
 
@@ -511,6 +560,7 @@ function wireActions() {
     if (act === 'sidebar') win.classList.toggle('no-sidebar');
     if (act === 'list') { if (state.panes === 2) return; win.classList.toggle('no-list'); }
     if (act === 'strip') { $('#page').classList.toggle('no-strip'); drawPage(); }
+    if (act === 'focus') { const on = $('#page').classList.toggle('is-focus'); for (const f of $$('[data-act="focus"]')) f.setAttribute('aria-pressed', String(on)); markHere(); }
     if (act === 'fmt') { $('#page').classList.toggle('show-fmt'); for (const f of $$('[data-act="fmt"]')) f.setAttribute('aria-pressed', String($('#page').classList.contains('show-fmt'))); }
   });
   $('#daynight').onclick = () => {
@@ -532,7 +582,7 @@ function wireActions() {
 function drawPhones() {
   const x = document.documentElement.dataset.x;
   const acts = `<span class="phone__acts"><button class="icon-button" data-icon="${state.view}" aria-label="View"></button><button class="icon-button" data-icon="more" aria-label="More"></button></span>`;
-  const foot = `<div class="phone__foot">${['live', 'source', 'reading'].map((v) => `<button class="icon-button" data-icon="${v}" aria-pressed="${state.view === v}" aria-label="${v}"></button>`).join('')}<button class="icon-button" data-icon="format" aria-label="Format"></button><button class="icon-button seal-control" aria-label="Seal"><span class="seal" style="--eien-seal-size:18px">永</span></button><button class="icon-button" data-icon="more" aria-label="More"></button></div>`;
+  const foot = `<div class="phone__foot">${['live', 'source', 'reading'].map((v) => `<button class="icon-button" data-icon="${v}" aria-pressed="${state.view === v}" aria-label="${v}"></button>`).join('')}<button class="icon-button" data-icon="format" aria-label="Format"></button><button class="icon-button" data-icon="focus" aria-label="Focus mode"></button><button class="icon-button seal-control" aria-label="Seal"><span class="seal" style="--eien-seal-size:18px">永</span></button><button class="icon-button" data-icon="more" aria-label="More"></button></div>`;
   const fab = `<div class="phone__fab">${['live', 'source', 'reading'].map((v) => `<button class="icon-button" style="--eien-control:40px" data-icon="${v}" aria-pressed="${state.view === v}" aria-label="${v}"></button>`).join('')}<button class="icon-button" style="--eien-control:40px" data-icon="more" aria-label="More"></button></div>`;
   const status = '<div class="phone__status"><span>9:41</span><span>●●●</span></div>';
   const index = `<div class="phone">${status}<div class="phone__bar"><button class="phone__back">${icon('back')}Fic</button><span class="phone__title"></span><button class="icon-button" data-icon="search" aria-label="Search"></button><button class="icon-button" data-icon="sort" aria-label="Sort"></button></div>
@@ -542,6 +592,76 @@ function drawPhones() {
   $('#phones').innerHTML = index + page;
   drawIcons($('#phones'));
 }
+
+/** Focus mode's "here": the paragraph the caret is in (the second, before any click). */
+function markHere() {
+  const sel = getSelection();
+  const at = sel?.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement)?.closest('.prose p');
+  const ps = $$('#sheet .prose p:not(.scene)');
+  const here = at ?? $('#sheet .prose p.is-here') ?? ps[1];
+  for (const p of $$('#sheet .prose p')) p.classList.toggle('is-here', p === here);
+}
+document.addEventListener('selectionchange', () => { if ($('#page').classList.contains('is-focus')) markHere(); });
+
+// The right-click menu, and renaming in place.
+const ctx = $('#ctx');
+function openMenu(e, target) {
+  e.preventDefault();
+  const isNote = target.classList.contains('note-row');
+  const nameEl = target.querySelector(isNote ? '.note-row__title' : '.row__name');
+  const name = nameEl.textContent.replace(/^#/, '');
+  const items = [
+    ['rename', 'Rename', 'F2', () => renameInPlace(nameEl, isNote ? '.md' : '')],
+    ...(isNote ? [['pin', 'Pin', '', () => {}], ['move', 'Move to…', '⇧⌘M', () => {}]] : [['plus', 'New note inside', '⌘N', () => {}]]),
+    'hr',
+    ['trash', 'Send to the trash', '⌘⌫', () => {}, true],
+  ];
+  ctx.innerHTML = `<div class="ctx__head">${name}</div>` + items.map((it, i) => it === 'hr' ? '<hr />' :
+    `<button role="menuitem" data-i="${i}" class="${it[4] ? 'is-danger' : ''}">${icon(it[0])}<span>${it[1]}</span><kbd>${it[2]}</kbd></button>`).join('');
+  ctx.hidden = false;
+  const w = ctx.offsetWidth, h = ctx.offsetHeight;
+  ctx.style.left = `${Math.min(e.clientX, innerWidth - w - 8)}px`;
+  ctx.style.top = `${Math.min(e.clientY, innerHeight - h - 8)}px`;
+  for (const b of $$('button', ctx)) b.onclick = () => { ctx.hidden = true; items[+b.dataset.i][3](); };
+  $('button', ctx).focus();
+}
+document.addEventListener('contextmenu', (e) => { const t = e.target.closest('.row, .note-row'); if (t) openMenu(e, t); });
+document.addEventListener('click', (e) => { if (!e.target.closest('#ctx')) ctx.hidden = true; });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') ctx.hidden = true;
+  if (e.key === 'F2') { const t = document.activeElement?.closest('.row, .note-row') ?? $('.note-row[aria-selected="true"]'); if (t) renameInPlace(t.querySelector('.row__name, .note-row__title'), t.classList.contains('note-row') ? '.md' : ''); }
+});
+/** The name becomes its own field: same face, size and weight; Enter keeps, Esc puts back. */
+function renameInPlace(el, ext) {
+  const was = el.textContent;
+  const hash = was.startsWith('#') ? '#' : '';
+  el.classList.add('renaming');
+  el.innerHTML = `${hash ? '<span class="row__hash">#</span>' : ''}<input class="rename-field" aria-label="New name" spellcheck="false" />${ext ? `<span class="rename-ext">${ext}</span>` : ''}`;
+  el.style.display = 'flex'; el.style.alignItems = 'baseline';
+  const field = $('input', el);
+  field.value = was.replace(/^#/, '');
+  field.focus(); field.select();
+  const taken = new Set($$('.note-row__title, .row__name').map((n) => n.textContent.toLowerCase()).filter((n) => n !== was.toLowerCase()));
+  const say = (text) => { $('.rename-say', el)?.remove(); if (text) el.insertAdjacentHTML('beforeend', `<span class="rename-say">${text}</span>`); };
+  const done = (keep) => {
+    const next = field.value.trim();
+    if (keep && next && taken.has(next.toLowerCase())) { say(`“${next}” is there already, in any case`); field.focus(); return; }
+    el.classList.remove('renaming'); el.style.display = ''; el.textContent = hash + (keep && next ? next : was);
+  };
+  field.oninput = () => say(taken.has(field.value.trim().toLowerCase()) ? `“${field.value.trim()}” is there already` : '');
+  field.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); };
+  field.onblur = () => { if (el.classList.contains('renaming')) done(!taken.has(field.value.trim().toLowerCase())); };
+  field.onclick = (e) => e.stopPropagation();
+}
+document.addEventListener('dblclick', (e) => { const n = e.target.closest('.note-row__title, .row__name'); if (n && !n.classList.contains('renaming')) renameInPlace(n, n.classList.contains('note-row__title') ? '.md' : ''); });
+
+// C's strip: its ground is one of the theme's own surfaces, so it follows any theme.
+const GROUNDS = ['desk', 'blotter', 'band', 'paper', 'selected'];
+$('#ground').insertAdjacentHTML('beforeend', GROUNDS.map((g) => `<button class="word-button ground" data-ground="${g}" aria-pressed="${g === 'desk'}" data-tip="--eien-${g}" style="display:inline-flex;gap:5px;align-items:center"><i style="width:12px;height:12px;border-radius:var(--eien-radius-s);background:var(--eien-${g});box-shadow:inset 0 0 0 1px var(--eien-rule-strong)"></i>${g}</button>`).join(''));
+for (const b of $$('[data-ground]')) b.onclick = () => {
+  document.documentElement.style.setProperty('--runhead-ground', `var(--eien-${b.dataset.ground})`);
+  for (const x of $$('[data-ground]')) x.setAttribute('aria-pressed', String(x === b));
+};
 
 drawTree(); drawRows(); drawFmt(); wireActions();
 wireBar((attr) => { if (attr === 'x') drawFmt(); drawFoot(); drawPage(); });

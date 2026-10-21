@@ -1,5 +1,11 @@
 # Writer themes
 
+The three approaches are kept, all of them, as the three tabs of the Themes
+category in Settings: **Gallery**, **Mix your own** (the maker, renamed) and
+**From a file**. They're in [settings.html](settings.html) under Settings /
+Themes, where choosing one paints the whole window; this page keeps the
+larger preview and the full contrast table.
+
 [themes.html](themes.html) has six new themes beside Washi, and three ways to
 make your own. The preview is a small window painted only by the theme's
 tokens. Day and night switch in the bar, and every choice is checked live
@@ -29,7 +35,7 @@ Otaku stays as it is beside them.
 
 - **A · Gallery:** choose from the themes. It's the simplest, and what most
   writers need.
-- **B · Maker:** three choices (the paper's hue and warmth, the ink's hue,
+- **B · Mix your own:** three choices (the paper's hue and warmth, the ink's hue,
   the seal's hue), and Eien works out all ten colours for day and night.
   - The surfaces keep their steps, so contrast holds whatever you pick. I
     checked across the range of hues and warmth: every result passes.
@@ -44,9 +50,8 @@ Otaku stays as it is beside them.
 
 ## Recommendation
 
-- **All three, as layers of one feature:** the gallery in Settings, a
-  "Make one…" there that opens the maker, and files for anyone who wants to
-  edit by hand.
+- **All three, as one category:** Settings / Themes, with Gallery, Mix your
+  own and From a file as its tabs (decided 2026-10-21).
 - **Ship the gallery's themes first.** They need nothing but tokens, the
   same mechanism Otaku already uses.
 

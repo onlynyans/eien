@@ -69,9 +69,9 @@ textarea:focus { outline: none; border-color: var(--eien-focus); }
 </head>
 <body>
 <header class="xbar">
-  <span class="xbar__name">Eien · Writer themes</span>
+  <span class="xbar__name">Eien · Settings / Themes</span>
   <div class="xbar__group" data-x-set="a"><span class="xbar__label">Approach</span>
-    <button class="word-button" data-value="gallery">A · Gallery</button><button class="word-button" data-value="maker">B · Maker</button><button class="word-button" data-value="file">C · From a file</button></div>
+    <button class="word-button" data-value="gallery">A · Gallery</button><button class="word-button" data-value="maker">B · Mix your own</button><button class="word-button" data-value="file">C · From a file</button></div>
   <div class="xbar__group" data-x-set="scheme"><span class="xbar__label">Preview</span>
     <button class="word-button" data-value="day">Day</button><button class="word-button" data-value="night">Night</button></div>
 </header>
@@ -94,7 +94,7 @@ textarea:focus { outline: none; border-color: var(--eien-focus); }
     <section class="panel only only--gallery"><h2>Choose a theme</h2>
       <p>Each is a palette in Eien's own order (darker is further back), day and night, and each keeps the contrast Eien keeps. Washi stays the default; the rest come with Eien, and your own join them.</p>
       <div class="gallery" id="gallery" style="display:grid"></div></section>
-    <section class="panel only only--maker"><h2>Make one</h2>
+    <section class="panel only only--maker"><h2>Mix your own</h2>
       <p>Three choices, the rest worked out: the paper's hue and warmth, the ink's hue, the seal's hue. Surfaces keep their steps and the inks their contrast, by day and by night.</p>
       <div id="knobs" style="display:grid;gap:10px"></div>
       <div class="field" style="display:flex;gap:8px;align-items:center"><span class="label">Name</span><input id="maker-name" value="My Room" style="border:0;background:none;flex:1;font:inherit;outline:none" /></div>
@@ -108,37 +108,10 @@ textarea:focus { outline: none; border-color: var(--eien-focus); }
 </div>
 <script>
 /*@shared-js*/
-// [day, night] for each token. The rules are the ink at low strength, so they follow it.
-const THEMES = {
-  washi: { name: 'Washi', kanji: '和紙', note: 'Eien’s own: paper and sumi ink', t: {
-    desk: ['#d9d2c8', '#110e0b'], blotter: ['#eae5dd', '#1a1713'], band: ['#f4f1ea', '#201d19'], paper: ['#fdfbf7', '#28241f'], selected: ['#ede9e3', '#38332e'],
-    ink: ['#23201c', '#e9e2d4'], 'ink-soft': ['#51473c', '#c3b9a7'], pencil: ['#5d5348', '#a7a095'], faded: ['#766d62', '#837c73'], seal: ['#c4472d', '#e0603f'] } },
-  kinari: { name: 'Kinari', kanji: '生成り', note: 'Unbleached cloth: yellower paper, a persimmon seal', t: {
-    desk: ['#d8cfb8', '#14110a'], blotter: ['#e9e2cd', '#1c180f'], band: ['#f3eedd', '#231e14'], paper: ['#fcf9ee', '#2b251a'], selected: ['#ece5d1', '#3b3426'],
-    ink: ['#2a2418', '#ece3cc'], 'ink-soft': ['#574a33', '#c8bb9c'], pencil: ['#5f523d', '#ab9f86'], faded: ['#7b6d56', '#88806d'], seal: ['#b8432a', '#dc6a43'] } },
-  aizome: { name: 'Aizome', kanji: '藍染', note: 'Indigo dye: cool paper, blue-black ink', t: {
-    desk: ['#c9cfd8', '#0b0e14'], blotter: ['#dfe3e9', '#121620'], band: ['#edf0f4', '#181d28'], paper: ['#fbfcfd', '#1f2533'], selected: ['#e3e8ef', '#2e3648'],
-    ink: ['#17213a', '#dde4f0'], 'ink-soft': ['#34405c', '#b3bfd6'], pencil: ['#3f4b64', '#97a3ba'], faded: ['#5f6a80', '#7a8599'], seal: ['#c4472d', '#e3664a'] } },
-  koke: { name: 'Koke', kanji: '苔', note: 'A moss garden: green-grey desk, quiet ink', t: {
-    desk: ['#cdd2c4', '#0d100b'], blotter: ['#e1e5d9', '#141811'], band: ['#eef0e8', '#1a1f16'], paper: ['#fafbf6', '#21271c'], selected: ['#e5e9dc', '#30382a'],
-    ink: ['#1f2619', '#e2e8d6'], 'ink-soft': ['#3e4833', '#bcc6ab'], pencil: ['#48523c', '#a0aa90'], faded: ['#67705a', '#808a72'], seal: ['#a8432f', '#d76a4e'] } },
-  rosoku: { name: 'Rōsoku', kanji: '蝋燭', note: 'Candlelight: amber at night, no blue light', t: {
-    desk: ['#dccab2', '#120c06'], blotter: ['#ecdfcb', '#1b130b'], band: ['#f5ece0', '#22180e'], paper: ['#fdf8f0', '#2a1f13'], selected: ['#efe3d1', '#3c2d1e'],
-    ink: ['#2b1d10', '#f0dcc0'], 'ink-soft': ['#5a4129', '#d2b894'], pencil: ['#634d37', '#b39b7c'], faded: ['#7f6a53', '#8f7c64'], seal: ['#b9442b', '#e8763f'] } },
-  sumi: { name: 'Sumi', kanji: '墨', note: 'For tired eyes: the most contrast there is', t: {
-    desk: ['#cfcfcc', '#000000'], blotter: ['#e6e6e3', '#0a0a0a'], band: ['#f2f2ef', '#141414'], paper: ['#ffffff', '#1b1b1b'], selected: ['#e8e8e4', '#2c2c2c'],
-    ink: ['#000000', '#f5f5f2'], 'ink-soft': ['#262626', '#d9d9d4'], pencil: ['#3a3a3a', '#bdbdb8'], faded: ['#5e5e5e', '#8f8f8a'], seal: ['#c4361d', '#ff6a45'] } },
-  sakura: { name: 'Sakura-nezumi', kanji: '桜鼠', note: 'Cherry-grey: plum ink, a rose seal', t: {
-    desk: ['#d8cdcc', '#120d0e'], blotter: ['#e9e1e0', '#1b1415'], band: ['#f3eeed', '#221a1b'], paper: ['#fdfafa', '#2a2122'], selected: ['#eee6e5', '#3a2f30'],
-    ink: ['#2a1e20', '#efe1e2'], 'ink-soft': ['#573f43', '#cbb5b8'], pencil: ['#5f464a', '#ad989b'], faded: ['#7c6468', '#8d7b7d'], seal: ['#b2394a', '#e0697a'] } },
-};
-const TOKENS = ['desk', 'blotter', 'band', 'paper', 'selected', 'ink', 'ink-soft', 'pencil', 'faded', 'seal'];
+const TOKENS = THEME_TOKENS;
 let current = THEMES.washi;
 const scheme = () => (document.documentElement.dataset.scheme === 'night' ? 1 : 0);
 
-const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-function lum(h) { return hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); }
-const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 
 function paint(theme) {
   current = theme;
@@ -162,18 +135,9 @@ document.getElementById('gallery').innerHTML = Object.entries(THEMES).map(([id, 
   <span><span class="card__name">${th.name}</span><span class="card__kanji">${th.kanji}</span></span><span class="label">${th.note}</span></button>`).join('');
 for (const c of document.querySelectorAll('.card')) c.onclick = () => paint(THEMES[c.dataset.theme]);
 
-// B · Maker: hue and warmth for the paper, a hue for the ink, a hue for the seal.
+// B · Mix your own: hue and warmth for the paper, a hue for the ink, a hue for the seal.
 const knobs = { paper: 38, warmth: 18, ink: 30, seal: 12 };
-const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l); const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
-  return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
-function made() {
-  const { paper: ph, warmth: w, ink: ih, seal: sh } = knobs;
-  const surf = (dl, nl) => [hsl(ph, w, dl), hsl(ph, Math.min(w, 22), nl)];
-  return { name: document.getElementById('maker-name').value || 'My Room', kanji: '', note: 'Made here', t: {
-    desk: surf(83, 5), blotter: surf(89, 8), band: surf(94, 11), paper: surf(98.5, 14), selected: surf(91, 19),
-    ink: [hsl(ih, 22, 12), hsl(ih, 25, 88)], 'ink-soft': [hsl(ih, 18, 27), hsl(ih, 16, 72)], pencil: [hsl(ih, 12, 31), hsl(ih, 9, 62)], faded: [hsl(ih, 9, 43), hsl(ih, 6, 52)],
-    seal: [hsl(sh, 63, 47), hsl(sh, 72, 56)] } };
-}
+const made = () => mixTheme(knobs, document.getElementById('maker-name').value || 'My Room');
 document.getElementById('knobs').innerHTML = [['paper', 'Paper hue', 360], ['warmth', 'Warmth', 40], ['ink', 'Ink hue', 360], ['seal', 'Seal hue', 360]].map(([k, label, max]) =>
   `<label class="knob"><span class="label">${label}</span><input type="range" min="0" max="${max}" value="${knobs[k]}" data-knob="${k}" /><output>${knobs[k]}</output></label>`).join('');
 for (const r of document.querySelectorAll('[data-knob]')) r.oninput = () => { knobs[r.dataset.knob] = +r.value; r.nextElementSibling.textContent = r.value; paint(made()); };
