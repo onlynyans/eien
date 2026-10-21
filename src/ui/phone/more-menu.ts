@@ -15,12 +15,16 @@ export interface MoreState {
 }
 
 export function moreItems(state: MoreState, run: (command: MenuCommand) => void): MenuItem[] {
-  const item = (label: string, command: MenuCommand, checked?: boolean): MenuItem => ({
+  const item = (label: string, command: MenuCommand): MenuItem => ({
     label,
     run: () => run(command),
-    checked,
   });
-  const on = (key: 'editor.focus' | 'editor.typewriter') => state.values[key] === 'on';
+  const toggle = (label: string, key: 'editor.focus' | 'editor.typewriter'): MenuItem => ({
+    label,
+    run: () => run(`toggle:${key}`),
+    checked: state.values[key] === 'on',
+    toggle: true,
+  });
   return [
     item('Seal', 'seal'),
     item('Compare', 'compare'),
@@ -30,8 +34,8 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     item('Copy for AO3', 'copy-ao3'),
     item('Export AO3 HTML', 'export-ao3'),
     'separator',
-    item('Focus mode', 'toggle:editor.focus', on('editor.focus')),
-    item('Typewriter scrolling', 'toggle:editor.typewriter', on('editor.typewriter')),
+    toggle('Focus mode', 'editor.focus'),
+    toggle('Typewriter scrolling', 'editor.typewriter'),
     ...(state.sprinting
       ? [item('Stop sprint', 'sprint:stop')]
       : SPRINT_MINUTES.map((minutes) => item(`Sprint, ${minutes} minutes`, `sprint:${minutes}`))),

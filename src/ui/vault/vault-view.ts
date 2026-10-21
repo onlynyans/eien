@@ -234,6 +234,7 @@ export async function showVault(
   /** Rename a note: open it, and its title becomes a field. */
   async function renameNote(path: string): Promise<void> {
     if (note.path !== path) await openNote(path);
+    else phone.stack.show('page'); // on a phone, from the list: the title's on the page
     page.editTitle();
   }
 

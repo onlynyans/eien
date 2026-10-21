@@ -33,6 +33,13 @@ export interface PhoneView {
 }
 
 export function phoneView(of: PhoneViewOf): PhoneView {
+  // The keyboard into a pane just shown: on the page, its title (no phone keyboard comes up).
+  const focusPane = (pane: PhonePane) =>
+    pane === 'sidebar'
+      ? of.sidebar.focusTree()
+      : pane === 'list'
+        ? focusList(of.list)
+        : of.page.focus();
   const stack = new PhoneStack({
     shell: of.shell,
     backName: (to) =>
@@ -48,23 +55,39 @@ export function phoneView(of: PhoneViewOf): PhoneView {
         { opener },
         'More',
       ),
-    // The keyboard into the pane just shown: on the page, its title (no keyboard comes up).
-    focus: (pane: PhonePane) =>
-      pane === 'sidebar'
-        ? of.sidebar.focusTree()
-        : pane === 'list'
-          ? focusList(of.list)
-          : of.page.focus(),
+    focus: (pane: PhonePane) => focusPane(pane),
     changed: of.changed,
+    leavingPage: () => {
+      const { outline, versions } = of.parts();
+      if (outline.open) void outline.toggle();
+      if (of.page.comparing) void versions.cycleCompare('draft');
+      if (versions.panelOpen) versions.showPanel(false);
+    },
+    // Turned sideways, the panes all show: a pane shut gives the page the keyboard (spec §4).
+    lost: () => (stack.phone ? focusPane(stack.shown ?? 'list') : of.page.focus()),
   });
   of.shell.prepend(stack.bar);
-  /** What lies over the page closes before the page is left: the outline cards, the versions. */
+  /** What lies over the page closes before the page is left: Compare, the cards, the versions. */
   const closeOver = (): boolean => {
+    if (stack.shown !== 'page') return false;
     const { outline, versions } = of.parts();
     if (outline.open) void outline.toggle();
+    else if (of.page.comparing) void versions.cycleCompare('draft');
     else if (versions.panelOpen) versions.showPanel(false);
     else return false;
     return true;
   };
-  return { stack, back: () => closeMenu() || closeOver() || stack.back() };
+  return { stack, back: () => closeMenu() || pressEsc() || closeOver() || stack.back() };
+}
+
+/**
+ * Back first does what Esc does where the keyboard is: a rename being typed (the title, a
+ * folder, a seal's name, a book's goal) stops, keeping nothing. Whether anything took it.
+ */
+function pressEsc(): boolean {
+  const at = document.activeElement;
+  if (!at || at === document.body) return false;
+  const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+  at.dispatchEvent(event);
+  return event.defaultPrevented;
 }

@@ -14,6 +14,7 @@ import {
   stepped,
 } from '../../core/config';
 import { h, wordButton } from '../dom';
+import { NARROW } from '../phone/phone-stack';
 import { reasonOf } from '../reason';
 import type { SettingsState } from './settings-state';
 
@@ -32,9 +33,10 @@ export class SettingsScreen {
   /** `platform` (process.platform's name) leaves out the settings another system alone has. */
   constructor(container: HTMLElement, settings: SettingsState, platform: string) {
     this.#settings = settings;
+    const phone = matchMedia(NARROW).matches; // one pane at a time: no panes to choose
     const groups = SETTING_GROUPS.map((group) => {
       const rows = SETTINGS.filter(
-        (setting) => setting.group === group && offeredOn(setting, platform),
+        (setting) => setting.group === group && offeredOn(setting, platform, phone),
       ).map((setting) => this.#row(setting));
       return rows.length > 0
         ? h(

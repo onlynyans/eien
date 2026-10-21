@@ -21,13 +21,19 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
   const menu = new MenuBus(bridge);
   let shown: ShownVault | null = null;
 
-  const open = async () => {
+  const openNow = async () => {
     await shown?.stop();
     shown = null;
     const info = await bridge.vault.current();
     await settings.reload(); // the vault's own settings come with it
     if (info) shown = await showVault(root, bridge, info.name, settings, () => screen.open(), menu);
     else renderWelcome(root, chooseVault, bridge.platform);
+  };
+  // One at a time: a second open (a double tap on Allow) waits, then stops the first view.
+  let opening: Promise<void> = Promise.resolve();
+  const open = () => {
+    opening = opening.then(openNow, openNow);
+    return opening;
   };
   const chooseVault = async () => {
     const info = await bridge.vault.choose();

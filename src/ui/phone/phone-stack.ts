@@ -11,7 +11,7 @@ export type PhonePane = 'sidebar' | 'list' | 'page';
 const ORDER: readonly PhonePane[] = ['sidebar', 'list', 'page'];
 
 /** Narrower than any desktop window (app/electron/window.ts: 640, less a Windows frame's 16). */
-const NARROW = '(max-width: 599.98px)';
+export const NARROW = '(max-width: 599.98px)';
 
 export interface PhoneParts {
   readonly shell: HTMLElement;
@@ -21,6 +21,10 @@ export interface PhoneParts {
   more(opener: HTMLElement): void;
   /** The keyboard to the pane now shown (never left in one gone from sight). */
   focus(pane: PhonePane): void;
+  /** The page goes from sight: what lay over it closes, so nothing waits there unseen. */
+  leavingPage(): void;
+  /** The keyboard was on something gone from sight as the window turned: give it a place. */
+  lost(): void;
   /** Phone or not, or the pane shown, changed: lay the panes out again. */
   changed(): void;
 }
@@ -35,6 +39,13 @@ export class PhoneStack {
   readonly #onNarrow = () => {
     this.#apply();
     this.#parts.changed();
+    const at = document.activeElement;
+    const gone =
+      !(at instanceof HTMLElement) ||
+      at === document.body ||
+      at.closest('[inert]') !== null ||
+      !at.checkVisibility({ visibilityProperty: true });
+    if (gone) this.#parts.lost();
   };
   #shown: PhonePane = 'list';
 
@@ -67,6 +78,7 @@ export class PhoneStack {
   /** Bring `pane` into sight (on a phone) with the keyboard in it. */
   show(pane: PhonePane): void {
     if (pane === this.#shown) return;
+    if (this.#shown === 'page') this.#parts.leavingPage();
     this.#shown = pane;
     this.#apply();
     if (!this.phone) return;

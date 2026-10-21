@@ -106,6 +106,9 @@ test('the ⋯ turns focus mode on, and shows it chosen', async ({ page }) => {
     .toBe('on');
   await more(page).click();
   await expect(menuItem(page, 'Focus mode')).toHaveAttribute('aria-checked', 'true');
+  // On or off by itself, not one of several: a keyboard's Enter mustn't land on it to turn it off.
+  await expect(menuItem(page, 'Focus mode')).toHaveAttribute('role', 'menuitemcheckbox');
+  await expect(menuItem(page, 'Seal')).toBeFocused();
 });
 
 test('the ⋯ opens the settings', async ({ page }) => {

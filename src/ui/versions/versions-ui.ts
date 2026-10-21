@@ -133,12 +133,13 @@ export class VersionsUI {
   }
 
   /** ⌘⇧D: Changes, then the seal alone, then the draft. */
-  async cycleCompare(): Promise<void> {
+  /** The next of draft → changes → sealed, or `to` (a phone's back: the draft). */
+  async cycleCompare(to?: CompareMode): Promise<void> {
     if (!this.#parts.note.session) return;
     if (this.#seals.length === 0) return this.#line.say('Not sealed yet');
-    const next: CompareMode =
+    const after =
       this.#mode === 'draft' ? 'changes' : this.#mode === 'changes' ? 'sealed' : 'draft';
-    await this.#show(next);
+    await this.#show(to ?? after);
   }
 
   /** Whether the versions panel is open. */

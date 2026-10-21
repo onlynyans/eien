@@ -55,6 +55,7 @@
    Each is named, as in its own sheet (tests/selectors.test.ts). */
 @media (hover: none) {
   .page__views,
+  .page__panes,
   .page__tools,
   .list__head .list__sort,
   .sidebar__new {

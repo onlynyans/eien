@@ -85,8 +85,15 @@ export class PaneLayout {
 
   /** Shut `pane` if it's open, open it if it's shut. The list has nothing to do with two panes. */
   toggle(pane: Shuttable): void {
-    if (this.#parts.phone() || (pane === 'list' && this.two)) return;
-    this.#set(pane, !this.isShut(pane));
+    const phone = this.#parts.phone();
+    // On a phone, "Hide sidebar" (the tree's seal) goes on to the notes.
+    if (phone === 'sidebar' && pane === 'sidebar') this.#parts.showPhone('list');
+    else if (!phone && !(pane === 'list' && this.two)) this.#set(pane, !this.isShut(pane));
+  }
+
+  /** Whether the list is drawn: in sight, or on a phone, a pane away (its back bar names it). */
+  get listKept(): boolean {
+    return !this.isShut('list') || this.#parts.phone() !== null;
   }
 
   /** Open `pane` if it's shut (on a phone, bring it into sight); whether it's in sight now. */
