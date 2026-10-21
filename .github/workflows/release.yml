@@ -1,10 +1,10 @@
 name: Release
 
-# A version tag (v0.1.0) builds the installers, each on its own system, tries
-# each app as a writer gets it (tests/packaged), and attaches the installers to
-# a draft GitHub Release, to look over and publish by hand. Run by hand, it
-# builds and tries them with no release, keeping them as the run's artifacts.
-# Never on a pull request: no change waits on it.
+# A version tag (v0.1.0) builds the installers and portable copies, each on its
+# own system, tries each app as a writer gets it (tests/packaged), and attaches
+# them to a draft GitHub Release, to look over and publish by hand. Run by hand,
+# it builds and tries them with no release, keeping them as the run's
+# artifacts. Never on a pull request: no change waits on it.
 on:
   push:
     tags: ['v*']
@@ -22,11 +22,16 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            installer: dist/*.dmg
+            downloads: |
+              dist/*.dmg
+              dist/portable/*.zip
           - os: windows-latest
-            installer: dist/*.exe
+            downloads: |
+              dist/*.exe
+              dist/portable/*.exe
+          # The AppImage is Linux's installer and portable copy at once.
           - os: ubuntu-latest
-            installer: dist/*.AppImage
+            downloads: dist/*.AppImage
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     defaults:
@@ -54,7 +59,7 @@ jobs:
         run: npx install-electron
       - run: npm run build
 
-      - name: Installer
+      - name: Installer and portable copy
         env:
           # Signing and notarizing, once these secrets exist (AGENTS.md → Releases).
           CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CERTIFICATE || '' }}
@@ -71,18 +76,23 @@ jobs:
             APPLE_TEAM_ID WIN_CSC_LINK WIN_CSC_KEY_PASSWORD; do
             [ -n "${!name}" ] || unset "$name"
           done
-          npx electron-builder --publish never
+          node scripts/package.mjs
 
       # The app as a writer gets it: from the .dmg, as the setup installs it, or
-      # unpacked as the AppImage holds it (the tests' default).
-      - name: The app in the .dmg (macOS)
+      # unpacked as the AppImage holds it (the tests' default); the portable
+      # copy unzipped where it will live (macOS), or unpacked (Windows).
+      - name: The app in the .dmg, and the portable copy unzipped (macOS)
         if: runner.os == 'macOS'
         run: |
           mount="$RUNNER_TEMP/eien-dmg"
+          carried="$RUNNER_TEMP/carried"
           hdiutil attach dist/*.dmg -nobrowse -readonly -mountpoint "$mount"
+          ditto -x -k dist/portable/*.zip "$carried"
           # A broken signature makes macOS call the download damaged, with no way to open it.
           codesign --verify --deep --strict "$mount/Eien.app"
+          codesign --verify --deep --strict "$carried/Eien.app"
           echo "EIEN_APP=$mount/Eien.app/Contents/MacOS/Eien" >> "$GITHUB_ENV"
+          echo "EIEN_PORTABLE_APP=$carried/Eien.app/Contents/MacOS/Eien" >> "$GITHUB_ENV"
       - name: The app the setup installs, for this user only (Windows)
         if: runner.os == 'Windows'
         # PowerShell: Git's bash would turn the setup's /S into a path.
@@ -93,22 +103,41 @@ jobs:
           $app = Join-Path $env:LOCALAPPDATA 'Programs\eien\Eien.exe'
           if (-not (Test-Path $app)) { throw "The setup didn't install Eien at $app." }
           "EIEN_APP=$app" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: The portable .exe keeps its data beside itself (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        # Its launcher runs Eien from a temp copy, so only the real .exe shows where the data goes.
+        run: |
+          $carried = New-Item -ItemType Directory (Join-Path $env:RUNNER_TEMP 'carried')
+          $exe = Copy-Item (Get-Item dist/portable/*-windows-portable.exe) $carried -PassThru
+          Start-Process -FilePath $exe.FullName
+          $data = Join-Path $carried 'Eien Data'
+          $kept = { @(Get-ChildItem $data -ErrorAction SilentlyContinue).Count -gt 0 }
+          $deadline = (Get-Date).AddSeconds(60)
+          while (-not (& $kept) -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 1 }
+          Get-Process Eien -ErrorAction SilentlyContinue | Stop-Process -Force
+          if (-not (& $kept)) { throw "The portable Eien kept nothing in $data." }
 
       # Ubuntu 24.04 stops Chromium's sandbox from creating namespaces (as in ci.yml).
       - name: Allow Chromium's sandbox (Linux)
         if: runner.os == 'Linux'
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      # These machines are thrown away, so the tests may use their own folders (settings-home.spec.ts).
       - name: Try the app (Linux, virtual display)
         if: runner.os == 'Linux'
+        env:
+          EIEN_REAL_FOLDERS: '1'
         run: xvfb-run --auto-servernum npm run test:packaged
       - name: Try the app
         if: runner.os != 'Linux'
+        env:
+          EIEN_REAL_FOLDERS: '1'
         run: npm run test:packaged
 
       - uses: actions/upload-artifact@v7
         with:
-          name: installer-${{ runner.os }}
-          path: ${{ matrix.installer }}
+          name: downloads-${{ runner.os }}
+          path: ${{ matrix.downloads }}
           if-no-files-found: error
           retention-days: 14
       - name: Keep the report of a failed run
@@ -132,14 +161,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
-          pattern: installer-*
-          path: installers
+          pattern: downloads-*
+          path: downloads
           merge-multiple: true
-      - name: A draft release with the installers
+      - name: A draft release with the downloads
         env:
           GH_TOKEN: ${{ github.token }}
+        # The portable copies arrive in downloads/portable/: every file, wherever it is.
         run: |
-          gh release create "$GITHUB_REF_NAME" installers/* \
+          gh release create "$GITHUB_REF_NAME" $(find downloads -type f) \
             --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
             --title "Eien ${GITHUB_REF_NAME#v}" \
             --notes "Not signed yet: macOS and Windows ask before the first start. [How to install](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/README.md#install)" \

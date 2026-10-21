@@ -5,7 +5,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import config, { IDENTITY } from '../electron-builder';
+import { builderConfig, IDENTITY } from '../electron-builder';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const json = (file: string) => JSON.parse(readFileSync(join(ROOT, file), 'utf8'));
@@ -15,9 +15,11 @@ describe("Eien's identity", () => {
     expect(IDENTITY).toEqual({ productName: 'Eien', appId: 'io.github.onlynyans.eien' });
   });
 
-  it('names the installers', () => {
-    expect(config.productName).toBe(IDENTITY.productName);
-    expect(config.appId).toBe(IDENTITY.appId);
+  it('names the installers and the portable copies', () => {
+    for (const config of [builderConfig(false), builderConfig(true)]) {
+      expect(config.productName).toBe(IDENTITY.productName);
+      expect(config.appId).toBe(IDENTITY.appId);
+    }
   });
 
   it('names the data folder, in development too', () => {
@@ -30,7 +32,7 @@ describe("Eien's identity", () => {
   });
 
   it('is never changed while the app runs', () => {
-    // Only the tests' own data folder (EIEN_USER_DATA) may move the settings.
+    // Only data-folders.ts's choice (a separate or portable copy's) may move the data folder.
     const dir = join(ROOT, 'src/app/electron');
     const sources = readdirSync(dir)
       .filter((name) => name.endsWith('.ts') && !name.endsWith('.test.ts'))
@@ -38,6 +40,6 @@ describe("Eien's identity", () => {
       .join('\n');
     expect(sources).not.toMatch(/\bsetName\(|\bapp\.name\s*=[^=]/);
     expect(sources.match(/setPath\('userData'/g)).toHaveLength(1);
-    expect(sources).toContain("if (userData) app.setPath('userData', userData);");
+    expect(sources).toContain('const userData = dataFolder(thisCopy());');
   });
 });

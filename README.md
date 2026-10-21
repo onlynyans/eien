@@ -28,6 +28,19 @@ Download the installer for your computer from the
 | Windows (64-bit) | `Eien-<version>-windows-setup.exe` | Run it. It installs for you alone, without an administrator's password |
 | Linux (64-bit) | `Eien-<version>-linux.AppImage` | Make it executable (`chmod +x`) and run it |
 
+Or take a portable copy, which installs nothing and keeps everything in an
+"Eien Data" folder beside itself, for a USB stick or a folder you carry:
+
+| Computer | File | Then |
+|---|---|---|
+| Mac | `Eien-<version>-mac-portable.zip` | Unzip it, move Eien with Finder into the folder it will live in, and open it there |
+| Windows | `Eien-<version>-windows-portable.exe` | Put it in the folder it will live in, and run it |
+
+On a Mac, move the portable Eien once before opening it: macOS runs a
+downloaded app that hasn't been moved from a locked, read-only copy, where
+Eien can't keep its data. If that happens, Eien says so and quits; move it and
+open it again. A portable copy needs a folder it can write to.
+
 Eien isn't signed yet, so the first start asks once:
 
 - **Mac:** macOS says it couldn't check Eien. Click Done, open System
@@ -40,22 +53,35 @@ Eien isn't signed yet, so the first start asks once:
   stopping Chromium's sandbox, which Eien keeps on. CI allows it with
   `sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`.
 
-### Updating
+On a Mac, macOS asks once whether Eien may use your Documents folder, where
+it keeps this device's settings. Until Eien is signed, it may ask again after
+an update.
 
-Eien doesn't update itself, and never goes online to look for a new version.
-To update, download the new installer and install it over the old one (on a
-Mac, replace Eien in Applications).
-
-An update, or uninstalling, changes only the app. What's yours stays:
+### Where Eien keeps things
 
 - **Your notes**: plain Markdown files in your vault's folder. Nothing an
   installer does touches them.
 - **The vault's own data**: its hidden `.eien/` folder (seals, the vault's
   settings, pins) and each folder's `.eien-folder.json`, inside the vault.
-- **This device's settings** (the look, the panes, the vault last open), in
-  Eien's data folder: `~/Library/Application Support/Eien` on a Mac,
-  `%APPDATA%\Eien` on Windows, `~/.config/Eien` on Linux. Eien run from
-  source uses the same folder.
+- **This device's settings** (the look, the panes, the vault last open):
+  - installed, or run from source: `settings.json` in `Documents/Eien`, where
+    you can see it, and the window's own storage (pane widths, sorts, today's
+    tally) in Eien's data folder: `~/Library/Application Support/Eien` on a
+    Mac, `%APPDATA%\Eien` on Windows, `~/.config/Eien` on Linux. A
+    `settings.json` already in the data folder moves to `Documents/Eien` the
+    first time, unless one is there already. If your vault is `Documents/Eien`
+    itself (or holds it), the settings stay in the data folder, so they never
+    sync with your notes, and Eien says so. If something syncs your Documents
+    folder (iCloud, OneDrive), your computers share this file.
+  - portable: all of it in "Eien Data" beside the app.
+
+### Updating
+
+Eien doesn't update itself, and never goes online to look for a new version.
+To update, download the new installer and install it over the old one (on a
+Mac, replace Eien in Applications), or put the new portable copy where the
+old one was. An update, or uninstalling, changes only the app: everything
+above stays.
 
 ## Develop
 

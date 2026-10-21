@@ -33,7 +33,7 @@ when code and spec disagree, fix one of them in the same change.
 | `src/core/` | Rules, pure TypeScript: `paths`, `text`, `vault`, `saving`, `format` (the formatting commands), `config` (every setting, and its files), `markdown` (Eien's Markdown and a note's plain text, shared with the editor), `note`, `tags`, `search`, `versions` (ids, seal files, retention, the word diff), `typography` (quotation marks), `counters` (today's tally, a sprint), `ao3` (Copy for AO3 and Paste: `to-html.ts` writes blocks round `inline-writer.ts`; `from-html.ts` reads blocks round `html-inline.ts`, after `tidy.ts` turns styles into tags) |
 | `src/platform/` | `bridge.ts` (all the window may ask), `storage.ts` (the Storage contract), and its `electron/`, `capacitor/` and `memory/` implementations; `index/`, the vault's index over any Storage; `open-vault.ts` (a vault and its index kept in step) and `settings-store.ts` (this device's settings and the vault's), shared by the desktop and the phone; `stray.ts`, what a crash can leave (temp files, a phone's rename steps), recovered at open by `electron/recover-strays.ts` and `capacitor/recover.ts`. `capacitor/` is Storage over a plain `FilesPort` (`files.ts`): Capacitor's Filesystem on the phone (`capacitor-files.ts`), Node's in tests (`node-files.ts`), so the storage contract tests run on it; `recover.ts` puts back what a crash left; `poller.ts` looks for changes, as a phone has no watcher |
 | `src/ui/` | The window: `app.ts` holds the settings, the menu and the vault shown; `vault/vault-view.ts` wires the panes (`sidebar`, `list`, `page`) to the vault and the open note (`vault/open-note.ts`), and `vault/pane-drawer.ts` draws them; `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`), and with two panes the sidebar's tree (`sidebar/tree.ts`) lists the notes; `vault/organize.ts` renames, moves and trashes, keeping order and pins in step; `versions/` seals the open note (`note-versions.ts`, the rules in `core/versions`), compares it with a seal and lists its seals; `menu/` is the floating menu; `welcome/` before a vault is open; `editor/` is CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows), `editor/typing.ts` decides typed quotes and pastes on the editor's state alone, and `editor/writing-tools.ts` the scene break key, focus mode and typewriter scrolling; `vault/ao3-out.ts` is Copy for AO3 and Export; `page/word-count.ts` counts the note's words and what the writer's own changes add, and `counters/` shows today's, the book's and a sprint's in the colophon (wired in `vault/counting.ts`); `menu/ask-number.ts` asks for a number where a menu was (a book's goal); `outline/board.ts` is outline cards, shown in the sheet's place (`vault/outline.ts`); `vault/page-parts.ts` makes the page's seals, counters, Copy for AO3 and outline cards together, for `vault/vault-view.ts`; `settings/` is the settings screen and the look it sets on `<html>`; styles in `theme/` and beside each view |
-| `src/app/electron/` | Main process: window, menu, the vault and settings sessions and their IPC (`ipc.ts`: one window per handler), the device's own file, and `out-session.ts` (the clipboard, the save dialog); `menu.ts` builds the menu bar, its on/off settings as checks that `checkToggles` keeps in step (`TOGGLES` in `core/config`); `context-menu.ts` is the note's right-click menu (spelling suggestions on macOS, from `context-menu-of.ts`); the sandboxed `preload.ts` |
+| `src/app/electron/` | Main process: window, menu, the vault and settings sessions and their IPC (`ipc.ts`: one window per handler), the device's own file (`device-settings.ts`; where it and the data folder are, for an installed, portable or separate copy, is decided in `data-folders.ts` alone), and `out-session.ts` (the clipboard, the save dialog); `menu.ts` builds the menu bar, its on/off settings as checks that `checkToggles` keeps in step (`TOGGLES` in `core/config`); `context-menu.ts` is the note's right-click menu (spelling suggestions on macOS, from `context-menu-of.ts`); the sandboxed `preload.ts` |
 | `src/app/mobile/` | The phone: `preload.ts` sets `window.eien` before the window's own script (the page is the desktop's, built by `vite.mobile.config.ts` into `out/mobile`); `mobile-vault.ts` opens the vault in Documents/Eien; `vault-home.ts` and `all-files.ts` ask for Android's access (Eien's plugins are in `android/app/src/main/java/io/github/onlynyans/eien/`: `AllFilesPlugin.java`, and `VaultFilesPlugin.java`, the flushed write and the one-step renames `capacitor-files.ts` uses on Android); `phone-out.ts` copies and exports. `android/` is the Capacitor Android project (`capacitor.config.json`) |
 | `tests/` | Architecture tests (layers; `selectors.test.ts`: no style rule ends in `*` after a `:hover` or `:focus`, which restyles the whole window); `tests/e2e/` drives the built app on real folders with Playwright; `tests/mobile/` the phone's page in Chromium; `tests/android/` Eien on an emulator or phone over adb |
 | `tsconfig.{core,web,node,mobile,e2e}.json` | One per environment: core can use neither DOM nor Node, the window can't use Node, the phone's code has the DOM and no Node |
@@ -57,8 +57,8 @@ npm run test:mutation  # Stryker: the edits to core and platform no test catches
 npm run test:mobile  # builds the phone's page, then tests it in Chromium (Playwright)
 npm run android      # builds the phone's page and copies it into android/
 npm run test:android # builds and installs the debug APK, then tests it on the device adb sees
-npm run package      # builds, then makes this system's installer in dist/ (electron-builder)
-npm run test:packaged  # starts the packaged app in dist/, or EIEN_APP=<an executable> (Playwright)
+npm run package      # builds, then this system's installer in dist/ and portable copy in dist/portable/
+npm run test:packaged  # starts the packaged apps in dist/ (or EIEN_APP, EIEN_PORTABLE_APP) (Playwright)
 ```
 
 The Android commands need a JDK and the Android SDK. On a Mac, from Homebrew:
@@ -93,9 +93,24 @@ rule is broken (turn the rule off, run the test, put it back).
 
 `electron-builder.ts` makes the installers: a universal `.dmg` (Apple Silicon
 and Intel), a Windows setup `.exe` (NSIS, one click, for this user only, so no
-admin rights) and a Linux AppImage. `tests/packaged/` starts the packaged app
-and checks that it opens, saves into a vault, and finds the window's storage
-that another build left.
+admin rights) and a Linux AppImage. With `EIEN_PORTABLE=1` it makes the
+portable copies instead, in `dist/portable/`: a zipped `.app` and a single
+Windows `.exe` (the AppImage is Linux's). A portable build is marked
+(`"portable": true` in its package.json), and keeps everything in "Eien Data"
+beside itself; `scripts/package.mjs` (`npm run package`) makes both.
+`tests/packaged/` starts the packaged apps and checks that they open, save into
+a vault, find the window's storage that another build left, and keep their
+data where they should.
+
+Where a copy keeps things is decided in `src/app/electron/data-folders.ts`,
+in this order: `EIEN_USER_DATA` (tests, separate copies: everything there); a
+portable copy ("Eien Data" beside the `.app`, or beside the `.exe` its
+launcher names in `PORTABLE_EXECUTABLE_DIR`; it says so and quits when it
+can't write there); else installed (or from source): Electron's data folder,
+with this device's `settings.json` in `Documents/Eien`. The first start moves
+a `settings.json` from the data folder there, never over one already there;
+while the vault last opened holds `Documents/Eien`, the file stays in the data
+folder, and Eien says so once.
 
 To release, set the version in `package.json` and merge, then tag `main` with
 it: `git fetch origin && git tag v0.2.0 origin/main && git push origin v0.2.0`.

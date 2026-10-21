@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const where = vi.hoisted(() => ({ userData: '' }));
-vi.mock('electron', () => ({ app: { getPath: () => where.userData } }));
+vi.mock('electron', () => ({ app: { getPath: () => where.userData, getAppPath: () => '' } }));
 
 const { readDeviceFile, updateDeviceFile } = await import('./device-settings');
 
@@ -18,8 +18,11 @@ const unreadable = process.platform === 'win32' || process.getuid?.() === 0;
 describe('updateDeviceFile', () => {
   beforeEach(async () => {
     where.userData = await mkdtemp(join(tmpdir(), 'eien-device-'));
+    // A separate copy's: the file in the data folder (./device-settings.test.ts has the installed one's).
+    vi.stubEnv('EIEN_USER_DATA', where.userData);
   });
   afterEach(async () => {
+    vi.unstubAllEnvs();
     await chmod(join(where.userData, 'settings.json'), 0o644).catch(() => {});
     await rm(where.userData, { recursive: true, force: true });
   });

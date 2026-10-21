@@ -522,7 +522,9 @@ does nothing.
 - **Vault settings** live in `.eien/config.json`: chapter numbers (i ii iii or
   1 2 3); later quotes, AO3 options, scene break style. The vault's watcher
   reports this one hidden file, so a change from another device shows at once.
-- **Device settings** live in the app's data folder (`settings.json`): scheme
+- **Device settings** live in `settings.json`, never in a vault: in
+  `Documents/Eien` for an installed copy, in a portable copy's "Eien Data" beside
+  it (`src/app/electron/data-folders.ts`). They hold the scheme
   (day, night or the system's), palette, text face, text size (90–130%),
   density (comfortable or compact), page frame (sheet or full) and zoom
   (50–200%), panes (three or two), focus mode, typewriter scrolling and

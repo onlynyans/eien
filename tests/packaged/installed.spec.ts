@@ -5,21 +5,13 @@
 
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { _electron, type ElectronApplication, test } from '@playwright/test';
-import { appEnv, closeApp, editorContent, expect, launchApp, makeVault, ROOT } from '../e2e/launch';
-
-/** Where npm run package leaves this system's app, unpacked. */
-const BUILT: Partial<Record<NodeJS.Platform, string>> = {
-  darwin: 'dist/mac-universal/Eien.app/Contents/MacOS/Eien',
-  win32: 'dist/win-unpacked/Eien.exe',
-  linux: 'dist/linux-unpacked/eien',
-};
-
-const executable = resolve(ROOT, process.env.EIEN_APP ?? BUILT[process.platform] ?? '');
+import { appEnv, closeApp, editorContent, expect, launchApp, makeVault } from '../e2e/launch';
+import { installedApp } from './packaged';
 
 const launchPackaged = (userData: string, vault?: string): Promise<ElectronApplication> =>
-  _electron.launch({ executablePath: executable, env: appEnv(userData, vault) });
+  _electron.launch({ executablePath: installedApp, env: appEnv(userData, vault) });
 
 /** A throwaway data folder, as each launch gets. */
 const freshUserData = () => mkdtempSync(join(tmpdir(), 'eien-packaged-'));
