@@ -96,16 +96,157 @@
   justify-self: end;
   margin-right: calc(var(--eien-space-2) * -1);
 }
-/* The sort: a word under New note, shown like the other controls, on hover or focus. */
-.list__head .list__sort {
+/* The lens's controls (./lens-bar.ts): the filter and the sort, icons under New note, shown
+   like the other controls on hover or focus, and always while one is on (a dot says so). */
+.list__tools {
+  grid-column: 2;
   grid-row: 2;
+  justify-self: end;
+  display: flex;
+  gap: var(--eien-space-1);
+  margin-right: calc(var(--eien-space-2) * -1);
+}
+.list__tools .icon-button {
+  position: relative;
   opacity: 0;
   transition: opacity var(--eien-calm) var(--eien-ease);
 }
-.list:hover .list__sort,
-.list__sort:focus-visible,
-.list__sort[aria-expanded="true"] {
+.list:hover .list__tools .icon-button,
+.list__tools .icon-button:focus-visible,
+.list__tools .icon-button[aria-expanded="true"],
+.list__tools .icon-button.is-on {
   opacity: 1;
+}
+.list__tools .icon-button.is-on::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--eien-ink-soft);
+}
+/* Each part of the lens that's on: a chip with its ×; a kept-out tag struck through in carmine. */
+.list__lens {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--eien-space-1) var(--eien-space-2);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 2px 1px var(--eien-space-2);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-ink-soft);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-s);
+}
+.chip.is-out .chip__words {
+  color: var(--eien-removed);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.chip__clear.icon-button {
+  width: 18px;
+  height: 18px;
+}
+.chip__clear .icon {
+  width: 11px;
+  height: 11px;
+}
+/* While a lens is on, a folder's rows don't drag, and a line says why. */
+.list__locked {
+  flex: none;
+  margin: 0;
+  padding: var(--eien-space-2) var(--eien-space-4);
+  font-size: var(--eien-size-preview);
+  font-style: italic;
+  color: var(--eien-pencil);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+
+/* The tag filter's panel (./tag-filter-panel.ts): each tag left alone, wanted, or kept out. */
+.tag-filter {
+  min-width: calc(var(--eien-space-8) * 3);
+}
+.tag-filter__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eien-space-3);
+  padding: var(--eien-space-1) var(--eien-space-2);
+}
+.tag-filter__match {
+  display: flex;
+}
+.tag-filter__match .word-button[aria-pressed="true"] {
+  color: var(--eien-ink);
+  background: var(--eien-selected);
+}
+.tag-filter__none {
+  margin: 0;
+  padding: var(--eien-space-2);
+  font-size: var(--eien-size-preview);
+  color: var(--eien-pencil);
+}
+.tri {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: var(--eien-space-2);
+  padding: 4px var(--eien-space-2) 4px calc(4px + var(--depth, 0) * var(--eien-space-3));
+  border: 0;
+  border-radius: var(--eien-radius-s);
+  background: none;
+  font: inherit;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-ink-soft);
+  text-align: left;
+  cursor: pointer;
+}
+.tri:hover,
+.tri:focus-visible {
+  background: var(--eien-selected);
+}
+.tri__box {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: transparent;
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-s);
+}
+.tri__box .icon {
+  width: 12px;
+  height: 12px;
+}
+.tri[data-state="in"] {
+  color: var(--eien-ink);
+}
+.tri[data-state="in"] .tri__box {
+  color: var(--eien-paper);
+  background: var(--eien-ink-soft);
+  border-color: var(--eien-ink-soft);
+}
+.tri[data-state="out"] {
+  color: var(--eien-removed);
+}
+.tri[data-state="out"] .tri__box {
+  color: var(--eien-removed);
+  background: var(--eien-paper);
+  border-color: var(--eien-removed);
+}
+.tri[data-state="out"] .tri__name {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
 }
 
 /* A quiet line under the head: where a note went. */
@@ -335,4 +476,26 @@
 }
 .name-field__problem[hidden] {
   display: none;
+}
+
+/* Arranging (Arrange mode): a grip at each row's own left edge, out of the row's columns. */
+.note-row__grip {
+  position: absolute;
+  left: var(--eien-space-1);
+  top: 50%;
+  display: flex;
+  color: var(--eien-pencil);
+  transform: translateY(-50%);
+}
+.note-row__grip .icon {
+  width: 12px;
+  height: 12px;
+}
+.rows.is-arranging .note-row {
+  cursor: grab;
+}
+.list__tools .list__arrange[aria-pressed="true"] {
+  opacity: 1;
+  color: var(--eien-ink);
+  background: var(--eien-selected);
 }

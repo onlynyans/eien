@@ -8,26 +8,35 @@
 
 import { tagKey } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
-import { h, type Props, wordButton } from '../dom';
+import { h, wordButton } from '../dom';
 import { icon } from '../icons';
-import { isMenuKey, menuPoint } from '../list/row-events';
 import type { SearchField } from '../list/search-field';
-import { type WindowedRow, WindowedRows } from '../shell/windowed-rows';
 import { FolderField } from './folder-field';
 import { Folds } from './folds';
 import { SidebarFoot } from './foot';
+import { drawLensSlot, type SlotLens } from './lens-slot';
 import { RowCache } from './row-cache';
+import { type FolderMove, folderRowEvents, tagRowEvents } from './row-keys';
 import { foldingSection, plainSection } from './sections';
 import { sidebarSignature } from './signature';
 import { TagField } from './tag-field';
 import { keyOf, RESULTS, type TreeActions, type TreeModel, TreeRows } from './tree';
+import { TreeWindows } from './tree-windows';
 
 export interface SidebarModel extends TreeModel {
   /** News from the last action, when there's no note list to show it above. */
   readonly notice: string | null;
 }
 
+export type { FolderMove } from './row-keys';
+
 export interface SidebarActions extends TreeActions {
+  /** Move a folder in your order, or out of or into a folder. */
+  moveFolder(path: string, how: FolderMove): void;
+  /** Move a tag one place up or down among the tags beside it. */
+  moveTag(key: string, by: -1 | 1): void;
+  /** Lay a tag over the list showing (#32): moved on to the next state, or kept out at once. */
+  filterTag(key: string, out: boolean): void;
   newFolder(): void;
   /** Make a tag no note carries yet (the + beside TAGS). */
   newTag(tag: string): void;
@@ -43,6 +52,8 @@ export class Sidebar {
   readonly element: HTMLElement;
   /** Where the search field goes when there's no list in sight. */
   readonly searchSlot = h('div', { class: 'sidebar__search' });
+  /** With two panes, the chosen row's lens (../list/lens-bar.ts): its sort and tag filter. */
+  readonly lens = h('div', { class: 'sidebar__lens', attrs: { hidden: true } });
   /** The count, and the window's controls the layout draws there. */
   readonly foot = new SidebarFoot();
   readonly #search: SearchField;
@@ -95,28 +106,8 @@ export class Sidebar {
   readonly #rows = new RowCache();
   /** Which sections are folded, on this device. */
   readonly #folds = new Folds();
-  /** Long lists of notes, drawn by the rows in sight, kept from draw to draw by the list's id. */
-  #windows = new Map<string, { rows: WindowedRows; holder: HTMLElement; depth: number }>();
-  /** The lists a draw under way has drawn windowed. */
-  #windowsDrawn = new Map<string, { rows: WindowedRows; holder: HTMLElement; depth: number }>();
-  /** A list's windowed group: the one drawn before, given its rows now. */
-  readonly #windowed = (id: string, depth: number, rows: readonly WindowedRow[]) => {
-    let window = this.#windows.get(id);
-    if (!window || window.depth !== depth) {
-      const list = h('ul', { class: 'tree tree-window' });
-      const estimate =
-        parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--eien-row-h')) ||
-        30;
-      window = {
-        rows: new WindowedRows(list, estimate),
-        holder: h('li', { class: 'tree-notes' }, list),
-        depth,
-      };
-    }
-    this.#windowsDrawn.set(id, window);
-    window.rows.set(rows);
-    return window.holder;
-  };
+  /** Long lists of notes, drawn by the rows in sight, kept from draw to draw. */
+  readonly #windows = new TreeWindows();
 
   constructor(name: string, actions: SidebarActions, keys: string, search: SearchField) {
     this.#actions = actions;
@@ -166,6 +157,7 @@ export class Sidebar {
         h('span', { class: 'sidebar__vault', text: name, attrs: { 'data-folder': '' } }),
       ),
       this.searchSlot,
+      this.lens,
       this.#body,
       this.foot.element,
     );
@@ -186,9 +178,9 @@ export class Sidebar {
     )?.focus();
   }
 
-  /** After a folder's rename: the keyboard goes to it, at `path`, with the next redraw. */
-  refocusOn(path: string): void {
-    this.#refocus = keyOf({ kind: 'folder', path });
+  /** After a folder's rename or move: the keyboard goes to it, at `path` (or the row `key`), with the next redraw. */
+  refocusOn(path: string | null, key?: string): void {
+    this.#refocus = key ?? keyOf({ kind: 'folder', path: path ?? '' });
   }
 
   /** Rename the folder at `path` in place: its name becomes a field; Enter keeps it, Esc doesn't. */
@@ -196,6 +188,11 @@ export class Sidebar {
     this.#folds.set('folders', false); // a folder made under FOLDERS folded is named in sight
     this.#folderField.start(path);
     if (this.#model) this.draw(this.#model);
+  }
+
+  /** The chosen row's lens, with two panes; none (null) with three, or for a search. */
+  drawLens(lens: SlotLens | null): void {
+    drawLensSlot(this.lens, lens);
   }
 
   /** Name a new tag in place, at the end of TAGS (opened, if folded). */
@@ -214,19 +211,33 @@ export class Sidebar {
     const giveBack = this.#holdKeyboard();
     const actions = this.#actions;
     this.#rows.begin();
-    this.#windowsDrawn = new Map();
+    this.#windows.begin();
     const rows = new TreeRows(
       model,
       actions,
-      { folder: (path) => this.#folderEvents(path), tag: (key) => this.#tagEvents(key) },
+      {
+        folder: (path) =>
+          folderRowEvents({
+            menu: (at) => actions.folderMenu(path, at),
+            rename: () => this.editFolder(path),
+            move: (how) => actions.moveFolder(path, how),
+          }),
+        tag: (key) =>
+          tagRowEvents({
+            select: () => actions.select({ kind: 'tag', key }),
+            menu: (at) => actions.tagMenu(key, at),
+            move: (by) => actions.moveTag(key, by),
+            filter: (out) => actions.filterTag(key, out),
+          }),
+      },
       this.#rows,
-      this.#windowed,
+      this.#windows.group,
     );
     // The same frame, and nothing to give the keyboard to: only notes' rows change, in place;
     // a windowed list is given its rows again, and draws those in sight.
     if (settled && frame === this.#drawn && this.#rows.patch((id, at) => rows.noteRows(id, at))) {
-      for (const [id, { depth }] of this.#windows) rows.noteRows(id, depth);
-      this.#windows = this.#windowsDrawn;
+      for (const [id, { depth }] of this.#windows.shown) rows.noteRows(id, depth);
+      this.#windows.settle(false);
       giveBack();
       return;
     }
@@ -278,8 +289,7 @@ export class Sidebar {
     this.#drawing = false;
     this.#rows.settle();
     // In the window now: each long list draws the rows in sight.
-    this.#windows = this.#windowsDrawn;
-    for (const { rows: windowed } of this.#windows.values()) windowed.render();
+    this.#windows.settle();
     giveBack();
     // A redraw mustn't take the caret out of the name being typed.
     this.#folderField.restore(this.#body);
@@ -309,8 +319,7 @@ export class Sidebar {
       );
       const visible = same?.closest('[hidden]') ? undefined : same;
       // A note's row in a long list may be out of sight, undrawn: its list brings it back.
-      if (!visible && [...this.#windows.values()].some(({ rows }) => rows.focusKey(focused)))
-        return;
+      if (!visible && this.#windows.focusKey(focused)) return;
       const rows = visible || focusedAt < 0 ? [] : this.#shown('.tree-row__name');
       (visible ?? rows[Math.min(focusedAt, rows.length - 1)])?.focus();
     };
@@ -321,39 +330,5 @@ export class Sidebar {
     return [...this.#body.querySelectorAll<HTMLElement>(selector)].filter(
       (control) => !control.closest('[hidden]'),
     );
-  }
-
-  /**
-   * A folder's own menu and keys: right-click or the menu key; F2 renames it. Not a
-   * double-click, as a note's name has: a click opens a folder and the next shuts it.
-   */
-  #folderEvents(folder: string): Props['on'] {
-    return {
-      contextmenu: (event) => {
-        event.preventDefault();
-        this.#actions.folderMenu(folder, menuPoint(event));
-      },
-      keydown: (event) => {
-        if (isMenuKey(event)) this.#actions.folderMenu(folder, menuPoint(event));
-        else if (event.key === 'F2') this.editFolder(folder);
-        else return;
-        event.preventDefault();
-      },
-    };
-  }
-
-  /** A tag's menu: right-click or the menu key. */
-  #tagEvents(key: string): Props['on'] {
-    return {
-      contextmenu: (event) => {
-        event.preventDefault();
-        this.#actions.tagMenu(key, menuPoint(event));
-      },
-      keydown: (event) => {
-        if (!isMenuKey(event)) return;
-        this.#actions.tagMenu(key, menuPoint(event));
-        event.preventDefault();
-      },
-    };
   }
 }

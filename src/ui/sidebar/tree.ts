@@ -3,7 +3,7 @@
 // own folders, and under All Notes, Pinned and each tag; and a search's
 // results take the tree's place while there's no note list to show them.
 
-import type { TagNode } from '../../core/tags';
+import { stateOf, type TagFilter, type TagNode } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import { h, type Props } from '../dom';
 import { icon } from '../icons';
@@ -42,6 +42,8 @@ export interface TreeModel {
   readonly openNote: string | null;
   /** The folders that are books, marked BOOK. */
   readonly books: ReadonlySet<string>;
+  /** The tag filter over the list showing (#32): each tag row says whether it's wanted or kept out. */
+  readonly filter?: TagFilter;
 }
 
 export interface TreeActions extends RowActions {
@@ -164,7 +166,24 @@ export class TreeRows {
 
   tags(nodes: readonly TagNode[], depth: number): HTMLElement[] {
     return nodes.flatMap((tag) => {
-      const label = h('span', {}, h('span', { class: 'tree-row__hash', text: '#' }), tag.name);
+      const state = this.#model.filter ? stateOf(this.#model.filter, tag.key) : undefined;
+      const label = h(
+        'span',
+        {},
+        h('span', { class: 'tree-row__hash', text: '#' }),
+        tag.name,
+        // In the list's filter: a tick for wanted, a dash for kept out, named for assistive tech.
+        state
+          ? h(
+              'span',
+              {
+                class: 'tree-row__filter',
+                attrs: { role: 'img', 'aria-label': state === 'in' ? 'wanted' : 'kept out' },
+              },
+              icon(state === 'in' ? 'check' : 'exclude'),
+            )
+          : null,
+      );
       const selection: Selection = { kind: 'tag', key: tag.key };
       const parent = tag.children.length > 0 || (this.#model.two && tag.count > 0);
       const id = tagId(tag.key);
@@ -175,6 +194,7 @@ export class TreeRows {
         depth,
         parent ? this.#twist(id, `#${tag.tag}`) : undefined,
       );
+      if (state) row.querySelector('.tree-row__name')?.setAttribute('data-filter', state);
       // A tag made with the + that no note carries yet: faded, and how to give it some.
       if (tag.count === 0 && tag.children.length === 0) {
         row.classList.add('tree-row--empty');
@@ -247,7 +267,12 @@ export class TreeRows {
                   : undefined,
               'data-key': keyOf(selection),
               'data-folder': folder,
-              'aria-keyshortcuts': folder === undefined ? undefined : 'F2',
+              'aria-keyshortcuts':
+                folder !== undefined
+                  ? 'F2 Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight'
+                  : tag !== undefined
+                    ? 'Alt+ArrowUp Alt+ArrowDown Shift+Enter Alt+Enter'
+                    : undefined,
             },
             on: {
               click: () => this.#actions.select(selection),

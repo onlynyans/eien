@@ -8,12 +8,13 @@ mockups here are how to see it; `tokens.css` is the source of every value.
 | [specimen.html](specimen.html) | Every colour and surface, the depth stack, every ink's contrast on every surface, the four text faces side by side and the mono, the seal, rows and their states, the diff style, the spacing scale — day and night side by side |
 | [desktop.html](desktop.html) | The app window: three panes, two-pane mode, collapsing and resizing, the page's views, Compare, Seal, Versions |
 | [phone.html](phone.html) | The phone: contents → index → page, one at a time, controls behind ⋯ |
-| [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night. Its colours are the Washi palette |
+| [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night. Its colours are the Washi palette. It mirrors the app's `src/ui/theme/tokens.css` (the source), with the corner scale, icon, control and weight tokens stage 3 added, and the mockups' own font names |
 | [themes/otaku.css](themes/otaku.css) | The Otaku palette: Otaku's colours on Eien's colour tokens, day and night |
 | [choices.js](choices.js) | The mockups' settings — FACE, PALETTE (Washi · Otaku), DENSITY (Comfortable · Compact), PAGE (Sheet · Full) and CHAPTERS (i ii iii · 1 2 3): sets `data-face`, `data-palette`, `data-density`, `data-frame` and `data-numerals` before the page draws and keeps each choice |
 | [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Source Sans 3, Atkinson Hyperlegible Next, Schibsted Grotesk, Hanken Grotesk, Instrument Sans and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
 | [references.md](references.md) | The reference screenshots, what reads well in each, and the surface values that came of it |
+| [explorations/](explorations/README.md) | The design passes after these mockups (stages 2 and 3): the three layouts, Settings, tags, themes, your order; the components as built at the end of [explorations/specimen.html](explorations/specimen.html) |
 
 To view them, serve this folder (fonts don't load from `file://`):
 
