@@ -220,8 +220,7 @@ describe('renderList', () => {
 
     // Fails today (docs/backlog.md, #35): `windowed.set` hands the keyboard to the list before
     // renderList reads which row had it, and putting the list back drops it to the body.
-    // When this passes, drop `.fails`.
-    it.fails('keeps the keyboard on the note a redraw moved out of sight', () => {
+    it('keeps the keyboard on the note a redraw moved out of sight', () => {
       long(many());
       row('n0.md').focus();
       const moved = folder([...Array.from({ length: 2999 }, (_, i) => `n${i + 1}.md`), 'n0.md']);
