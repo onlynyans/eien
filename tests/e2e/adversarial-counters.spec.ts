@@ -3,9 +3,9 @@
 // test can't show it: CodeMirror's undo of a restore, and a quit. A comment
 // on a test describes the defect it caught, as it was before the fix.
 
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 import { ALONE, clickMenu, closeApp, editorContent, expect, launchApp, test } from './launch';
 
 test.use({
@@ -35,6 +35,56 @@ async function typeAtEnd(page: Page, text: string): Promise<void> {
   await page.keyboard.press('ControlOrMeta+End');
   await page.keyboard.type(text);
 }
+
+/**
+ * Hold the window's write of `path` while it gives the note an id (a seal's own save) for
+ * `ms`, as a slow machine does. Through Electron's own table of invoke handlers: the window
+ * itself is left as it is.
+ */
+async function slowSealOf(app: ElectronApplication, path: string, ms: number): Promise<void> {
+  await app.evaluate(
+    ({ ipcMain }, [path, ms]) => {
+      type Handler = (...args: unknown[]) => unknown;
+      const handlers = (ipcMain as unknown as { _invokeHandlers?: Map<string, Handler> })
+        ._invokeHandlers;
+      const write = handlers?.get('vault:write');
+      if (!handlers || !write) throw new Error('Electron’s invoke handlers have moved');
+      handlers.set('vault:write', async (event, at, text, expected) => {
+        if (at === path && typeof text === 'string' && text.includes('\nid: ')) {
+          await new Promise((done) => setTimeout(done, ms));
+        }
+        return write(event, at, text, expected);
+      });
+    },
+    [path, ms] as const,
+  );
+}
+
+test('another device’s words arriving while a seal writes: both kept, neither counted here', async ({
+  app,
+  page,
+  vault,
+}) => {
+  // counters.spec.ts once waited for the seal line to be "not empty", which "Not sealed yet"
+  // already is: on a slow runner it wrote another device's words while the seal was still giving
+  // the note its id. Then both have changed, and the page's words go to a conflict copy, as
+  // spec §3 says. Here that moment is made to happen, and what's kept is checked.
+  await open(page, 'Loose');
+  await typeAtEnd(page, ' Four five.');
+  await expect.poll(() => read(vault, 'Loose.md')).toContain('Four five');
+  await expect(today(page)).toHaveText('Today +2');
+  await slowSealOf(app, 'Loose.md', 1500);
+  await clickMenu(app, 'File', 'Seal');
+  writeFileSync(join(vault ?? '', 'Loose.md'), 'One two three. Seven eight nine ten.\n');
+  await expect(page.locator('.seal-line')).toHaveText(/^Sealed /u, { timeout: 10_000 });
+  // The other device's words where they were; the page's, with the id, in a copy beside them.
+  expect(read(vault, 'Loose.md')).toBe('One two three. Seven eight nine ten.\n');
+  const copy = readdirSync(vault ?? '').find((name) => name.startsWith('Loose (conflict '));
+  expect(copy).toBeDefined();
+  expect(read(vault, copy ?? '')).toMatch(/^---\nid: \w+\n---\nOne two three\.\n Four five\.\n?$/u);
+  await expect(words(page)).toHaveText('5 words');
+  await expect(today(page)).toHaveText('Today +2'); // no one wrote the copy, nor the other words
+});
 
 test('⌘Z after a restore isn’t writing: today doesn’t gain the words the restore took away', async ({
   app,
