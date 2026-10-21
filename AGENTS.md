@@ -17,7 +17,7 @@ when code and spec disagree, fix one of them in the same change.
 - **The window never touches the disk.** All file access goes through the
   `Storage` interface in `src/platform/`.
 - **Settings** are added only in `src/core/config/schema.ts`. **Theme tokens**
-  only in `src/ui/theme/tokens.css`, documented in `docs/themes.md`.
+  only in `src/ui/theme/tokens.css`, documented in `docs/design/README.md`.
 - **Verify, don't assume.** Every behavior change comes with a test that would
   fail without it. Check library APIs and versions against the installed
   package, not memory.
@@ -37,7 +37,8 @@ when code and spec disagree, fix one of them in the same change.
 | `src/app/mobile/` | The phone: `preload.ts` sets `window.eien` before the window's own script (the page is the desktop's, built by `vite.mobile.config.ts` into `out/mobile`); `mobile-vault.ts` opens the vault in Documents/Eien/Vault (exports go to Documents/Eien/Exports); `vault-home.ts` and `all-files.ts` ask for Android's access (Eien's plugins are in `android/app/src/main/java/io/github/onlynyans/eien/`: `AllFilesPlugin.java`, and `VaultFilesPlugin.java`, the flushed write and the one-step renames `capacitor-files.ts` uses on Android); `phone-out.ts` copies and exports (AO3 HTML, EPUB and Word; no PDF, and no import, on the phone). `android/` is the Capacitor Android project (`capacitor.config.json`); `ios/` is the Capacitor iOS project, with Eien's Swift plugin (`ios/App/App/VaultFileOps.swift`, the file operations, a save's last step coordinated with other apps (`replace`), tested by `scripts/ios/vault-file-ops-test/`, `vault-file-ops-adversarial/` and `vault-file-coordination/`; `VaultFilesPlugin.swift`, registered by its view controller) |
 | `tests/` | Architecture tests (layers; `selectors.test.ts`: no style rule ends in `*` after a `:hover` or `:focus`, which restyles the whole window); `zip-interop.test.ts` holds Eien's zips to zlib and `unzip`; `tests/support/` holds what the tests share, Node-free so core's tests can use it: a strict zip reader, a strict XML check, an export's parts; `tests/e2e/` drives the built app on real folders with Playwright; `tests/mobile/` the phone's page in Chromium; `tests/android/` Eien on an emulator or phone over adb |
 | `tsconfig.{core,web,node,mobile,e2e}.json` | One per environment: core can use neither DOM nor Node, the window can't use Node, the phone's code has the DOM and no Node |
-| `docs/design/` | The approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on |
+| `docs/design/` | The approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on. `.interface-design/system.md` sums it up for the interface-design skill |
+| `docs/backlog.md` | What comes after the phases: fixes, tweaks and features, each marked for the design pass or not, and the owner's open questions |
 
 Unit tests sit beside their module as `name.test.ts`; property tests (fast-check)
 as `name.property.test.ts`. Those try the same generated inputs on every run;
@@ -78,8 +79,10 @@ it runs on: use an emulator, not a phone that holds a real vault.
 
 CI (`.github/workflows/ci.yml`) runs lint, types and unit tests on Linux, the
 end-to-end tests on macOS, Windows and Linux, the phone's page in Chromium, and
-the Android debug build (its APK kept as the run's artifact), on every push to
-`main` and every pull request. The Android tests on a device are run by hand. An end-to-end test that holds the app to a time (a draw,
+the Android debug build (its APK kept as the run's artifact), and on macOS the
+iOS plugin's Swift tests and the app on an iPhone simulator, on every push to
+`main` and every pull request. All seven checks must pass before a pull
+request merges (the repository's ruleset). The Android tests on a device are run by hand. An end-to-end test that holds the app to a time (a draw,
 a search, typing without a stall), or drags with the pointer, is tagged
 `ALONE` (`@alone`, from `tests/e2e/launch.ts`): those run after the rest, one
 at a time, so they measure Eien and not the tests running beside them, and no
