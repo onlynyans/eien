@@ -65,6 +65,7 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
     vault: [
       'choose',
       'current',
+      'importFolder',
       'list',
       'listFiles',
       'makeFolder',
@@ -78,7 +79,7 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
       'write',
     ],
     settings: ['read', 'set'],
-    out: ['copy', 'saveAs'],
+    out: ['copy', 'kinds', 'saveAs'],
     platform: process.platform,
     readIsOurs: true,
   });
