@@ -510,7 +510,8 @@ test.describe('two panes’ tree', () => {
     await ready(page);
     await row(page, 'Needle').click({ button: 'right' });
     await page.getByRole('menuitem', { name: 'Pin' }).click();
-    await expect(folder(page, 'Pinned')).toBeVisible();
+    // Pinned is always there: its count says the pin is in.
+    await expect(folder(page, 'Pinned').locator('.count')).toHaveText('1');
     await twoPanes(page);
     await folder(page, 'Fic').click();
     await folder(page, 'Scarf').click();
