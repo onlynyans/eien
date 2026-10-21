@@ -235,6 +235,48 @@ describe('restoring', () => {
     expect(texts).toContain('---\nid: T2\n---\nDraft, and more.');
     expect(await v.read('Note.md')).toBe('---\nid: T2\n---\nOld.');
   });
+
+  it('finishes in the note’s own file when another note is opened while it works (a slow disk)', async () => {
+    const v = vaultWith({ 'Note.md': '---\nid: SLOW\n---\nThe old ending.' });
+    const note = await v.open('Note.md');
+    const old = sealed(await v.versions.seal(note));
+    note.type('---\nid: SLOW\n---\nA new ending.');
+    v.tick(3000);
+    const amend = note.amend;
+    note.amend = (change, undoable) => {
+      note.state.open = false; // the draft is sealed, and Draft opens before the page is changed
+      return amend(change, undoable);
+    };
+    // The draft was sealed on the page; the file holds nothing newer.
+    expect((await v.versions.restore(note, 'SLOW', old.version)).kind).toBe('same');
+    expect(await v.read('Note.md')).toBe('---\nid: SLOW\n---\nThe old ending.');
+    const texts = await Promise.all(
+      (await v.versions.list('SLOW')).map((s) => v.versions.text('SLOW', s)),
+    );
+    expect(texts).toEqual([
+      '---\nid: SLOW\n---\nA new ending.',
+      '---\nid: SLOW\n---\nThe old ending.',
+    ]);
+  });
+
+  it('in the file, keeps its byte-order mark and line endings, and seals words written there first', async () => {
+    const v = vaultWith({ 'Note.md': '﻿---\r\nid: CRLF\r\n---\r\nThe old ending.' });
+    v.storage.put(
+      '.eien/versions/CRLF/2026-01-01T00-00-00Z.md',
+      '---\nid: CRLF\n---\nThe old ending.',
+    );
+    const note = await v.open('Note.md');
+    note.state.open = false; // Draft opened before the restore began
+    // Another device's words, arriving as the restore starts.
+    v.storage.put('Note.md', '﻿---\r\nid: CRLF\r\n---\r\nTheirs.');
+    const [then] = await v.versions.list('CRLF');
+    expect((await v.versions.restore(note, 'CRLF', then as VersionFile)).kind).toBe('sealed');
+    expect(await v.read('Note.md')).toBe('﻿---\r\nid: CRLF\r\n---\r\nThe old ending.');
+    const texts = await Promise.all(
+      (await v.versions.list('CRLF')).map((s) => v.versions.text('CRLF', s)),
+    );
+    expect(texts).toContain('---\nid: CRLF\n---\nTheirs.');
+  });
 });
 
 describe('naming and deleting', () => {

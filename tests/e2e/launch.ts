@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -127,6 +128,19 @@ const closed = new WeakSet<ElectronApplication>();
 const QUIT_LIMIT_MS = 10_000;
 
 /**
+ * End the app and every process it started. On Windows, killing Electron's
+ * main process leaves its GPU, renderer and crash-report processes running,
+ * holding the data folder (its removal fails, EPERM) and slowing the tests
+ * after it until they hang too; taskkill /T ends the whole tree.
+ */
+function killApp(child: ReturnType<ElectronApplication['process']>): void {
+  if (process.platform === 'win32' && child.pid !== undefined) {
+    spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f']);
+  }
+  child.kill('SIGKILL'); // where taskkill couldn't, or anywhere else
+}
+
+/**
  * Quit the app, and if it hasn't exited in QUIT_LIMIT_MS, kill it and say so.
  * On slow CI machines Electron's quit has, once, hung past the test's own
  * timeout; this keeps one slow exit from failing the run, and leaves a
@@ -151,7 +165,7 @@ export async function closeApp(app: ElectronApplication): Promise<void> {
   ]);
   if (outcome === late) {
     console.warn(`Eien did not quit within ${QUIT_LIMIT_MS} ms; killing it.`);
-    child.kill('SIGKILL');
+    killApp(child);
     await exited;
   }
 }
