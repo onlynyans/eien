@@ -236,6 +236,7 @@ test.describe('the keyboard is never lost', () => {
     await page.keyboard.press('Enter');
     const dialog = page.locator('dialog.settings');
     await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Lists', exact: true }).click();
     await dialog.locator('[data-value="two"]').click();
     await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
     await page.keyboard.press('Escape');
@@ -742,6 +743,10 @@ test.describe('changing the panes mid-sentence', () => {
     await page.keyboard.press('ControlOrMeta+End');
     await page.keyboard.type(' More snow fell.');
     await page.getByRole('button', { name: 'Settings' }).click();
+    await page
+      .locator('dialog.settings')
+      .getByRole('button', { name: 'Lists', exact: true })
+      .click();
     await page.locator('dialog.settings [data-value="two"]').click();
     await page.keyboard.press('Escape');
     await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
