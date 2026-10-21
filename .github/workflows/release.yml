@@ -8,7 +8,6 @@ name: Release
 on:
   push:
     tags: ['v*']
-    branches: [packaging]  # TEMPORARY: tries the workflow before merging; removed before merge.
   workflow_dispatch:
 
 permissions:
