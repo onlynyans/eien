@@ -198,3 +198,43 @@ describe('closeMenu', () => {
     expect(closeMenu()).toBe(false);
   });
 });
+
+describe('a row’s menu (Eien’s own)', () => {
+  it('is headed by the row’s name, for the eye; each choice an icon, its word and its key', () => {
+    openMenu(
+      [
+        { label: 'Rename', icon: 'rename', keys: 'F2', run: vi.fn() },
+        'separator',
+        {
+          label: 'Move to the trash',
+          icon: 'trash',
+          keys: 'Mod-Backspace',
+          danger: true,
+          run: vi.fn(),
+        },
+      ],
+      { at: { x: 10, y: 10 } },
+      'Ideas',
+      true,
+    );
+    const head = menu()?.querySelector('.menu__head');
+    expect(head?.textContent).toBe('Ideas');
+    expect(head?.getAttribute('aria-hidden')).toBe('true');
+    expect(menu()?.getAttribute('aria-label')).toBe('Ideas');
+    const [rename, trash] = items();
+    // Its words are its name alone: the key is drawn by the style sheet, and named for assistive tech.
+    expect(rename?.textContent).toBe('Rename');
+    expect(rename?.querySelector('svg.icon')).not.toBeNull();
+    expect(rename?.getAttribute('aria-keyshortcuts')).toBe('F2');
+    expect(rename?.querySelector('.menu__keys')?.getAttribute('data-keys')).toBe('F2');
+    expect(trash?.classList.contains('is-danger')).toBe(true);
+    expect(trash?.getAttribute('aria-keyshortcuts')).toMatch(/^(Meta|Control)\+Backspace$/);
+  });
+
+  it('a menu with no icons stays a list of words, with no head', () => {
+    openMenu(sorts(), { at: { x: 0, y: 0 } }, 'Sort');
+    expect(menu()?.querySelector('.menu__head')).toBeNull();
+    expect(menu()?.classList.contains('menu--icons')).toBe(false);
+    expect(items().map((item) => item.textContent)).toEqual(['Order', 'Title', 'Newest']);
+  });
+});
