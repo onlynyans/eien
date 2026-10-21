@@ -68,8 +68,16 @@ test.describe('sections, guides and books', () => {
     // Open, its twisty waits out of sight until the pointer or the keyboard comes.
     await page.mouse.move(1, 1);
     await expect.poll(() => twistyOpacity(folders)).toBe('0');
-    await folders.hover();
-    await expect.poll(() => twistyOpacity(folders)).toBe('1');
+    // The pointer comes to rest on the label. Chromium sometimes misses a hover that arrives in one
+    // move (1 in 5 on main, more on Linux's runner): it moves again until the label is under it.
+    const box = await folders.boundingBox();
+    if (!box) throw new Error('Folders has no box');
+    const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+    await expect(async () => {
+      await page.mouse.move(x, y + 2);
+      await page.mouse.move(x, y, { steps: 3 });
+      expect(await twistyOpacity(folders)).toBe('1');
+    }).toPass({ timeout: 5000 });
 
     await folders.click();
     await expect(folders).toHaveAttribute('aria-expanded', 'false');
