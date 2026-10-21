@@ -179,12 +179,12 @@ test.describe('back', () => {
 });
 
 test.describe('turned sideways or upright', () => {
-  test('the keyboard in the sidebar, turned upright onto the page: it goes to the page', async ({
+  test('the keyboard in the search field, turned upright onto the page: it goes to the page', async ({
     page,
   }) => {
     // phone-stack.ts #onNarrow lays the panes out again and moves no keyboard: the search field
-    // the writer was in goes out of sight with the keyboard in it, and Chromium leaves it on the
-    // body (spec §4: a shut pane gives the keyboard to the page).
+    // the writer was in (on the list's band, sideways) goes out of sight with the keyboard in it,
+    // and Chromium leaves it on the body (spec §4: a shut pane gives the keyboard to the page).
     await withNotes(page);
     await page.setViewportSize({ width: 915, height: 412 });
     await titles(page).filter({ hasText: 'Ideas' }).click();

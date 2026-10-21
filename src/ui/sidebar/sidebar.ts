@@ -1,13 +1,15 @@
 // The sidebar: the vault's contents page. The seal (which shuts the sidebar
-// to a strip, and opens it again), the vault's name and the search field,
-// then the tree (./tree.ts); at the foot, day or night, the panes and the
-// settings. The head and search field stay put; the rest redraws. A folder
-// takes a dropped note, and has its own menu.
+// to a strip, and opens it again), the vault's name and, with no list in
+// sight, the search field (../list/search-field.ts), then the tree
+// (./tree.ts); at the foot, day or night, the panes and the settings. The
+// head and search field stay put; the rest redraws. A folder takes a dropped
+// note, and has its own menu.
 
 import type { SettingValues } from '../../core/config';
 import type { FolderNode } from '../../core/vault';
 import { h, type Props, wordButton } from '../dom';
 import { isMenuKey, menuPoint } from '../list/row-events';
+import type { SearchField } from '../list/search-field';
 import { FolderField } from './folder-field';
 import { sidebarFoot } from './foot';
 import { sidebarSignature } from './signature';
@@ -22,8 +24,6 @@ export interface SidebarModel extends TreeModel {
 }
 
 export interface SidebarActions extends TreeActions {
-  /** The search field's words, a moment after typing stops; "" when cleared. */
-  search(query: string): void;
   newFolder(): void;
   /** The name typed for a folder being renamed. */
   renameFolder(path: string, typed: string): void;
@@ -35,16 +35,13 @@ export interface SidebarActions extends TreeActions {
   toggleSidebar(): void;
 }
 
-/** How long typing must pause before the search runs. */
-const SEARCH_AFTER_MS = 150;
-
 export class Sidebar {
   readonly element: HTMLElement;
-  readonly #search: HTMLInputElement;
-  readonly #clear: HTMLButtonElement;
+  /** Where the search field goes when there's no list in sight. */
+  readonly searchSlot = h('div', { class: 'sidebar__search' });
+  readonly #search: SearchField;
   readonly #body = h('div', { class: 'sidebar__body' });
   readonly #actions: SidebarActions;
-  #timer: ReturnType<typeof setTimeout> | undefined;
   #model: SidebarModel | null = null;
   /** Set while redrawing: a field taken out by a redraw isn't the writer leaving it. */
   #drawing = false;
@@ -64,38 +61,9 @@ export class Sidebar {
   /** What was last drawn (./signature.ts): the same again isn't rebuilt. */
   #drawn = '';
 
-  constructor(name: string, actions: SidebarActions, keys: string) {
+  constructor(name: string, actions: SidebarActions, keys: string, search: SearchField) {
     this.#actions = actions;
-    this.#search = h('input', {
-      class: 'field',
-      attrs: {
-        type: 'search',
-        placeholder: `Search ${name}`,
-        'aria-label': `Search ${name}`,
-        'aria-keyshortcuts': 'Meta+Shift+F Control+Shift+F',
-        autocomplete: 'off',
-        spellcheck: 'false',
-      },
-      on: {
-        input: () => {
-          this.#clear.hidden = !this.#search.value;
-          clearTimeout(this.#timer);
-          this.#timer = setTimeout(() => actions.search(this.#search.value), SEARCH_AFTER_MS);
-        },
-        keydown: (event) => {
-          if (event.key !== 'Escape') return;
-          if (!this.#search.value) this.#search.blur();
-          else {
-            this.clearSearch();
-            actions.search('');
-          }
-        },
-      },
-    });
-    this.#clear = wordButton('Clear', () => this.#clearAndSearch(), {
-      'aria-label': 'Clear search',
-      hidden: true,
-    });
+    this.#search = search;
     /** The seal as a button: it shuts the sidebar, and on the strip, opens it again. */
     const seal = (label: string, extra: string) =>
       h(
@@ -127,24 +95,15 @@ export class Sidebar {
         // The vault itself takes a dropped note, out of whatever folder it was in.
         h('span', { class: 'sidebar__vault', text: name, attrs: { 'data-folder': '' } }),
       ),
-      h('div', { class: 'sidebar__search', attrs: { role: 'search' } }, this.#search, this.#clear),
+      this.searchSlot,
       this.#body,
     );
-  }
-
-  get query(): string {
-    return this.#search.value;
-  }
-
-  focusSearch(): void {
-    this.#search.focus();
-    this.#search.select();
   }
 
   /**
    * Give the keyboard to the marked row (the selected one, or the open note),
    * or the first; with no rows (a search that found nothing), the first
-   * control there, or the search field.
+   * control there, or the search field when it's here.
    */
   focusTree(): void {
     const rows = [...this.#body.querySelectorAll<HTMLElement>('.tree-row__name')];
@@ -152,20 +111,13 @@ export class Sidebar {
       rows.find((row) => row.getAttribute('aria-current') === 'true') ??
       rows[0] ??
       this.#body.querySelector<HTMLElement>('.sidebar__tree button') ??
-      this.#search
-    ).focus();
+      this.searchSlot.querySelector<HTMLElement>('input')
+    )?.focus();
   }
 
   /** After a folder's rename: the keyboard goes to it, at `path`, with the next redraw. */
   refocusOn(path: string): void {
     this.#refocus = keyOf({ kind: 'folder', path });
-  }
-
-  /** Empty the field, without searching for nothing. */
-  clearSearch(): void {
-    clearTimeout(this.#timer);
-    this.#search.value = '';
-    this.#clear.hidden = true;
   }
 
   /** Rename the folder at `path` in place: its name becomes a field; Enter keeps it, Esc doesn't. */
@@ -219,7 +171,7 @@ export class Sidebar {
                 'div',
                 { class: 'sidebar__empty' },
                 h('p', { text: 'No notes match.' }),
-                wordButton('Clear search', () => this.#clearAndSearch(), {
+                wordButton('Clear search', () => this.#search.clearAndSearch(), {
                   'data-key': 'clear-search',
                 }),
               )
@@ -261,12 +213,6 @@ export class Sidebar {
     }
     // A redraw mustn't take the caret out of the name being typed.
     this.#folderField.restore(this.#body);
-  }
-
-  #clearAndSearch(): void {
-    this.clearSearch();
-    this.#actions.search('');
-    this.#search.focus();
   }
 
   /** A folder's own menu and keys: right-click or the menu key; F2 renames it. */

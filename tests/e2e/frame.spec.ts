@@ -11,7 +11,7 @@ import { clickMenu, expect, test, windowZoom } from './launch';
 test.use({ vaultFiles: { 'Note.md': 'Words.\n' } });
 
 const MAC = process.platform === 'darwin';
-const BANDS = ['.sidebar__head', '.list__head', '.page__bar'];
+const BANDS = ['.sidebar__head', '.list__search', '.list__head', '.page__bar'];
 
 /** Where the window controls overlay leaves the page free, in the page's pixels. */
 const freeArea = (page: Page) =>
@@ -103,7 +103,7 @@ test('with the sidebar shut, nothing sits under the traffic lights', async ({ ap
   // The list's head begins after them.
   await expect
     .poll(async () => {
-      const head = await box(page, '.list__head');
+      const head = await box(page, '.list__search'); // the list's top band: its search
       return head.left + head.paddingLeft;
     })
     .toBeGreaterThan(free.left);
@@ -128,7 +128,7 @@ test('the panes’ top bands drag the window; every control in them stays clicka
       edges: [...document.querySelectorAll('.pane-edge')].map(region),
     };
   }, BANDS);
-  expect(regions.bands).toEqual(['drag', 'drag', 'drag']);
+  expect(regions.bands).toEqual(['drag', 'drag', 'drag', 'drag']);
   expect(regions.controls).toBeGreaterThan(5);
   expect(regions.dragging).toEqual([]);
   expect(regions.edges).toEqual(['no-drag', 'no-drag']);

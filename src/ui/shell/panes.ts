@@ -76,6 +76,11 @@ export class PaneLayout {
     return this.#two && !this.#parts.phone();
   }
 
+  /** Whether this is a phone's layout, one pane at a time. */
+  get phone(): boolean {
+    return this.#parts.phone() !== null;
+  }
+
   /** Whether `pane` is out of sight: shut, or, for the list, there are two panes; on a phone, not the one shown. */
   isShut(pane: Shuttable): boolean {
     const phone = this.#parts.phone();

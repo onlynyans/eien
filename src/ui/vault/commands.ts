@@ -1,11 +1,13 @@
 // The menu bar's commands for an open vault (../../app/electron/menu.ts):
-// a new note, search, the page's views and formats, and the panes — ⌘\ and
-// ⌘⇧\ shut or open the sidebar and the list, ⌘1/⌘2/⌘3 give one the keyboard,
-// opening it first if it's shut (spec §4). Zoom is the window's (../app.ts).
+// a new note, search (the field in sight), the page's views and formats, and
+// the panes — ⌘\ and ⌘⇧\ shut or open the sidebar and the list, ⌘1/⌘2/⌘3
+// give one the keyboard, opening it first if it's shut (spec §4). Zoom is the
+// window's (../app.ts).
 
 import { SPRINT_MINUTES } from '../../core/counters';
 import { formatCommand } from '../../core/format';
 import type { ExportFormat, MenuCommand } from '../../platform/bridge';
+import type { SearchField } from '../list/search-field';
 import type { PageView } from '../page/page';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
@@ -16,6 +18,8 @@ export interface CommandContext {
   readonly panes: PaneLayout;
   readonly sidebar: Sidebar;
   readonly list: HTMLElement;
+  /** In the list's band, or the sidebar's (../list/search-field.ts). */
+  readonly search: SearchField;
   newNote(): void;
   /** Draw the list: a shut one isn't kept drawn. */
   drawList(): Promise<void>;
@@ -29,8 +33,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   const { page, panes, sidebar } = ctx;
   if (command === 'new-note') ctx.newNote();
   else if (command === 'search') {
-    panes.open('sidebar');
-    sidebar.focusSearch();
+    // The field in sight: the list's, or, with no list, the sidebar's, opened first if it's shut.
+    if (ctx.search.isIn(sidebar.searchSlot)) panes.open('sidebar');
+    ctx.search.focus();
   } else if (command === 'view:next') page.nextMode();
   else if (command === 'view:live' || command === 'view:source' || command === 'view:reading') {
     page.setMode(command.slice('view:'.length) as 'live' | 'source' | 'reading');

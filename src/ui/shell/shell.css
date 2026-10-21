@@ -113,13 +113,14 @@ body {
    or in a browser, app-region means nothing. */
 .sidebar__head,
 .sidebar__strip,
+.list__search,
 .list__head,
 .page__bar,
 .versions__head,
 .welcome {
   -webkit-app-region: drag;
 }
-:is(.sidebar__head, .sidebar__strip, .list__head, .page__bar, .versions__head)
+:is(.sidebar__head, .sidebar__strip, .list__search, .list__head, .page__bar, .versions__head)
   :is(button, input, select, textarea, a, [tabindex], [role="group"]),
 .welcome__sheet,
 .menu,

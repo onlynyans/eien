@@ -9,6 +9,52 @@
   border-right: var(--eien-hairline) solid var(--eien-rule);
 }
 
+/* The search field (search-field.ts) and its CLEAR, wherever it is. */
+.search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--eien-space-1);
+  min-width: 0;
+}
+/* The system's clear button is a coloured icon; CLEAR beside the field is a word. */
+.search .field::-webkit-search-cancel-button {
+  appearance: none;
+}
+.search .word-button {
+  flex: none;
+  margin-right: calc(var(--eien-space-2) * -1);
+}
+.search .word-button[hidden] {
+  display: none;
+}
+
+/* The list's top band, as tall as the page's control strip, holding the
+   search field; empty (and gone) when the field is in the sidebar. It may
+   drag the window; the field and its CLEAR never do. */
+.list__search {
+  display: flex;
+  align-items: center;
+  flex: none;
+  height: var(--band);
+  padding: 0 var(--eien-space-4);
+  background: var(--eien-band);
+}
+.list__search:empty {
+  display: none;
+}
+.list__search .search {
+  -webkit-app-region: no-drag;
+}
+
+/* What redraws: the head, the news and the rows. */
+.list__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .list__head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -16,11 +62,20 @@
   gap: var(--eien-space-1) var(--eien-space-3);
   flex: none;
   padding: var(--eien-space-4);
-  /* Clear of macOS's traffic lights while the sidebar's shut (../shell/shell.css). */
-  padding-left: max(var(--eien-space-4), calc(var(--controls-left) - var(--pane-sidebar, 0px)));
   background: var(--eien-band);
   border-bottom: var(--eien-hairline) solid var(--eien-rule);
 }
+/* Under the search band, the head needs less above it (desktop.css). */
+.list__search:not(:empty) + .list__body .list__head {
+  padding-top: var(--eien-space-2);
+}
+/* The list's top band, the search's or, with none, the head, keeps clear of macOS's
+   traffic lights while the sidebar's shut (../shell/shell.css). */
+.list__search,
+.list__search:empty + .list__body .list__head {
+  padding-left: max(var(--eien-space-4), calc(var(--controls-left) - var(--pane-sidebar, 0px)));
+}
+
 .list__heading {
   grid-column: 1;
   margin: 0;
