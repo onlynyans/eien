@@ -257,12 +257,11 @@ page there shows them working.
     (filled, ticked) or kept out (carmine, struck through); one press moves
     it on, ⌥ keeps it out; All of / Any of for two or more wanted.
 
-## Layouts (decided 2026-10-21)
+## Still open
 
-All three layouts are offered, as a setting (`appearance.layout`: band,
-slip, runhead, as `data-layout` on `<html>`), carried by one framework:
-commands defined once, hosts that draw a list of them, a small module and
-stylesheet per layout. Each layout sets its own radius scale on `:root`
-(`--eien-radius-s/-m/-l`: A 2/4/8, B 4/8/14, C 3/6/10) and its own phone
-bottom (A a top bar, B a floating slip, C a tool rail). Nothing hardcodes a
-radius; components use the three tokens.
+- **The window's layout:** A · Band, B · Slip or C · Running head (40px,
+  one strip across the window, the sidebar's head under the lights). One
+  framework can carry all three as a setting (`explorations/overall.md`).
+- **The radius scale's steps:** each exploration tries its own
+  (2/4/8, 4/8/14, 3/6/10).
+- **The phone's bottom** for the chosen layout, and the app's icon (#21).
