@@ -14,6 +14,19 @@ import type { Configuration } from 'electron-builder';
 export const IDENTITY = { productName: 'Eien', appId: 'io.github.onlynyans.eien' } as const;
 
 /**
+ * The seal, Eien's icon, made from build/icons/seal.svg by `npm run icons`
+ * (scripts/icons/build.mjs): the macOS template, Windows' sizes 16 to 256, and
+ * Linux's PNGs, one of which is also the window's own icon there
+ * (src/app/electron/window.ts). The phones' icons are in android/ and ios/.
+ */
+export const ICONS = {
+  mac: 'build/icons/icon.icns',
+  win: 'build/icons/icon.ico',
+  linux: 'build/icons/linux',
+  linuxWindow: 'build/icons/linux/512x512.png',
+} as const;
+
+/**
  * Signed only when a certificate is given (CSC_LINK, AGENTS.md → Releases).
  * Until then macOS gets an ad-hoc signature: without one, Apple Silicon calls
  * a downloaded app "damaged" and offers no way to open it. Ad-hoc can't use
@@ -38,12 +51,15 @@ export function builderConfig(portable: boolean): Configuration {
     // The build (npm run build), and package.json for its entry point. The
     // production dependencies the main process imports come along by themselves.
     files: ['package.json', 'out/main/**', 'out/preload/**', 'out/renderer/**'],
+    // The Linux window's icon, beside the app's own files: resources/icon.png.
+    extraResources: [{ from: ICONS.linuxWindow, to: 'icon.png' }],
     ...(portable ? { extraMetadata: { portable: true } } : {}),
     // No native modules: nothing to rebuild for Electron.
     npmRebuild: false,
     mac: {
       // One download for Apple Silicon and Intel.
       target: [{ target: portable ? 'zip' : 'dmg', arch: ['universal'] }],
+      icon: ICONS.mac,
       category: 'public.app-category.productivity',
       artifactName: artifactName(portable ? 'mac-portable' : 'mac'),
       identity: signed ? undefined : '-',
@@ -51,6 +67,7 @@ export function builderConfig(portable: boolean): Configuration {
     },
     win: {
       target: [{ target: portable ? 'portable' : 'nsis', arch: ['x64'] }],
+      icon: ICONS.win,
     },
     nsis: {
       // One click, for this user only (%LOCALAPPDATA%\Programs): no admin rights asked.
@@ -61,6 +78,7 @@ export function builderConfig(portable: boolean): Configuration {
     portable: { artifactName: artifactName('windows-portable') },
     linux: {
       target: [{ target: 'AppImage', arch: ['x64'] }],
+      icon: ICONS.linux,
       category: 'Office',
       artifactName: artifactName('linux'),
     },

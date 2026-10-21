@@ -147,4 +147,18 @@ release, keeping them as the run's artifacts.
 - **No auto-update.** Eien never goes online to look for a version. On macOS,
   an updater (electron-updater) would need the app signed; reconsider once it
   is.
-- **No icon yet:** the installers use Electron's.
+- **The icon is the seal** (a vermilion square with 永), from one source,
+  `build/icons/seal.svg`: the glyph drawn by hand as paths (traced from no
+  font, so no font licence), in the interface's seal colours. After changing
+  it run `npm run icons` (`scripts/icons/build.mjs`, which rasterizes with
+  Electron itself and writes the `.icns` and `.ico`) and commit what it makes:
+  the macOS template (`build/icons/icon.icns`: a rounded square, 824 of 1024
+  px, one soft shadow), Windows' `icon.ico` (16 to 256, the full square), Linux's
+  PNGs (`build/icons/linux/`, 16 to 512; the 512 is also packed as
+  `resources/icon.png` for the window's own icon, `window.ts`), Android's
+  adaptive icon (the glyph as a vector, scaled into the 66 dp safe circle, over
+  the seal's colour; a themed one too; legacy square and round PNGs under it)
+  and iOS's 1024 px square, which must have no alpha channel. `electron-builder.ts`
+  names them (`ICONS`); `tests/icons.test.ts` holds the sizes and the wiring.
+  The vermilion is the interface's own, not deepened for small sizes: the glyph
+  holds at 32 px and up, and at 16 it blurs to a pale mark on the colour.
