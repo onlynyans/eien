@@ -6,7 +6,8 @@ import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
 import { open, putOutside, titles } from './outside';
 
-test.use({ ...devices['Pixel 7'] });
+// Motion reduced from the start, so no fade is under way when axe looks (../e2e/axe.ts).
+test.use({ ...devices['Pixel 7'], reducedMotion: 'reduce' });
 
 /** Settings, from the page's ⋯. */
 async function openSettings(page: Page): Promise<void> {

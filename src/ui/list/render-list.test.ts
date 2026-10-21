@@ -184,6 +184,48 @@ describe('renderList', () => {
     expect(run.sort).toHaveBeenCalledWith('title');
   });
 
+  describe('thousands of notes', () => {
+    const many = (first = 'n0.md') =>
+      folder([first, ...Array.from({ length: 2999 }, (_, i) => `n${i + 1}.md`)]);
+    /** The list drawn once, then made a scroller 400 px tall: happy-dom lays nothing out. */
+    const long = (list: NoteList) => {
+      renderList(container, list, null, actions());
+      const rows = container.querySelector<HTMLElement>('ul.rows') as HTMLElement;
+      rows.style.overflowY = 'auto';
+      Object.defineProperty(rows, 'clientHeight', { value: 400, configurable: true });
+      renderList(container, list, null, actions());
+      return rows;
+    };
+
+    it('draws the rows in sight, each saying where it stands among them all', () => {
+      long(many());
+      const drawn = container.querySelectorAll('ul.rows > li[aria-posinset]');
+      expect(drawn.length).toBeGreaterThan(0);
+      expect(drawn.length).toBeLessThan(100);
+      expect(drawn[0]?.getAttribute('aria-setsize')).toBe('3000');
+    });
+
+    it('keeps its list, and each row’s element, from one draw to the next', () => {
+      const rows = long(many());
+      const first = row('n0.md');
+      renderList(container, many(), null, actions());
+      expect(container.querySelector('ul.rows')).toBe(rows);
+      expect(row('n0.md')).toBe(first);
+    });
+
+    // Fails today (docs/backlog.md, #35): `windowed.set` hands the keyboard to the list before
+    // renderList reads which row had it, and putting the list back drops it to the body.
+    // When this passes, drop `.fails`.
+    it.fails('keeps the keyboard on the note a redraw moved out of sight', () => {
+      long(many());
+      row('n0.md').focus();
+      const moved = folder([...Array.from({ length: 2999 }, (_, i) => `n${i + 1}.md`), 'n0.md']);
+      renderList(container, moved, null, actions());
+      expect((document.activeElement as HTMLElement).dataset.path).toBe('n0.md');
+      expect(document.activeElement?.closest('li')?.getAttribute('aria-posinset')).toBe('3000');
+    });
+  });
+
   describe('a redraw', () => {
     it('gives the keyboard back to the row that had it, wherever that row went', () => {
       renderList(container, folder(['a.md', 'b.md', 'c.md']), null, actions());

@@ -4,9 +4,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TagNode } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
+import type { Props } from '../dom';
+import { WINDOW_FROM } from '../shell/window-range';
+import type { WindowedRow } from '../shell/windowed-rows';
 import type { ListedNote, NoteList } from '../vault/vault-state';
 import { RowCache } from './row-cache';
-import { openId, RESULTS, selectionOf, type TreeActions, type TreeModel, TreeRows } from './tree';
+import {
+  openId,
+  RESULTS,
+  selectionOf,
+  type TreeActions,
+  type TreeModel,
+  TreeRows,
+  type Windowed,
+} from './tree';
 
 const folderNode = (
   path: string,
@@ -79,6 +90,19 @@ const model = (extra: Partial<TreeModel> = {}): TreeModel => ({
   ...extra,
 });
 
+/** The sidebar's windowed group for a long list; none of the short lists here asks for one. */
+const noWindow: Windowed = () => {
+  throw new Error('a short list was drawn windowed');
+};
+
+const rowsOf = (
+  of: TreeModel,
+  run: TreeActions,
+  folderEvents: (path: string) => Props['on'],
+  cache: RowCache,
+  windowed: Windowed = noWindow,
+) => new TreeRows(of, run, folderEvents, cache, windowed);
+
 const draw = (rows: TreeRows) => {
   const list = document.createElement('ul');
   list.append(...rows.library(), ...rows.folders(vault, 0, () => null));
@@ -112,18 +136,18 @@ describe('openId and selectionOf', () => {
 
 describe('TreeRows, three panes', () => {
   it('lists All Notes, then Pinned only when something is pinned, with counts', () => {
-    const none = new TreeRows(model(), actions(), () => ({}), new RowCache());
+    const none = rowsOf(model(), actions(), () => ({}), new RowCache());
     expect(none.library().map((row) => row.textContent)).toEqual(['All Notes3']);
-    const some = new TreeRows(model({ pinned: 2 }), actions(), () => ({}), new RowCache());
+    const some = rowsOf(model({ pinned: 2 }), actions(), () => ({}), new RowCache());
     expect(some.library().map((row) => row.textContent)).toEqual(['All Notes3', 'Pinned2']);
   });
 
   it('lists the folders, an open one’s own folders inside it, and no notes', () => {
-    const shut = draw(new TreeRows(model(), actions(), () => ({}), new RowCache()));
+    const shut = draw(rowsOf(model(), actions(), () => ({}), new RowCache()));
     expect(names(shut)).toEqual(['all', 'folder:Drafts', 'folder:Book']);
 
     const open = draw(
-      new TreeRows(model({ open: new Set(['Drafts']) }), actions(), () => ({}), new RowCache()),
+      rowsOf(model({ open: new Set(['Drafts']) }), actions(), () => ({}), new RowCache()),
     );
     expect(names(open)).toEqual(['all', 'folder:Drafts', 'folder:Drafts/Old', 'folder:Book']);
     expect(open.querySelectorAll('.tree-row--note')).toHaveLength(0);
@@ -134,7 +158,7 @@ describe('TreeRows, three panes', () => {
   });
 
   it('marks the row selected, and a book folder as a book', () => {
-    const rows = new TreeRows(
+    const rows = rowsOf(
       model({ selection: { kind: 'folder', path: 'Book' }, books: new Set(['Book']) }),
       actions(),
       () => ({}),
@@ -151,7 +175,7 @@ describe('TreeRows, three panes', () => {
     const run = actions();
     const folderKeys = vi.fn();
     const tree = draw(
-      new TreeRows(model(), run, (path) => ({ keydown: () => folderKeys(path) }), new RowCache()),
+      rowsOf(model(), run, (path) => ({ keydown: () => folderKeys(path) }), new RowCache()),
     );
     byKey(tree, 'folder:Drafts').click();
     byKey(tree, 'all').click();
@@ -167,7 +191,7 @@ describe('TreeRows, three panes', () => {
 
   it('gives a folder with folders inside a twisty that opens it, named for what it does', () => {
     const run = actions();
-    const tree = draw(new TreeRows(model(), run, () => ({}), new RowCache()));
+    const tree = draw(rowsOf(model(), run, () => ({}), new RowCache()));
     const twist = byKey(tree, 'twist:Drafts');
     expect(twist.getAttribute('aria-expanded')).toBe('false');
     expect(twist.getAttribute('aria-label')).toBe('Open Drafts');
@@ -179,7 +203,7 @@ describe('TreeRows, three panes', () => {
 
   it('lists tags with their # and, open, their children', () => {
     const tags = [tag('fic', 3, [tag('fic/aot', 2)])];
-    const rows = new TreeRows(
+    const rows = rowsOf(
       model({ tags, open: new Set([openId({ kind: 'tag', key: 'fic' })]) }),
       actions(),
       () => ({}),
@@ -207,7 +231,7 @@ describe('TreeRows, two panes', () => {
     });
 
   it('lists each open row’s notes under it, after its folders, each under its own key', () => {
-    const tree = draw(new TreeRows(two(), actions(), () => ({}), new RowCache()));
+    const tree = draw(rowsOf(two(), actions(), () => ({}), new RowCache()));
     expect(names(tree)).toEqual([
       'all',
       'note:/all:Drafts/a.md',
@@ -220,7 +244,7 @@ describe('TreeRows, two panes', () => {
   });
 
   it('marks the note on the page wherever it is listed, and no row as selected', () => {
-    const tree = draw(new TreeRows(two(), actions(), () => ({}), new RowCache()));
+    const tree = draw(rowsOf(two(), actions(), () => ({}), new RowCache()));
     const current = [...tree.querySelectorAll('[aria-current="true"]')].map(
       (each) => (each as HTMLElement).dataset.key,
     );
@@ -228,7 +252,7 @@ describe('TreeRows, two panes', () => {
   });
 
   it('gives the Library rows and a folder with notes a twisty, and says which are open', () => {
-    const tree = draw(new TreeRows(two(), actions(), () => ({}), new RowCache()));
+    const tree = draw(rowsOf(two(), actions(), () => ({}), new RowCache()));
     expect(byKey(tree, 'all').getAttribute('aria-expanded')).toBe('true');
     expect(byKey(tree, 'folder:Book').getAttribute('aria-expanded')).toBe('false');
     expect(tree.querySelector('[data-key="twist:Book"]')).not.toBeNull();
@@ -236,7 +260,7 @@ describe('TreeRows, two panes', () => {
 
   it('lets a note be moved with Alt+arrows only where its folder is in its own order', () => {
     const run = actions();
-    const tree = draw(new TreeRows(two(), run, () => ({}), new RowCache()));
+    const tree = draw(rowsOf(two(), run, () => ({}), new RowCache()));
     const key = (row: string) =>
       byKey(tree, row).dispatchEvent(
         new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true }),
@@ -252,7 +276,7 @@ describe('TreeRows, two panes', () => {
   });
 
   it('draws a search’s results under their own key', () => {
-    const rows = new TreeRows(
+    const rows = rowsOf(
       model({ results: listOf([note('x.md')], { kind: 'search' }) }),
       actions(),
       () => ({}),
@@ -261,6 +285,41 @@ describe('TreeRows, two panes', () => {
     expect(
       rows.noteRows(RESULTS, 0).map((row) => row.querySelector('button')?.dataset.key),
     ).toEqual(['note:results:x.md']);
+  });
+});
+
+describe('TreeRows, a long list', () => {
+  it('hands a list of WINDOW_FROM notes or more to one windowed group, its rows made only when drawn', () => {
+    const notes = Array.from({ length: WINDOW_FROM }, (_, i) => note(`n${i}.md`));
+    const asked: { id: string; depth: number; rows: readonly WindowedRow[] }[] = [];
+    const holder = document.createElement('li');
+    const rows = rowsOf(
+      model({ two: true, open: new Set(['/all']), notes: new Map([['/all', listOf(notes)]]) }),
+      actions(),
+      () => ({}),
+      new RowCache(),
+      (id, depth, rows) => {
+        asked.push({ id, depth, rows });
+        return holder;
+      },
+    );
+    expect(rows.noteRows('/all', 1)).toEqual([holder]);
+    const [group] = asked;
+    expect([group?.id, group?.depth, group?.rows.length]).toEqual(['/all', 1, WINDOW_FROM]);
+    expect(group?.rows[3]?.key).toBe('note:/all:n3.md');
+    const made = group?.rows[3]?.make();
+    expect(made?.querySelector('button')?.dataset.path).toBe('n3.md');
+  });
+
+  it('draws a list one shorter as rows of its own', () => {
+    const notes = Array.from({ length: WINDOW_FROM - 1 }, (_, i) => note(`n${i}.md`));
+    const rows = rowsOf(
+      model({ two: true, open: new Set(['/all']), notes: new Map([['/all', listOf(notes)]]) }),
+      actions(),
+      () => ({}),
+      new RowCache(),
+    );
+    expect(rows.noteRows('/all', 1)).toHaveLength(WINDOW_FROM - 1);
   });
 });
 
@@ -274,7 +333,7 @@ describe('RowCache', () => {
     });
   const noteRowsOf = (cache: RowCache, notes: ListedNote[], openNote: string | null = null) => {
     cache.begin();
-    const rows = new TreeRows(twoModel(notes, openNote), actions(), () => ({}), cache).noteRows(
+    const rows = rowsOf(twoModel(notes, openNote), actions(), () => ({}), cache).noteRows(
       '/all',
       1,
     );

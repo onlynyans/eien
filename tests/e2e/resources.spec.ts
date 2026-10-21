@@ -10,14 +10,17 @@ import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { ALONE, expect, ROOT, test, type VaultFiles } from './launch';
 
-/** Elements in the window with 3,000 notes listed, three panes or two (measured: TODO). */
-const ELEMENTS = 4000;
-/** The JS heap may grow this much over 200 notes and 20 layouts switched (measured: TODO). */
-const HEAP_GROWTH = 8 * 1024 * 1024;
-/** From the window's start to the first list of 3,000 notes drawn, in ms (measured: TODO). */
-const FIRST_LIST_MS = 4000;
-/** The built renderer's own code and styles, in bytes: about 10% over what they were (TODO). */
-const RENDERER = { js: 1_720_000, css: 132_000 };
+/**
+ * Elements in the window with 3,000 notes listed (measured: 492 with three panes, 689 with
+ * two). A taller window draws more rows; one element per note would be over 15,000.
+ */
+const ELEMENTS = 1500;
+/** The JS heap may grow this much over 200 notes and 20 layouts switched (measured: 0.58 MB). */
+const HEAP_GROWTH = 3 * 1024 * 1024;
+/** From the window's start to the first list of 3,000 notes drawn (measured: 150 to 190 ms). */
+const FIRST_LIST_MS = 1500;
+/** The built renderer's own code and styles, in bytes (measured: 1,574,453 and 120,787), +10%. */
+const RENDERER = { js: 1_730_000, css: 133_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);

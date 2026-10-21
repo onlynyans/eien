@@ -37,6 +37,8 @@ export async function seriousViolations(page: Page): Promise<string[]> {
  * with where the pointer was.
  */
 export async function violationsUnder(page: Page, areas: readonly string[]): Promise<string[]> {
+  // Before the pointer moves: a fade already under way keeps the length it started with.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const found: string[] = [];
   for (const area of areas) {
     const box = await page.locator(area).first().boundingBox();

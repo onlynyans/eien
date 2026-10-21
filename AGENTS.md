@@ -77,11 +77,11 @@ Adding one:
   that show on hover are checked too. A new screen or popup adds its state to
   the accessibility specs. Fix what it finds; what can't be fixed in the change
   goes in `docs/backlog.md`.
-- **Budgets.** Measure first (`BUDGETS=1` prints each number), then set the
-  budget with room for CI's slower machines, and write the measured number by
-  it. Never raise a budget to make a test pass: find what grew. A test held
-  to a time is `ALONE`. A new long-lived listener, cache or per-note element
-  is what the heap and element budgets catch.
+- **Budgets** (speed's rules are under Commands, after CI). Measure first
+  (`BUDGETS=1` prints each number), then set the budget with room for CI's
+  slower machines, and write the measured number beside it. A test held to a
+  time is `ALONE`. A listener, cache or element kept per note is what the heap
+  and element budgets catch.
 
 ## Commands
 
