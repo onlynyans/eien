@@ -237,6 +237,17 @@ describe('VaultIndex search', () => {
     expect(index.search('cafe nuit').hits.map((hit) => hit.path)).toEqual(['Café.md']);
   });
 
+  it('searches only the notes it is given, when it is given some', async () => {
+    const index = await searchable();
+    const within = ['Notes.md', 'Café.md', 'Gone.md'];
+    expect(index.search('scarf', 200, within)).toEqual({
+      total: 1,
+      hits: [{ path: 'Notes.md', snippet: 'The scarf, mended.' }],
+    });
+    expect(index.search('scarf', 200, []).total).toBe(0);
+    expect(index.search('scarf', 200, null).total).toBe(3);
+  });
+
   it('finds nothing for an empty query, or before the first refresh', async () => {
     const index = await searchable();
     expect(index.search('   ')).toEqual({ total: 0, hits: [] });

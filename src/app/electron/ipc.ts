@@ -16,6 +16,14 @@ export function answer(
   window.once('closed', () => ipcMain.removeHandler(channel));
 }
 
+/** `value`, which must be a list of texts, or nothing (null or undefined, as null). */
+export function texts(value: unknown, name: string): string[] | null {
+  if (value === undefined || value === null) return null;
+  if (!Array.isArray(value) || !value.every((each) => typeof each === 'string'))
+    throw new TypeError(`${name} must be a list of texts.`);
+  return value;
+}
+
 /** `value`, which must be text. */
 export function text(value: unknown, name: string): string {
   if (typeof value !== 'string') throw new TypeError(`${name} must be text.`);

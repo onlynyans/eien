@@ -25,7 +25,7 @@ features that came after, and the plan for them (below the table).
 | 8 | Icons at the sidebar's foot | tweak | Sidebar | DAY and NIGHT become one toggle with sun and moon icons, as Otaku's; SETTINGS, 3 PANES and 2 PANES become icons. | Words | yes | you |
 | 9 | "1 NOTES" | fix | Sidebar | The foot says "1 NOTES" for one note; the list's head already says "1 NOTE". | Always "notes" | – | review |
 | 10 | Sync status | gap | Sidebar | A sync icon at the sidebar's foot, with a tooltip: "Synced · Syncthing, 4m ago", or "Changed on another device 4m ago". Nothing at all when the vault isn't a Syncthing folder (no `.stfolder` marker). | Not built (spec §4 has it) | yes: [overall](design/explorations/overall.md) | audit, you |
-| 11 | Search in the list | tweak | List | The search field at the top of the list pane, above its heading, as in the mockup, searching only the notes that list holds. With two panes, or the list shut, it's in the sidebar and searches there. | In the sidebar, searching the whole vault (⇧⌘F) | yes | you |
+| 11 | Search in the list | tweak | List | The search field at the top of the list pane, above its heading, as in the mockup, searching only the notes that list holds. With two panes, or the list shut, it's in the sidebar and searches there. | **Done** ([#30](https://github.com/onlynyans/eien/pull/30)): on the list's band, that list's notes; in the sidebar with no list in sight (and on a phone), the whole vault | yes | you |
 | 12 | Your order, and a lens over it | feature | Sidebar, list | One system for both panes. Every list keeps your order, written to the vault: folders, subfolders, notes, tags, All Notes. Drag to reorder folders and tags, and drag a folder out of its parent. A sort (newest, title A–Z or Z–A) or a filter is a lens laid over your order, like a spreadsheet's filter: cleared to get your order back. Dragging reorders only while no lens is on. | Each list sorts by Order (the default), Title or Modified; dragging reorders only in a folder sorted by Order; folders and tags can't be reordered | yes: [order](design/explorations/order.md) | you |
 | 13 | Tags on the page | feature | Page | The note's tags at the top right of the sheet, as the mockup has them (#fic/aot #posted), with a way to add and remove one there. | Tags are typed: `#tag` in the text, or `tags:` in front matter. The sidebar lists them; the page doesn't show them | yes | you |
 | 14 | Formatting bar | feature | Page | A bar of the formatting commands (bold, italic and the rest) that can be shown or hidden. Where it sits is the design pass's to find, after #16. | The keys, the Format menu, and the selection bar, which shows only over selected text | yes | you |
@@ -60,7 +60,7 @@ overlap.
 |---|---|---|
 | 1A Window and keys | #1 no title bar, #2 zoom the whole interface, #19 AltGr | `src/app/electron` (the window, the menu), the panes' top bands |
 | 1B The sidebar, as the mockup has it | #3 sections fold, #5 guide lines, #6 BOOK mark, #9 "1 NOTES" | `src/ui/sidebar` |
-| 1C Search in the list | #11 | `src/ui/list`, the sidebar's search, a search within one list's notes |
+| 1C Search in the list (done, [#30](https://github.com/onlynyans/eien/pull/30)) | #11 | `src/ui/list`, the sidebar's search, a search within one list's notes |
 | 1D Type settings, after 1B and 1C (they share the row styles) | #24 the machine voice's face, #25 row names' weight | `src/core/config` (two settings), the tokens, today's Settings screen |
 
 1A on macOS: the traffic lights sit over the sidebar's head

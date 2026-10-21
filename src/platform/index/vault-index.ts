@@ -78,12 +78,16 @@ export class VaultIndex {
 
   /**
    * The notes holding every word of `query`: those whose title holds them
-   * first, then the most recently changed.
+   * first, then the most recently changed. Given `within`, only those notes
+   * (a list's) are searched.
    */
-  search(query: string, limit = SEARCH_LIMIT): SearchResult {
+  search(query: string, limit = SEARCH_LIMIT, within?: readonly string[] | null): SearchResult {
     const terms = queryTerms(query);
     if (terms.length === 0) return { total: 0, hits: [] };
-    const found = [...this.#notes.values()].filter((known) => matchesAll(known.searchable, terms));
+    const among = within
+      ? within.flatMap((path) => this.#notes.get(path) ?? [])
+      : this.#notes.values();
+    const found = [...new Set(among)].filter((known) => matchesAll(known.searchable, terms));
     const inTitle = new Set(
       found.filter((known) =>
         matchesAll(searchText(titleOf(baseName(known.note.path)), ''), terms),

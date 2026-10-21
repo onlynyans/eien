@@ -70,7 +70,8 @@ export class MobileVault implements VaultBridge {
   // Async, as over IPC: a call with no vault open rejects rather than throwing.
   list = async () => this.#vault().list();
   notes = async () => this.#vault().notes();
-  search = async (query: string) => this.#vault().search(query);
+  search = async (query: string, within?: readonly string[] | null) =>
+    this.#vault().search(query, within);
   listFiles = async (folder: string) => this.#vault().listFiles(folder);
   read = async (path: string) => this.#vault().read(path);
   readBytes = async (path: string) => this.#vault().readBytes(path);

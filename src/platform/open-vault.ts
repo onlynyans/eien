@@ -5,7 +5,7 @@
 // window calls it directly (app/mobile).
 
 import type { VaultEntry } from '../core/vault';
-import { VaultIndex } from './index';
+import { SEARCH_LIMIT, VaultIndex } from './index';
 import type { FileState, MoveResult, Storage, WriteResult } from './storage';
 
 export class OpenVault {
@@ -28,7 +28,8 @@ export class OpenVault {
 
   list = () => this.index.entries();
   notes = () => this.index.notes();
-  search = (query: string) => this.index.search(query);
+  search = (query: string, within?: readonly string[] | null) =>
+    this.index.search(query, SEARCH_LIMIT, within);
   listFiles = (folder: string) => this.storage.listFiles(folder);
   read = (path: string): Promise<FileState | null> => this.storage.read(path);
   readBytes = (path: string) => this.storage.readBytes(path);

@@ -5,6 +5,7 @@
 import { freeNoteName, joinPath } from '../../core/paths';
 import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
+import { SearchField } from '../list/search-field';
 import { listKey, rememberSort } from '../list/sorts';
 import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
@@ -60,9 +61,13 @@ export async function showVault(
 
   const choose = (next: Selection) => {
     nav.choose(next);
-    sidebar.clearSearch();
+    search.clear();
     void redraw();
   };
+  const search = new SearchField((words) => {
+    nav.query = words;
+    void redraw();
+  });
 
   const rowActions = {
     open: (path: string) => void openNote(path),
@@ -81,16 +86,12 @@ export async function showVault(
         phone.stack.show('list'); // on a phone, the notes chosen
         if (!panes.two) return choose(next);
         nav.chooseAndToggle(next);
-        sidebar.clearSearch();
+        search.clear();
         void redraw();
       },
       toggle: (id) => {
         nav.toggle(id);
         void draw.sidebar();
-      },
-      search: (words) => {
-        nav.query = words;
-        void redraw();
       },
       folderMenu: (path, at) => void showFolderMenu(menus, path, at),
       newFolder: () => void newFolder(nav.selection.kind === 'folder' ? nav.selection.path : ''),
@@ -107,8 +108,16 @@ export async function showVault(
       toggleSidebar: () => panes.toggle('sidebar'),
     },
     keys.sidebar,
+    search,
   );
-  const list = h('section', { class: 'list', attrs: { 'aria-label': 'Notes' } });
+  const listSearch = h('div', { class: 'list__search' });
+  const listBody = h('div', { class: 'list__body' });
+  const list = h(
+    'section',
+    { class: 'list', attrs: { 'aria-label': 'Notes' } },
+    listSearch,
+    listBody,
+  );
   const pageArea = h('main', { class: 'page' });
   const shell = h('div', { class: 'shell' }, sidebar.element, list, pageArea);
   root.replaceChildren(shell);
@@ -193,18 +202,15 @@ export async function showVault(
     panes,
     settings,
     sidebar,
-    list,
+    list: listBody,
+    placeSearch: (inList, name) => search.place(inList ? listSearch : sidebar.searchSlot, name),
     notice,
     openNote: () => note.path,
     pageNews: (text) => page.news(text),
     listActions: {
       ...rowActions,
       newNote: () => void newNote(),
-      clearSearch: () => {
-        nav.query = '';
-        sidebar.clearSearch();
-        void redraw();
-      },
+      clearSearch: () => search.clearAndSearch(),
       sort: (sort) => {
         rememberSort(listKey(nav.selection), sort);
         void redraw();
@@ -274,7 +280,8 @@ export async function showVault(
       page,
       panes,
       sidebar,
-      list,
+      list: listBody,
+      search,
       newNote: () => void newNote(),
       drawList: () => draw.list(),
       parts,
