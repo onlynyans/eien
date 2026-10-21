@@ -35,6 +35,10 @@
 .page__format {
   grid-row: 2;
 }
+/* The formatting bar's setting off (#14): outweighs each layout's look for the row. */
+.page__main > .page__format[hidden] {
+  display: none;
+}
 .page__phone {
   grid-row: 5;
   display: none; /* a phone's alone (../phone/phone.css) */
@@ -86,7 +90,7 @@
   margin: 0;
   min-height: 1lh;
 }
-/* The tags' places (../chrome/layout-spec.ts, TagSlot): empty until they're built. */
+/* The tags' places (../chrome/layout-spec.ts, TagSlot): the layout's holds them (./tag-set.css). */
 .sheet__tags:empty,
 .title-tags:empty,
 .colophon__tags:empty {

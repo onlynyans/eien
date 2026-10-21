@@ -115,3 +115,13 @@
   > .chevron-slot--sidebar {
   top: calc(var(--band) * 2);
 }
+
+/* The formatting bar (#14): the band's second row, its commands centred, a hairline under it.
+   Shown while the setting is on, not only on hover: the writer asked for it. */
+[data-layout="band"] .page__format {
+  display: flex;
+  justify-content: center;
+  padding: calc(var(--eien-space-1) / 2) var(--eien-space-3);
+  background: var(--eien-band);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}

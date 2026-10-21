@@ -5,7 +5,9 @@ import {
   type Edit,
   FORMAT_COMMANDS,
   formatCommand,
+  headingLevel,
   keyOn,
+  nextHeading,
   toggleCheck,
 } from './index';
 
@@ -191,5 +193,28 @@ describe('the command list', () => {
     expect(acceleratorOf('Mod-Shift-x')).toBe('CmdOrCtrl+Shift+X');
     expect(acceleratorOf('Mod-Alt-1')).toBe('CmdOrCtrl+Alt+1');
     expect(acceleratorOf('Mod-Shift-.')).toBe('CmdOrCtrl+Shift+.');
+  });
+});
+
+describe('the formatting bar’s heading control', () => {
+  it('takes the caret’s line a level down each press: 1, 2, 3, then off', () => {
+    const press = (line: string) => {
+      const command = formatCommand(nextHeading(line));
+      return command
+        ? apply(line, command.run(line, { from: line.length, to: line.length }).changes)
+        : line;
+    };
+    expect(press('Words')).toBe('# Words');
+    expect(press('# Words')).toBe('## Words');
+    expect(press('## Words')).toBe('### Words');
+    expect(press('### Words')).toBe('Words');
+    expect(press('##### Words')).toBe('### Words');
+  });
+
+  it('reads a heading as the line formats do', () => {
+    expect(headingLevel('## Two')).toBe(2);
+    expect(headingLevel('#tag')).toBe(0);
+    expect(headingLevel('  ### indented')).toBe(3);
+    expect(headingLevel('####### seven')).toBe(0);
   });
 });

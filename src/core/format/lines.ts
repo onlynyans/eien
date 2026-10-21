@@ -119,6 +119,10 @@ export function toggleLines(text: string, selection: Selection, format: LineForm
   return { changes, selection: { from: at(selection.from, range), to: at(selection.to, false) } };
 }
 
+/** The heading level a line is written at ("## Title" is 2), as toggleLines reads it; 0 for none. */
+export const headingLevel = (line: string): number =>
+  /^[ \t]*(#{1,6})[ \t]+/.exec(line)?.[1]?.length ?? 0;
+
 /** Tick or untick the checklist item on the line holding `pos`; null if it isn't one. */
 export function toggleCheck(text: string, pos: number): Edit | null {
   const lineFrom = text.lastIndexOf('\n', pos - 1) + 1;

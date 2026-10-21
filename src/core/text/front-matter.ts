@@ -15,3 +15,16 @@ export function frontMatterEnd(text: string): number {
   const end = 4 + match.index + match[0].length;
   return text[end] === '\n' ? end + 1 : end;
 }
+
+/**
+ * The front matter's YAML (between the "---" lines, without them) and where
+ * the text after it starts; null when there's none. Expects editor text.
+ */
+export function frontMatterBlock(
+  text: string,
+): { readonly yaml: string; readonly end: number } | null {
+  const end = frontMatterEnd(text);
+  if (end === 0) return null;
+  const yaml = text.slice(4, end).replace(/(?:^|\n)(?:---|\.\.\.)[ \t]*\n?$/, '');
+  return { yaml, end };
+}

@@ -44,6 +44,9 @@ export interface HostSpec {
 /** Where a layout shows the note's tags (backlog #13), each a slot the page keeps (../page/page.ts). */
 export type TagSlot = 'runningHead' | 'underTitle' | 'colophon';
 
+/** On a phone, whatever the layout, the tags are slips under the title: big enough to touch. */
+export const PHONE_TAGS: TagSlot = 'underTitle';
+
 export interface LayoutSpec {
   /** The hosts on a desktop's window: every command it draws in exactly one. */
   readonly desktop: readonly HostSpec[];
@@ -58,6 +61,28 @@ export const VIEWS: HostItem = {
   group: 'View',
   ids: ['view.live', 'view.source', 'view.reading'],
 };
+
+/** The formatting bar (#14): the Format menu's commands, in its runs; shown by the setting. */
+export const formatBar = (name: string): HostSpec => ({
+  name,
+  slot: 'format',
+  label: 'Format',
+  items: [
+    'format.bold',
+    'format.italic',
+    'format.underline',
+    'format.strike',
+    '|',
+    'format.heading',
+    'format.highlight',
+    'format.link',
+    '|',
+    'format.quote',
+    'format.bullet',
+    'format.numbered',
+    'format.checklist',
+  ],
+});
 
 /** The sidebar's foot (#8): day or night, three panes or two, the settings. */
 export const FOOT: HostSpec = {

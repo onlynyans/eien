@@ -275,3 +275,9 @@ stylesheet each (its corners on `:root[data-layout=…]`). The slots wave 2
 fills: the formatting bar's row (`page.slots.format`, the `format` slot),
 the sync icon's place at the sidebar's foot (`SidebarFoot.sync`), and C's
 strip ground (`--runhead-ground`, the desk until it's a setting).
+
+Built in 3D (#13, #14): the tag set (`ui/page/tag-set.ts`, `tag-set.css`) in
+each layout's tag slot, slips under the title on a phone; the formatting bar
+as the `format` slot's host: Band's second row on the band ground, Slip's own
+raised slip at the blotter's top left, Running head's raised rail down the
+margin, each with the word button's states, pressed where its format is on.

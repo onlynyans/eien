@@ -5,6 +5,7 @@ export {
   type FormatCommandId,
   formatCommand,
   keyOn,
+  nextHeading,
 } from './commands';
 export { apply, type Change, type Edit, type Selection } from './edit';
 export {
@@ -16,5 +17,5 @@ export {
   toggleInline,
   UNDERLINE,
 } from './inline';
-export { type LineFormat, toggleCheck, toggleLines } from './lines';
+export { headingLevel, type LineFormat, toggleCheck, toggleLines } from './lines';
 export { insertLink } from './link';

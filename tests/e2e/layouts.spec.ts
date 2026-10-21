@@ -22,6 +22,7 @@ const COMMANDS = [
   'compare',
   'seal',
   'versions',
+  'format-bar',
   'focus',
   'scheme',
   'panes',

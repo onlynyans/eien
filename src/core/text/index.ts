@@ -7,6 +7,6 @@ export {
   toEditor,
   withoutBom,
 } from './format';
-export { frontMatterEnd } from './front-matter';
+export { frontMatterBlock, frontMatterEnd } from './front-matter';
 export { firstGraphemes, graphemeBoundary } from './graphemes';
 export { countPlainWords, countWords } from './words';

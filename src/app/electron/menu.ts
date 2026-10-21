@@ -154,6 +154,7 @@ export function buildMenu(send: SendCommand): Menu {
         // The writing tools (spec §4), this device's settings.
         toggle('Focus Mode', 'editor.focus', 'CmdOrCtrl+Shift+Return'),
         toggle('Typewriter Scrolling', 'editor.typewriter'),
+        toggle('Formatting Bar', 'editor.formatBar', 'CmdOrCtrl+Shift+B'),
         { type: 'separator' },
         // A sprint against the clock, counted in the colophon (spec §4).
         {

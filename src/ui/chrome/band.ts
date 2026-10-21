@@ -2,7 +2,7 @@
 // its band, which hides to a lip (#16); the panes' chevrons at their heads;
 // on a phone, the page's tools in the top bar. Styles in ./band.css.
 
-import { CHEVRONS, FOOT, type LayoutSpec, VIEWS } from './layout-spec';
+import { CHEVRONS, FOOT, formatBar, type LayoutSpec, VIEWS } from './layout-spec';
 
 export const BAND: LayoutSpec = {
   desktop: [
@@ -11,8 +11,9 @@ export const BAND: LayoutSpec = {
       name: 'band-tools',
       slot: 'pageBar',
       label: 'Page',
-      items: ['compare', 'seal', 'versions', '|', 'focus', 'strip'],
+      items: ['compare', 'seal', 'versions', '|', 'format-bar', 'focus', 'strip'],
     },
+    formatBar('band-format'),
     ...CHEVRONS,
     FOOT,
   ],

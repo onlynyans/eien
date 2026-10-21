@@ -32,3 +32,23 @@ export function ariaKeys(key: string, mac: boolean): string {
   );
   return [...mods, named(parts.key)].join('+');
 }
+
+/** A command's key on this system, as a tooltip shows it and as aria-keyshortcuts names it. */
+export function keysOf(
+  def: { readonly key?: string; readonly keyOffMac?: string; readonly keyThrough?: string },
+  mac: boolean,
+): { readonly text: string; readonly aria: string } | null {
+  const key = mac ? def.key : (def.keyOffMac ?? def.key);
+  if (!key) return null;
+  if (!def.keyThrough) return { text: keyText(key, mac), aria: ariaKeys(key, mac) };
+  // A run (⌘⌥1–3): each key named for aria-keyshortcuts, the first and last for the eye.
+  const { mods, key: first } = partsOf(key);
+  const run: string[] = [];
+  for (let code = first.charCodeAt(0); code <= def.keyThrough.charCodeAt(0); code++) {
+    run.push([...mods, String.fromCharCode(code)].join('-'));
+  }
+  return {
+    text: `${keyText(key, mac)}–${def.keyThrough}`,
+    aria: run.map((each) => ariaKeys(each, mac)).join(' '),
+  };
+}

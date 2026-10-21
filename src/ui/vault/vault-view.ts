@@ -125,6 +125,7 @@ export async function showVault(
     organizer,
     openNote: (path) => void openNote(path),
     act: (operation) => void act(operation),
+    tell,
   });
   const phone = phoneView({
     shell,

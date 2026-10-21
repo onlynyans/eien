@@ -5,7 +5,7 @@
 import { h } from '../dom';
 import { type IconName, icon } from '../icons';
 import { type CommandId, commandOf } from './commands';
-import { ariaKeys, keyText } from './keys';
+import { keysOf } from './keys';
 import type { HostSpec } from './layout-spec';
 
 /** How a command looks right now; what's left out is as its definition has it. */
@@ -85,7 +85,7 @@ export class Host {
 
   #button(id: CommandId): HTMLButtonElement {
     const def = commandOf(id);
-    const mac = this.#of.mac;
+    const keys = keysOf(def, this.#of.mac);
     const button = h(
       'button',
       {
@@ -94,8 +94,8 @@ export class Host {
           type: 'button',
           'data-command': id,
           'aria-label': def.label,
-          'aria-keyshortcuts': def.key && ariaKeys(def.key, mac),
-          'data-shortcut': def.key && keyText(def.key, mac),
+          'aria-keyshortcuts': keys?.aria,
+          'data-shortcut': keys?.text,
           // Its identity across redraws and layouts: the keyboard comes back to it by this.
           'data-key': `command:${id}`,
           'aria-haspopup': id === 'settings' ? 'dialog' : id === 'more' ? 'menu' : undefined,

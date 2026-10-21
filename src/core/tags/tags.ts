@@ -34,15 +34,19 @@ export const tagKey = (tag: string): string =>
     .replace(/i\u0307/g, 'i')
     .normalize('NFC');
 
-/** The inline tags in `taggable` text (see core/markdown: code and links already blanked). */
-export function inlineTags(taggable: string): string[] {
-  const found: string[] = [];
-  for (const match of taggable.matchAll(INLINE)) {
+/** Each inline tag in `text`, tidied, with where it's written: from its "#" to its end. */
+export function* inlineTagsAt(
+  text: string,
+): Generator<{ readonly tag: string; readonly from: number; readonly to: number }> {
+  for (const match of text.matchAll(INLINE)) {
     const tag = tidyTag(match[1] ?? '');
-    if (tag) found.push(tag);
+    if (tag) yield { tag, from: match.index, to: match.index + match[0].length };
   }
-  return found;
 }
+
+/** The inline tags in `taggable` text (see core/markdown: code and links already blanked). */
+export const inlineTags = (taggable: string): string[] =>
+  Array.from(inlineTagsAt(taggable), (found) => found.tag);
 
 /**
  * The tags in a front matter block (its YAML, without the "---" lines):
