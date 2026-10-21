@@ -116,7 +116,26 @@
   --eien-row-h: 30px; /* a tree or list row, desktop */
   --eien-touch: 44px; /* the smallest thing a finger presses */
   --eien-seal-size: 22px; /* the app's mark */
-  --eien-radius: 0; /* paper has square corners; only dots are round */
+  /* Corners (#27, stage 3): paper stays square; what you press takes -s, what
+     floats -m, what covers the window -l. The app's layouts each set their own
+     scale (A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10); these
+     are A's. Dots stay round. `--eien-radius` (0) is kept for the mockups made
+     before the scale: paper. */
+  --eien-radius: 0;
+  --eien-radius-s: 2px;
+  --eien-radius-m: 4px;
+  --eien-radius-l: 8px;
+  /* Icons (the app's ui/icons.ts; drawn in explorations/specimen.html): a
+     16-unit grid, stroked at a hairline's weight, in an icon control's square. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px;
+  /* Names' weight (#25, two settings, 400 to 700): the sidebar's, the list's,
+     and the chosen list title a step heavier, at most 700. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+  --eien-weight-list-chosen: 500;
+  --eien-dimmed: 0.32; /* focus mode: the paragraphs not being written, faded back */
 
   /* ── Motion: quick and quiet, no bounce ─────────────────────────────── */
   --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);

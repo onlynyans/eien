@@ -195,3 +195,22 @@
   height: 14px;
   color: var(--eien-pencil);
 }
+
+/* A tag laid over the list showing (#32): a tick for wanted; struck in carmine, a dash, kept out. */
+.tree-row__filter {
+  display: inline-flex;
+  margin-left: var(--eien-space-1);
+  vertical-align: middle;
+}
+.tree-row__filter .icon {
+  width: 12px;
+  height: 12px;
+}
+.tree-row__name[data-filter="in"] .tree-row__label {
+  color: var(--eien-ink);
+}
+.tree-row__name[data-filter="out"] .tree-row__label {
+  color: var(--eien-removed);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}

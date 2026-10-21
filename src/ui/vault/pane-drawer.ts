@@ -6,7 +6,7 @@
 // list: in its band, it searches that list's notes; in the sidebar (no list
 // in sight, or a phone, whose contents page holds it), the whole vault.
 
-import { lensParts } from '../list/lens-bar';
+import { type Arrange, canDrag, lensParts } from '../list/lens-bar';
 import { type ListActions, renderList } from '../list/list';
 import { filterFor, listKey, sortFor } from '../list/sorts';
 import type { SettingsState } from '../settings/settings-state';
@@ -34,6 +34,8 @@ export interface DrawnParts {
   openNote(): string | null;
   /** News for the page's status line, when no pane beside it is open to show it. */
   pageNews(text: string | null): void;
+  /** How the list's rows move now (Arrange mode, and whether it's arranging). */
+  arrange(): Arrange;
 }
 
 export class PaneDrawer {
@@ -95,6 +97,7 @@ export class PaneDrawer {
       openNote: this.#parts.openNote(),
       books: state.books,
       notice: listShown ? null : notice.text,
+      filter: filterFor(listKey(nav.selection)),
     });
   }
 
@@ -104,23 +107,26 @@ export class PaneDrawer {
     const inList = this.#searchInList();
     if (!panes.listKept) return; // out of sight: nothing to read for it
     const words = nav.query.trim();
+    const arrange = this.#parts.arrange();
+    const key = listKey(nav.selection);
+    // Arranging: your order shows, the lens set aside until Done.
     const notes = words
       ? await state.search(words, inList ? nav.selection : null)
       : await state.notesFor(
           nav.selection,
           settings.values['books.numerals'],
-          sortFor(listKey(nav.selection)),
-          filterFor(listKey(nav.selection)),
+          arrange.on ? 'order' : sortFor(key),
+          arrange.on ? undefined : filterFor(key),
         );
     if (turn !== this.#listTurn) return;
-    this.#listOrdered =
-      notes.folder !== undefined && notes.sort === 'order' && !notes.filter && !words;
+    this.#listOrdered = canDrag(notes, arrange) && !words;
     renderList(
       this.#parts.list,
       notes,
       this.#parts.openNote(),
       this.#parts.listActions,
       this.#parts.notice.text,
+      arrange,
     );
   }
 }

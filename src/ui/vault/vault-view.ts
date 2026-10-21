@@ -4,10 +4,11 @@
 // ./chrome-wiring.ts. This wires them together.
 
 import { freeNoteName, joinPath } from '../../core/paths';
+import { nextState, stateOf, withTagState } from '../../core/tags';
 import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
 import { SearchField } from '../list/search-field';
-import { listKey, rememberFilter, rememberSort } from '../list/sorts';
+import { filterFor, listKey, rememberFilter, rememberSort } from '../list/sorts';
 import { filterTags } from '../list/tag-filter-panel';
 import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
@@ -22,6 +23,7 @@ import { notePage } from './note-page';
 import { Notice } from './notice';
 import { oneAtATime } from './one-at-a-time';
 import { OpenNote } from './open-note';
+import { orderActions } from './order-actions';
 import { Organizer } from './organize';
 import { ownWrites } from './own-writes';
 import { pageParts } from './page-parts';
@@ -69,7 +71,10 @@ export async function showVault(
     tell,
   });
 
+  /** Arranging the list now (Arrange mode): until Done, or another list is chosen. */
+  let arranging = false;
   const choose = (next: Selection) => {
+    arranging = false;
     nav.choose(next);
     search.clear();
     void redraw();
@@ -79,11 +84,21 @@ export async function showVault(
     void redraw();
   });
 
+  // The sidebar's moves in your order (./order-actions.ts); `sidebar` and `draw` come after.
+  const order = orderActions({
+    state,
+    organizer,
+    nav,
+    sidebar: () => sidebar,
+    act: (operation) => act(operation),
+    redrawTree: () => void draw.sidebar(),
+  });
+
   const rowActions = {
     open: (path: string) => void openNote(path),
     menu: (path: string, at: { x: number; y: number }, ordered: boolean) =>
       showNoteMenu(menus, path, at, ordered),
-    nudge: (path: string, by: -1 | 1) => void act(() => organizer.nudge(path, by)),
+    nudge: (path: string, by: -1 | 1) => order.nudgeNote(path, by),
     rename: (path: string) => renameNote(path),
     pin: (path: string) => void act(() => organizer.pin(path, !state.pins.includes(path))),
     trash: (path: string) => void act(() => organizer.trash(path)),
@@ -106,6 +121,14 @@ export async function showVault(
       },
       folderMenu: (path, at) => void showFolderMenu(menus, path, at),
       tagMenu: (key, at) => showTagMenu(menus, key, at),
+      moveFolder: (path, how) => order.moveFolder(path, how),
+      moveTag: (key, by) => order.moveTag(key, by),
+      filterTag: (key, out) => {
+        const list = listKey(nav.selection);
+        const filter = filterFor(list);
+        rememberFilter(list, withTagState(filter, key, nextState(stateOf(filter, key), out)));
+        void redraw();
+      },
       newTag: (tag) => void act(() => organizer.makeTag(tag, true)),
       newFolder: () => void newFolder(nav.selection.kind === 'folder' ? nav.selection.path : ''),
       renameFolder: (path, typed) =>
@@ -196,6 +219,7 @@ export async function showVault(
     editFolder: (path) => editFolder(path),
     followFolder: (from, to) => nav.follow(from, to),
     unselect: (path) => nav.unselect(path),
+    moveFolder: (path, how) => order.moveFolder(path, how),
   };
 
   const note = new OpenNote(bridge.vault, page, () => void refresh());
@@ -247,6 +271,14 @@ export async function showVault(
         void redraw();
       },
       tags: () => filterTags(state.tags),
+      arrange: (on) => {
+        arranging = on;
+        void redraw();
+      },
+    },
+    arrange: () => {
+      const mode = settings.values['lists.arranging'] === 'mode';
+      return { mode, on: mode && arranging };
     },
   });
   const redraw = () => {
@@ -256,17 +288,16 @@ export async function showVault(
     return draw.all().then(() => phone.stack.rename());
   };
 
-  /** Rename in the row the writer is at (./rename-in-row.ts); with none in sight, by the page's title. */
-  function renameNote(path: string): void {
-    // A phone, one pane at a time, keeps its rename on the page, where the title is in sight.
-    if (phone.stack.phone) return void renameOnPage(path);
-    renameInRow(path, {
-      namesIn: (folder) => state.namesIn(folder),
-      rename: (from, typed) => organizer.renameNote(from, typed),
-      act,
-      onPage: (at) => void renameOnPage(at),
-    });
-  }
+  /** Rename in the row the writer is at; on a phone, or with no row in sight, by the page's title. */
+  const renameNote = (path: string) =>
+    phone.stack.phone
+      ? void renameOnPage(path)
+      : renameInRow(path, {
+          namesIn: (folder) => state.namesIn(folder),
+          rename: (from, typed) => organizer.renameNote(from, typed),
+          act,
+          onPage: (at) => void renameOnPage(at),
+        });
 
   async function renameOnPage(path: string): Promise<void> {
     if (note.path !== path) await openNote(path);
@@ -317,6 +348,9 @@ export async function showVault(
     redraw,
     organizer,
     tree: sidebar.element,
+    dropFolder: (path, to) => order.dropFolder(path, to),
+    placeNote: (path, before) => order.placeNote(path, before),
+    folderDrags: () => settings.values['lists.arranging'] !== 'mode',
     act,
     listOrdered: () => draw.listOrdered,
     showFolder: (path) => choose({ kind: 'folder', path }),

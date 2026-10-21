@@ -245,6 +245,53 @@ h2 { margin: var(--eien-space-7) 0 var(--eien-space-2); }
 .wrow { padding: 7px var(--eien-space-3); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); font-size: var(--eien-size-row); position: relative; }
 .wrow.sel { background: var(--eien-selected); }
 .wrow.sel::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: var(--eien-mark-w); background: var(--eien-seal); }
+
+/* As built, stage 3: the app's own components, as they ship. */
+.built { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--eien-space-5); }
+.built .paper { padding: var(--eien-space-4); }
+.built h3 { margin: 0 0 var(--eien-space-3); font: 500 var(--eien-size-meta) var(--eien-face-mono); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+.b-menu { display: grid; width: 230px; padding: var(--eien-space-1); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.b-menu__head { padding: 4px 8px 6px; font: var(--eien-size-label) var(--eien-face-mono); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+.b-menu button { appearance: none; display: grid; grid-template-columns: 16px 1fr auto; gap: 12px; align-items: center; padding: 5px 8px; border: 0; border-radius: var(--eien-radius-s); background: none; font: inherit; color: var(--eien-ink-soft); text-align: left; }
+.b-menu button:first-of-type { background: var(--eien-selected); color: var(--eien-ink); }
+.b-menu kbd { font: var(--eien-size-label) var(--eien-face-mono); color: var(--eien-pencil); }
+.b-menu .danger { color: var(--eien-removed); }
+.b-menu hr { border: 0; border-top: var(--eien-hairline) solid var(--eien-rule-soft); margin: 3px 4px; width: auto; }
+.b-row { position: relative; padding: 8px 16px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); color: var(--eien-ink-soft); }
+.b-row input { all: unset; width: 70%; color: var(--eien-ink); border-bottom: var(--eien-hairline) solid var(--eien-focus); }
+.b-row .ext { font: var(--eien-size-meta) var(--eien-face-mono); color: var(--eien-faded); margin-left: 2px; }
+.b-say { display: inline-block; margin: 4px 16px 0; padding: 2px 8px; font: var(--eien-size-label) var(--eien-face-mono); color: var(--eien-caution); background: var(--eien-caution-wash); border-radius: var(--eien-radius-s); }
+.b-section { display: flex; align-items: center; justify-content: space-between; height: var(--eien-row-h); font: var(--eien-size-label) var(--eien-face-mono); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+.b-tree { display: grid; gap: 2px; }
+.b-tree span.r { display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; color: var(--eien-ink-soft); }
+.b-tree .empty { color: var(--eien-faded); font-style: italic; }
+.b-tree .in { color: var(--eien-ink); }
+.b-tree .out { color: var(--eien-removed); text-decoration: line-through; }
+.b-tree .hint { padding: 0 8px 4px 24px; font-size: var(--eien-size-meta); font-style: italic; color: var(--eien-pencil); }
+.b-tree .count { font: var(--eien-size-meta) var(--eien-face-mono); color: var(--eien-pencil); }
+.b-tree svg, .b-chips svg, .b-tri svg { width: 12px; height: 12px; vertical-align: middle; }
+.b-head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: baseline; }
+.b-head h4 { margin: 0; font: 500 var(--eien-size-heading) var(--eien-face-text); }
+.b-tools { display: flex; gap: 4px; }
+.b-tools .icon-button { position: relative; }
+.b-tools .on::after { content: ""; position: absolute; top: 4px; right: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--eien-ink-soft); }
+.b-chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.b-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 4px 1px 8px; font: var(--eien-size-meta) var(--eien-face-mono); color: var(--eien-ink-soft); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); }
+.b-chip.out { color: var(--eien-removed); text-decoration: line-through; }
+.b-locked { margin: 8px 0 0; font-size: var(--eien-size-preview); font-style: italic; color: var(--eien-pencil); }
+.b-tri { display: grid; gap: 1px; width: 240px; }
+.b-tri .t { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; padding: 4px 8px 4px 4px; font: var(--eien-size-meta) var(--eien-face-mono); color: var(--eien-ink-soft); }
+.b-tri .box { display: grid; place-items: center; width: 18px; height: 18px; color: transparent; border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); }
+.b-tri .t.in { color: var(--eien-ink); }
+.b-tri .t.in .box { color: var(--eien-paper); background: var(--eien-ink-soft); border-color: var(--eien-ink-soft); }
+.b-tri .t.out { color: var(--eien-removed); }
+.b-tri .t.out .box { color: var(--eien-removed); border-color: var(--eien-removed); }
+.b-tri .t.out .n { text-decoration: line-through; }
+.b-sync { display: flex; gap: var(--eien-space-4); align-items: center; }
+.b-sync .ok { color: var(--eien-added); } .b-sync .other { color: var(--eien-pencil); }
+.b-sync svg { width: 14px; height: 14px; }
+.b-grip { position: relative; padding-left: 24px !important; }
+.b-grip svg { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); width: 12px; height: 12px; color: var(--eien-pencil); }
 </style>
 </head>
 <body>
@@ -280,6 +327,10 @@ h2 { margin: var(--eien-space-7) 0 var(--eien-space-2); }
   <h2 class="label">Row names' weight · #25</h2>
   <p class="lede">The sidebar's names and the list's titles each take 400 to 700. A chosen list title is 100 heavier, up to 700, so it still stands out at 600; at 700 the seal's rule and the fill carry it alone.</p>
   <div class="weights" id="weights"></div>
+
+  <h2 class="label">As built · stage 3 (wave 2)</h2>
+  <p class="lede">The components the app now ships, drawn with its own tokens and icons, to judge beside the explorations: the row's menu and rename in place (#29), the sidebar's quiet + and a tag made before notes carry it (#4), the sync status (#10), the lens with its chips and the three-way tag filter (#12, #32), and Arrange mode's grips (#12).</p>
+  <div class="built" id="built"></div>
 </main>
 <script>
 // Shared by every exploration (inlined into each page by _build.py).
@@ -487,6 +538,40 @@ document.getElementById('faces').innerHTML = MACHINE_FACES.map((f) => `<div clas
 const titles = ['The Last Bell', 'Wall Rose, at Dusk', 'What the Recruits Say', 'Night Watch'];
 document.getElementById('weights').innerHTML = [400, 500, 600, 700].map((w) => `<div class="wcol"><span class="label">${w} · chosen ${Math.min(w + 100, 700)}</span>
   ${titles.map((t, i) => `<div class="wrow${i === 2 ? ' sel' : ''}" style="font-weight:${i === 2 ? Math.min(w + 100, 700) : w}">${t}</div>`).join('')}</div>`).join('');
+
+
+document.getElementById('built').innerHTML = `
+  <div class="paper"><h3>A row's menu</h3><div class="b-menu"><span class="b-menu__head">Ideas</span>
+    <button>${icon('rename')}<span>Rename</span><kbd>F2</kbd></button>
+    <button>${icon('pin')}<span>Pin</span><kbd>⇧⌘P</kbd></button><hr />
+    <button>${icon('move')}<span>Move to…</span><kbd></kbd></button>
+    <button>${icon('link')}<span>Export…</span><kbd></kbd></button><hr />
+    <button class="danger">${icon('trash')}<span>Move to the trash</span><kbd>⌘⌫</kbd></button></div></div>
+  <div class="paper"><h3>Rename in place</h3>
+    <div class="b-row"><input value="Thaw" aria-label="New name" /><span class="ext">.md</span></div>
+    <span class="b-say">There is one of that name here already.</span>
+    <div class="b-row">The Gate Holds</div></div>
+  <div class="paper"><h3>The sidebar's TAGS</h3>
+    <div class="b-section"><span>Tags</span><button class="icon-button" aria-label="New tag">${icon('plus')}</button></div>
+    <div class="b-tree"><span class="r in">#posted ${icon('check')}<span class="count">22</span></span>
+      <span class="r out">#draft ${icon('exclude')}<span class="count">14</span></span>
+      <span class="r">#fic<span class="count">41</span></span>
+      <span class="r empty">#ideas<span class="count">0</span></span><span class="hint">No notes yet: add it to a note’s tags.</span></div></div>
+  <div class="paper"><h3>The list's head, a lens on</h3><div class="b-head"><h4>Beneath the Walls</h4>
+    <span class="b-tools"><button class="icon-button" aria-label="Arrange">${icon('grip')}</button><button class="icon-button on" aria-label="Filter by tag">${icon('filter')}</button><button class="icon-button on" aria-label="Sort">${icon('sort')}</button></span>
+    <span class="label">2 of 14 notes · Book</span><span></span>
+    <span class="b-chips"><span class="b-chip">Title ${icon('close')}</span><span class="b-chip">#posted ${icon('close')}</span><span class="b-chip out">#draft ${icon('close')}</span></span></div>
+    <p class="b-locked">Sorted or filtered: your order is kept underneath. Clear it to drag.</p></div>
+  <div class="paper"><h3>The tag filter</h3><div class="b-tri">
+    <span class="label" style="padding:4px 8px">Tags · All of / Any of</span>
+    <span class="t"><span class="box">${icon('check')}</span><span class="n">#fic</span><span class="count">41</span></span>
+    <span class="t in"><span class="box">${icon('check')}</span><span class="n">#posted</span><span class="count">22</span></span>
+    <span class="t out"><span class="box">${icon('exclude')}</span><span class="n">#draft</span><span class="count">14</span></span></div></div>
+  <div class="paper"><h3>Sync status · Arrange mode</h3>
+    <div class="b-sync"><span class="ok">${icon('sync')}</span><span class="label">Synced · Syncthing</span></div>
+    <div class="b-sync" style="margin-top:8px"><span class="other">${icon('sync')}</span><span class="label">Changed on another device 4m ago</span></div>
+    <div class="b-row b-grip" style="margin-top:12px">${icon('grip')}The Last Bell</div>
+    <div class="b-row b-grip">${icon('grip')}Wall Rose, at Dusk</div></div>`;
 
 wireBar((attr, value) => { if (attr === 'stroke') document.documentElement.style.setProperty('--eien-icon-stroke', value); });
 </script>

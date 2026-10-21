@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NO_FILTER, type TagFilter } from '../../core/tags';
 import { closeMenu } from '../menu/menu';
 import type { NoteList } from '../vault/vault-state';
-import { lensLine, lensParts, ownSort } from './lens-bar';
+import { canDrag, inOwnOrder, lensLine, lensParts, ownSort } from './lens-bar';
 import { listLabel } from './list';
 import { type FilterTag, filterTags, openTagFilter } from './tag-filter-panel';
 
@@ -61,15 +61,17 @@ describe('lensParts', () => {
     expect(parts.controls[1]?.classList.contains('is-on')).toBe(true);
   });
 
-  it('a list with no order of its own (All Notes) is at home sorted newest', () => {
-    const all = list({
-      kind: 'all',
+  it('a tag’s list, with no order of its own, is at home sorted newest; All Notes in your order', () => {
+    const tag = list({
+      kind: 'tag',
       folder: undefined,
       sort: 'modified',
       sorts: ['title', 'modified'],
     });
-    expect(ownSort(all)).toBe('modified');
-    expect(lensParts(all, actions()).chips).toBeNull();
+    expect(ownSort(tag)).toBe('modified');
+    expect(lensParts(tag, actions()).chips).toBeNull();
+    const all = list({ kind: 'all', folder: undefined, sorts: ['order', 'title', 'modified'] });
+    expect(ownSort(all)).toBe('order');
   });
 
   it('each tag in the filter is a chip, a kept-out one struck; × leaves it alone; “all of” with two wanted', () => {
@@ -188,5 +190,43 @@ describe('the tag filter’s panel', () => {
       ['fic/aot', 1],
       ['draft', 0],
     ]);
+  });
+});
+
+describe('arranging', () => {
+  const arranged = (on: boolean) => ({ mode: true, on });
+
+  it('rows drag in your order; in Arrange mode, only while arranging', () => {
+    expect(canDrag(list(), { mode: false, on: false })).toBe(true);
+    expect(canDrag(list(), arranged(false))).toBe(false);
+    expect(canDrag(list(), arranged(true))).toBe(true);
+    expect(canDrag(list({ sort: 'title' }), { mode: false, on: false })).toBe(false);
+    expect(inOwnOrder(list({ kind: 'all', folder: undefined }))).toBe(true);
+    expect(inOwnOrder(list({ kind: 'tag', folder: undefined }))).toBe(false);
+  });
+
+  it('in Arrange mode, the head has Arrange; arranging, only Done, the lens set aside', () => {
+    const run = { ...actions(), arrange: vi.fn() };
+    const idle = lensParts(list({ sort: 'title' }), run, 'list', arranged(false));
+    expect(idle.controls[0]?.getAttribute('aria-label')).toBe('Arrange');
+    expect(idle.chips).not.toBeNull();
+    (idle.controls[0] as HTMLButtonElement).click();
+    expect(run.arrange).toHaveBeenCalledWith(true);
+    const on = lensParts(list({ sort: 'title' }), run, 'list', arranged(true));
+    expect(on.controls.map((control) => control.getAttribute('aria-label'))).toEqual([
+      'Done arranging',
+    ]);
+    expect(on.controls[0]?.getAttribute('aria-pressed')).toBe('true');
+    expect(on.chips).toBeNull();
+  });
+
+  it('says why rows don’t move: a lens on, or not arranging; nothing while arranging', () => {
+    expect(lensLine(list(), arranged(false))?.textContent).toBe(
+      'Your order. Choose Arrange to move notes.',
+    );
+    expect(lensLine(list(), arranged(true))).toBeNull();
+    expect(lensLine(list({ kind: 'all', folder: undefined, sort: 'title' }))?.textContent).toMatch(
+      /kept underneath/,
+    );
   });
 });

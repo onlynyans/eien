@@ -191,7 +191,9 @@ describe('TreeRows, three panes', () => {
     ]);
     byKey(tree, 'folder:Book').dispatchEvent(new KeyboardEvent('keydown', { key: 'F2' }));
     expect(folderKeys).toHaveBeenCalledWith('Book');
-    expect(byKey(tree, 'folder:Book').getAttribute('aria-keyshortcuts')).toBe('F2');
+    expect(byKey(tree, 'folder:Book').getAttribute('aria-keyshortcuts')).toBe(
+      'F2 Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight',
+    );
     expect(byKey(tree, 'all').hasAttribute('aria-keyshortcuts')).toBe(false);
   });
 

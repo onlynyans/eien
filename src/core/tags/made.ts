@@ -50,5 +50,26 @@ export function withMadeTag(
   return `${JSON.stringify({ ...file, made: after }, null, 2)}\n`;
 }
 
+/** The tags' own order (keys, as the writer placed them), from the same file; none if unset. */
+export function parseTagOrder(text: string | null): string[] {
+  const file = readFile(text) ?? {};
+  return Array.isArray(file.order)
+    ? [...new Set(file.order.filter((key): key is string => typeof key === 'string' && key !== ''))]
+    : [];
+}
+
+/** The file's text with the tags' order set to `order` (keys); null when it isn't JSON to change. */
+export function withTagOrder(
+  text: string | null,
+  order: readonly string[],
+): string | null | undefined {
+  const file = readFile(text);
+  if (file === null) return null;
+  const before = parseTagOrder(text);
+  if (before.length === order.length && before.every((key, i) => key === order[i]))
+    return undefined;
+  return `${JSON.stringify({ ...file, order: [...order] }, null, 2)}\n`;
+}
+
 /** The tag typed in the sidebar's field ("#draft", "fic/aot"); null when it can't be one. */
 export const typedTag = (typed: string): string | null => tidyTag(typed.trim());
