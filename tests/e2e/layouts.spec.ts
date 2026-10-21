@@ -36,7 +36,9 @@ const CORNERS: Record<Layout, [string, string, string]> = {
 };
 const MAC = process.platform === 'darwin';
 
-const control = (page: Page, command: string) => page.locator(`[data-command="${command}"]`);
+/** The desktop's control for `command`; the layout's phone bottom, hidden here, has its own. */
+const control = (page: Page, command: string) =>
+  page.locator(`[data-command="${command}"]:not(.phone-bar__controls *, .page__phone *)`);
 
 /** A note open, and sealed, so Compare has something to show and every control can be used. */
 async function ready(app: ElectronApplication, page: Page): Promise<void> {
