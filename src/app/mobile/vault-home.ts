@@ -24,8 +24,10 @@ export interface VaultHome {
   readonly files: FilesPort;
   /** The files in the folder exports go to. */
   readonly exports: FilesPort;
-  /** That folder, as the writer is told it ("Eien/Exports"). */
+  /** That folder, as the writer is told it: "Eien/Exports", as Files or Documents shows it. */
   readonly exportFolder: string;
+  /** Where the vault is, as the writer is told it. */
+  readonly vaultShown: string;
   /** Whether Eien may use the folder now. */
   allowed(): Promise<boolean>;
   /** Ask for the access on the system's screens; whether it was given. */
@@ -40,15 +42,26 @@ const granted = async (): Promise<boolean> => {
 
 export function vaultHome(platform: string): VaultHome {
   const files = new CapacitorFiles(Directory.Documents, vaultFolderOn(platform));
-  const exportFolder = exportFolderOn(platform);
-  const exports = new CapacitorFiles(Directory.Documents, exportFolder);
+  const exports = new CapacitorFiles(Directory.Documents, exportFolderOn(platform));
+  // On iOS the Files app shows the app's Documents as "Eien": the same names as Android's.
+  const exportFolder = 'Eien/Exports';
   if (platform !== 'android') {
-    return { files, exports, exportFolder, allowed: async () => true, ask: async () => true };
+    const vaultShown =
+      platform === 'ios' ? 'Eien › Vault, in the Files app' : 'Documents/Eien/Vault';
+    return {
+      files,
+      exports,
+      exportFolder,
+      vaultShown,
+      allowed: async () => true,
+      ask: async () => true,
+    };
   }
   return {
     files,
     exports,
     exportFolder,
+    vaultShown: 'Documents/Eien/Vault',
     allowed: () => granted().catch(() => false),
     async ask() {
       if ((await Filesystem.requestPermissions()).publicStorage !== 'granted') return false;

@@ -11,7 +11,8 @@
 //   name, then moves. Each was run on this Mac against ion-ios-filesystem's
 //   own sources, compiled with swiftc.
 // - Eien's VaultFiles (ios/App/App/VaultFilesPlugin.swift): a flushed write,
-//   and renames that replace (rename(2)) or refuse with "TAKEN".
+//   renames that replace (rename(2)) or refuse with "TAKEN", and a listing of
+//   each entry as itself (lstat), links left out.
 // Each test names what a writer would lose.
 
 import {
@@ -61,6 +62,27 @@ vi.mock('@capacitor/core', async () => {
       } catch (error) {
         throw system(error);
       }
+    },
+    /** VaultFileOps.list: each entry by lstat, links and the like left out; MISSING with no folder. */
+    async list({ path: at }: { path: string }) {
+      const folder = full(at);
+      const isFolder = await fs.stat(folder).then(
+        (entry) => entry.isDirectory(),
+        () => false,
+      );
+      if (!isFolder) throw Object.assign(new Error('Nothing is there.'), { code: 'MISSING' });
+      const files = [];
+      for (const name of await fs.readdir(folder)) {
+        const entry = await fs.lstat(path.join(folder, name)).catch(() => null);
+        if (!entry || !(entry.isFile() || entry.isDirectory())) continue;
+        files.push({
+          name,
+          type: entry.isDirectory() ? 'directory' : 'file',
+          size: entry.isDirectory() ? 0 : entry.size,
+          mtime: entry.mtimeMs,
+        });
+      }
+      return { files };
     },
     async rename({ from, to, replace }: { from: string; to: string; replace: boolean }) {
       await ios.beforeRename?.();
@@ -279,6 +301,8 @@ describe('without Eien’s plugin on iOS', () => {
     };
     const { storage } = phone();
     const result = await storage.move('Draft.md', 'Chapter.md').catch(() => null);
+    // Refused before any rename (no plugin, nothing written): the chapter arrives all the same.
+    await ios.beforeRename?.();
     const texts = await everyText();
     expect(texts).toContain('The laptop’s chapter.');
     expect(texts).toContain('Mine.');

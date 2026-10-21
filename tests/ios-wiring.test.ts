@@ -56,14 +56,14 @@ const hasJq = (() => {
   }
 })();
 
-/** The jq program smoke.sh gives the output of `xcrun simctl list <what> -j`. */
-const jqFor = (what: string): string => {
-  const program = new RegExp(`simctl list ${what} -j \\|\\s*jq -r '([^']+)'`, 'u').exec(
-    source('scripts/ios/smoke.sh'),
-  )?.[1];
-  if (!program) throw new Error(`smoke.sh no longer lists ${what} with jq`);
-  return program;
-};
+/** What scripts/ios/pick-simulator.sh (smoke.sh's choice) picks from simctl's runtimes. */
+const pick = (runtimes: unknown): string =>
+  execFileSync('bash', ['scripts/ios/pick-simulator.sh'], {
+    input: JSON.stringify(runtimes),
+    cwd: new URL('..', import.meta.url),
+  })
+    .toString()
+    .trim();
 
 const iPhone = (name: string, min: string) => ({
   productFamily: 'iPhone',
@@ -81,7 +81,14 @@ describe('the simulator smoke.sh makes', () => {
     // device" (code 403). An iPod touch is productFamily "iPhone" too, and it's last in
     // Xcode's list; it runs nothing past iOS 15. The job fails before it builds anything,
     // so nothing in it says whether Eien keeps a writer's words on iOS.
-    const supported = [iPhone('iPhone 16e', '18.3.0'), iPhone('iPhone 17 Pro', '26.0.0')];
+    const supported = [
+      iPhone('iPhone 16e', '18.3.0'),
+      iPhone('iPhone 17 Pro', '26.0.0'),
+      {
+        ...iPhone('iPod touch (7th generation)', '12.3.0'),
+        identifier: 'com.apple.CoreSimulator.SimDeviceType.iPod-touch--7th-generation-',
+      },
+    ];
     const runtimes = {
       runtimes: [
         {
@@ -93,23 +100,9 @@ describe('the simulator smoke.sh makes', () => {
         },
       ],
     };
-    const devicetypes = {
-      devicetypes: [
-        ...supported,
-        {
-          ...iPhone('iPod touch (7th generation)', '12.3.0'),
-          identifier: 'com.apple.CoreSimulator.SimDeviceType.iPod-touch--7th-generation-',
-          maxRuntimeVersionString: '15.99.99',
-        },
-      ],
-    };
-    const jq = (program: string, json: unknown) =>
-      execFileSync('jq', ['-r', program], { input: JSON.stringify(json) })
-        .toString()
-        .trim();
-    const runtime = jq(jqFor('runtimes'), runtimes);
-    const device = jq(jqFor('devicetypes'), devicetypes);
+    const [runtime, device] = pick(runtimes).split(' ');
     const picked = runtimes.runtimes.find((entry) => entry.identifier === runtime);
     expect(picked?.supportedDeviceTypes.map((type) => type.identifier)).toContain(device);
+    expect(device).toBe('com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro'); // never the iPod
   });
 });

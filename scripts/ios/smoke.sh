@@ -11,13 +11,8 @@ OUT="${1:-out/ios-smoke}"
 APP_ID=io.github.onlynyans.eien
 mkdir -p "$OUT"
 
-# The newest iOS the runner has, and the newest iPhone that runtime itself says it runs.
-latest=$(xcrun simctl list runtimes -j |
-  jq '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | last')
-runtime=$(jq -r '.identifier' <<<"$latest")
-device_type=$(jq -r '[.supportedDeviceTypes[] |
-  select(.productFamily == "iPhone" and (.name | startswith("iPhone")))] | last | .identifier' <<<"$latest")
-[ "$runtime" != null ] && [ "$device_type" != null ] || { echo "No iPhone simulator here."; exit 1; }
+read -r runtime device_type < <(xcrun simctl list runtimes -j | bash scripts/ios/pick-simulator.sh) ||
+  { echo "No iPhone simulator here."; exit 1; }
 echo "Simulator: $device_type on $runtime"
 udid=$(xcrun simctl create "Eien smoke" "$device_type" "$runtime")
 trap 'xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true; xcrun simctl delete "$udid" >/dev/null 2>&1 || true' EXIT

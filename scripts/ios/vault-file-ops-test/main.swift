@@ -74,5 +74,25 @@ try VaultFileOps.rename(at("tear-case.md"), to: at(".tear-case.md.eien-case"), r
 try VaultFileOps.rename(at(".tear-case.md.eien-case"), to: at("Tear-case.md"), replace: false)
 check(text("Tear-case.md") == "Words.", "a rename that only changes case, in two steps")
 
+// list: each entry as itself; a link to nothing never hides the folder (it's left out)
+try FileManager.default.createDirectory(at: at("Listed/Fic"), withIntermediateDirectories: true)
+try VaultFileOps.write("A chapter.", to: at("Listed/Chapter.md"))
+try FileManager.default.createSymbolicLink(atPath: at("Listed/Research").path, withDestinationPath: "/nowhere/Research")
+try FileManager.default.createSymbolicLink(atPath: at("Listed/Elsewhere.md").path, withDestinationPath: at("Listed/Chapter.md").path)
+let listed = try VaultFileOps.list(at("Listed")).sorted { $0.name < $1.name }
+check(listed.map(\.name) == ["Chapter.md", "Fic"], "a folder's notes and folders listed; links (one to nothing) left out")
+check(listed.first?.size == 10 && listed.first?.directory == false, "a file's size, as itself")
+check(listed.last?.directory == true && listed.last?.size == 0, "a folder, as a folder")
+let written = try FileManager.default.attributesOfItem(atPath: at("Listed/Chapter.md").path)[.modificationDate] as? Date
+check(abs((listed.first?.mtime ?? 0) - (written?.timeIntervalSince1970 ?? 0) * 1000) < 1, "its time, in milliseconds")
+do {
+    _ = try VaultFileOps.list(at("not a folder"))
+    check(false, "no folder there: missing")
+} catch VaultFileError.missing { check(true, "no folder there: missing") }
+do {
+    _ = try VaultFileOps.list(at("Listed/Chapter.md"))
+    check(false, "a file isn't a folder to list")
+} catch VaultFileError.missing { check(true, "a file isn't a folder to list") }
+
 print(failures == 0 ? "All passed." : "\(failures) failed.")
 exit(failures == 0 ? 0 : 1)

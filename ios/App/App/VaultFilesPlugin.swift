@@ -12,7 +12,8 @@ public class VaultFilesPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "VaultFiles"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "write", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "rename", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "rename", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "list", returnType: CAPPluginReturnPromise)
     ]
 
     /// The text written, and flushed to the disk before the call answers.
@@ -33,12 +34,37 @@ public class VaultFilesPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    /// A folder's files and folders, each as itself; "MISSING" when there's no folder.
+    @objc func list(_ call: CAPPluginCall) {
+        answer(call) {
+            let entries = try VaultFileOps.list(try Self.inDocuments(call.getString("path")))
+            return [
+                "files": entries.map { entry -> [String: Any] in
+                    [
+                        "name": entry.name,
+                        "type": entry.directory ? "directory" : "file",
+                        "size": entry.size,
+                        "mtime": entry.mtime
+                    ]
+                }
+            ]
+        }
+    }
+
     private func answer(_ call: CAPPluginCall, _ operation: () throws -> Void) {
-        do {
+        answer(call) {
             try operation()
-            call.resolve()
+            return [:]
+        }
+    }
+
+    private func answer(_ call: CAPPluginCall, _ operation: () throws -> [String: Any]) {
+        do {
+            call.resolve(try operation())
         } catch VaultFileError.taken {
             call.reject("Something is already at that name.", "TAKEN")
+        } catch VaultFileError.missing {
+            call.reject("Nothing is there.", "MISSING")
         } catch {
             call.reject("\(error)")
         }

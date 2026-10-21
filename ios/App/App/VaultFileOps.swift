@@ -1,7 +1,8 @@
-// The vault's writes and renames on iOS (spec §3), where the Filesystem
-// plugin falls short of the storage's contract: its write isn't flushed to
-// the disk, and its rename deletes the file it replaces before moving, so a
-// rename that fails loses both. Plain Foundation and Darwin, with nothing of
+// The vault's writes, renames and listings on iOS (spec §3), where the
+// Filesystem plugin falls short of the storage's contract: its write isn't
+// flushed to the disk; its rename deletes the file it replaces before
+// moving, so a rename that fails loses both; and its listing follows links,
+// so one link to nothing fails the whole folder as though it weren't there. Plain Foundation and Darwin, with nothing of
 // Capacitor's, so scripts/ios/vault-file-ops-test/main.swift tests them with
 // swiftc alone (npm run test:ios-files). The plugin is VaultFilesPlugin.swift.
 
@@ -10,7 +11,19 @@ import Foundation
 enum VaultFileError: Error, Equatable {
     /// Something is at the new name already (a rename that mustn't replace).
     case taken
+    /// No folder there to list.
+    case missing
     case system(String)
+}
+
+/// One entry of a folder, as itself: never what a link leads to.
+struct VaultEntry: Equatable {
+    let name: String
+    let directory: Bool
+    /// Bytes; 0 for folders.
+    let size: Int
+    /// Last modified, in milliseconds since 1970.
+    let mtime: Double
 }
 
 enum VaultFileOps {
@@ -50,6 +63,29 @@ enum VaultFileOps {
         if folder >= 0 {
             _ = try? flush(folder)
             close(folder)
+        }
+    }
+
+    /// What's directly in `folder`: files and folders, each as itself (lstat). A link, which may
+    /// lead nowhere, is left out, as the desktop leaves it out; one gone since the listing too.
+    static func list(_ folder: URL) throws -> [VaultEntry] {
+        var isFolder: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isFolder),
+              isFolder.boolValue
+        else { throw VaultFileError.missing }
+        let names = try FileManager.default.contentsOfDirectory(atPath: folder.path)
+        return names.compactMap { name in
+            var info = stat()
+            guard lstat(folder.appendingPathComponent(name).path, &info) == 0 else { return nil }
+            let kind = info.st_mode & S_IFMT
+            guard kind == S_IFDIR || kind == S_IFREG else { return nil }
+            let time = info.st_mtimespec
+            return VaultEntry(
+                name: name,
+                directory: kind == S_IFDIR,
+                size: kind == S_IFDIR ? 0 : Int(info.st_size),
+                mtime: Double(time.tv_sec) * 1000 + Double(time.tv_nsec) / 1_000_000
+            )
         }
     }
 

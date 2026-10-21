@@ -11,10 +11,14 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { type FileEntry, type FilesPort, TakenError } from './files';
 
-/** Paths are in Documents. Rejects with the code "TAKEN" for a name that's taken. */
+/**
+ * Paths are in Documents. Rejects with the code "TAKEN" for a name that's taken, and (list,
+ * on iOS) "MISSING" when there's no folder.
+ */
 interface VaultFilesPlugin {
   write(options: { path: string; text: string }): Promise<void>;
   rename(options: { from: string; to: string; replace: boolean }): Promise<void>;
+  list(options: { path: string }): Promise<{ files: FileEntry[] }>;
 }
 
 const VaultFiles = registerPlugin<VaultFilesPlugin>('VaultFiles');
@@ -30,14 +34,30 @@ export class CapacitorFiles implements FilesPort {
   readonly #root: string;
   /** Eien's own plugin for writes and renames: on Android and iOS, in Documents. */
   readonly #native: boolean;
+  /**
+   * iOS: the Filesystem plugin's listing follows links (one to nothing fails the whole
+   * folder as though it weren't there), and its text read refuses a file cut mid-character.
+   */
+  readonly #ios: boolean;
 
   constructor(directory: Directory, root: string) {
     this.#directory = directory;
     this.#root = root;
-    this.#native =
-      directory === Directory.Documents &&
-      ['android', 'ios'].includes(Capacitor.getPlatform()) &&
-      Capacitor.isPluginAvailable('VaultFiles');
+    const platform = Capacitor.getPlatform();
+    this.#native = directory === Directory.Documents && ['android', 'ios'].includes(platform);
+    this.#ios = this.#native && platform === 'ios';
+  }
+
+  /**
+   * Eien's own plugin; on a phone without it nothing is written, rather than through the
+   * Filesystem plugin's rename, which deletes the note at the new name before moving.
+   */
+  #plugin(): VaultFilesPlugin {
+    if (!Capacitor.isPluginAvailable('VaultFiles'))
+      throw new Error(
+        'Eien’s own file plugin is missing: nothing was written, so nothing is lost.',
+      );
+    return VaultFiles;
   }
 
   #path(path: string): string {
@@ -60,7 +80,13 @@ export class CapacitorFiles implements FilesPort {
     }
   }
 
-  readText(path: string): Promise<string | null> {
+  async readText(path: string): Promise<string | null> {
+    if (this.#ios) {
+      // Read as bytes: a file a crash cut mid-character still reads, the cut as U+FFFD. A
+      // byte-order mark is kept, as Eien keeps it everywhere.
+      const bytes = await this.readBytes(path);
+      return bytes === null ? null : new TextDecoder('utf-8', { ignoreBOM: true }).decode(bytes);
+    }
     return this.#orNull(path, async () => {
       const { data } = await Filesystem.readFile({ ...this.#at(path), encoding: Encoding.UTF8 });
       return typeof data === 'string' ? data : await data.text();
@@ -78,7 +104,7 @@ export class CapacitorFiles implements FilesPort {
   async writeText(path: string, text: string): Promise<void> {
     // A lone surrogate as U+FFFD, as the version's hash reads it (Java would write "?").
     const words = text.toWellFormed();
-    if (this.#native) await VaultFiles.write({ path: this.#path(path), text: words });
+    if (this.#native) await this.#plugin().write({ path: this.#path(path), text: words });
     else await Filesystem.writeFile({ ...this.#at(path), data: words, encoding: Encoding.UTF8 });
   }
 
@@ -110,6 +136,15 @@ export class CapacitorFiles implements FilesPort {
   }
 
   async list(folder: string): Promise<FileEntry[] | null> {
+    if (this.#ios) {
+      // Each entry as itself: a link, which may lead nowhere, is left out (VaultFileOps.list).
+      try {
+        return (await this.#plugin().list({ path: this.#path(folder) })).files;
+      } catch (error) {
+        if ((error as { code?: unknown }).code === 'MISSING') return null;
+        throw error;
+      }
+    }
     try {
       const { files } = await Filesystem.readdir(this.#at(folder));
       return files.map((file) => ({
@@ -126,7 +161,7 @@ export class CapacitorFiles implements FilesPort {
 
   async rename(from: string, to: string): Promise<void> {
     if (this.#native) {
-      await VaultFiles.rename({ from: this.#path(from), to: this.#path(to), replace: true });
+      await this.#plugin().rename({ from: this.#path(from), to: this.#path(to), replace: true });
       return;
     }
     await Filesystem.rename({
@@ -139,11 +174,11 @@ export class CapacitorFiles implements FilesPort {
 
   async renameNew(from: string, to: string): Promise<void> {
     if (this.#native) {
-      await VaultFiles.rename({ from: this.#path(from), to: this.#path(to), replace: false }).catch(
-        (error: unknown) => {
+      await this.#plugin()
+        .rename({ from: this.#path(from), to: this.#path(to), replace: false })
+        .catch((error: unknown) => {
           throw (error as { code?: unknown }).code === 'TAKEN' ? new TakenError(to) : error;
-        },
-      );
+        });
       return;
     }
     if (await this.stat(to)) throw new TakenError(to);
