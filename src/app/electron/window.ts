@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { BrowserWindow, type IpcMainEvent, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, type IpcMainEvent, ipcMain, shell } from 'electron';
 import type { SettingValues } from '../../core/config';
 import { CHANNEL } from '../../platform/bridge';
 import { serveContextMenu } from './context-menu';
@@ -22,6 +22,16 @@ function appUrl(): string {
   return pathToFileURL(join(import.meta.dirname, '../renderer/index.html')).href;
 }
 
+/**
+ * Linux shows the window's own icon (the installers give macOS's and Windows'
+ * theirs): the seal, packed beside the app as resources/icon.png
+ * (electron-builder.ts, extraResources) and in build/icons when run from source.
+ */
+const linuxIcon = () =>
+  app.isPackaged
+    ? join(process.resourcesPath, 'icon.png')
+    : join(import.meta.dirname, '../../build/icons/linux/512x512.png');
+
 /** The window, as this device's `settings` have it: its zoom, from the first draw. */
 export async function createMainWindow(settings: SettingValues): Promise<BrowserWindow> {
   const url = appUrl();
@@ -32,6 +42,7 @@ export async function createMainWindow(settings: SettingValues): Promise<Browser
     minHeight: 480,
     show: false,
     title: 'Eien',
+    ...(process.platform === 'linux' ? { icon: linuxIcon() } : {}),
     ...frameOptions(process.platform, zoomFactorOf(settings)),
     webPreferences: {
       zoomFactor: zoomFactorOf(settings),
