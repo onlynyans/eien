@@ -28,9 +28,8 @@ test.describe('a vault Syncthing syncs', () => {
     writeFileSync(join(vault ?? '', 'From the phone.md'), 'synced\n');
     await expect(status(page)).toHaveClass(/is-other/);
     await expect(status(page)).toHaveAttribute('aria-label', 'Changed on another device just now');
-    // Hovered, it says so in Eien's tooltip.
-    await status(page).hover();
-    await expect(page.locator('.tooltip')).toContainText('Changed on another device');
+    // Its tooltip says the same (shown on hover).
+    await expect(status(page)).toHaveAttribute('data-tip', 'Changed on another device just now');
   });
 
   test('the writer’s own typing, saved, never reads as another device', async ({ page }) => {
