@@ -309,7 +309,7 @@ holds the rest, as the menu bar does on the desktop.
 
 ### Layouts
 
-Three layouts, a device setting (`appearance.layout`, Settings → Appearance;
+Three layouts, a device setting (`appearance.layout`, Settings → Look → Appearance;
 `data-layout` on `<html>`). They differ only in where the controls sit, not
 in what they are or do ([overall.md](design/explorations/overall.md)):
 
@@ -483,10 +483,10 @@ words, as on the page.
 - **Quotes:** typed quotes follow the quote setting (curly or straight).
 - **Focus mode:** dims every paragraph but the current one (the lines between
   blank lines round the caret). View → Focus Mode (⌘⇧↵, Ctrl+Shift+Enter), or
-  Settings → Editor.
+  Settings → Writing → Editor.
 - **Typewriter scrolling:** keeps the caret line at the middle of the page as
   the writer types, deletes or moves with the keys; a click leaves the page
-  where it is. View → Typewriter Scrolling, or Settings → Editor.
+  where it is. View → Typewriter Scrolling, or Settings → Writing → Editor.
 - Both are this device's settings; the View menu's checks follow them, wherever
   they're changed.
 - **Counters:** words in the note (its words only: not the marks, link
@@ -515,7 +515,7 @@ words, as on the page.
   every pane, as a browser zooms (Electron's own zoom). ⌘0 puts back
   whichever ⌘+ would change there. Both are per device. The colophon shows the
   page's zoom when it isn't 100%, as it's the page's; the interface's shows in
-  its own size, and in Settings → Layout. The phone has the page's alone.
+  its own size, and in Settings → Look → Appearance. The phone has the page's alone.
 - **Text size:** a setting that scales the text face from its tuned size
   (90%–130%), separately from zoom.
 - **Outline cards:** a book's notes as cards on a board; drag to reorder.
@@ -531,7 +531,7 @@ words, as on the page.
   The keyboard is always on a card or Close, and goes to the page with it.
   With no book to show, one line of news says so.
 - **Spellcheck:** off until turned on, using the platform's own checker.
-  That's macOS's: Settings → Editor → Spellcheck, or Edit → Check Spelling
+  That's macOS's: Settings → Writing → Editor → Spellcheck, or Edit → Check Spelling
   While Typing. A right-click on a word it underlines offers its suggestions
   and Learn Spelling, then Cut, Copy and Paste. Windows and Linux don't offer
   it: Electron has no checker of their own there and would download
@@ -608,7 +608,7 @@ src/ui/
   versions/     ✓ sealing, Compare, the versions panel, the colophon's last seal
   outline/      ✓ outline cards: a book's chapters as cards on the blotter, reordered by drag or keys
   counters/     ✓ the colophon's today, book and sprint
-  settings/     ✓ the settings screen, drawn from the schema; the look they set on <html>
+  settings/     ✓ Settings over the window: categories and tabs, drawn from the schema; the Themes tabs; the look they set on <html>
   phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
@@ -669,19 +669,21 @@ Every setting is defined once, in `src/core/config/schema.ts`:
   label: 'Quotation marks',
   description: 'As you type them, and in what Copy for AO3 gives. Code keeps its own.',
   scope: 'vault',              // 'vault' travels with the notes; 'device' stays on this device
+  group: 'Writing',            // its tab in Settings (here under This vault)
   type: 'choice',
   choices: { curly: 'Curly “ ”', straight: 'Straight " "' },
   default: 'curly',
 }
 ```
 
-The settings screen, defaults, validation and storage all come from that one
+Settings, the defaults, validation and storage all come from that one
 list. Adding a setting means adding one entry. A setting joins the list in the
 phase that builds what it changes, so the screen never offers a switch that
 does nothing.
 
 - **Vault settings** live in `.eien/config.json`: chapter numbers (i ii iii or
-  1 2 3); later quotes, AO3 options, scene break style. The vault's watcher
+  1 2 3), quotation marks and AO3's scene break. Settings shows them apart,
+  under This vault. The vault's watcher
   reports this one hidden file, so a change from another device shows at once.
 - **Device settings** live in `settings.json`, never in a vault: in
   `Documents/Eien` for an installed copy, in a portable copy's "Eien Data" beside
@@ -689,7 +691,9 @@ does nothing.
   (day, night or the system's), palette, the layout (band, slip or running
   head), text face, text size (90–130%),
   density (comfortable or compact), page frame (sheet or full), the page's
-  zoom and the interface's (each 50–200%), panes (three or two), focus mode, typewriter scrolling and
+  zoom and the interface's (each 50–200%), the machine voice's face, the
+  weight of the sidebar's names and the list's titles, the Running head's
+  ground, panes (three or two), focus mode, typewriter scrolling and
   spellcheck (macOS). A setting may be one system's alone (`platforms` in the
   schema): the screen shows it only there.
 - An unknown or invalid value in a file is ignored with a warning in the log,
@@ -709,8 +713,61 @@ does nothing.
   scales every pane, set by the main process on the window. Text size scales
   the text face everywhere.
 
-Settings are grouped and labeled on the settings screen: **Appearance**,
-**Editor**, **Writing**, **Layout**, **AO3**, **Sync**.
+### Settings over the window
+
+Settings ([settings.md](design/explorations/settings.md)) opens over the
+dimmed window (⌘, or the settings control) as a sheet of raised paper at a
+larger inset (64px above and below, 112px at the sides).
+
+- **It moves and resizes** (`ui/settings/box.ts`, `frame.ts`): its head
+  moves it, its edges and corners resize it (the corner also by the arrow
+  keys), always inside the window and never smaller than 560 × 380. A move
+  never resizes. Its box is this device's (the window's own storage), and a
+  double-click on its head puts it back where it first opens.
+- **Its side column holds categories**, each a label in the machine voice
+  over its tabs (`ui/settings/places.ts`); each of the schema's groups is a
+  tab:
+
+  | Category | Tabs |
+  |---|---|
+  | Look | Appearance, Type, Page |
+  | Themes | Gallery, Custom (§7) |
+  | Writing | Lists, Editor |
+  | This vault | Writing, AO3 |
+
+  **This vault** holds the vault's own settings (those whose scope is
+  `vault`) and nothing else, and says they're kept in its
+  `.eien/config.json`. A tab with nothing offered here (Lists on a phone)
+  isn't shown.
+- **Its head is a breadcrumb**, `SETTINGS / CATEGORY / TAB`. It opens on the
+  tab last shown, the keyboard on that tab's name.
+- A setting is its name, what it does, and its control: choices in a
+  segmented well (words, or icons with names), the faces as cards set in
+  each face, the Running head's ground as swatches of the theme's surfaces,
+  a weight's four steps, or a stepper. Every control is a button, a field or
+  a slider, so the keyboard reaches each one. The Type tab opens with a line
+  of running text.
+- **Esc** closes it (unless it's putting back a name being typed), as does a
+  click on the dimmed window, and gives the keyboard back to what opened it.
+- **On a phone** it's a full sheet: the tabs in one strip under the head,
+  nothing to move or resize; the phone's back closes it first.
+
+### Type and the Running head
+
+- **Faces:** one list, `core/config/faces.ts` (FACES), feeds both face
+  settings: Typeface (the eight text faces) and **Machine voice** (IBM Plex
+  Mono, the default, or any of the eight). Each face carries its own machine
+  sizes (counts, labels, the Source view), so a proportional face reads at
+  the mono's size; its family is one token in `tokens.css`
+  (`--eien-family-<id>`). A face added later is one entry there, and its
+  tokens.
+- **Weight of names:** two settings, 400 to 700: the sidebar's names
+  (`--eien-weight-tree`) and the list's titles (`--eien-weight-list`). A
+  chosen list title is 100 heavier, at most 700 (so 500 at the default); the
+  sidebar's chosen name is not heavier.
+- **Running head:** the Running head layout's strip takes one of the
+  theme's own surfaces as its ground (desk, the default; blotter, band,
+  paper or selected), so it follows any theme.
 
 ---
 
@@ -777,10 +834,22 @@ Settings are grouped and labeled on the settings screen: **Appearance**,
   vault open yet, another vault, a file being edited) is worn as Washi.
   Renaming the theme worn moves the setting with it; sending it to the
   trash wears Washi.
-- The settings screen lists the gallery's themes and then your own under
-  Palette. Settings' Themes tabs (Gallery and Custom, the mix panel) are
-  built on `ui/theme/writer-themes.ts`: list, create, save, rename, trash,
-  palette and verdict.
+- **Settings → Themes** has two tabs (`ui/settings/themes-tabs.ts`), and a
+  theme chosen in either is worn on the whole window at once:
+  - **Gallery:** Eien's own, as cards (desk | paper with ink | night paper
+    with the seal; the name, its kanji, a note).
+  - **Custom:** the writer's own, a card for each file in `.eien/themes`
+    (its colours worked out from the file's mix; one that can't be read says
+    so), and a "New theme" card, which makes `Untitled.json` (numbered when
+    taken), wears it and puts the keyboard in its name. The custom theme worn
+    opens its mix (`ui/settings/mix-panel.ts`): its name, renamed in place
+    (Enter keeps, Esc puts back; a taken name is refused and said); its file;
+    the trash; its colours by day and by night; four knobs (paper, warmth,
+    ink, seal) whose tracks show the colours they choose between; and the
+    contrast verdict. A knob's mix is worn as it turns and written a moment
+    after it rests (`WriterThemes.preview`, then `save`, one write after
+    another), so a read of the file meanwhile never takes it back.
+  - There's no "from a file": Custom writes the files.
 - All fonts are bundled. Nothing is fetched from the web.
 
 ---
@@ -1178,7 +1247,8 @@ On macOS, Windows and Linux, each with a fresh temporary vault:
 - export a book and a note as EPUB, Word and PDF through the menus, read back
   from the files saved; import a folder, and the notes appear beside the
   vault's own, nothing written over
-- switch theme, quotes and pane layout; settings survive a restart
+- switch theme, quotes and pane layout; settings survive a restart; Settings
+  moved, resized and kept; a custom theme made, worn, renamed and trashed
 - drag notes to reorder; the order survives a restart
 - a vault with 5,000 notes opens and searches within set time limits: listed
   within 15 s of launch, a search answered within 2 s, a typed change in the

@@ -116,17 +116,37 @@
   /* Text: anything a person wrote — notes, titles, names in the tree. The face and
      the sizes tuned to it are in "The text face" below. */
   /* Machine: anything the machine counts or you press — numbers, dates, labels, buttons.
-     Always IBM Plex Mono, whatever the text face. */
-  --eien-face-mono: "IBM Plex Mono", ui-monospace, monospace;
+     IBM Plex Mono unless the writer chooses another face for it (the Machine voice
+     setting sets this and the three machine sizes below, from core/config/faces.ts). */
+  --eien-face-mono: var(--eien-family-plex-mono);
   /* The seal's glyph, 永. Mockups use the system's Mincho; the app ships the seal as SVG. */
   --eien-face-seal: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Songti SC", serif;
 
-  /* The machine voice's sizes: the same whichever text face is chosen. */
+  /* Every bundled face's family, once (core/config/faces.ts lists them): the text face
+     and the machine voice each name one. */
+  --eien-family-plex-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --eien-family-newsreader: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
+  --eien-family-literata: "Literata Variable", "Iowan Old Style", Georgia, serif;
+  --eien-family-plex-sans: "IBM Plex Sans Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-family-source-sans: "Source Sans 3 Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-family-atkinson:
+    "Atkinson Hyperlegible Next Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-family-schibsted: "Schibsted Grotesk Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-family-hanken: "Hanken Grotesk Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-family-instrument: "Instrument Sans Variable", "Helvetica Neue", Arial, sans-serif;
+
+  /* The machine voice's sizes, Plex Mono's: the same whichever text face is chosen. A
+     machine face of the writer's choosing brings its own (core/config/faces.ts). */
   --eien-size-meta: 11px; /* counts, dates, the status line */
   --eien-size-label: 10px; /* section labels and buttons, set in capitals */
   --eien-size-source: 14px; /* the Source view: the raw .md, in mono */
 
   --eien-leading-row: 1.35;
+  /* The weight of names (two settings, 400 to 700): the sidebar's, and the note list's
+     titles, the chosen title a step heavier (at most 700). */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+  --eien-weight-list-chosen: 500;
   --eien-track-label: 0.12em; /* letterspacing for capitals */
 
   /* ── Space: a 4px grid ──────────────────────────────────────────────── */
@@ -173,14 +193,14 @@
    by eye until a page reads at the same apparent size, and its own measure, so
    a line holds about the same number of characters (about 75) in each. Every
    size is multiplied by --eien-text-scale, the Text size setting. Only the
-   text voice changes; the mono never does. */
+   text voice changes; the machine voice keeps its own face and sizes. */
 :root {
   --eien-text-scale: 1; /* Text size, 0.9 to 1.3: set from the settings */
   --eien-zoom: 1; /* the page's zoom, 0.5 to 2: set from the settings */
 }
 :root,
 [data-face="newsreader"] {
-  --eien-face-text: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
+  --eien-face-text: var(--eien-family-newsreader);
   --eien-size-prose: calc(22px * var(--eien-text-scale)); /* the writing */
   --eien-size-title: calc(36px * var(--eien-text-scale)); /* a note's title on its page */
   --eien-size-heading: calc(
@@ -197,7 +217,7 @@
 }
 :root[data-face="literata"],
 [data-face="literata"] {
-  --eien-face-text: "Literata Variable", "Iowan Old Style", Georgia, serif;
+  --eien-face-text: var(--eien-family-literata);
   --eien-size-prose: calc(19px * var(--eien-text-scale));
   --eien-size-title: calc(32px * var(--eien-text-scale));
   --eien-size-heading: calc(21px * var(--eien-text-scale));
@@ -208,7 +228,7 @@
 }
 :root[data-face="plex-sans"],
 [data-face="plex-sans"] {
-  --eien-face-text: "IBM Plex Sans Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-face-text: var(--eien-family-plex-sans);
   --eien-size-prose: calc(18px * var(--eien-text-scale));
   --eien-size-title: calc(31px * var(--eien-text-scale));
   --eien-size-heading: calc(20px * var(--eien-text-scale));
@@ -219,7 +239,7 @@
 }
 :root[data-face="source-sans"],
 [data-face="source-sans"] {
-  --eien-face-text: "Source Sans 3 Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-face-text: var(--eien-family-source-sans);
   --eien-size-prose: calc(20px * var(--eien-text-scale));
   --eien-size-title: calc(32px * var(--eien-text-scale));
   --eien-size-heading: calc(21px * var(--eien-text-scale));
@@ -230,7 +250,7 @@
 }
 :root[data-face="atkinson"],
 [data-face="atkinson"] {
-  --eien-face-text: "Atkinson Hyperlegible Next Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-face-text: var(--eien-family-atkinson);
   --eien-size-prose: calc(18px * var(--eien-text-scale));
   --eien-size-title: calc(30px * var(--eien-text-scale));
   --eien-size-heading: calc(20px * var(--eien-text-scale));
@@ -241,7 +261,7 @@
 }
 :root[data-face="schibsted"],
 [data-face="schibsted"] {
-  --eien-face-text: "Schibsted Grotesk Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-face-text: var(--eien-family-schibsted);
   --eien-size-prose: calc(18px * var(--eien-text-scale));
   --eien-size-title: calc(31px * var(--eien-text-scale));
   --eien-size-heading: calc(21px * var(--eien-text-scale));
@@ -252,7 +272,7 @@
 }
 :root[data-face="hanken"],
 [data-face="hanken"] {
-  --eien-face-text: "Hanken Grotesk Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-face-text: var(--eien-family-hanken);
   --eien-size-prose: calc(19px * var(--eien-text-scale));
   --eien-size-title: calc(31px * var(--eien-text-scale));
   --eien-size-heading: calc(21px * var(--eien-text-scale));
@@ -263,7 +283,7 @@
 }
 :root[data-face="instrument"],
 [data-face="instrument"] {
-  --eien-face-text: "Instrument Sans Variable", "Helvetica Neue", Arial, sans-serif;
+  --eien-face-text: var(--eien-family-instrument);
   --eien-size-prose: calc(18.5px * var(--eien-text-scale));
   --eien-size-title: calc(30px * var(--eien-text-scale));
   --eien-size-heading: calc(20px * var(--eien-text-scale));

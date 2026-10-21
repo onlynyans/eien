@@ -147,7 +147,10 @@ test.describe('three thousand notes', () => {
       const dialog = page.getByRole('dialog', { name: 'Settings' });
       await expect(dialog).toBeVisible();
       await time.mark();
-      await dialog.locator(`[data-value="${layout}"]`).click();
+      await dialog
+        .getByRole('group', { name: 'Layout' })
+        .locator(`[data-value="${layout}"]`)
+        .click();
       await expect(page.locator('html')).toHaveAttribute('data-layout', layout);
       await page.waitForTimeout(300);
       expect(await time.longest(), layout).toBeLessThan(STALL);

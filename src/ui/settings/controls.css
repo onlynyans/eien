@@ -1,0 +1,163 @@
+/* A setting in Settings (./controls.ts): its name in the text face, what it
+   does in pencil, then its control: a segmented well, face cards, swatches,
+   a weight's steps, a stepper. The Themes tabs are ./themes.css. */
+
+.setting {
+  display: grid;
+  gap: var(--eien-space-1);
+  max-width: 46em;
+  margin-bottom: 22px;
+}
+.setting__label {
+  margin: 0;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  font-weight: 400;
+  color: var(--eien-ink);
+}
+.setting__about {
+  margin: 0;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  line-height: 1.45;
+  color: var(--eien-pencil);
+}
+/* The two weights side by side, as one pair. */
+.setting--weight {
+  display: inline-grid;
+  width: calc(50% - var(--eien-space-2));
+  margin-right: var(--eien-space-3);
+  vertical-align: top;
+}
+
+/* Choices in a segmented well: the chosen one raised. */
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-self: start;
+  gap: 2px;
+  margin-top: var(--eien-space-1);
+  padding: 2px;
+  border-radius: var(--eien-radius-m);
+  background: var(--eien-press);
+}
+.choices .icon-button {
+  width: 34px;
+  height: 26px;
+}
+.choices .word-button[aria-pressed="true"],
+.choices .icon-button[aria-pressed="true"] {
+  background: var(--eien-paper-raised);
+  border-color: var(--eien-rule);
+  color: var(--eien-ink);
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 2px;
+}
+.setting__value {
+  min-width: 4.5em;
+  text-align: center;
+  color: var(--eien-ink);
+}
+
+/* Faces, each a card set in itself. */
+.faces {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--eien-space-1);
+  margin-top: var(--eien-space-1);
+}
+.face {
+  appearance: none;
+  display: grid;
+  gap: 2px;
+  padding: var(--eien-space-2) 10px;
+  border: var(--eien-hairline) solid var(--eien-rule-soft);
+  border-radius: var(--eien-radius-s);
+  background: var(--eien-paper);
+  text-align: left;
+  color: var(--eien-ink-soft);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .face:hover {
+    border-color: var(--eien-rule-strong);
+  }
+}
+.face[aria-pressed="true"] {
+  border-color: var(--eien-rule-strong);
+  box-shadow: inset 0 0 0 1px var(--eien-rule-strong);
+  color: var(--eien-ink);
+}
+.face__sample {
+  font-family: var(--eien-face-text);
+  font-size: 22px;
+  line-height: 1.1;
+}
+.face__sample--machine {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+.face__name,
+.swatch__name {
+  font-family: var(--eien-face-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--eien-pencil);
+}
+
+/* The theme's own surfaces, as swatches. */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--eien-space-1);
+}
+.swatch {
+  appearance: none;
+  display: grid;
+  justify-items: center;
+  gap: var(--eien-space-1);
+  padding: var(--eien-space-1);
+  border: var(--eien-hairline) solid transparent;
+  border-radius: var(--eien-radius-s);
+  background: none;
+  cursor: pointer;
+}
+.swatch__chip {
+  width: 54px;
+  height: 22px;
+  border-radius: var(--eien-radius-s);
+  box-shadow: inset 0 0 0 1px var(--eien-rule-strong);
+}
+.swatch[aria-pressed="true"] {
+  border-color: var(--eien-rule-strong);
+}
+
+.weight {
+  display: grid;
+  gap: var(--eien-space-1);
+}
+.weight__sample {
+  justify-self: start;
+  padding: 6px 10px;
+  border-radius: var(--eien-radius-s);
+  background: var(--eien-selected);
+  font-size: var(--eien-size-row);
+}
+
+@media (max-width: 599.98px) {
+  .setting--weight {
+    display: grid;
+    width: auto;
+    margin-right: 0;
+  }
+}

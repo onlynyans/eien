@@ -1,0 +1,213 @@
+/* Settings / Themes (./themes-tabs.ts): the themes as cards, Gallery and
+   Custom alike, and the mix of the custom theme worn (./mix-panel.ts). */
+
+.themes__about {
+  margin-bottom: 14px;
+}
+.themes__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: var(--eien-space-2);
+}
+.theme {
+  appearance: none;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: var(--eien-space-2);
+  border: var(--eien-hairline) solid var(--eien-rule-soft);
+  border-radius: var(--eien-radius-m);
+  background: none;
+  text-align: left;
+  color: var(--eien-ink-soft);
+  cursor: pointer;
+}
+.theme[aria-pressed="true"] {
+  border-color: var(--eien-rule-strong);
+  box-shadow: inset 0 0 0 1px var(--eien-rule-strong);
+  color: var(--eien-ink);
+}
+/* A theme's colours are its own: the one place the card isn't drawn in the theme worn. */
+.theme__sw {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 2fr;
+  height: 46px;
+  overflow: hidden;
+  border-radius: var(--eien-radius-s);
+  box-shadow: inset 0 0 0 1px var(--eien-rule);
+}
+.theme__sw i {
+  display: grid;
+  place-items: center;
+  background: var(--eien-well);
+}
+.theme__ink {
+  width: 60%;
+  height: 3px;
+  border-radius: 999px;
+}
+.theme__dot {
+  width: var(--eien-space-2);
+  height: var(--eien-space-2);
+}
+.theme__name {
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+}
+.theme__kanji {
+  margin-left: 6px;
+  font-family: var(--eien-face-seal);
+  color: var(--eien-pencil);
+}
+.theme__note {
+  font-size: 9px;
+}
+.theme--new {
+  place-content: center;
+  justify-items: center;
+  min-height: 104px;
+  border-style: dashed;
+  border-color: var(--eien-rule-strong);
+  color: var(--eien-pencil);
+}
+@media (hover: hover) {
+  .theme--new:hover {
+    color: var(--eien-ink);
+    border-color: var(--eien-focus);
+  }
+}
+
+/* The mix of the custom theme worn: on the band, below the cards. */
+.mix {
+  max-width: 640px;
+  margin-top: var(--eien-space-4);
+  padding: var(--eien-space-4) 18px var(--eien-space-3);
+  background: var(--eien-band);
+  border: var(--eien-hairline) solid var(--eien-rule-soft);
+  border-radius: var(--eien-radius-m);
+}
+.mix__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.mix__name {
+  all: unset;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-heading);
+  color: var(--eien-ink);
+  caret-color: var(--eien-seal);
+  border-bottom: var(--eien-hairline) solid transparent;
+}
+@media (hover: hover) {
+  .mix__name:hover {
+    border-bottom-color: var(--eien-rule);
+  }
+}
+.mix__name:focus {
+  border-bottom-color: var(--eien-focus);
+}
+.mix__file {
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  color: var(--eien-pencil);
+  white-space: nowrap;
+}
+@media (hover: hover) {
+  .mix__trash:hover {
+    color: var(--eien-removed);
+  }
+}
+.mix__preview {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 6px var(--eien-space-3);
+  margin-bottom: var(--eien-space-4);
+}
+.mix__chips {
+  display: flex;
+  height: 26px;
+  overflow: hidden;
+  border-radius: var(--eien-radius-s);
+  box-shadow: inset 0 0 0 1px var(--eien-rule);
+}
+.mix__chips i {
+  flex: 1;
+}
+.mix__chips .mix__inks {
+  flex: 2;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 0 10px;
+}
+.mix__inks i {
+  height: 3px;
+  border-radius: 999px;
+}
+.mix__inks i:nth-child(2) {
+  width: 75%;
+}
+.mix__inks i:nth-child(3) {
+  width: 50%;
+}
+.mix__knob-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 46px;
+  align-items: center;
+  gap: var(--eien-space-2);
+  max-width: 520px;
+  margin-bottom: var(--eien-space-2);
+}
+.mix__knob-row output {
+  text-align: right;
+}
+/* A knob's track shows the colours it chooses between: the one place a gradient carries meaning. */
+.mix__knob {
+  appearance: none;
+  width: 100%;
+  height: var(--eien-space-2);
+  border-radius: 999px;
+  background: var(--track);
+  box-shadow: inset 0 0 0 1px var(--eien-rule);
+  cursor: pointer;
+}
+.mix__knob::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--eien-space-4);
+  height: var(--eien-space-4);
+  border-radius: 50%;
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+}
+.mix__knob:focus-visible {
+  outline-offset: 4px;
+}
+.mix__verdict,
+.mix__said,
+.mix__unread {
+  margin: 10px 0 0;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-added);
+}
+.mix__verdict--short {
+  color: var(--eien-caution);
+}
+.mix__said {
+  color: var(--eien-pencil);
+}
+.mix__unread {
+  color: var(--eien-caution);
+  font-family: var(--eien-face-text);
+}
+@media (max-width: 599.98px) {
+  .mix__knob-row {
+    grid-template-columns: 72px 1fr 40px;
+  }
+}
