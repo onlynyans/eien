@@ -23,6 +23,13 @@ export default defineConfig({
         test: { name: 'window', include: [WINDOW], environment: 'happy-dom' },
       },
     ],
-    coverage: { provider: 'v8', include: ['src/**/*.ts'], reporter: ['text'] },
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      reporter: ['text'],
+      // What the tests covered (October 2026, on a Mac: 67.8, 69.1, 61.2, 68.9), less a little
+      // for Linux, where CI measures it and the Mac's own storage tests skip. Raise them as it grows.
+      thresholds: { statements: 65, branches: 66, functions: 58, lines: 66 },
+    },
   },
 });

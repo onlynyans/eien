@@ -28,7 +28,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      # What ships (dependencies, not devDependencies) with no known high or critical advisory.
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run typecheck
+      # Fails under the thresholds in vitest.config.ts.
       - run: npm run test:coverage
 
   phone-page:
