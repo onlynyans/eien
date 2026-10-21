@@ -17,12 +17,12 @@ Then open <http://127.0.0.1:4173/explorations/overall.html>.
 
 | Page | What it explores | Backlog |
 |---|---|---|
-| [overall.html](overall.html) · [md](overall.md) | The whole window, desktop and phone, in three explorations: A · Band, B · Slip, C · Running head | #1, #3–#8, #10, #11, #13–#17, #25, #27 |
+| [overall.html](overall.html) · [md](overall.md) | The whole window, desktop and phone, in three explorations: A · Band, B · Slip, C · Running head. Focus mode, rename in place, and how one framework carries all three | #1, #3–#8, #10, #11, #13–#17, #25, #27 |
 | [specimen.html](specimen.html) · [md](specimen.md) | The icon set, the control's states, three corner scales, the machine voice in every face, row weights | #24–#27 |
-| [settings.html](settings.html) · [md](settings.md) | Settings as a popover, in the page, or over the window, in Eien's voice, live | #18, #24, #25 |
-| [tags.html](tags.html) · [md](tags.md) | Tags on the page: running head, label slips, the note's card; a tag with no notes yet | #4, #13 |
-| [themes.html](themes.html) · [md](themes.md) | Six new themes beside Washi; a gallery, a maker, a file; contrast checked live | #20 |
-| [order.html](order.html) · [md](order.md) | Your order and a lens over it, across both panes; moving folders out; lens chips, a filter strip, arrange mode | #12 |
+| [settings.html](settings.html) · [md](settings.md) | Settings over the window (chosen): moved and resized, a breadcrumb, category labels, Themes as a category | #18, #20, #24, #25 |
+| [tags.html](tags.html) · [md](tags.md) | Tags on the page: the running head (chosen), label slips, the note's card; a tag with no notes yet | #4, #13 |
+| [themes.html](themes.html) · [md](themes.md) | Six new themes beside Washi; Gallery and Custom; contrast checked live | #20 |
+| [order.html](order.html) · [md](order.md) | Your order and a lens over it, across both panes; moving folders out; drag anytime or Arrange mode; a three-way tag filter | #12 |
 
 The pages are built from `_src/` by `python3 _build.py`, which puts the
 shared tokens, icons and face list (`_src/shared.css`, `_src/shared.js`)

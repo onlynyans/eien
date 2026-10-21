@@ -211,6 +211,8 @@ button, input { font: inherit; color: inherit; }
 :root[data-x='b'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; --sheet-radius: 3px; --band: 56px; --top: 0px; }
 /* C · Running head: one strip across the window, like a book's running head. */
 :root[data-x='c'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; --sheet-radius: 0; --band: 48px; --top: 40px; }
+/* A shut sidebar keeps a strip of desk: the traffic lights and the seal, which opens it again. */
+:root { --strip: 76px; --runhead-ground: var(--eien-desk); }
 
 body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
 .stage { min-height: 0; display: grid; place-items: stretch; padding: var(--eien-space-4); background: light-dark(#cfc8bd, #0b0907); }
@@ -228,7 +230,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
   background: var(--eien-blotter);
   transition: grid-template-columns var(--eien-calm) var(--eien-ease);
 }
-.window.no-sidebar { --sb: 0px; }
+.window.no-sidebar { --sb: var(--strip); }
 .window.no-list, .window.two-panes { --ls: 0px; }
 .window.two-panes { --sb: 320px; }
 .lights { position: absolute; z-index: 30; top: 18px; left: 16px; display: flex; gap: 8px; }
@@ -239,7 +241,9 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 
 /* C: the running head across the window */
 .runhead { display: none; grid-column: 1 / -1; grid-row: 1; align-items: center; gap: var(--eien-space-1);
-  padding: 0 var(--eien-space-3) 0 84px; background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+  padding: 0 var(--eien-space-3) 0 84px; background: var(--runhead-ground); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+/* C: the sidebar's head sits under the traffic lights, at the sidebar's left, with no rule under it. */
+:root[data-x='c'] .sidebar__head { height: 48px; padding-left: var(--eien-space-4); }
 :root[data-x='c'] .runhead { display: flex; }
 .runhead__crumbs { flex: 1; text-align: center; }
 .runhead .views { margin-right: var(--eien-space-2); }
@@ -247,30 +251,40 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .pane { grid-row: 2; min-width: 0; min-height: 0; position: relative; overflow: hidden; }
 .sidebar { grid-column: 1; background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; }
 .list { grid-column: 2; background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; }
-.page { grid-column: 3; background: var(--eien-blotter); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; container: page / inline-size; }
+.page { grid-column: 3; background: var(--eien-blotter); display: grid; grid-template-rows: auto auto minmax(0, 1fr) var(--status-h); container: page / inline-size; }
+/* Each part in its own row, so a part that's hidden never hands its row to the next. */
+:root { --status-h: 40px; }
+.page__bar { grid-row: 1; } .page > .fmt { grid-row: 2; } .page__scroll { grid-row: 3; } .status { grid-row: 4; }
 .window.no-sidebar .sidebar, .window.no-list .list, .window.two-panes .list { border-right: 0; }
-.sidebar > *, .list > * { min-width: 240px; }
-.window.two-panes .sidebar > * { min-width: 300px; }
+.sidebar__inner, .list > :not(.pane-toggle):not(.pane-reopen) { min-width: 240px; }
+.window.two-panes .sidebar__inner { min-width: 300px; }
+.sidebar__inner { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.strip { display: none; flex-direction: column; align-items: center; padding-top: calc(var(--top, 0px) + 48px); gap: var(--eien-space-2); }
+:root[data-x='c'] .strip { padding-top: var(--eien-space-3); }
+.window.no-sidebar .sidebar__inner { display: none; }
+.window.no-sidebar .strip { display: flex; }
+.seal-button { appearance: none; display: grid; place-items: center; padding: 4px; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; cursor: pointer; }
+@media (hover: hover) { .seal-button:hover { border-color: var(--eien-rule); } }
+.strip .icon-button { opacity: 0; } .sidebar:hover .strip .icon-button, .strip .icon-button:focus-visible { opacity: 1; }
 
-/* Pane chevrons (#15): shown on hover at a pane's edge. */
-.pane-toggle { position: absolute; z-index: 20; opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease); }
-.pane:hover > .pane-toggle, .pane-toggle:focus-visible { opacity: 1; }
+/* Pane chevrons (#15). A pane's ‹ shuts it; the way back is a › in the same
+   spot of the pane beside it. Both show on hover, as every control does. */
+.pane-toggle, .pane-reopen { position: absolute; z-index: 20; opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease); }
+.pane:hover > .pane-toggle, .pane:hover > .pane-reopen, .pane-toggle:focus-visible, .pane-reopen:focus-visible { opacity: 1; }
+.pane-reopen { display: none; }
+.window.no-list:not(.two-panes) .page > .pane-reopen { display: inline-grid; }
 :root[data-x='a'] .pane-toggle { top: calc((var(--band) - var(--eien-control)) / 2); right: var(--eien-space-2); }
-:root[data-x='b'] .pane-toggle { top: 50%; right: -1px; width: 16px; height: 44px; translate: 0 -50%;
-  border: var(--eien-hairline) solid var(--eien-rule); border-right: 0; border-radius: var(--eien-radius-m) 0 0 var(--eien-radius-m);
-  background: var(--eien-band); }
-:root[data-x='b'] .pane-toggle svg { width: 12px; }
-:root[data-x='c'] .pane-toggle { display: none; }
-.reopen { position: absolute; z-index: 25; left: 0; top: 0; bottom: 0; width: 14px; display: none; }
-.reopen .icon-button { position: absolute; top: calc(var(--top) + 64px); left: 2px; opacity: 0; background: var(--eien-paper-raised); border-color: var(--eien-rule); }
-.reopen:hover .icon-button, .reopen .icon-button:focus-visible { opacity: 1; }
-:root:not([data-x='c']) .window.no-sidebar .reopen--sidebar,
-:root:not([data-x='c']) .window.no-list:not(.two-panes) .reopen--list { display: block; }
-.reopen--list { left: var(--sb); }
+:root[data-x='a'] .pane-reopen { top: calc((var(--band) - var(--eien-control)) / 2); left: var(--eien-space-2); z-index: 21; }
+:root[data-x='b'] .pane-toggle, :root[data-x='b'] .pane-reopen { top: 50%; width: 16px; height: 44px; translate: 0 -50%;
+  border: var(--eien-hairline) solid var(--eien-rule); background: var(--eien-band); }
+:root[data-x='b'] .pane-toggle { right: -1px; border-right: 0; border-radius: var(--eien-radius-m) 0 0 var(--eien-radius-m); }
+:root[data-x='b'] .pane-reopen { left: -1px; border-left: 0; border-radius: 0 var(--eien-radius-m) var(--eien-radius-m) 0; }
+:root[data-x='b'] .pane-toggle svg, :root[data-x='b'] .pane-reopen svg { width: 12px; }
+:root[data-x='c'] .pane-toggle, :root[data-x='c'] .pane-reopen { display: none !important; }
+:root[data-x='a'] .window.no-list .page__bar { padding-left: calc(var(--eien-space-2) + var(--eien-control) + var(--eien-space-2)); }
 
 /* ═══ Sidebar ══════════════════════════════════════════════════════════ */
 .sidebar__head { display: flex; align-items: center; gap: var(--eien-space-3); height: var(--band); flex: none; padding: 0 var(--eien-space-4) 0 84px; }
-:root[data-x='c'] .sidebar__head { display: none; }
 .vault-name { font-weight: 600; white-space: nowrap; }
 .sidebar__search { display: none; padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2); }
 .window.two-panes .sidebar__search, .window.no-list .sidebar__search { display: block; }
@@ -324,8 +338,6 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 /* ═══ Note list ════════════════════════════════════════════════════════ */
 .list__search { display: flex; align-items: center; height: var(--band); flex: none; padding: 0 var(--eien-space-4); background: var(--eien-band); }
 :root[data-x='c'] .list__search { height: auto; padding-top: var(--eien-space-3); }
-.window.no-sidebar .list__search { padding-left: 84px; }
-:root[data-x='c'] .window.no-sidebar .list__search { padding-left: var(--eien-space-4); }
 .search-wrap { position: relative; flex: 1; }
 .search-wrap .icon { position: absolute; left: 9px; top: 50%; translate: 0 -50%; color: var(--eien-faded); width: 13px; height: 13px; }
 .search-wrap .field { padding-left: 28px; }
@@ -377,11 +389,8 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 /* Formatting bar (#14): A in the band's second row; B a slip at the sheet's top; C a rail in the margin. */
 .fmt { display: none; align-items: center; gap: 1px; }
 .fmt .icon-button { width: 26px; height: 26px; }
-.fmt .letter { font-family: var(--eien-face-text); font-size: 15px; line-height: 1; }
-.fmt .letter--i { font-style: italic; } .fmt .letter--b { font-weight: 700; } .fmt .letter--u { text-decoration: underline; text-underline-offset: 2px; } .fmt .letter--s { text-decoration: line-through; }
 .page.show-fmt .fmt { display: flex; }
 :root[data-x='a'] .fmt { grid-row: 1; justify-content: center; padding: 3px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
-:root[data-x='a'] .page { grid-template-rows: auto auto minmax(0, 1fr) auto; }
 :root[data-x='b'] .fmt { position: absolute; z-index: 6; top: 12px; left: 50%; translate: -50% 0; padding: 3px; background: var(--eien-paper-raised);
   border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
 :root[data-x='c'] .fmt { position: absolute; z-index: 6; left: 12px; top: 50%; translate: 0 -50%; flex-direction: column; padding: 3px;
@@ -419,7 +428,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .prose.is-source { font-family: var(--eien-face-mono); font-size: 14px; line-height: 1.7; white-space: pre-wrap; color: var(--eien-ink-soft); }
 .prose.is-source .mk { color: var(--eien-faded); }
 
-.status { display: flex; justify-content: center; align-items: center; gap: var(--eien-space-2); min-height: 40px; padding: 0 var(--eien-space-4);
+.status { display: flex; justify-content: center; align-items: center; gap: var(--eien-space-2); height: var(--status-h); overflow: hidden; padding: 0 var(--eien-space-4);
   background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
   letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; }
 .status .dot { color: var(--eien-faded); }
@@ -428,6 +437,32 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 :root[data-x='c'] .status { justify-content: flex-end; }
 :root[data-x='c'] .status__tags { display: flex; gap: var(--eien-space-2); align-items: center; }
 :root[data-x='c'] .status__tags .tag { padding: 0 8px; border-radius: var(--eien-radius-dot); background: var(--eien-press); color: var(--eien-ink-soft); }
+
+/* Focus mode: every paragraph but the one you're in recedes. */
+.prose p { transition: opacity var(--eien-calm) var(--eien-ease); }
+.page.is-focus .prose p:not(.is-here) { opacity: 0.32; }
+[data-act='focus'][aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* The right-click menu: raised paper, an icon and a word for each, its key in pencil. */
+.ctx { position: fixed; z-index: 60; min-width: 210px; padding: 4px; display: grid; gap: 1px;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.ctx[hidden] { display: none; }
+.ctx button { appearance: none; display: grid; grid-template-columns: 16px 1fr auto; gap: 10px; align-items: center; padding: 5px 8px; border: 0; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; text-align: left; font-family: var(--eien-face-text); font-size: calc(var(--eien-size-row) * 0.9); }
+.ctx button:hover, .ctx button:focus-visible { background: var(--eien-selected); color: var(--eien-ink); outline: none; }
+.ctx button kbd { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); color: var(--eien-pencil); }
+.ctx button.is-danger { color: var(--eien-removed); }
+.ctx hr { border: 0; border-top: var(--eien-hairline) solid var(--eien-rule-soft); margin: 3px 4px; }
+.ctx__head { padding: 4px 8px 6px; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+
+/* Renaming in place: the name itself becomes the field, same face, size and weight. */
+.renaming { position: relative; }
+.rename-field { all: unset; box-sizing: border-box; width: 100%; font: inherit; color: var(--eien-ink); caret-color: var(--eien-seal);
+  border-bottom: var(--eien-hairline) solid var(--eien-focus); line-height: inherit; }
+.rename-field::selection { background: var(--eien-seal-wash); }
+.rename-ext { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-faded); margin-left: 2px; }
+.rename-say { position: absolute; z-index: 5; left: 0; top: 100%; padding: 2px 6px; white-space: nowrap;
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); color: var(--eien-caution); background: var(--eien-caution-wash); border-radius: var(--eien-radius-s); }
 
 /* ═══ Phone ════════════════════════════════════════════════════════════ */
 .phones { display: flex; gap: var(--eien-space-6); flex-wrap: wrap; justify-content: center; padding: var(--eien-space-4); }
@@ -459,6 +494,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
     <button class="word-button" data-value="desktop">Desktop</button><button class="word-button" data-value="phone">Phone</button></div>
   <div class="xbar__group" data-x-set="sync"><span class="xbar__label">Syncthing</span>
     <button class="word-button" data-value="on">Set up</button><button class="word-button" data-value="other">Changed elsewhere</button><button class="word-button" data-value="off">None</button></div>
+  <div class="xbar__group" id="ground"><span class="xbar__label">C's strip</span></div>
   <div class="xbar__group"><span class="xbar__label">Weights</span>
     <span class="xnote">tree</span><input id="w-tree" type="range" min="400" max="700" step="100" value="400" aria-label="Sidebar names' weight" />
     <span class="xnote">list</span><input id="w-list" type="range" min="400" max="700" step="100" value="400" aria-label="List titles' weight" />
@@ -479,9 +515,15 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
       <button class="icon-button" data-icon="versions" data-tip="Versions" aria-label="Versions"></button>
       <span class="sep"></span>
       <button class="icon-button" data-icon="format" data-act="fmt" data-tip="Formatting bar ⇧⌘B" aria-label="Formatting bar"></button>
+      <button class="icon-button" data-icon="focus" data-act="focus" data-tip="Focus: only the paragraph you’re in ⇧⌘↵" aria-label="Focus mode"></button>
     </div>
 
     <nav class="pane sidebar" aria-label="Ink & Ash">
+      <div class="strip">
+        <button class="seal-button" data-act="sidebar" data-tip="Show the sidebar ⌘\" data-tip-side="right" aria-label="Show the sidebar"><span class="seal">永</span></button>
+        <button class="icon-button" data-icon="right" data-act="sidebar" data-tip="Show the sidebar ⌘\" data-tip-side="right" aria-label="Show the sidebar"></button>
+      </div>
+      <div class="sidebar__inner">
       <div class="sidebar__head"><span class="seal">永</span><span class="vault-name">Ink &amp; Ash</span></div>
       <div class="sidebar__search"><div class="search-wrap"><span data-icon="search"></span><input class="field" type="search" placeholder="Search Ink & Ash" /></div></div>
       <div class="sidebar__scroll" id="tree"></div>
@@ -492,6 +534,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
         <button class="icon-button" id="panes" data-tip-side="up"></button>
         <button class="icon-button" data-icon="settings" data-tip="Settings ⌘," data-tip-side="up" aria-label="Settings"></button>
       </footer>
+      </div>
       <button class="icon-button pane-toggle" data-icon="left" data-act="sidebar" data-tip="Hide the sidebar ⌘\" aria-label="Hide the sidebar"></button>
     </nav>
 
@@ -507,6 +550,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
     </section>
 
     <main class="pane page" id="page">
+      <button class="icon-button pane-reopen" data-icon="right" data-act="list" data-tip="Show the list ⇧⌘\" data-tip-side="right" aria-label="Show the list"></button>
       <div class="page__bar" role="toolbar" aria-label="Page">
         <div class="views" role="group" aria-label="View"></div>
         <span class="spacer"></span>
@@ -515,6 +559,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
         <button class="icon-button" data-icon="versions" data-tip="Versions" aria-label="Versions"></button>
         <span class="sep"></span>
         <button class="icon-button" data-icon="format" data-act="fmt" data-tip="Formatting bar ⇧⌘B" aria-label="Formatting bar"></button>
+        <button class="icon-button" data-icon="focus" data-act="focus" data-tip="Focus: only the paragraph you’re in ⇧⌘↵" aria-label="Focus mode"></button>
         <button class="icon-button" data-icon="up" data-act="strip" data-tip="Hide this strip" aria-label="Hide the controls"></button>
       </div>
       <div class="fmt" role="toolbar" aria-label="Format"></div>
@@ -527,6 +572,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
             <button class="icon-button seal-control" data-tip="Seal ⌘S" aria-label="Seal"><span class="seal">永</span></button>
             <button class="icon-button" data-icon="versions" data-tip="Versions" aria-label="Versions"></button>
             <button class="icon-button" data-icon="format" data-act="fmt" data-tip="Formatting bar ⇧⌘B" aria-label="Formatting bar"></button>
+            <button class="icon-button" data-icon="focus" data-act="focus" data-tip="Focus: only the paragraph you’re in ⇧⌘↵" aria-label="Focus mode"></button>
           </span>
           <button class="icon-button" data-act="strip" id="slip-fold" data-tip="Fold the tools away" aria-label="Fold the tools"></button>
         </div>
@@ -535,11 +581,10 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
       <footer class="status" id="status"></footer>
     </main>
 
-    <div class="reopen reopen--sidebar"><button class="icon-button" data-icon="right" data-act="sidebar" data-tip="Show the sidebar ⌘\" data-tip-side="right" aria-label="Show the sidebar"></button></div>
-    <div class="reopen reopen--list"><button class="icon-button" data-icon="right" data-act="list" data-tip="Show the list ⇧⌘\" data-tip-side="right" aria-label="Show the list"></button></div>
   </div>
 
   <div class="phones" id="phones"></div>
+  <div class="ctx" id="ctx" role="menu" hidden></div>
 </main>
 
 <script>
@@ -590,6 +635,17 @@ const ICONS = {
   folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
   palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
   type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+  bold: '<path d="M4.5 2.8h4.2a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 8h4.9a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 2.8v10.4"/>',
+  italic: '<path d="M7.2 2.8h5M3.8 13.2h5M10 2.8L6 13.2"/>',
+  underline: '<path d="M4.5 2.8v4.6a3.5 3.5 0 0 0 7 0V2.8"/><path d="M3.5 13.5h9"/>',
+  strike: '<path d="M2.5 8h11"/><path d="M11.2 4.4c-.6-1-1.8-1.6-3.2-1.6-1.8 0-3.2 1-3.2 2.4 0 .9.5 1.6 1.6 2.1"/><path d="M5 11.4c.6 1.1 1.8 1.8 3.3 1.8 1.9 0 3.3-1 3.3-2.5 0-.6-.2-1.1-.6-1.5"/>',
+  focus: '<path d="M2.5 4h11" opacity=".35"/><path d="M2.5 8h11"/><path d="M2.5 12h8" opacity=".35"/><path d="M1 6v4M15 6v4"/>',
+  rename: '<path d="M3 11.5h6.5"/><path d="M11.5 3v10M10 3h3M10 13h3"/>',
+  trash: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/>',
+  move: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/><path d="M6.5 9.5h4M9 8l1.5 1.5L9 11"/>',
+  include: '<path d="M8 4v8M4 8h8"/>',
+  exclude: '<path d="M4 8h8"/>',
+  resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
 };
 
 /** An icon as SVG markup, stroked in currentColor. */
@@ -645,6 +701,72 @@ function wireBar(onChange = () => {}) {
     for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
     pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
   }
+}
+
+// Themes: [day, night] for each colour token. The rules are the ink at low
+// strength, so they follow it. Washi is tokens.css's own; the rest are new.
+const THEME_TOKENS = ['desk', 'blotter', 'band', 'paper', 'selected', 'ink', 'ink-soft', 'pencil', 'faded', 'seal'];
+const THEMES = {
+  washi: { name: 'Washi', kanji: '和紙', note: 'Eien’s own: paper and sumi ink', t: {
+    desk: ['#d9d2c8', '#110e0b'], blotter: ['#eae5dd', '#1a1713'], band: ['#f4f1ea', '#201d19'], paper: ['#fdfbf7', '#28241f'], selected: ['#ede9e3', '#38332e'],
+    ink: ['#23201c', '#e9e2d4'], 'ink-soft': ['#51473c', '#c3b9a7'], pencil: ['#5d5348', '#a7a095'], faded: ['#766d62', '#837c73'], seal: ['#c4472d', '#e0603f'] } },
+  kinari: { name: 'Kinari', kanji: '生成り', note: 'Unbleached cloth: yellower paper, a persimmon seal', t: {
+    desk: ['#d8cfb8', '#14110a'], blotter: ['#e9e2cd', '#1c180f'], band: ['#f3eedd', '#231e14'], paper: ['#fcf9ee', '#2b251a'], selected: ['#ece5d1', '#3b3426'],
+    ink: ['#2a2418', '#ece3cc'], 'ink-soft': ['#574a33', '#c8bb9c'], pencil: ['#5f523d', '#ab9f86'], faded: ['#7b6d56', '#88806d'], seal: ['#b8432a', '#dc6a43'] } },
+  aizome: { name: 'Aizome', kanji: '藍染', note: 'Indigo dye: cool paper, blue-black ink', t: {
+    desk: ['#c9cfd8', '#0b0e14'], blotter: ['#dfe3e9', '#121620'], band: ['#edf0f4', '#181d28'], paper: ['#fbfcfd', '#1f2533'], selected: ['#e3e8ef', '#2e3648'],
+    ink: ['#17213a', '#dde4f0'], 'ink-soft': ['#34405c', '#b3bfd6'], pencil: ['#3f4b64', '#97a3ba'], faded: ['#5f6a80', '#7a8599'], seal: ['#c4472d', '#e3664a'] } },
+  koke: { name: 'Koke', kanji: '苔', note: 'A moss garden: green-grey desk, quiet ink', t: {
+    desk: ['#cdd2c4', '#0d100b'], blotter: ['#e1e5d9', '#141811'], band: ['#eef0e8', '#1a1f16'], paper: ['#fafbf6', '#21271c'], selected: ['#e5e9dc', '#30382a'],
+    ink: ['#1f2619', '#e2e8d6'], 'ink-soft': ['#3e4833', '#bcc6ab'], pencil: ['#48523c', '#a0aa90'], faded: ['#67705a', '#808a72'], seal: ['#a8432f', '#d76a4e'] } },
+  rosoku: { name: 'Rōsoku', kanji: '蝋燭', note: 'Candlelight: amber at night, no blue light', t: {
+    desk: ['#dccab2', '#120c06'], blotter: ['#ecdfcb', '#1b130b'], band: ['#f5ece0', '#22180e'], paper: ['#fdf8f0', '#2a1f13'], selected: ['#efe3d1', '#3c2d1e'],
+    ink: ['#2b1d10', '#f0dcc0'], 'ink-soft': ['#5a4129', '#d2b894'], pencil: ['#634d37', '#b39b7c'], faded: ['#7f6a53', '#8f7c64'], seal: ['#b9442b', '#e8763f'] } },
+  sumi: { name: 'Sumi', kanji: '墨', note: 'For tired eyes: the most contrast there is', t: {
+    desk: ['#cfcfcc', '#000000'], blotter: ['#e6e6e3', '#0a0a0a'], band: ['#f2f2ef', '#141414'], paper: ['#ffffff', '#1b1b1b'], selected: ['#e8e8e4', '#2c2c2c'],
+    ink: ['#000000', '#f5f5f2'], 'ink-soft': ['#262626', '#d9d9d4'], pencil: ['#3a3a3a', '#bdbdb8'], faded: ['#5e5e5e', '#8f8f8a'], seal: ['#c4361d', '#ff6a45'] } },
+  sakura: { name: 'Sakura-nezumi', kanji: '桜鼠', note: 'Cherry-grey: plum ink, a rose seal', t: {
+    desk: ['#d8cdcc', '#120d0e'], blotter: ['#e9e1e0', '#1b1415'], band: ['#f3eeed', '#221a1b'], paper: ['#fdfafa', '#2a2122'], selected: ['#eee6e5', '#3a2f30'],
+    ink: ['#2a1e20', '#efe1e2'], 'ink-soft': ['#573f43', '#cbb5b8'], pencil: ['#5f464a', '#ad989b'], faded: ['#7c6468', '#8d7b7d'], seal: ['#b2394a', '#e0697a'] } },
+};
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function luminance(h) {
+  return hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; })
+    .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+/**
+ * An ink of hue `h` and saturation `sat`, starting at lightness `l` and stepped
+ * darker by day (`dir` -1) or lighter by night (+1) until it reaches `min`
+ * contrast on every one of `grounds`: the hue stays, the contrast holds.
+ */
+function fitInk(h, sat, l, grounds, min, dir) {
+  let ink = hsl(h, sat, l);
+  while (grounds.some((g) => contrast(ink, g) < min + 0.1) && l > 0 && l < 100) { l += dir; ink = hsl(h, sat, l); }
+  return ink;
+}
+/** "Custom": four choices, and every token worked out from them, day and night. */
+function mixTheme({ paper: ph, warmth: w, ink: ih, seal: sh }, name = 'My Room') {
+  const surf = (dl, nl) => [hsl(ph, w, dl), hsl(ph, Math.min(w, 22), nl)];
+  const t = { desk: surf(83, 5), blotter: surf(89, 8), band: surf(94, 11), paper: surf(98.5, 14), selected: surf(91, 19), seal: [hsl(sh, 63, 47), hsl(sh, 72, 56)] };
+  const grounds = (s) => ['desk', 'band', 'paper', 'selected'].map((k) => t[k][s]);
+  // The inks carry their hue, saturated enough to see by day, each as light as Eien's contrast allows.
+  const ink = (sat, dl, nsat, nl, min) => [fitInk(ih, sat, dl, grounds(0), min, -1), fitInk(ih, nsat, nl, grounds(1), min, 1)];
+  Object.assign(t, { ink: ink(48, 16, 38, 88, 7), 'ink-soft': ink(38, 30, 30, 70, 4.5), pencil: ink(30, 34, 20, 62, 4.5), faded: ink(20, 46, 12, 52, 3) });
+  return { name, kanji: '', note: 'Your own', t };
+}
+/** A theme on the whole page: each token as light-dark(day, night); the rules from the ink. */
+function applyTheme(theme, el = document.documentElement) {
+  for (const k of THEME_TOKENS) el.style.setProperty(`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`);
+  const [d, n] = theme.t.ink.map((c) => hexRgb(c).join(' '));
+  el.style.setProperty('--eien-rule-soft', `light-dark(rgb(${d} / 0.07), rgb(${n} / 0.07))`);
+  el.style.setProperty('--eien-rule', `light-dark(rgb(${d} / 0.13), rgb(${n} / 0.14))`);
+  el.style.setProperty('--eien-rule-strong', `light-dark(rgb(${d} / 0.26), rgb(${n} / 0.26))`);
+  el.style.setProperty('--eien-paper-raised', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 45%, #fff), color-mix(in srgb, ${theme.t.paper[1]} 88%, #fff))`);
+  el.style.setProperty('--eien-well', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 70%, ${theme.t.band[0]}), color-mix(in srgb, ${theme.t.paper[1]} 60%, ${theme.t.blotter[1]}))`);
 }
 
 
@@ -732,11 +854,10 @@ function viewsHtml() {
   return ['live', 'source', 'reading'].map((v) => `<button class="icon-button" data-icon="${v}" data-view="${v}" aria-pressed="${state.view === v}"
     data-tip="${{ live: 'Live: formatting shown', source: 'Source: the Markdown', reading: 'Reading: read only' }[v]} ⌘E" aria-label="${v}"></button>`).join('');
 }
-const FMT = [['b', 'B', 'Bold ⌘B'], ['i', 'I', 'Italic ⌘I'], ['u', 'U', 'Underline ⌘U'], ['s', 'S', 'Strikethrough ⇧⌘X'], ['|'], ['heading', '', 'Heading ⌘⌥1–3'], ['highlight', '', 'Highlight ⇧⌘H'], ['link', '', 'Link ⌘K'], ['|'], ['quote', '', 'Quote ⇧⌘.'], ['bullets', '', 'List ⇧⌘8'], ['numbers', '', 'Numbered ⇧⌘7'], ['checklist', '', 'Checklist ⇧⌘9']];
+const FMT = [['bold', 'Bold ⌘B'], ['italic', 'Italic ⌘I'], ['underline', 'Underline ⌘U'], ['strike', 'Strikethrough ⇧⌘X'], ['|'], ['heading', 'Heading ⌘⌥1–3'], ['highlight', 'Highlight ⇧⌘H'], ['link', 'Link ⌘K'], ['|'], ['quote', 'Quote ⇧⌘.'], ['bullets', 'List ⇧⌘8'], ['numbers', 'Numbered ⇧⌘7'], ['checklist', 'Checklist ⇧⌘9']];
 function drawFmt() {
   const side = document.documentElement.dataset.x === 'c' ? 'right' : '';
-  $('.fmt').innerHTML = FMT.map(([k, letter, tip]) => k === '|' ? '<span class="sep"></span>'
-    : letter ? `<button class="icon-button" data-tip="${tip}" ${side ? `data-tip-side="${side}"` : ''} aria-label="${tip}"><span class="letter letter--${k}">${letter}</span></button>`
+  $('.fmt').innerHTML = FMT.map(([k, tip]) => k === '|' ? '<span class="sep"></span>'
     : `<button class="icon-button" data-icon="${k}" data-tip="${tip}" ${side ? `data-tip-side="${side}"` : ''} aria-label="${tip}"></button>`).join('');
   drawIcons($('.fmt'));
 }
@@ -781,6 +902,7 @@ function drawPage() {
   drawIcons($('#status'));
   wireTags($('#status'));
   $('#slip-fold').innerHTML = icon($('#page').classList.contains('no-strip') ? 'left' : 'right');
+  if ($('#page').classList.contains('is-focus')) markHere();
   drawPhones();
 }
 
@@ -810,6 +932,7 @@ function wireActions() {
     if (act === 'sidebar') win.classList.toggle('no-sidebar');
     if (act === 'list') { if (state.panes === 2) return; win.classList.toggle('no-list'); }
     if (act === 'strip') { $('#page').classList.toggle('no-strip'); drawPage(); }
+    if (act === 'focus') { const on = $('#page').classList.toggle('is-focus'); for (const f of $$('[data-act="focus"]')) f.setAttribute('aria-pressed', String(on)); markHere(); }
     if (act === 'fmt') { $('#page').classList.toggle('show-fmt'); for (const f of $$('[data-act="fmt"]')) f.setAttribute('aria-pressed', String($('#page').classList.contains('show-fmt'))); }
   });
   $('#daynight').onclick = () => {
@@ -831,7 +954,7 @@ function wireActions() {
 function drawPhones() {
   const x = document.documentElement.dataset.x;
   const acts = `<span class="phone__acts"><button class="icon-button" data-icon="${state.view}" aria-label="View"></button><button class="icon-button" data-icon="more" aria-label="More"></button></span>`;
-  const foot = `<div class="phone__foot">${['live', 'source', 'reading'].map((v) => `<button class="icon-button" data-icon="${v}" aria-pressed="${state.view === v}" aria-label="${v}"></button>`).join('')}<button class="icon-button" data-icon="format" aria-label="Format"></button><button class="icon-button seal-control" aria-label="Seal"><span class="seal" style="--eien-seal-size:18px">永</span></button><button class="icon-button" data-icon="more" aria-label="More"></button></div>`;
+  const foot = `<div class="phone__foot">${['live', 'source', 'reading'].map((v) => `<button class="icon-button" data-icon="${v}" aria-pressed="${state.view === v}" aria-label="${v}"></button>`).join('')}<button class="icon-button" data-icon="format" aria-label="Format"></button><button class="icon-button" data-icon="focus" aria-label="Focus mode"></button><button class="icon-button seal-control" aria-label="Seal"><span class="seal" style="--eien-seal-size:18px">永</span></button><button class="icon-button" data-icon="more" aria-label="More"></button></div>`;
   const fab = `<div class="phone__fab">${['live', 'source', 'reading'].map((v) => `<button class="icon-button" style="--eien-control:40px" data-icon="${v}" aria-pressed="${state.view === v}" aria-label="${v}"></button>`).join('')}<button class="icon-button" style="--eien-control:40px" data-icon="more" aria-label="More"></button></div>`;
   const status = '<div class="phone__status"><span>9:41</span><span>●●●</span></div>';
   const index = `<div class="phone">${status}<div class="phone__bar"><button class="phone__back">${icon('back')}Fic</button><span class="phone__title"></span><button class="icon-button" data-icon="search" aria-label="Search"></button><button class="icon-button" data-icon="sort" aria-label="Sort"></button></div>
@@ -841,6 +964,76 @@ function drawPhones() {
   $('#phones').innerHTML = index + page;
   drawIcons($('#phones'));
 }
+
+/** Focus mode's "here": the paragraph the caret is in (the second, before any click). */
+function markHere() {
+  const sel = getSelection();
+  const at = sel?.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement)?.closest('.prose p');
+  const ps = $$('#sheet .prose p:not(.scene)');
+  const here = at ?? $('#sheet .prose p.is-here') ?? ps[1];
+  for (const p of $$('#sheet .prose p')) p.classList.toggle('is-here', p === here);
+}
+document.addEventListener('selectionchange', () => { if ($('#page').classList.contains('is-focus')) markHere(); });
+
+// The right-click menu, and renaming in place.
+const ctx = $('#ctx');
+function openMenu(e, target) {
+  e.preventDefault();
+  const isNote = target.classList.contains('note-row');
+  const nameEl = target.querySelector(isNote ? '.note-row__title' : '.row__name');
+  const name = nameEl.textContent.replace(/^#/, '');
+  const items = [
+    ['rename', 'Rename', 'F2', () => renameInPlace(nameEl, isNote ? '.md' : '')],
+    ...(isNote ? [['pin', 'Pin', '', () => {}], ['move', 'Move to…', '⇧⌘M', () => {}]] : [['plus', 'New note inside', '⌘N', () => {}]]),
+    'hr',
+    ['trash', 'Send to the trash', '⌘⌫', () => {}, true],
+  ];
+  ctx.innerHTML = `<div class="ctx__head">${name}</div>` + items.map((it, i) => it === 'hr' ? '<hr />' :
+    `<button role="menuitem" data-i="${i}" class="${it[4] ? 'is-danger' : ''}">${icon(it[0])}<span>${it[1]}</span><kbd>${it[2]}</kbd></button>`).join('');
+  ctx.hidden = false;
+  const w = ctx.offsetWidth, h = ctx.offsetHeight;
+  ctx.style.left = `${Math.min(e.clientX, innerWidth - w - 8)}px`;
+  ctx.style.top = `${Math.min(e.clientY, innerHeight - h - 8)}px`;
+  for (const b of $$('button', ctx)) b.onclick = () => { ctx.hidden = true; items[+b.dataset.i][3](); };
+  $('button', ctx).focus();
+}
+document.addEventListener('contextmenu', (e) => { const t = e.target.closest('.row, .note-row'); if (t) openMenu(e, t); });
+document.addEventListener('click', (e) => { if (!e.target.closest('#ctx')) ctx.hidden = true; });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') ctx.hidden = true;
+  if (e.key === 'F2') { const t = document.activeElement?.closest('.row, .note-row') ?? $('.note-row[aria-selected="true"]'); if (t) renameInPlace(t.querySelector('.row__name, .note-row__title'), t.classList.contains('note-row') ? '.md' : ''); }
+});
+/** The name becomes its own field: same face, size and weight; Enter keeps, Esc puts back. */
+function renameInPlace(el, ext) {
+  const was = el.textContent;
+  const hash = was.startsWith('#') ? '#' : '';
+  el.classList.add('renaming');
+  el.innerHTML = `${hash ? '<span class="row__hash">#</span>' : ''}<input class="rename-field" aria-label="New name" spellcheck="false" />${ext ? `<span class="rename-ext">${ext}</span>` : ''}`;
+  el.style.display = 'flex'; el.style.alignItems = 'baseline';
+  const field = $('input', el);
+  field.value = was.replace(/^#/, '');
+  field.focus(); field.select();
+  const taken = new Set($$('.note-row__title, .row__name').map((n) => n.textContent.toLowerCase()).filter((n) => n !== was.toLowerCase()));
+  const say = (text) => { $('.rename-say', el)?.remove(); if (text) el.insertAdjacentHTML('beforeend', `<span class="rename-say">${text}</span>`); };
+  const done = (keep) => {
+    const next = field.value.trim();
+    if (keep && next && taken.has(next.toLowerCase())) { say(`“${next}” is there already, in any case`); field.focus(); return; }
+    el.classList.remove('renaming'); el.style.display = ''; el.textContent = hash + (keep && next ? next : was);
+  };
+  field.oninput = () => say(taken.has(field.value.trim().toLowerCase()) ? `“${field.value.trim()}” is there already` : '');
+  field.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); };
+  field.onblur = () => { if (el.classList.contains('renaming')) done(!taken.has(field.value.trim().toLowerCase())); };
+  field.onclick = (e) => e.stopPropagation();
+}
+document.addEventListener('dblclick', (e) => { const n = e.target.closest('.note-row__title, .row__name'); if (n && !n.classList.contains('renaming')) renameInPlace(n, n.classList.contains('note-row__title') ? '.md' : ''); });
+
+// C's strip: its ground is one of the theme's own surfaces, so it follows any theme.
+const GROUNDS = ['desk', 'blotter', 'band', 'paper', 'selected'];
+$('#ground').insertAdjacentHTML('beforeend', GROUNDS.map((g) => `<button class="word-button ground" data-ground="${g}" aria-pressed="${g === 'desk'}" data-tip="--eien-${g}" style="display:inline-flex;gap:5px;align-items:center"><i style="width:12px;height:12px;border-radius:var(--eien-radius-s);background:var(--eien-${g});box-shadow:inset 0 0 0 1px var(--eien-rule-strong)"></i>${g}</button>`).join(''));
+for (const b of $$('[data-ground]')) b.onclick = () => {
+  document.documentElement.style.setProperty('--runhead-ground', `var(--eien-${b.dataset.ground})`);
+  for (const x of $$('[data-ground]')) x.setAttribute('aria-pressed', String(x === b));
+};
 
 drawTree(); drawRows(); drawFmt(); wireActions();
 wireBar((attr) => { if (attr === 'x') drawFmt(); drawFoot(); drawPage(); });

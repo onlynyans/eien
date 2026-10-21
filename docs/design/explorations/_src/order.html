@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-a="chips">
+<html lang="en" data-arranging="drag">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,46 +8,56 @@
 <style>
 /*@shared-css*/
 body { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
-.stage { min-height: 0; display: grid; grid-template-columns: 300px 360px minmax(0, 1fr); background: var(--eien-blotter); }
-.sb { background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; }
+.stage { min-height: 0; display: grid; grid-template-columns: 300px 380px minmax(0, 1fr); background: var(--eien-blotter); }
+.sb { background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; position: relative; }
 .ls { background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; }
 .scroll { flex: 1; min-height: 0; overflow: auto; padding: 4px 0 24px; }
 
 .head { position: relative; display: flex; align-items: center; gap: 2px; min-height: var(--eien-row-h); padding: 6px 8px 6px 16px; }
 .head .label { flex: 1; }
-.head .icon-button { width: 26px; height: 26px; }
-:root[data-a='chips'] .sb .head .icon-button, :root[data-a='arrange'] .sb .head .icon-button:not([aria-pressed='true']) { opacity: 0; }
-:root[data-a='chips'] .sb .head:hover .icon-button, :root[data-a='arrange'] .sb .head:hover .icon-button, .head .icon-button:focus-visible { opacity: 1; }
-.ls__head { padding: 12px 8px 14px 16px; background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: baseline; }
+.head .icon-button { width: 26px; height: 26px; opacity: 0; }
+.head:hover .icon-button, .head .icon-button:focus-visible, .head .icon-button[aria-pressed='true'], .head .icon-button.dotted { opacity: 1; }
+.ls__head { position: relative; padding: 12px 8px 14px 16px; background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: baseline; }
 .ls__title { margin: 0; font-size: var(--eien-size-heading); font-weight: 500; }
 .ls__tools { display: flex; gap: 2px; }
 .ls__tools .icon-button { width: 26px; height: 26px; }
-.ls__meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.ls__meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
 
-/* A lens laid over your order: a chip that says so, with its ×. */
-.chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 2px 1px 8px; border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s);
-  background: var(--eien-paper-raised); font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); }
-.chip .icon-button { width: 18px; height: 18px; } .chip svg { width: 11px; height: 11px; }
+/* A lens laid over your order says so, with its own ×. */
+.chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 2px 1px 7px; border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em; color: var(--eien-ink); }
+.chip.is-out { color: var(--eien-removed); text-decoration: line-through; text-decoration-thickness: 1px; }
+.chip .icon-button { width: 18px; height: 18px; opacity: 1; } .chip svg { width: 11px; height: 11px; }
 .dotted { position: relative; }
 .dotted::after { content: ''; position: absolute; top: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--eien-ink-soft); }
 
-/* B · a filter strip under the list's head, the spreadsheet's way */
-.strip { display: none; grid-column: 1 / -1; gap: 6px; align-items: center; flex-wrap: wrap; padding-top: 8px; margin-top: 4px; border-top: var(--eien-hairline) solid var(--eien-rule-soft); }
-:root[data-a='strip'] .strip { display: flex; }
-.strip .word-button { padding: 2px 6px; }
-.seg { display: inline-flex; gap: 1px; padding: 2px; border-radius: var(--eien-radius-m); background: var(--eien-press); }
-.seg .word-button[aria-pressed='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); }
-
-.menu { position: absolute; z-index: 30; top: calc(100% - 2px); right: 8px; min-width: 200px; padding: 4px; display: grid; gap: 1px;
+.menu { position: absolute; z-index: 30; top: calc(100% - 4px); right: 8px; min-width: 230px; padding: 4px; display: grid; gap: 1px;
   background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
 .menu[hidden] { display: none; }
-.menu .word-button { display: flex; align-items: center; gap: 8px; text-align: left; }
-.menu .word-button::before { content: ''; width: 4px; height: 4px; border-radius: 50%; }
-.menu .word-button[aria-checked='true']::before { background: currentColor; }
+.menu > .word-button { display: flex; align-items: center; gap: 8px; text-align: left; }
+.menu > .word-button::before { content: ''; width: 4px; height: 4px; border-radius: 50%; }
+.menu > .word-button[aria-checked='true']::before { background: currentColor; }
 .menu hr { border: 0; border-top: var(--eien-hairline) solid var(--eien-rule-soft); margin: 3px 0; width: 100%; }
-.menu .hint { padding: 4px 8px; font-family: var(--eien-face-mono); font-size: 10px; color: var(--eien-pencil); }
+.menu .hint { padding: 4px 8px; font-family: var(--eien-face-mono); font-size: 10px; color: var(--eien-pencil); max-width: 260px; }
+.menu__title { display: flex; justify-content: space-between; align-items: center; padding: 4px 4px 4px 8px; }
 
-/* Rows: the tree's and the list's, each draggable while your order shows */
+/* NEW: the three-way tag: left alone, wanted, or kept out. One press moves it on. */
+.tri { appearance: none; display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border: 0; border-radius: var(--eien-radius-s);
+  background: none; cursor: pointer; text-align: left; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); }
+.tri:hover { background: var(--eien-hover); }
+.tri__box { width: 18px; height: 18px; display: grid; place-items: center; border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); color: transparent; }
+.tri__box svg { width: 12px; height: 12px; }
+.tri[data-state='in'] { color: var(--eien-ink); }
+.tri[data-state='in'] .tri__box { color: var(--eien-paper); background: var(--eien-ink-soft); border-color: var(--eien-ink-soft); }
+.tri[data-state='out'] { color: var(--eien-removed); }
+.tri[data-state='out'] .tri__box { color: var(--eien-removed); border-color: var(--eien-removed); background: var(--eien-paper); }
+.tri[data-state='out'] .tri__name { text-decoration: line-through; text-decoration-thickness: 1px; }
+.tri .count { font-size: 10px; }
+.seg { display: inline-flex; gap: 1px; padding: 2px; border-radius: var(--eien-radius-m); background: var(--eien-press); }
+.seg .word-button { padding: 2px 6px; }
+.seg .word-button[aria-pressed='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); }
+
+/* Rows */
 .tree, .tree ul { list-style: none; margin: 0; padding: 0; position: relative; }
 .tree ul::before { content: ''; position: absolute; top: 0; bottom: 15px; left: calc(16px + var(--d) * 16px + 6px); width: 1px; background: var(--eien-rule); }
 .row { position: relative; display: flex; align-items: center; gap: 8px; height: var(--eien-row-h); padding: 0 12px 0 calc(16px + var(--d) * 16px); color: var(--eien-ink-soft); user-select: none; outline: none; }
@@ -58,25 +68,30 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hi
 .row .tw.leaf::before { content: none; }
 .row .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row .hash { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
-.grip { width: 14px; height: 18px; color: var(--eien-faded); display: none; cursor: grab; flex: none; margin-left: -18px; }
+.grip { width: 14px; height: 18px; color: var(--eien-faded); display: inline-grid; place-items: center; visibility: hidden; cursor: grab; flex: none; }
+/* In the tree the grip sits at the row's own left edge, clear of the guide lines at every depth. */
+.row .grip { position: absolute; left: 1px; top: 50%; translate: 0 -50%; }
 .grip svg { width: 14px; height: 14px; }
-.can-drag .row:hover .grip, .can-drag .nrow:hover .grip { display: inline-grid; place-items: center; }
-:root[data-a='arrange'] .can-drag .grip { display: inline-grid; place-items: center; }
+.can-drag .row:hover .grip, .can-drag .nrow:hover .grip, .is-arranging .grip { visibility: visible; }
+.is-arranging { background: color-mix(in srgb, var(--eien-selected) 40%, transparent); }
 .row.is-dragging, .nrow.is-dragging { opacity: 0.4; }
 .row[aria-current='true'] { background: var(--eien-selected); color: var(--eien-ink); }
 .row.drop-in { background: var(--eien-selected); box-shadow: inset 0 0 0 1px var(--eien-rule-strong); }
 .marker { position: absolute; z-index: 10; height: 2px; background: var(--eien-ink-soft); pointer-events: none; display: none; }
 .marker::before { content: ''; position: absolute; left: -4px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: var(--eien-ink-soft); }
 .marker__out { position: absolute; top: -18px; left: 0; white-space: nowrap; font-family: var(--eien-face-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--eien-ink-soft); background: var(--eien-paper-raised); padding: 0 4px; border-radius: var(--eien-radius-s); border: 1px solid var(--eien-rule); }
-
 .nrow { position: relative; display: grid; grid-template-columns: 14px 1fr auto; gap: 2px 10px; padding: 10px 16px 10px 12px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); color: var(--eien-ink-soft); }
-.nrow .grip { margin-left: 0; display: inline-grid; place-items: center; visibility: hidden; }
-.can-drag .nrow:hover .grip, :root[data-a='arrange'] .can-drag .nrow .grip { visibility: visible; }
+.nrow .grip { margin-left: 0; }
+/* Where a dragged note will land: a line the list's full width, in ink, as the tree's marker is. */
+.nrow.drop-before::after, .nrow.drop-after::after { content: ''; position: absolute; left: 0; right: 0; height: var(--eien-mark-w); background: var(--eien-ink-soft); pointer-events: none; z-index: 2; }
+.nrow.drop-before::after { top: calc(var(--eien-mark-w) / -2); }
+.nrow.drop-after::after { bottom: calc(var(--eien-mark-w) / -2); }
 .nrow .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nrow .p { grid-column: 2 / -1; font-size: var(--eien-size-preview); color: var(--eien-pencil); }
 .nrow .tg { font-family: var(--eien-face-mono); font-size: 10px; color: var(--eien-pencil); }
-.locked { padding: 8px 16px; font-family: var(--eien-face-mono); font-size: 10px; color: var(--eien-pencil); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); display: none; }
-.ls.has-lens .locked { display: block; }
+.locked { padding: 7px 16px; font-family: var(--eien-face-mono); font-size: 10px; color: var(--eien-pencil); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.locked[hidden] { display: none; }
+.empty { padding: 32px 16px; text-align: center; font-style: italic; color: var(--eien-ink-soft); }
 
 .notes { padding: var(--eien-space-6); overflow: auto; color: var(--eien-ink-soft); font-size: var(--eien-size-preview); line-height: 1.6; }
 .notes h2 { font-size: var(--eien-size-heading); font-weight: 500; color: var(--eien-ink); margin: 0 0 8px; }
@@ -88,8 +103,8 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hi
 <body>
 <header class="xbar">
   <span class="xbar__name">Eien · Your order, and what's laid over it</span>
-  <div class="xbar__group" data-x-set="a"><span class="xbar__label">Approach</span>
-    <button class="word-button" data-value="chips">A · Lens chips</button><button class="word-button" data-value="strip">B · Filter strip</button><button class="word-button" data-value="arrange">C · Arrange mode</button></div>
+  <div class="xbar__group" data-x-set="arranging"><span class="xbar__label">Settings / Writing / Lists · Arranging</span>
+    <button class="word-button" data-value="drag">Drag anytime</button><button class="word-button" data-value="mode">In Arrange mode</button></div>
 </header>
 <main class="stage">
   <aside class="sb" id="sb"></aside>
@@ -99,9 +114,9 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hi
 <footer class="log" id="log">Drag a folder, a tag or a note. Drag a folder to the left of its row to take it out of its folder.</footer>
 <script>
 /*@shared-js*/
-// One model for every list: a tree of folders, a tree of tags, a folder's notes.
-// Each keeps your order (written to the vault); a lens (sort, filter) is laid
-// over it on this device and never changes it.
+// One model for every list: the tree of folders, the tree of tags, a folder's
+// notes. Each keeps your order (written to the vault). A lens (a sort, a tag
+// filter) is laid over it on this device and never changes it.
 let uid = 0;
 const node = (name, children, extra = {}) => ({ id: ++uid, name, children: children ?? null, ...extra });
 const TREES = {
@@ -111,101 +126,126 @@ const TREES = {
   Tags: [node('fic', [node('aot', [])], { tag: true }), node('draft', null, { tag: true }), node('posted', null, { tag: true }), node('ideas', null, { tag: true })],
 };
 const NOTES = [
-  ['The Last Bell', 'Sep 2', ['posted']], ['Wall Rose, at Dusk', 'Sep 9', ['posted']], ['Rations', 'Aug 21', ['draft']], ['What the Recruits Say', 'Oct 18', ['draft']],
-  ['Night Watch', 'Oct 2', []], ['A Borrowed Coat', 'Jul 30', ['posted']], ['The Gate Holds', 'Oct 20', ['draft']],
+  ['The Last Bell', 'Sep 2', ['posted', 'fic/aot']], ['Wall Rose, at Dusk', 'Sep 9', ['posted']], ['Rations', 'Aug 21', ['draft']], ['What the Recruits Say', 'Oct 18', ['draft', 'fic/aot']],
+  ['Night Watch', 'Oct 2', ['ideas']], ['A Borrowed Coat', 'Jul 30', ['posted', 'fic/aot']], ['The Gate Holds', 'Oct 20', ['draft', 'ideas']],
 ].map(([t, d, tags], i) => ({ id: 100 + i, t, d, tags, when: Date.parse(`${d} 2026`) }));
-const lens = { Folders: 'yours', Tags: 'yours', list: 'yours', filter: null };
-let arranging = { Folders: false, Tags: false, list: false };
+const ALL_TAGS = [...new Set(NOTES.flatMap((n) => n.tags))].sort();
+
+// The lens: a sort per list, and the list's tag filter (each tag left alone, wanted, or kept out).
+const lens = { Folders: 'yours', Tags: 'yours', list: 'yours' };
+const filter = { tags: new Map(), match: 'all' }; // tag → 'in' | 'out'
+const arranging = { Folders: false, Tags: false, list: false };
 const SORTS = { yours: 'Your order', newest: 'Newest', oldest: 'Oldest', az: 'Title A–Z', za: 'Title Z–A' };
 const TREE_SORTS = { yours: 'Your order', az: 'A–Z', za: 'Z–A' };
-const mode = () => document.documentElement.dataset.a;
+const setting = () => document.documentElement.dataset.arranging; // 'drag' | 'mode'
 const log = (s) => { document.getElementById('log').textContent = s; };
+const filtered = () => filter.tags.size > 0;
 
-const sorted = (items, how, key) => {
+/** The order a pane shows: your order while it's arranging (the lens waits), else its lens. */
+const how = (which) => (arranging[which] ? 'yours' : lens[which]);
+const lensOn = (which) => !arranging[which] && (lens[which] !== 'yours' || (which === 'list' && filtered()));
+/** Reordering is allowed only with your order showing, and in Arrange mode only while arranging. */
+const canDrag = (which) => !lensOn(which) && (setting() === 'drag' || arranging[which]);
+
+const sorted = (items, by, key) => {
   const out = [...items];
-  if (how === 'az') out.sort((a, b) => key(a).localeCompare(key(b)));
-  if (how === 'za') out.sort((a, b) => key(b).localeCompare(key(a)));
-  if (how === 'newest') out.sort((a, b) => b.when - a.when);
-  if (how === 'oldest') out.sort((a, b) => a.when - b.when);
+  if (by === 'az') out.sort((a, b) => key(a).localeCompare(key(b)));
+  if (by === 'za') out.sort((a, b) => key(b).localeCompare(key(a)));
+  if (by === 'newest') out.sort((a, b) => b.when - a.when);
+  if (by === 'oldest') out.sort((a, b) => a.when - b.when);
   return out;
 };
-const canDrag = (which) => (mode() === 'arrange' ? arranging[which] : lens[which] === 'yours' && (which !== 'list' || !lens.filter));
+function passes(n) {
+  if (arranging.list) return true;
+  const wanted = [...filter.tags].filter(([, s]) => s === 'in').map(([t]) => t);
+  const kept = [...filter.tags].filter(([, s]) => s === 'out').map(([t]) => t);
+  if (kept.some((t) => n.tags.includes(t))) return false;
+  if (!wanted.length) return true;
+  return filter.match === 'all' ? wanted.every((t) => n.tags.includes(t)) : wanted.some((t) => n.tags.includes(t));
+}
 
 function treeHtml(list, depth, which) {
-  return sorted(list, lens[which], (n) => n.name).map((n) => `<li data-id="${n.id}"><div class="row" tabindex="0" draggable="${canDrag(which)}" data-id="${n.id}" style="--d:${depth}" ${n.current ? 'aria-current="true"' : ''}>
+  return sorted(list, how(which), (n) => n.name).map((n) => `<li data-id="${n.id}"><div class="row" tabindex="0" draggable="${canDrag(which)}" data-id="${n.id}" style="--d:${depth}" ${n.current ? 'aria-current="true"' : ''}>
     <span class="grip">${icon('grip')}</span><span class="tw${n.children?.length ? '' : ' leaf'}"></span><span class="nm">${n.tag ? '<span class="hash">#</span>' : ''}${n.name}</span></div>
     ${n.children?.length ? `<ul style="--d:${depth}">${treeHtml(n.children, depth + 1, which)}</ul>` : ''}</li>`).join('');
 }
-function sortMenu(which, sorts) {
-  return `<div class="menu" hidden data-menu="${which}">${Object.entries(sorts).map(([k, v]) => `<button class="word-button" role="menuitemradio" aria-checked="${lens[which] === k}" data-lens="${which}" data-v="${k}">${v}</button>`).join('')}
-    <hr /><span class="hint">${which === 'list' ? 'Your order stays underneath' : 'Your order stays underneath'}</span></div>`;
-}
-function headTools(which, sorts) {
-  const on = lens[which] !== 'yours';
-  if (mode() === 'arrange') return `<button class="icon-button" data-arrange="${which}" aria-pressed="${arranging[which]}" data-icon="grip" data-tip="${arranging[which] ? 'Done arranging' : 'Arrange'}"></button>
-    <button class="icon-button${on ? ' dotted' : ''}" data-open="${which}" data-icon="sort" data-tip="Sort" ${arranging[which] ? 'disabled' : ''}></button>${sortMenu(which, sorts)}`;
-  return `<button class="icon-button${on && mode() === 'chips' ? ' dotted' : ''}" data-open="${which}" data-icon="sort" data-tip="Sort"></button>${sortMenu(which, sorts)}`;
-}
+const sortMenu = (which, sorts) => `<div class="menu" hidden data-menu="${which}">${Object.entries(sorts).map(([k, label]) =>
+  `<button class="word-button" role="menuitemradio" aria-checked="${lens[which] === k}" data-lens="${which}" data-v="${k}">${label}</button>`).join('')}<hr /><span class="hint">Your order stays underneath</span></div>`;
+const arrangeButton = (which) => setting() === 'mode'
+  ? `<button class="icon-button" data-arrange="${which}" aria-pressed="${arranging[which]}" data-icon="grip" data-tip="${arranging[which] ? 'Done arranging' : 'Arrange'}" aria-label="Arrange"></button>` : '';
+const sortChip = (which, sorts) => lens[which] !== 'yours' && !arranging[which]
+  ? `<span class="chip">${sorts[lens[which]]}<button class="icon-button" data-clear="${which}" aria-label="Back to your order">${icon('close')}</button></span>` : '';
+
 function drawSidebar() {
-  document.getElementById('sb').innerHTML = `<div class="scroll">${Object.keys(TREES).map((which) => `<div class="head"><span class="label">${which}</span>
-    ${lens[which] !== 'yours' && mode() !== 'arrange' ? `<span class="chip">${TREE_SORTS[lens[which]]}<button class="icon-button" data-clear="${which}" aria-label="Back to your order">${icon('close')}</button></span>` : ''}
-    ${headTools(which, TREE_SORTS)}<button class="icon-button" data-icon="plus" data-tip="New ${which === 'Tags' ? 'tag' : 'folder'}"></button></div>
-    <ul class="tree${canDrag(which) ? ' can-drag' : ''}" data-tree="${which}">${treeHtml(TREES[which], 0, which)}</ul>`).join('')}</div><div class="marker" id="marker"><span class="marker__out" hidden>Out of its folder</span></div>`;
+  document.getElementById('sb').innerHTML = `<div class="scroll">${Object.keys(TREES).map((which) => `<div class="head"><span class="label">${which}</span>${sortChip(which, TREE_SORTS)}
+    ${arrangeButton(which)}<button class="icon-button${lens[which] !== 'yours' ? ' dotted' : ''}" data-open="${which}" data-icon="sort" data-tip="Sort" aria-label="Sort" ${arranging[which] ? 'disabled' : ''}></button>${sortMenu(which, TREE_SORTS)}
+    <button class="icon-button" data-icon="plus" data-tip="New ${which === 'Tags' ? 'tag' : 'folder'}" aria-label="New"></button></div>
+    <ul class="tree${canDrag(which) ? ' can-drag' : ''}${arranging[which] ? ' is-arranging' : ''}" data-tree="${which}">${treeHtml(TREES[which], 0, which)}</ul>`).join('')}</div>
+    <div class="marker" id="marker"><span class="marker__out" hidden>Out of its folder</span></div>`;
+}
+function filterMenu() {
+  return `<div class="menu" hidden data-menu="filter"><div class="menu__title"><span class="label">Tags</span>
+      <span class="seg"><button class="word-button" aria-pressed="${filter.match === 'all'}" data-match="all">All of</button><button class="word-button" aria-pressed="${filter.match === 'any'}" data-match="any">Any of</button></span></div>
+    ${ALL_TAGS.map((t) => { const st = filter.tags.get(t) ?? 'none'; return `<button class="tri" data-tri="${t}" data-state="${st}" aria-label="#${t}: ${st === 'in' ? 'wanted' : st === 'out' ? 'kept out' : 'left alone'}">
+      <span class="tri__box">${st === 'out' ? icon('exclude') : icon('check')}</span><span class="tri__name">#${t}</span><span class="count">${NOTES.filter((n) => n.tags.includes(t)).length}</span></button>`; }).join('')}
+    <hr /><span class="hint">Press once to want it, twice to keep it out, again to leave it alone. ⌥ and a press keeps it out at once.</span>
+    ${filtered() ? '<button class="word-button" data-clearfilter>Every note</button>' : ''}</div>`;
 }
 function drawList() {
-  const shown = sorted(NOTES.filter((n) => !lens.filter || n.tags.includes(lens.filter)), lens.list, (n) => n.t);
-  const on = lens.list !== 'yours' || lens.filter;
-  const chips = mode() === 'chips' ? [lens.list !== 'yours' ? `<span class="chip">${SORTS[lens.list]}<button class="icon-button" data-clear="list" aria-label="Back to your order">${icon('close')}</button></span>` : '',
-    lens.filter ? `<span class="chip">#${lens.filter}<button class="icon-button" data-clearf aria-label="Show every note">${icon('close')}</button></span>` : ''].join('') : '';
-  const strip = `<div class="strip"><span class="label">Sort</span><span class="seg">${Object.entries(SORTS).map(([k, v]) => `<button class="word-button" aria-pressed="${lens.list === k}" data-lens="list" data-v="${k}">${v}</button>`).join('')}</span>
-    <span class="label">Only</span><span class="seg"><button class="word-button" aria-pressed="${!lens.filter}" data-f="">All</button>${['draft', 'posted'].map((t) => `<button class="word-button" aria-pressed="${lens.filter === t}" data-f="${t}">#${t}</button>`).join('')}</span></div>`;
-  const filterMenu = `<div class="menu" hidden data-menu="filter"><button class="word-button" aria-checked="${!lens.filter}" data-f="">Every note</button>${['draft', 'posted'].map((t) => `<button class="word-button" aria-checked="${lens.filter === t}" data-f="${t}">Only #${t}</button>`).join('')}</div>`;
+  const shown = sorted(NOTES.filter(passes), how('list'), (n) => n.t);
+  const tagChips = arranging.list ? '' : [...filter.tags].map(([t, s]) => `<span class="chip${s === 'out' ? ' is-out' : ''}" title="${s === 'out' ? 'Kept out' : 'Wanted'}">#${t}<button class="icon-button" data-untag="${t}" aria-label="Leave #${t} alone">${icon('close')}</button></span>`).join('');
+  const matchNote = !arranging.list && [...filter.tags.values()].filter((s) => s === 'in').length > 1 ? `<span class="label">${filter.match === 'all' ? 'all of' : 'any of'}</span>` : '';
   const ls = document.getElementById('ls');
-  ls.classList.toggle('has-lens', Boolean(on) && mode() !== 'arrange');
-  ls.innerHTML = `<header class="ls__head"><h2 class="ls__title">Beneath the Walls</h2><span class="ls__tools">${mode() === 'strip' ? `<button class="icon-button${on ? ' dotted' : ''}" data-togglestrip data-icon="filter" data-tip="Sort and filter"></button>` : headTools('list', SORTS)}
-    ${mode() === 'chips' ? `<button class="icon-button${lens.filter ? ' dotted' : ''}" data-open="filter" data-icon="filter" data-tip="Filter"></button>${filterMenu}` : ''}</span>
-    <div class="ls__meta"><span class="label">${shown.length} of ${NOTES.length} notes · book</span>${chips}</div>${strip}</header>
-    <div class="locked">${mode() === 'arrange' ? '' : 'Sorted or filtered: your order is kept underneath. Clear it to drag.'}</div>
-    <div class="scroll${canDrag('list') ? ' can-drag' : ''}" data-notes>${shown.map((n) => `<div class="nrow" draggable="${canDrag('list')}" data-note="${n.id}" tabindex="0"><span class="grip">${icon('grip')}</span><span class="t">${n.t}</span><span class="count">${n.d}</span>
-      <span class="p">${n.tags.map((t) => `<span class="tg">#${t}</span>`).join(' ') || '&nbsp;'}</span></div>`).join('')}</div>`;
+  ls.innerHTML = `<header class="ls__head"><h2 class="ls__title">Beneath the Walls</h2>
+      <span class="ls__tools">${arrangeButton('list')}
+        <button class="icon-button${filtered() ? ' dotted' : ''}" data-open="filter" data-icon="filter" data-tip="Filter by tag" aria-label="Filter by tag" ${arranging.list ? 'disabled' : ''}></button>
+        <button class="icon-button${lens.list !== 'yours' ? ' dotted' : ''}" data-open="list" data-icon="sort" data-tip="Sort" aria-label="Sort" ${arranging.list ? 'disabled' : ''}></button>${sortMenu('list', SORTS)}${filterMenu()}</span>
+      <div class="ls__meta"><span class="label">${shown.length} of ${NOTES.length} notes · book</span>${sortChip('list', SORTS)}${matchNote}${tagChips}</div></header>
+    <div class="locked" ${lensOn('list') ? '' : 'hidden'}>Sorted or filtered: your order is kept underneath. Clear it to drag.</div>
+    <div class="locked" ${setting() === 'mode' && !arranging.list && !lensOn('list') ? '' : 'hidden'}>Your order. Choose Arrange to move notes.</div>
+    <div class="scroll${canDrag('list') ? ' can-drag' : ''}${arranging.list ? ' is-arranging' : ''}">${shown.length ? shown.map((n) => `<div class="nrow" draggable="${canDrag('list')}" data-note="${n.id}" tabindex="0"><span class="grip">${icon('grip')}</span><span class="t">${n.t}</span><span class="count">${n.d}</span>
+      <span class="p">${n.tags.map((t) => `<span class="tg">#${t}</span>`).join(' ')}</span></div>`).join('') : '<p class="empty">No note here passes that filter.</p>'}</div>`;
 }
 function draw() { drawSidebar(); drawList(); drawIcons(); wire(); }
 
-// Finding and moving in the model.
 function findIn(list, id, parent = null) { for (const [i, n] of list.entries()) { if (n.id === id) return { list, i, n, parent }; const f = n.children && findIn(n.children, id, n); if (f) return f; } return null; }
 const contains = (n, id) => n.id === id || (n.children ?? []).some((c) => contains(c, id));
 function move(which, id, targetId, place) {
   const tree = TREES[which];
-  const src = findIn(tree, id); const dst = findIn(tree, targetId);
-  if (!src || !dst || contains(src.n, targetId)) return;
+  const src = findIn(tree, id); if (!src || contains(src.n, targetId)) return;
   src.list.splice(src.i, 1);
-  const again = findIn(tree, targetId);
-  if (place === 'in') { again.n.children = again.n.children ?? []; again.n.children.push(src.n); log(`“${src.n.name}” moved into “${again.n.name}”.`); }
-  else { again.list.splice(again.i + (place === 'after' ? 1 : 0), 0, src.n); log(`“${src.n.name}” placed ${place} “${again.n.name}”, in your order.`); }
+  const dst = findIn(tree, targetId);
+  if (place === 'in') { dst.n.children = dst.n.children ?? []; dst.n.children.push(src.n); log(`“${src.n.name}” moved into “${dst.n.name}”.`); }
+  else { dst.list.splice(dst.i + (place === 'after' ? 1 : 0), 0, src.n); log(`“${src.n.name}” placed ${place} “${dst.n.name}”, in your order.`); }
   draw();
 }
-
 /** Out of its folder: placed just after the folder it was in. */
 function outdent(which, id) {
-  const tree = TREES[which];
-  const f = findIn(tree, id);
-  if (!f?.parent) return;
-  f.list.splice(f.i, 1);
-  const p = findIn(tree, f.parent.id);
-  p.list.splice(p.i + 1, 0, f.n);
-  log(`“${f.n.name}” taken out of “${f.parent.name}”.`);
-  draw();
+  const tree = TREES[which]; const f = findIn(tree, id); if (!f?.parent) return;
+  f.list.splice(f.i, 1); const p = findIn(tree, f.parent.id); p.list.splice(p.i + 1, 0, f.n);
+  log(`“${f.n.name}” taken out of “${f.parent.name}”.`); draw();
 }
+const reopen = (name) => { const m = document.querySelector(`[data-menu="${name}"]`); if (m) m.hidden = false; };
 
 let dragging = null;
 function wire() {
   for (const b of document.querySelectorAll('[data-open]')) b.onclick = (e) => { e.stopPropagation(); const m = document.querySelector(`[data-menu="${b.dataset.open}"]`); const was = !m.hidden; for (const x of document.querySelectorAll('.menu')) x.hidden = true; m.hidden = was; };
   for (const b of document.querySelectorAll('[data-lens]')) b.onclick = () => { lens[b.dataset.lens] = b.dataset.v; log(b.dataset.v === 'yours' ? 'Back to your order.' : `${SORTS[b.dataset.v] ?? TREE_SORTS[b.dataset.v]}, laid over your order.`); draw(); };
   for (const b of document.querySelectorAll('[data-clear]')) b.onclick = () => { lens[b.dataset.clear] = 'yours'; log('Back to your order.'); draw(); };
-  for (const b of document.querySelectorAll('[data-clearf]')) b.onclick = () => { lens.filter = null; draw(); };
-  for (const b of document.querySelectorAll('[data-f]')) b.onclick = () => { lens.filter = b.dataset.f || null; draw(); };
-  for (const b of document.querySelectorAll('[data-arrange]')) b.onclick = () => { const w = b.dataset.arrange; arranging[w] = !arranging[w]; if (arranging[w]) lens[w] = 'yours'; log(arranging[w] ? 'Arranging: drag, or ⌥ and the arrows.' : 'Done.'); draw(); };
-  for (const b of document.querySelectorAll('[data-togglestrip]')) b.onclick = () => document.querySelector('.strip').toggleAttribute('hidden');
+  for (const b of document.querySelectorAll('[data-untag]')) b.onclick = () => { filter.tags.delete(b.dataset.untag); draw(); };
+  for (const b of document.querySelectorAll('[data-clearfilter]')) b.onclick = () => { filter.tags.clear(); draw(); };
+  for (const b of document.querySelectorAll('[data-match]')) b.onclick = (e) => { e.stopPropagation(); filter.match = b.dataset.match; draw(); reopen('filter'); };
+  for (const b of document.querySelectorAll('[data-tri]')) b.onclick = (e) => {
+    e.stopPropagation();
+    const t = b.dataset.tri; const now = filter.tags.get(t);
+    const next = e.altKey ? (now === 'out' ? undefined : 'out') : now === undefined ? 'in' : now === 'in' ? 'out' : undefined;
+    if (next) filter.tags.set(t, next); else filter.tags.delete(t);
+    draw(); reopen('filter');
+  };
+  for (const b of document.querySelectorAll('[data-arrange]')) b.onclick = () => {
+    const w = b.dataset.arrange; arranging[w] = !arranging[w];
+    log(arranging[w] ? 'Arranging: your order shows, any sort or filter set aside. Drag, or ⌥ and the arrows.' : 'Done. The sort and filter you had are back.'); draw();
+  };
   const marker = document.getElementById('marker');
   for (const row of document.querySelectorAll('.tree .row')) {
     const which = row.closest('[data-tree]').dataset.tree;
@@ -227,16 +267,14 @@ function wire() {
       marker.style.left = `${16 + d * 16 + 18}px`; marker.style.right = '12px';
     };
     row.ondrop = (e) => {
-      e.preventDefault();
-      if (!dragging) return;
+      e.preventDefault(); if (!dragging) return;
       if (row.dataset.place === 'out') outdent(which, dragging.id);
       else if (dragging.id !== +row.dataset.id) move(which, dragging.id, +row.dataset.id, row.dataset.place);
       dragging = null;
     };
     row.onkeydown = (e) => {
       if (!e.altKey || !canDrag(which)) return;
-      const f = findIn(TREES[which], +row.dataset.id); if (!f) return;
-      const id = f.n.id;
+      const f = findIn(TREES[which], +row.dataset.id); if (!f) return; const id = f.n.id;
       if (e.key === 'ArrowUp' && f.i > 0) move(which, id, f.list[f.i - 1].id, 'before');
       else if (e.key === 'ArrowDown' && f.i < f.list.length - 1) move(which, id, f.list[f.i + 1].id, 'after');
       else if (e.key === 'ArrowLeft' && f.parent) outdent(which, id);
@@ -247,19 +285,38 @@ function wire() {
   }
   for (const row of document.querySelectorAll('.nrow')) {
     row.ondragstart = () => { dragging = { which: 'list', id: +row.dataset.note }; row.classList.add('is-dragging'); };
-    row.ondragend = () => row.classList.remove('is-dragging');
-    row.ondragover = (e) => { if (dragging?.which === 'list' && canDrag('list')) e.preventDefault(); };
-    row.ondrop = (e) => { e.preventDefault(); const from = NOTES.findIndex((n) => n.id === dragging.id); const [n] = NOTES.splice(from, 1); NOTES.splice(NOTES.findIndex((x) => x.id === +row.dataset.note), 0, n); log(`“${n.t}” moved, in your order.`); dragging = null; draw(); };
+    const unmark = () => { for (const r of document.querySelectorAll('.drop-before, .drop-after')) r.classList.remove('drop-before', 'drop-after'); };
+    row.ondragend = () => { row.classList.remove('is-dragging'); unmark(); };
+    row.ondragover = (e) => {
+      if (dragging?.which !== 'list' || !canDrag('list')) return;
+      e.preventDefault();
+      const r = row.getBoundingClientRect();
+      const place = e.clientY - r.top < r.height / 2 ? 'before' : 'after';
+      if (!row.classList.contains(`drop-${place}`)) { unmark(); row.classList.add(`drop-${place}`); }
+      row.dataset.place = place;
+    };
+    row.ondragleave = (e) => { if (!row.contains(e.relatedTarget)) row.classList.remove('drop-before', 'drop-after'); };
+    row.ondrop = (e) => {
+      e.preventDefault(); unmark();
+      if (!dragging || dragging.id === +row.dataset.note) return;
+      const [n] = NOTES.splice(NOTES.findIndex((x) => x.id === dragging.id), 1);
+      const at = NOTES.findIndex((x) => x.id === +row.dataset.note) + (row.dataset.place === 'after' ? 1 : 0);
+      NOTES.splice(at, 0, n);
+      log(`“${n.t}” placed ${row.dataset.place} “${row.querySelector('.t').textContent}”, in your order.`); dragging = null; draw();
+    };
   }
 }
 document.addEventListener('click', (e) => { if (!e.target.closest('.menu') && !e.target.closest('[data-open]')) for (const m of document.querySelectorAll('.menu')) m.hidden = true; });
 
 const NOTES_TEXT = {
-  chips: `<h2>A · Lens chips</h2><p>Each pane keeps your order. Choosing a sort, or a filter, lays a lens over it, and the lens shows as a chip in the pane's head: <b>NEWEST ×</b>. The × takes it off and your order is back, untouched. While a lens is on, rows can't be dragged, and a line under the head says why.</p><p>Folders and tags work the same way: a sort icon on the section's head (on hover), and drag to place them. Drag a folder onto another to put it inside; to the left of its own row to take it out of its folder. From the keyboard: <kbd>⌥↑</kbd> <kbd>⌥↓</kbd> move, <kbd>⌥←</kbd> out of the folder, <kbd>⌥→</kbd> into the folder above.</p>`,
-  strip: `<h2>B · Filter strip</h2><p>The spreadsheet's way: the filter icon opens a strip under the list's head with every sort and filter in sight at once. Nothing hides behind a menu. The icon carries a dot while anything is on, and "All" with "Your order" clears it.</p><p>The tree keeps a small sort menu on each section's head; the strip is for the list, where filtering earns its room.</p>`,
-  arrange: `<h2>C · Arrange mode</h2><p>Order is something you set on purpose: the grip icon in a head starts arranging that pane. Grips show on every row, the sort is set aside, and dragging (or <kbd>⌥</kbd> with the arrows) places things. Done, and the pane goes back to whatever sort it had.</p><p>Outside arrange mode, a drag only ever moves something into a folder, never reorders by accident.</p>`,
+  drag: `<h2>Drag anytime (the default)</h2><p>Each pane keeps your order. A sort or a tag filter is a lens laid over it, shown as a chip in the pane's head: <b>NEWEST ×</b>, <b>#draft ×</b>, a struck-through <b>#posted ×</b> for a tag kept out. The × takes it off and your order is back, untouched. While a lens is on, rows can't be dragged, and a line under the head says why.</p><p>Drag a folder onto another to put it inside, to the left of its own row to take it out of its folder. From the keyboard: <kbd>⌥↑</kbd> <kbd>⌥↓</kbd> move, <kbd>⌥←</kbd> out of the folder, <kbd>⌥→</kbd> into the folder above.</p>`,
+  mode: `<h2>In Arrange mode</h2><p>The same panes, but order changes only on purpose: <b>Arrange</b> (the grip, in a pane's head) starts it. Grips show on every row, any sort or filter is set aside while you arrange, and both come back when you choose <b>Done</b>. Outside it, nothing can be dragged out of place by accident.</p><p>One setting switches between the two: Settings / Writing / Lists, <b>Arranging</b>: Drag anytime, or In Arrange mode.</p>`,
 };
-wireBar(() => { document.getElementById('notes').innerHTML = NOTES_TEXT[mode()] + '<p class="xnote">Where it’s kept: your order of a folder’s notes and subfolders in its .eien-folder.json (as now); of the top folders, the tags and All Notes in .eien/order.json, so it syncs. The lens is this device’s, as sorts are now.</p>'; draw(); });
+wireBar(() => {
+  for (const k of Object.keys(arranging)) arranging[k] = false;
+  document.getElementById('notes').innerHTML = NOTES_TEXT[setting()] + '<h2 style="margin-top:28px">The tag filter</h2><p>The filter icon in the list’s head opens the vault’s tags, each in one of three states: left alone, <b>wanted</b> (filled), or <b>kept out</b> (struck through, in carmine). One press moves a tag on to the next; ⌥ and a press keeps it out at once. With two or more wanted, <b>All of</b> or <b>Any of</b> decides. Each state shows as a chip in the head, with its ×.</p><p class="xnote">Where it’s kept: your order of a folder’s notes and subfolders in its .eien-folder.json (as now); the top folders, the tags and All Notes in .eien/order.json, so it syncs. The lens is this device’s, per list, as sorts are now.</p>';
+  draw();
+});
 </script>
 </body>
 </html>

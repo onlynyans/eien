@@ -43,7 +43,7 @@ These decide arguments. When a change conflicts with one, the principle wins.
 My Vault/
   .eien/
     config.json                vault settings (see §6)
-    themes/<name>.json         themes added by the writer (see §7)
+    themes/<name>.json         the writer's own themes, one file each (see §7)
     versions/<note id>/        checkpoints and named versions (see §9)
       2026-10-19T16-40-02Z.md
       2026-10-19T17-02-11Z--before the rewrite.md
@@ -473,7 +473,7 @@ src/core/            (✓ = built)
   format/       ✓ the formatting commands: inline marks, line formats, links, their keys
   config/       ✓ the settings schema, defaults, reading and writing settings files (§6)
   counters/     ✓ today's tally (net, per day) and a sprint's clock
-  theme/         theme schema, validation, token list (§7)
+  themes/       ✓ colours and contrast, the gallery, the mix (fitInk), the tokens a theme sets and their check, a theme's file (§7)
   markdown/     ✓ Eien's Markdown (==highlight==, [[wiki links]], footnotes) and a note's plain text
   note/         ✓ a note's preview, words, tags and id
   tags/         ✓ tag extraction and the tag tree
@@ -491,6 +491,7 @@ src/platform/
   index/        ✓ the vault's index over any Storage: previews, words, tags, search
   capacitor/    ✓ Storage over the phone's file system: writes through a temp file (on iOS coordinated with other apps), case-only renames in two steps, trash in .eien/trash, polling for changes, recovery after a crash
   case-twin.ts  ✓ no storage makes a name its folder has in another case
+  theme-files.ts ✓ the writer's own themes in .eien/themes: list, read, create, write, rename, trash (§7)
 src/ui/
   app.ts        ✓ the window: panes, vault and note kept in step
   shell/        ✓ the panes: resizing, collapsing, three or two, kept per device
@@ -501,7 +502,7 @@ src/ui/
   notes/        ✓ the open note: autosave, reload, conflict copies
   vault/        ✓ the vault as the window knows it, its panes drawn, the menu's commands, organizing (rename, move, trash)
   welcome/      ✓ before a vault is open
-  theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts
+  theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts; wearing a theme, and the writer's own as the window keeps them
   editor/       ✓ CodeMirror, the three views, the selection bar, images, typed quotes, pasted HTML, the writing tools (scene breaks, focus, typewriter)
   versions/     ✓ sealing, Compare, the versions panel, the colophon's last seal
   outline/      ✓ outline cards: a book's chapters as cards on the blotter, reordered by drag or keys
@@ -620,19 +621,64 @@ Settings are grouped and labeled on the settings screen: **Appearance**,
 - Token groups, each clearly labeled: **surface** (desk, paper, panel),
   **ink** (text, muted, faint), **lines**, **accent**, **status**, **type**
   (prose, interface, mono), **size**, **space**.
-- Light and dark are built-in themes. A theme is a JSON file:
+- **A theme is colours only**, by day and by night: the five surfaces (desk,
+  blotter, band, paper, selected), the four inks (ink, ink-soft, pencil,
+  faded), the seal (one per theme: a theme may change its colour, and still
+  nothing else is that colour) and the status inks (added, removed,
+  caution). The rules, the washes, hover and press, and the raised and well
+  grounds are worked out from them (`core/themes/tokens.ts`). Faces, sizes
+  and spaces stay Eien's.
+- **Eien's contrast** (WCAG), which every theme keeps by day and by night:
+  ink, ink-soft, pencil and the status inks reach 4.5:1, faded and the seal
+  3:1, on each of the five surfaces (`core/themes/contrast-rules.ts`). The
+  verdict says so in words, or names the first colour that falls short.
+- **The gallery**, Eien's own (`core/themes/gallery.ts`): Washi 和紙 (the
+  default, tokens.css's own colours), Kinari 生成り, Aizome 藍染, Koke 苔,
+  Rōsoku 蝋燭, Sumi 墨, Sakura-nezumi 桜鼠, and Otaku (its own sheet,
+  `otaku.css`). Each keeps Eien's order of surfaces (darker is further
+  back) and its contrast.
+- **Your own themes** are one file each in the vault's `.eien/themes/`, so
+  they sync with the notes. The file is named for the theme, as a note is
+  for its title (a name compared as the storage compares names: no two
+  differ only in case), and holds the name and the four choices it's mixed
+  from:
 
   ```json
   {
-    "name": "Ember",
-    "mode": "dark",
-    "tokens": { "--eien-paper": "#1d1b19", "--eien-accent": "#d9792b" }
+    "name": "Late Train",
+    "mix": { "paper": 215, "warmth": 10, "ink": 225, "seal": 8 }
   }
   ```
 
-  Only known `--eien-*` tokens with valid CSS values are accepted, so a theme
-  can't break the layout or run code. Writer themes go in `.eien/themes/`.
-  (Not built yet: [backlog](backlog.md) #20. Washi and Otaku are built in.)
+  Paper, ink and seal are hues (0–360), warmth the paper's saturation
+  (0–40). Every other key in the file is kept when Eien writes it. A choice
+  missing or out of range takes the first mix's, with a warning in the log;
+  a file that isn't a JSON object is worn as Washi and never written over.
+  A theme is made, saved, renamed (the file is renamed) and sent to the
+  trash through the Storage contract (`platform/theme-files.ts`), so its
+  file is never lost, only sent where it can be taken back. The watcher reports the folder's
+  files, so another device's change shows at once.
+- **The mix** (`core/themes/mix.ts`) works every colour out from the four
+  choices: the surfaces from the paper's hue and warmth (the night's warmth
+  stops at 22), the inks from the ink's hue, the seal from its own. Each
+  ink, the seal and the status inks are **fitted** (`fitInk`): they start
+  where they should sit and step darker by day, or lighter by night, until
+  every surface reaches their contrast (the writing itself 7:1). So every
+  mix keeps Eien's contrast; property tests hold it.
+- **Which theme is worn** is the Palette setting (`appearance.palette`,
+  this device's): a gallery theme's id, or `mine:` and one of your own
+  themes' names. Washi is worn by tokens.css and Otaku by `data-palette`;
+  every other theme is its colour tokens set as overrides on `<html>`
+  (`ui/theme/wear.ts`), and only known colour tokens whose values are
+  `light-dark()` of two colours are applied (`safeTokens`), so a theme
+  can't break the layout or run code. One of your own that isn't there (no
+  vault open yet, another vault, a file being edited) is worn as Washi.
+  Renaming the theme worn moves the setting with it; sending it to the
+  trash wears Washi.
+- The settings screen lists the gallery's themes and then your own under
+  Palette. Settings' Themes tabs (Gallery and Custom, the mix panel) are
+  built on `ui/theme/writer-themes.ts`: list, create, save, rename, trash,
+  palette and verdict.
 - All fonts are bundled. Nothing is fetched from the web.
 
 ---
@@ -998,7 +1044,9 @@ Every rule, with the cases most likely to break it:
 - **Versions:** naming, sorting, retention at day and month boundaries, time
   zones, names with forbidden characters.
 - **Settings and themes:** every invalid value falls back; unknown tokens and
-  CSS injection attempts are rejected.
+  CSS injection attempts are rejected; every gallery theme and every mix
+  (property tests, and the knobs' grid) keeps Eien's contrast by day and by
+  night; a theme file reads back as it was written, unknown keys kept.
 
 ### Storage contract
 
@@ -1010,6 +1058,9 @@ Node fs), so they behave the same:
   even something that arrived a moment before
 - a file changed on disk while open; deleted while open; renamed while open
 - a read-only file; a full disk (simulated); a permission error
+- the writer's themes in `.eien/themes`: made (numbered when the name is
+  taken in any case), listed, saved with unknown keys kept, renamed (a name
+  another has refused), sent to the trash, never written over when unreadable
 
 ### End-to-end (Playwright, the real Electron app)
 

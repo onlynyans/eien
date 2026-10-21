@@ -3,9 +3,83 @@
 [overall.html](overall.html) shows the desktop window and the phone (Show →
 Phone), with three ways to carry the backlog's interface changes. Switch
 between them in the bar at the top. Hover a pane to see its controls; every
-control has a tooltip. Try: the Syncthing switch (Set up, Changed elsewhere,
-None), the sidebar's + on FOLDERS and TAGS, folding LIBRARY, FOLDERS or TAGS,
-the formatting bar, hiding the page's controls, and the two weight sliders.
+control has a tooltip. Things to try:
+
+- the Syncthing switch: Set up, Changed elsewhere, None;
+- the sidebar's + on FOLDERS and TAGS;
+- folding LIBRARY, FOLDERS or TAGS;
+- the formatting bar, and Focus mode;
+- hiding the page's controls;
+- shutting and reopening panes;
+- right-clicking a row, or F2, or double-clicking a name;
+- the two weight sliders, and C's strip ground.
+
+## Third pass (2026-10-21)
+
+- **The sidebar's head is as it was** in all three: the seal and the
+  vault's name on the 56px band beside the traffic lights.
+- **The seal button** has no background, and its hairline shows only on
+  hover, in `--eien-rule`.
+- **C's running head is a single 40px strip** across the whole window
+  again, with the traffic lights in it. That compact strip is what sets C
+  apart. The sidebar's head sits under the lights, at the sidebar's left,
+  with no rule under it.
+- **The formatting bar is drawn icons:** bold, italic, underline and
+  strikethrough are pen-line icons like the rest, not letters.
+
+## Second pass (2026-10-21)
+
+- **Fixed: the pane chevrons.** In A and B the ‹ that shuts a pane spanned
+  the pane's width: it took the pane's `min-width` meant for its contents.
+  It's 28px now.
+- **The way back from a shut pane:**
+  - **A shut sidebar keeps a strip of desk**, in all three. The strip holds
+    the traffic lights and the seal, and the seal opens it again, as the
+    spec has it ("the seal shuts and opens it"). A › shows under the seal on
+    hover.
+  - **A shut list's way back** is a › in the same spot its ‹ was, in the
+    pane beside it: the page band's left end in A, a tab on the page's left
+    edge in B. Both show on hover, as every control does. In C, the running
+    head's pane icons do both, always in sight.
+- **Fixed: the status bar's height.** Zoomed out, the colophon grew to fill
+  the space under a short sheet. The page grid gave a hidden part's row to
+  the next part. Each part of the page now has its own row, and the status
+  bar is a fixed `--status-h` (40px).
+- **Focus mode** is in every toolbar: A's band, B's slip, C's running head,
+  and the phone's foot.
+  - Its icon is three lines with only the middle one in full ink. It dims
+    every paragraph but the one with the caret, and its key is ⇧⌘↵ as in the
+    spec.
+- **C keeps the sidebar's own head** at the top left, above LIBRARY: the
+  seal and the vault's name, the same height as the running head beside it.
+  Shut, it's the strip with the seal. The running head starts after the
+  sidebar.
+- **C's strip ground** is a setting: one of the theme's own surfaces (desk,
+  blotter, band, paper, selected) as `--runhead-ground: var(--eien-…)`. It
+  follows any theme or scheme and is never a fixed colour. Try it in the bar
+  here, and in Settings / Look / Appearance.
+- **Rename, in the row** (see below).
+
+## Renaming, made one thing
+
+- **The incoherence:** today, Rename on a note opens the note and moves you
+  to its title on the page, while Rename on a folder edits in its row, and a
+  tag can't be renamed at all. So one word does two things, in two places.
+- **Now there's one way, in place, for notes, folders and tags:**
+  - It starts from the row's right-click (Rename, F2), with F2 on a focused
+    row, or with a double-click on a name.
+  - The name itself becomes the field: same face, size and weight, its words
+    selected and a hairline under it in the focus ink. A note's `.md` shows
+    after the field, faded, so it's plain that it stays.
+  - Enter keeps it, Esc puts the old name back, and leaving the field keeps
+    it.
+  - A name that's taken (case aside, as the storage counts it) shows as a
+    small ochre line under the row as you type, and the field stays open.
+- **Renaming a note by its title on the page** stays, as a second way.
+- **The right-click menu becomes Eien's own:**
+  - raised paper, the row's name as its head, an icon and a word for each
+    choice, its key in pencil;
+  - "Send to the trash" in carmine, after a rule.
 
 ## Intent
 
@@ -14,127 +88,84 @@ the formatting bar, hiding the page's controls, and the two weight sliders.
 - **What they do most:** write the next scene; then find a note, reorder
   chapters, seal and compare, copy for AO3.
 - **Feel:** a book on a desk at night. Every control recedes until the
-  pointer or the keyboard asks for it. The page is the brightest, quietest
-  thing on the screen.
+  pointer or the keyboard asks for it.
 
-## Domain
+## The three explorations
 
-- **Domain:** a writing desk and its things: the blotter, washi, sumi, an
-  inkstone, the seal and its red paste, a book's contents page and running
-  head, a colophon, label slips, a ribbon bookmark, a pen's line.
-- **Colour world:** washi's warm off-white, sumi's brown-black, the inkstone's
-  near-black, the blotter's grey-beige, the seal's vermilion, moss and ochre
-  for what changed. Nothing blue, nothing neon.
-- **Signature:** the seal, plus one new one: icons drawn as pen lines on a
-  16-unit grid, with round ends, in the ink of whatever they sit in. They
-  read like the hairlines and the struck-through words of Compare, not like
-  another app's glyphs.
-- **Defaults turned down:**
-  - A grey title bar, which becomes the panes' own bands.
-  - A toolbar always in sight, which shows on hover, can hide, or floats.
-  - Rounded cards everywhere, replaced by paper that stays square, with
-    corners only on what you press or what floats.
+- **A · Band:** the approved mockup, carried forward.
+  - The page's controls sit in its band, and the band hides to a lip.
+  - The formatting bar is the band's second row; tags are in the running
+    head.
+  - Corners are 2 / 4 / 8.
+- **B · Slip:** the page loses its band.
+  - The tools float on a raised slip, the formatting bar on a second slip.
+  - Tags are label slips under the title, and panes have edge tabs.
+  - Corners are 4 / 8 / 14.
+- **C · Running head:** one strip beside the sidebar's head, holding the
+  pane toggles, the breadcrumb and every page tool.
+  - The formatting bar is a rail in the margin; tags are pills in the
+    colophon.
+  - Corners are 3 / 6 / 10.
 
-## What all three share
+Recommendation, unchanged: A's structure with B's corners. With tags already
+decided as A (the running head), A is the shortest step. C is the strongest
+if the window should feel like one object with a title strip of its own.
 
-These are fixed in all three, from your answers and `system.md`:
+## Can one framework carry all three?
 
-- **No title bar** (#1). The traffic lights sit over the sidebar's head, and
-  the panes' top bands drag the window. In C they sit in a strip of their
-  own.
-- **Icons for controls** (#26), from one set (see
-  [specimen.html](specimen.html)), each with a tooltip naming it and its key:
-  - the views as edit, code and book (#17);
-  - day and night as one sun/moon toggle, the panes as one icon that shows
-    the current layout, and settings (#8).
-- **The sidebar:**
-  - Its sections fold from their label (#3), with guide lines (#5) and BOOK
-    marks (#6).
-  - A quiet + appears on hover beside FOLDERS and TAGS (#4). The one by TAGS
-    names a tag in place, with no notes yet.
-  - Pinned is always in Library (#7), with a ribbon icon.
-- **Sync status** (#10): one sync icon at the sidebar's foot, in moss.
-  - Its tooltip says "Synced · Syncthing, 4m ago", or "Changed on another
-    device 4m ago" in pencil ink.
-  - Nothing shows when the vault isn't a Syncthing folder. Eien can tell from
-    the `.stfolder` marker Syncthing puts in every folder it shares.
-- **Search in the list** (#11), already being built in 1C.
-- **Row weights** (#25): the list's chosen title is 100 heavier. Whether the
-  sidebar's chosen row is too differs: A no, B and C yes.
+Yes, cleanly, and the app is most of the way there. The three explorations
+don't differ in what the controls are or what they do; they differ only in
+where the controls sit. So the framework separates three things.
 
-## A · Band
+1. **Commands, once.** Each control is a command:
+   - its id, its icon, its label, its key, what it does, and whether it's on;
+   - examples: `view.live`, `seal`, `versions`, `focus`, `format-bar`,
+     `pane.sidebar`.
 
-The approved mockup, carried forward.
+   The app already has most of this: `MenuBus` carries commands from the
+   menu bar and the phone's ⋯, and `core/format`'s `FORMAT_COMMANDS` is the
+   same idea. One `ui/chrome/commands.ts` lists them, about 100 lines of
+   data.
+2. **Hosts, dumb.** A host is an element that draws a list of command ids as
+   icon buttons, with their tooltips and pressed states, and nothing else.
+   One `ui/chrome/host.ts`, about 80 lines.
+3. **Chromes, small.** A chrome says which hosts exist and which commands
+   each holds:
+   - Band: the page band, plus the formatting bar's row.
+   - Slip: the slip and the format slip.
+   - Running head: the strip and the margin rail.
 
-- **Page controls:** they stay in the page's band, as icons on hover. The
-  chevron at the band's end hides the band (#16); a small lip at the top of
-  the blotter brings it back.
-- **Formatting bar** (#14): a second row in the band.
-- **Tags** (#13): at the running head's right, as the mockup had them, with a
-  + on hover.
-- **Shutting panes** (#15): a chevron at the pane's top right, on hover. A
-  shut pane leaves a thin edge that shows ›.
-- **Corners:** 2 / 4 / 8px, barely there. The sheet stays square.
-- **Phone:** the page's top bar carries the view and ⋯.
-- **Trade-off:** the least change, and the most familiar. The band costs
-  56px above the sheet while it shows.
+   Each is a short module (`chrome/band.ts`, `slip.ts`, `runhead.ts`, about
+   60 lines each) plus its own stylesheet. The choice is a device setting
+   (`appearance.chrome`) set as `data-chrome` on `<html>`. Switching it
+   unmounts one chrome's hosts and mounts the other's. Nothing else changes.
 
-## B · Slip
+The pieces that move between chromes are components already: the tag set
+(running head, colophon or slips), the pane toggles, and the sync icon. Each
+chrome names a slot for them.
 
-The page loses its band.
+**Why it stays simple:**
 
-- **Page controls:** they sit on a raised paper slip, floating at the top
-  right of the blotter, which folds to a single chevron (#16). The sheet
-  reaches the top of the pane.
-- **Formatting bar:** a second slip at the sheet's top edge.
-- **Tags:** label slips just under the title, like paper tabs.
-- **Shutting panes:** small tabs that stick out from a pane's edge at its
-  middle, on hover.
-- **Corners:** 4 / 8 / 14px, softer. The sheet takes 3px.
-- **Phone:** a floating slip at the bottom right.
-- **Trade-off:** the most room for the page, and the most "object on a desk".
-  The slip floats over the blotter's corner, so on a narrow page it sits
-  near the text.
+- There are three chromes, as a fixed union, not a plugin system.
+- Commands don't know where they're drawn.
+- Hosts don't know what's in them.
+- CSS stays per chrome, so no rule asks "which chrome am I in?" inside a
+  component.
 
-## C · Running head
+**Tests:**
 
-One strip across the whole window, like a book's running head. It's the
-title bar with useful icons in it, as in Claude's window.
+- a unit test that every command is in exactly one host per chrome, so none
+  is lost when switching;
+- one e2e per chrome that each command is reachable from the keyboard.
 
-- **The strip holds:**
-  - the traffic lights;
-  - the pane toggles, which are always there here, so no hover chevrons (#15);
-  - the breadcrumb, centred;
-  - the views, Compare, Seal, Versions and the formatting toggle.
-- **Panes:** they have no head of their own.
-- **Formatting bar:** a vertical rail in the page's left margin.
-- **Tags:** pills in the colophon, by the counts.
-- **Corners:** 3 / 6 / 10px, with round pills for tags.
-- **Phone:** a tool rail at the bottom.
-- **Trade-off:**
-  - Every control is in one predictable line, and the strip is where the
-    title bar was, so no height is lost.
-  - It's the furthest from the approved design: the panes stop being three
-    objects with their own heads.
-
-## Recommendation
-
-**A's structure, with B's corners and C's always-there pane toggles** for
-whoever wants them. In more detail:
-
-- Keep the band, since it's the approved design and the least surprising.
-- Take B's softer corner scale (4 / 8 / 14) for controls and floating things,
-  and keep the sheet square: paper is paper.
-- Put tags in A's running head; [tags.md](tags.md) explores them further.
-- The formatting bar sits in the band's second row.
-- The sidebar's chosen row stays at its weight. Its seal rule and fill
-  already mark it, and a heavier name would shift the tree's text as you
-  move.
-
-Your call; each piece is independent, so a mix works too.
+**The cost:** the work is moving today's page bar and sidebar foot onto
+commands, the same work the icons (#26) need anyway. Building the framework
+first and the chromes second costs less than building one chrome and
+refactoring later.
 
 ## Open
 
-- Which exploration, or which mix.
-- The phone: the three bottoms (top bar, floating slip, bottom rail) are
-  rough. The chosen one gets its own pass.
+- Which exploration, or which mix. The framework above makes "all three, as
+  a setting" a real option.
+- The phone's three bottoms (top bar, floating slip, bottom rail) are still
+  rough; the chosen one gets its own pass.

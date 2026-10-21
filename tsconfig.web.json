@@ -11,6 +11,7 @@
     "src/platform/bridge.ts",
     "src/platform/storage.ts",
     "src/platform/case-twin.ts",
+    "src/platform/theme-files.ts",
     "src/platform/memory",
     "src/platform/index",
     "tests/support"

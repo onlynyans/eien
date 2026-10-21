@@ -1,5 +1,9 @@
 # Tags on the page: three approaches
 
+**Chosen on 2026-10-21: A, in the running head.** B and C stay here for
+reference; the recommendation's note on the phone stands (slips under the
+title there, where there's no hover).
+
 [tags.html](tags.html). Try:
 
 - the + beside the note's tags, or the # key while the page has focus;
