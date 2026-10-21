@@ -16,7 +16,8 @@ import { MemoryStorage } from './memory/memory-storage';
 import type { Storage } from './storage';
 
 const volume = await caseVolume();
-afterAll(() => volume?.close());
+// A disk image can take a while to let go on a CI Mac: more than a hook's usual 10 s.
+afterAll(() => volume?.close(), 60_000);
 
 interface Subject {
   storage: Storage;
