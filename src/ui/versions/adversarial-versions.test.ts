@@ -63,6 +63,16 @@ function vaultWith(files: Record<string, string>, hooks: Hooks = {}) {
     await reindex();
     let text = (await storage.read(path))?.text ?? '';
     let saved = text;
+    // One save at a time, as the note's session saves (its queue).
+    let saving = Promise.resolve(true);
+    const saveNow = async () => {
+      if (text === saved) return true;
+      const current = await storage.read(path);
+      const written = await storage.write(path, text, current?.version ?? null);
+      if (written.ok) saved = text;
+      await reindex();
+      return written.ok;
+    };
     const target: SealTarget & { type(next: string): void } = {
       path,
       open: () => true,
@@ -76,13 +86,9 @@ function vaultWith(files: Record<string, string>, hooks: Hooks = {}) {
         text = next;
         return target.save();
       },
-      save: async () => {
-        if (text === saved) return true;
-        const current = await storage.read(path);
-        const written = await storage.write(path, text, current?.version ?? null);
-        if (written.ok) saved = text;
-        await reindex();
-        return written.ok;
+      save: () => {
+        saving = saving.then(saveNow, saveNow);
+        return saving;
       },
     };
     return target;

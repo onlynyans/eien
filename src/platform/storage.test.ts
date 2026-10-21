@@ -15,19 +15,18 @@ import {
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VaultPathError } from '../core/paths';
 import { CapacitorStorage, TRASH_FOLDER } from './capacitor/capacitor-storage';
 import { NodeFiles } from './capacitor/node-files';
-import {
-  type DiskStorage,
-  openDiskStorage,
-  tempNameOf,
-  writeDurably,
-} from './electron/disk-storage';
+import { type DiskStorage, openDiskStorage, writeDurably } from './electron/disk-storage';
 import { recoverStrays } from './electron/recover-strays';
 import { MemoryStorage } from './memory/memory-storage';
 import type { Storage } from './storage';
+import { tempBeside } from './stray';
+
+/** The temp file a crash left beside `name`: one write's, with its token. */
+const tempNameOf = (name: string) => tempBeside(name, '0a1b2c3d');
 
 interface Subject {
   storage: Storage;
@@ -111,6 +110,31 @@ for (const [name, make] of Object.entries(implementations)) {
       expect((await subject.storage.read('Note.md'))?.text).toBe('One.');
     });
 
+    it('never writes over a temp file another write left: its words may be nowhere else', async () => {
+      // A crash's temp file on another device, brought here by Syncthing before that device
+      // could recover it. One from before tokens, and one whose token this write draws first.
+      const { storage } = subject;
+      await subject.putOutside('Note.md', 'Before.');
+      await subject.putOutside('.Note.md.eien.tmp', 'The laptop’s paragraph.');
+      await subject.putOutside('.Note.md.0a1b2c3d.eien.tmp', 'The tablet’s paragraph.');
+      const random = vi.spyOn(crypto, 'getRandomValues').mockImplementationOnce((array) => {
+        if (array instanceof Uint32Array) array[0] = 0x0a1b2c3d;
+        return array;
+      });
+      let version = (await storage.read('Note.md'))?.version ?? null;
+      for (const words of ['After.', 'After, twice.']) {
+        const written = await storage.write('Note.md', words, version);
+        if (!written.ok) throw new Error('refused');
+        version = written.version;
+      }
+      expect((await storage.read('Note.md'))?.text).toBe('After, twice.');
+      expect((await storage.read('.Note.md.eien.tmp'))?.text).toBe('The laptop’s paragraph.');
+      expect((await storage.read('.Note.md.0a1b2c3d.eien.tmp'))?.text).toBe(
+        'The tablet’s paragraph.',
+      );
+      random.mockRestore();
+    });
+
     it('reads a file’s bytes, and nothing for a missing one', async () => {
       await subject.putOutside('art/cover.png', 'PNG-bytes');
       const bytes = await subject.storage.readBytes('art/cover.png');
@@ -128,7 +152,7 @@ for (const [name, make] of Object.entries(implementations)) {
       const listed = (await storage.list()).find((entry) => entry.path === 'Art/Deep/scarf.png');
       expect(listed).toMatchObject({ kind: 'file', size: 256 });
       // Something there: a file, a folder, or one put there a moment ago. Never written over.
-      // (Case aside is the system's: Linux keeps two; the import numbers names case aside itself.)
+      // (A name there in another case too, on a disk that tells case apart: case-twins.test.ts.)
       expect(await storage.writeNew('Art/Deep/scarf.png', new Uint8Array([1]))).toBe(false);
       expect([...((await storage.readBytes('Art/Deep/scarf.png')) ?? [])]).toEqual([...bytes]);
       expect(await storage.writeNew('Art', new Uint8Array([1]))).toBe(false);

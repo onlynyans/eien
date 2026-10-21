@@ -13,6 +13,7 @@ public class VaultFilesPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "write", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "rename", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "replace", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "list", returnType: CAPPluginReturnPromise)
     ]
 
@@ -30,6 +31,18 @@ public class VaultFilesPlugin: CAPPlugin, CAPBridgedPlugin {
                 try Self.inDocuments(call.getString("from")),
                 to: try Self.inDocuments(call.getString("to")),
                 replace: call.getBool("replace") ?? false
+            )
+        }
+    }
+
+    /// A save's last step, coordinated with apps editing the note in place: "CHANGED" when the
+    /// note isn't at `expected` (null: no note).
+    @objc func replace(_ call: CAPPluginCall) {
+        answer(call) {
+            try VaultFileOps.replace(
+                try Self.inDocuments(call.getString("from")),
+                to: try Self.inDocuments(call.getString("to")),
+                expected: call.getString("expected")
             )
         }
     }
@@ -65,6 +78,8 @@ public class VaultFilesPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("Something is already at that name.", "TAKEN")
         } catch VaultFileError.missing {
             call.reject("Nothing is there.", "MISSING")
+        } catch VaultFileError.changed {
+            call.reject("The note changed meanwhile.", "CHANGED")
         } catch {
             call.reject("\(error)")
         }

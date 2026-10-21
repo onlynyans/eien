@@ -1,7 +1,8 @@
 // A vault on the phone (spec §10): the Storage contract (../storage.ts) over
 // a plain file system (./files.ts) — Capacitor's on the phone. Writes go
 // through a hidden temp file and are checked again just before they take
-// the file's place; moves refuse what the desktop's refuse. A phone has no
+// the file's place (on iOS inside a write coordinated with other apps);
+// moves refuse what the desktop's refuse. A phone has no
 // trash for files, so the trash is .eien/trash in the vault (decided
 // 2026-10-20): the words come back from any device, as a system trash
 // keeps them, a folder for each moment. Moves, trash and renames back never
@@ -10,6 +11,7 @@
 
 import { isHiddenName, nameKey, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
+import { type CaseLook, caseTwin, twinError } from '../case-twin';
 import {
   type FileState,
   MAX_BYTES_READ,
@@ -17,12 +19,15 @@ import {
   type Storage,
   type WriteResult,
 } from '../storage';
-import { CASE_STEP, hiddenBeside, NEW_SUFFIX, TEMP_SUFFIX, TRASH_STEP } from '../stray';
-import { type FilesPort, folderOf, nameOf, TakenError } from './files';
+import { CASE_STEP, NEW_SUFFIX, tempBeside } from '../stray';
+import { besidePath, ChangedError, type FilesPort, folderOf, nameOf, TakenError } from './files';
+import { TRASH_FOLDER, trashInto } from './phone-trash';
 import { Poller } from './poller';
 
-/** Where trashed files go: in the vault, hidden, a folder for each moment something was trashed. */
-export const TRASH_FOLDER = '.eien/trash';
+export { TRASH_FOLDER };
+
+/** How many tokens a write tries for its temp file: another one only if it was taken. */
+const TEMP_TRIES = 5;
 
 export interface CapacitorStorageOptions {
   /** How often the vault is looked at for changes, in milliseconds. */
@@ -39,13 +44,6 @@ async function versionOf(text: string): Promise<string> {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-/** The hidden file beside `path` named for `suffix` (a write's temp file, a rename's step). */
-const besidePath = (path: string, suffix: string): string => {
-  const folder = folderOf(path);
-  const name = hiddenBeside(nameOf(path), suffix);
-  return folder ? `${folder}/${name}` : name;
-};
-
 const addressable = (path: string): boolean => {
   try {
     vaultPath(path);
@@ -56,9 +54,6 @@ const addressable = (path: string): boolean => {
 };
 
 const joined = (folder: string, name: string) => (folder ? `${folder}/${name}` : name);
-
-/** A trash folder's name for the moment `ms`: "2026-10-20T22-40-00-123Z". */
-const stampOf = (ms: number) => new Date(ms).toISOString().replace(/[:.]/gu, '-');
 
 export class CapacitorStorage implements Storage {
   readonly #files: FilesPort;
@@ -72,6 +67,12 @@ export class CapacitorStorage implements Storage {
     this.#poller = new Poller(files, options.pollMs ?? 3000, options.active ?? (() => true));
     this.#now = options.now ?? Date.now;
   }
+
+  /** The system's own rule for case: Android's shared storage ignores it, iOS's tells it apart. */
+  readonly #look: CaseLook = {
+    exists: async (path) => (await this.#files.stat(path)) !== null,
+    names: async (folder) => ((await this.#files.list(folder)) ?? []).map((entry) => entry.name),
+  };
 
   async list(): Promise<VaultEntry[]> {
     const entries: VaultEntry[] = [];
@@ -124,17 +125,23 @@ export class CapacitorStorage implements Storage {
     return this.#oneAtATime(nameKey(at), async () => {
       const current = await this.read(at);
       if ((current?.version ?? null) !== expected) return { ok: false, current };
+      const twin = current === null ? await caseTwin(this.#look, at) : null;
+      if (twin !== null) return { ok: false, current: await this.read(twin) };
       await this.#files.makeFolder(folderOf(at));
-      const temp = besidePath(at, TEMP_SUFFIX);
+      const temp = await this.#freshTemp(at);
       await this.#files.writeText(temp, text);
-      const now = await this.read(at);
-      if ((now?.version ?? null) !== expected) {
+      const refused = async (current: FileState | null): Promise<WriteResult> => {
         await this.#files.remove(temp).catch(() => undefined);
-        return { ok: false, current: now };
-      }
+        return { ok: false, current };
+      };
+      const now = await this.read(at);
+      if ((now?.version ?? null) !== expected) return refused(now);
       try {
-        await this.#files.rename(temp, at);
+        // On iOS coordinated with apps editing the note in place, and looked at once more.
+        if (this.#files.replace) await this.#files.replace(temp, at, expected);
+        else await this.#files.rename(temp, at);
       } catch (error) {
+        if (error instanceof ChangedError) return refused(await this.read(at));
         // The temp file goes only while the note is there as it was: if the rename took the
         // note with it, the temp holds the only words, recovered when the vault next opens.
         const after = await this.read(at).catch(() => undefined);
@@ -156,6 +163,7 @@ export class CapacitorStorage implements Storage {
     const at = vaultPath(path);
     return this.#oneAtATime(nameKey(at), async () => {
       if (await this.#files.stat(at)) return false;
+      if ((await caseTwin(this.#look, at)) !== null) return false;
       await this.#files.makeFolder(folderOf(at));
       const temp = besidePath(at, NEW_SUFFIX);
       try {
@@ -182,6 +190,8 @@ export class CapacitorStorage implements Storage {
       if (source === target) return { ok: true };
       const caseOnly = nameKey(source) === nameKey(target);
       if (await this.#taken(source, target, caseOnly)) return { ok: false, reason: 'taken' };
+      if ((await caseTwin(this.#look, target, source)) !== null)
+        return { ok: false, reason: 'taken' };
       await this.#files.makeFolder(folderOf(target));
       try {
         if (caseOnly) await this.#renameCase(source, target);
@@ -192,6 +202,18 @@ export class CapacitorStorage implements Storage {
       }
       return { ok: true };
     });
+  }
+
+  /**
+   * A temp file name for a write to `at` that nothing has: the write's own token, and
+   * another if a file is there (Eien's plugins write over one, as the Filesystem's does).
+   */
+  async #freshTemp(at: string): Promise<string> {
+    for (let tries = 1; ; tries++) {
+      const temp = joined(folderOf(at), tempBeside(nameOf(at)));
+      if ((await this.#files.stat(temp)) === null) return temp;
+      if (tries >= TEMP_TRIES) throw new Error(`No free temp file beside ${at}.`);
+    }
   }
 
   /**
@@ -222,36 +244,15 @@ export class CapacitorStorage implements Storage {
   async trash(path: string): Promise<void> {
     const at = vaultPath(path);
     if (!(await this.#files.stat(at))) throw new Error(`Nothing to trash: ${path}`);
-    await this.#oneAtATime(nameKey(at), async () => {
-      // What holds the trash (.eien, a file of that name, the trash itself) steps aside first.
-      const holds = `${TRASH_FOLDER}/`.startsWith(`${at}/`);
-      const from = holds ? besidePath(at, TRASH_STEP) : at;
-      if (holds) await this.#files.renameNew(at, from);
-      try {
-        const stamp = stampOf(this.#now());
-        for (let n = 1; ; n++) {
-          // The same name trashed in the same moment takes the next folder.
-          const into = `${TRASH_FOLDER}/${n === 1 ? stamp : `${stamp}-${n}`}/${nameOf(at)}`;
-          if (await this.#files.stat(into)) continue;
-          await this.#files.makeFolder(folderOf(into));
-          try {
-            await this.#files.renameNew(from, into);
-            return;
-          } catch (error) {
-            if (!(error instanceof TakenError)) throw error;
-          }
-        }
-      } catch (error) {
-        if (holds) await this.#files.renameNew(from, at).catch(() => undefined); // back where it was
-        throw error;
-      }
-    });
+    await this.#oneAtATime(nameKey(at), () => trashInto(this.#files, at, this.#now()));
   }
 
   async makeFolder(path: string): Promise<void> {
     const at = vaultPath(path);
     if ((await this.#files.stat(at))?.type === 'file')
       throw new Error(`A file is in the way: ${path}`);
+    const twin = await caseTwin(this.#look, at);
+    if (twin !== null) throw twinError(twin);
     await this.#files.makeFolder(at);
   }
 

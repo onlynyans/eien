@@ -8,7 +8,7 @@
 
 import { isHiddenName, nameKey, recoveredName } from '../../core/paths';
 import type { Storage } from '../storage';
-import { besideOf, NEW_SUFFIX, steppedFrom, strayHoldsWords, TEMP_SUFFIX } from '../stray';
+import { besideOf, NEW_SUFFIX, steppedFrom, strayHoldsWords, tempFor } from '../stray';
 import { type FileEntry, type FilesPort, TakenError } from './files';
 
 const joined = (folder: string, name: string) => (folder ? `${folder}/${name}` : name);
@@ -29,7 +29,7 @@ export async function recoverStrays(
     for (const entry of entries) {
       const path = joined(folder, entry.name);
       const back = steppedFrom(entry.name);
-      const noteName = entry.type === 'file' ? besideOf(entry.name, TEMP_SUFFIX) : null;
+      const noteName = entry.type === 'file' ? tempFor(entry.name) : null;
       if (back !== null) {
         const put = await putBack(files, folder, entry, back, names, now);
         if (put !== null) recovered.push(put);

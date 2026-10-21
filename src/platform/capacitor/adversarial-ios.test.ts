@@ -11,8 +11,9 @@
 //   name, then moves. Each was run on this Mac against ion-ios-filesystem's
 //   own sources, compiled with swiftc.
 // - Eien's VaultFiles (ios/App/App/VaultFilesPlugin.swift): a flushed write,
-//   renames that replace (rename(2)) or refuse with "TAKEN", and a listing of
-//   each entry as itself (lstat), links left out.
+//   renames that replace (rename(2)) or refuse with "TAKEN", a listing of
+//   each entry as itself (lstat), links left out, and a save's last step
+//   (replace), refused with "CHANGED" when the note moved on meanwhile.
 // Each test names what a writer would lose.
 
 import {
@@ -36,6 +37,8 @@ const ios = vi.hoisted(() => ({
   vaultFiles: true,
   /** Run just before a plugin's rename acts: Syncthing writing beside Eien. */
   beforeRename: null as null | (() => Promise<void>),
+  /** Run as a save's last step is coordinated: another app saving the note first. */
+  beforeReplace: null as null | (() => Promise<void>),
 }));
 
 vi.mock('@capacitor/core', async () => {
@@ -83,6 +86,21 @@ vi.mock('@capacitor/core', async () => {
         });
       }
       return { files };
+    },
+    /** VaultFileOps.replace: other apps save first, then the note's version is looked at. */
+    async replace({ from, to, expected }: { from: string; to: string; expected: string | null }) {
+      await ios.beforeReplace?.();
+      const bytes = await fs.readFile(full(to)).catch(() => null);
+      const words = bytes && new TextDecoder('utf-8', { ignoreBOM: true }).decode(bytes);
+      const digest = async (text: string) =>
+        Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).toString(
+          'hex',
+        );
+      if ((words === null ? null : await digest(words)) !== expected)
+        throw Object.assign(new Error('The note changed meanwhile.'), { code: 'CHANGED' });
+      await fs.rename(full(from), full(to)).catch((error) => {
+        throw system(error);
+      });
     },
     async rename({ from, to, replace }: { from: string; to: string; replace: boolean }) {
       await ios.beforeRename?.();
@@ -216,6 +234,7 @@ beforeEach(async () => {
   ios.documents = await mkdtemp(join(tmpdir(), 'eien-ios-'));
   ios.vaultFiles = true;
   ios.beforeRename = null;
+  ios.beforeReplace = null;
   vault = join(ios.documents, 'Vault');
   await mkdir(vault);
 });
@@ -318,5 +337,38 @@ describe('without Eien’s plugin on iOS', () => {
     const { storage } = phone();
     expect(await storage.move('Draft.md', 'Chapter.md')).toEqual({ ok: false, reason: 'taken' });
     expect(await everyText()).toEqual(expect.arrayContaining(['Mine.', 'The laptop’s chapter.']));
+  });
+});
+
+describe('another app editing the note in place, through the Files app', () => {
+  it('saves its words first; Eien’s save is refused, and keeps the writer’s as a copy', async () => {
+    // Without coordination, Eien's save went over the other app's, or the other app's next
+    // autosave over Eien's. Now the other app saves as Eien's save is coordinated, and the
+    // note's version is looked at after that.
+    await put('Shared.md', 'Before.');
+    const { storage } = phone();
+    const before = await storage.read('Shared.md');
+    ios.beforeReplace = async () => {
+      ios.beforeReplace = null;
+      await put('Shared.md', 'Before. A line typed in the other app.');
+    };
+    const result = await storage.write(
+      'Shared.md',
+      'Before. A line typed in Eien.',
+      before?.version ?? null,
+    );
+    expect(result).toEqual({ ok: false, current: await storage.read('Shared.md') });
+    expect((await storage.read('Shared.md'))?.text).toBe('Before. A line typed in the other app.');
+    // Eien's words are still on the page, and its temp file is gone: the session keeps a copy.
+    expect((await readdir(vault)).filter((name) => name.endsWith('.eien.tmp'))).toEqual([]);
+  });
+
+  it('a save the other app didn’t touch goes through', async () => {
+    await put('Shared.md', 'Before.');
+    const { storage } = phone();
+    const before = await storage.read('Shared.md');
+    const result = await storage.write('Shared.md', 'After.', before?.version ?? null);
+    expect(result.ok).toBe(true);
+    expect((await storage.read('Shared.md'))?.text).toBe('After.');
   });
 });

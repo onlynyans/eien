@@ -47,14 +47,14 @@ for (const [name, make] of Object.entries(implementations)) {
 
     it('saves a note renamed to the longest title the rename allows', async () => {
       // The writer pastes a long first sentence as the title: renamedPath cuts it, leaving
-      // room for the 10 bytes a save's temp file adds.
+      // room for the 19 bytes a save's temp file adds.
       await subject.storage.write('Note.md', 'Words.', null);
       const renamed = renamedPath('Note.md', 'a'.repeat(300), [], true);
       if (!renamed.ok) throw new Error('refused');
-      expect(utf8Length(renamed.path)).toBe(245);
+      expect(utf8Length(renamed.path)).toBe(236);
       expect(isValidName(renamed.path)).toBe(true);
       expect(await subject.storage.move('Note.md', renamed.path)).toEqual({ ok: true });
-      // The next autosave: on disk the temp file ".<name>.eien.tmp" is 265 bytes, ENAMETOOLONG.
+      // The next autosave: its temp file ".<name>.<token>.eien.tmp" is 255 bytes, the most there is.
       const before = await subject.storage.read(renamed.path);
       const saved = await subject.storage
         .write(renamed.path, 'Words. And an hour more.', before?.version ?? null)

@@ -9,23 +9,20 @@ import { Clipboard } from '@capacitor/clipboard';
 import { freeName } from '../../core/paths';
 import type { OutBridge, OutFile } from '../../platform/bridge';
 import { type FilesPort, TakenError } from '../../platform/capacitor/files';
-import { hiddenBeside, TEMP_SUFFIX } from '../../platform/stray';
+import { tempBeside } from '../../platform/stray';
 
 /** How many names an export tries while others are being saved under them. */
 const TRIES = 5;
 
 const EXTENSIONS = { html: '.html', epub: '.epub', docx: '.docx' } as const;
 
-/** Exports under way: each writes through a temp file of its own, so two of one name can't meet. */
-let serial = 0;
-
 /** Exports into `exports`, named to the writer as in `folder` ("Eien/Exports"). */
 export function phoneOut(exports: FilesPort, folder: string): OutBridge {
   /** Write it through a hidden temp file, then give it the first free name. */
   async function save(base: string, extension: string, write: (temp: string) => Promise<void>) {
     await exports.makeFolder('');
-    serial += 1;
-    const temp = hiddenBeside(`${base}${extension}.${Date.now()}-${serial}`, TEMP_SUFFIX);
+    // A temp file of its own (a token of its own), so two exports of one name can't meet.
+    const temp = tempBeside(`${base}${extension}`);
     await write(temp);
     const taken = ((await exports.list('')) ?? []).map((entry) => entry.name);
     for (let tries = 0; tries < TRIES; tries++) {

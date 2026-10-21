@@ -112,14 +112,17 @@ so two devices never overwrite each other's state through Syncthing.
 
 - **Autosave.** Edits are written 800 ms after typing pauses, and on blur,
   switching notes and quitting. A note that hasn't changed is never rewritten.
-- **Durable writes.** Write to a hidden `.name.md.eien.tmp` beside the note,
-  flush it to disk, rename it over the note, and flush the folder. A crash
-  leaves the old file or the new one, never a partial one. At the next launch
-  a stray temp file holding words its note doesn't is kept as
-  `Note (recovered 2026-10-19 16-40).md`, whatever its time: a newer note was
-  changed by another device meanwhile, since this one's next save would have
-  taken the same temp file. One holding the note's own words, or none, is
-  removed; one that can't be read is left for the next launch.
+- **Durable writes.** Write to a hidden temp file beside the note, flush it to
+  disk, rename it over the note, and flush the folder. A crash leaves the old
+  file or the new one, never a partial one. Each write's temp file is its own
+  (`.name.md.<token>.eien.tmp`, a random token), never one that's there: a
+  temp file a crash left, here or on another device that Syncthing brought it
+  from, is never written over or renamed away by a save. At the next launch a
+  stray temp file holding words its note doesn't (with a token or from before
+  them, `.name.md.eien.tmp`) is kept as `Note (recovered 2026-10-19 16-40).md`,
+  whatever its time: its words may be nowhere else. One holding the note's own
+  words, or none, is removed; one that can't be read is left for the next
+  launch.
 - **Renames in two steps.** The phone renames a note or folder whose name
   changes only in case through a hidden step name (`.name.md.eien-case`), as
   its storage ignores case. A crash between the steps leaves the step, which
@@ -131,7 +134,18 @@ so two devices never overwrite each other's state through Syncthing.
   after another, so two can't both pass the version check. The version is
   checked again after the temp file is flushed, just before it takes the
   note's place: a change another program makes in that moment is refused, not
-  overwritten.
+  overwritten. On iOS that last look is inside a write coordinated with other
+  apps (NSFileCoordinator): an app editing the note in place, through the
+  Files app, saves its own changes first, so they're seen and kept, and is
+  told of Eien's save, so it reads the note again rather than save its old
+  words over Eien's.
+- **Case twins.** On a system that tells case apart (Linux, iOS), a new note,
+  image or folder, a move and a rename never take a name another entry in
+  its folder has in another case (`chapter.md` beside `Chapter.md`, or a
+  folder `fic` beside `Fic`): macOS, Windows and Android's shared storage
+  can't hold both, so Syncthing couldn't bring them there. A rename by case
+  alone is the same entry, and allowed. Twins made elsewhere are left as they
+  are, each saved under its own name.
 - **External changes.** Eien watches the vault. What changes while the vault
   is first read, before the watcher listens (Syncthing catching up as a phone
   opens Eien), is caught by one more look once it listens, reading only what
@@ -435,7 +449,8 @@ src/platform/
   electron/     ✓ Storage over Node fs: durable writes, the watcher, crash recovery
   memory/       ✓ Storage in memory, for tests
   index/        ✓ the vault's index over any Storage: previews, words, tags, search
-  capacitor/    ✓ Storage over the phone's file system: writes through a temp file, case-only renames in two steps, trash in .eien/trash, polling for changes, recovery after a crash
+  capacitor/    ✓ Storage over the phone's file system: writes through a temp file (on iOS coordinated with other apps), case-only renames in two steps, trash in .eien/trash, polling for changes, recovery after a crash
+  case-twin.ts  ✓ no storage makes a name its folder has in another case
 src/ui/
   app.ts        ✓ the window: panes, vault and note kept in step
   shell/        ✓ the panes: resizing, collapsing, three or two, kept per device
@@ -871,7 +886,8 @@ Compare or Restore finishes lands on a note opened meanwhile.
   app shows as "Eien" ("On My iPhone › Eien › Vault"), with `Exports` beside
   it; no access to ask for. Its writes and renames are Eien's own, as on
   Android (a Swift plugin: flushed to the disk, renames in one step, never
-  over a file that's there). Syncthing on iOS (Möbius Sync) can sync the
+  over a file that's there), and a save's last step is coordinated with apps
+  editing the note in place (§3). Syncthing on iOS (Möbius Sync) can sync the
   folder. CI builds the app and runs it on a simulator, with no Apple account;
   installing it on a device needs Xcode and an Apple ID.
 - **The phone layout** is one pane at a time: tree → list → page. A window
@@ -981,7 +997,8 @@ On macOS, Windows and Linux, each with a fresh temporary vault:
   case-only rename on the shared storage, which ignores case; the back
   gesture; a long press.
 - **On iOS** (CI, or `npm run test:ios` on a Mac with Xcode): the Swift file
-  operations tested with swiftc alone (`npm run test:ios-files`), then the
+  operations tested with swiftc alone (`npm run test:ios-files`), a save
+  coordinated with another app's open note among them, then the
   app built for an iPhone simulator, started with a crash's leftovers in its
   vault, and held to recovering them: the bridge, the storage and the Swift
   plugin together. The screen is kept.

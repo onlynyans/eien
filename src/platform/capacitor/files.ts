@@ -3,6 +3,8 @@
 // plugin gives them on the phone (./capacitor-files.ts); Node's fs gives
 // them in tests (./node-files.ts), so the storage's contract tests run on it.
 
+import { hiddenBeside } from '../stray';
+
 /** A file or folder, as a listing or a stat tells it. */
 export interface FileEntry {
   readonly name: string;
@@ -18,6 +20,14 @@ export class TakenError extends Error {
   constructor(path: string) {
     super(`Something is already at ${path}.`);
     this.name = 'TakenError';
+  }
+}
+
+/** Thrown by `replace` when the file isn't at the version expected: nothing was done. */
+export class ChangedError extends Error {
+  constructor(path: string) {
+    super(`${path} changed meanwhile.`);
+    this.name = 'ChangedError';
   }
 }
 
@@ -48,8 +58,16 @@ export interface FilesPort {
    */
   rename(from: string, to: string): Promise<void>;
   /**
-   * Rename a file or folder to a name nothing has, by any case: TakenError when something is
-   * there, looked at as close to the rename as the system allows.
+   * Where the system coordinates writes with other apps (iOS): rename as `rename` does, as a
+   * coordinated write, only while the file at `to` is at `version` (the storage's, of its
+   * text; null: no file there), looked at inside the coordination; ChangedError, and nothing
+   * done, when it isn't. Another app editing the file in place saves first, and is told.
+   */
+  replace?(from: string, to: string, version: string | null): Promise<void>;
+  /**
+   * Rename a file or folder to a name nothing has: TakenError when something is there (by any
+   * case the system ignores), looked at as close to the rename as the system allows. A name
+   * another entry has in another case, the storage refuses itself (../case-twin.ts).
    */
   renameNew(from: string, to: string): Promise<void>;
   /** Make the folder and any above it; one already there, or made at the same moment, is fine. */
@@ -64,3 +82,10 @@ export const folderOf = (path: string): string =>
 
 /** The last name of a vault path. */
 export const nameOf = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
+
+/** The hidden file beside `path` named for `suffix` (a write's temp file, a rename's step). */
+export const besidePath = (path: string, suffix: string): string => {
+  const folder = folderOf(path);
+  const name = hiddenBeside(nameOf(path), suffix);
+  return folder ? `${folder}/${name}` : name;
+};

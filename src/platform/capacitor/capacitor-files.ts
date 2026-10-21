@@ -5,20 +5,23 @@
 // renames are Eien's own plugin's (VaultFilesPlugin.java, VaultFilesPlugin.
 // swift): the Filesystem plugin's write is never flushed to the disk, and
 // its rename deletes the file it replaces before renaming, so a rename that
-// fails loses both. Elsewhere (the phone's page in tests) the Filesystem's.
+// fails loses both. On iOS a save's last step is coordinated with apps
+// editing the note in place (`replace`). Elsewhere (the phone's page in
+// tests) the Filesystem's.
 
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
-import { type FileEntry, type FilesPort, TakenError } from './files';
+import { ChangedError, type FileEntry, type FilesPort, TakenError } from './files';
 
 /**
- * Paths are in Documents. Rejects with the code "TAKEN" for a name that's taken, and (list,
- * on iOS) "MISSING" when there's no folder.
+ * Paths are in Documents. Rejects with the code "TAKEN" for a name that's taken, and on iOS
+ * "MISSING" (list) when there's no folder and "CHANGED" (replace) for a note changed meanwhile.
  */
 interface VaultFilesPlugin {
   write(options: { path: string; text: string }): Promise<void>;
   rename(options: { from: string; to: string; replace: boolean }): Promise<void>;
   list(options: { path: string }): Promise<{ files: FileEntry[] }>;
+  replace(options: { from: string; to: string; expected: string | null }): Promise<void>;
 }
 
 const VaultFiles = registerPlugin<VaultFilesPlugin>('VaultFiles');
@@ -39,6 +42,8 @@ export class CapacitorFiles implements FilesPort {
    * folder as though it weren't there), and its text read refuses a file cut mid-character.
    */
   readonly #ios: boolean;
+  /** iOS only: a save's last step as a coordinated write (VaultFileOps.replace). */
+  readonly replace?: (from: string, to: string, version: string | null) => Promise<void>;
 
   constructor(directory: Directory, root: string) {
     this.#directory = directory;
@@ -46,6 +51,14 @@ export class CapacitorFiles implements FilesPort {
     const platform = Capacitor.getPlatform();
     this.#native = directory === Directory.Documents && ['android', 'ios'].includes(platform);
     this.#ios = this.#native && platform === 'ios';
+    if (this.#ios) {
+      this.replace = (from, to, expected) =>
+        this.#plugin()
+          .replace({ from: this.#path(from), to: this.#path(to), expected })
+          .catch((error: unknown) => {
+            throw (error as { code?: unknown }).code === 'CHANGED' ? new ChangedError(to) : error;
+          });
+    }
   }
 
   /**

@@ -13,10 +13,11 @@ const FORBIDDEN = /[<>:"/\\|?*\u0000-\u001f\u007f]/;
 export const MAX_NAME_BYTES = 255;
 
 /**
- * The longest name Eien makes: room is left for the 10 bytes a save's temp
- * file adds (".<name>.eien.tmp"), so a note Eien named can always be saved.
+ * The longest name Eien makes: room is left for the 19 bytes a save's temp
+ * file adds (".<name>.<token>.eien.tmp"), so a note Eien named is saved, and
+ * recovered after a crash, under its whole name.
  */
-export const MAX_MADE_NAME_BYTES = MAX_NAME_BYTES - 10;
+export const MAX_MADE_NAME_BYTES = MAX_NAME_BYTES - 19;
 
 export type NameProblem =
   | 'empty'
