@@ -48,6 +48,7 @@ features that came after, and the plan for them (below the table).
 | 31 | This vault's settings | tweak | Settings | The vault's own settings (chapter numbers, AO3's scene break) in a category of their own, "This vault", apart from this device's. | Mixed in with the rest | yes | you |
 | 32 | The three-way filter on the sidebar's TAGS | feature | Sidebar | A tag row can be wanted or kept out (with a modifier click), as in the list's filter, if it costs nothing in speed with thousands of notes. | Choosing a tag shows its notes | yes | you |
 | 33 | A lens in the two-pane tree | feature | Sidebar | With two panes the tree lists notes; a sort or filter acts there as it does in the list. | Sorts apply to the list only | – | you |
+| 34 | Speed with thousands of notes | fix | Sidebar, list | Two panes with 3,000 notes drew 6,000 rows: laying them out held the window for most of a second on a slow machine, and CI's timing test failed on macOS. Draw only the rows in sight, keep the keyboard through every row, and hold the common actions to a time in CI. | **Done** ([#37](https://github.com/onlynyans/eien/pull/37)): long lists draw the rows in sight (`ui/shell/windowed-rows.ts`); the speed budgets (`tests/e2e/budgets.spec.ts`): no task over 200 ms | – | you |
 
 ## Plan
 
@@ -109,6 +110,10 @@ each step's files apart from the others' in its wave.
 | 3A The layouts (done, [#36](https://github.com/onlynyans/eien/pull/36)) | #28 the framework and all three layouts as a setting; #26 the icons; #27 corners per layout; #15 chevrons and the seal strip; #16 the strip that hides; #17 view icons; #30 Focus; #8 the foot's icons; #1 what goes in C's strip |
 | 3B Themes (done, [#34](https://github.com/onlynyans/eien/pull/34)) | #20: the gallery's themes, your own in `.eien/themes/`, the mix (fitted to Eien's contrast); the theme applied as tokens |
 | 3C The app's icon (done, [#35](https://github.com/onlynyans/eien/pull/35)) | #21: the seal, for the installers and both phones |
+
+**Before wave 2**: the performance foundation (#34), so wave 2's tree and
+list work starts on lists that draw only the rows in sight, and with the
+speed budgets in CI.
 
 **Wave 2**, once 3A has merged (they build on its framework and icons):
 

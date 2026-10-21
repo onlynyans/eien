@@ -152,3 +152,15 @@ dialog {
   background: var(--controls-ground, var(--eien-band));
   color: var(--eien-ink-soft);
 }
+
+/* A long list's spacers (./windowed-rows.ts): the height of the rows not drawn, above and below. */
+.window-spacer {
+  display: block;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+/* The sidebar's group of a long list of notes: only a holder, the rows inside draw as any others. */
+.tree-notes {
+  display: block;
+}
