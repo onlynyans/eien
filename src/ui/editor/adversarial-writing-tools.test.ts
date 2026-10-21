@@ -251,8 +251,9 @@ describe('focus mode: what holds', () => {
       .join('\n')
       .padEnd(1_000_000, 'x');
     const state = EditorState.create({ doc, selection: { anchor: doc.length >> 1 } });
+    // Once before the clock: a keystroke's cost is the warmed code's, not its first compile.
+    let lit = bright(state);
     const started = performance.now();
-    let lit: number[] = [];
     for (let i = 0; i < 10; i++) lit = bright(state);
     expect((performance.now() - started) / 10).toBeLessThan(50);
     expect(lit.length).toBeLessThanOrEqual(4001);
