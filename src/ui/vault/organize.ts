@@ -12,8 +12,6 @@ import {
   type Renamed,
   renamedPath,
   titleOf,
-  VAULT_PINS,
-  VAULT_TAGS,
 } from '../../core/paths';
 import { withMadeTag, withTagOrder } from '../../core/tags';
 import {
@@ -21,8 +19,6 @@ import {
   type FolderChange,
   movedPins,
   parseFolderSettings,
-  parsePins,
-  pinsText,
   placedBefore,
   presentInOrder,
   renamedInOrder,
@@ -34,6 +30,7 @@ import {
 import type { VaultBridge } from '../../platform/bridge';
 import type { NoteSession } from '../notes/note-session';
 import { reasonOf } from '../reason';
+import { SmallFiles } from './small-files';
 import type { VaultState } from './vault-state';
 
 export interface OrganizeContext {
@@ -51,9 +48,6 @@ export interface OrganizeContext {
   tell(message: string): void;
 }
 
-/** How many times a small file is read and written again while it keeps changing. */
-const TRIES = 3;
-
 const PROBLEMS: Record<Exclude<Renamed, { ok: true }>['problem'], string> = {
   empty: 'A name needs a letter or a number.',
   taken: 'Something here already has that name.',
@@ -67,8 +61,12 @@ const nameOf = (path: string) => titleOf(baseName(path)) || path;
 export class Organizer {
   readonly #ctx: OrganizeContext;
 
+  /** The vault's own small files: pins, tags, All Notes' order, a folder's settings. */
+  readonly #files: SmallFiles;
+
   constructor(context: OrganizeContext) {
     this.#ctx = context;
+    this.#files = new SmallFiles(context);
   }
 
   /** Rename the note at `path` from the title typed; its new path, or null (and the writer told why). */
@@ -122,7 +120,7 @@ export class Organizer {
       if (held === 'held') this.#ctx.freeze?.(false);
     }
     if (held === 'held') this.#ctx.closed();
-    await this.#changePins((pins) => withoutPins(pins, path));
+    await this.#files.followPaths((paths) => withoutPins(paths, path));
     await this.#changeOrder(parentOf(path), (order) => withoutInOrder(order, baseName(path)), {
       left: baseName(path),
     });
@@ -140,7 +138,7 @@ export class Organizer {
    * on another device) or no longer a book is left as it is: never made again.
    */
   setGoal(folder: string, goal: number | null): Promise<boolean> {
-    return this.#update(
+    return this.#files.update(
       joinPath(folder, FOLDER_SETTINGS_NAME),
       (text) =>
         text === null || parseFolderSettings(text).book === null
@@ -188,7 +186,7 @@ export class Organizer {
   }
 
   pin(path: string, pinned: boolean): Promise<boolean> {
-    return this.#changePins((pins) => withPin(pins, path, pinned));
+    return this.#files.changePins((pins) => withPin(pins, path, pinned));
   }
 
   /**
@@ -233,7 +231,7 @@ export class Organizer {
       return this.#refuse(`“${nameOf(from)}” couldn’t be moved: ${why[result.reason]}`);
     }
     if (open && inside(open.path)) open.movedTo(to + open.path.slice(from.length));
-    await this.#changePins((pins) => movedPins(pins, from, to));
+    await this.#files.followPaths((paths) => movedPins(paths, from, to));
     const [left, came] = [baseName(from), baseName(to)];
     if (parentOf(from) === parentOf(to)) {
       await this.#changeOrder(parentOf(from), (order) => renamedInOrder(order, left, came), {
@@ -271,63 +269,26 @@ export class Organizer {
   }
 
   #changeFolder(folder: string, change: FolderChange): Promise<boolean> {
-    return this.#update(
+    return this.#files.update(
       joinPath(folder, FOLDER_SETTINGS_NAME),
       (text) => withFolderSettings(text, change),
       folder,
     );
   }
 
-  /**
-   * Make a tag no note carries yet (the sidebar's +), or take one made back out:
-   * kept in .eien/tags.json. Whether it was written.
-   */
+  /** Make a tag no note carries yet (the sidebar's +), or take one made back out. */
   makeTag(tag: string, made: boolean): Promise<boolean> {
-    return this.#update(VAULT_TAGS, (text) => withMadeTag(text, tag, made), 'tags');
+    return this.#files.makeTag(tag, made);
   }
 
-  /** The tags in your order (their keys, every level), kept in .eien/tags.json. */
+  /** The tags in your order (their keys, every level). */
   setTagOrder(order: readonly string[]): Promise<boolean> {
-    return this.#update(VAULT_TAGS, (text) => withTagOrder(text, order), 'tags');
+    return this.#files.setTagOrder(order);
   }
 
-  #changePins(change: (pins: string[]) => string[]): Promise<boolean> {
-    return this.#update(
-      VAULT_PINS,
-      (text) => {
-        const pins = parsePins(text);
-        const next = change(pins);
-        // No file is written for no change: a vault never pinned has no pins file.
-        return next.join('\n') === pins.join('\n') ? undefined : pinsText(next);
-      },
-      'pins',
-    );
-  }
-
-  /**
-   * Read a small file, change it, and write it back at the version read; read
-   * again if it changed meanwhile. `change` gives the new text, undefined for
-   * nothing to write, or null when the file can't be read as it should be.
-   */
-  async #update(
-    path: string,
-    change: (text: string | null) => string | null | undefined,
-    what: string,
-  ): Promise<boolean> {
-    for (let attempt = 0; attempt < TRIES; attempt++) {
-      const file = await this.#ctx.vault.read(path);
-      const next = change(file?.text ?? null);
-      if (next === undefined) return true;
-      if (next === null) {
-        this.#ctx.tell(
-          `${path} isn’t valid JSON, so the ${WHAT[what] ?? 'folder’s settings'} weren’t changed. Fix or remove it, then try again.`,
-        );
-        return false;
-      }
-      if ((await this.#ctx.vault.write(path, next, file?.version ?? null)).ok) return true;
-    }
-    this.#ctx.tell(`${path} kept changing; try again.`);
-    return false;
+  /** All Notes in your order: every note's path, as shown. */
+  setAllOrder(paths: readonly string[]): Promise<boolean> {
+    return this.#files.setAllOrder(paths);
   }
 
   async #refuse(message: string): Promise<null> {

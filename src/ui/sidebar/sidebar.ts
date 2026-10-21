@@ -35,6 +35,8 @@ export interface SidebarActions extends TreeActions {
   moveFolder(path: string, how: FolderMove): void;
   /** Move a tag one place up or down among the tags beside it. */
   moveTag(key: string, by: -1 | 1): void;
+  /** Lay a tag over the list showing (#32): moved on to the next state, or kept out at once. */
+  filterTag(key: string, out: boolean): void;
   newFolder(): void;
   /** Make a tag no note carries yet (the + beside TAGS). */
   newTag(tag: string): void;
@@ -222,8 +224,10 @@ export class Sidebar {
           }),
         tag: (key) =>
           tagRowEvents({
+            select: () => actions.select({ kind: 'tag', key }),
             menu: (at) => actions.tagMenu(key, at),
             move: (by) => actions.moveTag(key, by),
+            filter: (out) => actions.filterTag(key, out),
           }),
       },
       this.#rows,

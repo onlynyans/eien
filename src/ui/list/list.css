@@ -477,3 +477,25 @@
 .name-field__problem[hidden] {
   display: none;
 }
+
+/* Arranging (Arrange mode): a grip at each row's own left edge, out of the row's columns. */
+.note-row__grip {
+  position: absolute;
+  left: var(--eien-space-1);
+  top: 50%;
+  display: flex;
+  color: var(--eien-pencil);
+  transform: translateY(-50%);
+}
+.note-row__grip .icon {
+  width: 12px;
+  height: 12px;
+}
+.rows.is-arranging .note-row {
+  cursor: grab;
+}
+.list__tools .list__arrange[aria-pressed="true"] {
+  opacity: 1;
+  color: var(--eien-ink);
+  background: var(--eien-selected);
+}

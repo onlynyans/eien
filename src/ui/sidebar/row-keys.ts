@@ -45,12 +45,24 @@ export const folderRowEvents = (on: FolderKeys): Props['on'] => ({
 });
 
 export interface TagKeys {
+  /** Choose the tag: its notes, in the list. */
+  select(): void;
   menu(at: Point): void;
   move(by: -1 | 1): void;
+  /** Lay it over the list showing (#32): wanted, or (`out`) kept out at once. */
+  filter(out: boolean): void;
 }
 
-/** A tag's menu, and ⌥↑ ⌥↓ to move it among the tags beside it. */
+/**
+ * A tag's row: a click chooses it; ⇧ and a click (or ⇧Enter) moves it on in
+ * the list's filter, ⌥ and a click (or ⌥Enter) keeps it out at once, as the
+ * filter's own panel does. Its menu, and ⌥↑ ⌥↓ to move it among the tags beside it.
+ */
 export const tagRowEvents = (on: TagKeys): Props['on'] => ({
+  click: (event) => {
+    if (event.shiftKey || event.altKey) on.filter(event.altKey);
+    else on.select();
+  },
   contextmenu: (event) => {
     event.preventDefault();
     on.menu(menuPoint(event));
@@ -59,6 +71,7 @@ export const tagRowEvents = (on: TagKeys): Props['on'] => ({
     if (isMenuKey(event)) on.menu(menuPoint(event));
     else if (plainAlt(event) && event.key === 'ArrowUp') on.move(-1);
     else if (plainAlt(event) && event.key === 'ArrowDown') on.move(1);
+    else if (event.key === 'Enter' && (event.shiftKey || event.altKey)) on.filter(event.altKey);
     else return;
     event.preventDefault();
   },
