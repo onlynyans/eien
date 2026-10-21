@@ -40,9 +40,48 @@ when code and spec disagree, fix one of them in the same change.
 | `docs/design/` | The approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on. `.interface-design/system.md` sums it up for the interface-design skill |
 | `docs/backlog.md` | What comes after the phases: fixes, tweaks and features, each marked for the design pass or not, and the owner's open questions |
 
-Unit tests sit beside their module as `name.test.ts`; property tests (fast-check)
-as `name.property.test.ts`. Those try the same generated inputs on every run;
-`FC_SEED=<n>` reproduces a failure from another seed, and `FC_RUNS` tries more.
+## Tests
+
+Each kind catches its own regressions; a change adds the kind that would
+have caught it breaking.
+
+| Kind | For | Where | Run |
+|---|---|---|---|
+| Unit | A module's rules, given inputs | `name.test.ts` beside the module | `npm test`, or `npx vitest run <path>` |
+| Property | A rule over thousands of generated inputs (fast-check) | `name.property.test.ts` beside it | `npm test` |
+| DOM unit | What a window module draws and does: rows, roles, keys, focus kept across a redraw | `name.test.ts` under `src/ui/`, which run in happy-dom | `npx vitest run src/ui` |
+| Architecture | Layers, selectors, identity, icons, wiring | `tests/*.test.ts` | `npm test` |
+| End to end | The built app on real folders: what a writer does | `tests/e2e/*.spec.ts` | `npm run test:e2e` |
+| Accessibility | No serious or critical axe-core violation (WCAG 2.2 AA, contrast included), each layout by day and night, three panes, two, Settings | `tests/e2e/accessibility.spec.ts`, `tests/mobile/accessibility.spec.ts` | in `test:e2e`, `test:mobile` |
+| Speed budgets | No long task over 200 ms with thousands of notes | `tests/e2e/budgets.spec.ts` | in `test:e2e` (`ALONE`) |
+| Resource budgets | Elements in the window, the JS heap after a long session, the first list's time, the renderer's size | `tests/e2e/resources.spec.ts` | in `test:e2e` |
+| Phone page | The phone's page in Chromium, Capacitor's web plugins standing in | `tests/mobile/*.spec.ts` | `npm run test:mobile` |
+| Mutation | The edits to core and platform no test notices | Stryker, weekly | `npm run test:mutation` |
+| Coverage | A floor: CI fails under `thresholds` in `vitest.config.ts` | lint job | `npm run test:coverage` |
+
+Adding one:
+
+- **Unit and property tests** try the same inputs on every run; `FC_SEED=<n>`
+  reproduces a failure from another seed, and `FC_RUNS` tries more.
+- **DOM unit tests.** Vitest has two projects (`vitest.config.ts`): `src/ui/**`
+  runs in happy-dom, everything else in Node, so core can't lean on a DOM.
+  happy-dom lays nothing out: sizes are 0 and `checkVisibility()` is always
+  true, so stub `getBoundingClientRect` (or `clientHeight`, `scrollTop`) where
+  a module measures, and leave what only a real window shows to the end-to-end
+  tests. Test what the writer meets (rows, names, roles, keys, where the
+  keyboard is), not private state. `navigator.platform` isn't a Mac's: the
+  modifier is Ctrl.
+- **Accessibility.** `seriousViolations(page)` (`tests/e2e/axe.ts`) checks
+  the window at rest (motion reduced, so no fade is caught halfway);
+  `violationsUnder(page, areas)` with the pointer over each area, so controls
+  that show on hover are checked too. A new screen or popup adds its state to
+  the accessibility specs. Fix what it finds; what can't be fixed in the change
+  goes in `docs/backlog.md`.
+- **Budgets** (speed's rules are under Commands, after CI). Measure first
+  (`BUDGETS=1` prints each number), then set the budget with room for CI's
+  slower machines, and write the measured number beside it. A test held to a
+  time is `ALONE`. A listener, cache or element kept per note is what the heap
+  and element budgets catch.
 
 ## Commands
 
