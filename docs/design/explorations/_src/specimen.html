@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en" data-stroke="1.25">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — icons, corners and type settings</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+body { overflow: auto; }
+main { max-width: 1120px; margin: 0 auto; padding: var(--eien-space-6) var(--eien-space-5) var(--eien-space-8); }
+h1 { font-size: var(--eien-size-title); font-weight: 500; margin: 0 0 var(--eien-space-2); }
+h2 { margin: var(--eien-space-7) 0 var(--eien-space-2); }
+.lede { max-width: 44em; color: var(--eien-ink-soft); margin: 0 0 var(--eien-space-4); }
+.paper { background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); padding: var(--eien-space-5); }
+
+.icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 1px; background: var(--eien-rule-soft); border: var(--eien-hairline) solid var(--eien-rule-soft); }
+.cell { display: grid; justify-items: center; gap: var(--eien-space-2); padding: var(--eien-space-4) var(--eien-space-2) var(--eien-space-3); background: var(--eien-paper); color: var(--eien-ink-soft); }
+.cell .big { width: 48px; height: 48px; }
+.cell .big .icon { width: 48px; height: 48px; stroke-width: calc(var(--eien-icon-stroke) / 1); }
+.cell .small { display: flex; gap: var(--eien-space-2); align-items: center; }
+.cell .label { font-size: 9px; }
+
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--eien-space-4); }
+.col { background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); padding: var(--eien-space-4); display: grid; gap: var(--eien-space-3); align-content: start; }
+.col h3 { margin: 0; font-size: var(--eien-size-row); font-weight: 600; }
+.chip { display: inline-block; padding: 1px 7px; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); border: var(--eien-hairline) solid var(--eien-rule); background: var(--eien-band); }
+.menu { display: grid; gap: 1px; padding: var(--eien-space-1); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); box-shadow: var(--eien-shadow-float); }
+.menu .word-button { text-align: left; }
+.dialog { height: 70px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); box-shadow: var(--eien-shadow-float); display: grid; place-items: center; }
+.row-of { display: flex; gap: var(--eien-space-2); align-items: center; flex-wrap: wrap; }
+
+.states { display: flex; gap: var(--eien-space-5); flex-wrap: wrap; }
+.state { display: grid; justify-items: center; gap: var(--eien-space-1); }
+.is-hover { color: var(--eien-ink) !important; background: var(--eien-hover) !important; }
+.is-press { background: var(--eien-press) !important; border-color: var(--eien-rule-strong) !important; }
+.is-focus { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+.tip-demo { position: relative; display: inline-block; padding: 3px 7px; border-radius: var(--eien-radius-s); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); box-shadow: var(--eien-shadow-float); font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em; color: var(--eien-ink-soft); }
+.tip-demo kbd { font: inherit; color: var(--eien-pencil); margin-left: 6px; }
+
+.faces { display: grid; gap: 0; border-top: var(--eien-hairline) solid var(--eien-rule-soft); }
+.face-row { display: grid; grid-template-columns: 220px 1fr 1fr; gap: var(--eien-space-4); align-items: baseline; padding: var(--eien-space-2) 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.face-row .name { font-size: var(--eien-size-row); }
+.face-row .demo-label { font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+.face-row .demo-count { font-size: var(--eien-size-meta); font-variant-numeric: tabular-nums; color: var(--eien-pencil); }
+.weights { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--eien-space-3); }
+.wcol { background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); }
+.wcol .label { display: block; padding: var(--eien-space-2) var(--eien-space-3); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.wrow { padding: 7px var(--eien-space-3); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); font-size: var(--eien-size-row); position: relative; }
+.wrow.sel { background: var(--eien-selected); }
+.wrow.sel::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: var(--eien-mark-w); background: var(--eien-seal); }
+</style>
+</head>
+<body>
+<header class="xbar">
+  <span class="xbar__name">Eien · specimen of what's new</span>
+  <div class="xbar__group" data-x-set="theme"><span class="xbar__label">Scheme</span>
+    <button class="word-button" data-value="light">Day</button><button class="word-button" data-value="dark">Night</button></div>
+  <div class="xbar__group" data-x-set="stroke"><span class="xbar__label">Icon stroke</span>
+    <button class="word-button" data-value="1">1</button><button class="word-button" data-value="1.25">1.25</button><button class="word-button" data-value="1.5">1.5</button></div>
+</header>
+<main>
+  <h1>Icons, corners, and the two type settings</h1>
+  <p class="lede">Controls become icons (backlog #26), not everything stays square (#27), the machine voice's face becomes a setting (#24), and so does the weight of row names (#25). Everything else is as <code>system.md</code> has it.</p>
+
+  <h2 class="label">Icons · one set, drawn for Eien</h2>
+  <p class="lede">A 16-unit grid, round ends, stroked in the ink they sit in: they read as pen lines, like the hairlines and the crossed-through words of Compare, not as glyphs from another app. Drawn here as inline SVG; nothing fetched, no icon font. Shown at 48px to judge the drawing, and at 16px, the size they're used at, in each ink.</p>
+  <div class="icons" id="icons"></div>
+
+  <h2 class="label">An icon control, in every state</h2>
+  <div class="paper"><div class="states" id="states"></div>
+    <p class="lede" style="margin-top:var(--eien-space-4)">A tooltip names it, in the machine voice, with its key:</p>
+    <span class="tip-demo">Seal this version<kbd>⌘S</kbd></span>
+  </div>
+
+  <h2 class="label">Corners · three scales, one per exploration</h2>
+  <p class="lede">Paper stays square (the panes, the sheet, the list): it's paper. What you press gets a small radius; what floats a middle one; what covers the window the largest. Dots stay round. The three explorations try three strengths.</p>
+  <div class="grid3" id="corners"></div>
+
+  <h2 class="label">The machine voice's face · #24</h2>
+  <p class="lede">One list of faces feeds both settings, so a face added later appears in both. Every face below sets labels and counts as the mono does: capitals tracked for labels, figures in columns (<code>tabular-nums</code>) for counts.</p>
+  <div class="paper faces" id="faces"></div>
+
+  <h2 class="label">Row names' weight · #25</h2>
+  <p class="lede">The sidebar's names and the list's titles each take 400 to 700. A chosen list title is 100 heavier, up to 700, so it still stands out at 600; at 700 the seal's rule and the fill carry it alone.</p>
+  <div class="weights" id="weights"></div>
+</main>
+<script>
+/*@shared-js*/
+const names = Object.keys(ICONS);
+document.getElementById('icons').innerHTML = names.map((n) => `<div class="cell"><span class="big">${icon(n)}</span>
+  <span class="small"><span style="color:var(--eien-ink)">${icon(n)}</span><span style="color:var(--eien-ink-soft)">${icon(n)}</span><span style="color:var(--eien-pencil)">${icon(n)}</span></span><span class="label">${n}</span></div>`).join('');
+
+const states = [['Rest', ''], ['Hover', 'is-hover'], ['Pressed', 'is-press'], ['Chosen', 'chosen'], ['Focus', 'is-focus'], ['Disabled', 'disabled']];
+document.getElementById('states').innerHTML = ['live', 'compare', 'versions', 'sun'].map((n) => `<div class="row-of">${states.map(([label, cls]) =>
+  `<span class="state"><button class="icon-button ${cls}" ${cls === 'chosen' ? 'aria-pressed="true"' : ''} ${cls === 'disabled' ? 'disabled' : ''}>${icon(n)}</button><span class="label" style="font-size:9px">${label}</span></span>`).join('')}</div>`).join('');
+
+const SCALES = [['A · Band', 2, 4, 8], ['B · Slip', 4, 8, 14], ['C · Running head', 3, 6, 10]];
+document.getElementById('corners').innerHTML = SCALES.map(([name, s, m, l]) => `<div class="col" style="--eien-radius-s:${s}px;--eien-radius-m:${m}px;--eien-radius-l:${l}px">
+  <h3>${name}</h3><span class="label">s ${s} · m ${m} · l ${l}</span>
+  <div class="row-of"><button class="icon-button" aria-pressed="true">${icon('reading')}</button><button class="word-button" aria-pressed="true">Comfortable</button>
+  <span class="chip" style="border-radius:${name.startsWith('C') ? 999 : s}px">#fic/aot</span></div>
+  <input class="field" placeholder="Search Ink & Ash" />
+  <div class="menu" style="border-radius:${m}px"><button class="word-button" aria-checked="true">Your order</button><button class="word-button">Newest</button><button class="word-button">Title A–Z</button></div>
+  <div class="dialog" style="border-radius:${l}px"><span class="label">a sheet over the window</span></div></div>`).join('');
+
+document.getElementById('faces').innerHTML = MACHINE_FACES.map((f) => `<div class="face-row"><span class="name" style="font-family:${f.family}">${f.name}${f.mono ? ' · default' : ''}</span>
+  <span class="demo-label" style="font-family:${f.family}">Library · Folders · Tags</span>
+  <span class="demo-count" style="font-family:${f.family}">312 notes · 48,210 words · 3,051 w</span></div>`).join('');
+
+const titles = ['The Last Bell', 'Wall Rose, at Dusk', 'What the Recruits Say', 'Night Watch'];
+document.getElementById('weights').innerHTML = [400, 500, 600, 700].map((w) => `<div class="wcol"><span class="label">${w} · chosen ${Math.min(w + 100, 700)}</span>
+  ${titles.map((t, i) => `<div class="wrow${i === 2 ? ' sel' : ''}" style="font-weight:${i === 2 ? Math.min(w + 100, 700) : w}">${t}</div>`).join('')}</div>`).join('');
+
+wireBar((attr, value) => { if (attr === 'stroke') document.documentElement.style.setProperty('--eien-icon-stroke', value); });
+</script>
+</body>
+</html>

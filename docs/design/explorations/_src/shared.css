@@ -1,0 +1,196 @@
+/* Shared by every exploration (inlined into each page by _build.py).
+   The tokens are the approved ones from ../tokens.css (Washi, day and night),
+   plus what the design pass adds: a radius scale, icon sizes, the machine
+   face as a setting, and row weights. New tokens are marked NEW. */
+
+:root { color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+:root {
+  --eien-desk: light-dark(#d9d2c8, #110e0b);
+  --eien-blotter: light-dark(#eae5dd, #1a1713);
+  --eien-band: light-dark(#f4f1ea, #201d19);
+  --eien-paper: light-dark(#fdfbf7, #28241f);
+  --eien-paper-raised: light-dark(#ffffff, #312d28);
+  --eien-well: light-dark(#f9f7f3, #24201c);
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05));
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1));
+  --eien-selected: light-dark(#ede9e3, #38332e);
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5));
+  --eien-shadow-sheet: 0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float: 0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  --eien-ink: light-dark(#23201c, #e9e2d4);
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7);
+  --eien-pencil: light-dark(#5d5348, #a7a095);
+  --eien-faded: light-dark(#766d62, #837c73);
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07));
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.14));
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.26));
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px;
+  --eien-seal: light-dark(#c4472d, #e0603f);
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12));
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714);
+  --eien-focus: var(--eien-ink-soft);
+  --eien-added: light-dark(#485c2c, #9cb880);
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0);
+  --eien-caution: light-dark(#6b501f, #d0a659);
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+
+  /* The machine voice: IBM Plex Mono by default, now a setting (NEW: set from FACES). */
+  --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --eien-size-meta: 11px;
+  --eien-size-label: 10px;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em;
+  --eien-space-1: 4px; --eien-space-2: 8px; --eien-space-3: 12px; --eien-space-4: 16px;
+  --eien-space-5: 24px; --eien-space-6: 32px; --eien-space-7: 48px; --eien-space-8: 72px;
+  --eien-row-h: 30px;
+  --eien-touch: 44px;
+  --eien-seal-size: 22px;
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms;
+  --eien-calm: 220ms;
+  --eien-leading-tighten: 0;
+  --eien-sheet-pad-x: var(--eien-space-8);
+  --eien-sheet-pad-top: var(--eien-space-7);
+  --eien-page-gutter: var(--eien-space-5);
+  --eien-title-gap: var(--eien-space-6);
+  --eien-paragraph-gap: var(--eien-space-4);
+  --eien-row-pad-y: var(--eien-space-3);
+
+  /* NEW: corners. Not everything is square. A small scale: s for what you press
+     (buttons, fields, chips), m for what floats (menus, popovers, the tool slip),
+     l for what covers the window (a sheet over it, the phone's bottom sheet).
+     Paper itself (the sheet, the panes) stays square. Each exploration sets its own. */
+  --eien-radius-s: 3px;
+  --eien-radius-m: 6px;
+  --eien-radius-l: 10px;
+  --eien-radius-dot: 999px;
+
+  /* NEW: icons. Drawn on a 16-unit grid, stroked in the ink they sit in. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
+
+  /* NEW: row names' weight, two settings (400–700). A selected list title is 100 heavier. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+}
+
+/* The text voice: the writer's choice, sizes tuned per face (from ../tokens.css). */
+:root, [data-face='newsreader'] { --eien-face-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; --eien-size-prose: 22px; --eien-size-title: 36px; --eien-size-heading: 23px; --eien-size-row: 16px; --eien-size-preview: 14px; --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten)); --eien-measure: 29em; }
+[data-face='literata'] { --eien-face-text: 'Literata', Georgia, serif; --eien-size-prose: 19px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten)); --eien-measure: 34em; }
+[data-face='plex-sans'] { --eien-face-text: 'IBM Plex Sans', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='source-sans'] { --eien-face-text: 'Source Sans 3', Arial, sans-serif; --eien-size-prose: 20px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+[data-face='atkinson'] { --eien-face-text: 'Atkinson Hyperlegible Next', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='schibsted'] { --eien-face-text: 'Schibsted Grotesk', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 33em; }
+[data-face='hanken'] { --eien-face-text: 'Hanken Grotesk', Arial, sans-serif; --eien-size-prose: 19px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='instrument'] { --eien-face-text: 'Instrument Sans', Arial, sans-serif; --eien-size-prose: 18.5px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--eien-seal-wash); }
+:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+
+.seal {
+  display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-seal-size); height: var(--eien-seal-size);
+  background: var(--eien-seal); color: var(--eien-on-seal);
+  font-family: var(--eien-face-seal); font-size: calc(var(--eien-seal-size) * 0.68); line-height: 1;
+  border-radius: calc(var(--eien-radius-s) / 2);
+  user-select: none;
+}
+.seal--small { --eien-seal-size: 10px; font-size: 0; }
+
+.label {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil);
+}
+.count {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums; color: var(--eien-pencil);
+}
+
+/* Where a word stays (menus, choices of a setting). */
+.word-button {
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; padding: var(--eien-space-1) var(--eien-space-2);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.word-button[aria-pressed='true'], .word-button[aria-checked='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* NEW: the icon control. The word button's states, a square of --eien-control. */
+.icon-button {
+  appearance: none; display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-control); height: var(--eien-control); padding: 0;
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; position: relative;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon-button svg, .icon { width: var(--eien-icon); height: var(--eien-icon); display: block; }
+.icon { stroke-width: var(--eien-icon-stroke); }
+.icon-button[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.icon-button:disabled { color: var(--eien-faded); cursor: default; }
+@media (hover: hover) {
+  .word-button:hover, .icon-button:not(:disabled):hover { color: var(--eien-ink); background: var(--eien-hover); }
+}
+.word-button:active, .icon-button:not(:disabled):active { background: var(--eien-press); border-color: var(--eien-rule-strong); }
+
+/* NEW: a tooltip names an icon and its key: raised paper, the machine voice. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip); position: absolute; z-index: 50; pointer-events: none;
+  left: 50%; top: calc(100% + 6px); translate: -50% 0;
+  white-space: pre; padding: 3px 7px; border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em;
+  text-transform: none; color: var(--eien-ink-soft);
+  opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease);
+}
+[data-tip-side='up']::after { top: auto; bottom: calc(100% + 6px); }
+[data-tip-side='right']::after { left: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+[data-tip-side='left']::after { left: auto; right: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+@media (hover: hover) { [data-tip]:hover::after { opacity: 1; transition-delay: 450ms; } }
+[data-tip]:focus-visible::after { opacity: 1; }
+
+.field {
+  appearance: none; width: 100%; border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-s); background: var(--eien-well);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink);
+}
+.field::placeholder { color: var(--eien-faded); }
+.field:focus { outline: none; border-color: var(--eien-focus); }
+
+/* Explorations' own bar: outside the app, like the mockups' bar. */
+.xbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--eien-space-1) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-paper-raised); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.xbar__name { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); font-weight: 600; }
+.xbar__group { display: flex; align-items: center; gap: 2px; }
+.xbar__label { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); margin-right: var(--eien-space-1); }
+.xnote { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }

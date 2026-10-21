@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en" data-a="chips">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Your order, and what's laid over it</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/* Shared by every exploration (inlined into each page by _build.py).
+   The tokens are the approved ones from ../tokens.css (Washi, day and night),
+   plus what the design pass adds: a radius scale, icon sizes, the machine
+   face as a setting, and row weights. New tokens are marked NEW. */
+
+:root { color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+:root {
+  --eien-desk: light-dark(#d9d2c8, #110e0b);
+  --eien-blotter: light-dark(#eae5dd, #1a1713);
+  --eien-band: light-dark(#f4f1ea, #201d19);
+  --eien-paper: light-dark(#fdfbf7, #28241f);
+  --eien-paper-raised: light-dark(#ffffff, #312d28);
+  --eien-well: light-dark(#f9f7f3, #24201c);
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05));
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1));
+  --eien-selected: light-dark(#ede9e3, #38332e);
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5));
+  --eien-shadow-sheet: 0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float: 0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  --eien-ink: light-dark(#23201c, #e9e2d4);
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7);
+  --eien-pencil: light-dark(#5d5348, #a7a095);
+  --eien-faded: light-dark(#766d62, #837c73);
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07));
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.14));
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.26));
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px;
+  --eien-seal: light-dark(#c4472d, #e0603f);
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12));
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714);
+  --eien-focus: var(--eien-ink-soft);
+  --eien-added: light-dark(#485c2c, #9cb880);
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0);
+  --eien-caution: light-dark(#6b501f, #d0a659);
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+
+  /* The machine voice: IBM Plex Mono by default, now a setting (NEW: set from FACES). */
+  --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --eien-size-meta: 11px;
+  --eien-size-label: 10px;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em;
+  --eien-space-1: 4px; --eien-space-2: 8px; --eien-space-3: 12px; --eien-space-4: 16px;
+  --eien-space-5: 24px; --eien-space-6: 32px; --eien-space-7: 48px; --eien-space-8: 72px;
+  --eien-row-h: 30px;
+  --eien-touch: 44px;
+  --eien-seal-size: 22px;
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms;
+  --eien-calm: 220ms;
+  --eien-leading-tighten: 0;
+  --eien-sheet-pad-x: var(--eien-space-8);
+  --eien-sheet-pad-top: var(--eien-space-7);
+  --eien-page-gutter: var(--eien-space-5);
+  --eien-title-gap: var(--eien-space-6);
+  --eien-paragraph-gap: var(--eien-space-4);
+  --eien-row-pad-y: var(--eien-space-3);
+
+  /* NEW: corners. Not everything is square. A small scale: s for what you press
+     (buttons, fields, chips), m for what floats (menus, popovers, the tool slip),
+     l for what covers the window (a sheet over it, the phone's bottom sheet).
+     Paper itself (the sheet, the panes) stays square. Each exploration sets its own. */
+  --eien-radius-s: 3px;
+  --eien-radius-m: 6px;
+  --eien-radius-l: 10px;
+  --eien-radius-dot: 999px;
+
+  /* NEW: icons. Drawn on a 16-unit grid, stroked in the ink they sit in. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
+
+  /* NEW: row names' weight, two settings (400–700). A selected list title is 100 heavier. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+}
+
+/* The text voice: the writer's choice, sizes tuned per face (from ../tokens.css). */
+:root, [data-face='newsreader'] { --eien-face-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; --eien-size-prose: 22px; --eien-size-title: 36px; --eien-size-heading: 23px; --eien-size-row: 16px; --eien-size-preview: 14px; --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten)); --eien-measure: 29em; }
+[data-face='literata'] { --eien-face-text: 'Literata', Georgia, serif; --eien-size-prose: 19px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten)); --eien-measure: 34em; }
+[data-face='plex-sans'] { --eien-face-text: 'IBM Plex Sans', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='source-sans'] { --eien-face-text: 'Source Sans 3', Arial, sans-serif; --eien-size-prose: 20px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+[data-face='atkinson'] { --eien-face-text: 'Atkinson Hyperlegible Next', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='schibsted'] { --eien-face-text: 'Schibsted Grotesk', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 33em; }
+[data-face='hanken'] { --eien-face-text: 'Hanken Grotesk', Arial, sans-serif; --eien-size-prose: 19px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='instrument'] { --eien-face-text: 'Instrument Sans', Arial, sans-serif; --eien-size-prose: 18.5px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--eien-seal-wash); }
+:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+
+.seal {
+  display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-seal-size); height: var(--eien-seal-size);
+  background: var(--eien-seal); color: var(--eien-on-seal);
+  font-family: var(--eien-face-seal); font-size: calc(var(--eien-seal-size) * 0.68); line-height: 1;
+  border-radius: calc(var(--eien-radius-s) / 2);
+  user-select: none;
+}
+.seal--small { --eien-seal-size: 10px; font-size: 0; }
+
+.label {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil);
+}
+.count {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums; color: var(--eien-pencil);
+}
+
+/* Where a word stays (menus, choices of a setting). */
+.word-button {
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; padding: var(--eien-space-1) var(--eien-space-2);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.word-button[aria-pressed='true'], .word-button[aria-checked='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* NEW: the icon control. The word button's states, a square of --eien-control. */
+.icon-button {
+  appearance: none; display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-control); height: var(--eien-control); padding: 0;
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; position: relative;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon-button svg, .icon { width: var(--eien-icon); height: var(--eien-icon); display: block; }
+.icon { stroke-width: var(--eien-icon-stroke); }
+.icon-button[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.icon-button:disabled { color: var(--eien-faded); cursor: default; }
+@media (hover: hover) {
+  .word-button:hover, .icon-button:not(:disabled):hover { color: var(--eien-ink); background: var(--eien-hover); }
+}
+.word-button:active, .icon-button:not(:disabled):active { background: var(--eien-press); border-color: var(--eien-rule-strong); }
+
+/* NEW: a tooltip names an icon and its key: raised paper, the machine voice. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip); position: absolute; z-index: 50; pointer-events: none;
+  left: 50%; top: calc(100% + 6px); translate: -50% 0;
+  white-space: pre; padding: 3px 7px; border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em;
+  text-transform: none; color: var(--eien-ink-soft);
+  opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease);
+}
+[data-tip-side='up']::after { top: auto; bottom: calc(100% + 6px); }
+[data-tip-side='right']::after { left: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+[data-tip-side='left']::after { left: auto; right: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+@media (hover: hover) { [data-tip]:hover::after { opacity: 1; transition-delay: 450ms; } }
+[data-tip]:focus-visible::after { opacity: 1; }
+
+.field {
+  appearance: none; width: 100%; border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-s); background: var(--eien-well);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink);
+}
+.field::placeholder { color: var(--eien-faded); }
+.field:focus { outline: none; border-color: var(--eien-focus); }
+
+/* Explorations' own bar: outside the app, like the mockups' bar. */
+.xbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--eien-space-1) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-paper-raised); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.xbar__name { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); font-weight: 600; }
+.xbar__group { display: flex; align-items: center; gap: 2px; }
+.xbar__label { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); margin-right: var(--eien-space-1); }
+.xnote { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: 300px 360px minmax(0, 1fr); background: var(--eien-blotter); }
+.sb { background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; }
+.ls { background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; }
+.scroll { flex: 1; min-height: 0; overflow: auto; padding: 4px 0 24px; }
+
+.head { position: relative; display: flex; align-items: center; gap: 2px; min-height: var(--eien-row-h); padding: 6px 8px 6px 16px; }
+.head .label { flex: 1; }
+.head .icon-button { width: 26px; height: 26px; }
+:root[data-a='chips'] .sb .head .icon-button, :root[data-a='arrange'] .sb .head .icon-button:not([aria-pressed='true']) { opacity: 0; }
+:root[data-a='chips'] .sb .head:hover .icon-button, :root[data-a='arrange'] .sb .head:hover .icon-button, .head .icon-button:focus-visible { opacity: 1; }
+.ls__head { padding: 12px 8px 14px 16px; background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: baseline; }
+.ls__title { margin: 0; font-size: var(--eien-size-heading); font-weight: 500; }
+.ls__tools { display: flex; gap: 2px; }
+.ls__tools .icon-button { width: 26px; height: 26px; }
+.ls__meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+
+/* A lens laid over your order: a chip that says so, with its ×. */
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 2px 1px 8px; border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); }
+.chip .icon-button { width: 18px; height: 18px; } .chip svg { width: 11px; height: 11px; }
+.dotted { position: relative; }
+.dotted::after { content: ''; position: absolute; top: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--eien-ink-soft); }
+
+/* B · a filter strip under the list's head, the spreadsheet's way */
+.strip { display: none; grid-column: 1 / -1; gap: 6px; align-items: center; flex-wrap: wrap; padding-top: 8px; margin-top: 4px; border-top: var(--eien-hairline) solid var(--eien-rule-soft); }
+:root[data-a='strip'] .strip { display: flex; }
+.strip .word-button { padding: 2px 6px; }
+.seg { display: inline-flex; gap: 1px; padding: 2px; border-radius: var(--eien-radius-m); background: var(--eien-press); }
+.seg .word-button[aria-pressed='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); }
+
+.menu { position: absolute; z-index: 30; top: calc(100% - 2px); right: 8px; min-width: 200px; padding: 4px; display: grid; gap: 1px;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.menu[hidden] { display: none; }
+.menu .word-button { display: flex; align-items: center; gap: 8px; text-align: left; }
+.menu .word-button::before { content: ''; width: 4px; height: 4px; border-radius: 50%; }
+.menu .word-button[aria-checked='true']::before { background: currentColor; }
+.menu hr { border: 0; border-top: var(--eien-hairline) solid var(--eien-rule-soft); margin: 3px 0; width: 100%; }
+.menu .hint { padding: 4px 8px; font-family: var(--eien-face-mono); font-size: 10px; color: var(--eien-pencil); }
+
+/* Rows: the tree's and the list's, each draggable while your order shows */
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; position: relative; }
+.tree ul::before { content: ''; position: absolute; top: 0; bottom: 15px; left: calc(16px + var(--d) * 16px + 6px); width: 1px; background: var(--eien-rule); }
+.row { position: relative; display: flex; align-items: center; gap: 8px; height: var(--eien-row-h); padding: 0 12px 0 calc(16px + var(--d) * 16px); color: var(--eien-ink-soft); user-select: none; outline: none; }
+.row:focus-visible { box-shadow: inset 0 0 0 2px var(--eien-focus); }
+@media (hover: hover) { .row:hover { background: var(--eien-hover); } }
+.row .tw { width: 12px; height: 12px; display: inline-grid; place-items: center; color: var(--eien-faded); flex: none; }
+.row .tw::before { content: ''; width: 5px; height: 7px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); rotate: 90deg; }
+.row .tw.leaf::before { content: none; }
+.row .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .hash { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+.grip { width: 14px; height: 18px; color: var(--eien-faded); display: none; cursor: grab; flex: none; margin-left: -18px; }
+.grip svg { width: 14px; height: 14px; }
+.can-drag .row:hover .grip, .can-drag .nrow:hover .grip { display: inline-grid; place-items: center; }
+:root[data-a='arrange'] .can-drag .grip { display: inline-grid; place-items: center; }
+.row.is-dragging, .nrow.is-dragging { opacity: 0.4; }
+.row[aria-current='true'] { background: var(--eien-selected); color: var(--eien-ink); }
+.row.drop-in { background: var(--eien-selected); box-shadow: inset 0 0 0 1px var(--eien-rule-strong); }
+.marker { position: absolute; z-index: 10; height: 2px; background: var(--eien-ink-soft); pointer-events: none; display: none; }
+.marker::before { content: ''; position: absolute; left: -4px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: var(--eien-ink-soft); }
+.marker__out { position: absolute; top: -18px; left: 0; white-space: nowrap; font-family: var(--eien-face-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--eien-ink-soft); background: var(--eien-paper-raised); padding: 0 4px; border-radius: var(--eien-radius-s); border: 1px solid var(--eien-rule); }
+
+.nrow { position: relative; display: grid; grid-template-columns: 14px 1fr auto; gap: 2px 10px; padding: 10px 16px 10px 12px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); color: var(--eien-ink-soft); }
+.nrow .grip { margin-left: 0; display: inline-grid; place-items: center; visibility: hidden; }
+.can-drag .nrow:hover .grip, :root[data-a='arrange'] .can-drag .nrow .grip { visibility: visible; }
+.nrow .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nrow .p { grid-column: 2 / -1; font-size: var(--eien-size-preview); color: var(--eien-pencil); }
+.nrow .tg { font-family: var(--eien-face-mono); font-size: 10px; color: var(--eien-pencil); }
+.locked { padding: 8px 16px; font-family: var(--eien-face-mono); font-size: 10px; color: var(--eien-pencil); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); display: none; }
+.ls.has-lens .locked { display: block; }
+
+.notes { padding: var(--eien-space-6); overflow: auto; color: var(--eien-ink-soft); font-size: var(--eien-size-preview); line-height: 1.6; }
+.notes h2 { font-size: var(--eien-size-heading); font-weight: 500; color: var(--eien-ink); margin: 0 0 8px; }
+.notes kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-paper); }
+.notes p { margin: 0 0 12px; max-width: 40em; }
+.log { font-family: var(--eien-face-mono); font-size: 11px; color: var(--eien-pencil); padding: 6px 16px; background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); }
+</style>
+</head>
+<body>
+<header class="xbar">
+  <span class="xbar__name">Eien · Your order, and what's laid over it</span>
+  <div class="xbar__group" data-x-set="a"><span class="xbar__label">Approach</span>
+    <button class="word-button" data-value="chips">A · Lens chips</button><button class="word-button" data-value="strip">B · Filter strip</button><button class="word-button" data-value="arrange">C · Arrange mode</button></div>
+</header>
+<main class="stage">
+  <aside class="sb" id="sb"></aside>
+  <section class="ls" id="ls"></section>
+  <div class="notes" id="notes"></div>
+</main>
+<footer class="log" id="log">Drag a folder, a tag or a note. Drag a folder to the left of its row to take it out of its folder.</footer>
+<script>
+// Shared by every exploration (inlined into each page by _build.py).
+
+// Eien's icons: one set, drawn here on a 16-unit grid with round ends, stroked
+// in the ink of whatever they sit in. No icon font, nothing fetched. Each is
+// the inside of an <svg viewBox="0 0 16 16">.
+const ICONS = {
+  live: '<path d="M10.6 2.9l2.5 2.5-7.3 7.3-3.2.8.8-3.2z"/><path d="M9.2 4.3l2.5 2.5"/><path d="M8.5 13.5h5"/>',
+  source: '<path d="M5.5 4.5L2 8l3.5 3.5"/><path d="M10.5 4.5L14 8l-3.5 3.5"/><path d="M9.2 3l-2.4 10"/>',
+  reading: '<path d="M8 4.6C6.6 3.6 4.7 3.1 2.2 3.1v9.4c2.5 0 4.4.5 5.8 1.5 1.4-1 3.3-1.5 5.8-1.5V3.1c-2.5 0-4.4.5-5.8 1.5z"/><path d="M8 4.6V14"/>',
+  compare: '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
+  versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',
+  sidebar: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/>',
+  list: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/><path d="M8.5 6h3M8.5 8.5h3M8.5 11h2"/>',
+  panes3: '<path d="M2 3h12v10H2z"/><path d="M5.5 3v10M9 3v10"/>',
+  panes2: '<path d="M2 3h12v10H2z"/><path d="M6 3v10"/>',
+  left: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  right: '<path d="M6 3.5l4.5 4.5L6 12.5"/>',
+  up: '<path d="M3.5 10L8 5.5l4.5 4.5"/>',
+  down: '<path d="M3.5 6L8 10.5 12.5 6"/>',
+  sun: '<circle cx="8" cy="8" r="2.6"/><path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1"/>',
+  moon: '<path d="M13.2 9.6A5.4 5.4 0 1 1 6.4 2.8a4.3 4.3 0 0 0 6.8 6.8z"/>',
+  settings: '<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><path d="M5.5 3v3M10.5 6.5v3M7 10v3"/>',
+  plus: '<path d="M8 3.5v9M3.5 8h9"/>',
+  tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
+  pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
+  sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
+  search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
+  close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  sort: '<path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3"/>',
+  strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
+  format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',
+  link: '<path d="M6.8 9.2l2.4-2.4"/><path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/>',
+  quote: '<path d="M3 8.5h3.5v4H3zM3 8.5c0-2.5.8-4 3-5M9.5 8.5H13v4H9.5zM9.5 8.5c0-2.5.8-4 3-5"/>',
+  bullets: '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
+  numbers: '<path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7"/><path d="M2.5 3.5l1-.7v3.2M2.4 9.2c.2-.6 1.6-.7 1.6.2 0 .7-1.6 1.2-1.6 1.8h1.7"/>',
+  checklist: '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
+  highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
+  heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
+  grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
+  more: '<circle cx="3.5" cy="8" r=".8"/><circle cx="8" cy="8" r=".8"/><circle cx="12.5" cy="8" r=".8"/>',
+  outdent: '<path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h10"/><path d="M13.5 3v10"/>',
+  filter: '<path d="M2.5 3.5h11l-4.3 5.2v4l-2.4 1.3V8.7z"/>',
+  check: '<path d="M3 8.5l3 3 7-7"/>',
+  back: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
+  palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
+  type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+};
+
+/** An icon as SVG markup, stroked in currentColor. */
+function icon(name, label) {
+  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
+  return `<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" ${a11y}>${ICONS[name]}</svg>`;
+}
+
+/** Fill every [data-icon] with its icon. */
+function drawIcons(root = document) {
+  for (const el of root.querySelectorAll('[data-icon]')) {
+    el.innerHTML = icon(el.dataset.icon) + (el.dataset.iconText ?? '');
+  }
+}
+
+// One list of faces drives every face setting: the text face and the machine
+// voice both choose from it. A face added later is one more entry here (in the
+// app: one entry in core/config, its fonts and its tuning in tokens.css).
+const FACES = [
+  { id: 'plex-mono', name: 'IBM Plex Mono', family: "'IBM Plex Mono', ui-monospace, monospace", mono: true },
+  { id: 'newsreader', name: 'Newsreader', family: "'Newsreader', Georgia, serif" },
+  { id: 'literata', name: 'Literata', family: "'Literata', Georgia, serif" },
+  { id: 'plex-sans', name: 'IBM Plex Sans', family: "'IBM Plex Sans', Arial, sans-serif" },
+  { id: 'source-sans', name: 'Source Sans 3', family: "'Source Sans 3', Arial, sans-serif" },
+  { id: 'atkinson', name: 'Atkinson Hyperlegible Next', family: "'Atkinson Hyperlegible Next', Arial, sans-serif" },
+  { id: 'schibsted', name: 'Schibsted Grotesk', family: "'Schibsted Grotesk', Arial, sans-serif" },
+  { id: 'hanken', name: 'Hanken Grotesk', family: "'Hanken Grotesk', Arial, sans-serif" },
+  { id: 'instrument', name: 'Instrument Sans', family: "'Instrument Sans', Arial, sans-serif" },
+];
+/** The faces the text voice offers (all but the mono), and the machine voice (all). */
+const TEXT_FACES = FACES.filter((face) => !face.mono);
+const MACHINE_FACES = FACES;
+
+function setMachineFace(id) {
+  const face = FACES.find((each) => each.id === id) ?? FACES[0];
+  document.documentElement.style.setProperty('--eien-face-mono', face.family);
+}
+function setTextFace(id) {
+  if (id === 'newsreader') delete document.documentElement.dataset.face;
+  else document.documentElement.dataset.face = id;
+}
+
+/** The explorations' bar: [data-x-set="attr"] groups set data-<attr> on <html>. */
+function wireBar(onChange = () => {}) {
+  for (const group of document.querySelectorAll('[data-x-set]')) {
+    const attr = group.dataset.xSet;
+    const buttons = [...group.querySelectorAll('button[data-value]')];
+    const pick = (value) => {
+      document.documentElement.dataset[attr] = value;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.value === value));
+      onChange(attr, value);
+    };
+    for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
+    pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
+  }
+}
+
+// One model for every list: a tree of folders, a tree of tags, a folder's notes.
+// Each keeps your order (written to the vault); a lens (sort, filter) is laid
+// over it on this device and never changes it.
+let uid = 0;
+const node = (name, children, extra = {}) => ({ id: ++uid, name, children: children ?? null, ...extra });
+const TREES = {
+  Folders: [node('Fic', [node('A Mended Scarf', []), node('Beneath the Walls', [], { current: true }), node('One-shots', [])]),
+            node('Notes', [node('Characters', []), node('Places', []), node('Research', [node('Walls', []), node('Old maps', [])])]),
+            node('Checklists', []), node('Reading', [])],
+  Tags: [node('fic', [node('aot', [])], { tag: true }), node('draft', null, { tag: true }), node('posted', null, { tag: true }), node('ideas', null, { tag: true })],
+};
+const NOTES = [
+  ['The Last Bell', 'Sep 2', ['posted']], ['Wall Rose, at Dusk', 'Sep 9', ['posted']], ['Rations', 'Aug 21', ['draft']], ['What the Recruits Say', 'Oct 18', ['draft']],
+  ['Night Watch', 'Oct 2', []], ['A Borrowed Coat', 'Jul 30', ['posted']], ['The Gate Holds', 'Oct 20', ['draft']],
+].map(([t, d, tags], i) => ({ id: 100 + i, t, d, tags, when: Date.parse(`${d} 2026`) }));
+const lens = { Folders: 'yours', Tags: 'yours', list: 'yours', filter: null };
+let arranging = { Folders: false, Tags: false, list: false };
+const SORTS = { yours: 'Your order', newest: 'Newest', oldest: 'Oldest', az: 'Title A–Z', za: 'Title Z–A' };
+const TREE_SORTS = { yours: 'Your order', az: 'A–Z', za: 'Z–A' };
+const mode = () => document.documentElement.dataset.a;
+const log = (s) => { document.getElementById('log').textContent = s; };
+
+const sorted = (items, how, key) => {
+  const out = [...items];
+  if (how === 'az') out.sort((a, b) => key(a).localeCompare(key(b)));
+  if (how === 'za') out.sort((a, b) => key(b).localeCompare(key(a)));
+  if (how === 'newest') out.sort((a, b) => b.when - a.when);
+  if (how === 'oldest') out.sort((a, b) => a.when - b.when);
+  return out;
+};
+const canDrag = (which) => (mode() === 'arrange' ? arranging[which] : lens[which] === 'yours' && (which !== 'list' || !lens.filter));
+
+function treeHtml(list, depth, which) {
+  return sorted(list, lens[which], (n) => n.name).map((n) => `<li data-id="${n.id}"><div class="row" tabindex="0" draggable="${canDrag(which)}" data-id="${n.id}" style="--d:${depth}" ${n.current ? 'aria-current="true"' : ''}>
+    <span class="grip">${icon('grip')}</span><span class="tw${n.children?.length ? '' : ' leaf'}"></span><span class="nm">${n.tag ? '<span class="hash">#</span>' : ''}${n.name}</span></div>
+    ${n.children?.length ? `<ul style="--d:${depth}">${treeHtml(n.children, depth + 1, which)}</ul>` : ''}</li>`).join('');
+}
+function sortMenu(which, sorts) {
+  return `<div class="menu" hidden data-menu="${which}">${Object.entries(sorts).map(([k, v]) => `<button class="word-button" role="menuitemradio" aria-checked="${lens[which] === k}" data-lens="${which}" data-v="${k}">${v}</button>`).join('')}
+    <hr /><span class="hint">${which === 'list' ? 'Your order stays underneath' : 'Your order stays underneath'}</span></div>`;
+}
+function headTools(which, sorts) {
+  const on = lens[which] !== 'yours';
+  if (mode() === 'arrange') return `<button class="icon-button" data-arrange="${which}" aria-pressed="${arranging[which]}" data-icon="grip" data-tip="${arranging[which] ? 'Done arranging' : 'Arrange'}"></button>
+    <button class="icon-button${on ? ' dotted' : ''}" data-open="${which}" data-icon="sort" data-tip="Sort" ${arranging[which] ? 'disabled' : ''}></button>${sortMenu(which, sorts)}`;
+  return `<button class="icon-button${on && mode() === 'chips' ? ' dotted' : ''}" data-open="${which}" data-icon="sort" data-tip="Sort"></button>${sortMenu(which, sorts)}`;
+}
+function drawSidebar() {
+  document.getElementById('sb').innerHTML = `<div class="scroll">${Object.keys(TREES).map((which) => `<div class="head"><span class="label">${which}</span>
+    ${lens[which] !== 'yours' && mode() !== 'arrange' ? `<span class="chip">${TREE_SORTS[lens[which]]}<button class="icon-button" data-clear="${which}" aria-label="Back to your order">${icon('close')}</button></span>` : ''}
+    ${headTools(which, TREE_SORTS)}<button class="icon-button" data-icon="plus" data-tip="New ${which === 'Tags' ? 'tag' : 'folder'}"></button></div>
+    <ul class="tree${canDrag(which) ? ' can-drag' : ''}" data-tree="${which}">${treeHtml(TREES[which], 0, which)}</ul>`).join('')}</div><div class="marker" id="marker"><span class="marker__out" hidden>Out of its folder</span></div>`;
+}
+function drawList() {
+  const shown = sorted(NOTES.filter((n) => !lens.filter || n.tags.includes(lens.filter)), lens.list, (n) => n.t);
+  const on = lens.list !== 'yours' || lens.filter;
+  const chips = mode() === 'chips' ? [lens.list !== 'yours' ? `<span class="chip">${SORTS[lens.list]}<button class="icon-button" data-clear="list" aria-label="Back to your order">${icon('close')}</button></span>` : '',
+    lens.filter ? `<span class="chip">#${lens.filter}<button class="icon-button" data-clearf aria-label="Show every note">${icon('close')}</button></span>` : ''].join('') : '';
+  const strip = `<div class="strip"><span class="label">Sort</span><span class="seg">${Object.entries(SORTS).map(([k, v]) => `<button class="word-button" aria-pressed="${lens.list === k}" data-lens="list" data-v="${k}">${v}</button>`).join('')}</span>
+    <span class="label">Only</span><span class="seg"><button class="word-button" aria-pressed="${!lens.filter}" data-f="">All</button>${['draft', 'posted'].map((t) => `<button class="word-button" aria-pressed="${lens.filter === t}" data-f="${t}">#${t}</button>`).join('')}</span></div>`;
+  const filterMenu = `<div class="menu" hidden data-menu="filter"><button class="word-button" aria-checked="${!lens.filter}" data-f="">Every note</button>${['draft', 'posted'].map((t) => `<button class="word-button" aria-checked="${lens.filter === t}" data-f="${t}">Only #${t}</button>`).join('')}</div>`;
+  const ls = document.getElementById('ls');
+  ls.classList.toggle('has-lens', Boolean(on) && mode() !== 'arrange');
+  ls.innerHTML = `<header class="ls__head"><h2 class="ls__title">Beneath the Walls</h2><span class="ls__tools">${mode() === 'strip' ? `<button class="icon-button${on ? ' dotted' : ''}" data-togglestrip data-icon="filter" data-tip="Sort and filter"></button>` : headTools('list', SORTS)}
+    ${mode() === 'chips' ? `<button class="icon-button${lens.filter ? ' dotted' : ''}" data-open="filter" data-icon="filter" data-tip="Filter"></button>${filterMenu}` : ''}</span>
+    <div class="ls__meta"><span class="label">${shown.length} of ${NOTES.length} notes · book</span>${chips}</div>${strip}</header>
+    <div class="locked">${mode() === 'arrange' ? '' : 'Sorted or filtered: your order is kept underneath. Clear it to drag.'}</div>
+    <div class="scroll${canDrag('list') ? ' can-drag' : ''}" data-notes>${shown.map((n) => `<div class="nrow" draggable="${canDrag('list')}" data-note="${n.id}" tabindex="0"><span class="grip">${icon('grip')}</span><span class="t">${n.t}</span><span class="count">${n.d}</span>
+      <span class="p">${n.tags.map((t) => `<span class="tg">#${t}</span>`).join(' ') || '&nbsp;'}</span></div>`).join('')}</div>`;
+}
+function draw() { drawSidebar(); drawList(); drawIcons(); wire(); }
+
+// Finding and moving in the model.
+function findIn(list, id, parent = null) { for (const [i, n] of list.entries()) { if (n.id === id) return { list, i, n, parent }; const f = n.children && findIn(n.children, id, n); if (f) return f; } return null; }
+const contains = (n, id) => n.id === id || (n.children ?? []).some((c) => contains(c, id));
+function move(which, id, targetId, place) {
+  const tree = TREES[which];
+  const src = findIn(tree, id); const dst = findIn(tree, targetId);
+  if (!src || !dst || contains(src.n, targetId)) return;
+  src.list.splice(src.i, 1);
+  const again = findIn(tree, targetId);
+  if (place === 'in') { again.n.children = again.n.children ?? []; again.n.children.push(src.n); log(`“${src.n.name}” moved into “${again.n.name}”.`); }
+  else { again.list.splice(again.i + (place === 'after' ? 1 : 0), 0, src.n); log(`“${src.n.name}” placed ${place} “${again.n.name}”, in your order.`); }
+  draw();
+}
+
+/** Out of its folder: placed just after the folder it was in. */
+function outdent(which, id) {
+  const tree = TREES[which];
+  const f = findIn(tree, id);
+  if (!f?.parent) return;
+  f.list.splice(f.i, 1);
+  const p = findIn(tree, f.parent.id);
+  p.list.splice(p.i + 1, 0, f.n);
+  log(`“${f.n.name}” taken out of “${f.parent.name}”.`);
+  draw();
+}
+
+let dragging = null;
+function wire() {
+  for (const b of document.querySelectorAll('[data-open]')) b.onclick = (e) => { e.stopPropagation(); const m = document.querySelector(`[data-menu="${b.dataset.open}"]`); const was = !m.hidden; for (const x of document.querySelectorAll('.menu')) x.hidden = true; m.hidden = was; };
+  for (const b of document.querySelectorAll('[data-lens]')) b.onclick = () => { lens[b.dataset.lens] = b.dataset.v; log(b.dataset.v === 'yours' ? 'Back to your order.' : `${SORTS[b.dataset.v] ?? TREE_SORTS[b.dataset.v]}, laid over your order.`); draw(); };
+  for (const b of document.querySelectorAll('[data-clear]')) b.onclick = () => { lens[b.dataset.clear] = 'yours'; log('Back to your order.'); draw(); };
+  for (const b of document.querySelectorAll('[data-clearf]')) b.onclick = () => { lens.filter = null; draw(); };
+  for (const b of document.querySelectorAll('[data-f]')) b.onclick = () => { lens.filter = b.dataset.f || null; draw(); };
+  for (const b of document.querySelectorAll('[data-arrange]')) b.onclick = () => { const w = b.dataset.arrange; arranging[w] = !arranging[w]; if (arranging[w]) lens[w] = 'yours'; log(arranging[w] ? 'Arranging: drag, or ⌥ and the arrows.' : 'Done.'); draw(); };
+  for (const b of document.querySelectorAll('[data-togglestrip]')) b.onclick = () => document.querySelector('.strip').toggleAttribute('hidden');
+  const marker = document.getElementById('marker');
+  for (const row of document.querySelectorAll('.tree .row')) {
+    const which = row.closest('[data-tree]').dataset.tree;
+    row.ondragstart = (e) => { dragging = { which, id: +row.dataset.id }; row.classList.add('is-dragging'); e.dataTransfer.effectAllowed = 'move'; };
+    row.ondragend = () => { row.classList.remove('is-dragging'); marker.style.display = 'none'; for (const r of document.querySelectorAll('.drop-in')) r.classList.remove('drop-in'); };
+    row.ondragover = (e) => {
+      if (!dragging || dragging.which !== which || !canDrag(which)) return;
+      e.preventDefault();
+      const r = row.getBoundingClientRect(); const sb = document.getElementById('sb').getBoundingClientRect();
+      const y = (e.clientY - r.top) / r.height; const depth = +row.style.getPropertyValue('--d');
+      const out = depth > 0 && e.clientX - r.left < 16 + depth * 16 - 8;
+      const place = out ? 'out' : y < 0.3 ? 'before' : y > 0.7 ? 'after' : 'in';
+      row.dataset.place = place;
+      for (const x of document.querySelectorAll('.drop-in')) x.classList.remove('drop-in');
+      marker.querySelector('.marker__out').hidden = place !== 'out';
+      if (place === 'in') { row.classList.add('drop-in'); marker.style.display = 'none'; return; }
+      const d = place === 'out' ? depth - 1 : depth;
+      marker.style.display = 'block'; marker.style.top = `${(place === 'before' ? r.top : r.bottom) - sb.top - 1}px`;
+      marker.style.left = `${16 + d * 16 + 18}px`; marker.style.right = '12px';
+    };
+    row.ondrop = (e) => {
+      e.preventDefault();
+      if (!dragging) return;
+      if (row.dataset.place === 'out') outdent(which, dragging.id);
+      else if (dragging.id !== +row.dataset.id) move(which, dragging.id, +row.dataset.id, row.dataset.place);
+      dragging = null;
+    };
+    row.onkeydown = (e) => {
+      if (!e.altKey || !canDrag(which)) return;
+      const f = findIn(TREES[which], +row.dataset.id); if (!f) return;
+      const id = f.n.id;
+      if (e.key === 'ArrowUp' && f.i > 0) move(which, id, f.list[f.i - 1].id, 'before');
+      else if (e.key === 'ArrowDown' && f.i < f.list.length - 1) move(which, id, f.list[f.i + 1].id, 'after');
+      else if (e.key === 'ArrowLeft' && f.parent) outdent(which, id);
+      else if (e.key === 'ArrowRight' && f.i > 0) move(which, id, f.list[f.i - 1].id, 'in');
+      else return;
+      e.preventDefault(); document.querySelector(`.row[data-id="${id}"]`)?.focus();
+    };
+  }
+  for (const row of document.querySelectorAll('.nrow')) {
+    row.ondragstart = () => { dragging = { which: 'list', id: +row.dataset.note }; row.classList.add('is-dragging'); };
+    row.ondragend = () => row.classList.remove('is-dragging');
+    row.ondragover = (e) => { if (dragging?.which === 'list' && canDrag('list')) e.preventDefault(); };
+    row.ondrop = (e) => { e.preventDefault(); const from = NOTES.findIndex((n) => n.id === dragging.id); const [n] = NOTES.splice(from, 1); NOTES.splice(NOTES.findIndex((x) => x.id === +row.dataset.note), 0, n); log(`“${n.t}” moved, in your order.`); dragging = null; draw(); };
+  }
+}
+document.addEventListener('click', (e) => { if (!e.target.closest('.menu') && !e.target.closest('[data-open]')) for (const m of document.querySelectorAll('.menu')) m.hidden = true; });
+
+const NOTES_TEXT = {
+  chips: `<h2>A · Lens chips</h2><p>Each pane keeps your order. Choosing a sort, or a filter, lays a lens over it, and the lens shows as a chip in the pane's head: <b>NEWEST ×</b>. The × takes it off and your order is back, untouched. While a lens is on, rows can't be dragged, and a line under the head says why.</p><p>Folders and tags work the same way: a sort icon on the section's head (on hover), and drag to place them. Drag a folder onto another to put it inside; to the left of its own row to take it out of its folder. From the keyboard: <kbd>⌥↑</kbd> <kbd>⌥↓</kbd> move, <kbd>⌥←</kbd> out of the folder, <kbd>⌥→</kbd> into the folder above.</p>`,
+  strip: `<h2>B · Filter strip</h2><p>The spreadsheet's way: the filter icon opens a strip under the list's head with every sort and filter in sight at once. Nothing hides behind a menu. The icon carries a dot while anything is on, and "All" with "Your order" clears it.</p><p>The tree keeps a small sort menu on each section's head; the strip is for the list, where filtering earns its room.</p>`,
+  arrange: `<h2>C · Arrange mode</h2><p>Order is something you set on purpose: the grip icon in a head starts arranging that pane. Grips show on every row, the sort is set aside, and dragging (or <kbd>⌥</kbd> with the arrows) places things. Done, and the pane goes back to whatever sort it had.</p><p>Outside arrange mode, a drag only ever moves something into a folder, never reorders by accident.</p>`,
+};
+wireBar(() => { document.getElementById('notes').innerHTML = NOTES_TEXT[mode()] + '<p class="xnote">Where it’s kept: your order of a folder’s notes and subfolders in its .eien-folder.json (as now); of the top folders, the tags and All Notes in .eien/order.json, so it syncs. The lens is this device’s, as sorts are now.</p>'; draw(); });
+</script>
+</body>
+</html>

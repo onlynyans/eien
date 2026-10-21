@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en" data-a="popover">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Settings, three placements</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/* Shared by every exploration (inlined into each page by _build.py).
+   The tokens are the approved ones from ../tokens.css (Washi, day and night),
+   plus what the design pass adds: a radius scale, icon sizes, the machine
+   face as a setting, and row weights. New tokens are marked NEW. */
+
+:root { color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+:root {
+  --eien-desk: light-dark(#d9d2c8, #110e0b);
+  --eien-blotter: light-dark(#eae5dd, #1a1713);
+  --eien-band: light-dark(#f4f1ea, #201d19);
+  --eien-paper: light-dark(#fdfbf7, #28241f);
+  --eien-paper-raised: light-dark(#ffffff, #312d28);
+  --eien-well: light-dark(#f9f7f3, #24201c);
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05));
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1));
+  --eien-selected: light-dark(#ede9e3, #38332e);
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5));
+  --eien-shadow-sheet: 0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float: 0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  --eien-ink: light-dark(#23201c, #e9e2d4);
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7);
+  --eien-pencil: light-dark(#5d5348, #a7a095);
+  --eien-faded: light-dark(#766d62, #837c73);
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07));
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.14));
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.26));
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px;
+  --eien-seal: light-dark(#c4472d, #e0603f);
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12));
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714);
+  --eien-focus: var(--eien-ink-soft);
+  --eien-added: light-dark(#485c2c, #9cb880);
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0);
+  --eien-caution: light-dark(#6b501f, #d0a659);
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+
+  /* The machine voice: IBM Plex Mono by default, now a setting (NEW: set from FACES). */
+  --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --eien-size-meta: 11px;
+  --eien-size-label: 10px;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em;
+  --eien-space-1: 4px; --eien-space-2: 8px; --eien-space-3: 12px; --eien-space-4: 16px;
+  --eien-space-5: 24px; --eien-space-6: 32px; --eien-space-7: 48px; --eien-space-8: 72px;
+  --eien-row-h: 30px;
+  --eien-touch: 44px;
+  --eien-seal-size: 22px;
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms;
+  --eien-calm: 220ms;
+  --eien-leading-tighten: 0;
+  --eien-sheet-pad-x: var(--eien-space-8);
+  --eien-sheet-pad-top: var(--eien-space-7);
+  --eien-page-gutter: var(--eien-space-5);
+  --eien-title-gap: var(--eien-space-6);
+  --eien-paragraph-gap: var(--eien-space-4);
+  --eien-row-pad-y: var(--eien-space-3);
+
+  /* NEW: corners. Not everything is square. A small scale: s for what you press
+     (buttons, fields, chips), m for what floats (menus, popovers, the tool slip),
+     l for what covers the window (a sheet over it, the phone's bottom sheet).
+     Paper itself (the sheet, the panes) stays square. Each exploration sets its own. */
+  --eien-radius-s: 3px;
+  --eien-radius-m: 6px;
+  --eien-radius-l: 10px;
+  --eien-radius-dot: 999px;
+
+  /* NEW: icons. Drawn on a 16-unit grid, stroked in the ink they sit in. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
+
+  /* NEW: row names' weight, two settings (400–700). A selected list title is 100 heavier. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+}
+
+/* The text voice: the writer's choice, sizes tuned per face (from ../tokens.css). */
+:root, [data-face='newsreader'] { --eien-face-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; --eien-size-prose: 22px; --eien-size-title: 36px; --eien-size-heading: 23px; --eien-size-row: 16px; --eien-size-preview: 14px; --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten)); --eien-measure: 29em; }
+[data-face='literata'] { --eien-face-text: 'Literata', Georgia, serif; --eien-size-prose: 19px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten)); --eien-measure: 34em; }
+[data-face='plex-sans'] { --eien-face-text: 'IBM Plex Sans', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='source-sans'] { --eien-face-text: 'Source Sans 3', Arial, sans-serif; --eien-size-prose: 20px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+[data-face='atkinson'] { --eien-face-text: 'Atkinson Hyperlegible Next', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='schibsted'] { --eien-face-text: 'Schibsted Grotesk', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 33em; }
+[data-face='hanken'] { --eien-face-text: 'Hanken Grotesk', Arial, sans-serif; --eien-size-prose: 19px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='instrument'] { --eien-face-text: 'Instrument Sans', Arial, sans-serif; --eien-size-prose: 18.5px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--eien-seal-wash); }
+:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+
+.seal {
+  display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-seal-size); height: var(--eien-seal-size);
+  background: var(--eien-seal); color: var(--eien-on-seal);
+  font-family: var(--eien-face-seal); font-size: calc(var(--eien-seal-size) * 0.68); line-height: 1;
+  border-radius: calc(var(--eien-radius-s) / 2);
+  user-select: none;
+}
+.seal--small { --eien-seal-size: 10px; font-size: 0; }
+
+.label {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil);
+}
+.count {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums; color: var(--eien-pencil);
+}
+
+/* Where a word stays (menus, choices of a setting). */
+.word-button {
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; padding: var(--eien-space-1) var(--eien-space-2);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.word-button[aria-pressed='true'], .word-button[aria-checked='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* NEW: the icon control. The word button's states, a square of --eien-control. */
+.icon-button {
+  appearance: none; display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-control); height: var(--eien-control); padding: 0;
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; position: relative;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon-button svg, .icon { width: var(--eien-icon); height: var(--eien-icon); display: block; }
+.icon { stroke-width: var(--eien-icon-stroke); }
+.icon-button[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.icon-button:disabled { color: var(--eien-faded); cursor: default; }
+@media (hover: hover) {
+  .word-button:hover, .icon-button:not(:disabled):hover { color: var(--eien-ink); background: var(--eien-hover); }
+}
+.word-button:active, .icon-button:not(:disabled):active { background: var(--eien-press); border-color: var(--eien-rule-strong); }
+
+/* NEW: a tooltip names an icon and its key: raised paper, the machine voice. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip); position: absolute; z-index: 50; pointer-events: none;
+  left: 50%; top: calc(100% + 6px); translate: -50% 0;
+  white-space: pre; padding: 3px 7px; border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em;
+  text-transform: none; color: var(--eien-ink-soft);
+  opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease);
+}
+[data-tip-side='up']::after { top: auto; bottom: calc(100% + 6px); }
+[data-tip-side='right']::after { left: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+[data-tip-side='left']::after { left: auto; right: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+@media (hover: hover) { [data-tip]:hover::after { opacity: 1; transition-delay: 450ms; } }
+[data-tip]:focus-visible::after { opacity: 1; }
+
+.field {
+  appearance: none; width: 100%; border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-s); background: var(--eien-well);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink);
+}
+.field::placeholder { color: var(--eien-faded); }
+.field:focus { outline: none; border-color: var(--eien-focus); }
+
+/* Explorations' own bar: outside the app, like the mockups' bar. */
+.xbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--eien-space-1) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-paper-raised); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.xbar__name { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); font-weight: 600; }
+.xbar__group { display: flex; align-items: center; gap: 2px; }
+.xbar__label { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); margin-right: var(--eien-space-1); }
+.xnote { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; padding: var(--eien-space-4); background: light-dark(#cfc8bd, #0b0907); display: grid; }
+
+/* A small window, so the settings are seen against what they change. */
+.win { position: relative; display: grid; grid-template-columns: 248px 290px minmax(0, 1fr); min-height: 0; border-radius: 10px; overflow: hidden;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.18), 0 20px 50px rgb(0 0 0 / 0.25); background: var(--eien-blotter); }
+.lights { position: absolute; z-index: 30; top: 18px; left: 16px; display: flex; gap: 8px; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; } .lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
+.sb { background: var(--eien-desk); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; }
+.sb__head { height: 56px; display: flex; align-items: center; gap: 12px; padding-left: 84px; font-weight: 600; flex: none; }
+.sb__body { flex: 1; overflow: hidden; padding: 8px 0; }
+.sb .label { display: block; padding: 8px 16px 4px; }
+.r { display: flex; justify-content: space-between; align-items: baseline; height: var(--eien-row-h); padding: 0 16px 0 28px; color: var(--eien-ink-soft); font-weight: var(--eien-weight-tree); }
+.r.cur { background: var(--eien-selected); color: var(--eien-ink); position: relative; }
+.r.cur::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: var(--eien-seal); }
+.sb__foot { display: flex; align-items: center; gap: 4px; padding: 8px 8px 8px 16px; border-top: var(--eien-hairline) solid var(--eien-rule-soft); flex: none; }
+.sb__foot .count { flex: 1; font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; }
+.ls { background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; min-height: 0; }
+.ls__head { padding: 12px 16px 16px; background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.ls__title { margin: 0 0 4px; font-size: var(--eien-size-heading); font-weight: 500; }
+.nr { display: grid; grid-template-columns: 26px 1fr auto; gap: 2px 10px; padding: var(--eien-row-pad-y) 16px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); color: var(--eien-ink-soft); }
+.nr.sel { background: var(--eien-selected); color: var(--eien-ink); }
+.nr .t { font-weight: var(--eien-weight-list); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nr.sel .t { font-weight: min(calc(var(--eien-weight-list) + 100), 700); }
+.nr .p { grid-column: 2 / -1; font-size: var(--eien-size-preview); color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root[data-density='compact'] { --eien-row-pad-y: 8px; --eien-sheet-pad-x: 32px; --eien-sheet-pad-top: 24px; --eien-page-gutter: 8px; --eien-title-gap: 16px; --eien-paragraph-gap: 8px; }
+:root[data-density='compact'] .nr .p { display: none; }
+.pg { position: relative; display: grid; grid-template-rows: 56px minmax(0, 1fr) 40px; min-height: 0; }
+.pg__bar { background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); display: flex; align-items: center; justify-content: flex-end; gap: 2px; padding: 0 12px; }
+.pg__scroll { overflow: auto; padding: var(--eien-page-gutter); }
+.sheet { max-width: calc(var(--eien-measure) + 144px); margin: 0 auto; min-height: 100%; padding: var(--eien-sheet-pad-top) var(--eien-sheet-pad-x) 48px;
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet); font-size: var(--eien-size-prose); }
+:root[data-frame='full'] .pg__scroll { padding: 0; } :root[data-frame='full'] .sheet { border: 0; box-shadow: none; max-width: none; }
+.sheet h1 { font-size: var(--eien-size-title); font-weight: 500; margin: var(--eien-title-gap) 0; line-height: 1.2; }
+.sheet p { line-height: var(--eien-leading-prose); margin: 0 0 var(--eien-paragraph-gap); }
+.status { display: flex; justify-content: center; align-items: center; gap: 8px; background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+
+/* ═══ The settings themselves: one renderer, three placements ═══════════ */
+.set { display: grid; gap: var(--eien-space-5); }
+.set__group > .label { display: block; padding-bottom: var(--eien-space-2); margin-bottom: var(--eien-space-3); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.setting { display: grid; gap: var(--eien-space-1) var(--eien-space-4); margin-bottom: var(--eien-space-4); }
+.setting__name { font-size: var(--eien-size-row); color: var(--eien-ink); }
+.setting__desc { margin: 0; font-size: var(--eien-size-preview); color: var(--eien-pencil); line-height: 1.45; max-width: 34em; }
+.choices { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px; justify-self: start; border-radius: var(--eien-radius-m); background: var(--eien-press); margin-top: var(--eien-space-1); }
+.choices .word-button[aria-checked='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); }
+.choices .icon-button { width: 34px; height: 26px; }
+.choices .icon-button[aria-checked='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); color: var(--eien-ink); }
+.faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--eien-space-1); margin-top: var(--eien-space-1); }
+.face { appearance: none; display: grid; gap: 2px; text-align: left; padding: 8px 10px; border: var(--eien-hairline) solid var(--eien-rule-soft); border-radius: var(--eien-radius-s); background: var(--eien-paper); cursor: pointer; color: var(--eien-ink-soft); }
+.face:hover { border-color: var(--eien-rule-strong); }
+.face[aria-checked='true'] { border-color: var(--eien-rule-strong); color: var(--eien-ink); box-shadow: inset 0 0 0 1px var(--eien-rule-strong); }
+.face__sample { font-size: 22px; line-height: 1.1; }
+.face__sample--machine { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.6; }
+.face__name { font-family: var(--eien-face-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--eien-pencil); }
+.stepper { display: inline-flex; align-items: center; gap: 2px; justify-self: start; }
+.stepper output { min-width: 4.5em; text-align: center; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink); }
+.weight-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--eien-space-3); }
+.weight { display: grid; gap: 4px; }
+.weight__sample { padding: 6px 10px; border-radius: var(--eien-radius-s); background: var(--eien-selected); position: relative; }
+.toggle { justify-self: start; }
+
+/* A · Popover: anchored to the settings icon, above the sidebar's foot */
+.pop { display: none; position: absolute; z-index: 40; left: 12px; bottom: 52px; width: 420px; max-height: calc(100% - 80px);
+  grid-template-rows: auto auto minmax(0, 1fr); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+:root[data-a='popover'] .win.is-open .pop { display: grid; }
+.pop::after { content: ''; position: absolute; bottom: -6px; left: 197px; width: 10px; height: 10px; rotate: 45deg; background: var(--eien-paper-raised);
+  border-right: var(--eien-hairline) solid var(--eien-rule-strong); border-bottom: var(--eien-hairline) solid var(--eien-rule-strong); }
+.pop__head { display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 16px; }
+.tabs { display: flex; gap: 2px; padding: 0 12px 8px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.pop__body { overflow: auto; padding: 16px; }
+.pop .set__group > .label { display: none; }
+
+/* B · In the page: the third pane becomes Settings, as a page you read */
+:root[data-a='page'] .win.is-open .pg__scroll > .sheet { display: none; }
+.inpage { display: none; }
+:root[data-a='page'] .win.is-open .inpage { display: block; }
+.inpage .sheet { max-width: 760px; }
+.inpage__nav { display: flex; gap: 2px; margin: 0 0 var(--eien-space-5); padding-bottom: var(--eien-space-2); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); position: sticky; top: calc(var(--eien-page-gutter) * -1); background: var(--eien-paper); z-index: 2; }
+.inpage__title { font-size: var(--eien-size-title); font-weight: 500; margin: 0 0 var(--eien-space-2); }
+.inpage .setting { grid-template-columns: 200px minmax(0, 1fr); align-items: start; }
+.inpage .setting__desc { grid-column: 1; }
+.inpage .setting > :not(.setting__name):not(.setting__desc) { grid-column: 2; grid-row: 1 / span 2; }
+:root[data-a='page'] .win.is-open .pg__bar .close-page { display: inline-grid; }
+.close-page { display: none; }
+
+/* C · A sheet over the window, with its contents beside it */
+.scrim { display: none; position: absolute; inset: 0; z-index: 35; background: var(--eien-scrim); }
+.over { display: none; position: absolute; z-index: 40; inset: 48px 72px; grid-template-columns: 200px minmax(0, 1fr); overflow: hidden;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-l); box-shadow: var(--eien-shadow-float); }
+:root[data-a='over'] .win.is-open .scrim { display: block; }
+:root[data-a='over'] .win.is-open .over { display: grid; }
+.over__nav { background: var(--eien-desk); padding: 20px 8px; display: grid; align-content: start; gap: 2px; }
+.over__nav .word-button { text-align: left; padding: 6px 10px; }
+.over__nav .word-button[aria-current='true'] { background: var(--eien-selected); color: var(--eien-ink); }
+.over__main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.over__head { display: flex; justify-content: space-between; align-items: center; padding: 12px 12px 12px 28px; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.over__body { overflow: auto; padding: 24px 28px; }
+.over .set__group > .label { display: none; }
+.preview-strip { display: flex; align-items: baseline; gap: 16px; padding: 12px 14px; margin-bottom: 20px; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule-soft); border-radius: var(--eien-radius-s); }
+.preview-strip .big { font-size: var(--eien-size-prose); }
+</style>
+</head>
+<body>
+<header class="xbar">
+  <span class="xbar__name">Eien · Settings</span>
+  <div class="xbar__group" data-x-set="a"><span class="xbar__label">Approach</span>
+    <button class="word-button" data-value="popover">A · Popover</button><button class="word-button" data-value="page">B · In the page</button><button class="word-button" data-value="over">C · Over the window</button></div>
+  <span class="xnote">Click the settings icon at the sidebar's foot. Every choice changes the window behind, live.</span>
+</header>
+<main class="stage">
+  <div class="win" id="win">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <aside class="sb">
+      <div class="sb__head"><span class="seal">永</span>Ink &amp; Ash</div>
+      <div class="sb__body"><span class="label">Library</span><div class="r">All Notes<span class="count">312</span></div><div class="r">Pinned<span class="count">3</span></div>
+        <span class="label">Folders</span><div class="r">Fic<span class="count">41</span></div><div class="r cur">Beneath the Walls<span class="count">14</span></div><div class="r">One-shots<span class="count">22</span></div><div class="r">Notes<span class="count">198</span></div></div>
+      <div class="sb__foot"><span class="count">312 notes · 48,210 words</span>
+        <button class="icon-button" data-icon="sun" aria-label="Day or night"></button>
+        <button class="icon-button" data-icon="panes3" aria-label="Panes"></button>
+        <button class="icon-button" id="open" data-icon="settings" data-tip="Settings ⌘," data-tip-side="up" aria-label="Settings"></button></div>
+    </aside>
+    <section class="ls">
+      <div class="ls__head"><h2 class="ls__title">Beneath the Walls</h2><span class="label">14 notes · 33,206 words · book</span></div>
+      <div class="nr"><span class="count">i</span><span class="t">The Last Bell</span><span class="count">3,412 w</span><span class="p">The bell over the inner gate rings three times.</span></div>
+      <div class="nr"><span class="count">ii</span><span class="t">Wall Rose, at Dusk</span><span class="count">2,876 w</span><span class="p">From the top of the wall the farmland is a quilt.</span></div>
+      <div class="nr sel"><span class="count">iii</span><span class="t">What the Recruits Say</span><span class="count">3,051 w</span><span class="p">They have a name for him in the barracks.</span></div>
+      <div class="nr"><span class="count">iv</span><span class="t">Night Watch</span><span class="count">2,388 w</span><span class="p">Two lanterns, one blanket, and eleven hours.</span></div>
+    </section>
+    <main class="pg">
+      <div class="pg__bar"><button class="icon-button close-page" data-close data-icon="close" data-tip="Back to the note Esc" aria-label="Close settings"></button></div>
+      <div class="pg__scroll">
+        <article class="sheet"><span class="label">Fic / Beneath the Walls / iii</span><h1>What the Recruits Say</h1>
+          <p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p>
+          <p>Instead he takes the late watch, every night of the week, and lets them talk around the brazier as if he were part of the stone.</p></article>
+        <div class="inpage"><article class="sheet"><span class="label">Eien</span><h1 class="inpage__title">Settings</h1>
+          <nav class="inpage__nav" id="inpage-nav"></nav><div class="set" id="inpage-set"></div></article></div>
+      </div>
+      <footer class="status">3,051 words · today +809 · sealed sep 9 · 100%</footer>
+    </main>
+
+    <div class="pop" role="dialog" aria-label="Settings">
+      <div class="pop__head"><span class="label">Settings</span><button class="icon-button" data-close data-icon="close" aria-label="Close"></button></div>
+      <div class="tabs" id="pop-tabs"></div>
+      <div class="pop__body"><div class="set" id="pop-set"></div></div>
+    </div>
+    <div class="scrim" data-close></div>
+    <div class="over" role="dialog" aria-label="Settings">
+      <nav class="over__nav" id="over-nav"></nav>
+      <div class="over__main"><div class="over__head"><span class="label" id="over-title">Appearance</span><button class="icon-button" data-close data-icon="close" aria-label="Close"></button></div>
+        <div class="over__body"><div class="preview-strip"><span class="big">Aa · They have a name for him</span><span class="count">3,051 words · today +809</span></div><div class="set" id="over-set"></div></div></div>
+    </div>
+  </div>
+</main>
+<script>
+// Shared by every exploration (inlined into each page by _build.py).
+
+// Eien's icons: one set, drawn here on a 16-unit grid with round ends, stroked
+// in the ink of whatever they sit in. No icon font, nothing fetched. Each is
+// the inside of an <svg viewBox="0 0 16 16">.
+const ICONS = {
+  live: '<path d="M10.6 2.9l2.5 2.5-7.3 7.3-3.2.8.8-3.2z"/><path d="M9.2 4.3l2.5 2.5"/><path d="M8.5 13.5h5"/>',
+  source: '<path d="M5.5 4.5L2 8l3.5 3.5"/><path d="M10.5 4.5L14 8l-3.5 3.5"/><path d="M9.2 3l-2.4 10"/>',
+  reading: '<path d="M8 4.6C6.6 3.6 4.7 3.1 2.2 3.1v9.4c2.5 0 4.4.5 5.8 1.5 1.4-1 3.3-1.5 5.8-1.5V3.1c-2.5 0-4.4.5-5.8 1.5z"/><path d="M8 4.6V14"/>',
+  compare: '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
+  versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',
+  sidebar: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/>',
+  list: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/><path d="M8.5 6h3M8.5 8.5h3M8.5 11h2"/>',
+  panes3: '<path d="M2 3h12v10H2z"/><path d="M5.5 3v10M9 3v10"/>',
+  panes2: '<path d="M2 3h12v10H2z"/><path d="M6 3v10"/>',
+  left: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  right: '<path d="M6 3.5l4.5 4.5L6 12.5"/>',
+  up: '<path d="M3.5 10L8 5.5l4.5 4.5"/>',
+  down: '<path d="M3.5 6L8 10.5 12.5 6"/>',
+  sun: '<circle cx="8" cy="8" r="2.6"/><path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1"/>',
+  moon: '<path d="M13.2 9.6A5.4 5.4 0 1 1 6.4 2.8a4.3 4.3 0 0 0 6.8 6.8z"/>',
+  settings: '<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><path d="M5.5 3v3M10.5 6.5v3M7 10v3"/>',
+  plus: '<path d="M8 3.5v9M3.5 8h9"/>',
+  tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
+  pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
+  sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
+  search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
+  close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  sort: '<path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3"/>',
+  strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
+  format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',
+  link: '<path d="M6.8 9.2l2.4-2.4"/><path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/>',
+  quote: '<path d="M3 8.5h3.5v4H3zM3 8.5c0-2.5.8-4 3-5M9.5 8.5H13v4H9.5zM9.5 8.5c0-2.5.8-4 3-5"/>',
+  bullets: '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
+  numbers: '<path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7"/><path d="M2.5 3.5l1-.7v3.2M2.4 9.2c.2-.6 1.6-.7 1.6.2 0 .7-1.6 1.2-1.6 1.8h1.7"/>',
+  checklist: '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
+  highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
+  heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
+  grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
+  more: '<circle cx="3.5" cy="8" r=".8"/><circle cx="8" cy="8" r=".8"/><circle cx="12.5" cy="8" r=".8"/>',
+  outdent: '<path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h10"/><path d="M13.5 3v10"/>',
+  filter: '<path d="M2.5 3.5h11l-4.3 5.2v4l-2.4 1.3V8.7z"/>',
+  check: '<path d="M3 8.5l3 3 7-7"/>',
+  back: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
+  palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
+  type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+};
+
+/** An icon as SVG markup, stroked in currentColor. */
+function icon(name, label) {
+  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
+  return `<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" ${a11y}>${ICONS[name]}</svg>`;
+}
+
+/** Fill every [data-icon] with its icon. */
+function drawIcons(root = document) {
+  for (const el of root.querySelectorAll('[data-icon]')) {
+    el.innerHTML = icon(el.dataset.icon) + (el.dataset.iconText ?? '');
+  }
+}
+
+// One list of faces drives every face setting: the text face and the machine
+// voice both choose from it. A face added later is one more entry here (in the
+// app: one entry in core/config, its fonts and its tuning in tokens.css).
+const FACES = [
+  { id: 'plex-mono', name: 'IBM Plex Mono', family: "'IBM Plex Mono', ui-monospace, monospace", mono: true },
+  { id: 'newsreader', name: 'Newsreader', family: "'Newsreader', Georgia, serif" },
+  { id: 'literata', name: 'Literata', family: "'Literata', Georgia, serif" },
+  { id: 'plex-sans', name: 'IBM Plex Sans', family: "'IBM Plex Sans', Arial, sans-serif" },
+  { id: 'source-sans', name: 'Source Sans 3', family: "'Source Sans 3', Arial, sans-serif" },
+  { id: 'atkinson', name: 'Atkinson Hyperlegible Next', family: "'Atkinson Hyperlegible Next', Arial, sans-serif" },
+  { id: 'schibsted', name: 'Schibsted Grotesk', family: "'Schibsted Grotesk', Arial, sans-serif" },
+  { id: 'hanken', name: 'Hanken Grotesk', family: "'Hanken Grotesk', Arial, sans-serif" },
+  { id: 'instrument', name: 'Instrument Sans', family: "'Instrument Sans', Arial, sans-serif" },
+];
+/** The faces the text voice offers (all but the mono), and the machine voice (all). */
+const TEXT_FACES = FACES.filter((face) => !face.mono);
+const MACHINE_FACES = FACES;
+
+function setMachineFace(id) {
+  const face = FACES.find((each) => each.id === id) ?? FACES[0];
+  document.documentElement.style.setProperty('--eien-face-mono', face.family);
+}
+function setTextFace(id) {
+  if (id === 'newsreader') delete document.documentElement.dataset.face;
+  else document.documentElement.dataset.face = id;
+}
+
+/** The explorations' bar: [data-x-set="attr"] groups set data-<attr> on <html>. */
+function wireBar(onChange = () => {}) {
+  for (const group of document.querySelectorAll('[data-x-set]')) {
+    const attr = group.dataset.xSet;
+    const buttons = [...group.querySelectorAll('button[data-value]')];
+    const pick = (value) => {
+      document.documentElement.dataset[attr] = value;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.value === value));
+      onChange(attr, value);
+    };
+    for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
+    pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
+  }
+}
+
+// The settings as data, as src/core/config/schema.ts keeps them: each kind is
+// drawn by one function, wherever the settings are shown.
+const GROUPS = [
+  { name: 'Appearance', settings: [
+    { key: 'theme', name: 'Day or night', desc: 'Night is inkstone: the same warm colours, darkened. System follows this computer.', kind: 'choice',
+      options: [['system', 'System'], ['light', 'Day', 'sun'], ['dark', 'Night', 'moon']], value: 'light' },
+    { key: 'palette', name: 'Palette', desc: 'Washi is Eien’s paper and sumi ink; Otaku is cool grey round warm paper. Your own themes join these.', kind: 'choice',
+      options: [['washi', 'Washi'], ['otaku', 'Otaku'], ['kinari', 'Kinari']], value: 'washi' },
+    { key: 'face', name: 'Typeface', desc: 'For everything a person wrote: notes, titles, names.', kind: 'faces', faces: () => TEXT_FACES, value: 'newsreader' },
+    { key: 'machine', name: 'Machine voice', desc: 'For what the machine counts and what you press: counts, labels, the status line.', kind: 'faces', faces: () => MACHINE_FACES, machine: true, value: 'plex-mono' },
+    { key: 'size', name: 'Text size', desc: 'The typeface everywhere, from the size it’s tuned to.', kind: 'stepper', value: 100 },
+  ] },
+  { name: 'Lists', settings: [
+    { key: 'weights', name: 'Weight of names', desc: 'How heavy names sit in the sidebar and titles in the list. A chosen title is a step heavier.', kind: 'weights' },
+    { key: 'density', name: 'Density', desc: 'Compact keeps the type at its size and takes away space.', kind: 'choice', options: [['comfortable', 'Comfortable'], ['compact', 'Compact']], value: 'comfortable' },
+    { key: 'panes', name: 'Panes', desc: 'Two panes put the notes in the sidebar’s tree.', kind: 'choice', options: [['3', 'Three', 'panes3'], ['2', 'Two', 'panes2']], value: '3' },
+  ] },
+  { name: 'Page', settings: [
+    { key: 'frame', name: 'Page', desc: 'A sheet on the blotter, or paper from edge to edge.', kind: 'choice', options: [['sheet', 'Sheet'], ['full', 'Full']], value: 'sheet' },
+    { key: 'numerals', name: 'Chapter numbers', desc: 'In a book’s list and its breadcrumb.', kind: 'choice', options: [['roman', 'i ii iii'], ['arabic', '1 2 3']], value: 'roman' },
+    { key: 'typewriter', name: 'Typewriter scrolling', desc: 'The line you write stays at the middle of the page.', kind: 'choice', options: [['off', 'Off'], ['on', 'On']], value: 'off' },
+  ] },
+];
+const values = Object.fromEntries(GROUPS.flatMap((g) => g.settings.map((s) => [s.key, s.value])));
+values.weightTree = 400; values.weightList = 400;
+
+function apply() {
+  const root = document.documentElement;
+  if (values.theme === 'system') delete root.dataset.theme; else root.dataset.theme = values.theme;
+  setTextFace(values.face); setMachineFace(values.machine);
+  root.style.fontSize = `${values.size}%`;
+  root.dataset.density = values.density; root.dataset.frame = values.frame;
+  root.style.setProperty('--eien-weight-tree', values.weightTree); root.style.setProperty('--eien-weight-list', values.weightList);
+}
+
+function settingHtml(s) {
+  const head = `<span class="setting__name">${s.name}</span><p class="setting__desc">${s.desc}</p>`;
+  if (s.kind === 'choice') return `<div class="setting">${head}<div class="choices" role="radiogroup" aria-label="${s.name}">${s.options.map(([v, label, ic]) =>
+    ic ? `<button class="icon-button" role="radio" aria-checked="${values[s.key] === v}" data-key="${s.key}" data-v="${v}" data-tip="${label}" aria-label="${label}">${icon(ic)}</button>`
+       : `<button class="word-button" role="radio" aria-checked="${values[s.key] === v}" data-key="${s.key}" data-v="${v}">${label}</button>`).join('')}</div></div>`;
+  if (s.kind === 'faces') return `<div class="setting">${head}<div class="faces" role="radiogroup" aria-label="${s.name}">${s.faces().map((f) =>
+    `<button class="face" role="radio" aria-checked="${values[s.key] === f.id}" data-key="${s.key}" data-v="${f.id}">
+      <span class="face__sample${s.machine ? ' face__sample--machine' : ''}" style="font-family:${f.family}">${s.machine ? '312 notes' : 'Aa Gg'}</span><span class="face__name">${f.name}</span></button>`).join('')}</div></div>`;
+  if (s.kind === 'stepper') return `<div class="setting">${head}<div class="stepper"><button class="icon-button" data-step="-10" data-icon="down" aria-label="Smaller"></button><output>${values.size}%</output><button class="icon-button" data-step="10" data-icon="up" aria-label="Larger"></button></div></div>`;
+  if (s.kind === 'weights') return `<div class="setting">${head}<div class="weight-pair">${[['weightTree', 'Sidebar names', 'Beneath the Walls'], ['weightList', 'List titles', 'What the Recruits Say']].map(([k, label, sample]) =>
+    `<div class="weight"><span class="label">${label}</span><div class="choices" role="radiogroup" aria-label="${label}">${[400, 500, 600, 700].map((w) =>
+      `<button class="word-button" role="radio" aria-checked="${values[k] === w}" data-key="${k}" data-v="${w}" style="font-weight:${w}">${w}</button>`).join('')}</div>
+      <span class="weight__sample" style="font-weight:${k === 'weightList' ? Math.min(values[k] + 100, 700) : values[k]}">${sample}</span></div>`).join('')}</div></div>`;
+  return '';
+}
+const groupHtml = (g) => `<section class="set__group" data-group="${g.name}"><span class="label">${g.name}</span>${g.settings.map(settingHtml).join('')}</section>`;
+
+let groupShown = 'Appearance';
+function draw() {
+  const a = document.documentElement.dataset.a;
+  const one = GROUPS.find((g) => g.name === groupShown);
+  const tabs = (cls) => GROUPS.map((g) => `<button class="word-button" ${cls}="${g.name === groupShown}" data-group-pick="${g.name}">${g.name}</button>`).join('');
+  document.getElementById('pop-tabs').innerHTML = tabs('aria-pressed');
+  document.getElementById('pop-set').innerHTML = groupHtml(one);
+  document.getElementById('over-nav').innerHTML = tabs('aria-current');
+  document.getElementById('over-title').textContent = groupShown;
+  document.getElementById('over-set').innerHTML = groupHtml(one);
+  document.getElementById('inpage-nav').innerHTML = GROUPS.map((g) => `<a class="word-button" href="#g-${g.name}">${g.name}</a>`).join('');
+  document.getElementById('inpage-set').innerHTML = GROUPS.map((g) => groupHtml(g).replace('<section', `<section id="g-${g.name}"`)).join('');
+  drawIcons(document.getElementById('win'));
+  for (const b of document.querySelectorAll('[data-key]')) b.onclick = () => {
+    const v = b.dataset.v; values[b.dataset.key] = /^\d+$/.test(v) && b.dataset.key.startsWith('weight') ? +v : v; apply(); draw();
+  };
+  for (const b of document.querySelectorAll('[data-step]')) b.onclick = () => { values.size = Math.max(90, Math.min(130, values.size + +b.dataset.step)); apply(); draw(); };
+  for (const b of document.querySelectorAll('[data-group-pick]')) b.onclick = () => { groupShown = b.dataset.groupPick; draw(); };
+}
+const win = document.getElementById('win');
+document.getElementById('open').onclick = () => win.classList.toggle('is-open');
+document.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) win.classList.remove('is-open'); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') win.classList.remove('is-open'); });
+wireBar(() => { win.classList.add('is-open'); draw(); });
+apply(); drawIcons(); draw(); win.classList.add('is-open');
+</script>
+</body>
+</html>
