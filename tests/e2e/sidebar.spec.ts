@@ -203,7 +203,7 @@ test.describe('sections, guides and books', () => {
   test('with two panes, sections fold and guides run down the notes listed in the tree', async ({
     page,
   }) => {
-    await page.locator('[data-key="panes:two"]').click();
+    await page.getByRole('button', { name: 'Two panes', pressed: false }).click();
     await page.getByRole('button', { name: 'Open Fic' }).click();
     await page.getByRole('button', { name: 'Open Scarf' }).click();
     await expect(treeNote(page, 'The Tear')).toBeVisible();

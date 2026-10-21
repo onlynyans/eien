@@ -92,7 +92,7 @@ async function ready(page: Page): Promise<void> {
 }
 
 async function twoPanes(page: Page): Promise<void> {
-  await page.getByRole('button', { name: '2 panes' }).click();
+  await page.getByRole('button', { name: 'Two panes', pressed: false }).click();
   await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
 }
 
@@ -204,13 +204,13 @@ test.describe('the keyboard is never lost', () => {
     await expect.poll(() => focusIn(page, '.sidebar')).toBe(true);
   });
 
-  test('“2 panes” pressed from the keyboard keeps the keyboard on the pair', async ({ page }) => {
-    // The sidebar's foot is redrawn by the change, and the pressed button with it.
+  test('the panes toggle pressed from the keyboard keeps the keyboard', async ({ page }) => {
+    // The sidebar redraws for two panes; the foot's controls stay, and the keyboard on them.
     await ready(page);
-    await page.getByRole('button', { name: '2 panes' }).focus();
+    await page.getByRole('button', { name: 'Two panes', pressed: false }).focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
-    await expect.poll(() => focusIn(page, '.sidebar')).toBe(true);
+    await expect(page.getByRole('button', { name: 'Two panes', pressed: true })).toBeFocused();
   });
 
   test('two panes: a folder opened by its arrow from the keyboard keeps the keyboard', async ({
@@ -575,7 +575,7 @@ test.describe('search while the panes change', () => {
     await expect(treeNotes(page)).toHaveText(['Wool']);
     await search.press('Escape');
     await expect(page.locator('.sidebar__label')).toHaveText(['Library', 'Folders', 'Tags']);
-    await page.getByRole('button', { name: '3 panes' }).click();
+    await page.getByRole('button', { name: 'Two panes', pressed: true }).click();
     await expect(page.locator('.list__heading')).toHaveText('All Notes');
     await expect(page.locator('.note-row')).toHaveCount(5);
   });
@@ -586,11 +586,11 @@ test.describe('search while the panes change', () => {
     await ready(page);
     const search = page.getByRole('searchbox');
     await search.fill('sew');
-    await page.getByRole('button', { name: '2 panes' }).click(); // within the search's 150 ms
+    await page.getByRole('button', { name: 'Two panes', pressed: false }).click(); // within the search's 150 ms
     await expect(page.locator('.sidebar__label')).toHaveText(['Results']);
     await expect(treeNotes(page)).toHaveText(['Needle']);
     await search.fill('snow');
-    await page.getByRole('button', { name: '3 panes' }).click();
+    await page.getByRole('button', { name: 'Two panes', pressed: true }).click();
     await expect(page.locator('.note-row__title')).toHaveText(['Ideas']);
     await expect(page.locator('.sidebar__label')).toHaveText(['Library', 'Folders', 'Tags']);
   });
@@ -746,7 +746,7 @@ test.describe('changing the panes mid-sentence', () => {
     await editorContent(page).click();
     await page.keyboard.press('ControlOrMeta+End');
     await page.keyboard.type(' And more.');
-    await page.getByRole('button', { name: '3 panes' }).click();
+    await page.getByRole('button', { name: 'Two panes', pressed: true }).click();
     await expect
       .poll(() => readFileSync(at(vault, 'Ideas.md'), 'utf8'))
       .toMatch(/^Snow on the walls\. #winter\s*More snow fell\. And more\.\s*$/);

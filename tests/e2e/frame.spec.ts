@@ -138,8 +138,10 @@ test('the controls take the band’s colours, by day and by night', async ({ app
   test.skip(MAC, 'macOS’s traffic lights take no colour');
   await expect(page.locator('.page__bar')).toBeVisible();
   await recordControls(app);
-  for (const scheme of [/^night$/i, /^day$/i]) {
-    await page.getByRole('button', { name: scheme }).click();
+  // Day or night, at the sidebar's foot: once each way.
+  const scheme = page.locator('.sidebar__foot').getByRole('button', { name: 'Night' });
+  for (let turn = 0; turn < 2; turn++) {
+    await scheme.click();
     const { band, ink } = await bandColours(page);
     await expect.poll(() => lastTold(app)).toEqual({ color: band, symbolColor: ink, height: 56 });
   }

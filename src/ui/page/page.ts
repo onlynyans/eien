@@ -26,6 +26,12 @@ export class PageView {
   readonly #crumbs = h('p', { class: 'crumbs label' });
   /** The breadcrumb again, for a running head across the window (C's). */
   readonly runningCrumbs = h('p', { class: 'crumbs label running-crumbs' });
+  /** Where a layout puts the note's tags (../chrome/layout-spec.ts, TagSlot); empty until they're built. */
+  readonly tagSlots = {
+    runningHead: h('div', { class: 'sheet__tags' }),
+    underTitle: h('div', { class: 'title-tags' }),
+    colophon: h('span', { class: 'colophon__tags' }),
+  };
   readonly #title = h('h1', {
     class: 'title',
     attrs: { tabindex: '0', title: 'Rename', 'aria-keyshortcuts': 'Enter F2' },
@@ -52,9 +58,10 @@ export class PageView {
   readonly #sheet = h(
     'article',
     { class: 'sheet' },
-    this.#crumbs,
+    h('div', { class: 'sheet__head' }, this.#crumbs, this.tagSlots.runningHead),
     this.#title,
     this.#titleField,
+    this.tagSlots.underTitle,
     this.#notice,
     this.#editorHost,
     this.#compareHost,
@@ -121,6 +128,7 @@ export class PageView {
         h(
           'footer',
           { class: 'colophon count' },
+          this.tagSlots.colophon,
           this.words.element,
           this.#state,
           this.#counters,

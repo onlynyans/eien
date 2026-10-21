@@ -30,10 +30,11 @@ export function watchTooltips(root: Document = document): () => void {
     shownFor = null;
   };
   const show = (control: HTMLElement) => {
-    if (!control.isConnected || !control.checkVisibility({ opacityProperty: true })) return;
+    // A control faded in by the focus itself is still at nothing: its place counts, not its ink.
+    if (!control.isConnected || !control.checkVisibility()) return;
     shownFor = control;
     words.textContent = control.dataset.tip ?? '';
-    key.textContent = control.dataset.key ?? '';
+    key.textContent = control.dataset.shortcut ?? '';
     tip.hidden = false;
     const at = control.getBoundingClientRect();
     const box = tip.getBoundingClientRect();

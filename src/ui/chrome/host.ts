@@ -89,7 +89,9 @@ export class Host {
           'data-command': id,
           'aria-label': def.label,
           'aria-keyshortcuts': def.key && ariaKeys(def.key, mac),
-          'data-key': def.key && keyText(def.key, mac),
+          'data-shortcut': def.key && keyText(def.key, mac),
+          // Its identity across redraws and layouts: the keyboard comes back to it by this.
+          'data-key': `command:${id}`,
           'aria-haspopup': id === 'settings' ? 'dialog' : id === 'more' ? 'menu' : undefined,
         },
         on: { click: () => this.#of.press(id, button) },

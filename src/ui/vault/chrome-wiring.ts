@@ -116,23 +116,25 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     }
   };
 
-  const local = (id: LocalCommandId, opener: HTMLElement) => {
-    if (id === 'strip') {
+  /** The commands that send no menu command: one each, or the types say which is missing. */
+  const local: Record<LocalCommandId, (opener: HTMLElement) => void> = {
+    strip: () => {
       strip = !strip;
       rememberStrip(strip);
       shell.toggleAttribute('data-strip-shut', strip);
-    } else if (id === 'scheme') {
-      void settings.set('appearance.scheme', isNight() ? 'day' : 'night').catch(console.error);
-    } else if (id === 'panes') {
-      void settings.set('layout.panes', two() ? 'three' : 'two').catch(console.error);
-    } else if (id === 'more') of.phone.more(opener);
+    },
+    // Day or night, whichever isn't showing; System stays in Settings.
+    scheme: () =>
+      void settings.set('appearance.scheme', isNight() ? 'day' : 'night').catch(console.error),
+    panes: () => void settings.set('layout.panes', two() ? 'three' : 'two').catch(console.error),
+    more: (opener) => of.phone.more(opener),
   };
 
   const chrome = new Chrome({
     mac: of.mac,
     slots,
     look,
-    local,
+    local: (id, opener) => local[id](opener),
     send: (command) => of.menu.run(command),
     lost: () => page.focus(),
   });

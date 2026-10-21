@@ -6,7 +6,7 @@ import { CHEVRONS, FOOT, type LayoutSpec, VIEWS } from './layout-spec';
 
 export const BAND: LayoutSpec = {
   desktop: [
-    { name: 'band-views', slot: 'pageBar', label: 'View', items: [VIEWS] },
+    { name: 'band-views', slot: 'pageBar', label: 'Views', items: [VIEWS] },
     {
       name: 'band-tools',
       slot: 'pageBar',
@@ -16,6 +16,7 @@ export const BAND: LayoutSpec = {
     ...CHEVRONS,
     FOOT,
   ],
+  tags: 'runningHead',
   phone: {
     name: 'phone-band',
     slot: 'phoneBar',

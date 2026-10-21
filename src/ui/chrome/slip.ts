@@ -15,5 +15,6 @@ export const SLIP: LayoutSpec = {
     ...CHEVRONS,
     FOOT,
   ],
+  tags: 'underTitle',
   phone: { name: 'phone-slip', slot: 'phoneFoot', label: 'Page', items: [VIEWS, 'focus', 'more'] },
 };

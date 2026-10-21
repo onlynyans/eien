@@ -120,7 +120,7 @@ test.describe('no list in sight: the field in the sidebar, searching the whole v
   test('with two panes', async ({ page }) => {
     await ready(page);
     await choose(page, 'Fic');
-    await page.getByRole('button', { name: '2 panes' }).click();
+    await page.getByRole('button', { name: 'Two panes', pressed: false }).click();
     await expect(field(page)).toHaveCount(1);
     await expect(sidebarField(page)).toBeVisible();
     await expect(sidebarField(page)).toHaveAttribute(
@@ -132,7 +132,7 @@ test.describe('no list in sight: the field in the sidebar, searching the whole v
     await expect(treeNotes(page)).toHaveCount(4);
 
     // Back to three: the same words, now searching Fic's list, from the list's band.
-    await page.getByRole('button', { name: '3 panes' }).click();
+    await page.getByRole('button', { name: 'Two panes', pressed: true }).click();
     await expect(listField(page)).toHaveValue('scarf');
     await expect(titles(page)).toHaveText(['Mended']);
   });

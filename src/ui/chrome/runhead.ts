@@ -22,6 +22,7 @@ export const RUNHEAD: LayoutSpec = {
     },
     FOOT,
   ],
+  tags: 'colophon',
   phone: {
     name: 'phone-rail',
     slot: 'phoneFoot',

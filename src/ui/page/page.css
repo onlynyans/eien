@@ -75,9 +75,22 @@
   container-type: inline-size;
 }
 
+/* The sheet's running head: the breadcrumb, and the tags' place at the right (A's). */
+.sheet__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--eien-space-4);
+}
 .crumbs {
   margin: 0;
   min-height: 1lh;
+}
+/* The tags' places (../chrome/layout-spec.ts, TagSlot): empty until they're built. */
+.sheet__tags:empty,
+.title-tags:empty,
+.colophon__tags:empty {
+  display: none;
 }
 /* The title is the note's name: a field when it's being renamed, looking just as it did. */
 .title[tabindex] {

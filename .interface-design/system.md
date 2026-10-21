@@ -59,9 +59,10 @@ hairline borders, 4 shadows (the sheet's once, the float three times).
 - `--eien-shadow-sheet`: the sheet alone, the object lying on the blotter.
 - `--eien-shadow-float`: whatever floats above the window.
 - Panes, bands and rows cast none. No gradients.
-- **Corners: not everything is square** (changed 2026-10-20, #27). The
-  design pass sets a small radius scale and where each step applies. Dots
-  stay round. Until it's set, the app's `--eien-radius` is still 0.
+- **Corners: not everything is square** (changed 2026-10-20, #27). Three
+  steps, `--eien-radius-s` (what you press), `-m` (what floats), `-l` (what
+  covers the window), set by the layout (see "Layouts"). Paper stays square,
+  but for B's sheet. Dots stay round.
 - A mark, not a rule, is `--eien-mark-w` (2px): the seal's rule, the caret,
   the focus ring.
 
@@ -169,9 +170,9 @@ moves the writer didn't ask to move. None with reduced motion.
 - **Colophon:** the status line at the page's foot: a band, mono 11px
   capitals, items joined by a faded "·", optional ones dropped in a narrow
   pane.
-- **Sidebar foot:** a soft rule above; the vault's count and sync status
-  (a moss dot) in label type; the DAY and NIGHT pair with SETTINGS; the
-  3 PANES and 2 PANES pair.
+- **Sidebar foot:** a soft rule above; the vault's count in label type,
+  then the sync status's place and three icons: day or night (sun or moon),
+  three panes or two, settings.
 - **Panel** (versions): raised paper beside the page, a rule hairline on its
   left, the float shadow, a band head of `--band` height with a label and
   CLOSE.
@@ -266,3 +267,11 @@ stylesheet per layout. Each layout sets its own radius scale on `:root`
 (`--eien-radius-s/-m/-l`: A 2/4/8, B 4/8/14, C 3/6/10) and its own phone
 bottom (A a top bar, B a floating slip, C a tool rail). Nothing hardcodes a
 radius; components use the three tokens.
+
+Built in the app (backlog #28, 3A): `appearance.layout` in `core/config`;
+the commands in `ui/chrome/commands.ts`, the icons in `ui/icons.ts`, each
+layout's hosts in `ui/chrome/band.ts`, `slip.ts`, `runhead.ts` with a
+stylesheet each (its corners on `:root[data-layout=…]`). The slots wave 2
+fills: the formatting bar's row (`page.slots.format`, the `format` slot),
+the sync icon's place at the sidebar's foot (`SidebarFoot.sync`), and C's
+strip ground (`--runhead-ground`, the desk until it's a setting).

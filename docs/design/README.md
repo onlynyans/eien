@@ -227,7 +227,10 @@ and the design pass brings the mockups up to it. Each is in
 - **Controls are icons, not words** (#26). "A control is a word" was approved
   by mistake. Labels, counts and a menu's items stay words, in the mono.
 - **Not everything is square** (#27). A small radius scale, set by the
-  design pass. Dots stay round.
+  design pass. Dots stay round. Built: `--eien-radius-s`, `-m` and `-l` in
+  `tokens.css` (Band's 2/4/8), each layout setting its own in its stylesheet
+  (`src/ui/chrome/*.css`); with them, the icons' tokens `--eien-icon`,
+  `--eien-icon-stroke` and `--eien-control`.
 - **The machine voice's face is a setting** (#24), IBM Plex Mono by default.
 - **Row names' weight is a setting** (#25): the sidebar's names and the
   list's titles, 400–700 each. A selected list title is 100 heavier, at most

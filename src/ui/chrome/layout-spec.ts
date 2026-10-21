@@ -41,11 +41,16 @@ export interface HostSpec {
   readonly icons?: Partial<Record<CommandId, IconName>>;
 }
 
+/** Where a layout shows the note's tags (backlog #13), each a slot the page keeps (../page/page.ts). */
+export type TagSlot = 'runningHead' | 'underTitle' | 'colophon';
+
 export interface LayoutSpec {
   /** The hosts on a desktop's window: every command it draws in exactly one. */
   readonly desktop: readonly HostSpec[];
   /** The page's controls on a phone, one host. */
   readonly phone: HostSpec;
+  /** Where the note's tags go: A at the sheet's running head, B as slips under the title, C in the colophon. */
+  readonly tags: TagSlot;
 }
 
 /** The page's three views, one choice. */
