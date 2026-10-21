@@ -11,7 +11,11 @@ import { dirname, join } from 'node:path';
  */
 export async function syncedBySyncthing(root: string): Promise<boolean> {
   for (let at = root; ; at = dirname(at)) {
-    if (await stat(join(at, '.stfolder')).then(() => true, () => false)) return true;
+    const marked = await stat(join(at, '.stfolder')).then(
+      () => true,
+      () => false,
+    );
+    if (marked) return true;
     if (dirname(at) === at) return false;
   }
 }
