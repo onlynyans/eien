@@ -861,9 +861,13 @@ Compare or Restore finishes lands on a note opened meanwhile.
   it back; exports go to `Documents/Eien/Exports`. Eien saves when the phone
   sends it to the background, and looks at the vault again when it comes back
   (and every few seconds while it's in front: a phone has no file watcher).
-- **iOS:** the vault lives in Eien's own Files folder, visible in the Files
-  app. Syncthing on iOS (Möbius Sync) can sync it. Installing on a device needs
-  Xcode and an Apple developer account.
+- **iOS:** the vault is `Vault` in the app's own Documents, which the Files
+  app shows as "Eien" ("On My iPhone › Eien › Vault"), with `Exports` beside
+  it; no access to ask for. Its writes and renames are Eien's own, as on
+  Android (a Swift plugin: flushed to the disk, renames in one step, never
+  over a file that's there). Syncthing on iOS (Möbius Sync) can sync the
+  folder. CI builds the app and runs it on a simulator, with no Apple account;
+  installing it on a device needs Xcode and an Apple ID.
 - **The phone layout** is one pane at a time: tree → list → page. A window
   narrower than 600 px (narrower than any desktop window can be) is a
   phone's, whatever the system; turned sideways, a phone wide enough shows
@@ -968,7 +972,13 @@ On macOS, Windows and Linux, each with a fresh temporary vault:
   phone over adb): Playwright drives Eien's WebView while adb plays Syncthing
   and the system. The access asked for and refused; a note synced in; saving
   when the app goes to the background; a restart; a crash's leftovers; a
-  case-only rename on the shared storage, which ignores case.
+  case-only rename on the shared storage, which ignores case; the back
+  gesture; a long press.
+- **On iOS** (CI, or `npm run test:ios` on a Mac with Xcode): the Swift file
+  operations tested with swiftc alone (`npm run test:ios-files`), then the
+  app built for an iPhone simulator, started with a crash's leftovers in its
+  vault, and held to recovering them: the bridge, the storage and the Swift
+  plugin together. The screen is kept.
 
 ### CI (GitHub Actions)
 
@@ -979,6 +989,7 @@ On every push and pull request:
 3. End-to-end tests on macOS, Windows and Linux
 4. The phone's page in Chromium
 5. Android debug build, kept for 14 days to install on a phone
+6. iOS: the Swift file operations, and the app on a simulator
 
 On a version tag: release builds for each platform. A pull request
 can't merge while any check fails.
