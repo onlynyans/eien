@@ -1,7 +1,9 @@
 # Eien — notes for agents
 
 Read [docs/spec.md](docs/spec.md) first. It is the source of truth for behavior;
-when code and spec disagree, fix one of them in the same change.
+when code and spec disagree, fix one of them in the same change. New to the
+project? [docs/handbook.md](docs/handbook.md) is the way in: what Eien is, how
+it's built and shipped, and where everything lives.
 
 ## Rules
 
