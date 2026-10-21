@@ -6,8 +6,8 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
-import { editorContent, expect, test } from './launch';
+import type { Locator, Page } from '@playwright/test';
+import { ALONE, type Box, editorContent, expect, test } from './launch';
 
 const NOTE = '---\ntitle: "Kept: as written"  # mine\ntags: [fic/aot]\n---\nA scene. #draft\n';
 test.use({
@@ -24,6 +24,20 @@ const PLACES: Record<Layout, string> = {
 
 const readIn = (vault: string | null, path: string) =>
   readFileSync(join(vault ?? '', path), 'utf8');
+
+/** Where `locator` is once it has stopped moving: two looks in a row agree. */
+async function settled(locator: Locator): Promise<Box> {
+  let last = '';
+  await expect
+    .poll(async () => {
+      const now = JSON.stringify(await locator.boundingBox());
+      const same = now === last;
+      last = now;
+      return same;
+    })
+    .toBe(true);
+  return JSON.parse(last) as Box;
+}
 
 /** A tag's row in the sidebar: "#name" and its count. */
 const tagRow = (page: Page, name: string) =>
@@ -78,9 +92,10 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       await expect(tags.getByRole('button', { name: 'Add a tag' })).toBeFocused();
 
       // Take one off with its ×: only front matter changes; the words are as they were.
-      // Its × waits for the pointer, taking no room till then.
-      await tags.locator('.tag', { hasText: '#fic/aot' }).hover();
-      await tags.getByRole('button', { name: 'Take #fic/aot off' }).click();
+      // From the keyboard: its × takes no room until it has the keyboard (the pointer's is the
+      // narrow page's test), then shows, and Enter takes the tag off.
+      await tags.getByRole('button', { name: 'Take #fic/aot off' }).focus();
+      await page.keyboard.press('Enter');
       await expect(tags.locator('.tag')).toHaveText(['#posted', '#draft']);
       await expect
         .poll(() => readIn(vault, 'Note.md'), { timeout: 5000 })
@@ -110,19 +125,25 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       await expect(tags.locator('.tag--text')).toHaveText('#kept');
     });
 
-    test('in the narrowest page, the tags stay on it, to be seen and pressed', async ({ page }) => {
-      await page.setViewportSize({ width: 900, height: 600 }); // the page at its 360 px
-      await page.locator('.note-row', { hasText: 'Note' }).click();
-      const first = page.locator(`${PLACES[layout]} .tag`).first();
-      await expect(first).toBeVisible();
-      const sheet = await page.locator('.page').boundingBox();
-      const tag = await first.boundingBox();
-      expect(tag?.x ?? 0).toBeGreaterThanOrEqual(sheet?.x ?? 0);
-      await first.hover(); // nothing lies over it
-      await expect(first.getByRole('button', { name: 'Take #fic/aot off' })).toBeVisible();
-      // Its × showing never slides the tag from under the pointer.
-      expect((await first.boundingBox())?.x).toBe(tag?.x);
-    });
+    // ALONE: it hovers, and another test's window opening takes the pointer from it.
+    test(
+      'in the narrowest page, the tags stay on it, to be seen and pressed',
+      ALONE,
+      async ({ page }) => {
+        await page.setViewportSize({ width: 900, height: 600 }); // the page at its 360 px
+        await page.locator('.note-row', { hasText: 'Note' }).click();
+        const first = page.locator(`${PLACES[layout]} .tag`).first();
+        await expect(first).toBeVisible();
+        // The panes ease to their narrower widths: measured once they've stopped.
+        const tag = await settled(first);
+        const sheet = await page.locator('.page').boundingBox();
+        expect(tag?.x ?? 0).toBeGreaterThanOrEqual(sheet?.x ?? 0);
+        await first.hover(); // nothing lies over it
+        await expect(first.getByRole('button', { name: 'Take #fic/aot off' })).toBeVisible();
+        // Its × showing never slides the tag from under the pointer.
+        expect((await first.boundingBox())?.x).toBe(tag?.x);
+      },
+    );
 
     test('the # key on the page opens the field, with the keyboard in it', async ({ page }) => {
       await page.locator('.note-row', { hasText: 'Other' }).click();

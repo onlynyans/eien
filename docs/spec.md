@@ -425,11 +425,23 @@ CommonMark plus GitHub extensions, and three common additions:
 
 ### Organizing
 
-- **Rename** a note by its title on the page (click it, or F2 on its row; Enter
-  keeps, Esc doesn't), a folder in place (F2, or its menu). Renaming changes
-  the file's name, and the folder's order and the pins follow. A name another
-  file has (case and accents aside) is refused, never numbered: the writer
-  chose it. A change of case alone is allowed.
+- **Rename** in place, in the row: a note in the list or the tree (F2 on its
+  row, a double-click on its name, or Rename in its menu), a folder in the
+  tree (F2, or its menu; not a double-click, as a click opens a folder and the
+  next shuts it). The name becomes a field in its own face and size, its words
+  chosen, a note's `.md` faded after it. Enter keeps the name, Esc puts the old
+  one back and the keyboard on the row, and leaving the field keeps it. A note
+  can also be renamed by its title on the page (click it), and on a phone that
+  is where Rename goes. Renaming changes the file's name, and the folder's
+  order and the pins follow. A name another file has (case and accents aside)
+  is refused, never numbered: the writer chose it. As it's typed, a small
+  ochre line under the row says so, and the field stays open. A change of
+  case alone is allowed.
+- **A row's menu** (right-click, the menu key or Shift+F10) is Eien's own:
+  raised paper headed by the row's name, an icon, a word and its key in
+  pencil for each choice (no keys on a phone), and the trash last, in carmine,
+  after a rule. Arrows move through it, Enter chooses, Esc closes it and gives
+  the keyboard back.
 - **Move** a note by dragging it onto a folder (or the vault's name), or with
   Move to… in its menu. Where its name is taken it's numbered ("Ideas 2"), so
   nothing is replaced. The open note carries on at its new path. A folder
@@ -441,7 +453,8 @@ CommonMark plus GitHub extensions, and three common additions:
   list, on this device.
 - **Books:** Make it a book / Not a book, in a folder's menu.
 - **Pinned** notes are listed under Library, in the order pinned
-  (`.eien/pinned.json`, watched like the settings).
+  (`.eien/pinned.json`, watched like the settings). ⇧⌘P (Ctrl+Shift+P) on a
+  note's row pins it, or unpins it; so does Pin in its menu.
 - **The trash:** Move to the trash (⌘⌫ / Ctrl+Delete on a row, or the menu)
   sends a note or folder to the system's trash (the Recycle Bin on Windows),
   saving the open note first; the list says where it went. If the trash
