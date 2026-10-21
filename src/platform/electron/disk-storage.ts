@@ -3,19 +3,7 @@
 
 import { createHash } from 'node:crypto';
 import { type Dirent, type FSWatcher, watch } from 'node:fs';
-import {
-  link,
-  lstat,
-  mkdir,
-  open,
-  readdir,
-  readFile,
-  realpath,
-  rename,
-  rm,
-  stat,
-  unlink,
-} from 'node:fs/promises';
+import { lstat, mkdir, readdir, readFile, realpath, rm, stat } from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
 import { isHiddenName, isWatchedPath, nameKey, VaultPathError, vaultPath } from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
@@ -26,10 +14,16 @@ import {
   type Storage,
   type WriteResult,
 } from '../storage';
-import { hiddenBeside, NEW_SUFFIX, TEMP_SUFFIX } from '../stray';
+import { hiddenBeside, NEW_SUFFIX } from '../stray';
+import {
+  linkInstead,
+  renameWithRetry,
+  syncFolder,
+  writeDurably,
+  writeFlushed,
+} from './disk-writes';
 
-/** The hidden file a write goes through: ".<name>.eien.tmp" beside it (../stray.ts). */
-export const tempNameOf = (name: string): string => hiddenBeside(name, TEMP_SUFFIX);
+export { tempNameOf, writeDurably } from './disk-writes';
 
 /** Sends a file or folder (an absolute path) to the system's trash; throws when it can't. */
 export type TrashItem = (path: string) => Promise<void>;
@@ -327,99 +321,3 @@ const isNoFile = (error: unknown): boolean =>
   error !== null &&
   'code' in error &&
   (error.code === 'ENOENT' || error.code === 'ENOTDIR' || error.code === 'EISDIR');
-
-/**
- * Write through a hidden temp file: write, flush to disk, rename over the
- * file, then flush the folder. A crash leaves the old file or the new one.
- * If `stillWanted` answers false just before the rename, the temp file is
- * removed, the file is left as it is, and the answer is false.
- */
-export async function writeDurably(
-  file: string,
-  text: string,
-  stillWanted: () => Promise<boolean> = async () => true,
-): Promise<boolean> {
-  // `file` is a system path ("\\" on Windows): its name comes from node:path, not the vault's "/" helpers.
-  const temp = join(dirname(file), tempNameOf(basename(file)));
-  await writeFlushed(temp, text);
-  if (!(await stillWanted())) {
-    await rm(temp, { force: true });
-    return false;
-  }
-  try {
-    await renameWithRetry(temp, file);
-  } catch (error) {
-    await rm(temp, { force: true }); // the temp file, never the note
-    throw error;
-  }
-  await syncFolder(dirname(file));
-  return true;
-}
-
-/** Write `data` to `file` (UTF-8 for text) and flush it to the disk. */
-async function writeFlushed(file: string, data: string | Uint8Array): Promise<void> {
-  const handle = await open(file, 'w');
-  try {
-    await handle.writeFile(data);
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
-}
-
-/**
- * On Windows a file another program has open (a sync tool, a virus scan)
- * can't be replaced for a moment: try a few times. On failure `from` is
- * left as it is — it may be the writer's note, moving.
- */
-async function renameWithRetry(from: string, to: string): Promise<void> {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      await rename(from, to);
-      return;
-    } catch (error) {
-      const code = (error as NodeJS.ErrnoException).code;
-      if (attempt >= 5 || (code !== 'EPERM' && code !== 'EBUSY' && code !== 'EACCES')) throw error;
-      await new Promise((done) => setTimeout(done, 50 * attempt));
-    }
-  }
-}
-
-/**
- * Move a file by giving it its new name and then dropping the old: `link`
- * never replaces anything, so a file that appeared at `to` meanwhile (a sync
- * tool's) is safe. On a disk without links (FAT, exFAT, some network drives)
- * nothing is done, for the caller to rename.
- */
-async function linkInstead(from: string, to: string): Promise<'moved' | 'taken' | 'no links'> {
-  try {
-    await link(from, to);
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code === 'EEXIST') return 'taken';
-    if (['EPERM', 'ENOTSUP', 'EOPNOTSUPP', 'ENOSYS', 'EXDEV'].includes(code ?? ''))
-      return 'no links';
-    throw error;
-  }
-  try {
-    await unlink(from);
-  } catch (error) {
-    await unlink(to).catch(() => undefined); // back as it was: one name
-    throw error;
-  }
-  return 'moved';
-}
-
-/** So the rename itself survives a power cut. Windows can't open a folder for this; it isn't needed there. */
-async function syncFolder(folder: string): Promise<void> {
-  if (process.platform === 'win32') return;
-  const handle = await open(folder, 'r').catch(() => null);
-  if (!handle) return;
-  try {
-    await handle.sync();
-  } catch {
-    // Some file systems don't support it; the rename has still happened.
-  } finally {
-    await handle.close();
-  }
-}

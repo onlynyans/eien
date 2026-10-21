@@ -5,9 +5,12 @@
 // is what the EPUB and the PDF show.
 
 import { type HtmlElement, type HtmlNode, parseHtml } from '../ao3';
-import type { Chapter } from './chapter';
+import { IMAGE_SRC } from './book';
+import type { Chapter, ExportImage } from './chapter';
 import {
   collapse,
+  type Drawing,
+  LOOKS,
   type Look,
   type ParagraphLook,
   type Piece,
@@ -16,23 +19,10 @@ import {
   restyle,
   runText,
 } from './docx-runs';
+import { IMAGE_KINDS } from './images';
 
-const LOOKS: Readonly<Record<string, keyof Look>> = {
-  em: 'i',
-  i: 'i',
-  cite: 'i',
-  strong: 'b',
-  b: 'b',
-  u: 'u',
-  ins: 'u',
-  s: 'strike',
-  del: 'strike',
-  strike: 'strike',
-  mark: 'mark',
-  sup: 'sup',
-  sub: 'sub',
-  code: 'code',
-};
+/** A pixel at 96 to the inch, in English Metric Units (914,400 to the inch). */
+const EMU_PER_PIXEL = 9525;
 
 const BLOCKS = new Set([
   'p',
@@ -59,6 +49,40 @@ const text = (node: HtmlNode): string =>
 
 /** Writes chapters as Word's body, gathering what other parts need: links, lists, footnotes. */
 export class DocxWriter {
+  /** The book's images, as chaptersOf numbers them: the n-th is the relationship "rIdImage<n+1>". */
+  readonly #images: readonly ExportImage[];
+  /** The text's width and height, in EMU: no picture is drawn larger. */
+  readonly #area: { readonly cx: number; readonly cy: number };
+  /** The pictures drawn so far: each one's id in the document. */
+  #drawn = 0;
+
+  constructor(images: readonly ExportImage[], area: { cx: number; cy: number }) {
+    this.#images = images;
+    this.#area = area;
+  }
+
+  /** A picture for `src` (a book's "eien-image:<n>"), at 96 pixels an inch, made to fit. */
+  #drawing(src: string, alt: string): Drawing | null {
+    const n = IMAGE_SRC.exec(src)?.[1];
+    const image = n === undefined ? undefined : this.#images[Number(n)];
+    if (!image) return null;
+    const { width, height, kind } = image.info;
+    const scale = Math.min(
+      1,
+      this.#area.cx / (width * EMU_PER_PIXEL),
+      this.#area.cy / (height * EMU_PER_PIXEL),
+    );
+    this.#drawn += 1;
+    return {
+      rel: `rIdImage${Number(n) + 1}`,
+      cx: Math.max(1, Math.round(width * EMU_PER_PIXEL * scale)),
+      cy: Math.max(1, Math.round(height * EMU_PER_PIXEL * scale)),
+      id: this.#drawn,
+      name: `image-${Number(n) + 1}.${IMAGE_KINDS[kind].extension}`,
+      alt,
+    };
+  }
+
   /** Hyperlink addresses; the n-th is the relationship "rIdLink<n>". */
   readonly links: string[] = [];
   /** Each numbered list, its id after the bullets' 1: the level it's at, and its first number. */
@@ -258,7 +282,11 @@ export class DocxWriter {
       }
       const name = node.name;
       if (name === 'br') pieces.push({ kind: 'break', link });
-      else if (name === 'a' && node.attrs.class === 'noteref') {
+      else if (name === 'img') {
+        const drawing = this.#drawing(node.attrs.src ?? '', node.attrs.alt ?? '');
+        if (drawing) pieces.push({ kind: 'image', drawing });
+        else pieces.push({ kind: 'text', text: node.attrs.alt ?? '', look, link });
+      } else if (name === 'a' && node.attrs.class === 'noteref') {
         const n = Number(text(node));
         const id = this.#inNote ? null : this.#footnote(n);
         if (id !== null) pieces.push({ kind: 'note', n: id });

@@ -1,10 +1,12 @@
 // The page a PDF is printed from (spec §8): one HTML page holding the
 // title (a book's) and every chapter, each from a new page, its footnotes
-// at its end. The system's serif sets it; Chromium prints it. It runs no
-// script and loads nothing: its policy allows only its own styles.
+// at its end, its images in it as data. The system's serif sets it;
+// Chromium prints it. It runs no script and loads nothing: its policy
+// allows only its own styles and images held as data.
 
 import { escapeHtml } from '../ao3';
 import { chaptersOf, type ExportRequest, languageTag } from './book';
+import { dataAddress } from './images';
 import { xmlChars } from './xml';
 
 const STYLE = `
@@ -16,6 +18,7 @@ p { margin: 0; text-indent: 1.5em; orphans: 2; widows: 2; }
 h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p, .scene-break + p, blockquote p, li p, .footnotes p { text-indent: 0; }
 .scene-break { margin: 1em 0; text-align: center; text-indent: 0; }
 blockquote { margin: 0.8em 2em; }
+img { max-width: 100%; max-height: 90vh; height: auto; }
 pre { white-space: pre-wrap; font-size: 0.85em; }
 mark { background: #fff1a8; color: inherit; }
 table { border-collapse: collapse; margin: 0.8em 0; }
@@ -30,7 +33,8 @@ a { color: inherit; }
 
 /** The book (or note) as the HTML page the PDF is printed from. */
 export function printHtml(request: ExportRequest): string {
-  const chapters = chaptersOf(request, true).map((chapter, i) => {
+  const { chapters: written, images } = chaptersOf(request, true);
+  const chapters = written.map((chapter, i) => {
     const ids = `c${i + 1}-`;
     const notes = chapter.notes.map(({ blocks, referred }, j) => {
       const n = j + 1;
@@ -56,12 +60,18 @@ export function printHtml(request: ExportRequest): string {
 <html lang="${language}">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">
 <title>${title}</title>
 <style>${STYLE}</style>
 </head>
 <body>
-${xmlChars([...titlePage, ...chapters].join('\n'))}
+${xmlChars([...titlePage, ...chapters].join('\n')).replace(
+  /<img src="eien-image:(\d+)"/gu,
+  (whole, n: string) => {
+    const image = images[Number(n)];
+    return image ? `<img src="${dataAddress(image.info.kind, image.bytes)}"` : whole;
+  },
+)}
 </body>
 </html>
 `;

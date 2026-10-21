@@ -2,31 +2,16 @@
 // AO3 takes them. Quotes follow the vault's setting; code keeps its own.
 // ./to-html.ts writes the blocks round them. A book's exports (EPUB, Word,
 // PDF; spec §8) differ only where AO3 has no tag or no place: a highlight
-// is <mark>, an image its words, and a link goes to the web or mail only.
+// is <mark>, an image is the book's own copy (or its words), and a link goes
+// to the web or mail only.
 
 import type { SyntaxNode } from '@lezer/common';
 import { CONTEXT, curlyQuotes, type QuoteStyle, straightQuotes } from '../typography';
 import { bareAddress, destination, type References, safeAddress, webAddress } from './addresses';
 import { decodeEntities, escapeAttr, escapeHtml, trimSpaces, visible } from './html';
+import { BREAKS, INLINE_CONTAINERS, INLINE_TAGS, MARKS } from './inline-tags';
 
-/** Inline HTML a note may hold (spec §4) that AO3 takes as it is. */
-export const INLINE_TAGS = new Set([
-  'u',
-  'em',
-  'i',
-  'strong',
-  'b',
-  's',
-  'del',
-  'ins',
-  'sup',
-  'sub',
-  'br',
-  'small',
-  'big',
-  'cite',
-  'q',
-]);
+export { INLINE_TAGS };
 
 /**
  * Lines of a block's HTML (parted by line breaks) without the ones that show
@@ -45,41 +30,18 @@ function shownLines(html: string): string {
   return lines.join('<br />\n');
 }
 
-const INLINE_CONTAINERS: Readonly<Record<string, string>> = {
-  Emphasis: 'em',
-  StrongEmphasis: 'strong',
-  Strikethrough: 's',
-  Subscript: 'sub',
-  Superscript: 'sup',
-};
-
-const MARKS = new Set([
-  'EmphasisMark',
-  'StrikethroughMark',
-  'SubscriptMark',
-  'SuperscriptMark',
-  'HighlightMark',
-  'QuoteMark',
-  'HeaderMark',
-  'ListMark',
-  'LinkMark',
-  'WikiLinkMark',
-  'CodeMark',
-  'CodeInfo',
-  'LinkTitle',
-  'LinkLabel',
-  'TableDelimiter',
-]);
-
-/** The note's own tags that start a line or a paragraph. */
-const BREAKS = new Set(['br', 'hr', 'p', 'div', 'blockquote']);
+/** How a book's writer differs from AO3's (spec §8). */
+export interface BookFlavor {
+  /** The address a book gives the image the note names `address`; null when it carries none. */
+  image(address: string): string | null;
+}
 
 export class InlineWriter {
   readonly #source: string;
   readonly #quotes: QuoteStyle;
   readonly #references: References;
   /** Written for a book's exports, not for AO3 (see the top of this file). */
-  readonly #book: boolean;
+  readonly #book: BookFlavor | null;
   /** The last character of text written: what a quote after it opens or closes by. */
   #before = '';
   /** The note's own HTML tags opened in this block and not yet closed. */
@@ -89,7 +51,12 @@ export class InlineWriter {
   /** How many of them were opened outside the element being written: those it can't close. */
   #floor = 0;
 
-  constructor(source: string, quotes: QuoteStyle, references: References, book = false) {
+  constructor(
+    source: string,
+    quotes: QuoteStyle,
+    references: References,
+    book: BookFlavor | null = null,
+  ) {
     this.#source = source;
     this.#quotes = quotes;
     this.#references = references;
@@ -242,13 +209,17 @@ export class InlineWriter {
       return start + words + end;
     }
     const words = this.inline(node, open.to, close.from);
-    // A book carries no images yet: an image is its description.
-    if (!this.#follows(href) || (image && this.#book)) return words;
+    const alt = () => escapeAttr(decodeEntities(words.replace(/<[^>]*>/g, '')));
+    if (image && this.#book) {
+      // The book's own copy of the image; without one (from the web, not there), its description.
+      const src = this.#book.image(href);
+      return src === null ? words : `<img src="${escapeAttr(src)}" alt="${alt()}" />`;
+    }
+    if (!this.#follows(href)) return words;
     // A book's reader takes no space in an address (an EPUB checker, Word): written as %20.
     const address = this.#book ? href.replace(/ /gu, '%20') : href;
     if (!image) return `<a href="${escapeAttr(address)}">${words}</a>`;
-    const alt = decodeEntities(words.replace(/<[^>]*>/g, ''));
-    return `<img src="${escapeAttr(href)}" alt="${escapeAttr(alt)}" />`;
+    return `<img src="${escapeAttr(href)}" alt="${alt()}" />`;
   }
 
   /** HTML in the note: the tags AO3 takes kept, anything else shown as text. */

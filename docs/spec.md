@@ -756,7 +756,7 @@ Obsidian vault, iA Writer's library, a plain folder) into the vault.
 ### On the phone
 
 The phone has no menu bar: a note's menu and a book's offer the exports.
-EPUB, Word and AO3 HTML go to `Eien Exports` beside the vault's folder
+EPUB, Word (with their images) and AO3 HTML go to `Eien Exports` beside the vault's folder
 (Documents on Android; Eien's folder in the Files app on iOS), under a free
 name, never over a file there. PDF isn't offered: the WebView can't print to
 a file without a plugin of Eien's own, which may come later. Import isn't

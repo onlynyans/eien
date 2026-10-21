@@ -2,17 +2,8 @@
 // the only kind the content security policy lets the page show (spec §4).
 
 import { resolveLinkPath } from '../../core/paths';
+import { imageTypeOf } from '../../core/vault';
 import type { ImageLoader } from './widgets';
-
-const TYPES: Record<string, string> = {
-  png: 'image/png',
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  gif: 'image/gif',
-  webp: 'image/webp',
-  avif: 'image/avif',
-  svg: 'image/svg+xml',
-};
 
 export interface NoteImages {
   readonly load: ImageLoader;
@@ -28,7 +19,7 @@ export function noteImages(
   const made = new Map<string, Promise<string | null>>();
   const load: ImageLoader = (src) => {
     const path = resolveLinkPath(folder, src);
-    const type = path ? TYPES[path.slice(path.lastIndexOf('.') + 1).toLowerCase()] : undefined;
+    const type = path ? imageTypeOf(path.slice(path.lastIndexOf('/') + 1)) : null;
     if (!path || !type) return Promise.resolve(null);
     let url = made.get(path);
     if (!url) {

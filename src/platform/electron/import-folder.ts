@@ -6,10 +6,17 @@
 
 import { readdir, realpath } from 'node:fs/promises';
 import { basename } from 'node:path';
-import { type ImportReport, type LeftOut, type LeftReason, planImport } from '../../core/import';
-import { baseName, freeNoteName, parentOf, titleOf } from '../../core/paths';
+import {
+  type Copy,
+  type ImportReport,
+  type LeftOut,
+  type LeftReason,
+  planImport,
+} from '../../core/import';
+import { baseName, extensionOf, freeName, parentOf } from '../../core/paths';
 import { MAX_NOTE_BYTES } from '../index/vault-index';
 import type { OpenVault } from '../open-vault';
+import { MAX_BYTES_READ } from '../storage';
 import { listFolder, readNoLinks, within } from './outside-folder';
 
 /** Thrown when the folder chosen can't be imported at all (it's the vault, in it, or holds it). */
@@ -23,8 +30,8 @@ const TRIES = 5;
 const utf8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 /**
- * Copy the notes in `source` (a folder outside the vault at `vaultRoot`)
- * into a new folder at the top of `vault`.
+ * Copy the notes and images in `source` (a folder outside the vault at
+ * `vaultRoot`) into a new folder at the top of `vault`.
  */
 export async function importFolder(
   source: string,
@@ -39,44 +46,51 @@ export async function importFolder(
   const listed = await listFolder(from);
   // The vault's top as the disk has it now (links and hidden names too), not as the index last read it.
   const top = await readdir(to);
-  const plan = planImport(listed.files, basename(source), top, MAX_NOTE_BYTES);
+  const limits = { note: MAX_NOTE_BYTES, image: MAX_BYTES_READ } as const;
+  const plan = planImport(listed.files, basename(source), top, limits);
   const left: LeftOut[] = [...listed.left, ...plan.left];
-  const written: string[] = [];
+  const written: Copy[] = [];
 
   type Outcome<T> =
     | { readonly ok: true; readonly value: T }
     | { readonly ok: false; readonly why: LeftReason };
   const fail = (why: LeftReason) => ({ ok: false, why }) as const;
-  /** The note's text, or why it can't come in. */
-  const read = async (path: string): Promise<Outcome<string>> => {
-    const bytes = await readNoLinks(from, path);
+  /** The file's bytes (a note's as UTF-8 text), or why it can't come in. */
+  const read = async (copy: Copy): Promise<Outcome<Uint8Array | string>> => {
+    const bytes = await readNoLinks(from, copy.from);
     if (bytes === 'link') return fail('link');
     if (!bytes) return fail('unreadable');
-    if (bytes.length > MAX_NOTE_BYTES) return fail('too-large'); // grown since it was listed
+    if (bytes.length > limits[copy.kind]) return fail('too-large'); // grown since it was listed
+    if (copy.kind === 'image') return { ok: true, value: bytes };
     try {
       return { ok: true, value: utf8.decode(bytes) }; // a byte-order mark kept, as the note had it
     } catch {
       return fail('not-utf8');
     }
   };
-  /** Write `text` where nothing is: at `to`, or the next free name when something arrived there. */
-  const write = async (to: string, text: string): Promise<Outcome<string>> => {
+  /** Write it where nothing is: at `to`, or the next free name when something arrived there. */
+  const write = async (to: string, data: Uint8Array | string): Promise<Outcome<string>> => {
+    const name = baseName(to);
+    const extension = extensionOf(name);
     let target = to;
     for (let tries = 0; tries < TRIES; tries++) {
-      const result = await vault.storage.write(target, text, null).catch(() => null);
-      if (!result) return fail('unwritten');
-      if (result.ok) return { ok: true, value: target };
-      // Another device (Syncthing) wrote there meanwhile: kept, and this note numbered.
+      const done = await (typeof data === 'string'
+        ? vault.storage.write(target, data, null).then((result) => result.ok)
+        : vault.storage.writeNew(target, data)
+      ).catch(() => null);
+      if (done === null) return fail('unwritten');
+      if (done) return { ok: true, value: target };
+      // Another device (Syncthing) wrote there meanwhile: kept, and this one numbered.
       const folder = parentOf(to);
       const names = [...(await vault.storage.listFiles(folder)), baseName(target)];
-      target = `${folder}/${freeNoteName(titleOf(baseName(to)), names)}`;
+      target = `${folder}/${freeName(name.slice(0, name.length - extension.length), names, extension)}`;
     }
     return fail('taken');
   };
-  const copy = async (file: { from: string; to: string }) => {
-    const text = await read(file.from);
-    const done = text.ok ? await write(file.to, text.value) : text;
-    if (done.ok) written.push(done.value);
+  const copy = async (file: Copy) => {
+    const data = await read(file);
+    const done = data.ok ? await write(file.to, data.value) : data;
+    if (done.ok) written.push({ ...file, to: done.value });
     else left.push({ path: file.from, reason: done.why });
   };
 
@@ -85,11 +99,13 @@ export async function importFolder(
     for (let next = queue.shift(); next; next = queue.shift()) await copy(next);
   });
   await Promise.all(workers);
-  if (written.length) await vault.index.refresh(written).catch(() => undefined); // the watcher catches up
+  const paths = written.map((each) => each.to);
+  if (paths.length) await vault.index.refresh(paths).catch(() => undefined); // the watcher catches up
   const order = (a: LeftOut, b: LeftOut) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
   return {
     folder: written.length ? plan.folder : null,
-    copied: written.length,
+    copied: written.filter((each) => each.kind === 'note').length,
+    images: written.filter((each) => each.kind === 'image').length,
     left: left.sort(order),
   };
 }

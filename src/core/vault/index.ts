@@ -1,5 +1,6 @@
 export {
   type EntryKind,
+  imageTypeOf,
   isNoteName,
   isSyncConflictName,
   kindOf,

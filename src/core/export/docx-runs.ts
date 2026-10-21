@@ -16,10 +16,49 @@ export interface Look {
   readonly code?: true;
 }
 
+/** HTML's inline tags as the run properties they give. */
+export const LOOKS: Readonly<Record<string, keyof Look>> = {
+  em: 'i',
+  i: 'i',
+  cite: 'i',
+  strong: 'b',
+  b: 'b',
+  u: 'u',
+  ins: 'u',
+  s: 'strike',
+  del: 'strike',
+  strike: 'strike',
+  mark: 'mark',
+  sup: 'sup',
+  sub: 'sub',
+  code: 'code',
+};
+
 export type Piece =
   | { readonly kind: 'text'; text: string; readonly look: Look; readonly link: number | null }
   | { readonly kind: 'break'; readonly link: number | null }
-  | { readonly kind: 'note'; readonly n: number };
+  | { readonly kind: 'note'; readonly n: number }
+  | { readonly kind: 'image'; readonly drawing: Drawing };
+
+/** An image drawn in the text: its relationship, its size in EMU, its own id and words. */
+export interface Drawing {
+  readonly rel: string;
+  readonly cx: number;
+  readonly cy: number;
+  readonly id: number;
+  readonly name: string;
+  readonly alt: string;
+}
+
+const A = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+const PIC = 'http://schemas.openxmlformats.org/drawingml/2006/picture';
+
+/** A picture in line with the words (the "wp" prefix is declared on the part's root). */
+function drawingXml(d: Drawing): string {
+  const alt = escapeXml(d.alt);
+  const extent = `cx="${d.cx}" cy="${d.cy}"`;
+  return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent ${extent}/><wp:docPr id="${d.id}" name="Picture ${d.id}" descr="${alt}"/><a:graphic xmlns:a="${A}"><a:graphicData uri="${PIC}"><pic:pic xmlns:pic="${PIC}"><pic:nvPicPr><pic:cNvPr id="${d.id}" name="${escapeXml(d.name)}" descr="${alt}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${d.rel}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext ${extent}/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+}
 
 export const COURIER = '<w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New"/>';
 
@@ -72,13 +111,15 @@ export function paragraph(pieces: readonly Piece[], look: ParagraphLook, keep = 
   let runs = '';
   let open: number | null = null;
   for (const piece of pieces) {
-    const link = piece.kind === 'note' ? null : piece.link;
+    const link = piece.kind === 'note' || piece.kind === 'image' ? null : piece.link;
     if (link !== open) {
       if (open !== null) runs += '</w:hyperlink>';
       if (link !== null) runs += `<w:hyperlink r:id="rIdLink${link}" w:history="1">`;
       open = link;
     }
-    if (piece.kind === 'note') {
+    if (piece.kind === 'image') {
+      runs += drawingXml(piece.drawing);
+    } else if (piece.kind === 'note') {
       runs += `<w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr><w:footnoteReference w:id="${piece.n}"/></w:r>`;
     } else if (piece.kind === 'break') {
       runs += '<w:r><w:br/></w:r>';

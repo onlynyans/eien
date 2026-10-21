@@ -7,12 +7,23 @@ import { bookBlocks, decodeEntities, escapeHtml } from '../ao3';
 import { footnoteRefs, inRuns, literalRanges, splitFootnotes } from '../markdown';
 import { frontMatterEnd, toEditor } from '../text';
 import type { QuoteStyle } from '../typography';
+import type { ImageInfo } from './images';
 import { xmlChars } from './xml';
 
 /** A note to export: its title (the file's name) and its text as stored. */
 export interface ExportNote {
   readonly title: string;
   readonly markdown: string;
+  /** The images it shows that the book carries, by their address as the note writes it. */
+  readonly images?: ReadonlyMap<string, ExportImage>;
+}
+
+/** An image from the vault, read for a book: its bytes, and what they are. */
+export interface ExportImage {
+  /** Which file it is (its vault path): one copy for every note that shows it. */
+  readonly key: string;
+  readonly bytes: Uint8Array;
+  readonly info: ImageInfo;
 }
 
 export interface Chapter {
@@ -114,7 +125,12 @@ function marksAfterLinks(html: string, mark: (hex: string) => string): string {
  * footnotes' ids. A paragraph of more than 64 lines goes as paragraphs of
  * 64, as the index reads it (spec §4): the parser takes seconds over one.
  */
-export function chapterOf(note: ExportNote, quotes: QuoteStyle, ids = ''): Chapter {
+export function chapterOf(
+  note: ExportNote,
+  quotes: QuoteStyle,
+  ids = '',
+  image: (address: string) => string | null = () => null,
+): Chapter {
   const text = toEditor(note.markdown);
   const split = splitFootnotes(text.slice(frontMatterEnd(text)));
   const body = inRuns(split.text);
@@ -139,7 +155,7 @@ export function chapterOf(note: ExportNote, quotes: QuoteStyle, ids = ''): Chapt
       marked.add(n);
       return `<sup><a class="noteref" epub:type="noteref"${id} href="#${ids}fn${n}">${n}</a></sup>`;
     });
-  const blocks = bookBlocks(withMarks(body, number), quotes);
+  const blocks = bookBlocks(withMarks(body, number), quotes, image);
   // The notes' own Markdown may refer to further notes; a note never referred to comes last.
   const notes: string[][] = [];
   for (let i = 0; ; i++) {
@@ -147,7 +163,7 @@ export function chapterOf(note: ExportNote, quotes: QuoteStyle, ids = ''): Chapt
       const next = [...defined.keys()].find((key) => !numbers.has(key));
       if (next === undefined || number(next) === null) break;
     }
-    notes.push(bookBlocks(withMarks(defined.get(order[i] as string) ?? '', number), quotes));
+    notes.push(bookBlocks(withMarks(defined.get(order[i] as string) ?? '', number), quotes, image));
   }
   // A note is referred to when a mark leads to it from the text, or from a note that is.
   const marksIn = (html: readonly string[]) =>

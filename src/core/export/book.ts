@@ -3,7 +3,7 @@
 // language and paper.
 
 import type { QuoteStyle } from '../typography';
-import { type Chapter, chapterOf, type ExportNote } from './chapter';
+import { type Chapter, chapterOf, type ExportImage, type ExportNote } from './chapter';
 
 /** Each export's name in a menu (spec §8): the menu bar's, and a note's or a book's own. */
 export const EXPORT_LABELS = {
@@ -67,9 +67,35 @@ export function uuidOf(key: string): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
-/** The request's chapters; each one's footnote ids begin `c<n>-` when `prefixed` (one page for all). */
-export const chaptersOf = (request: ExportRequest, prefixed: boolean): Chapter[] =>
-  request.notes.map((note, i) => chapterOf(note, request.quotes, prefixed ? `c${i + 1}-` : ''));
+/** Where a book's writer puts an image, for each format to give its own address: "eien-image:<n>". */
+export const IMAGE_SRC = /^eien-image:(\d+)$/u;
+
+/**
+ * The request's chapters, and the images they show, each once, numbered
+ * from 0 in the order the notes hold them; an image in the chapters is
+ * `<img src="eien-image:<n>">`. Footnote ids begin `c<n>-` when `prefixed`
+ * (one page for every chapter).
+ */
+export function chaptersOf(
+  request: ExportRequest,
+  prefixed: boolean,
+): { chapters: Chapter[]; images: ExportImage[] } {
+  const images: ExportImage[] = [];
+  const numbers = new Map<string, number>();
+  const chapters = request.notes.map((note, i) =>
+    chapterOf(note, request.quotes, prefixed ? `c${i + 1}-` : '', (address) => {
+      const image = note.images?.get(address);
+      if (!image) return null;
+      let n = numbers.get(image.key);
+      if (n === undefined) {
+        n = images.push(image) - 1;
+        numbers.set(image.key, n);
+      }
+      return `eien-image:${n}`;
+    }),
+  );
+  return { chapters, images };
+}
 
 /** "2026-10-20T16:40:02Z": the time to the second, in UTC. */
 export const utcSeconds = (date: Date): string =>

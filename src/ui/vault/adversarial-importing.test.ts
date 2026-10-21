@@ -11,6 +11,7 @@ describe('importNews', () => {
     const news = importNews({
       folder: null,
       copied: 0,
+      images: 0,
       left: [
         { path: 'Ideas.md', reason: 'unwritten' },
         { path: 'Chapter.md', reason: 'unwritten' },

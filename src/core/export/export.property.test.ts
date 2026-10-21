@@ -6,6 +6,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { shownText, xmlParts } from '../../../tests/support/export-parts';
+import { GIF } from '../../../tests/support/images';
 import { readZip } from '../../../tests/support/read-zip';
 import { assertSoundXhtml, assertWellFormedXml } from '../../../tests/support/xml-check';
 import { readMarkdown } from '../markdown';
@@ -14,6 +15,14 @@ import type { ExportRequest } from './book';
 import { docx } from './docx';
 import { epub } from './epub';
 import { printHtml } from './print-html';
+
+/** The one image the notes carry ("dot.gif"); "gone.png" is its description. */
+const DOT = new Map([
+  [
+    'dot.gif',
+    { key: 'art/dot.gif', bytes: GIF, info: { kind: 'gif' as const, width: 1, height: 1 } },
+  ],
+]);
 
 /** The words a check looks for: none of them a mark, a label or part of one. */
 const WORDS = ['scarf', 'needle', 'mended', 'ember', 'thread'];
@@ -68,6 +77,8 @@ const token = fc.constantFrom(
   '&#12345678;',
   '<?',
   '<!--',
+  '![a *dot*](dot.gif)',
+  '![gone](gone.png)',
 );
 const line = fc
   .array(fc.tuple(token, fc.constantFrom(' ', '', '\t')), { minLength: 1, maxLength: 8 })
@@ -102,7 +113,7 @@ const note = fc
 
 const request = (markdowns: string[]): ExportRequest => ({
   title: 'Book & <Title>',
-  notes: markdowns.map((markdown, i) => ({ title: `Chapter ${i + 1}`, markdown })),
+  notes: markdowns.map((markdown, i) => ({ title: `Chapter ${i + 1}`, markdown, images: DOT })),
   book: true,
   quotes: 'curly',
   language: 'en-US',
@@ -161,12 +172,17 @@ describe('exports, over generated notes', () => {
     );
   });
 
-  it('the PDF’s page: no script, and only its own styles', () => {
+  it('the PDF’s page: no script, only its own styles, and images only as data', () => {
     fc.assert(
       fc.property(fc.array(note, { minLength: 1, maxLength: 2 }), (markdowns) => {
         const html = printHtml(request(markdowns));
-        expect(html).not.toMatch(/<(?:script|img|iframe|object|embed|link|style(?! *>))\b/iu);
+        expect(html).not.toMatch(/<(?:script|iframe|object|embed|link|style(?! *>))\b/iu);
         expect(html.match(/<style>/gu)).toHaveLength(1);
+        for (const image of html.matchAll(/<img\b[^>]*>/giu)) {
+          expect(image[0]).toMatch(
+            /^<img src="data:image\/gif;base64,R0lGODlh[^"]*" alt="[^"]*" \/>$/u,
+          );
+        }
       }),
     );
   });

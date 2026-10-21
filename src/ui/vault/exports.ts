@@ -18,6 +18,7 @@ import type { ExportFormat, OutBridge, OutFile, OutKind, VaultBridge } from '../
 import { reasonOf } from '../reason';
 import type { SettingsState } from '../settings/settings-state';
 import { currentBook } from './current-book';
+import { ExportImages, leftImages } from './export-images';
 import type { Navigation } from './navigation';
 import type { OpenNote } from './open-note';
 import type { VaultState } from './vault-state';
@@ -88,12 +89,19 @@ export function exportsOf(parts: ExportParts): Exports {
     date: new Date(),
   });
 
-  async function save(name: string, make: () => Promise<ExportRequest>, kind: OutKind) {
+  /** Save what `make` makes; its images, for a book's formats (AO3's HTML keeps its addresses). */
+  async function save(
+    name: string,
+    make: (images: ExportImages | null) => Promise<ExportRequest>,
+    kind: OutKind,
+  ) {
     try {
-      const made = await make();
+      const images =
+        kind === 'html' ? null : new ExportImages((path) => parts.vault.readBytes(path));
+      const made = await make(images);
       if (kind === 'pdf') tell('Making the PDF…');
       const saved = await parts.out.saveAs(name, fileOf(made, kind));
-      if (saved) tell(`Saved as “${saved}”.`);
+      if (saved) tell(`Saved as “${saved}”.${leftImages(images?.left ?? 0)}`);
     } catch (error) {
       tell(
         error instanceof Nothing ? error.message : `It couldn’t be exported: ${reasonOf(error)}`,
@@ -105,13 +113,14 @@ export function exportsOf(parts: ExportParts): Exports {
     const title = titleOf(baseName(path));
     await save(
       title,
-      async () => {
+      async (images) => {
         const markdown = await textOf(path);
         // No words to show (as Copy for AO3 finds them): nothing to export.
         if (!toAo3Html(markdown, { quotes: 'straight', sceneBreak: 'rule' })) {
           throw new Nothing('Nothing to export: the note has no words yet.');
         }
-        return request(title, [{ title, markdown }], false, path);
+        const carried = (await images?.of(path, markdown)) ?? new Map();
+        return request(title, [{ title, markdown, images: carried }], false, path);
       },
       kind,
     );
@@ -121,13 +130,16 @@ export function exportsOf(parts: ExportParts): Exports {
     const title = folder ? baseName(folder) : state.name;
     await save(
       title,
-      async () => {
+      async (images) => {
         // Syncthing's conflict copies sit beside their chapter: never a chapter themselves.
         const names = (await state.folderOrder(folder)).filter((name) => !isSyncConflictName(name));
         if (!names.length) throw new Nothing('Nothing to export: the book has no chapters yet.');
         const notes: ExportNote[] = [];
         for (const name of names) {
-          notes.push({ title: titleOf(name), markdown: await textOf(joinPath(folder, name)) });
+          const path = joinPath(folder, name);
+          const markdown = await textOf(path);
+          const carried = (await images?.of(path, markdown)) ?? new Map();
+          notes.push({ title: titleOf(name), markdown, images: carried });
         }
         return request(title, notes, true, folder);
       },

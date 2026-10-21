@@ -4,7 +4,8 @@
 // for older readers. The styles are few, so the reader's font and size win.
 
 import { chaptersOf, type ExportRequest, languageTag, utcSeconds, uuidOf } from './book';
-import type { Chapter } from './chapter';
+import type { Chapter, ExportImage } from './chapter';
+import { IMAGE_KINDS } from './images';
 import { escapeXml, toXhtml } from './xml';
 import { zipStore } from './zip';
 
@@ -21,6 +22,7 @@ p { margin: 0; text-indent: 1.5em; }
 h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p, .scene-break + p, blockquote p, li p, aside p { text-indent: 0; }
 .scene-break { margin: 1em 0; text-align: center; text-indent: 0; }
 blockquote { margin: 1em 1.5em; }
+img { max-width: 100%; height: auto; }
 pre { white-space: pre-wrap; font-size: 0.85em; }
 table { border-collapse: collapse; margin: 1em 0; }
 td, th { border: 1px solid; padding: 0.2em 0.4em; }
@@ -48,9 +50,11 @@ ${body}
 `;
 
 const chapterFile = (n: number) => `chapter-${n}.xhtml`;
+const imageFile = (image: ExportImage, n: number) =>
+  `images/image-${n + 1}.${IMAGE_KINDS[image.info.kind].extension}`;
 
 /** A chapter's page: its heading, its blocks, then its notes, each linking back to its mark. */
-function chapterBody(chapter: Chapter): string {
+function chapterBody(chapter: Chapter, images: readonly ExportImage[]): string {
   const notes = chapter.notes.map(({ blocks, referred }, i) => {
     const n = i + 1;
     const back = referred ? `<a href="#fnref${n}">${n}.</a> ` : `${n}. `;
@@ -71,18 +75,21 @@ function chapterBody(chapter: Chapter): string {
       : []),
     '</section>',
   ];
-  return toXhtml(parts.join('\n'));
+  return toXhtml(parts.join('\n')).replace(/<img src="eien-image:(\d+)"/gu, (whole, n: string) => {
+    const image = images[Number(n)];
+    return image ? `<img src="${imageFile(image, Number(n))}"` : whole;
+  });
 }
 
 /** The book (or note) as an EPUB file's bytes. */
 export function epub(request: ExportRequest): Uint8Array {
   const language = languageTag(request.language);
-  const chapters = chaptersOf(request, false);
+  const { chapters, images } = chaptersOf(request, false);
   const id = `urn:uuid:${uuidOf(request.key)}`;
   const title = escapeXml(request.title);
   const files = chapters.map((chapter, i) => ({
     path: `OEBPS/${chapterFile(i + 1)}`,
-    data: page(language, chapter.headingText, chapterBody(chapter)),
+    data: page(language, chapter.headingText, chapterBody(chapter, images)),
   }));
   const titlePage = request.book
     ? [
@@ -103,6 +110,10 @@ export function epub(request: ExportRequest): Uint8Array {
     ...chapters.map(
       (_, i) =>
         `<item id="c${i + 1}" href="${chapterFile(i + 1)}" media-type="application/xhtml+xml"/>`,
+    ),
+    ...images.map(
+      (image, n) =>
+        `<item id="img${n + 1}" href="${imageFile(image, n)}" media-type="${IMAGE_KINDS[image.info.kind].type}"/>`,
     ),
   ];
   const spine = [
@@ -161,6 +172,7 @@ ${points.join('\n')}
       { path: 'OEBPS/style.css', data: STYLE },
       ...titlePage,
       ...files,
+      ...images.map((image, n) => ({ path: `OEBPS/${imageFile(image, n)}`, data: image.bytes })),
     ],
     request.date,
   );

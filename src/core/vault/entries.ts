@@ -18,6 +18,23 @@ export interface VaultEntry {
 export const isNoteName = (name: string): boolean =>
   !isHiddenName(name) && name.toLowerCase().endsWith('.md');
 
+/** Images a note shows (spec §4), by extension, with their media types. */
+const IMAGE_TYPES: Readonly<Record<string, string>> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  avif: 'image/avif',
+  svg: 'image/svg+xml',
+};
+
+/** The media type of the image `name` names (by its extension, case aside), or null for none. */
+export const imageTypeOf = (name: string): string | null =>
+  isHiddenName(name)
+    ? null
+    : (IMAGE_TYPES[name.slice(name.lastIndexOf('.') + 1).toLowerCase()] ?? null);
+
 /** The kind a listed file or folder is. */
 export const kindOf = (name: string, isFolder: boolean): EntryKind =>
   isFolder ? 'folder' : isNoteName(name) ? 'note' : 'file';

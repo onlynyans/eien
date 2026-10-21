@@ -19,9 +19,12 @@ const MAX_OUT_BYTES = 64 * 1024 * 1024;
 /** The most a name offered may be: a title, many times over. */
 const MAX_NAME_CHARS = 1000;
 
-function bounded(value: unknown, name: string): string {
+/** The most a PDF's page may be: its images are in it as base64, 48 MB of them at most. */
+const MAX_PAGE_CHARS = 96 * 1024 * 1024;
+
+function bounded(value: unknown, name: string, most = MAX_OUT_CHARS): string {
   const out = text(value, name);
-  if (out.length > MAX_OUT_CHARS) throw new RangeError(`${name} is too long.`);
+  if (out.length > most) throw new RangeError(`${name} is too long.`);
   return out;
 }
 
@@ -52,7 +55,7 @@ export function outFile(value: unknown): OutFile {
     case 'pdf': {
       if (file.page !== 'a4' && file.page !== 'letter')
         throw new TypeError('page must be a4 or letter.');
-      return { kind: 'pdf', html: bounded(file.html, 'html'), page: file.page };
+      return { kind: 'pdf', html: bounded(file.html, 'html', MAX_PAGE_CHARS), page: file.page };
     }
     default:
       throw new TypeError('Not a kind of file Eien saves.');

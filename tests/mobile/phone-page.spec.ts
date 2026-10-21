@@ -221,6 +221,30 @@ test('a note’s menu exports it as EPUB or Word into Eien Exports; no PDF on th
   expect(String.fromCharCode(...(docx ?? []).slice(30, 49))).toBe('[Content_Types].xml');
 });
 
+test('the phone’s EPUB carries the note’s image from the vault', async ({ page }) => {
+  await open(page);
+  // A 1×1 GIF, as Syncthing would bring it.
+  await page.evaluate(
+    ([directory]) =>
+      window.Capacitor.Plugins.Filesystem.writeFile({
+        path: 'Eien/art/dot.gif',
+        data: 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==',
+        directory,
+        recursive: true,
+      }),
+    [DOCUMENTS] as const,
+  );
+  await putOutside(page, 'Eien/Dot.md', 'A dot: ![dot](art/dot.gif)\n');
+  await expect(titles(page)).toHaveText(['Dot'], { timeout: 10_000 });
+  await page.locator('.note-row', { hasText: 'Dot' }).click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Export…' }).click();
+  await page.getByRole('menuitem', { name: 'EPUB…' }).click();
+  await expect(page.locator('.list__notice')).toHaveText('Saved as “Eien Exports/Dot.epub”.');
+  const epub = String.fromCharCode(...((await bytesOutside(page, 'Eien Exports/Dot.epub')) ?? []));
+  expect(epub).toContain('OEBPS/images/image-1.gif');
+  expect(epub).toContain('<img src="images/image-1.gif" alt="dot" />');
+});
+
 test('the phone makes no PDF and imports no folder, and says so', async ({ page }) => {
   await open(page);
   const outcomes = await page.evaluate(async () => ({
