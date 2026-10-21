@@ -132,6 +132,18 @@ export function renderList(
                 : (EMPTY[list.kind] ?? 'Nothing here yet.'),
           }),
         );
+  // A redraw mustn't take the keyboard's place: the row that had focus has it again. Read before
+  // the long list is given its rows, which hands the keyboard to the list while it redraws.
+  const rowsBefore = [...container.querySelectorAll<HTMLElement>('.note-row[data-path]')];
+  const active =
+    document.activeElement instanceof HTMLElement && container.contains(document.activeElement)
+      ? document.activeElement
+      : null;
+  const focused = active?.dataset.path;
+  // A lens control the keyboard was on; a chip's × goes with its chip, to the filter's button.
+  const focusedKey =
+    active?.dataset.key ?? (active?.closest('.list__lens') ? 'lens-filter:list' : undefined);
+  const focusedAt = rowsBefore.findIndex((row) => row.dataset.path === focused);
   // Thousands of notes: one list that draws the rows in sight, kept with its scroll position.
   const long = list.notes.length >= WINDOW_FROM;
   let windowed = windows.get(container);
@@ -150,17 +162,6 @@ export function renderList(
       })),
     );
   }
-  // A redraw mustn't take the keyboard's place: the row that had focus has it again.
-  const rowsBefore = [...container.querySelectorAll<HTMLElement>('.note-row[data-path]')];
-  const active =
-    document.activeElement instanceof HTMLElement && container.contains(document.activeElement)
-      ? document.activeElement
-      : null;
-  const focused = active?.dataset.path;
-  // A lens control the keyboard was on; a chip's × goes with its chip, to the filter's button.
-  const focusedKey =
-    active?.dataset.key ?? (active?.closest('.list__lens') ? 'lens-filter:list' : undefined);
-  const focusedAt = rowsBefore.findIndex((row) => row.dataset.path === focused);
   container.replaceChildren(
     h(
       'header',
