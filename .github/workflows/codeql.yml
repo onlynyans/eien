@@ -20,6 +20,9 @@ permissions:
 jobs:
   analyze:
     name: CodeQL (JavaScript and TypeScript)
+    # Code scanning is free for public repositories only: while this one is
+    # private, GitHub refuses the results ("Code scanning is not enabled").
+    if: ${{ github.event.repository.private != true }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
