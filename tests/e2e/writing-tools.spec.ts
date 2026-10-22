@@ -108,17 +108,19 @@ test('typewriter scrolling holds the line being written at the middle of the pag
   await page.keyboard.press('ControlOrMeta+End');
   await page.keyboard.type(' And on.');
   // The line being written sits at the middle of the page's scroller, give or take a line.
-  const offset = await page.evaluate(() => {
-    const scroller = document.querySelector('.page__scroll') as HTMLElement;
-    const root = (document.querySelector('.editor-host') as HTMLElement).shadowRoot;
-    const line = [...(root?.querySelectorAll<HTMLElement>('.cm-line') ?? [])].find((each) =>
-      each.textContent?.includes('And on.'),
-    );
-    const box = scroller.getBoundingClientRect();
-    const at = line?.getBoundingClientRect();
-    return at ? at.top + at.height / 2 - (box.top + box.height / 2) : Number.NaN;
-  });
-  expect(Math.abs(offset)).toBeLessThan(40);
+  // CodeMirror scrolls in its next measure (an animation frame), so wait for it to land.
+  const offset = () =>
+    page.evaluate(() => {
+      const scroller = document.querySelector('.page__scroll') as HTMLElement;
+      const root = (document.querySelector('.editor-host') as HTMLElement).shadowRoot;
+      const line = [...(root?.querySelectorAll<HTMLElement>('.cm-line') ?? [])].find((each) =>
+        each.textContent?.includes('And on.'),
+      );
+      const box = scroller.getBoundingClientRect();
+      const at = line?.getBoundingClientRect();
+      return at ? Math.abs(at.top + at.height / 2 - (box.top + box.height / 2)) : Number.NaN;
+    });
+  await expect.poll(offset).toBeLessThan(40);
 });
 
 test('spellcheck: macOS’s own checker, off until asked for; not offered elsewhere', async ({
