@@ -62,8 +62,7 @@ export const SETTINGS = [
   {
     key: 'appearance.scheme',
     label: 'Day or night',
-    description:
-      'Night is inkstone: the same warm colours, darkened. System follows this computer.',
+    description: 'Use a light or dark appearance, or match your system setting.',
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
@@ -74,7 +73,7 @@ export const SETTINGS = [
     key: 'appearance.palette',
     label: 'Palette',
     description:
-      'Eien’s own themes, then your own: each a file in the vault’s .eien/themes, so it travels with your notes.',
+      'The color theme. Themes you create are saved in the vault’s .eien/themes folder and sync with your notes.',
     scope: 'device',
     group: 'Themes',
     type: 'choice',
@@ -87,7 +86,7 @@ export const SETTINGS = [
     key: 'appearance.layout',
     label: 'Layout',
     description:
-      'Where the page’s controls sit. Band: in a band above the page. Slip: on a slip floating over it. Running head: in one strip across the window.',
+      'Where the page’s toolbar appears. Band: above the page. Slip: floating over the page. Running head: in a strip across the top of the window.',
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
@@ -98,7 +97,7 @@ export const SETTINGS = [
     key: 'appearance.runheadGround',
     label: 'Running head',
     description:
-      'The Running head layout’s strip across the top of the window. Its ground is one of the theme’s own surfaces, so it follows any theme.',
+      'The background color of the Running head strip. Each option uses a color from the current theme.',
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
@@ -114,7 +113,7 @@ export const SETTINGS = [
   {
     key: 'appearance.face',
     label: 'Typeface',
-    description: 'For everything a person wrote: notes, titles, names.',
+    description: 'The font used for your notes, titles and names.',
     scope: 'device',
     group: 'Type',
     type: 'choice',
@@ -126,7 +125,7 @@ export const SETTINGS = [
     key: 'appearance.machineFace',
     label: 'Machine voice',
     description:
-      'For what the machine counts and what you press: counts, labels, the status line, the Source view.',
+      'The font used for word counts, labels, buttons, the status bar and the Source view.',
     scope: 'device',
     group: 'Type',
     type: 'choice',
@@ -136,7 +135,7 @@ export const SETTINGS = [
   {
     key: 'appearance.textSize',
     label: 'Text size',
-    description: 'The typeface everywhere, from the size it’s tuned to.',
+    description: 'Make text larger or smaller throughout the app.',
     scope: 'device',
     group: 'Type',
     type: 'number',
@@ -148,7 +147,7 @@ export const SETTINGS = [
   {
     key: 'appearance.nameWeight',
     label: 'Sidebar names',
-    description: 'How heavy the names sit in the sidebar. The chosen one keeps this weight.',
+    description: 'The font weight of names in the sidebar. The selected item uses the same weight.',
     scope: 'device',
     group: 'Type',
     type: 'number',
@@ -160,7 +159,8 @@ export const SETTINGS = [
   {
     key: 'appearance.titleWeight',
     label: 'List titles',
-    description: 'How heavy the titles sit in the note list. The chosen one is a step heavier.',
+    description:
+      'The font weight of titles in the note list. The selected note is one step bolder.',
     scope: 'device',
     group: 'Type',
     type: 'number',
@@ -172,7 +172,7 @@ export const SETTINGS = [
   {
     key: 'appearance.density',
     label: 'Density',
-    description: 'Compact keeps the type at its size and takes away space.',
+    description: 'Compact reduces the spacing between items. Text size stays the same.',
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
@@ -182,7 +182,8 @@ export const SETTINGS = [
   {
     key: 'appearance.frame',
     label: 'Page',
-    description: 'A sheet on the blotter, or paper from edge to edge.',
+    description:
+      'Show the page as a sheet with a margin around it, or fill the editor edge to edge.',
     scope: 'device',
     group: 'Page',
     type: 'choice',
@@ -192,7 +193,7 @@ export const SETTINGS = [
   {
     key: 'editor.focus',
     label: 'Focus',
-    description: 'Fades back every paragraph but the one you’re writing. Also View → Focus Mode.',
+    description: 'Dim every paragraph except the one you’re editing. Also in View → Focus Mode.',
     scope: 'device',
     group: 'Editor',
     type: 'choice',
@@ -203,7 +204,7 @@ export const SETTINGS = [
     key: 'editor.formatBar',
     label: 'Formatting bar',
     description:
-      'A bar of the Format menu’s commands over the page: bold, italic, headings, lists and the rest. Also View → Formatting Bar.',
+      'Show a toolbar above the page for bold, italic, headings, lists and other formatting. Also in View → Formatting Bar.',
     scope: 'device',
     group: 'Editor',
     type: 'choice',
@@ -215,8 +216,7 @@ export const SETTINGS = [
   {
     key: 'editor.typewriter',
     label: 'Typewriter scrolling',
-    description:
-      'Keeps the line you’re writing at the middle of the page as you type. Also in the View menu.',
+    description: 'Keep the current line vertically centered as you type. Also in the View menu.',
     scope: 'device',
     group: 'Editor',
     type: 'choice',
@@ -227,7 +227,7 @@ export const SETTINGS = [
     key: 'editor.spellcheck',
     label: 'Spellcheck',
     description:
-      'Underlines the words macOS doesn’t know, with its own dictionary; right-click one for suggestions. Also Edit → Check Spelling While Typing.',
+      'Underline misspelled words using the macOS dictionary. Right-click a word for suggestions. Also in Edit → Check Spelling While Typing.',
     scope: 'device',
     group: 'Editor',
     type: 'choice',
@@ -239,7 +239,7 @@ export const SETTINGS = [
   {
     key: 'books.numerals',
     label: 'Chapter numbers',
-    description: 'How a book numbers its chapters, in its list and its breadcrumb.',
+    description: 'The numbering style for chapters in a book’s list and breadcrumb.',
     scope: 'vault',
     group: 'Writing',
     type: 'choice',
@@ -249,7 +249,8 @@ export const SETTINGS = [
   {
     key: 'typography.quotes',
     label: 'Quotation marks',
-    description: 'As you type them, and in what Copy for AO3 gives. Code keeps its own.',
+    description:
+      'The quotation marks inserted as you type and used by Copy for AO3. Code is not affected.',
     scope: 'vault',
     group: 'Writing',
     type: 'choice',
@@ -260,7 +261,7 @@ export const SETTINGS = [
     key: 'ao3.sceneBreak',
     label: 'Scene breaks',
     description:
-      'How Copy for AO3 gives a *** line: AO3’s blank line, rule, blank line, or the rule alone.',
+      'How Copy for AO3 formats a *** scene break: a rule with blank lines around it, or the rule only.',
     scope: 'vault',
     group: 'AO3',
     type: 'choice',
@@ -270,7 +271,8 @@ export const SETTINGS = [
   {
     key: 'layout.panes',
     label: 'Panes',
-    description: 'Two puts the notes in the sidebar’s tree, in place of the note list.',
+    description:
+      'With two panes, notes appear in the sidebar’s tree instead of a separate note list.',
     wide: true,
     scope: 'device',
     group: 'Lists',
@@ -282,7 +284,7 @@ export const SETTINGS = [
     key: 'lists.arranging',
     label: 'Arranging',
     description:
-      'Drag anytime: rows move whenever your order is showing. In Arrange mode: only after choosing Arrange in a list’s head, so nothing moves by accident.',
+      'When rows can be reordered by dragging. Drag anytime: whenever a custom order is shown. In Arrange mode: only after choosing Arrange in the list’s header, to prevent accidental moves.',
     // A phone moves rows by their menu, never a drag.
     wide: true,
     scope: 'device',
@@ -295,7 +297,7 @@ export const SETTINGS = [
     key: 'window.zoom',
     label: 'Interface zoom',
     description:
-      'Every pane, as a browser zooms: View → Zoom In and Zoom Out, with the keyboard outside the page.',
+      'Zoom the whole window. Also in View → Zoom In and Zoom Out, or with the keyboard when the page isn’t focused.',
     // Electron's own zoom (webContents): a phone has none.
     platforms: ['darwin', 'win32', 'linux'],
     scope: 'device',
@@ -310,7 +312,7 @@ export const SETTINGS = [
     key: 'page.zoom',
     label: 'Page zoom',
     description:
-      'The page alone, the panes keeping their size: the same keys, with the keyboard in the page.',
+      'Zoom the page only; the panes keep their size. Uses the same shortcuts when the page is focused.',
     scope: 'device',
     group: 'Page',
     type: 'number',
