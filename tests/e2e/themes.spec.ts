@@ -199,7 +199,7 @@ test('a file in .eien/themes that isn’t a theme is listed, worn as Washi, neve
   await page.getByRole('button', { name: 'Settings' }).click();
   await goTo(page, 'Custom');
   await choose(page, 'Broken');
-  await expect(dialog(page).locator('.mix__unread')).toContainText('isn’t a theme Eien can read');
+  await expect(dialog(page).locator('.mix__unread')).toContainText('Eien can’t read this theme file');
   await expect(dialog(page).locator('.mix__body')).toBeHidden(); // no knobs to turn
   await expect(page.locator('html')).not.toHaveAttribute('data-palette');
   expect(existsSync(file) && readFileSync(file, 'utf8')).toBe('{ "mix": ');
