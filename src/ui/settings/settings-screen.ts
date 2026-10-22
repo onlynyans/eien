@@ -26,19 +26,19 @@ interface Drawn {
   flush?(): Promise<void>;
 }
 
-/** The Type tab opens with running text, so a change of face, size or weight shows in prose too. */
+/** The Type tab opens with running text, so a change of face, size or weight shows in prose too. Thoreau, Walden. */
 const sample = () =>
   h(
     'div',
     { class: 'settings__sample', attrs: { 'aria-hidden': 'true' } },
     h('p', {
-      text: 'They have a name for him in the barracks, and none of them will say it where he can hear.',
+      text: 'I had three chairs in my house; one for solitude, two for friendship, three for society.',
     }),
     h('span', { class: 'count', text: '3,051 words · today +809' }),
   );
 
 const VAULT_ABOUT =
-  'This vault’s own settings, kept in its .eien/config.json: they travel with its notes to every device.';
+  'Settings for this vault only. They’re saved in its .eien/config.json and sync with its notes to every device.';
 
 export class SettingsScreen {
   readonly #dialog: HTMLDialogElement;

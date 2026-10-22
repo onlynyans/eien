@@ -152,7 +152,7 @@ export class MixPanel {
     this.#body.hidden = theme.mix === null;
     this.#unread.textContent =
       theme.mix === null
-        ? 'This file isn’t a theme Eien can read, so it’s worn as Washi and never written over. Fix it by hand, or send it to the trash.'
+        ? 'Eien can’t read this theme file, so Washi is shown instead and the file is left unchanged. Fix it manually or move it to the trash.'
         : '';
     if (theme.mix === null) {
       this.#mix = null;

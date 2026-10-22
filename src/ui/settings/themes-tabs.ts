@@ -33,9 +33,7 @@ export function galleryTab(choose: Choose): ThemesTab {
     element: h(
       'div',
       { class: 'themes' },
-      about(
-        'Eien’s own themes. Each keeps Eien’s order of surfaces and its contrast, by day and by night.',
-      ),
+      about('Built-in themes. Each has a light and a dark version with readable contrast.'),
       h(
         'div',
         { class: 'themes__cards', attrs: { role: 'group', 'aria-label': 'Gallery' } },
@@ -123,7 +121,7 @@ export function customTab(
     'div',
     { class: 'themes' },
     about(
-      'Your own themes. Each is a file in .eien/themes, so it travels with the vault to every device. Choose one to wear it and change it, or make a new one.',
+      'Themes you’ve created. Each is saved as a file in .eien/themes and syncs with the vault to every device. Select one to use and edit it, or create a new one.',
     ),
     cards,
     said,
