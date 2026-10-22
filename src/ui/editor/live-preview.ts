@@ -239,7 +239,7 @@ function build(state: EditorState): DecorationSet {
           htmlTag(from, to);
           return;
         case 'HTMLBlock':
-          // A line that starts with a tag, as AO3's "<p>…</p>" do: each tag, as mid-line.
+          // A line that starts with a tag, as pasted "<p>…</p>" do: each tag, as mid-line.
           for (const tag of doc.sliceString(from, to).matchAll(/<[^<>]*>/g)) {
             htmlTag(from + tag.index, from + tag.index + tag[0].length);
           }

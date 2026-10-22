@@ -1,5 +1,5 @@
 // What the open note's page has besides the note: its seals (../versions),
-// its counters (./counting.ts), Copy for AO3 (./ao3-out.ts), its exports
+// its counters (./counting.ts), Copy as HTML (./copy-html.ts), its exports
 // (./exports.ts), outline cards (./outline.ts) and the settings it follows
 // (./note-page.ts) — made together, kept in step together, stopped together.
 
@@ -8,7 +8,7 @@ import type { Counters } from '../counters/counters';
 import type { PageView } from '../page/page';
 import type { SettingsState } from '../settings/settings-state';
 import { VersionsUI } from '../versions/versions-ui';
-import { type Ao3Out, ao3Out } from './ao3-out';
+import { type HtmlCopy, htmlCopy } from './copy-html';
 import { counting } from './counting';
 import { type Exports, exportsOf } from './exports';
 import type { Navigation } from './navigation';
@@ -39,7 +39,7 @@ export interface PagePartsOf {
 export interface PageParts {
   readonly versions: VersionsUI;
   readonly counters: Counters;
-  readonly ao3: Ao3Out;
+  readonly htmlCopy: HtmlCopy;
   readonly exports: Exports;
   readonly outline: Outline;
   /** Another note open, or the vault read again. */
@@ -77,7 +77,7 @@ export function pageParts(of: PagePartsOf): PageParts {
   return {
     versions,
     counters: counts.counters,
-    ao3: ao3Out({ page, note, out: of.bridge.out, settings, tell }),
+    htmlCopy: htmlCopy({ page, note, out: of.bridge.out, settings, tell }),
     exports: exportsOf({
       state,
       nav: of.nav,

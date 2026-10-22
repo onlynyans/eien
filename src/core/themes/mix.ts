@@ -33,7 +33,7 @@ export const MIX_RANGE: {
   seal: { min: 0, max: 360 },
 };
 
-/** A new theme's mix: Washi's warm paper, a brown ink, a vermilion seal. */
+/** A new theme's mix: the Paper theme's warm paper, a brown ink, a vermilion seal. */
 export const FIRST_MIX: Mix = { paper: 38, warmth: 18, ink: 30, seal: 12 };
 
 /** The margin each fitted ink keeps above its least, so rounding never leaves it short. */
@@ -89,7 +89,7 @@ const INK_START = {
   ],
 } as const satisfies Record<string, Start>;
 
-/** The status inks keep Washi's hues (moss, carmine, ochre), fitted to the theme's surfaces. */
+/** The status inks keep Paper's hues (moss, carmine, ochre), fitted to the theme's surfaces. */
 const STATUS_START = {
   added: {
     hue: [85, 90],
@@ -150,7 +150,7 @@ function fitted(
   return [each(0), each(1)];
 }
 
-/** The status inks for `surfaces`: Washi's hues, each fitted to them. */
+/** The status inks for `surfaces`: Paper's hues, each fitted to them. */
 export function statusInksFor(
   surfaces: Pick<Palette, (typeof SURFACES)[number]>,
 ): Pick<Palette, (typeof STATUS_INKS)[number]> {

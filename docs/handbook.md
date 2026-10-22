@@ -10,7 +10,7 @@ and the code wins for fact.
 A local Markdown notes app for writers, especially of long fiction and
 fanfiction. Notes are plain `.md` files in a folder (the **vault**). Eien adds
 tags, books (a folder of chapters in order), **seals** (versions you keep),
-AO3-ready HTML on copy, word counts and goals, and exports (EPUB, Word, PDF).
+clean HTML on copy, word counts and goals, and exports (EPUB, Word, PDF).
 It runs on macOS, Windows and Linux (Electron), and on Android and iOS
 (Capacitor). Devices sync through the files themselves, with Syncthing; there
 is no server, no account and no network use at all.
@@ -30,7 +30,7 @@ stay out of sight until the pointer or the keyboard asks for them.
 2. This handbook.
 3. [spec.md](spec.md): the source of truth for behaviour, by section (vault
    on disk §2, saving and sync §3, interface §4, architecture §5, settings
-   §6, themes §7, AO3 and exports §8, versions §9, phones and sync §10,
+   §6, themes §7, HTML and exports §8, versions §9, phones and sync §10,
    testing §11).
 4. [AGENTS.md](../AGENTS.md): the rules for the code, the module map, every
    command, the kinds of test, releasing. Written for people and coding
@@ -60,7 +60,7 @@ Each row: what it is, its section of the spec, and where to start in the code.
 | Rename in place, Eien's own right-click menu | §4 Organizing | `src/ui/vault/rename-in-row.ts`, `src/ui/list/name-field.ts`, `src/ui/menu/` |
 | Tags on the page, the formatting bar | §4 | `src/ui/page/` (stage 3D, #41) |
 | Seals: ⌘S, Compare, named seals, restore | §9 | `src/core/versions`, `src/ui/versions/` |
-| Copy for AO3, paste from HTML, curly quotes | §8 AO3 | `src/core/ao3`, `src/core/typography`, `src/ui/editor/typing.ts` |
+| Copy as HTML, paste from HTML, curly quotes | §8 HTML | `src/core/html`, `src/core/typography`, `src/ui/editor/typing.ts` |
 | Counters, goals, sprints, outline cards, focus, typewriter, spellcheck | §4 Writing tools | `src/core/counters`, `src/ui/counters/`, `src/ui/outline/`, `src/ui/editor/writing-tools.ts` |
 | Export EPUB, Word, PDF; import a Markdown folder | §8 | `src/core/export`, `src/core/import`, `src/ui/vault/exports.ts` |
 | Settings over the window; This vault; faces and weights | §6 | `src/core/config/schema.ts` (every setting), `src/ui/settings/` |
@@ -156,7 +156,7 @@ differs by case from one already there (Syncthing couldn't carry both).
 ```
 Vault/
   .eien/
-    config.json      the vault's settings (chapter numbers, AO3's scene break)
+    config.json      the vault's settings (chapter numbers, the scene break in copied HTML)
     pinned.json      pinned notes, a list of paths
     order.json       All Notes in your order, a list of paths
     tags.json        { made: tags no note carries yet, order: the tags' order }

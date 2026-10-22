@@ -1,6 +1,6 @@
 // What the editor does with what's typed and pasted (spec §4, §8): a typed
 // quote follows the vault's setting, curled by what's around it; pasted
-// HTML (AO3's, a web page's, or plain text that is really HTML) becomes
+// HTML (a story site's, a web page's, or plain text that is really HTML) becomes
 // Markdown. Code, addresses, HTML tags and front matter are left as typed.
 // The decisions are plain functions of the editor's state; the extensions
 // only hand them what was typed or pasted.
@@ -13,7 +13,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { decodeEntities, pastedMarkdown } from '../../core/ao3';
+import { decodeEntities, pastedMarkdown } from '../../core/html';
 import { frontMatterEnd } from '../../core/text';
 import { CONTEXT, curlyQuote, type QuoteStyle, revisedQuote } from '../../core/typography';
 

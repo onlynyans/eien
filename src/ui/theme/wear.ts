@@ -1,6 +1,6 @@
 // Wearing a theme (spec §7): the palette setting names one, and the window
-// wears it on <html>. Washi is tokens.css's own and Otaku has its sheet
-// (data-palette="otaku"); every other theme is its colour tokens set as
+// wears it on <html>. Paper is tokens.css's own and Slate has its sheet
+// (data-palette="slate"); every other theme is its colour tokens set as
 // overrides, only known tokens with valid values (safeTokens).
 
 import { nameKey } from '../../core/paths';
@@ -15,28 +15,28 @@ import {
 } from '../../core/themes';
 import type { WriterTheme } from '../../platform/theme-files';
 
-/** What wearing a theme sets: data-palette (none for Washi) and the colours to override, if any. */
+/** What wearing a theme sets: data-palette (none for Paper) and the colours to override, if any. */
 export interface Worn {
   readonly attribute: string | undefined;
   readonly palette: Palette | null;
 }
 
-const WASHI_WORN: Worn = { attribute: undefined, palette: null };
+const PAPER_WORN: Worn = { attribute: undefined, palette: null };
 
 /**
  * What the palette value `value` wears, given the writer's own themes
  * `mine`: a theme that isn't there (yet: the vault's files come after the
- * window's first draw), or can't be read, is Washi.
+ * window's first draw), or can't be read, is Paper.
  */
 export function wornFor(value: string, mine: readonly WriterTheme[]): Worn {
   const choice = themeChoice(value);
   if (choice.kind === 'mine') {
     const key = nameKey(choice.title);
     const theme = mine.find((each) => nameKey(each.title) === key);
-    return theme?.mix ? { attribute: 'mine', palette: mixPalette(theme.mix) } : WASHI_WORN;
+    return theme?.mix ? { attribute: 'mine', palette: mixPalette(theme.mix) } : PAPER_WORN;
   }
   const theme = galleryTheme(choice.id);
-  if (!theme || theme.id === 'washi') return WASHI_WORN;
+  if (!theme || theme.id === 'paper') return PAPER_WORN;
   return { attribute: theme.id, palette: theme.inSheet ? null : theme.palette };
 }
 

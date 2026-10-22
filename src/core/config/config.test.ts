@@ -99,11 +99,11 @@ describe('valueProblem', () => {
   });
 
   it('takes the gallery’s themes, and a theme of the writer’s own by a name its file can have', () => {
-    for (const good of ['washi', 'kinari', 'sakura', 'otaku', 'mine:Late Train']) {
+    for (const good of ['paper', 'linen', 'blossom', 'slate', 'mine:Late Train']) {
       expect(valueProblem(palette, good), good).toBeNull();
     }
     for (const bad of [
-      'Otaku',
+      'Slate',
       '',
       'toString',
       '__proto__',
@@ -112,10 +112,10 @@ describe('valueProblem', () => {
       'mine:.x',
       1,
       null,
-      ['otaku'],
+      ['slate'],
     ]) {
       expect(valueProblem(palette, bad)).toBe(
-        'must be one of washi, kinari, aizome, koke, rosoku, sumi, sakura, otaku, or a theme of your own (mine:<name>)',
+        'must be one of paper, linen, indigo, moss, candlelight, ink, blossom, slate, or a theme of your own (mine:<name>)',
       );
     }
   });
@@ -237,14 +237,14 @@ describe('withDefaults', () => {
 
 describe('withSetting', () => {
   it('sets one key and keeps the others, even ones it doesn’t know', () => {
-    const raw = { 'books.numerals': 'arabic', 'ao3.future': { nested: true } };
+    const raw = { 'books.numerals': 'arabic', 'later.future': { nested: true } };
     const next = withSetting(raw, { key: 'appearance.face', value: 'literata' });
     expect(next).toEqual({
       'books.numerals': 'arabic',
-      'ao3.future': { nested: true },
+      'later.future': { nested: true },
       'appearance.face': 'literata',
     });
-    expect(raw).toEqual({ 'books.numerals': 'arabic', 'ao3.future': { nested: true } }); // not changed in place
+    expect(raw).toEqual({ 'books.numerals': 'arabic', 'later.future': { nested: true } }); // not changed in place
   });
 
   it('leaves a default out of the file', () => {

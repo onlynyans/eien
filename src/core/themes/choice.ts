@@ -19,8 +19,8 @@ export const mineChoice = (title: string): string => MINE + title;
 export const isMineChoice = (value: string): boolean =>
   value.startsWith(MINE) && themeTitle(value.slice(MINE.length) + THEME_EXTENSION) !== null;
 
-/** The theme a palette value names; Washi for one that names none. */
+/** The theme a palette value names; Paper for one that names none. */
 export function themeChoice(value: string): ThemeChoice {
   if (isMineChoice(value)) return { kind: 'mine', title: value.slice(MINE.length) };
-  return { kind: 'gallery', id: galleryTheme(value)?.id ?? 'washi' };
+  return { kind: 'gallery', id: galleryTheme(value)?.id ?? 'paper' };
 }

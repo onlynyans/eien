@@ -1,9 +1,9 @@
-// Paste from AO3, or any HTML (spec §8): the HTML as Eien's Markdown.
-// Paragraphs; empty ones (AO3's spacers) dropped, so spacer, rule, spacer is
+// Paste from any HTML (spec §8): the HTML as Eien's Markdown.
+// Paragraphs; empty ones (spacer paragraphs) dropped, so spacer, rule, spacer is
 // one `***`; emphasis, strikethrough, underline, line breaks, quotes,
 // headings, lists, links and images as their Markdown; other tags keep
 // their text. What would read as Markdown in the words is escaped, so the
-// note says what the HTML said, and Copy for AO3 gives the HTML back.
+// note says what the HTML said, and Copy as HTML gives the HTML back.
 
 import { declarations } from './css';
 import { type HtmlElement, type HtmlNode, parseHtml, trimSpaces } from './html';

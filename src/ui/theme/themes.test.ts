@@ -40,15 +40,15 @@ function fakeRoot() {
 }
 
 describe('wornFor', () => {
-  it('wears Washi as tokens.css has it, and Otaku by its sheet', () => {
-    expect(wornFor('washi', [])).toEqual({ attribute: undefined, palette: null });
-    expect(wornFor('otaku', [])).toEqual({ attribute: 'otaku', palette: null });
+  it('wears Paper as tokens.css has it, and Slate by its sheet', () => {
+    expect(wornFor('paper', [])).toEqual({ attribute: undefined, palette: null });
+    expect(wornFor('slate', [])).toEqual({ attribute: 'slate', palette: null });
   });
 
   it('wears the gallery’s other themes as their colours', () => {
-    expect(wornFor('kinari', [])).toEqual({
-      attribute: 'kinari',
-      palette: galleryTheme('kinari')?.palette,
+    expect(wornFor('linen', [])).toEqual({
+      attribute: 'linen',
+      palette: galleryTheme('linen')?.palette,
     });
   });
 
@@ -58,11 +58,11 @@ describe('wornFor', () => {
     expect(wornFor('mine:LATE TRAIN', [late])).toEqual(worn);
   });
 
-  it('wears Washi for a theme that isn’t there, or can’t be read', () => {
-    const washi = { attribute: undefined, palette: null };
-    expect(wornFor('mine:Late Train', [])).toEqual(washi);
-    expect(wornFor('mine:Late Train', [{ ...late, mix: null }])).toEqual(washi);
-    expect(wornFor('nothing', [late])).toEqual(washi);
+  it('wears Paper for a theme that isn’t there, or can’t be read', () => {
+    const paper = { attribute: undefined, palette: null };
+    expect(wornFor('mine:Late Train', [])).toEqual(paper);
+    expect(wornFor('mine:Late Train', [{ ...late, mix: null }])).toEqual(paper);
+    expect(wornFor('nothing', [late])).toEqual(paper);
   });
 });
 
@@ -77,11 +77,11 @@ describe('wear', () => {
   it('takes the theme before off whole, and leaves every other property', () => {
     const { root, dataset, properties } = fakeRoot();
     root.style.setProperty('--eien-text-scale', '1.2');
-    wear(wornFor('kinari', []), root);
-    wear(wornFor('otaku', []), root);
-    expect(dataset.palette).toBe('otaku');
+    wear(wornFor('linen', []), root);
+    wear(wornFor('slate', []), root);
+    expect(dataset.palette).toBe('slate');
     for (const token of THEME_TOKENS) expect(properties.has(token), token).toBe(false);
-    wear(wornFor('washi', []), root);
+    wear(wornFor('paper', []), root);
     expect(dataset).toEqual({});
     expect(Object.fromEntries(properties)).toEqual({ '--eien-text-scale': '1.2' });
   });
@@ -166,19 +166,19 @@ describe('WriterThemes', () => {
   it('leaves the setting alone when the theme renamed isn’t the one worn', async () => {
     const { settings, themes } = await opened();
     await themes.create('Late Train', LATE);
-    await settings.set('appearance.palette', 'kinari');
+    await settings.set('appearance.palette', 'linen');
     await themes.rename('Late Train', 'Night Train');
-    expect(settings.values['appearance.palette']).toBe('kinari');
+    expect(settings.values['appearance.palette']).toBe('linen');
   });
 
-  it('sends a theme to the trash, and wears Washi when it was the one worn', async () => {
+  it('sends a theme to the trash, and wears Paper when it was the one worn', async () => {
     const { storage, settings, themes } = await opened();
     await themes.create('Late Train', LATE);
     await settings.set('appearance.palette', 'mine:late train');
     await themes.trash('Late Train');
     expect(storage.trashed).toEqual(['.eien/themes/Late Train.json']);
     expect(titles(themes)).toEqual([]);
-    expect(settings.values['appearance.palette']).toBe('washi');
+    expect(settings.values['appearance.palette']).toBe('paper');
   });
 
   it('mixes and judges for the Themes tabs', async () => {

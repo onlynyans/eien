@@ -1,8 +1,8 @@
-// What leaves the app on the phone (spec §8). Copy for AO3 puts the HTML on
-// the clipboard as text, for AO3's HTML box. A phone has no save dialog:
+// What leaves the app on the phone (spec §8). Copy as HTML puts the HTML on
+// the clipboard as text, for a site's HTML box. A phone has no save dialog:
 // an export goes to Eien/Exports beside the vault's folder (Documents on
 // Android; Eien's folder in the Files app on iOS), never over a file there.
-// AO3 HTML, EPUB and Word: a PDF needs printing, which the WebView can't do
+// HTML, EPUB and Word: a PDF needs printing, which the WebView can't do
 // to a file without a plugin of Eien's own.
 
 import { Clipboard } from '@capacitor/clipboard';

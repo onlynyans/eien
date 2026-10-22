@@ -50,7 +50,7 @@ runtime.
 | `@capacitor/filesystem` | The phone's files: the vault in the shared Documents/Eien/Vault on Android, Eien's own Files folder on iOS (MIT) |
 | `@capacitor/preferences` | This device's settings on the phone, kept apart from the vault as the desktop's are (MIT) |
 | `@capacitor/app` | When the phone sends Eien to the background (save now) and brings it back (look at the vault again) (MIT) |
-| `@capacitor/clipboard` | Copy for AO3 on the phone (MIT) |
+| `@capacitor/clipboard` | Copy as HTML on the phone (MIT) |
 
 ## Not a package
 
@@ -58,7 +58,7 @@ runtime.
 |---|---|---|
 | Zip archives (EPUB and Word files are zips) | `src/core/export/zip.ts`, about 100 lines | Both formats need only stored entries (an EPUB's `mimetype` must be stored), and a book's words are small. A package (fflate, JSZip) brings compression and reading Eien doesn't use; Eien's writer is held to zlib's CRC and to `unzip -t` in `tests/zip-interop.test.ts`, and read back strictly by `tests/support/read-zip.ts` |
 | The app's icons from the seal | `scripts/icons/build.mjs` (`npm run icons`), about 300 lines | Electron already renders SVG, so an offscreen window rasterizes the seal at each size; `.icns`, `.ico` and the iOS PNG (no alpha) are small containers written in the script. No image package (sharp, png2icons), no system tool (`sips`, `iconutil`), so it runs the same on any machine that has the project. The glyph 永 is a path in `build/icons/seal.svg`, the outline of Noto Serif JP's 永 (SIL OFL 1.1, which covers the font, not artwork drawn with it); the font itself is not in the project |
-| EPUB, Word, the PDF's page | `src/core/export/` | Each is a few XML files of fixed shape; the words come from Copy for AO3's own writer (`core/ao3`), so a note converts one way everywhere. The PDF is Electron's own `printToPDF` |
+| EPUB, Word, the PDF's page | `src/core/export/` | Each is a few XML files of fixed shape; the words come from Copy as HTML's own writer (`core/html`), so a note converts one way everywhere. The PDF is Electron's own `printToPDF` |
 
 The Android build also needs a JDK (21) and the Android SDK, which are tools on
 the machine that builds it, not packages: CI has them, and on a Mac Homebrew

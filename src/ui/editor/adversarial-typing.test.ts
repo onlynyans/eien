@@ -1,5 +1,5 @@
 // Adversarial tests for phase 8 in the editor: quotes typed one key at a
-// time, pastes decided on the editor's state, and Copy for AO3 of what's
+// time, pastes decided on the editor's state, and Copy as HTML of what's
 // chosen. Each was written to break the code, and each comment says the
 // defect it caught (as it was, before the fix) and why a writer would care;
 // the rest pin what matters.
@@ -8,7 +8,7 @@ import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { describe, expect, it, vi } from 'vitest';
 import { nameKey } from '../../core/paths';
-import { ao3Out } from '../vault/ao3-out';
+import { htmlCopy } from '../vault/copy-html';
 import { eienMarkdown } from './syntax';
 import { pastedText, typedText } from './typing';
 
@@ -109,7 +109,7 @@ describe('pasting into the editor', () => {
     expect(pastedText(at('a `co|de` b').state, '<p><em>X</em></p>', 'X')).toBeNull();
   });
 
-  it('pastes AO3’s HTML as Markdown, words and marks kept', () => {
+  it('pastes a story site’s HTML as Markdown, words and marks kept', () => {
     expect(
       pastedText(
         at('Note |').state,
@@ -120,25 +120,25 @@ describe('pasting into the editor', () => {
   });
 });
 
-/** Copy for AO3 with `selection` chosen in `doc`: what reaches the clipboard. */
+/** Copy as HTML with `selection` chosen in `doc`: what reaches the clipboard. */
 async function copied(
   doc: string,
   selection: { anchor: number; head?: number },
 ): Promise<string | undefined> {
   const state = EditorState.create({ doc, selection });
   const copy = vi.fn(async (_text: string, _html: string) => {});
-  const out = ao3Out({
+  const out = htmlCopy({
     page: { editor: { view: { state } } } as never,
     note: { session: { text: doc, path: 'Chapter.md' } } as never,
     out: { kinds: ['html'], copy, saveAs: vi.fn(async () => null) },
-    settings: { values: { 'typography.quotes': 'curly', 'ao3.sceneBreak': 'rule' } } as never,
+    settings: { values: { 'typography.quotes': 'curly', 'html.sceneBreak': 'rule' } } as never,
     tell: () => {},
   });
   await out.copy();
   return copy.mock.calls[0]?.[1];
 }
 
-describe('Copy for AO3 of the open note', () => {
+describe('Copy as HTML of the open note', () => {
   it('leaves the front matter out, of the whole note or a choice that starts in it', async () => {
     const doc = '---\ntitle: Secret\n---\n"Body," she said.';
     expect(await copied(doc, { anchor: 0 })).toBe('<p>“Body,” she said.</p>');
@@ -146,7 +146,7 @@ describe('Copy for AO3 of the open note', () => {
   });
 
   // A choice that starts at a "---" scene break is read as starting with front matter: everything
-  // up to the next "---" is left out, and the toast still says "Copied what’s chosen as AO3 HTML."
+  // up to the next "---" is left out, and the toast still says "Copied what’s chosen as HTML."
   it('copies every word of a choice that starts at a --- scene break', async () => {
     const doc = 'Scene one.\n\n---\n\nScene two, kept.\n\n---\n\nScene three.';
     const from = doc.indexOf('---');

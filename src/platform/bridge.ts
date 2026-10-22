@@ -61,7 +61,7 @@ export interface SettingsBridge {
 /** A note's or a book's exports (spec §8). */
 export type ExportFormat = 'epub' | 'docx' | 'pdf';
 
-/** A file to save: AO3's HTML as text; an EPUB or a Word file as bytes; a PDF as the page to print. */
+/** A file to save: HTML as text; an EPUB or a Word file as bytes; a PDF as the page to print. */
 export type OutFile =
   | { readonly kind: 'html'; readonly text: string }
   | { readonly kind: 'epub' | 'docx'; readonly bytes: Uint8Array }
@@ -101,8 +101,8 @@ export type MenuCommand =
   | 'seal'
   | 'compare'
   | 'versions'
-  | 'copy-ao3'
-  | 'export-ao3'
+  | 'copy-html'
+  | 'export-html'
   | `export-note:${ExportFormat}`
   | `export-book:${ExportFormat}`
   | 'import-folder'

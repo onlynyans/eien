@@ -1,7 +1,7 @@
 // Eien's own themes (spec §7): the gallery. Each is paper, dye, ink and one
 // seal, keeping Eien's order of surfaces and its contrast by day and by
-// night. Washi is tokens.css's own colours and Otaku has its sheet
-// (otaku.css): both are listed here for their cards and their verdict, and
+// night. Paper is tokens.css's own colours and Slate has its sheet
+// (slate.css): both are listed here for their cards and their verdict, and
 // worn by their sheets. The rest are worn as token overrides.
 
 import { statusInksFor } from './mix';
@@ -15,7 +15,7 @@ export interface GalleryTheme {
   /** What it is, in a line. */
   readonly note: string;
   readonly palette: Palette;
-  /** Worn by a style sheet of its own (tokens.css, otaku.css), not by overrides. */
+  /** Worn by a style sheet of its own (tokens.css, slate.css), not by overrides. */
   readonly inSheet?: true;
 }
 
@@ -45,8 +45,8 @@ const theme = (
 
 export const GALLERY: readonly GalleryTheme[] = [
   theme(
-    'washi',
-    'Washi',
+    'paper',
+    'Paper',
     '和紙',
     'The default: off-white paper and black ink',
     {
@@ -66,7 +66,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     },
     true,
   ),
-  theme('kinari', 'Kinari', '生成り', 'Warmer, yellow-tinted paper with an orange accent', {
+  theme('linen', 'Linen', '生成り', 'Warmer, yellow-tinted paper with an orange accent', {
     desk: ['#d8cfb8', '#14110a'],
     blotter: ['#e9e2cd', '#1c180f'],
     band: ['#f3eedd', '#231e14'],
@@ -78,7 +78,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#7b6d56', '#88806d'],
     seal: ['#b8432a', '#dc6a43'],
   }),
-  theme('aizome', 'Aizome', '藍染', 'Cool paper with blue-black text', {
+  theme('indigo', 'Indigo', '藍染', 'Cool paper with blue-black text', {
     desk: ['#c9cfd8', '#0b0e14'],
     blotter: ['#dfe3e9', '#121620'],
     band: ['#edf0f4', '#181d28'],
@@ -90,7 +90,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#5f6a80', '#7a8599'],
     seal: ['#c4472d', '#e3664a'],
   }),
-  theme('koke', 'Koke', '苔', 'Green-grey background with softer text', {
+  theme('moss', 'Moss', '苔', 'Green-grey background with softer text', {
     desk: ['#cdd2c4', '#0d100b'],
     blotter: ['#e1e5d9', '#141811'],
     band: ['#eef0e8', '#1a1f16'],
@@ -102,7 +102,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#67705a', '#808a72'],
     seal: ['#a8432f', '#d76a4e'],
   }),
-  theme('rosoku', 'Rōsoku', '蝋燭', 'Amber tones with no blue light at night', {
+  theme('candlelight', 'Candlelight', '蝋燭', 'Amber tones with no blue light at night', {
     desk: ['#dccab2', '#120c06'],
     blotter: ['#ecdfcb', '#1b130b'],
     band: ['#f5ece0', '#22180e'],
@@ -114,7 +114,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#7f6a53', '#8f7c64'],
     seal: ['#b9442b', '#e8763f'],
   }),
-  theme('sumi', 'Sumi', '墨', 'Highest contrast, for easier reading', {
+  theme('ink', 'Ink', '墨', 'Highest contrast, for easier reading', {
     desk: ['#cfcfcc', '#000000'],
     blotter: ['#e6e6e3', '#0a0a0a'],
     band: ['#f2f2ef', '#141414'],
@@ -126,7 +126,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#5e5e5e', '#8f8f8a'],
     seal: ['#c4361d', '#ff6a45'],
   }),
-  theme('sakura', 'Sakura-nezumi', '桜鼠', 'Pink-grey tones with plum text and a rose accent', {
+  theme('blossom', 'Blossom', '桜鼠', 'Pink-grey tones with plum text and a rose accent', {
     desk: ['#d8cdcc', '#120d0e'],
     blotter: ['#e9e1e0', '#1b1415'],
     band: ['#f3eeed', '#221a1b'],
@@ -139,8 +139,8 @@ export const GALLERY: readonly GalleryTheme[] = [
     seal: ['#b2394a', '#e0697a'],
   }),
   theme(
-    'otaku',
-    'Otaku',
+    'slate',
+    'Slate',
     '',
     'Cool grey around warm paper, with a burnt-orange accent',
     {
@@ -167,4 +167,4 @@ export const galleryTheme = (id: string): GalleryTheme | undefined =>
   GALLERY.find((each) => each.id === id);
 
 /** The theme worn when the chosen one can't be: Eien's own. */
-export const WASHI = GALLERY[0] as GalleryTheme;
+export const PAPER = GALLERY[0] as GalleryTheme;

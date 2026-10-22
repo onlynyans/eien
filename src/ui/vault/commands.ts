@@ -23,7 +23,7 @@ export interface CommandContext {
   newNote(): void;
   /** Draw the list: a shut one isn't kept drawn. */
   drawList(): Promise<void>;
-  /** The page's seals, counters, Copy for AO3, exports and outline cards (./page-parts.ts). */
+  /** The page's seals, counters, Copy as HTML, exports and outline cards (./page-parts.ts). */
   readonly parts: PageParts;
   /** File → Import Markdown Folder… (./importing.ts). */
   importFolder(): void;
@@ -56,8 +56,8 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   } else if (command === 'seal') void ctx.parts.versions.seal();
   else if (command === 'compare') void ctx.parts.versions.cycleCompare();
   else if (command === 'versions') ctx.parts.versions.showPanel(!ctx.parts.versions.panelOpen);
-  else if (command === 'copy-ao3') void ctx.parts.ao3.copy();
-  else if (command === 'export-ao3') void ctx.parts.exports.openNote('html');
+  else if (command === 'copy-html') void ctx.parts.htmlCopy.copy();
+  else if (command === 'export-html') void ctx.parts.exports.openNote('html');
   else if (command.startsWith('export-note:')) {
     void ctx.parts.exports.openNote(command.slice('export-note:'.length) as ExportFormat);
   } else if (command.startsWith('export-book:')) {

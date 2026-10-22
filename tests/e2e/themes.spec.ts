@@ -51,21 +51,21 @@ test('choosing a theme repaints the window, and it’s worn again after a restar
   await goTo(page, 'Gallery');
   await expect(dialog(page).locator('.settings__crumbs')).toHaveText('Settings/Themes/Gallery');
 
-  await choose(page, 'Kinari');
-  await expect(page.locator('html')).toHaveAttribute('data-palette', 'kinari');
+  await choose(page, 'Linen');
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'linen');
   await expect(desk(page)).toHaveCSS(
     'background-color',
-    rgb(galleryTheme('kinari')?.palette.desk[0] ?? '#000000'),
+    rgb(galleryTheme('linen')?.palette.desk[0] ?? '#000000'),
   );
 
-  await expect(card(page, 'Kinari')).toHaveAttribute('aria-pressed', 'true');
+  await expect(card(page, 'Linen')).toHaveAttribute('aria-pressed', 'true');
   await goTo(page, 'Custom');
   await choose(page, 'Late Train'); // the vault's own
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'mine');
   await expect(desk(page)).toHaveCSS('background-color', rgb(mixPalette(LATE).desk[0]));
   await expect(card(page, 'Late Train')).toHaveAttribute('aria-pressed', 'true');
   await goTo(page, 'Gallery');
-  await expect(card(page, 'Kinari')).toHaveAttribute('aria-pressed', 'false');
+  await expect(card(page, 'Linen')).toHaveAttribute('aria-pressed', 'false');
   const deviceFile = join(userData, 'settings.json');
   await expect
     .poll(() => JSON.parse(readFileSync(deviceFile, 'utf8')).settings)
@@ -82,7 +82,7 @@ test('choosing a theme repaints the window, and it’s worn again after a restar
   }
 });
 
-test('a theme changed on another device shows at once; one taken away leaves Washi', async ({
+test('a theme changed on another device shows at once; one taken away leaves Paper', async ({
   page,
   vault,
 }) => {
@@ -100,11 +100,11 @@ test('a theme changed on another device shows at once; one taken away leaves Was
   writeFileSync(join(vault ?? '', '.eien', 'themes', 'Orchard.json'), themeFile(ORCHARD));
   await expect(card(page, 'Orchard')).toBeVisible();
 
-  writeFileSync(file, '{ "mix": '); // half-written by hand: worn as Washi meanwhile
+  writeFileSync(file, '{ "mix": '); // half-written by hand: worn as Paper meanwhile
   await expect(page.locator('html')).not.toHaveAttribute('data-palette');
   await expect(desk(page)).toHaveCSS(
     'background-color',
-    rgb(galleryTheme('washi')?.palette.desk[0] ?? '#000000'),
+    rgb(galleryTheme('paper')?.palette.desk[0] ?? '#000000'),
   );
 });
 
@@ -175,7 +175,7 @@ test('a custom theme made, worn, mixed, renamed and sent to the trash, its file 
     await expect(name).toHaveValue('Harbour at Dusk');
     await expect(dialog(page)).toBeVisible();
 
-    // To the trash: the file goes where it can be taken back, and Washi is worn.
+    // To the trash: the file goes where it can be taken back, and Paper is worn.
     await dialog(page).getByRole('button', { name: 'Send Harbour at Dusk to the trash' }).click();
     await expect(dialog(page).locator('.mix__said')).toHaveText(
       '“Harbour at Dusk” is in the trash, where you can take it back.',
@@ -190,7 +190,7 @@ test('a custom theme made, worn, mixed, renamed and sent to the trash, its file 
   }
 });
 
-test('a file in .eien/themes that isn’t a theme is listed, worn as Washi, never written', async ({
+test('a file in .eien/themes that isn’t a theme is listed, worn as Paper, never written', async ({
   page,
   vault,
 }) => {

@@ -156,7 +156,7 @@ test('a note’s menu exports it as EPUB or Word into Eien/Exports; no PDF on th
   for (const label of ['EPUB…', 'Word (.docx)…']) {
     await page.locator('.note-row', { hasText: 'Tear' }).click({ button: 'right' });
     await page.getByRole('menuitem', { name: 'Export…' }).click();
-    await expect(page.getByRole('menuitem')).toHaveText(['AO3 HTML…', 'EPUB…', 'Word (.docx)…']);
+    await expect(page.getByRole('menuitem')).toHaveText(['HTML…', 'EPUB…', 'Word (.docx)…']);
     await page.getByRole('menuitem', { name: label }).click();
   }
   await expect(page.locator('.list__notice')).toHaveText('Saved as “Eien/Exports/Tear.docx”.');
@@ -203,7 +203,7 @@ test('the phone makes no PDF and imports no folder, and says so', async ({ page 
   expect(await listOutside(page, 'Eien/Exports')).toEqual([]);
 });
 
-test('Copy for AO3 puts the HTML on the clipboard', async ({ page, context }) => {
+test('Copy as HTML puts the HTML on the clipboard', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await open(page);
   await page.evaluate(() => window.eien.out.copy('<p>“Hi.”</p>', '<p>“Hi.”</p>'));

@@ -24,11 +24,11 @@ describe('plain text', () => {
   });
 
   it('keeps a link’s words but not its address; drops an image; keeps a bare address', () => {
-    expect(linesOf('See [the archive](https://ao3.org "AO3") and ![cover](c.png).')).toEqual([
-      'See the archive and .',
-    ]);
-    expect(linesOf('Go to https://ao3.org or <https://x.org>.')).toEqual([
-      'Go to https://ao3.org or https://x.org.',
+    expect(
+      linesOf('See [the archive](https://example.org "Archive") and ![cover](c.png).'),
+    ).toEqual(['See the archive and .']);
+    expect(linesOf('Go to https://example.org or <https://x.org>.')).toEqual([
+      'Go to https://example.org or https://x.org.',
     ]);
     expect(linesOf('[[Ideas — winter arc]] and [ref][1]\n\n[1]: https://x.org "title"')).toEqual([
       'Ideas — winter arc and ref',
@@ -44,7 +44,7 @@ describe('plain text', () => {
 
   it('takes HTML tags out but keeps their words, inline and in a block', () => {
     expect(linesOf('the <u>merciless</u> work<br>')).toEqual(['the merciless work']);
-    expect(linesOf('<p>AO3 <em>pasted</em></p>')).toEqual(['AO3 pasted']);
+    expect(linesOf('<p>Site <em>pasted</em></p>')).toEqual(['Site pasted']);
     expect(linesOf('<!-- a comment -->\nafter')).toEqual(['after']);
   });
 

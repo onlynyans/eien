@@ -6,9 +6,9 @@
 import { describe, expect, it } from 'vitest';
 import { curlyQuotes } from '../typography';
 import { fromHtml, pastedMarkdown } from './from-html';
-import { type Ao3Options, toAo3Html } from './to-html';
+import { type HtmlOptions, toHtml } from './to-html';
 
-const CURLY: Ao3Options = { quotes: 'curly', sceneBreak: 'spacer' };
+const CURLY: HtmlOptions = { quotes: 'curly', sceneBreak: 'spacer' };
 
 /** Milliseconds `run` takes. */
 function timed(run: () => unknown): number {
@@ -67,7 +67,7 @@ describe('Paste: words are never lost', () => {
     );
   });
 
-  it('keeps every word of AO3’s own page, Word and Apple Notes', () => {
+  it('keeps every word of a story site’s own page, Word and Apple Notes', () => {
     const page =
       '<div class="userstuff module" role="article"><p>He said, “I—” and stopped.</p><p><em>Don’t</em>, she thought. <strong><em>Don’t.</em></strong></p><p>&nbsp;</p><hr /><p>&nbsp;</p><blockquote><p>A letter.</p><p>Two lines.</p></blockquote></div>';
     expect(fromHtml(page)).toBe(
@@ -123,7 +123,7 @@ describe('Performance: nothing freezes the editor', () => {
     const html = `<div class="userstuff">${para.repeat(1000)}</div>`; // ~140 KB
     let md = '';
     expect(timed(() => (md = fromHtml(html)))).toBeLessThan(500);
-    expect(timed(() => toAo3Html(md, CURLY))).toBeLessThan(500);
+    expect(timed(() => toHtml(md, CURLY))).toBeLessThan(500);
   });
 
   // An inline tag left open before each paragraph (old HTML's <font>, unclosed spans) nests every

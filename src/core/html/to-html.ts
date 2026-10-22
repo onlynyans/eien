@@ -1,7 +1,7 @@
-// Copy for AO3 (spec §8): a note's Markdown as the HTML AO3 takes.
+// Copy as HTML (spec §8): a note's Markdown as plain HTML that story sites and editors take.
 // Paragraphs, line breaks, scene breaks, emphasis, strikethrough and
 // underline, quotes and headings as the spec's table says; lists, links,
-// images, code and tables as AO3 allows them; what AO3 has no tag for (a
+// images, code and tables as story sites allow them; what story sites have no tag for (a
 // highlight, a wiki link) as its words. Quotes follow the vault's setting;
 // code keeps its own. Front matter is the note's data, never posted.
 
@@ -13,12 +13,12 @@ import { References } from './addresses';
 import { escapeHtml, trimSpaces, visible } from './html';
 import { type BookFlavor, INLINE_TAGS, InlineWriter } from './inline-writer';
 
-/** AO3's two (the setting's), and a book's centred stars. */
+/** The setting's two, and a book's centred stars. */
 export type SceneBreakStyle = 'spacer' | 'rule' | 'stars';
 
-export interface Ao3Options {
+export interface HtmlOptions {
   readonly quotes: QuoteStyle;
-  /** `***` as AO3's spacer, rule, spacer (the default), or a plain rule. */
+  /** `***` as a spacer paragraph, rule, spacer (the default), or a plain rule. */
   readonly sceneBreak: SceneBreakStyle;
 }
 
@@ -28,17 +28,17 @@ const SCENE_BREAK: Record<SceneBreakStyle, string> = {
   stars: '<p class="scene-break">* * *</p>',
 };
 
-/** Block HTML that may stand alone in a note, and AO3 takes. */
+/** Block HTML that may stand alone in a note, and story sites take. */
 const BLOCK_TAGS = new Set(['p', 'hr', 'blockquote', 'div', 'br', ...INLINE_TAGS]);
 
-/** A note's blocks as AO3's: paragraphs, headings, quotes, lists, code, tables, scene breaks. */
+/** A note's blocks as HTML: paragraphs, headings, quotes, lists, code, tables, scene breaks. */
 class Writer extends InlineWriter {
   readonly #sceneBreak: SceneBreakStyle;
   readonly #book: BookFlavor | null;
 
   constructor(
     source: string,
-    options: Ao3Options,
+    options: HtmlOptions,
     references: References,
     book: BookFlavor | null = null,
   ) {
@@ -48,7 +48,7 @@ class Writer extends InlineWriter {
   }
 
   /**
-   * An HTML block, as the note shows it: the tags AO3 takes kept (their
+   * An HTML block, as the note shows it: the tags story sites take kept (their
    * attributes left behind), any other tag shown as the text it is.
    */
   htmlBlock(source: string): string {
@@ -126,7 +126,7 @@ class Writer extends InlineWriter {
           return visible(inner) ? `<li>${inner}</li>` : ''; // nothing to show: not posted
         });
         const kept = items.filter(Boolean); // an empty item isn't posted
-        // A book keeps a numbered list's first number ("1994."); AO3 gets its plain list.
+        // A book keeps a numbered list's first number ("1994."); a site gets its plain list.
         const first = Number.parseInt(this.slice(node.from, node.to), 10);
         const start = this.#book && tag === 'ol' && first !== 1 ? ` start="${first}"` : '';
         return kept.length ? `<${tag}${start}>${kept.join('\n')}</${tag}>` : '';
@@ -204,14 +204,14 @@ class Writer extends InlineWriter {
 }
 
 /**
- * The note's text as AO3 HTML: its front matter left out. With `chosen`,
+ * The note's text as HTML: its front matter left out. With `chosen`,
  * only the words from–to (offsets in `markdown`), their links found by the
  * whole note's references; what's chosen never starts with front matter, so
  * a "---" at its start is a scene break.
  */
-export function toAo3Html(
+export function toHtml(
   markdown: string,
-  options: Ao3Options,
+  options: HtmlOptions,
   chosen?: { readonly from: number; readonly to: number },
 ): string {
   // A note read from the disk may begin with a byte-order mark: its front matter is still its front matter.
@@ -228,7 +228,7 @@ export function toAo3Html(
 
 /**
  * A note's body (its front matter already left out) as a book's blocks of
- * HTML (spec §8): as AO3's, but a highlight is <mark>, a scene break centred
+ * HTML (spec §8): as copied, but a highlight is <mark>, a scene break centred
  * stars, an image the address `flavor.image` gives it (or its words), and
  * links go to the web or mail only.
  */

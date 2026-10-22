@@ -142,7 +142,7 @@ test('the ⋯ exports the note as its own menu does, into Documents/Eien/Exports
   await more(page).click();
   await menuItem(page, 'Export…').click();
   await expect(page.locator('.menu [role="menuitem"]')).toHaveText([
-    'AO3 HTML…',
+    'HTML…',
     'EPUB…',
     'Word (.docx)…',
   ]);
@@ -184,7 +184,7 @@ test('the ⋯ opens the settings, a full sheet: its tabs in a strip, nothing to 
   await expect(custom).toBeInViewport();
   expect((await custom.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await expect(sheet.getByRole('button', { name: 'New theme' })).toBeVisible();
-  await nav.getByRole('button', { name: 'AO3', exact: true }).click();
+  await nav.getByRole('button', { name: 'Writing', exact: true }).click();
   await expect(sheet.getByRole('group', { name: 'Scene breaks' })).toBeVisible();
   // No panes to choose on a phone.
   await expect(nav.getByRole('button', { name: 'Lists', exact: true })).toHaveCount(0);

@@ -70,7 +70,7 @@ export const noteMenu = (note: NoteMenu): MenuItem[] => [
   },
 ];
 
-/** The kinds `kinds` offers, as a menu that exports with `run`: a book's leaves out AO3's. */
+/** The kinds `kinds` offers, as a menu that exports with `run`: a book's leaves out plain HTML. */
 export const exportMenu = (
   kinds: readonly OutKind[],
   book: boolean,

@@ -1,6 +1,6 @@
 // The theme contract against its style sheets (spec §7): every token a
-// theme may set is one tokens.css defines, and the gallery's Washi and
-// Otaku, worn by their own sheets, are listed with the colours those
+// theme may set is one tokens.css defines, and the gallery's Paper and
+// Slate, worn by their own sheets, are listed with the colours those
 // sheets hold, so a card or a verdict never shows another.
 
 import { readFileSync } from 'node:fs';
@@ -32,8 +32,8 @@ describe('the theme contract', () => {
   });
 
   it.each([
-    ['washi', 'tokens.css'],
-    ['otaku', 'otaku.css'],
+    ['paper', 'tokens.css'],
+    ['slate', 'slate.css'],
   ])('lists %s with the colours of %s', (id, file) => {
     const theme = galleryTheme(id);
     if (!theme) throw new Error(`no ${id}`);

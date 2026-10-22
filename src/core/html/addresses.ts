@@ -1,6 +1,6 @@
-// Link addresses for Copy for AO3 and Paste: where a link goes, as the
+// Link addresses for Copy as HTML and Paste: where a link goes, as the
 // note's Markdown says it (a reference defined below, a bare www. address),
-// and whether AO3 should follow it at all.
+// and whether a story site should follow it at all.
 
 import type { SyntaxNode, Tree } from '@lezer/common';
 import { eienParser } from '../markdown';

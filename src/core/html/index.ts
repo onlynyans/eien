@@ -11,4 +11,4 @@ export {
   parseHtml,
 } from './html';
 export type { BookFlavor } from './inline-writer';
-export { type Ao3Options, bookBlocks, type SceneBreakStyle, toAo3Html } from './to-html';
+export { bookBlocks, type HtmlOptions, type SceneBreakStyle, toHtml } from './to-html';
