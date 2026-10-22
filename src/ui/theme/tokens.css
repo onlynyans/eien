@@ -119,8 +119,10 @@
      IBM Plex Mono unless the writer chooses another face for it (the Machine voice
      setting sets this and the three machine sizes below, from core/config/faces.ts). */
   --eien-face-mono: var(--eien-family-plex-mono);
-  /* The seal's glyph, 永. Mockups use the system's Mincho; the app ships the seal as SVG. */
-  --eien-face-seal: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Songti SC", serif;
+  /* The seal's glyph, 永: Noto Serif JP's, as the app's icon draws it (build/icons/seal.svg),
+     where that face is installed; else the system's Mincho. */
+  --eien-face-seal:
+    "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Songti SC", serif;
 
   /* Every bundled face's family, once (core/config/faces.ts lists them): the text face
      and the machine voice each name one. */

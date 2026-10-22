@@ -43,7 +43,7 @@ describe('the seal, the source of every icon', () => {
     expect(svg).not.toMatch(/<text|font-family|<image/u);
     const d = /<path id="glyph"[^>]*\sd="([^"]+)"/u.exec(svg)?.[1] ?? '';
     expect(d.length).toBeGreaterThan(500);
-    expect(d).toMatch(/^[MLZ\d\s.-]+$/u);
+    expect(d).toMatch(/^[MLQCZ\d\s.-]+$/u);
   });
 });
 

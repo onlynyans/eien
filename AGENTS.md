@@ -194,8 +194,9 @@ release, keeping them as the run's artifacts.
   an updater (electron-updater) would need the app signed; reconsider once it
   is.
 - **The icon is the seal** (a vermilion square with 永), from one source,
-  `build/icons/seal.svg`: the glyph drawn by hand as paths (traced from no
-  font, so no font licence), in the interface's seal colours. After changing
+  `build/icons/seal.svg`: 永 from Noto Serif JP (OFL; the outline as a path,
+  placed as `.seal` sets it; the SVG's comment says how), in the interface's
+  seal colours. After changing
   it run `npm run icons` (`scripts/icons/build.mjs`, which rasterizes with
   Electron itself and writes the `.icns` and `.ico`) and commit what it makes:
   the macOS template (`build/icons/icon.icns`: a rounded square, 824 of 1024
