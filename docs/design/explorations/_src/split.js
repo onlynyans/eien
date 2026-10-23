@@ -26,9 +26,16 @@ const NOTES = {
     html: '<p>Commander. Speaks last in any room, and never twice.</p><p>Knows the recruits’ name for Levi. Has never used it.</p><p>Chapter iv: he comes to the wall before dawn. What does he want? To be told no.</p>' },
 };
 const LIST = ['i', 'ii', 'iii', 'iv', 'v', 'erwin'];
-const plain = (html) => html.replace(/<[^>]+>/g, ' ').replace(/&\w+;/g, ' ');
+// A note is plain paragraphs, drawn escaped: what's typed is text, never markup.
+for (const n of Object.values(NOTES)) {
+  n.paras = n.html.match(/<p>.*?<\/p>/g).map((para) => para.slice(3, -4));
+  delete n.html;
+}
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const paraHtml = (id) => NOTES[id].paras.map((t) => `<p>${esc(t)}</p>`).join('');
+const plain = (id) => NOTES[id].paras.join(' ');
 // A chapter is longer than the lines shown here: `rest` is the words above them.
-const wordsOf = (id) => NOTES[id].rest + plain(NOTES[id].html).split(/\s+/).filter(Boolean).length;
+const wordsOf = (id) => NOTES[id].rest + plain(id).split(/\s+/).filter(Boolean).length;
 const MIN_SIDE = 360; // a page narrower than this can't hold the text's measure with any margin
 
 // The split: one or two notes, which side is active, where the divider is.
@@ -67,7 +74,7 @@ function context() {
       const head = layout === 'band' ? `<div class="sheet__head"><span class="crumb">${n.crumb}</span>${ctx.tagset(i)}</div>` : layout === 'slip' ? `<div class="sheet__head"><span class="crumb">${n.crumb}</span></div>` : '';
       const slips = layout === 'slip' ? `<div class="slips">${n.tags.map((t) => `<span>#${t}</span>`).join('')}</div>` : '';
       return `<article class="sheet${flat ? ' sheet--flat' : ''}" data-side="${i}">${close ? ctx.closeBtn(i).replace('close-side', 'close-side sheet__close quiet') : ''}${head}<h1>${n.title}</h1>${slips}
-        <div class="prose" contenteditable="true" spellcheck="true" data-note="${S.sides[i]}" data-side="${i}" aria-label="${n.title}">${n.html}</div></article>`;
+        <div class="prose" contenteditable="true" spellcheck="true" data-note="${S.sides[i]}" data-side="${i}" aria-label="${n.title}">${paraHtml(S.sides[i])}</div></article>`;
     },
     /** A note's colophon: its words and last seal; today's tally and what Eien says, on the active one. */
     colophon: (i, { today = i === S.active } = {}) => {
@@ -89,7 +96,7 @@ function windowHtml(ctx) {
     const n = NOTES[id];
     const chosen = S.sides[S.active] === id;
     const beside = ctx.split && !chosen && S.sides.includes(id);
-    return `<button class="row${chosen ? ' is-chosen' : ''}${beside ? ' is-beside' : ''}" draggable="true" data-note-row="${id}" aria-current="${chosen ? 'page' : 'false'}"${beside ? ' aria-description="Open on the other side"' : ''}><span class="ord">${n.ord}</span><span class="t">${n.title}</span><span class="count">${wordsOf(id).toLocaleString('en')}</span><span class="p">${plain(n.html).trim()}</span></button>`;
+    return `<button class="row${chosen ? ' is-chosen' : ''}${beside ? ' is-beside' : ''}" draggable="true" data-note-row="${id}" aria-current="${chosen ? 'page' : 'false'}"${beside ? ' aria-description="Open on the other side"' : ''}><span class="ord">${n.ord}</span><span class="t">${n.title}</span><span class="count">${wordsOf(id).toLocaleString('en')}</span><span class="p">${esc(plain(id))}</span></button>`;
   };
   const sbRow = (name, count, dd = 0, extra = '') => `<div class="trow${extra}" style="--d:${dd}"><span class="n">${name}</span>${count}</div>`;
   return `<div class="win" data-layout="${ctx.layout}" data-sb="${d.sb}" style="--win-w:${d.width}px">
@@ -210,8 +217,11 @@ function wire() {
     const prose = e.target.closest('.prose');
     if (!prose) return;
     const id = prose.dataset.note;
-    NOTES[id].html = prose.innerHTML;
-    for (const other of canvas.querySelectorAll(`.prose[data-note="${id}"]`)) if (other !== prose) other.innerHTML = prose.innerHTML;
+    NOTES[id].paras = prose.innerText.split(/\n+/).filter((t) => t.trim());
+    for (const other of canvas.querySelectorAll(`.prose[data-note="${id}"]`)) {
+      if (other === prose) continue;
+      other.replaceChildren(...NOTES[id].paras.map((t) => Object.assign(document.createElement('p'), { textContent: t })));
+    }
     for (const el of canvas.querySelectorAll(`[data-words="${id}"]`)) el.textContent = wordsOf(id).toLocaleString('en');
   });
   canvas.addEventListener('click', (e) => {
