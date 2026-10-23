@@ -9,24 +9,23 @@
 /*@shared-css*/
 /*@include:split.css*/
 
-/* 3 · Two sheets on one blotter: one set of tools, as in 2, but no pane edge:
-   the notes are two sheets lying on the same blotter, the gap between them the
-   divider. The active sheet lies on top, with the sheet's shadow; the other
-   lies flat, its hairline only. Page frame Full has no sheets: there, a 2px
-   ink-soft rule tops the active page. */
+/* 3 · Two sheets on one blotter: one set of tools, as in 2. The notes are two
+   sheets on the blotter, each with the same margin of blotter round it, and
+   between them one hairline, as a pane's edge is (the companion's edge): the
+   divider, rule-strong under the pointer, the focus ink while it's handled.
+   The active sheet lies on top, with the sheet's shadow; the other lies flat.
+   Page frame Full has no sheets: the hairline parts two pages of paper, and a
+   2px ink-soft rule tops the active one. */
 .band .tools-row:last-child { margin-left: auto; }
 /* Flat: no shadow, and its edge a step softer, so it reads as under the other. */
 .sheet--flat { box-shadow: none; border-color: var(--eien-rule-soft); }
-.duo[data-columns] > .blotter:first-child { padding-right: 0; }
-.duo[data-columns] > .blotter:last-child { padding-left: 0; }
+/* Each sheet with the same margin of blotter all round, the hairline between them. */
+.duo[data-columns] > .blotter { padding: var(--eien-space-5) var(--eien-space-5) 0; }
 .duo[data-columns] .sheet { max-width: none; }
-/* The gap is the divider: blotter, with a hairline only while it's handled. */
-.duo > .divider:not(:hover, :focus-visible, .is-dragging)::after { background: transparent; }
 .sheet__close { position: absolute; top: var(--eien-space-2); right: var(--eien-space-2); }
 .sheet:hover .sheet__close, .sheet__close:focus-visible { opacity: 1; }
 :root[data-frame='full'] .pg .blotter { padding: 0; background: var(--eien-paper); }
 :root[data-frame='full'] .pg .sheet { border: 0; box-shadow: none; border-radius: 0; max-width: none; }
-:root[data-frame='full'] .duo > .divider::after { background: var(--eien-rule); }
 :root[data-frame='full'] .duo[data-columns] .sheet:not(.sheet--flat)::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: var(--eien-mark-w); background: var(--eien-ink-soft); }
 </style>
 </head>
@@ -51,7 +50,7 @@ function sheetHtml(ctx, i) {
 }
 Split.page = (ctx) => {
   const body = ctx.shown.length === 1 ? `<div class="duo">${sheetHtml(ctx, ctx.shown[0])}</div>`
-    : `<div class="duo" data-columns="var(--eien-space-5)" style="grid-template-columns:${ctx.columns('var(--eien-space-5)')}">${sheetHtml(ctx, 0)}${ctx.divider()}${sheetHtml(ctx, 1)}</div>`;
+    : `<div class="duo" data-columns style="grid-template-columns:${ctx.columns()}">${sheetHtml(ctx, 0)}${ctx.divider()}${sheetHtml(ctx, 1)}</div>`;
   return `<div class="page">${topHtml(ctx)}${ctx.fmtBar()}${body}${ctx.colophon(ctx.active)}</div>`;
 };
 
@@ -61,16 +60,16 @@ mountSplitPage({
   bar: `<div class="xbar__group" data-x-set="frame"><span class="xbar__label">Page frame</span><button class="word-button" data-value="sheet">Sheet</button><button class="word-button" data-value="full">Full</button></div>`,
   notes: `
   <h2>3 · Two sheets on one blotter</h2>
-  <p>The page pane isn't cut in two. It's one blotter, with one set of tools (A's band, B's slip, C's running head), one formatting bar and one colophon, as in 2, and the two notes are two sheets lying side by side on it. The gap between them is the divider: drag it, and a hairline shows while it's handled.</p>
+  <p>The page pane isn't cut in two. It's one blotter, with one set of tools (A's band, B's slip, C's running head), one formatting bar and one colophon, as in 2, and the two notes are two sheets lying side by side on it. Each lies in the same margin of blotter, and between them runs one hairline, as a pane's edge does: that's the divider. Drag it; it's rule-strong under the pointer and the focus ink while it's handled.</p>
   <ul>
     <li><b>Active page:</b> the sheet on top. The active sheet has the sheet's shadow, the object you work on; the other lies flat, its hairline only. No colour, and nothing new: it's the depth Eien already has. In Page frame Full, where there are no sheets, a 2px ink-soft rule tops the active page instead (Page frame → Full).</li>
     <li><b>Closing:</b> the × at the sheet's top right corner, on hover.</li>
     <li><b>Formatting bar, tags, colophon, Versions, outline cards, Copy as HTML:</b> as in 2, for the active sheet.</li>
   </ul>
   <h2>For</h2>
-  <ul><li>It's Eien's own picture, two papers on a desk, and its cue is one Eien already has.</li><li>As calm as 2: one set of tools in their usual place, C's single strip kept.</li><li>No pane edge: the split doesn't add a line to the window, only a gap of blotter.</li></ul>
+  <ul><li>It's Eien's own picture, two papers on a desk, and its cue is one Eien already has.</li><li>As calm as 2: one set of tools in their usual place, C's single strip kept.</li><li>The divider is a pane's edge, the line Eien already draws between panes; nothing new.</li></ul>
   <h2>Against</h2>
-  <ul><li>The blotter round each sheet costs width: 24px between them.</li><li>A shadow is a subtle signal, quieter in Night, and Full needs its own (the rule).</li><li>As in 2, a tool's target isn't always beside it.</li></ul>`,
+  <ul><li>The blotter round each sheet costs width: 48px between the two sheets.</li><li>A shadow is a subtle signal, quieter in Night, and Full needs its own (the rule).</li><li>As in 2, a tool's target isn't always beside it.</li></ul>`,
 });
 </script>
 </body>

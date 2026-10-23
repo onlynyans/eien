@@ -35,7 +35,8 @@ Three more, 4 · Facing pages, 5 · A companion and 6 · Tools that follow, are 
   measure (the mock is drawn at real size); the machine voice for crumbs,
   counts and keys.
 - **Spacing:** Eien's 4px scale. The divider is a hairline column with an 8px
-  handle, as a pane's edge is; 3's gap is 24px of blotter.
+  handle, as a pane's edge is; in 3 it runs through the blotter, with 24px of
+  blotter on each side of it.
 
 ## What all three share
 
@@ -131,8 +132,12 @@ Three more, 4 · Facing pages, 5 · A companion and 6 · Tools that follow, are 
 - **What:** the page pane isn't cut in two. It's one blotter with one set of
   tools, one formatting bar and one colophon, as in 2.
   - The two notes are two sheets lying side by side on it.
-  - The 24px of blotter between them is the divider; a hairline shows only
-    while it's handled.
+  - Each sheet has the same 24px of blotter round it, and one hairline runs
+    between them, as a pane's edge does (the companion's edge, from 5): that's
+    the divider. It's rule-strong under the pointer, and the focus ink while
+    it's handled. In Page frame Full the same hairline parts two pages of
+    paper. (Revised on 2026-10-23: a wide gap with a handle in it read as a
+    bar.)
   - The × sits at a sheet's top right corner, on hover.
 - **Active:** the sheet on top.
   - The active sheet has the sheet's shadow, the object you work on; the other
@@ -142,10 +147,9 @@ Three more, 4 · Facing pages, 5 · A companion and 6 · Tools that follow, are 
 - **For:**
   - It's Eien's own picture, two papers on a desk.
   - Its cue is depth Eien already has: no colour and nothing new.
-  - As calm as 2, and the split adds no line to the window, only a gap of
-    blotter.
+  - As calm as 2, and its divider is a pane's edge, a line Eien already draws.
 - **Against:**
-  - The gap between the sheets costs 24px.
+  - The blotter between the sheets costs 48px.
   - A shadow is a subtle signal, and Full needs its own.
   - As in 2, a tool's target isn't always beside it.
 
@@ -177,8 +181,8 @@ Three more, 4 · Facing pages, 5 · A companion and 6 · Tools that follow, are 
   bar, one colophon, and C's running head kept whole.
 - Its cue for the active page is Eien's own: the sheet you're working on lies
   on top, with the sheet's shadow.
-- It adds no new mark and no new line. The split is a gap of blotter between
-  two papers.
+- It adds no new mark: the divider is a pane's edge, and the cue is the sheet's
+  own shadow.
 
 1 is clearer about what each tool acts on, but it doubles every bar, which
 Eien's "never louder than the page" argues against. If the shadow proves too

@@ -33,11 +33,34 @@
 /* The gutter: the fold down the middle of the sheet, a soft hairline; it's the divider. */
 .gutter { width: var(--eien-space-6); margin: 0; }
 .gutter::after { background: var(--eien-rule-soft); }
-/* The ribbon: the book's marker, hanging over the sheet's top edge into the outer margin. */
-.ribbon { position: absolute; z-index: 2; top: calc(var(--eien-hairline) * -1); left: calc((var(--leaf-x) - var(--eien-space-2)) / 2); width: var(--eien-space-2); height: var(--eien-space-6); background: var(--eien-ink-soft); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); pointer-events: none; }
-.leaf[data-side='1'] .ribbon { left: auto; right: calc((var(--leaf-x) - var(--eien-space-2)) / 2); }
+/* The mark on the page you're writing in, in three ways to choose from (Ribbon, in
+   the bar). None is the seal's colour; each arrives with its own short motion. */
+.ribbon { position: absolute; z-index: 2; pointer-events: none; }
+.ribbon svg { display: none; width: 100%; height: 100%; }
+/* 1 · The ribbon: the book's silk marker, hanging over the sheet's top edge into the
+   outer margin, its end forked. Ink-soft. */
+:root:is(:not([data-ribbon]), [data-ribbon='ribbon']) .ribbon { top: calc(var(--eien-hairline) * -1); left: calc((var(--leaf-x) - var(--eien-space-2)) / 2); width: var(--eien-space-2); height: var(--eien-space-6); background: var(--eien-ink-soft); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); }
+:root:is(:not([data-ribbon]), [data-ribbon='ribbon']) .leaf[data-side='1'] .ribbon { left: auto; right: calc((var(--leaf-x) - var(--eien-space-2)) / 2); }
 @keyframes ribbon-down { from { clip-path: polygon(0 0, 100% 0, 100% 0, 50% 0, 0 0); } }
-.win.is-arriving .ribbon { animation: ribbon-down var(--eien-calm) var(--eien-ease); }
+:root:is(:not([data-ribbon]), [data-ribbon='ribbon']) .win.is-arriving .ribbon { animation: ribbon-down var(--eien-calm) var(--eien-ease); }
+/* 2 · A dog-ear: the page's outer top corner turned down. The corner is gone to the
+   blotter; the flap shows the paper's back in the band's tone, a hairline round it.
+   The quietest of the three: no ink at all. */
+:root[data-ribbon='dogear'] .ribbon { top: calc(var(--eien-hairline) * -1); left: calc(var(--eien-hairline) * -1); width: var(--eien-space-5); height: var(--eien-space-5); }
+:root[data-ribbon='dogear'] .leaf[data-side='1'] .ribbon { left: auto; right: calc(var(--eien-hairline) * -1); scale: -1 1; }
+:root[data-ribbon='dogear'] .ribbon svg { display: block; overflow: visible; }
+.dogear__gone { fill: var(--eien-blotter); }
+.dogear__flap { fill: var(--eien-band); stroke: var(--eien-rule-strong); stroke-width: var(--eien-hairline); stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+@keyframes dogear-fold { from { transform: scale(0); } }
+:root[data-ribbon='dogear'] .win.is-arriving .dogear__flap, :root[data-ribbon='dogear'] .win.is-arriving .dogear__gone { transform-origin: 0 0; animation: dogear-fold var(--eien-calm) var(--eien-ease); }
+/* 3 · An edge tab: an index tab standing out from the page's outer edge into the
+   blotter, near its head. Ink-soft, and the easiest of the three to find at a glance. */
+:root[data-ribbon='tab'] .ribbon { top: var(--eien-space-6); left: calc((var(--eien-hairline) + var(--eien-space-1) + var(--eien-hairline)) * -1); width: calc(var(--eien-space-1) + var(--eien-hairline)); height: var(--eien-space-7); background: var(--eien-ink-soft); border-radius: var(--eien-radius-s) 0 0 var(--eien-radius-s); }
+:root[data-ribbon='tab'] .leaf[data-side='1'] .ribbon { left: auto; right: calc((var(--eien-hairline) + var(--eien-space-1) + var(--eien-hairline)) * -1); border-radius: 0 var(--eien-radius-s) var(--eien-radius-s) 0; }
+@keyframes tab-out { from { clip-path: inset(0 0 0 100%); } }
+@keyframes tab-out-right { from { clip-path: inset(0 100% 0 0); } }
+:root[data-ribbon='tab'] .win.is-arriving .ribbon { animation: tab-out var(--eien-calm) var(--eien-ease); }
+:root[data-ribbon='tab'] .win.is-arriving .leaf[data-side='1'] .ribbon { animation-name: tab-out-right; }
 /* Closed to one page: the facing page's edge stays by the gutter, its name down it, to turn to. */
 .edge { appearance: none; position: relative; display: grid; place-items: center; min-width: 0; padding: var(--eien-space-4) 0; border: 0; border-left: var(--eien-hairline) solid var(--eien-rule-soft); background: none; cursor: pointer; color: var(--eien-pencil); font: inherit; }
 .edge[data-turn='0'] { border-left: 0; border-right: var(--eien-hairline) solid var(--eien-rule-soft); }
@@ -58,6 +81,9 @@
 /*@include:split-alt.js*/
 
 const GUTTER = 32; // --eien-space-6
+/** The mark on the active page; its look is the bar's Ribbon choice (CSS). The dog-ear's
+    corner and flap are drawn in a 24-unit square, folded along its diagonal. */
+const RIBBON = '<span class="ribbon" aria-hidden="true"><svg viewBox="0 0 24 24"><polygon class="dogear__gone" points="0,0 24,0 0,24"/><polygon class="dogear__flap" points="24,0 24,24 0,24"/></svg></span>';
 /** Too narrow for two pages and the gutter: the book closes to the page you're on. */
 const isClosed = (ctx) => ctx.split && ctx.room - 2 * 16 < 2 * MIN_PAGE + GUTTER;
 const minShare = (ctx) => Math.min(0.45, MIN_PAGE / Math.max(1, ctx.room - 2 * 16 - GUTTER));
@@ -79,7 +105,7 @@ function leafHtml(ctx, i) {
   const active = i === ctx.active;
   const where = i === 0 ? 'left' : 'right';
   return `<section class="leaf hover-scope" data-side="${i}" role="region" aria-label="${esc(n.title)}, the ${where} page${active ? ', where you’re writing' : ''}">
-    ${active ? '<span class="ribbon" aria-hidden="true"></span>' : ''}${ctx.layout === 'runhead' ? `<div class="sheet__head"><span></span>${ctx.tagset(i)}</div>` : ctx.head(i)}
+    ${active ? RIBBON : ''}${ctx.layout === 'runhead' ? `<div class="sheet__head"><span></span>${ctx.tagset(i)}</div>` : ctx.head(i)}
     <div class="leaf__scroll" data-scroll="leaf${S.sides[i]}">${ctx.words(i)}</div>
     <footer class="folio"><span class="folio__figures">${ctx.figures(i, { keepOrd: true })}</span><span class="tools folio__tools quiet" role="group" aria-label="${esc(n.title)}: its tools">${['versions', 'compare', 'copy'].map((t) => ctx.tool(t, i, 'tool--spare')).join('')}${ctx.spare(i)}${ctx.closeBtn(i)}</span></footer>
   </section>`;
@@ -91,6 +117,7 @@ function edgeHtml(ctx, i) {
 
 const facing = {
   id: 'facing',
+  bar: `<div class="xbar__group" data-x-set="ribbon"><span class="xbar__label">Ribbon</span><button class="word-button" data-value="ribbon">1 · The ribbon</button><button class="word-button" data-value="dogear">2 · A dog-ear</button><button class="word-button" data-value="tab">3 · An edge tab</button></div>`,
   line: 'One sheet opened like a book: the notes face each other; a ribbon marks the page you’re writing in.',
   state: (ctx) => (isClosed(ctx) ? 'closed to one page' : ''),
   grid: (name, ctx) => {
@@ -151,6 +178,7 @@ mountAlt({
     <li><b>Each note's own</b> are in its folio: its number, words and last seal (the status line's ▪), and, while the pointer is over its page, Versions, Compare, Copy as HTML (behind one ⋯ when the page is narrow) and its ×. The left page's folio runs from the left and the right page's from the right, as page numbers do. Versions opens at the window's edge, as now. The colophon keeps the book's figures and today's tally.</li>
     <li><b>Tags</b> go on each page: A's running head, B's slips under the title. In C they move from the colophon to the page's own head, because a folio is too short to hold them.</li>
     <li><b>The active page</b> has the ribbon, a marker hanging over the sheet's top edge into that page's outer margin. It's ink-soft, not the seal, and the caret is in that page. Click in the other page, or press <kbd>${KEY('Mod-3')}</kbd>, and the ribbon moves.</li>
+    <li><b>Three marks to choose from</b> (Ribbon, in the bar): 1 · the ribbon, as first drawn; 2 · a dog-ear, the outer top corner turned down, the quietest, with no ink at all; 3 · an edge tab standing out from the page's outer edge, the easiest to find at a glance.</li>
     <li><b>Closing</b> is the × in a page's folio. <b>Swapping</b> is a book's tool (⇄ at the top) and in a row's menu. <b>A note chosen</b> in the list opens on the ribbon's page.</li>
     <li><b>Narrow:</b> two pages need ${2 * MIN_PAGE + GUTTER}px of sheet. That's about 1,370px of window with both panes open, or 1,100px with the sidebar shut. Below that the book closes to the ribbon's page. The facing page's edge stays by the gutter with its name, and a click or <kbd>${KEY('Mod-3')}</kbd> turns to it. The split is never refused.</li>
     <li><b>On a phone:</b> one page. The facing note is named in the page's folio, and tapping its name turns to it, as a leaf is turned.</li>
@@ -160,6 +188,8 @@ mountAlt({
   <h2>Against</h2>
   <ul><li>The folio is a second status line on each page, and the colophon is left with less to say.</li><li>The ribbon is a new mark, though a small one.</li><li>The gutter takes 32px, and the sheet's shared margins make each page narrower than a sheet of its own would be.</li></ul>`,
 });
+// Choosing a ribbon shows it arrive, as it does when the page changes.
+document.querySelector('[data-x-set="ribbon"]').addEventListener('click', (e) => { if (e.target.closest('[data-value]')) { S.arrive = true; draw(); } });
 </script>
 </body>
 </html>

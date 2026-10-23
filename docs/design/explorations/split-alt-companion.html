@@ -1165,6 +1165,7 @@ function mountAlt(dir) {
   ${group('theme', 'Light', [['light', 'Day'], ['dark', 'Night']])}
   ${group('sb', 'Sidebar', [['open', 'Open'], ['shut', 'Shut']])}
   ${group('fmt', 'Formatting bar', [['on', 'On'], ['off', 'Off']])}
+  ${dir.bar ?? ''}
   <label class="xbar__group"><span class="xbar__label">Window</span><input type="range" min="900" max="1680" step="20" value="1440" data-win-width aria-label="Window width" /><output></output></label>
   <span class="xnote">${dir.line}</span>
 </header>
@@ -1186,7 +1187,7 @@ const COMMON_NOTES = () => `
   <h2>In all three of these</h2>
   <ul>
     <li><b>Opening:</b> a note's right-click, Open to the Side; <kbd>${KEY('Mod-')}click</kbd> or <kbd>${KEY('Mod-Enter')}</kbd> on a row; drag a row onto the page's right edge (a preview shows where it lands; dropped on a page, it opens there); <kbd>${KEY('Mod-D')}</kbd> opens the note beside itself, and split, closes the other side.</li>
-    <li><b>Why ${KEY('Mod-D')}:</b> it's free in the menu and in the editor. <kbd>${KEY('Mod-\\')}</kbd> is Toggle Sidebar, and <kbd>${KEY('Alt-Mod-\\')}</kbd>, which 1–3 use, is CodeMirror's Indent Selection in the default keymap Eien's editor loads. ${KEY('Mod-D')} splits a pane in terminals too.</li>
+    <li><b>Why ${KEY('Mod-D')}:</b> it's free in the menu and in the editor. <kbd>${KEY('Mod-\\')}</kbd> is Toggle Sidebar, and <kbd>${KEY('Alt-Mod-\\')}</kbd>, which 1–3 first proposed, is CodeMirror's Indent Selection in the default keymap Eien's editor loads. ${KEY('Mod-D')} splits a pane in terminals too.</li>
     <li><b>Changing the active page:</b> a click in it, or <kbd>${KEY('Mod-3')}</kbd> (Go to Page), which pressed in a page goes to the other one. The list's chosen row is the active page's note; the other open note keeps a hairline-strength rule and no fill.</li>
     <li><b>Choosing a note</b> in the list or the tree opens it in the active page.</li>
     <li><b>Closing</b> never touches a note: it's in the list as it was. <kbd>${KEY('Mod-W')}</kbd> in a side closes that side first.</li>

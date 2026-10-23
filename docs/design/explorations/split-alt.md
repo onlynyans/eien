@@ -69,6 +69,17 @@ Window slider):
     too short to hold them.
 - **Active:** a ribbon, the book's marker, hangs over the sheet's top edge
   into the outer margin of the page you're in. It's ink-soft, not the seal.
+- **The mark, three ways to choose from** (Ribbon, in the page's bar; added
+  2026-10-23). None is the seal's colour, and each arrives with its own short
+  motion (none with reduced motion):
+  1. **The ribbon**, as first drawn: the book's silk marker over the sheet's
+     top edge, in the outer margin, its end forked. Ink-soft. It drops in.
+  2. **A dog-ear**: the page's outer top corner turned down. The corner is
+     gone to the blotter, and the flap shows the paper's back in the band's
+     tone, with a hairline round it. The quietest: no ink at all. It folds in.
+  3. **An edge tab**: an index tab standing out from the page's outer edge
+     into the blotter, near its head. Ink-soft, and the easiest to find at a
+     glance. It slides out.
 - **Narrow:** two pages need 752px of sheet, about 1,370px of window with both
   panes open. Below that, the book closes to the ribbon's page, and the facing
   page's edge stays by the gutter with its name, to turn to.

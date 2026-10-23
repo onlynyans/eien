@@ -115,11 +115,13 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 .quiet { opacity: 0; transition: opacity var(--eien-calm) var(--eien-ease); }
 .pg:hover .quiet, .quiet:focus-within { opacity: 1; }
 .slip { display: flex; gap: 2px; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
-.blotter { position: relative; min-height: 0; overflow: auto; padding: var(--eien-space-4) var(--eien-space-4) 0; }
+/* The blotter scrolls its sheet; the sheet fills what's left of it, so a short note never
+   overflows by the blotter's own padding (which showed a scrollbar in the gap). */
+.blotter { position: relative; min-height: 0; overflow: auto; display: flex; flex-direction: column; padding: var(--eien-space-4) var(--eien-space-4) 0; }
 /* The sheet at the face's own sizes, leading and measure; its margins narrow with
    a narrow page, as the app's do. */
 .sheet {
-  position: relative; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); min-height: 100%; margin: 0 auto;
+  position: relative; flex: 1 0 auto; width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto;
   padding: var(--eien-space-6) clamp(var(--eien-space-4), 8%, var(--eien-space-8));
   background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet);
   font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose);
