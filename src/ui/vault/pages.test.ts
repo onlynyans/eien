@@ -26,6 +26,7 @@ describe('the pages, with one page', () => {
     await pages.open('Fic/Snow.md');
     expect(pages.notes()).toEqual({ active: 'Fic/Snow.md', other: null });
     expect(pages.sides).toHaveLength(1);
+    expect(pages.active.page.element.hasAttribute('data-active')).toBe(true); // the one page
     expect(pages.active.page.editor.text).toBe('Snow fell all night.');
     // The window's running head, which the layout puts across the window (../chrome).
     expect(pages.pane.head.querySelector('.running-crumbs')?.textContent).toBe('Fic');

@@ -62,6 +62,7 @@ export class PagePane {
     });
     this.head = h('div', { class: 'window-head' }, first.runningCrumbs);
     this.#pages.append(first.element);
+    first.element.toggleAttribute('data-active', true); // the one page is the active one
     // Before what the page put in the area already (its selection bar, which floats).
     area.prepend(
       h(

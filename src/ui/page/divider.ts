@@ -20,7 +20,10 @@ export interface DividerEvents {
 }
 
 export class Divider {
+  /** Its column between the pages: the handle, and ⇄ beside it (never inside it, a control in a control). */
   readonly element: HTMLElement;
+  /** The separator itself: dragged, moved with the keys, named for assistive tech. */
+  readonly handle: HTMLElement;
   #share = readShare(stored());
   readonly #events: DividerEvents;
 
@@ -32,36 +35,31 @@ export class Divider {
       class: 'divider__swap',
       run: () => events.swap(),
     });
-    this.element = h(
-      'div',
-      {
-        class: 'divider quiet-row',
-        attrs: {
-          role: 'separator',
-          tabindex: '0',
-          'aria-orientation': 'vertical',
-          'aria-label': 'Between the two pages',
-          'aria-valuemin': '0',
-          'aria-valuemax': '100',
-          'aria-keyshortcuts': 'ArrowLeft ArrowRight Enter',
-          'data-tip': 'Drag to resize · double-click to even',
-        },
-        on: {
-          pointerdown: (down) => this.#drag(down),
-          dblclick: (event) => {
-            if (!swap.contains(event.target as Node)) this.#set(EVEN);
-          },
-          keydown: (event) => this.#key(event),
-        },
+    this.handle = h('div', {
+      class: 'divider__handle',
+      attrs: {
+        role: 'separator',
+        tabindex: '0',
+        'aria-orientation': 'vertical',
+        'aria-label': 'Between the two pages',
+        'aria-valuemin': '0',
+        'aria-valuemax': '100',
+        'aria-keyshortcuts': 'ArrowLeft ArrowRight Enter',
+        'data-tip': 'Drag to resize · double-click to even',
       },
-      swap,
-    );
+      on: {
+        pointerdown: (down) => this.#drag(down),
+        dblclick: () => this.#set(EVEN),
+        keydown: (event) => this.#key(event),
+      },
+    });
+    this.element = h('div', { class: 'divider quiet-row' }, this.handle, swap);
   }
 
   /** The left page's share of a pane `width` wide, as it's shown there. */
   shown(width: number): number {
     const share = shownShare(this.#share, width);
-    this.element.setAttribute('aria-valuenow', String(Math.round(share * 100)));
+    this.handle.setAttribute('aria-valuenow', String(Math.round(share * 100)));
     return share;
   }
 
@@ -72,10 +70,10 @@ export class Divider {
   }
 
   #drag(down: PointerEvent): void {
-    if (down.button !== 0 || (down.target as Element).closest('.divider__swap')) return;
+    if (down.button !== 0) return;
     down.preventDefault(); // no text chosen on the way
     const from = { x: down.clientX, share: this.#share, width: this.#events.width() };
-    this.element.classList.add('is-dragging');
+    this.handle.classList.add('is-dragging');
     // Followed on the document, as a pane's edge is (../shell/panes.ts): the divider moving out
     // from under the pointer doesn't end it. A move with the button up was let go elsewhere.
     const move = (event: PointerEvent) => {
@@ -90,7 +88,7 @@ export class Divider {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', up);
       document.removeEventListener('pointercancel', end);
-      this.element.classList.remove('is-dragging');
+      this.handle.classList.remove('is-dragging');
       keep(this.#share);
     };
     document.addEventListener('pointermove', move);
@@ -99,7 +97,7 @@ export class Divider {
   }
 
   #key(event: KeyboardEvent): void {
-    if (event.target !== this.element || event.altKey || event.metaKey || event.ctrlKey) return;
+    if (event.target !== this.handle || event.altKey || event.metaKey || event.ctrlKey) return;
     const by = event.key === 'ArrowLeft' ? -STEP : event.key === 'ArrowRight' ? STEP : 0;
     if (by !== 0) this.#set(movedShare(this.#share, this.#events.width(), by));
     else if (event.key === 'Enter') this.#set(EVEN);

@@ -11,7 +11,7 @@ function divider() {
   const events = { width: () => WIDTH, moved: vi.fn(), swap: vi.fn() };
   const made = new Divider(events);
   document.body.append(made.element);
-  return { made, events, element: made.element };
+  return { made, events, element: made.handle };
 }
 
 const key = (element: HTMLElement, name: string) =>
@@ -63,8 +63,9 @@ describe('the divider', () => {
   });
 
   it('swaps the pages with its ⇄, which no drag or double-click starts from', () => {
-    const { events, element } = divider();
-    const swap = element.querySelector<HTMLButtonElement>('.divider__swap');
+    const { made, events, element } = divider();
+    const swap = made.element.querySelector<HTMLButtonElement>('.divider__swap');
+    expect(element.contains(swap)).toBe(false); // beside the separator, never in it
     expect(swap?.getAttribute('aria-label')).toBe('Swap the pages');
     swap?.click();
     expect(events.swap).toHaveBeenCalledTimes(1);
