@@ -13,28 +13,27 @@ import { rememberStrip, stripShut } from '../chrome/strip';
 import { tooltips } from '../chrome/tooltip';
 import { h } from '../dom';
 import type { MenuBus } from '../menu/menu-bus';
-import type { PageView } from '../page/page';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
 import { COMPARE_WORD } from '../versions/seal-line';
-import type { PageParts } from './page-parts';
+import type { Pages } from './pages';
 import type { PhoneView } from './phone-view';
 
 export interface VaultChromeOf {
   readonly shell: HTMLElement;
-  readonly page: PageView;
+  /** The pane's slots, and the active page the controls act on. */
+  readonly pages: Pages;
   readonly sidebar: Sidebar;
   readonly panes: PaneLayout;
   readonly phone: PhoneView;
   readonly settings: SettingsState;
   readonly menu: MenuBus;
   readonly mac: boolean;
-  parts(): PageParts;
 }
 
 export interface VaultChrome {
-  /** Draw the layout chosen: once the page's parts are made. */
+  /** Draw the layout chosen: once the pages' parts are made. */
   mount(): void;
   /** Show every command as it is now. */
   refresh(): void;
@@ -45,16 +44,19 @@ const NAMES = { live: 'Live', source: 'Source', reading: 'Reading' } as const;
 const night = matchMedia('(prefers-color-scheme: dark)');
 
 export function vaultChrome(of: VaultChromeOf): VaultChrome {
-  const { shell, page, panes, settings } = of;
+  const { shell, pages, panes, settings } = of;
+  const { pane } = pages;
+  /** The page the controls act on, as each is asked how it looks. */
+  const page = () => pages.active.page;
   const slots = {
-    top: h('div', { class: 'window-head' }, page.runningCrumbs),
-    pageBar: page.slots.bar,
-    format: page.slots.format,
+    top: pane.head,
+    pageBar: pane.slots.bar,
+    format: pane.slots.format,
     sidebarChevron: h('div', { class: 'chevron-slot chevron-slot--sidebar' }),
     listChevron: h('div', { class: 'chevron-slot chevron-slot--list' }),
     foot: of.sidebar.foot.controls,
     phoneBar: of.phone.stack.controls,
-    phoneFoot: page.slots.phone,
+    phoneFoot: pane.slots.phone,
   };
   shell.append(slots.top, slots.sidebarChevron, slots.listChevron);
   let strip = stripShut();
@@ -71,17 +73,19 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   /** What's on at the caret, read once for all the bar's buttons (the editor's state the key). */
   let formatsFor: { state: unknown; on: ReadonlySet<FormatCommandId> } | null = null;
   const formatsOn = () => {
-    const state = page.editor.view.state;
-    if (formatsFor?.state !== state) formatsFor = { state, on: page.editor.formats };
+    const { editor } = page();
+    const state = editor.view.state;
+    if (formatsFor?.state !== state) formatsFor = { state, on: editor.formats };
     return formatsFor.on;
   };
   /** A formatting command's look: pressed where its format is on, off where there's nothing to format. */
   const formatLook = (id: CommandId): CommandLook => {
-    if (!page.writable || page.mode === 'reading') return { disabled: true, pressed: false };
-    if (id === 'format.heading') return { pressed: headingLevel(page.editor.caretLine) > 0 };
+    const { writable, mode, editor } = page();
+    if (!writable || mode === 'reading') return { disabled: true, pressed: false };
+    if (id === 'format.heading') return { pressed: headingLevel(editor.caretLine) > 0 };
     // In a table, the caret's menus; elsewhere it puts a table in.
     if (id === 'format.table') {
-      const inTable = page.editor.inTable;
+      const inTable = editor.inTable;
       return {
         pressed: inTable,
         tip: inTable ? 'Table: this row’s and column’s menus' : undefined,
@@ -92,7 +96,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   };
 
   const look = (id: CommandId): CommandLook => {
-    const versions = of.parts().versions;
+    const { versions } = pages.active;
+    const { mode } = page();
     switch (id) {
       case 'pane.sidebar': {
         const shut = panes.isShut('sidebar');
@@ -107,9 +112,9 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       case 'view.live':
       case 'view.source':
       case 'view.reading':
-        return { pressed: page.mode === id.slice('view.'.length) };
+        return { pressed: mode === id.slice('view.'.length) };
       case 'view.next':
-        return { icon: page.mode, tip: `${NAMES[page.mode]} · next view` };
+        return { icon: mode, tip: `${NAMES[mode]} · next view` };
       case 'compare': {
         const word = COMPARE_WORD[versions.compareMode];
         if (!versions.canCompare)
@@ -163,7 +168,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     panes: () => void settings.set('layout.panes', two() ? 'three' : 'two').catch(console.error),
     more: (opener) => of.phone.more(opener),
     // The bar's one heading control: the caret's line a level down each press.
-    'format.heading': () => of.menu.run(`format:${nextHeading(page.editor.caretLine)}`),
+    'format.heading': () => of.menu.run(`format:${nextHeading(page().editor.caretLine)}`),
   };
 
   const tips = tooltips();
@@ -182,16 +187,17 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     look,
     local: (id, opener) => local[id](opener),
     send: (command) => of.menu.run(command),
-    lost: () => page.focus(),
+    lost: () => page().focus(),
     watch: (host) => tips.watch(host),
   });
   /** The bar shown or not, as the setting says; the tags where the layout (or a phone) puts them. */
   const place = () => {
     const shown = barShown();
-    if (page.slots.format.hidden === shown) page.slots.format.hidden = !shown;
+    if (pane.slots.format.hidden === shown) pane.slots.format.hidden = !shown;
     shell.toggleAttribute('data-format-bar', shown);
     const layout = chrome.layout ?? settings.values['appearance.layout'];
-    page.tags.place(page.tagSlots, of.phone.stack.phone ? PHONE_TAGS : LAYOUT_SPECS[layout].tags);
+    const tags = of.phone.stack.phone ? PHONE_TAGS : LAYOUT_SPECS[layout].tags;
+    for (const { page } of pages.sides) page.tags.place(page.tagSlots, tags);
   };
   const refresh = () => {
     if (!mounted) return;
@@ -205,7 +211,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   });
   // The caret moved: the bar's buttons show what's on there, once a frame, and only while it shows.
   let frame = 0;
-  const stopCaret = page.onCaret(() => {
+  const stopCaret = pages.onCaret(() => {
     if (!mounted || !barShown() || frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
@@ -219,10 +225,12 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     mount: () => {
       mounted = true;
       chrome.mount(settings.values['appearance.layout']);
-      tips.watch(page.tags.set.element);
-      // A table's grips and + (in the editor's shadow root, so watched there), and a phone's table bar.
-      tips.watch(page.editor.tableTools);
-      tips.watch(page.tableBar.element);
+      for (const { page } of pages.sides) {
+        tips.watch(page.tags.set.element);
+        // A table's grips and + (in the editor's shadow root, so watched there), and a phone's table bar.
+        tips.watch(page.editor.tableTools);
+        tips.watch(page.tableBar.element);
+      }
       refresh();
     },
     refresh,

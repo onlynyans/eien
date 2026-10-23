@@ -128,8 +128,11 @@ async function copied(
   const state = EditorState.create({ doc, selection });
   const copy = vi.fn(async (_text: string, _html: string) => {});
   const out = htmlCopy({
-    page: { editor: { view: { state } } } as never,
-    note: { session: { text: doc, path: 'Chapter.md' } } as never,
+    active: () =>
+      ({
+        page: { editor: { view: { state } } },
+        note: { session: { text: doc, path: 'Chapter.md' } },
+      }) as never,
     out: { kinds: ['html'], copy, saveAs: vi.fn(async () => null) },
     settings: { values: { 'typography.quotes': 'curly', 'html.sceneBreak': 'rule' } } as never,
     tell: () => {},

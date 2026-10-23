@@ -1,103 +1,88 @@
-// What the open note's page has besides the note: its seals (../versions),
-// its counters (./counting.ts), Copy as HTML (./copy-html.ts), its exports
-// (./exports.ts), outline cards (./outline.ts) and the settings it follows
-// (./note-page.ts) — made together, kept in step together, stopped together.
+// What the pages of a shown vault share (each page's own note and seals are
+// ./pages.ts's): the counters (./counting.ts), Copy as HTML (./copy-html.ts),
+// the exports (./exports.ts) and outline cards (./outline.ts), each acting on
+// the active page — made together, kept in step together, stopped together.
 
 import type { Bridge } from '../../platform/bridge';
 import type { Counters } from '../counters/counters';
-import type { PageView } from '../page/page';
+import type { Written } from '../page/word-count';
 import type { SettingsState } from '../settings/settings-state';
-import { VersionsUI } from '../versions/versions-ui';
 import { type HtmlCopy, htmlCopy } from './copy-html';
 import { counting } from './counting';
 import { type Exports, exportsOf } from './exports';
 import type { Navigation } from './navigation';
-import { followSettings } from './note-page';
-import type { OpenNote } from './open-note';
 import type { Organizer } from './organize';
 import { type Outline, outlineCards } from './outline';
+import type { Pages } from './pages';
 import type { VaultState } from './vault-state';
 
 export interface PagePartsOf {
-  readonly page: PageView;
-  readonly note: OpenNote;
+  readonly pages: Pages;
   readonly state: VaultState;
   readonly bridge: Bridge;
   readonly settings: SettingsState;
   readonly nav: Navigation;
   readonly organizer: Organizer;
-  /** The Mac's keys, for the keys the versions panel names. */
-  readonly mac: boolean;
   tell(message: string): void;
-  /** What a seal's controls show changed (Compare's state, the panel open). */
-  changed(): void;
   /** Run a file operation, then read the vault again (one at a time). */
   act(operation: () => Promise<unknown>): Promise<void>;
   openNote(path: string): Promise<void>;
 }
 
 export interface PageParts {
-  readonly versions: VersionsUI;
   readonly counters: Counters;
   readonly htmlCopy: HtmlCopy;
   readonly exports: Exports;
   readonly outline: Outline;
+  /** Words the writer added on a page (./pages.ts tells them). */
+  wrote(added: number, when: Written): void;
+  /** A page's words counted again. */
+  counted(): void;
   /** Another note open, or the vault read again. */
   sync(): void;
-  /** Files changed on disk: another device may have sealed the open note. */
-  diskChanged(changed: ReadonlySet<string>): void;
   stop(): void;
 }
 
 export function pageParts(of: PagePartsOf): PageParts {
-  const { page, note, state, settings, tell } = of;
-  const versions = new VersionsUI({
-    page,
-    note,
-    vault: of.bridge.vault,
-    notesWithId: (id) => state.notesWithId(id),
-    mac: of.mac,
+  const { pages, state, settings, tell } = of;
+  const active = () => pages.active;
+  const counts = counting({
+    pane: pages.pane,
+    active,
+    flushWords: () => pages.flushWords(),
+    state,
     tell,
-    serial: of.act,
-    changed: of.changed,
   });
-  const counts = counting({ page, note: () => note, state, tell });
   const outline = outlineCards({
-    page,
+    active,
     state,
     nav: of.nav,
     organizer: of.organizer,
-    note: () => note,
     numerals: () => settings.values['books.numerals'],
     openNote: of.openNote,
     act: (operation) => void of.act(operation),
     tell,
   });
-  const stopSettings = followSettings(page, settings);
   return {
-    versions,
     counters: counts.counters,
-    htmlCopy: htmlCopy({ page, note, out: of.bridge.out, settings, tell }),
+    htmlCopy: htmlCopy({ active, out: of.bridge.out, settings, tell }),
     exports: exportsOf({
       state,
       nav: of.nav,
-      note,
+      openPath: () => pages.active.note.path,
+      openText: (path) => pages.session(path)?.text ?? null,
       vault: of.bridge.vault,
       out: of.bridge.out,
       settings,
       tell,
     }),
     outline,
+    wrote: counts.wrote,
+    counted: counts.counted,
     sync() {
-      versions.sync(); // another note open is seen here, whatever opened or closed it
-      void counts.sync();
+      void counts.sync(); // another note open is seen here, whatever opened or closed it
       void outline.sync();
     },
-    diskChanged: (changed) => void versions.diskChanged(changed),
-    stop() {
-      versions.stop();
-      counts.stop();
-      stopSettings();
-    },
+    stop: () => counts.stop(),
   };
 }

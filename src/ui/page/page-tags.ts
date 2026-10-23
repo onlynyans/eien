@@ -69,15 +69,13 @@ export class PageTags {
     this.set.show(null);
   }
 
-  /** # on the page, outside the words and any field, opens the field (docs/design: tags.md). */
-  listen(page: HTMLElement): void {
-    page.addEventListener('keydown', (event) => {
-      const target = event.target;
-      if (event.key !== '#' || !this.#open || !(target instanceof HTMLElement)) return;
-      if (target.closest('.editor-host, input, textarea, [contenteditable]')) return;
-      event.preventDefault();
-      this.set.open();
-    });
+  /** A key pressed on the page: #, outside the words and any field, opens the field (docs/design: tags.md). */
+  key(event: KeyboardEvent): void {
+    const target = event.target;
+    if (event.key !== '#' || !this.#open || !(target instanceof HTMLElement)) return;
+    if (target.closest('.editor-host, input, textarea, [contenteditable]')) return;
+    event.preventDefault();
+    this.set.open();
   }
 
   #change(edit: (text: string, tag: string) => string | null, tag: string, verb: string): void {

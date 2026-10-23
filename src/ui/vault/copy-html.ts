@@ -4,14 +4,13 @@
 
 import { toHtml } from '../../core/html';
 import type { OutBridge } from '../../platform/bridge';
-import type { PageView } from '../page/page';
 import { reasonOf } from '../reason';
 import type { SettingsState } from '../settings/settings-state';
-import type { OpenNote } from './open-note';
+import type { Side } from './pages';
 
 export interface HtmlCopyParts {
-  readonly page: PageView;
-  readonly note: OpenNote;
+  /** The active page and its note. */
+  active(): Pick<Side, 'page' | 'note'>;
   readonly out: OutBridge;
   readonly settings: SettingsState;
   tell(message: string): void;
@@ -20,7 +19,7 @@ export interface HtmlCopyParts {
 const NOTHING = 'Nothing to copy: the note has no words yet.';
 const NOTHING_CHOSEN = 'Nothing to copy: what’s chosen has no words.';
 
-/** Copy as HTML, for the open note. */
+/** Copy as HTML, for the active page's note. */
 export interface HtmlCopy {
   copy(): Promise<void>;
 }
@@ -38,8 +37,9 @@ export function htmlCopy(parts: HtmlCopyParts): HtmlCopy {
   return {
     /** ⇧⌘C: the words chosen, or the whole note, onto the clipboard as HTML. */
     async copy(): Promise<void> {
-      if (!parts.note.session) return;
-      const { state } = parts.page.editor.view;
+      const { note, page } = parts.active();
+      if (!note.session) return;
+      const { state } = page.editor.view;
       const { from, to } = state.selection.main;
       try {
         // What's chosen is read with the whole note: its links' references, its front matter left out.

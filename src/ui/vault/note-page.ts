@@ -1,4 +1,4 @@
-// The page for the open note: typing goes to its session, a [[link]] opens
+// A page for an open note: typing goes to its session, a [[link]] opens
 // the note it names (a web address opens in the browser), and a title typed
 // renames the note.
 
@@ -6,7 +6,6 @@ import { baseName, titleOf } from '../../core/paths';
 import { tagChoices } from '../../core/tags';
 import type { VaultBridge } from '../../platform/bridge';
 import { PageView } from '../page/page';
-import type { SettingsState } from '../settings/settings-state';
 import { copyImages } from './note-images';
 import { crumbsOf, type OpenNote } from './open-note';
 import type { Organizer } from './organize';
@@ -15,7 +14,7 @@ import type { VaultState } from './vault-state';
 export interface NotePageParts {
   /** Say what happened, where the window says such things (./notice.ts). */
   tell(message: string): void;
-  /** The open note: made after the page, which it shows. */
+  /** The page's note: made after the page, which it shows. */
   note(): OpenNote;
   readonly state: VaultState;
   readonly organizer: Organizer;
@@ -61,20 +60,4 @@ export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
     },
   });
   return page;
-}
-
-/** The page as the settings say: its zoom, the quotes typed on it, its writing tools. Returns a function to stop. */
-export function followSettings(page: PageView, settings: SettingsState): () => void {
-  const follow = (values: SettingsState['values']) => {
-    page.showZoom(values['page.zoom']);
-    page.editor.setQuotes(values['typography.quotes']);
-    page.editor.setTools({
-      focus: values['editor.focus'] === 'on',
-      typewriter: values['editor.typewriter'] === 'on',
-      spellcheck: values['editor.spellcheck'] === 'on',
-    });
-    page.editor.setMarks(values['editor.marks'] === 'on');
-  };
-  follow(settings.values);
-  return settings.onChange(follow);
 }

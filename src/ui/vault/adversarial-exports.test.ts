@@ -7,7 +7,6 @@ import type { OutBridge, OutFile, VaultBridge } from '../../platform/bridge';
 import { SettingsState } from '../settings/settings-state';
 import { exportsOf } from './exports';
 import type { Navigation } from './navigation';
-import type { OpenNote } from './open-note';
 import { VaultState } from './vault-state';
 
 /** A note as another app saved it: a byte-order mark, then its front matter. */
@@ -46,7 +45,8 @@ async function exportsWith(files: Record<string, string>) {
   const exports = exportsOf({
     state,
     nav: {} as Navigation,
-    note: { path: null, session: null } as unknown as OpenNote, // no note open
+    openPath: () => null, // no note open
+    openText: () => null,
     vault: { read } as unknown as VaultBridge,
     out,
     settings,

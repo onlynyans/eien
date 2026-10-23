@@ -32,7 +32,7 @@ beforeEach(() => {
     editable: () => editable,
     tell: (message) => tell(message),
   });
-  tags.listen(page);
+  page.addEventListener('keydown', (event) => tags.key(event));
   page.append(tags.set.element);
   tags.show(NOTE);
 });

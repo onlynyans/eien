@@ -20,13 +20,15 @@ import type { SettingsState } from '../settings/settings-state';
 import { currentBook } from './current-book';
 import { ExportImages, leftImages } from './export-images';
 import type { Navigation } from './navigation';
-import type { OpenNote } from './open-note';
 import type { VaultState } from './vault-state';
 
 export interface ExportParts {
   readonly state: VaultState;
   readonly nav: Navigation;
-  readonly note: OpenNote;
+  /** The active page's note, if any. */
+  openPath(): string | null;
+  /** The words of the note at `path` as a page has them, saved or not; null when it isn't open. */
+  openText(path: string): string | null;
   readonly vault: VaultBridge;
   readonly out: OutBridge;
   readonly settings: SettingsState;
@@ -50,12 +52,13 @@ export interface Exports {
 class Nothing extends Error {}
 
 export function exportsOf(parts: ExportParts): Exports {
-  const { state, note, tell } = parts;
+  const { state, tell } = parts;
   const quotes = () => parts.settings.values['typography.quotes'];
 
-  /** A note's text: the page's for the open one, else the disk's. */
+  /** A note's text: a page's for an open one, else the disk's. */
   async function textOf(path: string): Promise<string> {
-    if (note.path === path && note.session) return note.session.text;
+    const open = parts.openText(path);
+    if (open !== null) return open;
     const file = await parts.vault.read(path);
     if (!file) throw new Error(`“${titleOf(baseName(path))}” isn’t there any more.`);
     return file.text;
@@ -152,10 +155,11 @@ export function exportsOf(parts: ExportParts): Exports {
     note: exportNote,
     book: exportBook,
     async openNote(kind) {
-      if (note.path) await exportNote(note.path, kind);
+      const path = parts.openPath();
+      if (path) await exportNote(path, kind);
     },
     async currentBook(kind) {
-      const folder = await currentBook(state, parts.nav, note.path);
+      const folder = await currentBook(state, parts.nav, parts.openPath());
       if (folder === null)
         tell('Export Book exports a book: choose one, or open one of its chapters.');
       else await exportBook(folder, kind);

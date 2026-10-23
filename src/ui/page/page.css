@@ -48,6 +48,10 @@
 .page__phone:empty {
   display: none;
 }
+/* The pages lying in the pane (./page-pane.ts): one, or two when the window is split. */
+.page__pages {
+  display: contents;
+}
 .page__scroll {
   grid-row: 3;
   min-height: 0;

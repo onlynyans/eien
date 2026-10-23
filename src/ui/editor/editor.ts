@@ -37,7 +37,7 @@ export const EDITOR_MODES: readonly EditorMode[] = ['live', 'source', 'reading']
 
 export interface EditorEvents {
   /**
-   * The text changed (not by setText or replaceText): `written` when the
+   * The text changed in this view (not a reload, nor another view's echo): `written` when the
    * writer did it — typed, cut, pasted, formatted, undid — not Eien (a
    * seal's id, a restore), which counts toward no one's words.
    */
@@ -120,17 +120,6 @@ export class NoteEditor {
     this.#doc?.detach(this.#view);
     this.#doc = null;
     this.#view.setState(this.#state('', NO_IMAGES));
-  }
-
-  /**
-   * The same note's text, changed elsewhere: every view of it keeps its
-   * selection where it can stay, and the undo history starts afresh. A
-   * reload only comes when nothing here is unsaved, so the history holds
-   * nothing to lose; and an undo must never step back over the other
-   * device's words.
-   */
-  replaceText(text: string): void {
-    this.#doc?.replace(text);
   }
 
   /**

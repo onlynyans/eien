@@ -42,8 +42,8 @@ export class VersionsUI {
   readonly #versions: NoteVersions;
   readonly #panel: VersionsPanel;
   readonly #line = new SealLine();
-  /** The open note's session, as last seen: a new one is another note. */
-  #session: OpenNote['session'] = null;
+  /** The page's note as last seen (../vault/open-note.ts, `shown`): another count is another note, or the same opened again. */
+  #shown = -1;
   #id: string | null = null;
   #seals: VersionFile[] = [];
   readonly #words = new Map<string, number>();
@@ -79,9 +79,9 @@ export class VersionsUI {
 
   /** Called on every redraw: another note open (or none) is seen here. */
   sync(): void {
-    const session = this.#parts.note.session;
-    if (session !== this.#session) {
-      this.#session = session;
+    const { session, shown } = this.#parts.note;
+    if (shown !== this.#shown) {
+      this.#shown = shown;
       void this.noteChanged();
     } else if (session && noteIdOf(session.text) !== this.#id) {
       void this.#load(); // its id changed (a reload from another device, a seal): its seals too

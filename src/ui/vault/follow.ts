@@ -10,15 +10,13 @@ import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import { watchFolderDrags } from '../sidebar/folder-drag';
 import { type CommandContext, runCommand } from './commands';
-import { onDiskChanges, touches } from './disk-changes';
+import { onDiskChanges } from './disk-changes';
 import type { FolderDrop } from './folder-order';
 import { importFolder } from './importing';
-import type { OpenNote } from './open-note';
 import type { Organizer } from './organize';
 
 export interface FollowOf {
   readonly vault: VaultBridge;
-  readonly note: OpenNote;
   readonly settings: SettingsState;
   readonly panes: PaneLayout;
   readonly menu: MenuBus;
@@ -45,11 +43,11 @@ export interface FollowOf {
 }
 
 export function follow(of: FollowOf): () => void {
-  const { note, settings } = of;
+  const { settings } = of;
+  const { pages } = of.commands;
   const stopWatching = onDiskChanges(of.vault, (changed) => {
-    if (note.path && touches(note.path, changed)) void note.session?.diskChanged();
+    pages.diskChanged(changed); // an open note changed, or another device sealed one
     if (changed.has(VAULT_CONFIG)) void settings.reload(); // changed on another device
-    of.commands.parts.diskChanged(changed); // another device sealed the open note
     void of.refresh(changed);
   });
   const stopSettings = settings.onChange((values, before) => {
@@ -59,7 +57,7 @@ export function follow(of: FollowOf): () => void {
     if (strip.some((key) => values[key] !== before[key])) of.panes.refit();
     if (values['books.numerals'] !== before['books.numerals']) void of.redraw();
   });
-  const onBlur = () => void note.flush();
+  const onBlur = () => void pages.flush();
   window.addEventListener('blur', onBlur);
   const commands: CommandContext = {
     ...of.commands,

@@ -39,12 +39,12 @@ export interface OrganizeContext {
   readonly state: VaultState;
   /** "the trash", or on Windows "the Recycle Bin". */
   readonly trashName: string;
-  /** The note open now, if any. */
-  session(): NoteSession | null;
-  /** The open note was sent to the trash: show nothing. */
-  closed(): void;
-  /** Hold the page still while its note is moved or trashed (true), or let it go (false). */
-  freeze?(frozen: boolean): void;
+  /** The notes open now, on whichever pages. */
+  sessions(): readonly NoteSession[];
+  /** `path` was sent to the trash: the pages showing it, or a note in it, show nothing. */
+  closed(path: string): void;
+  /** Hold the pages showing `path`, or a note in it, still while it's moved or trashed (true), or let them go. */
+  freeze?(path: string, frozen: boolean): void;
   /** A quiet line in the list: what happened, or why it couldn't. */
   tell(message: string): void;
   /**
@@ -125,9 +125,9 @@ export class Organizer {
       );
       return false;
     } finally {
-      if (held === 'held') this.#ctx.freeze?.(false);
+      if (held === 'held') this.#ctx.freeze?.(path, false);
     }
-    if (held === 'held') this.#ctx.closed();
+    if (held === 'held') this.#ctx.closed(path);
     await this.#files.followPaths((paths) => withoutPins(paths, path));
     await this.#changeOrder(parentOf(path), (order) => withoutInOrder(order, baseName(path)), {
       left: baseName(path),
@@ -198,28 +198,35 @@ export class Organizer {
   }
 
   /**
-   * If the open note is `path` or in it: hold the page still and save it, so
-   * its last words go where it goes. 'refused' when they couldn't be saved —
-   * then nothing happens, and the writer is told; the words stay on the page.
+   * If notes open are `path` or in it: hold their pages still and save them,
+   * so their last words go where they go. 'refused' when one couldn't be
+   * saved — then nothing happens, and the writer is told; the words stay on the page.
    */
   async #hold(path: string, doing: string): Promise<'held' | 'refused' | 'none'> {
-    const open = this.#ctx.session();
-    if (!open || (open.path !== path && !open.path.startsWith(`${path}/`))) return 'none';
-    this.#ctx.freeze?.(true);
-    await open.flush();
-    if (open.state === 'saved') return 'held';
-    this.#ctx.freeze?.(false);
+    const open = this.#openIn(path);
+    if (open.length === 0) return 'none';
+    this.#ctx.freeze?.(path, true);
+    await Promise.all(open.map((session) => session.flush()));
+    const unsaved = open.find((session) => session.state !== 'saved');
+    if (!unsaved) return 'held';
+    this.#ctx.freeze?.(path, false);
     this.#ctx.tell(
-      `“${nameOf(open.path)}” has words that couldn’t be saved yet, so it didn’t ${doing}. They’re still on the page.`,
+      `“${nameOf(unsaved.path)}” has words that couldn’t be saved yet, so it didn’t ${doing}. They’re still on the page.`,
     );
     return 'refused';
+  }
+
+  /** The notes open at `path`, or in it. */
+  #openIn(path: string): NoteSession[] {
+    return this.#ctx
+      .sessions()
+      .filter((session) => session.path === path || session.path.startsWith(`${path}/`));
   }
 
   /** Move or rename `from` to `to`, keeping order, pins and the open note (and a note's images) in step. */
   async #move(from: string, to: string, isNote = false): Promise<string | null> {
     if (from === to) return to;
-    const open = this.#ctx.session();
-    const inside = (path: string) => path === from || path.startsWith(`${from}/`);
+    const open = this.#openIn(from);
     const held = await this.#hold(from, 'move'); // nothing half-saved at the old name
     if (held === 'refused') return null;
     let result: Awaited<ReturnType<VaultBridge['move']>>;
@@ -228,7 +235,7 @@ export class Organizer {
     } catch (error) {
       return this.#refuse(`“${nameOf(from)}” couldn’t be moved: ${reasonOf(error)}`);
     } finally {
-      if (held === 'held') this.#ctx.freeze?.(false);
+      if (held === 'held') this.#ctx.freeze?.(from, false);
     }
     if (!result.ok) {
       const why = {
@@ -238,7 +245,7 @@ export class Organizer {
       };
       return this.#refuse(`“${nameOf(from)}” couldn’t be moved: ${why[result.reason]}`);
     }
-    if (open && inside(open.path)) open.movedTo(to + open.path.slice(from.length));
+    for (const session of open) session.movedTo(to + session.path.slice(from.length));
     await this.#files.followPaths((paths) => movedPins(paths, from, to));
     const [left, came] = [baseName(from), baseName(to)];
     if (parentOf(from) === parentOf(to)) {
