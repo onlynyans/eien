@@ -115,6 +115,20 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await expect(page.locator('.page__pages[data-dock="under"]')).toHaveCount(1);
         expect(await violationsUnder(page, ['.page']), 'under the page').toEqual([]);
       });
+
+      test('tools that follow, and a page waiting, have no serious violation', async ({ page }) => {
+        await page.setViewportSize({ width: 1600, height: 900 });
+        await ready(page);
+        await chooseSetting(page, 'appearance.split', 'follow');
+        await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
+        await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
+        // The furniture over the active page, the other at rest, the tree listing the notes.
+        const areas = ['.page__leaf[data-active]', '.page__leaf:not([data-active])', '.sidebar'];
+        expect(await violationsUnder(page, areas), 'follow').toEqual([]);
+        await page.setViewportSize({ width: 960, height: 800 });
+        await expect(page.locator('.page__pages[data-narrow="wait"]')).toHaveCount(1);
+        expect(await violationsUnder(page, ['.page']), 'a page waiting').toEqual([]);
+      });
     });
   }
 }

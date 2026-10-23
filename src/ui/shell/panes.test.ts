@@ -227,3 +227,47 @@ describe('paneKeys', () => {
     expect(paneKeys(false)).toEqual({ sidebar: 'Ctrl+\\', list: 'Ctrl+Shift+\\' });
   });
 });
+
+describe('the list stepping aside for a split (Tools that follow)', () => {
+  it('goes out of sight while split, the tree listing the notes, and is never saved as shut', () => {
+    const panes = make();
+    panes.stepAside(true);
+    expect(panes.isShut('list')).toBe(true);
+    expect(panes.two).toBe(true);
+    expect(panes.aside).toBe(true);
+    expect(shell().dataset.panes).toBe('two');
+    expect(stored()?.listShut ?? false).toBe(false);
+    panes.stepAside(false);
+    expect(panes.isShut('list')).toBe(false);
+    expect(panes.two).toBe(false);
+  });
+
+  it('comes back with its toggle, and stays back until the split asks again', () => {
+    const panes = make();
+    panes.stepAside(true);
+    panes.toggle('list'); // ⇧⌘\, or its chevron
+    expect(panes.isShut('list')).toBe(false);
+    expect(panes.aside).toBe(false);
+    panes.stepAside(true); // the window drawn again, still split: the list stays
+    expect(panes.isShut('list')).toBe(false);
+    panes.stepAside(false);
+    panes.stepAside(true); // a new split: it steps aside again
+    expect(panes.isShut('list')).toBe(true);
+    expect(stored()?.listShut ?? false).toBe(false);
+  });
+
+  it('gives the keyboard to the page when it steps aside with it inside', () => {
+    const panes = make();
+    parts.list.querySelector('button')?.focus();
+    panes.stepAside(true);
+    expect(parts.leave).toHaveBeenCalled();
+  });
+
+  it('leaves two panes as they are', () => {
+    const panes = make(true);
+    panes.stepAside(true);
+    panes.stepAside(false);
+    expect(panes.two).toBe(true);
+    expect(panes.isShut('list')).toBe(true);
+  });
+});

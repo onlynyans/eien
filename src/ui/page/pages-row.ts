@@ -5,7 +5,7 @@
 // with the other page's edge beside it to turn to, or the second goes under
 // the first. Facing pages mark the active page.
 
-import { ariaKeys } from '../chrome/keys';
+import { ariaKeys, keyText } from '../chrome/keys';
 import type { SplitSpec } from '../chrome/splits';
 import { h, wordButton } from '../dom';
 import { Divider } from './divider';
@@ -46,6 +46,10 @@ export class PagesRow {
     attrs: { role: 'group', 'aria-label': 'The two pages', hidden: true },
   });
   readonly #edgeName = h('span', { class: 'page__edge-name label' });
+  /** Too narrow for two, with Tools that follow: the colophon's word that the other page waits. */
+  readonly waits = h('span', { class: 'colophon__waits' });
+  /** Where the split's share is worn, and the furniture told which page to stand over: the pane's main grid. */
+  readonly #wear: HTMLElement;
   readonly #edge: HTMLButtonElement;
   readonly #mark = markOf();
   readonly #divider: Divider;
@@ -57,7 +61,8 @@ export class PagesRow {
   #size = '';
   readonly #resized = new ResizeObserver(() => this.#layout());
 
-  constructor(events: RowEvents) {
+  constructor(wear: HTMLElement, events: RowEvents) {
+    this.#wear = wear;
     this.#events = events;
     this.#divider = new Divider({
       room: () => this.#roomNow(this.element.dataset.dock === 'under' ? 'y' : 'x'),
@@ -160,18 +165,27 @@ export class PagesRow {
     const spec = this.#spec;
     const narrow = spec && this.#roomNow('x') < spec.least ? spec.narrow : null;
     const under = narrow === 'under' && spec?.under ? spec.under : null;
-    const one = narrow === 'fold' || narrow === 'close' ? narrow : null;
+    const one = narrow === 'under' ? null : narrow;
     if (one) this.element.dataset.narrow = one;
     else delete this.element.dataset.narrow;
     if (under) this.element.dataset.dock = 'under';
     else delete this.element.dataset.dock;
     this.pager.hidden = one !== 'fold';
     if (one === 'fold') this.#drawPager();
+    const other = this.#other();
+    this.waits.textContent =
+      one === 'wait' && other
+        ? `${other.name || 'The other page'} waits · ${keyText('Mod-\\', MAC)} makes room`
+        : '';
+    // The pane's furniture over the active page, by grid: two pages shown, and a mode that has it.
+    const follows = spec?.follows && !one && this.#active ? this.#shown.indexOf(this.#active) : -1;
+    if (follows >= 0) this.#wear.dataset.followSide = String(follows);
+    else delete this.#wear.dataset.followSide;
     if (!spec || one) return;
     const measure = under ?? spec.measure;
     this.#divider.use(measure);
     const share = this.#divider.shown(this.#roomNow(measure.axis));
-    this.element.style.setProperty('--split-share', String(share));
+    this.#wear.style.setProperty('--split-share', String(share));
   }
 
   #other(): PageView | null {

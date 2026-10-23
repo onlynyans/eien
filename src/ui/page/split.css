@@ -4,9 +4,13 @@
    Two sheets, two papers on one blotter; Facing pages, one sheet opened like
    a book. --split-gap is the divider's column. */
 
+/* The divider's track, the mode's (a hairline unless it says otherwise): the pages' row and,
+   with Tools that follow, the pane's grid both take their columns from it. */
+.page__main {
+  --split-gap: var(--eien-hairline);
+}
 /* The pages' row: one page, or two with the divider's column between them. */
 .page__pages {
-  --split-gap: var(--eien-hairline);
   position: relative; /* the drop preview's box */
   grid-row: 3;
   display: grid;

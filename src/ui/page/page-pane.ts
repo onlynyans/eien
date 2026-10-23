@@ -28,29 +28,27 @@ export class PagePane {
   /** News from the last action, when neither the list nor the sidebar is there to show it. */
   readonly #news = h('span', { class: 'colophon__news', attrs: { role: 'status' } });
   readonly #colophon = h('footer', { class: 'colophon count' });
+  /** The pane's grid: its slots, the pages' row, the colophon. */
+  readonly #main = h('div', { class: 'page__main' });
   #active: PageView;
 
   /** The pane in `area`, `first` its active page (made with `area` as its layer). */
   constructor(area: HTMLElement, first: PageView, events: RowEvents) {
     this.#active = first;
-    this.#row = new PagesRow(events);
+    this.#row = new PagesRow(this.#main, events);
     this.head = h('div', { class: 'window-head' }, first.runningCrumbs);
     this.#row.element.append(first.element);
     first.element.toggleAttribute('data-active', true); // the one page is the active one
-    // Before what the page put in the area already (its selection bar, which floats).
-    area.prepend(
-      h(
-        'div',
-        { class: 'page__main' },
-        this.slots.bar,
-        this.slots.format,
-        this.#row.element,
-        first.tableBar.element,
-        this.#colophon,
-        this.slots.phone,
-      ),
-      first.aside,
+    this.#main.append(
+      this.slots.bar,
+      this.slots.format,
+      this.#row.element,
+      first.tableBar.element,
+      this.#colophon,
+      this.slots.phone,
     );
+    // Before what the page put in the area already (its selection bar, which floats).
+    area.prepend(this.#main, first.aside);
     this.#placeFigures([first], 'active');
     // # on the pane, outside the words and any field, opens the active page's tags.
     area.addEventListener('keydown', (event) => this.#active.tags.key(event));
@@ -81,6 +79,7 @@ export class PagePane {
    */
   place(pages: readonly PageView[], active: PageView, split: SplitSpec): void {
     this.#row.place(pages, active, split);
+    if (active !== this.#active && split.follows && pages.length === 2) this.#arrive();
     if (active !== this.#active) {
       // The active page's parts take the pane's places: one node each, swapped in place.
       this.#active.runningCrumbs.replaceWith(active.runningCrumbs);
@@ -89,6 +88,13 @@ export class PagePane {
       this.#active = active;
     }
     this.#placeFigures(pages, pages.length === 2 ? split.figures : 'active');
+  }
+
+  /** The furniture moved across to the page now active: it fades in there (none with reduced motion). */
+  #arrive(): void {
+    this.#main.classList.remove('is-arriving');
+    void this.#main.offsetWidth; // the animation runs again only from a style without it
+    this.#main.classList.add('is-arriving');
   }
 
   /** News from the last action in the status line; null takes it away. */
@@ -147,6 +153,7 @@ export class PagePane {
       foot.seal,
       this.#zoom,
       this.#news,
+      this.#row.waits,
       foot.said,
     );
   }

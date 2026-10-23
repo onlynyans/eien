@@ -122,6 +122,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
         return { pressed: !shut, tip: shut ? 'Show the sidebar' : 'Hide the sidebar' };
       }
       case 'pane.list': {
+        if (panes.aside) return { pressed: false, tip: 'Show the note list' };
         const shut = panes.isShut('list');
         if (panes.two)
           return { disabled: true, tip: 'Off with two panes: the sidebar lists the notes' };

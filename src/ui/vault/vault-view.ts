@@ -225,6 +225,7 @@ export async function showVault(
     arrange: lens.arrange,
   });
   const redraw = () => {
+    panes.stepAside(pages.split && pages.mode.listAside); // Tools that follow: the list makes room
     pages.sync();
     sync.draw();
     chrome.refresh();
@@ -244,6 +245,8 @@ export async function showVault(
     act,
     refresh: () => refresh(),
     redraw,
+    tell,
+    sidebarKey: keys.sidebar,
   });
 
   const refresh = (changed?: Iterable<string>) => state.refresh(changed).then(redraw);

@@ -265,8 +265,19 @@ device setting says (`appearance.split`, Settings → Look → Appearance):
   last seal); the colophon stays the page's. The one you aren't writing in
   sits back a step, its paper the band's tone. With less than 700px of page
   pane, the companion goes under the page, the divider lying across.
+- **Tools that follow**: the note list steps aside while split (never saved
+  as shut; Toggle Note List, ⇧⌘\, or its chevron brings it back), the tree
+  listing the notes as with two panes, and the two pages take its room. One
+  set of the page's furniture, A's band or B's slip, the formatting bar and
+  the colophon, stands over the page you're in, placed there by the pane's
+  grid and never moved, so the keyboard stays where it is; moving to the
+  other page, it fades in there (no motion with reduced motion). The
+  Running head's tools stay in it. The other page is paper on the blotter,
+  its × on hover. A split asked for without room for two 360px pages beside
+  the sidebar is refused, and Eien says why; a split window narrowed past
+  it shows the page you're in, and the colophon says the other waits.
 
-What follows holds for all three.
+What follows holds for all four.
 
 - **Opening:** a row's Ctrl-click (⌘ on a Mac) or Ctrl+Enter; Open to the
   Side in its menu; a row dragged onto the page pane (past 60% of a lone
@@ -289,8 +300,8 @@ What follows holds for all three.
 - **Narrow:** below two pages' width, Two sheets fold into one, the active
   page, and a pager with the page's tools names both; Facing pages' book
   closes to the active page, the other page's edge beside it with its name,
-  a click (or ⌘3) turning to it; a companion goes under the page. Shutting a
-  pane opens them again.
+  a click (or ⌘3) turning to it; a companion goes under the page; with Tools
+  that follow, the other page waits. Shutting a pane opens them again.
 - **One note on both pages** is one document: one undo history, one save,
   its words counted once (§3).
 - **The phone** shows one page: no split, and its menus offer none.
