@@ -114,15 +114,19 @@ async function openHome(session: VaultSession): Promise<void> {
 }
 
 /**
- * Answer the window's vault requests. The vault to open first is
+ * Answer the window's vault requests. The vault to open first is `root`,
+ * the one of the window that asked for this one (New Window); else
  * EIEN_VAULT (for tests and separate copies), else the one last opened, else
  * this copy's own. When the one last opened can't be (a drive that isn't
  * connected), the window says so and asks, rather than show an empty vault in
  * its place.
  */
-export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
+export async function serveVault(
+  window: BrowserWindow,
+  root: string | null = null,
+): Promise<VaultSession> {
   const session = new VaultSession(window);
-  const remembered = process.env.EIEN_VAULT || lastVault(await readDeviceFile());
+  const remembered = root ?? (process.env.EIEN_VAULT || lastVault(await readDeviceFile()));
   if (remembered) await session.openAt(remembered).catch(() => null);
   else await openHome(session);
 

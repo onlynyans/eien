@@ -8,8 +8,9 @@ import { frameOptions, serveFrame } from './frame';
 import { serveImport } from './import-session';
 import { isAppUrl, isExternalLink } from './navigation';
 import { serveOut } from './out-session';
-import { serveSettings, zoomFactorOf } from './settings-session';
+import { deviceSettings, serveSettings, zoomFactorOf } from './settings-session';
 import { serveVault } from './vault-session';
+import { serveWindow, type WindowPlace } from './window-session';
 
 /** How long the window gets to save before it closes anyway. */
 const SAVE_BEFORE_CLOSE_MS = 3000;
@@ -32,12 +33,20 @@ const linuxIcon = () =>
     ? join(process.resourcesPath, 'icon.png')
     : join(import.meta.dirname, '../../build/icons/linux/512x512.png');
 
-/** The window, as this device's `settings` have it: its zoom, from the first draw. */
-export async function createMainWindow(settings: SettingValues): Promise<BrowserWindow> {
+/**
+ * A window, as this device's `settings` have it (its zoom, from the first
+ * draw), on `place`: the vault and note it was asked for from another window
+ * (New Window), or, at launch, the vault last opened.
+ */
+export async function createMainWindow(
+  settings: SettingValues,
+  place: WindowPlace = { vault: null, note: null },
+): Promise<BrowserWindow> {
   const url = appUrl();
   const window = new BrowserWindow({
     width: 1280,
     height: 800,
+    ...place.bounds,
     minWidth: 640,
     minHeight: 480,
     show: false,
@@ -68,7 +77,8 @@ export async function createMainWindow(settings: SettingValues): Promise<Browser
   });
 
   saveBeforeClose(window);
-  const vault = await serveVault(window);
+  const vault = await serveVault(window, place.vault);
+  serveWindow(window, vault, { note: place.note }, (next) => openWindow(next));
   serveSettings(window, vault);
   serveImport(window, vault);
   serveOut(window);
@@ -77,6 +87,11 @@ export async function createMainWindow(settings: SettingValues): Promise<Browser
   window.once('ready-to-show', () => window.show());
   void window.loadURL(url);
   return window;
+}
+
+/** Another window, as this device's settings have it now. */
+export async function openWindow(place?: WindowPlace): Promise<BrowserWindow> {
+  return createMainWindow(await deviceSettings(), place);
 }
 
 /**

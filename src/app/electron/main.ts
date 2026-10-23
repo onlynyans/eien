@@ -3,7 +3,7 @@ import { CHANNEL } from '../../platform/bridge';
 import { dataFolder, prepareDataFolder, thisCopy } from './data-folders';
 import { buildMenu, checkToggles } from './menu';
 import { applyScheme, deviceSettings } from './settings-session';
-import { createMainWindow } from './window';
+import { createMainWindow, openWindow } from './window';
 
 // Tests and separate copies (EIEN_USER_DATA), and a portable copy, keep their
 // data in their own folder, so they never share settings or the
@@ -44,6 +44,8 @@ if (unwritable !== null) {
     Menu.setApplicationMenu(
       buildMenu((command, window) => {
         if (window instanceof BrowserWindow) window.webContents.send(CHANNEL.menu, command);
+        // No window to ask (macOS, all closed): a new one opens on the vault last opened.
+        else if (command === 'new-window') void openWindow();
       }),
     );
     // Day or night is set before the window draws, so it never flashes the other.
@@ -52,7 +54,7 @@ if (unwritable !== null) {
     checkToggles(settings);
     await createMainWindow(settings);
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) void deviceSettings().then(createMainWindow);
+      if (BrowserWindow.getAllWindows().length === 0) void openWindow();
     });
   });
 

@@ -80,6 +80,8 @@ export function buildMenu(send: SendCommand): Menu {
       label: 'File',
       submenu: [
         item('New Note', 'new-note', 'CmdOrCtrl+N'),
+        // Another window, on this one's vault and note (spec §4).
+        item('New Window', 'new-window', 'CmdOrCtrl+Shift+N'),
         // A seal keeps this version for good (spec §9); autosave keeps writing the note.
         item('Seal', 'seal', 'CmdOrCtrl+S'),
         item('Open Vault…', 'open-vault', 'CmdOrCtrl+O'),
@@ -98,7 +100,9 @@ export function buildMenu(send: SendCommand): Menu {
         item('Import Markdown Folder…', 'import-folder'),
         { type: 'separator' },
         ...(mac ? [] : [settings, { type: 'separator' } as const]),
-        mac ? { role: 'close' } : { role: 'quit' },
+        // Eien's own close, on every system: the window saves first (and, split, closes a side).
+        item('Close Window', 'close-window', 'CmdOrCtrl+W'),
+        ...(mac ? [] : [{ role: 'quit' } as const]),
       ],
     },
     {

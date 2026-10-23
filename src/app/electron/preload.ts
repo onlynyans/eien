@@ -53,6 +53,11 @@ const bridge: Bridge = {
     });
   },
   paintControls: (paint) => ipcRenderer.invoke(CHANNEL.paintControls, paint),
+  window: {
+    open: (note) => ipcRenderer.invoke(CHANNEL.windowOpen, note),
+    close: () => ipcRenderer.invoke(CHANNEL.windowClose),
+    start: () => ipcRenderer.invoke(CHANNEL.windowStart),
+  },
 };
 
 contextBridge.exposeInMainWorld('eien', bridge);
