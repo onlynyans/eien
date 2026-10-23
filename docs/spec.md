@@ -391,14 +391,16 @@ format without typing them:
   ⌘⇧9 checklist. Each toggles: pressed again, it takes the formatting off.
   ⌘⇧T puts in a table: a header and two rows of two columns, empty, the
   caret in the first cell, on the caret's line if it's blank or else after
-  it, a blank line either side. On
+  it, a blank line either side; with the caret in a table in Live, it opens
+  that cell's menus instead (Tables, below). On
   Windows and Linux ⌘ is Ctrl, and the headings are Ctrl+Shift+1–3: there
   Ctrl+Alt is AltGr, which types characters (², ³ and @ on a German keyboard),
   so a Ctrl+Alt key would take them. macOS keeps ⌘⌥, as ⌘⇧3 is its screenshot.
 - **Format menu** in the menu bar with the same commands and their keys.
 - **Formatting bar:** the same commands drawn as Eien's icons (bold, italic,
   underline, strikethrough; heading, highlight, link; quote, the lists; a
-  table, which is never pressed),
+  table, pressed with the caret in a table, where it opens the caret's
+  cell's menus),
   shown or hidden by its control in the page's toolbar, View → Formatting
   Bar or ⇧⌘B (a device setting, off at first). Each button runs the menu's
   command, and shows pressed where its format is on at the caret (read from
@@ -426,10 +428,47 @@ Typing `**` still formats, the marks hiding once the pair is whole.
 **Tables** in Live and Reading are drawn in place, row by row
 (`ui/editor/live-tables.ts`): each row a line of equal columns with
 hairlines between, the header on the band, the pipes and the delimiter row
-out of sight. A click in a cell puts the caret there, and typing edits the
-cell's Markdown; the file stays a plain GFM table. The words in a cell are
-formatted as anywhere else, and the caret's row shows its pipes (and its
-marks) as other lines do.
+out of sight, each column aligned as its delimiter says (left `---`, centre
+`:-:`, right `--:`, figures on the right in tabular figures). A click in a
+cell puts the caret there, and typing edits the cell's Markdown; the file
+stays a plain GFM table. The words in a cell are formatted as anywhere else,
+and the caret's row shows its pipes (and its marks) as other lines do.
+
+In Live a table is edited as a word processor's is (the table editor,
+`core/table` and `ui/editor/table-*.ts`; the design in
+`docs/design/explorations/tables.md`, "The choice"):
+
+- **Keys,** with the caret in a table: Tab and Shift-Tab go to the next and
+  previous cell, its words chosen, and Tab in the last cell adds a row; the
+  arrows cross into the next cell at a cell's edge, ↑ and ↓ always; Enter
+  adds a row under the caret's, Shift-Enter says a cell is one line; Esc
+  leaves the table for the line after it. ⌥⌘↑ ↓ ← → add a row or column on
+  that side; ⌥⌘⌫ removes the row, ⌥⇧⌘⌫ the column; ⌥↑ ↓ move the row;
+  ⇧F10 opens the cell's menus. (Ctrl for ⌘ on Windows and Linux.)
+- **On the desktop,** a grip at each row's left and over each column shows
+  for the row and column under the pointer or the caret. Pressed, it opens
+  that row's or column's menu, in the row menu's style (add on either side,
+  move, a column's alignment with a dot by the one it has, remove last in
+  carmine); dragged, the row or column moves, with the drop line. A + shows
+  only while the pointer is on a line between two rows or columns (or the
+  table's edges), with the line where the new one goes. A right-click on a
+  cell opens both its menus.
+- **On a phone,** no grips or + to aim at: the table's tools are one bar at
+  the page's foot, above the keyboard, while the caret is in a table (rows,
+  columns, alignment; 44px targets). A long press, where the phone gives
+  one, opens the cell's menus.
+- **Words are never lost.** Each change is one step of the editor's
+  history: ⌘Z puts back what a removal took, and the colophon says so ("Row
+  2 removed · ⌘Z puts it back").
+- **What Markdown can't do, it says,** in the colophon: the head row stays
+  (a GFM table always has one), and so does the last column. A cell is one
+  line: pasted lines join with spaces. A `|` typed or pasted in a cell is
+  saved as `\|`, unless it's escaped already; Backspace and Delete, with
+  nothing selected, never take a cell's edge or join a row to the line
+  beside it.
+- **The file changes only where it must:** a row added, removed or moved
+  touches its own line; a column's change rewrites each row's cells, giving
+  each row its outer pipes, and leaves their spaces as they were.
 
 Square brackets are a link only with an address or a defined reference, as
 CommonMark has it: `[sic]` and `[...]` keep their brackets on the page. HTML at

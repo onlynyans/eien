@@ -8,7 +8,7 @@ import { syntaxTree } from '@codemirror/language';
 import { type EditorState, type Range, StateField, type Text } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
-import { leadOf, pipesIn } from '../../core/table';
+import { type Align, alignOf, leadOf, pipesIn } from '../../core/table';
 import { previewMode } from './preview-mode';
 
 export interface Span {
@@ -84,14 +84,24 @@ export function tablesIn(state: EditorState): SyntaxNode[] {
 
 const CONTAINERS = new Set(['Document', 'Blockquote', 'BulletList', 'OrderedList', 'ListItem']);
 
-const cell = Decoration.mark({ class: 'eien-cell' });
+/** A cell, as its column is aligned: right-aligned figures in tabular figures. */
+const CELLS: Record<Align, Decoration> = {
+  left: Decoration.mark({ class: 'eien-cell' }),
+  center: Decoration.mark({ class: 'eien-cell eien-cell--center' }),
+  right: Decoration.mark({ class: 'eien-cell eien-cell--right' }),
+};
 
 function cellsOf(state: EditorState): DecorationSet {
   if (!state.facet(previewMode)) return Decoration.none;
   const out: Range<Decoration>[] = [];
   for (const table of tablesIn(state)) {
-    for (const row of tableRows(state.doc, table)) {
-      for (const { from, to } of row.cells) if (to > from) out.push(cell.range(from, to));
+    const rows = tableRows(state.doc, table);
+    const aligns = (rows[1]?.cells ?? []).map(({ from, to }) =>
+      alignOf(state.doc.sliceString(from, to)),
+    );
+    for (const row of rows) {
+      for (const [c, { from, to }] of row.cells.entries())
+        if (to > from) out.push(CELLS[aligns[c] ?? 'left'].range(from, to));
     }
   }
   return Decoration.set(out, true);

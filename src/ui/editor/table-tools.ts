@@ -8,13 +8,12 @@
 
 import { Facet } from '@codemirror/state';
 import { type EditorView, type PluginValue, ViewPlugin, type ViewUpdate } from '@codemirror/view';
-import { cellSpan, columnName, type Here } from '../../core/table';
-import { h } from '../dom';
-import { type IconName, icon } from '../icons';
+import { cellSpan, type Here } from '../../core/table';
 import { caretTable, type TableAt, tableAt } from './table-at';
 import { editTable } from './table-commands';
+import { controlsKey, makeControls, placeControls } from './table-controls';
 import { startDrag } from './table-drag';
-import { columnLine, measureTable, nearLine, rowLine, type TableGeometry } from './table-geometry';
+import { measureTable, nearLine, type TableGeometry } from './table-geometry';
 import { openColumnMenu, openRowMenu } from './table-menus';
 
 /** The element the controls are drawn in: the editor's own, kept across notes (its tooltips are watched). */
@@ -24,39 +23,6 @@ export const tableToolsHost = Facet.define<HTMLElement, HTMLElement | null>({
 
 /** How long the controls stay after the pointer leaves, so it can cross the margin to them. */
 const LINGER_MS = 400;
-
-const control = (
-  cls: string,
-  name: IconName,
-  label: string,
-  tip: string,
-  data: Record<string, string>,
-) =>
-  h(
-    'button',
-    {
-      class: cls,
-      attrs: { type: 'button', tabindex: '-1', 'aria-label': label, 'data-tip': tip, ...data },
-    },
-    icon(name),
-  );
-
-function insertName(
-  table: TableAt,
-  dir: 'column' | 'row',
-  at: number,
-  n: number,
-  rows: number,
-): string {
-  if (dir === 'column') {
-    if (at === 0) return `Add a column before ${columnName(table.lines, 0)}`;
-    if (at === n) return `Add a column after ${columnName(table.lines, n - 1)}`;
-    return `Add a column between ${columnName(table.lines, at - 1)} and ${columnName(table.lines, at)}`;
-  }
-  if (at === 0) return 'Add a row under the head row';
-  if (at === rows) return `Add a row after row ${at}`;
-  return `Add a row between rows ${at} and ${at + 1}`;
-}
 
 class TableTools implements PluginValue {
   readonly #view: EditorView;
@@ -170,86 +136,17 @@ class TableTools implements PluginValue {
       }
       return;
     }
-    const n = g.columns.length;
-    const rows = g.rows.length - 1;
-    const names = Array.from({ length: n }, (_, c) => columnName(table.lines, c));
-    const key = `${table.from}/${rows}/${names.join('|')}`;
+    const key = controlsKey(table, g);
     if (key !== this.#built && !this.#dragging) {
       this.#built = key;
-      const parts: HTMLElement[] = [];
-      for (let c = 0; c <= n; c++)
-        parts.push(
-          control(
-            'eien-table-add eien-table-add--column',
-            'plus',
-            insertName(table, 'column', c, n, rows),
-            'Add a column',
-            { 'data-add-column': String(c) },
-          ),
-        );
-      for (let at = 0; at <= rows; at++)
-        parts.push(
-          control(
-            'eien-table-add eien-table-add--row',
-            'plus',
-            insertName(table, 'row', at, n, rows),
-            'Add a row',
-            { 'data-add-row': String(at) },
-          ),
-        );
-      for (const [c, name] of names.entries())
-        parts.push(
-          control(
-            'eien-table-grip eien-table-grip--column',
-            'gripColumn',
-            `Column ${name}: menu, or drag to move`,
-            `Column ${name}: press for its menu, drag to move`,
-            { 'data-grip-column': String(c), 'aria-haspopup': 'menu', 'aria-expanded': 'false' },
-          ),
-        );
-      for (let r = 1; r <= rows; r++)
-        parts.push(
-          control(
-            'eien-table-grip eien-table-grip--row',
-            'grip',
-            `Row ${r}: menu, or drag to move`,
-            `Row ${r}: press for its menu, drag to move`,
-            { 'data-grip-row': String(r), 'aria-haspopup': 'menu', 'aria-expanded': 'false' },
-          ),
-        );
-      host.replaceChildren(...parts, h('div', { class: 'eien-table-drop' }));
+      host.replaceChildren(...makeControls(table, g));
     }
     const caret = caretTable(this.#view.state);
-    const caretHere = caret?.from === table.from ? caret.here : null;
-    const hoverHere = this.#hover?.pos === table.from ? this.#hover.here : null;
-    host.style.setProperty('--table-width', `${g.right - g.left}px`);
-    host.style.setProperty('--table-height', `${g.bottom - g.top}px`);
-    const place = (element: HTMLElement, x: number, y: number) => {
-      element.style.left = `${x}px`;
-      element.style.top = `${y}px`;
-    };
-    for (const element of host.querySelectorAll<HTMLElement>('[data-add-column]')) {
-      const c = Number(element.dataset.addColumn);
-      place(element, columnLine(g, c), g.top - 14);
-      element.classList.toggle('is-near', this.#near?.dir === 'column' && this.#near.at === c);
-    }
-    for (const element of host.querySelectorAll<HTMLElement>('[data-add-row]')) {
-      const at = Number(element.dataset.addRow);
-      place(element, g.left - 40, rowLine(g, at));
-      element.classList.toggle('is-near', this.#near?.dir === 'row' && this.#near.at === at);
-    }
-    for (const element of host.querySelectorAll<HTMLElement>('[data-grip-column]')) {
-      const c = Number(element.dataset.gripColumn);
-      const column = g.columns[c];
-      if (column) place(element, column.x + column.w / 2, g.top - 14);
-      element.classList.toggle('is-shown', hoverHere?.c === c || caretHere?.c === c);
-    }
-    for (const element of host.querySelectorAll<HTMLElement>('[data-grip-row]')) {
-      const r = Number(element.dataset.gripRow);
-      const row = g.rows[r];
-      if (row) place(element, g.left - 16, row.y + row.h / 2);
-      element.classList.toggle('is-shown', hoverHere?.r === r || caretHere?.r === r);
-    }
+    placeControls(host, g, {
+      near: this.#near,
+      hover: this.#hover?.pos === table.from ? this.#hover.here : null,
+      caret: caret?.from === table.from ? caret.here : null,
+    });
   }
 
   /** A grip pressed: its menu when it's let go where it was, a move when it's dragged. */

@@ -141,6 +141,9 @@ export const editorTheme = EditorView.theme({
     padding: 'var(--eien-space-1) var(--eien-space-3)',
     borderLeft: 'var(--eien-hairline) solid var(--eien-rule)',
   },
+  // A column aligned in its delimiter row (":-:", "--:"); figures on the right line up.
+  '.eien-cell--center': { textAlign: 'center' },
+  '.eien-cell--right': { textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
   // A pipe on the caret's row, shown as it's written: on the cells' edge, taking no room,
   // so the columns stay where they are.
   '.eien-table-pipe': {

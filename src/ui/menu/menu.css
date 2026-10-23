@@ -61,7 +61,8 @@
   gap: var(--eien-space-3);
 }
 /* With icons, a choice of several keeps its dot where a key would be (a column's alignment). */
-.menu--icons .word-button[role="menuitemradio"]::before {
+.menu--icons .word-button[role="menuitemradio"]::before,
+.menu--icons .word-button[role="menuitemradio"] .menu__keys {
   grid-row: 1;
   grid-column: 3;
   justify-self: end;

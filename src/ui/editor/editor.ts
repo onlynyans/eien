@@ -33,12 +33,8 @@ import {
 import { tableCells } from './live-tables';
 import { eienMarkdown } from './syntax';
 import { caretTable } from './table-at';
-import { tableSay } from './table-commands';
-import { tableInput } from './table-input';
-import { tableKeys } from './table-keys';
-import { cellContextMenu, openCellMenu } from './table-menus';
-import { tableTheme } from './table-theme';
-import { tableTools, tableToolsHost } from './table-tools';
+import { tableEditing, tableEditor } from './table-editor';
+import { openCellMenu } from './table-menus';
 import { editorTheme, markdownColours } from './theme';
 import { htmlPaste, quoteTyping } from './typing';
 import { type ImageLoader, imageLoader } from './widgets';
@@ -313,9 +309,7 @@ export class NoteEditor {
         'aria-label': 'Note',
       }),
       this.#images.of(imageLoader.of(loadImage)),
-      tableToolsHost.of(this.tableTools),
-      tableSay.of((words) => this.#events.said?.(words)),
-      tableTheme,
+      tableEditor(this.tableTools, (words) => this.#events.said?.(words)),
       this.#mode.of(modeExtensions(this.#current)),
       EditorView.updateListener.of((update) => {
         if (update.docChanged || update.selectionSet) this.#events.moved?.();
@@ -385,16 +379,7 @@ const lockExtensions = (locked: boolean): Extension =>
 function modeExtensions(mode: EditorMode): Extension {
   switch (mode) {
     case 'live':
-      return [
-        previewMode.of('live'),
-        livePreview,
-        tableCells,
-        keepFrontMatter,
-        tableKeys,
-        tableInput,
-        tableTools,
-        cellContextMenu,
-      ];
+      return [previewMode.of('live'), livePreview, tableCells, keepFrontMatter, tableEditing];
     case 'source':
       return [EditorView.editorAttributes.of({ class: 'eien-source' })];
     case 'reading':

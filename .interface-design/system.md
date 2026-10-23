@@ -369,6 +369,17 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   faded dot after a tag typed in the text; the + field's menu is a menu's
   raised paper, the chosen choice on `--eien-selected`, "Make #…" after a
   soft rule.
+- **Table editor** (`ui/editor/table-*.ts`, from `explorations/table-menus.html`):
+  a grip (14px icon, pencil, `--eien-radius-s`) at a row's left and over a
+  column, faded in for the row and column under the pointer or caret, ink on
+  `--eien-hover` under the pointer, a `--eien-rule-strong` hairline while its
+  menu is open; that menu is the row menu, a column's alignment a radio with
+  the ink dot where a key would be. A + (18px, raised paper, hairline
+  `--eien-rule-strong`) only while the pointer is on its line, the line 2px
+  ink-soft across or down the table; the drop line the same. A phone's
+  table bar: the band ground under the sheet, 44px icon buttons, rules
+  between the groups, scrolling sideways. A column's alignment shows: right
+  in tabular figures.
 - **Formatting bar**: the `format` slot's host. Band's second row on the
   band ground; Slip's own raised slip at the blotter's top left; Running
   head's raised rail down the margin. Its buttons have the icon control's
