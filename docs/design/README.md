@@ -237,7 +237,8 @@ and the design pass brings the mockups up to it. Each is in
   by mistake. Labels, counts and a menu's items stay words, in the mono.
 - **Not everything is square** (#27). A small radius scale, set by the
   design pass. Dots stay round. Built: `--eien-radius-s`, `-m` and `-l` in
-  `tokens.css` (Band's 2/4/8), each layout setting its own in its stylesheet
+  `tokens.css` (Band's 2/4/8), and `--eien-radius-dot` for what's fully round
+  (a pill, the phone's other-note slip), each layout setting its own in its stylesheet
   (`src/ui/chrome/*.css`); with them, the icons' tokens `--eien-icon`,
   `--eien-icon-stroke` and `--eien-control`.
 - **The machine voice's face is a setting** (#24), Interface font, IBM Plex

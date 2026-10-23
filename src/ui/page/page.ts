@@ -83,6 +83,8 @@ export class PageView {
   });
   /** The page's own part of the pane: the blotter round the sheet, scrolled, its head and foot round it. */
   readonly element: HTMLElement;
+  /** The blotter round the sheet, which scrolls: where a note's place is kept. */
+  readonly scroll: HTMLElement;
   /** Its own head and foot, which the split's mode fills (./page-leaf.ts). */
   readonly head: PageLeaf['head'];
   readonly folio: PageLeaf['folio'];
@@ -145,6 +147,7 @@ export class PageView {
     this.tableBar = new TableBar(this.editor.view);
     this.tags = new PageTags(this.editor, { ...events.tags, editable: () => !this.comparing });
     const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
+    this.scroll = scroll;
     this.board = new BoardHost(scroll);
     scroll.append(this.board.element);
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(scroll));

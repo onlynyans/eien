@@ -174,6 +174,7 @@ export async function showVault(
     parts: () => parts,
     sidebar,
     pages,
+    has: (path) => state.has(path),
     changed: () => panes.relayout(),
   });
   const panes = new PaneLayout(
@@ -230,7 +231,7 @@ export async function showVault(
     sync.draw();
     chrome.refresh();
     nameWindow(pages.active.note.path, name);
-    return draw.all().then(() => phone.stack.rename());
+    return draw.all().then(() => phone.drawn());
   };
 
   const actions = noteActions({

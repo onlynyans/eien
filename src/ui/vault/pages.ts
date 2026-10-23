@@ -13,6 +13,7 @@ import type { Written } from '../page/word-count';
 import type { SettingsState } from '../settings/settings-state';
 import { sealTargetOf } from '../versions/seal-target';
 import type { Navigation } from './navigation';
+import type { NotePlace } from './open-note';
 import { OpenNotes } from './open-notes';
 import type { OrganizeContext } from './organize';
 import { type PageParts, pageParts } from './page-parts';
@@ -110,7 +111,7 @@ export class Pages {
    * page, made for it, or, split already, the other page. Either way that
    * page is then the active one.
    */
-  async open(path: string, beside = false): Promise<void> {
+  async open(path: string, beside = false, place?: NotePlace): Promise<void> {
     if (beside) {
       const other = this.other ?? this.#make();
       if (!this.#sides.includes(other)) {
@@ -119,7 +120,7 @@ export class Pages {
       }
       this.activate(other);
     }
-    await this.#active.note.open(path);
+    await this.#active.note.open(path, place);
     this.pane.renamed();
   }
 

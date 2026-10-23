@@ -34,6 +34,49 @@
 .shell[data-phone][data-shown="page"] .page__phone:not(:empty) {
   display: flex;
 }
+/* The note you came from, a tap away at the bar's right (../vault/phone-other.ts): ⇄ and its
+   name on a round slip, its reach a finger's. */
+.phone-bar__other {
+  appearance: none;
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--eien-space-1);
+  max-width: 12em;
+  height: var(--eien-space-6);
+  margin-left: auto;
+  padding: 0 var(--eien-space-2);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-dot);
+  background: var(--eien-paper);
+  color: var(--eien-ink-soft);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.phone-bar__other[hidden] {
+  display: none;
+}
+.phone-bar__other::after {
+  content: "";
+  position: absolute;
+  inset: calc((var(--eien-touch) - var(--eien-space-6)) / -2) 0;
+}
+.phone-bar__other .icon {
+  flex: none;
+  width: var(--eien-space-3);
+  height: var(--eien-space-3);
+}
+.phone-bar__other-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell[data-shown="page"] .phone-bar__controls:not(:empty) ~ .phone-bar__other {
+  margin-left: 0;
+}
 .phone-bar__controls .icon-button,
 .page__phone .icon-button,
 .table-bar .icon-button {

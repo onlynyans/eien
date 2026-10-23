@@ -1419,6 +1419,11 @@ Compare or Restore finishes lands on a note opened meanwhile.
   - It opens on the notes. Choosing a folder or tag shows its notes; opening
     a note shows the page. A bar above the pane goes back, naming where
     ("‹ Fic", "‹ Library"); leaving the page closes what lay over it.
+  - No split and no New Window: the phone shows one page, and its menus
+    offer neither. Instead, with the page in sight, the bar keeps the note
+    you came from a tap away at its right (⇄ and its name): a tap goes back
+    to it where you left it (its caret and how far it was scrolled), and the
+    one you were in becomes the other note.
     Android's back gesture first closes a menu or the settings, then does
     what Esc does where the keyboard is (a rename being typed stops, keeping
     nothing), then closes what lies over the page (Compare gives the draft
