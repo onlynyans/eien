@@ -35,6 +35,7 @@ const COMMANDS = [
   'bullet',
   'numbered',
   'checklist',
+  'table',
 ].map((id) => `format.${id}`);
 
 for (const layout of ['band', 'slip', 'runhead'] as const) {
@@ -121,11 +122,29 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await expect(button(page, command)).toBeFocused();
       }
       // The keyboard on a button shows its tooltip: its words, then its key.
-      await expect(page.locator('.tooltip__words')).toHaveText('Checklist');
-      await expect(page.locator('.tooltip__key')).toHaveText(MAC ? '⇧⌘9' : 'Ctrl+Shift+9');
+      await expect(page.locator('.tooltip__words')).toHaveText('Table');
+      await expect(page.locator('.tooltip__key')).toHaveText(MAC ? '⇧⌘T' : 'Ctrl+Shift+T');
     });
   });
 }
+
+test.describe('the Table button', () => {
+  test.use({ deviceFile: { settings: { 'editor.formatBar': 'on' } } });
+
+  test('puts a small table after the caret’s line, the caret in its first cell', async ({
+    page,
+    vault,
+  }) => {
+    await page.locator('.note-row', { hasText: 'Note' }).click();
+    await editorContent(page).click();
+    await page.keyboard.press('ControlOrMeta+Home');
+    await button(page, 'format.table').click();
+    await page.keyboard.type('Name');
+    await expect
+      .poll(() => readIn(vault, 'Note.md'), { timeout: 5000 })
+      .toBe('Some plain words.\n\n| Name |  |\n| --- | --- |\n|  |  |\n|  |  |\n');
+  });
+});
 
 test.describe('shown when the app opens again', () => {
   test.use({ deviceFile: { settings: { 'editor.formatBar': 'on' } } });

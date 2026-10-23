@@ -6,6 +6,7 @@
 import type { VaultBridge, VaultInfo } from '../../platform/bridge';
 import { CapacitorStorage } from '../../platform/capacitor/capacitor-storage';
 import { recoverStrays } from '../../platform/capacitor/recover';
+import { imageWrite } from '../../platform/image-write';
 import { OpenVault } from '../../platform/open-vault';
 import { VAULT_NAME, type VaultHome } from './vault-home';
 
@@ -80,6 +81,8 @@ export class MobileVault implements VaultBridge {
   readBytes = async (path: string) => this.#vault().readBytes(path);
   write = async (path: string, text: string, expected: string | null) =>
     this.#vault().write(path, text, expected);
+  writeNew = async (path: string, bytes: Uint8Array) =>
+    this.#vault().writeNew(...imageWrite(path, bytes));
   move = async (from: string, to: string) => this.#vault().move(from, to);
   trash = async (path: string) => this.#vault().trash(path);
   makeFolder = async (path: string) => this.#vault().makeFolder(path);

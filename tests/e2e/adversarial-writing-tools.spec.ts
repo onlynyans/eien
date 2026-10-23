@@ -49,9 +49,9 @@ test.describe('focus mode', () => {
     await open(page, 'Table');
     await page.locator('.cm-line', { hasText: 'Last paragraph.' }).click();
     await expect(page.locator('.cm-editor')).toHaveClass(/eien-focus/);
-    await expect(page.locator('.eien-table')).toBeVisible();
+    await expect(page.locator('.eien-table-row').first()).toBeVisible();
     await expect.poll(() => shownOpacity(page, '.cm-line')).toBeLessThan(1); // "First paragraph."
-    await expect.poll(() => shownOpacity(page, '.eien-table')).toBeLessThan(1);
+    await expect.poll(() => shownOpacity(page, '.eien-table-row')).toBeLessThan(1);
   });
 });
 

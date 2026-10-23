@@ -21,7 +21,10 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     label,
     run: () => run(command),
   });
-  const toggle = (label: string, key: 'editor.focus' | 'editor.typewriter'): MenuItem => ({
+  const toggle = (
+    label: string,
+    key: 'editor.focus' | 'editor.typewriter' | 'editor.marks',
+  ): MenuItem => ({
     label,
     run: () => run(`toggle:${key}`),
     checked: state.values[key] === 'on',
@@ -38,6 +41,7 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     'separator',
     toggle('Focus mode', 'editor.focus'),
     toggle('Typewriter scrolling', 'editor.typewriter'),
+    toggle('Show Markdown marks', 'editor.marks'),
     ...(state.sprinting
       ? [item('Stop sprint', 'sprint:stop')]
       : SPRINT_MINUTES.map((minutes) => item(`Sprint, ${minutes} minutes`, `sprint:${minutes}`))),

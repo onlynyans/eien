@@ -15,6 +15,7 @@ import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
 import { Sidebar } from '../sidebar/sidebar';
 import { SyncStatus } from '../sidebar/sync-status';
+import { sealTargetOf } from '../versions/seal-target';
 import { vaultChrome } from './chrome-wiring';
 import { follow } from './follow';
 import { type MenuContext, showFolderMenu, showNoteMenu, showTagMenu, trashNameOn } from './menus';
@@ -69,6 +70,11 @@ export async function showVault(
     closed: () => note.close(),
     freeze: (frozen) => page.editor.setLocked(frozen),
     tell,
+    // The open note's links to its images, changed on the page: as a seal's id is (../versions).
+    amendOpen: async (path, change) => {
+      const target = sealTargetOf(note, page);
+      return target && target.path === path ? target.amend(change, false) : null;
+    },
   });
 
   /** Arranging the list now (Arrange mode): until Done, or another list is chosen. */
@@ -166,6 +172,7 @@ export async function showVault(
     openNote: (path) => void openNote(path),
     act: (operation) => void act(operation),
     tell,
+    vault: bridge.vault,
   });
   const phone = phoneView({
     shell,

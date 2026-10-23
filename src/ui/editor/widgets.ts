@@ -1,5 +1,5 @@
 // What Live and Reading draw in place of Markdown: a checkbox, a scene
-// break, an image, a table.
+// break, an image. A table is drawn in place (./live-tables.ts).
 
 import { Facet } from '@codemirror/state';
 import { type EditorView, WidgetType } from '@codemirror/view';
@@ -93,41 +93,4 @@ export class ImageWidget extends WidgetType {
       });
     return holder;
   }
-}
-
-/** A Markdown table, drawn as one. Its cells show their text as written. */
-export class TableWidget extends WidgetType {
-  constructor(readonly source: string) {
-    super();
-  }
-  override eq(other: TableWidget) {
-    return other.source === this.source;
-  }
-  toDOM() {
-    const rows = this.source
-      .split('\n')
-      .filter((row) => row.trim() !== '')
-      .map(cellsOf);
-    const table = document.createElement('table');
-    table.className = 'eien-table';
-    rows.forEach((cells, index) => {
-      if (index === 1 && cells.every((cell) => /^:?-+:?$/.test(cell))) return; // the delimiter row
-      const tr = table.insertRow();
-      for (const text of cells) {
-        const cell = document.createElement(index === 0 ? 'th' : 'td');
-        cell.textContent = text;
-        tr.append(cell);
-      }
-    });
-    return table;
-  }
-}
-
-/** A table row's cells: split on "|" (not "\|"), the outer pipes optional. */
-function cellsOf(row: string): string[] {
-  const trimmed = row
-    .trim()
-    .replace(/^\|/, '')
-    .replace(/(?<!\\)\|$/, '');
-  return trimmed.split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, '|'));
 }

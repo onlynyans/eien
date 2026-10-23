@@ -5,6 +5,7 @@ import type { Edit, Selection } from './edit';
 import { BOLD, HIGHLIGHT, ITALIC, STRIKE, toggleInline, UNDERLINE } from './inline';
 import { headingLevel, type LineFormat, toggleLines } from './lines';
 import { insertLink } from './link';
+import { insertTable } from './table';
 
 export type FormatCommandId =
   | 'bold'
@@ -19,7 +20,8 @@ export type FormatCommandId =
   | 'quote'
   | 'bullet'
   | 'numbered'
-  | 'checklist';
+  | 'checklist'
+  | 'table';
 
 export interface FormatCommand {
   readonly id: FormatCommandId;
@@ -117,6 +119,7 @@ export const FORMAT_COMMANDS: readonly FormatCommand[] = [
     inBar: false,
     run: lines({ kind: 'checklist' }),
   },
+  { id: 'table', label: 'Table', key: 'Mod-Shift-t', inBar: false, run: insertTable },
 ];
 
 export const formatCommand = (id: string): FormatCommand | undefined =>
