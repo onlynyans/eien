@@ -120,6 +120,13 @@ differs by case from one already there (Syncthing couldn't carry both).
   the composition root that wires the panes to the vault, and
   `ui/vault/pane-drawer.ts` draws them, each draw dropping itself if a newer
   one started.
+- The page pane (`ui/page/page-pane.ts`) holds the layout's slots, the
+  colophon and the versions panel; the pages lie in it (`ui/page/page.ts`,
+  one now, two when split), run by `ui/vault/pages.ts`, which knows the
+  active one: the menu's commands and the pane's tools act on it. A note
+  open on any page is held once (`ui/vault/open-notes.ts`): one session
+  saves it and one document holds its text and undo history, however many
+  pages show it.
 - The state the panes draw from is `ui/vault/vault-state.ts`: the entries,
   the index's notes, the tree (in your order), tags, pins, each folder's
   settings, All Notes' order.
@@ -287,7 +294,6 @@ out at 5 s on a slow Windows runner.
 - **Each change carries its test, its spec change, and its backlog row.**
   The spec changes in the pull request that changes behaviour.
 - **Small modules** (about 300 lines), named for one concept; KISS and DRY.
-  `vault-view.ts`, the composition root, is the one allowed past that.
 - **No code from NEO, Obsidian or Otaku.** Eien is written from scratch.
 - **Dependencies** are rare and listed with their reason in
   [dependencies.md](dependencies.md); licences must be permissive (MPL only
@@ -309,8 +315,7 @@ See [backlog.md](backlog.md) for the full list. At this handover:
   #22 smaller downloads (left by choice); renaming a tag that notes carry
   (#29's last part, not designed: it would rewrite notes); dragging tags
   (they move by ⌥↑ ⌥↓).
-- **Debt:** `vault-view.ts` (about 360 lines) wires everything and could lose
-  its sidebar actions to a module; `sidebar.ts` is 330. The design's
+- **Debt:** `sidebar.ts` is 330 lines, `menus.ts` 339. The design's
   `tokens.css` mirrors the app's by hand.
 - **Phones:** Android tests on a device are run by hand; the phone has no PDF
   export and no import.

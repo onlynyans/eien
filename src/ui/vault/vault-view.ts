@@ -1,37 +1,34 @@
-// An open vault's panes (the sidebar, the note list, the page) kept in step with each other and
-// the disk: file operations in ./organize.ts, what it follows in ./follow.ts, the panes' widths
-// in ../shell/panes.ts, a phone's one at a time in ./phone-view.ts, the layout's controls in
-// ./chrome-wiring.ts. This wires them together.
+// An open vault's panes (the sidebar, the note list, the page pane) kept in step with each other
+// and the disk: file operations in ./organize.ts, what the writer does to notes in
+// ./note-actions.ts, the sidebar's actions in ./vault-sidebar.ts, the pages in ./pages.ts, what
+// it follows in ./follow.ts, the panes' widths in ../shell/panes.ts, a phone's one at a time in
+// ./phone-view.ts, the layout's controls in ./chrome-wiring.ts. This wires them together.
 
-import { freeNoteName, joinPath } from '../../core/paths';
-import { nextState, stateOf, withTagState } from '../../core/tags';
 import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
 import { SearchField } from '../list/search-field';
-import { filterFor, listKey, rememberFilter, rememberSort } from '../list/sorts';
-import { filterTags } from '../list/tag-filter-panel';
 import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
-import { Sidebar } from '../sidebar/sidebar';
 import { SyncStatus } from '../sidebar/sync-status';
-import { sealTargetOf } from '../versions/seal-target';
 import { vaultChrome } from './chrome-wiring';
 import { follow } from './follow';
-import { type MenuContext, showFolderMenu, showNoteMenu, showTagMenu, trashNameOn } from './menus';
+import { listLens } from './list-lens';
+import { trashNameOn } from './menus';
 import { Navigation } from './navigation';
-import { notePage } from './note-page';
+import { noteActions } from './note-actions';
 import { Notice } from './notice';
 import { oneAtATime } from './one-at-a-time';
-import { OpenNote } from './open-note';
 import { orderActions } from './order-actions';
 import { Organizer } from './organize';
 import { ownWrites } from './own-writes';
 import { pageParts } from './page-parts';
+import { Pages, pagesHeld } from './pages';
 import { PaneDrawer } from './pane-drawer';
 import { phoneView } from './phone-view';
-import { renameInRow } from './rename-in-row';
-import { type Selection, VaultState } from './vault-state';
+import { rowActions } from './row-actions';
+import { vaultSidebar } from './vault-sidebar';
+import { VaultState } from './vault-state';
 import { nameWindow } from './window-name';
 
 export interface ShownVault {
@@ -67,29 +64,22 @@ export async function showVault(
   const notice = new Notice(() => void redraw());
   const tell = (message: string) => notice.tell(message);
 
+  // The notes open on the pages are held still and kept in step as they move.
   const organizer = new Organizer({
     vault: bridge.vault,
     state,
     trashName,
-    session: () => note.session,
-    closed: () => note.close(),
-    freeze: (frozen) => page.editor.setLocked(frozen),
     tell,
-    // The open note's links to its images, changed on the page: as a seal's id is (../versions).
-    amendOpen: async (path, change) => {
-      const target = sealTargetOf(note, page);
-      return target && target.path === path ? target.amend(change, false) : null;
-    },
+    ...pagesHeld(() => pages),
   });
 
-  /** Arranging the list now (Arrange mode): until Done, or another list is chosen. */
-  let arranging = false;
-  const choose = (next: Selection) => {
-    arranging = false;
-    nav.choose(next);
-    search.clear();
-    void redraw();
-  };
+  const lens = listLens({
+    nav,
+    search: () => search,
+    state,
+    settings,
+    redraw: () => void redraw(),
+  });
   const search = new SearchField((words) => {
     nav.query = words;
     void redraw();
@@ -105,55 +95,37 @@ export async function showVault(
     redrawTree: () => void draw.sidebar(),
   });
 
-  const rowActions = {
-    open: (path: string) => void openNote(path),
-    menu: (path: string, at: { x: number; y: number }, ordered: boolean) =>
-      showNoteMenu(menus, path, at, ordered),
-    nudge: (path: string, by: -1 | 1) => order.nudgeNote(path, by),
-    rename: (path: string) => renameNote(path),
-    pin: (path: string) => void act(() => organizer.pin(path, !state.pins.includes(path))),
-    trash: (path: string) => void act(() => organizer.trash(path)),
-  };
+  const { rows, menus } = rowActions({
+    state,
+    organizer,
+    nav,
+    order,
+    vaultName: name,
+    trashName,
+    openInNewWindow: bridge.window ? (path) => void bridge.window?.open(path) : undefined,
+    actions: () => actions,
+    exports: () => parts.exports,
+    choose: lens.choose,
+    act: (operation) => act(operation),
+  });
 
-  const sidebar = new Sidebar(
+  const sidebar = vaultSidebar({
     name,
-    {
-      ...rowActions,
-      select: (next) => {
-        phone.stack.show('list'); // on a phone, the notes chosen
-        if (!panes.two) return choose(next);
-        nav.chooseAndToggle(next);
-        search.clear();
-        void redraw();
-      },
-      toggle: (id) => {
-        nav.toggle(id);
-        void draw.sidebar();
-      },
-      folderMenu: (path, at) => void showFolderMenu(menus, path, at),
-      tagMenu: (key, at) => showTagMenu(menus, key, at),
-      moveFolder: (path, how) => order.moveFolder(path, how),
-      moveTag: (key, by) => order.moveTag(key, by),
-      filterTag: (key, out) => {
-        const list = listKey(nav.selection);
-        const filter = filterFor(list);
-        rememberFilter(list, withTagState(filter, key, nextState(stateOf(filter, key), out)));
-        void redraw();
-      },
-      newTag: (tag) => void act(() => organizer.makeTag(tag, true)),
-      newFolder: () => void newFolder(nav.selection.kind === 'folder' ? nav.selection.path : ''),
-      renameFolder: (path, typed) =>
-        void act(async () => {
-          const to = await organizer.renameFolder(path, typed);
-          // Where it is now: under the name the disk took (cleaned, or refused and kept).
-          sidebar.refocusOn(to ?? path);
-          if (to) nav.follow(path, to);
-        }),
-      toggleSidebar: () => panes.toggle('sidebar'),
-    },
-    keys.sidebar,
+    keys: keys.sidebar,
     search,
-  );
+    rows,
+    nav,
+    organizer,
+    order,
+    phone: () => phone,
+    panes: () => panes,
+    menus: () => menus,
+    choose: lens.choose,
+    redraw: () => void redraw(),
+    drawTree: () => void draw.sidebar(),
+    act: (operation) => act(operation),
+    newFolder: (parent) => void actions.newFolder(parent),
+  });
   // The sync status at the sidebar's foot: a note changed that this window didn't change.
   const sync = new SyncStatus(sidebar.foot.sync, syncthing);
   const stopSync = bridge.vault.onChange((paths, local) => {
@@ -170,14 +142,20 @@ export async function showVault(
   const pageArea = h('main', { class: 'page' });
   const shell = h('div', { class: 'shell' }, sidebar.element, list, pageArea);
   root.replaceChildren(shell);
-  const page = notePage(pageArea, {
-    note: () => note,
+  const pages = new Pages({
+    area: pageArea,
+    vault: bridge.vault,
     state,
     organizer,
-    openNote: (path) => void openNote(path),
-    act: (operation) => void act(operation),
+    settings,
+    mac: keys.sidebar.startsWith('⌘'),
+    openNote: (path) => void actions.openNote(path),
+    act: (operation) => act(operation),
     tell,
-    vault: bridge.vault,
+    changed: () => chrome.refresh(),
+    refresh: () => void refresh(),
+    wrote: (added, when) => parts.wrote(added, when),
+    counted: () => parts.counted(),
   });
   const phone = phoneView({
     shell,
@@ -186,7 +164,7 @@ export async function showVault(
     settings,
     parts: () => parts,
     sidebar,
-    page,
+    pages,
     changed: () => panes.relayout(),
   });
   const panes = new PaneLayout(
@@ -194,7 +172,7 @@ export async function showVault(
       shell,
       sidebar: sidebar.element,
       list,
-      leave: () => page.focus(),
+      leave: () => pages.active.page.focus(),
       changed: () => void redraw(),
       phone: () => phone.stack.shown,
       showPhone: (pane) => phone.stack.show(pane),
@@ -204,60 +182,33 @@ export async function showVault(
   // Made before the page's parts, which tell it when a seal's controls change; drawn after.
   const chrome = vaultChrome({
     shell,
-    page,
+    pages,
     sidebar,
     panes,
     phone,
     settings,
     menu,
     mac: keys.sidebar.startsWith('⌘'),
-    parts: () => parts,
   });
 
-  const menus: MenuContext = {
-    state,
-    organizer,
-    get exports() {
-      return parts.exports;
-    },
-    vaultName: name,
-    trashName,
-    openInNewWindow: bridge.window ? (path) => void bridge.window?.open(path) : undefined,
-    act: (operation) => void act(operation),
-    renameNote: (path) => renameNote(path),
-    newNote: (folder) => {
-      choose({ kind: 'folder', path: folder });
-      void newNote(folder);
-    },
-    newFolder: (parent) => void newFolder(parent),
-    editFolder: (path) => editFolder(path),
-    followFolder: (from, to) => nav.follow(from, to),
-    unselect: (path) => nav.unselect(path),
-    moveFolder: (path, how) => order.moveFolder(path, how),
-  };
-
-  const note = new OpenNote(bridge.vault, page, () => void refresh());
   const parts = pageParts({
-    page,
-    note,
+    pages,
     state,
     bridge,
     settings,
     nav,
     organizer,
-    mac: keys.sidebar.startsWith('⌘'),
     tell,
-    changed: () => chrome.refresh(),
     act: (operation) => act(operation),
-    openNote: (path) => openNote(path),
+    openNote: (path) => actions.openNote(path),
   });
   chrome.mount();
 
   // Run a file operation, then read the vault again and redraw: one at a time, each after the
   // last one's refresh, so two quick drags never work from a list that doesn't show the first.
   const act = oneAtATime(async () => {
-    // The open note may have moved, or been renamed: the page names it, and finds its images, there.
-    note.followMove();
+    // Open notes may have moved, or been renamed: their pages name them, and find their images, there.
+    pages.followMoves();
     await refresh();
   });
 
@@ -270,92 +221,38 @@ export async function showVault(
     list: listBody,
     placeSearch: (inList, name) => search.place(inList ? listSearch : sidebar.searchSlot, name),
     notice,
-    openNote: () => note.path,
-    pageNews: (text) => page.news(text),
-    listActions: {
-      ...rowActions,
-      newNote: () => void newNote(),
-      clearSearch: () => search.clearAndSearch(),
-      sort: (sort) => {
-        rememberSort(listKey(nav.selection), sort);
-        void redraw();
-      },
-      filter: (next) => {
-        rememberFilter(listKey(nav.selection), next);
-        void redraw();
-      },
-      tags: () => filterTags(state.tags),
-      arrange: (on) => {
-        arranging = on;
-        void redraw();
-      },
-    },
-    arrange: () => {
-      const mode = settings.values['lists.arranging'] === 'mode';
-      return { mode, on: mode && arranging };
-    },
+    shown: () => pages.notes(),
+    pageNews: (text) => pages.pane.news(text),
+    listActions: { ...rows, ...lens.actions, newNote: () => void actions.newNote() },
+    arrange: lens.arrange,
   });
   const redraw = () => {
+    pages.sync();
     parts.sync();
     sync.draw();
     chrome.refresh();
-    nameWindow(note.path, name);
+    nameWindow(pages.active.note.path, name);
     return draw.all().then(() => phone.stack.rename());
   };
 
-  /** Rename in the row the writer is at; on a phone, or with no row in sight, by the page's title. */
-  const renameNote = (path: string) =>
-    phone.stack.phone
-      ? void renameOnPage(path)
-      : renameInRow(path, {
-          namesIn: (folder) => state.namesIn(folder),
-          rename: (from, typed) => organizer.renameNote(from, typed),
-          act,
-          onPage: (at) => void renameOnPage(at),
-        });
-
-  async function renameOnPage(path: string): Promise<void> {
-    if (note.path !== path) await openNote(path);
-    else phone.stack.show('page'); // on a phone, from the list: the title's on the page
-    page.editTitle();
-  }
-
-  async function newFolder(parent: string): Promise<void> {
-    const path = await organizer.newFolder(parent);
-    if (!path) return;
-    nav.openTo(parent);
-    await refresh();
-    editFolder(path);
-  }
-
-  /** Rename a folder in place: in the sidebar, opened first if it's shut (a menu can outlive it). */
-  function editFolder(path: string): void {
-    panes.open('sidebar');
-    sidebar.editFolder(path);
-  }
-
-  async function openNote(path: string): Promise<void> {
-    await note.open(path);
-    await redraw();
-    phone.stack.show('page');
-  }
-
-  async function newNote(into?: string): Promise<void> {
-    const folder = into ?? nav.folder;
-    const path = joinPath(folder, freeNoteName('Untitled', state.namesIn(folder)));
-    const created = await bridge.vault.write(path, '', null);
-    if (!created.ok) return; // something took the name meanwhile; the next refresh shows it
-    nav.openTo(folder); // with two panes, the new note shows where it was made
-    await state.refresh();
-    await openNote(path);
-    page.focus(true); // into the new note, to write
-  }
+  const actions = noteActions({
+    vault: bridge.vault,
+    state,
+    nav,
+    organizer,
+    pages,
+    phone,
+    panes,
+    sidebar,
+    act,
+    refresh: () => refresh(),
+    redraw,
+  });
 
   const refresh = (changed?: Iterable<string>) => state.refresh(changed).then(redraw);
 
   const stopFollowing = follow({
     vault: bridge.vault,
-    note,
     settings,
     panes,
     menu,
@@ -368,15 +265,15 @@ export async function showVault(
     folderDrags: () => settings.values['lists.arranging'] !== 'mode',
     act,
     listOrdered: () => draw.listOrdered,
-    showFolder: (path) => choose({ kind: 'folder', path }),
+    showFolder: (path) => lens.choose({ kind: 'folder', path }),
     tell,
     commands: {
-      page,
+      pages,
       panes,
       sidebar,
       list: listBody,
       search,
-      newNote: () => void newNote(),
+      newNote: () => void actions.newNote(),
       drawList: () => draw.list(),
       parts,
     },
@@ -384,15 +281,15 @@ export async function showVault(
   await refresh();
   return {
     back: () => phone.back(),
-    notePath: () => note.path,
-    openNote: (path) => openNote(path),
+    notePath: () => pages.active.note.path,
+    openNote: (path) => actions.openNote(path),
     // The note's words first; then a seal or a move under way finishes (a quit waits for both).
     flush: async () => {
-      await note.flush();
+      await pages.flush();
       await act.idle();
     },
     stop: async () => {
-      await note.flush();
+      await pages.flush();
       stopFollowing();
       stopSync();
       chrome.stop();
@@ -400,6 +297,7 @@ export async function showVault(
       phone.stack.stop();
       notice.stop();
       parts.stop();
+      pages.stop();
     },
   };
 }

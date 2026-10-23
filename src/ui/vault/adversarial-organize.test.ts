@@ -10,7 +10,7 @@ import { NoteSession } from '../notes/note-session';
 import { Organizer } from './organize';
 import { VaultState } from './vault-state';
 
-/** A vault as the window sees it, an Organizer over it, and the note it has open. */
+/** A vault as the window sees it, an Organizer over it, and the notes it has open (its pages'). */
 async function vaultWith(files: Record<string, string>) {
   const storage = new MemoryStorage();
   for (const [path, text] of Object.entries(files)) storage.put(path, text);
@@ -18,7 +18,9 @@ async function vaultWith(files: Record<string, string>) {
   /** What reached the system's trash, with the words it held. */
   const trashed = new Map<string, string | null>();
   const told: string[] = [];
-  let session: NoteSession | null = null;
+  let sessions: NoteSession[] = [];
+  /** Each hold of the pages and its letting go, as the organizer asked: "Book on", "Book off". */
+  const frozen: string[] = [];
   const vault: VaultBridge = {
     current: async () => ({ name: 'V' }),
     choose: async () => null,
@@ -56,10 +58,11 @@ async function vaultWith(files: Record<string, string>) {
     vault,
     state,
     trashName: 'the trash',
-    session: () => session,
-    closed: () => {
-      session = null;
+    sessions: () => sessions,
+    closed: (path) => {
+      sessions = sessions.filter((s) => s.path !== path && !s.path.startsWith(`${path}/`));
     },
+    freeze: (path, on) => frozen.push(`${path} ${on ? 'on' : 'off'}`),
     tell: (message) => told.push(message),
   });
   await index.refresh();
@@ -71,14 +74,17 @@ async function vaultWith(files: Record<string, string>) {
     organizer,
     trashed,
     told,
+    frozen,
     open: async (path: string) => {
-      session = await NoteSession.open(vault, path, {
+      const session = await NoteSession.open(vault, path, {
         status: () => {},
         replaced: () => {},
         movedToCopy: () => {},
         gone: () => {},
       });
-      return session as NoteSession;
+      if (!session) throw new Error(`${path} isn’t there`);
+      sessions.push(session);
+      return session;
     },
     refresh: async () => {
       await index.refresh();
@@ -88,6 +94,39 @@ async function vaultWith(files: Record<string, string>) {
 }
 
 describe('Organizer, adversarial', () => {
+  it('moves every note open in a folder renamed, with the words not yet saved in each', async () => {
+    // The split: a chapter on one side, its notes on the other, both typed in, both in the book.
+    const v = await vaultWith({ 'Book/One.md': 'One.', 'Book/Notes.md': 'Notes.' });
+    const one = await v.open('Book/One.md');
+    const notes = await v.open('Book/Notes.md');
+    one.edit('One. Typed on the left.');
+    notes.edit('Notes. Typed on the right.');
+    expect(await v.organizer.renameFolder('Book', 'Novel')).toBe('Novel');
+    expect([one.path, notes.path]).toEqual(['Novel/One.md', 'Novel/Notes.md']);
+    expect((await v.storage.read('Novel/One.md'))?.text).toBe('One. Typed on the left.');
+    expect((await v.storage.read('Novel/Notes.md'))?.text).toBe('Notes. Typed on the right.');
+    expect(v.frozen).toEqual(['Book on', 'Book off']);
+  });
+
+  it('moves nothing while any note open in the folder couldn’t be saved, and names it', async () => {
+    const v = await vaultWith({ 'Book/One.md': 'One.', 'Book/Notes.md': 'Notes.' });
+    const one = await v.open('Book/One.md');
+    const notes = await v.open('Book/Notes.md');
+    const write = v.storage.write.bind(v.storage);
+    v.storage.write = async (path, text, expected) => {
+      if (path === 'Book/Notes.md') throw new Error('EACCES: permission denied');
+      return write(path, text, expected);
+    };
+    one.edit('One. Saved.');
+    notes.edit('Notes. Not saved.');
+    expect(await v.organizer.renameFolder('Book', 'Novel')).toBeNull();
+    v.storage.write = write;
+    expect(await v.storage.read('Book/Notes.md')).not.toBeNull();
+    expect(notes.path).toBe('Book/Notes.md');
+    expect(v.told.join(' ')).toContain('“Notes”');
+    expect(v.frozen).toEqual(['Book on', 'Book off']);
+  });
+
   it('never sends the open note to the trash without its last words when they couldn’t be saved', async () => {
     const v = await vaultWith({ 'Chapter.md': 'The words saved this morning.' });
     const session = await v.open('Chapter.md');

@@ -42,8 +42,8 @@ export class VersionsUI {
   readonly #versions: NoteVersions;
   readonly #panel: VersionsPanel;
   readonly #line = new SealLine();
-  /** The open note's session, as last seen: a new one is another note. */
-  #session: OpenNote['session'] = null;
+  /** The page's note as last seen (../vault/open-note.ts, `shown`): another count is another note, or the same opened again. */
+  #shown = -1;
   #id: string | null = null;
   #seals: VersionFile[] = [];
   readonly #words = new Map<string, number>();
@@ -74,14 +74,15 @@ export class VersionsUI {
     });
     parts.page.attach({ sealLine: this.#line.line, aside: this.#panel.element });
     this.#ticker = setInterval(() => this.#draw(), 60_000); // "2h ago" moves on
-    this.#draw();
+    // Drawn, but nothing told: whatever shows the controls is made after, and reads them then.
+    this.#draw(false);
   }
 
   /** Called on every redraw: another note open (or none) is seen here. */
   sync(): void {
-    const session = this.#parts.note.session;
-    if (session !== this.#session) {
-      this.#session = session;
+    const { session, shown } = this.#parts.note;
+    if (shown !== this.#shown) {
+      this.#shown = shown;
       void this.noteChanged();
     } else if (session && noteIdOf(session.text) !== this.#id) {
       void this.#load(); // its id changed (a reload from another device, a seal): its seals too
@@ -285,12 +286,12 @@ export class VersionsUI {
     await this.#load();
   }
 
-  #draw(): void {
+  #draw(tell = true): void {
     const now = Date.now();
     const session = this.#parts.note.session;
     const latest = latestVersion(this.#seals, now);
     this.#line.draw(session !== null, latest?.at ?? null);
-    this.#parts.changed();
+    if (tell) this.#parts.changed();
     if (!this.#panel.open) return;
     const draftWords = session ? wordsOf(session.text) : 0;
     this.#panel.draw({

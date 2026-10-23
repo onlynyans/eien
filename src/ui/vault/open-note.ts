@@ -1,96 +1,106 @@
-// The note open on the page: its session (saving and reloading), its
-// images, and what the page shows of it.
+// A page's note: its hold on the note (./open-notes.ts: the window's one
+// session and document for it, however many pages show it), and what the
+// page shows of it.
 
 import { baseName, parentOf, titleOf } from '../../core/paths';
-import type { VaultBridge } from '../../platform/bridge';
-import { type NoteImages, noteImages } from '../editor/image-loader';
-import { NoteDoc } from '../editor/note-doc';
-import { NoteSession } from '../notes/note-session';
+import type { ImageLoader } from '../editor/widgets';
+import type { NoteSession, SaveState } from '../notes/note-session';
 import type { PageView } from '../page/page';
+import type { NoteHolder, OpenEntry, OpenNotes } from './open-notes';
 
 /** The folders above a note, as the page shows them: "Fic / A Mended Scarf". */
 export const crumbsOf = (path: string): string =>
   parentOf(path).split('/').filter(Boolean).join(' / ');
 
-export class OpenNote {
-  #session: NoteSession | null = null;
-  #images: NoteImages | null = null;
-  /** The folder the images are read from: the note's, when it was opened or last moved. */
-  #imagesFolder = '';
-  readonly #vault: VaultBridge;
+export class OpenNote implements NoteHolder {
+  #entry: OpenEntry | null = null;
+  /** The images the page's editor reads from: changed when the note moves to another folder. */
+  #loader: ImageLoader | null = null;
+  /** Each open asked for: one that finishes after a later one lets its note go. */
+  #turn = 0;
+  #shown = 0;
+  readonly #notes: OpenNotes;
   readonly #page: PageView;
-  /** The vault changed under it (its text kept as a copy): read the vault again. */
-  readonly #changed: () => void;
 
-  constructor(vault: VaultBridge, page: PageView, changed: () => void) {
-    this.#vault = vault;
+  constructor(notes: OpenNotes, page: PageView) {
+    this.#notes = notes;
     this.#page = page;
-    this.#changed = changed;
   }
 
   get session(): NoteSession | null {
-    return this.#session;
+    return this.#entry?.session ?? null;
   }
 
   get path(): string | null {
-    return this.#session?.path ?? null;
+    return this.#entry?.session.path ?? null;
+  }
+
+  /**
+   * How many times a note (or nothing) was put on the page: each is afresh,
+   * the same note opened again too, so Compare goes back to the draft.
+   */
+  get shown(): number {
+    return this.#shown;
   }
 
   /** Open the note at `path`, once the one open now has saved. */
   async open(path: string): Promise<void> {
-    await this.#session?.flush();
-    const page = this.#page;
-    this.#session = await NoteSession.open(this.#vault, path, {
-      status: (saveState) => page.state(saveState),
-      replaced: (text) => page.replaceText(text),
-      movedToCopy: (copy, from) => {
-        page.retitle(titleOf(baseName(copy)), crumbsOf(copy));
-        page.notice(
-          `“${titleOf(baseName(from))}” changed elsewhere. Your version is kept beside it as “${titleOf(baseName(copy))}”.`,
-        );
-        this.#changed();
-      },
-      gone: () => this.close(),
+    const turn = ++this.#turn;
+    await this.#entry?.session.flush();
+    const entry = await this.#notes.take(path, this);
+    const before = this.#entry;
+    if (turn !== this.#turn) {
+      if (entry && entry !== before) this.#notes.release(entry, this);
+      return;
+    }
+    if (before && before !== entry) this.#notes.release(before, this);
+    this.#entry = entry;
+    this.#shown++;
+    if (!entry) return this.#page.showNothing();
+    this.#loader = entry.images.load;
+    this.#page.show({
+      crumbs: crumbsOf(path),
+      title: entry.session.title,
+      doc: entry.doc,
+      loadImage: entry.images.load,
     });
-    this.#images?.release();
-    this.#images = this.#session
-      ? noteImages(parentOf(path), (file) => this.#vault.readBytes(file))
-      : null;
-    this.#imagesFolder = parentOf(path);
-    if (this.#session && this.#images) {
-      page.show({
-        crumbs: crumbsOf(path),
-        title: this.#session.title,
-        doc: new NoteDoc(this.#session.text),
-        loadImage: this.#images.load,
-      });
-    } else page.showNothing();
-  }
-
-  /** The note moved (renamed, or into another folder): the page names it, and finds its images, there. */
-  followMove(): void {
-    const path = this.path;
-    if (!path || !this.#session) return;
-    this.#page.retitle(titleOf(baseName(path)), crumbsOf(path));
-    if (this.#imagesFolder === parentOf(path)) return;
-    this.#images?.release();
-    this.#images = noteImages(parentOf(path), (file) => this.#vault.readBytes(file));
-    this.#imagesFolder = parentOf(path);
-    this.#page.editor.setImageLoader(this.#images.load);
   }
 
   /** Nothing open: the note's gone (deleted elsewhere, or sent to the trash here). */
   close(): void {
-    this.#session?.close();
-    this.#session = null;
-    this.#images?.release();
-    this.#images = null;
+    this.#turn++;
+    if (this.#entry) this.#notes.release(this.#entry, this);
+    this.#entry = null;
+    this.#loader = null;
+    this.#shown++;
     this.#page.showNothing();
   }
 
-  /** Save whatever is unsaved, and count what was just written (today's words) without a pause. */
-  async flush(): Promise<void> {
-    this.#page.words.flush();
-    await this.#session?.flush();
+  status(state: SaveState): void {
+    this.#page.state(state);
+  }
+
+  reloaded(text: string): void {
+    this.#page.reloaded(text);
+  }
+
+  movedToCopy(copy: string, from: string): void {
+    this.#page.notice(
+      `“${titleOf(baseName(from))}” changed elsewhere. Your version is kept beside it as “${titleOf(baseName(copy))}”.`,
+    );
+  }
+
+  gone(): void {
+    this.close();
+  }
+
+  moved(): void {
+    const entry = this.#entry;
+    if (!entry) return;
+    const path = entry.session.path;
+    this.#page.retitle(titleOf(baseName(path)), crumbsOf(path));
+    if (this.#loader === entry.images.load) return;
+    this.#loader = entry.images.load;
+    this.#page.editor.setImageLoader(entry.images.load);
   }
 }

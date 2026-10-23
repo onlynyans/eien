@@ -45,7 +45,7 @@ async function vaultWith(files: Record<string, string>, images: readonly string[
     vault,
     state,
     trashName: 'the trash',
-    session: () => session,
+    sessions: () => (session ? [session] : []),
     closed: () => {
       session = null;
     },

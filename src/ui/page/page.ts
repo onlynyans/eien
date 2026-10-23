@@ -1,6 +1,7 @@
-// The page: the open note on its sheet, the colophon beneath, and the slots
-// the layout draws its controls in (../chrome): the bar above, the
-// formatting bar's row under it, and a phone's foot.
+// A page: a note on its sheet (or outline cards in its place), with what
+// the colophon says of it — its words, its save, its last seal — and its
+// versions panel, which the page pane (./page-pane.ts) puts where they go. The
+// pane holds one page, or two when the window is split.
 
 import { opensWithTitle } from '../../core/note';
 import { h } from '../dom';
@@ -29,7 +30,7 @@ const STATE_WORDS: Partial<Record<SaveState, string>> = { failed: 'Not saved yet
 export class PageView {
   readonly editor: NoteEditor;
   readonly #crumbs = h('p', { class: 'crumbs label' });
-  /** The breadcrumb again, for a running head across the window (C's). */
+  /** The breadcrumb again, for a running head across the window (C's): the pane shows the active page's. */
   readonly runningCrumbs = h('p', { class: 'label running-crumbs' });
   /** Where a layout puts the note's tags (../chrome/layout-spec.ts, TagSlot). */
   readonly tagSlots = {
@@ -56,12 +57,7 @@ export class PageView {
   readonly words = new WordCount();
   /** Where outline cards lie, in the sheet's place (./board-host.ts). */
   readonly board: BoardHost;
-  /** In the colophon, after the save state: today's words, the book's, a sprint (ui/counters). */
-  readonly #counters = h('span', { class: 'colophon__counters' });
   readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
-  readonly #zoom = h('span', { class: 'colophon__zoom', attrs: { 'aria-label': 'Zoom' } });
-  /** News from the last action, when neither the list nor the sidebar is there to show it. */
-  readonly #news = h('span', { class: 'colophon__news', attrs: { role: 'status' } });
   /** What the table editor just did ("Row 3 removed · ⌘Z puts it back"), for a while. */
   readonly #said = h('span', { class: 'colophon__said', attrs: { role: 'status' } });
   readonly #saying = new Notice(() => {
@@ -86,27 +82,32 @@ export class PageView {
     text: 'Choose a note, or make a new one.',
     attrs: { tabindex: '-1' },
   });
-  /** Where the layout draws its controls (../chrome/layout-spec.ts): each part has its own row. */
-  readonly slots = {
-    bar: h('div', { class: 'page__bar' }),
-    /** The formatting bar's row; empty until it's built. */
-    format: h('div', { class: 'page__format' }),
-    /** On a phone, the page's tools at its foot (B's slip, C's rail). */
-    phone: h('div', { class: 'page__phone' }),
-  };
-  /** In the colophon, after the save state: the last seal. */
+  /** The blotter round the sheet, scrolled: the page's own part of the pane. */
+  readonly element: HTMLElement;
+  /** The last seal. */
   readonly #sealLine = h('span', { class: 'colophon__seal' });
-  /** Beside the page: the versions panel. */
-  readonly #aside = h('div', { class: 'page__aside' });
+  /** What the colophon says of this page's note, for the pane to put in place. */
+  readonly foot: {
+    readonly tags: HTMLElement;
+    readonly words: HTMLElement;
+    readonly state: HTMLElement;
+    readonly seal: HTMLElement;
+    readonly said: HTMLElement;
+  };
+  /** Beside the pane: the versions panel. */
+  readonly aside = h('div', { class: 'page__aside' });
   #titleText = '';
   readonly #caret = new Set<() => void>();
   readonly #rename: (typed: string) => void;
   /** The note's tags, in the slot the layout names (./page-tags.ts). */
   readonly tags: PageTags;
 
-  /** `rename` hears a title the writer typed, different from the one there; `tags`, the tags' needs. */
+  /**
+   * `layer` holds what floats over the page (the selection bar); `rename`
+   * hears a title the writer typed, different from the one there; `tags`, the tags' needs.
+   */
   constructor(
-    container: HTMLElement,
+    layer: HTMLElement,
     events: EditorEvents & {
       rename(typed: string): void;
       readonly tags: Omit<PageTagsOf, 'editable'>;
@@ -148,35 +149,17 @@ export class PageView {
     this.#editorFrame.append(this.editor.tableTools);
     this.tableBar = new TableBar(this.editor.view);
     this.tags = new PageTags(this.editor, { ...events.tags, editable: () => !this.comparing });
-    this.tags.listen(container);
-    const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
-    this.board = new BoardHost(scroll);
-    scroll.append(this.board.element);
-    container.replaceChildren(
-      h(
-        'div',
-        { class: 'page__main' },
-        this.slots.bar,
-        this.slots.format,
-        scroll,
-        this.tableBar.element,
-        h(
-          'footer',
-          { class: 'colophon count' },
-          this.tagSlots.colophon,
-          this.words.element,
-          this.#state,
-          this.#counters,
-          this.#sealLine,
-          this.#zoom,
-          this.#news,
-          this.#said,
-        ),
-        this.slots.phone,
-      ),
-      this.#aside,
-    );
-    new SelectionBar(container, this.editor);
+    this.element = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
+    this.board = new BoardHost(this.element);
+    this.element.append(this.board.element);
+    this.foot = {
+      tags: this.tagSlots.colophon,
+      words: this.words.element,
+      state: this.#state,
+      seal: this.#sealLine,
+      said: this.#said,
+    };
+    new SelectionBar(layer, this.editor);
     this.showNothing();
   }
 
@@ -191,20 +174,10 @@ export class PageView {
     return !this.#sheet.hidden && !this.comparing && !this.board.shown;
   }
 
-  /** News from the last action in the status line; null takes it away. */
-  news(text: string | null): void {
-    this.#news.textContent = text ?? '';
-  }
-
-  /** Today's words, the book's and a sprint, in the colophon. */
-  counters(element: HTMLElement): void {
-    this.#counters.replaceChildren(element);
-  }
-
   /** The seals' parts: a line in the colophon, a panel beside. */
   attach(parts: { readonly sealLine: HTMLElement; readonly aside: HTMLElement }): void {
     this.#sealLine.replaceChildren(parts.sealLine);
-    this.#aside.replaceChildren(parts.aside);
+    this.aside.replaceChildren(parts.aside);
   }
 
   /** Show `view` (read only) in the editor's place; null gives the editor back. */
@@ -248,9 +221,8 @@ export class PageView {
     if (had && !this.board.shown) this.#empty.focus();
   }
 
-  /** New text from elsewhere, keeping the selection near where it was. */
-  replaceText(text: string): void {
-    this.editor.replaceText(text);
+  /** The note read again from disk: its document has the new text already (../vault/open-notes.ts). */
+  reloaded(text: string): void {
     this.words.show(text);
     this.tags.show(text);
     this.#showTitle(text);
@@ -276,11 +248,6 @@ export class PageView {
   nextMode(): void {
     const at = EDITOR_MODES.indexOf(this.editor.mode);
     this.setMode(EDITOR_MODES[(at + 1) % EDITOR_MODES.length] ?? 'live');
-  }
-
-  /** The page's zoom, in the colophon when it isn't 100%. */
-  showZoom(percent: number): void {
-    this.#zoom.textContent = percent === 100 ? '' : `${percent}%`;
   }
 
   /** A quiet line on the sheet, or none. */

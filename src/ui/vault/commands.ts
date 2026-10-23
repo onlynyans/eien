@@ -8,13 +8,14 @@ import { SPRINT_MINUTES } from '../../core/counters';
 import { formatCommand } from '../../core/format';
 import type { ExportFormat, MenuCommand } from '../../platform/bridge';
 import type { SearchField } from '../list/search-field';
-import type { PageView } from '../page/page';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
 import type { PageParts } from './page-parts';
+import type { Pages } from './pages';
 
 export interface CommandContext {
-  readonly page: PageView;
+  /** The page and its note's seals: the active page's. */
+  readonly pages: Pages;
   readonly panes: PaneLayout;
   readonly sidebar: Sidebar;
   readonly list: HTMLElement;
@@ -23,14 +24,15 @@ export interface CommandContext {
   newNote(): void;
   /** Draw the list: a shut one isn't kept drawn. */
   drawList(): Promise<void>;
-  /** The page's seals, counters, Copy as HTML, exports and outline cards (./page-parts.ts). */
+  /** The counters, Copy as HTML, exports and outline cards (./page-parts.ts). */
   readonly parts: PageParts;
   /** File → Import Markdown Folder… (./importing.ts). */
   importFolder(): void;
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
-  const { page, panes, sidebar } = ctx;
+  const { panes, sidebar } = ctx;
+  const { page, versions } = ctx.pages.active;
   if (command === 'new-note') ctx.newNote();
   else if (command === 'search') {
     // The field in sight: the list's, or, with no list, the sidebar's, opened first if it's shut.
@@ -53,9 +55,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   } else if (command === 'focus:page') {
     panes.openPage();
     page.focus();
-  } else if (command === 'seal') void ctx.parts.versions.seal();
-  else if (command === 'compare') void ctx.parts.versions.cycleCompare();
-  else if (command === 'versions') ctx.parts.versions.showPanel(!ctx.parts.versions.panelOpen);
+  } else if (command === 'seal') void versions.seal();
+  else if (command === 'compare') void versions.cycleCompare();
+  else if (command === 'versions') versions.showPanel(!versions.panelOpen);
   else if (command === 'copy-html') void ctx.parts.htmlCopy.copy();
   else if (command === 'export-html') void ctx.parts.exports.openNote('html');
   else if (command.startsWith('export-note:')) {

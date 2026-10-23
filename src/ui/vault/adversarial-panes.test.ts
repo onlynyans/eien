@@ -62,7 +62,7 @@ async function vaultWith(
     vault,
     state,
     trashName: 'the trash',
-    session: () => null,
+    sessions: () => [],
     closed: () => {},
     tell: (message) => told.push(message),
   });
@@ -184,7 +184,7 @@ function drawer(state: VaultState, nav: Navigation, two: boolean) {
     list: null,
     notice: { text: null },
     listActions: null,
-    openNote: () => null,
+    shown: () => ({ active: null, other: null }),
     pageNews: () => {},
     placeSearch: () => {},
   } as unknown as DrawnParts;
@@ -236,7 +236,7 @@ describe('the sidebar’s draws, when a slow search is overtaken', () => {
       settings: { values: { 'books.numerals': 'roman', 'appearance.scheme': 'system' } },
       sidebar: { draw: (model: SidebarModel) => drawn.push(model), drawLens: () => {} },
       notice: { text: null },
-      openNote: () => null,
+      shown: () => ({ active: null, other: null }),
       pageNews: () => {},
       placeSearch: () => {},
     } as unknown as DrawnParts);

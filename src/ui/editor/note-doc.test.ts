@@ -82,10 +82,10 @@ describe('one note on both sides: one document (the split)', () => {
   });
 
   it('starts the history afresh on a reload from elsewhere, which no side tells', () => {
-    const { a, b, told, type } = twoViews('Snow.');
+    const { doc, a, b, told, type } = twoViews('Snow.');
     type(a, 5, ' Mine.');
     told.length = 0;
-    a.replaceText('Another device’s words.');
+    doc.replace('Another device’s words.');
     expect(b.text).toBe('Another device’s words.');
     expect(told).toEqual([]);
     expect(runOn(a, undo)).toBe(false); // ⌘Z never steps back over the other device's words

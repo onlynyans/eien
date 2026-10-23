@@ -9,11 +9,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryStorage } from '../../platform/memory/memory-storage';
 import { readWhole } from '../menu/ask-number';
-import type { PageView } from '../page/page';
+import type { PagePane } from '../page/page-pane';
 import { WordCount } from '../page/word-count';
 import { counting } from '../vault/counting';
-import type { OpenNote } from '../vault/open-note';
 import { Organizer } from '../vault/organize';
+import type { Side } from '../vault/pages';
 import type { VaultState } from '../vault/vault-state';
 import { Counters } from './counters';
 
@@ -281,18 +281,20 @@ describe('the book in the colophon', () => {
     // page.show — with `book` still the last note's, until the redraw's sync() has read the new
     // note's folder over IPC. Meanwhile the colophon names the old book with a made-up total
     // (its words, less its chapter, plus the new note's): "Book 903 / 90,000" for a loose note.
-    const page = { counters: () => {}, words: new WordCount() };
+    const page = { words: new WordCount() };
     let path = 'Scarf/Tear.md';
     const state = {
       bookOf: async (at: string) =>
         at.startsWith('Scarf/') ? { words: 1_000, note: 100, goal: 90_000 } : null,
     };
     const counts = counting({
-      page: page as unknown as PageView,
-      note: () => ({ path }) as OpenNote,
+      pane: { counters: () => {} } as unknown as PagePane,
+      active: () => ({ page, note: { path } }) as unknown as Side,
+      flushWords: () => {},
       state: state as unknown as VaultState,
       tell: () => {},
     });
+    page.words.onCounted(counts.counted); // as the pages tell it (../vault/pages.ts)
     page.words.show(words(100));
     await counts.sync();
     expect(book(counts.counters)).toBe('Book 1,000 / 90,000');
@@ -317,7 +319,7 @@ describe('a book’s word goal, set', () => {
       vault: storage as unknown as ConstructorParameters<typeof Organizer>[0]['vault'],
       state: {} as VaultState,
       trashName: 'the trash',
-      session: () => null,
+      sessions: () => [],
       closed: () => {},
       tell: () => {},
     });
