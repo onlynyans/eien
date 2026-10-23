@@ -200,6 +200,11 @@ so two devices never overwrite each other's state through Syncthing.
     again.
   - Changes are told in bursts, 120 ms after the first, so a file written
     without pause can't hold the others' news back.
+  - **The same note in two windows** (New Window) follows the same rules:
+    each window saves through its own session, checked against the file's
+    version. The other window reloads what one saved; if both had edited,
+    the later save goes to a sibling copy. No words are lost. One window
+    showing a note twice (the split) is one document, and saves once.
 - **Syncthing conflicts.** Files named `*.sync-conflict-*` are shown beside
   their note with a mark, so the writer can compare and merge them.
 - **Deleting** sends files to the system trash. If the trash fails, nothing is
@@ -218,6 +223,18 @@ so two devices never overwrite each other's state through Syncthing.
 ---
 
 ## 4. Interface
+
+### Windows
+
+Eien can have several windows (File → New Window, ⇧⌘N; a note's menu,
+Open in New Window). Each has its own vault, note, panes and split; a new
+one opens on the vault and note of the window it was asked from, a step down
+and across from it. A window is named for its note, or its vault with none
+open, so the system lists it by that (macOS's Window menu, the taskbar).
+Close Window (⌘W) saves, then closes it. Two windows on one vault share its
+folder: it's read and watched once, and a change one window makes isn't
+taken for a sync in the other. A setting changed in one window holds in all
+of them. A phone has one window.
 
 ### Layout
 

@@ -31,6 +31,8 @@ const PIN_KEY = 'Mod-Shift-p';
 
 export interface NoteMenu {
   readonly pinned: boolean;
+  /** Open in New Window: the desktop's only (a phone has one window). */
+  openInNewWindow?(): void;
   /** The note can move up or down: the list is in its folder's own order. */
   readonly ordered: boolean;
   readonly trashName: string;
@@ -44,6 +46,12 @@ export interface NoteMenu {
 }
 
 export const noteMenu = (note: NoteMenu): MenuItem[] => [
+  ...(note.openInNewWindow
+    ? ([
+        { label: 'Open in New Window', icon: 'window', run: note.openInNewWindow },
+        'separator',
+      ] as const)
+    : []),
   { label: 'Rename', icon: 'rename', keys: 'F2', run: note.rename },
   {
     label: note.pinned ? 'Unpin' : 'Pin',
@@ -200,6 +208,8 @@ export interface MenuContext {
   unselect(path: string): void;
   /** Move a folder in your order, or out of its folder. */
   moveFolder(path: string, how: 'up' | 'down' | 'out'): void;
+  /** A note in a window of its own: the desktop's only. */
+  readonly openInNewWindow?: (path: string) => void;
 }
 
 type At = { readonly x: number; readonly y: number };
@@ -213,6 +223,7 @@ export function showNoteMenu(ctx: MenuContext, path: string, at: At, ordered: bo
       pinned,
       ordered,
       trashName: ctx.trashName,
+      openInNewWindow: ctx.openInNewWindow && (() => ctx.openInNewWindow?.(path)),
       rename: () => ctx.renameNote(path),
       pin: (pin) => ctx.act(() => ctx.organizer.pin(path, pin)),
       nudge: (by) => ctx.act(() => ctx.organizer.nudge(path, by)),
