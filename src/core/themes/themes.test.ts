@@ -84,6 +84,13 @@ describe('the gallery', () => {
     expect(galleryTheme('nothing')).toBeUndefined();
   });
 
+  it('names and describes each theme in plain English words, no kanji', () => {
+    for (const theme of GALLERY) {
+      expect(Object.keys(theme), theme.id).not.toContain('kanji');
+      expect(`${theme.name} ${theme.note}`, theme.id).toMatch(/^[\x20-\x7e]+$/);
+    }
+  });
+
   it.each(GALLERY.map((theme) => [theme.name, theme] as const))(
     '%s keeps Eien’s contrast by day and by night',
     (_name, theme) => {

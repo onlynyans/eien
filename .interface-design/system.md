@@ -292,7 +292,7 @@ page there shows them working.
     face, swatches of theme surfaces, or a stepper.
 - **Themes:** a category of two tabs.
   - **Gallery:** Eien's own themes as cards: desk | paper with ink | night
-    paper with the seal, then the name, its kanji, a note.
+    paper with the seal, then the name and a note (no kanji: 2026-10-22).
   - **Custom:** the writer's own, one named file each in `.eien/themes/`,
     as the same cards, plus a dashed "New theme" card. The chosen one opens
     a mix panel on the band: its name as an in-place field, its file in

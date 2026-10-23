@@ -172,6 +172,7 @@ ins.diff,
   ); /* the small seal's square, unpressed */
   height: calc(var(--eien-space-2) + var(--eien-hairline) * 2);
   border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: min(var(--eien-radius-s), 20%); /* the small seal's corners */
 }
 .version__name {
   grid-column: 2;

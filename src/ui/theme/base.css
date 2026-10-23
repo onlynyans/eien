@@ -41,6 +41,9 @@ body {
   font-size: calc(var(--eien-seal-size) * 0.68);
   line-height: 1;
   user-select: none;
+  /* A stamp's corners, from the layout it sits in (ui/chrome/*.css): the small
+     step, never past a fifth of its side, so a small seal still reads square. */
+  border-radius: min(var(--eien-radius-s), 20%);
 }
 .seal--small {
   --eien-seal-size: 10px;

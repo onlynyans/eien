@@ -19,6 +19,10 @@
   border: var(--eien-hairline) solid var(--eien-rule);
   box-shadow: var(--eien-shadow-sheet);
 }
+/* The large seal takes the layout's middle step, as a larger stamp's corners are larger. */
+.welcome__seal {
+  border-radius: min(var(--eien-radius-m), 20%);
+}
 .welcome__name {
   margin: 0;
   font-family: var(--eien-face-text);

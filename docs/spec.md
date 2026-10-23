@@ -866,9 +866,9 @@ larger inset (64px above and below, 112px at the sides).
   ink, ink-soft, pencil and the status inks reach 4.5:1, faded and the seal
   3:1, on each of the five surfaces (`core/themes/contrast-rules.ts`). The
   verdict says so in words, or names the first colour that falls short.
-- **The gallery**, Eien's own (`core/themes/gallery.ts`): Paper 和紙 (the
-  default, tokens.css's own colours), Linen 生成り, Indigo 藍染, Moss 苔,
-  Candlelight 蝋燭, Ink 墨, Blossom 桜鼠, and Slate (its own sheet,
+- **The gallery**, Eien's own (`core/themes/gallery.ts`): Paper (the
+  default, tokens.css's own colours), Linen, Indigo, Moss, Candlelight, Ink,
+  Blossom, and Slate (its own sheet,
   `slate.css`, from the Otaku design). Each keeps Eien's order of surfaces (darker is further
   back) and its contrast.
 - **Your own themes** are one file each in the vault's `.eien/themes/`, so
@@ -912,7 +912,7 @@ larger inset (64px above and below, 112px at the sides).
 - **Settings → Themes** has two tabs (`ui/settings/themes-tabs.ts`), and a
   theme chosen in either is worn on the whole window at once:
   - **Gallery:** Eien's own, as cards (desk | paper with ink | night paper
-    with the seal; the name, its kanji, a note).
+    with the seal; the name, a note).
   - **Custom:** the writer's own, a card for each file in `.eien/themes`
     (its colours worked out from the file's mix; one that can't be read says
     so), and a "New theme" card, which makes `Untitled.json` (numbered when
