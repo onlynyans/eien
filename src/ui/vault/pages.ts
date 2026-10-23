@@ -4,6 +4,7 @@
 // commands, the pane's tools and the window-wide parts (./page-parts.ts) act
 // on the active page.
 
+import { SPLIT_SPECS, type SplitSpec } from '../chrome/splits';
 import type { ShownNotes } from '../list/shown-notes';
 import type { NoteSession } from '../notes/note-session';
 import { PagePane } from '../page/page-pane';
@@ -48,8 +49,9 @@ export class Pages {
       swap: () => this.swap(),
     });
     // The pages as the settings say: the pane's zoom, and each editor's quotes, tools and marks.
-    const follow = (values: SettingsState['values']) => {
+    const follow = (values: SettingsState['values'], before?: SettingsState['values']) => {
       this.pane.showZoom(values['page.zoom']);
+      if (before && values['appearance.split'] !== before['appearance.split']) this.#place();
       for (const { page } of this.#sides) followSettings(page, values);
     };
     follow(of.settings.values);
@@ -72,6 +74,11 @@ export class Pages {
 
   get split(): boolean {
     return this.#sides.length === 2;
+  }
+
+  /** How two pages are laid out (appearance.split): the mode's spec, split or not. */
+  get mode(): SplitSpec {
+    return SPLIT_SPECS[this.#of.settings.values['appearance.split']];
   }
 
   notes(): ShownNotes {
@@ -216,6 +223,7 @@ export class Pages {
     this.pane.place(
       this.#sides.map(({ page }) => page),
       this.#active.page,
+      this.mode,
     );
     this.#of.rearranged();
   }

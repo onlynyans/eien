@@ -17,6 +17,6 @@ export const SLIP: LayoutSpec = {
     FOOT,
   ],
   tags: 'underTitle',
-  pager: { slot: 'pageBar', before: 'slip' },
+  tools: 'slip',
   phone: { name: 'phone-slip', slot: 'phoneFoot', label: 'Page', items: [VIEWS, 'focus', 'more'] },
 };

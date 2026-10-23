@@ -32,6 +32,8 @@ export interface CommandDef {
   readonly phone?: true;
   /** Drawn in these layouts only: C's running head never hides, so has no strip to hide. */
   readonly layouts?: readonly Layout[];
+  /** Drawn only while the window is split, where the split's mode puts it (./splits.ts). */
+  readonly split?: true;
 }
 
 /** The formatting bar's commands (#14), each the Format menu's, in the bar's order. */
@@ -111,6 +113,16 @@ export const COMMANDS = [
   },
   { id: 'versions', icon: 'versions', label: 'Versions', sends: 'versions' },
   {
+    id: 'copy-html',
+    icon: 'copy',
+    label: 'Copy as HTML',
+    key: 'Mod-Shift-c',
+    sends: 'copy-html',
+    split: true,
+  },
+  { id: 'page.close', icon: 'close', label: 'Close this page', key: 'Mod-w', split: true },
+  { id: 'pages.swap', icon: 'swap', label: 'Swap the pages', sends: 'split:swap', split: true },
+  {
     id: 'focus',
     icon: 'focus',
     label: 'Focus mode',
@@ -155,6 +167,6 @@ const BY_ID = new Map<string, CommandDef>(COMMANDS.map((command) => [command.id,
 
 export const commandOf = (id: CommandId): CommandDef => BY_ID.get(id) as CommandDef;
 
-/** Whether `command` is drawn on the desktop in `layout`. */
+/** Whether `command` is drawn on the desktop in `layout`, with one page (a split's own are its mode's). */
 export const onDesktopIn = (command: CommandDef, layout: Layout): boolean =>
-  !command.phone && (command.layouts?.includes(layout) ?? true);
+  !command.phone && !command.split && (command.layouts?.includes(layout) ?? true);

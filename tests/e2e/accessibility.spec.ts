@@ -67,18 +67,39 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.setViewportSize({ width: 1600, height: 900 });
         await ready(page);
         await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
-        await expect(page.locator('.page__pages > .page__scroll')).toHaveCount(2);
+        await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
         // Each page, the divider (its ⇄ shows under the pointer) and the list's two marks.
         const areas = [
-          '.page__scroll:not([data-active])',
-          '.page__scroll[data-active]',
+          '.page__leaf:not([data-active])',
+          '.page__leaf[data-active]',
           '.divider',
           '.list',
         ];
         expect(await violationsUnder(page, areas), 'split').toEqual([]);
         await page.setViewportSize({ width: 1000, height: 800 });
-        await expect(page.locator('.page__pages[data-folded]')).toHaveCount(1);
+        await expect(page.locator('.page__pages[data-narrow="fold"]')).toHaveCount(1);
         expect(await violationsUnder(page, ['.page']), 'folded, the pager showing').toEqual([]);
+      });
+
+      test('facing pages, and the book closed, have no serious violation', async ({ page }) => {
+        await page.setViewportSize({ width: 1600, height: 900 });
+        await ready(page);
+        await page.evaluate(() => window.eien.settings.set('appearance.split', 'facing'));
+        await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
+        await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
+        // Each page with its folio's tools in sight, the gutter, and the book's tools.
+        const areas = [
+          '.page__leaf[data-side="0"]',
+          '.page__leaf[data-side="1"]',
+          '.divider',
+          '.page__bar',
+        ];
+        expect(await violationsUnder(page, areas), 'facing').toEqual([]);
+        await page.setViewportSize({ width: 1000, height: 800 });
+        await expect(page.locator('.page__pages[data-narrow="close"]')).toHaveCount(1);
+        expect(await violationsUnder(page, ['.page']), 'the book closed, the edge showing').toEqual(
+          [],
+        );
       });
     });
   }

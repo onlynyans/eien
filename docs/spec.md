@@ -239,9 +239,25 @@ closes the active page instead (see Split).
 
 ### Split
 
-Two notes side by side in one window, never top and bottom: **Two sheets**,
-two papers on one blotter, with one set of the layout's tools, one
-formatting bar and one colophon, all for the active page.
+Two notes side by side in one window, never top and bottom, laid out as a
+device setting says (`appearance.split`, Settings → Look → Appearance):
+
+- **Two sheets** (the default): two papers on one blotter, with one set of
+  the layout's tools, one formatting bar and one colophon, all for the
+  active page.
+- **Facing pages**: one sheet opened like a book, the gutter between its
+  pages the divider. The book's tools stay where the layout puts them (with
+  Swap the pages among them); each note's own (Compare, Seal, Versions, Copy
+  as HTML and its ×) are in its folio at its page's foot, beside its words,
+  save and last seal, mirrored on the right page as page numbers are, and
+  showing while the pointer is over that page. The colophon keeps the
+  book's figures and today's. In the Running head, the tags go to each
+  page's own head. The active page carries a mark, a setting of its own
+  (`appearance.facingMark`): a ribbon over its top edge, its outer corner
+  turned down, or a tab at its outer edge, each arriving with a short motion
+  (none with reduced motion).
+
+What follows holds for both.
 
 - **Opening:** a row's Ctrl-click (⌘ on a Mac) or Ctrl+Enter; Open to the
   Side in its menu; a row dragged onto the page pane (past 60% of a lone
@@ -261,9 +277,10 @@ formatting bar and one colophon, all for the active page.
   them. Neither page is ever narrower than 360px; where it stands is
   remembered on this device. Which notes are split isn't remembered across a
   restart.
-- **Narrow:** below two pages' width, the two fold into one, the active
-  page, and a pager with the page's tools names both. Shutting a pane
-  unfolds them.
+- **Narrow:** below two pages' width, Two sheets fold into one, the active
+  page, and a pager with the page's tools names both; Facing pages' book
+  closes to the active page, the other page's edge beside it with its name,
+  a click (or ⌘3) turning to it. Shutting a pane opens them again.
 - **One note on both pages** is one document: one undo history, one save,
   its words counted once (§3).
 - **The phone** shows one page: no split, and its menus offer none.

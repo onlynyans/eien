@@ -17,7 +17,8 @@ import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
 import { COMPARE_WORD } from '../versions/seal-line';
-import type { Pages } from './pages';
+import { pageHosts } from './page-hosts';
+import type { Pages, Side } from './pages';
 import type { PhoneView } from './phone-view';
 
 export interface VaultChromeOf {
@@ -70,6 +71,9 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   const two = () => settings.values['layout.panes'] === 'two';
   const barShown = () => settings.values['editor.formatBar'] === 'on';
 
+  /** The split the layout's hosts are drawn for: its mode while split, none with one page. */
+  const split = () => (pages.split ? pages.mode : null);
+
   /** What's on at the caret, read once for all the bar's buttons (the editor's state the key). */
   let formatsFor: { state: unknown; on: ReadonlySet<FormatCommandId> } | null = null;
   const formatsOn = () => {
@@ -95,9 +99,10 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     return { pressed: formatsOn().has(sends.slice('format:'.length) as FormatCommandId) };
   };
 
-  const look = (id: CommandId): CommandLook => {
-    const { versions } = pages.active;
-    const { mode } = page();
+  /** How `id` looks now, for `side`'s note (a page's own host), else the active page's. */
+  const look = (id: CommandId, side: Side = pages.active): CommandLook => {
+    const { versions } = side;
+    const { mode } = side.page;
     switch (id) {
       case 'pane.sidebar': {
         const shut = panes.isShut('sidebar');
@@ -169,6 +174,11 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     more: (opener) => of.phone.more(opener),
     // The bar's one heading control: the caret's line a level down each press.
     'format.heading': () => of.menu.run(`format:${nextHeading(page().editor.caretLine)}`),
+    // A page's own ×: the page it's on.
+    'page.close': (opener) => {
+      const side = pages.sides.find(({ page }) => page.element.contains(opener));
+      if (side) pages.close(side);
+    },
   };
 
   const tips = tooltips();
@@ -192,6 +202,13 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     pager: pane.pager,
   });
   tips.watch(pane.divider);
+  const own = pageHosts({
+    pages,
+    mac: of.mac,
+    look,
+    press: (id, opener) => chrome.press(id, opener),
+    watch: (host) => tips.watch(host),
+  });
   /** Each page's own controls with tooltips (its tags' +, a table's grips, its ×): watched once, as it's made. */
   const watched = new WeakSet<object>();
   const watchPages = () => {
@@ -212,19 +229,20 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     shell.toggleAttribute('data-format-bar', shown);
     const layout = chrome.layout ?? settings.values['appearance.layout'];
     const tags = of.phone.stack.phone ? PHONE_TAGS : LAYOUT_SPECS[layout].tags;
-    for (const { page } of pages.sides) page.tags.place(page.tagSlots, tags);
+    // Where each note's figures are at its page's foot, C's tags go to the page's own head.
+    const onPage = split()?.foot === 'page' && tags === 'colophon' ? 'runningHead' : tags;
+    for (const { page } of pages.sides) page.tags.place(page.tagSlots, onPage);
   };
   const refresh = () => {
     if (!mounted) return;
+    chrome.mount(settings.values['appearance.layout'], split()); // nothing when it's the same
+    own.sync();
     watchPages();
     place();
     chrome.refresh();
+    own.refresh();
   };
-  const stopSettings = settings.onChange((values) => {
-    if (!mounted) return;
-    chrome.mount(values['appearance.layout']); // nothing when it's the same
-    refresh();
-  });
+  const stopSettings = settings.onChange(() => refresh());
   // The caret moved: the bar's buttons show what's on there, once a frame, and only while it shows.
   let frame = 0;
   const stopCaret = pages.onCaret(() => {
@@ -232,6 +250,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     frame = requestAnimationFrame(() => {
       frame = 0;
       chrome.refresh();
+      own.refresh();
     });
   });
   // A command from the menu bar or a key (⌘E, ⇧⌘↵): its control shows it, once it's run.
@@ -240,7 +259,6 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   return {
     mount: () => {
       mounted = true;
-      chrome.mount(settings.values['appearance.layout']);
       refresh();
     },
     refresh,

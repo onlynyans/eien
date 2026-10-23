@@ -80,8 +80,16 @@ export class PageView {
     text: 'Choose a note, or make a new one.',
     attrs: { tabindex: '-1' },
   });
-  /** The blotter round the sheet, scrolled: the page's own part of the pane. */
+  /** The page's own part of the pane: the blotter round the sheet, scrolled, and its folio. */
   readonly element: HTMLElement;
+  /**
+   * The page's own foot, while a split puts each note's figures and tools on
+   * its page (../chrome/splits.ts, Facing pages): the pane fills it.
+   */
+  readonly folio = {
+    figures: h('span', { class: 'page__figures' }),
+    tools: h('span', { class: 'page__tools' }),
+  };
   /** The last seal. */
   readonly #sealLine = h('span', { class: 'colophon__seal' });
   /** What the colophon says of this page's note, for the pane to put in place. */
@@ -140,9 +148,15 @@ export class PageView {
     this.#editorFrame.append(this.editor.tableTools);
     this.tableBar = new TableBar(this.editor.view);
     this.tags = new PageTags(this.editor, { ...events.tags, editable: () => !this.comparing });
-    this.element = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
-    this.board = new BoardHost(this.element);
-    this.element.append(this.board.element);
+    const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
+    this.board = new BoardHost(scroll);
+    scroll.append(this.board.element);
+    this.element = h(
+      'div',
+      { class: 'page__leaf' },
+      scroll,
+      h('footer', { class: 'page__folio count' }, this.folio.figures, this.folio.tools),
+    );
     this.foot = {
       tags: this.tagSlots.colophon,
       words: this.words.element,
