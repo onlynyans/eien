@@ -85,7 +85,7 @@ const model = (extra: Partial<TreeModel> = {}): TreeModel => ({
   two: false,
   notes: new Map(),
   results: null,
-  openNote: null,
+  shown: { active: null, other: null },
   books: new Set(),
   ...extra,
 });
@@ -234,7 +234,7 @@ describe('TreeRows, two panes', () => {
         ['/all', listOf([note('Drafts/a.md'), note('Book/one.md')])],
         ['Drafts', listOf([note('Drafts/a.md')], { folder: 'Drafts', sort: 'order' })],
       ]),
-      openNote: 'Drafts/a.md',
+      shown: { active: 'Drafts/a.md', other: null },
       ...extra,
     });
 
@@ -338,7 +338,7 @@ describe('RowCache', () => {
       two: true,
       open: new Set(['/all']),
       notes: new Map([['/all', listOf(notes)]]),
-      openNote,
+      shown: { active: openNote, other: null },
     });
   const noteRowsOf = (cache: RowCache, notes: ListedNote[], openNote: string | null = null) => {
     cache.begin();

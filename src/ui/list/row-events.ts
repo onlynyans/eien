@@ -13,6 +13,8 @@ export interface Point {
 
 export interface RowActions {
   open(path: string): void;
+  /** ⌘-click or ⌘Enter: the note on a page beside the one open (the desktop's only). */
+  openBeside?(path: string): void;
   /** The row's menu, at the pointer or the row; `ordered` when the row is in its folder's own order. */
   menu(path: string, at: Point, ordered: boolean): void;
   rename(path: string): void;
@@ -65,7 +67,8 @@ function secondClick(path: string, event: MouseEvent): boolean {
 export function rowEvents(path: string, actions: RowActions, ordered: boolean): Props['on'] {
   return {
     click: (event) => {
-      if (secondClick(path, event)) actions.rename(path);
+      if ((isMac ? event.metaKey : event.ctrlKey) && actions.openBeside) actions.openBeside(path);
+      else if (secondClick(path, event)) actions.rename(path);
       else actions.open(path);
     },
     contextmenu: (event) => {
@@ -75,6 +78,7 @@ export function rowEvents(path: string, actions: RowActions, ordered: boolean): 
     keydown: (event) => {
       const mod = isMac ? event.metaKey : event.ctrlKey;
       if (isMenuKey(event)) actions.menu(path, menuPoint(event), ordered);
+      else if (mod && event.key === 'Enter' && actions.openBeside) actions.openBeside(path);
       else if (event.key === 'F2') actions.rename(path);
       else if (mod && event.shiftKey && event.key.toLowerCase() === 'p' && actions.pin)
         actions.pin(path);

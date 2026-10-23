@@ -1,0 +1,159 @@
+/* The split (spec §4; system.md, "The split window"): two pages side by side
+   in the page pane (./page-pane.ts), the divider between them drawn as a
+   pane's edge is (./divider.ts). Two sheets: two papers on one blotter, the
+   one you work on lying on top with the sheet's shadow, the other flat. */
+
+/* The pages' row: one page, or two with the divider's column between them. */
+.page__pages {
+  position: relative; /* the drop preview's box */
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+.page__pages[data-two]:not([data-folded]) {
+  grid-template-columns:
+    calc((100% - var(--eien-hairline)) * var(--split-share))
+    var(--eien-hairline)
+    minmax(0, 1fr);
+}
+
+/* Each sheet with the same margin of blotter round it, and filling its page. */
+:root:not([data-frame="full"]) .page__pages[data-two] > .page__scroll {
+  padding: var(--eien-space-5) var(--eien-space-5) 0;
+}
+.page__pages[data-two] .sheet {
+  position: relative;
+  width: 100%;
+  transition:
+    box-shadow var(--eien-calm) var(--eien-ease),
+    border-color var(--eien-calm) var(--eien-ease);
+}
+/* The page you aren't in lies flat: no shadow, and its edge a step softer. */
+.page__pages[data-two]:not([data-folded]) > .page__scroll:not([data-active]) .sheet {
+  box-shadow: none;
+  border-color: var(--eien-rule-soft);
+}
+/* Page frame Full has no sheets: a 2px ink-soft rule tops the active page instead. */
+:root[data-frame="full"]
+  .page__pages[data-two]:not([data-folded])
+  > .page__scroll[data-active]
+  .sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--eien-mark-w);
+  background: var(--eien-ink-soft);
+}
+
+/* A page's × at its sheet's top right, on hover; only while there are two. */
+.sheet__close {
+  position: absolute;
+  top: var(--eien-space-2);
+  right: var(--eien-space-2);
+}
+.page__pages:not([data-two]) .sheet__close {
+  display: none;
+}
+
+/* The divider: a hairline down the middle of its column, a handle round it to grab;
+   rule-strong under the pointer, the focus ink while it's handled. ⇄ is beside the handle, in
+   the same column: a control is never inside another. */
+.divider {
+  position: relative;
+  z-index: 4;
+}
+.divider__handle {
+  position: absolute;
+  inset: 0;
+  cursor: col-resize;
+  outline: none;
+  touch-action: none;
+}
+.divider__handle::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(var(--eien-space-1) * -1);
+}
+.divider__handle::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 50%;
+  translate: -50% 0;
+  width: var(--eien-hairline);
+  background: var(--eien-rule);
+  transition: background var(--eien-quick) var(--eien-ease);
+}
+.divider__handle:hover::after {
+  background: var(--eien-rule-strong);
+}
+.divider__handle:focus-visible::after,
+.divider__handle.is-dragging::after {
+  width: var(--eien-mark-w);
+  background: var(--eien-focus);
+}
+/* ⇄, on the divider while it's hovered or has the keyboard. */
+.divider__swap {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  background: var(--eien-paper-raised);
+  border-color: var(--eien-rule-strong);
+}
+.divider__handle:focus-visible + .divider__swap {
+  opacity: 1;
+}
+
+/* Folded, too narrow for two: the active page alone, and the pager names both. */
+.page__pages[data-folded] > .page__scroll:not([data-active]),
+.page__pages[data-folded] > .divider {
+  display: none;
+}
+
+/* Folded: the two pages by name, with the page's tools; the active one pressed. */
+/* Short of room, the names give way, each to an ellipsis in a control's square, and the
+   pager no further: it never lies over the tools beside it. */
+.page__pager {
+  --pager-gap: calc(var(--eien-space-1) / 2);
+  display: flex;
+  align-items: center;
+  gap: var(--pager-gap);
+  min-width: calc(2 * var(--eien-control) + var(--pager-gap));
+}
+.page__pager[hidden] {
+  display: none;
+}
+.page__pager .word-button {
+  min-width: var(--eien-control);
+  padding-block: 0;
+  line-height: calc(var(--eien-control) - 2 * var(--eien-hairline));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.page__pager .word-button[aria-pressed="true"] {
+  color: var(--eien-ink);
+  background: var(--eien-selected);
+}
+
+/* A note dragged over the page pane: where its page would stand, raised paper with an ink edge. */
+.drop-preview {
+  position: absolute;
+  z-index: 8;
+  inset: 0 var(--drop-right) 0 var(--drop-left);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: var(--eien-paper-raised);
+  border-left: var(--eien-mark-w) solid var(--eien-ink-soft);
+}
+.drop-preview__label {
+  padding: var(--eien-space-1) var(--eien-space-2);
+  color: var(--eien-ink-soft);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-s);
+}

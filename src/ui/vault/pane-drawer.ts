@@ -8,6 +8,7 @@
 
 import { type Arrange, canDrag, lensParts } from '../list/lens-bar';
 import { type ListActions, renderList } from '../list/list';
+import type { ShownNotes } from '../list/shown-notes';
 import { filterFor, listKey, sortFor } from '../list/sorts';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
@@ -15,7 +16,6 @@ import type { Sidebar } from '../sidebar/sidebar';
 import { openId } from '../sidebar/tree';
 import type { Navigation } from './navigation';
 import type { Notice } from './notice';
-import type { ShownNotes } from './pages';
 import { treeNotes } from './tree-notes';
 import type { VaultState } from './vault-state';
 
@@ -95,7 +95,7 @@ export class PaneDrawer {
       two: panes.two,
       notes,
       results,
-      openNote: this.#parts.shown().active,
+      shown: this.#parts.shown(),
       books: state.books,
       notice: listShown ? null : notice.text,
       filter: filterFor(listKey(nav.selection)),
@@ -124,7 +124,7 @@ export class PaneDrawer {
     renderList(
       this.#parts.list,
       notes,
-      this.#parts.shown().active,
+      this.#parts.shown(),
       this.#parts.listActions,
       this.#parts.notice.text,
       arrange,

@@ -68,7 +68,7 @@ describe('sidebarSignature, the tree’s frame', () => {
 describe('noteRowShows, what a note’s row shows', () => {
   const today = 'Tue Oct 20 2026';
   const shows = (n: ListedNote, l: NoteList = list([n]), open: string | null = null, day = today) =>
-    noteRowShows(n, lookOf(n, l, '/all', 1, open), day);
+    noteRowShows(n, lookOf(n, l, '/all', 1, { active: open, other: null }), day);
 
   it('is the same while a note is typed in within the minute its time shows', () => {
     expect(shows(note({ modified: at + 59_000, words: 121 }))).toBe(shows(note()));

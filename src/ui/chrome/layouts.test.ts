@@ -44,6 +44,11 @@ describe('the commands', () => {
 describe.each(LAYOUTS)('the %s layout', (layout) => {
   const spec = LAYOUT_SPECS[layout];
 
+  it('puts the split’s pager, folded, before one of its own hosts in that host’s slot', () => {
+    const before = spec.desktop.find((host) => host.name === spec.pager.before);
+    expect(before?.slot).toBe(spec.pager.slot);
+  });
+
   it('draws every command its desktop offers in exactly one host', () => {
     const offered = COMMANDS.filter((command) => onDesktopIn(command, layout));
     expect(sorted(desktopIds(layout))).toEqual(sorted(offered.map((command) => command.id)));

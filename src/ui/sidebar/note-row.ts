@@ -3,6 +3,7 @@
 
 import { h } from '../dom';
 import { type RowActions, rowEvents, rowKeys } from '../list/row-events';
+import { type ShownNotes, shownAttrs } from '../list/shown-notes';
 import { when } from '../list/when';
 import type { ListedNote, NoteList } from '../vault/vault-state';
 import { atDepth } from './depth';
@@ -16,8 +17,8 @@ export interface NoteRowLook {
   readonly book: boolean;
   /** In a folder in its own order: Alt+↑ and Alt+↓ move it. */
   readonly ordered: boolean;
-  /** The note on the page. */
-  readonly current: boolean;
+  /** Whether a page shows it: the active page's, or the other's (../list/shown-notes.ts). */
+  readonly shown: Readonly<Record<string, string | undefined>>;
 }
 
 export const noteRowKey = (note: ListedNote, under: string) => `note:${under}:${note.path}`;
@@ -28,13 +29,13 @@ export const lookOf = (
   list: NoteList,
   under: string,
   depth: number,
-  openNote: string | null,
+  shown: ShownNotes,
 ): NoteRowLook => ({
   depth,
   under,
   book: list.kind === 'book',
   ordered: list.folder !== undefined && list.sort === 'order',
-  current: note.path === openNote,
+  shown: shownAttrs(note.path, shown),
 });
 
 /**
@@ -62,7 +63,7 @@ export function noteRow(note: ListedNote, look: NoteRowLook, actions: RowActions
           class: 'tree-row__name',
           attrs: {
             type: 'button',
-            'aria-current': look.current ? 'true' : undefined,
+            ...look.shown,
             // The same note can be under its folder, a tag and Pinned: each row has its own key.
             'data-key': noteRowKey(note, look.under),
             'data-path': note.path,

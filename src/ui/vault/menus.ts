@@ -1,195 +1,21 @@
-// The choices a note or a folder offers (right-click, the menu key, or
-// Shift+F10). Every move a drag makes is here too, for the keyboard.
+// A note's, a folder's and a tag's menu (right-click, the menu key, or
+// Shift+F10), opened where it was asked for, and what each choice does; the
+// choices themselves are ./menu-items.ts. Every move a drag makes is here
+// too, for the keyboard.
 
-import { EXPORT_LABELS } from '../../core/export';
 import { baseName, parentOf, titleOf } from '../../core/paths';
 import { type TagNode, tagKey } from '../../core/tags';
-import type { FolderNode } from '../../core/vault';
-import type { ExportFormat, OutKind } from '../../platform/bridge';
+import type { ExportFormat } from '../../platform/bridge';
 import { askNumber } from '../menu/ask-number';
-import { type MenuItem, openMenu } from '../menu/menu';
+import { openMenu } from '../menu/menu';
 import type { Exports } from './exports';
+import { destinations, exportMenu, folderMenu, noteMenu } from './menu-items';
 import type { Organizer } from './organize';
 import type { VaultState } from './vault-state';
 
-/**
- * Where a trashed note goes, as the writer finds it: the system's trash, or on a phone, which
- * has none, the vault's own (.eien/trash, where any device can take it back).
- */
-const TRASH_NAMES: Record<string, string> = {
-  win32: 'the Recycle Bin',
-  android: '.eien/trash',
-  ios: '.eien/trash',
-};
-
-export const trashNameOn = (platform: string): string => TRASH_NAMES[platform] ?? 'the trash';
-
-/** The trash's key on a row: ⌘⌫ on a Mac, Ctrl+Delete elsewhere (./row-events.ts takes either). */
-const TRASH_KEY = /Mac|iPhone|iPad/.test(navigator.platform) ? 'Mod-Backspace' : 'Mod-Delete';
-/** Pin or unpin a focused row. */
-const PIN_KEY = 'Mod-Shift-p';
-
-export interface NoteMenu {
-  readonly pinned: boolean;
-  /** Open in New Window: the desktop's only (a phone has one window). */
-  openInNewWindow?(): void;
-  /** The note can move up or down: the list is in its folder's own order. */
-  readonly ordered: boolean;
-  readonly trashName: string;
-  rename(): void;
-  pin(pinned: boolean): void;
-  nudge(by: -1 | 1): void;
-  moveTo(): void;
-  /** Export… : the note as a file (spec §8). */
-  exportTo(): void;
-  trash(): void;
-}
-
-export const noteMenu = (note: NoteMenu): MenuItem[] => [
-  ...(note.openInNewWindow
-    ? ([
-        { label: 'Open in New Window', icon: 'window', run: note.openInNewWindow },
-        'separator',
-      ] as const)
-    : []),
-  { label: 'Rename', icon: 'rename', keys: 'F2', run: note.rename },
-  {
-    label: note.pinned ? 'Unpin' : 'Pin',
-    icon: 'pin',
-    keys: PIN_KEY,
-    run: () => note.pin(!note.pinned),
-  },
-  'separator',
-  ...(note.ordered
-    ? ([
-        { label: 'Move up', icon: 'up', keys: 'Alt-ArrowUp', run: () => note.nudge(-1) },
-        { label: 'Move down', icon: 'down', keys: 'Alt-ArrowDown', run: () => note.nudge(1) },
-      ] as const)
-    : []),
-  { label: 'Move to…', icon: 'move', run: note.moveTo },
-  { label: 'Export…', icon: 'link', run: note.exportTo },
-  'separator',
-  {
-    label: `Move to ${note.trashName}`,
-    icon: 'trash',
-    keys: TRASH_KEY,
-    danger: true,
-    run: note.trash,
-  },
-];
-
-/** The kinds `kinds` offers, as a menu that exports with `run`: a book's leaves out plain HTML. */
-export const exportMenu = (
-  kinds: readonly OutKind[],
-  book: boolean,
-  run: (kind: OutKind) => void,
-): MenuItem[] =>
-  kinds
-    .filter((kind) => !book || kind !== 'html')
-    .map((kind) => ({ label: EXPORT_LABELS[kind], run: () => run(kind) }));
-
-/** The most words a goal may be: more than any book. */
+/** A book's word goal, at most. */
 const MAX_GOAL = 10_000_000;
 
-export interface FolderMenu {
-  readonly book: boolean;
-  /** The folder it's in, by name; null at the top. */
-  readonly parent: string | null;
-  /** Where it can move among the folders beside it. */
-  readonly canUp: boolean;
-  readonly canDown: boolean;
-  move(how: 'up' | 'down' | 'out'): void;
-  /** A book's word goal: asked for in a small field. */
-  goal(): void;
-  readonly trashName: string;
-  newNote(): void;
-  newFolder(): void;
-  rename(): void;
-  setBook(book: boolean): void;
-  moveTo(): void;
-  /** A book's Export… (spec §8). */
-  exportTo(): void;
-  trash(): void;
-}
-
-export const folderMenu = (folder: FolderMenu): MenuItem[] => [
-  { label: 'New note here', icon: 'plus', run: folder.newNote },
-  { label: 'New folder inside', icon: 'folder', run: folder.newFolder },
-  'separator',
-  { label: 'Rename', icon: 'rename', keys: 'F2', run: folder.rename },
-  {
-    label: folder.book ? 'Not a book' : 'Make it a book',
-    icon: 'numbers',
-    run: () => folder.setBook(!folder.book),
-  },
-  ...(folder.book ? [{ label: 'Word goal…', icon: 'check', run: folder.goal } as const] : []),
-  'separator',
-  ...(folder.canUp
-    ? [{ label: 'Move up', icon: 'up', keys: 'Alt-ArrowUp', run: () => folder.move('up') } as const]
-    : []),
-  ...(folder.canDown
-    ? [
-        {
-          label: 'Move down',
-          icon: 'down',
-          keys: 'Alt-ArrowDown',
-          run: () => folder.move('down'),
-        } as const,
-      ]
-    : []),
-  ...(folder.parent !== null
-    ? [
-        {
-          label: `Move out of ${folder.parent}`,
-          icon: 'outdent',
-          keys: 'Alt-ArrowLeft',
-          run: () => folder.move('out'),
-        } as const,
-      ]
-    : []),
-  { label: 'Move to…', icon: 'move', run: folder.moveTo },
-  ...(folder.book ? [{ label: 'Export…', icon: 'link', run: folder.exportTo } as const] : []),
-  'separator',
-  {
-    label: `Move to ${folder.trashName}`,
-    icon: 'trash',
-    keys: TRASH_KEY,
-    danger: true,
-    run: folder.trash,
-  },
-];
-
-/**
- * Where something can be moved: the vault itself, then every folder, nested.
- * `here` (where it is now) and `exclude` (a folder and all in it) can't be chosen.
- */
-export function destinations(
-  tree: FolderNode,
-  vaultName: string,
-  here: string,
-  exclude: string | null,
-  choose: (folder: string) => void,
-): MenuItem[] {
-  const items: MenuItem[] = [{ label: vaultName, run: () => choose(''), disabled: here === '' }];
-  const walk = (node: FolderNode, depth: number) => {
-    for (const folder of node.folders) {
-      const out =
-        exclude !== null && (folder.path === exclude || folder.path.startsWith(`${exclude}/`));
-      if (out) continue;
-      items.push({
-        label: folder.name,
-        run: () => choose(folder.path),
-        disabled: folder.path === here,
-        depth,
-      });
-      walk(folder, depth + 1);
-    }
-  };
-  walk(tree, 1);
-  return items;
-}
-
-/** What the menus act on: the vault view's state and its ways of acting. */
 export interface MenuContext {
   readonly state: VaultState;
   readonly organizer: Organizer;
@@ -210,6 +36,8 @@ export interface MenuContext {
   moveFolder(path: string, how: 'up' | 'down' | 'out'): void;
   /** A note in a window of its own: the desktop's only. */
   readonly openInNewWindow?: (path: string) => void;
+  /** A note on a page beside the open one: the desktop's only, and not in a phone's layout. */
+  readonly openBeside?: (path: string) => void;
 }
 
 type At = { readonly x: number; readonly y: number };
@@ -224,6 +52,7 @@ export function showNoteMenu(ctx: MenuContext, path: string, at: At, ordered: bo
       ordered,
       trashName: ctx.trashName,
       openInNewWindow: ctx.openInNewWindow && (() => ctx.openInNewWindow?.(path)),
+      openBeside: ctx.openBeside && (() => ctx.openBeside?.(path)),
       rename: () => ctx.renameNote(path),
       pin: (pin) => ctx.act(() => ctx.organizer.pin(path, pin)),
       nudge: (by) => ctx.act(() => ctx.organizer.nudge(path, by)),

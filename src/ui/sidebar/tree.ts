@@ -8,6 +8,7 @@ import type { FolderNode } from '../../core/vault';
 import { h, type Props } from '../dom';
 import { icon } from '../icons';
 import type { RowActions } from '../list/row-events';
+import type { ShownNotes } from '../list/shown-notes';
 import { WINDOW_FROM } from '../shell/window-range';
 import type { WindowedRow } from '../shell/windowed-rows';
 import type { ListedNote, NoteList, Selection } from '../vault/vault-state';
@@ -39,7 +40,8 @@ export interface TreeModel {
   /** A search's results, when there's no note list to show them; else null. */
   readonly results: NoteList | null;
   /** The note on the page. */
-  readonly openNote: string | null;
+  /** The notes the pages show: the active page's, and the other's while split. */
+  readonly shown: ShownNotes;
   /** The folders that are books, marked BOOK. */
   readonly books: ReadonlySet<string>;
   /** The tag filter over the list showing (#32): each tag row says whether it's wanted or kept out. */
@@ -306,7 +308,7 @@ export class TreeRows {
           id,
           depth,
           list.notes.map((note) => {
-            const look = lookOf(note, list, id, depth, this.#model.openNote);
+            const look = lookOf(note, list, id, depth, this.#model.shown);
             return {
               key: noteRowKey(note, id),
               shows: noteRowShows(note, look, this.#today),
@@ -323,7 +325,7 @@ export class TreeRows {
 
   /** A note's row: the one drawn before if it shows the same (./row-cache.ts). */
   #note(note: ListedNote, depth: number, list: NoteList, under: string): HTMLElement {
-    const look = lookOf(note, list, under, depth, this.#model.openNote);
+    const look = lookOf(note, list, under, depth, this.#model.shown);
     return this.#cache.row(noteRowKey(note, under), noteRowShows(note, look, this.#today), () =>
       noteRow(note, look, this.#actions),
     );

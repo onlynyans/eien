@@ -135,6 +135,33 @@ test.describe('three thousand notes', () => {
     },
   );
 
+  test(
+    'split: opening beside, switching notes and pages and dragging the divider never stall',
+    ALONE,
+    async ({ page }) => {
+      test.setTimeout(90_000);
+      await page.setViewportSize({ width: 1600, height: 900 });
+      await expect(page.locator('.note-row').first()).toBeVisible({ timeout: 30_000 });
+      await library(page, 'All Notes').click();
+      const rows = page.locator('.rows .note-row');
+      await rows.nth(0).click();
+      const time = await stalls(page);
+      await time.mark();
+      await rows.nth(1).click({ modifiers: ['ControlOrMeta'] });
+      await expect(page.locator('.page__pages > .page__scroll')).toHaveCount(2);
+      for (let i = 2; i < 6; i++) await rows.nth(i).click(); // notes on the active page
+      await page.locator('.page__pages > .page__scroll:not([data-active]) .sheet').click();
+      const divider = page.getByRole('separator', { name: 'Between the two pages' });
+      const at = await divider.boundingBox();
+      if (!at) throw new Error('no divider');
+      await page.mouse.move(at.x + at.width / 2, at.y + 60);
+      await page.mouse.down();
+      await page.mouse.move(at.x + 160, at.y + 60, { steps: 8 });
+      await page.mouse.up();
+      expect(await time.longest()).toBeLessThan(STALL);
+    },
+  );
+
   test('switching layouts never stalls', ALONE, async ({ page }) => {
     test.setTimeout(90_000);
     await expect(page.locator('.note-row').first()).toBeVisible({ timeout: 30_000 });

@@ -115,6 +115,8 @@ export type MenuCommand =
   | 'focus:sidebar'
   | 'focus:list'
   | 'focus:page'
+  | 'split'
+  | 'split:swap'
   | 'seal'
   | 'compare'
   | 'versions'

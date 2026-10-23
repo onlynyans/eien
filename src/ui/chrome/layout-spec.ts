@@ -54,6 +54,8 @@ export interface LayoutSpec {
   readonly phone: HostSpec;
   /** Where the note's tags go: A at the sheet's running head, B as slips under the title, C in the colophon. */
   readonly tags: TagSlot;
+  /** Where the split's pager goes when its two pages fold into one: in `slot`, before the host named. */
+  readonly pager: { readonly slot: SlotName; readonly before: string };
 }
 
 /** The page's three views, one choice. */

@@ -189,7 +189,22 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     send: (command) => of.menu.run(command),
     lost: () => page().focus(),
     watch: (host) => tips.watch(host),
+    pager: pane.pager,
   });
+  tips.watch(pane.divider);
+  /** Each page's own controls with tooltips (its tags' +, a table's grips, its ×): watched once, as it's made. */
+  const watched = new WeakSet<object>();
+  const watchPages = () => {
+    for (const { page } of pages.sides) {
+      if (watched.has(page)) continue;
+      watched.add(page);
+      tips.watch(page.tags.set.element);
+      // A table's grips and + (in the editor's shadow root, so watched there), and a phone's table bar.
+      tips.watch(page.editor.tableTools);
+      tips.watch(page.tableBar.element);
+      tips.watch(page.closer);
+    }
+  };
   /** The bar shown or not, as the setting says; the tags where the layout (or a phone) puts them. */
   const place = () => {
     const shown = barShown();
@@ -201,6 +216,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   };
   const refresh = () => {
     if (!mounted) return;
+    watchPages();
     place();
     chrome.refresh();
   };
@@ -225,12 +241,6 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     mount: () => {
       mounted = true;
       chrome.mount(settings.values['appearance.layout']);
-      for (const { page } of pages.sides) {
-        tips.watch(page.tags.set.element);
-        // A table's grips and + (in the editor's shadow root, so watched there), and a phone's table bar.
-        tips.watch(page.editor.tableTools);
-        tips.watch(page.tableBar.element);
-      }
       refresh();
     },
     refresh,

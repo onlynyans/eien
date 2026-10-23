@@ -30,8 +30,8 @@ export interface NoteActionsOf {
 }
 
 export interface NoteActions {
-  /** Show the note at `path` on the active page (on a phone, the page shown). */
-  openNote(path: string): Promise<void>;
+  /** Show the note at `path` on the active page, or `beside` it (on a phone, the page shown). */
+  openNote(path: string, beside?: boolean): Promise<void>;
   /** A new note, "Untitled", in `into` (else the folder chosen), open to write in. */
   newNote(into?: string): Promise<void>;
   /** A new folder in `parent`, its name in a field to type over. */
@@ -45,8 +45,8 @@ export interface NoteActions {
 export function noteActions(of: NoteActionsOf): NoteActions {
   const { state, nav, pages, phone } = of;
 
-  async function openNote(path: string): Promise<void> {
-    await pages.open(path);
+  async function openNote(path: string, beside = false): Promise<void> {
+    await pages.open(path, beside && !phone.stack.phone); // a phone shows one page
     await of.redraw();
     phone.stack.show('page');
   }

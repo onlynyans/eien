@@ -17,6 +17,9 @@ test.use({
   },
 });
 
+/** The other note's row, by its path: its title is in Note's words too ("[[Other]]"). */
+const otherRow = (page: Page) => page.locator('.note-row[data-path="Other.md"]');
+
 /** The note open on the page, so the page's controls and the editor are there to check. */
 async function ready(page: Page): Promise<void> {
   await page.locator('.note-row', { hasText: 'Note' }).click();
@@ -58,6 +61,24 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         const settings = page.getByRole('dialog', { name: 'Settings' });
         await expect(settings).toBeVisible();
         expect(await violationsUnder(page, ['dialog[open]']), 'Settings').toEqual([]);
+      });
+
+      test('split, and folded, has no serious violation', async ({ page }) => {
+        await page.setViewportSize({ width: 1600, height: 900 });
+        await ready(page);
+        await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
+        await expect(page.locator('.page__pages > .page__scroll')).toHaveCount(2);
+        // Each page, the divider (its ⇄ shows under the pointer) and the list's two marks.
+        const areas = [
+          '.page__scroll:not([data-active])',
+          '.page__scroll[data-active]',
+          '.divider',
+          '.list',
+        ];
+        expect(await violationsUnder(page, areas), 'split').toEqual([]);
+        await page.setViewportSize({ width: 1000, height: 800 });
+        await expect(page.locator('.page__pages[data-folded]')).toHaveCount(1);
+        expect(await violationsUnder(page, ['.page']), 'folded, the pager showing').toEqual([]);
       });
     });
   }

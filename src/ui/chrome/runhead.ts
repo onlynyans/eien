@@ -24,6 +24,7 @@ export const RUNHEAD: LayoutSpec = {
     FOOT,
   ],
   tags: 'colophon',
+  pager: { slot: 'top', before: 'runhead-tools' },
   phone: {
     name: 'phone-rail',
     slot: 'phoneFoot',

@@ -4,77 +4,53 @@
 // commands, the pane's tools and the window-wide parts (./page-parts.ts) act
 // on the active page.
 
-import type { VaultBridge } from '../../platform/bridge';
+import type { ShownNotes } from '../list/shown-notes';
 import type { NoteSession } from '../notes/note-session';
-import type { PageView } from '../page/page';
 import { PagePane } from '../page/page-pane';
-import type { Written } from '../page/word-count';
 import type { SettingsState } from '../settings/settings-state';
 import { sealTargetOf } from '../versions/seal-target';
-import { VersionsUI } from '../versions/versions-ui';
-import { type NotePageParts, notePage } from './note-page';
-import { OpenNote } from './open-note';
 import { OpenNotes } from './open-notes';
 import type { OrganizeContext } from './organize';
+import { closeSide, followSettings, makeSide, type Side, type SideOf } from './page-side';
 
-/** A page, the note it shows, and that note's seals. */
-export interface Side {
-  readonly page: PageView;
-  readonly note: OpenNote;
-  readonly versions: VersionsUI;
-}
+export type { Side } from './page-side';
 
-/** The notes the pages show: the active page's, and the other's while split. */
-export interface ShownNotes {
-  readonly active: string | null;
-  readonly other: string | null;
-}
-
-export interface PagesOf extends Omit<NotePageParts, 'note'> {
-  /** The pane's element (the window's `main`). */
-  readonly area: HTMLElement;
-  readonly vault: VaultBridge;
+export interface PagesOf extends SideOf {
   readonly settings: SettingsState;
-  /** The Mac's keys, for the keys the versions panel names. */
-  readonly mac: boolean;
-  /** What a seal's controls show changed (Compare's state, the panel open). */
-  changed(): void;
-  /** Run a file operation after those under way, then read the vault again (one at a time). */
-  act(operation: () => Promise<unknown>): Promise<void>;
   /** A note changed under the window (its words kept as a copy): read the vault again. */
   refresh(): void;
-  /** Words the writer added on a page, for today's tally and a sprint (../counters). */
-  wrote(added: number, when: Written): void;
-  /** A page's words were counted again: the book's total moves with them. */
-  counted(): void;
+  /** The pages changed (one opened beside, closed, swapped, another made active): the window draws them. */
+  rearranged(): void;
 }
 
 const inside = (path: string, folder: string) => path === folder || path.startsWith(`${folder}/`);
 
 export class Pages {
   readonly pane: PagePane;
+  readonly #of: PagesOf;
   readonly #notes: OpenNotes;
-  readonly #sides: Side[] = [];
+  /** Left to right: one page, or two while the window is split. */
+  #sides: Side[] = [];
+  #active: Side;
   readonly #caret = new Set<() => void>();
   readonly #stopSettings: () => void;
 
   constructor(of: PagesOf) {
+    this.#of = of;
     this.#notes = new OpenNotes(of.vault, of.refresh);
-    const first = this.#side(of);
-    this.pane = new PagePane(of.area, first.page);
-    this.#sides.push(first);
+    this.#active = this.#make();
+    this.#sides = [this.#active];
+    this.pane = new PagePane(of.area, this.#active.page, {
+      activate: (page) => {
+        const side = this.#sides.find((each) => each.page === page);
+        if (side) this.activate(side, true);
+      },
+      swap: () => this.swap(),
+    });
     // The pages as the settings say: the pane's zoom, and each editor's quotes, tools and marks.
     const follow = (values: SettingsState['values']) => {
       this.pane.showZoom(values['page.zoom']);
-      for (const { page } of this.#sides) {
-        page.editor.setQuotes(values['typography.quotes']);
-        page.editor.setTools({
-          focus: values['editor.focus'] === 'on',
-          typewriter: values['editor.typewriter'] === 'on',
-          spellcheck: values['editor.spellcheck'] === 'on',
-        });
-        page.editor.setMarks(values['editor.marks'] === 'on');
-      }
+      for (const { page } of this.#sides) followSettings(page, values);
     };
     follow(of.settings.values);
     this.#stopSettings = of.settings.onChange(follow);
@@ -82,15 +58,24 @@ export class Pages {
 
   /** The page the commands act on. */
   get active(): Side {
-    return this.#sides[0] as Side;
+    return this.#active;
+  }
+
+  /** The page beside the active one, while the window is split. */
+  get other(): Side | null {
+    return this.#sides.find((side) => side !== this.#active) ?? null;
   }
 
   get sides(): readonly Side[] {
     return this.#sides;
   }
 
+  get split(): boolean {
+    return this.#sides.length === 2;
+  }
+
   notes(): ShownNotes {
-    return { active: this.active.note.path, other: null };
+    return { active: this.#active.note.path, other: this.other?.note.path ?? null };
   }
 
   /** Hear the active page's caret move, or its text change under it; returns a function to stop. */
@@ -99,9 +84,67 @@ export class Pages {
     return () => this.#caret.delete(listener);
   }
 
-  /** Show the note at `path` on the active page. */
-  open(path: string): Promise<void> {
-    return this.active.note.open(path);
+  /**
+   * Show the note at `path` on the active page, or `beside` it: on a second
+   * page, made for it, or, split already, the other page. Either way that
+   * page is then the active one.
+   */
+  async open(path: string, beside = false): Promise<void> {
+    if (beside) {
+      const other = this.other ?? this.#make();
+      if (!this.#sides.includes(other)) {
+        this.#sides = [...this.#sides, other];
+        followSettings(other.page, this.#of.settings.values);
+      }
+      this.activate(other);
+    }
+    await this.#active.note.open(path);
+    this.pane.renamed();
+  }
+
+  /** Make `side` the active page; `focus`, with the keyboard in it. */
+  activate(side: Side, focus = false): void {
+    if (side !== this.#active) {
+      this.#active = side;
+      this.#place();
+    }
+    if (focus) side.page.focus();
+  }
+
+  /** ⌘D: the active page's note beside itself, or, split, the other page closed. */
+  async toggle(): Promise<void> {
+    const other = this.other;
+    if (other) this.close(other);
+    else if (this.#active.note.path) await this.open(this.#active.note.path, true);
+  }
+
+  /** ⌘3 in a page: the keyboard to the other one. */
+  focusOther(): void {
+    const other = this.other;
+    if (other) this.activate(other, true);
+  }
+
+  /**
+   * Close `side` (its ×, ⌘W, ⌘D): never the last page, and never its note,
+   * which is as it was. Whether it closed.
+   */
+  close(side: Side): boolean {
+    if (!this.split || !this.#sides.includes(side)) return false;
+    const had = side.page.element.contains(document.activeElement);
+    this.#sides = this.#sides.filter((each) => each !== side);
+    const left = this.#sides[0] as Side;
+    this.#active = left;
+    this.#place();
+    closeSide(side);
+    if (had) left.page.focus();
+    return true;
+  }
+
+  /** ⇄: the two pages trade places; the active one stays active. */
+  swap(): void {
+    if (!this.split) return;
+    this.#sides = [...this.#sides].reverse();
+    this.#place();
   }
 
   /** Every note open, for the organizer: a move or the trash waits for its words. */
@@ -138,6 +181,7 @@ export class Pages {
   /** Notes this window moved or renamed: kept, named and imaged where they are now. */
   followMoves(): void {
     this.#notes.followMoves();
+    this.pane.renamed();
   }
 
   /** Save whatever is unsaved, and count what was just written (today's words) without a pause. */
@@ -164,30 +208,30 @@ export class Pages {
 
   stop(): void {
     this.#stopSettings();
+    this.pane.stop();
     for (const { versions } of this.#sides) versions.stop();
   }
 
-  /** A page, its note and its seals. */
-  #side(of: PagesOf): Side {
-    let note: OpenNote | null = null;
-    const page = notePage(of.area, { ...of, note: () => note as OpenNote });
-    note = new OpenNote(this.#notes, page);
-    page.words.onWrote(of.wrote);
-    page.words.onCounted(of.counted);
-    page.onCaret(() => {
-      if (this.active.page === page) for (const listener of this.#caret) listener();
+  #place(): void {
+    this.pane.place(
+      this.#sides.map(({ page }) => page),
+      this.#active.page,
+    );
+    this.#of.rearranged();
+  }
+
+  /** A page, its note and its seals; the active one when the writer goes into it. */
+  #make(): Side {
+    const side: Side = makeSide(this.#of, this.#notes, {
+      close: () => this.close(side),
+      caret: () => {
+        if (this.#active === side) for (const listener of this.#caret) listener();
+      },
+      entered: () => {
+        if (this.#active !== side) this.activate(side);
+      },
     });
-    const versions = new VersionsUI({
-      page,
-      note,
-      vault: of.vault,
-      notesWithId: (id) => of.state.notesWithId(id),
-      mac: of.mac,
-      tell: of.tell,
-      serial: of.act,
-      changed: of.changed,
-    });
-    return { page, note, versions };
+    return side;
   }
 }
 

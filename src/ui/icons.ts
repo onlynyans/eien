@@ -28,6 +28,7 @@ export const ICONS = {
   tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
   pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
   window: '<path d="M2.5 4h9v8.5h-9z"/><path d="M5 4V2.5h8.5V10H11.5"/>',
+  split: '<path d="M2.5 3.5h11v9h-11z"/><path d="M8 3.5v9"/>',
   sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
   search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
   close: '<path d="M4 4l8 8M12 4l-8 8"/>',
@@ -83,6 +84,7 @@ export const ICONS = {
   move: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/><path d="M6.5 9.5h4M9 8l1.5 1.5L9 11"/>',
   include: '<path d="M8 4v8M4 8h8"/>',
   exclude: '<path d="M4 8h8"/>',
+  swap: '<path d="M3 5.5h9.5M10 3l2.5 2.5L10 8"/><path d="M13 10.5H3.5M6 8l-2.5 2.5L6 13"/>',
   resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
 } as const;
 

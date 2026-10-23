@@ -53,9 +53,16 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     else if (!wasShut) focusList(ctx.list);
     else void ctx.drawList().then(() => focusList(ctx.list));
   } else if (command === 'focus:page') {
+    // Pressed in a page while split: the other page.
+    const inPage = ctx.pages.sides.some((side) =>
+      side.page.element.contains(document.activeElement),
+    );
     panes.openPage();
-    page.focus();
-  } else if (command === 'seal') void versions.seal();
+    if (inPage && ctx.pages.split) ctx.pages.focusOther();
+    else page.focus();
+  } else if (command === 'split') void ctx.pages.toggle();
+  else if (command === 'split:swap') ctx.pages.swap();
+  else if (command === 'seal') void versions.seal();
   else if (command === 'compare') void versions.cycleCompare();
   else if (command === 'versions') versions.showPanel(!versions.panelOpen);
   else if (command === 'copy-html') void ctx.parts.htmlCopy.copy();
