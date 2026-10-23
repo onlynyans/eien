@@ -88,6 +88,7 @@
   /* Machine: anything the machine counts or you press — numbers, dates, labels, buttons.
      Always IBM Plex Mono, whatever the text face. */
   --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-source: var(--eien-face-mono); /* the Source view and code (Source font) */
   /* The seal's glyph, 永: Noto Serif JP's, as the app's icon draws it (build/icons/seal.svg),
      where that face is installed; else the system's Mincho. */
   --eien-face-seal: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', 'Songti SC', serif;

@@ -43,7 +43,17 @@ runtime.
 | `@codemirror/commands` | Undo history and the standard editing keys (MIT) |
 | `@codemirror/language`, `@codemirror/lang-markdown` | Markdown parsing in the editor, with GitHub's extensions; the syntax tree Live and Reading are drawn from (MIT) |
 | `@lezer/markdown`, `@lezer/highlight`, `@lezer/common` | The parser under lang-markdown, used directly for `==highlight==` and `[[wiki links]]` and the styles of their parts (MIT) |
-| `@fontsource/ibm-plex-mono` | The machine voice, whatever the text face (SIL OFL): 400 and 600, and 400 italic |
+| `@fontsource/ibm-plex-mono` | The interface font and the Source font by default, whatever the text face (SIL OFL): 400 and 600, and 400 italic |
+| `@fontsource-variable/jetbrains-mono` | A monospaced face the interface and Source fonts can choose (SIL OFL): variable weight, roman. Only its Latin and Latin Extended files are declared (`ui/theme/monos.css`), as for every mono below |
+| `@fontsource-variable/fira-code` | A monospaced face, with programming ligatures (SIL OFL): variable weight, roman |
+| `@fontsource-variable/cascadia-code` | Microsoft's monospaced face, from Windows Terminal (SIL OFL): variable weight, roman |
+| `@fontsource-variable/source-code-pro` | Adobe's monospaced face (SIL OFL): variable weight, roman |
+| `@fontsource/iosevka` | A narrow monospaced face, so a long line fits (SIL OFL): 400 and 600, Latin only |
+| `@fontsource/commit-mono` | A neutral, even monospaced face (SIL OFL): 400 and 600, Latin only |
+| `@fontsource/space-mono` | A wide, geometric monospaced face with a typewriter's feel (SIL OFL): 400 and 700 |
+| `@fontsource-variable/victor-mono` | A narrow monospaced face with a cursive italic (SIL OFL): variable weight, roman and italic |
+| `@fontsource/monaspace-radon` | GitHub's handwriting-style monospaced face, from the Monaspace family (SIL OFL): 400 and 600, Latin only |
+| `@fontsource/comic-mono` | A friendly, rounded monospaced face after Comic Sans's shapes (MIT): 400, Latin only |
 | `@capacitor/core` | The phone's runtime under the same window: the bridge to native code and each plugin's web stand-in (MIT) |
 | `@capacitor/android` | The Android shell: an activity holding a WebView that serves the page from the app itself, never the network (MIT) |
 | `@capacitor/ios` | The iOS shell, the same over WKWebView; its Swift packages (Capacitor's and the plugins') are fetched by Xcode when it builds (MIT) |

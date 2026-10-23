@@ -41,7 +41,7 @@ test('a sort is a chip over your order; while it’s on, rows don’t move, and 
   await page.getByRole('menuitemradio', { name: 'Title' }).click();
   await expect(titles(page)).toHaveText(['Fire', 'Gate', 'Needle', 'Thaw']);
   await expect(chips(page)).toHaveText(['Title']);
-  await expect(page.locator('.list__locked')).toHaveText(/your order is kept underneath/);
+  await expect(page.locator('.list__locked')).toHaveText(/Clear your sort or filters above to restore your order\./);
   // Alt+↓ moves a row only in your order.
   await page.locator('.note-row', { hasText: 'Fire' }).focus();
   await page.keyboard.press('Alt+ArrowDown');

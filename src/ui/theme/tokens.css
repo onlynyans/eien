@@ -116,17 +116,30 @@
   /* Text: anything a person wrote — notes, titles, names in the tree. The face and
      the sizes tuned to it are in "The text face" below. */
   /* Machine: anything the machine counts or you press — numbers, dates, labels, buttons.
-     IBM Plex Mono unless the writer chooses another face for it (the Machine voice
-     setting sets this and the three machine sizes below, from core/config/faces.ts). */
+     IBM Plex Mono unless the writer chooses another face for it (the Interface font
+     setting sets this and the meta and label sizes below, from core/config/faces.ts). */
   --eien-face-mono: var(--eien-family-plex-mono);
+  /* Source: the raw Markdown of the Source view, and code. Plex Mono unless the Source
+     font setting chooses another (it sets this and --eien-size-source). */
+  --eien-face-source: var(--eien-family-plex-mono);
   /* The seal's glyph, 永: Noto Serif JP's, as the app's icon draws it (build/icons/seal.svg),
      where that face is installed; else the system's Mincho. */
   --eien-face-seal:
     "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Songti SC", serif;
 
-  /* Every bundled face's family, once (core/config/faces.ts lists them): the text face
-     and the machine voice each name one. */
+  /* Every bundled face's family, once (core/config/faces.ts lists them): the text face,
+     the interface font and the Source font each name one. */
   --eien-family-plex-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --eien-family-jetbrains-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --eien-family-fira-code: "Fira Code Variable", ui-monospace, monospace;
+  --eien-family-cascadia-code: "Cascadia Code Variable", ui-monospace, monospace;
+  --eien-family-source-code-pro: "Source Code Pro Variable", ui-monospace, monospace;
+  --eien-family-iosevka: "Iosevka", ui-monospace, monospace;
+  --eien-family-commit-mono: "Commit Mono", ui-monospace, monospace;
+  --eien-family-space-mono: "Space Mono", ui-monospace, monospace;
+  --eien-family-victor-mono: "Victor Mono Variable", ui-monospace, monospace;
+  --eien-family-monaspace-radon: "Monaspace Radon", ui-monospace, monospace;
+  --eien-family-comic-mono: "Comic Mono", ui-monospace, monospace;
   --eien-family-newsreader: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
   --eien-family-literata: "Literata Variable", "Iowan Old Style", Georgia, serif;
   --eien-family-plex-sans: "IBM Plex Sans Variable", "Helvetica Neue", Arial, sans-serif;
@@ -137,11 +150,11 @@
   --eien-family-hanken: "Hanken Grotesk Variable", "Helvetica Neue", Arial, sans-serif;
   --eien-family-instrument: "Instrument Sans Variable", "Helvetica Neue", Arial, sans-serif;
 
-  /* The machine voice's sizes, Plex Mono's: the same whichever text face is chosen. A
-     machine face of the writer's choosing brings its own (core/config/faces.ts). */
+  /* The machine voice's sizes, Plex Mono's: the same whichever text face is chosen. An
+     interface or Source font of the writer's choosing brings its own (core/config/faces.ts). */
   --eien-size-meta: 11px; /* counts, dates, the status line */
   --eien-size-label: 10px; /* section labels and buttons, set in capitals */
-  --eien-size-source: 14px; /* the Source view: the raw .md, in mono */
+  --eien-size-source: 14px; /* the Source view: the raw .md, in the Source font */
 
   --eien-leading-row: 1.35;
   /* The weight of names (two settings, 400 to 700): the sidebar's, and the note list's

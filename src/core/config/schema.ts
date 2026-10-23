@@ -3,7 +3,7 @@
 // adding one entry. A setting joins the list when what it changes exists.
 
 import { GALLERY, isMineChoice } from '../themes';
-import { faceChoices, MACHINE_FACES, TEXT_FACES } from './faces';
+import { faceChoices, INTERFACE_FACES, TEXT_FACES } from './faces';
 
 /** 'vault' travels with the notes (.eien/config.json); 'device' stays on this device. */
 export type SettingScope = 'vault' | 'device';
@@ -121,14 +121,23 @@ export const SETTINGS = [
     default: 'newsreader',
   },
   {
-    key: 'appearance.machineFace',
-    label: 'Machine voice',
-    description:
-      'The font used for word counts, labels, buttons, the status bar and the Source view.',
+    key: 'appearance.interfaceFace',
+    label: 'Interface font',
+    description: 'The font for labels, buttons, counts and the status bar.',
     scope: 'device',
     group: 'Type',
     type: 'choice',
-    choices: faceChoices(MACHINE_FACES),
+    choices: faceChoices(INTERFACE_FACES),
+    default: 'plex-mono',
+  },
+  {
+    key: 'appearance.sourceFace',
+    label: 'Source font',
+    description: 'The font for Markdown in the Source view, and for code.',
+    scope: 'device',
+    group: 'Type',
+    type: 'choice',
+    choices: faceChoices(INTERFACE_FACES),
     default: 'plex-mono',
   },
   {

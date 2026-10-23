@@ -57,7 +57,7 @@ export function settingRow(setting: Setting, set: Set): Row {
 type Kind = 'faces' | 'swatches' | 'weight' | 'stepper' | 'choice';
 
 function kindOf(setting: Setting): Kind {
-  if (setting.key === 'appearance.face' || setting.key === 'appearance.machineFace') return 'faces';
+  if (setting.key in FACE_SAMPLES) return 'faces';
   if (setting.key === 'appearance.runheadGround') return 'swatches';
   if (setting.key in WEIGHT_SAMPLES) return 'weight';
   return setting.type === 'number' ? 'stepper' : 'choice';
@@ -120,15 +120,23 @@ function choices(setting: ChoiceSetting, labelId: string, set: Set): Row {
   return pressed(buttons, group('choices', labelId, buttons), setting.key as SettingKey);
 }
 
-/** Each face as a card set in itself: a text face's sample in its own sizes, the machine's in capitals. */
+/** Each face setting's sample, and its card's look: the interface's in capitals, Markdown for the Source view. */
+const FACE_SAMPLES: Partial<Record<SettingKey, { readonly text: string; readonly kind?: string }>> =
+  {
+    'appearance.face': { text: 'Aa Gg' },
+    'appearance.interfaceFace': { text: '312 notes · 4m', kind: 'machine' },
+    'appearance.sourceFace': { text: '## Draft *two*', kind: 'source' },
+  };
+
+/** Each face as a card set in itself: a text face's sample in its own sizes, the others' in theirs. */
 function faces(setting: ChoiceSetting, labelId: string, set: Set): Row {
-  const machine = setting.key === 'appearance.machineFace';
+  const { text, kind } = FACE_SAMPLES[setting.key as SettingKey] ?? { text: 'Aa Gg' };
   const buttons = Object.entries(setting.choices).map(([value, name]) => {
     const sample = h('span', {
-      class: `face__sample${machine ? ' face__sample--machine' : ''}`,
-      text: machine ? '312 notes · 4m' : 'Aa Gg',
+      class: `face__sample${kind ? ` face__sample--${kind}` : ''}`,
+      text,
     });
-    if (machine) sample.style.setProperty('font-family', `var(--eien-family-${value})`);
+    if (kind) sample.style.setProperty('font-family', `var(--eien-family-${value})`);
     const card = choiceButton(
       'face',
       value,
@@ -138,7 +146,7 @@ function faces(setting: ChoiceSetting, labelId: string, set: Set): Row {
     );
     card.setAttribute('aria-label', name);
     // A text face's sizes come with it: the tokens apply inside any element that names it.
-    if (!machine && faceOf(value)) card.dataset.face = value;
+    if (!kind && faceOf(value)) card.dataset.face = value;
     return card;
   });
   return pressed(buttons, group('faces', labelId, buttons), setting.key as SettingKey);

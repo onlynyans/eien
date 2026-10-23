@@ -1,5 +1,5 @@
-// The settings set as custom properties: the machine voice's face and sizes,
-// the weight of names and its rule, and the Running head's ground. Their
+// The settings set as custom properties: the interface font's face and sizes,
+// the Source font's, the weight of names and its rule, and the Running head's ground. Their
 // defaults are tokens.css's (tests/faces-tokens.test.ts).
 
 import { describe, expect, it } from 'vitest';
@@ -32,14 +32,36 @@ describe('the weights’ rule', () => {
   });
 });
 
-describe('the machine voice’s face', () => {
-  it('names a face’s family and brings its own sizes', () => {
-    const set = lookProperties({ ...DEFAULT_SETTINGS, 'appearance.machineFace': 'newsreader' });
+describe('the interface font', () => {
+  it('names a face’s family and brings its own sizes, leaving the Source view alone', () => {
+    const set = lookProperties({ ...DEFAULT_SETTINGS, 'appearance.interfaceFace': 'newsreader' });
     expect(set).toMatchObject({
       '--eien-face-mono': 'var(--eien-family-newsreader)',
       '--eien-size-meta': '12.5px',
       '--eien-size-label': '11.5px',
-      '--eien-size-source': '16.5px',
+      '--eien-face-source': null,
+      '--eien-size-source': null,
+    });
+  });
+
+  it('sets another mono too: only Plex Mono, the default, is tokens.css’s own', () => {
+    const set = lookProperties({ ...DEFAULT_SETTINGS, 'appearance.interfaceFace': 'iosevka' });
+    expect(set).toMatchObject({
+      '--eien-face-mono': 'var(--eien-family-iosevka)',
+      '--eien-size-meta': '12px',
+      '--eien-size-label': '11px',
+    });
+  });
+});
+
+describe('the Source font', () => {
+  it('names a face’s family and its source size, leaving the interface alone', () => {
+    const set = lookProperties({ ...DEFAULT_SETTINGS, 'appearance.sourceFace': 'comic-mono' });
+    expect(set).toMatchObject({
+      '--eien-face-source': 'var(--eien-family-comic-mono)',
+      '--eien-size-source': '14px',
+      '--eien-face-mono': null,
+      '--eien-size-meta': null,
     });
   });
 });

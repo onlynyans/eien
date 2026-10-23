@@ -44,9 +44,9 @@ export const editorTheme = EditorView.theme({
     { backgroundColor: 'var(--eien-seal-wash)' },
   '&.cm-focused .cm-selectionBackground': { backgroundColor: 'var(--eien-seal-wash)' },
 
-  // Source: the raw file, in the machine voice.
+  // Source: the raw file, in the Source font.
   '&.eien-source .cm-scroller': {
-    fontFamily: 'var(--eien-face-mono)',
+    fontFamily: 'var(--eien-face-source)',
     fontSize: 'var(--eien-size-source)',
     lineHeight: 'var(--eien-leading-prose)',
   },
@@ -82,7 +82,7 @@ export const editorTheme = EditorView.theme({
     color: 'var(--eien-pencil)',
   },
   '.eien-codeblock': {
-    fontFamily: 'var(--eien-face-mono)',
+    fontFamily: 'var(--eien-face-source)',
     fontSize: 'var(--eien-size-source)',
     backgroundColor: 'var(--eien-well)',
     padding: '0 var(--eien-space-3) !important',

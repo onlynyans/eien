@@ -761,8 +761,8 @@ does nothing.
   (day, night or the system's), palette, the layout (band, slip or running
   head), text face, text size (90–130%),
   density (comfortable or compact), page frame (sheet or full), the page's
-  zoom and the interface's (each 50–200%), the machine voice's face, the
-  weight of the sidebar's names and the list's titles, the Running head's
+  zoom and the interface's (each 50–200%), the interface font, the Source
+  font, the weight of the sidebar's names and the list's titles, the Running head's
   ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar and
   spellcheck (macOS). A setting may be one system's alone (`platforms` in the
   schema): the screen shows it only there.
@@ -824,13 +824,18 @@ larger inset (64px above and below, 112px at the sides).
 
 ### Type and the Running head
 
-- **Faces:** one list, `core/config/faces.ts` (FACES), feeds both face
-  settings: Typeface (the eight text faces) and **Machine voice** (IBM Plex
-  Mono, the default, or any of the eight). Each face carries its own machine
-  sizes (counts, labels, the Source view), so a proportional face reads at
-  the mono's size; its family is one token in `tokens.css`
-  (`--eien-family-<id>`). A face added later is one entry there, and its
-  tokens.
+- **Faces:** one list, `core/config/faces.ts` (FACES), feeds the three face
+  settings: Typeface (the eight text faces), **Interface font** (labels,
+  buttons, counts and the status bar) and **Source font** (the Source view's
+  Markdown, and code), each IBM Plex Mono by default or any face in the list:
+  eleven monospaced faces (IBM Plex Mono, JetBrains Mono, Fira Code, Cascadia
+  Code, Source Code Pro, Iosevka, Commit Mono, Space Mono, Victor Mono,
+  Monaspace Radon, Comic Mono) and the eight text faces. Each face carries its
+  own machine sizes (counts, labels, the Source view), so any face reads at
+  Plex Mono's size; its family is one token in `tokens.css`
+  (`--eien-family-<id>`). The monos other than Plex Mono bring only their
+  Latin and Latin Extended files (`ui/theme/monos.css`). A face added later is
+  one entry there, and its tokens.
 - **Weight of names:** two settings, 400 to 700: the sidebar's names
   (`--eien-weight-tree`) and the list's titles (`--eien-weight-list`). A
   chosen list title is 100 heavier, at most 700 (so 500 at the default); the

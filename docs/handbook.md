@@ -330,7 +330,7 @@ See [backlog.md](backlog.md) for the full list. At this handover:
 | Your order | The order you give folders, notes and tags; written to the vault, so it syncs |
 | Lens | A sort or tag filter laid over a list, on this device; it never changes your order |
 | Arrange mode | A setting under which rows move only while arranging |
-| Machine voice | The face for counts, labels and buttons (IBM Plex Mono unless changed); the text face is for what you wrote |
+| Machine voice | What the machine says: counts, labels, buttons, the status bar, in the Interface font (IBM Plex Mono unless changed); the text face is for what you wrote, the Source font for the Source view's Markdown |
 | Band, Slip, Running head | The three layouts: where the window's controls sit |
 | Desk, blotter, paper | The surfaces: the sidebar, the page pane, the list and the sheet |
 | Made tag | A tag created from the sidebar before any note carries it (`.eien/tags.json`) |

@@ -100,9 +100,16 @@ machine count it, or do you press it?* The mono.
   22px, title 36px, list heading 23px, row 16px, preview 14px.
 - **Machine voice**, IBM Plex Mono by default: labels 10px in capitals
   tracked 0.12em (`--eien-size-label`, `--eien-track-label`), counts and
-  dates 11px with tabular figures (`--eien-size-meta`). Its face becomes the
-  writer's choice too (changed 2026-10-20, #24): `--eien-face-mono` is set
-  by that setting, so everything in the machine voice follows it.
+  dates 11px with tabular figures (`--eien-size-meta`). Its face is the
+  writer's choice too (changed 2026-10-20, #24): the **Interface font**
+  setting sets `--eien-face-mono`, so everything in the machine voice
+  follows it.
+- **Source**: the Source view's raw Markdown, and code, in
+  `--eien-face-source` at `--eien-size-source` (14px), set by the **Source
+  font** setting apart from the interface (2026-10-22). Both choose from the
+  eleven monos (Plex Mono, JetBrains Mono, Fira Code, Cascadia Code, Source
+  Code Pro, Iosevka, Commit Mono, Space Mono, Victor Mono, Monaspace Radon,
+  Comic Mono) and the eight text faces.
 - Weights: 400; 500 for a note's title and the list's heading; 600 for the
   vault's name and `strong`. A label is never bold: it's quiet by size,
   tracking and pencil ink.
@@ -137,8 +144,8 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Depth | `--eien-shadow-sheet`, `--eien-shadow-float` | two shadows, no more | – |
 | Corners | `--eien-radius-s`, `-m`, `-l` | A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10 | layout |
 | Icons | `--eien-icon` 16px, `--eien-icon-stroke` 1.25, `--eien-control` 28px (desktop), `--eien-touch` 44px | | – |
-| Faces | `--eien-family-*` (nine: plex-mono, newsreader, literata, plex-sans, source-sans, atkinson, schibsted, hanken, instrument); `--eien-face-text`, `--eien-face-mono`, `--eien-face-seal` | the two voices point at a family | settings: Text face, Machine voice (both from one FACES list, `src/core/config/faces.ts`) |
-| Sizes | `--eien-size-prose`, `-title`, `-heading`, `-row`, `-preview` (each face's own, × `--eien-text-scale`); `--eien-size-label` 10px, `-meta` 11px, `-source` 14px (each machine face's own) | Newsreader: 22, 36, 23, 16, 14 | settings: Text size (`--eien-text-scale`, 0.9–1.3), the faces |
+| Faces | `--eien-family-*` (nineteen: eleven monos, plex-mono first, and the eight text faces); `--eien-face-text`, `--eien-face-mono`, `--eien-face-source`, `--eien-face-seal` | each voice points at a family | settings: Typeface, Interface font, Source font (all from one FACES list, `src/core/config/faces.ts`) |
+| Sizes | `--eien-size-prose`, `-title`, `-heading`, `-row`, `-preview` (each face's own, × `--eien-text-scale`); `--eien-size-label` 10px, `-meta` 11px (the interface font's own), `-source` 14px (the Source font's own) | Newsreader: 22, 36, 23, 16, 14 | settings: Text size (`--eien-text-scale`, 0.9–1.3), the faces |
 | Weights | `--eien-weight-tree`, `--eien-weight-list`, `--eien-weight-list-chosen`; `--eien-track-label` 0.12em | 400, 400, 500 | settings: Row weights (chosen = list + 100, at most 700) |
 | Space | `--eien-space-1` … `-8` | 4, 8, 12, 16, 24, 32, 48, 72 | – |
 | Lengths | `--eien-row-h` 30px × text scale (26 compact), `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |

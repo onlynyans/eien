@@ -2,7 +2,7 @@ export {
   FACES,
   type Face,
   faceOf,
-  MACHINE_FACES,
+  INTERFACE_FACES,
   type MachineSizes,
   TEXT_FACES,
 } from './faces';

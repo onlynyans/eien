@@ -196,7 +196,7 @@ export function lensLine(list: NoteList, arrange: Arrange = NO_ARRANGE): HTMLEle
   const text = !orderable
     ? null
     : !inOwnOrder(list)
-      ? 'Sorted or filtered: your order is kept underneath. Clear it to drag.'
+      ? 'Clear your sort or filters above to restore your order.'
       : arrange.mode
         ? 'Your order. Choose Arrange to move notes.'
         : null;

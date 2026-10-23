@@ -20,9 +20,10 @@ describe('the faces in tokens.css', () => {
     }
   });
 
-  it('holds Plex Mono as the machine voice, at the sizes FACES gives it', () => {
+  it('holds Plex Mono as the interface and Source fonts, at the sizes FACES gives it', () => {
     const mono = FACES[0];
     expect(token('--eien-face-mono')).toBe(`var(--eien-family-${mono.id})`);
+    expect(token('--eien-face-source')).toBe(`var(--eien-family-${mono.id})`);
     expect(token('--eien-size-meta')).toBe(`${mono.machine.meta}px`);
     expect(token('--eien-size-label')).toBe(`${mono.machine.label}px`);
     expect(token('--eien-size-source')).toBe(`${mono.machine.source}px`);
