@@ -350,7 +350,8 @@ shows it working.
   - A strip of desk: a strip `--band` wide (56px), widening at its top into a
     shoulder of desk that holds macOS's lights, its outer corner
     `--eien-radius-l`.
-  - C · Running head: always the 56px strip.
+  - C · Running head: always a strip as wide as its own bands are tall
+    (48px, C's `--band`).
   - In full screen (no lights), the seal sits in the top row, never a band
     down.
 
