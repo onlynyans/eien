@@ -135,13 +135,17 @@ test('every quiet icon shows by one rule: the row it sits in hovered, in the lis
     await expect.poll(() => opacity('.list__head .add-button')).toBe('0');
     await expect.poll(() => opacity('.sidebar__section .add-button')).toBe('0');
   };
-  /** Hover `row` until its quiet icons have come in (a hover can miss its first move). */
+  /**
+   * Hover `row` until its quiet icons have come in (a hover can miss its first move). At the
+   * row's middle: a point a few pixels from its top can fall on the band above it, and each
+   * try would then fade the icons out and in again, read half-way.
+   */
   const hover = async (row: string) => {
     const box = await page.locator(row).first().boundingBox();
     if (!box) throw new Error(`${row} has no box`);
     await expect(async () => {
-      await page.mouse.move(box.x + box.width / 2, box.y + 4);
-      await page.mouse.move(box.x + box.width / 2 + 2, box.y + 6);
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.move(box.x + box.width / 2 + 2, box.y + box.height / 2 + 2);
       expect(await opacity(`${row} .icon-button--quiet`)).toBe('1');
     }).toPass({ timeout: 5000 });
   };
