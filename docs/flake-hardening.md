@@ -42,6 +42,12 @@ finishes the job.
    - `src/platform/storage.test.ts`, "never writes over a temp file another
      write left": over its 5 s limit on a slow Windows runner;
    - hover-driven checks on Linux (prefer the keyboard to show a tooltip).
+     Found 2026-10-23 (draft #61's diagnostic): on Linux CI a still
+     pointer's `:hover` lapses within a second or two, though nothing moved
+     and nothing redrew. And a value read right after a move is mid-fade (the
+     quiet icons' 0.27, 17ms into 220ms). Read a hover-driven style with its
+     transitions finished (`el.getAnimations().forEach((a) => a.finish())`),
+     as `sidebar-adders.spec.ts`'s `opacity` does, not after a wait.
    Wait on state, not time.
 5. **Report retried tests in CI:** the end-to-end jobs' summary lists every
    test that passed only on a retry (Playwright's `flaky`), so a flake is

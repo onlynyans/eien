@@ -125,21 +125,25 @@ test('Pinned is always under Library: with nothing pinned, its list says how to 
 test('every quiet icon shows by one rule: the row it sits in hovered, in the list as in the sidebar', async ({
   page,
 }) => {
+  /**
+   * A quiet icon's opacity where its fade is going: the fade finished first, so what's read is
+   * the rule's answer, not a frame part-way. Read mid-fade, a hover just begun reads ~0.27, and
+   * on Linux CI a still pointer's hover can lapse before a retry reads it.
+   */
   const opacity = (selector: string) =>
     page
       .locator(selector)
       .first()
-      .evaluate((control) => getComputedStyle(control).opacity);
+      .evaluate((control) => {
+        for (const fade of control.getAnimations()) fade.finish();
+        return getComputedStyle(control).opacity;
+      });
   const rest = async () => {
     await page.mouse.move(1, 1);
     await expect.poll(() => opacity('.list__head .add-button')).toBe('0');
     await expect.poll(() => opacity('.sidebar__section .add-button')).toBe('0');
   };
-  /**
-   * Hover `row` until its quiet icons have come in (a hover can miss its first move). At the
-   * row's middle: a point a few pixels from its top can fall on the band above it, and each
-   * try would then fade the icons out and in again, read half-way.
-   */
+  /** Hover `row`, at its middle, until its quiet icons have come in (a hover can miss its first move). */
   const hover = async (row: string) => {
     const box = await page.locator(row).first().boundingBox();
     if (!box) throw new Error(`${row} has no box`);
