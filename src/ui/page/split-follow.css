@@ -23,6 +23,13 @@
 .page__main[data-follow-side="1"] > :is(.page__bar, .page__format, .colophon) {
   grid-column: 3;
 }
+/* Over the left page, the bar is clear of the window's edge and of the system's controls there. */
+.page__main[data-follow-side="0"] > .page__bar {
+  padding-right: var(--eien-space-3);
+}
+:root[data-split="follow"] .page__pages[data-two] .sheet {
+  position: relative;
+}
 :root[data-split="follow"] .page__pages[data-two] .sheet__close {
   display: inline-grid;
 }
