@@ -98,7 +98,7 @@ describe('Chrome', () => {
     const local = vi.fn();
     new Chrome(of({ send, local })).mount('band');
     document.querySelector<HTMLButtonElement>('[data-command="seal"]')?.click();
-    expect(send).toHaveBeenCalledWith('seal');
+    expect(send).toHaveBeenCalledWith('seal', 'seal');
     const scheme = document.querySelector<HTMLButtonElement>('[data-command="scheme"]');
     scheme?.click();
     expect(local).toHaveBeenCalledWith('scheme', scheme);

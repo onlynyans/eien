@@ -3,13 +3,15 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { STEP } from '../shell/pane-state';
+import { SHARE, UNDER_PAGE } from '../shell/split-state';
 import { Divider } from './divider';
 
 const WIDTH = 1000;
 
 function divider() {
-  const events = { width: () => WIDTH, moved: vi.fn(), swap: vi.fn() };
+  const events = { room: () => WIDTH, moved: vi.fn(), swap: vi.fn() };
   const made = new Divider(events);
+  made.use(SHARE);
   document.body.append(made.element);
   return { made, events, element: made.handle };
 }
@@ -60,6 +62,18 @@ describe('the divider', () => {
     expect(element.classList.contains('is-dragging')).toBe(false);
     expect(made.shown(WIDTH)).toBeCloseTo(0.62);
     expect(divider().made.shown(WIDTH)).toBeCloseTo(0.62); // the next window's, as this device keeps it
+  });
+
+  it('lies across, moved by ↑ ↓, when its measure is the companion’s under the page', () => {
+    const { made, element } = divider();
+    made.use(UNDER_PAGE);
+    expect(element.getAttribute('aria-orientation')).toBe('horizontal');
+    expect(element.getAttribute('aria-keyshortcuts')).toBe('ArrowUp ArrowDown Enter');
+    const before = made.shown(WIDTH);
+    key(element, 'ArrowDown');
+    expect(made.shown(WIDTH)).toBeCloseTo(before + STEP / WIDTH);
+    key(element, 'ArrowRight'); // across the other way: nothing
+    expect(made.shown(WIDTH)).toBeCloseTo(before + STEP / WIDTH);
   });
 
   it('swaps the pages with its ⇄, which no drag or double-click starts from', () => {

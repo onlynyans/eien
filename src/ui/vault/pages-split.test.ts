@@ -80,14 +80,14 @@ describe('one note on both pages', () => {
     expect(pages.other?.page.editor.text).toBe('Snow fell. The gate held.');
     await pages.flush();
     expect((await storage.read('Snow.md'))?.text).toBe('Snow fell. The gate held.');
-    expect(wrote).toEqual([3]); // counted once, by the page it was typed in
+    expect(wrote()).toEqual([3]); // counted once, by the page it was typed in
     // The other page's count follows, and adds nothing when its own writer types.
     const other = pages.other;
     if (!other) throw new Error('not split');
     pages.activate(other);
     typeAtEnd(pages, ' Then rain.');
     await pages.flush();
-    expect(wrote).toEqual([3, 2]);
+    expect(wrote()).toEqual([3, 2]);
     expect(other.page.words.words).toBe(7);
   });
 });

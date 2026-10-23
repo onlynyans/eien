@@ -12,8 +12,8 @@ import { type SplitSpec, splitHosts } from './splits';
 
 export interface ChromeOf extends Omit<HostOf, 'press'> {
   readonly slots: Readonly<Record<SlotName, HTMLElement>>;
-  /** Run the menu's command (../menu/menu-bus.ts). */
-  send(command: MenuCommand): void;
+  /** Run the menu's command (../menu/menu-bus.ts), for the control `id` pressed. */
+  send(command: MenuCommand, id: CommandId): void;
   /** Run one of the window's own commands; `opener` is the button pressed. */
   local(id: LocalCommandId, opener: HTMLElement): void;
   /** The keyboard was on a control the new layout doesn't draw: give it a place. */
@@ -91,7 +91,7 @@ export class Chrome {
   /** Run `id`, as its button does. */
   press(id: CommandId, opener: HTMLElement): void {
     const sends = commandOf(id).sends;
-    if (sends) this.#of.send(sends);
+    if (sends) this.#of.send(sends, id);
     else this.#of.local(id as LocalCommandId, opener);
     // What it changed shows once it's done: a menu command is heard by others first.
     queueMicrotask(() => this.refresh());

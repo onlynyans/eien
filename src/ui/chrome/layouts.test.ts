@@ -32,6 +32,7 @@ describe('the commands', () => {
       'format.heading',
       'more',
       'page.close',
+      'page.more',
       'panes',
       'scheme',
       'strip',
@@ -44,7 +45,7 @@ describe('the commands', () => {
         ...desktopIds(layout),
         ...idsIn(LAYOUT_SPECS[layout].phone.items),
       ]),
-      ...Object.values(SPLIT_SPECS).flatMap((split) => [...split.own, ...split.tools]),
+      ...Object.values(SPLIT_SPECS).flatMap((split) => [...split.own.items, ...split.tools]),
     ]);
     expect(sorted([...drawn])).toEqual(sorted(COMMANDS.map((command) => command.id)));
   });
@@ -153,10 +154,10 @@ describe.each(LAYOUTS.flatMap((layout) => MODES.map((mode) => [layout, mode] as 
       const offered = COMMANDS.filter((command) => onDesktopIn(command, layout)).map(
         (command) => command.id as CommandId,
       );
-      const kept = offered.filter((id) => !split.own.includes(id));
+      const kept = offered.filter((id) => !split.own.items.includes(id));
       expect(sorted(ids)).toEqual(sorted([...kept, ...split.tools]));
       // What a page holds for itself was the layout's, or is the split's own (a page's ×).
-      for (const id of split.own)
+      for (const id of split.own.items)
         expect(commandOf(id).split || offered.includes(id), id).toBeTruthy();
     });
 
@@ -173,7 +174,7 @@ describe.each(LAYOUTS.flatMap((layout) => MODES.map((mode) => [layout, mode] as 
     });
 
     it('draws nothing a page holds for itself in the layout’s hosts', () => {
-      expect(ids.filter((id) => split.own.includes(id))).toEqual([]);
+      expect(ids.filter((id) => split.own.items.includes(id))).toEqual([]);
     });
   },
 );

@@ -122,6 +122,8 @@ export const COMMANDS = [
   },
   { id: 'page.close', icon: 'close', label: 'Close this page', key: 'Mod-w', split: true },
   { id: 'pages.swap', icon: 'swap', label: 'Swap the pages', sends: 'split:swap', split: true },
+  { id: 'page.lead', icon: 'swap', label: 'Make it the page', sends: 'split:swap', split: true },
+  { id: 'page.more', icon: 'more', label: 'More for this note', split: true },
   {
     id: 'focus',
     icon: 'focus',

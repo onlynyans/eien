@@ -60,7 +60,7 @@ describe('the pages, with one page', () => {
     typeAtEnd(pages, ' The gate held.');
     await pages.flush();
     expect((await storage.read('Snow.md'))?.text).toBe('Snow. The gate held.');
-    expect(wrote).toEqual([3]);
+    expect(wrote()).toEqual([3]);
   });
 
   it('shows a note afresh when it’s opened again on its page, as when another is', async () => {

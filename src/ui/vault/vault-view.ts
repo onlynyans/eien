@@ -23,7 +23,6 @@ import { orderActions } from './order-actions';
 import { Organizer } from './organize';
 import { ownWrites } from './own-writes';
 import { pageDrop } from './page-drop';
-import { pageParts } from './page-parts';
 import { Pages, pagesHeld } from './pages';
 import { PaneDrawer } from './pane-drawer';
 import { phoneView } from './phone-view';
@@ -67,6 +66,10 @@ export async function showVault(
   const notice = new Notice(() => void redraw());
   const tell = (message: string) => notice.tell(message);
 
+  /** A note in a window of its own: the desktop's only. */
+  const openInNewWindow = bridge.window
+    ? (path: string) => void bridge.window?.open(path)
+    : undefined;
   // The notes open on the pages are held still and kept in step as they move.
   const organizer = new Organizer({
     vault: bridge.vault,
@@ -105,10 +108,10 @@ export async function showVault(
     order,
     vaultName: name,
     trashName,
-    openInNewWindow: bridge.window ? (path) => void bridge.window?.open(path) : undefined,
+    openInNewWindow,
     phone: () => phone.stack.phone,
     actions: () => actions,
-    exports: () => parts.exports,
+    exports: () => pages.parts.exports,
     choose: lens.choose,
     act: (operation) => act(operation),
   });
@@ -149,19 +152,20 @@ export async function showVault(
   const pages = new Pages({
     area: pageArea,
     vault: bridge.vault,
+    out: bridge.out,
     state,
+    nav,
     organizer,
     settings,
     mac: keys.sidebar.startsWith('⌘'),
-    openNote: (path) => void actions.openNote(path),
+    openNote: (path) => actions.openNote(path),
     act: (operation) => act(operation),
     tell,
     changed: () => chrome.refresh(),
     rearranged: () => void redraw(),
     refresh: () => void refresh(),
-    wrote: (added, when) => parts.wrote(added, when),
-    counted: () => parts.counted(),
   });
+  const { parts } = pages;
   const phone = phoneView({
     shell,
     list,
@@ -194,18 +198,7 @@ export async function showVault(
     settings,
     menu,
     mac: keys.sidebar.startsWith('⌘'),
-  });
-
-  const parts = pageParts({
-    pages,
-    state,
-    bridge,
-    settings,
-    nav,
-    organizer,
-    tell,
-    act: (operation) => act(operation),
-    openNote: (path) => actions.openNote(path),
+    openInNewWindow,
   });
   chrome.mount();
 
@@ -233,7 +226,6 @@ export async function showVault(
   });
   const redraw = () => {
     pages.sync();
-    parts.sync();
     sync.draw();
     chrome.refresh();
     nameWindow(pages.active.note.path, name);
@@ -303,7 +295,6 @@ export async function showVault(
       panes.stop();
       phone.stack.stop();
       notice.stop();
-      parts.stop();
       pages.stop();
     },
   };
