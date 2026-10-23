@@ -17,6 +17,9 @@ test.use({
   },
 });
 
+/** The other note's row, by its path: its title is in Note's words too ("[[Other]]"). */
+const otherRow = (page: Page) => page.locator('.note-row[data-path="Other.md"]');
+
 /** The note open on the page, so the page's controls and the editor are there to check. */
 async function ready(page: Page): Promise<void> {
   await page.locator('.note-row', { hasText: 'Note' }).click();
@@ -63,9 +66,7 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       test('split, and folded, has no serious violation', async ({ page }) => {
         await page.setViewportSize({ width: 1600, height: 900 });
         await ready(page);
-        await page
-          .locator('.note-row', { hasText: 'Other' })
-          .click({ modifiers: ['ControlOrMeta'] });
+        await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
         await expect(page.locator('.page__pages > .page__scroll')).toHaveCount(2);
         // Each page, the divider (its ⇄ shows under the pointer) and the list's two marks.
         const areas = [
