@@ -1140,7 +1140,7 @@ seal** (docs/design).
   copy in `.eien/versions/<id>/<UTC time>.md`, the time to the second
   (`2026-10-19T16-40-02Z.md`); a second one in the same second is
   `2026-10-19T16-40-02Z~2.md`. Nothing is made if the note matches its last
-  checkpoint ("Nothing new to seal"); a checkpoint dated ahead (another
+  checkpoint ("No changes since the last version"); a checkpoint dated ahead (another
   device's clock) isn't taken as the last. The note is saved as it's sealed,
   a note that can't be saved isn't sealed, and a seal pressed while the note
   is being renamed or moved waits for that, then seals. What can't be done is

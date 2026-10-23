@@ -110,7 +110,7 @@ describe('Chrome', () => {
     chrome.mount('band');
     const focus = () => document.querySelector<HTMLButtonElement>('[data-command="focus"]');
     expect(focus()?.hasAttribute('aria-pressed')).toBe(false);
-    expect(focus()?.dataset.tip).toBe('Focus: only the paragraph you’re in');
+    expect(focus()?.dataset.tip).toBe('Focus mode: dim all but the current paragraph');
 
     looks.set('focus', { pressed: true, disabled: true, tip: 'Focus · on', icon: 'sun' });
     focus()?.click();

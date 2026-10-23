@@ -302,7 +302,7 @@ describe('naming and deleting', () => {
       count: 1,
     };
     expect(await v.versions.name('X', gone, 'name')).toEqual({
-      reason: 'That seal isn’t there any more.',
+      reason: 'That version no longer exists.',
     });
   });
 

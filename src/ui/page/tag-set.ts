@@ -153,8 +153,8 @@ export class TagSet {
       attrs: {
         type: 'button',
         // Why there's no ×: the header never edits the words.
-        'aria-label': `#${tag}, in the text: show where`,
-        'data-tip': 'In the text · show where',
+        'aria-label': `#${tag}, typed in the note: find it`,
+        'data-tip': 'Typed in the note · click to find it',
         'data-key': `page-tag:${tagKey(tag)}`,
       },
       on: { click: () => this.#of.find(tag) },

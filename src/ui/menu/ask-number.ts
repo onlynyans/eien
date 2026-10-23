@@ -50,7 +50,7 @@ export function askNumber(asked: NumberAsked): Promise<number | null | undefined
       { class: 'menu ask', attrs: { role: 'dialog', 'aria-label': asked.label } },
       h('span', { class: 'label', text: asked.label }),
       field,
-      h('span', { class: 'ask__hint', text: 'Enter sets it · empty, none · Esc leaves it' }),
+      h('span', { class: 'ask__hint', text: 'Enter to set · empty for none · Esc to cancel' }),
     );
     field.addEventListener('input', () => field.removeAttribute('aria-invalid'));
     field.addEventListener('keydown', (event) => {

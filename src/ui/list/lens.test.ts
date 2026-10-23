@@ -224,7 +224,7 @@ describe('arranging', () => {
 
   it('says why rows don’t move: a lens on, or not arranging; nothing while arranging', () => {
     expect(lensLine(list(), arranged(false))?.textContent).toBe(
-      'Your order. Choose Arrange to move notes.',
+      'This is your order. Choose Arrange to move notes.',
     );
     expect(lensLine(list(), arranged(true))).toBeNull();
     expect(lensLine(list({ kind: 'all', folder: undefined, sort: 'title' }))?.textContent).toMatch(

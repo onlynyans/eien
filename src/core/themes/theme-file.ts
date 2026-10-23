@@ -47,7 +47,7 @@ export function readTheme(text: string): ReadTheme {
   const given = isObject(raw.mix) ? raw.mix : {};
   const problems: string[] = isObject(raw.mix)
     ? []
-    : ['It has no "mix"; Eien’s first mix is used.'];
+    : ['It has no "mix", so the default mix is used.'];
   const mix: Record<keyof Mix, number> = { ...FIRST_MIX };
   for (const key of MIX_KEYS) {
     const value = given[key];

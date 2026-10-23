@@ -175,7 +175,7 @@ describe('the verdict', () => {
   it('says every ink keeps the contrast', () => {
     expect(verdictOf(mixPalette(FIRST_MIX))).toEqual({
       keeps: true,
-      words: 'Every ink keeps Eien’s contrast, by day and by night.',
+      words: 'Every color has enough contrast to read, by day and by night.',
     });
   });
 
@@ -186,7 +186,7 @@ describe('the verdict', () => {
     const verdict = verdictOf(faint);
     expect(verdict.keeps).toBe(false);
     expect(verdict.words).toMatch(
-      /^Under Eien’s contrast: pencil on desk by day, 1\.\d:1 of 4\.5:1\.$/,
+      /^Not enough contrast by day: pencil on desk is 1\.\d:1, and needs 4\.5:1\.$/,
     );
   });
 });
@@ -271,7 +271,7 @@ describe('a theme’s file', () => {
     ]);
     expect(readTheme('{}')).toEqual({
       mix: FIRST_MIX,
-      problems: ['It has no "mix"; Eien’s first mix is used.'],
+      problems: ['It has no "mix", so the default mix is used.'],
     });
   });
 

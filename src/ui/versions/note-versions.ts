@@ -64,7 +64,7 @@ export type SealResult =
 /** How many times a seal (or a restore) is tried again when something moved meanwhile. */
 const TRIES = 3;
 
-const NOT_SAVED = 'The note couldn’t be saved, so it wasn’t sealed.';
+const NOT_SAVED = 'No version was made: the note couldn’t be saved.';
 
 export class NoteVersions {
   readonly #ctx: VersionsContext;
@@ -95,7 +95,7 @@ export class NoteVersions {
       if (result.kind === 'sealed') await this.#thin(id);
       return result;
     } catch (error) {
-      return refused(`The note wasn’t sealed: ${reasonOf(error)}`);
+      return refused(`No version was made: ${reasonOf(error)}`);
     }
   }
 
@@ -109,13 +109,13 @@ export class NoteVersions {
   async restore(target: SealTarget, id: string, version: VersionFile): Promise<SealResult> {
     try {
       const text = await this.text(id, version);
-      if (text === null) return refused('That seal isn’t there any more.');
+      if (text === null) return refused('That version no longer exists.');
       const result = await this.#restoreAs(target, text);
       if (result.kind !== 'refused' || target.open()) return result;
       const file = await fileTarget(this.#ctx.vault, target.path);
       return file ? await this.#restoreAs(file, text) : refused('The note isn’t there any more.');
     } catch (error) {
-      return refused(`The seal wasn’t restored: ${reasonOf(error)}`);
+      return refused(`The version wasn’t restored: ${reasonOf(error)}`);
     }
   }
 
@@ -140,11 +140,11 @@ export class NoteVersions {
       }
       if (!typedSince) {
         return refused(
-          'The seal couldn’t be put back just now (the note may be moving); try again.',
+          'The version couldn’t be restored just now (the note may be moving). Try again.',
         );
       }
     }
-    return refused('The note kept changing while it was being restored; try again.');
+    return refused('The note changed while it was being restored. Try again.');
   }
 
   /** Name a seal (an empty name takes it away); its file, or why it couldn't be named. */
@@ -162,12 +162,12 @@ export class NoteVersions {
         return {
           reason:
             moved.reason === 'missing'
-              ? 'That seal isn’t there any more.'
-              : 'Another seal already has that name.',
+              ? 'That version no longer exists.'
+              : 'Another version already has that name.',
         };
       }
     } catch (error) {
-      return { reason: `The seal couldn’t be named: ${reasonOf(error)}` };
+      return { reason: `The version couldn’t be named: ${reasonOf(error)}` };
     }
     return sortedVersions([file])[0] as VersionFile;
   }
@@ -180,7 +180,9 @@ export class NoteVersions {
   /** Save the note, then write its text as a seal, unless it's as its latest seal. */
   async #sealAs(target: SealTarget, id: string): Promise<SealResult> {
     if (!(await target.save())) {
-      return refused(target.open() ? NOT_SAVED : 'Another note was opened, so it wasn’t sealed.');
+      return refused(
+        target.open() ? NOT_SAVED : 'No version was made: another note was opened first.',
+      );
     }
     const text = target.text();
     for (let attempt = 0; attempt < TRIES; attempt++) {
@@ -195,7 +197,7 @@ export class NoteVersions {
         return { kind: 'sealed', id, version: sortedVersions([file])[0] as VersionFile, text };
       }
     }
-    return refused('Another device kept sealing this note at the same moment; try again.');
+    return refused('Another device was saving a version of this note at the same time. Try again.');
   }
 
   /**
@@ -210,12 +212,12 @@ export class NoteVersions {
     if (id !== null && !shared) return id;
     // Another tool's id, one that can't name a folder: never written over.
     if (id === null && hasForeignNoteId(text)) {
-      return refused('The note’s id can’t name a folder for its seals, so it wasn’t sealed.');
+      return refused('No version was made: the note’s id can’t be used as a folder name.');
     }
     const fresh = newNoteId(this.#ctx.random());
     if (withNoteId(text, fresh) === null) {
       return refused(
-        'The note’s front matter isn’t a list of keys Eien can add its id to, so it wasn’t sealed.',
+        'No version was made: Eien can’t add an id to this note’s front matter, as it isn’t a list of keys.',
       );
     }
     if (id !== null) await this.#copySeals(id, fresh);
@@ -223,8 +225,8 @@ export class NoteVersions {
     if (!(await target.amend((now) => withNoteId(now, fresh), false))) {
       return refused(
         target.open()
-          ? 'The note couldn’t be given its id just now (it may be moving), so it wasn’t sealed.'
-          : 'Another note was opened, so it wasn’t sealed.',
+          ? 'No version was made: the note couldn’t be given an id just now (it may be moving). Try again.'
+          : 'No version was made: another note was opened first.',
       );
     }
     return fresh;
