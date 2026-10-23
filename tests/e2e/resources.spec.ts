@@ -23,9 +23,11 @@ const FIRST_LIST_MS = 1500;
  * The built renderer's own code and styles, in bytes, +10%. Measured again as features land:
  * 1,614,848 and 137,409 with 3E's row menu and rename in place (#42); 1,688,127 and 152,698
  * with 3D's tags and formatting bar (#41); CSS 169,893 (on Windows) with the ten monos'
- * @font-face rules, Latin and Latin Extended only (ui/theme/monos.css, #54).
+ * @font-face rules, Latin and Latin Extended only (ui/theme/monos.css, #54). The CSS is
+ * minified from #54 on (electron.vite.config.ts): about 110,000 then, with room for the
+ * shut sidebar (#57) and the table editor (#58).
  */
-const RENDERER = { js: 1_860_000, css: 187_000 };
+const RENDERER = { js: 1_860_000, css: 118_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);
