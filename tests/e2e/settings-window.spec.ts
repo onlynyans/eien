@@ -33,7 +33,7 @@ const style = (page: Page, selector: string, property: string) =>
     .first()
     .evaluate((element, name) => getComputedStyle(element).getPropertyValue(name), property);
 const rgb = (hex: Hex) => `rgb(${rgbOf(hex).join(', ')})`;
-const WASHI = galleryTheme('washi')?.palette;
+const PAPER = galleryTheme('paper')?.palette;
 
 /** Drag from the middle of `from` by `dx`, `dy`, with the mouse. */
 async function drag(page: Page, from: Box, dx: number, dy: number): Promise<void> {
@@ -126,7 +126,7 @@ test('its breadcrumb names the tab; Esc closes it and gives the keyboard back', 
     ['Type', 'Look/Type'],
     ['Custom', 'Themes/Custom'],
     ['Editor', 'Writing/Editor'],
-    ['AO3', 'This vault/AO3'],
+    ['Writing', 'This vault/Writing'],
   ]) {
     const button = dialog(page).getByRole('navigation').getByRole('button', { name, exact: true });
     await button.focus();
@@ -138,14 +138,14 @@ test('its breadcrumb names the tab; Esc closes it and gives the keyboard back', 
   await page.keyboard.press('Tab');
   await expect(dialog(page).getByRole('button', { name: 'Close settings' })).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.locator(':focus')).toHaveAttribute('data-value', 'spacer');
+  await expect(page.locator(':focus')).toHaveAttribute('data-value', 'roman');
 
   await page.keyboard.press('Escape');
   await expect(dialog(page)).toBeHidden();
   await expect(opener).toBeFocused();
   // It opens again where it was.
   await page.keyboard.press('Enter');
-  await expect(crumbs(page)).toHaveText('Settings/This vault/AO3');
+  await expect(crumbs(page)).toHaveText('Settings/This vault/Writing');
 });
 
 test('This vault’s settings stand apart, and go to the vault’s own file', async ({
@@ -157,13 +157,12 @@ test('This vault’s settings stand apart, and go to the vault’s own file', as
   await goTo(page, 'Writing');
   await expect(dialog(page).locator('.settings__scope').first()).toContainText('.eien/config.json');
   await choose(page, 'Quotation marks', 'Straight " "');
-  await goTo(page, 'AO3');
   await choose(page, 'Scene breaks', 'Rule alone');
   const vaultFile = join(vault ?? '', '.eien', 'config.json');
   await expect
     // Asked before the first write lands, the file isn't there yet: a read that throws ends a poll.
     .poll(() => existsSync(vaultFile) && JSON.parse(readFileSync(vaultFile, 'utf8')))
-    .toEqual({ 'typography.quotes': 'straight', 'ao3.sceneBreak': 'rule' });
+    .toEqual({ 'typography.quotes': 'straight', 'html.sceneBreak': 'rule' });
   // None of this device's: nothing written to its own file.
   await goTo(page, 'Appearance');
   await choose(page, 'Density', 'Compact');
@@ -211,11 +210,11 @@ test.describe('the Running head layout', () => {
 
   test('its strip takes the ground chosen, one of the theme’s own surfaces', async ({ page }) => {
     const strip = page.locator('.window-head');
-    await expect(strip).toHaveCSS('background-color', rgb(WASHI?.desk[0] ?? '#000000'));
+    await expect(strip).toHaveCSS('background-color', rgb(PAPER?.desk[0] ?? '#000000'));
     await page.getByRole('button', { name: 'Settings' }).click();
     await choose(page, 'Running head', 'Paper');
-    await expect(strip).toHaveCSS('background-color', rgb(WASHI?.paper[0] ?? '#000000'));
+    await expect(strip).toHaveCSS('background-color', rgb(PAPER?.paper[0] ?? '#000000'));
     await choose(page, 'Running head', 'Desk');
-    await expect(strip).toHaveCSS('background-color', rgb(WASHI?.desk[0] ?? '#000000'));
+    await expect(strip).toHaveCSS('background-color', rgb(PAPER?.desk[0] ?? '#000000'));
   });
 });

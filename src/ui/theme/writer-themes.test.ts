@@ -80,13 +80,13 @@ describe('the writer’s themes', () => {
     expect(await themes.rename('Orchard', ' / ')).toEqual({ ok: false, problem: 'empty' });
   });
 
-  it('sends one to the trash, where it can be taken back, and Washi is worn', async () => {
+  it('sends one to the trash, where it can be taken back, and Paper is worn', async () => {
     const { themes, settings, palette, storage } = await subject();
     await themes.create('Late Train', LATE);
     await settings.set('appearance.palette', 'mine:Late Train');
     themes.preview('Late Train', { ...LATE, seal: 300 }); // a knob turned, not yet written
     await themes.trash('Late Train');
-    expect(palette()).toBe('washi');
+    expect(palette()).toBe('paper');
     expect(themes.list).toEqual([]);
     expect(storage.trashed).toEqual(['.eien/themes/Late Train.json']);
   });

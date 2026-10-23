@@ -1,7 +1,7 @@
-// Copy for AO3, inline: a block's words, marks and the note's own HTML as
-// AO3 takes them. Quotes follow the vault's setting; code keeps its own.
+// Copy as HTML, inline: a block's words, marks and the note's own HTML as
+// story sites take them. Quotes follow the vault's setting; code keeps its own.
 // ./to-html.ts writes the blocks round them. A book's exports (EPUB, Word,
-// PDF; spec §8) differ only where AO3 has no tag or no place: a highlight
+// PDF; spec §8) differ only where story sites have no tag or no place: a highlight
 // is <mark>, an image is the book's own copy (or its words), and a link goes
 // to the web or mail only.
 
@@ -30,7 +30,7 @@ function shownLines(html: string): string {
   return lines.join('<br />\n');
 }
 
-/** How a book's writer differs from AO3's (spec §8). */
+/** How a book's writer differs from the copy's (spec §8). */
 export interface BookFlavor {
   /** The address a book gives the image the note names `address`; null when it carries none. */
   image(address: string): string | null;
@@ -46,7 +46,7 @@ export class InlineWriter {
   readonly #source: string;
   readonly #quotes: QuoteStyle;
   readonly #references: References;
-  /** Written for a book's exports, not for AO3 (see the top of this file). */
+  /** Written for a book's exports, not for copying (see the top of this file). */
   readonly #book: BookFlavor | null;
   /** The last character of text written: what a quote after it opens or closes by. */
   #before = '';
@@ -69,7 +69,7 @@ export class InlineWriter {
     this.#book = book;
   }
 
-  /** Whether a link to `href` is kept: one AO3 may follow; in a book, only to the web or mail. */
+  /** Whether a link to `href` is kept: one a story site may follow; in a book, only to the web or mail. */
   #follows(href: string): boolean {
     return this.#book ? webAddress(href) : safeAddress(href);
   }
@@ -193,7 +193,7 @@ export class InlineWriter {
   }
 
   /**
-   * A link (or an image) as AO3 takes it, to its address or the reference
+   * A link (or an image) as story sites take it, to its address or the reference
    * the note defines; one to an address it shouldn't follow, as its words;
    * brackets that link nowhere ("[sic]", "[...]"), as written.
    */
@@ -237,7 +237,7 @@ export class InlineWriter {
     return `<img src="${escapeAttr(href)}" alt="${alt()}" />`;
   }
 
-  /** HTML in the note: the tags AO3 takes kept, anything else shown as text. */
+  /** HTML in the note: the tags story sites take kept, anything else shown as text. */
   html(source: string, allowed: ReadonlySet<string>): string {
     const match = /^<(\/?)([A-Za-z][A-Za-z0-9]*)\b[^>]*?(\/?)>$/u.exec(source.trim());
     const name = match?.[2]?.toLowerCase();
@@ -268,7 +268,7 @@ export class InlineWriter {
     return this.closed(trimSpaces(shownLines(trimSpaces(this.inline(node)))));
   }
 
-  /** `inner`, with the HTML tags it left open closed: AO3 gets whole elements. */
+  /** `inner`, with the HTML tags it left open closed: a site gets whole elements. */
   closed(inner: string): string {
     return inner + this.#closeFrom(0);
   }

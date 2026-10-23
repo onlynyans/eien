@@ -1,4 +1,4 @@
-// Phase 8 on the real app (spec §8): Copy for AO3 puts the note's HTML on
+// Phase 8 on the real app (spec §8): Copy as HTML puts the note's HTML on
 // the system clipboard, as text and as HTML; pasting it into another note
 // gives the Markdown back; Export saves it where the system's dialog says;
 // plain text that is really HTML pastes as Markdown, code takes a paste as
@@ -61,7 +61,7 @@ const clipboardOf = (app: ElectronApplication) =>
 
 const notice = (page: Page) => page.locator('.list__notice');
 
-test('the menus: Edit → Copy for AO3 (⇧⌘C), File → Export AO3 HTML…', async ({ app, page }) => {
+test('the menus: Edit → Copy as HTML (⇧⌘C), File → Export HTML…', async ({ app, page }) => {
   await expect(page.locator('.note-row').first()).toBeVisible();
   const items = await app.evaluate(({ Menu }) =>
     Menu.getApplicationMenu()?.items.flatMap((menu) =>
@@ -70,23 +70,23 @@ test('the menus: Edit → Copy for AO3 (⇧⌘C), File → Export AO3 HTML…', 
   );
   expect(items).toEqual(
     expect.arrayContaining([
-      ['Edit', 'Copy for AO3', 'CmdOrCtrl+Shift+C'],
-      ['File', 'Export AO3 HTML…', null],
+      ['Edit', 'Copy as HTML', 'CmdOrCtrl+Shift+C'],
+      ['File', 'Export HTML…', null],
     ]),
   );
 });
 
-test('Copy for AO3, then paste into another note: the HTML out, the Markdown back', async ({
+test('Copy as HTML, then paste into another note: the HTML out, the Markdown back', async ({
   app,
   page,
   vault,
 }) => {
   await app.evaluate(({ clipboard }) => clipboard.writeText('before'));
   await open(page, 'Chapter');
-  await clickMenu(app, 'Edit', 'Copy for AO3');
-  await expect(notice(page)).toHaveText('Copied as AO3 HTML.');
+  await clickMenu(app, 'Edit', 'Copy as HTML');
+  await expect(notice(page)).toHaveText('Copied as HTML.');
   const copied = await clipboardOf(app);
-  expect(copied.text).toBe(CHAPTER_HTML); // for AO3's HTML box
+  expect(copied.text).toBe(CHAPTER_HTML); // for a site's HTML box
   expect(copied.html).toContain(CHAPTER_HTML); // for its rich text box
 
   await open(page, 'Blank');
@@ -97,13 +97,13 @@ test('Copy for AO3, then paste into another note: the HTML out, the Markdown bac
     .toBe('# The Scarf\n\n“Look,” he said.\n\n“No.”\n\n***\n\nShe *mended* it.');
 });
 
-test('Copy for AO3 copies only what’s chosen, when something is', async ({ app, page }) => {
+test('Copy as HTML copies only what’s chosen, when something is', async ({ app, page }) => {
   await open(page, 'Chapter');
   await page.locator('.cm-line', { hasText: 'She mended it.' }).click();
   await page.keyboard.press('Home');
   await page.keyboard.press('Shift+End');
-  await clickMenu(app, 'Edit', 'Copy for AO3');
-  await expect(notice(page)).toHaveText('Copied what’s chosen as AO3 HTML.');
+  await clickMenu(app, 'Edit', 'Copy as HTML');
+  await expect(notice(page)).toHaveText('Copied what’s chosen as HTML.');
   expect((await clipboardOf(app)).text).toBe('<p>She <em>mended</em> it.</p>');
 });
 
@@ -126,7 +126,7 @@ test('pasted plain text that is really HTML becomes Markdown; code takes it as i
     .toBe('Before.\n\n```\n<p>One</p><p><em>Two</em></p>\n```\n');
 });
 
-test('Export AO3 HTML saves where the dialog says, and nothing when it’s cancelled', async ({
+test('Export HTML saves where the dialog says, and nothing when it’s cancelled', async ({
   app,
   page,
 }) => {
@@ -145,13 +145,13 @@ test('Export AO3 HTML saves where the dialog says, and nothing when it’s cance
       }) as typeof dialog.showSaveDialog;
     }, file);
     await open(page, 'Chapter');
-    await clickMenu(app, 'File', 'Export AO3 HTML…');
+    await clickMenu(app, 'File', 'Export HTML…');
     await expect
       .poll(() => app.evaluate(() => (globalThis as { offered?: string[] }).offered?.length))
       .toBe(1);
     expect(existsSync(file)).toBe(false);
 
-    await clickMenu(app, 'File', 'Export AO3 HTML…');
+    await clickMenu(app, 'File', 'Export HTML…');
     await expect(notice(page)).toHaveText('Saved as “The Scarf.html”.');
     expect(readFileSync(file, 'utf8')).toBe(`\uFEFF${CHAPTER_HTML}`); // marked as UTF-8 for a browser
     const offered = await app.evaluate(() => (globalThis as { offered?: string[] }).offered);
@@ -167,7 +167,7 @@ test('Export AO3 HTML saves where the dialog says, and nothing when it’s cance
 test('an empty note copies nothing, and says so', async ({ app, page }) => {
   await app.evaluate(({ clipboard }) => clipboard.writeText('kept'));
   await open(page, 'Blank');
-  await clickMenu(app, 'Edit', 'Copy for AO3');
+  await clickMenu(app, 'Edit', 'Copy as HTML');
   await expect(notice(page)).toHaveText('Nothing to copy: the note has no words yet.');
   expect((await clipboardOf(app)).text).toBe('kept');
 });
@@ -196,20 +196,19 @@ test('a vault set to straight quotes keeps them as typed', async ({ app, page, v
     dialog.getByRole('navigation').getByRole('button', { name, exact: true }).click();
   await tab('Writing'); // This vault's
   await dialog.getByRole('button', { name: 'Straight " "', exact: true }).click();
-  await tab('AO3');
   await dialog.getByRole('button', { name: 'Rule alone', exact: true }).click();
   await page.keyboard.press('Escape');
   await expect
     .poll(() => JSON.parse(readIn(vault, '.eien/config.json')))
-    .toEqual({ 'typography.quotes': 'straight', 'ao3.sceneBreak': 'rule' });
+    .toEqual({ 'typography.quotes': 'straight', 'html.sceneBreak': 'rule' });
 
   await editorContent(page).click();
   await page.keyboard.type('"Plain," she said. Don\'t.');
   await expect.poll(() => readIn(vault, 'Blank.md')).toBe('"Plain," she said. Don\'t.');
 
   await open(page, 'Chapter');
-  await clickMenu(app, 'Edit', 'Copy for AO3');
-  await expect(notice(page)).toHaveText('Copied as AO3 HTML.');
+  await clickMenu(app, 'Edit', 'Copy as HTML');
+  await expect(notice(page)).toHaveText('Copied as HTML.');
   expect((await clipboardOf(app)).text).toBe(
     CHAPTER_HTML.replace('<p><br /></p><hr /><p><br /></p>', '<hr />').replaceAll(/[“”]/gu, '"'),
   );

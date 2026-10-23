@@ -2,7 +2,7 @@
 // splitFootnotes read a line differently. Fails on the code as it stands.
 
 import { describe, expect, it } from 'vitest';
-import { bookBlocks } from '../ao3';
+import { bookBlocks } from '../html';
 import { splitFootnotes } from './footnotes';
 
 describe('splitFootnotes and the parser agree on what a fence is', () => {

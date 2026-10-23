@@ -55,7 +55,7 @@ async function exportsWith(files: Record<string, string>) {
   return { exports, saved, told };
 }
 
-describe('a note’s Export… → AO3 HTML, for a note that isn’t open', () => {
+describe('a note’s Export… → HTML, for a note that isn’t open', () => {
   it('never posts the front matter of a note stored with a byte-order mark', async () => {
     const { exports, saved } = await exportsWith({ 'Mending.md': STORED });
     await exports.note('Mending.md', 'html');

@@ -8,7 +8,7 @@ export {
   shortfalls,
   verdictOf,
 } from './contrast-rules';
-export { GALLERY, type GalleryTheme, galleryTheme, WASHI } from './gallery';
+export { GALLERY, type GalleryTheme, galleryTheme, PAPER } from './gallery';
 export { FIRST_MIX, fitInk, MIX_KEYS, MIX_RANGE, type Mix, mixPalette, statusInksFor } from './mix';
 export {
   type DayNight,

@@ -1,4 +1,4 @@
-// A small, forgiving HTML reader for what's pasted (AO3's HTML, a web page,
+// A small, forgiving HTML reader for what's pasted (a story site's HTML, a web page,
 // a notes app's text): elements and text, entities decoded. Not a browser:
 // it never runs anything, and keeps no more of a page than its words and
 // their shapes. Unclosed tags close with their parent; a block opening

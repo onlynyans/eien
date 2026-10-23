@@ -131,8 +131,8 @@
       text: ['Snowed in at the outpost. Short days, long chapters. The scarf has to come back.'],
     },
     checklist: {
-      title: 'AO3 posting checklist', folder: 'checklists', tags: ['todo'], date: 'Oct 11', age: 11500, words: 96, pinned: true,
-      text: ['- [x] Title, summary and notes', '- [x] Tags: fandom, relationships, characters', '- [x] Archive warnings and rating', '- [x] Chapter number and chapter title', '- [ ] Copy for AO3, paste into the HTML box', '- [ ] Preview: the scene breaks', '- [ ] Post, then add #posted'],
+      title: 'Posting checklist', folder: 'checklists', tags: ['todo'], date: 'Oct 11', age: 11500, words: 96, pinned: true,
+      text: ['- [x] Title, summary and notes', '- [x] Tags: fandom, relationships, characters', '- [x] Archive warnings and rating', '- [x] Chapter number and chapter title', '- [ ] Copy as HTML, paste into the HTML box', '- [ ] Preview: the scene breaks', '- [ ] Post, then add #posted'],
     },
   };
 
@@ -935,7 +935,7 @@
       say('Sealed just now.');
     }
 
-    function copyForAO3() {
+    function copyAsHtml() {
       const n = note();
       const quotes = (s) => (st.quotes === 'straight' ? s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'") : s);
       const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -944,8 +944,8 @@
         .join('\n');
       navigator.clipboard?.writeText(html).catch(() => {});
       closeSheet();
-      flash('Copied as AO3 HTML');
-      say('Copied as AO3 HTML.');
+      flash('Copied as HTML');
+      say('Copied as HTML.');
     }
 
     /* Wiring */
@@ -1005,8 +1005,8 @@
           st.baseline = Number(t.dataset.i);
           closeSheet();
           return setCompare('changes');
-        case 'ao3':
-          return copyForAO3();
+        case 'html':
+          return copyAsHtml();
         case 'quotes':
           st.quotes = t.dataset.quotes;
           return renderSheet();

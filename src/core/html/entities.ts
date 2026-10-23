@@ -1,6 +1,6 @@
 // HTML 4's named character references (and XHTML's &apos;): every name a
-// writer, a word processor or AO3 is likely to have used, read the same way
-// by Paste, Copy for AO3's book exports and the PDF's browser. HTML 5 has
+// writer, a word processor or a story site is likely to have used, read the same way
+// by Paste, Copy as HTML's book exports and the PDF's browser. HTML 5 has
 // two thousand more; a name not here is kept as its words.
 
 /** Names for a run of characters from `first` on, in order. */

@@ -28,8 +28,8 @@ then open <http://127.0.0.1:4173/specimen.html>.
 
 A writer, often late at night, three scenes into a chapter, who also keeps
 hundreds of notes. What they do most: write the next scene, find a note,
-reorder chapters, seal a version and compare against it, copy a chapter for
-AO3. The interface must never be louder than the page.
+reorder chapters, seal a version and compare against it, copy a chapter to
+post it. The interface must never be louder than the page.
 
 ## Direction: a book on a desk at night
 
@@ -158,8 +158,8 @@ Two separate choices, and every combination works:
   `data-palette="otaku"` on `<html>` and overrides only the colour tokens —
   surfaces, shadows, inks, rules, the seal and status. Faces, sizes, spaces
   and motion stay Eien's.
-- **The app's gallery** (spec §7, `src/core/themes`) adds Kinari, Aizome,
-  Koke, Rōsoku, Sumi and Sakura-nezumi, and the writer's own themes in
+- **The app's gallery** (spec §7, `src/core/themes`) adds Linen, Indigo,
+  Moss, Candlelight, Ink and Blossom (and names Washi Paper, Otaku Slate), and the writer's own themes in
   `.eien/themes/`, mixed from four choices. Those are worn as overrides of
   the colour tokens on `<html>` (`data-palette` is the theme's id, or
   `mine`): the surfaces, inks, seal and status inks, with the rules,

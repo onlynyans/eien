@@ -1,9 +1,8 @@
-// Exports (spec §8): a note, or a book's chapters in its order, as AO3
+// Exports (spec §8): a note, or a book's chapters in its order, as
 // HTML, EPUB, Word or a PDF, made here with core/export and saved where the
 // writer chooses (on the phone, in Eien/Exports). The open note goes as it
 // is on the page, words not yet saved included.
 
-import { toAo3Html } from '../../core/ao3';
 import {
   docx,
   type ExportNote,
@@ -12,6 +11,7 @@ import {
   pageSizeOf,
   printHtml,
 } from '../../core/export';
+import { toHtml } from '../../core/html';
 import { baseName, joinPath, titleOf } from '../../core/paths';
 import { isSyncConflictName } from '../../core/vault';
 import type { ExportFormat, OutBridge, OutFile, OutKind, VaultBridge } from '../../platform/bridge';
@@ -36,7 +36,7 @@ export interface ExportParts {
 export interface Exports {
   /** What this device can save: every kind, but a PDF on the phone. */
   readonly kinds: readonly OutKind[];
-  /** A note, open or not ('html' is AO3's). */
+  /** A note, open or not ('html' is plain HTML). */
   note(path: string, kind: OutKind): Promise<void>;
   /** A book's chapters in its order. */
   book(folder: string, kind: ExportFormat): Promise<void>;
@@ -67,10 +67,10 @@ export function exportsOf(parts: ExportParts): Exports {
     if (kind === 'docx') return { kind, bytes: docx(request) };
     if (kind === 'pdf')
       return { kind, html: printHtml(request), page: pageSizeOf(request.language) };
-    const sceneBreak = parts.settings.values['ao3.sceneBreak'];
+    const sceneBreak = parts.settings.values['html.sceneBreak'];
     return {
       kind,
-      text: toAo3Html(request.notes[0]?.markdown ?? '', { quotes: quotes(), sceneBreak }),
+      text: toHtml(request.notes[0]?.markdown ?? '', { quotes: quotes(), sceneBreak }),
     };
   }
 
@@ -89,7 +89,7 @@ export function exportsOf(parts: ExportParts): Exports {
     date: new Date(),
   });
 
-  /** Save what `make` makes; its images, for a book's formats (AO3's HTML keeps its addresses). */
+  /** Save what `make` makes; its images, for a book's formats (plain HTML keeps its addresses). */
   async function save(
     name: string,
     make: (images: ExportImages | null) => Promise<ExportRequest>,
@@ -115,8 +115,8 @@ export function exportsOf(parts: ExportParts): Exports {
       title,
       async (images) => {
         const markdown = await textOf(path);
-        // No words to show (as Copy for AO3 finds them): nothing to export.
-        if (!toAo3Html(markdown, { quotes: 'straight', sceneBreak: 'rule' })) {
+        // No words to show (as Copy as HTML finds them): nothing to export.
+        if (!toHtml(markdown, { quotes: 'straight', sceneBreak: 'rule' })) {
           throw new Nothing('Nothing to export: the note has no words yet.');
         }
         const carried = (await images?.of(path, markdown)) ?? new Map();

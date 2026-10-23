@@ -22,7 +22,7 @@ shipped.
 - **Who:** a writer, often late at night, three scenes into a chapter, who also
   keeps hundreds of notes. What they do most: write the next scene, find a
   note, reorder chapters, seal a version and compare against it, copy a
-  chapter for AO3.
+  chapter to post it.
 - **Feel:** a book on a desk at night. Calm, warm, paper and ink. The
   interface is never louder than the page.
 - **Signature:** the seal, a vermilion square with 永 pressed into it. It
@@ -129,7 +129,7 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 
 | Family | Tokens | Values | Set by |
 |---|---|---|---|
-| Surfaces | `--eien-desk`, `-blotter`, `-band`, `-paper`, `-paper-raised`, `-well`, `-selected`, `-hover`, `-press`, `-scrim` | light-dark pairs (Washi) | theme |
+| Surfaces | `--eien-desk`, `-blotter`, `-band`, `-paper`, `-paper-raised`, `-well`, `-selected`, `-hover`, `-press`, `-scrim` | light-dark pairs (Paper) | theme |
 | Inks | `--eien-ink`, `-ink-soft`, `-pencil`, `-faded`, `-focus` | four strengths; focus = ink-soft | theme |
 | Seal | `--eien-seal`, `-seal-wash` | vermilion | theme (one seal colour per theme) |
 | Status | `--eien-added`, `-removed` (= `-danger`), `-caution`, each `-wash` | moss, carmine, ochre | theme |
@@ -273,7 +273,7 @@ page there shows them working.
   double-click of its head. On a phone it's a full sheet, its tabs in a
   strip under the head. Built: `src/ui/settings/` (3G).
   - **Categories:** Look (Appearance, Type, Page), Themes (Gallery,
-    Custom), Writing (Lists, Editor), This vault (Writing, AO3): the
+    Custom), Writing (Lists, Editor), This vault (Writing): the
     vault's own settings apart from this device's (#31).
   - **Breadcrumb head:** `SETTINGS / CATEGORY / TAB` in the machine voice,
     slashes faded, the last part ink-soft.

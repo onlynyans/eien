@@ -1,6 +1,6 @@
-// What leaves the app (spec §8): Copy for AO3 puts the HTML on the
-// clipboard, as text (for AO3's HTML box) and as HTML (for its rich text
-// box); an export (AO3 HTML, EPUB, Word, PDF) is saved where the writer
+// What leaves the app (spec §8): Copy as HTML puts the HTML on the
+// clipboard, as text (for a site's HTML box) and as HTML (for its rich text
+// box); an export (HTML, EPUB, Word, PDF) is saved where the writer
 // chooses, through the system's own dialog, so the window never names a
 // place on disk. A PDF is printed here, from the page the window made.
 
@@ -30,7 +30,7 @@ function bounded(value: unknown, name: string, most = MAX_OUT_CHARS): string {
 
 /** Each kind's dialog: its title, and the extension it's saved with. */
 const KINDS: Readonly<Record<OutKind, { title: string; name: string; extension: string }>> = {
-  html: { title: 'Export AO3 HTML', name: 'HTML', extension: 'html' },
+  html: { title: 'Export HTML', name: 'HTML', extension: 'html' },
   epub: { title: 'Export EPUB', name: 'EPUB', extension: 'epub' },
   docx: { title: 'Export Word Document', name: 'Word Document', extension: 'docx' },
   pdf: { title: 'Export PDF', name: 'PDF', extension: 'pdf' },

@@ -69,18 +69,18 @@ describe('fitInk', () => {
 });
 
 describe('the gallery', () => {
-  it('holds Eien’s own themes, Washi first, with Otaku kept', () => {
+  it('holds Eien’s own themes, Paper first, with Slate kept', () => {
     expect(GALLERY.map((theme) => theme.id)).toEqual([
-      'washi',
-      'kinari',
-      'aizome',
-      'koke',
-      'rosoku',
-      'sumi',
-      'sakura',
-      'otaku',
+      'paper',
+      'linen',
+      'indigo',
+      'moss',
+      'candlelight',
+      'ink',
+      'blossom',
+      'slate',
     ]);
-    expect(galleryTheme('kinari')?.name).toBe('Kinari');
+    expect(galleryTheme('linen')?.name).toBe('Linen');
     expect(galleryTheme('nothing')).toBeUndefined();
   });
 
@@ -173,9 +173,9 @@ describe('the verdict', () => {
   });
 
   it('names the first ink that falls short, where and when', () => {
-    const washi = galleryTheme('washi')?.palette;
-    if (!washi) throw new Error('no Washi');
-    const faint = { ...washi, pencil: ['#d0d0d0', washi.pencil[1]] as const };
+    const paper = galleryTheme('paper')?.palette;
+    if (!paper) throw new Error('no Paper');
+    const faint = { ...paper, pencil: ['#d0d0d0', paper.pencil[1]] as const };
     const verdict = verdictOf(faint);
     expect(verdict.keeps).toBe(false);
     expect(verdict.words).toMatch(
@@ -301,7 +301,7 @@ describe('a theme’s file', () => {
 
 describe('which theme a setting names', () => {
   it('names a gallery theme by its id', () => {
-    expect(themeChoice('kinari')).toEqual({ kind: 'gallery', id: 'kinari' });
+    expect(themeChoice('linen')).toEqual({ kind: 'gallery', id: 'linen' });
   });
 
   it('names the writer’s own as mine: and its name', () => {
@@ -323,8 +323,8 @@ describe('which theme a setting names', () => {
     }
   });
 
-  it('falls back on Washi for a value that names nothing', () => {
-    expect(themeChoice('nothing')).toEqual({ kind: 'gallery', id: 'washi' });
-    expect(themeChoice('mine:a/b')).toEqual({ kind: 'gallery', id: 'washi' });
+  it('falls back on Paper for a value that names nothing', () => {
+    expect(themeChoice('nothing')).toEqual({ kind: 'gallery', id: 'paper' });
+    expect(themeChoice('mine:a/b')).toEqual({ kind: 'gallery', id: 'paper' });
   });
 });

@@ -54,7 +54,7 @@ export const CATEGORIES: readonly Category[] = [
     name: 'This vault',
     icon: 'folder',
     scope: 'vault',
-    tabs: [group('Writing'), group('AO3')],
+    tabs: [group('Writing')],
   },
 ];
 

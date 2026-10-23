@@ -82,7 +82,7 @@ describe('Word’s lists, hidden words and the edges of a paste', () => {
     expect(fromHtml(numbers.join(''))).toBe('3. Cut\n4. Sew');
   });
 
-  it('leaves out what the page hid: display none, visibility hidden, AO3’s landmarks', () => {
+  it('leaves out what the page hid: display none, visibility hidden, a site’s landmarks', () => {
     expect(
       fromHtml(
         '<p>Seen <span style="display:none">unseen</span><span style="visibility: hidden">gone</span></p><h3 class="landmark heading">Chapter Text</h3><p>Next</p>',

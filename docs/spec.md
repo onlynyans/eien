@@ -397,7 +397,7 @@ format without typing them:
 
 Square brackets are a link only with an address or a defined reference, as
 CommonMark has it: `[sic]` and `[...]` keep their brackets on the page. HTML at
-the start of a line (AO3's `<p>…</p>`) looks as it does mid-line. Front matter
+the start of a line (pasted `<p>…</p>`) looks as it does mid-line. Front matter
 shows quietly, in the mono, never as a scene break.
 
 Links: ⌘-click (Ctrl-click on Windows and Linux) follows one. A web address
@@ -649,7 +649,7 @@ src/core/            (✓ = built)
   search/       ✓ folding (case, accents, quotes), query terms, snippets
   typography/   ✓ quotation marks: curled by what's around them, an apostrophe once it shows, and back
   versions/     ✓ the note's id in its front matter, seal file names, retention, word diff
-  ao3/          ✓ Markdown → AO3 HTML (and a book's HTML); HTML (AO3's, Google Docs', Word's, a page's) → Markdown
+  html/         ✓ Markdown → HTML (and a book's HTML); HTML (a story site's, Google Docs', Word's, a page's) → Markdown
   export/       ✓ a note as a chapter (headings, footnotes); EPUB, Word and the PDF's page; a store-only zip
   import/       ✓ which files of a folder from elsewhere come in, under what names, and why the rest don't
 src/platform/
@@ -673,7 +673,7 @@ src/ui/
   notes/        ✓ the open note: autosave, reload, conflict copies
   vault/        ✓ the vault as the window knows it, its panes drawn, the menu's commands, organizing (rename, move, trash)
   welcome/      ✓ before a vault is open
-  theme/        ✓ tokens.css (the eight faces, density, frame), the Otaku palette, base.css, fonts; wearing a theme, and the writer's own as the window keeps them
+  theme/        ✓ tokens.css (the eight faces, density, frame), the Slate palette, base.css, fonts; wearing a theme, and the writer's own as the window keeps them
   editor/       ✓ CodeMirror, the three views, the selection bar, images, typed quotes, pasted HTML, the writing tools (scene breaks, focus, typewriter)
   versions/     ✓ sealing, Compare, the versions panel, the colophon's last seal
   outline/      ✓ outline cards: a book's chapters as cards on the blotter, reordered by drag or keys
@@ -718,7 +718,7 @@ src/app/
 | Language | TypeScript, strict | Catches mistakes before they run |
 | Build | Vite | Fast, small configuration |
 | Editor | CodeMirror 6 | Proven Markdown editing, live preview through decorations |
-| Rendering | The editor's own parse (Lezer) | Live and Reading style the text in place, so there is no second parser to disagree with the editor. AO3's HTML is phase 8 |
+| Rendering | The editor's own parse (Lezer) | Live and Reading style the text in place, so there is no second parser to disagree with the editor. Copy as HTML is phase 8 |
 | Diff | jsdiff (word level) | Inline strike/insert, like Google Docs |
 | Front matter | `yaml` | Keeps comments and formatting when writing back |
 | Lint and format | Biome | One tool for both |
@@ -737,7 +737,7 @@ Every setting is defined once, in `src/core/config/schema.ts`:
 {
   key: 'typography.quotes',
   label: 'Quotation marks',
-  description: 'As you type them, and in what Copy for AO3 gives. Code keeps its own.',
+  description: 'As you type them, and in what Copy as HTML gives. Code keeps its own.',
   scope: 'vault',              // 'vault' travels with the notes; 'device' stays on this device
   group: 'Writing',            // its tab in Settings (here under This vault)
   type: 'choice',
@@ -752,7 +752,7 @@ phase that builds what it changes, so the screen never offers a switch that
 does nothing.
 
 - **Vault settings** live in `.eien/config.json`: chapter numbers (i ii iii or
-  1 2 3), quotation marks and AO3's scene break. Settings shows them apart,
+  1 2 3), quotation marks and the scene break in copied HTML. Settings shows them apart,
   under This vault. The vault's watcher
   reports this one hidden file, so a change from another device shows at once.
 - **Device settings** live in `settings.json`, never in a vault: in
@@ -803,7 +803,7 @@ larger inset (64px above and below, 112px at the sides).
   | Look | Appearance, Type, Page |
   | Themes | Gallery, Custom (§7) |
   | Writing | Lists, Editor |
-  | This vault | Writing, AO3 |
+  | This vault | Writing |
 
   **This vault** holds the vault's own settings (those whose scope is
   `vault`) and nothing else, and says they're kept in its
@@ -861,10 +861,10 @@ larger inset (64px above and below, 112px at the sides).
   ink, ink-soft, pencil and the status inks reach 4.5:1, faded and the seal
   3:1, on each of the five surfaces (`core/themes/contrast-rules.ts`). The
   verdict says so in words, or names the first colour that falls short.
-- **The gallery**, Eien's own (`core/themes/gallery.ts`): Washi 和紙 (the
-  default, tokens.css's own colours), Kinari 生成り, Aizome 藍染, Koke 苔,
-  Rōsoku 蝋燭, Sumi 墨, Sakura-nezumi 桜鼠, and Otaku (its own sheet,
-  `otaku.css`). Each keeps Eien's order of surfaces (darker is further
+- **The gallery**, Eien's own (`core/themes/gallery.ts`): Paper 和紙 (the
+  default, tokens.css's own colours), Linen 生成り, Indigo 藍染, Moss 苔,
+  Candlelight 蝋燭, Ink 墨, Blossom 桜鼠, and Slate (its own sheet,
+  `slate.css`, from the Otaku design). Each keeps Eien's order of surfaces (darker is further
   back) and its contrast.
 - **Your own themes** are one file each in the vault's `.eien/themes/`, so
   they sync with the notes. The file is named for the theme, as a note is
@@ -882,7 +882,7 @@ larger inset (64px above and below, 112px at the sides).
   Paper, ink and seal are hues (0–360), warmth the paper's saturation
   (0–40). Every other key in the file is kept when Eien writes it. A choice
   missing or out of range takes the first mix's, with a warning in the log;
-  a file that isn't a JSON object is worn as Washi and never written over.
+  a file that isn't a JSON object is worn as Paper and never written over.
   A theme is made, saved, renamed (the file is renamed) and sent to the
   trash through the Storage contract (`platform/theme-files.ts`), so its
   file is never lost, only sent where it can be taken back. The watcher reports the folder's
@@ -896,14 +896,14 @@ larger inset (64px above and below, 112px at the sides).
   mix keeps Eien's contrast; property tests hold it.
 - **Which theme is worn** is the Palette setting (`appearance.palette`,
   this device's): a gallery theme's id, or `mine:` and one of your own
-  themes' names. Washi is worn by tokens.css and Otaku by `data-palette`;
+  themes' names. Paper is worn by tokens.css and Slate by `data-palette`;
   every other theme is its colour tokens set as overrides on `<html>`
   (`ui/theme/wear.ts`), and only known colour tokens whose values are
   `light-dark()` of two colours are applied (`safeTokens`), so a theme
   can't break the layout or run code. One of your own that isn't there (no
-  vault open yet, another vault, a file being edited) is worn as Washi.
+  vault open yet, another vault, a file being edited) is worn as Paper.
   Renaming the theme worn moves the setting with it; sending it to the
-  trash wears Washi.
+  trash wears Paper.
 - **Settings → Themes** has two tabs (`ui/settings/themes-tabs.ts`), and a
   theme chosen in either is worn on the whole window at once:
   - **Gallery:** Eien's own, as cards (desk | paper with ink | night paper
@@ -926,11 +926,12 @@ larger inset (64px above and below, 112px at the sides).
 
 ## 8. What leaves the app, and what comes in
 
-### AO3
+### Copy as HTML
 
-AO3 accepts only HTML. Eien keeps notes in Markdown and converts at the edges.
+Story sites and many editors take only HTML. Eien keeps notes in Markdown and
+converts at the edges.
 
-**Copy for AO3** (and Export → AO3 HTML) produces:
+**Copy as HTML** (and Export → HTML) produces:
 
 | Markdown | HTML |
 |---|---|
@@ -943,16 +944,16 @@ AO3 accepts only HTML. Eien keeps notes in Markdown and converts at the edges.
 | headings | `<h2>`–`<h6>` |
 
 Quotes are converted to the quote setting on the way out. Lists, links (to
-web, mail and relative addresses only), images, code and tables go as AO3
-takes them; a highlight and a wiki link go as their words. The front matter is
+web, mail and relative addresses only), images, code and tables go as story
+sites take them; a highlight and a wiki link go as their words. The front matter is
 never posted.
 
-Edit → Copy for AO3 (⇧⌘C, Ctrl+Shift+C) copies what's chosen, or the whole
-note, as text (for AO3's HTML box) and as HTML (for its rich text box). File →
-Export AO3 HTML… saves the whole note through the system's save dialog, under
+Edit → Copy as HTML (⇧⌘C, Ctrl+Shift+C) copies what's chosen, or the whole
+note, as text (for a site's HTML box) and as HTML (for a rich text box). File →
+Export HTML… saves the whole note through the system's save dialog, under
 the note's name. An empty note copies nothing and says so.
 
-**Paste from AO3** (or any HTML) turns it into Markdown:
+**Paste from HTML** turns it into Markdown:
 
 - `<p>` → paragraphs; empty `<p><br /></p>` spacers are dropped.
 - A spacer, `<hr>`, spacer group → one `***`.
@@ -981,8 +982,8 @@ a year (`'90s`) or an elision (`'tis`, `'em`, `'cause`, `rock 'n' roll`). In
 code (or code being typed), an address, an HTML tag and the front matter,
 quotes stay as typed.
 
-A round trip, Markdown → AO3 → Markdown, gives back the same text. Tests prove
-it, including on real AO3 output.
+A round trip, Markdown → HTML → Markdown, gives back the same text. Tests prove
+it, including on real output copied from a story site.
 
 ### Exports: EPUB, Word, PDF
 
@@ -990,10 +991,10 @@ it, including on real AO3 output.
   File → Export Book ▸ the same three exports the book the open note is a
   chapter of, or, with none open there, the book chosen in the sidebar (as
   Outline Cards finds it); with no book, one line of news says so. A note's
-  menu has Export… (AO3 HTML, EPUB, Word, PDF) for that note, open or not, and
+  menu has Export… (HTML, EPUB, Word, PDF) for that note, open or not, and
   a book's folder menu has Export… (EPUB, Word, PDF).
 - **Where:** saved where the writer chooses, through the system's save
-  dialog, offering the note's or the book's name, as Export AO3 HTML is. A
+  dialog, offering the note's or the book's name, as Export HTML is. A
   note with no words, or a book with no chapters, exports nothing and says so.
 - **A book** is its folder's notes in the book's order (§2), each a chapter;
   notes in its subfolders and Syncthing's conflict copies aren't chapters.
@@ -1002,15 +1003,15 @@ it, including on real AO3 output.
 - **A chapter's heading** is its note's title, unless the note begins with a
   top-level heading (`# The Scarf`): then that heading is the chapter's, and
   isn't shown twice. Each chapter starts a new page.
-- **The Markdown** converts as Copy for AO3 converts it (the table above,
+- **The Markdown** converts as Copy as HTML converts it (the table above,
   quotes as the vault's setting, front matter left out, a note's own HTML as
-  AO3 takes it), with these differences, the same in all three formats:
+  story sites take it), with these differences, the same in all three formats:
   - `==highlight==` is highlighted (`<mark>`; Word's yellow highlight).
   - A scene break (`***`) is a centred `* * *`; the paragraph after it, or
     after a heading, isn't indented.
   - Links go to the web and mail only; a link to anything else (another note,
     a file) is its words, and a `[[wiki link]]` is its words (after a `|`,
-    its alias, as Copy for AO3 has it).
+    its alias, as Copy as HTML has it).
   - **Images** from the vault go in: `![A red scarf](attachments/scarf.png)`,
     by a path from the note's folder or from the vault's top
     (`/attachments/scarf.png`), as the page finds it. PNG, JPEG and GIF, each
@@ -1113,7 +1114,7 @@ Obsidian vault, iA Writer's library, a plain folder) into the vault.
 
 The phone has no menu bar: a note's menu and a book's offer the exports (a
 long press), and so does the page's ⋯ for the note open. EPUB, Word (with
-their images) and AO3 HTML go to `Eien/Exports` beside the vault's folder (Documents on Android;
+their images) and HTML go to `Eien/Exports` beside the vault's folder (Documents on Android;
 Eien's folder in the Files app on iOS), under a free name, never over a file
 there. PDF isn't offered: the WebView can't print to
 a file without a plugin of Eien's own, which may come later. Import isn't
@@ -1236,7 +1237,7 @@ Compare or Restore finishes lands on a note opened meanwhile.
     back, the outline cards, the versions), then goes back a pane; at the
     tree it leaves Eien in the background.
   - The page's ⋯ offers what the menu bar does on the desktop: Seal,
-    Compare, Versions, Outline cards, Copy for AO3, Export… (the note's own
+    Compare, Versions, Outline cards, Copy as HTML, Export… (the note's own
     choices), Focus mode, Typewriter scrolling, a sprint (Stop while one is
     under way), Settings. The views, Focus mode and the ⋯ itself are the
     layout's phone bottom (§4, Layouts): in the top bar, on a floating slip,
@@ -1278,9 +1279,9 @@ Every rule, with the cases most likely to break it:
   marks and front matter excluded.
 - **Quotes:** apostrophes (`'tis`, `rock 'n' roll`, `the '90s`), nested quotes,
   quotes after a dash, toggling twice gives the same text.
-- **AO3:** the real sample from a fic; every table row both ways;
+- **HTML:** the real sample from a fic; every table row both ways;
   property-based round trips over generated documents (fast-check).
-- **Exports:** footnotes, headings and the book's differences from AO3; over
+- **Exports:** footnotes, headings and the book's differences from copied HTML; over
   generated notes, every EPUB part and every Word part is well-formed XML with
   its prefixes declared, and every word of the note is in each; the zip read
   back by a strict reader and by `unzip`.
@@ -1313,7 +1314,7 @@ On macOS, Windows and Linux, each with a fresh temporary vault:
 - create, type, quit, relaunch: the text is on disk and back on screen
 - another program edits the open note: it reloads, or a conflict copy appears
 - checkpoint, edit, cycle the compare button through all three states
-- paste the AO3 sample; Copy for AO3 matches the expected HTML
+- paste the story site's sample; Copy as HTML matches the expected HTML
 - export a book and a note as EPUB, Word and PDF through the menus, read back
   from the files saved; import a folder, and the notes appear beside the
   vault's own, nothing written over
@@ -1378,7 +1379,7 @@ are built (2026-10-20); what comes next is in the [backlog](backlog.md).
 | 5 | Design system | Tokens from `docs/design`; palettes and schemes; the eight text faces; text size, density, page frame and zoom; the settings screen |
 | 6 | Organizing | Tags, nesting, search, drag-and-drop order, books, pins, rename, move, trash; then resizing and collapsing the panes, and two-pane mode |
 | 7 | Versions | Checkpoints, the compare button, named versions |
-| 8 | AO3 and typography | Copy for AO3, paste from HTML, quote setting |
+| 8 | HTML and typography | Copy as HTML, paste from HTML, quote setting |
 | 9 | Writing tools | Scene breaks, focus, typewriter, counters, sprint, goals, outline cards, spellcheck |
 | 10 | Mobile | Android APK with Syncthing; then iOS |
 | 11 | Export and import | EPUB, Word, PDF; import from other Markdown folders |
@@ -1395,7 +1396,7 @@ are built (2026-10-20); what comes next is in the [backlog](backlog.md).
 
 ## Open questions
 
-1. ~~AO3 scene break: keep AO3's spacer, `<hr>`, spacer pattern as the
+1. ~~HTML scene break: keep the spacer, `<hr>`, spacer pattern as the
    default?~~ Yes: `<p><br /></p><hr /><p><br /></p>`, so the sections
    breathe (2026-10-20).
 2. ~~Default sort for the note list: modified date, or title?~~ Neither: your

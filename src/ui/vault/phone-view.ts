@@ -50,7 +50,7 @@ export function phoneView(of: PhoneViewOf): PhoneView {
     const exportTo = () =>
       openMenu(
         exportMenu(of.parts().exports.kinds, false, (kind) =>
-          run(kind === 'html' ? 'export-ao3' : `export-note:${kind}`),
+          run(kind === 'html' ? 'export-html' : `export-note:${kind}`),
         ),
         { opener },
         'Export',

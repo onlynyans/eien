@@ -106,12 +106,12 @@ export class WriterThemes {
     return renamed;
   }
 
-  /** Send a theme to the trash, where the writer can take it back; Washi is worn if it was. */
+  /** Send a theme to the trash, where the writer can take it back; Paper is worn if it was. */
   async trash(title: string): Promise<void> {
     await this.#saving;
     this.#pending.delete(nameKey(title));
     await this.#files.trash(title);
-    if (this.#worn(title)) await this.#settings.set('appearance.palette', 'washi');
+    if (this.#worn(title)) await this.#settings.set('appearance.palette', 'paper');
     await this.reload();
   }
 

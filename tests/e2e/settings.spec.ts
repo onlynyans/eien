@@ -129,9 +129,9 @@ test('palette, density, page and text size change the look at once', async ({ pa
   await page.getByRole('button', { name: 'Settings' }).click();
 
   await goTo(page, 'Gallery');
-  await choose(page, 'Gallery', 'Otaku');
-  await expect(root(page)).toHaveAttribute('data-palette', 'otaku');
-  await expect(page.locator('.sidebar')).toHaveCSS('background-color', 'rgb(207, 212, 210)'); // Otaku's desk, by day
+  await choose(page, 'Gallery', 'Slate');
+  await expect(root(page)).toHaveAttribute('data-palette', 'slate');
+  await expect(page.locator('.sidebar')).toHaveCSS('background-color', 'rgb(207, 212, 210)'); // Slate's desk, by day
 
   expect(await style(page, '.sheet', 'padding-top')).toBe('48px');
   await goTo(page, 'Appearance');
@@ -301,7 +301,7 @@ test.describe('a settings file that’s wrong', () => {
     deviceFile: {
       settings: {
         'appearance.face': 'comic-sans',
-        'appearance.palette': 'otaku',
+        'appearance.palette': 'slate',
         'page.zoom': 'huge',
         'future.key': 7,
       },
@@ -313,7 +313,7 @@ test.describe('a settings file that’s wrong', () => {
     page,
     userData,
   }) => {
-    await expect(root(page)).toHaveAttribute('data-palette', 'otaku');
+    await expect(root(page)).toHaveAttribute('data-palette', 'slate');
     await expect(root(page)).not.toHaveAttribute('data-face');
     await expect(page.locator('.colophon__zoom')).toBeHidden();
     await openBook(page);
@@ -326,7 +326,7 @@ test.describe('a settings file that’s wrong', () => {
       .poll(() => (readJson(join(userData, 'settings.json')) as { settings: unknown }).settings)
       // Every other key stays as written; a bad one is ignored when read, not erased.
       .toEqual({
-        'appearance.palette': 'otaku',
+        'appearance.palette': 'slate',
         'page.zoom': 'huge',
         'future.key': 7,
         'appearance.face': 'hanken',

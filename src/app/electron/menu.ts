@@ -83,7 +83,7 @@ export function buildMenu(send: SendCommand): Menu {
         item('Seal', 'seal', 'CmdOrCtrl+S'),
         item('Open Vault…', 'open-vault', 'CmdOrCtrl+O'),
         { type: 'separator' },
-        item('Export AO3 HTML…', 'export-ao3'),
+        item('Export HTML…', 'export-html'),
         // The open note, or the book it's a chapter of (or the book chosen), as a file (spec §8).
         {
           label: 'Export Note',
@@ -114,8 +114,8 @@ export function buildMenu(send: SendCommand): Menu {
         { role: 'delete' },
         { role: 'selectAll' },
         { type: 'separator' },
-        // The note (or what's chosen in it) as the HTML AO3 takes (spec §8).
-        item('Copy for AO3', 'copy-ao3', 'CmdOrCtrl+Shift+C'),
+        // The note (or what's chosen in it) as plain HTML that story sites and editors take (spec §8).
+        item('Copy as HTML', 'copy-html', 'CmdOrCtrl+Shift+C'),
         // macOS's own checker; elsewhere there's none without a download (spec §4).
         ...(mac
           ? [

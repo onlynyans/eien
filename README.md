@@ -1,7 +1,7 @@
 # Eien
 
 A local Markdown notes app for writers. Notes are plain `.md` files in folders,
-with tags, seals (the versions you keep) and named seals, and AO3-ready HTML
+with tags, seals (the versions you keep) and named seals, and clean HTML
 on copy.
 
 For macOS, Windows, Linux, Android and iOS.
@@ -26,8 +26,8 @@ interface work after it (stage 3) too. What's left is in the
   book, and send what you don't want to the system's trash.
 - **Versions.** ⌘S seals the note. Compare it with a seal, word by word; name
   a seal; restore one.
-- **AO3.** Copy for AO3 gives HTML ready to paste into AO3's box, and pasting
-  from AO3 or a web page gives Markdown back. Quotation marks are set as you
+- **HTML.** Copy as HTML gives clean HTML ready to paste into a story site or
+  an editor, and pasting HTML from a web page gives Markdown back. Quotation marks are set as you
   type.
 - **Writing tools.** Scene breaks, focus mode, typewriter scrolling, today's
   and a book's word counts, sprints, goals, outline cards, and spellcheck on

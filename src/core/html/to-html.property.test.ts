@@ -1,13 +1,13 @@
-// Properties of Copy for AO3 and Paste over generated notes: AO3's HTML,
+// Properties of Copy as HTML and Paste over generated notes: the HTML,
 // pasted back as Markdown and copied again, is the same HTML; and a note
 // written as Paste writes it comes back as it was.
 
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { fromHtml } from './from-html';
-import { type Ao3Options, toAo3Html } from './to-html';
+import { type HtmlOptions, toHtml } from './to-html';
 
-const OPTIONS: Ao3Options = { quotes: 'straight', sceneBreak: 'spacer' };
+const OPTIONS: HtmlOptions = { quotes: 'straight', sceneBreak: 'spacer' };
 
 /** Words and marks a note is made of, Markdown's own among them. */
 const token = fc.constantFrom(
@@ -97,12 +97,12 @@ function shown(html: string): string {
   return out;
 }
 
-describe('Copy for AO3, pasted back', () => {
+describe('Copy as HTML, pasted back', () => {
   it('copied again, shows as the same HTML', () => {
     fc.assert(
       fc.property(note, (md) => {
-        const html = toAo3Html(md, OPTIONS);
-        expect(shown(toAo3Html(fromHtml(html), OPTIONS))).toBe(shown(html));
+        const html = toHtml(md, OPTIONS);
+        expect(shown(toHtml(fromHtml(html), OPTIONS))).toBe(shown(html));
       }),
     );
   });
@@ -110,8 +110,8 @@ describe('Copy for AO3, pasted back', () => {
   it('pasted once more, is the same Markdown', () => {
     fc.assert(
       fc.property(note, (md) => {
-        const pasted = fromHtml(toAo3Html(md, OPTIONS));
-        expect(fromHtml(toAo3Html(pasted, OPTIONS))).toBe(pasted);
+        const pasted = fromHtml(toHtml(md, OPTIONS));
+        expect(fromHtml(toHtml(pasted, OPTIONS))).toBe(pasted);
       }),
     );
   });

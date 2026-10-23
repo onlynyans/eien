@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { fromHtml, looksLikeHtml } from './from-html';
 import { decodeEntities, parseHtml } from './html';
-import { type Ao3Options, toAo3Html } from './to-html';
+import { type HtmlOptions, toHtml } from './to-html';
 
-const CURLY: Ao3Options = { quotes: 'curly', sceneBreak: 'spacer' };
-const STRAIGHT: Ao3Options = { quotes: 'straight', sceneBreak: 'spacer' };
-const html = (md: string, options = STRAIGHT) => toAo3Html(md, options);
+const CURLY: HtmlOptions = { quotes: 'curly', sceneBreak: 'spacer' };
+const STRAIGHT: HtmlOptions = { quotes: 'straight', sceneBreak: 'spacer' };
+const html = (md: string, options = STRAIGHT) => toHtml(md, options);
 
-describe('Copy for AO3: the spec’s table', () => {
+describe('Copy as HTML: the spec’s table', () => {
   it('paragraphs and line breaks', () => {
     expect(html('One.\n\nTwo,\nthree.')).toBe('<p>One.</p>\n<p>Two,<br />\nthree.</p>');
   });
 
-  it('a scene break as AO3’s spacer, rule, spacer, or a plain rule', () => {
+  it('a scene break as spacer, rule, spacer, or a plain rule', () => {
     expect(html('A.\n\n***\n\nB.')).toBe('<p>A.</p>\n<p><br /></p><hr /><p><br /></p>\n<p>B.</p>');
     expect(html('A.\n\n***\n\nB.', { ...STRAIGHT, sceneBreak: 'rule' })).toBe(
       '<p>A.</p>\n<hr />\n<p>B.</p>',
@@ -25,7 +25,7 @@ describe('Copy for AO3: the spec’s table', () => {
     );
   });
 
-  it('quotes and headings (a note’s # is AO3’s h2)', () => {
+  it('quotes and headings (a note’s # is h2)', () => {
     expect(html('> Said.\n> Twice.')).toBe('<blockquote><p>Said.<br />\nTwice.</p></blockquote>');
     expect(html('# One\n\n## Two\n\n###### Six')).toBe('<h2>One</h2>\n<h3>Two</h3>\n<h6>Six</h6>');
   });
@@ -64,13 +64,13 @@ describe('Copy for AO3: the spec’s table', () => {
   });
 });
 
-describe('Copy for AO3: the rest of a note', () => {
-  it('lists, links, images and code as AO3 takes them', () => {
+describe('Copy as HTML: the rest of a note', () => {
+  it('lists, links, images and code as story sites take them', () => {
     expect(html('- one\n- two\n\n1. a\n2. b')).toBe(
       '<ul><li>one</li>\n<li>two</li></ul>\n<ol><li>a</li>\n<li>b</li></ol>',
     );
-    expect(html('[AO3](https://archiveofourown.org) ![map](map.png)')).toBe(
-      '<p><a href="https://archiveofourown.org">AO3</a> <img src="map.png" alt="map" /></p>',
+    expect(html('[Archive](https://example.org) ![map](map.png)')).toBe(
+      '<p><a href="https://example.org">Archive</a> <img src="map.png" alt="map" /></p>',
     );
     expect(html('```\nlet x = 1 < 2;\n```')).toBe('<pre>let x = 1 &lt; 2;</pre>');
   });
@@ -87,7 +87,7 @@ describe('Copy for AO3: the rest of a note', () => {
     expect(html('- [ ] todo\n- [x] done')).toBe('<ul><li>☐ todo</li>\n<li>☑ done</li></ul>');
   });
 
-  it('escapes what would read as HTML, and keeps only the HTML AO3 takes', () => {
+  it('escapes what would read as HTML, and keeps only plain HTML that story sites and editors take', () => {
     expect(html('1 < 2 & 3 > 2')).toBe('<p>1 &lt; 2 &amp; 3 &gt; 2</p>');
     expect(html('<script>alert(1)</script>')).toBe('<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>');
     expect(html('<p class="x">kept, &amp; plain</p>')).toBe('<p>kept, &amp; plain</p>');
@@ -109,8 +109,8 @@ describe('Copy for AO3: the rest of a note', () => {
   });
 });
 
-describe('Paste from AO3 (or any HTML)', () => {
-  it('paragraphs, dropping AO3’s empty spacers; spacer, rule, spacer is one ***', () => {
+describe('Paste from any HTML', () => {
+  it('paragraphs, dropping empty spacer paragraphs; spacer, rule, spacer is one ***', () => {
     expect(fromHtml('<p>One.</p><p><br /></p><hr /><p>&nbsp;</p><p>Two.</p>')).toBe(
       'One.\n\n***\n\nTwo.',
     );
@@ -147,7 +147,7 @@ describe('Paste from AO3 (or any HTML)', () => {
     );
   });
 
-  it('a page of AO3’s own, as copied from a work', () => {
+  it('a story site’s page, as copied from a work', () => {
     const page = `<div class="userstuff module" role="article">
 <h3 class="landmark heading" id="work">Chapter Text</h3>
 <p>The scarf caught on the gate.</p>
@@ -157,7 +157,7 @@ describe('Paste from AO3 (or any HTML)', () => {
 <p>&nbsp;</p>
 <p>She mended it by the fire.</p>
 </div>`;
-    // "Chapter Text" is AO3's heading for screen readers, hidden on the page: it isn't the writer's.
+    // "Chapter Text" is the site's heading for screen readers, hidden on the page: it isn't the writer's.
     expect(fromHtml(page)).toBe(
       'The scarf caught on the gate.\n\n“Look,” he began, and *stopped*.\n\n***\n\nShe mended it by the fire.',
     );
@@ -210,7 +210,7 @@ describe('plain text that is really HTML', () => {
   });
 });
 
-describe('the round trip, Markdown → AO3 → Markdown', () => {
+describe('the round trip, Markdown → HTML → Markdown', () => {
   it('gives back a chapter as written', () => {
     const chapter = [
       '# The Mended Scarf',
@@ -222,16 +222,16 @@ describe('the round trip, Markdown → AO3 → Markdown', () => {
       '## After',
       'The end.',
     ].join('\n\n');
-    expect(fromHtml(toAo3Html(chapter, STRAIGHT))).toBe(chapter);
+    expect(fromHtml(toHtml(chapter, STRAIGHT))).toBe(chapter);
   });
 
   it('gives back the curly quotes of a note set to curly', () => {
     const note = '“Look,” he said. She didn’t.';
-    expect(fromHtml(toAo3Html(note, CURLY))).toBe(note);
+    expect(fromHtml(toHtml(note, CURLY))).toBe(note);
   });
 });
 
-describe('Copy for AO3: links, code and what’s chosen', () => {
+describe('Copy as HTML: links, code and what’s chosen', () => {
   it('links by the note’s references; brackets that link nowhere stay as written', () => {
     expect(html('[a][map], [map][] and [map].\n\n[map]: <https://x.org/a b>')).toBe(
       '<p><a href="https://x.org/a b">a</a>, <a href="https://x.org/a b">map</a> and <a href="https://x.org/a b">map</a>.</p>',
@@ -257,9 +257,9 @@ describe('Copy for AO3: links, code and what’s chosen', () => {
   it('what’s chosen: never front matter, its links found in the whole note', () => {
     const note = '---\nid: N1\n---\nOne.\n\n---\n\nSee [the map][map].\n\n[map]: https://x.org';
     const from = note.indexOf('---\n\nSee');
-    expect(toAo3Html(note, STRAIGHT, { from, to: note.indexOf('\n\n[map]') })).toBe(
+    expect(toHtml(note, STRAIGHT, { from, to: note.indexOf('\n\n[map]') })).toBe(
       '<p><br /></p><hr /><p><br /></p>\n<p>See <a href="https://x.org">the map</a>.</p>',
     );
-    expect(toAo3Html(note, STRAIGHT, { from: 2, to: 8 })).toBe(''); // only front matter chosen
+    expect(toHtml(note, STRAIGHT, { from: 2, to: 8 })).toBe(''); // only front matter chosen
   });
 });

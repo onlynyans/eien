@@ -12,7 +12,7 @@ export interface MoreState {
   readonly values: SettingValues;
   /** A sprint under way: Stop is offered, not another. */
   readonly sprinting: boolean;
-  /** Export…: the note's own export choices (EPUB, Word, AO3 HTML), as its menu offers them. */
+  /** Export…: the note's own export choices (EPUB, Word, HTML), as its menu offers them. */
   exportTo(): void;
 }
 
@@ -33,7 +33,7 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     item('Versions', 'versions'),
     item('Outline cards', 'outline'),
     'separator',
-    item('Copy for AO3', 'copy-ao3'),
+    item('Copy as HTML', 'copy-html'),
     { label: 'Export…', run: state.exportTo },
     'separator',
     toggle('Focus mode', 'editor.focus'),

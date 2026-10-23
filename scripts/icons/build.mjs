@@ -27,26 +27,30 @@ const ground = /<rect id="ground"[^>]*fill="(#[0-9a-f]{6})"/u.exec(source)?.[1];
 const ink = /<path id="glyph"[^>]*fill="(#[0-9a-f]{6})"/u.exec(source)?.[1];
 const glyph = /<path id="glyph"[^>]*\sd="([^"]+)"/u.exec(source)?.[1];
 if (!(ground && ink && glyph)) throw new Error('build/icons/seal.svg lost its ground or glyph');
-if (/[^MLZ\d\s.-]/u.test(glyph)) throw new Error('the glyph may use only M, L and Z');
+if (/[^MLQCZ\d\s.-]/u.test(glyph)) throw new Error('the glyph may use only M, L, Q, C and Z');
 
-/** The glyph's outlines as lists of [x, y] points (1024 units). */
-const outlines = glyph
-  .split('Z')
-  .filter((s) => s.trim())
-  .map((s) =>
-    s
-      .replace(/[ML]/gu, ' ')
-      .trim()
-      .split(/\s+/u)
-      .map(Number)
-      .reduce((points, n, i) => {
-        if (i % 2 === 0) points.push([n]);
-        else points[points.length - 1].push(n);
-        return points;
-      }, []),
-  );
-/** The farthest any part of the glyph is from the middle, which is what a circular safe zone must hold. */
-const reach = Math.max(...outlines.flat().map(([x, y]) => Math.hypot(x - 512, y - 512)));
+/** The glyph's path as commands: a letter (M, L, Q, C or Z, all absolute) and its [x, y] points (1024 units). */
+const commands = [...glyph.matchAll(/([MLQCZ])([^MLQCZ]*)/gu)].map(([, letter, numbers]) => ({
+  letter,
+  points: numbers
+    .trim()
+    .split(/\s+/u)
+    .filter(Boolean)
+    .map(Number)
+    .reduce((points, n, i) => {
+      if (i % 2 === 0) points.push([n]);
+      else points[points.length - 1].push(n);
+      return points;
+    }, []),
+}));
+/**
+ * The farthest any point of the path is from the middle, which is what a
+ * circular safe zone must hold. A curve stays inside its control points, so
+ * counting them errs on the safe side.
+ */
+const reach = Math.max(
+  ...commands.flatMap(({ points }) => points).map(([x, y]) => Math.hypot(x - 512, y - 512)),
+);
 
 const svg = (body, defs = '') =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">${defs}${body}</svg>`;
@@ -185,8 +189,8 @@ const write = (path, data) => {
 function vector(safe) {
   const k = ((safe / 2) * (1024 / 108)) / reach;
   const at = (v) => +((((v - 512) * k + 512) * 108) / 1024).toFixed(2);
-  const path = outlines
-    .map((points) => `M${points.map(([x, y]) => `${at(x)},${at(y)}`).join('L')}Z`)
+  const path = commands
+    .map(({ letter, points }) => letter + points.map(([x, y]) => `${at(x)},${at(y)}`).join(' '))
     .join('');
   return `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"

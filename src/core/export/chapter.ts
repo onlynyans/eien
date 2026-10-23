@@ -1,9 +1,9 @@
 // A note as a chapter of an export (spec §8): its heading, its blocks of
-// HTML as Copy for AO3 writes them for a book (core/ao3's bookBlocks), and
+// HTML as Copy as HTML writes them for a book (core/html's bookBlocks), and
 // its footnotes, numbered in the order they're first referred to. EPUB,
 // Word and the PDF are each made from this.
 
-import { bookBlocks, decodeEntities, escapeHtml, imageAddresses } from '../ao3';
+import { bookBlocks, decodeEntities, escapeHtml, imageAddresses } from '../html';
 import { footnoteRefs, inRuns, literalRanges, splitFootnotes } from '../markdown';
 import { frontMatterEnd, toEditor } from '../text';
 import type { QuoteStyle } from '../typography';

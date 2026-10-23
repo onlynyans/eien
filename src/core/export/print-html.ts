@@ -5,7 +5,7 @@
 // prints it. It runs no script and loads nothing: its policy allows only its
 // own styles and images held as data.
 
-import { escapeHtml } from '../ao3';
+import { escapeHtml } from '../html';
 import { chaptersOf, type ExportRequest, languageTag } from './book';
 import { dataAddress } from './images';
 import { xmlChars } from './xml';

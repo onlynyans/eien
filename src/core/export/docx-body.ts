@@ -1,10 +1,10 @@
 // A chapter's HTML (./chapter.ts) as Word's paragraphs: headings, quotes,
 // lists, code and tables in Word's own styles (./docx.ts defines them),
 // emphasis as run properties, links as hyperlinks, and footnote marks as
-// Word's own footnotes. Read with core/ao3's HTML reader, so what Word gets
+// Word's own footnotes. Read with core/html's HTML reader, so what Word gets
 // is what the EPUB and the PDF show.
 
-import { type HtmlElement, type HtmlNode, parseHtml } from '../ao3';
+import { type HtmlElement, type HtmlNode, parseHtml } from '../html';
 import { IMAGE_SRC } from './book';
 import type { Chapter, ExportImage } from './chapter';
 import {

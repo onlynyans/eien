@@ -102,7 +102,7 @@ function styled(node: HtmlElement, css: Map<string, string>, within: Within): Ht
   return { ...node, name, children };
 }
 
-/** Hidden from the reader: by its style, or AO3's "landmark" headings (there for screen readers). */
+/** Hidden from the reader: by its style, or a site's "landmark" headings (there for screen readers). */
 const hidden = (node: HtmlElement, css: Map<string, string>) =>
   css.get('display') === 'none' ||
   css.get('visibility') === 'hidden' ||

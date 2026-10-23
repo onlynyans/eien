@@ -90,7 +90,7 @@ test.describe('exports', () => {
     );
     expect(file).toEqual(
       expect.arrayContaining([
-        ['Export AO3 HTML…', null],
+        ['Export HTML…', null],
         ['Export Note', ['EPUB…', 'Word (.docx)…', 'PDF…']],
         ['Export Book', ['EPUB…', 'Word (.docx)…', 'PDF…']],
         ['Import Markdown Folder…', null],
@@ -177,7 +177,7 @@ test.describe('exports', () => {
     await page.locator('.note-row', { hasText: 'Loose' }).click({ button: 'right' });
     await page.getByRole('menuitem', { name: 'Export…' }).click();
     await expect(page.getByRole('menuitem')).toHaveText([
-      'AO3 HTML…',
+      'HTML…',
       'EPUB…',
       'Word (.docx)…',
       'PDF…',

@@ -1,15 +1,15 @@
-// Copy for AO3 (spec §8): the open note (or what's chosen in it) as AO3's
+// Copy as HTML (spec §8): the open note (or what's chosen in it) as
 // HTML, quotes and scene breaks as the vault's settings say, onto the
-// clipboard. Export → AO3 HTML is ./exports.ts's, with the other exports.
+// clipboard. Export → HTML is ./exports.ts's, with the other exports.
 
-import { toAo3Html } from '../../core/ao3';
+import { toHtml } from '../../core/html';
 import type { OutBridge } from '../../platform/bridge';
 import type { PageView } from '../page/page';
 import { reasonOf } from '../reason';
 import type { SettingsState } from '../settings/settings-state';
 import type { OpenNote } from './open-note';
 
-export interface Ao3Parts {
+export interface HtmlCopyParts {
   readonly page: PageView;
   readonly note: OpenNote;
   readonly out: OutBridge;
@@ -20,23 +20,23 @@ export interface Ao3Parts {
 const NOTHING = 'Nothing to copy: the note has no words yet.';
 const NOTHING_CHOSEN = 'Nothing to copy: what’s chosen has no words.';
 
-/** Copy for AO3, for the open note. */
-export interface Ao3Out {
+/** Copy as HTML, for the open note. */
+export interface HtmlCopy {
   copy(): Promise<void>;
 }
 
-export function ao3Out(parts: Ao3Parts): Ao3Out {
+export function htmlCopy(parts: HtmlCopyParts): HtmlCopy {
   const html = (text: string, chosen?: { from: number; to: number }) =>
-    toAo3Html(
+    toHtml(
       text,
       {
         quotes: parts.settings.values['typography.quotes'],
-        sceneBreak: parts.settings.values['ao3.sceneBreak'],
+        sceneBreak: parts.settings.values['html.sceneBreak'],
       },
       chosen,
     );
   return {
-    /** ⇧⌘C: the words chosen, or the whole note, onto the clipboard as AO3 HTML. */
+    /** ⇧⌘C: the words chosen, or the whole note, onto the clipboard as HTML. */
     async copy(): Promise<void> {
       if (!parts.note.session) return;
       const { state } = parts.page.editor.view;
@@ -46,7 +46,7 @@ export function ao3Out(parts: Ao3Parts): Ao3Out {
         const out = html(state.doc.toString(), from === to ? undefined : { from, to });
         if (!out) return parts.tell(from === to ? NOTHING : NOTHING_CHOSEN);
         await parts.out.copy(out, out);
-        parts.tell(from === to ? 'Copied as AO3 HTML.' : 'Copied what’s chosen as AO3 HTML.');
+        parts.tell(from === to ? 'Copied as HTML.' : 'Copied what’s chosen as HTML.');
       } catch (error) {
         parts.tell(`It couldn’t be copied: ${reasonOf(error)}`);
       }

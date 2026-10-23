@@ -66,9 +66,9 @@ describe('words that never reach the exports', () => {
     }
   });
 
-  it('shows an aliased [[wiki link]] as its alias, as Copy for AO3 does (spec §8)', () => {
+  it('shows an aliased [[wiki link]] as its alias, as Copy as HTML does (spec §8)', () => {
     // Decided in the fixes for this pass: the count reads both sides ("Mending|the scarf"), as
-    // Live shows them; a book, like AO3, gets the words a reader is meant to see.
+    // Live shows them; a book, like copied HTML, gets the words a reader is meant to see.
     const out = shown('She wore [[Mending|the scarf]] again.');
     for (const text of [out.epub, out.word, out.pdf]) {
       expect(text).toContain('She wore the scarf again.');

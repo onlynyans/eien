@@ -244,7 +244,7 @@ add('scraps', [
 ]);
 
 add('checklists', [
-  ['AO3 posting checklist', 96, 'yesterday', '', 'todo', {
+  ['Posting checklist', 96, 'yesterday', '', 'todo', {
     pinned: true,
     body: [
       C(true, 'Title, summary and author’s notes'),

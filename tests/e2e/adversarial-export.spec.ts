@@ -36,7 +36,7 @@ test.describe('a note’s Export…, for a note that isn’t open', () => {
     rmSync(out, { recursive: true, force: true });
   });
 
-  test('AO3 HTML never holds the front matter of a note saved with a byte-order mark', async ({
+  test('HTML never holds the front matter of a note saved with a byte-order mark', async ({
     app,
     page,
   }) => {
@@ -45,7 +45,7 @@ test.describe('a note’s Export…, for a note that isn’t open', () => {
     await page.locator('.note-row', { hasText: 'Fire' }).click(); // another note open
     await page.locator('.note-row', { hasText: 'Mending' }).click({ button: 'right' });
     await page.getByRole('menuitem', { name: 'Export…' }).click();
-    await page.getByRole('menuitem', { name: 'AO3 HTML…' }).click();
+    await page.getByRole('menuitem', { name: 'HTML…' }).click();
     await expect(page.locator('.list__notice')).toHaveText('Saved as “Mending.html”.');
     const html = readFileSync(file, 'utf8');
     expect(html).toContain('She mended the scarf.');

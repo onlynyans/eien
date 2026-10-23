@@ -18,7 +18,7 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
   // The look is set before anything is drawn, so nothing shows in the wrong face.
   const settings = await SettingsState.load(bridge.settings);
   const themes = new WriterThemes(bridge.vault, settings);
-  // The vault's own themes come with the vault: until then, one of them is worn as Washi.
+  // The vault's own themes come with the vault: until then, one of them is worn as Paper.
   const wearChosen = () => wear(wornFor(settings.values['appearance.palette'], themes.list));
   applyLook(settings.values);
   wearChosen();

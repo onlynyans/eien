@@ -7,7 +7,7 @@ import { type Chapter, chapterOf, type ExportImage, type ExportNote } from './ch
 
 /** Each export's name in a menu (spec §8): the menu bar's, and a note's or a book's own. */
 export const EXPORT_LABELS = {
-  html: 'AO3 HTML…',
+  html: 'HTML…',
   epub: 'EPUB…',
   docx: 'Word (.docx)…',
   pdf: 'PDF…',

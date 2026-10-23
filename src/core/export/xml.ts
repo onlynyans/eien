@@ -2,7 +2,7 @@
 // characters XML 1.0 allows, and only its five named references. A reader
 // that meets anything else refuses the whole file.
 
-import { NAMED_ENTITIES } from '../ao3';
+import { NAMED_ENTITIES } from '../html';
 
 /** Characters XML 1.0 can't hold, even as references: controls (but tab and line ends), lone surrogates, U+FFFE, U+FFFF. */
 // biome-ignore lint/suspicious/noControlCharactersInRegex: the control characters are what's removed
@@ -31,7 +31,7 @@ const XML_NAMED: Readonly<Record<string, string>> = {
 const OBSOLETE = /<\/?big>/gu;
 
 /**
- * The HTML core/ao3 writes, as XHTML: its references (the note's own
+ * The HTML core/html writes, as XHTML: its references (the note's own
  * "&nbsp;", "&eacute;", "&#8212;"…) as the characters they are, but XML's
  * five; a number past Unicode as U+FFFD, as a browser shows it; anything
  * else the parser took for a reference ("R&D;", "&Q_A;") as its words; what

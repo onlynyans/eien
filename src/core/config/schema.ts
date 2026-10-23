@@ -21,7 +21,6 @@ export const SETTING_GROUPS = [
   'Lists',
   'Editor',
   'Writing',
-  'AO3',
 ] as const;
 export type SettingGroup = (typeof SETTING_GROUPS)[number];
 
@@ -80,7 +79,7 @@ export const SETTINGS = [
     // The gallery's, in its order (core/themes); a theme of the writer's own is "mine:<name>".
     choices: Object.fromEntries(GALLERY.map((theme) => [theme.id, theme.name])),
     more: { accepts: isMineChoice, what: 'a theme of your own (mine:<name>)' },
-    default: 'washi',
+    default: 'paper',
   },
   {
     key: 'appearance.layout',
@@ -250,7 +249,7 @@ export const SETTINGS = [
     key: 'typography.quotes',
     label: 'Quotation marks',
     description:
-      'The quotation marks inserted as you type and used by Copy for AO3. Code is not affected.',
+      'The quotation marks inserted as you type and used in copied and exported HTML. Code is not affected.',
     scope: 'vault',
     group: 'Writing',
     type: 'choice',
@@ -258,12 +257,12 @@ export const SETTINGS = [
     default: 'curly',
   },
   {
-    key: 'ao3.sceneBreak',
+    key: 'html.sceneBreak',
     label: 'Scene breaks',
     description:
-      'How Copy for AO3 formats a *** scene break: a rule with blank lines around it, or the rule only.',
+      'How a *** scene break looks in copied and exported HTML: a rule with a blank line above and below it, or the rule only.',
     scope: 'vault',
-    group: 'AO3',
+    group: 'Writing',
     type: 'choice',
     choices: { spacer: 'Spaced rule', rule: 'Rule alone' },
     default: 'spacer',
