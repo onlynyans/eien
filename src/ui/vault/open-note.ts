@@ -28,6 +28,11 @@ export class OpenNote implements NoteHolder {
   #turn = 0;
   /** The note this page showed before the one it shows now, and where it was left. */
   #left: NotePlace | null = null;
+  /**
+   * How far the page was last scrolled, kept as it scrolls: a page out of sight (a phone's,
+   * gone back to the list) reads 0, so its place is taken from here, not from the page then.
+   */
+  #scrolled = 0;
   #shown = 0;
   readonly #notes: OpenNotes;
   readonly #page: PageView;
@@ -35,6 +40,13 @@ export class OpenNote implements NoteHolder {
   constructor(notes: OpenNotes, page: PageView) {
     this.#notes = notes;
     this.#page = page;
+    page.scroll.addEventListener(
+      'scroll',
+      () => {
+        this.#scrolled = page.scroll.scrollTop;
+      },
+      { passive: true },
+    );
   }
 
   get session(): NoteSession | null {
@@ -88,7 +100,7 @@ export class OpenNote implements NoteHolder {
   /** Where the page is in its note now. */
   #place(path: string): NotePlace {
     const { anchor, head } = this.#page.editor.view.state.selection.main;
-    return { path, anchor, head, scroll: this.#page.scroll.scrollTop };
+    return { path, anchor, head, scroll: this.#scrolled };
   }
 
   /** Back where the note was left: the caret where it was, scrolled as it was (or as near as the text allows). */
@@ -98,7 +110,12 @@ export class OpenNote implements NoteHolder {
     view.dispatch({
       selection: { anchor: Math.min(place.anchor, most), head: Math.min(place.head, most) },
     });
-    this.#page.scroll.scrollTop = place.scroll;
+    const { scroll } = this.#page;
+    scroll.scrollTop = place.scroll;
+    // Again once the editor has measured its lines: before, the page may not reach so far down.
+    requestAnimationFrame(() => {
+      scroll.scrollTop = place.scroll;
+    });
   }
 
   /** Nothing open: the note's gone (deleted elsewhere, or sent to the trash here). */

@@ -35,6 +35,18 @@ describe('a page’s last note', () => {
     expect(note.left?.path).toBe('Notes.md');
   });
 
+  it('keeps how far it was scrolled, though the page is out of sight when the next opens', async () => {
+    // On a phone, back to the list hides the page first, and a page out of sight reads 0.
+    const { pages } = await twoNotes();
+    const { note, page } = pages.active;
+    await pages.open('Chapter.md');
+    const top = vi.spyOn(page.scroll, 'scrollTop', 'get').mockReturnValue(900);
+    page.scroll.dispatchEvent(new Event('scroll'));
+    top.mockReturnValue(0); // gone from sight
+    await pages.open('Notes.md');
+    expect(note.left?.scroll).toBe(900);
+  });
+
   it('isn’t the note reopened on its own page', async () => {
     const { pages } = await twoNotes();
     await pages.open('Chapter.md');
