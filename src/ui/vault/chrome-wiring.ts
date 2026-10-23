@@ -162,7 +162,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   tips.watch(of.sidebar.foot.sync);
   // The lens's controls: in the list's head (its rows drawn only in sight, so the pane is cheap
   // to watch), and with two panes in the sidebar's lens.
-  tips.watch(of.sidebar.lens);
+  tips.watch(of.sidebar.lens.tools);
+  tips.watch(of.sidebar.lens.chips);
   const listPane = of.shell.querySelector<HTMLElement>('.list');
   if (listPane) tips.watch(listPane);
   const chrome = new Chrome({

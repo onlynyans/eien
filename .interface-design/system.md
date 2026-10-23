@@ -349,7 +349,7 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   makes something (`ui/add-button.ts`: New folder and New tag at a section
   label's right, New note in the list's head) and the lens's filter, sort and
   Arrange. One rule for every pane: opacity 0 until the row they sit in
-  (`.quiet-row`: a sidebar section, the list's head, the sidebar's lens) is
+  (`.quiet-row`: a sidebar section, the list's head, the sidebar's search row, where two panes put the chosen row's filter and sort, with no head) is
   hovered, or they have the keyboard, are open (`aria-expanded`), pressed or
   on; always shown on `hover: none`. Their own hover, press and focus are the
   icon button's.

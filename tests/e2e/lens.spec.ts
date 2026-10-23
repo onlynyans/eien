@@ -123,23 +123,28 @@ test('the filter’s panel works from the keyboard: arrows, Enter, ⌥Enter, Esc
   await expect(filterButton(page)).toBeFocused();
 });
 
-test('with two panes, the chosen row’s lens is in the sidebar, and acts on the tree’s notes', async ({
+test('with two panes, the chosen row’s lens is on the search field’s row, and acts on the tree’s notes', async ({
   page,
 }) => {
   await page.locator('.sidebar__foot [data-command="panes"][aria-pressed="false"]').click();
   await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
   await folder(page, 'Fic').click();
-  const lens = page.locator('.sidebar__lens');
-  await expect(lens).toBeVisible();
-  await expect(lens.locator('.sidebar__lens-name')).toHaveText('Fic');
+  // No list head in the sidebar: the search field, and the chosen row's sort and filter beside it.
+  const find = page.locator('.sidebar__find');
+  await expect(find.getByRole('searchbox')).toBeVisible();
+  const tools = find.getByRole('group', { name: 'Sort and filter Fic' });
+  await expect(tools.locator('[data-key="lens-filter:tree"]')).toHaveCount(1);
+  await expect(page.locator('.sidebar :is(.list__head, .list__heading, .list__meta)')).toHaveCount(0);
+  await expect(page.locator('.sidebar__lens')).toBeHidden(); // no chips while no lens is on
   const notes = page.locator('.tree-row--note .tree-row__label');
   await expect(notes).toHaveText(['Thaw', 'Needle', 'Gate', 'Fire']);
-  await lens.locator('[data-key="lens-filter:tree"]').click();
+  await tools.locator('[data-key="lens-filter:tree"]').click();
   await tri(page, 'posted').click();
   await page.keyboard.press('Escape');
   await expect(notes).toHaveText(['Thaw', 'Gate']);
-  await expect(lens.locator('.chip')).toHaveText(['#posted']);
-  await lens.locator('.chip').getByRole('button').click();
+  const chips = page.locator('.sidebar__lens .chip');
+  await expect(chips).toHaveText(['#posted']);
+  await chips.getByRole('button').click();
   await expect(notes).toHaveText(['Thaw', 'Needle', 'Gate', 'Fire']);
 });
 

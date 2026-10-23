@@ -485,9 +485,10 @@ CommonMark plus GitHub extensions, and three common additions:
     keeps it out at once; a plain click still chooses the tag. A tag in the
     filter shows it on its row: a tick when wanted, struck in carmine with a
     dash when kept out. With 3,000 notes it holds to the speed budget.
-  - **With two panes** the tree lists the notes, and the chosen row's lens is
-    in the sidebar, under the search field: the same controls and chips,
-    acting on that row's notes in the tree.
+  - **With two panes** the tree lists the notes, and no list head shows in
+    the sidebar: the chosen row's filter and sort are quiet icons at the end
+    of the search field's row (a group named "Sort and filter <row>"), its
+    chips under it while a lens is on, acting on that row's notes in the tree.
 - **Books:** Make it a book / Not a book, in a folder's menu.
 - **Pinned** notes are listed under Library, in the order pinned
   (`.eien/pinned.json`, watched like the settings). ⇧⌘P (Ctrl+Shift+P) on a
