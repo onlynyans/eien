@@ -41,7 +41,9 @@ test('a sort is a chip over your order; while it’s on, rows don’t move, and 
   await page.getByRole('menuitemradio', { name: 'Title' }).click();
   await expect(titles(page)).toHaveText(['Fire', 'Gate', 'Needle', 'Thaw']);
   await expect(chips(page)).toHaveText(['Title']);
-  await expect(page.locator('.list__locked')).toHaveText(/Clear your sort or filters above to restore your order\./);
+  await expect(page.locator('.list__locked')).toHaveText(
+    /Clear your sort or filters above to restore your order\./,
+  );
   // Alt+↓ moves a row only in your order.
   await page.locator('.note-row', { hasText: 'Fire' }).focus();
   await page.keyboard.press('Alt+ArrowDown');
@@ -134,7 +136,9 @@ test('with two panes, the chosen row’s lens is on the search field’s row, an
   await expect(find.getByRole('searchbox')).toBeVisible();
   const tools = find.getByRole('group', { name: 'Sort and filter Fic' });
   await expect(tools.locator('[data-key="lens-filter:tree"]')).toHaveCount(1);
-  await expect(page.locator('.sidebar :is(.list__head, .list__heading, .list__meta)')).toHaveCount(0);
+  await expect(page.locator('.sidebar :is(.list__head, .list__heading, .list__meta)')).toHaveCount(
+    0,
+  );
   await expect(page.locator('.sidebar__lens')).toBeHidden(); // no chips while no lens is on
   const notes = page.locator('.tree-row--note .tree-row__label');
   await expect(notes).toHaveText(['Thaw', 'Needle', 'Gate', 'Fire']);

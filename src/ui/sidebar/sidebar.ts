@@ -54,7 +54,10 @@ export class Sidebar {
   readonly searchSlot = h('div', { class: 'sidebar__search' });
   /** With two panes, the chosen row's lens (../list/lens-bar.ts): its sort and tag filter, at the search field's end. */
   readonly lens: LensSlot = {
-    tools: h('span', { class: 'list__tools sidebar__tools', attrs: { role: 'group', hidden: true } }),
+    tools: h('span', {
+      class: 'list__tools sidebar__tools',
+      attrs: { role: 'group', hidden: true },
+    }),
     chips: h('div', { class: 'sidebar__lens', attrs: { hidden: true } }),
   };
   /** The count, and the window's controls the layout draws there. */

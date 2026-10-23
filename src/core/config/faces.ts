@@ -41,7 +41,12 @@ export const FACES = [
     mono: true,
     machine: { meta: 10.5, label: 10, source: 13.5 },
   },
-  { id: 'fira-code', name: 'Fira Code', mono: true, machine: { meta: 11, label: 10, source: 13.5 } },
+  {
+    id: 'fira-code',
+    name: 'Fira Code',
+    mono: true,
+    machine: { meta: 11, label: 10, source: 13.5 },
+  },
   {
     id: 'cascadia-code',
     name: 'Cascadia Code',
@@ -79,7 +84,12 @@ export const FACES = [
     mono: true,
     machine: { meta: 10.5, label: 10, source: 13.5 },
   },
-  { id: 'comic-mono', name: 'Comic Mono', mono: true, machine: { meta: 11, label: 10, source: 14 } },
+  {
+    id: 'comic-mono',
+    name: 'Comic Mono',
+    mono: true,
+    machine: { meta: 11, label: 10, source: 14 },
+  },
   { id: 'newsreader', name: 'Newsreader', machine: { meta: 12.5, label: 11.5, source: 16.5 } },
   { id: 'literata', name: 'Literata', machine: { meta: 11.5, label: 10.5, source: 15 } },
   { id: 'plex-sans', name: 'IBM Plex Sans', machine: { meta: 11.5, label: 10.5, source: 14.5 } },

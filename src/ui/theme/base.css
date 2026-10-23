@@ -50,6 +50,22 @@ body {
   font-size: 0; /* too small for the glyph: the square alone */
 }
 
+/* ── A row's name, centred by its capitals ──────────────────────────────
+   A line box centres a face's ascent and descent, not its letters: with most
+   faces the descent is the deeper, so a name sat above the row's middle. The
+   box is trimmed to the capitals and the baseline, then given back half the
+   rest above and half below: the same height as the line, its capitals in
+   the middle, for any face, size or density. A count beside it keeps to its
+   baseline. The padding holds what a name draws past the trim (descenders,
+   accents), inside its clip. */
+@supports (text-box: trim-both cap alphabetic) {
+  .tree-row__label,
+  .note-row__title {
+    text-box: trim-both cap alphabetic;
+    padding-block: calc((1lh - 1cap) / 2);
+  }
+}
+
 /* ── Machine voice: the mono, whatever the text face ──────────────────── */
 .label {
   font-family: var(--eien-face-mono);

@@ -103,7 +103,9 @@ describe('lensParts', () => {
 describe('lensLine', () => {
   it('says why a folder’s rows don’t drag while it’s sorted or filtered', () => {
     expect(lensLine(list())).toBeNull();
-    expect(lensLine(list({ sort: 'title' }))?.textContent).toMatch(/Clear your sort or filters above to restore your order\./);
+    expect(lensLine(list({ sort: 'title' }))?.textContent).toMatch(
+      /Clear your sort or filters above to restore your order\./,
+    );
     expect(lensLine(list({ filter: { tags: [['a', 'in']], match: 'all' } }))).not.toBeNull();
     expect(lensLine(list({ kind: 'tag', folder: undefined, sort: 'title' }))).toBeNull();
   });

@@ -6,8 +6,6 @@
 // keyboard on the control it was on; a chip's × goes with its chip, so it
 // goes to the filter.
 
-import { h } from '../dom';
-
 export interface SlotLens {
   /** The chosen row's name. */
   readonly name: string;
@@ -40,5 +38,7 @@ export function drawLensSlot(slot: LensSlot, lens: SlotLens | null): void {
   slot.chips.replaceChildren(...(lens?.chips ? [lens.chips] : []));
   if (!had) return;
   const back = `[data-key="${CSS.escape(had)}"]`;
-  (slot.tools.querySelector<HTMLElement>(back) ?? slot.chips.querySelector<HTMLElement>(back))?.focus();
+  (
+    slot.tools.querySelector<HTMLElement>(back) ?? slot.chips.querySelector<HTMLElement>(back)
+  )?.focus();
 }
