@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Split window: 1 · Two whole pages</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:split.css*/
+
+/* 1 · Two whole pages: each page has all its own parts: A's band, B's slip,
+   C's half of the running head; its formatting bar; its colophon. The active
+   one carries a 2px ink-soft rule across its top. */
+.side.is-active::before { content: ''; position: absolute; z-index: 3; left: 0; right: 0; top: 0; height: var(--eien-mark-w); background: var(--eien-ink-soft); }
+/* Each page's tools show while the pointer is over that page, not the other. */
+.pg:hover .side:not(:hover) .quiet:not(:focus-within) { opacity: 0; }
+.band .tools-row:last-child { margin-left: auto; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:split.js*/
+
+// Each page whole: its own top (A's band, B's slip, C's segment of the running head),
+// its own formatting bar and colophon.
+function sideHtml(ctx, i) {
+  const n = ctx.note(i);
+  const active = ctx.shown.length === 2 && i === ctx.active;
+  const close = ctx.split ? ctx.closeBtn(i) : '';
+  const pager = ctx.folded ? ctx.pager() : '';
+  const top = ctx.layout === 'band'
+    ? `<div class="band"><span class="tools-row quiet">${ctx.views()}</span>${pager}<span class="tools-row quiet">${ctx.pageTools()}${close}</span></div>`
+    : ctx.layout === 'slip' ? `<div class="topline">${pager}<span class="slip quiet">${ctx.views()}${ctx.pageTools()}${close}</span></div>` : '';
+  return `<section class="side${active ? ' is-active' : ''}" data-side="${i}" aria-label="${n.title}${active ? ', the active page' : ''}">${top}${ctx.fmtBar()}<div class="blotter">${ctx.sheet(i)}</div>${ctx.colophon(i)}</section>`;
+}
+Split.page = (ctx) => (ctx.shown.length === 1 ? sideHtml(ctx, ctx.shown[0])
+  : `<div class="duo" data-columns style="grid-template-columns:${ctx.columns()}">${sideHtml(ctx, 0)}${ctx.divider()}${sideHtml(ctx, 1)}</div>`);
+// C: the running head splits over the two pages, a crumb and the tools for each.
+function segHtml(ctx, i) {
+  return `<div class="seg" data-side="${i}"><span class="crumb">${ctx.note(i).crumb}</span>${ctx.folded ? ctx.pager() : ''}<span class="tools-row">${ctx.views()}${ctx.pageTools()}${ctx.split ? ctx.closeBtn(i) : ''}</span></div>`;
+}
+Split.strip = (ctx) => (ctx.shown.length === 1 ? segHtml(ctx, ctx.shown[0])
+  : `<div class="duo" data-columns style="grid-template-columns:${ctx.columns()}">${segHtml(ctx, 0)}<span></span>${segHtml(ctx, 1)}</div>`);
+
+mountSplitPage({
+  id: 'apart',
+  note: 'Each page whole: its own tools, formatting bar and colophon. The active page has a rule across its top.',
+  notes: `
+  <h2>1 · Two whole pages</h2>
+  <p>Each page is a whole page, as if the page pane were cut in two: its own top (A's band with the views, the tools and its ×; B's slip; C's half of the running head, a crumb and the tools over each page), its own formatting bar, its own colophon.</p>
+  <ul>
+    <li><b>Formatting bar:</b> one per page (A: under its band; B: its slip at the page's top left; C: its rail in the page's margin), acting on its page.</li>
+    <li><b>Tags:</b> where the layout puts them, on each page (A: the sheet's running head; B: slips under the title; C: each colophon).</li>
+    <li><b>Word counts and seals:</b> each colophon has its note's words and last seal; today's tally sits on the active one.</li>
+    <li><b>Versions and Compare</b> open in the page they're about: Versions lays its panel over the other page while it's open, so its own page stays in sight. <b>Outline cards</b> fill the page that asked. <b>Copy as HTML</b> copies the active page's note.</li>
+    <li><b>Active page:</b> a 2px ink-soft rule across its top, and the caret. Each page's tools come up while the pointer is over that page.</li>
+  </ul>
+  <h2>For</h2>
+  <ul><li>Nothing to guess: every control sits on the page it acts on.</li><li>Each side reads as Eien's page, unchanged.</li></ul>
+  <h2>Against</h2>
+  <ul><li>Twice the furniture: two bands, two formatting bars, two colophons. On narrow sides A's band crowds, and C's running head stops being one line across the window.</li><li>The rule on top is the one new mark, and it's more than the other two need.</li></ul>`,
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Split window: 2 · One set of tools</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:split.css*/
+
+/* 2 · One set of tools: one band (A), one slip (B), the running head (C), one
+   formatting bar and one colophon, acting on the active page. The other page's
+   words soften to ink-soft; the colophon and the crumb name the active note. */
+.band .tools-row:last-child { margin-left: auto; }
+.side2 { position: relative; min-width: 0; min-height: 0; display: grid; }
+.side2.is-other :is(h1, .prose) { color: var(--eien-ink-soft); transition: color var(--eien-calm) var(--eien-ease); }
+.side2 > .close-side { position: absolute; z-index: 3; top: var(--eien-space-1); right: var(--eien-space-2); opacity: 0; }
+.side2:hover > .close-side, .side2 > .close-side:focus-visible { opacity: 1; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:split.js*/
+
+// One set of tools for the active page: A's band, B's slip, C's running head as they are.
+function topHtml(ctx) {
+  const pager = ctx.folded ? ctx.pager() : '';
+  if (ctx.layout === 'band') return `<div class="band"><span class="tools-row quiet">${ctx.views()}</span>${pager}<span class="tools-row quiet">${ctx.pageTools()}</span></div>`;
+  if (ctx.layout === 'slip') return `<div class="topline">${pager}<span class="slip quiet">${ctx.views()}${ctx.pageTools()}</span></div>`;
+  return '';
+}
+// C's running head: the active note's crumb, and the tools that act on it.
+Split.strip = (ctx) => `<div class="seg"><span class="crumb">${ctx.note(ctx.active).crumb}</span>${ctx.folded ? ctx.pager() : ''}<span class="tools-row">${ctx.views()}${ctx.pageTools()}</span></div>`;
+function sideHtml(ctx, i) {
+  const two = ctx.shown.length === 2;
+  const cls = two ? (i === ctx.active ? ' is-active' : ' is-other') : '';
+  return `<section class="side2${cls}" data-side="${i}" aria-label="${ctx.note(i).title}${two && i === ctx.active ? ', the active page' : ''}">${ctx.split ? ctx.closeBtn(i) : ''}<div class="blotter">${ctx.sheet(i)}</div></section>`;
+}
+Split.page = (ctx) => {
+  const body = ctx.shown.length === 1 ? `<div class="duo">${sideHtml(ctx, ctx.shown[0])}</div>`
+    : `<div class="duo" data-columns style="grid-template-columns:${ctx.columns()}">${sideHtml(ctx, 0)}${ctx.divider()}${sideHtml(ctx, 1)}</div>`;
+  return `<div class="page">${topHtml(ctx)}${ctx.fmtBar()}${body}${ctx.colophon(ctx.active)}</div>`;
+};
+
+mountSplitPage({
+  id: 'shared',
+  note: 'One set of tools, acting on the active page; the other page’s words soften.',
+  notes: `
+  <h2>2 · One set of tools, for the active page</h2>
+  <p>The page pane keeps its one set of tools, where the layout puts them (A's band, B's slip, C's running head), and they act on the active page. The two pages share the blotter's pane, split by the divider, and nothing else of theirs is doubled.</p>
+  <ul>
+    <li><b>Formatting bar:</b> one, as now, for the active page.</li>
+    <li><b>Tags:</b> on each sheet in A and B; in C, the colophon shows the active note's.</li>
+    <li><b>Colophon:</b> one, the active note's: its number, its words, today's tally, its last seal.</li>
+    <li><b>Versions and Compare</b> open for the active note, the panel at the window's right edge as now, over part of the right page. <b>Outline cards</b> take the active page's place. <b>Copy as HTML</b> copies the active note.</li>
+    <li><b>Active page:</b> the other page's words soften to ink-soft, and the colophon and C's crumb name the active note; the caret is in it.</li>
+  </ul>
+  <h2>For</h2>
+  <ul><li>The calmest: one row of tools in its usual place, one formatting bar, one colophon; Running head keeps its single strip.</li><li>Nothing new to learn: the tools work as they do now.</li></ul>
+  <h2>Against</h2>
+  <ul><li>A tool's target isn't beside it: on the right page, A's views sit over the left one.</li><li>The softened ink is a quiet cue; in Night it's quieter still.</li></ul>`,
+});
+</script>
+</body>
+</html>

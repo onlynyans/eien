@@ -115,9 +115,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 
 /* The seal: one button, shown where it is in each state, moving as it would. */
 .corner-seal { position: absolute; z-index: 6; left: calc(var(--seal-x) - 16px); top: calc(var(--seal-y) - 16px); transition: left var(--eien-calm) var(--eien-ease), top var(--eien-calm) var(--eien-ease); }
-.seal-button { appearance: none; display: grid; place-items: center; padding: var(--eien-space-1); border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; cursor: pointer; transition: border-color var(--eien-quick) var(--eien-ease); }
-@media (hover: hover) { .seal-button:hover { border-color: var(--eien-rule); } }
-.seal-button:active { background: var(--eien-press); }
+/*@include:seal-button.css*/
 
 /* Direction 3's shoulder, and anything else a page draws, waits hidden till it's used. */
 .shoulder { display: none; }

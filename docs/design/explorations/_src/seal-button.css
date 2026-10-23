@@ -1,0 +1,5 @@
+/* The seal as a button, as the app draws it: no ground, a hairline that shows on hover.
+   Shared by the corner and split explorations. */
+.seal-button { appearance: none; display: grid; place-items: center; padding: var(--eien-space-1); border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; cursor: pointer; transition: border-color var(--eien-quick) var(--eien-ease); }
+@media (hover: hover) { .seal-button:hover { border-color: var(--eien-rule); } }
+.seal-button:active { background: var(--eien-press); }
