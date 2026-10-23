@@ -44,6 +44,8 @@ async function pagesWith(files: Record<string, string>, chosen: Partial<SettingV
     for (const listener of listeners) listener(settings.values, before);
   };
   const area = document.body.appendChild(document.createElement('main'));
+  /** How many times the pages told the window their seals' controls changed. */
+  let told = 0;
   const wrote: number[] = [];
   const pages = new Pages({
     area,
@@ -55,12 +57,14 @@ async function pagesWith(files: Record<string, string>, chosen: Partial<SettingV
     openNote: () => {},
     act: async (operation) => void (await operation()),
     tell: () => {},
-    changed: () => {},
+    changed: () => {
+      told++;
+    },
     refresh: () => {},
     wrote: (added) => wrote.push(added),
     counted: () => {},
   });
-  return { pages, storage, area, change, wrote };
+  return { pages, storage, area, change, wrote, told: () => told };
 }
 
 /** Type at the end of the active page's note, as the writer does. */
@@ -79,6 +83,14 @@ afterEach(() => {
 });
 
 describe('the pages, with one page', () => {
+  it('make their page without telling the window anything, as the window is made after them', async () => {
+    // The vault view makes the pages before the chrome they'd tell: a call back now would reach
+    // a chrome not yet made, and the vault would never show.
+    const { pages, told } = await pagesWith({ 'Snow.md': 'Snow.' });
+    stops.push(() => pages.stop());
+    expect(told()).toBe(0);
+  });
+
   it('shows the note opened on the active page, and names it as the only note shown', async () => {
     const { pages, area } = await pagesWith({ 'Fic/Snow.md': 'Snow fell all night.' });
     stops.push(() => pages.stop());

@@ -74,7 +74,8 @@ export class VersionsUI {
     });
     parts.page.attach({ sealLine: this.#line.line, aside: this.#panel.element });
     this.#ticker = setInterval(() => this.#draw(), 60_000); // "2h ago" moves on
-    this.#draw();
+    // Drawn, but nothing told: whatever shows the controls is made after, and reads them then.
+    this.#draw(false);
   }
 
   /** Called on every redraw: another note open (or none) is seen here. */
@@ -285,12 +286,12 @@ export class VersionsUI {
     await this.#load();
   }
 
-  #draw(): void {
+  #draw(tell = true): void {
     const now = Date.now();
     const session = this.#parts.note.session;
     const latest = latestVersion(this.#seals, now);
     this.#line.draw(session !== null, latest?.at ?? null);
-    this.#parts.changed();
+    if (tell) this.#parts.changed();
     if (!this.#panel.open) return;
     const draftWords = session ? wordsOf(session.text) : 0;
     this.#panel.draw({
