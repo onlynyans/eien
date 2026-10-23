@@ -10,6 +10,8 @@ const MAC_KEYS: Record<string, string> = {
   Backspace: '⌫',
   ArrowUp: '↑',
   ArrowDown: '↓',
+  ArrowLeft: '←',
+  ArrowRight: '→',
 };
 
 /** `key` split into its modifiers and the key itself ("-" alone is a key, as in "Mod--"). */

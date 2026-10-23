@@ -369,6 +369,21 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   faded dot after a tag typed in the text; the + field's menu is a menu's
   raised paper, the chosen choice on `--eien-selected`, "Make #…" after a
   soft rule.
+- **Table editor** (`ui/editor/table-*.ts`, `editor/table.css`, from
+  `explorations/table-menus.html`): its controls are the window's own, in a
+  layer over the editor (out of its shadow root). A grip is a quiet
+  `.icon-button` with the row grip's 12px icon in pencil, over each column
+  and at each row's left, on (`is-on`) for the row and column under the
+  pointer or caret; carried, it's a dragged row (raised paper, rule-strong
+  edge, the float shadow). Its menu is the row menu, a column's alignment a
+  radio with the ink dot where a key would be. The + on a line between
+  columns or rows is the quiet + (`ui/add-button.ts`), on only while the
+  pointer is on that line, with the drop marker across or down the table;
+  a moved row or column shows the same marker. Each stands off the table by
+  `--eien-space-1`, a row's + one control further out. A phone's table bar
+  is a host on the band (its rules `host__rule`, its buttons at
+  `--eien-touch`) docked under the sheet. A column's alignment shows: right
+  in tabular figures.
 - **Formatting bar**: the `format` slot's host. Band's second row on the
   band ground; Slip's own raised slip at the blotter's top left; Running
   head's raised rail down the margin. Its buttons have the icon control's

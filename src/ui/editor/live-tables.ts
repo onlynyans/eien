@@ -8,6 +8,7 @@ import { syntaxTree } from '@codemirror/language';
 import { type EditorState, type Range, StateField, type Text } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
+import { type Align, alignOf, leadOf, pipesIn } from '../../core/table';
 import { previewMode } from './preview-mode';
 
 export interface Span {
@@ -37,7 +38,7 @@ export function tableRows(doc: Text, table: SyntaxNode): TableRow[] {
     const line = doc.line(n);
     const kind = n === first ? 'head' : n === first + 1 ? 'rule' : 'body';
     // In a quote, the ">" before each row is the quote's, not a cell.
-    const lead = quoted ? (/^[>\s]*/u.exec(line.text)?.[0].length ?? 0) : 0;
+    const lead = quoted ? leadOf(line.text, true) : 0;
     rows.push({ from: line.from, to: line.to, kind, ...splitRow(line.text, line.from, lead) });
   }
   return rows;
@@ -45,12 +46,7 @@ export function tableRows(doc: Text, table: SyntaxNode): TableRow[] {
 
 /** A row's cells and pipes, at `offset` in the note, its first `lead` characters not its own. */
 function splitRow(text: string, offset: number, lead: number): Pick<TableRow, 'cells' | 'pipes'> {
-  const bars: number[] = [];
-  let escaped = false;
-  for (let i = lead; i < text.length; i++) {
-    if (text[i] === '|' && !escaped) bars.push(i);
-    escaped = !escaped && text[i] === '\\';
-  }
+  const bars = pipesIn(text, lead);
   const blank = (from: number, to: number) => text.slice(from, to).trim() === '';
   const edges = [lead - 1, ...bars, text.length];
   const cells: Span[] = [];
@@ -88,14 +84,24 @@ export function tablesIn(state: EditorState): SyntaxNode[] {
 
 const CONTAINERS = new Set(['Document', 'Blockquote', 'BulletList', 'OrderedList', 'ListItem']);
 
-const cell = Decoration.mark({ class: 'eien-cell' });
+/** A cell, as its column is aligned: right-aligned figures in tabular figures. */
+const CELLS: Record<Align, Decoration> = {
+  left: Decoration.mark({ class: 'eien-cell' }),
+  center: Decoration.mark({ class: 'eien-cell eien-cell--center' }),
+  right: Decoration.mark({ class: 'eien-cell eien-cell--right' }),
+};
 
 function cellsOf(state: EditorState): DecorationSet {
   if (!state.facet(previewMode)) return Decoration.none;
   const out: Range<Decoration>[] = [];
   for (const table of tablesIn(state)) {
-    for (const row of tableRows(state.doc, table)) {
-      for (const { from, to } of row.cells) if (to > from) out.push(cell.range(from, to));
+    const rows = tableRows(state.doc, table);
+    const aligns = (rows[1]?.cells ?? []).map(({ from, to }) =>
+      alignOf(state.doc.sliceString(from, to)),
+    );
+    for (const row of rows) {
+      for (const [c, { from, to }] of row.cells.entries())
+        if (to > from) out.push(CELLS[aligns[c] ?? 'left'].range(from, to));
     }
   }
   return Decoration.set(out, true);

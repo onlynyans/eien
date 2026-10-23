@@ -1,6 +1,6 @@
 // axe-core over the phone's page (../e2e/axe.ts): each layout, by day and by
-// night, on the notes, the page, its ⋯ menu and Settings. No serious or
-// critical violation, colour contrast included.
+// night, on the notes, the page, its table bar, its ⋯ menu and Settings. No
+// serious or critical violation, colour contrast included.
 
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
@@ -20,7 +20,11 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
   for (const scheme of ['day', 'night'] as const) {
     test(`${layout} by ${scheme}: the notes, the page, its menu and Settings`, async ({ page }) => {
       await open(page);
-      await putOutside(page, 'Eien/Vault/Ideas.md', '# Ideas\n\nAn *idea*, #draft.\n');
+      await putOutside(
+        page,
+        'Eien/Vault/Ideas.md',
+        '# Ideas\n\nAn *idea*, #draft.\n\n| Who | When |\n|---|--:|\n| Mara | 30 |\n',
+      );
       await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
       await titles(page).first().click();
       await expect(page.locator('.title')).toHaveText('Ideas');
@@ -39,6 +43,9 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       await expect(settings).toBeHidden();
 
       expect(await seriousViolations(page), 'the page').toEqual([]);
+      await page.locator('.eien-cell', { hasText: 'Mara' }).click();
+      await expect(page.getByRole('toolbar', { name: 'Table' })).toBeVisible();
+      expect(await seriousViolations(page), 'the table bar').toEqual([]);
       await page.getByRole('button', { name: 'More' }).click();
       await expect(page.locator('.menu')).toBeVisible();
       expect(await seriousViolations(page), 'the ⋯ menu').toEqual([]);

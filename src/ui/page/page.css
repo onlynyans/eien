@@ -19,7 +19,7 @@
 .page__main {
   position: relative;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) var(--status-h) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto var(--status-h) auto;
   min-width: 0;
   min-height: 0;
 }
@@ -40,7 +40,7 @@
   display: none;
 }
 .page__phone {
-  grid-row: 5;
+  grid-row: 6;
   display: none; /* a phone's alone (../phone/phone.css) */
 }
 .page__bar:empty,
@@ -162,7 +162,7 @@
 
 /* The colophon: the status line at the foot of the page. */
 .colophon {
-  grid-row: 4;
+  grid-row: 5;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -178,8 +178,14 @@
 }
 .colophon__state:empty,
 .colophon__zoom:empty,
-.colophon__news:empty {
+.colophon__news:empty,
+.colophon__said:empty {
   display: none;
+}
+.colophon__said {
+  color: var(--eien-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* The writer's own words, not the machine's: in the text face, as the list's news is. */
 .colophon__news {

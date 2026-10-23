@@ -6,8 +6,10 @@ import { opensWithTitle } from '../../core/note';
 import { h } from '../dom';
 import { EDITOR_MODES, type EditorEvents, type EditorMode, NoteEditor } from '../editor/editor';
 import { SelectionBar } from '../editor/selection-bar';
+import { TableBar } from '../editor/table-bar';
 import type { ImageLoader } from '../editor/widgets';
 import type { SaveState } from '../notes/note-session';
+import { Notice } from '../vault/notice';
 import { BoardHost } from './board-host';
 import { PageTags, type PageTagsOf } from './page-tags';
 import { WordCount } from './word-count';
@@ -44,6 +46,8 @@ export class PageView {
   });
   readonly #notice = h('p', { class: 'notice', attrs: { role: 'status', hidden: true } });
   readonly #editorHost = h('div', { class: 'editor-host' });
+  /** The editor, with its table's controls laid over it (../editor/table.css). */
+  readonly #editorFrame = h('div', { class: 'page__editor' }, this.#editorHost);
   /** In the editor's place while a seal is compared or shown (read only). */
   readonly #compareHost = h('div', { class: 'compare-host', attrs: { hidden: true } });
   /** The note's words, and what writing adds to them (./word-count.ts). */
@@ -56,6 +60,13 @@ export class PageView {
   readonly #zoom = h('span', { class: 'colophon__zoom', attrs: { 'aria-label': 'Zoom' } });
   /** News from the last action, when neither the list nor the sidebar is there to show it. */
   readonly #news = h('span', { class: 'colophon__news', attrs: { role: 'status' } });
+  /** What the table editor just did ("Row 3 removed · ⌘Z puts it back"), for a while. */
+  readonly #said = h('span', { class: 'colophon__said', attrs: { role: 'status' } });
+  readonly #saying = new Notice(() => {
+    this.#said.textContent = this.#saying.text ?? '';
+  });
+  /** A phone's table tools, above the keyboard while the caret's in a table (../editor/table-bar.ts). */
+  readonly tableBar: TableBar;
   readonly #sheet = h(
     'article',
     { class: 'sheet' },
@@ -64,7 +75,7 @@ export class PageView {
     this.#titleField,
     this.tagSlots.underTitle,
     this.#notice,
-    this.#editorHost,
+    this.#editorFrame,
     this.#compareHost,
   );
   /** With no note open; it takes the keyboard when the page is given it. */
@@ -127,9 +138,13 @@ export class PageView {
       follow: events.follow,
       ...(events.images ? { images: events.images } : {}),
       moved: () => {
+        this.tableBar.sync();
         for (const listener of this.#caret) listener();
       },
+      said: (words) => this.#saying.tell(words),
     });
+    this.#editorFrame.append(this.editor.tableTools);
+    this.tableBar = new TableBar(this.editor.view);
     this.tags = new PageTags(this.editor, { ...events.tags, editable: () => !this.comparing });
     this.tags.listen(container);
     const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
@@ -142,6 +157,7 @@ export class PageView {
         this.slots.bar,
         this.slots.format,
         scroll,
+        this.tableBar.element,
         h(
           'footer',
           { class: 'colophon count' },
@@ -152,6 +168,7 @@ export class PageView {
           this.#sealLine,
           this.#zoom,
           this.#news,
+          this.#said,
         ),
         this.slots.phone,
       ),

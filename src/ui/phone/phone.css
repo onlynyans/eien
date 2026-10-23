@@ -35,7 +35,8 @@
   display: flex;
 }
 .phone-bar__controls .icon-button,
-.page__phone .icon-button {
+.page__phone .icon-button,
+.table-bar .icon-button {
   --eien-control: var(--eien-touch);
 }
 .shell[data-phone] > .sidebar,

@@ -479,7 +479,9 @@
   color: var(--eien-pencil);
   transform: translateY(-50%);
 }
-.note-row__grip .icon {
+/* A grip's icon, a row's here and a table's (../editor/table.css). */
+.note-row__grip .icon,
+.table-tools__grip .icon {
   width: 12px;
   height: 12px;
 }
