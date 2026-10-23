@@ -598,9 +598,12 @@ const rowOf = (r) => (r === 0 ? T.head : T.rows[r - 1]);
 const colName = (c) => T.head[c].trim() || `column ${c + 1}`;
 const rowName = (r) => (r === 0 ? 'the head row' : `row ${r}`);
 
+const escapePipes = (s) => s.replace(/(\\*)\|/g, (pipe, slashes) => (slashes.length % 2 ? pipe : `${slashes}\\|`));
 /** The table's lines in the file: tidy pads each column to its widest cell, compact doesn't. */
 function tableLines(tidy) {
-  const all = [T.head, ...T.rows].map((row) => row.map((s) => s.replace(/\|/g, '\\|')));
+  // A pipe ends a cell, so it's written \| unless the writer already escaped it: a pipe after
+  // an odd run of backslashes is escaped already. Other backslashes are the writer's Markdown.
+  const all = [T.head, ...T.rows].map((row) => row.map(escapePipes));
   const width = T.head.map((_, c) => (tidy ? Math.max(3, ...all.map((row) => [...row[c]].length)) : 3));
   const pad = (s, c) => {
     if (!tidy) return s;
