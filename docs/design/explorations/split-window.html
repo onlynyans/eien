@@ -771,12 +771,22 @@ const Split = { page: () => '', strip: () => '' };
 let canvas;
 const root = document.documentElement;
 
+/** The bar's choices as the window may use them: one of the known values, a width as a number. */
+const LAYOUTS = ['band', 'slip', 'runhead'];
+function choices() {
+  const d = root.dataset;
+  return {
+    layout: LAYOUTS.includes(d.layout) ? d.layout : 'band',
+    sb: d.sb === 'shut' ? 'shut' : 'open',
+    width: Math.round(Math.min(2400, Math.max(600, Number(d.width) || 1440))),
+  };
+}
+
 /** What a direction draws with: the state, and the pieces every layout shares. */
 function context() {
   const d = root.dataset;
-  const layout = d.layout;
-  const winW = +d.width;
-  const sbW = d.sb === 'shut' ? (layout === 'runhead' ? C_STRIP : 0) : SIDEBAR_W;
+  const { layout, sb, width: winW } = choices();
+  const sbW = sb === 'shut' ? (layout === 'runhead' ? C_STRIP : 0) : SIDEBAR_W;
   const pageW = winW - sbW - LIST_W;
   const split = S.sides.length === 2;
   // Too narrow for two pages: they fold into one, with a pager between them.
@@ -818,7 +828,7 @@ function context() {
 }
 
 function windowHtml(ctx) {
-  const d = root.dataset;
+  const d = choices();
   const row = (id) => {
     const n = NOTES[id];
     const chosen = S.sides[S.active] === id;
