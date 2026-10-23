@@ -267,3 +267,19 @@ export const editorLines = (page: Page) => page.locator('.cm-line');
 export const editorContent = (page: Page) => page.locator('.cm-content');
 
 export { expect } from '@playwright/test';
+
+/**
+ * Choose a setting the way the writer does, in Settings (its category and tab found by its
+ * row), so the window's own settings change: one set through the bridge reaches the other
+ * windows, never the one that asked.
+ */
+export async function chooseSetting(page: Page, key: string, value: string): Promise<void> {
+  await page.getByRole('button', { name: 'Settings' }).first().click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await expect(dialog).toBeVisible();
+  const choice = dialog.locator(`[data-setting="${key}"] [data-value="${value}"]`);
+  await choice.click();
+  await expect(choice).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+}

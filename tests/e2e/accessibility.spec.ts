@@ -5,7 +5,7 @@
 
 import type { Page } from '@playwright/test';
 import { seriousViolations, violationsUnder } from './axe';
-import { expect, test } from './launch';
+import { chooseSetting, expect, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -84,7 +84,7 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       test('facing pages, and the book closed, have no serious violation', async ({ page }) => {
         await page.setViewportSize({ width: 1600, height: 900 });
         await ready(page);
-        await page.evaluate(() => window.eien.settings.set('appearance.split', 'facing'));
+        await chooseSetting(page, 'appearance.split', 'facing');
         await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
         await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
         // Each page with its folio's tools in sight, the gutter, and the book's tools.
