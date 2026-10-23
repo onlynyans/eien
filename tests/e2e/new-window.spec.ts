@@ -66,6 +66,8 @@ test.describe('New Window', () => {
   });
 
   test('a setting changed in one window reaches the other', async ({ app, page }) => {
+    // The vault shown first: a menu command sent before the window hears the menu is lost.
+    await expect(row(page, 'Ideas')).toBeVisible();
     const second = await newWindow(app);
     await expect(second.locator('html')).not.toHaveAttribute('data-layout', 'slip');
     await page.evaluate(() => window.eien.settings.set('appearance.layout', 'slip'));
