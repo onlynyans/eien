@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — The window's corner: 2 · The seal stays</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:corner.css*/
+
+/* 2 · The seal stays: shut, the sidebar goes entirely (no strip), and the
+   seal stays where it was, in the lights' row: beside them on macOS, at the
+   window's left edge in full screen and on Windows and Linux. The list's band
+   starts after it. */
+.win[data-way='new'][data-sb='shut'] { --sb: 0px; --seal-x: calc(var(--controls-left) + 27px); --seal-y: calc(var(--band) / 2); }
+.win[data-way='new'][data-sb='shut'] .sb { border-right-color: transparent; }
+.win[data-way='new'][data-sb='shut'] .ls__band { padding-left: calc(var(--seal-x) + 16px + var(--eien-space-3)); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:corner.js*/
+
+mountCornerPage({
+  id: 'stay',
+  note: 'Offered with 3, as a setting. The seal never moves: shutting the sidebar takes the desk away from under it.',
+  notes: `
+  <h2>2 · The seal stays</h2>
+  <p>The seal never moves. Shutting the sidebar takes the whole desk away, strip and all, and the seal stays exactly where it was in the top row: beside the lights on macOS, at the window's left edge in full screen and on Windows and Linux. The list's band (or the page's, with the list shut) starts after it, so the lights and the seal read as one row, the window's own corner.</p>
+  <h2>Offered with 3</h2>
+  <p>Chosen on 2026-10-22: both 2 and 3, as a setting (Look → Appearance, "Shut sidebar": The seal alone, or A strip of desk). This is The seal alone.</p>
+  <h2>For</h2>
+  <ul>
+    <li>Nothing jumps: the seal is where your eye left it, in every state. Full screen, it is the corner.</li>
+    <li>48px more for the list and the page while the sidebar's shut.</li>
+    <li>The lights sit on one surface, the band, as they do over the open sidebar's head.</li>
+    <li>Small in code: the strip goes, and the list's keep-clear sum adds the seal's width.</li>
+  </ul>
+  <h2>Against</h2>
+  <ul>
+    <li>It undoes a decided pattern: "a shut sidebar leaves a strip of desk with the traffic lights and the seal". With no desk at the left, only the seal (its tooltip and key) says a sidebar is there.</li>
+    <li>On macOS the list's band gives its first 135px to the lights and the seal, so the search field narrows while the sidebar's shut.</li>
+    <li>The seal sits on the band's tone, not the desk's; it needs no change, but it's a new ground for it.</li>
+  </ul>
+  <h2>In the app</h2>
+  <p><code>STRIP</code> in <code>pane-state.ts</code> becomes 0, the seal is drawn once, over the panes, at the sidebar head's place (<code>sidebar.css</code>), and <code>list.css</code>'s <code>.list__search</code> keeps clear of <code>--controls-left</code> plus the seal. Band's › for a shut sidebar, which sat under the seal, goes: the seal is the way back.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>the seal: it shuts and opens the sidebar, as in the app</li>
+    <li>Window → Full screen, with the sidebar shut: no lights, and no empty corner</li>
+    <li>System → Windows, Linux: their controls are at the right, so the left corner is the seal's alone</li>
+    <li>Show → As built now, to see what this replaces; View → All states, for the six side by side</li>
+  </ul>
+  <h2>As built now</h2>
+  <p>Shut, the sidebar is a 48px strip, but macOS's lights stand 20 to 72px from the window's edge: they hang over the strip's edge onto the list's band, half on the desk and half off it, and the seal waits a band lower. In full screen there are no lights, yet the seal still waits a band down, alone under an empty corner.</p>`,
+});
+</script>
+</body>
+</html>

@@ -324,6 +324,37 @@ the sync icon's place at the sidebar's foot (`SidebarFoot.sync`), and C's
 strip ground (`--runhead-ground`: the Running head setting, one of the
 theme's surfaces, the desk by default; built in 3G).
 
+## Decided, not built yet (2026-10-22)
+
+From `docs/design/explorations/tables.md` and `corner.md`; each page there
+shows it working.
+
+- **Tables in Live** (`table-menus.html`): a GFM table edited in place, the
+  file a plain Markdown table.
+  - Desktop: a grip at each row's left and over each column, for the row and
+    column under the pointer or the caret. Pressed, the row's or column's
+    menu (the row menu's style); dragged, the row or column moves, with the
+    drop line.
+  - A + comes only while the pointer is on a line between two columns or
+    rows (or the table's outer edges), with the line where the new one goes.
+  - The formatting bar's Table button: pressed with the caret in a table, it
+    opens the caret's menus.
+  - Phone: the table's tools on one bar docked above the keyboard, 44px
+    targets.
+  - Keys: Tab, arrows and Enter between cells; ⌥⌘ arrows add, ⌥⌘⌫ removes,
+    ⌘Z puts back.
+- **A shut sidebar** (`corner-stay.html`, `corner-shoulder.html`): a
+  setting for A · Band and B · Slip, "Shut sidebar".
+  - The seal alone: no strip; the seal stays in the top row, beside macOS's
+    lights.
+  - A strip of desk: a strip `--band` wide (56px), widening at its top into a
+    shoulder of desk that holds macOS's lights, its outer corner
+    `--eien-radius-l`.
+  - C · Running head: always a strip as wide as its own bands are tall
+    (48px, C's `--band`).
+  - In full screen (no lights), the seal sits in the top row, never a band
+    down.
+
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 
 As shipped; see `docs/design/explorations/specimen.html`, As built.
