@@ -141,6 +141,48 @@ test.describe('a long session', () => {
       expect(report('heap growth, bytes', growth)).toBeLessThan(HEAP_GROWTH);
     },
   );
+
+  test(
+    'a page opened beside and closed 50 times leaves nothing behind',
+    ALONE,
+    async ({ app, page }) => {
+      test.setTimeout(180_000);
+      await page.setViewportSize({ width: 1600, height: 900 });
+      const cdp = await page.context().newCDPSession(page);
+      const heap = async () => {
+        await cdp.send('HeapProfiler.collectGarbage');
+        await cdp.send('HeapProfiler.collectGarbage');
+        return (await cdp.send('Runtime.getHeapUsage')).usedSize;
+      };
+      const pages = page.locator('.page__pages > .page__scroll');
+      const besideAndBack = async (times: number) => {
+        for (let i = 0; i < times; i++) {
+          const note = `Note ${String((i % (NOTES - 1)) + 1).padStart(2, '0')}`;
+          await page
+            .locator(`.note-row[data-path="${note}.md"]`)
+            .click({ modifiers: ['ControlOrMeta'] });
+          await expect(pages).toHaveCount(2);
+          await app.evaluate(({ BrowserWindow, Menu }) => {
+            const window = BrowserWindow.getAllWindows()[0];
+            const close = Menu.getApplicationMenu()
+              ?.items.find((item) => item.label === 'File')
+              ?.submenu?.items.find((item) => item.label === 'Close Window');
+            close?.click(undefined, window, window?.webContents);
+          });
+          await expect(pages).toHaveCount(1);
+        }
+      };
+      await page.locator('.note-row[data-path="Note 00.md"]').click();
+      await expect(page.locator('.page__scroll[data-active] .title')).toHaveText('Note 00');
+      await besideAndBack(3); // warmed up
+      const elementsBefore = await elements(page);
+      const before = await heap();
+      await besideAndBack(50);
+      expect(await elements(page), 'elements, the page closed each time').toBe(elementsBefore);
+      const growth = (await heap()) - before;
+      expect(report('heap growth after 50 pages beside, bytes', growth)).toBeLessThan(HEAP_GROWTH);
+    },
+  );
 });
 
 test('the built renderer’s code and styles stay within their budget', () => {

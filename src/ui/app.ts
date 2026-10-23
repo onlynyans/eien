@@ -66,8 +66,10 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
   menu.on((command) => {
     if (command === 'open-vault') void chooseVault();
     else if (command === 'new-window') void bridge.window?.open(shown?.notePath() ?? null);
-    else if (command === 'close-window') void bridge.window?.close();
-    else if (command === 'settings') screen.open();
+    // ⌘W: while split, the active page; else the window.
+    else if (command === 'close-window') {
+      if (!shown?.closePage()) void bridge.window?.close();
+    } else if (command === 'settings') screen.open();
     else if (isZoomCommand(command)) {
       const key = zoomKeyFor(keyboardInPage(), wholeZoom);
       const now = settings.values[key];

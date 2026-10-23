@@ -151,6 +151,14 @@
 .tree-row__name:focus-visible {
   outline: none;
 }
+/* On the other page, while split (../list/shown-notes.ts): a fainter rule, no fill. */
+.tree-row:has([data-beside])::before {
+  content: "";
+  position: absolute;
+  inset: var(--eien-space-2) auto var(--eien-space-2) 0;
+  width: var(--eien-mark-w);
+  background: var(--eien-faded);
+}
 /* Selected: a neutral fill, and the seal's rule beside it. */
 .tree-row:has([aria-current="true"]) {
   background: var(--eien-selected);

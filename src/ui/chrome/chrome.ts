@@ -19,6 +19,8 @@ export interface ChromeOf extends Omit<HostOf, 'press'> {
   lost(): void;
   /** Show the tooltips of a host just drawn (./tooltip.ts). */
   watch(host: HTMLElement): void;
+  /** The split's pager, folded (../page/page-pane.ts): placed where the layout says. */
+  readonly pager?: HTMLElement;
 }
 
 export class Chrome {
@@ -56,6 +58,11 @@ export class Chrome {
       if (host.spec.first) slot.prepend(host.element);
       else slot.append(host.element);
       this.#of.watch(host.element);
+    }
+    if (this.#of.pager) {
+      const { slot, before } = spec.pager;
+      const next = this.#hosts.find((host) => host.spec.name === before)?.element ?? null;
+      this.#of.slots[slot].insertBefore(this.#of.pager, next);
     }
     this.#layout = layout;
     if (active instanceof HTMLElement && !active.isConnected) {

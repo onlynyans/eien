@@ -23,10 +23,13 @@ export interface NotePageParts {
   act(operation: () => Promise<unknown>): void;
   /** Where images dropped or pasted into the note are written (./note-images.ts). */
   readonly vault: Pick<VaultBridge, 'writeNew'>;
+  /** The page's ×, while the window is split: the page closes, its note as it is. */
+  close(): void;
 }
 
 export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
   const page: PageView = new PageView(area, {
+    close: () => parts.close(),
     changed: (text) => parts.note().session?.edit(text),
     follow: (target) => {
       if (target.kind === 'url')

@@ -56,6 +56,12 @@ export class SelectionBar {
     this.#bar.hidden = true;
   }
 
+  /** Its page closed: the bar goes with it. */
+  remove(): void {
+    this.hide();
+    this.#bar.remove();
+  }
+
   #later(): void {
     clearTimeout(this.#timer);
     this.#timer = setTimeout(() => this.#show(), SHOW_AFTER_MS);

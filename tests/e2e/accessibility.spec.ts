@@ -59,6 +59,26 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await expect(settings).toBeVisible();
         expect(await violationsUnder(page, ['dialog[open]']), 'Settings').toEqual([]);
       });
+
+      test('split, and folded, has no serious violation', async ({ page }) => {
+        await page.setViewportSize({ width: 1600, height: 900 });
+        await ready(page);
+        await page
+          .locator('.note-row', { hasText: 'Other' })
+          .click({ modifiers: ['ControlOrMeta'] });
+        await expect(page.locator('.page__pages > .page__scroll')).toHaveCount(2);
+        // Each page, the divider (its ⇄ shows under the pointer) and the list's two marks.
+        const areas = [
+          '.page__scroll:not([data-active])',
+          '.page__scroll[data-active]',
+          '.divider',
+          '.list',
+        ];
+        expect(await violationsUnder(page, areas), 'split').toEqual([]);
+        await page.setViewportSize({ width: 1000, height: 800 });
+        await expect(page.locator('.page__pages[data-folded]')).toHaveCount(1);
+        expect(await violationsUnder(page, ['.page']), 'folded, the pager showing').toEqual([]);
+      });
     });
   }
 }

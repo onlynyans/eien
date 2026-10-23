@@ -14,7 +14,7 @@ import { SyncStatus } from '../sidebar/sync-status';
 import { vaultChrome } from './chrome-wiring';
 import { follow } from './follow';
 import { listLens } from './list-lens';
-import { trashNameOn } from './menus';
+import { trashNameOn } from './menu-items';
 import { Navigation } from './navigation';
 import { noteActions } from './note-actions';
 import { Notice } from './notice';
@@ -22,6 +22,7 @@ import { oneAtATime } from './one-at-a-time';
 import { orderActions } from './order-actions';
 import { Organizer } from './organize';
 import { ownWrites } from './own-writes';
+import { pageDrop } from './page-drop';
 import { pageParts } from './page-parts';
 import { Pages, pagesHeld } from './pages';
 import { PaneDrawer } from './pane-drawer';
@@ -42,6 +43,8 @@ export interface ShownVault {
   notePath(): string | null;
   /** Show the note at `path`. */
   openNote(path: string): Promise<void>;
+  /** Close the active page while the window is split: whether there was one to close. */
+  closePage(): boolean;
 }
 
 /** Show the vault named `name` in `root`; `syncthing` when Syncthing syncs it (the sidebar's sync status). */
@@ -103,6 +106,7 @@ export async function showVault(
     vaultName: name,
     trashName,
     openInNewWindow: bridge.window ? (path) => void bridge.window?.open(path) : undefined,
+    phone: () => phone.stack.phone,
     actions: () => actions,
     exports: () => parts.exports,
     choose: lens.choose,
@@ -153,6 +157,7 @@ export async function showVault(
     act: (operation) => act(operation),
     tell,
     changed: () => chrome.refresh(),
+    rearranged: () => void redraw(),
     refresh: () => void refresh(),
     wrote: (added, when) => parts.wrote(added, when),
     counted: () => parts.counted(),
@@ -262,6 +267,7 @@ export async function showVault(
     tree: sidebar.element,
     dropFolder: (path, to) => order.dropFolder(path, to),
     placeNote: (path, before) => order.placeNote(path, before),
+    pageDrop: pageDrop(pages, (path, beside) => void actions.openNote(path, beside)),
     folderDrags: () => settings.values['lists.arranging'] !== 'mode',
     act,
     listOrdered: () => draw.listOrdered,
@@ -282,6 +288,7 @@ export async function showVault(
   return {
     back: () => phone.back(),
     notePath: () => pages.active.note.path,
+    closePage: () => pages.close(pages.active),
     openNote: (path) => actions.openNote(path),
     // The note's words first; then a seal or a move under way finishes (a quit waits for both).
     flush: async () => {

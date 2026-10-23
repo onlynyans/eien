@@ -234,7 +234,39 @@ open, so the system lists it by that (macOS's Window menu, the taskbar).
 Close Window (⌘W) saves, then closes it. Two windows on one vault share its
 folder: it's read and watched once, and a change one window makes isn't
 taken for a sync in the other. A setting changed in one window holds in all
-of them. A phone has one window.
+of them. A phone has one window. While the window is split, Close Window
+closes the active page instead (see Split).
+
+### Split
+
+Two notes side by side in one window, never top and bottom: **Two sheets**,
+two papers on one blotter, with one set of the layout's tools, one
+formatting bar and one colophon, all for the active page.
+
+- **Opening:** a row's Ctrl-click (⌘ on a Mac) or Ctrl+Enter; Open to the
+  Side in its menu; a row dragged onto the page pane (past 60% of a lone
+  page, beside it; onto a page, that page); View → Split Page (⌘D), the note
+  beside itself. Split already, the note opens on the other page.
+- **The active page** is the one the writer is in (a click, the keyboard),
+  or View → Go to Page (⌘3) pressed in a page: the other one. The commands,
+  the formatting bar, Copy as HTML, Seal, Compare, Versions and outline
+  cards act on it. Its sheet lies on top with the sheet's shadow; the other
+  lies flat (with Page frame Full, a 2px rule tops the active page). The
+  list's chosen row is its note; the other page's note keeps a fainter rule.
+- **Closing:** the sheet's × (on hover), Close Window (⌘W), or Split Page
+  again (the other page). A note is never touched by closing its page. The
+  last page never closes.
+- **The divider** is a pane's edge: dragged, or ← → with the keyboard, Enter
+  or a double-click to even the pages; ⇄ on it (and View → Swap Pages) swaps
+  them. Neither page is ever narrower than 360px; where it stands is
+  remembered on this device. Which notes are split isn't remembered across a
+  restart.
+- **Narrow:** below two pages' width, the two fold into one, the active
+  page, and a pager with the page's tools names both. Shutting a pane
+  unfolds them.
+- **One note on both pages** is one document: one undo history, one save,
+  its words counted once (§3).
+- **The phone** shows one page: no split, and its menus offer none.
 
 ### Layout
 

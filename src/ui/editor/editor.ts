@@ -42,6 +42,8 @@ export interface EditorEvents {
    * seal's id, a restore), which counts toward no one's words.
    */
   changed(text: string, written: boolean): void;
+  /** The text changed in another view of the same note (or a reload), told and counted there. */
+  echoed?(text: string): void;
   /** A link was followed: a web address, or a [[note]] by its title. */
   follow(target: { readonly kind: 'url' | 'note'; readonly value: string }): void;
   /** The caret moved, or the text changed under it: what's on at the caret may differ. */
@@ -113,6 +115,12 @@ export class NoteEditor {
     this.#view.setState(start > 0 ? state.update({ selection: { anchor: start } }).state : state);
     this.#view.scrollDOM.scrollTop = 0;
     doc.attach(this.#view);
+  }
+
+  /** The page closed: the note let go, and the view with it. */
+  destroy(): void {
+    this.release();
+    this.#view.destroy();
   }
 
   /** No note: the document is let go, and the editor holds nothing of it. */
@@ -275,9 +283,11 @@ export class NoteEditor {
       EditorView.updateListener.of((update) => {
         if (update.docChanged || update.selectionSet) this.#events.moved?.();
         // A change made in this view, told once: an echo of another view's was told there.
+        if (!update.docChanged) return;
         const told = update.transactions.filter((tr) => tr.docChanged && !isEcho(tr));
-        if (told.length === 0) return;
-        this.#events.changed(update.state.doc.toString(), told.some(writtenBy));
+        if (told.length > 0)
+          this.#events.changed(update.state.doc.toString(), told.some(writtenBy));
+        else this.#events.echoed?.(update.state.doc.toString());
       }),
       historyInput((command) => this.#doc?.run(this.#view, command) ?? false),
       linkFollowing(

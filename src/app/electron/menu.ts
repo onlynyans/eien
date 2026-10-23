@@ -182,6 +182,10 @@ export function buildMenu(send: SendCommand): Menu {
         item('Go to Note List', 'focus:list', 'CmdOrCtrl+2'),
         item('Go to Page', 'focus:page', 'CmdOrCtrl+3'),
         { type: 'separator' },
+        // Two notes side by side (spec §4): the note beside itself, or, split, the other page closed.
+        item('Split Page', 'split', 'CmdOrCtrl+D'),
+        item('Swap Pages', 'split:swap'),
+        { type: 'separator' },
         // With the keyboard in the page, the page's zoom; elsewhere the whole window's (spec §4).
         item('Zoom In', 'zoom:in', 'CmdOrCtrl+='),
         { ...item('Zoom In', 'zoom:in', 'CmdOrCtrl+Plus'), visible: false }, // ⌘+ with Shift, as well as ⌘=

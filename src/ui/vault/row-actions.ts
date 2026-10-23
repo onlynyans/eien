@@ -19,6 +19,8 @@ export interface RowActionsOf {
   readonly trashName: string;
   /** A note in a window of its own: the desktop's only. */
   readonly openInNewWindow?: (path: string) => void;
+  /** Whether the window shows one pane at a time (a phone's): one page, no split. */
+  phone(): boolean;
   /** Made after the rows, whose panes they need. */
   actions(): NoteActions;
   exports(): Exports;
@@ -33,6 +35,7 @@ export function rowActions(of: RowActionsOf): {
 } {
   const { state, organizer, order } = of;
   const act = (operation: () => Promise<unknown>) => void of.act(operation);
+  const beside = (path: string) => void of.actions().openNote(path, true);
   const menus: MenuContext = {
     state,
     organizer,
@@ -42,6 +45,9 @@ export function rowActions(of: RowActionsOf): {
     vaultName: of.vaultName,
     trashName: of.trashName,
     openInNewWindow: of.openInNewWindow,
+    get openBeside() {
+      return of.phone() ? undefined : beside;
+    },
     act,
     renameNote: (path) => of.actions().renameNote(path),
     newNote: (folder) => {
@@ -56,6 +62,7 @@ export function rowActions(of: RowActionsOf): {
   };
   const rows: RowActions = {
     open: (path) => void of.actions().openNote(path),
+    openBeside: beside,
     menu: (path, at, ordered) => showNoteMenu(menus, path, at, ordered),
     nudge: (path, by) => order.nudgeNote(path, by),
     rename: (path) => of.actions().renameNote(path),

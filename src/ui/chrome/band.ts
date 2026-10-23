@@ -18,6 +18,7 @@ export const BAND: LayoutSpec = {
     FOOT,
   ],
   tags: 'runningHead',
+  pager: { slot: 'pageBar', before: 'band-tools' },
   phone: {
     name: 'phone-band',
     slot: 'phoneBar',

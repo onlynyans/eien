@@ -25,6 +25,8 @@ export class WordCount {
   #since = 0;
   #lately = 0;
   #timer: ReturnType<typeof setTimeout> | undefined;
+  /** Another page's change to the note, not counted yet (see `echoed`). */
+  #echo: string | null = null;
   readonly #wrote = new Set<(added: number, when: Written) => void>();
   readonly #counted = new Set<(words: number) => void>();
 
@@ -54,8 +56,20 @@ export class WordCount {
     this.#show(countWords(text));
   }
 
+  /**
+   * The same note changed on another page, which counts what its writer added:
+   * this page's count follows once typing pauses, and adds nothing; what was
+   * typed here before it is counted first.
+   */
+  echoed(text: string): void {
+    this.flush();
+    this.#echo = text;
+    this.#timer = setTimeout(() => this.#settle(), COUNT_AFTER_MS);
+  }
+
   /** A change in the editor: the writer's counted once typing pauses; Eien's at once. */
   edited(text: string, written: boolean): void {
+    this.#settle(); // another page's words are no one's here: the count starts after them
     if (!written) {
       this.show(text);
       return;
@@ -78,6 +92,7 @@ export class WordCount {
   /** Count what the writer has written now, without waiting for a pause: the window closing, a sprint's end. */
   flush(): void {
     clearTimeout(this.#timer);
+    this.#settle();
     if (this.#pending === null) return;
     const words = countWords(this.#pending);
     this.#pending = null;
@@ -85,6 +100,14 @@ export class WordCount {
     this.#show(words);
     if (added !== 0)
       for (const wrote of this.#wrote) wrote(added, { from: this.#since, to: this.#lately });
+  }
+
+  /** Another page's change, counted as where this page starts from. */
+  #settle(): void {
+    if (this.#echo === null) return;
+    const text = this.#echo;
+    this.#echo = null;
+    this.#show(countWords(text));
   }
 
   #show(words: number): void {

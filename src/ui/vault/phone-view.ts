@@ -12,7 +12,7 @@ import { type PhonePane, PhoneStack } from '../phone/phone-stack';
 import type { SettingsState } from '../settings/settings-state';
 import type { Sidebar } from '../sidebar/sidebar';
 import { focusList } from './commands';
-import { exportMenu } from './menus';
+import { exportMenu } from './menu-items';
 import type { PageParts } from './page-parts';
 import type { Pages } from './pages';
 

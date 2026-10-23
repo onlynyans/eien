@@ -316,6 +316,13 @@
   background: var(--eien-selected);
   color: var(--eien-ink);
 }
+.note-row[data-beside]::before {
+  content: "";
+  position: absolute;
+  inset: var(--eien-space-2) auto var(--eien-space-2) 0;
+  width: var(--eien-mark-w);
+  background: var(--eien-faded);
+}
 .note-row[aria-current="true"]::before {
   content: "";
   position: absolute;

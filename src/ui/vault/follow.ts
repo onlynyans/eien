@@ -4,7 +4,7 @@
 
 import { VAULT_CONFIG } from '../../core/paths';
 import type { VaultBridge } from '../../platform/bridge';
-import { watchDrags } from '../list/drag';
+import { type PageDrop, watchDrags } from '../list/drag';
 import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
@@ -26,6 +26,8 @@ export interface FollowOf {
   readonly tree: HTMLElement;
   /** A folder dragged in the tree, let go (../sidebar/folder-drag.ts). */
   dropFolder(path: string, to: FolderDrop): void;
+  /** A note dragged onto the page pane (./page-drop.ts). */
+  readonly pageDrop: PageDrop;
   /** A note dragged into place in the list showing. */
   placeNote(path: string, before: string | null): void;
   /** Whether folders drag in the tree: not in Arrange mode, where order changes only on purpose. */
@@ -69,6 +71,7 @@ export function follow(of: FollowOf): () => void {
     moveTo: (path: string, folder: string) =>
       void of.act(() => of.organizer.moveInto(path, folder, true)),
     placeBefore: (path: string, before: string | null) => of.placeNote(path, before),
+    page: of.pageDrop,
   };
   watchDrags(of.commands.list, { ...drags, orderable: of.listOrdered });
   watchDrags(of.tree, { ...drags, orderable: () => false }, '.tree-row__name[data-path]');

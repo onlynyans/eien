@@ -1,5 +1,6 @@
 // Dragging a note (spec §4): onto a folder in the sidebar to move it there,
-// or, in a folder's own order, between the list's rows to place it. The row
+// in a folder's own order between the list's rows to place it, or onto the
+// page pane to open it there (../vault/page-drop.ts). The row
 // lifts off the paper and follows the pointer; a hairline marks where it
 // will go (docs/design). Esc puts it back. The keyboard has the same moves:
 // the row's menu, and Alt+↑/↓.
@@ -11,12 +12,24 @@ export interface DragActions {
   moveTo(path: string, folder: string): void;
   /** Place the note at `path` just before the note at `before` (last, for null). */
   placeBefore(path: string, before: string | null): void;
+  /** The page pane, where a note let go opens. */
+  readonly page?: PageDrop;
+}
+
+/** Where a dragged note opens on the page pane, shown while it's over it. */
+export interface PageDrop {
+  /** The pointer at (x, y): whether that's over the pane, which then shows where the note would open. */
+  over(x: number, y: number): boolean;
+  /** Let go over the pane: the note at `path` opens where it showed. */
+  drop(path: string): void;
+  /** Off the pane, or the drag over: nothing shown. */
+  leave(): void;
 }
 
 /** How far the pointer goes before a press becomes a drag, in pixels. */
 export const DRAG_AFTER = 5;
 
-type Drop = { readonly folder: string } | { readonly before: string | null };
+type Drop = { readonly folder: string } | { readonly before: string | null } | 'page';
 
 /**
  * Let `list`'s rows (`rows`: the note list's, or the sidebar tree's notes)
@@ -114,6 +127,11 @@ export function watchDrags(
         return;
       }
       light(null);
+      if (actions.page?.over(event.clientX, event.clientY)) {
+        drop = 'page';
+        mark(null);
+        return;
+      }
       // Across, the gap between two cards is the place between them: the nearest card says which.
       const over =
         under?.closest<HTMLElement>(rows) ??
@@ -158,7 +176,9 @@ export function watchDrags(
       if (released) forget();
       else document.addEventListener('pointerup', forget, { capture: true, once: true });
       const target = drop;
-      if (!commit || !target) return;
+      if (commit && target === 'page') return actions.page?.drop(path); // where it showed
+      actions.page?.leave();
+      if (!commit || !target || target === 'page') return;
       if ('folder' in target) actions.moveTo(path, target.folder);
       // Before itself, or before the one already after it: where it is. Nothing to write.
       else if (target.before !== path && target.before !== nextOf(row, rows)) {

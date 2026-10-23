@@ -8,7 +8,6 @@ import { filtering } from '../../core/tags';
 import { addButton } from '../add-button';
 import { h, wordButton } from '../dom';
 import { icon } from '../icons';
-
 import { WINDOW_FROM } from '../shell/window-range';
 import { WindowedRows } from '../shell/windowed-rows';
 import type { ListedNote, NoteList } from '../vault/vault-state';
@@ -22,6 +21,7 @@ import {
 } from './lens-bar';
 import { noteCount as notes } from './note-count';
 import { type RowActions, rowEvents, rowKeys } from './row-events';
+import { type ShownNotes, shownAttrs } from './shown-notes';
 import { when } from './when';
 
 export interface ListActions extends RowActions, LensActions {
@@ -61,21 +61,22 @@ export function listLabel(list: NoteList): string {
 const windows = new WeakMap<HTMLElement, WindowedRows>();
 
 /** What a row shows, as a string: the same string, the same element. */
-const rowShows = (note: ListedNote, book: boolean, ordered: boolean, open: boolean) =>
+const rowShows = (note: ListedNote, book: boolean, ordered: boolean, shown: ShownNotes) =>
   JSON.stringify([
     note.title,
     note.ordinal ?? '',
     book ? note.words : Math.floor(note.modified / 60_000),
     note.preview,
     ordered,
-    open,
+    note.path === shown.active,
+    note.path === shown.other,
     new Date().toDateString(),
   ]);
 
 export function renderList(
   container: HTMLElement,
   list: NoteList,
-  openPath: string | null,
+  shown: ShownNotes,
   actions: ListActions,
   notice: string | null = null,
   arrange: Arrange = NO_ARRANGE,
@@ -96,7 +97,7 @@ export function renderList(
           attrs: {
             type: 'button',
             'data-path': note.path,
-            'aria-current': note.path === openPath ? 'true' : undefined,
+            ...shownAttrs(note.path, shown),
             'aria-keyshortcuts': rowKeys(ordered),
           },
           on: rowEvents(note.path, actions, ordered),
@@ -159,7 +160,7 @@ export function renderList(
     windowed.set(
       list.notes.map((note) => ({
         key: note.path,
-        shows: rowShows(note, book, ordered, note.path === openPath) + (grips ? 'g' : ''),
+        shows: rowShows(note, book, ordered, shown) + (grips ? 'g' : ''),
         make: () => row(note),
       })),
     );
