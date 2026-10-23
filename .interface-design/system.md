@@ -400,6 +400,84 @@ A · Band and B · Slip, "Shut sidebar" (`appearance.shutSidebar`, as
 - One length says where the corner's things end, `--corner`
   (`shell/shell.css`); every band that could run under them keeps clear of it.
 
+## The split window and New Window (decided 2026-10-23, being built)
+
+From `docs/design/explorations/split.md` and `split-alt.md`; each page there
+shows it working, and `docs/split-and-windows.md` is the build's plan. The
+split is a setting of four modes (`appearance.split`, as `data-split` on
+`<html>`), the way the layouts are: each mode a spec and a stylesheet, its
+corners and colours the layout's own.
+
+- **Shared by every mode:**
+  - Two notes side by side, never top and bottom (but for the companion when
+    narrow). A page is never narrower than `--eien-page-min`.
+  - Opening: Open to the Side (a row's menu), ⌘-click or ⌘Enter on a row, a
+    row dropped on the page's right edge (a raised-paper preview with a 2px
+    ink-soft edge where it lands), ⌘D. ⌘D, split, closes the other side.
+  - The active page: a click in it, or ⌘3 (pressed in a page, the other
+    one). Formatting, keys and Copy as HTML act on it.
+  - The list: the chosen row is the active page's note (the selected fill
+    and the seal's rule); the other open note keeps a fainter rule, pencil,
+    no fill.
+  - Closing (×, or ⌘W while split) never touches a note. Swap is ⇄.
+  - One note on both sides is one document: one history, one save, one
+    count.
+  - A divider is a pane's edge: a hairline in its own column, an
+    `--eien-space-2` handle round it, `--eien-rule-strong` under the pointer,
+    the focus ink at `--eien-mark-w` while dragged or focused; arrows move
+    it, double-click or Enter evens it; ⇄ shows on it on hover.
+- **3 · Two sheets** (the default): one set of the layout's tools, one
+  formatting bar, one colophon, for the active page. Two sheets on the
+  blotter, `--eien-space-5` of blotter round each, the divider between. The
+  active sheet has `--eien-shadow-sheet` and a `--eien-rule` edge; the other
+  lies flat, a `--eien-rule-soft` edge. In Page frame Full, the divider parts
+  two pages of paper and a 2px ink-soft rule tops the active one. Below two
+  pages' width, the pair folds into one with a pager naming both.
+- **4 · Facing pages:** one sheet opened like a book; the gutter
+  (`--eien-space-6`, a `--eien-rule-soft` hairline) is the divider. The
+  book's tools where the layout puts them; each note's own (its number,
+  words, last seal; Versions, Compare, Copy as HTML, ×, on hover) in a folio
+  at its page's foot, a soft rule above, mirrored as page numbers are. The
+  active page's mark is a setting (`appearance.facingMark`, as
+  `data-facing-mark`), none of them the seal's colour, each with its own
+  `--eien-calm` arrival (none with reduced motion):
+  - **the ribbon** (the default): an ink-soft silk marker, `--eien-space-2`
+    wide and `--eien-space-6` long, over the sheet's top edge in the outer
+    margin, its end forked; it drops in.
+  - **a dog-ear:** the outer top corner turned down, `--eien-space-5`
+    square: the corner gone to the blotter, the flap the paper's back in
+    `--eien-band` with a `--eien-rule-strong` hairline; no ink. It folds in.
+  - **an edge tab:** an ink-soft index tab standing out from the page's
+    outer edge, `--eien-space-7` long, `--eien-radius-s` on its outer
+    corners, `--eien-space-6` below the head. It slides out.
+  Too narrow for two pages and the gutter, the book closes to the marked
+  page, and the facing page's edge stays by the gutter, its name down it in
+  label type, to turn to.
+- **5 · Companion:** the page keeps every tool it has. The second note sits
+  at the window's right edge, where Versions opens, `--eien-companion-w`
+  wide (at least `--eien-companion-min`, the page beside it at least
+  `--eien-companion-page-min`), its words at row size. Its own head (its
+  name, ⇄ to make it the page, ⋯, ×) and foot (words, last seal). The one
+  you aren't writing in sits back a step: its paper takes `--eien-band`.
+  Narrower than both, it goes under the page, its edge dragged up and down.
+- **6 · Tools that follow:** the note list steps aside while split (not
+  saved as shut); one set of the page's furniture (A's band, formatting bar
+  and colophon; B's slip, resting folded; C's running-head tools and that
+  page's crumb in ink-soft) stands on the active page, placed by grid, never
+  moved in the DOM. The other page is paper on the blotter, its × on hover.
+  Too narrow for two pages beside the sidebar, the split is refused, and
+  Eien says why.
+- **New Window:** File → New Window (⇧⌘N) and a row's Open in New Window; a
+  window opens on the vault and note it was asked from. Its title is its
+  note's name. ⌘W closes the active side while split, the window otherwise.
+- **The phone:** no split and no New Window; the back bar keeps the note you
+  came from a tap away (⇄ and its name, a `--eien-radius-dot` slip at the
+  bar's right), each keeping its place.
+- **New tokens** (lengths, in `src/ui/theme/tokens.css`, not themed):
+  `--eien-page-min` 360px (a page in a split), `--eien-companion-w` 380px,
+  `--eien-companion-min` 300px, `--eien-companion-page-min` 400px. Every
+  other length above is a space, rule, mark or radius token.
+
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 
 As shipped; see `docs/design/explorations/specimen.html`, As built.

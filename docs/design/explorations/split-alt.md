@@ -69,8 +69,8 @@ Window slider):
     too short to hold them.
 - **Active:** a ribbon, the book's marker, hangs over the sheet's top edge
   into the outer margin of the page you're in. It's ink-soft, not the seal.
-- **The mark, three ways to choose from** (Ribbon, in the page's bar; added
-  2026-10-23). None is the seal's colour, and each arrives with its own short
+- **The mark, all three kept as a setting** (the owner's call, 2026-10-23;
+  Ribbon, in the page's bar). None is the seal's colour, and each arrives with its own short
   motion (none with reduced motion):
   1. **The ribbon**, as first drawn: the book's silk marker over the sheet's
      top edge, in the outer margin, its end forked. Ink-soft. It drops in.
