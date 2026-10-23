@@ -228,7 +228,7 @@ describe('arranging', () => {
     );
     expect(lensLine(list(), arranged(true))).toBeNull();
     expect(lensLine(list({ kind: 'all', folder: undefined, sort: 'title' }))?.textContent).toMatch(
-      /kept underneath/,
+      /Clear your sort or filters above to restore your order\./,
     );
   });
 });
