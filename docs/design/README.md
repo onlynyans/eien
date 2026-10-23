@@ -14,7 +14,7 @@ mockups here are how to see it; `tokens.css` is the source of every value.
 | [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Source Sans 3, Atkinson Hyperlegible Next, Schibsted Grotesk, Hanken Grotesk, Instrument Sans and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
 | [references.md](references.md) | The reference screenshots, what reads well in each, and the surface values that came of it |
-| [explorations/](explorations/README.md) | The design passes after these mockups (stages 2 and 3): the three layouts, Settings, tags, themes, your order; the components as built at the end of [explorations/specimen.html](explorations/specimen.html) |
+| [explorations/](explorations/README.md) | The design passes after these mockups (stages 2 and 3): the three layouts, Settings, tags, themes, your order; the components as built at the end of [explorations/specimen.html](explorations/specimen.html). Chosen, not built yet: editing a table in Live ([tables.md](explorations/tables.md)) and the window's corner in Band and Slip ([corner.md](explorations/corner.md)) |
 
 To view them, serve this folder (fonts don't load from `file://`):
 

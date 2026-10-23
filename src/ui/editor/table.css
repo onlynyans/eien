@@ -1,0 +1,80 @@
+/* The table editor's controls (ui/editor/table-*.ts), the window's own:
+   quiet icon buttons and the drop marker, from chrome.css and list.css.
+
+   On the desktop, a layer over the editor: each control stands where its
+   line, column or row is (--at-x, --at-y, set as the table is measured),
+   off the table by a gap. Over a column, above the table: its grip, and
+   the + on each line between columns. Beside a row, left of the table: its
+   grip, and the + on each line between rows one control further out. */
+.page__editor {
+  position: relative;
+}
+.table-tools {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.table-tools .icon-button {
+  position: absolute;
+  left: var(--at-x);
+  top: var(--at-y);
+  pointer-events: auto;
+}
+.table-tools__over {
+  translate: -50% calc(-100% - var(--eien-space-1));
+}
+.table-tools__beside {
+  translate: calc(-100% - var(--eien-space-1)) -50%;
+}
+.table-tools__beside.add-button {
+  translate: calc(-200% - 2 * var(--eien-space-1)) -50%;
+}
+/* A grip, as a row's: pencil, and a hand to carry it with. */
+.table-tools .table-tools__grip {
+  color: var(--eien-pencil);
+  cursor: grab;
+}
+/* Carried, as a dragged row is: raised paper, a rule-strong edge, the float shadow. */
+.table-tools .table-tools__grip.is-carried {
+  cursor: grabbing;
+  color: var(--eien-ink);
+  background: var(--eien-paper-raised);
+  border-color: var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+}
+/* The drop marker, in the layer's own coordinates; across the table it runs
+   its whole width, from the table's edge. */
+.table-tools .drop-marker {
+  position: absolute;
+}
+.table-tools .drop-marker:not(.drop-marker--across) {
+  left: var(--marker-x);
+  width: var(--marker-w);
+}
+.table-tools .drop-marker[hidden],
+.editor-host[hidden] + .table-tools {
+  display: none;
+}
+/* Nothing to aim at with a finger: a phone has the table bar. */
+@media (hover: none) {
+  .table-tools {
+    display: none;
+  }
+}
+
+/* A phone's table tools: a host of icon buttons on the band, docked under
+   the sheet (above the keyboard when it's up), there while the caret is in a
+   table; one row that scrolls sideways. */
+.table-bar {
+  grid-row: 4;
+  display: none;
+  overflow-x: auto;
+  padding: 0 var(--eien-space-2);
+  background: var(--eien-band);
+  border-top: var(--eien-hairline) solid var(--eien-rule);
+}
+@media (hover: none) {
+  .table-bar:not([hidden]) {
+    display: flex;
+  }
+}

@@ -1,0 +1,7 @@
+/* Each layout's corners, as src/ui/chrome/*.css sets them on :root[data-layout]:
+   A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10. */
+:root[data-layout='band'] { --eien-radius-s: 2px; --eien-radius-m: 4px; --eien-radius-l: 8px; }
+:root[data-layout='slip'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; }
+:root[data-layout='runhead'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; }
+a.word-button { text-decoration: none; }
+.word-button[aria-current='page'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }

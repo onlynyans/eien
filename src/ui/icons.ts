@@ -43,6 +43,22 @@ export const ICONS = {
     '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
   table: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6.3h11M2.5 9.7h11M8 3v10"/>',
   highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
+  // The table editor's (explorations/_src/table.js): a row or column added on a side, one removed, the alignments.
+  rowAbove:
+    '<path d="M2.5 8.5h11v5h-11z"/><path d="M2.5 11h11" opacity=".45"/><path d="M8 1.8v4.4M5.8 4h4.4"/>',
+  rowBelow:
+    '<path d="M2.5 2.5h11v5h-11z"/><path d="M2.5 5h11" opacity=".45"/><path d="M8 9.8v4.4M5.8 12h4.4"/>',
+  colLeft:
+    '<path d="M8.5 2.5h5v11h-5z"/><path d="M11 2.5v11" opacity=".45"/><path d="M4 5.8v4.4M1.8 8h4.4"/>',
+  colRight:
+    '<path d="M2.5 2.5h5v11h-5z"/><path d="M5 2.5v11" opacity=".45"/><path d="M12 5.8v4.4M9.8 8h4.4"/>',
+  rowDelete: '<path d="M2.5 5h11v6h-11z"/><path d="M6.8 6.8l2.4 2.4M9.2 6.8l-2.4 2.4"/>',
+  colDelete: '<path d="M5 2.5h6v11H5z"/><path d="M6.8 6.8l2.4 2.4M9.2 6.8l-2.4 2.4"/>',
+  alignLeft: '<path d="M2.5 4h11M2.5 7h7M2.5 10h11M2.5 13h7"/>',
+  alignCenter: '<path d="M2.5 4h11M4.5 7h7M2.5 10h11M4.5 13h7"/>',
+  alignRight: '<path d="M2.5 4h11M6.5 7h7M2.5 10h11M6.5 13h7"/>',
+  gripColumn:
+    '<circle cx="4" cy="6" r=".7"/><circle cx="4" cy="10" r=".7"/><circle cx="8" cy="6" r=".7"/><circle cx="8" cy="10" r=".7"/><circle cx="12" cy="6" r=".7"/><circle cx="12" cy="10" r=".7"/>',
   heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
   grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
   more: '<circle cx="3.5" cy="8" r=".8"/><circle cx="8" cy="8" r=".8"/><circle cx="12.5" cy="8" r=".8"/>',

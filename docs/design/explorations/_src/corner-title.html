@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — The window's corner: 1 · A title line</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:corner.css*/
+
+/* 1 · A title line: a 32px line of desk across the window's top holds the
+   system's controls (macOS's lights at its left, Windows' and Linux's at its
+   right) and the note's name. The panes start under it, so none of them keeps
+   clear of anything. Full screen, with no controls to hold, it goes. */
+.win[data-way='new'][data-os][data-full='no'] { --top-h: var(--eien-space-6); --controls-left: 0px; --controls-right: 0px; --lights-y: calc(var(--top-h) / 2); --wctl-h: var(--top-h); }
+/* The seal keeps the sidebar's gutter, open or shut, at the head's height. */
+.win[data-way='new'][data-sb='shut'] { --seal-y: calc(var(--top-h) + var(--band) / 2); }
+.win[data-way='new'] .win__top { display: flex; align-items: center; justify-content: center; background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.win__title { font-size: var(--eien-size-preview); color: var(--eien-pencil); white-space: nowrap; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:corner.js*/
+
+mountCornerPage({
+  id: 'title',
+  note: 'A quiet title line across the window holds the system’s controls; the panes start under it.',
+  notes: `
+  <h2>1 · A title line</h2>
+  <p>A 32px line of desk across the top of the window, a hairline under it. macOS's lights sit in it, at its left; Windows' and Linux's controls at its right, 32px tall; the note's name in its middle, quiet, as a document window's title. The three panes start under it. In full screen there are no controls, so the line goes and the panes reach the top.</p>
+  <p>The seal stays on the sidebar's gutter: in the head when it's open, at the top of the strip when it's shut, at the same height either way. It never steps aside for the lights.</p>
+  <h2>For</h2>
+  <ul>
+    <li>One home for the system's controls on every system, so the panes stop keeping clear of them: the <code>--controls-left</code> and <code>--controls-right</code> sums in the sidebar's head, the list's band, Band's and Slip's page bars all go.</li>
+    <li>It closes 3A's known gap too: Windows' controls no longer sit over Band's hidden strip or Slip's blotter.</li>
+    <li>The most predictable: nothing moves sideways, in any state.</li>
+  </ul>
+  <h2>Against</h2>
+  <ul>
+    <li>32px of height on every window, on every system: the title bar #1 took away comes back, as a second band above the bands.</li>
+    <li>The lights no longer line up with the panes' heads, which is what made the window feel like one object.</li>
+  </ul>
+  <h2>In the app</h2>
+  <p>Running head already has such a row: the <code>top</code> slot, <code>.window-head</code> (<code>chrome/layout-spec.ts</code>, <code>runhead.css</code>), which holds C's strip and drags the window. Band and Slip would fill that slot with the title line. <code>frame.ts</code> centres the lights in 32px (<code>lightsIn(32)</code>) and sets Windows' overlay to 32px. Eien doesn't follow full screen yet: the main process would tell the window on <code>enter-full-screen</code> and <code>leave-full-screen</code>, as an attribute the line hides by.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>the seal: it shuts and opens the sidebar, as in the app</li>
+    <li>Window → Full screen, with the sidebar shut: no lights, and no empty corner</li>
+    <li>System → Windows, Linux: their controls are at the right, so the left corner is the seal's alone</li>
+    <li>Show → As built now, to see what this replaces; View → All states, for the six side by side</li>
+  </ul>
+  <h2>As built now</h2>
+  <p>Shut, the sidebar is a 48px strip, but macOS's lights stand 20 to 72px from the window's edge: they hang over the strip's edge onto the list's band, half on the desk and half off it, and the seal waits a band lower. In full screen there are no lights, yet the seal still waits a band down, alone under an empty corner.</p>`,
+});
+</script>
+</body>
+</html>

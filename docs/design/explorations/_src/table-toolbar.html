@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Tables in Live: 2 · Toolbar</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:table.css*/
+/*@include:table-bar.css*/
+
+/* 2 · Toolbar: the table's tools on one bar, there only while the caret is in
+   the table. It floats over the table's top left, or joins the formatting
+   bar's row; on a phone it docks above the keyboard. */
+/* Over the table's top left, in a gap kept for it, so it never covers the words above. */
+.tbl-wrap { margin-top: var(--eien-space-7); }
+.tbl-layer .tbar { position: absolute; translate: 0 -100%; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:table.js*/
+/*@include:table-bar.js*/
+
+mountTablePage({
+  id: 'toolbar',
+  name: 'the plan',
+  note: 'Put the caret in a cell: the table’s tools come with it, and go when it leaves.',
+  bar: `<div class="xbar__group" data-x-set="where"><span class="xbar__label">Bar</span><button class="word-button" data-value="float">Over the table</button><button class="word-button" data-value="row">In the formatting bar</button></div>`,
+  notes: `
+  <h2>2 · A toolbar with the caret</h2>
+  <p>Nothing on the table at rest, nothing on hover: the tools come when the caret goes into a cell, on one bar of icons with their names and keys in tooltips, and go when it leaves. Rows, then columns, then the column's alignment, then where the caret is.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>click a cell; the bar sits over the table's top left</li>
+    <li>Bar → In the formatting bar: the same tools join the page's formatting row (Band's second row, where the Table button lives) instead of floating</li>
+    <li><kbd>${KEY('Alt-F10')}</kbd> from a cell to the bar; <kbd>←</kbd> <kbd>→</kbd> along it, <kbd>Esc</kbd> back to the cell</li>
+    <li>remove a row with words in it: the colophon says <kbd>${KEY('Mod-Z')}</kbd> puts it back</li>
+  </ul>
+  ${SHARED_KEYS()}
+  <h2>On a phone</h2>
+  <p>This is where 2 is strongest. The bar docks at the foot, just above the keyboard, as the phone's formatting row does: one row of 44px targets that scrolls sideways. Nothing to hover, nothing to find in the margin (Show → Phone).</p>`,
+});
+
+const pane = document.querySelector('.pane');
+const tools = tableBar();
+const fbar = formatBar(() => focusCell(here.r, here.c));
+
+function place() {
+  const where = document.documentElement.dataset.where;
+  const home = isTouch() ? pane : where === 'row' ? fbar : layer;
+  if (tools.bar.parentElement !== home) home.append(tools.bar);
+  tools.sync();
+  fbar.querySelector('.fbar__table').setAttribute('aria-pressed', String(tools.bar.classList.contains('is-shown')));
+  if (home === layer) {
+    const g = geometry();
+    tools.bar.style.left = `${g.left}px`;
+    tools.bar.style.top = `${g.top - 6}px`;
+  } else {
+    tools.bar.style.left = tools.bar.style.top = '';
+  }
+}
+Table.onDraw = place;
+Table.onMove = place;
+// Alt-F10, as rich editors have it: from the cell to the bar.
+Table.onKey = (e) => {
+  if (e.key !== 'F10' || !e.altKey) return false;
+  e.preventDefault();
+  tools.focus();
+  return true;
+};
+requestAnimationFrame(place);
+</script>
+</body>
+</html>

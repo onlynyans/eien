@@ -92,6 +92,19 @@ describe('a table’s cells', () => {
     expect(cells('| a | b |\n|---|---|', false)).toEqual([]);
   });
 
+  it('take their column’s alignment, from its delimiter', () => {
+    const doc = '| a | b | c |\n|---|:-:|--:|\n| x | y | 7 |';
+    const classes: string[] = [];
+    stateOf(doc)
+      .field(tableCells)
+      .between(0, doc.length, (_from, _to, deco) => void classes.push(String(deco.spec.class)));
+    expect(classes.slice(-3)).toEqual([
+      'eien-cell',
+      'eien-cell eien-cell--center',
+      'eien-cell eien-cell--right',
+    ]);
+  });
+
   it('follow an edit', () => {
     const state = stateOf('| a | b |\n|---|---|');
     const next = state.update({ changes: { from: 2, insert: 'new ' } }).state;

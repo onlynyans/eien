@@ -1,0 +1,1488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Tables in Live: 3 · Menus, with 1’s +</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/* Shared by every exploration (inlined into each page by _build.py).
+   The tokens are the approved ones from ../tokens.css (Washi, day and night),
+   plus what the design pass adds: a radius scale, icon sizes, the machine
+   face as a setting, and row weights. New tokens are marked NEW. */
+
+:root { color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+:root {
+  --eien-desk: light-dark(#d9d2c8, #110e0b);
+  --eien-blotter: light-dark(#eae5dd, #1a1713);
+  --eien-band: light-dark(#f4f1ea, #201d19);
+  --eien-paper: light-dark(#fdfbf7, #28241f);
+  --eien-paper-raised: light-dark(#ffffff, #312d28);
+  --eien-well: light-dark(#f9f7f3, #24201c);
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05));
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1));
+  --eien-selected: light-dark(#ede9e3, #38332e);
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5));
+  --eien-shadow-sheet: 0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float: 0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  --eien-ink: light-dark(#23201c, #e9e2d4);
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7);
+  --eien-pencil: light-dark(#5d5348, #a7a095);
+  --eien-faded: light-dark(#766d62, #837c73);
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07));
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.14));
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.26));
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px;
+  --eien-seal: light-dark(#c4472d, #e0603f);
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12));
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714);
+  --eien-focus: var(--eien-ink-soft);
+  --eien-added: light-dark(#485c2c, #9cb880);
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0);
+  --eien-caution: light-dark(#6b501f, #d0a659);
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+
+  /* The machine voice: IBM Plex Mono by default, now a setting (NEW: set from FACES). */
+  --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --eien-size-meta: 11px;
+  --eien-size-label: 10px;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em;
+  --eien-space-1: 4px; --eien-space-2: 8px; --eien-space-3: 12px; --eien-space-4: 16px;
+  --eien-space-5: 24px; --eien-space-6: 32px; --eien-space-7: 48px; --eien-space-8: 72px;
+  --eien-row-h: 30px;
+  --eien-touch: 44px;
+  --eien-seal-size: 22px;
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms;
+  --eien-calm: 220ms;
+  --eien-leading-tighten: 0;
+  --eien-sheet-pad-x: var(--eien-space-8);
+  --eien-sheet-pad-top: var(--eien-space-7);
+  --eien-page-gutter: var(--eien-space-5);
+  --eien-title-gap: var(--eien-space-6);
+  --eien-paragraph-gap: var(--eien-space-4);
+  --eien-row-pad-y: var(--eien-space-3);
+
+  /* NEW: corners. Not everything is square. A small scale: s for what you press
+     (buttons, fields, chips), m for what floats (menus, popovers, the tool slip),
+     l for what covers the window (a sheet over it, the phone's bottom sheet).
+     Paper itself (the sheet, the panes) stays square. Each exploration sets its own. */
+  --eien-radius-s: 3px;
+  --eien-radius-m: 6px;
+  --eien-radius-l: 10px;
+  --eien-radius-dot: 999px;
+
+  /* NEW: icons. Drawn on a 16-unit grid, stroked in the ink they sit in. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
+
+  /* NEW: row names' weight, two settings (400–700). A selected list title is 100 heavier. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+}
+
+/* The text voice: the writer's choice, sizes tuned per face (from ../tokens.css). */
+:root, [data-face='newsreader'] { --eien-face-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; --eien-size-prose: 22px; --eien-size-title: 36px; --eien-size-heading: 23px; --eien-size-row: 16px; --eien-size-preview: 14px; --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten)); --eien-measure: 29em; }
+[data-face='literata'] { --eien-face-text: 'Literata', Georgia, serif; --eien-size-prose: 19px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten)); --eien-measure: 34em; }
+[data-face='plex-sans'] { --eien-face-text: 'IBM Plex Sans', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='source-sans'] { --eien-face-text: 'Source Sans 3', Arial, sans-serif; --eien-size-prose: 20px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+[data-face='atkinson'] { --eien-face-text: 'Atkinson Hyperlegible Next', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='schibsted'] { --eien-face-text: 'Schibsted Grotesk', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 33em; }
+[data-face='hanken'] { --eien-face-text: 'Hanken Grotesk', Arial, sans-serif; --eien-size-prose: 19px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='instrument'] { --eien-face-text: 'Instrument Sans', Arial, sans-serif; --eien-size-prose: 18.5px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--eien-seal-wash); }
+:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+
+.seal {
+  display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-seal-size); height: var(--eien-seal-size);
+  background: var(--eien-seal); color: var(--eien-on-seal);
+  font-family: var(--eien-face-seal); font-size: calc(var(--eien-seal-size) * 0.68); line-height: 1;
+  border-radius: calc(var(--eien-radius-s) / 2);
+  user-select: none;
+}
+.seal--small { --eien-seal-size: 10px; font-size: 0; }
+
+.label {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil);
+}
+.count {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums; color: var(--eien-pencil);
+}
+
+/* Where a word stays (menus, choices of a setting). */
+.word-button {
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; padding: var(--eien-space-1) var(--eien-space-2);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.word-button[aria-pressed='true'], .word-button[aria-checked='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* NEW: the icon control. The word button's states, a square of --eien-control. */
+.icon-button {
+  appearance: none; display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-control); height: var(--eien-control); padding: 0;
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; position: relative;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon-button svg, .icon { width: var(--eien-icon); height: var(--eien-icon); display: block; }
+.icon { stroke-width: var(--eien-icon-stroke); }
+.icon-button[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.icon-button:disabled { color: var(--eien-faded); cursor: default; }
+@media (hover: hover) {
+  .word-button:hover, .icon-button:not(:disabled):hover { color: var(--eien-ink); background: var(--eien-hover); }
+}
+.word-button:active, .icon-button:not(:disabled):active { background: var(--eien-press); border-color: var(--eien-rule-strong); }
+
+/* NEW: a tooltip names an icon and its key: raised paper, the machine voice. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip); position: absolute; z-index: 50; pointer-events: none;
+  left: 50%; top: calc(100% + 6px); translate: -50% 0;
+  white-space: pre; padding: 3px 7px; border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em;
+  text-transform: none; color: var(--eien-ink-soft);
+  opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease);
+}
+[data-tip-side='up']::after { top: auto; bottom: calc(100% + 6px); }
+[data-tip-side='right']::after { left: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+[data-tip-side='left']::after { left: auto; right: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+@media (hover: hover) { [data-tip]:hover::after { opacity: 1; transition-delay: 450ms; } }
+[data-tip]:focus-visible::after { opacity: 1; }
+
+.field {
+  appearance: none; width: 100%; border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-s); background: var(--eien-well);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink);
+}
+.field::placeholder { color: var(--eien-faded); }
+.field:focus { outline: none; border-color: var(--eien-focus); }
+
+/* Explorations' own bar: outside the app, like the mockups' bar. */
+.xbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--eien-space-1) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-paper-raised); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.xbar__name { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); font-weight: 600; }
+.xbar__group { display: flex; align-items: center; gap: 2px; }
+.xbar__label { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); margin-right: var(--eien-space-1); }
+.xnote { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+
+/* Shared by the three table explorations (table-*.html): the page, the table
+   at rest and while it's edited, the file beside it, the colophon. Each page
+   adds only its own controls. */
+
+/* Each layout's corners, as src/ui/chrome/*.css sets them on :root[data-layout]:
+   A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10. */
+:root[data-layout='band'] { --eien-radius-s: 2px; --eien-radius-m: 4px; --eien-radius-l: 8px; }
+:root[data-layout='slip'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; }
+:root[data-layout='runhead'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; }
+a.word-button { text-decoration: none; }
+.word-button[aria-current='page'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 420px); background: var(--eien-blotter); }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 40%); } }
+
+/* The page pane: the sheet on the blotter, the colophon at its foot. */
+.pane { min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) var(--status-h, 40px); position: relative; }
+.page { min-height: 0; overflow: auto; padding: var(--eien-space-5); }
+.sheet {
+  width: min(100%, 860px); margin: 0 auto; min-height: 100%;
+  padding: var(--eien-space-7) var(--eien-space-8) var(--eien-space-8);
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet);
+  font-size: var(--eien-size-prose); position: relative;
+}
+:root[data-layout='slip'] .sheet { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.title { font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; margin: var(--eien-space-5) 0 var(--eien-space-6); }
+.prose { line-height: var(--eien-leading-prose); margin: 0 0 var(--eien-space-4); }
+.prose:focus { outline: none; }
+.colophon {
+  display: flex; align-items: center; gap: var(--eien-space-2); padding: 0 var(--eien-space-4);
+  background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--eien-pencil); white-space: nowrap; overflow: hidden;
+}
+.colophon .dot { color: var(--eien-faded); }
+.colophon__said { margin-left: auto; color: var(--eien-ink-soft); overflow: hidden; text-overflow: ellipsis; }
+
+/* The table at rest: a book's table, rules across and none down. */
+.tbl-wrap { position: relative; margin: var(--eien-space-6) 0; }
+.tbl-scroll { overflow-x: auto; }
+.tbl {
+  border-collapse: collapse; width: 100%;
+  font-size: calc(var(--eien-size-prose) * 0.8); line-height: 1.4;
+  border-top: var(--eien-hairline) solid var(--eien-rule-strong); border-bottom: var(--eien-hairline) solid var(--eien-rule-strong);
+}
+.tbl th, .tbl td { padding: 0; vertical-align: top; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); text-align: left; }
+.tbl th { font-weight: 500; border-bottom-color: var(--eien-rule); }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl :is(th, td) + :is(th, td) { border-left: var(--eien-hairline) solid transparent; transition: border-color var(--eien-calm) var(--eien-ease); }
+/* While it's edited, the grid shows: where one cell ends and the next begins. */
+.tbl-wrap.is-in .tbl :is(th, td) + :is(th, td) { border-left-color: var(--eien-rule-soft); }
+.tbl [data-align='right'] { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl [data-align='center'] { text-align: center; }
+.cell {
+  min-height: 1.4em; padding: var(--eien-space-2) var(--eien-space-3);
+  white-space: pre-wrap; overflow-wrap: break-word; caret-color: var(--eien-seal); outline: none;
+  border-radius: var(--eien-radius-s);
+}
+.cell:focus { box-shadow: inset 0 0 0 var(--eien-hairline) var(--eien-rule-strong); }
+.cell:empty::before { content: '\200b'; }
+/* A row or column a control points at: the selected fill, as a chosen row has. */
+.tbl .is-aimed { background: var(--eien-selected); }
+.tbl .is-dragged { background: var(--eien-paper-raised); }
+.tbl-layer { position: absolute; inset: 0; pointer-events: none; }
+.tbl-layer > * { pointer-events: auto; }
+
+/* The file, beside the page: what Eien writes, line by line. */
+.file { min-height: 0; display: grid; grid-template-rows: var(--band, 56px) minmax(0, 1fr) auto; background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); }
+@media (max-width: 900px) { .file { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }
+.file__head { display: flex; align-items: center; gap: var(--eien-space-3); padding: 0 var(--eien-space-4); border-bottom: var(--eien-hairline) solid var(--eien-rule); background: var(--eien-band); }
+.file__head .count { margin-left: auto; }
+.file__src {
+  margin: 0; padding: var(--eien-space-3) var(--eien-space-2); overflow: auto; background: var(--eien-paper);
+  font-family: var(--eien-face-mono); font-size: 12px; line-height: 1.75; color: var(--eien-ink-soft);
+}
+.ln { display: block; white-space: pre; padding: 0 var(--eien-space-2); border-radius: var(--eien-radius-s); min-height: 1.75em; }
+.ln.is-table { color: var(--eien-ink); }
+.ln.is-here { background: var(--eien-selected); }
+.ln.is-changed { animation: changed 1.6s var(--eien-ease); }
+@keyframes changed { from { background: var(--eien-added-wash); } }
+@media (prefers-reduced-motion: reduce) { .ln.is-changed { animation: none; } * { transition: none !important; } }
+.file__notes { border-top: var(--eien-hairline) solid var(--eien-rule); padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-4); max-height: 46vh; overflow: auto; font-size: var(--eien-size-preview); line-height: 1.55; color: var(--eien-ink-soft); }
+.file__notes h2 { margin: var(--eien-space-3) 0 var(--eien-space-1); font: inherit; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); font-weight: 400; }
+.file__notes h2:first-child { margin-top: 0; }
+.file__notes ul { margin: 0; padding-left: 1.1em; }
+.file__notes p { margin: 0; }
+kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-paper); white-space: nowrap; }
+
+/* A phone: the page in a phone's width, no margins to spare, nothing hovers. */
+:root[data-device='phone'] .page { padding: var(--eien-space-4) 0; }
+:root[data-device='phone'] .pane { width: 390px; max-width: 100%; justify-self: center; border-left: var(--eien-hairline) solid var(--eien-rule-strong); border-right: var(--eien-hairline) solid var(--eien-rule-strong); background: var(--eien-paper); }
+:root[data-device='phone'] .sheet { border: 0; box-shadow: none; border-radius: 0; padding: var(--eien-space-4) var(--eien-space-4) var(--eien-space-8); }
+:root[data-device='phone'] .title { font-size: calc(var(--eien-size-title) * 0.8); }
+:root[data-device='phone'] .tbl { width: max-content; min-width: 100%; }
+
+/* 1 and 3 put controls on the table's edges: the margins round it count as the
+   table, so the pointer can reach them. With no hover (a phone), the table steps
+   in from the narrow margin while it's edited, to make room for the row's. */
+.tbl-wrap.has-edges { isolation: isolate; transition: margin var(--eien-calm) var(--eien-ease); }
+.tbl-wrap.has-edges::before { content: ''; position: absolute; inset: -40px -24px -16px -44px; z-index: -1; }
+.is-touch .tbl-wrap.has-edges.is-in { margin-left: 40px; }
+
+/* The + on a line between rows or columns (1 shows a faint dot there till the pointer comes). */
+.ins { position: absolute; translate: -50% -50%; appearance: none; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--eien-ink-soft); cursor: pointer; }
+.ins--col { width: 16px; height: 24px; }
+.ins--row { width: 24px; height: 16px; }
+.ins__dot, .ins__plus { grid-area: 1 / 1; transition: opacity var(--eien-quick) var(--eien-ease); }
+.ins__dot { width: 4px; height: 4px; border-radius: var(--eien-radius-dot); background: var(--eien-faded); opacity: 0; }
+.ins__plus {
+  display: grid; place-items: center; width: 18px; height: 18px; opacity: 0;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s);
+}
+.ins__plus svg { width: 12px; height: 12px; }
+.ins:is(:hover, :focus-visible, .is-near) .ins__plus { opacity: 1; }
+.ins:focus-visible { outline: none; }
+.ins:focus-visible .ins__plus { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 1px; }
+/* Where it goes: the drop line of your order, 2px ink-soft, across or down the table. */
+.ins__line { position: absolute; pointer-events: none; background: var(--eien-ink-soft); border-radius: var(--eien-radius-dot); opacity: 0; }
+.ins--col .ins__line { top: calc(100% + 6px); left: calc(50% - 1px); width: var(--eien-mark-w); height: var(--tbl-h); }
+.ins--row .ins__line { left: calc(100% + 6px); top: calc(50% - 1px); height: var(--eien-mark-w); width: var(--tbl-w); }
+.ins:is(:hover, :focus-visible) .ins__line { opacity: 1; }
+.ins[hidden] { display: none; }
+
+/* The formatting bar's row, with its Table button, and the table's tools on
+   one bar (2 · Toolbar; 3 · Menus' phone). Each page says where the bar goes. */
+
+/* The formatting bar, as Band draws it: the page's second row, on the band. */
+.pane { grid-template-rows: auto minmax(0, 1fr) var(--status-h, 40px); }
+.fbar { display: flex; justify-content: center; align-items: center; gap: 2px; min-height: 40px; padding: 2px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); flex-wrap: wrap; }
+.fbar .fbar__rule { width: var(--eien-hairline); height: 18px; margin: 0 var(--eien-space-1); background: var(--eien-rule); }
+.fbar__table[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+:root[data-device='phone'] .fbar { display: none; }
+
+/* The table's tools: raised paper while it floats; one row of icons. */
+.tbar {
+  display: none; align-items: center; gap: 2px; padding: 2px; width: max-content;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono);
+}
+.tbar.is-shown { display: flex; }
+.tbar__rule { width: var(--eien-hairline); align-self: stretch; margin: var(--eien-space-1) 2px; background: var(--eien-rule); }
+.tbar__where { padding: 0 var(--eien-space-2) 0 var(--eien-space-1); white-space: nowrap; }
+.tbar .icon-button[aria-disabled='true'] { color: var(--eien-faded); }
+@media (hover: hover) { .tbar .tbar__off:not([aria-disabled='true']):hover { color: var(--eien-removed); } }
+/* Joined to the formatting bar, the table's tools are the bar's own: no float, no edge. */
+.fbar .tbar { background: none; border: 0; box-shadow: none; padding: 0; }
+.fbar .tbar.is-shown::before { content: ''; width: var(--eien-hairline); height: 18px; margin: 0 var(--eien-space-1); background: var(--eien-rule); }
+
+/* A phone: docked to the foot, above where the keyboard comes; one row that scrolls sideways. */
+.is-touch .pane > .tbar {
+  position: absolute; left: 0; right: 0; bottom: var(--status-h, 40px); width: auto; z-index: 5;
+  overflow-x: auto; border-radius: 0; border-width: var(--eien-hairline) 0 0; box-shadow: none; background: var(--eien-band);
+}
+.is-touch .tbar .icon-button { width: var(--eien-touch); height: var(--eien-touch); }
+.is-touch .tbar .tbar__where { display: none; }
+
+
+/* 3 · Menus, as chosen: a grip on each row and column, as a list's rows have.
+   Press it for that row's or column's menu, drag it to move them; right-click
+   a cell for both. With 1's + on the lines between columns and rows, shown
+   only while the pointer is on a line; and 2's bar on a phone. */
+.grip {
+  position: absolute; translate: -50% -50%; display: grid; place-items: center; padding: 0;
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none;
+  color: var(--eien-pencil); cursor: grab; touch-action: none; opacity: 0;
+  transition: opacity var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease);
+}
+.grip--row { width: 20px; height: 26px; }
+.grip--col { width: 32px; height: 20px; }
+.grip svg { width: 14px; height: 14px; }
+.grip:is(.is-shown, :hover, :focus-visible, [aria-expanded='true']) { opacity: 1; }
+@media (hover: hover) { .grip:hover { color: var(--eien-ink); background: var(--eien-hover); } }
+.grip[aria-expanded='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.grip[hidden] { display: none; }
+/* While a row or column is carried: nothing selects, nothing scrolls, the + wait. */
+body.is-dragging, body.is-dragging * { cursor: grabbing; user-select: none; }
+.tbl-wrap.is-dragging .tbl-scroll { overflow: visible; }
+.tbl-wrap.is-dragging .ins { display: none; }
+.tbl .is-dragged { position: relative; z-index: 2; box-shadow: inset 0 0 0 var(--eien-hairline) var(--eien-rule-strong); }
+.tbl-wrap.is-dragging .tbl :is(th, td):not(.is-dragged) { opacity: 0.72; }
+/* The drop line, as your order's: 2px ink-soft, across or down the table. */
+.drop { position: absolute; display: none; background: var(--eien-ink-soft); border-radius: var(--eien-radius-dot); pointer-events: none; }
+.drop.is-on { display: block; }
+
+/* The menu: a row's menu, as the sidebar's is. */
+.menu {
+  position: absolute; z-index: 30; min-width: 232px; padding: var(--eien-space-1);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float);
+}
+.menu[hidden] { display: none; }
+.menu__head { padding: 6px var(--eien-space-2) 4px; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu__item {
+  appearance: none; display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: var(--eien-space-2); width: 100%;
+  padding: 5px var(--eien-space-2); border: 0; border-radius: var(--eien-radius-s); background: none; cursor: pointer; text-align: left;
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft);
+}
+.menu__item:focus { outline: none; background: var(--eien-selected); color: var(--eien-ink); }
+.menu__item:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: -2px; }
+@media (hover: hover) { .menu__item:not([aria-disabled='true']):hover { background: var(--eien-hover); color: var(--eien-ink); } }
+.menu__item[aria-disabled='true'] { color: var(--eien-faded); cursor: default; }
+.menu__item--danger, .menu__item--danger:focus { color: var(--eien-danger, var(--eien-removed)); }
+.menu__key { font-size: var(--eien-size-label); color: var(--eien-pencil); letter-spacing: 0.04em; }
+.menu__dot { justify-self: end; width: 5px; height: 5px; margin-right: 4px; border-radius: var(--eien-radius-dot); background: var(--eien-ink); }
+.menu__rule { height: var(--eien-hairline); margin: var(--eien-space-1) var(--eien-space-2); background: var(--eien-rule-soft); }
+
+/* 1's +, lighter: no dots; it shows only while the pointer is on a line between
+   two columns or rows, or on the table's outer edges, with the line where the
+   new one goes. The row's + stands left of the grips, so the margin reaching
+   the table goes further left. */
+.ins__dot { display: none; }
+.ins.is-near .ins__line { opacity: 1; }
+.ins--col .ins__line { top: calc(50% + 14px); }
+.ins--row .ins__line { left: calc(50% + 40px); }
+.tbl-wrap.has-edges::before { left: -64px; }
+
+/* A phone: 2's bar above the keyboard; no grips or + to aim at. A long press
+   on a cell still opens its menu, as the phone's bottom sheet. */
+.is-touch .grip, .is-touch .ins { display: none; }
+.is-touch .tbl-wrap.has-edges.is-in { margin-left: 0; }
+.is-touch .pane > .menu {
+  left: 0; right: 0; bottom: 0; top: auto; min-width: 0; padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-4);
+  border-radius: var(--eien-radius-l) var(--eien-radius-l) 0 0; border-width: var(--eien-hairline) 0 0;
+}
+.is-touch .menu__item { min-height: var(--eien-touch); font-size: 13px; }
+.is-touch .menu__key { display: none; }
+</style>
+</head>
+<body>
+<script>
+// Shared by every exploration (inlined into each page by _build.py).
+
+// Eien's icons: one set, drawn here on a 16-unit grid with round ends, stroked
+// in the ink of whatever they sit in. No icon font, nothing fetched. Each is
+// the inside of an <svg viewBox="0 0 16 16">.
+const ICONS = {
+  live: '<path d="M10.6 2.9l2.5 2.5-7.3 7.3-3.2.8.8-3.2z"/><path d="M9.2 4.3l2.5 2.5"/><path d="M8.5 13.5h5"/>',
+  source: '<path d="M5.5 4.5L2 8l3.5 3.5"/><path d="M10.5 4.5L14 8l-3.5 3.5"/><path d="M9.2 3l-2.4 10"/>',
+  reading: '<path d="M8 4.6C6.6 3.6 4.7 3.1 2.2 3.1v9.4c2.5 0 4.4.5 5.8 1.5 1.4-1 3.3-1.5 5.8-1.5V3.1c-2.5 0-4.4.5-5.8 1.5z"/><path d="M8 4.6V14"/>',
+  compare: '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
+  versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',
+  sidebar: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/>',
+  list: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/><path d="M8.5 6h3M8.5 8.5h3M8.5 11h2"/>',
+  panes3: '<path d="M2 3h12v10H2z"/><path d="M5.5 3v10M9 3v10"/>',
+  panes2: '<path d="M2 3h12v10H2z"/><path d="M6 3v10"/>',
+  left: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  right: '<path d="M6 3.5l4.5 4.5L6 12.5"/>',
+  up: '<path d="M3.5 10L8 5.5l4.5 4.5"/>',
+  down: '<path d="M3.5 6L8 10.5 12.5 6"/>',
+  sun: '<circle cx="8" cy="8" r="2.6"/><path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1"/>',
+  moon: '<path d="M13.2 9.6A5.4 5.4 0 1 1 6.4 2.8a4.3 4.3 0 0 0 6.8 6.8z"/>',
+  settings: '<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><path d="M5.5 3v3M10.5 6.5v3M7 10v3"/>',
+  plus: '<path d="M8 3.5v9M3.5 8h9"/>',
+  tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
+  pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
+  sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
+  search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
+  close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  sort: '<path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3"/>',
+  strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
+  format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',
+  link: '<path d="M6.8 9.2l2.4-2.4"/><path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/>',
+  quote: '<path d="M3 8.5h3.5v4H3zM3 8.5c0-2.5.8-4 3-5M9.5 8.5H13v4H9.5zM9.5 8.5c0-2.5.8-4 3-5"/>',
+  bullets: '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
+  numbers: '<path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7"/><path d="M2.5 3.5l1-.7v3.2M2.4 9.2c.2-.6 1.6-.7 1.6.2 0 .7-1.6 1.2-1.6 1.8h1.7"/>',
+  checklist: '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
+  highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
+  heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
+  grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
+  more: '<circle cx="3.5" cy="8" r=".8"/><circle cx="8" cy="8" r=".8"/><circle cx="12.5" cy="8" r=".8"/>',
+  outdent: '<path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h10"/><path d="M13.5 3v10"/>',
+  filter: '<path d="M2.5 3.5h11l-4.3 5.2v4l-2.4 1.3V8.7z"/>',
+  check: '<path d="M3 8.5l3 3 7-7"/>',
+  back: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
+  palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
+  type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+  bold: '<path d="M4.5 2.8h4.2a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 8h4.9a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 2.8v10.4"/>',
+  italic: '<path d="M7.2 2.8h5M3.8 13.2h5M10 2.8L6 13.2"/>',
+  underline: '<path d="M4.5 2.8v4.6a3.5 3.5 0 0 0 7 0V2.8"/><path d="M3.5 13.5h9"/>',
+  strike: '<path d="M2.5 8h11"/><path d="M11.2 4.4c-.6-1-1.8-1.6-3.2-1.6-1.8 0-3.2 1-3.2 2.4 0 .9.5 1.6 1.6 2.1"/><path d="M5 11.4c.6 1.1 1.8 1.8 3.3 1.8 1.9 0 3.3-1 3.3-2.5 0-.6-.2-1.1-.6-1.5"/>',
+  focus: '<path d="M2.5 4h11" opacity=".35"/><path d="M2.5 8h11"/><path d="M2.5 12h8" opacity=".35"/><path d="M1 6v4M15 6v4"/>',
+  rename: '<path d="M3 11.5h6.5"/><path d="M11.5 3v10M10 3h3M10 13h3"/>',
+  trash: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/>',
+  move: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/><path d="M6.5 9.5h4M9 8l1.5 1.5L9 11"/>',
+  include: '<path d="M8 4v8M4 8h8"/>',
+  exclude: '<path d="M4 8h8"/>',
+  resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
+};
+
+/** An icon as SVG markup, stroked in currentColor. */
+function icon(name, label) {
+  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
+  return `<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" ${a11y}>${ICONS[name]}</svg>`;
+}
+
+/** Fill every [data-icon] with its icon. */
+function drawIcons(root = document) {
+  for (const el of root.querySelectorAll('[data-icon]')) {
+    el.innerHTML = icon(el.dataset.icon) + (el.dataset.iconText ?? '');
+  }
+}
+
+// One list of faces drives every face setting: the text face and the machine
+// voice both choose from it. A face added later is one more entry here (in the
+// app: one entry in core/config, its fonts and its tuning in tokens.css).
+const FACES = [
+  { id: 'plex-mono', name: 'IBM Plex Mono', family: "'IBM Plex Mono', ui-monospace, monospace", mono: true },
+  { id: 'newsreader', name: 'Newsreader', family: "'Newsreader', Georgia, serif" },
+  { id: 'literata', name: 'Literata', family: "'Literata', Georgia, serif" },
+  { id: 'plex-sans', name: 'IBM Plex Sans', family: "'IBM Plex Sans', Arial, sans-serif" },
+  { id: 'source-sans', name: 'Source Sans 3', family: "'Source Sans 3', Arial, sans-serif" },
+  { id: 'atkinson', name: 'Atkinson Hyperlegible Next', family: "'Atkinson Hyperlegible Next', Arial, sans-serif" },
+  { id: 'schibsted', name: 'Schibsted Grotesk', family: "'Schibsted Grotesk', Arial, sans-serif" },
+  { id: 'hanken', name: 'Hanken Grotesk', family: "'Hanken Grotesk', Arial, sans-serif" },
+  { id: 'instrument', name: 'Instrument Sans', family: "'Instrument Sans', Arial, sans-serif" },
+];
+/** The faces the text voice offers (all but the mono), and the machine voice (all). */
+const TEXT_FACES = FACES.filter((face) => !face.mono);
+const MACHINE_FACES = FACES;
+
+function setMachineFace(id) {
+  const face = FACES.find((each) => each.id === id) ?? FACES[0];
+  document.documentElement.style.setProperty('--eien-face-mono', face.family);
+}
+function setTextFace(id) {
+  if (id === 'newsreader') delete document.documentElement.dataset.face;
+  else document.documentElement.dataset.face = id;
+}
+
+/** The explorations' bar: [data-x-set="attr"] groups set data-<attr> on <html>. */
+function wireBar(onChange = () => {}) {
+  for (const group of document.querySelectorAll('[data-x-set]')) {
+    const attr = group.dataset.xSet;
+    const buttons = [...group.querySelectorAll('button[data-value]')];
+    const pick = (value) => {
+      document.documentElement.dataset[attr] = value;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.value === value));
+      onChange(attr, value);
+    };
+    for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
+    pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
+  }
+}
+
+// Themes: [day, night] for each colour token. The rules are the ink at low
+// strength, so they follow it. Washi is tokens.css's own; the rest are new.
+const THEME_TOKENS = ['desk', 'blotter', 'band', 'paper', 'selected', 'ink', 'ink-soft', 'pencil', 'faded', 'seal'];
+const THEMES = {
+  washi: { name: 'Washi', kanji: '和紙', note: 'Eien’s own: paper and sumi ink', t: {
+    desk: ['#d9d2c8', '#110e0b'], blotter: ['#eae5dd', '#1a1713'], band: ['#f4f1ea', '#201d19'], paper: ['#fdfbf7', '#28241f'], selected: ['#ede9e3', '#38332e'],
+    ink: ['#23201c', '#e9e2d4'], 'ink-soft': ['#51473c', '#c3b9a7'], pencil: ['#5d5348', '#a7a095'], faded: ['#766d62', '#837c73'], seal: ['#c4472d', '#e0603f'] } },
+  kinari: { name: 'Kinari', kanji: '生成り', note: 'Unbleached cloth: yellower paper, a persimmon seal', t: {
+    desk: ['#d8cfb8', '#14110a'], blotter: ['#e9e2cd', '#1c180f'], band: ['#f3eedd', '#231e14'], paper: ['#fcf9ee', '#2b251a'], selected: ['#ece5d1', '#3b3426'],
+    ink: ['#2a2418', '#ece3cc'], 'ink-soft': ['#574a33', '#c8bb9c'], pencil: ['#5f523d', '#ab9f86'], faded: ['#7b6d56', '#88806d'], seal: ['#b8432a', '#dc6a43'] } },
+  aizome: { name: 'Aizome', kanji: '藍染', note: 'Indigo dye: cool paper, blue-black ink', t: {
+    desk: ['#c9cfd8', '#0b0e14'], blotter: ['#dfe3e9', '#121620'], band: ['#edf0f4', '#181d28'], paper: ['#fbfcfd', '#1f2533'], selected: ['#e3e8ef', '#2e3648'],
+    ink: ['#17213a', '#dde4f0'], 'ink-soft': ['#34405c', '#b3bfd6'], pencil: ['#3f4b64', '#97a3ba'], faded: ['#5f6a80', '#7a8599'], seal: ['#c4472d', '#e3664a'] } },
+  koke: { name: 'Koke', kanji: '苔', note: 'A moss garden: green-grey desk, quiet ink', t: {
+    desk: ['#cdd2c4', '#0d100b'], blotter: ['#e1e5d9', '#141811'], band: ['#eef0e8', '#1a1f16'], paper: ['#fafbf6', '#21271c'], selected: ['#e5e9dc', '#30382a'],
+    ink: ['#1f2619', '#e2e8d6'], 'ink-soft': ['#3e4833', '#bcc6ab'], pencil: ['#48523c', '#a0aa90'], faded: ['#67705a', '#808a72'], seal: ['#a8432f', '#d76a4e'] } },
+  rosoku: { name: 'Rōsoku', kanji: '蝋燭', note: 'Candlelight: amber at night, no blue light', t: {
+    desk: ['#dccab2', '#120c06'], blotter: ['#ecdfcb', '#1b130b'], band: ['#f5ece0', '#22180e'], paper: ['#fdf8f0', '#2a1f13'], selected: ['#efe3d1', '#3c2d1e'],
+    ink: ['#2b1d10', '#f0dcc0'], 'ink-soft': ['#5a4129', '#d2b894'], pencil: ['#634d37', '#b39b7c'], faded: ['#7f6a53', '#8f7c64'], seal: ['#b9442b', '#e8763f'] } },
+  sumi: { name: 'Sumi', kanji: '墨', note: 'For tired eyes: the most contrast there is', t: {
+    desk: ['#cfcfcc', '#000000'], blotter: ['#e6e6e3', '#0a0a0a'], band: ['#f2f2ef', '#141414'], paper: ['#ffffff', '#1b1b1b'], selected: ['#e8e8e4', '#2c2c2c'],
+    ink: ['#000000', '#f5f5f2'], 'ink-soft': ['#262626', '#d9d9d4'], pencil: ['#3a3a3a', '#bdbdb8'], faded: ['#5e5e5e', '#8f8f8a'], seal: ['#c4361d', '#ff6a45'] } },
+  sakura: { name: 'Sakura-nezumi', kanji: '桜鼠', note: 'Cherry-grey: plum ink, a rose seal', t: {
+    desk: ['#d8cdcc', '#120d0e'], blotter: ['#e9e1e0', '#1b1415'], band: ['#f3eeed', '#221a1b'], paper: ['#fdfafa', '#2a2122'], selected: ['#eee6e5', '#3a2f30'],
+    ink: ['#2a1e20', '#efe1e2'], 'ink-soft': ['#573f43', '#cbb5b8'], pencil: ['#5f464a', '#ad989b'], faded: ['#7c6468', '#8d7b7d'], seal: ['#b2394a', '#e0697a'] } },
+};
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function luminance(h) {
+  return hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; })
+    .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+/**
+ * An ink of hue `h` and saturation `sat`, starting at lightness `l` and stepped
+ * darker by day (`dir` -1) or lighter by night (+1) until it reaches `min`
+ * contrast on every one of `grounds`: the hue stays, the contrast holds.
+ */
+function fitInk(h, sat, l, grounds, min, dir) {
+  let ink = hsl(h, sat, l);
+  while (grounds.some((g) => contrast(ink, g) < min + 0.1) && l > 0 && l < 100) { l += dir; ink = hsl(h, sat, l); }
+  return ink;
+}
+/** "Custom": four choices, and every token worked out from them, day and night. */
+function mixTheme({ paper: ph, warmth: w, ink: ih, seal: sh }, name = 'My Room') {
+  const surf = (dl, nl) => [hsl(ph, w, dl), hsl(ph, Math.min(w, 22), nl)];
+  const t = { desk: surf(83, 5), blotter: surf(89, 8), band: surf(94, 11), paper: surf(98.5, 14), selected: surf(91, 19), seal: [hsl(sh, 63, 47), hsl(sh, 72, 56)] };
+  const grounds = (s) => ['desk', 'band', 'paper', 'selected'].map((k) => t[k][s]);
+  // The inks carry their hue, saturated enough to see by day, each as light as Eien's contrast allows.
+  const ink = (sat, dl, nsat, nl, min) => [fitInk(ih, sat, dl, grounds(0), min, -1), fitInk(ih, nsat, nl, grounds(1), min, 1)];
+  Object.assign(t, { ink: ink(48, 16, 38, 88, 7), 'ink-soft': ink(38, 30, 30, 70, 4.5), pencil: ink(30, 34, 20, 62, 4.5), faded: ink(20, 46, 12, 52, 3) });
+  return { name, kanji: '', note: 'Your own', t };
+}
+/** A theme on the whole page: each token as light-dark(day, night); the rules from the ink. */
+function applyTheme(theme, el = document.documentElement) {
+  for (const k of THEME_TOKENS) el.style.setProperty(`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`);
+  const [d, n] = theme.t.ink.map((c) => hexRgb(c).join(' '));
+  el.style.setProperty('--eien-rule-soft', `light-dark(rgb(${d} / 0.07), rgb(${n} / 0.07))`);
+  el.style.setProperty('--eien-rule', `light-dark(rgb(${d} / 0.13), rgb(${n} / 0.14))`);
+  el.style.setProperty('--eien-rule-strong', `light-dark(rgb(${d} / 0.26), rgb(${n} / 0.26))`);
+  el.style.setProperty('--eien-paper-raised', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 45%, #fff), color-mix(in srgb, ${theme.t.paper[1]} 88%, #fff))`);
+  el.style.setProperty('--eien-well', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 70%, ${theme.t.band[0]}), color-mix(in srgb, ${theme.t.paper[1]} 60%, ${theme.t.blotter[1]}))`);
+}
+
+// Shared by the three table explorations (table-*.html): a GFM table as the
+// file holds it, drawn as cells you type in; the keys, the undo, the file and
+// the colophon every direction shares. Each page adds only its controls, by
+// setting Table.onDraw, Table.onMove, Table.onKey and Table.onBar (a choice of
+// its own on the explorations' bar).
+
+// The table's icons, on the same 16-unit grid as the rest.
+Object.assign(ICONS, {
+  table: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6.5h11M2.5 9.8h11M7 6.5V13"/>',
+  rowAbove: '<path d="M2.5 8.5h11v5h-11z"/><path d="M2.5 11h11" opacity=".45"/><path d="M8 1.8v4.4M5.8 4h4.4"/>',
+  rowBelow: '<path d="M2.5 2.5h11v5h-11z"/><path d="M2.5 5h11" opacity=".45"/><path d="M8 9.8v4.4M5.8 12h4.4"/>',
+  colLeft: '<path d="M8.5 2.5h5v11h-5z"/><path d="M11 2.5v11" opacity=".45"/><path d="M4 5.8v4.4M1.8 8h4.4"/>',
+  colRight: '<path d="M2.5 2.5h5v11h-5z"/><path d="M5 2.5v11" opacity=".45"/><path d="M12 5.8v4.4M9.8 8h4.4"/>',
+  rowDelete: '<path d="M2.5 5h11v6h-11z"/><path d="M6.8 6.8l2.4 2.4M9.2 6.8l-2.4 2.4"/>',
+  colDelete: '<path d="M5 2.5h6v11H5z"/><path d="M6.8 6.8l2.4 2.4M9.2 6.8l-2.4 2.4"/>',
+  alignLeft: '<path d="M2.5 4h11M2.5 7h7M2.5 10h11M2.5 13h7"/>',
+  alignCenter: '<path d="M2.5 4h11M4.5 7h7M2.5 10h11M4.5 13h7"/>',
+  alignRight: '<path d="M2.5 4h11M6.5 7h7M2.5 10h11M6.5 13h7"/>',
+  gripRow: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
+  gripCol: '<circle cx="4" cy="6" r=".7"/><circle cx="4" cy="10" r=".7"/><circle cx="8" cy="6" r=".7"/><circle cx="8" cy="10" r=".7"/><circle cx="12" cy="6" r=".7"/><circle cx="12" cy="10" r=".7"/>',
+});
+const ALIGN_ICON = { left: 'alignLeft', center: 'alignCenter', right: 'alignRight' };
+
+const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+const mod = (e) => (MAC ? e.metaKey : e.ctrlKey);
+/** A key as this system writes it: KEY('Mod-Alt-↓') is ⌥⌘↓ on a Mac (its order), Ctrl+Alt+↓ elsewhere. */
+function KEY(k) {
+  const parts = k.split('-');
+  const key = parts.pop();
+  const has = (m) => parts.includes(m);
+  return MAC
+    ? `${has('Alt') ? '⌥' : ''}${has('Shift') ? '⇧' : ''}${has('Mod') ? '⌘' : ''}${key}`
+    : [has('Mod') && 'Ctrl', has('Alt') && 'Alt', has('Shift') && 'Shift', key].filter(Boolean).join('+');
+}
+const escHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// The table, as the file holds it. Row 0 is the head row, which GFM always has.
+const T = {
+  head: ['Chapter', 'POV', 'Words', 'State'],
+  align: ['left', 'left', 'right', 'center'],
+  rows: [
+    ['i · The Late Watch', 'Levi', '2,840', 'sealed'],
+    ['ii · Rations', 'Hange', '2,204', 'sealed'],
+    ['iii · Below the Gate', 'Levi', '3,412', 'draft'],
+    ['iv · What the Recruits Say', 'Erwin', '3,051', 'draft'],
+  ],
+};
+const BEFORE = ['---', 'tags: [fic/aot, planning]', '---', '', 'The chapters so far, and where each one stands.', ''];
+const AFTER = ['', 'Erwin’s still needs the scene at the gate.'];
+
+const Table = { onDraw() {}, onMove() {}, onKey() { return false; }, onBar() {} };
+let here = { r: 1, c: 0 };
+let inTable = false;
+const cols = () => T.head.length;
+const rowOf = (r) => (r === 0 ? T.head : T.rows[r - 1]);
+const colName = (c) => T.head[c].trim() || `column ${c + 1}`;
+const rowName = (r) => (r === 0 ? 'the head row' : `row ${r}`);
+
+const escapePipes = (s) => s.replace(/(\\*)\|/g, (pipe, slashes) => (slashes.length % 2 ? pipe : `${slashes}\\|`));
+/** The table's lines in the file: tidy pads each column to its widest cell, compact doesn't. */
+function tableLines(tidy) {
+  // A pipe ends a cell, so it's written \| unless the writer already escaped it: a pipe after
+  // an odd run of backslashes is escaped already. Other backslashes are the writer's Markdown.
+  const all = [T.head, ...T.rows].map((row) => row.map(escapePipes));
+  const width = T.head.map((_, c) => (tidy ? Math.max(3, ...all.map((row) => [...row[c]].length)) : 3));
+  const pad = (s, c) => {
+    if (!tidy) return s;
+    const n = width[c] - [...s].length;
+    if (T.align[c] === 'right') return ' '.repeat(n) + s;
+    if (T.align[c] === 'center') return ' '.repeat(n >> 1) + s + ' '.repeat(n - (n >> 1));
+    return s + ' '.repeat(n);
+  };
+  const line = (row) => `| ${row.map(pad).join(' | ')} |`;
+  const rule = (c) => {
+    const a = T.align[c];
+    const dashes = '-'.repeat(width[c] - (a === 'center' ? 2 : a === 'right' ? 1 : 0));
+    return a === 'center' ? `:${dashes}:` : a === 'right' ? `${dashes}:` : dashes;
+  };
+  return [line(all[0]), `| ${T.head.map((_, c) => rule(c)).join(' | ')} |`, ...all.slice(1).map(line)];
+}
+
+// The page every direction shares: the sheet, the table, the colophon, the file.
+let wrap, table, scroller, layer, src, where, said;
+function mountTablePage({ id, name, note, notes, bar = '' }) {
+  const pages = [['handles', '1 · Handles'], ['toolbar', '2 · Toolbar'], ['menus', '3 · Menus']];
+  const group = (attr, label, choices) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${choices.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
+  document.body.insertAdjacentHTML('afterbegin', `
+<header class="xbar">
+  <span class="xbar__name">Eien · Tables in Live</span>
+  <nav class="xbar__group" aria-label="Directions">${pages.map(([p, w]) => `<a class="word-button" href="table-${p}.html"${p === id ? ' aria-current="page"' : ''}>${w}</a>`).join('')}</nav>
+  ${group('theme', 'Light', [['light', 'Day'], ['dark', 'Night']])}
+  ${group('layout', 'Corners', [['band', 'A · Band'], ['slip', 'B · Slip'], ['runhead', 'C · Running head']])}
+  ${group('device', 'Show', [['desktop', 'Desktop'], ['phone', 'Phone']])}
+  ${group('tidy', 'File', [['tidy', 'Tidy pipes'], ['compact', 'Compact']])}
+  ${bar}
+  <span class="xnote">${note}</span>
+</header>
+<main class="stage">
+  <div class="pane">
+    <div class="page">
+      <article class="sheet">
+        <span class="label">Fic / Beneath the Walls / Plan</span>
+        <h1 class="title">The plan</h1>
+        <p class="prose">${BEFORE[4]}</p>
+        <div class="tbl-wrap"><div class="tbl-scroll"><table class="tbl" aria-label="Table: ${name}"></table></div><div class="tbl-layer"></div></div>
+        <p class="prose" tabindex="-1" data-after>${AFTER[1]}</p>
+      </article>
+    </div>
+    <footer class="colophon"><span class="colophon__where"></span><span class="colophon__said" role="status" aria-live="polite"></span></footer>
+  </div>
+  <aside class="file" aria-label="The file">
+    <div class="file__head"><span class="label">The file</span><span class="count">fic/beneath-the-walls/plan.md</span></div>
+    <pre class="file__src" aria-label="The note’s Markdown, as saved"></pre>
+    <div class="file__notes">${notes}</div>
+  </aside>
+</main>`);
+  wrap = document.querySelector('.tbl-wrap');
+  table = wrap.querySelector('.tbl');
+  scroller = wrap.querySelector('.tbl-scroll');
+  layer = wrap.querySelector('.tbl-layer');
+  src = document.querySelector('.file__src');
+  where = document.querySelector('.colophon__where');
+  said = document.querySelector('.colophon__said');
+  wireTable();
+  const root = document.documentElement;
+  root.dataset.theme ??= matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  wireBar((attr) => {
+    if (attr === 'tidy') drawFile();
+    if (attr === 'device') setTouch();
+    Table.onBar(attr);
+    requestAnimationFrame(() => Table.onDraw());
+  });
+  matchMedia('(hover: none)').addEventListener('change', setTouch);
+  addEventListener('resize', () => Table.onDraw());
+  scroller.addEventListener('scroll', () => Table.onDraw());
+  drawIcons();
+}
+/** Touch: a phone shown here, or a pointer that can't hover. Nothing waits for a hover then. */
+function setTouch() {
+  const root = document.documentElement;
+  root.classList.toggle('is-touch', root.dataset.device === 'phone' || matchMedia('(hover: none)').matches);
+}
+const isTouch = () => document.documentElement.classList.contains('is-touch');
+
+const PLAIN = (() => { const d = document.createElement('div'); try { d.contentEditable = 'plaintext-only'; return d.contentEditable === 'plaintext-only'; } catch { return false; } })();
+function drawTable() {
+  const cell = (text, r, c) => `<div class="cell" contenteditable="${PLAIN ? 'plaintext-only' : 'true'}" spellcheck="true" role="textbox" aria-label="${escHtml(r === 0 ? `Heading of column ${c + 1}` : `${colName(c)}, row ${r}`)}" data-r="${r}" data-c="${c}">${escHtml(text)}</div>`;
+  table.innerHTML = `<thead><tr data-r="0">${T.head.map((t, c) => `<th scope="col" data-c="${c}" data-align="${T.align[c]}">${cell(t, 0, c)}</th>`).join('')}</tr></thead>
+    <tbody>${T.rows.map((row, i) => `<tr data-r="${i + 1}">${row.map((t, c) => `<td data-c="${c}" data-align="${T.align[c]}">${cell(t, i + 1, c)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+}
+const cellAt = (r, c) => table.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+const posOf = (el) => ({ r: +el.dataset.r, c: +el.dataset.c });
+
+/** Puts the caret in a cell: at its 'start', its 'end', or round 'all' its words. */
+function focusCell(r, c, at = 'end') {
+  const el = cellAt(r, c);
+  if (!el) return;
+  el.focus({ preventScroll: false });
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  if (at !== 'all') range.collapse(at === 'start');
+  const sel = getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+/** Whether the caret is at a cell's start or end, with nothing selected. */
+function atEdge(el, side) {
+  const sel = getSelection();
+  if (!sel.rangeCount || !sel.isCollapsed) return false;
+  const caret = sel.getRangeAt(0);
+  const rest = document.createRange();
+  rest.selectNodeContents(el);
+  if (side === 'start') rest.setEnd(caret.startContainer, caret.startOffset);
+  else rest.setStart(caret.endContainer, caret.endOffset);
+  return rest.toString().length === 0;
+}
+
+// Undo: each change keeps the table as it was, so ⌘Z puts back what a removal took.
+const past = [];
+const future = [];
+const snapshot = () => JSON.stringify({ T, here });
+function restore(json) {
+  const s = JSON.parse(json);
+  Object.assign(T, s.T);
+  redraw(s.here);
+}
+function undo() {
+  if (!past.length) return say('Nothing to undo');
+  future.push(snapshot());
+  restore(past.pop());
+  say('Undone');
+}
+function redo() {
+  if (!future.length) return say('Nothing to redo');
+  past.push(snapshot());
+  restore(future.pop());
+  say('Redone');
+}
+/** A change to the table's shape: `fn` makes it and says where the caret goes, or false. */
+function change(words, fn) {
+  const before = snapshot();
+  const to = fn();
+  if (to === false) return false;
+  past.push(before);
+  future.length = 0;
+  lastTyped = {};
+  redraw(to);
+  say(words);
+  return true;
+}
+const hasWords = (cells) => cells.some((s) => s.trim());
+const back = () => ` · ${KEY('Mod-Z')} puts it back`;
+const ops = {
+  /** A new row at body index `at` (0 is first under the head). */
+  insertRow(at, c = here.c) {
+    return change('Row added', () => { T.rows.splice(at, 0, T.head.map(() => '')); return { r: at + 1, c }; });
+  },
+  deleteRow(r) {
+    if (r === 0) { say('The head row stays: a Markdown table always has one'); return false; }
+    const gone = T.rows[r - 1];
+    return change(`Row ${r} removed${hasWords(gone) ? back() : ''}`, () => {
+      T.rows.splice(r - 1, 1);
+      return { r: Math.min(r, T.rows.length), c: here.c };
+    });
+  },
+  /** A new column at index `at`; the caret goes to its head, to name it. */
+  insertCol(at) {
+    return change('Column added: name it', () => {
+      T.head.splice(at, 0, '');
+      T.align.splice(at, 0, 'left');
+      for (const row of T.rows) row.splice(at, 0, '');
+      return { r: 0, c: at };
+    });
+  },
+  deleteCol(c) {
+    if (cols() === 1) { say('The last column stays: delete the table in Source'); return false; }
+    const name = colName(c);
+    const gone = [T.head[c], ...T.rows.map((row) => row[c])];
+    return change(`Column ${name} removed${hasWords(gone) ? back() : ''}`, () => {
+      T.head.splice(c, 1);
+      T.align.splice(c, 1);
+      for (const row of T.rows) row.splice(c, 1);
+      return { r: here.r, c: Math.min(c, cols() - 1) };
+    });
+  },
+  align(c, a) {
+    if (T.align[c] === a) return false;
+    return change(`${colName(c)} aligned ${a}`, () => { T.align[c] = a; return here; });
+  },
+  /** Moves body row `from` (1-based) to stand at body index `to` of what's left. */
+  moveRow(from, to) {
+    if (from === 0 || to + 1 === from) return false;
+    return change(`Row ${from} moved`, () => {
+      const [row] = T.rows.splice(from - 1, 1);
+      T.rows.splice(to, 0, row);
+      return { r: to + 1, c: here.c };
+    });
+  },
+  moveCol(from, to) {
+    if (to === from) return false;
+    return change(`${colName(from)} moved`, () => {
+      for (const list of [T.head, T.align, ...T.rows]) { const [x] = list.splice(from, 1); list.splice(to, 0, x); }
+      return { r: here.r, c: to };
+    });
+  },
+};
+
+function redraw(to = here) {
+  drawTable();
+  here = { r: Math.max(0, Math.min(to.r, T.rows.length)), c: Math.max(0, Math.min(to.c, cols() - 1)) };
+  drawFile();
+  focusCell(here.r, here.c, 'end');
+  Table.onDraw();
+}
+
+let lastTyped = {};
+let saidTimer;
+function say(words) {
+  said.textContent = words;
+  clearTimeout(saidTimer);
+  saidTimer = setTimeout(() => { said.textContent = ''; }, 6000);
+}
+function drawWhere() {
+  where.textContent = inTable
+    ? `${here.r === 0 ? 'Head row' : `Row ${here.r} of ${T.rows.length}`} · Column ${here.c + 1} of ${cols()} · ${T.align[here.c]}`
+    : `Table · ${T.rows.length} rows · ${cols()} columns`;
+}
+
+let shown = [];
+/** The file, redrawn only where it changed: the lines that differ flash moss once. */
+function drawFile() {
+  const tidy = document.documentElement.dataset.tidy !== 'compact';
+  const lines = [...BEFORE, ...tableLines(tidy), ...AFTER];
+  const same = lines.length === shown.length && lines.every((l, i) => l === shown[i]);
+  if (!same) {
+    let p = 0;
+    while (p < lines.length && lines[p] === shown[p]) p++;
+    let s = 0;
+    while (s < lines.length - p && lines[lines.length - 1 - s] === shown[shown.length - 1 - s]) s++;
+    const first = BEFORE.length;
+    const last = lines.length - AFTER.length;
+    src.innerHTML = lines.map((l, i) => {
+      const cls = ['ln', i >= first && i < last && 'is-table', shown.length && i >= p && i < lines.length - s && 'is-changed'];
+      // Each line ends in its newline, so the file copies as it's saved.
+      return `<span class="${cls.filter(Boolean).join(' ')}">${escHtml(l)}\n</span>`;
+    }).join('');
+    shown = lines;
+  }
+  const at = BEFORE.length + (here.r === 0 ? 0 : here.r + 1);
+  src.querySelectorAll('.ln').forEach((ln, i) => ln.classList.toggle('is-here', inTable && i === at));
+  if (inTable) src.children[at]?.scrollIntoView({ block: 'nearest' });
+  drawWhere();
+}
+
+/** Where each column and row is, in the wrap's own coordinates, for the controls laid over them. */
+function geometry() {
+  const base = wrap.getBoundingClientRect();
+  const view = scroller.getBoundingClientRect();
+  const t = table.getBoundingClientRect();
+  const cols = [...table.rows[0].cells].map((th) => { const b = th.getBoundingClientRect(); return { x: b.left - base.left, w: b.width }; });
+  const rows = [...table.rows].map((tr) => { const b = tr.getBoundingClientRect(); return { y: b.top - base.top, h: b.height }; });
+  return { cols, rows, top: t.top - base.top, height: t.height, left: view.left - base.left, right: Math.min(t.right, view.right) - base.left };
+}
+
+/** The table counts as "in use" while focus is in it or in a control marked data-table-part. */
+const inside = (el) => !!el?.closest?.('.tbl-wrap, [data-table-part]');
+function setIn(on) {
+  if (inTable === on) return;
+  inTable = on;
+  wrap.classList.toggle('is-in', on);
+  drawFile();
+  Table.onDraw();
+}
+/** Back to the caret's cell, from a control. */
+const toCell = () => focusCell(here.r, here.c, 'end');
+
+function wireTable() {
+  table.addEventListener('focusin', (e) => {
+    const el = e.target.closest('.cell');
+    if (!el) return;
+    here = posOf(el);
+    setIn(true);
+    drawFile();
+    Table.onMove(here);
+  });
+  document.addEventListener('focusout', (e) => {
+    if (inside(e.target) && !inside(e.relatedTarget)) setTimeout(() => { if (!inside(document.activeElement)) setIn(false); });
+  });
+  table.addEventListener('input', (e) => {
+    const el = e.target.closest('.cell');
+    const { r, c } = posOf(el);
+    const key = `${r}:${c}`;
+    if (key !== lastTyped.key || Date.now() - lastTyped.at > 1500) { past.push(snapshot()); future.length = 0; }
+    lastTyped = { key, at: Date.now() };
+    rowOf(r)[c] = el.textContent.replace(/\n/g, ' ');
+    drawFile();
+    Table.onDraw();
+  });
+  // A cell is one line in Markdown: pasted lines join with spaces.
+  table.addEventListener('paste', (e) => {
+    e.preventDefault();
+    document.execCommand('insertText', false, e.clipboardData.getData('text/plain').replace(/\s*\n\s*/g, ' '));
+  });
+  table.addEventListener('keydown', (e) => {
+    const el = e.target.closest('.cell');
+    if (!el || Table.onKey(e)) return;
+    const { r, c } = here;
+    const n = cols();
+    const last = T.rows.length;
+    const go = (r2, c2, at) => { e.preventDefault(); focusCell(r2, c2, at); };
+    const k = e.key;
+    if (mod(e) && e.altKey) {
+      const act = {
+        ArrowUp: () => ops.insertRow(Math.max(0, r - 1)),
+        ArrowDown: () => ops.insertRow(r),
+        ArrowLeft: () => ops.insertCol(c),
+        ArrowRight: () => ops.insertCol(c + 1),
+        Backspace: () => (e.shiftKey ? ops.deleteCol(c) : ops.deleteRow(r)),
+      }[k];
+      if (act) { e.preventDefault(); act(); }
+      return;
+    }
+    if (mod(e) && k.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if (mod(e) && k.toLowerCase() === 'y' && !MAC) { e.preventDefault(); redo(); return; }
+    if (k === 'Tab') {
+      if (e.shiftKey) { if (c > 0) go(r, c - 1, 'all'); else if (r > 0) go(r - 1, n - 1, 'all'); else e.preventDefault(); }
+      else if (c < n - 1) go(r, c + 1, 'all');
+      else if (r < last) go(r + 1, 0, 'all');
+      else { e.preventDefault(); ops.insertRow(last, 0); }
+    } else if (k === 'Enter') {
+      e.preventDefault();
+      if (e.shiftKey) say('A cell is one line in Markdown');
+      else ops.insertRow(r);
+    } else if (k === 'ArrowUp' && !e.shiftKey && r > 0) go(r - 1, c, 'end');
+    else if (k === 'ArrowDown' && !e.shiftKey && r < last) go(r + 1, c, 'end');
+    else if (k === 'ArrowLeft' && !e.shiftKey && atEdge(el, 'start') && (c > 0 || r > 0)) go(c > 0 ? r : r - 1, c > 0 ? c - 1 : n - 1, 'end');
+    else if (k === 'ArrowRight' && !e.shiftKey && atEdge(el, 'end') && (c < n - 1 || r < last)) go(c < n - 1 ? r : r + 1, c < n - 1 ? c + 1 : 0, 'start');
+    else if (k === 'Escape') {
+      e.preventDefault();
+      document.querySelector('[data-after]').focus();
+      say('Out of the table');
+    }
+  });
+  drawTable();
+  drawFile();
+}
+
+/** The keys every direction shares, for its notes. */
+const SHARED_KEYS = () => `
+  <h2>Keys, in all three</h2>
+  <ul>
+    <li><kbd>Tab</kbd> <kbd>⇧Tab</kbd> next and last cell; <kbd>Tab</kbd> in the last cell adds a row</li>
+    <li>Arrows move between cells at a cell's edge; <kbd>↑</kbd> <kbd>↓</kbd> always</li>
+    <li><kbd>Enter</kbd> a new row under this one; <kbd>Esc</kbd> out of the table</li>
+    <li><kbd>${KEY('Mod-Alt-↑')}</kbd> <kbd>${KEY('Mod-Alt-↓')}</kbd> row above, below; <kbd>${KEY('Mod-Alt-←')}</kbd> <kbd>${KEY('Mod-Alt-→')}</kbd> column left, right</li>
+    <li><kbd>${KEY('Mod-Alt-⌫')}</kbd> remove the row; <kbd>${KEY('Mod-Alt-Shift-⌫')}</kbd> the column; <kbd>${KEY('Mod-Z')}</kbd> puts either back</li>
+  </ul>`;
+
+// The table's edges, for 1 · Handles and 3 · Menus: controls for the row and
+// column under the pointer or the caret, and a + on the lines between them.
+
+let hover = { r: -1, c: -1 };
+function useEdges() {
+  wrap.classList.add('has-edges');
+  table.addEventListener('pointerover', (e) => {
+    const cell = e.target.closest('th, td');
+    if (!cell) return;
+    hover = { r: +cell.parentElement.dataset.r, c: +cell.dataset.c };
+    Table.onDraw();
+  });
+  wrap.addEventListener('pointerleave', () => { hover = { r: -1, c: -1 }; Table.onDraw(); });
+  wrap.addEventListener('transitionend', (e) => { if (e.target === wrap) Table.onDraw(); });
+}
+/** Lights the row or column a removal would take, before it goes. */
+function aim(kind, i) {
+  for (const el of table.querySelectorAll('.is-aimed')) el.classList.remove('is-aimed');
+  if (kind === 'col') for (const el of table.querySelectorAll(`[data-c="${i}"]:is(th, td)`)) el.classList.add('is-aimed');
+  if (kind === 'row') for (const el of table.querySelectorAll(`tr[data-r="${i}"] > *`)) el.classList.add('is-aimed');
+}
+
+// The + on each line, with a name that says which line.
+function insColName(c) {
+  const n = cols();
+  if (c === 0) return `Add a column before ${colName(0)}`;
+  if (c === n) return `Add a column after ${colName(n - 1)}`;
+  return `Add a column between ${colName(c - 1)} and ${colName(c)}`;
+}
+function insRowName(at) {
+  if (at === 0) return 'Add a row under the head row';
+  if (at === T.rows.length) return `Add a row after row ${at}`;
+  return `Add a row between rows ${at} and ${at + 1}`;
+}
+/** A + on the line between two columns ('col') or rows ('row'); `at` is the line's index. */
+function insertHtml(dir, at) {
+  const name = dir === 'col' ? insColName(at) : insRowName(at);
+  return `<button class="ins ins--${dir}" data-ins-${dir}="${at}" aria-label="${escHtml(name)}" data-tip="${dir === 'col' ? 'Add a column' : 'Add a row'}" data-tip-side="${dir === 'col' ? 'up' : 'left'}"><span class="ins__dot"></span><span class="ins__plus">${icon('plus')}</span><span class="ins__line"></span></button>`;
+}
+/** Where each line is: a column line's x, a row line's y, in the wrap's coordinates. */
+const colLine = (g, c) => (c < g.cols.length ? g.cols[c].x : g.cols.at(-1).x + g.cols.at(-1).w);
+const rowLine = (g, at) => (at < T.rows.length ? g.rows[at + 1].y : g.top + g.height);
+
+
+// The formatting bar's row, with its Table button, and the table's tools on
+// one bar (2 · Toolbar; 3 · Menus' phone). Each page says where the bar goes
+// and calls sync() whenever the table or the caret changes.
+
+/** The formatting bar, as Band draws it, at the top of the page pane. `onTable`: its Table button. */
+function formatBar(onTable) {
+  const pane = document.querySelector('.pane');
+  const button = (n) => `<button class="icon-button" tabindex="-1" data-icon="${n}" aria-label="${n}" data-tip="${n[0].toUpperCase() + n.slice(1)}"></button>`;
+  pane.insertAdjacentHTML('afterbegin', `<div class="fbar" role="toolbar" aria-label="Formatting">
+    ${['bold', 'italic', 'underline', 'strike'].map(button).join('')}<span class="fbar__rule"></span>
+    ${['heading', 'quote', 'bullets', 'numbers', 'checklist', 'link'].map(button).join('')}
+    <button class="icon-button fbar__table" data-icon="table" aria-label="Table" data-tip="Table"></button>
+  </div>`);
+  const fbar = pane.querySelector('.fbar');
+  drawIcons(fbar);
+  const table = fbar.querySelector('.fbar__table');
+  table.addEventListener('mousedown', (e) => e.preventDefault());
+  table.addEventListener('click', onTable);
+  return fbar;
+}
+
+const TABLE_TOOLS = [
+  ['rowAbove', 'Add a row above', 'Mod-Alt-↑', () => ops.insertRow(Math.max(0, here.r - 1))],
+  ['rowBelow', 'Add a row below', 'Mod-Alt-↓', () => ops.insertRow(here.r)],
+  ['rowDelete', 'Remove this row', 'Mod-Alt-⌫', () => ops.deleteRow(here.r), 'tbar__off'],
+  '|',
+  ['colLeft', 'Add a column to the left', 'Mod-Alt-←', () => ops.insertCol(here.c)],
+  ['colRight', 'Add a column to the right', 'Mod-Alt-→', () => ops.insertCol(here.c + 1)],
+  ['colDelete', 'Remove this column', 'Mod-Alt-Shift-⌫', () => ops.deleteCol(here.c), 'tbar__off'],
+  '|',
+  ['alignLeft', 'Align the column left', '', () => ops.align(here.c, 'left')],
+  ['alignCenter', 'Align the column centre', '', () => ops.align(here.c, 'center')],
+  ['alignRight', 'Align the column right', '', () => ops.align(here.c, 'right')],
+  '|',
+];
+
+/** The table's tools: one toolbar, its arrows moving along it (one tab stop), Esc back to the cell. */
+function tableBar() {
+  const bar = document.createElement('div');
+  bar.className = 'tbar';
+  bar.setAttribute('role', 'toolbar');
+  bar.setAttribute('aria-label', 'Table');
+  bar.dataset.tablePart = '';
+  bar.innerHTML = TABLE_TOOLS.map((t) => (t === '|'
+    ? '<span class="tbar__rule" aria-hidden="true"></span>'
+    : `<button class="icon-button ${t[4] ?? ''}" tabindex="-1" data-act="${t[0]}" aria-label="${t[1]}" data-tip="${t[1]}${t[2] ? `  ${KEY(t[2])}` : ''}">${icon(t[0])}</button>`)).join('') + '<span class="tbar__where count"></span>';
+  const buttons = [...bar.querySelectorAll('button')];
+  const run = Object.fromEntries(TABLE_TOOLS.filter((t) => t !== '|').map((t) => [t[0], t[3]]));
+  let roving = 0;
+  /** How each tool looks now: what can't be done says why when pressed, rather than vanishing. */
+  function sync() {
+    bar.classList.toggle('is-shown', inTable || bar.contains(document.activeElement));
+    bar.querySelector('[data-act="rowDelete"]').setAttribute('aria-disabled', String(here.r === 0));
+    bar.querySelector('[data-act="colDelete"]').setAttribute('aria-disabled', String(cols() === 1));
+    for (const a of ['left', 'center', 'right']) bar.querySelector(`[data-act="${ALIGN_ICON[a]}"]`).setAttribute('aria-pressed', String(T.align[here.c] === a));
+    bar.querySelector('.tbar__where').textContent = `${here.r === 0 ? 'HEAD' : `ROW ${here.r}`} · COL ${here.c + 1}`;
+    buttons.forEach((b, i) => { b.tabIndex = i === roving ? 0 : -1; });
+  }
+  // The pointer's press keeps the caret in its cell; the keyboard stays on the bar.
+  bar.addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+  bar.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    run[b.dataset.act]();
+    if (e.detail === 0) { roving = buttons.indexOf(b); sync(); b.focus(); }
+  });
+  bar.addEventListener('keydown', (e) => {
+    const i = buttons.indexOf(document.activeElement);
+    const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: buttons.length - 1 }[e.key];
+    if (to !== undefined) {
+      e.preventDefault();
+      roving = (to + buttons.length) % buttons.length;
+      sync();
+      buttons[roving].focus();
+    } else if (e.key === 'Escape') { e.preventDefault(); toCell(); }
+  });
+  bar.addEventListener('focusout', () => setTimeout(() => Table.onDraw()));
+  return { bar, sync, focus: () => buttons[roving].focus() };
+}
+
+
+mountTablePage({
+  id: 'menus',
+  name: 'the plan',
+  note: 'Chosen: a grip on each row and column (press for its menu, drag to move), a + on the line you point at, and 2’s bar on a phone.',
+  notes: `
+  <h2>3 · Menus, with 1's + (chosen)</h2>
+  <p>A grip at each row's left and over each column, as a list's rows have, showing for the row and column under the pointer or the caret. Press a grip for that row's or column's menu, in the right-click menu's style (its name at the head, an icon, a word and a key per choice, removal last in carmine); drag it to move the row or column, with your order's drop line. Right-click a cell for both menus at once.</p>
+  <p>From 1, the +, lighter: no dots, nothing at rest. Point at a line between two columns or two rows, or at the table's outer edges, and a + comes at its end, with a line showing where the new column or row goes.</p>
+  <p>The formatting bar has the Table button: with the caret in a table it's pressed, and opens the caret's menus; elsewhere it makes a table.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>point between two columns, or past the last one; then the +</li>
+    <li>drag a row's grip up or down, or a column's sideways</li>
+    <li>a column's menu: add, align (the dot is the column's now), move, remove</li>
+    <li>right-click a cell, <kbd>${KEY('Shift-F10')}</kbd> in it, or the formatting bar's Table button</li>
+    <li><kbd>${KEY('Alt-↑')}</kbd> <kbd>${KEY('Alt-↓')}</kbd> in a cell move its row, as they move a line elsewhere in the editor</li>
+  </ul>
+  ${SHARED_KEYS()}
+  <h2>On a phone</h2>
+  <p>2's bar: docked at the foot, above the keyboard, one row of 44px targets that scrolls sideways, there while the caret's in the table. No grips or + to aim at; a long press on a cell still opens its menus as the phone's bottom sheet, for moving and aligning (Show → Phone; right-click stands in for the long press).</p>`,
+});
+useEdges();
+
+const pane = document.querySelector('.pane');
+const menu = document.createElement('div');
+menu.className = 'menu';
+menu.setAttribute('role', 'menu');
+menu.dataset.tablePart = '';
+menu.hidden = true;
+const drop = document.createElement('div');
+drop.className = 'drop';
+let built = '';
+let opener = null;
+let near = null;
+// A phone's way: 2's bar, docked above the keyboard.
+const tools = tableBar();
+// The formatting bar's Table button: in a table, the caret's menus; elsewhere it would make one.
+const fbar = formatBar(() => {
+  if (!inTable) { focusCell(1, 0); say('In the app, Table makes a new table here'); return; }
+  const cell = cellAt(here.r, here.c);
+  const b = cell.getBoundingClientRect();
+  cellMenu(here.r, here.c, cell, localOf(b.left + 8, b.bottom + 4));
+});
+
+function build() {
+  const n = cols();
+  let html = '';
+  for (let c = 0; c <= n; c++) html += insertHtml('col', c);
+  for (let at = 0; at <= T.rows.length; at++) html += insertHtml('row', at);
+  for (let c = 0; c < n; c++) html += `<button class="grip grip--col" data-grip-col="${c}" aria-haspopup="menu" aria-expanded="false" aria-label="Column ${escHtml(colName(c))}: menu, or drag to move" data-tip="Column ${escHtml(colName(c))}: press for its menu, drag to move" data-tip-side="up">${icon('gripCol')}</button>`;
+  for (let r = 1; r <= T.rows.length; r++) html += `<button class="grip grip--row" data-grip-row="${r}" aria-haspopup="menu" aria-expanded="false" aria-label="Row ${r}: menu, or drag to move" data-tip="Row ${r}: press for its menu, drag to move" data-tip-side="left">${icon('gripRow')}</button>`;
+  layer.innerHTML = html;
+  layer.append(drop);
+  if (!isTouch()) layer.append(menu);
+  near = null;
+}
+
+function place() {
+  const key = `${T.head.join('|')}/${T.rows.length}`;
+  if (key !== built && !layer.contains(document.activeElement) && !dragging) { build(); built = key; }
+  const g = geometry();
+  const touch = isTouch();
+  layer.style.setProperty('--tbl-h', `${g.height}px`);
+  layer.style.setProperty('--tbl-w', `${g.right - g.left}px`);
+  const at = (el, x, y) => {
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.hidden = x < g.left - 1 || x > g.right + 1;
+  };
+  for (const el of layer.querySelectorAll('[data-ins-col]')) at(el, colLine(g, +el.dataset.insCol), g.top - 14);
+  for (const el of layer.querySelectorAll('[data-ins-row]')) {
+    el.style.left = `${g.left - 40}px`;
+    el.style.top = `${rowLine(g, +el.dataset.insRow)}px`;
+  }
+  for (const el of layer.querySelectorAll('[data-grip-col]')) {
+    const c = +el.dataset.gripCol;
+    at(el, g.cols[c].x + g.cols[c].w / 2, g.top - 14);
+    el.classList.toggle('is-shown', (!touch && hover.c === c) || (inTable && here.c === c));
+  }
+  for (const el of layer.querySelectorAll('[data-grip-row]')) {
+    const r = +el.dataset.gripRow;
+    el.style.left = `${g.left - 16}px`;
+    el.style.top = `${g.rows[r].y + g.rows[r].h / 2}px`;
+    el.classList.toggle('is-shown', (!touch && hover.r === r) || (inTable && here.r === r));
+  }
+  const home = touch ? pane : layer;
+  if (menu.parentElement !== home) home.append(menu);
+  if (touch) {
+    if (tools.bar.parentElement !== pane) pane.append(tools.bar);
+    tools.sync();
+  } else tools.bar.remove();
+  fbar.querySelector('.fbar__table').setAttribute('aria-pressed', String(inTable));
+}
+Table.onDraw = place;
+Table.onMove = place;
+
+// The + shows only while the pointer is on its line: between two columns (or
+// at the table's sides), between two rows (or under the last); closer in the
+// margins, where it stands, so the pointer can reach it along its line.
+function setNear(next) {
+  if (near?.dir === next?.dir && near?.at === next?.at) return;
+  near = next;
+  for (const el of layer.querySelectorAll('.ins')) {
+    el.classList.toggle('is-near', !!near && el.dataset[near.dir === 'col' ? 'insCol' : 'insRow'] === String(near.at));
+  }
+}
+wrap.addEventListener('pointermove', (e) => {
+  if (dragging || isTouch() || e.target.closest('.ins')) return;
+  const g = geometry();
+  const p = localOf(e.clientX, e.clientY);
+  let best = null;
+  const consider = (dir, at, d, max) => { if (d <= max && (!best || d < best.d)) best = { dir, at, d }; };
+  if (p.y >= g.top - 26 && p.y <= g.top + g.height) {
+    for (let c = 0; c <= g.cols.length; c++) consider('col', c, Math.abs(p.x - colLine(g, c)), p.y < g.top ? 10 : 6);
+  }
+  if (p.x >= g.left - 52 && p.x <= g.right) {
+    for (let at = 0; at <= T.rows.length; at++) consider('row', at, Math.abs(p.y - rowLine(g, at)), p.x < g.left ? 10 : 5);
+  }
+  setNear(best);
+});
+wrap.addEventListener('pointerleave', () => setNear(null));
+
+// The menus: a row's, a column's, or a cell's (both).
+function rowItems(r) {
+  if (r === 0) return [{ icon: 'rowBelow', word: 'Add a row below', key: 'Mod-Alt-↓', run: () => ops.insertRow(0) }];
+  return [
+    { icon: 'rowAbove', word: 'Add a row above', key: 'Mod-Alt-↑', run: () => ops.insertRow(r - 1) },
+    { icon: 'rowBelow', word: 'Add a row below', key: 'Mod-Alt-↓', run: () => ops.insertRow(r) },
+    { icon: 'up', word: 'Move up', key: 'Alt-↑', off: r === 1, run: () => ops.moveRow(r, r - 2) },
+    { icon: 'down', word: 'Move down', key: 'Alt-↓', off: r === T.rows.length, run: () => ops.moveRow(r, r) },
+  ];
+}
+function colItems(c) {
+  const n = cols();
+  return [
+    { icon: 'colLeft', word: 'Add a column left', key: 'Mod-Alt-←', run: () => ops.insertCol(c) },
+    { icon: 'colRight', word: 'Add a column right', key: 'Mod-Alt-→', run: () => ops.insertCol(c + 1) },
+    '|',
+    ...['left', 'center', 'right'].map((a) => ({ icon: ALIGN_ICON[a], word: `Align ${a === 'center' ? 'centre' : a}`, checked: T.align[c] === a, run: () => ops.align(c, a) })),
+    '|',
+    { icon: 'left', word: 'Move left', off: c === 0, run: () => ops.moveCol(c, c - 1) },
+    { icon: 'right', word: 'Move right', off: c === n - 1, run: () => ops.moveCol(c, c + 1) },
+  ];
+}
+const removeRow = (r) => ({ icon: 'trash', word: 'Remove row', key: 'Mod-Alt-⌫', danger: true, aim: ['row', r], run: () => ops.deleteRow(r) });
+const removeCol = (c) => ({ icon: 'trash', word: 'Remove column', key: 'Mod-Alt-Shift-⌫', danger: true, off: cols() === 1, aim: ['col', c], run: () => ops.deleteCol(c) });
+
+let items = [];
+function openMenu({ head, groups, at, from }) {
+  items = [];
+  const itemHtml = (it) => {
+    if (it === '|') return '<div class="menu__rule" role="separator"></div>';
+    const i = items.push(it) - 1;
+    const role = it.checked === undefined ? 'menuitem' : 'menuitemradio';
+    return `<button class="menu__item${it.danger ? ' menu__item--danger' : ''}" role="${role}" tabindex="-1" data-i="${i}"${it.checked !== undefined ? ` aria-checked="${it.checked}"` : ''}${it.off ? ' aria-disabled="true"' : ''}>${icon(it.icon)}<span>${it.word}</span>${it.checked ? '<span class="menu__dot" aria-hidden="true"></span>' : `<span class="menu__key">${it.key ? KEY(it.key) : ''}</span>`}</button>`;
+  };
+  menu.setAttribute('aria-label', head);
+  menu.innerHTML = `<div class="menu__head" aria-hidden="true">${escHtml(head)}</div>` + groups.map((g) => g.map(itemHtml).join('')).join('<div class="menu__rule" role="separator"></div>');
+  menu.hidden = false;
+  opener = from;
+  opener?.setAttribute?.('aria-expanded', 'true');
+  if (!isTouch()) {
+    // Kept over the sheet: never past the table's right edge, nor further left than its grips.
+    const g = geometry();
+    menu.style.left = `${Math.max(g.left - 32, Math.min(at.x, g.right - menu.offsetWidth))}px`;
+    menu.style.top = `${at.y}px`;
+  } else menu.style.left = menu.style.top = '';
+  menu.querySelector('.menu__item:not([aria-disabled="true"])')?.focus();
+}
+function closeMenu(back = true) {
+  if (menu.hidden) return;
+  menu.hidden = true;
+  aim();
+  opener?.setAttribute?.('aria-expanded', 'false');
+  if (back) (opener?.isConnected ? opener : cellAt(here.r, here.c))?.focus();
+  opener = null;
+}
+const localOf = (x, y) => { const b = wrap.getBoundingClientRect(); return { x: x - b.left, y: y - b.top }; };
+function rowMenu(r, from, at) { openMenu({ head: r === 0 ? 'The head row' : `Row ${r}`, groups: [rowItems(r), r ? [removeRow(r)] : []].filter((g) => g.length), at, from }); }
+function colMenu(c, from, at) { openMenu({ head: `Column · ${colName(c)}`, groups: [colItems(c), [removeCol(c)]], at, from }); }
+function cellMenu(r, c, from, at) {
+  openMenu({ head: `${r === 0 ? 'Head' : `Row ${r}`} · ${colName(c)}`, groups: [rowItems(r), colItems(c), [...(r ? [removeRow(r)] : []), removeCol(c)]], at, from });
+}
+
+menu.addEventListener('mousedown', (e) => e.preventDefault());
+menu.addEventListener('click', (e) => {
+  const b = e.target.closest('.menu__item');
+  if (!b || b.getAttribute('aria-disabled') === 'true') return;
+  const it = items[+b.dataset.i];
+  closeMenu(false);
+  if (it.run() === false) toCell();
+});
+menu.addEventListener('pointerover', (e) => { const it = items[+e.target.closest('.menu__item')?.dataset.i]; aim(...(it?.aim ?? [])); });
+menu.addEventListener('focusin', (e) => { const it = items[+e.target.closest('.menu__item')?.dataset.i]; aim(...(it?.aim ?? [])); });
+menu.addEventListener('keydown', (e) => {
+  const list = [...menu.querySelectorAll('.menu__item')];
+  const i = list.indexOf(document.activeElement);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: list.length - 1 }[e.key];
+  if (to !== undefined) { e.preventDefault(); list[(to + list.length) % list.length].focus(); }
+  else if (e.key === 'Escape') { e.preventDefault(); closeMenu(); }
+  else if (e.key === 'Tab') { e.preventDefault(); closeMenu(); }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.activeElement.click(); }
+});
+document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target) && !opener?.contains?.(e.target)) closeMenu(false); });
+
+// Right-click a cell (a long press on a phone), or Shift-F10 in it: both its menus.
+table.addEventListener('contextmenu', (e) => {
+  const cell = e.target.closest('.cell');
+  if (!cell) return;
+  e.preventDefault();
+  const { r, c } = posOf(cell);
+  if (document.activeElement !== cell) focusCell(r, c);
+  cellMenu(r, c, cell, localOf(e.clientX, e.clientY));
+});
+Table.onKey = (e) => {
+  // On a phone, Alt-F10 reaches 2's bar, as on page 2.
+  if (e.key === 'F10' && e.altKey && isTouch()) { e.preventDefault(); tools.focus(); return true; }
+  if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') {
+    e.preventDefault();
+    const cell = cellAt(here.r, here.c);
+    const b = cell.getBoundingClientRect();
+    cellMenu(here.r, here.c, cell, localOf(b.left + 8, b.bottom + 4));
+    return true;
+  }
+  // Alt-↑ ↓ move the row, as they move a line elsewhere in the editor.
+  if (e.altKey && !mod(e) && !e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && here.r > 0) {
+    e.preventDefault();
+    if (e.key === 'ArrowUp' && here.r > 1) ops.moveRow(here.r, here.r - 2);
+    if (e.key === 'ArrowDown' && here.r < T.rows.length) ops.moveRow(here.r, here.r);
+    return true;
+  }
+  return false;
+};
+
+// A grip: pressed, its menu; dragged, the row or column moves, with the drop
+// line where it will land. The drag listens on the whole document and ends
+// however the press ends (released, the capture lost, or the browser taking
+// it), so a drop is never missed; only Esc puts it back.
+let dragging = null;
+layer.addEventListener('pointerdown', (e) => {
+  const grip = e.target.closest('.grip');
+  if (!grip || e.button !== 0) return;
+  e.preventDefault();
+  try { grip.setPointerCapture(e.pointerId); } catch {}
+  const kind = grip.dataset.gripRow ? 'row' : 'col';
+  const from = +(grip.dataset.gripRow ?? grip.dataset.gripCol);
+  dragging = { kind, from, grip, id: e.pointerId, start: { x: e.clientX, y: e.clientY }, moved: false, to: kind === 'row' ? from - 1 : from, g: geometry() };
+});
+function dragTo(e) {
+  const d = dragging;
+  const dx = e.clientX - d.start.x;
+  const dy = e.clientY - d.start.y;
+  if (!d.moved && Math.hypot(dx, dy) < 4) return;
+  if (!d.moved) {
+    d.moved = true;
+    closeMenu(false);
+    setNear(null);
+    wrap.classList.add('is-dragging');
+    document.body.classList.add('is-dragging');
+    getSelection().removeAllRanges();
+    d.cells = d.kind === 'row' ? [...table.querySelectorAll(`tr[data-r="${d.from}"] > *`)] : [...table.querySelectorAll(`[data-c="${d.from}"]:is(th, td)`)];
+    for (const el of d.cells) el.classList.add('is-dragged');
+  }
+  for (const el of d.cells) el.style.translate = d.kind === 'row' ? `0 ${dy}px` : `${dx}px 0`;
+  const p = localOf(e.clientX, e.clientY);
+  const { g } = d;
+  if (d.kind === 'row') {
+    const rest = g.rows.slice(1).filter((_, i) => i + 1 !== d.from);
+    d.to = rest.filter((row) => row.y + row.h / 2 < p.y).length;
+    const y = d.to < rest.length ? rest[d.to].y : rest.at(-1).y + rest.at(-1).h;
+    Object.assign(drop.style, { left: `${g.left}px`, width: `${g.right - g.left}px`, top: `${y - 1}px`, height: '2px' });
+  } else {
+    const rest = g.cols.filter((_, i) => i !== d.from);
+    d.to = rest.filter((col) => col.x + col.w / 2 < p.x).length;
+    const x = d.to < rest.length ? rest[d.to].x : rest.at(-1).x + rest.at(-1).w;
+    Object.assign(drop.style, { left: `${x - 1}px`, width: '2px', top: `${g.top}px`, height: `${g.height}px` });
+  }
+  drop.classList.add('is-on');
+}
+/** Ends a drag: `how` is 'up' (released), 'lost' (the capture or the press taken away) or 'esc'. */
+function endDrag(how) {
+  const d = dragging;
+  if (!d) return;
+  dragging = null;
+  try { d.grip.releasePointerCapture(d.id); } catch {}
+  drop.classList.remove('is-on');
+  wrap.classList.remove('is-dragging');
+  document.body.classList.remove('is-dragging');
+  for (const el of d.cells ?? []) { el.classList.remove('is-dragged'); el.style.translate = ''; }
+  if (how === 'esc') return toCell();
+  if (!d.moved) {
+    if (how !== 'up') return;
+    const b = d.grip.getBoundingClientRect();
+    const at = localOf(d.kind === 'row' ? b.right + 4 : b.left, b.bottom + 4);
+    (d.kind === 'row' ? rowMenu : colMenu)(d.from, d.grip, at);
+  } else if ((d.kind === 'row' ? ops.moveRow(d.from, d.to) : ops.moveCol(d.from, d.to)) === false) toCell();
+}
+const ours = (e) => dragging && e.pointerId === dragging.id;
+document.addEventListener('pointermove', (e) => { if (ours(e)) dragTo(e); });
+document.addEventListener('pointerup', (e) => { if (ours(e)) endDrag('up'); });
+document.addEventListener('pointercancel', (e) => { if (ours(e)) endDrag('lost'); });
+layer.addEventListener('lostpointercapture', (e) => { if (ours(e)) endDrag('lost'); });
+document.addEventListener('dragstart', (e) => { if (dragging) e.preventDefault(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dragging) { e.preventDefault(); endDrag('esc'); } });
+
+// A +: the pointer's press keeps the caret where it is.
+layer.addEventListener('mousedown', (e) => { if (e.target.closest('.ins')) e.preventDefault(); });
+layer.addEventListener('click', (e) => {
+  const ins = e.target.closest('.ins');
+  if (ins) {
+    if (ins.dataset.insCol) ops.insertCol(+ins.dataset.insCol);
+    else ops.insertRow(+ins.dataset.insRow, 0);
+    return;
+  }
+  // The keyboard opens a grip's menu with Enter or Space, as any button.
+  const grip = e.target.closest('.grip');
+  if (!grip || e.detail !== 0) return;
+  const b = grip.getBoundingClientRect();
+  if (grip.dataset.gripRow) rowMenu(+grip.dataset.gripRow, grip, localOf(b.right + 4, b.top));
+  else colMenu(+grip.dataset.gripCol, grip, localOf(b.left, b.bottom + 4));
+});
+
+requestAnimationFrame(place);
+</script>
+</body>
+</html>

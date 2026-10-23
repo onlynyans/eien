@@ -341,6 +341,37 @@ the sync icon's place at the sidebar's foot (`SidebarFoot.sync`), and C's
 strip ground (`--runhead-ground`: the Running head setting, one of the
 theme's surfaces, the desk by default; built in 3G).
 
+## Decided, not built yet (2026-10-22)
+
+From `docs/design/explorations/tables.md` and `corner.md`; each page there
+shows it working.
+
+- **Tables in Live** (`table-menus.html`): a GFM table edited in place, the
+  file a plain Markdown table.
+  - Desktop: a grip at each row's left and over each column, for the row and
+    column under the pointer or the caret. Pressed, the row's or column's
+    menu (the row menu's style); dragged, the row or column moves, with the
+    drop line.
+  - A + comes only while the pointer is on a line between two columns or
+    rows (or the table's outer edges), with the line where the new one goes.
+  - The formatting bar's Table button: pressed with the caret in a table, it
+    opens the caret's menus.
+  - Phone: the table's tools on one bar docked above the keyboard, 44px
+    targets.
+  - Keys: Tab, arrows and Enter between cells; ⌥⌘ arrows add, ⌥⌘⌫ removes,
+    ⌘Z puts back.
+- **A shut sidebar** (`corner-stay.html`, `corner-shoulder.html`): a
+  setting for A · Band and B · Slip, "Shut sidebar".
+  - The seal alone: no strip; the seal stays in the top row, beside macOS's
+    lights.
+  - A strip of desk: a strip `--band` wide (56px), widening at its top into a
+    shoulder of desk that holds macOS's lights, its outer corner
+    `--eien-radius-l`.
+  - C · Running head: always a strip as wide as its own bands are tall
+    (48px, C's `--band`).
+  - In full screen (no lights), the seal sits in the top row, never a band
+    down.
+
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 
 As shipped; see `docs/design/explorations/specimen.html`, As built.
@@ -387,6 +418,21 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   faded dot after a tag typed in the text; the + field's menu is a menu's
   raised paper, the chosen choice on `--eien-selected`, "Make #…" after a
   soft rule.
+- **Table editor** (`ui/editor/table-*.ts`, `editor/table.css`, from
+  `explorations/table-menus.html`): its controls are the window's own, in a
+  layer over the editor (out of its shadow root). A grip is a quiet
+  `.icon-button` with the row grip's 12px icon in pencil, over each column
+  and at each row's left, on (`is-on`) for the row and column under the
+  pointer or caret; carried, it's a dragged row (raised paper, rule-strong
+  edge, the float shadow). Its menu is the row menu, a column's alignment a
+  radio with the ink dot where a key would be. The + on a line between
+  columns or rows is the quiet + (`ui/add-button.ts`), on only while the
+  pointer is on that line, with the drop marker across or down the table;
+  a moved row or column shows the same marker. Each stands off the table by
+  `--eien-space-1`, a row's + one control further out. A phone's table bar
+  is a host on the band (its rules `host__rule`, its buttons at
+  `--eien-touch`) docked under the sheet. A column's alignment shows: right
+  in tabular figures.
 - **Formatting bar**: the `format` slot's host. Band's second row on the
   band ground; Slip's own raised slip at the blotter's top left; Running
   head's raised rail down the margin. Its buttons have the icon control's

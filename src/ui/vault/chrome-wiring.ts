@@ -79,7 +79,14 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   const formatLook = (id: CommandId): CommandLook => {
     if (!page.writable || page.mode === 'reading') return { disabled: true, pressed: false };
     if (id === 'format.heading') return { pressed: headingLevel(page.editor.caretLine) > 0 };
-    if (id === 'format.table') return {}; // it puts a table in, and is never on
+    // In a table, the caret's menus; elsewhere it puts a table in.
+    if (id === 'format.table') {
+      const inTable = page.editor.inTable;
+      return {
+        pressed: inTable,
+        tip: inTable ? 'Table: this row’s and column’s menus' : undefined,
+      };
+    }
     const sends = commandOf(id).sends ?? '';
     return { pressed: formatsOn().has(sends.slice('format:'.length) as FormatCommandId) };
   };
@@ -213,6 +220,9 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       mounted = true;
       chrome.mount(settings.values['appearance.layout']);
       tips.watch(page.tags.set.element);
+      // A table's grips and + (in the editor's shadow root, so watched there), and a phone's table bar.
+      tips.watch(page.editor.tableTools);
+      tips.watch(page.tableBar.element);
       refresh();
     },
     refresh,
