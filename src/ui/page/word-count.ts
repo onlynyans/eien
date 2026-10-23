@@ -25,17 +25,22 @@ export class WordCount {
   #since = 0;
   #lately = 0;
   #timer: ReturnType<typeof setTimeout> | undefined;
-  #wrote: (added: number, when: Written) => void = () => {};
-  #counted: (words: number) => void = () => {};
+  readonly #wrote = new Set<(added: number, when: Written) => void>();
+  readonly #counted = new Set<(words: number) => void>();
 
-  /** `wrote` hears the words each stretch of writing added (or, below 0, took away), and when. */
-  onWrote(wrote: (added: number, when: Written) => void): void {
-    this.#wrote = wrote;
+  /**
+   * `wrote` hears the words each stretch of writing added (or, below 0, took
+   * away), and when. Returns a function to stop.
+   */
+  onWrote(wrote: (added: number, when: Written) => void): () => void {
+    this.#wrote.add(wrote);
+    return () => this.#wrote.delete(wrote);
   }
 
-  /** `counted` hears the note's words each time they're counted. */
-  onCounted(counted: (words: number) => void): void {
-    this.#counted = counted;
+  /** `counted` hears the note's words each time they're counted. Returns a function to stop. */
+  onCounted(counted: (words: number) => void): () => void {
+    this.#counted.add(counted);
+    return () => this.#counted.delete(counted);
   }
 
   /** The words of the open note, as last counted. */
@@ -78,12 +83,13 @@ export class WordCount {
     this.#pending = null;
     const added = words - this.#words;
     this.#show(words);
-    if (added !== 0) this.#wrote(added, { from: this.#since, to: this.#lately });
+    if (added !== 0)
+      for (const wrote of this.#wrote) wrote(added, { from: this.#since, to: this.#lately });
   }
 
   #show(words: number): void {
     this.#words = words;
     this.element.textContent = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
-    this.#counted(words);
+    for (const counted of this.#counted) counted(words);
   }
 }

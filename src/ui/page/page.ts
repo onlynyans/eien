@@ -5,6 +5,7 @@
 import { opensWithTitle } from '../../core/note';
 import { h } from '../dom';
 import { EDITOR_MODES, type EditorEvents, type EditorMode, NoteEditor } from '../editor/editor';
+import type { NoteDoc } from '../editor/note-doc';
 import { SelectionBar } from '../editor/selection-bar';
 import { TableBar } from '../editor/table-bar';
 import type { ImageLoader } from '../editor/widgets';
@@ -17,7 +18,8 @@ import { WordCount } from './word-count';
 export interface PageNote {
   readonly crumbs: string;
   readonly title: string;
-  readonly text: string;
+  /** Its text and history, shared with any other page showing it (../editor/note-doc.ts). */
+  readonly doc: NoteDoc;
   readonly loadImage: ImageLoader;
 }
 
@@ -224,12 +226,13 @@ export class PageView {
     this.#empty.hidden = true;
     this.#crumbs.textContent = this.runningCrumbs.textContent = note.crumbs;
     this.#title.textContent = this.#titleText = note.title;
-    this.#showTitle(note.text);
-    this.editor.setText(note.text, note.loadImage);
+    const { text } = note.doc;
+    this.#showTitle(text);
+    this.editor.show(note.doc, note.loadImage);
     this.notice(null);
     this.state('saved');
-    this.words.show(note.text);
-    this.tags.show(note.text);
+    this.words.show(text);
+    this.tags.show(text);
   }
 
   showNothing(): void {
@@ -238,6 +241,7 @@ export class PageView {
     this.#sheet.hidden = true;
     this.#empty.hidden = false;
     this.runningCrumbs.textContent = '';
+    this.editor.release();
     this.words.clear();
     this.tags.clear();
     this.state('saved');

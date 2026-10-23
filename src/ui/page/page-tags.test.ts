@@ -4,6 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NoteEditor } from '../editor/editor';
+import { NoteDoc } from '../editor/note-doc';
 import { PageTags } from './page-tags';
 
 const NOTE = '---\ntags: [draft]\n---\nA scene. #wip\n';
@@ -25,7 +26,7 @@ beforeEach(() => {
     changed: (text, written) => changed(text, written),
     follow: () => {},
   });
-  editor.setText(NOTE, async () => null);
+  editor.show(new NoteDoc(NOTE), async () => null);
   tags = new PageTags(editor, {
     choices: () => [{ tag: 'posted', count: 1 }],
     editable: () => editable,
@@ -68,7 +69,7 @@ describe('the page’s tags', () => {
 
   it('says why, and changes nothing, when the front matter can’t be changed in place', () => {
     const broken = '---\ntags: [draft]\ntags: [draft]\n---\nWords.\n';
-    editor.setText(broken, async () => null);
+    editor.show(new NoteDoc(broken), async () => null);
     tags.show(broken);
     offButton('draft')?.click();
     expect(editor.text).toBe(broken);
