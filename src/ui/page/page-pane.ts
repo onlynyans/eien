@@ -33,7 +33,8 @@ export class PagePane {
     this.#active = first;
     this.head = h('div', { class: 'window-head' }, first.runningCrumbs);
     this.#pages.append(first.element);
-    area.replaceChildren(
+    // Before what the page put in the area already (its selection bar, which floats).
+    area.prepend(
       h(
         'div',
         { class: 'page__main' },

@@ -99,6 +99,8 @@ describe('the pages, with one page', () => {
       part.className.replace(/^colophon__/, ''),
     );
     expect(parts).toEqual(['tags', 'words', 'state', 'counters', 'seal', 'zoom', 'news', 'said']);
+    // Beside the pane's parts, what floats over the page: its selection bar, kept.
+    expect(area.querySelectorAll('.selection-bar')).toHaveLength(1);
   });
 
   it('shows the pane’s zoom as the setting changes', async () => {
