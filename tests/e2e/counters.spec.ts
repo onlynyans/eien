@@ -6,7 +6,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { clickMenu, closeApp, editorContent, expect, launchApp, test } from './launch';
+import { clickMenu, closeApp, editorContent, expect, launchApp, readQuietly, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -58,7 +58,7 @@ test('today counts what the writer writes, net; a seal or another device’s cha
   // shown, not counted as written here. Before it, both would have changed, and the page's
   // words would rightly go to a conflict copy.
   await expect
-    .poll(() => readFileSync(join(vault ?? '', 'Loose.md'), 'utf8'))
+    .poll(() => readQuietly(join(vault ?? '', 'Loose.md')))
     .toMatch(/^---\nid: \w+\n---\n[\s\S]*Four five/u);
   const text = readFileSync(join(vault ?? '', 'Loose.md'), 'utf8');
   writeFileSync(join(vault ?? '', 'Loose.md'), `${text.trimEnd()} Seven eight nine ten.\n`);

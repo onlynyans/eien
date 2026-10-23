@@ -3,10 +3,20 @@
 // two panes, where the tree lists the notes (spec §4). Remembered on this
 // device, across a restart.
 
-import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
-import { ALONE, boxOf, clickMenu, closeApp, expect, fakeTrash, launchApp, test } from './launch';
+import {
+  ALONE,
+  boxOf,
+  clickMenu,
+  closeApp,
+  expect,
+  fakeTrash,
+  launchApp,
+  readQuietly,
+  test,
+} from './launch';
 
 const BOOK = 'Fic/Scarf';
 test.use({
@@ -59,8 +69,9 @@ const focusIn = (page: Page, selector: string) =>
       !!document.querySelector(selector)?.contains(active)
     );
   }, selector);
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
 const read = (vault: string | null, path: string) =>
-  readFileSync(join(vault ?? '', ...path.split('/')), 'utf8');
+  readQuietly(join(vault ?? '', ...path.split('/')));
 
 async function openBook(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Open Fic' }).click();
@@ -339,7 +350,7 @@ test.describe('two panes', () => {
     await expect(page.locator('.list')).toBeHidden();
 
     await expect
-      .poll(() => JSON.parse(readFileSync(join(userData, 'settings.json'), 'utf8')))
+      .poll(() => JSON.parse(readQuietly(join(userData, 'settings.json')) || '{}'))
       .toEqual({ settings: { 'layout.panes': 'two' } });
     await closeApp(app);
     const again = await launchApp(userData, vault);

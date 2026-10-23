@@ -1,10 +1,9 @@
 // Phase 4 on the real app: the editor's three views, its formatting by key,
 // menu and selection bar, checkboxes, pictures, and links (spec §4).
 
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { clickMenu, editorContent, editorLines, expect, test } from './launch';
+import { clickMenu, editorContent, editorLines, expect, readQuietly, test } from './launch';
 
 /** A 1×1 PNG. */
 const PIXEL = Buffer.from(
@@ -36,8 +35,8 @@ test.use({
   },
 });
 
-const readIn = (vault: string | null, path: string) =>
-  readFileSync(join(vault ?? '', path), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const readIn = (vault: string | null, path: string) => readQuietly(join(vault ?? '', path));
 
 async function open(page: Page, title: string): Promise<void> {
   await page.locator('.note-row', { hasText: title }).click();

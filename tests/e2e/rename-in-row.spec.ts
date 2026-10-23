@@ -6,7 +6,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { expect, test } from './launch';
+import { expect, readQuietly, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -142,19 +142,12 @@ test('a note arriving from another device mid-rename leaves the field and its wo
 test('⇧⌘P (Ctrl+Shift+P) on a row pins the note, and again unpins it', async ({ page, vault }) => {
   await row(page, 'Thaw').focus();
   await page.keyboard.press('ControlOrMeta+Shift+P');
-  await expect
-    .poll(() => {
-      try {
-        return readFileSync(at(vault, '.eien/pinned.json'), 'utf8');
-      } catch {
-        return '';
-      }
-    })
-    .toContain('Thaw.md');
+  await expect.poll(() => readQuietly(at(vault, '.eien/pinned.json'))).toContain('Thaw.md');
   await row(page, 'Thaw').focus();
   await page.keyboard.press('ControlOrMeta+Shift+P');
   await expect
-    .poll(() => readFileSync(at(vault, '.eien/pinned.json'), 'utf8'))
+    // Parsed, so a read that comes back empty isn't taken for an unpin.
+    .poll(() => JSON.parse(readQuietly(at(vault, '.eien/pinned.json')) || 'null'))
     .not.toContain('Thaw.md');
 });
 
