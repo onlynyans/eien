@@ -26,9 +26,10 @@ const FIRST_LIST_MS = 1500;
  * @font-face rules, Latin and Latin Extended only (ui/theme/monos.css, #54). The CSS is
  * minified from #54 on (electron.vite.config.ts): about 110,000 then, with room for the
  * shut sidebar (#57) and the table editor (#58). CSS 118,374 with Two sheets and Facing
- * pages (ui/page/split.css, #66, #67).
+ * pages (ui/page/split.css, #66, #67); 122,671 with the split's four modes, one stylesheet
+ * each (ui/page/split*.css, #66–#69).
  */
-const RENDERER = { js: 1_860_000, css: 130_000 };
+const RENDERER = { js: 1_860_000, css: 134_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);
