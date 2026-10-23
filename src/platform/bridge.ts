@@ -52,8 +52,12 @@ export interface VaultBridge {
    * importing (the phone) or the folder can't be (the vault itself).
    */
   importFolder(): Promise<ImportReport | null>;
-  /** Paths that changed on disk, as they change. Returns a function to stop. */
-  onChange(listener: (paths: string[]) => void): () => void;
+  /**
+   * Paths that changed on disk, as they change, and of those (`local`, the
+   * desktop's only) the ones another window on this device wrote. Returns a
+   * function to stop.
+   */
+  onChange(listener: (paths: string[], local?: readonly string[]) => void): () => void;
 }
 
 /** Settings (spec §6): this device's and the open vault's, checked by the main process. */
@@ -62,6 +66,11 @@ export interface SettingsBridge {
   read(): Promise<SettingValues>;
   /** Change one setting; resolves to every value after it, or rejects when it can't be kept. */
   set<K extends SettingKey>(key: K, value: SettingValues[K]): Promise<SettingValues>;
+  /**
+   * Another window on this device changed a setting: read them again. The
+   * desktop's only (a phone has one window). Returns a function to stop.
+   */
+  onChanged?(listener: () => void): () => void;
 }
 
 /** A note's or a book's exports (spec §8). */
@@ -171,6 +180,7 @@ export const CHANNEL = {
   changed: 'vault:changed',
   settingsRead: 'settings:read',
   settingsSet: 'settings:set',
+  settingsChanged: 'settings:changed',
   outCopy: 'out:copy',
   outSaveAs: 'out:save-as',
   menu: 'app:menu',

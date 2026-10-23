@@ -1,19 +1,34 @@
-// How the main process answers the window. Each answer is for one window
-// only, and ends with it; each argument is checked by the handler.
+// How the main process answers its windows. Each channel is listened to once,
+// for every window; each call goes to the answer of the window that sent it,
+// and ends with that window. Each argument is checked by the answer.
 
 import { type BrowserWindow, type IpcMainInvokeEvent, ipcMain } from 'electron';
 
+type Answer = (...args: unknown[]) => unknown;
+
+/** Each window's answers, by its page's id, while the window is open. */
+const answers = new Map<number, Map<string, Answer>>();
+/** The channels listened to: once each, however many windows there are. */
+const listening = new Set<string>();
+
 /** Answer `channel` for `window` alone, until the window closes. */
-export function answer(
-  window: BrowserWindow,
-  channel: string,
-  fn: (...args: unknown[]) => unknown,
-): void {
+export function answer(window: BrowserWindow, channel: string, fn: Answer): void {
+  const id = window.webContents.id;
+  let mine = answers.get(id);
+  if (!mine) {
+    mine = new Map();
+    answers.set(id, mine);
+    window.once('closed', () => answers.delete(id));
+  }
+  if (mine.has(channel)) throw new Error(`This window answers ${channel} already.`);
+  mine.set(channel, fn);
+  if (listening.has(channel)) return;
+  listening.add(channel);
   ipcMain.handle(channel, (event: IpcMainInvokeEvent, ...args: unknown[]) => {
-    if (event.sender !== window.webContents) throw new Error('Not this window.');
-    return fn(...args);
+    const theirs = answers.get(event.sender.id)?.get(channel);
+    if (!theirs) throw new Error('Not a window Eien knows.');
+    return theirs(...args);
   });
-  window.once('closed', () => ipcMain.removeHandler(channel));
 }
 
 /** `value`, which must be a list of texts, or nothing (null or undefined, as null). */

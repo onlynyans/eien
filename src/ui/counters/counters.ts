@@ -75,6 +75,8 @@ export class Counters {
   constructor(parts: CountersParts) {
     this.#parts = parts;
     this.element = h('span', { class: 'counters' }, this.#today, this.#book, this.#sprint);
+    // Another window here wrote words, or started a sprint: this one shows it too.
+    globalThis.addEventListener?.('storage', this.#heard);
     // A sprint that was over long before this window opened isn't news any more.
     if (this.#sprintOn && this.#sprintOn.ends + DONE_FOR < this.#now()) this.stopSprint();
     this.#showToday();
@@ -91,10 +93,11 @@ export class Counters {
    */
   wrote(added: number, when?: Written): void {
     const now = this.#now();
-    this.#tally = tallied(this.#tally, new Date(now), added);
+    // Read again first: another window here may have written since this one last did.
+    this.#tally = tallied(readTally(kept(TALLY_KEY)) ?? this.#tally, new Date(now), added);
     keep(TALLY_KEY, this.#tally);
     this.#showToday();
-    const sprint = this.#sprintOn;
+    const sprint = readSprint(kept(SPRINT_KEY)) ?? this.#sprintOn;
     if (sprint && inSprint(sprint, when?.from ?? now, when?.to ?? now)) {
       this.#sprintOn = { ...sprint, words: sprint.words + added };
       keep(SPRINT_KEY, this.#sprintOn);
@@ -128,11 +131,23 @@ export class Counters {
     this.#tick();
   }
 
-  /** Stop the clocks: the vault is closing. */
+  /** Stop the clocks and stop listening: the vault is closing. */
   stop(): void {
     clearInterval(this.#ticking);
     clearTimeout(this.#midnight);
+    globalThis.removeEventListener?.('storage', this.#heard);
   }
+
+  /** What another window here kept: today's tally, or the sprint. */
+  readonly #heard = (event: StorageEvent): void => {
+    if (event.key === TALLY_KEY) {
+      this.#tally = readTally(kept(TALLY_KEY));
+      this.#showToday();
+    } else if (event.key === SPRINT_KEY) {
+      this.#sprintOn = readSprint(kept(SPRINT_KEY));
+      this.#tick();
+    }
+  };
 
   /** Today's words; at midnight, shown again (a new day starts at none). */
   #showToday(): void {

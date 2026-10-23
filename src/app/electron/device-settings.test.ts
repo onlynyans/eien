@@ -16,7 +16,7 @@ vi.mock('electron', () => ({
     getAppPath: () => where.userData, // no package.json there: not a portable build
     isPackaged: false,
   },
-  BrowserWindow: { getAllWindows: () => [] },
+  BrowserWindow: { getAllWindows: () => [], getFocusedWindow: () => null },
   dialog: { showMessageBox: told },
 }));
 
