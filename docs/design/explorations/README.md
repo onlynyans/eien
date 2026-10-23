@@ -34,7 +34,7 @@ Two sets of three, a page per direction. Each set's `.md` has the trade-offs
 and the choice. **Chosen:** for tables, 3 · Menus with 1's + on the desktop
 and 2's bar on the phone ([table-menus.html](table-menus.html) shows it
 whole); for the corner, both 2 and 3, as a setting, 3's strip as wide as the
-bands are tall.
+bands are tall, and C's shut sidebar the same 56px strip.
 
 | Page | Direction | For | Against |
 |---|---|---|---|

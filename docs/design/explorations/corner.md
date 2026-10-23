@@ -2,8 +2,9 @@
 
 **Chosen on 2026-10-22: offer both 2 and 3, as a setting.** Not built yet.
 In Look → Appearance, "Shut sidebar": **The seal alone** (2) or **A strip
-of desk** (3), the strip as wide as the bands are tall. 1 stays here for
-reference.
+of desk** (3), the strip as wide as the bands are tall. In C · Running head
+a shut sidebar is always that strip, 56px too (its running head holds the
+lights, so the setting is A's and B's alone). 1 stays here for reference.
 
 In A · Band and B · Slip, shutting the sidebar leaves a 48px strip of desk
 (`STRIP` in `src/ui/shell/pane-state.ts`) with the seal, which opens it again.
@@ -110,6 +111,9 @@ by side. The seal opens and shuts the sidebar, as in the app.
   app").
 - A strip of desk: `STRIP` is the band's height, 56px, with the shoulder on
   macOS (3's "In the app").
+- C · Running head: always the strip, 56px, the seal in its middle at the
+  gutter's height, as `runhead.css` places it now. So wherever there's a
+  strip, it's 56px: one `STRIP`, `--band` wide.
 - Both need the window to know it's full screen (above).
 
 ## Recommendation (before the choice)
