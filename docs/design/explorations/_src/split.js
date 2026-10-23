@@ -212,7 +212,7 @@ const act = {
   },
   close(i) { S.sides.splice(i, 1); S.active = 0; draw(); say('Closed; the note is where it was'); },
   swap() { S.sides.reverse(); S.active = 1 - S.active; draw(); say('Swapped'); },
-  /** ⌥⌘\: the note to the side, or, split, the other side closed. */
+  /** ⌘D: the note to the side, or, split, the other side closed. */
   toggle() { if (S.sides.length === 2) act.close(1 - S.active); else act.toSide(S.sides[0]); },
 };
 
@@ -270,7 +270,7 @@ function wire() {
       if (inPage && S.sides.length === 2) act.activate(1 - S.active, true);
       else canvas.querySelector(`.prose[data-side="${S.active}"]`)?.focus();
     }
-    if (e.key === '\\' && e.altKey) { e.preventDefault(); act.toggle(); }
+    if (e.key.toLowerCase() === 'd' && !e.altKey && !e.shiftKey) { e.preventDefault(); act.toggle(); }
   });
 }
 
@@ -365,7 +365,7 @@ function openMenu(id, x, y) {
     ${item('open', 'Open', 'Enter', 'open')}
     ${item('side', 'Open to the Side', `${KEY('Mod-')}click`, 'side')}
     ${item('window', 'Open in New Window', '', 'window')}
-    ${split ? `<div class="menu__rule" role="separator"></div>${item('swap', 'Swap Sides', '', 'swap')}${item('close', 'Close the Other Side', KEY('Alt-Mod-\\'), 'close')}` : ''}`;
+    ${split ? `<div class="menu__rule" role="separator"></div>${item('swap', 'Swap Sides', '', 'swap')}${item('close', 'Close the Other Side', KEY('Mod-D'), 'close')}` : ''}`;
   menu.setAttribute('aria-label', NOTES[id].title);
   menu.hidden = false;
   menu.style.left = `${Math.min(x, innerWidth - 280)}px`;
@@ -433,11 +433,11 @@ const COMMON_NOTES = () => `
   <h2>In all three</h2>
   <ul>
     <li><b>Side by side</b>, a divider between: drag it, <kbd>←</kbd> <kbd>→</kbd> on it, double-click to even it; neither page narrower than ${MIN_SIDE}px. Top and bottom isn't offered: prose wants its measure, and two short pages of it read worse than one.</li>
-    <li><b>Opening:</b> a note's right-click, Open to the Side; <kbd>${KEY('Mod-')}click</kbd> or <kbd>${KEY('Mod-Enter')}</kbd> on a row; drag a row onto the page's right edge; <kbd>${KEY('Alt-Mod-\\')}</kbd> opens the note beside itself (<kbd>${KEY('Mod-\\')}</kbd> is Toggle Sidebar, so the split takes ⌥ with it).</li>
+    <li><b>Opening:</b> a note's right-click, Open to the Side; <kbd>${KEY('Mod-')}click</kbd> or <kbd>${KEY('Mod-Enter')}</kbd> on a row; drag a row onto the page's right edge; <kbd>${KEY('Mod-D')}</kbd> opens the note beside itself, and split, closes the other side (it's free: <kbd>${KEY('Mod-\\')}</kbd> is Toggle Sidebar, and <kbd>${KEY('Alt-Mod-\\')}</kbd> the editor's Indent Selection).</li>
     <li><b>Active page:</b> a click in it, or <kbd>${KEY('Mod-3')}</kbd> (Go to Page), which pressed in a page goes to the other one. The list's chosen row is the active page's note; the other side's note keeps a fainter rule, in pencil, with no fill.</li>
     <li><b>Choosing a note</b> in the list (or the sidebar, with two panes) opens it in the active page.</li>
-    <li><b>Closing a side:</b> its × on hover, <kbd>${KEY('Mod-W')}</kbd> in it (the window's ⌘W, while split), or <kbd>${KEY('Alt-Mod-\\')}</kbd> again for the other side. Nothing is lost: the note is where it was. <b>Swapping:</b> the ⇄ on the divider, or the row's menu.</li>
-    <li><b>The same note on both sides</b> is one document: type in one and it shows in the other (try ${KEY('Alt-Mod-\\')} with one note open).</li>
+    <li><b>Closing a side:</b> its × on hover, <kbd>${KEY('Mod-W')}</kbd> in it (the window's ⌘W, while split), or <kbd>${KEY('Mod-D')}</kbd> again for the other side. Nothing is lost: the note is where it was. <b>Swapping:</b> the ⇄ on the divider, or the row's menu.</li>
+    <li><b>The same note on both sides</b> is one document: type in one and it shows in the other (try ${KEY('Mod-D')} with one note open).</li>
     <li><b>Narrow:</b> below ${MIN_SIDE * 2}px of page (the window less the panes beside it), the two pages fold into one, with a pager naming both; <kbd>${KEY('Mod-3')}</kbd> turns between them. Shutting the sidebar or the list unfolds them. The split is never refused, only folded.</li>
     <li><b>Copy as HTML</b>, <b>Seal</b>, <b>Versions</b>, <b>Outline cards</b>, the formatting keys and Find all act on the active page.</li>
   </ul>`;

@@ -1,0 +1,235 @@
+/* The split window's second set (split-alt-*.html): the window, its panes and
+   the parts all three directions share. Each direction's own look is in its
+   page. Every value is a token or made of tokens; the few the app has and
+   shared.css doesn't are mirrored here from src/ui/theme/tokens.css. */
+/*@include:layouts.css*/
+/*@include:seal-button.css*/
+
+:root {
+  /* The app's own, from src/ui/theme/tokens.css. */
+  --eien-field: color-mix(in srgb, var(--eien-ink) 6%, transparent);
+  --eien-sidebar-w: 264px;
+  --eien-list-w: 316px;
+  --eien-panel-w: 284px;
+  --status-h: 40px;
+  /* Half a step: between the icons of one group, and a slip's lip round them. */
+  --tool-gap: calc(var(--eien-space-1) / 2);
+  /* Outside Eien: the desktop the window lies on, a step behind the desk. */
+  --outside: color-mix(in oklab, var(--eien-desk) 88%, var(--eien-ink));
+}
+
+/* ── The exploration's frame: the bar, the window scaled to fit, the notes ── */
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(var(--eien-panel-w), calc(var(--eien-panel-w) + var(--eien-space-8))); }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 45%); } }
+.canvas { min-height: 0; overflow: auto; padding: var(--eien-space-4); background: var(--outside); }
+.fit { position: relative; margin: 0 auto; }
+.fit > .win { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.xbar input[type='range'] { width: calc(var(--eien-space-8) + var(--eien-space-7)); accent-color: var(--eien-ink-soft); }
+.xbar output { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); min-width: 9ch; }
+.notes { min-height: 0; overflow: auto; padding: var(--eien-space-4) var(--eien-space-5); background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); font-size: var(--eien-size-preview); line-height: 1.55; color: var(--eien-ink-soft); }
+@media (max-width: 900px) { .notes { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }
+.notes h2 { margin: var(--eien-space-5) 0 var(--eien-space-2); font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); font-weight: 400; }
+.notes h2:first-child { margin-top: 0; }
+.notes p { margin: 0 0 var(--eien-space-2); }
+.notes ul { margin: 0 0 var(--eien-space-2); padding-left: 1.1em; }
+.notes li { margin-bottom: var(--eien-space-1); }
+.notes b { color: var(--eien-ink); font-weight: 500; }
+.notes a { color: var(--eien-ink); }
+/* The skill's checkpoint, at the top of each page's notes: a term in the machine voice, its reason in the text face. */
+.checkpoint { display: grid; grid-template-columns: auto 1fr; gap: var(--eien-space-1) var(--eien-space-3); margin: 0; padding: var(--eien-space-3) 0; border-block: var(--eien-hairline) solid var(--eien-rule-soft); }
+.checkpoint dt { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); padding-top: var(--tool-gap); }
+.checkpoint dd { margin: 0; }
+kbd { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); padding: 0 var(--eien-space-1); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-paper); white-space: nowrap; }
+
+/* ── The window: the app's lengths ── */
+.win {
+  --band: calc(var(--eien-space-7) + var(--eien-space-2));
+  --runhead-h: 0px;
+  --controls-left: calc(var(--eien-space-8) + var(--eien-space-2)); /* the system's three lights */
+  --sb: var(--eien-sidebar-w);
+  --ls: var(--eien-list-w);
+  --seal-box: calc(var(--eien-seal-size) + var(--eien-space-2) + 2 * var(--eien-hairline));
+  width: var(--win-w); height: var(--win-h); position: relative; overflow: hidden;
+  display: grid; grid-template-rows: var(--runhead-h) minmax(0, 1fr); grid-template-columns: var(--sb) var(--ls) minmax(0, 1fr);
+  background: var(--eien-desk); color: var(--eien-ink); font-size: var(--eien-size-row);
+  border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-l); box-shadow: var(--eien-shadow-float);
+}
+.win[data-layout='runhead'] { --band: var(--eien-space-7); --runhead-h: calc(var(--eien-space-6) + var(--eien-space-2)); }
+.win[data-sb='shut'] { --sb: 0px; }
+.win[data-layout='runhead'][data-sb='shut'] { --sb: var(--band); }
+.win[data-list='away'] { --ls: 0px; }
+.win > :is(.sb, .ls, .pg) { grid-row: 2; min-width: 0; min-height: 0; overflow: hidden; }
+.win > .sb { grid-column: 1; }
+.win > .ls { grid-column: 2; }
+.win > .pg { grid-column: 3; }
+
+/* The seal: past the lights in A and B, open or shut; at the sidebar's head in C, and its strip shut. */
+.win { --seal-x: calc(var(--controls-left) + var(--eien-space-3)); --seal-y: calc((var(--band) - var(--seal-box)) / 2); }
+.win[data-layout='runhead'] { --seal-x: var(--eien-space-3); --seal-y: calc(var(--runhead-h) + (var(--band) - var(--seal-box)) / 2); }
+.win[data-layout='runhead'][data-sb='shut'] { --seal-x: calc((var(--band) - var(--seal-box)) / 2); }
+/* Whatever band lies under the seal starts a gutter past it. */
+.win { --past-seal: calc(var(--seal-x) + var(--seal-box) + var(--eien-space-4)); }
+.seal-btn { position: absolute; z-index: 6; left: var(--seal-x); top: var(--seal-y); }
+/* The system's lights, drawn as where they sit (their colours are the system's, not Eien's). */
+.lights { position: absolute; z-index: 5; left: var(--eien-space-5); top: calc((var(--band) - var(--eien-space-3)) / 2); display: flex; gap: var(--eien-space-2); }
+.win[data-layout='runhead'] .lights { top: calc((var(--runhead-h) - var(--eien-space-3)) / 2); }
+.lights i { width: var(--eien-space-3); height: var(--eien-space-3); border-radius: var(--eien-radius-dot); border: var(--eien-hairline) solid var(--eien-rule-strong); background: var(--eien-hover); }
+
+/* C's running head: one strip across the window, the lights and the panes' toggles, then the page's part. */
+.runhead { grid-row: 1; grid-column: 1 / -1; display: flex; min-width: 0; background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.runhead__panes { flex: none; display: flex; align-items: center; gap: var(--tool-gap); width: max(calc(var(--sb) + var(--ls)), calc(var(--controls-left) + 2 * var(--eien-control) + var(--eien-space-4))); padding-left: calc(var(--controls-left) + var(--eien-space-2)); }
+.runhead__page { flex: 1; min-width: 0; display: flex; align-items: center; }
+.runhead .icon-button { color: var(--eien-pencil); }
+.crumb { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* ── The sidebar: the desk, a book's contents page ── */
+.sb { display: flex; flex-direction: column; border-right: var(--eien-hairline) solid var(--eien-rule); }
+.win[data-sb='shut']:not([data-layout='runhead']) .sb { visibility: hidden; }
+.win[data-layout='runhead'][data-sb='shut'] .sb > * { visibility: hidden; }
+.sb > * { flex: none; width: var(--eien-sidebar-w); }
+.sb__head { display: flex; align-items: center; height: var(--band); padding-left: calc(var(--seal-x) + var(--seal-box) + var(--eien-space-2)); font-weight: 600; }
+.sb__sec { display: flex; align-items: center; height: var(--eien-row-h); padding: 0 var(--eien-space-4); margin-top: var(--eien-space-2); }
+.trow {
+  appearance: none; position: relative; display: flex; align-items: baseline; gap: var(--eien-space-2); height: var(--eien-row-h); line-height: var(--eien-row-h);
+  padding: 0 var(--eien-space-4) 0 calc(var(--eien-space-4) * (1 + var(--d, 0))); border: 0; background: none; text-align: left; font: inherit;
+  color: var(--eien-ink-soft); font-weight: var(--eien-weight-tree);
+}
+.trow__name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trow--note { cursor: pointer; }
+.trow--note .count { flex: none; width: var(--eien-space-5); }
+@media (hover: hover) { .trow--note:hover { background: var(--eien-hover); color: var(--eien-ink); } }
+.trow--note:focus-visible { outline-offset: calc(var(--eien-mark-w) * -1); }
+.book-mark { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); padding: 0 var(--eien-space-1); border: var(--eien-hairline) solid var(--eien-rule); line-height: 1.4; }
+/* The chosen row: the neutral fill and the seal's rule. The other open note: a rule at hairline strength, no fill. */
+:is(.trow, .row).is-chosen { background: var(--eien-selected); color: var(--eien-ink); }
+:is(.trow, .row):is(.is-chosen, .is-beside)::before { content: ''; position: absolute; left: 0; top: var(--eien-space-2); bottom: var(--eien-space-2); width: var(--eien-mark-w); background: var(--eien-seal); }
+:is(.trow, .row).is-beside::before { background: var(--eien-rule-strong); }
+
+/* ── The note list: paper, an index ── */
+.ls { background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); display: flex; flex-direction: column; }
+.ls__band { flex: none; display: flex; align-items: center; gap: var(--eien-space-2); height: var(--band); padding: 0 var(--eien-space-4); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.win[data-sb='shut']:not([data-layout='runhead']) .ls__band { padding-left: var(--past-seal); }
+.search { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--eien-space-2); padding: 0 var(--eien-space-3); height: var(--eien-control); background: var(--eien-field); border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-m); color: var(--eien-pencil); transition: border-color var(--eien-quick) var(--eien-ease); }
+@media (hover: hover) { .search:hover { border-color: var(--eien-rule); } }
+.search:focus-within { background: var(--eien-well); box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.search input { flex: 1; min-width: 0; border: 0; background: none; padding: 0; outline: none; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink); }
+.search input::placeholder { color: var(--eien-faded); }
+.ls__head { flex: none; padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.ls__title { font-size: var(--eien-size-heading); font-weight: 500; line-height: 1.3; }
+.rows { overflow: auto; }
+.row {
+  appearance: none; position: relative; display: grid; grid-template-columns: var(--eien-space-6) minmax(0, 1fr) auto; gap: 0 var(--eien-space-1); width: 100%;
+  padding: var(--eien-row-pad-y) var(--eien-space-4); border: 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); background: none;
+  text-align: left; cursor: pointer; font: inherit; color: var(--eien-ink);
+}
+@media (hover: hover) { .row:hover { background: var(--eien-hover); } }
+.row:focus-visible { outline-offset: calc(var(--eien-mark-w) * -1); }
+.row__ord { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); padding-top: var(--tool-gap); }
+.row__title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: var(--eien-weight-list); }
+.row.is-chosen .row__title { font-weight: 500; }
+.row__preview { grid-column: 2 / 4; font-size: var(--eien-size-preview); color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row.is-dragged { opacity: 0.72; }
+
+/* ── The page pane and its parts, which each direction arranges ── */
+.pg { position: relative; display: grid; grid-template-rows: minmax(0, 1fr); background: var(--eien-blotter); }
+.pg > * { min-width: 0; min-height: 0; }
+.tools { display: flex; align-items: center; gap: var(--tool-gap); min-width: 0; }
+.tools .icon-button { color: var(--eien-pencil); }
+/* Quiet until the pointer is over the part they belong to, or the keyboard is in them. */
+.quiet { opacity: 0; transition: opacity var(--eien-calm) var(--eien-ease); }
+.hover-scope:hover .quiet, .quiet:focus-within, .quiet:focus-visible { opacity: 1; }
+@media (hover: none) { .quiet { opacity: 1; } }
+/* A · Band: the page's band. B · Slip: a row of blotter with the raised slip in it. */
+.band { display: flex; align-items: center; justify-content: space-between; gap: var(--eien-space-2); height: var(--band); padding: 0 var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); min-width: 0; }
+.topline { display: flex; align-items: center; justify-content: flex-end; gap: var(--eien-space-2); height: var(--band); padding: 0 var(--eien-space-3); min-width: 0; }
+.slip { display: flex; align-items: center; gap: var(--tool-gap); padding: var(--tool-gap); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.tools-rule { width: var(--eien-hairline); height: var(--eien-space-4); margin: 0 var(--eien-space-1); background: var(--eien-rule); }
+/* The formatting bar: A's band's second row; B's raised slip at the page's top left; C's raised rail down its margin. */
+.fmt { display: flex; justify-content: center; align-items: center; gap: var(--tool-gap); padding: var(--tool-gap) var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.fmt .icon-button { color: var(--eien-ink-soft); }
+.fmt__rule { width: var(--eien-hairline); height: var(--eien-space-4); margin: 0 var(--eien-space-1); background: var(--eien-rule); }
+.win[data-layout='slip'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-3); flex-wrap: wrap; justify-content: flex-start; max-width: calc(100% - 2 * var(--eien-space-3)); top: calc((var(--band) - var(--eien-control)) / 2 - var(--tool-gap)); padding: var(--tool-gap); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); background: var(--eien-paper-raised); box-shadow: var(--eien-shadow-float); }
+.win[data-layout='runhead'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-2); top: var(--eien-space-4); flex-direction: column; padding: var(--tool-gap); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); background: var(--eien-paper-raised); box-shadow: var(--eien-shadow-float); }
+.win[data-layout='runhead'] .fmt__rule { width: var(--eien-space-4); height: var(--eien-hairline); margin: var(--eien-space-1) 0; }
+/* The blotter, and the sheet on it. */
+.blotter { position: relative; min-height: 0; overflow: auto; padding: var(--eien-space-4) var(--eien-space-4) 0; }
+.win[data-layout='runhead'] .has-rail .blotter { padding-left: calc(var(--eien-control) + var(--eien-space-5)); }
+.sheet {
+  --sheet-x: clamp(var(--eien-space-4), 7%, var(--eien-sheet-pad-x));
+  position: relative; max-width: calc(var(--eien-measure) + 2 * var(--eien-sheet-pad-x)); min-height: 100%; margin: 0 auto;
+  padding: var(--eien-space-5) var(--sheet-x) var(--eien-space-6);
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet);
+}
+.win[data-layout='slip'] .sheet { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.sheet__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eien-space-3); min-height: var(--eien-space-4); min-width: 0; }
+.tagset { display: flex; gap: var(--eien-space-2); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); white-space: nowrap; }
+.title { font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; margin: var(--eien-space-4) 0 var(--eien-space-5); }
+.slips { display: flex; flex-wrap: wrap; gap: var(--eien-space-1); margin: calc(var(--eien-space-3) * -1) 0 var(--eien-space-5); }
+.slips span { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); padding: 0 var(--eien-space-2); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-band); }
+.prose { outline: none; caret-color: var(--eien-seal); font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose); }
+.prose p { margin: 0 0 var(--eien-paragraph-gap); }
+/* The colophon: the status line, a band at the page's foot. */
+.colophon { display: flex; align-items: center; gap: var(--eien-space-2); height: var(--status-h); min-width: 0; padding: 0 var(--eien-space-4); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; }
+/* Its optional items go first in a narrow page, as the app's colophon drops them. */
+.colophon { container: colophon / inline-size; }
+.opt, .kept { display: contents; }
+@container colophon (width < 600px) { .opt { display: none; } }
+@container colophon (width < 400px) { .opt-narrow { display: none; } }
+@container folio (width < 300px) { .opt-narrow { display: none; } }
+/* A bar too narrow for every tool keeps the spare ones behind a ⋯. */
+.band, .topline, .runhead__page, .runhead__seg { container-type: inline-size; }
+.tool--more { display: none; }
+@container (width < 520px) { .tool--spare { display: none; } .tool--more { display: inline-grid; } }
+.dot { color: var(--eien-faded); }
+.sealmark { color: var(--eien-seal); }
+.pill { text-transform: none; padding: 0 var(--eien-space-2); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-dot); }
+.said { margin-left: auto; padding-left: var(--eien-space-3); color: var(--eien-ink-soft); text-transform: none; overflow: hidden; text-overflow: ellipsis; }
+
+/* The divider: the pane edge's handle over a hairline; rule-strong under the pointer; the
+   focus ink, 2px, while it's dragged or has the keyboard. */
+.divider { position: relative; z-index: 4; width: var(--eien-space-2); margin: 0 calc(var(--eien-space-1) * -1); cursor: col-resize; outline: none; touch-action: none; }
+.divider::after { content: ''; position: absolute; inset-block: 0; left: calc(50% - var(--eien-hairline) / 2); width: var(--eien-hairline); background: var(--eien-rule); transition: background var(--eien-quick) var(--eien-ease); }
+.divider[data-axis='y'] { width: auto; height: var(--eien-space-2); margin: calc(var(--eien-space-1) * -1) 0; cursor: row-resize; }
+.divider[data-axis='y']::after { inset-block: auto; inset-inline: 0; top: calc(50% - var(--eien-hairline) / 2); left: 0; width: auto; height: var(--eien-hairline); }
+@media (hover: hover) { .divider:hover::after { background: var(--eien-rule-strong); } }
+.divider:focus-visible::after, .divider.is-dragging::after { left: calc(50% - var(--eien-mark-w) / 2); width: var(--eien-mark-w); background: var(--eien-focus); }
+.divider[data-axis='y']:is(:focus-visible, .is-dragging)::after { left: 0; width: auto; top: calc(50% - var(--eien-mark-w) / 2); height: var(--eien-mark-w); }
+
+/* A note dragged over the page pane: where it would land. */
+.drop-preview { position: absolute; z-index: 8; display: grid; place-items: center; pointer-events: none; background: color-mix(in srgb, var(--eien-paper-raised) 84%, transparent); border-left: var(--eien-mark-w) solid var(--eien-ink-soft); }
+.drop-preview[data-edge='top'] { border-left: 0; border-top: var(--eien-mark-w) solid var(--eien-ink-soft); }
+.drop-preview[data-edge='none'] { border-left: 0; outline: var(--eien-mark-w) solid var(--eien-ink-soft); outline-offset: calc(var(--eien-mark-w) * -1); }
+.drop-preview .label { color: var(--eien-ink-soft); max-width: 80%; text-align: center; }
+
+/* The menu: raised paper, the row's name at its head, an icon, a word and a key per choice. */
+.menu { position: fixed; z-index: 40; min-width: calc(var(--eien-panel-w) - var(--eien-space-5)); padding: var(--eien-space-1); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.menu[hidden] { display: none; }
+.menu__head { padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-1); font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+.menu__item { appearance: none; display: grid; grid-template-columns: var(--eien-icon) 1fr auto; align-items: center; gap: var(--eien-space-2); width: 100%; padding: var(--eien-space-1) var(--eien-space-2); min-height: var(--eien-control); border: 0; border-radius: var(--eien-radius-s); background: none; cursor: pointer; text-align: left; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); }
+.menu__item:focus { outline: none; background: var(--eien-selected); color: var(--eien-ink); }
+@media (hover: hover) { .menu__item:hover { background: var(--eien-hover); color: var(--eien-ink); } }
+.menu__key { font-size: var(--eien-size-label); color: var(--eien-pencil); }
+.menu__rule { height: var(--eien-hairline); margin: var(--eien-space-1) var(--eien-space-2); background: var(--eien-rule-soft); }
+
+/* What moves when the writer moves it: a quick fade, none with reduced motion. */
+@keyframes arrive { from { opacity: 0; } }
+.win.is-arriving .arrives { animation: arrive var(--eien-calm) var(--eien-ease); }
+@media (prefers-reduced-motion: reduce) { .quiet, .win.is-arriving .arrives { transition: none; animation: none; } }
+
+/* A page's rows keep their places whether or not the formatting bar is there: the top
+   (A's band, B's row of blotter), the formatting bar, the blotter, the colophon. B's and
+   C's formatting bars float, placed against the page. */
+.page { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; }
+.page > :is(.band, .topline) { grid-row: 1; }
+.page > .fmt { grid-row: 2; }
+.page > .blotter { grid-row: 3; }
+.page > .colophon { grid-row: 4; }
+.win:is([data-layout='slip'], [data-layout='runhead']) .page > .fmt { grid-row: auto; }
+/* B: where a page is too narrow for both slips side by side, the formatting slip goes under
+   the tools' row and the sheet makes room, as the app's slip.css does. */
+.page { container: page / inline-size; }
+@container page (width < 720px) {
+  .win[data-layout='slip'] .page > .fmt { top: var(--band); }
+  .win[data-layout='slip'] .page.has-fmt > .blotter { padding-top: calc(var(--eien-control) + var(--eien-space-4)); }
+}

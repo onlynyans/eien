@@ -15,6 +15,9 @@ Window slider):
 - [split-window.html](split-window.html): New Window and the phone, shown once,
   the same whichever split is chosen
 
+Three more, 4 · Facing pages, 5 · A companion and 6 · Tools that follow, are in
+[split-alt.md](split-alt.md), with a table comparing all six.
+
 ## Design intent
 
 - **Intent:** a writer late at night with a chapter beside the one before it,
@@ -46,9 +49,10 @@ Window slider):
   - **⌘-click** a row in the list, or **⌘Enter** on it;
   - drag a row onto the page's right edge, with a drop preview where the new
     page will stand. Dropped on a page instead, it opens there.
-  - **⌥⌘\\** opens the note beside itself. **⌘\\** is already Toggle Sidebar
-    and **⇧⌘\\** Toggle Note List, so the split takes the same key with ⌥.
-    Pressed while split, it closes the other side.
+  - **⌘D** opens the note beside itself. Pressed while split, it closes the
+    other side. It's free: ⌘\\ is Toggle Sidebar, ⇧⌘\\ Toggle Note List, and
+    ⌥⌘\\ is taken too, by the editor's Indent Selection (CodeMirror's
+    default keymap, which Eien's editor loads).
 - **Which page is active:**
   - A click in a page makes it active.
   - **⌘3** (Go to Page) goes to the page; pressed in a page, it goes to the
@@ -61,13 +65,13 @@ Window slider):
 - **Closing a side:**
   - its × on hover;
   - **⌘W** in it: while split, the window's ⌘W closes the active side first;
-  - ⌥⌘\\ for the other side.
+  - ⌘D for the other side.
 
   The note is closed, not touched, so no words are at stake.
 - **Swapping the sides:** the ⇄ on the divider (on hover or focus), or the
   row's menu.
 - **The same note on both sides** is one document: typing in one shows in the
-  other at once (try ⌥⌘\\ with one note open). The seals, the counts and the
+  other at once (try ⌘D with one note open). The seals, the counts and the
   undo are the note's, not the page's.
 - **Narrow windows:**
   - Below 720px of page (the window less the panes beside it), the two pages

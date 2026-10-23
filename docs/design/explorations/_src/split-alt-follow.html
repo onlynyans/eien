@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Split window: 6 · Tools that follow</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:split-alt.css*/
+
+/* 6 · Tools that follow: the list steps aside, so the two pages have its room,
+   and the sidebar's tree lists the notes, as with two panes. There's one set of
+   the page's furniture, and it goes where you are: A's band, formatting bar and
+   colophon over the page you're writing in; B's slip resting folded on it; C's
+   running head's tools over it. The other page is paper on the blotter, at rest. */
+.pair { --lead: var(--eien-space-3); position: relative; display: grid; grid-template-rows: var(--band) auto minmax(0, 1fr) var(--status-h); height: 100%; min-height: 0; }
+.win[data-layout='runhead'] .pair { grid-template-rows: 0 auto minmax(0, 1fr) var(--status-h); }
+/* Shut, the seal lies over the first page's top: what's there starts a gutter past it. */
+.win[data-sb='shut'][data-list='away']:not([data-layout='runhead']) .pair { --lead: var(--past-seal); }
+.pair > * { min-width: 0; min-height: 0; }
+.pair > :is(.band, .topline, .rest-head) { grid-row: 1; }
+.pair > .fmt { grid-row: 2; }
+.pair > .blotter { grid-row: 3; }
+.pair > .colophon { grid-row: 4; }
+.pair > .divider { grid-row: 1 / -1; grid-column: 2; }
+.win:is([data-layout='slip'], [data-layout='runhead']) .pair > .fmt { grid-row: 1 / -1; align-self: start; }
+.pair > [data-col='1']:is(.band, .topline, .rest-head) { padding-left: var(--lead); }
+.win[data-layout='slip'] .pair > .fmt[data-col='1'] { left: var(--lead); }
+.win[data-layout='runhead'] .pair > .blotter.has-rail { padding-left: calc(var(--eien-control) + var(--eien-space-5)); }
+/* B: a half is too narrow for both slips side by side, so the formatting slip goes under
+   the tools' row, and the sheet under it makes room (one page: only where it's narrow). */
+.pair { container: page / inline-size; }
+.win[data-layout='slip'] .pair.is-two.has-fmt > .fmt { top: var(--band); }
+.win[data-layout='slip'] .pair.is-two.has-fmt > .blotter.is-on { padding-top: calc(var(--eien-control) + var(--eien-space-4)); }
+@container page (width < 720px) {
+  .win[data-layout='slip'] .pair.has-fmt > .fmt { top: var(--band); }
+  .win[data-layout='slip'] .pair.has-fmt > .blotter.is-on { padding-top: calc(var(--eien-control) + var(--eien-space-4)); }
+}
+/* The page at rest: its top is blotter, its × there on hover. */
+.rest-head { display: flex; align-items: center; justify-content: flex-end; padding: 0 var(--eien-space-3); }
+/* The list's way back, at the first page's top left, as a shut pane's › is. */
+.list-back { grid-row: 1; grid-column: 1; justify-self: start; align-self: center; z-index: 2; margin-left: var(--lead); }
+.pair.has-list-back > [data-col='1']:is(.band, .topline, .rest-head) { padding-left: calc(var(--lead) + var(--eien-control) + var(--eien-space-2)); }
+.win[data-layout='slip'] .pair.has-list-back > .fmt[data-col='1'] { left: calc(var(--lead) + var(--eien-control) + var(--eien-space-2)); }
+/* B: the slip rests folded on the page you're in; the pointer over the pages, or the keyboard, opens it. */
+.slip__more { display: none; align-items: center; gap: var(--tool-gap); }
+.hover-scope:hover .slip__more, .slip:focus-within .slip__more { display: flex; }
+.slip__fold { color: var(--eien-pencil); }
+/* C: the running head's page part, one segment over each page; the tools in the active one. */
+.runhead__pair { flex: 1; display: grid; height: 100%; min-width: 0; }
+.runhead__seg { display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-3); }
+.runhead__seg .crumb { flex: 1; text-align: center; }
+.runhead__seg.is-on .crumb { color: var(--eien-ink-soft); }
+.waits { margin-left: auto; padding-left: var(--eien-space-3); color: var(--eien-ink-soft); overflow: hidden; text-overflow: ellipsis; }
+.waits + .said { margin-left: 0; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:split-alt.js*/
+
+const NEED = 2 * MIN_PAGE; // two pages, each with its measure
+/** Room for two pages: the list has stepped aside, unless brought back. */
+const fits = (ctx) => ctx.room >= NEED;
+/** Split but too narrow: the active page alone; the other waits, marked in the tree. */
+const waiting = (ctx) => ctx.split && !fits(ctx);
+const colOf = (ctx, i) => (waiting(ctx) || !ctx.split ? 1 : i === 0 ? 1 : 3);
+
+const PAGE_TOOLS = ['compare', 'versions', 'copy', 'focus', 'cards', 'format'];
+/** The one set of the page's tools, for the page you're in. */
+function toolsHtml(ctx) {
+  const i = ctx.active;
+  const two = ctx.split && !waiting(ctx);
+  return `<span class="tools" role="group" aria-label="Page tools, for ${esc(ctx.note(i).title)}">${PAGE_TOOLS.map((t) => ctx.tool(t, i)).join('')}${ctx.spare(i)}${two ? `<span class="tools-rule tool--spare" aria-hidden="true"></span>${ctx.swapBtn()}${ctx.closeBtn(i)}` : ''}</span>`;
+}
+/** The top of each page: the active one's band (A) or slip (B); the other's is blotter, its × on hover. */
+function topHtml(ctx, i) {
+  const col = colOf(ctx, i);
+  const at = `data-col="${col}" style="grid-column:${col}"`;
+  if (i !== ctx.active) return ctx.layout === 'runhead' ? '' : `<div class="rest-head" ${at}>${ctx.closeBtn(i, 'quiet')}</div>`;
+  if (ctx.layout === 'band') return `<div class="band arrives" ${at}><span class="quiet">${ctx.views()}</span><span class="quiet">${toolsHtml(ctx)}</span></div>`;
+  if (ctx.layout === 'slip') return `<div class="topline" ${at}><span class="slip arrives">${ctx.btn('strip', 'The page’s tools', { cls: 'slip__fold', attrs: 'data-slip-fold' })}<span class="slip__more">${ctx.views()}<span class="tools-rule" aria-hidden="true"></span>${toolsHtml(ctx)}</span></span></div>`;
+  return '';
+}
+function blotterHtml(ctx, i) {
+  const col = colOf(ctx, i);
+  const n = ctx.note(i);
+  const on = ctx.split && i === ctx.active;
+  const rail = ctx.layout === 'runhead' && ctx.fmt && i === ctx.active ? ' has-rail' : '';
+  return `<div class="blotter${rail}${i === ctx.active ? ' is-on' : ''}" data-col="${col}" style="grid-column:${col}" data-side="${i}" data-scroll="page-${S.sides[i]}" role="region" aria-label="${esc(n.title)}${ctx.split ? (on ? ', where you’re writing' : ', at rest') : ''}"><article class="sheet">${ctx.head(i)}${ctx.words(i)}</article></div>`;
+}
+function colophonHtml(ctx) {
+  const i = ctx.active;
+  const col = colOf(ctx, i);
+  const other = ctx.split ? NOTES[S.sides[1 - i]].title : '';
+  const how = ctx.listShown && ctx.split ? KEY('Mod-Shift-\\') : KEY('Mod-\\');
+  return `<footer class="colophon arrives" data-col="${col}" style="grid-column:${col}">${ctx.figures(i, { today: true })}${ctx.layout === 'runhead' ? `<span class="dot" aria-hidden="true">·</span>${ctx.pills(i)}` : ''}${waiting(ctx) ? `<span class="waits" title="${ctx.listShown ? 'Hide the list' : 'Shut the sidebar'} to make room for both">${esc(other)} waits · ${how} makes room</span>` : ''}${ctx.said()}</footer>`;
+}
+
+const follow = {
+  id: 'follow',
+  line: 'The list steps aside for two pages, and the page’s tools go where you are.',
+  listShown: (ctx) => !ctx.split || S.listBack,
+  treeNotes: (ctx) => !ctx.listShown,
+  state: (ctx) => (waiting(ctx) ? 'one page waits' : ctx.split && !ctx.listShown ? 'list aside' : ''),
+  grid: (name) => ['gridTemplateColumns', `minmax(0, ${S.ratio}fr) auto minmax(0, ${1 - S.ratio}fr)`],
+  valueNow: () => Math.round(S.ratio * 100),
+  resize: (f, px) => { const min = Math.min(0.45, MIN_PAGE / px); S.ratio = Math.min(1 - min, Math.max(min, f)); },
+  nudge: (step, ctx) => { const min = Math.min(0.45, MIN_PAGE / ctx.room); S.ratio = Math.min(1 - min, Math.max(min, S.ratio + step * 0.02)); },
+  even: () => { S.ratio = 0.5; },
+  page(ctx) {
+    const two = ctx.split && !waiting(ctx);
+    const shown = two ? [0, 1] : [ctx.active];
+    const back = two && !ctx.listShown && ctx.layout !== 'runhead'
+      ? ctx.btn('right', 'Show the note list', { key: 'Mod-Shift-\\', cls: 'list-back quiet', attrs: 'data-list-toggle' }) : '';
+    const grid = two ? gridStyle('pair', ctx) : 'style="grid-template-columns:minmax(0, 1fr)"';
+    return `<div class="pair hover-scope${two ? ' is-two' : ''}${ctx.fmt ? ' has-fmt' : ''}${back ? ' has-list-back' : ''}" ${grid}>
+      ${shown.map((i) => topHtml(ctx, i)).join('')}${back}
+      ${ctx.fmtBar('arrives', `data-col="${colOf(ctx, ctx.active)}" style="grid-column:${colOf(ctx, ctx.active)}"`)}
+      ${shown.map((i) => blotterHtml(ctx, i)).join('')}${two ? dividerHtml(ctx) : ''}
+      ${colophonHtml(ctx)}
+    </div>`;
+  },
+  strip(ctx) {
+    const two = ctx.split && !waiting(ctx);
+    const seg = (i) => (i === ctx.active
+      ? `<div class="runhead__seg is-on arrives" style="grid-column:${colOf(ctx, i)}">${ctx.crumb(i)}${ctx.views()}<span class="tools-rule" aria-hidden="true"></span>${toolsHtml(ctx)}</div>`
+      : `<div class="runhead__seg hover-scope" style="grid-column:${colOf(ctx, i)}">${ctx.crumb(i)}${ctx.closeBtn(i, 'quiet')}</div>`);
+    return `<div class="runhead__pair" ${two ? gridStyle('strip', ctx) : 'style="grid-template-columns:minmax(0, 1fr)"'}>${(two ? [0, 1] : [ctx.active]).map(seg).join('')}</div>`;
+  },
+  drop(ctx, x) {
+    const here = (i, box) => ({ side: i, box, edge: 'none', label: `Open here, in place of ${NOTES[S.sides[i]].title}` });
+    if (!ctx.split) return x > 0.6 ? { side: 'new', box: [0.5, 0, 1, 1], label: 'Open beside: the list steps aside' } : here(0, [0, 0, 1, 1]);
+    if (waiting(ctx)) return here(ctx.active, [0, 0, 1, 1]);
+    return x > S.ratio ? here(1, [S.ratio, 0, 1, 1]) : here(0, [0, 0, S.ratio, 1]);
+  },
+  /** Refused, not folded: with no room for two pages beside the sidebar, nothing opens, and Eien says why. */
+  refuse: (ctx) => (S.sides.length === 1 && ctx.winW - ctx.sbW < NEED ? `No room for two pages beside the sidebar: shut it (${KEY('Mod-\\')}), then open to the side` : ''),
+  opened: (ctx) => (!ctx.listShown ? `The list steps aside for two pages: ${KEY('Mod-Shift-\\')} brings it back` : ''),
+  toggleList(ctx) {
+    if (!ctx.split) { say('The list is open: it steps aside only while two pages are open'); return; }
+    S.listBack = !S.listBack;
+    draw();
+    if (S.listBack && waiting(context())) say(`No room for the list and two pages: one waits beside`);
+  },
+  listBand: (ctx) => (ctx.split ? ctx.btn('left', 'Let the list step aside', { key: 'Mod-Shift-\\', cls: 'quiet', attrs: 'data-list-toggle' }) : ''),
+  click(b) { if ('slipFold' in b.dataset) b.parentElement.querySelector('.slip__more .icon-button')?.focus(); },
+};
+
+mountAlt({
+  ...follow,
+  notes: `
+  <h2>Checkpoint</h2>
+  <dl class="checkpoint">
+    <dt>Intent</dt><dd>Two notes worked on in turn, with room for both, and the tools wherever the writer is.</dd>
+    <dt>Palette</dt><dd>The band, blotter and paper Eien already has. The cue is where the band is, not a colour.</dd>
+    <dt>Depth</dt><dd>Two sheets, each with the sheet's shadow; the panes' hairlines; the slip's float. Nothing new.</dd>
+    <dt>Surfaces</dt><dd>The page you're in has its band and colophon. The other is paper on the blotter, at rest.</dd>
+    <dt>Type</dt><dd>As Eien's page. C's crumb for the page you're in is ink-soft, the other's pencil.</dd>
+    <dt>Spacing</dt><dd>A 4px base. Each page at least 360px, which the list's 316px makes room for.</dd>
+  </dl>
+  <h2>6 · Tools that follow</h2>
+  <p>When a second note opens, the note list steps aside, so the two pages have its room, and the sidebar's tree lists the book's notes as it does with two panes. There's one set of the page's furniture, and it goes where you are: A's band, formatting bar and colophon; B's slip; C's running-head tools. The other page is just paper on the blotter, at rest.</p>
+  <ul>
+    <li><b>Side by side</b>, a pane edge between: drag it, use <kbd>←</kbd> <kbd>→</kbd> on it, double-click or <kbd>Enter</kbd> to even it. Neither page is narrower than ${MIN_PAGE}px. Top and bottom isn't offered.</li>
+    <li><b>The list:</b> it steps aside while two pages are open. The › at the first page's top left (C: the running head's list toggle) or <kbd>${KEY('Mod-Shift-\\')}</kbd> brings it back, and its ‹ lets it go again. Closing a side brings it back.</li>
+    <li><b>The tools follow you.</b> A: the band (views, Compare, Versions, Copy as HTML, Focus mode, Outline cards, the formatting bar, ⇄, ×), the formatting bar under it, and the colophon (its words, today's tally, its last seal) sit over and under the page you're in. B: the slip rests folded on that page, and opens when the pointer is over the pages. C: the running head's tools sit over it, and its crumb is in ink-soft. Tags stay on each sheet (A, B), or go in the colophon (C).</li>
+    <li><b>The active page</b> is the one with the furniture. The other page's top is plain blotter, with its × on hover. A click or <kbd>${KEY('Mod-3')}</kbd> moves the furniture across, with a fade, or none with reduced motion. Versions opens at the window's edge for the page you're in, and Outline cards take its place.</li>
+    <li><b>Choosing a note</b> in the tree (or the list, when it's back) opens it in the active page. <b>Swapping:</b> ⇄ in the tools, or a row's menu.</li>
+    <li><b>Narrow, and the shut sidebar:</b> two pages need ${NEED}px beside the sidebar: a window of about 990px with it open, and any window with it shut. <b>Below that the split is refused</b>, and Eien says why ("shut the sidebar"). A split window narrowed past it shows the page you're in, and the colophon says the other waits beside. Shutting the sidebar brings it back.</li>
+    <li><b>On a phone:</b> one page. The phone's bar is already the one set of tools, and the other note waits behind the back bar's ⇄, as split-window.html shows.</li>
+  </ul>
+  <h2>For</h2>
+  <ul><li>Each tool is always beside the page it acts on, and there's only one of each.</li><li>The two pages get real width. At 1440px, two 430px pages become two 588px pages.</li><li>The cue is the band, the slip, the running head: things a writer already reads as "the page".</li></ul>
+  <h2>Against</h2>
+  <ul><li>The list leaving changes the window when you split, and you have to know how to get it back.</li><li>The band moves when the writer moves. That's motion they asked for, but it is motion.</li><li>Refusing a split in a narrow window with the sidebar open is honest, but it's a no.</li></ul>`,
+});
+</script>
+</body>
+</html>

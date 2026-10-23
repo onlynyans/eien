@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Split window: 4 · Facing pages</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:split-alt.css*/
+
+/* 4 · Facing pages: one sheet, opened like a book. The two notes face each other
+   across the gutter (the fold, which is the divider). The book's tools stay where
+   the layout puts them and act on both pages; each note's own (its words, its
+   seal, Versions, Compare, Copy as HTML, its ×) sit in its folio, at the page's
+   foot, mirrored as a book's page numbers are. A ribbon hangs in the outer margin
+   of the page you're writing in. */
+.blotter--book { overflow: hidden; padding-bottom: var(--eien-space-4); }
+.book { display: grid; height: 100%; min-height: 0; max-width: none; padding: 0; }
+.leaf { --leaf-x: clamp(var(--eien-space-4), 7%, var(--eien-space-7)); position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; }
+.leaf > .sheet__head { padding: var(--eien-space-5) var(--leaf-x) 0; }
+
+.leaf__scroll { overflow: auto; padding: 0 var(--leaf-x) var(--eien-space-5); }
+/* The folio: a note's own line at its page's foot, outer side first, its tools by the gutter. */
+.folio { container: folio / inline-size; display: flex; align-items: center; gap: var(--eien-space-3); height: var(--status-h); min-width: 0; padding: 0 var(--leaf-x); border-top: var(--eien-hairline) solid var(--eien-rule-soft); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; }
+.folio__figures { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.folio__figures .dot { margin: 0 var(--eien-space-2); }
+.folio__tools { flex: none; margin-left: auto; }
+/* Each page's tools come up under the pointer over that page, not the other. */
+.page.hover-scope:hover .leaf:not(:hover) .folio__tools:not(:focus-within) { opacity: 0; }
+.leaf[data-side='1'] .folio { flex-direction: row-reverse; }
+.leaf[data-side='1'] .folio__tools { margin: 0 auto 0 0; }
+/* The gutter: the fold down the middle of the sheet, a soft hairline; it's the divider. */
+.gutter { width: var(--eien-space-6); margin: 0; }
+.gutter::after { background: var(--eien-rule-soft); }
+/* The ribbon: the book's marker, hanging over the sheet's top edge into the outer margin. */
+.ribbon { position: absolute; z-index: 2; top: calc(var(--eien-hairline) * -1); left: calc((var(--leaf-x) - var(--eien-space-2)) / 2); width: var(--eien-space-2); height: var(--eien-space-6); background: var(--eien-ink-soft); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); pointer-events: none; }
+.leaf[data-side='1'] .ribbon { left: auto; right: calc((var(--leaf-x) - var(--eien-space-2)) / 2); }
+@keyframes ribbon-down { from { clip-path: polygon(0 0, 100% 0, 100% 0, 50% 0, 0 0); } }
+.win.is-arriving .ribbon { animation: ribbon-down var(--eien-calm) var(--eien-ease); }
+/* Closed to one page: the facing page's edge stays by the gutter, its name down it, to turn to. */
+.edge { appearance: none; position: relative; display: grid; place-items: center; min-width: 0; padding: var(--eien-space-4) 0; border: 0; border-left: var(--eien-hairline) solid var(--eien-rule-soft); background: none; cursor: pointer; color: var(--eien-pencil); font: inherit; }
+.edge[data-turn='0'] { border-left: 0; border-right: var(--eien-hairline) solid var(--eien-rule-soft); }
+.edge__name { writing-mode: vertical-rl; max-height: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; }
+.edge[data-turn='0'] .edge__name { rotate: 180deg; }
+@media (hover: hover) { .edge:hover { background: var(--eien-hover); color: var(--eien-ink-soft); } }
+.edge:focus-visible { outline-offset: calc(var(--eien-mark-w) * -1); }
+/* C: the running head names both pages, each over its own, as a book's verso and recto do. */
+.spread-head { flex: 1; display: grid; align-items: center; min-width: 0; height: 100%; padding: 0 var(--eien-space-4); }
+.spread-head .crumb { text-align: center; }
+.runhead__page > .tools { flex: none; padding-right: var(--eien-space-3); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:split-alt.js*/
+
+const GUTTER = 32; // --eien-space-6
+/** Too narrow for two pages and the gutter: the book closes to the page you're on. */
+const isClosed = (ctx) => ctx.split && ctx.room - 2 * 16 < 2 * MIN_PAGE + GUTTER;
+const minShare = (ctx) => Math.min(0.45, MIN_PAGE / Math.max(1, ctx.room - 2 * 16 - GUTTER));
+
+/** The book's tools act on both pages; with one page, the note's own join them. */
+function bookTools(ctx) {
+  const note = ctx.split ? [] : ['compare', 'versions', 'copy'];
+  const book = [...note, 'focus', 'cards', 'format'].map((n) => ctx.tool(n)).join('') + ctx.spare();
+  return `<span class="tools" role="group" aria-label="${ctx.split ? 'The book’s tools' : 'Page tools'}">${book}${ctx.split && !isClosed(ctx) ? `<span class="tools-rule tool--spare" aria-hidden="true"></span>${ctx.swapBtn()}` : ''}</span>`;
+}
+function topHtml(ctx) {
+  if (ctx.layout === 'band') return `<div class="band"><span class="quiet">${ctx.views()}</span><span class="quiet">${bookTools(ctx)}</span></div>`;
+  if (ctx.layout === 'slip') return `<div class="topline"><span class="slip quiet">${ctx.views()}<span class="tools-rule" aria-hidden="true"></span>${bookTools(ctx)}</span></div>`;
+  return '';
+}
+/** A page of the book: its running head, its words, and its folio. */
+function leafHtml(ctx, i) {
+  const n = ctx.note(i);
+  const active = i === ctx.active;
+  const where = i === 0 ? 'left' : 'right';
+  return `<section class="leaf hover-scope" data-side="${i}" role="region" aria-label="${esc(n.title)}, the ${where} page${active ? ', where you’re writing' : ''}">
+    ${active ? '<span class="ribbon" aria-hidden="true"></span>' : ''}${ctx.layout === 'runhead' ? `<div class="sheet__head"><span></span>${ctx.tagset(i)}</div>` : ctx.head(i)}
+    <div class="leaf__scroll" data-scroll="leaf${S.sides[i]}">${ctx.words(i)}</div>
+    <footer class="folio"><span class="folio__figures">${ctx.figures(i, { keepOrd: true })}</span><span class="tools folio__tools quiet" role="group" aria-label="${esc(n.title)}: its tools">${['versions', 'compare', 'copy'].map((t) => ctx.tool(t, i, 'tool--spare')).join('')}${ctx.spare(i)}${ctx.closeBtn(i)}</span></footer>
+  </section>`;
+}
+function edgeHtml(ctx, i) {
+  const t = esc(ctx.note(i).title);
+  return `<button class="edge" data-turn="${i}" aria-label="Turn to ${t}, the facing page" data-tip="Turn to ${t}  ${KEY('Mod-3')}" data-tip-side="${i === 0 ? 'right' : 'left'}"><span class="edge__name">${t}</span></button>`;
+}
+
+const facing = {
+  id: 'facing',
+  line: 'One sheet opened like a book: the notes face each other; a ribbon marks the page you’re writing in.',
+  state: (ctx) => (isClosed(ctx) ? 'closed to one page' : ''),
+  grid: (name, ctx) => {
+    if (isClosed(ctx)) return ['gridTemplateColumns', ctx.active === 0 ? 'minmax(0, 1fr) var(--eien-space-6)' : 'var(--eien-space-6) minmax(0, 1fr)'];
+    return ['gridTemplateColumns', `calc((100% - var(--eien-space-6)) * ${S.ratio}) var(--eien-space-6) minmax(0, 1fr)`];
+  },
+  valueNow: () => Math.round(S.ratio * 100),
+  resize: (f, px, ctx) => { const min = Math.min(0.45, MIN_PAGE / px); S.ratio = Math.min(1 - min, Math.max(min, f)); },
+  nudge: (step, ctx) => { const min = minShare(ctx); S.ratio = Math.min(1 - min, Math.max(min, S.ratio + step * 0.02)); },
+  even: () => { S.ratio = 0.5; },
+  page(ctx) {
+    let body;
+    if (!ctx.split) {
+      body = `<div class="blotter" data-scroll="one"><article class="sheet hover-scope" data-side="0">${ctx.head(0)}${ctx.words(0)}</article></div>`;
+    } else if (isClosed(ctx)) {
+      const pair = ctx.active === 0 ? leafHtml(ctx, 0) + edgeHtml(ctx, 1) : edgeHtml(ctx, 0) + leafHtml(ctx, 1);
+      body = `<div class="blotter blotter--book"><article class="sheet book" ${gridStyle('book', ctx)}>${pair}</article></div>`;
+    } else {
+      body = `<div class="blotter blotter--book"><article class="sheet book" ${gridStyle('book', ctx)}>${leafHtml(ctx, 0)}${dividerHtml(ctx, { label: 'The gutter, between the two pages', cls: 'gutter' })}${leafHtml(ctx, 1)}</article></div>`;
+    }
+    const colophon = ctx.split
+      ? `<footer class="colophon"><span class="opt"><span>Beneath the Walls</span><span class="dot" aria-hidden="true">·</span></span><span>33,206 words</span><span class="opt"><span class="dot" aria-hidden="true">·</span><span>today 412</span></span>${ctx.said()}</footer>`
+      : `<footer class="colophon">${ctx.figures(0, { today: true })}${ctx.layout === 'runhead' ? `<span class="dot" aria-hidden="true">·</span>${ctx.pills(0)}` : ''}${ctx.said()}</footer>`;
+    return `<div class="page hover-scope${ctx.fmt ? ' has-fmt' : ''}${ctx.layout === 'runhead' && ctx.fmt ? ' has-rail' : ''}">${topHtml(ctx)}${ctx.fmtBar()}${body}${colophon}</div>`;
+  },
+  strip(ctx) {
+    const crumbs = !ctx.split ? `<div class="spread-head">${ctx.crumb(0)}</div>`
+      : isClosed(ctx) ? `<div class="spread-head">${ctx.crumb(ctx.active)}</div>`
+      : `<div class="spread-head" ${gridStyle('book', ctx)}>${ctx.crumb(0)}<span></span>${ctx.crumb(1)}</div>`;
+    return `${crumbs}${ctx.views()}<span class="tools-rule" aria-hidden="true"></span>${bookTools(ctx)}`;
+  },
+  drop(ctx, x) {
+    const here = (i, box) => ({ side: i, box, edge: 'none', label: `Open on this page, in place of ${NOTES[S.sides[i]].title}` });
+    if (!ctx.split) return x > 0.6 ? { side: 'new', box: [0.5, 0, 1, 1], label: 'Open as the facing page' } : here(0, [0, 0, 1, 1]);
+    if (isClosed(ctx)) return here(ctx.active, [0, 0, 1, 1]);
+    return x > S.ratio ? here(1, [S.ratio, 0, 1, 1]) : here(0, [0, 0, S.ratio, 1]);
+  },
+  opened: (ctx) => (isClosed(ctx) ? 'Too narrow for facing pages: the book shows one, the other’s edge beside it' : ''),
+};
+
+mountAlt({
+  ...facing,
+  notes: `
+  <h2>Checkpoint</h2>
+  <dl class="checkpoint">
+    <dt>Intent</dt><dd>A writer at night with a chapter and its notes open together, as an open book lies on a desk.</dd>
+    <dt>Palette</dt><dd>Paper on the blotter, ink in its four strengths. The ribbon is ink-soft, so the seal keeps its five places.</dd>
+    <dt>Depth</dt><dd>One sheet, one sheet's shadow. The fold is a soft hairline, because a book is one object.</dd>
+    <dt>Surfaces</dt><dd>Blotter, then paper. The folio is paper with a soft rule, because it belongs to the page and not to the window.</dd>
+    <dt>Type</dt><dd>The writer's words in the text face. Crumbs and folios in the machine voice, because the machine counts them.</dd>
+    <dt>Spacing</dt><dd>A 4px base. The gutter is 32px, a page's margins 16–48px, and the folio is the colophon's height.</dd>
+  </dl>
+  <h2>4 · Facing pages</h2>
+  <p>The page pane keeps one sheet, opened like a book. The two notes face each other across the gutter. The book's tools stay where the layout puts them (A's band, B's slip, C's running head) and act on both pages. Each note's own tools sit in its folio, at the foot of its page.</p>
+  <ul>
+    <li><b>Side by side</b>, always, because a book opens sideways: top and bottom isn't offered. The gutter is the divider: drag the fold, use <kbd>←</kbd> <kbd>→</kbd> on it, double-click or <kbd>Enter</kbd> to even it. No page is narrower than ${MIN_PAGE}px.</li>
+    <li><b>The book's tools</b> sit at the top and act on both pages: the views, Focus mode, Outline cards (the book's cards take the spread), the formatting bar and Swap the sides. <b>The formatting bar</b> is one bar, and it formats wherever the caret is.</li>
+    <li><b>Each note's own</b> are in its folio: its number, words and last seal (the status line's ▪), and, while the pointer is over its page, Versions, Compare, Copy as HTML (behind one ⋯ when the page is narrow) and its ×. The left page's folio runs from the left and the right page's from the right, as page numbers do. Versions opens at the window's edge, as now. The colophon keeps the book's figures and today's tally.</li>
+    <li><b>Tags</b> go on each page: A's running head, B's slips under the title. In C they move from the colophon to the page's own head, because a folio is too short to hold them.</li>
+    <li><b>The active page</b> has the ribbon, a marker hanging over the sheet's top edge into that page's outer margin. It's ink-soft, not the seal, and the caret is in that page. Click in the other page, or press <kbd>${KEY('Mod-3')}</kbd>, and the ribbon moves.</li>
+    <li><b>Closing</b> is the × in a page's folio. <b>Swapping</b> is a book's tool (⇄ at the top) and in a row's menu. <b>A note chosen</b> in the list opens on the ribbon's page.</li>
+    <li><b>Narrow:</b> two pages need ${2 * MIN_PAGE + GUTTER}px of sheet. That's about 1,370px of window with both panes open, or 1,100px with the sidebar shut. Below that the book closes to the ribbon's page. The facing page's edge stays by the gutter with its name, and a click or <kbd>${KEY('Mod-3')}</kbd> turns to it. The split is never refused.</li>
+    <li><b>On a phone:</b> one page. The facing note is named in the page's folio, and tapping its name turns to it, as a leaf is turned.</li>
+  </ul>
+  <h2>For</h2>
+  <ul><li>It's the picture a writer already has: an open book, a chapter facing its notes.</li><li>The tools split by what they act on, so neither kind is far from its target: the book's at the top, each note's on its own page.</li><li>The ribbon can't be mistaken for focus or for the seal. It stays quiet by Night and in Full.</li></ul>
+  <h2>Against</h2>
+  <ul><li>The folio is a second status line on each page, and the colophon is left with less to say.</li><li>The ribbon is a new mark, though a small one.</li><li>The gutter takes 32px, and the sheet's shared margins make each page narrower than a sheet of its own would be.</li></ul>`,
+});
+</script>
+</body>
+</html>
