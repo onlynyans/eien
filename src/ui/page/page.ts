@@ -6,6 +6,7 @@ import { opensWithTitle } from '../../core/note';
 import { h } from '../dom';
 import { EDITOR_MODES, type EditorEvents, type EditorMode, NoteEditor } from '../editor/editor';
 import { SelectionBar } from '../editor/selection-bar';
+import { TableBar } from '../editor/table-bar';
 import type { ImageLoader } from '../editor/widgets';
 import type { SaveState } from '../notes/note-session';
 import { BoardHost } from './board-host';
@@ -18,6 +19,9 @@ export interface PageNote {
   readonly text: string;
   readonly loadImage: ImageLoader;
 }
+
+/** How long the colophon keeps what the table editor did. */
+const SAID_MS = 6000;
 
 /** What the colophon says of the save: only a failure is worth a word. */
 const STATE_WORDS: Partial<Record<SaveState, string>> = { failed: 'Not saved yet — trying again' };
@@ -56,6 +60,11 @@ export class PageView {
   readonly #zoom = h('span', { class: 'colophon__zoom', attrs: { 'aria-label': 'Zoom' } });
   /** News from the last action, when neither the list nor the sidebar is there to show it. */
   readonly #news = h('span', { class: 'colophon__news', attrs: { role: 'status' } });
+  /** What the table editor just did ("Row 3 removed · ⌘Z puts it back"), for a while. */
+  readonly #said = h('span', { class: 'colophon__said', attrs: { role: 'status' } });
+  #saidTimer: ReturnType<typeof setTimeout> | undefined;
+  /** A phone's table tools, above the keyboard while the caret's in a table (../editor/table-bar.ts). */
+  readonly tableBar: TableBar;
   readonly #sheet = h(
     'article',
     { class: 'sheet' },
@@ -127,9 +136,12 @@ export class PageView {
       follow: events.follow,
       ...(events.images ? { images: events.images } : {}),
       moved: () => {
+        this.tableBar.sync();
         for (const listener of this.#caret) listener();
       },
+      said: (words) => this.#say(words),
     });
+    this.tableBar = new TableBar(this.editor.view);
     this.tags = new PageTags(this.editor, { ...events.tags, editable: () => !this.comparing });
     this.tags.listen(container);
     const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
@@ -142,6 +154,7 @@ export class PageView {
         this.slots.bar,
         this.slots.format,
         scroll,
+        this.tableBar.element,
         h(
           'footer',
           { class: 'colophon count' },
@@ -152,6 +165,7 @@ export class PageView {
           this.#sealLine,
           this.#zoom,
           this.#news,
+          this.#said,
         ),
         this.slots.phone,
       ),
@@ -175,6 +189,15 @@ export class PageView {
   /** News from the last action in the status line; null takes it away. */
   news(text: string | null): void {
     this.#news.textContent = text ?? '';
+  }
+
+  /** What the table editor did, in the colophon until the next thing, or a few seconds. */
+  #say(words: string): void {
+    this.#said.textContent = words;
+    clearTimeout(this.#saidTimer);
+    this.#saidTimer = setTimeout(() => {
+      this.#said.textContent = '';
+    }, SAID_MS);
   }
 
   /** Today's words, the book's and a sprint, in the colophon. */

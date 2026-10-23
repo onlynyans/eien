@@ -18,6 +18,7 @@ import {
   keyOn,
 } from '../../core/format';
 import type { QuoteStyle } from '../../core/typography';
+import { h } from '../dom';
 import { activeFormats } from './active-formats';
 import { eienChange, eienUndo, writtenBy } from './eien-change';
 import { hiddenMarkEditing } from './hidden-marks';
@@ -31,6 +32,13 @@ import {
 } from './live-preview';
 import { tableCells } from './live-tables';
 import { eienMarkdown } from './syntax';
+import { caretTable } from './table-at';
+import { tableSay } from './table-commands';
+import { tableInput } from './table-input';
+import { tableKeys } from './table-keys';
+import { cellContextMenu, openCellMenu } from './table-menus';
+import { tableTheme } from './table-theme';
+import { tableTools, tableToolsHost } from './table-tools';
 import { editorTheme, markdownColours } from './theme';
 import { htmlPaste, quoteTyping } from './typing';
 import { type ImageLoader, imageLoader } from './widgets';
@@ -58,6 +66,8 @@ export interface EditorEvents {
   moved?(): void;
   /** Images were dropped at `at`, or pasted at the caret (null): add them to the note (./image-drop.ts). */
   images?(files: readonly File[], at: number | null): void;
+  /** What the table editor did, for the colophon: "Row 3 removed · ⌘Z puts it back". */
+  said?(words: string): void;
 }
 
 export class NoteEditor {
@@ -82,10 +92,14 @@ export class NoteEditor {
   /** Changes we make ourselves aren't the writer's typing. */
   #quiet = false;
 
+  /** Where a table's grips and + are drawn (./table-tools.ts): the editor's own, kept from note to note. */
+  readonly tableTools = h('div', { class: 'eien-table-tools' });
+
   constructor(host: HTMLElement, events: EditorEvents) {
     this.#events = events;
     const root = host.attachShadow({ mode: 'open' });
     this.#view = new EditorView({ root, parent: root, state: this.#state('', async () => null) });
+    this.#view.dom.append(this.tableTools);
   }
 
   get view(): EditorView {
@@ -158,10 +172,14 @@ export class NoteEditor {
     this.#view.dispatch({ effects: this.#mode.reconfigure(modeExtensions(mode)) });
   }
 
-  /** Run a formatting command on the selection (spec §4, Live). */
+  /**
+   * Run a formatting command on the selection (spec §4, Live). Table, with
+   * the caret in a table in Live, opens the caret's cell's menus instead.
+   */
   format(command: FormatCommand): boolean {
     const state = this.#view.state;
     if (state.readOnly) return false;
+    if (command.id === 'table' && openCellMenu(this.#view)) return true;
     const { from, to } = state.selection.main;
     const edit = command.run(state.doc.toString(), { from, to });
     this.#view.dispatch({
@@ -203,6 +221,11 @@ export class NoteEditor {
   /** The Format menu's commands on at the caret (./active-formats.ts). */
   get formats(): ReadonlySet<FormatCommandId> {
     return activeFormats(this.#view.state);
+  }
+
+  /** Whether the caret is in a table, in Live: the Table button is pressed. */
+  get inTable(): boolean {
+    return caretTable(this.#view.state) !== null;
   }
 
   /** The caret's line, as written. */
@@ -290,6 +313,9 @@ export class NoteEditor {
         'aria-label': 'Note',
       }),
       this.#images.of(imageLoader.of(loadImage)),
+      tableToolsHost.of(this.tableTools),
+      tableSay.of((words) => this.#events.said?.(words)),
+      tableTheme,
       this.#mode.of(modeExtensions(this.#current)),
       EditorView.updateListener.of((update) => {
         if (update.docChanged || update.selectionSet) this.#events.moved?.();
@@ -359,7 +385,16 @@ const lockExtensions = (locked: boolean): Extension =>
 function modeExtensions(mode: EditorMode): Extension {
   switch (mode) {
     case 'live':
-      return [previewMode.of('live'), livePreview, tableCells, keepFrontMatter];
+      return [
+        previewMode.of('live'),
+        livePreview,
+        tableCells,
+        keepFrontMatter,
+        tableKeys,
+        tableInput,
+        tableTools,
+        cellContextMenu,
+      ];
     case 'source':
       return [EditorView.editorAttributes.of({ class: 'eien-source' })];
     case 'reading':

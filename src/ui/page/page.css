@@ -19,7 +19,7 @@
 .page__main {
   position: relative;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) var(--status-h) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto var(--status-h) auto;
   min-width: 0;
   min-height: 0;
 }
@@ -40,7 +40,7 @@
   display: none;
 }
 .page__phone {
-  grid-row: 5;
+  grid-row: 6;
   display: none; /* a phone's alone (../phone/phone.css) */
 }
 .page__bar:empty,
@@ -162,7 +162,7 @@
 
 /* The colophon: the status line at the foot of the page. */
 .colophon {
-  grid-row: 4;
+  grid-row: 5;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -178,8 +178,14 @@
 }
 .colophon__state:empty,
 .colophon__zoom:empty,
-.colophon__news:empty {
+.colophon__news:empty,
+.colophon__said:empty {
   display: none;
+}
+.colophon__said {
+  color: var(--eien-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* The writer's own words, not the machine's: in the text face, as the list's news is. */
 .colophon__news {
@@ -216,4 +222,38 @@
 }
 .page__board[hidden] {
   display: none;
+}
+
+/* A phone's table tools (ui/editor/table-bar.ts): docked under the sheet, so
+   above the keyboard when it's up; one row of finger-sized buttons that
+   scrolls sideways. Only where nothing hovers: the desktop has the grips. */
+.table-bar {
+  grid-row: 4;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 2px var(--eien-space-2);
+  background: var(--eien-band);
+  border-top: var(--eien-hairline) solid var(--eien-rule);
+}
+@media (hover: none) {
+  .table-bar:not([hidden]) {
+    display: flex;
+  }
+}
+.table-bar .icon-button {
+  --eien-control: var(--eien-touch);
+  flex: none;
+}
+.table-bar .icon-button[aria-disabled="true"] {
+  color: var(--eien-faded);
+}
+.table-bar__rule {
+  flex: none;
+  align-self: stretch;
+  width: var(--eien-hairline);
+  margin: var(--eien-space-2) 2px;
+  background: var(--eien-rule);
 }

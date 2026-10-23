@@ -60,6 +60,12 @@
   grid-template-columns: var(--eien-icon) 1fr auto;
   gap: var(--eien-space-3);
 }
+/* With icons, a choice of several keeps its dot where a key would be (a column's alignment). */
+.menu--icons .word-button[role="menuitemradio"]::before {
+  grid-row: 1;
+  grid-column: 3;
+  justify-self: end;
+}
 .menu__keys::after {
   content: attr(data-keys);
   font-family: var(--eien-face-mono);

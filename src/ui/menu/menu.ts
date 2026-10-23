@@ -49,7 +49,10 @@ export interface Place {
  */
 export function float(panel: HTMLElement, place: Place, closed?: () => void): () => void {
   open?.close();
-  const back = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  // Inside a shadow root (the editor's), the element that had the keyboard is the root's, not its host.
+  let had = document.activeElement;
+  while (had?.shadowRoot?.activeElement) had = had.shadowRoot.activeElement;
+  const back = had instanceof HTMLElement ? had : null;
   const close = () => {
     if (open !== handle) return;
     open = null;
@@ -103,6 +106,7 @@ export function openMenu(
   place: Place,
   label = 'Choices',
   head = false,
+  closed?: () => void,
 ): void {
   const buttons: HTMLButtonElement[] = [];
   const iconed = items.some((item) => item !== 'separator' && item.icon);
@@ -173,7 +177,7 @@ export function openMenu(
     event.preventDefault();
     event.stopPropagation();
   });
-  close = float(menu, place);
+  close = float(menu, place, closed);
 
   // The choice made, of several (a sort); never a toggle, which Enter would turn off.
   (

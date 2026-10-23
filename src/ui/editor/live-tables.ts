@@ -8,6 +8,7 @@ import { syntaxTree } from '@codemirror/language';
 import { type EditorState, type Range, StateField, type Text } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view';
 import type { SyntaxNode } from '@lezer/common';
+import { leadOf, pipesIn } from '../../core/table';
 import { previewMode } from './preview-mode';
 
 export interface Span {
@@ -37,7 +38,7 @@ export function tableRows(doc: Text, table: SyntaxNode): TableRow[] {
     const line = doc.line(n);
     const kind = n === first ? 'head' : n === first + 1 ? 'rule' : 'body';
     // In a quote, the ">" before each row is the quote's, not a cell.
-    const lead = quoted ? (/^[>\s]*/u.exec(line.text)?.[0].length ?? 0) : 0;
+    const lead = quoted ? leadOf(line.text, true) : 0;
     rows.push({ from: line.from, to: line.to, kind, ...splitRow(line.text, line.from, lead) });
   }
   return rows;
@@ -45,12 +46,7 @@ export function tableRows(doc: Text, table: SyntaxNode): TableRow[] {
 
 /** A row's cells and pipes, at `offset` in the note, its first `lead` characters not its own. */
 function splitRow(text: string, offset: number, lead: number): Pick<TableRow, 'cells' | 'pipes'> {
-  const bars: number[] = [];
-  let escaped = false;
-  for (let i = lead; i < text.length; i++) {
-    if (text[i] === '|' && !escaped) bars.push(i);
-    escaped = !escaped && text[i] === '\\';
-  }
+  const bars = pipesIn(text, lead);
   const blank = (from: number, to: number) => text.slice(from, to).trim() === '';
   const edges = [lead - 1, ...bars, text.length];
   const cells: Span[] = [];
