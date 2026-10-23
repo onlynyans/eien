@@ -1,12 +1,12 @@
 // Live and Reading (spec §4): the note as it reads, the Markdown marks
 // hidden. In Live the lines holding the selection show their marks, so what
-// you edit is what's in the file; in Reading nothing does.
+// you edit is what's in the file (unless "Show Markdown marks" is off); in
+// Reading nothing does.
 
 import { syntaxTree } from '@codemirror/language';
 import {
   EditorSelection,
   EditorState,
-  Facet,
   type Range,
   RangeSet,
   StateField,
@@ -17,18 +17,12 @@ import type { SyntaxNodeRef } from '@lezer/common';
 import { isLink, referenceLabels } from '../../core/markdown';
 import { frontMatterEnd } from '../../core/text';
 import { noteIdOf } from '../../core/versions';
-import { CheckboxWidget, ImageWidget, SceneBreakWidget, TableWidget } from './widgets';
+import { hide, hideLineMark, hideLines, hidePipe } from './hidden-ranges';
+import { tableRows } from './live-tables';
+import { previewMode, showMarks } from './preview-mode';
+import { CheckboxWidget, ImageWidget, SceneBreakWidget } from './widgets';
 
-export type PreviewMode = 'live' | 'reading';
-
-/** Which preview the editor is in; absent, there's none (Source). */
-export const previewMode = Facet.define<PreviewMode, PreviewMode | null>({
-  combine: (values) => values[0] ?? null,
-});
-
-const hide = Decoration.replace({});
-/** Whole lines out of sight: the front matter that only holds the note's id. */
-const hideLines = Decoration.replace({ block: true });
+export { type PreviewMode, previewMode, showMarks } from './preview-mode';
 
 /** Front matter that is Eien's own and nothing else: the "id:" a note's first seal gave it. */
 const ID_ONLY = /^---\nid:[ \t]*([A-Za-z0-9_-]{1,64})[ \t]*\n(?:---|\.\.\.)[ \t]*(?:\n|$)/;
@@ -103,9 +97,9 @@ function build(state: EditorState): DecorationSet {
   const doc = state.doc;
   const out: Range<Decoration>[] = [];
 
-  // Lines the selection touches show their marks (Live only).
+  // Lines the selection touches show their marks (Live only, and as the setting says).
   const activeLines = new Set<number>();
-  if (mode === 'live') {
+  if (mode === 'live' && state.facet(showMarks)) {
     for (const range of state.selection.ranges) {
       for (let n = doc.lineAt(range.from).number; n <= doc.lineAt(range.to).number; n++)
         activeLines.add(n);
@@ -117,9 +111,9 @@ function build(state: EditorState): DecorationSet {
     return false;
   };
   /** Hide [from, to), and a space right after it when `andSpace`. */
-  const hideMark = (from: number, to: number, andSpace = false) => {
+  const hideMark = (from: number, to: number, andSpace = false, as = hide) => {
     const end = andSpace && doc.sliceString(to, to + 1) === ' ' ? to + 1 : to;
-    if (end > from) out.push(hide.range(from, end));
+    if (end > from) out.push(as.range(from, end));
   };
   const lineClass = (from: number, to: number, cls: string) => {
     for (let n = doc.lineAt(from).number; n <= doc.lineAt(to).number; n++)
@@ -152,7 +146,7 @@ function build(state: EditorState): DecorationSet {
       switch (name) {
         case 'HeaderMark':
           if (!isActive(from) && node.node.parent?.name.startsWith('ATXHeading'))
-            hideMark(from, to, true);
+            hideMark(from, to, true, hideLineMark);
           return;
         case 'EmphasisMark':
         case 'StrikethroughMark':
@@ -178,7 +172,7 @@ function build(state: EditorState): DecorationSet {
           lineClass(from, to, 'eien-quote');
           return;
         case 'QuoteMark':
-          if (!isActive(from)) hideMark(from, to, true);
+          if (!isActive(from)) hideMark(from, to, true, hideLineMark);
           return;
         case 'WikiLink':
           out.push(mark('eien-link').range(from, to));
@@ -208,14 +202,18 @@ function build(state: EditorState): DecorationSet {
             out.push(Decoration.replace({ widget: new SceneBreakWidget() }).range(from, to));
           return;
         case 'Table':
-          if (!active) {
-            out.push(
-              Decoration.replace({
-                widget: new TableWidget(doc.sliceString(from, to)),
-                block: true,
-              }).range(from, to),
-            );
-            return false;
+          // Its rows are lines (./live-tables.ts); the words in its cells are formatted below.
+          for (const row of tableRows(doc, node.node)) {
+            const shown = isActive(row.from);
+            if (row.kind === 'rule' && !shown) {
+              out.push(hideLines.range(row.from, row.to));
+              continue;
+            }
+            lineClass(row.from, row.from, 'eien-table-row');
+            if (row.kind === 'head') lineClass(row.from, row.from, 'eien-table-head');
+            for (const pipe of row.pipes) {
+              out.push((shown ? mark('eien-table-pipe') : hidePipe).range(pipe.from, pipe.to));
+            }
           }
           return;
         case 'Task': {
@@ -225,7 +223,7 @@ function build(state: EditorState): DecorationSet {
           if (done) out.push(mark('eien-done').range(marker.to, to));
           if (!isActive(from)) {
             const listMark = node.node.parent?.getChild('ListMark');
-            if (listMark) hideMark(listMark.from, listMark.to, true);
+            if (listMark) hideMark(listMark.from, listMark.to, true, hideLineMark);
             out.push(
               Decoration.replace({ widget: new CheckboxWidget(done) }).range(
                 marker.from,
@@ -299,7 +297,9 @@ export const livePreview = StateField.define<DecorationSet>({
   create: build,
   update(value, tr) {
     const parsed = syntaxTree(tr.state) !== syntaxTree(tr.startState);
-    const modeChanged = tr.state.facet(previewMode) !== tr.startState.facet(previewMode);
+    const modeChanged =
+      tr.state.facet(previewMode) !== tr.startState.facet(previewMode) ||
+      tr.state.facet(showMarks) !== tr.startState.facet(showMarks);
     if (tr.docChanged || tr.selection || parsed || modeChanged) return build(tr.state);
     return value;
   },

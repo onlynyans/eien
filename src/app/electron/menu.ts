@@ -8,12 +8,13 @@ import type { ExportFormat, MenuCommand } from '../../platform/bridge';
 /** A note's or a book's exports, in the File menu's order (spec §8). */
 const EXPORTS: readonly ExportFormat[] = ['epub', 'docx', 'pdf'];
 
-/** Where the Format menu draws its lines: inline marks, then the link, then line formats. */
+/** Where the Format menu draws its lines: inline marks, the link, line formats, then a table. */
 const FORMAT_GROUPS: readonly (readonly FormatCommandId[])[] = [
   ['bold', 'italic', 'underline', 'strike', 'highlight'],
   ['link'],
   ['heading1', 'heading2', 'heading3', 'quote'],
   ['bullet', 'numbered', 'checklist'],
+  ['table'],
 ];
 
 const DEVELOP: MenuItemConstructorOptions = {
@@ -154,6 +155,7 @@ export function buildMenu(send: SendCommand): Menu {
         // The writing tools (spec §4), this device's settings.
         toggle('Focus Mode', 'editor.focus', 'CmdOrCtrl+Shift+Return'),
         toggle('Typewriter Scrolling', 'editor.typewriter'),
+        toggle('Show Markdown Marks', 'editor.marks'),
         toggle('Formatting Bar', 'editor.formatBar', 'CmdOrCtrl+Shift+B'),
         { type: 'separator' },
         // A sprint against the clock, counted in the colophon (spec §4).

@@ -329,7 +329,7 @@ describe('typewriter scrolling: what holds', () => {
 });
 
 describe('settings for the tools: what holds', () => {
-  it('every menu toggle is a device setting of off and on, off by default', () => {
+  it('every menu toggle is a device setting of off and on, off by default but the marks', () => {
     for (const key of TOGGLES) {
       const setting = SETTINGS.find((each) => each.key === key);
       expect(setting?.type, key).toBe('choice');
@@ -338,7 +338,8 @@ describe('settings for the tools: what holds', () => {
         'off',
         'on',
       ]);
-      expect(setting?.default, key).toBe('off');
+      // Live's marks show as they always have until the writer hides them.
+      expect(setting?.default, key).toBe(key === 'editor.marks' ? 'on' : 'off');
     }
   });
 

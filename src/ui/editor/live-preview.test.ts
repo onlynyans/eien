@@ -2,9 +2,9 @@
 // marks hide, what becomes a widget, and what the caret's lines keep.
 
 import { syntaxTree } from '@codemirror/language';
-import { EditorSelection, EditorState } from '@codemirror/state';
+import { Compartment, EditorSelection, EditorState } from '@codemirror/state';
 import { describe, expect, it } from 'vitest';
-import { livePreview, type PreviewMode, previewMode } from './live-preview';
+import { livePreview, type PreviewMode, previewMode, showMarks } from './live-preview';
 import { eienMarkdown } from './syntax';
 
 interface Shown {
@@ -34,6 +34,7 @@ function show(doc: string, caret: number, mode: PreviewMode | null): Shown {
 }
 
 const END = 10_000; // a caret past the end: on the last line
+const marks = new Compartment();
 
 describe('Live', () => {
   it('hides emphasis marks away from the caret, and keeps them on its line', () => {
@@ -79,12 +80,26 @@ describe('Live', () => {
     expect(show(doc, doc.indexOf('***'), 'live').widgets).toEqual([]);
   });
 
-  it('draws a table whole, unless the caret is in it', () => {
+  it('draws a table in place, its pipes and delimiter row hidden, the caret’s row showing its pipes', () => {
     const doc = '| a | b |\n|---|---|\n| 1 | 2 |\n\nafter';
-    expect(show(doc, END, 'live').widgets).toEqual([
-      `TableWidget:${doc.slice(0, doc.indexOf('\n\n'))}`,
-    ]);
-    expect(show(doc, 2, 'live').widgets).toEqual([]);
+    const away = show(doc, END, 'live');
+    expect(away.widgets).toEqual([]);
+    expect(away.hidden).toEqual(['|', '|', '|', '|---|---|', '|', '|', '|']);
+    expect(away.lines).toEqual(
+      expect.arrayContaining(['eien-table-row@1', 'eien-table-head@1', 'eien-table-row@3']),
+    );
+    const editing = show(doc, doc.indexOf('1'), 'live');
+    expect(editing.hidden).toEqual(['|', '|', '|', '|---|---|']); // the header’s, and the delimiter row
+    expect(editing.marks.filter((m) => m.startsWith('eien-table-pipe'))).toHaveLength(3);
+  });
+
+  it('formats the words in a table’s cells as anywhere else', () => {
+    const doc = '| **Project** | *due* |\n|---|---|\n| `x` | ==now== |\n\nafter';
+    const shown = show(doc, END, 'live');
+    expect(shown.hidden).toEqual(expect.arrayContaining(['**', '**', '*', '*', '==', '==']));
+    expect(shown.marks).toEqual(
+      expect.arrayContaining(['eien-code:`x`', 'eien-highlight:==now==']),
+    );
   });
 
   it('draws an image, and the raw syntax on the caret’s line', () => {
@@ -109,6 +124,51 @@ describe('Live', () => {
     const shown = show('> He drapes it.\n\nx', END, 'live');
     expect(shown.hidden).toEqual(['> ']);
     expect(shown.lines).toContain('eien-quote@1');
+  });
+});
+
+describe('Live with its marks hidden', () => {
+  /** As `show`, with "Show Markdown marks" off. */
+  const hidden = (doc: string, caret: number) => {
+    const state = EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(caret),
+      extensions: [eienMarkdown(), previewMode.of('live'), showMarks.of(false), livePreview],
+    });
+    const found: string[] = [];
+    state.field(livePreview).between(0, doc.length, (from, to, deco) => {
+      if (!(deco.spec as { class?: string }).class) found.push(doc.slice(from, to));
+    });
+    return found;
+  };
+
+  it('keeps the marks hidden on the caret’s line too', () => {
+    const doc = '## A **bold** [link](x.md) word';
+    expect(show(doc, 8, 'live').hidden).toEqual([]);
+    expect(hidden(doc, 8)).toEqual(['## ', '**', '**', '[', '](x.md)']);
+  });
+
+  it('keeps a table’s pipes hidden on the caret’s row', () => {
+    const doc = '| a | b |\n|---|---|\n| 1 | 2 |';
+    expect(hidden(doc, doc.indexOf('1'))).toEqual(['|', '|', '|', '|---|---|', '|', '|', '|']);
+  });
+
+  it('shows the marks again when the setting comes back on', () => {
+    const doc = 'A **bold** word.';
+    const state = EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(4),
+      extensions: [
+        eienMarkdown(),
+        previewMode.of('live'),
+        marks.of(showMarks.of(false)),
+        livePreview,
+      ],
+    });
+    const count = (s: EditorState) => s.field(livePreview).size;
+    expect(count(state)).toBeGreaterThan(0);
+    const back = state.update({ effects: marks.reconfigure([]) }).state;
+    expect(count(back)).toBe(0);
   });
 });
 

@@ -89,6 +89,7 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
       'search',
       'trash',
       'write',
+      'writeNew',
     ],
     settings: ['read', 'set'],
     out: ['copy', 'kinds', 'saveAs'],

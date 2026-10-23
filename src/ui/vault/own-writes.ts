@@ -48,6 +48,10 @@ export function ownWrites(vault: VaultBridge, now: () => number = Date.now): Own
       mark(path);
       return vault.write(path, text, expected).finally(() => mark(path));
     },
+    writeNew: (path, bytes) => {
+      mark(path);
+      return vault.writeNew(path, bytes).finally(() => mark(path));
+    },
     move: (from, to) => {
       mark(from, to);
       return vault.move(from, to).finally(() => mark(from, to));

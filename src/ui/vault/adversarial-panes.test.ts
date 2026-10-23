@@ -26,6 +26,7 @@ async function vaultWith(
     current: async () => ({ name: 'V' }),
     choose: async () => null,
     importFolder: async () => null,
+    writeNew: async () => true,
     list: async () => index.entries(),
     notes: async () => index.notes(),
     search: async (query) => {

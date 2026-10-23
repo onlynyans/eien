@@ -12,6 +12,9 @@ class FakeVault {
   }
   async trash() {}
   async makeFolder() {}
+  async writeNew() {
+    return true;
+  }
   async importFolder() {
     return null;
   }

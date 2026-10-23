@@ -1,7 +1,8 @@
 // Organizing the vault (spec §2–§4): renaming and moving notes and folders,
 // sending them to the trash, a folder's order, books and pins. Each keeps
 // the rest in step: the folder's order follows a renamed note, pins follow a
-// move, and the open note carries on at its new name.
+// move, the open note carries on at its new name, and a note's own folder of
+// images ("Chapter 3.assets") goes where the note goes, its links following.
 
 import {
   baseName,
@@ -29,6 +30,7 @@ import {
 import type { VaultBridge } from '../../platform/bridge';
 import type { NoteSession } from '../notes/note-session';
 import { reasonOf } from '../reason';
+import { moveAssets, trashAssets } from './note-assets';
 import { SmallFiles } from './small-files';
 import type { VaultState } from './vault-state';
 
@@ -45,6 +47,12 @@ export interface OrganizeContext {
   freeze?(frozen: boolean): void;
   /** A quiet line in the list: what happened, or why it couldn't. */
   tell(message: string): void;
+  /**
+   * Change the words of the note at `path`, if it's the one open, as an edit
+   * of Eien's own (the caret and the undo history stay), and save it: whether
+   * that worked, or null when the note isn't open.
+   */
+  amendOpen?(path: string, change: (text: string) => string): Promise<boolean | null>;
 }
 
 const PROBLEMS: Record<Exclude<Renamed, { ok: true }>['problem'], string> = {
@@ -69,7 +77,7 @@ export class Organizer {
   renameNote(path: string, typed: string): Promise<string | null> {
     const renamed = renamedPath(path, typed, this.#ctx.state.namesIn(parentOf(path)), true);
     if (!renamed.ok) return this.#refuse(PROBLEMS[renamed.problem]);
-    return this.#move(path, renamed.path);
+    return this.#move(path, renamed.path, true);
   }
 
   renameFolder(path: string, typed: string): Promise<string | null> {
@@ -84,7 +92,11 @@ export class Organizer {
     if (!isNote && (folder === path || folder.startsWith(`${path}/`))) {
       return this.#refuse('A folder can’t go inside itself.');
     }
-    return this.#move(path, movedPath(path, folder, this.#ctx.state.namesIn(folder), isNote));
+    return this.#move(
+      path,
+      movedPath(path, folder, this.#ctx.state.namesIn(folder), isNote),
+      isNote,
+    );
   }
 
   /** A new folder in `parent`, "New folder" or the first free name like it. */
@@ -120,7 +132,7 @@ export class Organizer {
     await this.#changeOrder(parentOf(path), (order) => withoutInOrder(order, baseName(path)), {
       left: baseName(path),
     });
-    this.#ctx.tell(`“${nameOf(path)}” is in ${this.#ctx.trashName}.`);
+    this.#ctx.tell(await trashAssets(this.#ctx, path));
     return true;
   }
 
@@ -203,8 +215,8 @@ export class Organizer {
     return 'refused';
   }
 
-  /** Move or rename `from` to `to`, keeping order, pins and the open note in step. */
-  async #move(from: string, to: string): Promise<string | null> {
+  /** Move or rename `from` to `to`, keeping order, pins and the open note (and a note's images) in step. */
+  async #move(from: string, to: string, isNote = false): Promise<string | null> {
     if (from === to) return to;
     const open = this.#ctx.session();
     const inside = (path: string) => path === from || path.startsWith(`${from}/`);
@@ -239,6 +251,7 @@ export class Organizer {
       // A folder in its own order keeps it: the newcomer goes last.
       await this.#changeOrder(parentOf(to), (order) => [...order, came], { came });
     }
+    if (isNote) await moveAssets(this.#ctx, from, to);
     return to;
   }
 

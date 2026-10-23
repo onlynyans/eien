@@ -29,7 +29,7 @@ export const editorTheme = EditorView.theme({
     transition: 'opacity var(--eien-calm) var(--eien-ease)',
   },
   '&.eien-focus .cm-line.eien-current': { opacity: '1' },
-  // What Live draws as a block (a table) isn't a line, and is never where the caret writes.
+  // What Live draws as a block (lines it hides) isn't a line, and is never where the caret writes.
   '&.eien-focus .cm-content > :not(.cm-line)': {
     opacity: 'var(--eien-dimmed)',
     transition: 'opacity var(--eien-calm) var(--eien-ease)',
@@ -122,17 +122,34 @@ export const editorTheme = EditorView.theme({
     fontSize: 'var(--eien-size-meta)',
     color: 'var(--eien-pencil)',
   },
-  '.eien-table': {
-    borderCollapse: 'collapse',
-    margin: 'var(--eien-space-3) 0',
+  // A table's rows are lines (ui/editor/live-tables.ts), each a row of equal columns: every
+  // cell is one element, so the rows' columns line up. Hairlines between, the header on the band.
+  '.cm-line.eien-table-row': {
+    display: 'flex',
     fontSize: '0.9em',
+    borderRight: 'var(--eien-hairline) solid var(--eien-rule)',
+    borderBottom: 'var(--eien-hairline) solid var(--eien-rule)',
   },
-  '.eien-table th, .eien-table td': {
-    border: 'var(--eien-hairline) solid var(--eien-rule)',
+  '.cm-line.eien-table-head': {
+    backgroundColor: 'var(--eien-band)',
+    borderTop: 'var(--eien-hairline) solid var(--eien-rule)',
+    fontWeight: '600',
+  },
+  '.eien-cell': {
+    flex: '1 1 0',
+    minWidth: '0',
     padding: 'var(--eien-space-1) var(--eien-space-3)',
-    textAlign: 'left',
+    borderLeft: 'var(--eien-hairline) solid var(--eien-rule)',
   },
-  '.eien-table th': { backgroundColor: 'var(--eien-band)', fontWeight: '600' },
+  // A pipe on the caret's row, shown as it's written: on the cells' edge, taking no room,
+  // so the columns stay where they are.
+  '.eien-table-pipe': {
+    flex: '0 0 0',
+    width: '0',
+    overflow: 'visible',
+    padding: 'var(--eien-space-1) 0',
+    color: 'var(--eien-faded)',
+  },
 });
 
 /** Markdown's look in every view: marks quiet, words in ink. No seal, no colour for colour's sake. */

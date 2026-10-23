@@ -23,6 +23,7 @@ async function vaultWith(files: Record<string, string>) {
     current: async () => ({ name: 'V' }),
     choose: async () => null,
     importFolder: async () => null,
+    writeNew: async () => true,
     list: async () => index.entries(),
     notes: async () => index.notes(),
     search: async (query) => index.search(query),

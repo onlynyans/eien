@@ -1,6 +1,7 @@
 // The folder tree the sidebar shows, built from a vault's entries.
 
 import { baseName, parentOf } from '../paths';
+import { isAssetsFolder } from './assets';
 import type { VaultEntry } from './entries';
 
 export interface FolderNode {
@@ -26,7 +27,9 @@ export const byName: (a: string, b: string) => number = new Intl.Collator(undefi
 
 /**
  * The tree of folders, each with its notes. A note or folder whose parent
- * folder isn't listed is still placed: its missing folders are made.
+ * folder isn't listed is still placed: its missing folders are made. A
+ * note's own folder of images ("Chapter 3.assets", ./assets.ts) isn't shown,
+ * nor anything in it.
  */
 export function buildTree(entries: readonly VaultEntry[], vaultName: string): FolderNode {
   const root: FolderNode = { name: vaultName, path: '', folders: [], notes: [], noteCount: 0 };
@@ -41,7 +44,14 @@ export function buildTree(entries: readonly VaultEntry[], vaultName: string): Fo
     return node;
   };
 
+  const notes = new Set(entries.filter((e) => e.kind === 'note').map((e) => e.path));
+  const hidden = entries
+    .filter((e) => e.kind === 'folder' && isAssetsFolder(e.path, (path) => notes.has(path)))
+    .map((e) => `${e.path}/`);
+  const inHidden = (path: string) => hidden.some((folder) => `${path}/`.startsWith(folder));
+
   for (const entry of entries) {
+    if (hidden.length > 0 && inHidden(entry.path)) continue;
     if (entry.kind === 'folder') folderAt(entry.path);
     else if (entry.kind === 'note') folderAt(parentOf(entry.path)).notes.push(entry.path);
   }

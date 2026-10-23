@@ -79,6 +79,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   const formatLook = (id: CommandId): CommandLook => {
     if (!page.writable || page.mode === 'reading') return { disabled: true, pressed: false };
     if (id === 'format.heading') return { pressed: headingLevel(page.editor.caretLine) > 0 };
+    if (id === 'format.table') return {}; // it puts a table in, and is never on
     const sends = commandOf(id).sends ?? '';
     return { pressed: formatsOn().has(sends.slice('format:'.length) as FormatCommandId) };
   };

@@ -7,6 +7,7 @@ import { app, type BrowserWindow, dialog, shell } from 'electron';
 import { CHANNEL, type VaultInfo } from '../../platform/bridge';
 import { openDiskStorage } from '../../platform/electron/disk-storage';
 import { recoverStrays } from '../../platform/electron/recover-strays';
+import { imageWrite } from '../../platform/image-write';
 import { OpenVault } from '../../platform/open-vault';
 import { DOCUMENTS_FOLDER, homeVault, thisCopy } from './data-folders';
 import { lastVault, readDeviceFile, updateDeviceFile } from './device-settings';
@@ -135,6 +136,9 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
       throw new TypeError('expected must be text or null.');
     return session.vault().write(text(path, 'path'), text(body, 'text'), expected);
   });
+  handle(CHANNEL.writeNew, (path, bytes) =>
+    session.vault().writeNew(...imageWrite(text(path, 'path'), bytes)),
+  );
   handle(CHANNEL.move, (from, to) => session.vault().move(text(from, 'from'), text(to, 'to')));
   handle(CHANNEL.trash, (path) => session.vault().trash(text(path, 'path')));
   handle(CHANNEL.makeFolder, (path) => session.vault().makeFolder(text(path, 'path')));

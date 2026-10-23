@@ -50,12 +50,12 @@ My Vault/
     versions/<note id>/        checkpoints and named versions (see §9)
       2026-10-19T16-40-02Z.md
       2026-10-19T17-02-11Z--before the rewrite.md
-  attachments/                 images and files pasted into notes
   Fic/
     A Mended Scarf/
       .eien-folder.json        this folder's order, and whether it's a book
       Mending.md
       Fire.md
+      Fire.assets/             Fire's own images, dropped or pasted into it
   Ideas.md
 ```
 
@@ -63,6 +63,19 @@ My Vault/
 
 - A note is any `.md` file in the vault, outside `.eien/`. Other files are
   shown only as attachments.
+- **A note's images** live in a folder beside it named for it: `Fire.md` →
+  `Fire.assets/` (`core/vault/assets.ts`). An image dropped on the page or
+  pasted into it (PNG, JPEG, GIF, WebP, AVIF or SVG, up to 32 MB) is copied
+  there under its own name, or numbered where that's taken (`scarf 2.png`),
+  never over what's there; a pasted one with no name is `image.png`. The
+  note links to it relative to itself, encoded as a Markdown link must be:
+  `![](Fire.assets/scarf.png)`, at the drop point or the caret. The folder
+  is the note's: the sidebar never shows it as a folder (nor what's in it)
+  while the note is beside it, and renaming, moving or trashing the note
+  renames, moves or trashes it too, the note's links to it following. Where
+  it can't follow (its new name is taken), it stays, and the list says where
+  the images are. A paste that carries words as well as a picture (a word
+  processor's) pastes the words. On a phone, images come by paste alone.
 - The note's title is its file name without `.md`. Renaming the title renames
   the file.
 - Text is UTF-8. A byte-order mark and CRLF line endings are read correctly and
@@ -366,7 +379,7 @@ The editor has three views of the same note, switched by a toolbar control and
 
 | View | What it shows |
 |---|---|
-| **Live** (default) | Markdown with its marks hidden except on the line being edited. Checkboxes are clickable, images show inline. |
+| **Live** (default) | Markdown with its marks hidden except on the line being edited (or everywhere, with Show Markdown marks off). Checkboxes are clickable, images show inline, tables are drawn as tables and edited in place. |
 | **Source** | The raw `.md`, with syntax colored. |
 | **Reading** | The note rendered and read-only. |
 
@@ -375,13 +388,17 @@ format without typing them:
 
 - **Keys:** ⌘B bold, ⌘I italic, ⌘U underline, ⌘⇧X strikethrough, ⌘⇧H
   highlight, ⌘K link, ⌘⌥1–3 headings, ⌘⇧. quote, ⌘⇧7 numbered list, ⌘⇧8 list,
-  ⌘⇧9 checklist. Each toggles: pressed again, it takes the formatting off. On
+  ⌘⇧9 checklist. Each toggles: pressed again, it takes the formatting off.
+  ⌘⇧T puts in a table: a header and two rows of two columns, empty, the
+  caret in the first cell, on the caret's line if it's blank or else after
+  it, a blank line either side. On
   Windows and Linux ⌘ is Ctrl, and the headings are Ctrl+Shift+1–3: there
   Ctrl+Alt is AltGr, which types characters (², ³ and @ on a German keyboard),
   so a Ctrl+Alt key would take them. macOS keeps ⌘⌥, as ⌘⇧3 is its screenshot.
 - **Format menu** in the menu bar with the same commands and their keys.
 - **Formatting bar:** the same commands drawn as Eien's icons (bold, italic,
-  underline, strikethrough; heading, highlight, link; quote, the lists),
+  underline, strikethrough; heading, highlight, link; quote, the lists; a
+  table, which is never pressed),
   shown or hidden by its control in the page's toolbar, View → Formatting
   Bar or ⇧⌘B (a device setting, off at first). Each button runs the menu's
   command, and shows pressed where its format is on at the caret (read from
@@ -394,6 +411,25 @@ format without typing them:
 - **Selection bar:** when text is selected, a small bar of the same commands
   appears beside it. It appears only for a selection and never while typing.
 - Typing the Markdown marks works too, as in any Markdown editor.
+
+**Show Markdown marks** (Settings → Writing → Editor, or View → Show
+Markdown Marks; a device setting, on at first, as Live has always been: the
+marks tell the writer where a format starts and ends). Off, Live keeps every
+mark hidden on the caret's line too, so the page reads like a word
+processor's, and stays editable (`ui/editor/hidden-marks.ts`): the caret
+steps over a hidden mark or a widget whole; Backspace and Delete take the
+letter beyond a mark, not the mark, and a pair of marks left with nothing
+between them goes too; at a line's start Backspace takes the line's format
+off (a heading, a quote, a list item); a table's cell edge stays put.
+Typing `**` still formats, the marks hiding once the pair is whole.
+
+**Tables** in Live and Reading are drawn in place, row by row
+(`ui/editor/live-tables.ts`): each row a line of equal columns with
+hairlines between, the header on the band, the pipes and the delimiter row
+out of sight. A click in a cell puts the caret there, and typing edits the
+cell's Markdown; the file stays a plain GFM table. The words in a cell are
+formatted as anywhere else, and the caret's row shows its pipes (and its
+marks) as other lines do.
 
 Square brackets are a link only with an address or a defined reference, as
 CommonMark has it: `[sic]` and `[...]` keep their brackets on the page. HTML at
@@ -495,7 +531,8 @@ CommonMark plus GitHub extensions, and three common additions:
   note's row pins it, or unpins it; so does Pin in its menu.
 - **The trash:** Move to the trash (⌘⌫ / Ctrl+Delete on a row, or the menu)
   sends a note or folder to the system's trash (the Recycle Bin on Windows),
-  saving the open note first; the list says where it went. If the trash
+  saving the open note first, a note's own images with it; the list says
+  where it went. If the trash
   fails, nothing is deleted and the list says why.
 - While the open note is moved or trashed, the page holds still (typing isn't
   taken) and its last words are saved first. If they can't be saved (the disk
@@ -638,7 +675,7 @@ small `index.ts`; nothing reaches into another module's files.
 src/core/            (✓ = built)
   paths/        ✓ name rules, reserved names, collisions, vault paths, sibling names
   text/         ✓ BOM and line endings kept, front matter located, words, chapter numbers
-  vault/        ✓ entries, the folder tree, .eien-folder.json (order, book), pins
+  vault/        ✓ entries, the folder tree, .eien-folder.json (order, book), pins, a note's own images (.assets)
   saving/       ✓ what to do when a note changes on disk
   format/       ✓ the formatting commands: inline marks, line formats, links, their keys
   config/       ✓ the settings schema, defaults, reading and writing settings files (§6)
@@ -672,10 +709,10 @@ src/ui/
   icons.ts      ✓ Eien's own icons, inline SVG
   menu/         ✓ the small floating menu: right-click choices, sorts
   notes/        ✓ the open note: autosave, reload, conflict copies
-  vault/        ✓ the vault as the window knows it, its panes drawn, the menu's commands, organizing (rename, move, trash)
+  vault/        ✓ the vault as the window knows it, its panes drawn, the menu's commands, organizing (rename, move, trash, a note's images with it), images dropped or pasted
   welcome/      ✓ before a vault is open
   theme/        ✓ tokens.css (the eight faces, density, frame), the Slate palette, base.css, fonts; wearing a theme, and the writer's own as the window keeps them
-  editor/       ✓ CodeMirror, the three views, the selection bar, images, typed quotes, pasted HTML, the writing tools (scene breaks, focus, typewriter)
+  editor/       ✓ CodeMirror, the three views, the selection bar, images, tables in place, Live with its marks hidden, typed quotes, pasted HTML, the writing tools (scene breaks, focus, typewriter)
   versions/     ✓ sealing, Compare, the versions panel, the colophon's last seal
   outline/      ✓ outline cards: a book's chapters as cards on the blotter, reordered by drag or keys
   counters/     ✓ the colophon's today, book and sprint
@@ -707,6 +744,10 @@ src/app/
   place; only the tags in §4 get their look, and any other HTML stays as text.
 - Images come only from the vault, read through the bridge and shown as `blob:`
   URLs; an image from the web shows as a note and is never fetched.
+- The window writes bytes only as a new image a note shows (one dropped or
+  pasted), where nothing is, no bigger than 32 MB (`platform/image-write.ts`,
+  checked by the main process and the phone's vault). Everything else it
+  writes is text, through the version check.
 - Pasted HTML (phase 8) goes through a sanitizer; scripts, event handlers and
   remote content never run.
 
@@ -764,8 +805,8 @@ does nothing.
   density (comfortable or compact), page frame (sheet or full), the page's
   zoom and the interface's (each 50–200%), the interface font, the Source
   font, the weight of the sidebar's names and the list's titles, the Running head's
-  ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar and
-  spellcheck (macOS). A setting may be one system's alone (`platforms` in the
+  ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar,
+  whether Live shows the Markdown marks, and spellcheck (macOS). A setting may be one system's alone (`platforms` in the
   schema): the screen shows it only there.
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.
