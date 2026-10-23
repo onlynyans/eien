@@ -30,9 +30,6 @@ export const DEFAULT_PANES: Panes = Object.freeze({
   listShut: false,
 });
 
-/** A shut sidebar: the seal alone, on a strip (--eien-space-7). */
-export const STRIP = 48;
-
 /** In a narrow window the list, then the sidebar, give way until the page has this much. */
 export const PAGE_MIN = 360;
 
@@ -90,7 +87,8 @@ export function dragged(panes: Panes, edge: Edge, shown: number, by: number): Pa
 export const sidebarEdge = (two: boolean): Edge => (two ? 'sidebarTwo' : 'sidebar');
 
 /**
- * The widths the window shows: a shut sidebar is the strip, the list is gone
+ * The widths the window shows: a shut sidebar is its `strip` (--strip, which
+ * the layout and Shut sidebar make; none for the seal alone), the list is gone
  * when shut or with two panes, and in a window too narrow for all three the
  * list, then the sidebar, give way (not past their narrowest) to keep the
  * page PAGE_MIN wide. What's remembered doesn't change, so a wider window
@@ -100,9 +98,12 @@ export function shownWidths(
   panes: Panes,
   two: boolean,
   window: number,
+  strip: number,
 ): { readonly sidebar: number; readonly list: number } {
   const edge = sidebarEdge(two);
-  let sidebar = panes.sidebarShut ? STRIP : panes[edge];
+  // Read from the window's styles: anything but a length there is no strip.
+  const shut = Number.isFinite(strip) ? Math.max(0, Math.round(strip)) : 0;
+  let sidebar = panes.sidebarShut ? shut : panes[edge];
   let list = two || panes.listShut ? 0 : panes.list;
   let over = sidebar + list + PAGE_MIN - window;
   if (over > 0 && list > 0) {

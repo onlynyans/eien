@@ -131,7 +131,10 @@ for (const layout of LAYOUTS) {
       await control(page, 'pane.sidebar').click();
       await expect(page.locator('.sidebar__vault')).toBeHidden();
       await expect(control(page, 'pane.sidebar')).toHaveAttribute('aria-pressed', 'false');
-      await control(page, 'pane.sidebar').click();
+      // Shut to the seal alone in Band and Slip, the seal is the way back (./corner.spec.ts).
+      const back =
+        layout === 'runhead' ? control(page, 'pane.sidebar') : page.locator('.sidebar__show');
+      await back.click();
       await expect(page.locator('.sidebar__vault')).toBeVisible();
     });
   });

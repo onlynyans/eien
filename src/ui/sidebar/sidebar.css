@@ -2,6 +2,8 @@
 
 .sidebar {
   --twisty: var(--eien-space-3); /* the disclosure triangle's box */
+  /* The seal's button, so the seal itself is on --seal-x (../shell/shell.css). */
+  --seal-button-x: calc(var(--seal-x) - var(--eien-space-1) - var(--eien-hairline));
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -16,15 +18,7 @@
   gap: var(--eien-space-2);
   height: var(--band);
   flex: none;
-  /* The seal's button pads it by a space: the seal itself sits on the gutter,
-     right of macOS's traffic lights (../shell/shell.css). */
-  padding: 0 var(--eien-space-4) 0
-    calc(
-      var(--controls-left, 0px) +
-      var(--eien-space-4) -
-      var(--eien-space-1) -
-      var(--eien-hairline)
-    );
+  padding: 0 var(--eien-space-4) 0 var(--seal-button-x);
 }
 
 /* The seal as a button: the mark that shuts the sidebar, and on the strip opens it again. */
@@ -55,7 +49,9 @@
   transform: scale(0.94);
 }
 
-/* Shut: the strip holds the seal alone; everything else waits. */
+/* Shut: the strip holds the seal alone; everything else waits. How it's shut is Band's and
+   Slip's setting, Shut sidebar (data-shut-sidebar, ../settings/look.ts); Running head's is
+   always the strip, its running head holding the system's controls (../chrome/runhead.css). */
 .sidebar__strip {
   display: none;
   flex: none;
@@ -63,12 +59,54 @@
   height: var(--band);
   align-items: center;
 }
-/* macOS's traffic lights are wider than the strip: the seal waits below them. */
-[data-platform="darwin"] .sidebar__strip {
-  margin-top: var(--band);
-}
 .shell[data-sidebar-shut] .sidebar__strip {
   display: flex;
+}
+
+/* The seal alone: no strip. The seal stays where it was in the top row, beside macOS's
+   lights, over the next pane's band, which starts a gutter past it. */
+:root[data-shut-sidebar="seal"] {
+  --strip: 0px;
+}
+:root[data-shut-sidebar="seal"] .shell[data-sidebar-shut] {
+  --corner: calc(var(--seal-x) + var(--eien-seal-size) + var(--eien-space-4));
+}
+:root[data-shut-sidebar="seal"] .shell[data-sidebar-shut] > .sidebar {
+  border-right-width: 0;
+}
+:root[data-shut-sidebar="seal"] .sidebar__strip {
+  /* Placed against the shell: the sidebar has no width to show it in. */
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  padding-left: var(--seal-button-x);
+}
+
+/* A strip of desk under macOS's lights, which stand wider than it: the seal waits a band
+   lower, and the strip's top widens into a shoulder of desk that holds the lights, one band
+   tall. With no lights (full screen, Windows, Linux) the seal is at the top, and no shoulder. */
+:root[data-shut-sidebar="strip"][data-controls-left] .sidebar__strip {
+  box-sizing: content-box;
+  padding-top: var(--band);
+}
+:root[data-shut-sidebar="strip"][data-controls-left] .shell[data-sidebar-shut] {
+  --shoulder: calc(var(--controls-left) + var(--eien-space-2));
+  --corner: calc(var(--shoulder) + var(--eien-space-4));
+}
+:root[data-shut-sidebar="strip"][data-controls-left] .sidebar__strip::before {
+  content: "";
+  /* Placed against the shell, past the sidebar's edge, which would clip it. */
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: calc(var(--strip) - var(--eien-hairline));
+  width: calc(var(--shoulder) - var(--strip) + var(--eien-hairline));
+  height: var(--band);
+  background: var(--eien-desk);
+  border: 0 solid var(--eien-rule);
+  border-width: 0 var(--eien-hairline) var(--eien-hairline) 0;
+  border-bottom-right-radius: var(--eien-radius-l);
 }
 /* Each named: a bare :not() here would restyle the whole window as the sidebar shuts. */
 .shell[data-sidebar-shut]

@@ -108,14 +108,16 @@ test.describe('resizing', () => {
   }) => {
     await expect(page.locator('.note-row').first()).toBeVisible();
     const sidebar = await token(page, '--eien-sidebar-w');
-    const strip = await token(page, '--eien-space-7');
     await expect.poll(() => sidebarWidth(page)).toBe(sidebar);
     await expect.poll(() => listWidth(page)).toBe(await token(page, '--eien-list-w'));
     await twoPanes(page);
-    await expect.poll(() => sidebarWidth(page)).toBe(sidebar + strip);
+    await expect
+      .poll(() => sidebarWidth(page))
+      .toBe(sidebar + (await token(page, '--eien-space-7')));
     await expect(page.locator('.list')).toBeHidden();
     await page.locator('.sidebar__hide').click();
-    await expect.poll(() => sidebarWidth(page)).toBe(strip);
+    // Shut to the seal alone, Shut sidebar's default: no strip (./corner.spec.ts).
+    await expect.poll(() => sidebarWidth(page)).toBe(0);
   });
 
   test(
@@ -206,7 +208,10 @@ test.describe('shutting and opening', () => {
     await expect(vaultName).toBeHidden();
     await expect(toggleOf(page, 'sidebar')).toHaveAttribute('aria-pressed', 'false');
     await expect(toggleOf(page, 'sidebar')).toHaveAttribute('data-tip', 'Show the sidebar');
-    await toggleOf(page, 'sidebar').click();
+    // Shut to the seal alone (Shut sidebar's default), the seal is the way back, with no ›
+    // beside it; a strip's › is ./corner.spec.ts's.
+    await expect(toggleOf(page, 'sidebar')).toBeHidden();
+    await page.locator('.sidebar__show').click();
     await expect(vaultName).toBeVisible();
     await expect(toggleOf(page, 'sidebar')).toHaveAttribute('aria-pressed', 'true');
     await expect(toggleOf(page, 'sidebar')).toHaveAttribute('data-tip', 'Hide the sidebar');

@@ -29,6 +29,14 @@ export function applyLook(
   if (root.dataset.layout !== values['appearance.layout']) {
     root.dataset.layout = values['appearance.layout'];
   }
+  // Shut sidebar is Band's and Slip's (../sidebar/sidebar.css): Running head's shut sidebar is
+  // always its strip, as its running head holds the system's controls (../chrome/runhead.css).
+  const shut =
+    values['appearance.layout'] === 'runhead' ? undefined : values['appearance.shutSidebar'];
+  if (root.dataset.shutSidebar !== shut) {
+    if (shut) root.dataset.shutSidebar = shut;
+    else delete root.dataset.shutSidebar;
+  }
   for (const [key, name] of Object.entries(LOOK_ATTRIBUTES)) {
     const value = values[key as keyof typeof LOOK_ATTRIBUTES];
     if (value === DEFAULT_SETTINGS[key as keyof typeof LOOK_ATTRIBUTES]) delete root.dataset[name];

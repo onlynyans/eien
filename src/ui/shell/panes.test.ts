@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import type { PhonePane } from '../phone/phone-stack';
-import { DEFAULT_PANES, LIMITS, STEP, STRIP } from './pane-state';
+import { DEFAULT_PANES, LIMITS, STEP } from './pane-state';
 import { PaneLayout, type PaneParts, paneKeys } from './panes';
 
 const KEY = 'eien.panes';
@@ -70,17 +70,29 @@ describe('PaneLayout', () => {
   });
 
   it('shuts and opens the sidebar to its strip, remembering it, and says it changed', () => {
+    // The strip's width is the layout's (./shell.css); here, as Band's strip of desk.
+    shell().style.setProperty('--strip', '56px');
     const panes = make();
     panes.toggle('sidebar');
     expect(panes.isShut('sidebar')).toBe(true);
     expect(shell().hasAttribute('data-sidebar-shut')).toBe(true);
-    expect(shell().style.getPropertyValue('--pane-sidebar')).toBe(`${STRIP}px`);
+    expect(shell().style.getPropertyValue('--pane-sidebar')).toBe('56px');
     expect(stored().sidebarShut).toBe(true);
     expect(parts.changed).toHaveBeenCalledOnce();
 
     panes.toggle('sidebar');
     expect(panes.isShut('sidebar')).toBe(false);
     expect(stored().sidebarShut).toBe(false);
+  });
+
+  it('fits a shut sidebar again to a strip the layout or Shut sidebar changed', () => {
+    shell().style.setProperty('--strip', '56px');
+    const panes = make();
+    panes.toggle('sidebar');
+    shell().style.setProperty('--strip', '0px'); // the seal alone: no strip
+    panes.refit();
+    expect(shell().style.getPropertyValue('--pane-sidebar')).toBe('0px');
+    expect(stored().sidebarShut).toBe(true);
   });
 
   it('shut, the list takes no keyboard: what had it goes to the page', () => {

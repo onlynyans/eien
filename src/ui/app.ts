@@ -8,6 +8,7 @@ import { applyLook } from './settings/look';
 import { SettingsScreen } from './settings/settings-screen';
 import { SettingsState } from './settings/settings-state';
 import { isZoomCommand, keyboardInPage, zoomedBy, zoomKeyFor } from './settings/zoom';
+import { followControlsLeft } from './shell/controls-left';
 import { paintWindowControls } from './shell/window-controls';
 import { wear, wornFor } from './theme/wear';
 import { WriterThemes } from './theme/writer-themes';
@@ -23,6 +24,7 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
   applyLook(settings.values);
   wearChosen();
   const repaintControls = paintWindowControls(bridge);
+  followControlsLeft();
   settings.onChange((values) => {
     applyLook(values);
     wearChosen();

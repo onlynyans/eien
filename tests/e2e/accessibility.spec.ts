@@ -1,6 +1,7 @@
 // axe-core over the window (./axe.ts): every layout, by day and by night,
-// with three panes, two, and Settings open, the pointer over each pane in
-// turn. No serious or critical violation, colour contrast included.
+// with three panes, the sidebar shut (the seal alone, or a strip of desk), two
+// panes, and Settings open, the pointer over each pane in turn. No serious or
+// critical violation, colour contrast included.
 
 import type { Page } from '@playwright/test';
 import { seriousViolations, violationsUnder } from './axe';
@@ -22,6 +23,16 @@ async function ready(page: Page): Promise<void> {
   await expect(page.locator('.title')).toHaveText('Note');
 }
 
+/** The sidebar shut by its seal: what's left of it, and the panes beside it, checked. */
+async function shutViolations(page: Page) {
+  await page.locator('.sidebar__hide').click();
+  await expect(page.locator('.sidebar__show')).toBeVisible();
+  const found = await violationsUnder(page, ['.sidebar__strip', '.list', '.page']);
+  await page.locator('.sidebar__show').click();
+  await expect(page.locator('.sidebar__hide')).toBeVisible();
+  return found;
+}
+
 for (const layout of ['band', 'slip', 'runhead'] as const) {
   for (const scheme of ['day', 'night'] as const) {
     test.describe(`${layout} by ${scheme}`, () => {
@@ -29,12 +40,15 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         deviceFile: { settings: { 'appearance.layout': layout, 'appearance.scheme': scheme } },
       });
 
-      test('three panes, two panes and Settings have no serious violation', async ({ page }) => {
+      test('three panes, the sidebar shut, two panes and Settings have no serious violation', async ({
+        page,
+      }) => {
         await ready(page);
         await expect(page.locator('html')).toHaveAttribute('data-layout', layout);
         expect(await violationsUnder(page, ['.sidebar', '.list', '.page']), 'three panes').toEqual(
           [],
         );
+        expect(await shutViolations(page), 'the sidebar shut').toEqual([]);
 
         await page.locator('[data-command="panes"]').click();
         await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
@@ -70,4 +84,26 @@ for (const scheme of ['day', 'night'] as const) {
       expect(await seriousViolations(page), 'a column’s menu').toEqual([]);
     });
   });
+}
+
+// Shut sidebar's other choice, Band's and Slip's: a strip of desk, with its shoulder on macOS.
+for (const layout of ['band', 'slip'] as const) {
+  for (const scheme of ['day', 'night'] as const) {
+    test.describe(`${layout}, a strip of desk, by ${scheme}`, () => {
+      test.use({
+        deviceFile: {
+          settings: {
+            'appearance.layout': layout,
+            'appearance.scheme': scheme,
+            'appearance.shutSidebar': 'strip',
+          },
+        },
+      });
+
+      test('the sidebar shut to its strip has no serious violation', async ({ page }) => {
+        await ready(page);
+        expect(await shutViolations(page)).toEqual([]);
+      });
+    });
+  }
 }
