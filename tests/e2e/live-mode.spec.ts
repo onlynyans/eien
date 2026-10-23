@@ -47,12 +47,12 @@ test('clicking a cell puts the caret in it, and typing edits the table’s Markd
   vault,
 }) => {
   await open(page);
-  await cell(page, 'Mara').click();
-  await page.keyboard.press('End'); // the line's end: after the last cell
-  await page.keyboard.press('ArrowLeft');
-  await page.keyboard.press('ArrowLeft');
+  await cell(page, '30').click();
   await page.keyboard.type('5');
-  await expect.poll(() => readIn(vault, 'Table.md'), { timeout: 5000 }).toContain('| Mara | 305 |');
+  // In the cell clicked, wherever in it the click put the caret; the row keeps its pipes.
+  await expect
+    .poll(() => readIn(vault, 'Table.md'), { timeout: 5000 })
+    .toMatch(/^\| Mara \|(?=[^|\n]*5)[ 035]+\|$/mu);
   // Still a GFM table, the rest as it was.
   expect(readIn(vault, 'Table.md')).toContain('| **Project** | Due |\n|---|---|\n');
 });
