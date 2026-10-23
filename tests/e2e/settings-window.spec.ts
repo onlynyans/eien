@@ -8,7 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { galleryTheme, type Hex, rgbOf } from '../../src/core/themes';
-import { type Box, boxOf, closeApp, expect, launchApp, test } from './launch';
+import { ALONE, type Box, boxOf, closeApp, expect, launchApp, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -52,64 +52,69 @@ const near = (box: Box) => ({
   h: Math.round(box.height),
 });
 
-test('moves by its head, resizes by its edges and corners, inside the window, and goes back on a double-click', async ({
-  app,
-  page,
-  userData,
-  vault,
-}) => {
-  await page.setViewportSize({ width: 1200, height: 800 });
-  await page.getByRole('button', { name: 'Settings' }).click();
-  const sheet = dialog(page);
-  const first = near(await boxOf(sheet));
-  expect(first).toEqual({ x: 112, y: 64, w: 976, h: 672 }); // the inset, 64px and 112px
+// Dragged with the pointer: alone, so no other test's window takes it mid-drag.
+test(
+  'moves by its head, resizes by its edges and corners, inside the window, and goes back on a double-click',
+  ALONE,
+  async ({ app, page, userData, vault }) => {
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await page.getByRole('button', { name: 'Settings' }).click();
+    const sheet = dialog(page);
+    const first = near(await boxOf(sheet));
+    expect(first).toEqual({ x: 112, y: 64, w: 976, h: 672 }); // the inset, 64px and 112px
 
-  // A move never resizes.
-  await drag(page, await boxOf(sheet.locator('.settings__crumbs')), -40, 30);
-  expect(near(await boxOf(sheet))).toEqual({ ...first, x: 72, y: 94 });
+    // A move never resizes.
+    await drag(page, await boxOf(sheet.locator('.settings__crumbs')), -40, 30);
+    expect(near(await boxOf(sheet))).toEqual({ ...first, x: 72, y: 94 });
 
-  // Its right edge, then its left, then a corner: only those edges move.
-  await drag(page, await boxOf(sheet.locator('[data-grip="e"]')), -100, 0);
-  expect(near(await boxOf(sheet))).toEqual({ x: 72, y: 94, w: 876, h: 672 });
-  await drag(page, await boxOf(sheet.locator('[data-grip="w"]')), 60, 0);
-  expect(near(await boxOf(sheet))).toEqual({ x: 132, y: 94, w: 816, h: 672 });
-  await drag(page, await boxOf(sheet.locator('[data-grip="nw"]')), 40, 50);
-  expect(near(await boxOf(sheet))).toEqual({ x: 172, y: 144, w: 776, h: 622 });
+    // Its right edge, then its left, then a corner: only those edges move.
+    await drag(page, await boxOf(sheet.locator('[data-grip="e"]')), -100, 0);
+    expect(near(await boxOf(sheet))).toEqual({ x: 72, y: 94, w: 876, h: 672 });
+    await drag(page, await boxOf(sheet.locator('[data-grip="w"]')), 60, 0);
+    expect(near(await boxOf(sheet))).toEqual({ x: 132, y: 94, w: 816, h: 672 });
+    await drag(page, await boxOf(sheet.locator('[data-grip="nw"]')), 40, 50);
+    expect(near(await boxOf(sheet))).toEqual({ x: 172, y: 144, w: 776, h: 622 });
 
-  // Never smaller than 560 × 380, never out of the window, and still open after a drag let go outside.
-  await drag(page, await boxOf(sheet.locator('[data-grip="se"]')), -900, -900);
-  expect(near(await boxOf(sheet))).toMatchObject({ w: 560, h: 380 });
-  await drag(page, await boxOf(sheet.locator('.settings__crumbs')), 2000, 2000);
-  expect(near(await boxOf(sheet))).toEqual({ x: 1200 - 8 - 560, y: 800 - 8 - 380, w: 560, h: 380 });
-  await expect(sheet).toBeVisible();
+    // Never smaller than 560 × 380, never out of the window, and still open after a drag let go outside.
+    await drag(page, await boxOf(sheet.locator('[data-grip="se"]')), -900, -900);
+    expect(near(await boxOf(sheet))).toMatchObject({ w: 560, h: 380 });
+    await drag(page, await boxOf(sheet.locator('.settings__crumbs')), 2000, 2000);
+    expect(near(await boxOf(sheet))).toEqual({
+      x: 1200 - 8 - 560,
+      y: 800 - 8 - 380,
+      w: 560,
+      h: 380,
+    });
+    await expect(sheet).toBeVisible();
 
-  // The corner takes the keyboard too.
-  await sheet.getByRole('button', { name: 'Resize settings' }).focus();
-  await page.keyboard.press('ArrowLeft');
-  await page.keyboard.press('ArrowUp');
-  expect(near(await boxOf(sheet))).toEqual({ x: 632, y: 412, w: 560, h: 380 }); // at its least: no smaller
+    // The corner takes the keyboard too.
+    await sheet.getByRole('button', { name: 'Resize settings' }).focus();
+    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('ArrowUp');
+    expect(near(await boxOf(sheet))).toEqual({ x: 632, y: 412, w: 560, h: 380 }); // at its least: no smaller
 
-  // Kept on this device: it opens where it was left, after a restart too.
-  await drag(page, await boxOf(sheet.locator('.settings__crumbs')), -300, -200);
-  const kept = near(await boxOf(sheet));
-  await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Settings' }).click();
-  expect(near(await boxOf(sheet))).toEqual(kept);
-  await closeApp(app);
-  const again = await launchApp(userData, vault);
-  try {
-    const page2 = await again.firstWindow();
-    await page2.setViewportSize({ width: 1200, height: 800 });
-    await page2.getByRole('button', { name: 'Settings' }).click();
-    expect(near(await boxOf(dialog(page2)))).toEqual(kept);
+    // Kept on this device: it opens where it was left, after a restart too.
+    await drag(page, await boxOf(sheet.locator('.settings__crumbs')), -300, -200);
+    const kept = near(await boxOf(sheet));
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Settings' }).click();
+    expect(near(await boxOf(sheet))).toEqual(kept);
+    await closeApp(app);
+    const again = await launchApp(userData, vault);
+    try {
+      const page2 = await again.firstWindow();
+      await page2.setViewportSize({ width: 1200, height: 800 });
+      await page2.getByRole('button', { name: 'Settings' }).click();
+      expect(near(await boxOf(dialog(page2)))).toEqual(kept);
 
-    // A double-click on its head puts it back.
-    await dialog(page2).locator('.settings__crumbs').dblclick();
-    expect(near(await boxOf(dialog(page2)))).toEqual(first);
-  } finally {
-    await closeApp(again);
-  }
-});
+      // A double-click on its head puts it back.
+      await dialog(page2).locator('.settings__crumbs').dblclick();
+      expect(near(await boxOf(dialog(page2)))).toEqual(first);
+    } finally {
+      await closeApp(again);
+    }
+  },
+);
 
 test('its breadcrumb names the tab; Esc closes it and gives the keyboard back', async ({
   page,
