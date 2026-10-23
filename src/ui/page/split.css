@@ -1,10 +1,12 @@
 /* The split (spec §4; system.md, "The split window"): two pages side by side
-   in the page pane (./page-pane.ts), the divider between them drawn as a
-   pane's edge is (./divider.ts). Two sheets: two papers on one blotter, the
-   one you work on lying on top with the sheet's shadow, the other flat. */
+   in the page pane (./page-pane.ts), the divider between them (./divider.ts).
+   Each mode (data-split on <html>, ../chrome/splits.ts) lays them out its way:
+   Two sheets, two papers on one blotter; Facing pages, one sheet opened like
+   a book. --split-gap is the divider's column. */
 
 /* The pages' row: one page, or two with the divider's column between them. */
 .page__pages {
+  --split-gap: var(--eien-hairline);
   position: relative; /* the drop preview's box */
   grid-row: 3;
   display: grid;
@@ -12,48 +14,21 @@
   min-width: 0;
   min-height: 0;
 }
-.page__pages[data-two]:not([data-folded]) {
+.page__pages[data-two]:not([data-narrow]) {
   grid-template-columns:
-    calc((100% - var(--eien-hairline)) * var(--split-share))
-    var(--eien-hairline)
+    calc((100% - var(--split-gap)) * var(--split-share))
+    var(--split-gap)
     minmax(0, 1fr);
 }
-
-/* Each sheet with the same margin of blotter round it, and filling its page. */
-:root:not([data-frame="full"]) .page__pages[data-two] > .page__scroll {
-  padding: var(--eien-space-5) var(--eien-space-5) 0;
-}
-.page__pages[data-two] .sheet {
+/* A page: its blotter and sheet, scrolled, and its folio (Facing pages' alone) beneath. */
+.page__leaf {
   position: relative;
-  width: 100%;
-  transition:
-    box-shadow var(--eien-calm) var(--eien-ease),
-    border-color var(--eien-calm) var(--eien-ease);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
 }
-/* The page you aren't in lies flat: no shadow, and its edge a step softer. */
-.page__pages[data-two]:not([data-folded]) > .page__scroll:not([data-active]) .sheet {
-  box-shadow: none;
-  border-color: var(--eien-rule-soft);
-}
-/* Page frame Full has no sheets: a 2px ink-soft rule tops the active page instead. */
-:root[data-frame="full"]
-  .page__pages[data-two]:not([data-folded])
-  > .page__scroll[data-active]
-  .sheet::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: var(--eien-mark-w);
-  background: var(--eien-ink-soft);
-}
-
-/* A page's × at its sheet's top right, on hover; only while there are two. */
-.sheet__close {
-  position: absolute;
-  top: var(--eien-space-2);
-  right: var(--eien-space-2);
-}
-.page__pages:not([data-two]) .sheet__close {
+.page__folio {
   display: none;
 }
 
@@ -107,13 +82,24 @@
   opacity: 1;
 }
 
-/* Folded, too narrow for two: the active page alone, and the pager names both. */
-.page__pages[data-folded] > .page__scroll:not([data-active]),
-.page__pages[data-folded] > .divider {
+/* A page's × at its sheet's top right, on hover, while Two sheets are split. Named under its
+   sheet, so it outweighs the icon button's own display (../chrome/chrome.css). */
+.sheet > .sheet__close {
+  position: absolute;
+  top: var(--eien-space-2);
+  right: var(--eien-space-2);
   display: none;
 }
+:root[data-split="sheets"] .page__pages[data-two] .sheet__close {
+  display: inline-grid;
+}
 
-/* Folded: the two pages by name, with the page's tools; the active one pressed. */
+/* Too narrow for two: one page, the active one. Two sheets fold, a pager naming both;
+   the book closes, the other page's edge beside it. */
+.page__pages[data-narrow] > .page__leaf:not([data-active]),
+.page__pages[data-narrow] > .divider {
+  display: none;
+}
 /* Short of room, the names give way, each to an ellipsis in a control's square, and the
    pager no further: it never lies over the tools beside it. */
 .page__pager {
@@ -137,6 +123,264 @@
 .page__pager .word-button[aria-pressed="true"] {
   color: var(--eien-ink);
   background: var(--eien-selected);
+}
+
+/* ── 4 · Facing pages ───────────────────────────────────────────────────── */
+
+/* One sheet, opened like a book, on the blotter: the pages are its leaves. */
+:root[data-split="facing"] .page__pages[data-two] {
+  --split-gap: var(--eien-space-6);
+  margin: var(--eien-page-gutter);
+  background: var(--eien-paper);
+  border: var(--eien-sheet-edge);
+  box-shadow: var(--eien-sheet-lift);
+}
+:root[data-split="facing"] .page__pages[data-two] .page__leaf {
+  --leaf-x: clamp(var(--eien-space-4), 7%, var(--eien-space-7));
+}
+:root[data-split="facing"] .page__pages[data-two] .page__scroll {
+  padding: 0;
+}
+:root[data-split="facing"] .page__pages[data-two] .sheet {
+  --pad-x: var(--leaf-x);
+  width: 100%;
+  padding-top: var(--eien-space-5);
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+/* The gutter, the fold down the middle of the sheet: a soft hairline; it's the divider. */
+:root[data-split="facing"] .divider::after {
+  background: var(--eien-rule-soft);
+}
+:root[data-split="facing"] .divider__swap {
+  display: none; /* ⇄ is the book's tool, at the top */
+}
+/* The folio: a note's own line at its page's foot, its figures outermost, its tools by the
+   gutter, mirrored on the right page as page numbers are; its tools under the pointer. */
+:root[data-split="facing"] .page__pages[data-two] .page__folio {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-3);
+  height: var(--status-h);
+  min-width: 0;
+  padding: 0 var(--leaf-x);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+  text-transform: uppercase;
+  letter-spacing: var(--eien-track-label);
+  white-space: nowrap;
+}
+:root[data-split="facing"] .page__pages[data-two] > .page__leaf[data-side="1"] .page__folio {
+  flex-direction: row-reverse;
+}
+.page__figures {
+  display: flex;
+  gap: var(--eien-space-3);
+  min-width: 0;
+  overflow: hidden;
+}
+.page__tools {
+  margin-inline-start: auto;
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+.page__leaf:hover .page__tools,
+.page__tools:focus-within {
+  opacity: 1;
+}
+.page__pages > .page__leaf[data-side="1"] .page__tools {
+  margin-inline: 0 auto;
+}
+@media (hover: none) {
+  .page__tools {
+    opacity: 1;
+  }
+}
+
+/* ── 3 · Two sheets ─────────────────────────────────────────────────────── */
+
+/* Each sheet with the same margin of blotter round it, and filling its page. */
+:root[data-split="sheets"]:not([data-frame="full"]) .page__pages[data-two] .page__scroll {
+  padding: var(--eien-space-5) var(--eien-space-5) 0;
+}
+:root[data-split="sheets"] .page__pages[data-two] .sheet {
+  position: relative;
+  width: 100%;
+  transition:
+    box-shadow var(--eien-calm) var(--eien-ease),
+    border-color var(--eien-calm) var(--eien-ease);
+}
+/* The page you aren't in lies flat: no shadow, and its edge a step softer. */
+:root[data-split="sheets"]
+  .page__pages[data-two]:not([data-narrow])
+  > .page__leaf:not([data-active])
+  .sheet {
+  box-shadow: none;
+  border-color: var(--eien-rule-soft);
+}
+/* Page frame Full has no sheets: a 2px ink-soft rule tops the active page instead. */
+:root[data-split="sheets"][data-frame="full"]
+  .page__pages[data-two]:not([data-narrow])
+  > .page__leaf[data-active]
+  .sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--eien-mark-w);
+  background: var(--eien-ink-soft);
+}
+
+/* The mark on the page you're writing in (data-facing-mark): none of them the seal's
+   colour, each arriving with its own short motion (none with reduced motion, ../theme). */
+.page__mark {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+.page__mark svg {
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* 1 · The ribbon: the book's silk marker over the sheet's top edge, its end forked. */
+:root[data-facing-mark="ribbon"] .page__mark {
+  top: calc(var(--eien-hairline) * -1);
+  left: calc((var(--leaf-x) - var(--eien-space-2)) / 2);
+  width: var(--eien-space-2);
+  height: var(--eien-space-6);
+  background: var(--eien-ink-soft);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+  animation: mark-ribbon var(--eien-calm) var(--eien-ease);
+}
+@keyframes mark-ribbon {
+  from {
+    clip-path: polygon(0 0, 100% 0, 100% 0, 50% 0, 0 0);
+  }
+}
+/* 2 · A dog-ear: the outer top corner turned down, the flap the paper's back. No ink. */
+:root[data-facing-mark="dogear"] .page__mark {
+  top: calc(var(--eien-hairline) * -1);
+  left: calc(var(--eien-hairline) * -1);
+  width: var(--eien-space-5);
+  height: var(--eien-space-5);
+}
+:root[data-facing-mark="dogear"] .page__mark svg {
+  display: block;
+}
+.page__mark-gone {
+  fill: var(--eien-page-ground);
+}
+.page__mark-flap {
+  fill: var(--eien-band);
+  stroke: var(--eien-rule-strong);
+  stroke-width: var(--eien-hairline);
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+:root[data-facing-mark="dogear"] .page__mark polygon {
+  transform-origin: 0 0;
+  animation: mark-dogear var(--eien-calm) var(--eien-ease);
+}
+@keyframes mark-dogear {
+  from {
+    transform: scale(0);
+  }
+}
+/* 3 · An edge tab: an index tab standing out from the page's outer edge, near its head. */
+:root[data-facing-mark="tab"] .page__mark {
+  top: var(--eien-space-6);
+  left: calc((var(--eien-space-1) + 2 * var(--eien-hairline)) * -1);
+  width: calc(var(--eien-space-1) + var(--eien-hairline));
+  height: var(--eien-space-7);
+  background: var(--eien-ink-soft);
+  border-radius: var(--eien-radius-s) 0 0 var(--eien-radius-s);
+  animation: mark-tab var(--eien-calm) var(--eien-ease);
+}
+@keyframes mark-tab {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+@keyframes mark-tab-right {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+/* The right page's mark is at its outer edge, the right. */
+:root[data-facing-mark="ribbon"] .page__pages > .page__leaf[data-side="1"] .page__mark {
+  left: auto;
+  right: calc((var(--leaf-x) - var(--eien-space-2)) / 2);
+}
+:root[data-facing-mark="dogear"] .page__pages > .page__leaf[data-side="1"] .page__mark {
+  left: auto;
+  right: calc(var(--eien-hairline) * -1);
+  scale: -1 1; /* the right page's outer corner is its right */
+}
+:root[data-facing-mark="tab"] .page__pages > .page__leaf[data-side="1"] .page__mark {
+  left: auto;
+  right: calc((var(--eien-space-1) + 2 * var(--eien-hairline)) * -1);
+  border-radius: 0 var(--eien-radius-s) var(--eien-radius-s) 0;
+  animation-name: mark-tab-right;
+}
+
+/* Closed to one page: the facing page's edge stays by the gutter, its name down it. */
+.page__edge {
+  display: none;
+}
+.page__pages[data-narrow="close"] {
+  grid-template-columns: minmax(0, 1fr) var(--split-gap);
+}
+.page__pages[data-narrow="close"][data-active-side="1"] {
+  grid-template-columns: var(--split-gap) minmax(0, 1fr);
+}
+.page__pages[data-narrow="close"] > .page__edge {
+  appearance: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  grid-row: 1;
+  grid-column: 2;
+  min-width: 0;
+  padding: var(--eien-space-4) 0;
+  border: 0;
+  border-left: var(--eien-hairline) solid var(--eien-rule-soft);
+  background: none;
+  color: var(--eien-pencil);
+  cursor: pointer;
+}
+.page__pages[data-narrow="close"][data-active-side="1"] > .page__edge {
+  grid-column: 1;
+  border-left: 0;
+  border-right: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.page__pages[data-narrow="close"] > .page__leaf[data-active] {
+  grid-row: 1;
+  grid-column: 1;
+}
+.page__pages[data-narrow="close"][data-active-side="1"] > .page__leaf[data-active] {
+  grid-column: 2;
+}
+.page__edge-name {
+  max-height: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+}
+.page__pages[data-active-side="1"] > .page__edge .page__edge-name {
+  rotate: 180deg;
+}
+@media (hover: hover) {
+  .page__edge:hover {
+    background: var(--eien-hover);
+    color: var(--eien-ink-soft);
+  }
+}
+.page__edge:focus-visible {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: calc(var(--eien-mark-w) * -1);
 }
 
 /* A note dragged over the page pane: where its page would stand, raised paper with an ink edge. */

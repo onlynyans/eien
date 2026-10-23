@@ -8,6 +8,7 @@ import { type CommandId, commandOf, type Layout, type LocalCommandId } from './c
 import { Host, type HostOf } from './host';
 import type { SlotName } from './layout-spec';
 import { LAYOUT_SPECS } from './layouts';
+import { type SplitSpec, splitHosts } from './splits';
 
 export interface ChromeOf extends Omit<HostOf, 'press'> {
   readonly slots: Readonly<Record<SlotName, HTMLElement>>;
@@ -28,6 +29,8 @@ export class Chrome {
   readonly #hostOf: HostOf;
   #hosts: Host[] = [];
   #layout: Layout | null = null;
+  /** The split the hosts were drawn for: none with one page. */
+  #split: SplitSpec | null = null;
 
   constructor(of: ChromeOf) {
     this.#of = of;
@@ -42,9 +45,12 @@ export class Chrome {
     return this.#layout;
   }
 
-  /** Draw `layout`'s hosts in place of the last one's; the keyboard stays on the same command. */
-  mount(layout: Layout): void {
-    if (layout === this.#layout) return;
+  /**
+   * Draw `layout`'s hosts in place of the last one's, as `split` has them
+   * while the window is split; the keyboard stays on the same command.
+   */
+  mount(layout: Layout, split: SplitSpec | null = null): void {
+    if (layout === this.#layout && split === this.#split) return;
     const active = document.activeElement;
     const held =
       active instanceof HTMLElement && this.#hosts.some((host) => host.element.contains(active))
@@ -52,19 +58,19 @@ export class Chrome {
         : undefined;
     this.unmount();
     const spec = LAYOUT_SPECS[layout];
-    this.#hosts = [...spec.desktop, spec.phone].map((each) => new Host(each, this.#hostOf));
+    this.#hosts = [...splitHosts(spec, split), spec.phone].map(
+      (each) => new Host(each, this.#hostOf),
+    );
     for (const host of this.#hosts) {
       const slot = this.#of.slots[host.spec.slot];
       if (host.spec.first) slot.prepend(host.element);
       else slot.append(host.element);
       this.#of.watch(host.element);
     }
-    if (this.#of.pager) {
-      const { slot, before } = spec.pager;
-      const next = this.#hosts.find((host) => host.spec.name === before)?.element ?? null;
-      this.#of.slots[slot].insertBefore(this.#of.pager, next);
-    }
+    const tools = this.#hosts.find((host) => host.spec.name === spec.tools);
+    if (this.#of.pager && tools) tools.element.before(this.#of.pager);
     this.#layout = layout;
+    this.#split = split;
     if (active instanceof HTMLElement && !active.isConnected) {
       const twin = held
         ? this.#hosts.map((host) => host.button(held)).find((button) => button?.checkVisibility())
@@ -79,6 +85,7 @@ export class Chrome {
     for (const host of this.#hosts) host.element.remove();
     this.#hosts = [];
     this.#layout = null;
+    this.#split = null;
   }
 
   /** Run `id`, as its button does. */

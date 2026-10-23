@@ -154,7 +154,7 @@ test.describe('a long session', () => {
         await cdp.send('HeapProfiler.collectGarbage');
         return (await cdp.send('Runtime.getHeapUsage')).usedSize;
       };
-      const pages = page.locator('.page__pages > .page__scroll');
+      const pages = page.locator('.page__pages > .page__leaf');
       const besideAndBack = async (times: number) => {
         for (let i = 0; i < times; i++) {
           const note = `Note ${String((i % (NOTES - 1)) + 1).padStart(2, '0')}`;
@@ -173,7 +173,7 @@ test.describe('a long session', () => {
         }
       };
       await page.locator('.note-row[data-path="Note 00.md"]').click();
-      await expect(page.locator('.page__scroll[data-active] .title')).toHaveText('Note 00');
+      await expect(page.locator('.page__leaf[data-active] .title')).toHaveText('Note 00');
       await besideAndBack(3); // warmed up
       const elementsBefore = await elements(page);
       const before = await heap();

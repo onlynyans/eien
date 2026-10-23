@@ -148,9 +148,9 @@ test.describe('three thousand notes', () => {
       const time = await stalls(page);
       await time.mark();
       await rows.nth(1).click({ modifiers: ['ControlOrMeta'] });
-      await expect(page.locator('.page__pages > .page__scroll')).toHaveCount(2);
+      await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
       for (let i = 2; i < 6; i++) await rows.nth(i).click(); // notes on the active page
-      await page.locator('.page__pages > .page__scroll:not([data-active]) .sheet').click();
+      await page.locator('.page__pages > .page__leaf:not([data-active]) .sheet').click();
       const divider = page.getByRole('separator', { name: 'Between the two pages' });
       const at = await divider.boundingBox();
       if (!at) throw new Error('no divider');

@@ -21,11 +21,14 @@ function fakeRoot() {
   return { root: root as unknown as HTMLElement, dataset: root.dataset, properties };
 }
 
+/** What <html> says at the defaults: what every stylesheet names, the default too. */
+const AT_REST = { layout: 'band', split: 'sheets', facingMark: 'ribbon', shutSidebar: 'seal' };
+
 describe('applyLook', () => {
-  it('sets nothing but the layout, the shut sidebar and the scales at the defaults', () => {
+  it('sets nothing but the layout, the split, its mark, the shut sidebar and the scales at the defaults', () => {
     const { root, dataset, properties } = fakeRoot();
     applyLook(DEFAULT_SETTINGS, root);
-    expect(dataset).toEqual({ layout: 'band', shutSidebar: 'seal' });
+    expect(dataset).toEqual(AT_REST);
     expect(Object.fromEntries(properties)).toEqual({
       '--eien-text-scale': '1',
       '--eien-zoom': '1',
@@ -42,6 +45,8 @@ describe('applyLook', () => {
         'appearance.density': 'compact',
         'appearance.frame': 'full',
         'appearance.layout': 'runhead',
+        'appearance.split': 'facing',
+        'appearance.facingMark': 'dogear',
         'appearance.textSize': 120,
         'page.zoom': 150,
       },
@@ -53,6 +58,8 @@ describe('applyLook', () => {
       density: 'compact',
       frame: 'full',
       layout: 'runhead',
+      split: 'facing',
+      facingMark: 'dogear',
     });
     expect(properties.get('--eien-text-scale')).toBe('1.2');
     expect(properties.get('--eien-zoom')).toBe('1.5');
@@ -64,14 +71,9 @@ describe('applyLook', () => {
       { ...DEFAULT_SETTINGS, 'appearance.scheme': 'day', 'appearance.face': 'hanken' },
       root,
     );
-    expect(dataset).toEqual({
-      theme: 'light',
-      face: 'hanken',
-      layout: 'band',
-      shutSidebar: 'seal',
-    });
+    expect(dataset).toEqual({ theme: 'light', face: 'hanken', ...AT_REST });
     applyLook(DEFAULT_SETTINGS, root);
-    expect(dataset).toEqual({ layout: 'band', shutSidebar: 'seal' });
+    expect(dataset).toEqual(AT_REST);
   });
 
   it('says how a shut sidebar looks in Band and Slip, and nothing in Running head', () => {

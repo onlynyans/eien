@@ -25,13 +25,16 @@ export interface HostOf {
   press(id: CommandId, opener: HTMLElement): void;
 }
 
-export class Host {
+/** What a host draws: its name, label and commands; where it goes is its owner's (a layout's slot, a page). */
+export type HostDraw = Pick<HostSpec, 'name' | 'label' | 'items' | 'icons'>;
+
+export class Host<Spec extends HostDraw = HostSpec> {
   readonly element: HTMLElement;
-  readonly spec: HostSpec;
+  readonly spec: Spec;
   readonly #of: HostOf;
   readonly #buttons = new Map<CommandId, HTMLButtonElement>();
 
-  constructor(spec: HostSpec, of: HostOf) {
+  constructor(spec: Spec, of: HostOf) {
     this.spec = spec;
     this.#of = of;
     const items = spec.items.map((item) =>

@@ -10,8 +10,8 @@ import type { Page } from '@playwright/test';
 import { ALONE, boxOf, clickMenu, expect, readQuietly, test } from './launch';
 
 const row = (page: Page, title: string) => page.locator('.note-row', { hasText: title });
-const pages = (page: Page) => page.locator('.page__pages > .page__scroll');
-const active = (page: Page) => page.locator('.page__pages > .page__scroll[data-active]');
+const pages = (page: Page) => page.locator('.page__pages > .page__leaf');
+const active = (page: Page) => page.locator('.page__pages > .page__leaf[data-active]');
 const editorIn = (scroll: ReturnType<typeof pages>) => scroll.locator('.cm-content');
 
 /** Open the note titled `title` on the page, and wait for its words. */
@@ -109,16 +109,16 @@ test.describe('the split', () => {
     await page.setViewportSize({ width: 1400, height: 800 });
     await openNote(page, 'Chapter', 'The gate held.');
     await row(page, 'Notes').click({ modifiers: ['ControlOrMeta'] });
-    await expect(page.locator('.page__pages[data-folded]')).toHaveCount(0);
+    await expect(page.locator('.page__pages[data-narrow="fold"]')).toHaveCount(0);
     await page.setViewportSize({ width: 1000, height: 800 }); // the page well under two 360 px pages
-    await expect(page.locator('.page__pages[data-folded]')).toHaveCount(1);
+    await expect(page.locator('.page__pages[data-narrow="fold"]')).toHaveCount(1);
     await expect(pages(page).filter({ visible: true })).toHaveCount(1);
     const pager = page.getByRole('group', { name: 'The two pages' });
     await expect(pager.getByRole('button')).toHaveText(['Chapter', 'Notes']);
     await pager.getByRole('button', { name: 'Chapter' }).click();
     await expect(editorIn(active(page))).toContainText('The gate held.');
     await page.setViewportSize({ width: 1400, height: 800 });
-    await expect(page.locator('.page__pages[data-folded]')).toHaveCount(0);
+    await expect(page.locator('.page__pages[data-narrow="fold"]')).toHaveCount(0);
   });
 
   test('moves the divider by a drag, and evens it with a double-click', ALONE, async ({ page }) => {
