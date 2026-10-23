@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — The window's corner: 3 · The desk’s shoulder</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:corner.css*/
+
+/* 3 · The desk's shoulder: the strip stays 48px, but at its top it widens
+   into a shoulder of desk just wide enough for macOS's lights, one band tall,
+   its outer corner the layout's large radius. The seal tucks under the lights.
+   With no lights (full screen, Windows, Linux) there's no shoulder, and the
+   seal rises to the top. */
+.win[data-way='new'] { --shoulder-w: calc(var(--controls-left) + var(--eien-space-2)); }
+.win[data-way='new'] .shoulder {
+  position: absolute; z-index: 4; left: calc(var(--strip) - var(--eien-hairline)); top: 0;
+  width: calc(var(--shoulder-w) - var(--strip) + var(--eien-hairline)); height: var(--band);
+  background: var(--eien-desk); border: var(--eien-hairline) solid var(--eien-rule); border-width: 0 var(--eien-hairline) var(--eien-hairline) 0;
+  border-bottom-right-radius: var(--eien-radius-l);
+}
+.win[data-way='new'][data-os='mac'][data-full='no'][data-sb='shut'] .shoulder { display: block; }
+.win[data-way='new'][data-os='mac'][data-full='no'][data-sb='shut'] .ls__band { padding-left: calc(var(--shoulder-w) - var(--strip) + var(--eien-space-3)); }
+.win[data-way='new'][data-full='yes'][data-sb='shut'] { --seal-y: calc(var(--band) / 2); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:corner.js*/
+
+mountCornerPage({
+  id: 'shoulder',
+  note: 'The strip widens at its top into a shoulder of desk that holds the lights; the seal tucks under them.',
+  notes: `
+  <h2>3 · The desk's shoulder</h2>
+  <p>The strip stays 48px, but at its top it widens into a shoulder of desk just wide enough for macOS's lights: 88px, one band tall, its outer corner rounded by the layout's large radius (8px in Band, 14px in Slip). The lights sit wholly on the desk, as they do over the open sidebar, and the seal tucks into the strip under them. In full screen, and on Windows and Linux, there are no lights at the left, so there's no shoulder, and the seal rises to the strip's top.</p>
+  <h2>For</h2>
+  <ul>
+    <li>It keeps the decided pattern, a strip of desk with the seal, and mends only what's awkward: the lights on two surfaces, and the empty corner in full screen.</li>
+    <li>The fewest changes: a shoulder drawn while the sidebar's shut on macOS, and the seal's "a band lower" only while there are lights.</li>
+  </ul>
+  <h2>Against</h2>
+  <ul>
+    <li>A new shape: an L of desk, the only one of its kind in the window, and a corner the panes don't otherwise have.</li>
+    <li>On macOS the seal still sits a band below the lights, and moves up and down as the window goes full screen and back.</li>
+    <li>The list's band gives 40px more at its left while the sidebar's shut.</li>
+  </ul>
+  <h2>In the app</h2>
+  <p><code>sidebar.css</code> draws the shoulder on <code>.sidebar__strip</code> (a pseudo-element past the strip's edge, as wide as <code>--controls-left</code> plus a space) and moves the seal down only while there are lights. If <code>env(titlebar-area-x)</code> reads 0 in full screen (to be checked in Electron), <code>--controls-left</code> says so with no new code; if not, the main process tells the window on <code>enter-full-screen</code> and <code>leave-full-screen</code>. <code>list.css</code>'s keep-clear sum takes the shoulder's width.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>the seal: it shuts and opens the sidebar, as in the app</li>
+    <li>Window → Full screen, with the sidebar shut: no lights, and no empty corner</li>
+    <li>System → Windows, Linux: their controls are at the right, so the left corner is the seal's alone</li>
+    <li>Show → As built now, to see what this replaces; View → All states, for the six side by side</li>
+  </ul>
+  <h2>As built now</h2>
+  <p>Shut, the sidebar is a 48px strip, but macOS's lights stand 20 to 72px from the window's edge: they hang over the strip's edge onto the list's band, half on the desk and half off it, and the seal waits a band lower. In full screen there are no lights, yet the seal still waits a band down, alone under an empty corner.</p>`,
+});
+</script>
+</body>
+</html>

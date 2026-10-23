@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Tables in Live: 3 · Menus</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:table.css*/
+
+/* 3 · Menus: a grip on each row and column, as a list's rows have. Press it
+   for that row's or column's menu, drag it to move them; right-click a cell
+   for both. */
+.grip {
+  position: absolute; translate: -50% -50%; display: grid; place-items: center; padding: 0;
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none;
+  color: var(--eien-pencil); cursor: grab; touch-action: none; opacity: 0;
+  transition: opacity var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease);
+}
+.grip--row { width: 20px; height: 26px; }
+.grip--col { width: 26px; height: 18px; }
+.grip svg { width: 14px; height: 14px; }
+.grip:is(.is-shown, :hover, :focus-visible, [aria-expanded='true']) { opacity: 1; }
+@media (hover: hover) { .grip:hover { color: var(--eien-ink); background: var(--eien-hover); } }
+.grip[aria-expanded='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.grip[hidden] { display: none; }
+.tbl-wrap.is-dragging, .tbl-wrap.is-dragging .grip { cursor: grabbing; }
+.tbl-wrap.is-dragging .tbl { user-select: none; }
+.tbl .is-dragged { position: relative; z-index: 2; box-shadow: inset 0 0 0 var(--eien-hairline) var(--eien-rule-strong); }
+.tbl-wrap.is-dragging .tbl :is(th, td):not(.is-dragged) { opacity: 0.72; }
+/* The drop line, as your order's: 2px ink-soft, across or down the table. */
+.drop { position: absolute; display: none; background: var(--eien-ink-soft); border-radius: var(--eien-radius-dot); pointer-events: none; }
+.drop.is-on { display: block; }
+
+/* The menu: a row's menu, as the sidebar's is. */
+.menu {
+  position: absolute; z-index: 30; min-width: 232px; padding: var(--eien-space-1);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float);
+}
+.menu[hidden] { display: none; }
+.menu__head { padding: 6px var(--eien-space-2) 4px; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu__item {
+  appearance: none; display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: var(--eien-space-2); width: 100%;
+  padding: 5px var(--eien-space-2); border: 0; border-radius: var(--eien-radius-s); background: none; cursor: pointer; text-align: left;
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft);
+}
+.menu__item:focus { outline: none; background: var(--eien-selected); color: var(--eien-ink); }
+.menu__item:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: -2px; }
+@media (hover: hover) { .menu__item:not([aria-disabled='true']):hover { background: var(--eien-hover); color: var(--eien-ink); } }
+.menu__item[aria-disabled='true'] { color: var(--eien-faded); cursor: default; }
+.menu__item--danger, .menu__item--danger:focus { color: var(--eien-danger, var(--eien-removed)); }
+.menu__key { font-size: var(--eien-size-label); color: var(--eien-pencil); letter-spacing: 0.04em; }
+.menu__dot { justify-self: end; width: 5px; height: 5px; margin-right: 4px; border-radius: var(--eien-radius-dot); background: var(--eien-ink); }
+.menu__rule { height: var(--eien-hairline); margin: var(--eien-space-1) var(--eien-space-2); background: var(--eien-rule-soft); }
+
+/* A phone: the grips at a finger's size; the menu is the phone's bottom sheet. */
+.is-touch .grip--row { width: 32px; height: 40px; }
+.is-touch .grip--col { width: 40px; height: 28px; }
+.is-touch .pane > .menu {
+  left: 0; right: 0; bottom: 0; top: auto; min-width: 0; padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-4);
+  border-radius: var(--eien-radius-l) var(--eien-radius-l) 0 0; border-width: var(--eien-hairline) 0 0;
+}
+.is-touch .menu__item { min-height: var(--eien-touch); font-size: 13px; }
+.is-touch .menu__key { display: none; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:table.js*/
+
+mountTablePage({
+  id: 'menus',
+  name: 'the plan',
+  note: 'A grip on each row and column: press it for its menu, drag it to move. Right-click a cell for both.',
+  notes: `
+  <h2>3 · A menu and a grip per row and column</h2>
+  <p>A grip at each row's left and over each column, as a list's rows have, showing for the row and column under the pointer or the caret. Press a grip for that row's or column's menu, in the right-click menu's style (its name at the head, an icon, a word and a key per choice, removal last in carmine); drag it to move the row or column, with your order's drop line. Right-click a cell for both menus at once.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>drag a row's grip up or down, or a column's sideways</li>
+    <li>a column's menu: add, align (the dot is the column's now), move, remove</li>
+    <li>right-click a cell, or <kbd>${KEY('Shift-F10')}</kbd> in it</li>
+    <li><kbd>${KEY('Alt-↑')}</kbd> <kbd>${KEY('Alt-↓')}</kbd> in a cell move its row, as they move a line elsewhere in the editor</li>
+  </ul>
+  ${SHARED_KEYS()}
+  <h2>On a phone</h2>
+  <p>The caret's row and column keep their grips, finger-sized. A tap on a grip, or a long press on a cell, opens the menu as the phone's bottom sheet; a long press on a grip and a drag moves the row (Show → Phone; right-click stands in for the long press).</p>`,
+});
+useEdges();
+
+const pane = document.querySelector('.pane');
+const menu = document.createElement('div');
+menu.className = 'menu';
+menu.setAttribute('role', 'menu');
+menu.dataset.tablePart = '';
+menu.hidden = true;
+const drop = document.createElement('div');
+drop.className = 'drop';
+let built = '';
+let opener = null;
+
+function build() {
+  const n = cols();
+  let html = '';
+  for (let c = 0; c < n; c++) html += `<button class="grip grip--col" data-grip-col="${c}" aria-haspopup="menu" aria-expanded="false" aria-label="Column ${escHtml(colName(c))}: menu, or drag to move" data-tip="Column ${escHtml(colName(c))}: press for its menu, drag to move" data-tip-side="up">${icon('gripCol')}</button>`;
+  for (let r = 1; r <= T.rows.length; r++) html += `<button class="grip grip--row" data-grip-row="${r}" aria-haspopup="menu" aria-expanded="false" aria-label="Row ${r}: menu, or drag to move" data-tip="Row ${r}: press for its menu, drag to move" data-tip-side="left">${icon('gripRow')}</button>`;
+  layer.innerHTML = html;
+  layer.append(drop);
+  if (!isTouch()) layer.append(menu);
+}
+
+function place() {
+  const key = `${T.head.join('|')}/${T.rows.length}`;
+  if (key !== built && !layer.contains(document.activeElement) && !dragging) { build(); built = key; }
+  const g = geometry();
+  const touch = isTouch();
+  for (const el of layer.querySelectorAll('[data-grip-col]')) {
+    const c = +el.dataset.gripCol;
+    const x = g.cols[c].x + g.cols[c].w / 2;
+    el.style.left = `${x}px`;
+    el.style.top = `${g.top - 14}px`;
+    el.hidden = x < g.left || x > g.right;
+    el.classList.toggle('is-shown', (!touch && hover.c === c) || (inTable && here.c === c));
+  }
+  for (const el of layer.querySelectorAll('[data-grip-row]')) {
+    const r = +el.dataset.gripRow;
+    el.style.left = `${g.left - 16}px`;
+    el.style.top = `${g.rows[r].y + g.rows[r].h / 2}px`;
+    el.classList.toggle('is-shown', (!touch && hover.r === r) || (inTable && here.r === r));
+  }
+  const home = touch ? pane : layer;
+  if (menu.parentElement !== home) home.append(menu);
+}
+Table.onDraw = place;
+Table.onMove = place;
+
+// The menus: a row's, a column's, or a cell's (both).
+function rowItems(r) {
+  if (r === 0) return [{ icon: 'rowBelow', word: 'Add a row below', key: 'Mod-Alt-↓', run: () => ops.insertRow(0) }];
+  return [
+    { icon: 'rowAbove', word: 'Add a row above', key: 'Mod-Alt-↑', run: () => ops.insertRow(r - 1) },
+    { icon: 'rowBelow', word: 'Add a row below', key: 'Mod-Alt-↓', run: () => ops.insertRow(r) },
+    { icon: 'up', word: 'Move up', key: 'Alt-↑', off: r === 1, run: () => ops.moveRow(r, r - 2) },
+    { icon: 'down', word: 'Move down', key: 'Alt-↓', off: r === T.rows.length, run: () => ops.moveRow(r, r) },
+  ];
+}
+function colItems(c) {
+  const n = cols();
+  return [
+    { icon: 'colLeft', word: 'Add a column left', key: 'Mod-Alt-←', run: () => ops.insertCol(c) },
+    { icon: 'colRight', word: 'Add a column right', key: 'Mod-Alt-→', run: () => ops.insertCol(c + 1) },
+    '|',
+    ...['left', 'center', 'right'].map((a) => ({ icon: ALIGN_ICON[a], word: `Align ${a === 'center' ? 'centre' : a}`, checked: T.align[c] === a, run: () => ops.align(c, a) })),
+    '|',
+    { icon: 'left', word: 'Move left', off: c === 0, run: () => ops.moveCol(c, c - 1) },
+    { icon: 'right', word: 'Move right', off: c === n - 1, run: () => ops.moveCol(c, c + 1) },
+  ];
+}
+const removeRow = (r) => ({ icon: 'trash', word: 'Remove row', key: 'Mod-Alt-⌫', danger: true, aim: ['row', r], run: () => ops.deleteRow(r) });
+const removeCol = (c) => ({ icon: 'trash', word: 'Remove column', key: 'Mod-Alt-Shift-⌫', danger: true, off: cols() === 1, aim: ['col', c], run: () => ops.deleteCol(c) });
+
+let items = [];
+function openMenu({ head, groups, at, from }) {
+  items = [];
+  const itemHtml = (it) => {
+    if (it === '|') return '<div class="menu__rule" role="separator"></div>';
+    const i = items.push(it) - 1;
+    const role = it.checked === undefined ? 'menuitem' : 'menuitemradio';
+    return `<button class="menu__item${it.danger ? ' menu__item--danger' : ''}" role="${role}" tabindex="-1" data-i="${i}"${it.checked !== undefined ? ` aria-checked="${it.checked}"` : ''}${it.off ? ' aria-disabled="true"' : ''}>${icon(it.icon)}<span>${it.word}</span>${it.checked ? '<span class="menu__dot" aria-hidden="true"></span>' : `<span class="menu__key">${it.key ? KEY(it.key) : ''}</span>`}</button>`;
+  };
+  menu.setAttribute('aria-label', head);
+  menu.innerHTML = `<div class="menu__head" aria-hidden="true">${escHtml(head)}</div>` + groups.map((g) => g.map(itemHtml).join('')).join('<div class="menu__rule" role="separator"></div>');
+  menu.hidden = false;
+  opener = from;
+  opener?.setAttribute?.('aria-expanded', 'true');
+  if (!isTouch()) {
+    // Kept over the sheet: never past the table's right edge, nor further left than its grips.
+    const g = geometry();
+    menu.style.left = `${Math.max(g.left - 32, Math.min(at.x, g.right - menu.offsetWidth))}px`;
+    menu.style.top = `${at.y}px`;
+  } else menu.style.left = menu.style.top = '';
+  menu.querySelector('.menu__item:not([aria-disabled="true"])')?.focus();
+}
+function closeMenu(back = true) {
+  if (menu.hidden) return;
+  menu.hidden = true;
+  aim();
+  opener?.setAttribute?.('aria-expanded', 'false');
+  if (back) (opener?.isConnected ? opener : cellAt(here.r, here.c))?.focus();
+  opener = null;
+}
+const localOf = (x, y) => { const b = wrap.getBoundingClientRect(); return { x: x - b.left, y: y - b.top }; };
+function rowMenu(r, from, at) { openMenu({ head: r === 0 ? 'The head row' : `Row ${r}`, groups: [rowItems(r), r ? [removeRow(r)] : []].filter((g) => g.length), at, from }); }
+function colMenu(c, from, at) { openMenu({ head: `Column · ${colName(c)}`, groups: [colItems(c), [removeCol(c)]], at, from }); }
+function cellMenu(r, c, from, at) {
+  openMenu({ head: `${r === 0 ? 'Head' : `Row ${r}`} · ${colName(c)}`, groups: [rowItems(r), colItems(c), [...(r ? [removeRow(r)] : []), removeCol(c)]], at, from });
+}
+
+menu.addEventListener('mousedown', (e) => e.preventDefault());
+menu.addEventListener('click', (e) => {
+  const b = e.target.closest('.menu__item');
+  if (!b || b.getAttribute('aria-disabled') === 'true') return;
+  const it = items[+b.dataset.i];
+  closeMenu(false);
+  if (it.run() === false) toCell();
+});
+menu.addEventListener('pointerover', (e) => { const it = items[+e.target.closest('.menu__item')?.dataset.i]; aim(...(it?.aim ?? [])); });
+menu.addEventListener('focusin', (e) => { const it = items[+e.target.closest('.menu__item')?.dataset.i]; aim(...(it?.aim ?? [])); });
+menu.addEventListener('keydown', (e) => {
+  const list = [...menu.querySelectorAll('.menu__item')];
+  const i = list.indexOf(document.activeElement);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: list.length - 1 }[e.key];
+  if (to !== undefined) { e.preventDefault(); list[(to + list.length) % list.length].focus(); }
+  else if (e.key === 'Escape') { e.preventDefault(); closeMenu(); }
+  else if (e.key === 'Tab') { e.preventDefault(); closeMenu(); }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.activeElement.click(); }
+});
+document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !menu.contains(e.target) && !opener?.contains?.(e.target)) closeMenu(false); });
+
+// Right-click a cell (a long press on a phone), or Shift-F10 in it: both its menus.
+table.addEventListener('contextmenu', (e) => {
+  const cell = e.target.closest('.cell');
+  if (!cell) return;
+  e.preventDefault();
+  const { r, c } = posOf(cell);
+  if (document.activeElement !== cell) focusCell(r, c);
+  cellMenu(r, c, cell, localOf(e.clientX, e.clientY));
+});
+Table.onKey = (e) => {
+  if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') {
+    e.preventDefault();
+    const cell = cellAt(here.r, here.c);
+    const b = cell.getBoundingClientRect();
+    cellMenu(here.r, here.c, cell, localOf(b.left + 8, b.bottom + 4));
+    return true;
+  }
+  // Alt-↑ ↓ move the row, as they move a line elsewhere in the editor.
+  if (e.altKey && !mod(e) && !e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && here.r > 0) {
+    e.preventDefault();
+    if (e.key === 'ArrowUp' && here.r > 1) ops.moveRow(here.r, here.r - 2);
+    if (e.key === 'ArrowDown' && here.r < T.rows.length) ops.moveRow(here.r, here.r);
+    return true;
+  }
+  return false;
+};
+
+// A grip: pressed, its menu; dragged, the row or column moves, with the drop line where it would land.
+let dragging = null;
+layer.addEventListener('pointerdown', (e) => {
+  const grip = e.target.closest('.grip');
+  if (!grip || e.button !== 0) return;
+  e.preventDefault();
+  grip.setPointerCapture(e.pointerId);
+  const kind = grip.dataset.gripRow ? 'row' : 'col';
+  const from = +(grip.dataset.gripRow ?? grip.dataset.gripCol);
+  dragging = { kind, from, grip, start: { x: e.clientX, y: e.clientY }, moved: false, to: null, g: geometry() };
+});
+layer.addEventListener('pointermove', (e) => {
+  const d = dragging;
+  if (!d) return;
+  const dx = e.clientX - d.start.x;
+  const dy = e.clientY - d.start.y;
+  if (!d.moved && Math.hypot(dx, dy) < 4) return;
+  if (!d.moved) {
+    d.moved = true;
+    closeMenu(false);
+    wrap.classList.add('is-dragging');
+    d.cells = d.kind === 'row' ? [...table.querySelectorAll(`tr[data-r="${d.from}"] > *`)] : [...table.querySelectorAll(`[data-c="${d.from}"]:is(th, td)`)];
+    for (const el of d.cells) el.classList.add('is-dragged');
+  }
+  for (const el of d.cells) el.style.translate = d.kind === 'row' ? `0 ${dy}px` : `${dx}px 0`;
+  const p = localOf(e.clientX, e.clientY);
+  const { g } = d;
+  if (d.kind === 'row') {
+    const rest = g.rows.slice(1).filter((_, i) => i + 1 !== d.from);
+    d.to = rest.filter((row) => row.y + row.h / 2 < p.y).length;
+    const y = d.to < rest.length ? rest[d.to].y : rest.at(-1).y + rest.at(-1).h;
+    Object.assign(drop.style, { left: `${g.left}px`, width: `${g.right - g.left}px`, top: `${y - 1}px`, height: '2px' });
+    drop.classList.toggle('is-on', d.to + 1 !== d.from);
+  } else {
+    const rest = g.cols.filter((_, i) => i !== d.from);
+    d.to = rest.filter((col) => col.x + col.w / 2 < p.x).length;
+    const x = d.to < rest.length ? rest[d.to].x : rest.at(-1).x + rest.at(-1).w;
+    Object.assign(drop.style, { left: `${x - 1}px`, width: '2px', top: `${g.top}px`, height: `${g.height}px` });
+    drop.classList.toggle('is-on', d.to !== d.from);
+  }
+});
+function endDrag(e, cancel) {
+  const d = dragging;
+  if (!d) return;
+  dragging = null;
+  drop.classList.remove('is-on');
+  wrap.classList.remove('is-dragging');
+  for (const el of d.cells ?? []) { el.classList.remove('is-dragged'); el.style.translate = ''; }
+  if (cancel) return;
+  if (!d.moved) {
+    const b = d.grip.getBoundingClientRect();
+    const at = localOf(d.kind === 'row' ? b.right + 4 : b.left, b.bottom + 4);
+    (d.kind === 'row' ? rowMenu : colMenu)(d.from, d.grip, at);
+  } else if (d.kind === 'row') ops.moveRow(d.from, d.to);
+  else ops.moveCol(d.from, d.to);
+}
+layer.addEventListener('pointerup', (e) => endDrag(e, false));
+layer.addEventListener('pointercancel', (e) => endDrag(e, true));
+// The keyboard opens a grip's menu with Enter or Space, as any button.
+layer.addEventListener('click', (e) => {
+  const grip = e.target.closest('.grip');
+  if (!grip || e.detail !== 0) return;
+  const b = grip.getBoundingClientRect();
+  if (grip.dataset.gripRow) rowMenu(+grip.dataset.gripRow, grip, localOf(b.right + 4, b.top));
+  else colMenu(+grip.dataset.gripCol, grip, localOf(b.left, b.bottom + 4));
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dragging) endDrag(e, true); });
+
+requestAnimationFrame(place);
+</script>
+</body>
+</html>

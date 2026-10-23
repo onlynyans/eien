@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — The window's corner: 3 · The desk’s shoulder</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/* Shared by every exploration (inlined into each page by _build.py).
+   The tokens are the approved ones from ../tokens.css (Washi, day and night),
+   plus what the design pass adds: a radius scale, icon sizes, the machine
+   face as a setting, and row weights. New tokens are marked NEW. */
+
+:root { color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+:root {
+  --eien-desk: light-dark(#d9d2c8, #110e0b);
+  --eien-blotter: light-dark(#eae5dd, #1a1713);
+  --eien-band: light-dark(#f4f1ea, #201d19);
+  --eien-paper: light-dark(#fdfbf7, #28241f);
+  --eien-paper-raised: light-dark(#ffffff, #312d28);
+  --eien-well: light-dark(#f9f7f3, #24201c);
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05));
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1));
+  --eien-selected: light-dark(#ede9e3, #38332e);
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5));
+  --eien-shadow-sheet: 0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float: 0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  --eien-ink: light-dark(#23201c, #e9e2d4);
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7);
+  --eien-pencil: light-dark(#5d5348, #a7a095);
+  --eien-faded: light-dark(#766d62, #837c73);
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07));
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.14));
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.26));
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px;
+  --eien-seal: light-dark(#c4472d, #e0603f);
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12));
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714);
+  --eien-focus: var(--eien-ink-soft);
+  --eien-added: light-dark(#485c2c, #9cb880);
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0);
+  --eien-caution: light-dark(#6b501f, #d0a659);
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+
+  /* The machine voice: IBM Plex Mono by default, now a setting (NEW: set from FACES). */
+  --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --eien-size-meta: 11px;
+  --eien-size-label: 10px;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em;
+  --eien-space-1: 4px; --eien-space-2: 8px; --eien-space-3: 12px; --eien-space-4: 16px;
+  --eien-space-5: 24px; --eien-space-6: 32px; --eien-space-7: 48px; --eien-space-8: 72px;
+  --eien-row-h: 30px;
+  --eien-touch: 44px;
+  --eien-seal-size: 22px;
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms;
+  --eien-calm: 220ms;
+  --eien-leading-tighten: 0;
+  --eien-sheet-pad-x: var(--eien-space-8);
+  --eien-sheet-pad-top: var(--eien-space-7);
+  --eien-page-gutter: var(--eien-space-5);
+  --eien-title-gap: var(--eien-space-6);
+  --eien-paragraph-gap: var(--eien-space-4);
+  --eien-row-pad-y: var(--eien-space-3);
+
+  /* NEW: corners. Not everything is square. A small scale: s for what you press
+     (buttons, fields, chips), m for what floats (menus, popovers, the tool slip),
+     l for what covers the window (a sheet over it, the phone's bottom sheet).
+     Paper itself (the sheet, the panes) stays square. Each exploration sets its own. */
+  --eien-radius-s: 3px;
+  --eien-radius-m: 6px;
+  --eien-radius-l: 10px;
+  --eien-radius-dot: 999px;
+
+  /* NEW: icons. Drawn on a 16-unit grid, stroked in the ink they sit in. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
+
+  /* NEW: row names' weight, two settings (400–700). A selected list title is 100 heavier. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+}
+
+/* The text voice: the writer's choice, sizes tuned per face (from ../tokens.css). */
+:root, [data-face='newsreader'] { --eien-face-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; --eien-size-prose: 22px; --eien-size-title: 36px; --eien-size-heading: 23px; --eien-size-row: 16px; --eien-size-preview: 14px; --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten)); --eien-measure: 29em; }
+[data-face='literata'] { --eien-face-text: 'Literata', Georgia, serif; --eien-size-prose: 19px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten)); --eien-measure: 34em; }
+[data-face='plex-sans'] { --eien-face-text: 'IBM Plex Sans', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='source-sans'] { --eien-face-text: 'Source Sans 3', Arial, sans-serif; --eien-size-prose: 20px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+[data-face='atkinson'] { --eien-face-text: 'Atkinson Hyperlegible Next', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='schibsted'] { --eien-face-text: 'Schibsted Grotesk', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 33em; }
+[data-face='hanken'] { --eien-face-text: 'Hanken Grotesk', Arial, sans-serif; --eien-size-prose: 19px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='instrument'] { --eien-face-text: 'Instrument Sans', Arial, sans-serif; --eien-size-prose: 18.5px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--eien-seal-wash); }
+:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+
+.seal {
+  display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-seal-size); height: var(--eien-seal-size);
+  background: var(--eien-seal); color: var(--eien-on-seal);
+  font-family: var(--eien-face-seal); font-size: calc(var(--eien-seal-size) * 0.68); line-height: 1;
+  border-radius: calc(var(--eien-radius-s) / 2);
+  user-select: none;
+}
+.seal--small { --eien-seal-size: 10px; font-size: 0; }
+
+.label {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil);
+}
+.count {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums; color: var(--eien-pencil);
+}
+
+/* Where a word stays (menus, choices of a setting). */
+.word-button {
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; padding: var(--eien-space-1) var(--eien-space-2);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.word-button[aria-pressed='true'], .word-button[aria-checked='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* NEW: the icon control. The word button's states, a square of --eien-control. */
+.icon-button {
+  appearance: none; display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-control); height: var(--eien-control); padding: 0;
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; position: relative;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon-button svg, .icon { width: var(--eien-icon); height: var(--eien-icon); display: block; }
+.icon { stroke-width: var(--eien-icon-stroke); }
+.icon-button[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.icon-button:disabled { color: var(--eien-faded); cursor: default; }
+@media (hover: hover) {
+  .word-button:hover, .icon-button:not(:disabled):hover { color: var(--eien-ink); background: var(--eien-hover); }
+}
+.word-button:active, .icon-button:not(:disabled):active { background: var(--eien-press); border-color: var(--eien-rule-strong); }
+
+/* NEW: a tooltip names an icon and its key: raised paper, the machine voice. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip); position: absolute; z-index: 50; pointer-events: none;
+  left: 50%; top: calc(100% + 6px); translate: -50% 0;
+  white-space: pre; padding: 3px 7px; border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em;
+  text-transform: none; color: var(--eien-ink-soft);
+  opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease);
+}
+[data-tip-side='up']::after { top: auto; bottom: calc(100% + 6px); }
+[data-tip-side='right']::after { left: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+[data-tip-side='left']::after { left: auto; right: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+@media (hover: hover) { [data-tip]:hover::after { opacity: 1; transition-delay: 450ms; } }
+[data-tip]:focus-visible::after { opacity: 1; }
+
+.field {
+  appearance: none; width: 100%; border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-s); background: var(--eien-well);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink);
+}
+.field::placeholder { color: var(--eien-faded); }
+.field:focus { outline: none; border-color: var(--eien-focus); }
+
+/* Explorations' own bar: outside the app, like the mockups' bar. */
+.xbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--eien-space-1) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-paper-raised); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.xbar__name { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); font-weight: 600; }
+.xbar__group { display: flex; align-items: center; gap: 2px; }
+.xbar__label { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); margin-right: var(--eien-space-1); }
+.xnote { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+
+/* Shared by the three window-corner explorations (corner-*.html): Eien's
+   window as built, at its real size, in A · Band or B · Slip, on macOS or
+   Windows and Linux, in a window or full screen, the sidebar open or shut.
+   Each page adds only its own rules, under .win[data-way='new']. */
+/* Each layout's corners, as src/ui/chrome/*.css sets them on :root[data-layout]:
+   A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10. */
+:root[data-layout='band'] { --eien-radius-s: 2px; --eien-radius-m: 4px; --eien-radius-l: 8px; }
+:root[data-layout='slip'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; }
+:root[data-layout='runhead'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; }
+a.word-button { text-decoration: none; }
+.word-button[aria-current='page'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px); }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 45%); } }
+/* The canvas: a quiet desktop the window sits on; the window scales to fit it. */
+.canvas { min-height: 0; overflow: auto; padding: var(--eien-space-5); background: light-dark(#cfc8bd, #0b0907); }
+.fit { position: relative; margin: 0 auto; }
+.fit > .win { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.states { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--eien-space-5) var(--eien-space-4); }
+.state__name { display: block; margin-bottom: var(--eien-space-2); }
+.states .win { pointer-events: none; }
+
+.notes { min-height: 0; overflow: auto; padding: var(--eien-space-4); background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); font-size: var(--eien-size-preview); line-height: 1.55; color: var(--eien-ink-soft); }
+@media (max-width: 900px) { .notes { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }
+.notes h2 { margin: var(--eien-space-4) 0 var(--eien-space-1); font: inherit; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); font-weight: 400; }
+.notes h2:first-child { margin-top: 0; }
+.notes p { margin: 0 0 var(--eien-space-2); }
+.notes ul { margin: 0; padding-left: 1.1em; }
+.notes code { font-family: var(--eien-face-mono); font-size: 0.9em; }
+
+/* The window. Its lengths are the app's: --band 56px, the strip 48px
+   (pane-state.ts STRIP), sidebar 264px, list 316px; macOS's lights at x 20,
+   12px each, 8px apart, the overlay's titlebar-area-x past them; Windows'
+   controls three of 46px at the right. */
+.win {
+  --band: 56px; --strip: 48px; --sb-w: 264px; --list-w: 316px;
+  --top-h: 0px;            /* a title band above the panes (none, as built) */
+  --controls-left: 0px;    /* where macOS's lights end: env(titlebar-area-x) */
+  --controls-right: 0px;   /* Windows' and Linux's controls: 100vw − titlebar-area's right */
+  --lights-y: calc(var(--band) / 2);
+  --wctl-h: var(--band);
+  --sb: var(--sb-w);
+  /* The seal's centre. Open: on the head's gutter, past the lights. Shut: the strip's middle. */
+  --seal-x: calc(var(--controls-left) + 27px);
+  --seal-y: calc(var(--top-h) + var(--band) / 2);
+  width: 1120px; height: 700px; overflow: hidden;
+  display: grid; grid-template-rows: var(--top-h) minmax(0, 1fr);
+  background: var(--eien-desk); color: var(--eien-ink);
+  border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 10px; box-shadow: var(--eien-shadow-float);
+  font-size: var(--eien-size-row);
+  transition: grid-template-rows var(--eien-calm) var(--eien-ease);
+}
+.win[data-os='win'] { border-radius: 8px; }
+.win[data-full='yes'] { border-radius: 0; border-color: transparent; }
+.win[data-os='mac'][data-full='no'] { --controls-left: 80px; }
+.win[data-os='win'][data-full='no'] { --controls-right: 138px; }
+.win[data-sb='shut'] { --sb: var(--strip); --seal-x: calc(var(--strip) / 2); }
+/* As built: macOS's lights are wider than the strip, so its seal waits a band lower, even with no lights. */
+.win[data-os='mac'][data-sb='shut'] { --seal-y: calc(var(--top-h) + var(--band) * 1.5); }
+
+.win__top { display: none; min-width: 0; overflow: hidden; }
+.win__panes { grid-row: 2; min-height: 0; display: grid; grid-template-columns: var(--sb) var(--list-w) minmax(0, 1fr); transition: grid-template-columns var(--eien-calm) var(--eien-ease); }
+
+/* The sidebar: the desk. */
+.sb { min-width: 0; overflow: hidden; display: flex; flex-direction: column; border-right: var(--eien-hairline) solid var(--eien-rule); }
+.sb > * { width: var(--sb-w); }
+.win[data-sb='shut'] .sb > * { visibility: hidden; }
+.sb__head { flex: none; display: flex; align-items: center; height: var(--band); padding-left: calc(var(--seal-x) + 16px + var(--eien-space-2)); }
+.sb__vault { font-weight: 600; }
+.sb__body { flex: 1; padding: var(--eien-space-2) 0; }
+.sb__sec { display: flex; align-items: center; height: var(--eien-row-h); padding: 0 var(--eien-space-4); margin-top: var(--eien-space-2); }
+.sb__row { position: relative; display: flex; align-items: baseline; gap: var(--eien-space-2); height: var(--eien-row-h); line-height: var(--eien-row-h); padding: 0 var(--eien-space-4) 0 calc(var(--eien-space-4) + var(--d, 0) * 16px); color: var(--eien-ink-soft); }
+.sb__row .n { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb__row.is-chosen { background: var(--eien-selected); color: var(--eien-ink); }
+.sb__row.is-chosen::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: var(--eien-mark-w); background: var(--eien-seal); }
+.book { font-family: var(--eien-face-mono); font-size: 9px; letter-spacing: var(--eien-track-label); padding: 0 3px; border: var(--eien-hairline) solid var(--eien-rule); color: var(--eien-pencil); line-height: 14px; }
+.sb__foot { flex: none; display: flex; align-items: center; gap: 2px; height: 44px; padding: 0 var(--eien-space-3) 0 var(--eien-space-4); border-top: var(--eien-hairline) solid var(--eien-rule-soft); }
+.sb__foot .label { flex: 1; }
+
+/* The list: paper, its search on a band. */
+.ls { min-width: 0; overflow: hidden; background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); }
+.ls__band { display: flex; align-items: center; height: var(--band); padding: 0 var(--eien-space-4) 0 max(var(--eien-space-4), calc(var(--controls-left) - var(--sb))); background: var(--eien-band); transition: padding var(--eien-calm) var(--eien-ease); }
+.ls__band .field { padding: 6px var(--eien-space-3); color: var(--eien-faded); white-space: nowrap; overflow: hidden; }
+.ls__head { padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.ls__title { font-size: var(--eien-size-heading); font-weight: 500; line-height: 1.3; }
+.note { position: relative; display: grid; grid-template-columns: 28px 1fr auto; gap: 0 var(--eien-space-1); padding: var(--eien-space-3) var(--eien-space-4); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.note .ord { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); padding-top: 2px; }
+.note .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note .p { grid-column: 2 / 4; font-size: var(--eien-size-preview); color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note.is-chosen { background: var(--eien-selected); }
+.note.is-chosen::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: var(--eien-mark-w); background: var(--eien-seal); }
+
+/* The page: the band (A) or the blotter's top row with its slip (B), the sheet, the colophon. */
+.pg { min-width: 0; display: grid; grid-template-rows: var(--band) minmax(0, 1fr) 40px; background: var(--eien-blotter); }
+.pg__band { display: flex; align-items: center; justify-content: space-between; gap: var(--eien-space-2); padding: 0 max(var(--eien-space-3), var(--controls-right)) 0 var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.pg__group { display: flex; gap: 2px; }
+.pg__group .icon-button { color: var(--eien-pencil); }
+.slip { display: none; }
+.win[data-layout='slip'] .pg__band { background: var(--eien-blotter); border-bottom: 0; justify-content: flex-end; }
+.win[data-layout='slip'] .pg__band > .pg__group { display: none; }
+.win[data-layout='slip'] .slip { display: flex; gap: 2px; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.pg__blotter { min-height: 0; overflow: hidden; padding: var(--eien-space-5) var(--eien-space-5) 0; }
+.win[data-layout='slip'] .pg__blotter { padding-top: 0; }
+.sheet { max-width: 620px; margin: 0 auto; padding: var(--eien-space-6) var(--eien-space-7); min-height: 100%; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet); font-size: 19px; line-height: 1.55; }
+.win[data-layout='slip'] .sheet { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.sheet h1 { font-size: 30px; font-weight: 500; line-height: 1.2; margin: var(--eien-space-4) 0 var(--eien-space-5); }
+.sheet p { margin: 0 0 var(--eien-space-3); }
+.colophon { display: flex; align-items: center; gap: var(--eien-space-2); padding: 0 var(--eien-space-4); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); text-transform: uppercase; color: var(--eien-pencil); }
+
+/* The system's controls: macOS's lights, Windows' and Linux's minimize, maximize, close. */
+.lights { display: none; position: absolute; z-index: 5; left: 20px; top: calc(var(--lights-y) - 6px); gap: 8px; transition: top var(--eien-calm) var(--eien-ease); }
+.win[data-os='mac'][data-full='no'] .lights { display: flex; }
+.lights i { width: 12px; height: 12px; border-radius: var(--eien-radius-dot); background: #ff5f57; box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.18); }
+.lights i:nth-child(2) { background: #febc2e; }
+.lights i:nth-child(3) { background: #28c840; }
+.wctl { display: none; position: absolute; z-index: 5; right: 0; top: 0; height: var(--wctl-h); }
+.win[data-os='win'][data-full='no'] .wctl { display: flex; }
+.wctl span { width: 46px; display: grid; place-items: center; color: var(--eien-ink-soft); }
+.wctl svg { width: 10px; height: 10px; }
+
+/* The seal: one button, shown where it is in each state, moving as it would. */
+.corner-seal { position: absolute; z-index: 6; left: calc(var(--seal-x) - 16px); top: calc(var(--seal-y) - 16px); transition: left var(--eien-calm) var(--eien-ease), top var(--eien-calm) var(--eien-ease); }
+.seal-button { appearance: none; display: grid; place-items: center; padding: var(--eien-space-1); border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; cursor: pointer; transition: border-color var(--eien-quick) var(--eien-ease); }
+@media (hover: hover) { .seal-button:hover { border-color: var(--eien-rule); } }
+.seal-button:active { background: var(--eien-press); }
+
+/* Direction 3's shoulder, and anything else a page draws, waits hidden till it's used. */
+.shoulder { display: none; }
+@media (prefers-reduced-motion: reduce) { .win, .win * { transition: none !important; } }
+
+
+/* 3 · The desk's shoulder: the strip stays 48px, but at its top it widens
+   into a shoulder of desk just wide enough for macOS's lights, one band tall,
+   its outer corner the layout's large radius. The seal tucks under the lights.
+   With no lights (full screen, Windows, Linux) there's no shoulder, and the
+   seal rises to the top. */
+.win[data-way='new'] { --shoulder-w: calc(var(--controls-left) + var(--eien-space-2)); }
+.win[data-way='new'] .shoulder {
+  position: absolute; z-index: 4; left: calc(var(--strip) - var(--eien-hairline)); top: 0;
+  width: calc(var(--shoulder-w) - var(--strip) + var(--eien-hairline)); height: var(--band);
+  background: var(--eien-desk); border: var(--eien-hairline) solid var(--eien-rule); border-width: 0 var(--eien-hairline) var(--eien-hairline) 0;
+  border-bottom-right-radius: var(--eien-radius-l);
+}
+.win[data-way='new'][data-os='mac'][data-full='no'][data-sb='shut'] .shoulder { display: block; }
+.win[data-way='new'][data-os='mac'][data-full='no'][data-sb='shut'] .ls__band { padding-left: calc(var(--shoulder-w) - var(--strip) + var(--eien-space-3)); }
+.win[data-way='new'][data-full='yes'][data-sb='shut'] { --seal-y: calc(var(--band) / 2); }
+</style>
+</head>
+<body>
+<script>
+// Shared by every exploration (inlined into each page by _build.py).
+
+// Eien's icons: one set, drawn here on a 16-unit grid with round ends, stroked
+// in the ink of whatever they sit in. No icon font, nothing fetched. Each is
+// the inside of an <svg viewBox="0 0 16 16">.
+const ICONS = {
+  live: '<path d="M10.6 2.9l2.5 2.5-7.3 7.3-3.2.8.8-3.2z"/><path d="M9.2 4.3l2.5 2.5"/><path d="M8.5 13.5h5"/>',
+  source: '<path d="M5.5 4.5L2 8l3.5 3.5"/><path d="M10.5 4.5L14 8l-3.5 3.5"/><path d="M9.2 3l-2.4 10"/>',
+  reading: '<path d="M8 4.6C6.6 3.6 4.7 3.1 2.2 3.1v9.4c2.5 0 4.4.5 5.8 1.5 1.4-1 3.3-1.5 5.8-1.5V3.1c-2.5 0-4.4.5-5.8 1.5z"/><path d="M8 4.6V14"/>',
+  compare: '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
+  versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',
+  sidebar: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/>',
+  list: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/><path d="M8.5 6h3M8.5 8.5h3M8.5 11h2"/>',
+  panes3: '<path d="M2 3h12v10H2z"/><path d="M5.5 3v10M9 3v10"/>',
+  panes2: '<path d="M2 3h12v10H2z"/><path d="M6 3v10"/>',
+  left: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  right: '<path d="M6 3.5l4.5 4.5L6 12.5"/>',
+  up: '<path d="M3.5 10L8 5.5l4.5 4.5"/>',
+  down: '<path d="M3.5 6L8 10.5 12.5 6"/>',
+  sun: '<circle cx="8" cy="8" r="2.6"/><path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1"/>',
+  moon: '<path d="M13.2 9.6A5.4 5.4 0 1 1 6.4 2.8a4.3 4.3 0 0 0 6.8 6.8z"/>',
+  settings: '<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><path d="M5.5 3v3M10.5 6.5v3M7 10v3"/>',
+  plus: '<path d="M8 3.5v9M3.5 8h9"/>',
+  tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
+  pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
+  sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
+  search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
+  close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  sort: '<path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3"/>',
+  strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
+  format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',
+  link: '<path d="M6.8 9.2l2.4-2.4"/><path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/>',
+  quote: '<path d="M3 8.5h3.5v4H3zM3 8.5c0-2.5.8-4 3-5M9.5 8.5H13v4H9.5zM9.5 8.5c0-2.5.8-4 3-5"/>',
+  bullets: '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
+  numbers: '<path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7"/><path d="M2.5 3.5l1-.7v3.2M2.4 9.2c.2-.6 1.6-.7 1.6.2 0 .7-1.6 1.2-1.6 1.8h1.7"/>',
+  checklist: '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
+  highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
+  heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
+  grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
+  more: '<circle cx="3.5" cy="8" r=".8"/><circle cx="8" cy="8" r=".8"/><circle cx="12.5" cy="8" r=".8"/>',
+  outdent: '<path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h10"/><path d="M13.5 3v10"/>',
+  filter: '<path d="M2.5 3.5h11l-4.3 5.2v4l-2.4 1.3V8.7z"/>',
+  check: '<path d="M3 8.5l3 3 7-7"/>',
+  back: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
+  palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
+  type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+  bold: '<path d="M4.5 2.8h4.2a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 8h4.9a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 2.8v10.4"/>',
+  italic: '<path d="M7.2 2.8h5M3.8 13.2h5M10 2.8L6 13.2"/>',
+  underline: '<path d="M4.5 2.8v4.6a3.5 3.5 0 0 0 7 0V2.8"/><path d="M3.5 13.5h9"/>',
+  strike: '<path d="M2.5 8h11"/><path d="M11.2 4.4c-.6-1-1.8-1.6-3.2-1.6-1.8 0-3.2 1-3.2 2.4 0 .9.5 1.6 1.6 2.1"/><path d="M5 11.4c.6 1.1 1.8 1.8 3.3 1.8 1.9 0 3.3-1 3.3-2.5 0-.6-.2-1.1-.6-1.5"/>',
+  focus: '<path d="M2.5 4h11" opacity=".35"/><path d="M2.5 8h11"/><path d="M2.5 12h8" opacity=".35"/><path d="M1 6v4M15 6v4"/>',
+  rename: '<path d="M3 11.5h6.5"/><path d="M11.5 3v10M10 3h3M10 13h3"/>',
+  trash: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/>',
+  move: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/><path d="M6.5 9.5h4M9 8l1.5 1.5L9 11"/>',
+  include: '<path d="M8 4v8M4 8h8"/>',
+  exclude: '<path d="M4 8h8"/>',
+  resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
+};
+
+/** An icon as SVG markup, stroked in currentColor. */
+function icon(name, label) {
+  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
+  return `<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" ${a11y}>${ICONS[name]}</svg>`;
+}
+
+/** Fill every [data-icon] with its icon. */
+function drawIcons(root = document) {
+  for (const el of root.querySelectorAll('[data-icon]')) {
+    el.innerHTML = icon(el.dataset.icon) + (el.dataset.iconText ?? '');
+  }
+}
+
+// One list of faces drives every face setting: the text face and the machine
+// voice both choose from it. A face added later is one more entry here (in the
+// app: one entry in core/config, its fonts and its tuning in tokens.css).
+const FACES = [
+  { id: 'plex-mono', name: 'IBM Plex Mono', family: "'IBM Plex Mono', ui-monospace, monospace", mono: true },
+  { id: 'newsreader', name: 'Newsreader', family: "'Newsreader', Georgia, serif" },
+  { id: 'literata', name: 'Literata', family: "'Literata', Georgia, serif" },
+  { id: 'plex-sans', name: 'IBM Plex Sans', family: "'IBM Plex Sans', Arial, sans-serif" },
+  { id: 'source-sans', name: 'Source Sans 3', family: "'Source Sans 3', Arial, sans-serif" },
+  { id: 'atkinson', name: 'Atkinson Hyperlegible Next', family: "'Atkinson Hyperlegible Next', Arial, sans-serif" },
+  { id: 'schibsted', name: 'Schibsted Grotesk', family: "'Schibsted Grotesk', Arial, sans-serif" },
+  { id: 'hanken', name: 'Hanken Grotesk', family: "'Hanken Grotesk', Arial, sans-serif" },
+  { id: 'instrument', name: 'Instrument Sans', family: "'Instrument Sans', Arial, sans-serif" },
+];
+/** The faces the text voice offers (all but the mono), and the machine voice (all). */
+const TEXT_FACES = FACES.filter((face) => !face.mono);
+const MACHINE_FACES = FACES;
+
+function setMachineFace(id) {
+  const face = FACES.find((each) => each.id === id) ?? FACES[0];
+  document.documentElement.style.setProperty('--eien-face-mono', face.family);
+}
+function setTextFace(id) {
+  if (id === 'newsreader') delete document.documentElement.dataset.face;
+  else document.documentElement.dataset.face = id;
+}
+
+/** The explorations' bar: [data-x-set="attr"] groups set data-<attr> on <html>. */
+function wireBar(onChange = () => {}) {
+  for (const group of document.querySelectorAll('[data-x-set]')) {
+    const attr = group.dataset.xSet;
+    const buttons = [...group.querySelectorAll('button[data-value]')];
+    const pick = (value) => {
+      document.documentElement.dataset[attr] = value;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.value === value));
+      onChange(attr, value);
+    };
+    for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
+    pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
+  }
+}
+
+// Themes: [day, night] for each colour token. The rules are the ink at low
+// strength, so they follow it. Washi is tokens.css's own; the rest are new.
+const THEME_TOKENS = ['desk', 'blotter', 'band', 'paper', 'selected', 'ink', 'ink-soft', 'pencil', 'faded', 'seal'];
+const THEMES = {
+  washi: { name: 'Washi', kanji: '和紙', note: 'Eien’s own: paper and sumi ink', t: {
+    desk: ['#d9d2c8', '#110e0b'], blotter: ['#eae5dd', '#1a1713'], band: ['#f4f1ea', '#201d19'], paper: ['#fdfbf7', '#28241f'], selected: ['#ede9e3', '#38332e'],
+    ink: ['#23201c', '#e9e2d4'], 'ink-soft': ['#51473c', '#c3b9a7'], pencil: ['#5d5348', '#a7a095'], faded: ['#766d62', '#837c73'], seal: ['#c4472d', '#e0603f'] } },
+  kinari: { name: 'Kinari', kanji: '生成り', note: 'Unbleached cloth: yellower paper, a persimmon seal', t: {
+    desk: ['#d8cfb8', '#14110a'], blotter: ['#e9e2cd', '#1c180f'], band: ['#f3eedd', '#231e14'], paper: ['#fcf9ee', '#2b251a'], selected: ['#ece5d1', '#3b3426'],
+    ink: ['#2a2418', '#ece3cc'], 'ink-soft': ['#574a33', '#c8bb9c'], pencil: ['#5f523d', '#ab9f86'], faded: ['#7b6d56', '#88806d'], seal: ['#b8432a', '#dc6a43'] } },
+  aizome: { name: 'Aizome', kanji: '藍染', note: 'Indigo dye: cool paper, blue-black ink', t: {
+    desk: ['#c9cfd8', '#0b0e14'], blotter: ['#dfe3e9', '#121620'], band: ['#edf0f4', '#181d28'], paper: ['#fbfcfd', '#1f2533'], selected: ['#e3e8ef', '#2e3648'],
+    ink: ['#17213a', '#dde4f0'], 'ink-soft': ['#34405c', '#b3bfd6'], pencil: ['#3f4b64', '#97a3ba'], faded: ['#5f6a80', '#7a8599'], seal: ['#c4472d', '#e3664a'] } },
+  koke: { name: 'Koke', kanji: '苔', note: 'A moss garden: green-grey desk, quiet ink', t: {
+    desk: ['#cdd2c4', '#0d100b'], blotter: ['#e1e5d9', '#141811'], band: ['#eef0e8', '#1a1f16'], paper: ['#fafbf6', '#21271c'], selected: ['#e5e9dc', '#30382a'],
+    ink: ['#1f2619', '#e2e8d6'], 'ink-soft': ['#3e4833', '#bcc6ab'], pencil: ['#48523c', '#a0aa90'], faded: ['#67705a', '#808a72'], seal: ['#a8432f', '#d76a4e'] } },
+  rosoku: { name: 'Rōsoku', kanji: '蝋燭', note: 'Candlelight: amber at night, no blue light', t: {
+    desk: ['#dccab2', '#120c06'], blotter: ['#ecdfcb', '#1b130b'], band: ['#f5ece0', '#22180e'], paper: ['#fdf8f0', '#2a1f13'], selected: ['#efe3d1', '#3c2d1e'],
+    ink: ['#2b1d10', '#f0dcc0'], 'ink-soft': ['#5a4129', '#d2b894'], pencil: ['#634d37', '#b39b7c'], faded: ['#7f6a53', '#8f7c64'], seal: ['#b9442b', '#e8763f'] } },
+  sumi: { name: 'Sumi', kanji: '墨', note: 'For tired eyes: the most contrast there is', t: {
+    desk: ['#cfcfcc', '#000000'], blotter: ['#e6e6e3', '#0a0a0a'], band: ['#f2f2ef', '#141414'], paper: ['#ffffff', '#1b1b1b'], selected: ['#e8e8e4', '#2c2c2c'],
+    ink: ['#000000', '#f5f5f2'], 'ink-soft': ['#262626', '#d9d9d4'], pencil: ['#3a3a3a', '#bdbdb8'], faded: ['#5e5e5e', '#8f8f8a'], seal: ['#c4361d', '#ff6a45'] } },
+  sakura: { name: 'Sakura-nezumi', kanji: '桜鼠', note: 'Cherry-grey: plum ink, a rose seal', t: {
+    desk: ['#d8cdcc', '#120d0e'], blotter: ['#e9e1e0', '#1b1415'], band: ['#f3eeed', '#221a1b'], paper: ['#fdfafa', '#2a2122'], selected: ['#eee6e5', '#3a2f30'],
+    ink: ['#2a1e20', '#efe1e2'], 'ink-soft': ['#573f43', '#cbb5b8'], pencil: ['#5f464a', '#ad989b'], faded: ['#7c6468', '#8d7b7d'], seal: ['#b2394a', '#e0697a'] } },
+};
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function luminance(h) {
+  return hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; })
+    .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+/**
+ * An ink of hue `h` and saturation `sat`, starting at lightness `l` and stepped
+ * darker by day (`dir` -1) or lighter by night (+1) until it reaches `min`
+ * contrast on every one of `grounds`: the hue stays, the contrast holds.
+ */
+function fitInk(h, sat, l, grounds, min, dir) {
+  let ink = hsl(h, sat, l);
+  while (grounds.some((g) => contrast(ink, g) < min + 0.1) && l > 0 && l < 100) { l += dir; ink = hsl(h, sat, l); }
+  return ink;
+}
+/** "Custom": four choices, and every token worked out from them, day and night. */
+function mixTheme({ paper: ph, warmth: w, ink: ih, seal: sh }, name = 'My Room') {
+  const surf = (dl, nl) => [hsl(ph, w, dl), hsl(ph, Math.min(w, 22), nl)];
+  const t = { desk: surf(83, 5), blotter: surf(89, 8), band: surf(94, 11), paper: surf(98.5, 14), selected: surf(91, 19), seal: [hsl(sh, 63, 47), hsl(sh, 72, 56)] };
+  const grounds = (s) => ['desk', 'band', 'paper', 'selected'].map((k) => t[k][s]);
+  // The inks carry their hue, saturated enough to see by day, each as light as Eien's contrast allows.
+  const ink = (sat, dl, nsat, nl, min) => [fitInk(ih, sat, dl, grounds(0), min, -1), fitInk(ih, nsat, nl, grounds(1), min, 1)];
+  Object.assign(t, { ink: ink(48, 16, 38, 88, 7), 'ink-soft': ink(38, 30, 30, 70, 4.5), pencil: ink(30, 34, 20, 62, 4.5), faded: ink(20, 46, 12, 52, 3) });
+  return { name, kanji: '', note: 'Your own', t };
+}
+/** A theme on the whole page: each token as light-dark(day, night); the rules from the ink. */
+function applyTheme(theme, el = document.documentElement) {
+  for (const k of THEME_TOKENS) el.style.setProperty(`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`);
+  const [d, n] = theme.t.ink.map((c) => hexRgb(c).join(' '));
+  el.style.setProperty('--eien-rule-soft', `light-dark(rgb(${d} / 0.07), rgb(${n} / 0.07))`);
+  el.style.setProperty('--eien-rule', `light-dark(rgb(${d} / 0.13), rgb(${n} / 0.14))`);
+  el.style.setProperty('--eien-rule-strong', `light-dark(rgb(${d} / 0.26), rgb(${n} / 0.26))`);
+  el.style.setProperty('--eien-paper-raised', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 45%, #fff), color-mix(in srgb, ${theme.t.paper[1]} 88%, #fff))`);
+  el.style.setProperty('--eien-well', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 70%, ${theme.t.band[0]}), color-mix(in srgb, ${theme.t.paper[1]} 60%, ${theme.t.blotter[1]}))`);
+}
+
+// Shared by the three window-corner explorations (corner-*.html): Eien's
+// window drawn in any of its states, the explorations' bar that picks one, and
+// every state side by side. Each page adds its own CSS for .win[data-way='new'].
+
+const WCTL = {
+  min: '<path d="M1 5h8"/>',
+  max: '<path d="M1.5 1.5h7v7h-7z"/>',
+  close: '<path d="M1 1l8 8M9 1l-8 8"/>',
+};
+const wctl = (name) => `<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1">${WCTL[name]}</svg>`;
+
+/** The window in state `s` ({ layout, os, full, sb, way }). */
+function windowHtml(s, live = true) {
+  const sbRow = (name, count, d = 0, extra = '') => `<div class="sb__row${extra}" style="--d:${d}"><span class="n">${name}</span>${count}</div>`;
+  const note = (ord, t, n, p, chosen) => `<div class="note${chosen ? ' is-chosen' : ''}"><span class="ord">${ord}</span><span class="t">${t}</span><span class="count">${n}</span><span class="p">${p}</span></div>`;
+  const tools = (names) => names.map((n) => `<span class="icon-button" aria-hidden="true">${icon(n)}</span>`).join('');
+  const sealTip = s.sb === 'open' ? 'Hide the sidebar' : 'Show the sidebar';
+  return `<div class="win" data-layout="${s.layout}" data-os="${s.os}" data-full="${s.full}" data-sb="${s.sb}" data-way="${s.way}"${live ? '' : ' inert'}>
+  <div class="win__top"><span class="win__title">What the Recruits Say</span></div>
+  <div class="win__panes">
+    <aside class="sb">
+      <div class="sb__head"><span class="sb__vault">Eien</span></div>
+      <div class="sb__body">
+        <div class="sb__sec"><span class="label">Library</span></div>
+        ${sbRow('All notes', '<span class="count">214</span>')}
+        ${sbRow('Pinned', '<span class="count">3</span>')}
+        <div class="sb__sec"><span class="label">Folders</span></div>
+        ${sbRow('Fic', '<span class="count">41</span>')}
+        ${sbRow('Beneath the Walls', '<span class="book">BOOK</span><span class="count">14</span>', 1, ' is-chosen')}
+        ${sbRow('Ideas', '<span class="count">57</span>')}
+        ${sbRow('Research', '<span class="count">9</span>')}
+        <div class="sb__sec"><span class="label">Tags</span></div>
+        ${sbRow('<span class="count">#</span> aot', '<span class="count">33</span>')}
+        ${sbRow('<span class="count">#</span> draft', '<span class="count">14</span>')}
+      </div>
+      <div class="sb__foot"><span class="label">214 notes</span>${tools(['moon', 'panes3', 'settings'])}</div>
+    </aside>
+    <section class="ls">
+      <div class="ls__band"><span class="field">Search</span></div>
+      <div class="ls__head"><div class="ls__title">Beneath the Walls</div><span class="label">14 notes · 33,206 words · book</span></div>
+      ${note('i', 'The Late Watch', '2,840', 'He takes the late watch, every night of the week.')}
+      ${note('ii', 'Rations', '2,204', 'Half a loaf, a strip of dried meat, and a promise.')}
+      ${note('iii', 'Below the Gate', '3,412', 'The water came up through the stones first.')}
+      ${note('iv', 'What the Recruits Say', '3,051', 'They have a name for him in the barracks.', true)}
+      ${note('v', 'The Long Way Round', '1,906', 'Nobody had walked the outer road in years.')}
+    </section>
+    <main class="pg">
+      <div class="pg__band">
+        <span class="pg__group">${tools(['live', 'source', 'reading'])}</span>
+        <span class="pg__group">${tools(['compare', 'versions', 'focus', 'strip'])}</span>
+        <span class="slip">${tools(['live', 'source', 'reading', 'compare', 'versions', 'focus', 'right'])}</span>
+      </div>
+      <div class="pg__blotter"><article class="sheet">
+        <span class="label">Fic / Beneath the Walls / iv</span>
+        <h1>What the Recruits Say</h1>
+        <p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p>
+        <p>Instead he takes the late watch, every night of the week, and lets them talk around the brazier as if he were part of the stone.</p>
+      </article></div>
+      <div class="colophon">3,051 words <span class="count">·</span> today 412 <span class="count">·</span> sealed 2h ago</div>
+    </main>
+  </div>
+  <div class="shoulder" aria-hidden="true"></div>
+  <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wctl" aria-hidden="true"><span>${wctl('min')}</span><span>${wctl('max')}</span><span>${wctl('close')}</span></div>
+  <button class="seal-button corner-seal" data-seal aria-label="${sealTip}" aria-expanded="${s.sb === 'open'}" data-tip="${sealTip}"${live ? '' : ' tabindex="-1"'}><span class="seal">永</span></button>
+</div>`;
+}
+
+/** Each state there is: macOS's four, then Windows' and Linux's two (no full screen there: it's macOS's case). */
+const ALL_STATES = [
+  { os: 'mac', full: 'no', sb: 'open', name: 'macOS · in a window · sidebar open' },
+  { os: 'mac', full: 'no', sb: 'shut', name: 'macOS · in a window · sidebar shut' },
+  { os: 'mac', full: 'yes', sb: 'open', name: 'macOS · full screen · sidebar open' },
+  { os: 'mac', full: 'yes', sb: 'shut', name: 'macOS · full screen · sidebar shut' },
+  { os: 'win', full: 'no', sb: 'open', name: 'Windows, Linux · sidebar open' },
+  { os: 'win', full: 'no', sb: 'shut', name: 'Windows, Linux · sidebar shut' },
+];
+
+let canvas;
+function mountCornerPage({ id, note, notes }) {
+  const pages = [['title', '1 · A title line'], ['stay', '2 · The seal stays'], ['shoulder', '3 · The desk’s shoulder']];
+  const group = (attr, label, choices) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${choices.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
+  document.body.insertAdjacentHTML('afterbegin', `
+<header class="xbar">
+  <span class="xbar__name">Eien · The window's corner</span>
+  <nav class="xbar__group" aria-label="Directions">${pages.map(([p, w]) => `<a class="word-button" href="corner-${p}.html"${p === id ? ' aria-current="page"' : ''}>${w}</a>`).join('')}</nav>
+  ${group('way', 'Show', [['new', 'This direction'], ['now', 'As built now']])}
+  ${group('view', 'View', [['one', 'One state'], ['all', 'All states']])}
+  ${group('layout', 'Layout', [['band', 'A · Band'], ['slip', 'B · Slip']])}
+  ${group('os', 'System', [['mac', 'macOS'], ['win', 'Windows, Linux']])}
+  ${group('full', 'Window', [['no', 'In a window'], ['yes', 'Full screen']])}
+  ${group('sb', 'Sidebar', [['open', 'Open'], ['shut', 'Shut']])}
+  ${group('theme', 'Light', [['light', 'Day'], ['dark', 'Night']])}
+  <span class="xnote">${note}</span>
+</header>
+<main class="stage">
+  <div class="canvas"></div>
+  <aside class="notes">${notes}</aside>
+</main>`);
+  canvas = document.querySelector('.canvas');
+  const root = document.documentElement;
+  root.dataset.theme ??= matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  wireBar(draw);
+  addEventListener('resize', fit);
+  // The seal shows and hides the sidebar, as in the app: here it flips the bar's choice.
+  canvas.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-seal]')) return;
+    document.querySelector(`[data-x-set="sb"] [data-value="${root.dataset.sb === 'open' ? 'shut' : 'open'}"]`).click();
+  });
+}
+
+let drawn = '';
+/** Draws one window, or every state; one window is changed in place, so it moves as the app would. */
+function draw() {
+  const d = document.documentElement.dataset;
+  const s = { layout: d.layout, os: d.os, full: d.full, sb: d.sb, way: d.way };
+  if (!s.layout || !s.os || !s.full || !s.sb || !s.way || !d.view) return;
+  if (d.view === 'all') {
+    drawn = 'all';
+    canvas.innerHTML = `<div class="states">${ALL_STATES.map((st) => `<div class="state"><span class="label state__name">${st.name}</span><div class="fit">${windowHtml({ ...s, ...st }, false)}</div></div>`).join('')}</div>`;
+  } else {
+    const win = canvas.querySelector('.win');
+    if (drawn !== 'one' || !win) {
+      drawn = 'one';
+      canvas.innerHTML = `<div class="fit">${windowHtml(s)}</div>`;
+    } else {
+      Object.assign(win.dataset, s);
+      const seal = win.querySelector('[data-seal]');
+      const tip = s.sb === 'open' ? 'Hide the sidebar' : 'Show the sidebar';
+      seal.setAttribute('aria-label', tip);
+      seal.setAttribute('aria-expanded', String(s.sb === 'open'));
+      seal.dataset.tip = tip;
+    }
+  }
+  fit();
+}
+/** Scales each window to its box, keeping its real size inside. */
+function fit() {
+  for (const box of canvas.querySelectorAll('.fit')) {
+    const win = box.firstElementChild;
+    const room = box.parentElement === canvas ? canvas.clientWidth - 48 : box.clientWidth || box.parentElement.clientWidth;
+    const tall = box.parentElement === canvas ? canvas.clientHeight - 48 : Infinity;
+    const scale = Math.min(1, room / 1120, tall / 700);
+    win.style.transform = `scale(${scale})`;
+    box.style.width = box.parentElement === canvas ? `${1120 * scale}px` : '100%';
+    box.style.height = `${700 * scale}px`;
+  }
+}
+
+
+mountCornerPage({
+  id: 'shoulder',
+  note: 'The strip widens at its top into a shoulder of desk that holds the lights; the seal tucks under them.',
+  notes: `
+  <h2>3 · The desk's shoulder</h2>
+  <p>The strip stays 48px, but at its top it widens into a shoulder of desk just wide enough for macOS's lights: 88px, one band tall, its outer corner rounded by the layout's large radius (8px in Band, 14px in Slip). The lights sit wholly on the desk, as they do over the open sidebar, and the seal tucks into the strip under them. In full screen, and on Windows and Linux, there are no lights at the left, so there's no shoulder, and the seal rises to the strip's top.</p>
+  <h2>For</h2>
+  <ul>
+    <li>It keeps the decided pattern, a strip of desk with the seal, and mends only what's awkward: the lights on two surfaces, and the empty corner in full screen.</li>
+    <li>The fewest changes: a shoulder drawn while the sidebar's shut on macOS, and the seal's "a band lower" only while there are lights.</li>
+  </ul>
+  <h2>Against</h2>
+  <ul>
+    <li>A new shape: an L of desk, the only one of its kind in the window, and a corner the panes don't otherwise have.</li>
+    <li>On macOS the seal still sits a band below the lights, and moves up and down as the window goes full screen and back.</li>
+    <li>The list's band gives 40px more at its left while the sidebar's shut.</li>
+  </ul>
+  <h2>In the app</h2>
+  <p><code>sidebar.css</code> draws the shoulder on <code>.sidebar__strip</code> (a pseudo-element past the strip's edge, as wide as <code>--controls-left</code> plus a space) and moves the seal down only while there are lights. If <code>env(titlebar-area-x)</code> reads 0 in full screen (to be checked in Electron), <code>--controls-left</code> says so with no new code; if not, the main process tells the window on <code>enter-full-screen</code> and <code>leave-full-screen</code>. <code>list.css</code>'s keep-clear sum takes the shoulder's width.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>the seal: it shuts and opens the sidebar, as in the app</li>
+    <li>Window → Full screen, with the sidebar shut: no lights, and no empty corner</li>
+    <li>System → Windows, Linux: their controls are at the right, so the left corner is the seal's alone</li>
+    <li>Show → As built now, to see what this replaces; View → All states, for the six side by side</li>
+  </ul>
+  <h2>As built now</h2>
+  <p>Shut, the sidebar is a 48px strip, but macOS's lights stand 20 to 72px from the window's edge: they hang over the strip's edge onto the list's band, half on the desk and half off it, and the seal waits a band lower. In full screen there are no lights, yet the seal still waits a band down, alone under an empty corner.</p>`,
+});
+</script>
+</body>
+</html>

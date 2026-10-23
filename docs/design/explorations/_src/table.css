@@ -1,0 +1,96 @@
+/* Shared by the three table explorations (table-*.html): the page, the table
+   at rest and while it's edited, the file beside it, the colophon. Each page
+   adds only its own controls. */
+
+/*@include:layouts.css*/
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 420px); background: var(--eien-blotter); }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 40%); } }
+
+/* The page pane: the sheet on the blotter, the colophon at its foot. */
+.pane { min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) var(--status-h, 40px); position: relative; }
+.page { min-height: 0; overflow: auto; padding: var(--eien-space-5); }
+.sheet {
+  width: min(100%, 860px); margin: 0 auto; min-height: 100%;
+  padding: var(--eien-space-7) var(--eien-space-8) var(--eien-space-8);
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet);
+  font-size: var(--eien-size-prose); position: relative;
+}
+:root[data-layout='slip'] .sheet { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.title { font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; margin: var(--eien-space-5) 0 var(--eien-space-6); }
+.prose { line-height: var(--eien-leading-prose); margin: 0 0 var(--eien-space-4); }
+.prose:focus { outline: none; }
+.colophon {
+  display: flex; align-items: center; gap: var(--eien-space-2); padding: 0 var(--eien-space-4);
+  background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--eien-pencil); white-space: nowrap; overflow: hidden;
+}
+.colophon .dot { color: var(--eien-faded); }
+.colophon__said { margin-left: auto; color: var(--eien-ink-soft); overflow: hidden; text-overflow: ellipsis; }
+
+/* The table at rest: a book's table, rules across and none down. */
+.tbl-wrap { position: relative; margin: var(--eien-space-6) 0; }
+.tbl-scroll { overflow-x: auto; }
+.tbl {
+  border-collapse: collapse; width: 100%;
+  font-size: calc(var(--eien-size-prose) * 0.8); line-height: 1.4;
+  border-top: var(--eien-hairline) solid var(--eien-rule-strong); border-bottom: var(--eien-hairline) solid var(--eien-rule-strong);
+}
+.tbl th, .tbl td { padding: 0; vertical-align: top; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); text-align: left; }
+.tbl th { font-weight: 500; border-bottom-color: var(--eien-rule); }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl :is(th, td) + :is(th, td) { border-left: var(--eien-hairline) solid transparent; transition: border-color var(--eien-calm) var(--eien-ease); }
+/* While it's edited, the grid shows: where one cell ends and the next begins. */
+.tbl-wrap.is-in .tbl :is(th, td) + :is(th, td) { border-left-color: var(--eien-rule-soft); }
+.tbl [data-align='right'] { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl [data-align='center'] { text-align: center; }
+.cell {
+  min-height: 1.4em; padding: var(--eien-space-2) var(--eien-space-3);
+  white-space: pre-wrap; overflow-wrap: break-word; caret-color: var(--eien-seal); outline: none;
+  border-radius: var(--eien-radius-s);
+}
+.cell:focus { box-shadow: inset 0 0 0 var(--eien-hairline) var(--eien-rule-strong); }
+.cell:empty::before { content: '\200b'; }
+/* A row or column a control points at: the selected fill, as a chosen row has. */
+.tbl .is-aimed { background: var(--eien-selected); }
+.tbl .is-dragged { background: var(--eien-paper-raised); }
+.tbl-layer { position: absolute; inset: 0; pointer-events: none; }
+.tbl-layer > * { pointer-events: auto; }
+
+/* 1 and 3 put controls on the table's edges: the margins round it count as the
+   table, so the pointer can reach them. With no hover (a phone), the table steps
+   in from the narrow margin while it's edited, to make room for the row's. */
+.tbl-wrap.has-edges { isolation: isolate; transition: margin var(--eien-calm) var(--eien-ease); }
+.tbl-wrap.has-edges::before { content: ''; position: absolute; inset: -40px -24px -16px -44px; z-index: -1; }
+.is-touch .tbl-wrap.has-edges.is-in { margin-left: 40px; }
+
+/* The file, beside the page: what Eien writes, line by line. */
+.file { min-height: 0; display: grid; grid-template-rows: var(--band, 56px) minmax(0, 1fr) auto; background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); }
+@media (max-width: 900px) { .file { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }
+.file__head { display: flex; align-items: center; gap: var(--eien-space-3); padding: 0 var(--eien-space-4); border-bottom: var(--eien-hairline) solid var(--eien-rule); background: var(--eien-band); }
+.file__head .count { margin-left: auto; }
+.file__src {
+  margin: 0; padding: var(--eien-space-3) var(--eien-space-2); overflow: auto; background: var(--eien-paper);
+  font-family: var(--eien-face-mono); font-size: 12px; line-height: 1.75; color: var(--eien-ink-soft);
+}
+.ln { display: block; white-space: pre; padding: 0 var(--eien-space-2); border-radius: var(--eien-radius-s); min-height: 1.75em; }
+.ln.is-table { color: var(--eien-ink); }
+.ln.is-here { background: var(--eien-selected); }
+.ln.is-changed { animation: changed 1.6s var(--eien-ease); }
+@keyframes changed { from { background: var(--eien-added-wash); } }
+@media (prefers-reduced-motion: reduce) { .ln.is-changed { animation: none; } * { transition: none !important; } }
+.file__notes { border-top: var(--eien-hairline) solid var(--eien-rule); padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-4); max-height: 46vh; overflow: auto; font-size: var(--eien-size-preview); line-height: 1.55; color: var(--eien-ink-soft); }
+.file__notes h2 { margin: var(--eien-space-3) 0 var(--eien-space-1); font: inherit; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); font-weight: 400; }
+.file__notes h2:first-child { margin-top: 0; }
+.file__notes ul { margin: 0; padding-left: 1.1em; }
+.file__notes p { margin: 0; }
+kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-paper); white-space: nowrap; }
+
+/* A phone: the page in a phone's width, no margins to spare, nothing hovers. */
+:root[data-device='phone'] .page { padding: var(--eien-space-4) 0; }
+:root[data-device='phone'] .pane { width: 390px; max-width: 100%; justify-self: center; border-left: var(--eien-hairline) solid var(--eien-rule-strong); border-right: var(--eien-hairline) solid var(--eien-rule-strong); background: var(--eien-paper); }
+:root[data-device='phone'] .sheet { border: 0; box-shadow: none; border-radius: 0; padding: var(--eien-space-4) var(--eien-space-4) var(--eien-space-8); }
+:root[data-device='phone'] .title { font-size: calc(var(--eien-size-title) * 0.8); }
+:root[data-device='phone'] .tbl { width: max-content; min-width: 100%; }
