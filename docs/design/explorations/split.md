@@ -15,6 +15,25 @@ Window slider):
 - [split-window.html](split-window.html): New Window and the phone, shown once,
   the same whichever split is chosen
 
+## Design intent
+
+- **Intent:** a writer late at night with a chapter beside the one before it,
+  or beside its notes, checking continuity and keeping on writing. The page
+  stays the loudest thing, and the second note is a second sheet of paper,
+  not a second app.
+- **Palette:** Eien's own: desk, blotter, paper and ink. No colour marks the
+  active page; the seal keeps its five places, so it never marks a side.
+- **Depth:** hairlines and the two shadows only. The active page is told by
+  ink (1), by ink strength (2) or by the sheet's shadow (3), never by a fill or
+  a hue.
+- **Surfaces:** as the layout has them. Nothing new is raised but the menus,
+  the drop preview's label and the divider's ⇄.
+- **Type:** the writer's face at its own prose and title sizes, leading and
+  measure (the mock is drawn at real size); the machine voice for crumbs,
+  counts and keys.
+- **Spacing:** Eien's 4px scale. The divider is a hairline column with an 8px
+  handle, as a pane's edge is; 3's gap is 24px of blotter.
+
 ## What all three share
 
 - **Side by side, with a divider.**

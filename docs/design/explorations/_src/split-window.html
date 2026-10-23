@@ -14,46 +14,37 @@
 @media (max-width: 1100px) { .canvas { grid-template-columns: 1fr; } }
 .part__name { display: block; margin-bottom: var(--eien-space-3); }
 
-/* macOS's menu bar and Eien's File menu, open. */
-.desk { position: relative; height: 600px; }
-.menubar { display: flex; align-items: center; gap: var(--eien-space-4); height: 26px; padding: 0 var(--eien-space-3); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); font-size: 13px; }
+/* macOS's menu bar with Eien's File menu open, and a note's menu beside it. */
+.menubar { display: flex; align-items: center; gap: var(--eien-space-4); height: var(--eien-space-5); padding: 0 var(--eien-space-3); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); font-size: var(--eien-size-preview); }
 .menubar b { font-weight: 600; }
-.menubar .is-open { padding: 0 6px; border-radius: var(--eien-radius-s); background: var(--eien-selected); }
-.menu.file-menu { position: absolute; top: 32px; left: 60px; z-index: 30; }
-.menu.row-menu { position: absolute; top: 32px; left: 360px; z-index: 30; }
-/* The windows: small, each its own vault and note. */
-.minis { position: absolute; left: 0; right: 0; top: 340px; height: 240px; }
-.mini {
-  position: absolute; width: 360px; height: 200px; display: grid; grid-template-columns: 70px 90px 1fr; grid-template-rows: 18px 1fr; overflow: hidden;
-  background: var(--eien-desk); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 8px; box-shadow: var(--eien-shadow-float);
-  transition: translate var(--eien-calm) var(--eien-ease), opacity var(--eien-calm) var(--eien-ease);
-}
-.mini__top { grid-column: 1 / -1; display: flex; align-items: center; gap: 4px; padding: 0 6px; font-family: var(--eien-face-mono); font-size: 9px; color: var(--eien-pencil); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
-.mini__top i { width: 6px; height: 6px; border-radius: var(--eien-radius-dot); background: var(--eien-faded); }
-.mini__sb, .mini__ls { overflow: hidden; white-space: nowrap; }
-.mini__ls { background: var(--eien-paper); border-left: var(--eien-hairline) solid var(--eien-rule); border-right: var(--eien-hairline) solid var(--eien-rule); padding: 6px; font-size: 9px; color: var(--eien-pencil); line-height: 1.8; }
-.mini__pg { background: var(--eien-blotter); padding: 8px; }
-.mini__pg div { height: 100%; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); padding: 8px; font-size: 11px; line-height: 1.4; }
-.mini__sb { padding: 6px; font-size: 9px; color: var(--eien-ink-soft); line-height: 1.8; }
-.mini--new { translate: 220px 30px; z-index: 2; }
-.mini--new[hidden] { display: grid; opacity: 0; translate: 0 0; pointer-events: none; }
+.menubar .is-open { padding: 0 var(--eien-space-2); border-radius: var(--eien-radius-s); background: var(--eien-selected); }
+.menus { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--eien-space-5); margin: var(--eien-space-1) 0 0 var(--eien-space-8); }
+.menus .menu { position: static; }
+/* Real Eien windows, scaled: the one you're in, and the one New Window opens over it. */
+.windows { position: relative; margin-top: var(--eien-space-6); }
+.windows .fit { margin: 0; }
+.windows .win { pointer-events: none; }
+.window--new { position: absolute; transition: opacity var(--eien-calm) var(--eien-ease), translate var(--eien-calm) var(--eien-ease); }
+.window--new[hidden] { display: block; opacity: 0; translate: calc(var(--eien-space-5) * -1) calc(var(--eien-space-5) * -1); }
 
 /* The phone: no split. The back bar keeps the other note a tap away. */
-.phone { width: 340px; height: 680px; display: grid; grid-template-rows: 44px minmax(0, 1fr) 56px; overflow: hidden; position: relative; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 36px; box-shadow: var(--eien-shadow-float); }
+/* A phone's own size and corner, not Eien's. */
+.phone { width: 340px; height: 680px; display: grid; grid-template-rows: var(--eien-touch) minmax(0, 1fr) calc(var(--eien-touch) + var(--eien-space-3)); overflow: hidden; position: relative; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 36px; box-shadow: var(--eien-shadow-float); }
 .backbar { display: flex; align-items: center; gap: var(--eien-space-1); padding: 0 var(--eien-space-2); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
-.backbar .back { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; height: var(--eien-touch); padding: 0 var(--eien-space-1); border: 0; background: none; color: var(--eien-ink-soft); font: inherit; font-size: 14px; white-space: nowrap; overflow: hidden; }
-.backbar .other { display: flex; align-items: center; gap: var(--eien-space-1); height: 32px; max-width: 150px; padding: 0 var(--eien-space-2); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-dot); background: var(--eien-paper); color: var(--eien-ink-soft); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: nowrap; overflow: hidden; cursor: pointer; }
+.backbar .back { display: flex; align-items: center; gap: var(--eien-space-1); flex: 1; min-width: 0; height: var(--eien-touch); padding: 0 var(--eien-space-1); border: 0; background: none; color: var(--eien-ink-soft); font: inherit; font-size: var(--eien-size-preview); white-space: nowrap; overflow: hidden; }
+.backbar .other { display: flex; align-items: center; gap: var(--eien-space-1); height: var(--eien-space-6); max-width: 12em; padding: 0 var(--eien-space-2); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-dot); background: var(--eien-paper); color: var(--eien-ink-soft); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: nowrap; overflow: hidden; cursor: pointer; }
 .backbar .other::after { content: ''; position: absolute; inset: -6px; }
 .backbar .other { position: relative; }
-.backbar .other svg { flex: none; width: 14px; height: 14px; }
-.phone .page-body { overflow: auto; padding: var(--eien-space-4); font-size: 17px; line-height: 1.55; }
-.phone h1 { font-size: 24px; font-weight: 500; margin: var(--eien-space-2) 0 var(--eien-space-3); }
+.backbar .other svg { flex: none; width: var(--eien-space-3); height: var(--eien-space-3); }
+/* A phone's page: the face's prose and title, a size down for a hand-held measure. */
+.phone .page-body { overflow: auto; padding: var(--eien-space-4); font-size: calc(var(--eien-size-prose) * 0.82); line-height: var(--eien-leading-prose); }
+.phone h1 { font-size: calc(var(--eien-size-title) * 0.72); font-weight: 500; line-height: 1.2; margin: var(--eien-space-2) 0 var(--eien-space-3); }
 .phone .slips { margin: 0 0 var(--eien-space-3); }
 .rail { display: flex; justify-content: space-around; align-items: center; background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); }
 .rail .icon-button { width: var(--eien-touch); height: var(--eien-touch); }
 .sheet-menu { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-5); background: var(--eien-paper-raised); border-top: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-l) var(--eien-radius-l) 0 0; box-shadow: var(--eien-shadow-float); }
 .sheet-menu[hidden] { display: none; }
-.sheet-menu .menu__item { min-height: var(--eien-touch); font-size: 13px; }
+.sheet-menu .menu__item { min-height: var(--eien-touch); }
 .phone-list { display: grid; }
 .phone-list button { appearance: none; text-align: left; padding: var(--eien-space-3) var(--eien-space-4); min-height: var(--eien-touch); border: 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); background: none; font: inherit; color: var(--eien-ink); cursor: pointer; }
 </style>
@@ -70,34 +61,30 @@
   <div class="canvas">
     <section aria-labelledby="nw">
       <span class="label part__name" id="nw">New window</span>
-      <div class="desk">
-        <div class="menubar" aria-hidden="true"><b>Eien</b><span class="is-open">File</span><span>Edit</span><span>Format</span><span>View</span><span>Window</span><span>Help</span></div>
-        <div class="menu file-menu" role="menu" aria-label="File">
+      <div class="menubar" aria-hidden="true"><b>Eien</b><span class="is-open">File</span><span>Edit</span><span>Format</span><span>View</span><span>Window</span><span>Help</span></div>
+      <div class="menus">
+        <div class="menu" role="menu" aria-label="File">
           <div class="menu__head" aria-hidden="true">File</div>
           <button class="menu__item" role="menuitem" data-key-row="Mod-N"><span></span><span>New Note</span><span class="menu__key"></span></button>
-          <button class="menu__item" role="menuitem" data-new-window data-key-row="Mod-Shift-N"><span data-icon="window"></span><span>New Window</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-new-window="iv" data-key-row="Mod-Shift-N"><span data-icon="window"></span><span>New Window</span><span class="menu__key"></span></button>
           <button class="menu__item" role="menuitem" data-key-row="Mod-S"><span></span><span>Seal</span><span class="menu__key"></span></button>
           <button class="menu__item" role="menuitem" data-key-row="Mod-O"><span></span><span>Open Vault…</span><span class="menu__key"></span></button>
           <div class="menu__rule" role="separator"></div>
-          <button class="menu__item" role="menuitem"><span></span><span>Export HTML…</span><span class="menu__key"></span></button>
           <button class="menu__item" role="menuitem"><span></span><span>Export Note</span><span class="menu__key">›</span></button>
           <div class="menu__rule" role="separator"></div>
           <button class="menu__item" role="menuitem" data-key-row="Mod-W"><span></span><span>Close Window</span><span class="menu__key"></span></button>
         </div>
-        <div class="menu row-menu" role="menu" aria-label="What the Recruits Say">
-          <div class="menu__head" aria-hidden="true">What the Recruits Say</div>
+        <div class="menu" role="menu" aria-label="Below the Gate">
+          <div class="menu__head" aria-hidden="true">Below the Gate</div>
           <button class="menu__item" role="menuitem"><span data-icon="open"></span><span>Open</span><span class="menu__key">Enter</span></button>
           <button class="menu__item" role="menuitem" data-key-row="Mod-click"><span data-icon="side"></span><span>Open to the Side</span><span class="menu__key"></span></button>
-          <button class="menu__item" role="menuitem" data-new-window="iv"><span data-icon="window"></span><span>Open in New Window</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-new-window="iii"><span data-icon="window"></span><span>Open in New Window</span><span class="menu__key"></span></button>
           <div class="menu__rule" role="separator"></div>
           <button class="menu__item" role="menuitem" data-key-row="F2"><span data-icon="rename"></span><span>Rename</span><span class="menu__key"></span></button>
           <button class="menu__item" role="menuitem"><span data-icon="move"></span><span>Move to…</span><span class="menu__key"></span></button>
         </div>
-        <div class="minis">
-          <div class="mini" aria-label="A window: Beneath the Walls, What the Recruits Say"><div class="mini__top"><i></i><i></i><i></i> Fic · What the Recruits Say</div><div class="mini__sb">Library<br />Fic<br />Ideas</div><div class="mini__ls">i The Late Watch<br />ii Rations<br />iv What the Recruits Say</div><div class="mini__pg"><div>They have a name for him in the barracks…</div></div></div>
-          <div class="mini mini--new" hidden aria-label="The new window"><div class="mini__top"><i></i><i></i><i></i> <span data-mini-title>Fic · What the Recruits Say</span></div><div class="mini__sb">Library<br />Fic<br />Ideas</div><div class="mini__ls" data-mini-list>i The Late Watch<br />ii Rations<br />iv What the Recruits Say</div><div class="mini__pg"><div data-mini-page>They have a name for him in the barracks…</div></div></div>
-        </div>
       </div>
+      <div class="windows" aria-label="Eien's windows"></div>
     </section>
     <section aria-labelledby="ph">
       <span class="label part__name" id="ph">The phone: no split</span>
@@ -144,26 +131,42 @@
 <script>
 /*@shared-js*/
 /*@include:keys.js*/
-Object.assign(ICONS, {
-  swap: '<path d="M3 5.5h9.5M10 3l2.5 2.5L10 8"/><path d="M13 10.5H3.5M6 8l-2.5 2.5L6 13"/>',
-  side: '<path d="M2.5 3h11v10h-11z"/><path d="M8 3v10"/><path d="M10 6.5v3M8.5 8h3"/>',
-  window: '<path d="M2.5 4h9v8.5h-9z"/><path d="M5 4V2.5h8.5V10H11.5"/>',
-  open: '<path d="M3 3h10v10H3z"/><path d="M6 8h4"/>',
-});
-const root = document.documentElement;
+/*@include:split.js*/
+
+// One page, as all three directions draw a single note.
+Split.page = (ctx) => {
+  const top = ctx.layout === 'band' ? `<div class="band">${ctx.views()}${ctx.pageTools()}</div>`
+    : ctx.layout === 'slip' ? `<div class="topline"><span class="slip">${ctx.views()}${ctx.pageTools()}</span></div>` : '';
+  return `<div class="page">${top}<div class="duo"><div class="blotter">${ctx.sheet(0)}</div></div>${ctx.colophon(0)}</div>`;
+};
+Split.strip = (ctx) => `<div class="seg"><span class="crumb">${ctx.note(0).crumb}</span><span class="tools-row">${ctx.views()}${ctx.pageTools()}</span></div>`;
+
 root.dataset.theme ??= matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-wireBar();
+Object.assign(root.dataset, { width: '1280', sb: 'open', fmt: 'off' });
+const windows = document.querySelector('.windows');
+let newNote = null;
+/** A window on note `id`, scaled to `scale`. */
+function smallWindow(id, scale) {
+  S.sides = [id];
+  S.active = 0;
+  const html = windowHtml(context());
+  return `<div class="fit" style="width:${1280 * scale}px; height:${WIN_H * scale}px">${html.replace('class="win"', 'class="win" inert').replace('style="--win-w', `style="transform:scale(${scale}); --win-w`)}</div>`;
+}
+function drawWindows() {
+  const scale = Math.min(0.42, (windows.clientWidth - 48) / 1280);
+  windows.style.height = `${WIN_H * scale + 48}px`;
+  windows.innerHTML = smallWindow('iv', scale) + `<div class="window--new" style="left:48px; top:48px"${newNote ? '' : ' hidden'}>${smallWindow(newNote ?? 'iv', scale)}</div>`;
+  drawIcons(windows);
+}
+wireBar(() => { if (root.dataset.layout && root.dataset.theme) drawWindows(); });
+addEventListener('resize', drawWindows);
 for (const el of document.querySelectorAll('[data-key-row]')) el.querySelector('.menu__key').textContent = el.dataset.keyRow === 'Mod-click' ? `${KEY('Mod-')}click` : KEY(el.dataset.keyRow);
 for (const el of document.querySelectorAll('kbd[data-key]')) el.textContent = KEY(el.dataset.key);
 drawIcons();
 
-// New Window: a second window, on the same vault and note, its own from then on.
-const mini = document.querySelector('.mini--new');
+// New Window opens on the note this window shows; Open in New Window, on the row's note.
 for (const b of document.querySelectorAll('[data-new-window]')) {
-  b.addEventListener('click', () => {
-    mini.hidden = false;
-    document.querySelector('[data-mini-title]').textContent = b.dataset.newWindow ? 'Fic · What the Recruits Say' : 'Fic · What the Recruits Say (a new window)';
-  });
+  b.addEventListener('click', () => { newNote = b.dataset.newWindow; drawWindows(); });
 }
 
 // The phone: the note you came from stays a tap away.

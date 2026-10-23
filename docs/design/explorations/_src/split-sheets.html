@@ -15,13 +15,13 @@
    lies flat, its hairline only. Page frame Full has no sheets: there, a 2px
    ink-soft rule tops the active page. */
 .band .tools-row:last-child { margin-left: auto; }
-.sheet--flat { box-shadow: none; }
+/* Flat: no shadow, and its edge a step softer, so it reads as under the other. */
+.sheet--flat { box-shadow: none; border-color: var(--eien-rule-soft); }
 .duo[data-columns] > .blotter:first-child { padding-right: 0; }
 .duo[data-columns] > .blotter:last-child { padding-left: 0; }
 .duo[data-columns] .sheet { max-width: none; }
 /* The gap is the divider: blotter, with a hairline only while it's handled. */
-.duo > .divider { width: auto; margin: 0; }
-.duo > .divider::after { background: transparent; }
+.duo > .divider:not(:hover, :focus-visible, .is-dragging)::after { background: transparent; }
 .sheet__close { position: absolute; top: var(--eien-space-2); right: var(--eien-space-2); }
 .sheet:hover .sheet__close, .sheet__close:focus-visible { opacity: 1; }
 :root[data-frame='full'] .pg .blotter { padding: 0; background: var(--eien-paper); }

@@ -227,7 +227,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); }
 @media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 45%); } }
 /* A quiet desktop the window sits on, outside Eien; the window scales to fit it. */
-.canvas { min-height: 0; overflow: auto; padding: var(--eien-space-4); background: light-dark(#cfc8bd, #0b0907); }
+.canvas { min-height: 0; overflow: auto; padding: var(--eien-space-4); background: color-mix(in srgb, var(--eien-desk) 84%, var(--eien-ink)); }
 .fit { position: relative; margin: 0 auto; }
 .fit > .win { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .notes { min-height: 0; overflow: auto; padding: var(--eien-space-4); background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); font-size: var(--eien-size-preview); line-height: 1.55; color: var(--eien-ink-soft); }
@@ -242,25 +242,30 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 .xbar output { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); min-width: 7ch; }
 
 /* The window. Its lengths are the app's: --band 56px (48 in C), C's running
-   head 40px, sidebar 264px, list 316px, the colophon 40px. */
+   head 40px, the colophon 40px; the sidebar's and the list's widths
+   (--eien-sidebar-w, --eien-list-w) come from split.js, which also measures
+   with them. The seal's button is the seal and its padding and hairline. */
 .win {
-  --band: 56px; --sb-w: 264px; --list-w: 316px; --status-h: 40px; --head-h: 0px; --controls-left: 80px;
-  --sb: var(--sb-w);
-  width: var(--win-w, 1440px); height: 860px; overflow: hidden; position: relative;
-  display: grid; grid-template-rows: var(--head-h) minmax(0, 1fr); grid-template-columns: var(--sb) var(--list-w) minmax(0, 1fr);
+  --band: calc(var(--eien-space-7) + var(--eien-space-2)); --status-h: calc(var(--eien-space-6) + var(--eien-space-2));
+  --head-h: 0px; --controls-left: 80px;
+  --seal-btn: calc(var(--eien-seal-size) + 2 * var(--eien-space-1) + 2 * var(--eien-hairline));
+  --sb: var(--eien-sidebar-w);
+  width: var(--win-w); height: var(--win-h); overflow: hidden; position: relative;
+  display: grid; grid-template-rows: var(--head-h) minmax(0, 1fr); grid-template-columns: var(--sb) var(--eien-list-w) minmax(0, 1fr);
   background: var(--eien-desk); color: var(--eien-ink); font-size: var(--eien-size-row);
   border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 10px; box-shadow: var(--eien-shadow-float);
 }
-.win[data-layout='runhead'] { --band: 48px; --head-h: 40px; }
+.win[data-layout='runhead'] { --band: var(--eien-space-7); --head-h: calc(var(--eien-space-6) + var(--eien-space-2)); }
 /* Shut, the sidebar is the seal alone in A and B (the default), and C's 48px strip. */
 .win[data-sb='shut'] { --sb: 0px; }
 .win[data-layout='runhead'][data-sb='shut'] { --sb: var(--band); }
 /* The seal: beside the lights in A and B, open or shut; on C's sidebar head. */
-.win { --seal-x: calc(var(--controls-left) + var(--eien-space-3)); --seal-y: calc((var(--band) - 32px) / 2); }
-.win[data-layout='runhead'] { --seal-x: var(--eien-space-3); --seal-y: calc(var(--head-h) + (var(--band) - 32px) / 2); }
-.win[data-layout='runhead'][data-sb='shut'] { --seal-x: calc((var(--band) - 32px) / 2); }
+.win { --seal-x: calc(var(--controls-left) + var(--eien-space-3)); --seal-y: calc((var(--band) - var(--seal-btn)) / 2); }
+.win[data-layout='runhead'] { --seal-x: var(--eien-space-3); --seal-y: calc(var(--head-h) + (var(--band) - var(--seal-btn)) / 2); }
+.win[data-layout='runhead'][data-sb='shut'] { --seal-x: calc((var(--band) - var(--seal-btn)) / 2); }
 .seal-btn { position: absolute; z-index: 6; left: var(--seal-x); top: var(--seal-y); }
 .win > .sb, .win > .ls, .win > .pg { grid-row: 2; min-width: 0; min-height: 0; overflow: hidden; }
+/* macOS's own lights, in macOS's own colours. */
 .lights { position: absolute; z-index: 5; left: 20px; top: 22px; display: flex; gap: 8px; }
 .win[data-layout='runhead'] .lights { top: 14px; }
 .lights i { width: 12px; height: 12px; border-radius: var(--eien-radius-dot); background: #ff5f57; box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.18); }
@@ -268,7 +273,7 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 .lights i:nth-child(3) { background: #28c840; }
 
 /* C's running head: one strip across the window; its page part is the direction's. */
-.strip { grid-row: 1; grid-column: 1 / -1; display: grid; grid-template-columns: var(--sb) var(--list-w) minmax(0, 1fr); background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); min-width: 0; }
+.strip { grid-row: 1; grid-column: 1 / -1; display: grid; grid-template-columns: var(--sb) var(--eien-list-w) minmax(0, 1fr); background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); min-width: 0; }
 .strip__panes { grid-column: 1 / 3; display: flex; align-items: center; gap: 2px; padding-left: calc(var(--controls-left) + var(--eien-space-2)); }
 .strip__page { grid-column: 3; min-width: 0; display: flex; align-items: center; }
 .crumb { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -276,25 +281,26 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 /* The sidebar: the desk. */
 .sb { display: flex; flex-direction: column; border-right: var(--eien-hairline) solid var(--eien-rule); }
 .win[data-sb='shut'] .sb { visibility: hidden; }
-.sb > * { width: var(--sb-w); }
-.sb__head { flex: none; display: flex; align-items: center; height: var(--band); padding-left: calc(var(--seal-x) + 32px + var(--eien-space-2)); font-weight: 600; }
+/* Its contents keep their width as it shuts, so nothing reflows mid-slide. */
+.sb > * { width: var(--eien-sidebar-w); }
+.sb__head { flex: none; display: flex; align-items: center; height: var(--band); padding-left: calc(var(--seal-x) + var(--seal-btn) + var(--eien-space-2)); font-weight: 600; }
 .sb__sec { display: flex; align-items: center; height: var(--eien-row-h); padding: 0 var(--eien-space-4); margin-top: var(--eien-space-2); }
 .trow { position: relative; display: flex; align-items: baseline; gap: var(--eien-space-2); height: var(--eien-row-h); line-height: var(--eien-row-h); padding: 0 var(--eien-space-4) 0 calc(var(--eien-space-4) + var(--d, 0) * 16px); color: var(--eien-ink-soft); }
 .trow .n { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .trow.is-chosen { background: var(--eien-selected); color: var(--eien-ink); }
 .trow.is-chosen::before, .row.is-chosen::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: var(--eien-mark-w); background: var(--eien-seal); }
-.book { font-family: var(--eien-face-mono); font-size: 9px; letter-spacing: var(--eien-track-label); padding: 0 3px; border: var(--eien-hairline) solid var(--eien-rule); color: var(--eien-pencil); line-height: 14px; }
+.book { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); padding: 0 3px; border: var(--eien-hairline) solid var(--eien-rule); color: var(--eien-pencil); line-height: 14px; }
 
 /* The list: paper, its search on a band. A note open on the other side keeps a
    fainter rule, in pencil and with no fill, so both open notes are findable. */
 .ls { background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); }
 .ls__band { display: flex; align-items: center; height: var(--band); padding: 0 var(--eien-space-4); background: var(--eien-band); }
-.win[data-sb='shut']:not([data-layout='runhead']) .ls__band { padding-left: calc(var(--seal-x) + 32px + var(--eien-space-3)); }
+.win[data-sb='shut']:not([data-layout='runhead']) .ls__band { padding-left: calc(var(--seal-x) + var(--seal-btn) + var(--eien-space-3)); }
 .ls__band .field { padding: 6px var(--eien-space-3); color: var(--eien-faded); }
 .ls__head { padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
 .ls__title { font-size: var(--eien-size-heading); font-weight: 500; line-height: 1.3; }
 .row {
-  appearance: none; position: relative; display: grid; grid-template-columns: 28px 1fr auto; gap: 0 var(--eien-space-1); width: 100%;
+  appearance: none; position: relative; display: grid; grid-template-columns: var(--eien-space-6) 1fr auto; gap: 0 var(--eien-space-1); width: 100%;
   padding: var(--eien-space-3) var(--eien-space-4); border: 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); background: none;
   text-align: left; cursor: pointer; font: inherit; color: var(--eien-ink);
 }
@@ -327,12 +333,20 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 .pg:hover .quiet, .quiet:focus-within { opacity: 1; }
 .slip { display: flex; gap: 2px; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
 .blotter { position: relative; min-height: 0; overflow: auto; padding: var(--eien-space-4) var(--eien-space-4) 0; }
-.sheet { position: relative; max-width: 640px; min-height: 100%; margin: 0 auto; padding: var(--eien-space-6) clamp(var(--eien-space-4), 7%, var(--eien-space-7)); background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet); font-size: 19px; line-height: 1.55; transition: box-shadow var(--eien-calm) var(--eien-ease); }
+/* The sheet at the face's own sizes, leading and measure; its margins narrow with
+   a narrow page, as the app's do. */
+.sheet {
+  position: relative; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); min-height: 100%; margin: 0 auto;
+  padding: var(--eien-space-6) clamp(var(--eien-space-4), 8%, var(--eien-space-8));
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet);
+  font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose);
+  transition: box-shadow var(--eien-calm) var(--eien-ease), border-color var(--eien-calm) var(--eien-ease);
+}
 .win[data-layout='slip'] .sheet { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
 .sheet__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eien-space-3); min-height: 18px; }
-.sheet h1 { font-size: 28px; font-weight: 500; line-height: 1.2; margin: var(--eien-space-3) 0 var(--eien-space-4); }
+.sheet h1 { font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; margin: var(--eien-space-4) 0 var(--eien-space-5); }
 .prose { outline: none; caret-color: var(--eien-seal); }
-.prose p { margin: 0 0 var(--eien-space-3); }
+.prose p { margin: 0 0 var(--eien-paragraph-gap); }
 .tagset { display: flex; gap: var(--eien-space-2); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); white-space: nowrap; }
 .slips { display: flex; gap: var(--eien-space-1); margin: calc(var(--eien-space-3) * -1) 0 var(--eien-space-4); }
 .slips span { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); padding: 1px 8px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-band); }
@@ -348,13 +362,16 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 .win[data-layout='slip'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-3); top: calc((var(--band) - var(--eien-control) - 6px) / 2); padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
 .win[data-layout='runhead'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-2); top: var(--eien-space-4); flex-direction: column; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
 
-/* The divider between two pages: the pane edge's handle, a hairline, rule-strong
-   on hover, the focus ink while dragged or focused; its swap shows on hover. */
-.divider { position: relative; z-index: 4; width: var(--eien-space-2); margin: 0 calc(var(--eien-space-1) * -1); cursor: col-resize; outline: none; touch-action: none; }
-.divider::after { content: ''; position: absolute; top: 0; bottom: 0; left: calc(50% - var(--eien-hairline) / 2); width: var(--eien-hairline); background: var(--eien-rule); transition: background var(--eien-quick) var(--eien-ease); }
+/* The divider between two pages, as a pane's edge is: its own column (a
+   hairline wide, or wider where a direction says), a hairline drawn down its
+   middle, an 8px handle round it to grab; rule-strong on hover, the focus ink
+   at 2px while dragged or focused; its swap shows on hover. */
+.divider { position: relative; z-index: 4; cursor: col-resize; outline: none; touch-action: none; }
+.divider::before { content: ''; position: absolute; inset: 0 calc(var(--eien-space-1) * -1); }
+.divider::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; translate: -50% 0; width: var(--eien-hairline); background: var(--eien-rule); transition: background var(--eien-quick) var(--eien-ease); }
 .divider:hover::after { background: var(--eien-rule-strong); }
-.divider:focus-visible::after, .divider.is-dragging::after { left: calc(50% - var(--eien-mark-w) / 2); width: var(--eien-mark-w); background: var(--eien-focus); }
-.divider__swap { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 24px; height: 24px; border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); background: var(--eien-paper-raised); opacity: 0; }
+.divider:focus-visible::after, .divider.is-dragging::after { width: var(--eien-mark-w); background: var(--eien-focus); }
+.divider__swap { position: absolute; z-index: 1; left: 50%; top: 50%; translate: -50% -50%; width: var(--eien-space-5); height: var(--eien-space-5); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); background: var(--eien-paper-raised); opacity: 0; }
 .divider__swap svg { width: 12px; height: 12px; }
 .divider:is(:hover, :focus-within) .divider__swap, .divider__swap:focus-visible { opacity: 1; }
 
@@ -362,14 +379,14 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 .close-side { color: var(--eien-pencil); }
 .same { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); white-space: nowrap; }
 .pager { display: flex; align-items: center; gap: 2px; min-width: 0; }
-.pager .word-button { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pager .word-button { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Dropping a note on the page's right edge: where the new page would stand. */
 .drop-preview { position: absolute; z-index: 8; top: 0; bottom: 0; right: 0; display: grid; place-items: center; pointer-events: none; background: color-mix(in srgb, var(--eien-paper-raised) 82%, transparent); border-left: var(--eien-mark-w) solid var(--eien-ink-soft); }
-.drop-preview .label { color: var(--eien-ink-soft); }
+.drop-preview .label { color: var(--eien-ink-soft); padding: var(--eien-space-1) var(--eien-space-2); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); }
 
 /* The row's menu, as the sidebar's is. */
-.menu { position: fixed; z-index: 40; min-width: 260px; padding: var(--eien-space-1); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.menu { position: fixed; z-index: 40; min-width: 18em; padding: var(--eien-space-1); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
 .menu[hidden] { display: none; }
 .menu__head { padding: 6px var(--eien-space-2) 4px; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
 .menu__item { appearance: none; display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: var(--eien-space-2); width: 100%; padding: 5px var(--eien-space-2); border: 0; border-radius: var(--eien-radius-s); background: none; cursor: pointer; text-align: left; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); }
@@ -619,12 +636,10 @@ const NOTES = {
     html: '<p>The water came up through the stones first, before anyone heard it.</p><p>By the time the bell rang, the lower stair was gone.</p>' },
   iv: { ord: 'iv', title: 'What the Recruits Say', rest: 2999, crumb: 'Fic / Beneath the Walls / iv', tags: ['fic/aot', 'draft'], sealed: '2h ago',
     html: '<p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p><p>Instead he takes the late watch, every night of the week, and lets them talk around the brazier as if he were part of the stone.</p><p>Erwin finds him there an hour before dawn, and says nothing either.</p>' },
-  v: { ord: 'v', title: 'The Long Way Round', rest: 1898, crumb: 'Fic / Beneath the Walls / v', tags: ['fic/aot', 'draft'], sealed: 'never',
+  v: { ord: 'v', title: 'The Long Way Round', rest: 1898, crumb: 'Fic / Beneath the Walls / v', tags: ['fic/aot', 'draft'], sealed: 'not yet',
     html: '<p>Nobody had walked the outer road in years.</p>' },
-  erwin: { ord: '·', title: 'Erwin', rest: 0, crumb: 'Fic / Beneath the Walls / Notes', tags: ['character'], sealed: 'Sep 30',
-    html: '<p>Commander. Speaks last in any room, and never twice.</p><p>Knows the recruits’ name for Levi. Has never used it.</p><p>Chapter iv: he comes to the wall before dawn. What does he want? To be told no.</p>' },
 };
-const LIST = ['i', 'ii', 'iii', 'iv', 'v', 'erwin'];
+const LIST = ['i', 'ii', 'iii', 'iv', 'v'];
 // A note is plain paragraphs, drawn escaped: what's typed is text, never markup.
 for (const n of Object.values(NOTES)) {
   n.paras = n.html.match(/<p>.*?<\/p>/g).map((para) => para.slice(3, -4));
@@ -636,6 +651,11 @@ const plain = (id) => NOTES[id].paras.join(' ');
 // A chapter is longer than the lines shown here: `rest` is the words above them.
 const wordsOf = (id) => NOTES[id].rest + plain(id).split(/\s+/).filter(Boolean).length;
 const MIN_SIDE = 360; // a page narrower than this can't hold the text's measure with any margin
+// The app's widths (--eien-sidebar-w, --eien-list-w, C's strip), and the window's height here.
+const SIDEBAR_W = 264;
+const LIST_W = 316;
+const C_STRIP = 48;
+const WIN_H = 860;
 
 // The split: one or two notes, which side is active, where the divider is.
 const S = { sides: ['iv'], active: 0, ratio: 0.5 };
@@ -648,8 +668,8 @@ function context() {
   const d = root.dataset;
   const layout = d.layout;
   const winW = +d.width;
-  const sbW = d.sb === 'shut' ? (layout === 'runhead' ? 48 : 0) : 264;
-  const pageW = winW - sbW - 316;
+  const sbW = d.sb === 'shut' ? (layout === 'runhead' ? C_STRIP : 0) : SIDEBAR_W;
+  const pageW = winW - sbW - LIST_W;
   const split = S.sides.length === 2;
   // Too narrow for two pages: they fold into one, with a pager between them.
   const folded = split && pageW < MIN_SIDE * 2;
@@ -660,7 +680,7 @@ function context() {
     id: (i) => S.sides[i],
     note: (i) => NOTES[S.sides[i]],
     /** Two pages' columns, the divider between: `gap` wide. */
-    columns: (gap = 'var(--eien-space-2)') => `calc((100% - ${gap}) * ${S.ratio}) ${gap} minmax(0, 1fr)`,
+    columns: (gap = 'var(--eien-hairline)') => `calc((100% - ${gap}) * ${S.ratio}) ${gap} minmax(0, 1fr)`,
     tools: (names, cls = '') => `<span class="tools ${cls}">${names.map(([n, w]) => `<button class="icon-button" data-icon="${n}" aria-label="${w}" data-tip="${w}"></button>`).join('')}</span>`,
     views: () => ctx.tools([['live', 'Live'], ['source', 'Source'], ['reading', 'Reading']]),
     pageTools: () => ctx.tools([['compare', 'Compare'], ['versions', 'Versions'], ['focus', 'Focus mode'], ['format', 'Formatting bar']]),
@@ -698,7 +718,7 @@ function windowHtml(ctx) {
     return `<button class="row${chosen ? ' is-chosen' : ''}${beside ? ' is-beside' : ''}" draggable="true" data-note-row="${id}" aria-current="${chosen ? 'page' : 'false'}"${beside ? ' aria-description="Open on the other side"' : ''}><span class="ord">${n.ord}</span><span class="t">${n.title}</span><span class="count">${wordsOf(id).toLocaleString('en')}</span><span class="p">${esc(plain(id))}</span></button>`;
   };
   const sbRow = (name, count, dd = 0, extra = '') => `<div class="trow${extra}" style="--d:${dd}"><span class="n">${name}</span>${count}</div>`;
-  return `<div class="win" data-layout="${ctx.layout}" data-sb="${d.sb}" style="--win-w:${d.width}px">
+  return `<div class="win" data-layout="${ctx.layout}" data-sb="${d.sb}" style="--win-w:${d.width}px; --win-h:${WIN_H}px; --eien-sidebar-w:${SIDEBAR_W}px; --eien-list-w:${LIST_W}px">
   ${ctx.layout === 'runhead' ? `<div class="strip"><div class="strip__panes">${ctx.tools([['sidebar', 'Sidebar'], ['list', 'Note list']])}</div><div class="strip__page">${Split.strip(ctx)}</div></div>` : ''}
   <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
   <button class="seal-button seal-btn" data-seal aria-label="${d.sb === 'open' ? 'Hide' : 'Show'} the sidebar" aria-expanded="${d.sb === 'open'}" data-tip="${d.sb === 'open' ? 'Hide' : 'Show'} the sidebar  ${KEY('Mod-\\')}"><span class="seal">永</span></button>
@@ -761,10 +781,10 @@ function fit() {
   const win = box?.firstElementChild;
   if (!win) return;
   const w = +root.dataset.width;
-  const scale = Math.min(1, (canvas.clientWidth - 32) / w, (canvas.clientHeight - 32) / 860);
+  const scale = Math.min(1, (canvas.clientWidth - 32) / w, (canvas.clientHeight - 32) / WIN_H);
   win.style.transform = `scale(${scale})`;
   box.style.width = `${w * scale}px`;
-  box.style.height = `${860 * scale}px`;
+  box.style.height = `${WIN_H * scale}px`;
 }
 
 let saidTimer;
@@ -1009,7 +1029,7 @@ function mountSplitPage({ id, note, notes, bar = '' }) {
   wireBar(draw);
   addEventListener('resize', fit);
   // Open to the side from the start, so the split shows; one key or click puts it back.
-  S.sides = ['iv', 'erwin'];
+  S.sides = ['iv', 'iii'];
   S.active = 0;
   draw();
 }

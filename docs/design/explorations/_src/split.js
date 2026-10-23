@@ -20,12 +20,10 @@ const NOTES = {
     html: '<p>The water came up through the stones first, before anyone heard it.</p><p>By the time the bell rang, the lower stair was gone.</p>' },
   iv: { ord: 'iv', title: 'What the Recruits Say', rest: 2999, crumb: 'Fic / Beneath the Walls / iv', tags: ['fic/aot', 'draft'], sealed: '2h ago',
     html: '<p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p><p>Instead he takes the late watch, every night of the week, and lets them talk around the brazier as if he were part of the stone.</p><p>Erwin finds him there an hour before dawn, and says nothing either.</p>' },
-  v: { ord: 'v', title: 'The Long Way Round', rest: 1898, crumb: 'Fic / Beneath the Walls / v', tags: ['fic/aot', 'draft'], sealed: 'never',
+  v: { ord: 'v', title: 'The Long Way Round', rest: 1898, crumb: 'Fic / Beneath the Walls / v', tags: ['fic/aot', 'draft'], sealed: 'not yet',
     html: '<p>Nobody had walked the outer road in years.</p>' },
-  erwin: { ord: '·', title: 'Erwin', rest: 0, crumb: 'Fic / Beneath the Walls / Notes', tags: ['character'], sealed: 'Sep 30',
-    html: '<p>Commander. Speaks last in any room, and never twice.</p><p>Knows the recruits’ name for Levi. Has never used it.</p><p>Chapter iv: he comes to the wall before dawn. What does he want? To be told no.</p>' },
 };
-const LIST = ['i', 'ii', 'iii', 'iv', 'v', 'erwin'];
+const LIST = ['i', 'ii', 'iii', 'iv', 'v'];
 // A note is plain paragraphs, drawn escaped: what's typed is text, never markup.
 for (const n of Object.values(NOTES)) {
   n.paras = n.html.match(/<p>.*?<\/p>/g).map((para) => para.slice(3, -4));
@@ -37,6 +35,11 @@ const plain = (id) => NOTES[id].paras.join(' ');
 // A chapter is longer than the lines shown here: `rest` is the words above them.
 const wordsOf = (id) => NOTES[id].rest + plain(id).split(/\s+/).filter(Boolean).length;
 const MIN_SIDE = 360; // a page narrower than this can't hold the text's measure with any margin
+// The app's widths (--eien-sidebar-w, --eien-list-w, C's strip), and the window's height here.
+const SIDEBAR_W = 264;
+const LIST_W = 316;
+const C_STRIP = 48;
+const WIN_H = 860;
 
 // The split: one or two notes, which side is active, where the divider is.
 const S = { sides: ['iv'], active: 0, ratio: 0.5 };
@@ -49,8 +52,8 @@ function context() {
   const d = root.dataset;
   const layout = d.layout;
   const winW = +d.width;
-  const sbW = d.sb === 'shut' ? (layout === 'runhead' ? 48 : 0) : 264;
-  const pageW = winW - sbW - 316;
+  const sbW = d.sb === 'shut' ? (layout === 'runhead' ? C_STRIP : 0) : SIDEBAR_W;
+  const pageW = winW - sbW - LIST_W;
   const split = S.sides.length === 2;
   // Too narrow for two pages: they fold into one, with a pager between them.
   const folded = split && pageW < MIN_SIDE * 2;
@@ -61,7 +64,7 @@ function context() {
     id: (i) => S.sides[i],
     note: (i) => NOTES[S.sides[i]],
     /** Two pages' columns, the divider between: `gap` wide. */
-    columns: (gap = 'var(--eien-space-2)') => `calc((100% - ${gap}) * ${S.ratio}) ${gap} minmax(0, 1fr)`,
+    columns: (gap = 'var(--eien-hairline)') => `calc((100% - ${gap}) * ${S.ratio}) ${gap} minmax(0, 1fr)`,
     tools: (names, cls = '') => `<span class="tools ${cls}">${names.map(([n, w]) => `<button class="icon-button" data-icon="${n}" aria-label="${w}" data-tip="${w}"></button>`).join('')}</span>`,
     views: () => ctx.tools([['live', 'Live'], ['source', 'Source'], ['reading', 'Reading']]),
     pageTools: () => ctx.tools([['compare', 'Compare'], ['versions', 'Versions'], ['focus', 'Focus mode'], ['format', 'Formatting bar']]),
@@ -99,7 +102,7 @@ function windowHtml(ctx) {
     return `<button class="row${chosen ? ' is-chosen' : ''}${beside ? ' is-beside' : ''}" draggable="true" data-note-row="${id}" aria-current="${chosen ? 'page' : 'false'}"${beside ? ' aria-description="Open on the other side"' : ''}><span class="ord">${n.ord}</span><span class="t">${n.title}</span><span class="count">${wordsOf(id).toLocaleString('en')}</span><span class="p">${esc(plain(id))}</span></button>`;
   };
   const sbRow = (name, count, dd = 0, extra = '') => `<div class="trow${extra}" style="--d:${dd}"><span class="n">${name}</span>${count}</div>`;
-  return `<div class="win" data-layout="${ctx.layout}" data-sb="${d.sb}" style="--win-w:${d.width}px">
+  return `<div class="win" data-layout="${ctx.layout}" data-sb="${d.sb}" style="--win-w:${d.width}px; --win-h:${WIN_H}px; --eien-sidebar-w:${SIDEBAR_W}px; --eien-list-w:${LIST_W}px">
   ${ctx.layout === 'runhead' ? `<div class="strip"><div class="strip__panes">${ctx.tools([['sidebar', 'Sidebar'], ['list', 'Note list']])}</div><div class="strip__page">${Split.strip(ctx)}</div></div>` : ''}
   <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
   <button class="seal-button seal-btn" data-seal aria-label="${d.sb === 'open' ? 'Hide' : 'Show'} the sidebar" aria-expanded="${d.sb === 'open'}" data-tip="${d.sb === 'open' ? 'Hide' : 'Show'} the sidebar  ${KEY('Mod-\\')}"><span class="seal">永</span></button>
@@ -162,10 +165,10 @@ function fit() {
   const win = box?.firstElementChild;
   if (!win) return;
   const w = +root.dataset.width;
-  const scale = Math.min(1, (canvas.clientWidth - 32) / w, (canvas.clientHeight - 32) / 860);
+  const scale = Math.min(1, (canvas.clientWidth - 32) / w, (canvas.clientHeight - 32) / WIN_H);
   win.style.transform = `scale(${scale})`;
   box.style.width = `${w * scale}px`;
-  box.style.height = `${860 * scale}px`;
+  box.style.height = `${WIN_H * scale}px`;
 }
 
 let saidTimer;
@@ -410,7 +413,7 @@ function mountSplitPage({ id, note, notes, bar = '' }) {
   wireBar(draw);
   addEventListener('resize', fit);
   // Open to the side from the start, so the split shows; one key or click puts it back.
-  S.sides = ['iv', 'erwin'];
+  S.sides = ['iv', 'iii'];
   S.active = 0;
   draw();
 }
