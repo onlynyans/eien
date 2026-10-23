@@ -51,7 +51,7 @@ export class PagePane {
       ),
       first.aside,
     );
-    this.#placeFigures([first], null);
+    this.#placeFigures([first], 'active');
     // # on the pane, outside the words and any field, opens the active page's tags.
     area.addEventListener('keydown', (event) => this.#active.tags.key(event));
   }
@@ -88,7 +88,7 @@ export class PagePane {
       this.#active.aside.replaceWith(active.aside);
       this.#active = active;
     }
-    this.#placeFigures(pages, pages.length === 2 && split.foot === 'page' ? split : null);
+    this.#placeFigures(pages, pages.length === 2 ? split.figures : 'active');
   }
 
   /** News from the last action in the status line; null takes it away. */
@@ -116,20 +116,29 @@ export class PagePane {
   }
 
   /**
-   * Each note's figures: its words, save and last seal. In the colophon, the
-   * active note's, its tags first and its counters between, in the order a
-   * single page always had; or, `onPages`, at each page's own foot, the
-   * colophon keeping the book's figures and today's.
+   * Each note's figures: its words, save and last seal, as the split says
+   * (../chrome/splits.ts). In the colophon, its tags first and the counters
+   * between, in the order a single page always had: the active note's, or
+   * the first page's with the second's at its own foot; or each at its own
+   * page's foot, the colophon keeping the book's figures and today's.
    */
-  #placeFigures(pages: readonly PageView[], onPages: SplitSpec | null): void {
-    const { foot } = this.#active;
-    if (onPages) {
-      for (const page of pages)
-        page.folio.figures.replaceChildren(page.foot.words, page.foot.state, page.foot.seal);
-      this.#colophon.replaceChildren(this.#counters, this.#zoom, this.#news, foot.said);
+  #placeFigures(pages: readonly PageView[], where: SplitSpec['figures']): void {
+    const onFoot = where === 'pages' ? pages : where === 'second' ? pages.slice(1) : [];
+    for (const page of pages) {
+      const { words, state, seal } = page.foot;
+      if (onFoot.includes(page)) page.folio.figures.replaceChildren(words, state, seal);
+      else page.folio.figures.replaceChildren();
+    }
+    if (where === 'pages') {
+      this.#colophon.replaceChildren(
+        this.#counters,
+        this.#zoom,
+        this.#news,
+        this.#active.foot.said,
+      );
       return;
     }
-    for (const page of pages) page.folio.figures.replaceChildren();
+    const { foot } = where === 'second' ? (pages[0] ?? this.#active) : this.#active;
     this.#colophon.replaceChildren(
       foot.tags,
       foot.words,

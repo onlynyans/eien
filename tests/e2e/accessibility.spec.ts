@@ -101,6 +101,20 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
           [],
         );
       });
+
+      test('a companion, beside and under the page, has no serious violation', async ({ page }) => {
+        await page.setViewportSize({ width: 1600, height: 900 });
+        await ready(page);
+        await chooseSetting(page, 'appearance.split', 'companion');
+        await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
+        await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
+        // The companion with its head's tools in sight, and the page beside it resting.
+        const areas = ['.page__leaf[data-side="1"]', '.page__leaf[data-side="0"]'];
+        expect(await violationsUnder(page, areas), 'beside').toEqual([]);
+        await page.setViewportSize({ width: 1200, height: 900 });
+        await expect(page.locator('.page__pages[data-dock="under"]')).toHaveCount(1);
+        expect(await violationsUnder(page, ['.page']), 'under the page').toEqual([]);
+      });
     });
   }
 }

@@ -18,6 +18,7 @@ import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
 import { COMPARE_WORD } from '../versions/seal-line';
 import { pageHosts } from './page-hosts';
+import { pageMore } from './page-more';
 import type { Pages, Side } from './pages';
 import type { PhoneView } from './phone-view';
 
@@ -31,6 +32,8 @@ export interface VaultChromeOf {
   readonly settings: SettingsState;
   readonly menu: MenuBus;
   readonly mac: boolean;
+  /** A note in a window of its own: the desktop's only (a companion's ⋯ offers it). */
+  readonly openInNewWindow?: (path: string) => void;
 }
 
 export interface VaultChrome {
@@ -71,6 +74,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   const two = () => settings.values['layout.panes'] === 'two';
   const barShown = () => settings.values['editor.formatBar'] === 'on';
 
+  const sideOf = (element: HTMLElement) =>
+    pages.sides.find(({ page }) => page.element.contains(element));
   /** The split the layout's hosts are drawn for: its mode while split, none with one page. */
   const split = () => (pages.split ? pages.mode : null);
 
@@ -100,7 +105,15 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   };
 
   /** How `id` looks now, for `side`'s note (a page's own host), else the active page's. */
-  const look = (id: CommandId, side: Side = pages.active): CommandLook => {
+  /**
+   * The page a layout control acts on: the active one, or with a companion
+   * the page itself, the formatting bar still the caret's (../chrome/splits.ts).
+   */
+  const target = (id: CommandId): Side =>
+    split()?.toolsFor === 'first' && !id.startsWith('format')
+      ? (pages.sides[0] ?? pages.active)
+      : pages.active;
+  const look = (id: CommandId, side: Side = target(id)): CommandLook => {
     const { versions } = side;
     const { mode } = side.page;
     switch (id) {
@@ -174,10 +187,14 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     more: (opener) => of.phone.more(opener),
     // The bar's one heading control: the caret's line a level down each press.
     'format.heading': () => of.menu.run(`format:${nextHeading(page().editor.caretLine)}`),
-    // A page's own ×: the page it's on.
+    // A page's own ×, and a companion's ⋯: the page it's on.
     'page.close': (opener) => {
-      const side = pages.sides.find(({ page }) => page.element.contains(opener));
+      const side = sideOf(opener);
       if (side) pages.close(side);
+    },
+    'page.more': (opener) => {
+      const side = sideOf(opener);
+      if (side) pageMore({ ...of, run: (c) => of.menu.run(c) }, side, opener);
     },
   };
 
@@ -196,7 +213,10 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     slots,
     look,
     local: (id, opener) => local[id](opener),
-    send: (command) => of.menu.run(command),
+    send: (command, id) => {
+      pages.activate(target(id)); // the page it acts on is the one the command runs for
+      of.menu.run(command);
+    },
     lost: () => page().focus(),
     watch: (host) => tips.watch(host),
     pager: pane.pager,
@@ -230,8 +250,12 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     const layout = chrome.layout ?? settings.values['appearance.layout'];
     const tags = of.phone.stack.phone ? PHONE_TAGS : LAYOUT_SPECS[layout].tags;
     // Where each note's figures are at its page's foot, C's tags go to the page's own head.
-    const onPage = split()?.foot === 'page' && tags === 'colophon' ? 'runningHead' : tags;
-    for (const { page } of pages.sides) page.tags.place(page.tagSlots, onPage);
+    // C's tags are the colophon's: a page whose figures are at its own foot has them at its own head.
+    const figures = split()?.figures ?? 'active';
+    pages.sides.forEach(({ page }, index) => {
+      const own = figures === 'pages' || (figures === 'second' && index === 1);
+      page.tags.place(page.tagSlots, own && tags === 'colophon' ? 'runningHead' : tags);
+    });
   };
   const refresh = () => {
     if (!mounted) return;

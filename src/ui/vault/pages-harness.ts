@@ -1,12 +1,14 @@
 // For the window's tests only: pages (./pages.ts) over a vault in memory, with
 // settings that can change, wired as the vault view wires them, less the panes.
 
+import { vi } from 'vitest';
 import type { SettingValues } from '../../core/config';
 import { withDefaults } from '../../core/config/settings';
-import type { VaultBridge } from '../../platform/bridge';
+import type { OutBridge, VaultBridge } from '../../platform/bridge';
 import { VaultIndex } from '../../platform/index';
 import { MemoryStorage } from '../../platform/memory/memory-storage';
 import type { SettingsState } from '../settings/settings-state';
+import { Navigation } from './navigation';
 import type { Organizer } from './organize';
 import { Pages } from './pages';
 import { VaultState } from './vault-state';
@@ -48,7 +50,6 @@ export async function pagesWith(
   const area = document.body.appendChild(document.createElement('main'));
   /** How many times the pages told the window their seals' controls changed. */
   let told = 0;
-  const wrote: number[] = [];
   /** How many times the pages said they changed (rearranged), for the window to draw. */
   let rearranged = 0;
   const pages = new Pages({
@@ -56,9 +57,15 @@ export async function pagesWith(
     vault,
     state,
     organizer: {} as Organizer,
+    nav: new Navigation(),
+    out: {
+      kinds: ['html'],
+      copy: async () => {},
+      saveAs: async () => null,
+    } as unknown as OutBridge,
     settings: settings as unknown as SettingsState,
     mac: false,
-    openNote: () => {},
+    openNote: async () => {},
     act: async (operation) => void (await operation()),
     tell: () => {},
     changed: () => {
@@ -68,10 +75,18 @@ export async function pagesWith(
       rearranged++;
     },
     refresh: () => {},
-    wrote: (added) => wrote.push(added),
-    counted: () => {},
   });
-  return { pages, storage, area, change, wrote, rearranged: () => rearranged, told: () => told };
+  // What the pages counted as written (today's tally), each stretch's words.
+  const wrote = vi.spyOn(pages.parts, 'wrote');
+  return {
+    pages,
+    storage,
+    area,
+    change,
+    wrote: () => wrote.mock.calls.map(([added]) => added),
+    rearranged: () => rearranged,
+    told: () => told,
+  };
 }
 
 /** Type at the end of the active page's note, as the writer does. */

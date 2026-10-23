@@ -1,0 +1,35 @@
+/* 3 · Two sheets (the split's default, ../chrome/splits.ts): two papers on
+   one blotter, one set of tools for the active page, the one you work on
+   lying on top with the sheet's shadow, the other flat. Shared parts:
+   ./split.css. */
+
+/* Each sheet with the same margin of blotter round it, and filling its page. */
+:root[data-split="sheets"]:not([data-frame="full"]) .page__pages[data-two] .page__scroll {
+  padding: var(--eien-space-5) var(--eien-space-5) 0;
+}
+:root[data-split="sheets"] .page__pages[data-two] .sheet {
+  position: relative;
+  width: 100%;
+  transition:
+    box-shadow var(--eien-calm) var(--eien-ease),
+    border-color var(--eien-calm) var(--eien-ease);
+}
+/* The page you aren't in lies flat: no shadow, and its edge a step softer. */
+:root[data-split="sheets"]
+  .page__pages[data-two]:not([data-narrow])
+  > .page__leaf:not([data-active])
+  .sheet {
+  box-shadow: none;
+  border-color: var(--eien-rule-soft);
+}
+/* Page frame Full has no sheets: a 2px ink-soft rule tops the active page instead. */
+:root[data-split="sheets"][data-frame="full"]
+  .page__pages[data-two]:not([data-narrow])
+  > .page__leaf[data-active]
+  .sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--eien-mark-w);
+  background: var(--eien-ink-soft);
+}

@@ -1,0 +1,74 @@
+/* 5 · Companion (../chrome/splits.ts): the page as it always is, and the
+   second note a companion at the window's right edge, or under the page
+   when narrow: a pane of its own with its head, its words in a smaller hand,
+   and its foot. Shared parts: ./split.css. */
+
+/* The page as it always is; the companion at the window's right edge (or under the page),
+   a pane of its own: its head (its name, its few tools), its words in a smaller hand,
+   its foot (its figures). */
+:root[data-split="companion"] .page__pages[data-two] > .page__leaf[data-side="1"] {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: var(--eien-paper);
+  transition: background-color var(--eien-calm) var(--eien-ease);
+}
+:root[data-split="companion"] .page__leaf[data-side="1"] .page__head {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-2);
+  height: var(--band);
+  min-width: 0;
+  padding: 0 var(--eien-space-2) 0 var(--eien-space-4);
+  background: var(--eien-band);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.page__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--eien-face-text);
+  font-weight: var(--eien-weight-list-chosen);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:root[data-split="companion"] .page__leaf[data-side="1"] .page__scroll {
+  padding: var(--eien-space-4) var(--eien-space-5) var(--eien-space-6);
+}
+:root[data-split="companion"] .page__leaf[data-side="1"] .sheet {
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  font-size: var(--eien-size-row);
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+:root[data-split="companion"] .page__pages[data-two] .sheet {
+  transition: background-color var(--eien-calm) var(--eien-ease);
+}
+/* Its name is in its head. */
+:root[data-split="companion"] .page__leaf[data-side="1"] .title {
+  display: none;
+}
+:root[data-split="companion"] .page__leaf[data-side="1"] .page__folio {
+  display: flex;
+  align-items: center;
+  height: var(--status-h);
+  min-width: 0;
+  padding: 0 var(--eien-space-4);
+  background: var(--eien-band);
+  border-top: var(--eien-hairline) solid var(--eien-rule);
+  text-transform: uppercase;
+  letter-spacing: var(--eien-track-label);
+  white-space: nowrap;
+}
+
+/* Companion, sitting back a step: the paper you aren't writing in takes the band's tone. */
+:root[data-split="companion"]
+  .page__pages[data-two]
+  > .page__leaf[data-side="0"]:not([data-active])
+  .sheet,
+:root[data-split="companion"]
+  .page__pages[data-two]
+  > .page__leaf[data-side="1"]:not([data-active]) {
+  background: var(--eien-band);
+}

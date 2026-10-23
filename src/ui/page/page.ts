@@ -13,6 +13,7 @@ import type { SaveState } from '../notes/note-session';
 import { quietButton } from '../quiet-button';
 import { Notice } from '../vault/notice';
 import { BoardHost } from './board-host';
+import { type PageLeaf, pageLeaf } from './page-leaf';
 import { PageTags, type PageTagsOf } from './page-tags';
 import { PageTitle } from './page-title';
 import { WordCount } from './word-count';
@@ -80,16 +81,11 @@ export class PageView {
     text: 'Choose a note, or make a new one.',
     attrs: { tabindex: '-1' },
   });
-  /** The page's own part of the pane: the blotter round the sheet, scrolled, and its folio. */
+  /** The page's own part of the pane: the blotter round the sheet, scrolled, its head and foot round it. */
   readonly element: HTMLElement;
-  /**
-   * The page's own foot, while a split puts each note's figures and tools on
-   * its page (../chrome/splits.ts, Facing pages): the pane fills it.
-   */
-  readonly folio = {
-    figures: h('span', { class: 'page__figures' }),
-    tools: h('span', { class: 'page__tools' }),
-  };
+  /** Its own head and foot, which the split's mode fills (./page-leaf.ts). */
+  readonly head: PageLeaf['head'];
+  readonly folio: PageLeaf['folio'];
   /** The last seal. */
   readonly #sealLine = h('span', { class: 'colophon__seal' });
   /** What the colophon says of this page's note, for the pane to put in place. */
@@ -151,12 +147,7 @@ export class PageView {
     const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
     this.board = new BoardHost(scroll);
     scroll.append(this.board.element);
-    this.element = h(
-      'div',
-      { class: 'page__leaf' },
-      scroll,
-      h('footer', { class: 'page__folio count' }, this.folio.figures, this.folio.tools),
-    );
+    ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(scroll));
     this.foot = {
       tags: this.tagSlots.colophon,
       words: this.words.element,

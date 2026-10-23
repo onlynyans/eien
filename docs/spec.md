@@ -256,8 +256,17 @@ device setting says (`appearance.split`, Settings → Look → Appearance):
   (`appearance.facingMark`): a ribbon over its top edge, its outer corner
   turned down, or a tab at its outer edge, each arriving with a short motion
   (none with reduced motion).
+- **Companion**: the page as it always is, every one of its tools acting on
+  it (the formatting bar on whichever words the caret is in); the second
+  note a companion at the window's right edge, 380px (at least 300, the page
+  beside it at least 400), its words at row size. It has its own head (its
+  name; Make it the page, ⇄; its ⋯ with its views, Seal, Versions, Compare,
+  Copy as HTML and Open in New Window; its ×) and foot (its words, save and
+  last seal); the colophon stays the page's. The one you aren't writing in
+  sits back a step, its paper the band's tone. With less than 700px of page
+  pane, the companion goes under the page, the divider lying across.
 
-What follows holds for both.
+What follows holds for all three.
 
 - **Opening:** a row's Ctrl-click (⌘ on a Mac) or Ctrl+Enter; Open to the
   Side in its menu; a row dragged onto the page pane (past 60% of a lone
@@ -280,7 +289,8 @@ What follows holds for both.
 - **Narrow:** below two pages' width, Two sheets fold into one, the active
   page, and a pager with the page's tools names both; Facing pages' book
   closes to the active page, the other page's edge beside it with its name,
-  a click (or ⌘3) turning to it. Shutting a pane opens them again.
+  a click (or ⌘3) turning to it; a companion goes under the page. Shutting a
+  pane opens them again.
 - **One note on both pages** is one document: one undo history, one save,
   its words counted once (§3).
 - **The phone** shows one page: no split, and its menus offer none.

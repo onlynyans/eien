@@ -96,11 +96,11 @@ export const SETTINGS = [
     key: 'appearance.split',
     label: 'Split',
     description:
-      'How two notes side by side are laid out. Two sheets: two pages on one desk, one set of tools. Facing pages: one sheet opened like a book, each note’s own tools at its page’s foot.',
+      'How two notes side by side are laid out. Two sheets: two pages on one desk, one set of tools. Facing pages: one sheet opened like a book, each note’s own tools at its page’s foot. Companion: the second note beside the page, narrower, with its own few tools.',
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
-    choices: { sheets: 'Two sheets', facing: 'Facing pages' },
+    choices: { sheets: 'Two sheets', facing: 'Facing pages', companion: 'Companion' },
     default: 'sheets',
   },
   {

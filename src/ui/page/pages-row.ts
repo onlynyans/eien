@@ -1,13 +1,13 @@
 // The pages' row in the page pane (./page-pane.ts): one page, or two side by
 // side with the divider between them (./divider.ts), as the split's mode
-// lays them out (../chrome/splits.ts). Too narrow for two, they fold into
-// the active one with a pager naming both, or the book closes to it with the
-// other page's edge beside it to turn to. Facing pages mark the active page.
+// lays them out (../chrome/splits.ts). Too narrow for two side by side, they
+// fold into the active one with a pager naming both, or the book closes to it
+// with the other page's edge beside it to turn to, or the second goes under
+// the first. Facing pages mark the active page.
 
 import { ariaKeys } from '../chrome/keys';
 import type { SplitSpec } from '../chrome/splits';
 import { h, wordButton } from '../dom';
-import { twoFit } from '../shell/split-state';
 import { Divider } from './divider';
 import type { PageView } from './page';
 
@@ -53,14 +53,14 @@ export class PagesRow {
   #shown: readonly PageView[] = [];
   #active: PageView | null = null;
   #spec: SplitSpec | null = null;
-  /** The pages' room, as last laid out: only a change lays them out again. */
-  #room = -1;
+  /** The row's size, as last laid out: only a change lays the pages out again. */
+  #size = '';
   readonly #resized = new ResizeObserver(() => this.#layout());
 
   constructor(events: RowEvents) {
     this.#events = events;
     this.#divider = new Divider({
-      width: () => this.#roomNow(),
+      room: () => this.#roomNow(this.element.dataset.dock === 'under' ? 'y' : 'x'),
       moved: () => this.#layout(true),
       swap: () => events.swap(),
     });
@@ -116,6 +116,7 @@ export class PagesRow {
   renamed(): void {
     const two = this.#shown.length === 2;
     for (const page of this.#shown) {
+      page.head.name.textContent = page.name;
       if (!two) {
         page.element.removeAttribute('role');
         page.element.removeAttribute('aria-label');
@@ -141,24 +142,36 @@ export class PagesRow {
     this.#resized.disconnect();
   }
 
-  /** The pages' room: the row's width less the divider's column (--split-gap, the mode's). */
-  #roomNow(): number {
+  /** The pages' room along `axis`: the row's size less the divider's track (--split-gap, the mode's). */
+  #roomNow(axis: 'x' | 'y'): number {
     const gap = Number.parseFloat(getComputedStyle(this.element).getPropertyValue('--split-gap'));
-    return this.element.clientWidth - (Number.isFinite(gap) ? gap : 0);
+    const size = axis === 'x' ? this.element.clientWidth : this.element.clientHeight;
+    return size - (Number.isFinite(gap) ? gap : 0);
   }
 
-  /** Two pages side by side where they fit, the divider where it stands; else one, as the mode says. */
+  /**
+   * Two pages side by side where they fit, the divider where it stands; else
+   * as the mode says: one page (folded or closed), or the second under the first.
+   */
   #layout(force = false): void {
-    const room = this.#roomNow();
-    if (!force && room === this.#room) return;
-    this.#room = room;
-    const narrow = this.#spec && !twoFit(room) ? this.#spec.narrow : null;
-    if (narrow) this.element.dataset.narrow = narrow;
+    const size = `${this.element.clientWidth}×${this.element.clientHeight}`;
+    if (!force && size === this.#size) return;
+    this.#size = size;
+    const spec = this.#spec;
+    const narrow = spec && this.#roomNow('x') < spec.least ? spec.narrow : null;
+    const under = narrow === 'under' && spec?.under ? spec.under : null;
+    const one = narrow === 'fold' || narrow === 'close' ? narrow : null;
+    if (one) this.element.dataset.narrow = one;
     else delete this.element.dataset.narrow;
-    this.pager.hidden = narrow !== 'fold';
-    if (narrow === 'fold') this.#drawPager();
-    if (this.#spec && !narrow)
-      this.element.style.setProperty('--split-share', String(this.#divider.shown(room)));
+    if (under) this.element.dataset.dock = 'under';
+    else delete this.element.dataset.dock;
+    this.pager.hidden = one !== 'fold';
+    if (one === 'fold') this.#drawPager();
+    if (!spec || one) return;
+    const measure = under ?? spec.measure;
+    this.#divider.use(measure);
+    const share = this.#divider.shown(this.#roomNow(measure.axis));
+    this.element.style.setProperty('--split-share', String(share));
   }
 
   #other(): PageView | null {
