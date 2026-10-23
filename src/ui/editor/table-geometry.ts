@@ -1,7 +1,8 @@
 // Where a table's rows and columns are on the page, measured for the
-// controls laid over it (./table-tools.ts), in the editor's own box. Rows
-// from the editor's line blocks; columns from the head row's cells, which
-// Live draws as equal columns (./live-tables.ts).
+// controls laid over it (./table-tools.ts), in the controls' own layer: its
+// box, at the page's zoom (the sheet's CSS zoom scales what's measured, not
+// what's placed). Rows and the head row's cells from their elements; Live
+// draws the columns equal when a row's cells can't be told apart.
 
 import type { EditorView } from '@codemirror/view';
 import { bodyRowsOf, columnsOf, lineOfRow } from '../../core/table';
@@ -17,6 +18,8 @@ export interface TableGeometry {
   readonly columns: readonly { readonly x: number; readonly w: number }[];
   /** Each row's top and height: the head row first, the delimiter row left out. */
   readonly rows: readonly { readonly y: number; readonly h: number }[];
+  /** A control's size (`--eien-control`): how near the pointer must come to a line. */
+  readonly reach: number;
 }
 
 /** The line element `pos` is drawn in, or null when it isn't drawn (out of the viewport). */
@@ -26,11 +29,33 @@ function lineElement(view: EditorView, pos: number): HTMLElement | null {
   return element?.closest<HTMLElement>('.cm-line') ?? null;
 }
 
-/** `table` measured, or null when its head row isn't drawn. Call in a measure's read. */
-export function measureTable(view: EditorView, table: TableAt): TableGeometry | null {
-  const head = lineElement(view, table.from);
-  if (!head) return null;
-  const box = view.dom.getBoundingClientRect();
+/** How much the page's zoom scales what's measured in `layer`. */
+export const zoomOf = (layer: HTMLElement): number =>
+  (layer as HTMLElement & { currentCSSZoom?: number }).currentCSSZoom ?? 1;
+
+/** A point on the screen in `layer`'s own coordinates. */
+export function inLayer(layer: HTMLElement, x: number, y: number): { x: number; y: number } {
+  const box = layer.getBoundingClientRect();
+  const zoom = zoomOf(layer);
+  return { x: (x - box.left) / zoom, y: (y - box.top) / zoom };
+}
+
+/** `table` measured in `layer`, or null when a row isn't drawn. Call in a measure's read. */
+export function measureTable(
+  view: EditorView,
+  table: TableAt,
+  layer: HTMLElement,
+): TableGeometry | null {
+  const first = view.state.doc.lineAt(table.from).number;
+  const lines = Array.from({ length: bodyRowsOf(table.lines) + 1 }, (_, r) =>
+    lineElement(view, view.state.doc.line(first + lineOfRow(r)).from),
+  );
+  const head = lines[0];
+  if (!head || lines.some((line) => !line)) return null;
+  const box = layer.getBoundingClientRect();
+  const zoom = zoomOf(layer);
+  const x = (at: number) => (at - box.left) / zoom;
+  const y = (at: number) => (at - box.top) / zoom;
   const line = head.getBoundingClientRect();
   const n = columnsOf(table.lines);
   const cells = [...head.querySelectorAll<HTMLElement>(':scope > .eien-cell')];
@@ -38,26 +63,25 @@ export function measureTable(view: EditorView, table: TableAt): TableGeometry | 
     cells.length === n
       ? cells.map((cell) => {
           const at = cell.getBoundingClientRect();
-          return { x: at.left - box.left, w: at.width };
+          return { x: x(at.left), w: at.width / zoom };
         })
       : Array.from({ length: n }, (_, c) => ({
-          x: line.left - box.left + (c * line.width) / n,
-          w: line.width / n,
+          x: x(line.left + (c * line.width) / n),
+          w: line.width / n / zoom,
         }));
-  const first = view.state.doc.lineAt(table.from).number;
-  const offset = view.documentTop - box.top;
-  const rows = Array.from({ length: bodyRowsOf(table.lines) + 1 }, (_, r) => {
-    const block = view.lineBlockAt(view.state.doc.line(first + lineOfRow(r)).from);
-    return { y: block.top + offset, h: block.height };
+  const rows = lines.map((each) => {
+    const at = (each as HTMLElement).getBoundingClientRect();
+    return { y: y(at.top), h: at.height / zoom };
   });
   const last = rows.at(-1);
   return {
-    left: line.left - box.left,
-    right: line.right - box.left,
+    left: x(line.left),
+    right: x(line.right),
     top: rows[0]?.y ?? 0,
     bottom: last ? last.y + last.h : 0,
     columns,
     rows,
+    reach: Number.parseFloat(getComputedStyle(layer).getPropertyValue('--eien-control')) || 0,
   };
 }
 
@@ -72,25 +96,30 @@ export const columnLine = (g: TableGeometry, c: number): number => {
 /** The y of the line above row `at` under the head (0: under the head row; the last: the table's foot). */
 export const rowLine = (g: TableGeometry, at: number): number => g.rows[at + 1]?.y ?? g.bottom;
 
-/** The line between columns or rows nearest the pointer at (x, y), if it's close enough to show its +. */
+/** Whether (x, y) is on the table or in the margins its controls stand in (./table.css). */
+export const nearTable = (g: TableGeometry, x: number, y: number): boolean =>
+  x >= g.left - 2.5 * g.reach && x <= g.right && y >= g.top - 1.5 * g.reach && y <= g.bottom;
+
+/**
+ * The line between columns or rows nearest the pointer at (x, y), if it's
+ * close enough to show its +: a quarter of a control on the table, half of
+ * one in the margin where the + stands, so the pointer can follow the line
+ * out to it.
+ */
 export function nearLine(
   g: TableGeometry,
   x: number,
   y: number,
 ): { readonly dir: 'column' | 'row'; readonly at: number } | null {
+  if (!nearTable(g, x, y)) return null;
   let best: { dir: 'column' | 'row'; at: number; d: number } | null = null;
-  const consider = (dir: 'column' | 'row', at: number, d: number, max: number) => {
-    if (d <= max && (!best || d < best.d)) best = { dir, at, d };
+  const consider = (dir: 'column' | 'row', at: number, d: number, outside: boolean) => {
+    if (d <= g.reach / (outside ? 2 : 4) && (!best || d < best.d)) best = { dir, at, d };
   };
-  // Closer in the margins, where the + stands, so the pointer can follow the line out to it.
-  if (y >= g.top - 26 && y <= g.bottom) {
-    for (let c = 0; c <= g.columns.length; c++)
-      consider('column', c, Math.abs(x - columnLine(g, c)), y < g.top ? 10 : 6);
-  }
-  if (x >= g.left - 52 && x <= g.right) {
-    for (let at = 0; at < g.rows.length; at++)
-      consider('row', at, Math.abs(y - rowLine(g, at)), x < g.left ? 10 : 5);
-  }
+  for (let c = 0; c <= g.columns.length; c++)
+    if (x >= g.left) consider('column', c, Math.abs(x - columnLine(g, c)), y < g.top);
+  for (let at = 0; at < g.rows.length; at++)
+    if (y >= g.top) consider('row', at, Math.abs(y - rowLine(g, at)), x < g.left);
   const found = best as { dir: 'column' | 'row'; at: number } | null;
   return found ? { dir: found.dir, at: found.at } : null;
 }

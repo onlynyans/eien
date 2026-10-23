@@ -108,7 +108,7 @@ test(
     await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
     await page.mouse.down();
     await page.mouse.move(from.x + from.width / 2, below.y + below.height, { steps: 8 });
-    await expect(page.locator('.eien-table-drop.is-on')).toHaveCount(1);
+    await expect(page.locator('.table-tools .drop-marker:not([hidden])')).toHaveCount(1);
     await page.mouse.up();
     await saved(vault).toContain('| Levi | 41 |\n| Mara | 30 |\n');
     await expect(said(page)).toHaveText('Row 1 moved');
@@ -125,3 +125,28 @@ test(
     await saved(vault).toBe(NOTE);
   },
 );
+
+test.describe('at the page’s zoom', () => {
+  test.use({ deviceFile: { settings: { 'page.zoom': 150 } } });
+
+  test('the grips stand by their row and column', async ({ page }) => {
+    await open(page);
+    await cell(page, 'Levi').click();
+    const row = await cell(page, 'Levi').boundingBox();
+    const column = await cell(page, 'When').boundingBox();
+    const rowGrip = await page
+      .getByRole('button', { name: 'Row 2: menu, or drag to move' })
+      .boundingBox();
+    const columnGrip = await page
+      .getByRole('button', { name: 'Column When: menu, or drag to move' })
+      .boundingBox();
+    if (!row || !column || !rowGrip || !columnGrip) throw new Error('not laid out');
+    // Beside the row, at its middle; over the column, at its middle; both clear of the table.
+    expect(Math.abs(rowGrip.y + rowGrip.height / 2 - (row.y + row.height / 2))).toBeLessThan(2);
+    expect(rowGrip.x + rowGrip.width).toBeLessThanOrEqual(row.x);
+    expect(
+      Math.abs(columnGrip.x + columnGrip.width / 2 - (column.x + column.width / 2)),
+    ).toBeLessThan(2);
+    expect(columnGrip.y + columnGrip.height).toBeLessThanOrEqual(column.y);
+  });
+});

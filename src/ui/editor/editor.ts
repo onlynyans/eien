@@ -88,14 +88,17 @@ export class NoteEditor {
   /** Changes we make ourselves aren't the writer's typing. */
   #quiet = false;
 
-  /** Where a table's grips and + are drawn (./table-tools.ts): the editor's own, kept from note to note. */
-  readonly tableTools = h('div', { class: 'eien-table-tools' });
+  /**
+   * Where a table's grips and + are drawn (./table-tools.ts): the editor's
+   * own, kept from note to note; the page lays it over the editor, outside
+   * its shadow root, so they're the window's own controls.
+   */
+  readonly tableTools = h('div', { class: 'table-tools' });
 
   constructor(host: HTMLElement, events: EditorEvents) {
     this.#events = events;
     const root = host.attachShadow({ mode: 'open' });
     this.#view = new EditorView({ root, parent: root, state: this.#state('', async () => null) });
-    this.#view.dom.append(this.tableTools);
   }
 
   get view(): EditorView {

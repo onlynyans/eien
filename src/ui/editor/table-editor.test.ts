@@ -253,10 +253,8 @@ describe('the grips and +', () => {
     expect(names).toContain('Column Age: menu, or drag to move');
     expect(names).toContain('Add a column between Name and Age');
     expect(names).toContain('Add a row after row 2');
-    expect(tools().querySelector('[data-grip-row="1"]')?.classList.contains('is-shown')).toBe(true);
-    expect(tools().querySelector('[data-grip-row="2"]')?.classList.contains('is-shown')).toBe(
-      false,
-    );
+    expect(tools().querySelector('[data-grip-row="1"]')?.classList.contains('is-on')).toBe(true);
+    expect(tools().querySelector('[data-grip-row="2"]')?.classList.contains('is-on')).toBe(false);
     caretAt('After.');
     await frame();
     expect(tools().children).toHaveLength(0);

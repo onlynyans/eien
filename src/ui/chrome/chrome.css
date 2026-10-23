@@ -45,7 +45,9 @@
   color: var(--eien-ink);
   border-color: var(--eien-rule-strong);
 }
-.icon-button:disabled {
+/* Off: a control that can't act, or (aria-disabled) one that says why when pressed. */
+.icon-button:disabled,
+.icon-button[aria-disabled="true"] {
   color: var(--eien-faded);
   cursor: default;
 }

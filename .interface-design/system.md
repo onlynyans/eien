@@ -369,16 +369,20 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   faded dot after a tag typed in the text; the + field's menu is a menu's
   raised paper, the chosen choice on `--eien-selected`, "Make #…" after a
   soft rule.
-- **Table editor** (`ui/editor/table-*.ts`, from `explorations/table-menus.html`):
-  a grip (14px icon, pencil, `--eien-radius-s`) at a row's left and over a
-  column, faded in for the row and column under the pointer or caret, ink on
-  `--eien-hover` under the pointer, a `--eien-rule-strong` hairline while its
-  menu is open; that menu is the row menu, a column's alignment a radio with
-  the ink dot where a key would be. A + (18px, raised paper, hairline
-  `--eien-rule-strong`) only while the pointer is on its line, the line 2px
-  ink-soft across or down the table; the drop line the same. A phone's
-  table bar: the band ground under the sheet, 44px icon buttons, rules
-  between the groups, scrolling sideways. A column's alignment shows: right
+- **Table editor** (`ui/editor/table-*.ts`, `editor/table.css`, from
+  `explorations/table-menus.html`): its controls are the window's own, in a
+  layer over the editor (out of its shadow root). A grip is a quiet
+  `.icon-button` with the row grip's 12px icon in pencil, over each column
+  and at each row's left, on (`is-on`) for the row and column under the
+  pointer or caret; carried, it's a dragged row (raised paper, rule-strong
+  edge, the float shadow). Its menu is the row menu, a column's alignment a
+  radio with the ink dot where a key would be. The + on a line between
+  columns or rows is the quiet + (`ui/add-button.ts`), on only while the
+  pointer is on that line, with the drop marker across or down the table;
+  a moved row or column shows the same marker. Each stands off the table by
+  `--eien-space-1`, a row's + one control further out. A phone's table bar
+  is a host on the band (its rules `host__rule`, its buttons at
+  `--eien-touch`) docked under the sheet. A column's alignment shows: right
   in tabular figures.
 - **Formatting bar**: the `format` slot's host. Band's second row on the
   band ground; Slip's own raised slip at the blotter's top left; Running

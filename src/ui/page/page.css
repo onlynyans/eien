@@ -223,37 +223,3 @@
 .page__board[hidden] {
   display: none;
 }
-
-/* A phone's table tools (ui/editor/table-bar.ts): docked under the sheet, so
-   above the keyboard when it's up; one row of finger-sized buttons that
-   scrolls sideways. Only where nothing hovers: the desktop has the grips. */
-.table-bar {
-  grid-row: 4;
-  display: none;
-  align-items: center;
-  gap: 2px;
-  min-width: 0;
-  overflow-x: auto;
-  padding: 2px var(--eien-space-2);
-  background: var(--eien-band);
-  border-top: var(--eien-hairline) solid var(--eien-rule);
-}
-@media (hover: none) {
-  .table-bar:not([hidden]) {
-    display: flex;
-  }
-}
-.table-bar .icon-button {
-  --eien-control: var(--eien-touch);
-  flex: none;
-}
-.table-bar .icon-button[aria-disabled="true"] {
-  color: var(--eien-faded);
-}
-.table-bar__rule {
-  flex: none;
-  align-self: stretch;
-  width: var(--eien-hairline);
-  margin: var(--eien-space-2) 2px;
-  background: var(--eien-rule);
-}

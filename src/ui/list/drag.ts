@@ -14,7 +14,7 @@ export interface DragActions {
 }
 
 /** How far the pointer goes before a press becomes a drag, in pixels. */
-const DRAG_AFTER = 5;
+export const DRAG_AFTER = 5;
 
 type Drop = { readonly folder: string } | { readonly before: string | null };
 

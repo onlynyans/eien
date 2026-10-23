@@ -9,6 +9,7 @@ import { SelectionBar } from '../editor/selection-bar';
 import { TableBar } from '../editor/table-bar';
 import type { ImageLoader } from '../editor/widgets';
 import type { SaveState } from '../notes/note-session';
+import { Notice } from '../vault/notice';
 import { BoardHost } from './board-host';
 import { PageTags, type PageTagsOf } from './page-tags';
 import { WordCount } from './word-count';
@@ -19,9 +20,6 @@ export interface PageNote {
   readonly text: string;
   readonly loadImage: ImageLoader;
 }
-
-/** How long the colophon keeps what the table editor did. */
-const SAID_MS = 6000;
 
 /** What the colophon says of the save: only a failure is worth a word. */
 const STATE_WORDS: Partial<Record<SaveState, string>> = { failed: 'Not saved yet — trying again' };
@@ -48,6 +46,8 @@ export class PageView {
   });
   readonly #notice = h('p', { class: 'notice', attrs: { role: 'status', hidden: true } });
   readonly #editorHost = h('div', { class: 'editor-host' });
+  /** The editor, with its table's controls laid over it (../editor/table.css). */
+  readonly #editorFrame = h('div', { class: 'page__editor' }, this.#editorHost);
   /** In the editor's place while a seal is compared or shown (read only). */
   readonly #compareHost = h('div', { class: 'compare-host', attrs: { hidden: true } });
   /** The note's words, and what writing adds to them (./word-count.ts). */
@@ -62,7 +62,9 @@ export class PageView {
   readonly #news = h('span', { class: 'colophon__news', attrs: { role: 'status' } });
   /** What the table editor just did ("Row 3 removed · ⌘Z puts it back"), for a while. */
   readonly #said = h('span', { class: 'colophon__said', attrs: { role: 'status' } });
-  #saidTimer: ReturnType<typeof setTimeout> | undefined;
+  readonly #saying = new Notice(() => {
+    this.#said.textContent = this.#saying.text ?? '';
+  });
   /** A phone's table tools, above the keyboard while the caret's in a table (../editor/table-bar.ts). */
   readonly tableBar: TableBar;
   readonly #sheet = h(
@@ -73,7 +75,7 @@ export class PageView {
     this.#titleField,
     this.tagSlots.underTitle,
     this.#notice,
-    this.#editorHost,
+    this.#editorFrame,
     this.#compareHost,
   );
   /** With no note open; it takes the keyboard when the page is given it. */
@@ -139,8 +141,9 @@ export class PageView {
         this.tableBar.sync();
         for (const listener of this.#caret) listener();
       },
-      said: (words) => this.#say(words),
+      said: (words) => this.#saying.tell(words),
     });
+    this.#editorFrame.append(this.editor.tableTools);
     this.tableBar = new TableBar(this.editor.view);
     this.tags = new PageTags(this.editor, { ...events.tags, editable: () => !this.comparing });
     this.tags.listen(container);
@@ -189,15 +192,6 @@ export class PageView {
   /** News from the last action in the status line; null takes it away. */
   news(text: string | null): void {
     this.#news.textContent = text ?? '';
-  }
-
-  /** What the table editor did, in the colophon until the next thing, or a few seconds. */
-  #say(words: string): void {
-    this.#said.textContent = words;
-    clearTimeout(this.#saidTimer);
-    this.#saidTimer = setTimeout(() => {
-      this.#said.textContent = '';
-    }, SAID_MS);
   }
 
   /** Today's words, the book's and a sprint, in the colophon. */

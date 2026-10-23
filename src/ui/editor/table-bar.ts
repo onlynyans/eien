@@ -80,7 +80,7 @@ const TOOLS: readonly (Tool | 'rule')[] = [
 
 export class TableBar {
   readonly element = h('div', {
-    class: 'table-bar',
+    class: 'host table-bar',
     attrs: { role: 'toolbar', 'aria-label': 'Table', hidden: true },
   });
   readonly #view: EditorView;
@@ -92,9 +92,7 @@ export class TableBar {
     this.#view = view;
     for (const tool of TOOLS) {
       if (tool === 'rule') {
-        this.element.append(
-          h('span', { class: 'table-bar__rule', attrs: { 'aria-hidden': 'true' } }),
-        );
+        this.element.append(h('span', { class: 'host__rule', attrs: { 'aria-hidden': 'true' } }));
         continue;
       }
       const keys = tool.keys;

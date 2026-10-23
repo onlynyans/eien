@@ -1,45 +1,51 @@
 // The table's controls on the desktop (./table-tools.ts), made and placed:
-// a + on each line between columns and rows, a grip for each column and row,
-// and the drop line; each named for what it does, for a screen reader and the
-// tooltip. Made again only when the table's shape or names change.
+// the quiet + (../add-button.ts) on each line between columns and rows, a
+// quiet grip for each column and row, and the drop marker (the one your
+// order's drag shows) for where a new or moved one goes. Each is named for
+// what it does, for a screen reader and the tooltip. Placed by where its
+// line, column or row is (`--at-x`, `--at-y`); ./table.css stands each off
+// the table by the tokens. Made again only when the table's shape or names
+// change.
 
 import { columnName, type Here } from '../../core/table';
+import { addButton } from '../add-button';
 import { h } from '../dom';
-import { type IconName, icon } from '../icons';
+import { icon } from '../icons';
 import type { TableAt } from './table-at';
 import { columnLine, rowLine, type TableGeometry } from './table-geometry';
 
-const control = (
-  cls: string,
-  name: IconName,
-  label: string,
-  tip: string,
-  data: Record<string, string>,
-) =>
-  h(
-    'button',
-    {
-      class: cls,
-      attrs: { type: 'button', tabindex: '-1', 'aria-label': label, 'data-tip': tip, ...data },
-    },
-    icon(name),
-  );
+/** What a + adds: a column at `at`, or a row at `at` under the head. */
+export type Adding = { readonly dir: 'column' | 'row'; readonly at: number };
 
-function insertName(
-  table: TableAt,
-  dir: 'column' | 'row',
-  at: number,
-  n: number,
-  rows: number,
-): string {
+function addName(table: TableAt, { dir, at }: Adding, n: number, rows: number): string {
+  const name = (c: number) => columnName(table.lines, c);
   if (dir === 'column') {
-    if (at === 0) return `Add a column before ${columnName(table.lines, 0)}`;
-    if (at === n) return `Add a column after ${columnName(table.lines, n - 1)}`;
-    return `Add a column between ${columnName(table.lines, at - 1)} and ${columnName(table.lines, at)}`;
+    if (at === 0) return `Add a column before ${name(0)}`;
+    if (at === n) return `Add a column after ${name(n - 1)}`;
+    return `Add a column between ${name(at - 1)} and ${name(at)}`;
   }
   if (at === 0) return 'Add a row under the head row';
   if (at === rows) return `Add a row after row ${at}`;
   return `Add a row between rows ${at} and ${at + 1}`;
+}
+
+function grip(name: string, kind: 'column' | 'row', index: number): HTMLButtonElement {
+  return h(
+    'button',
+    {
+      class: `icon-button icon-button--quiet table-tools__grip table-tools__${kind === 'column' ? 'over' : 'beside'}`,
+      attrs: {
+        type: 'button',
+        tabindex: '-1',
+        'aria-label': `${name}: menu, or drag to move`,
+        'aria-haspopup': 'menu',
+        'aria-expanded': 'false',
+        'data-tip': `${name}: press for its menu, drag to move`,
+        [`data-grip-${kind}`]: String(index),
+      },
+    },
+    icon(kind === 'column' ? 'gripColumn' : 'grip'),
+  );
 }
 
 const namesOf = (table: TableAt, g: TableGeometry) =>
@@ -49,91 +55,95 @@ const namesOf = (table: TableAt, g: TableGeometry) =>
 export const controlsKey = (table: TableAt, g: TableGeometry): string =>
   `${table.from}/${g.rows.length}/${namesOf(table, g).join('|')}`;
 
-/** The controls for `table`, and the drop line last. */
-export function makeControls(table: TableAt, g: TableGeometry): HTMLElement[] {
+/** The controls for `table`; a + runs `add`. The drop marker comes last. */
+export function makeControls(
+  table: TableAt,
+  g: TableGeometry,
+  add: (adding: Adding) => void,
+): HTMLElement[] {
   const names = namesOf(table, g);
   const n = names.length;
   const rows = g.rows.length - 1;
-  const parts: HTMLElement[] = [];
-  for (let c = 0; c <= n; c++)
-    parts.push(
-      control(
-        'eien-table-add eien-table-add--column',
-        'plus',
-        insertName(table, 'column', c, n, rows),
-        'Add a column',
-        { 'data-add-column': String(c) },
-      ),
-    );
-  for (let at = 0; at <= rows; at++)
-    parts.push(
-      control(
-        'eien-table-add eien-table-add--row',
-        'plus',
-        insertName(table, 'row', at, n, rows),
-        'Add a row',
-        { 'data-add-row': String(at) },
-      ),
-    );
-  for (const [c, name] of names.entries())
-    parts.push(
-      control(
-        'eien-table-grip eien-table-grip--column',
-        'gripColumn',
-        `Column ${name}: menu, or drag to move`,
-        `Column ${name}: press for its menu, drag to move`,
-        { 'data-grip-column': String(c), 'aria-haspopup': 'menu', 'aria-expanded': 'false' },
-      ),
-    );
-  for (let r = 1; r <= rows; r++)
-    parts.push(
-      control(
-        'eien-table-grip eien-table-grip--row',
-        'grip',
-        `Row ${r}: menu, or drag to move`,
-        `Row ${r}: press for its menu, drag to move`,
-        { 'data-grip-row': String(r), 'aria-haspopup': 'menu', 'aria-expanded': 'false' },
-      ),
-    );
-  return [...parts, h('div', { class: 'eien-table-drop' })];
+  const plus = (adding: Adding) => {
+    const button = addButton({
+      label: addName(table, adding, n, rows),
+      key: `add-${adding.dir}-${adding.at}`,
+      run: () => add(adding),
+    });
+    button.tabIndex = -1;
+    button.classList.add(adding.dir === 'column' ? 'table-tools__over' : 'table-tools__beside');
+    button.dataset[adding.dir === 'column' ? 'addColumn' : 'addRow'] = String(adding.at);
+    return button;
+  };
+  return [
+    ...Array.from({ length: n + 1 }, (_, at) => plus({ dir: 'column', at })),
+    ...Array.from({ length: rows + 1 }, (_, at) => plus({ dir: 'row', at })),
+    ...names.map((name, c) => grip(`Column ${name}`, 'column', c)),
+    ...Array.from({ length: rows }, (_, i) => grip(`Row ${i + 1}`, 'row', i + 1)),
+    h('div', { class: 'drop-marker', attrs: { hidden: true } }),
+  ];
 }
 
 /** What shows: the + on the line the pointer's on, the grips of the pointer's cell and the caret's. */
 export interface Shown {
-  readonly near: { readonly dir: 'column' | 'row'; readonly at: number } | null;
+  readonly near: Adding | null;
   readonly hover: Here | null;
   readonly caret: Here | null;
 }
 
-/** Each control where its line, column or row is, in the editor's box; the ones that show, shown. */
+const at = (element: HTMLElement, x: number, y: number) => {
+  element.style.setProperty('--at-x', `${x}px`);
+  element.style.setProperty('--at-y', `${y}px`);
+};
+
+/** The drop marker across the table at `y` ('row'), or down it at `x` ('column'); null hides it. */
+export function showMarker(
+  marker: HTMLElement,
+  g: TableGeometry,
+  line: Adding | null,
+  p = 0,
+): void {
+  marker.hidden = line === null;
+  if (!line) return;
+  const across = line.dir === 'column';
+  marker.classList.toggle('drop-marker--across', across);
+  marker.style.setProperty('--marker-x', `${across ? p : g.left}px`);
+  marker.style.setProperty('--marker-y', `${across ? g.top : p}px`);
+  marker.style.setProperty('--marker-w', `${g.right - g.left}px`);
+  marker.style.setProperty('--marker-h', `${g.bottom - g.top}px`);
+}
+
+/** Each control where its line, column or row is; the ones that show, on. */
 export function placeControls(host: HTMLElement, g: TableGeometry, shown: Shown): void {
-  host.style.setProperty('--table-width', `${g.right - g.left}px`);
-  host.style.setProperty('--table-height', `${g.bottom - g.top}px`);
-  const place = (element: HTMLElement, x: number, y: number) => {
-    element.style.left = `${x}px`;
-    element.style.top = `${y}px`;
-  };
   const { near, hover, caret } = shown;
   for (const element of host.querySelectorAll<HTMLElement>('[data-add-column]')) {
     const c = Number(element.dataset.addColumn);
-    place(element, columnLine(g, c), g.top - 14);
-    element.classList.toggle('is-near', near?.dir === 'column' && near.at === c);
+    at(element, columnLine(g, c), g.top);
+    element.classList.toggle('is-on', near?.dir === 'column' && near.at === c);
   }
   for (const element of host.querySelectorAll<HTMLElement>('[data-add-row]')) {
-    const at = Number(element.dataset.addRow);
-    place(element, g.left - 40, rowLine(g, at));
-    element.classList.toggle('is-near', near?.dir === 'row' && near.at === at);
+    const r = Number(element.dataset.addRow);
+    at(element, g.left, rowLine(g, r));
+    element.classList.toggle('is-on', near?.dir === 'row' && near.at === r);
   }
   for (const element of host.querySelectorAll<HTMLElement>('[data-grip-column]')) {
     const c = Number(element.dataset.gripColumn);
     const column = g.columns[c];
-    if (column) place(element, column.x + column.w / 2, g.top - 14);
-    element.classList.toggle('is-shown', hover?.c === c || caret?.c === c);
+    if (column) at(element, column.x + column.w / 2, g.top);
+    element.classList.toggle('is-on', hover?.c === c || caret?.c === c);
   }
   for (const element of host.querySelectorAll<HTMLElement>('[data-grip-row]')) {
     const r = Number(element.dataset.gripRow);
     const row = g.rows[r];
-    if (row) place(element, g.left - 16, row.y + row.h / 2);
-    element.classList.toggle('is-shown', hover?.r === r || caret?.r === r);
+    if (row) at(element, g.left, row.y + row.h / 2);
+    element.classList.toggle('is-on', hover?.r === r || caret?.r === r);
   }
+  const marker = host.querySelector<HTMLElement>('.drop-marker');
+  if (marker && !host.classList.contains('is-dragging'))
+    showMarker(
+      marker,
+      g,
+      near,
+      near?.dir === 'column' ? columnLine(g, near.at) : near ? rowLine(g, near.at) : 0,
+    );
 }

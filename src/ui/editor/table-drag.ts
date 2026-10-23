@@ -1,38 +1,40 @@
-// A row or column carried by its grip (./table-tools.ts), with the drop line
-// where it will land, as your order's drag has it. The drag listens on the
-// whole document and ends however the press ends: let go, the pointer's
+// A row or column carried by its grip (./table-tools.ts), the drop marker
+// where it will land, as your order's drag has it (../list/drag.ts, whose
+// distance a press goes before it's a drag this shares). The drag listens on
+// the whole document and ends however the press ends: let go, the pointer's
 // capture lost, or the browser taking the press for its own drag; so a drop
 // is never missed. Only Esc puts it back. Let go before it moved, the press
 // was a press: the grip's menu.
 
-import type { EditorView } from '@codemirror/view';
-import { dropAt, type TableGeometry } from './table-geometry';
-
-/** How far the pointer goes before a press is a drag. */
-const SLOP = 4;
+import { DRAG_AFTER } from '../list/drag';
+import { showMarker } from './table-controls';
+import { dropAt, inLayer, type TableGeometry } from './table-geometry';
 
 export interface DragOf {
-  readonly view: EditorView;
   readonly event: PointerEvent;
   readonly grip: HTMLElement;
-  /** The drop line: 2px, across or down the table. */
-  readonly drop: HTMLElement;
+  /** The controls' layer: its drop marker shows where the row or column lands. */
+  readonly layer: HTMLElement;
   readonly kind: 'row' | 'column';
   readonly from: number;
   readonly geometry: TableGeometry;
-  /** A drag began (true) or ended (false). */
-  dragging(on: boolean): void;
   /** Dropped: the row or column goes to `to` among the others. */
   moved(to: number): void;
   /** Let go where it was pressed. */
   pressed(): void;
+  /** Ended any way: Esc, a drop or a press. */
+  ended(): void;
 }
 
 export function startDrag(of: DragOf): void {
-  const { event, grip, drop, kind, geometry: g } = of;
+  const { event, grip, layer, kind, geometry: g } = of;
   const id = event.pointerId;
-  const start = { x: event.clientX, y: event.clientY };
-  const box = of.view.dom.getBoundingClientRect();
+  const start = inLayer(layer, event.clientX, event.clientY);
+  const home = {
+    x: grip.style.getPropertyValue('--at-x'),
+    y: grip.style.getPropertyValue('--at-y'),
+  };
+  const marker = layer.querySelector<HTMLElement>('.drop-marker');
   let moved = false;
   let to: number | null = null;
   try {
@@ -43,40 +45,18 @@ export function startDrag(of: DragOf): void {
 
   const move = (e: PointerEvent) => {
     if (e.pointerId !== id) return;
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-    if (!moved && Math.hypot(dx, dy) < SLOP) return;
+    const p = inLayer(layer, e.clientX, e.clientY);
+    if (!moved && Math.hypot(p.x - start.x, p.y - start.y) < DRAG_AFTER) return;
     if (!moved) {
       moved = true;
-      of.dragging(true);
-      grip.classList.add('is-carried');
+      layer.classList.add('is-dragging');
+      grip.classList.add('is-carried', 'is-on');
     }
-    grip.style.translate =
-      kind === 'row' ? `-50% calc(-50% + ${dy}px)` : `calc(-50% + ${dx}px) -50%`;
-    const at = dropAt(
-      g,
-      kind,
-      of.from,
-      kind === 'row' ? e.clientY - box.top : e.clientX - box.left,
-    );
+    // The grip follows the pointer along its row's or column's way.
+    grip.style.setProperty(kind === 'row' ? '--at-y' : '--at-x', `${kind === 'row' ? p.y : p.x}px`);
+    const at = dropAt(g, kind, of.from, kind === 'row' ? p.y : p.x);
     to = at.to;
-    Object.assign(
-      drop.style,
-      kind === 'row'
-        ? {
-            left: `${g.left}px`,
-            top: `${at.line - 1}px`,
-            width: `${g.right - g.left}px`,
-            height: '2px',
-          }
-        : {
-            left: `${at.line - 1}px`,
-            top: `${g.top}px`,
-            width: '2px',
-            height: `${g.bottom - g.top}px`,
-          },
-    );
-    drop.classList.add('is-on');
+    if (marker) showMarker(marker, g, { dir: kind, at: at.to }, at.line);
   };
 
   const end = (how: 'up' | 'lost' | 'esc') => {
@@ -91,19 +71,14 @@ export function startDrag(of: DragOf): void {
     } catch {
       // Released already.
     }
-    drop.classList.remove('is-on');
+    layer.classList.remove('is-dragging');
     grip.classList.remove('is-carried');
-    grip.style.translate = '';
-    if (moved) of.dragging(false);
-    if (how === 'esc') {
-      of.view.focus();
-      return;
-    }
-    if (!moved) {
-      if (how === 'up') of.pressed();
-      return;
-    }
-    if (to !== null) of.moved(to);
+    grip.style.setProperty('--at-x', home.x);
+    grip.style.setProperty('--at-y', home.y);
+    if (marker) showMarker(marker, g, null);
+    if (how === 'up' && !moved) of.pressed();
+    if (how !== 'esc' && moved && to !== null) of.moved(to);
+    of.ended();
   };
   const up = (e: PointerEvent) => {
     if (e.pointerId === id) end('up');
