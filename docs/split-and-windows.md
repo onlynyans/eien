@@ -1,7 +1,25 @@
 # Plan: New Window and the split window
 
-**Status: approved** (2026-10-23, by the owner), being built phase by phase.
-Each phase's pull request is linked here as it lands.
+**Status: approved** (2026-10-23, by the owner), built phase by phase.
+
+**As built** (each phase's pull request; where the build moved something
+between phases, it says why):
+
+| Phase | Pull request | Notes |
+|---|---|---|
+| 1. Many windows in the main process | [#62](https://github.com/onlynyans/eien/pull/62) | As planned. |
+| 2. New Window | [#63](https://github.com/onlynyans/eien/pull/63) | As planned. |
+| 3. One note, one document | [#64](https://github.com/onlynyans/eien/pull/64) | The open-notes registry and the organizer's sets moved to phase 4, where the pages that hold them are made. |
+| 4. The page pane and the pages | [#65](https://github.com/onlynyans/eien/pull/65) | With `vault/open-notes.ts`; `vault-view.ts` from 405 lines to ~300 (note and row actions, the sidebar's actions, the list's lens are their own modules). |
+| 5. The split, with Two sheets | [#66](https://github.com/onlynyans/eien/pull/66) | The setting and `chrome/splits.ts` came with phase 6: a setting with one choice isn't one. |
+| 6. Facing pages | [#67](https://github.com/onlynyans/eien/pull/67) | The split setting, the spec per mode, each page's own host; all three marks as `appearance.facingMark`. |
+| 7. Companion | [#68](https://github.com/onlynyans/eien/pull/68) | The divider moves each mode's *measure* (a share, a companion's width beside or height under). |
+| 8. Tools that follow | [#69](https://github.com/onlynyans/eien/pull/69) | The Running head's tools stay in the running head, which spans the window; the colophon and formatting bar follow. |
+| 9. The phone's other note | [#70](https://github.com/onlynyans/eien/pull/70) | Adds `--eien-radius-dot`. |
+
+Lengths the arithmetic needs live once, in TypeScript beside it, not as CSS
+tokens: `PAGE_MIN` (360, `shell/pane-state.ts`, already there for the panes)
+and `COMPANION` (380 / 300 / 400, `shell/split-state.ts`).
 
 **Goal:**
 - **New Window:** several windows, each with its own vault, note, panes and

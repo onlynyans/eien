@@ -400,7 +400,7 @@ A · Band and B · Slip, "Shut sidebar" (`appearance.shutSidebar`, as
 - One length says where the corner's things end, `--corner`
   (`shell/shell.css`); every band that could run under them keeps clear of it.
 
-## The split window and New Window (decided 2026-10-23, being built)
+## The split window and New Window (decided 2026-10-23, built)
 
 From `docs/design/explorations/split.md` and `split-alt.md`; each page there
 shows it working, and `docs/split-and-windows.md` is the build's plan. The
@@ -473,9 +473,12 @@ corners and colours the layout's own.
 - **The phone:** no split and no New Window; the back bar keeps the note you
   came from a tap away (⇄ and its name, a `--eien-radius-dot` slip at the
   bar's right), each keeping its place.
-- **New tokens** (lengths, in `src/ui/theme/tokens.css`, not themed):
-  `--eien-page-min` 360px (a page in a split), `--eien-companion-w` 380px,
-  `--eien-companion-min` 300px, `--eien-companion-page-min` 400px. Every
+- **Lengths** (as built): the ones the arithmetic needs live once, in
+  TypeScript beside it, not as CSS tokens: a page in a split at least 360px
+  (`PAGE_MIN`, `src/ui/shell/pane-state.ts`); a companion 380px, at least
+  300, the page beside it at least 400 (`COMPANION`,
+  `src/ui/shell/split-state.ts`). One token is new, `--eien-radius-dot`
+  (fully round: the phone's other-note slip, the theme cards' pills). Every
   other length above is a space, rule, mark or radius token.
 
 ## Built patterns (stage 3, wave 2, 2026-10-21)
