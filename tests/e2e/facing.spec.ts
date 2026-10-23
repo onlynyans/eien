@@ -4,7 +4,7 @@
 // and too narrow, the book closed to one page with the other's edge to turn to.
 
 import type { Page } from '@playwright/test';
-import { expect, test } from './launch';
+import { chooseSetting, expect, test } from './launch';
 
 const row = (page: Page, title: string) => page.locator('.note-row', { hasText: title });
 const leaves = (page: Page) => page.locator('.page__pages > .page__leaf');
@@ -63,10 +63,7 @@ test.describe('facing pages', () => {
   test('wears each of the three marks the setting offers', async ({ page }) => {
     await split(page);
     for (const mark of ['ribbon', 'dogear', 'tab'] as const) {
-      await page.evaluate(
-        (value) => window.eien.settings.set('appearance.facingMark', value),
-        mark,
-      );
+      await chooseSetting(page, 'appearance.facingMark', mark);
       await expect(page.locator('html')).toHaveAttribute('data-facing-mark', mark);
       await expect(active(page).locator('.page__mark')).toBeVisible();
     }
