@@ -42,7 +42,8 @@ hues darkened, never grey-blue).
 | `--eien-band` | the list's head, the page's control strip, the colophon, a panel's head |
 | `--eien-paper` | the note list and the sheet |
 | `--eien-paper-raised` | what floats: menus, the versions panel, a row being dragged |
-| `--eien-well` | inside a field |
+| `--eien-field` | a field at rest: a wash of the ink |
+| `--eien-well` | inside a field with the keyboard |
 | `--eien-selected` | the chosen row, beside the seal's rule |
 | `--eien-hover`, `--eien-press` | a row or button under the pointer, and pressed |
 
@@ -136,7 +137,7 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 
 | Family | Tokens | Values | Set by |
 |---|---|---|---|
-| Surfaces | `--eien-desk`, `-blotter`, `-band`, `-paper`, `-paper-raised`, `-well`, `-selected`, `-hover`, `-press`, `-scrim` | light-dark pairs (Paper) | theme |
+| Surfaces | `--eien-desk`, `-blotter`, `-band`, `-paper`, `-paper-raised`, `-well`, `-field`, `-selected`, `-hover`, `-press`, `-scrim` | light-dark pairs (Paper) | theme |
 | Inks | `--eien-ink`, `-ink-soft`, `-pencil`, `-faded`, `-focus` | four strengths; focus = ink-soft | theme |
 | Seal | `--eien-seal`, `-seal-wash` | vermilion | theme (one seal colour per theme) |
 | Status | `--eien-added`, `-removed` (= `-danger`), `-caution`, each `-wash` | moss, carmine, ochre | theme |
@@ -174,9 +175,18 @@ if a theme should change it, it joins `THEME_TOKENS`.
   seal's colour. Disabled: faded.
 - **Label** (`.label`): mono, 10px, capitals, tracked, pencil.
 - **Count** (`.count`): mono, 11px, tabular figures, pencil.
-- **Field** (`.field`): full width, well ground, a rule hairline, padding
-  8px 12px, mono 11px in ink, a faded placeholder; on focus the border turns
-  to the focus ink, with no ring.
+- **Field** (`.field`, changed 2026-10-22): set into the pane, not laid on
+  it. At rest `--eien-field` (a wash of the ink) with a transparent hairline,
+  `--eien-radius-s`; the hairline turns `--eien-rule` under the pointer;
+  focused, the well ground and a 2px focus-ink ring on its own edge, inset,
+  so nothing grows round it. Padding 8px 12px, mono 11px in ink, a faded
+  placeholder. The search field is the pane's width, so `--eien-radius-m`,
+  with the search icon in pencil set into its left.
+- **Rename** (`.rename`, 2026-10-22): a name edited where it stands (a
+  folder, a new tag, a note): the row's own face, size and weight, no box, no
+  ground; the 2px focus mark under the words (a hairline in rule-strong while
+  the window is away), the caret in the seal, and the row lit
+  `--eien-selected`, so it reads as the row being edited.
 - **Section label** (`.section__label`): LIBRARY, FOLDERS, TAGS. A button the
   row's height, label type, pencil (ink-soft on hover). Clicking folds the
   section; its twisty shows on hover, focus, or while folded.
@@ -341,8 +351,9 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   drawn from `data-keys` so the choice's name is its word alone); the trash
   last after a rule, in `--eien-danger`. No keys on a coarse pointer.
 - **Name field** (`ui/list/name-field.ts`): laid over the row's name in its
-  own face, size and weight (copied from the name); a hairline in
-  `--eien-focus` under it, caret in the seal; a note's `.md` after it in mono,
+  own face, size and weight (copied from the name), a `.rename`: the 2px
+  focus mark under it, caret in the seal, the row under it lit
+  `--eien-selected`; a note's `.md` after it in mono,
   meta size, faded. A problem shows under it: label size, mono,
   `--eien-caution` on `--eien-caution-wash`, `--eien-radius-s`.
 - **Quiet controls** (`icon-button--quiet`, `chrome/chrome.css`): the + that

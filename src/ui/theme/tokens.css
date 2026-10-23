@@ -42,6 +42,10 @@
   ); /* content: the note list and the sheet you write on */
   --eien-paper-raised: light-dark(#ffffff, #312d28); /* what floats: a menu, the versions panel */
   --eien-well: light-dark(#f9f7f3, #24201c); /* inside a field: a slip of paper let into the band */
+  --eien-field: light-dark(
+    rgb(35 32 28 / 0.06),
+    rgb(233 226 212 / 0.07)
+  ); /* a field at rest: a wash of ink, so it's set into whatever pane holds it */
   --eien-hover: light-dark(
     rgb(35 32 28 / 0.045),
     rgb(233 226 212 / 0.05)

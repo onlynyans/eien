@@ -36,7 +36,7 @@ export class FolderField {
     const editing = this.#editing;
     if (editing?.path !== folder.path) return null;
     const field = h('input', {
-      class: 'field tree-row__field',
+      class: 'rename tree-row__field',
       attrs: { type: 'text', 'aria-label': `Rename ${folder.name}`, spellcheck: 'false' },
     });
     field.value = editing.typed;

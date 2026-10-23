@@ -58,7 +58,8 @@ so permanence is the theme.
 | Band | `--eien-band` | the list's head, the page's control strip, the colophon, Compare's strip |
 | Paper | `--eien-paper` | the note list (the phone's index) and the sheet |
 | Raised paper | `--eien-paper-raised` | menus, the versions panel, the phone's bottom sheet, a row being dragged |
-| Well | `--eien-well` | inside a field |
+| Field | `--eien-field` | a field at rest: a wash of the ink, so it's set into the pane (2026-10-22) |
+| Well | `--eien-well` | inside a field with the keyboard |
 | Selected | `--eien-selected` | the chosen row, beside the seal's rule |
 
 ### The seal

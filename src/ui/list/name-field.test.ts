@@ -52,6 +52,12 @@ describe('editName', () => {
     expect(label.classList.contains('is-renamed')).toBe(true);
   });
 
+  it('is the row’s own words being edited, not a box: a .rename, never a .field', () => {
+    open();
+    expect(field()?.classList.contains('rename')).toBe(true);
+    expect(field()?.classList.contains('field')).toBe(false);
+  });
+
   it('Enter keeps the name typed; the row’s own name shows again', () => {
     const { done, label } = open();
     (field() as HTMLInputElement).value = 'Frost';

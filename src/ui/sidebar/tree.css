@@ -1,15 +1,19 @@
 /* The sidebar's tree (./tree.ts): its rows, the twisty, the guides down an open
    branch, and the BOOK mark. */
 
-/* A folder being renamed: its name as a field, in the text face. */
+/* A folder being renamed, or a tag named: its name as a field (.rename, theme/base.css) where
+   the name stands, in the name's face, size and weight; the row lit as chosen. */
 .tree-row__field {
   flex: 1;
-  min-width: 0;
-  height: calc(var(--eien-row-h) - 4px);
   margin-right: var(--eien-space-4);
-  padding: 0 var(--eien-space-2);
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-row);
+  font-weight: var(--eien-weight-tree);
+  line-height: var(--eien-leading-row);
+}
+.tree-row:has(> .tree-row__field),
+.tree-row:has(.is-renamed) {
+  background: var(--eien-selected);
 }
 /* Where a dragged note will go: the folder (or the vault's name) lit, as if chosen. */
 .tree-row__name.is-drop-target,
