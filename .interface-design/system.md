@@ -100,7 +100,7 @@ machine count it, or do you press it?* The mono.
   Schibsted Grotesk, Hanken Grotesk, Instrument Sans). Each face sets its own
   sizes, leading and measure so all eight read alike. Newsreader's: prose
   22px, title 36px, list heading 23px, row 16px, preview 14px.
-- **Machine voice**, IBM Plex Mono by default: labels 10px in capitals
+- **Interface font** (the machine's voice), IBM Plex Mono by default: labels 10px in capitals
   tracked 0.12em (`--eien-size-label`, `--eien-track-label`), counts and
   dates 11px with tabular figures (`--eien-size-meta`). Its face is the
   writer's choice too (changed 2026-10-20, #24): the **Interface font**
@@ -140,7 +140,7 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 |---|---|---|---|
 | Surfaces | `--eien-desk`, `-blotter`, `-band`, `-paper`, `-paper-raised`, `-well`, `-field`, `-selected`, `-hover`, `-press`, `-scrim` | light-dark pairs (Paper) | theme |
 | Inks | `--eien-ink`, `-ink-soft`, `-pencil`, `-faded`, `-focus` | four strengths; focus = ink-soft | theme |
-| Seal | `--eien-seal`, `-seal-wash` | vermilion | theme (one seal colour per theme) |
+| Seal | `--eien-seal`, `-seal-wash`, `-on-seal` (the glyph pressed into it); `--eien-seal-size` 22px (10px small) | vermilion; the glyph the paper's white | theme (one seal colour per theme) |
 | Status | `--eien-added`, `-removed` (= `-danger`), `-caution`, each `-wash` | moss, carmine, ochre | theme |
 | Lines | `--eien-rule-soft`, `-rule`, `-rule-strong`; `--eien-hairline` 1px; `--eien-mark-w` 2px | ink at three strengths | theme (colours) |
 | Depth | `--eien-shadow-sheet`, `--eien-shadow-float` | two shadows, no more | – |
@@ -151,6 +151,9 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Weights | `--eien-weight-tree`, `--eien-weight-list`, `--eien-weight-list-chosen`; `--eien-track-label` 0.12em | 400, 400, 500 | settings: Row weights (chosen = list + 100, at most 700) |
 | Space | `--eien-space-1` … `-8` | 4, 8, 12, 16, 24, 32, 48, 72 | – |
 | Lengths | `--eien-row-h` 30px × text scale (26 compact), `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |
+| Page rhythm | `--eien-measure` and `--eien-leading-prose` (each face's own: 29–34em, 1.5–1.76, less `--eien-leading-tighten`), `--eien-leading-row` 1.35; `--eien-title-gap`, `-paragraph-gap`, `-scene-gap`; `--eien-sheet-pad-x`, `-sheet-pad-top`, `--eien-page-gutter`; `--eien-list-preview` | comfortable: 32, 16, 1.4em; 72, 48, 24; tighten 0; preview shown. Compact: 16, 8, 0.8em; 48, 24, 8; tighten 0.14; no preview | the faces; density |
+| Frame | `--eien-page-ground`, `--eien-sheet-lift` | Sheet: the blotter, the sheet's shadow. Full: paper, none, gutter 0 | setting: Page |
+| Layout controls | `--controls-h`, `--controls-ground`; `--controls-left`, `--controls-right`; `--corner`, `--seal-x`, `--strip` | A: `--band` on the band; B: `--band` on the page ground; C: `--runhead-h` on `--runhead-ground`. Left is macOS's traffic lights, right Windows' and Linux's buttons, from the window controls overlay (0 where there are none: full screen, a phone). The corner's three: "A shut sidebar" below | layout; the window |
 | Page | `--eien-zoom` (0.5–2), `--eien-dimmed` 0.32 (focus mode's faded paragraphs), `--eien-sheet-edge` | | settings: Page zoom |
 | C's strip | `--runhead-ground` | one of the theme's surfaces, the desk by default | setting: Running head ground |
 | Motion | `--eien-quick` 120ms, `--eien-calm` 220ms, `--eien-ease` | cubic-bezier(0.2, 0.7, 0.2, 1) | – |
@@ -174,6 +177,20 @@ if a theme should change it, it joins `THEME_TOKENS`.
   hovers). Pressed: press tone, rule-strong border. Chosen in a set
   (`aria-pressed` or `aria-current`): ink in a rule-strong hairline, never the
   seal's colour. Disabled: faded.
+- **Seal** (`.seal`): a `--eien-seal-size` square of `--eien-seal`, the glyph
+  in `--eien-on-seal` at 0.68 of the side, in `--eien-face-seal`. Its corners
+  are a stamp's: `min(--eien-radius-s, 20%)` from the layout it sits in, so a
+  small seal still reads square. `.seal--small` (10px) is the square alone.
+  The app's icon is Noto Serif JP's 永 as an outline, placed as `.seal` sets
+  it (`build/icons/seal.svg`); the window sets the glyph in the first face of
+  `--eien-face-seal` it finds (Noto Serif JP where installed, else the
+  system's Mincho). Drawing it from the icon's path is on hold
+  (`docs/todos/in-app-seal.md`).
+- **A name centred by its capitals** (`.tree-row__label`, `.note-row__title`,
+  2026-10-22): `text-box: trim-both cap alphabetic`, then half of what's
+  left above and half below (`padding-block: calc((1lh - 1cap) / 2)`), so
+  the capitals sit in the row's middle for every face, size and density;
+  a count beside it keeps to its baseline.
 - **Label** (`.label`): mono, 10px, capitals, tracked, pencil.
 - **Count** (`.count`): mono, 11px, tabular figures, pencil.
 - **Field** (`.field`, changed 2026-10-22): set into the pane, not laid on
