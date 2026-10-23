@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
@@ -75,25 +75,53 @@ export async function boxOf(locator: Locator): Promise<Box> {
  * Click a menu item, as the window the click is for: no reliance on which
  * window has focus. `labels` go down through submenus (File → Export Note → EPUB…).
  */
-export async function clickMenu(
+export const clickMenu = (app: ElectronApplication, menu: string, ...labels: string[]) =>
+  clickMenuIn(app, 0, menu, ...labels);
+
+/** Click a menu item for the `nth` window opened (0 is the first), as clickMenu does. */
+export async function clickMenuIn(
   app: ElectronApplication,
+  nth: number,
   menu: string,
   ...labels: string[]
 ): Promise<void> {
   await app.evaluate(
-    ({ BrowserWindow, Menu }, path) => {
-      const window = BrowserWindow.getAllWindows()[0];
+    ({ BrowserWindow, Menu }, [nth, path]) => {
+      const windows = BrowserWindow.getAllWindows().sort((a, b) => a.id - b.id);
+      const window = windows[nth];
       let items = Menu.getApplicationMenu()?.items;
       let item: Electron.MenuItem | undefined;
       for (const label of path) {
         item = items?.find((entry) => entry.label === label);
         items = item?.submenu?.items;
       }
-      if (!item || !window) throw new Error(`No menu item ${path.join(' → ')}`);
+      if (!item || !window) throw new Error(`No menu item ${path.join(' → ')} for window ${nth}`);
       item.click(undefined, window, window.webContents);
     },
-    [menu, ...labels],
+    [nth, [menu, ...labels]] as const,
   );
+}
+
+/** File → New Window in the `nth` window opened: the new window's page, loaded. */
+export async function newWindow(app: ElectronApplication, nth = 0): Promise<Page> {
+  const [page] = await Promise.all([
+    app.waitForEvent('window'),
+    clickMenuIn(app, nth, 'File', 'New Window'),
+  ]);
+  await page.waitForLoadState('domcontentloaded');
+  return page;
+}
+
+/**
+ * A file's text, or '' while it can't be read: for expect.poll, which a
+ * throwing read would end at once instead of trying again while a write lands.
+ */
+export function readQuietly(path: string): string {
+  try {
+    return readFileSync(path, 'utf8');
+  } catch {
+    return '';
+  }
 }
 
 /**

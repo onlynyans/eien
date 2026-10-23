@@ -13,15 +13,29 @@ import { DOCUMENTS_FOLDER, homeVault, thisCopy } from './data-folders';
 import { lastVault, readDeviceFile, updateDeviceFile } from './device-settings';
 import { answer, text, texts } from './ipc';
 import { syncedBySyncthing } from './syncthing';
+import { type Opened, type VaultHold, Vaults } from './vaults';
 
 /** The longest search query the window may send. */
 const MAX_QUERY_LENGTH = 1000;
 
+/**
+ * A folder, opened for the vaults the windows hold: what a crash left is
+ * recovered, it's read into its index. Done once, by the first window to
+ * open it (./vaults.ts).
+ */
+async function openFolder(root: string): Promise<Opened> {
+  // The system's trash, looked up when it's used.
+  const storage = await openDiskStorage(root, (path) => shell.trashItem(path));
+  await recoverStrays(storage);
+  const vault = await OpenVault.open(basename(storage.root), storage);
+  return { vault, root: storage.root, syncthing: await syncedBySyncthing(storage.root) };
+}
+
+/** Every window's vaults: each folder opened once, however many windows show it. */
+const vaults = new Vaults(openFolder);
+
 export class VaultSession {
-  #open: OpenVault | null = null;
-  #root: string | null = null;
-  #syncthing = false;
-  #stopWatching: (() => void) | null = null;
+  #hold: VaultHold | null = null;
   readonly #window: BrowserWindow;
 
   constructor(window: BrowserWindow) {
@@ -29,51 +43,62 @@ export class VaultSession {
   }
 
   get info(): VaultInfo | null {
-    return this.#open ? { name: this.#open.name, syncthing: this.#syncthing } : null;
+    return this.#hold ? { name: this.#hold.vault.name, syncthing: this.#hold.syncthing } : null;
   }
 
   /** The vault open now, or null. */
   get open(): OpenVault | null {
-    return this.#open;
+    return this.#hold?.vault ?? null;
   }
 
   /** Its folder on disk. */
   get root(): string | null {
-    return this.#root;
+    return this.#hold?.root ?? null;
   }
 
   /**
-   * Open the folder at `root`: recover anything a crash left, read it into
-   * the index, then watch it. The window hears of a change once the index
-   * holds it.
+   * Open the folder at `root` (or share it with a window that has it open).
+   * The window hears of a change once the index holds it.
    */
   async openAt(root: string): Promise<VaultInfo> {
-    // The system's trash, looked up when it's used.
-    const storage = await openDiskStorage(root, (path) => shell.trashItem(path));
-    await recoverStrays(storage);
-    const vault = await OpenVault.open(basename(storage.root), storage);
-    this.close();
-    this.#open = vault;
-    this.#root = storage.root;
-    this.#syncthing = await syncedBySyncthing(storage.root);
-    this.#stopWatching = vault.watch((paths) => {
-      if (this.#open === vault && !this.#window.isDestroyed()) {
-        this.#window.webContents.send(CHANNEL.changed, paths);
+    const hold = await vaults.hold(root, (paths, local) => {
+      if (this.#hold === hold && !this.#window.isDestroyed()) {
+        this.#window.webContents.send(CHANNEL.changed, paths, local);
       }
     });
-    return { name: vault.name, syncthing: this.#syncthing };
+    this.close();
+    this.#hold = hold;
+    return { name: hold.vault.name, syncthing: hold.syncthing };
   }
 
   close(): void {
-    this.#stopWatching?.();
-    this.#stopWatching = null;
-    this.#open = null;
-    this.#root = null;
+    this.#hold?.release();
+    this.#hold = null;
   }
 
   vault(): OpenVault {
-    if (!this.#open) throw new Error('No vault is open.');
-    return this.#open;
+    if (!this.#hold) throw new Error('No vault is open.');
+    return this.#hold.vault;
+  }
+
+  /** `paths` were just written, moved or trashed by this window (./vaults.ts). */
+  wrote(paths: readonly string[]): void {
+    this.#hold?.wrote(paths);
+  }
+
+  /**
+   * `paths` are being written, moved or trashed by this window: marked
+   * before and after, so the other windows on this vault know the watcher's
+   * echo for this window's own, whenever it comes.
+   */
+  async writing<T>(paths: readonly string[], write: (vault: OpenVault) => Promise<T>): Promise<T> {
+    const vault = this.vault();
+    this.wrote(paths);
+    try {
+      return await write(vault);
+    } finally {
+      this.wrote(paths);
+    }
   }
 }
 
@@ -89,15 +114,19 @@ async function openHome(session: VaultSession): Promise<void> {
 }
 
 /**
- * Answer the window's vault requests. The vault to open first is
+ * Answer the window's vault requests. The vault to open first is `root`,
+ * the one of the window that asked for this one (New Window); else
  * EIEN_VAULT (for tests and separate copies), else the one last opened, else
  * this copy's own. When the one last opened can't be (a drive that isn't
  * connected), the window says so and asks, rather than show an empty vault in
  * its place.
  */
-export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
+export async function serveVault(
+  window: BrowserWindow,
+  root: string | null = null,
+): Promise<VaultSession> {
   const session = new VaultSession(window);
-  const remembered = process.env.EIEN_VAULT || lastVault(await readDeviceFile());
+  const remembered = root ?? (process.env.EIEN_VAULT || lastVault(await readDeviceFile()));
   if (remembered) await session.openAt(remembered).catch(() => null);
   else await openHome(session);
 
@@ -134,14 +163,26 @@ export async function serveVault(window: BrowserWindow): Promise<VaultSession> {
   handle(CHANNEL.write, (path, body, expected) => {
     if (expected !== null && typeof expected !== 'string')
       throw new TypeError('expected must be text or null.');
-    return session.vault().write(text(path, 'path'), text(body, 'text'), expected);
+    const at = text(path, 'path');
+    const words = text(body, 'text');
+    return session.writing([at], (vault) => vault.write(at, words, expected));
   });
-  handle(CHANNEL.writeNew, (path, bytes) =>
-    session.vault().writeNew(...imageWrite(text(path, 'path'), bytes)),
-  );
-  handle(CHANNEL.move, (from, to) => session.vault().move(text(from, 'from'), text(to, 'to')));
-  handle(CHANNEL.trash, (path) => session.vault().trash(text(path, 'path')));
-  handle(CHANNEL.makeFolder, (path) => session.vault().makeFolder(text(path, 'path')));
+  handle(CHANNEL.writeNew, (path, bytes) => {
+    const [at, image] = imageWrite(text(path, 'path'), bytes);
+    return session.writing([at], (vault) => vault.writeNew(at, image));
+  });
+  handle(CHANNEL.move, (from, to) => {
+    const [a, b] = [text(from, 'from'), text(to, 'to')];
+    return session.writing([a, b], (vault) => vault.move(a, b));
+  });
+  handle(CHANNEL.trash, (path) => {
+    const at = text(path, 'path');
+    return session.writing([at], (vault) => vault.trash(at));
+  });
+  handle(CHANNEL.makeFolder, (path) => {
+    const at = text(path, 'path');
+    return session.writing([at], (vault) => vault.makeFolder(at));
+  });
 
   window.on('closed', () => session.close());
   return session;

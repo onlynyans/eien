@@ -4,35 +4,27 @@
 // device, through Syncthing, or another app (the sidebar's sync status).
 
 import { isHiddenName } from '../../core/paths';
+import { OWN_ECHO_MS, RecentWrites } from '../../core/vault/recent-writes';
 import type { VaultBridge } from '../../platform/bridge';
 
-/** How long after a write of ours its echo from the watcher may come. */
-export const OWN_ECHO_MS = 5000;
+export { OWN_ECHO_MS };
 
 export interface OwnWrites {
   /** The vault, its writes remembered. */
   readonly vault: VaultBridge;
-  /** Of the `paths` the disk reports changed, those this window didn't change itself. */
-  foreign(paths: Iterable<string>): string[];
+  /**
+   * Of the `paths` the disk reports changed, the notes neither this window
+   * nor (`local`, as the main process says) another window on this device
+   * changed: what came from elsewhere.
+   */
+  foreign(paths: Iterable<string>, local?: readonly string[]): string[];
 }
 
 export function ownWrites(vault: VaultBridge, now: () => number = Date.now): OwnWrites {
-  /** Each path written, moved or trashed here, and when. */
-  const written = new Map<string, number>();
+  const written = new RecentWrites(now);
   /** Until when everything is ours: an import writes many files, by the main process. */
   let importing = 0;
-  const mark = (...paths: string[]) => {
-    const at = now();
-    for (const path of paths) written.set(path.normalize('NFC'), at);
-  };
-  const recent = (path: string) => {
-    const at = path.normalize('NFC');
-    for (const [own, when] of written) {
-      if (now() - when > OWN_ECHO_MS) written.delete(own);
-      else if (at === own || at.startsWith(`${own}/`)) return true;
-    }
-    return false;
-  };
+  const mark = (...paths: string[]) => written.mark(paths, true);
   // Every call named: the bridge may be a class, whose methods a spread would leave behind.
   const tracked: VaultBridge = {
     current: () => vault.current(),
@@ -73,11 +65,15 @@ export function ownWrites(vault: VaultBridge, now: () => number = Date.now): Own
   };
   return {
     vault: tracked,
-    foreign: (paths) =>
+    foreign: (paths, local = []) =>
       now() < importing
         ? []
         : [...paths].filter(
-            (path) => !path.split('/').some(isHiddenName) && path.endsWith('.md') && !recent(path),
+            (path) =>
+              !path.split('/').some(isHiddenName) &&
+              path.endsWith('.md') &&
+              !written.has(path) &&
+              !local.includes(path),
           ),
   };
 }

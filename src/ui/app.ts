@@ -30,6 +30,8 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
     wearChosen();
     repaintControls();
   });
+  // Another window here changed a setting: this one follows.
+  bridge.settings.onChanged?.(() => void settings.reload());
   themes.onChange(() => {
     wearChosen();
     repaintControls();
@@ -49,6 +51,7 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
     if (info) shown = await showVault(root, bridge, info.name, settings, menu, info.syncthing);
     else renderWelcome(root, chooseVault, bridge.platform);
   };
+  const showNote = (path: string) => shown?.openNote(path);
   // One at a time: a second open (a double tap on Allow) waits, then stops the first view.
   let opening: Promise<void> = Promise.resolve();
   const open = () => {
@@ -62,6 +65,8 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
 
   menu.on((command) => {
     if (command === 'open-vault') void chooseVault();
+    else if (command === 'new-window') void bridge.window?.open(shown?.notePath() ?? null);
+    else if (command === 'close-window') void bridge.window?.close();
     else if (command === 'settings') screen.open();
     else if (isZoomCommand(command)) {
       const key = zoomKeyFor(keyboardInPage(), wholeZoom);
@@ -84,4 +89,7 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
     await shown?.flush();
   });
   await open();
+  // A window opened from another (New Window) shows the note it was asked for.
+  const start = await bridge.window?.start();
+  if (start?.note) await showNote(start.note);
 }

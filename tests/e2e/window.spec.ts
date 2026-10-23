@@ -10,9 +10,10 @@ import { appEnv, closeApp, expect, ROOT, test } from './launch';
 /** The vault shown: Eien starts in one, its own when none was opened before. */
 const vaultShown = (page: Page) => page.locator('.tree-row__label', { hasText: 'All Notes' });
 
-test('opens one window, on a vault', async ({ app, page }) => {
-  await expect(page).toHaveTitle('Eien');
+test('opens one window, on a vault, named for it', async ({ app, page }) => {
   await expect(vaultShown(page)).toBeVisible();
+  // With no note open, the window's name is its vault's (New Window: the system lists windows by it).
+  await expect(page).toHaveTitle(await page.locator('.sidebar__vault').innerText());
   expect(app.windows()).toHaveLength(1);
 });
 
@@ -59,6 +60,7 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
       vault: Object.keys(vault).sort(),
       settings: Object.keys(eien.settings as Record<string, unknown>).sort(),
       out: Object.keys(eien.out as Record<string, unknown>).sort(),
+      window: Object.keys(eien.window as Record<string, unknown>).sort(),
       platform: eien.platform,
       readIsOurs: vault.read !== undefined && String(vault.read).includes('replaced') === false,
     };
@@ -73,6 +75,7 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
       'platform',
       'settings',
       'vault',
+      'window',
     ],
     vault: [
       'choose',
@@ -91,8 +94,9 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
       'write',
       'writeNew',
     ],
-    settings: ['read', 'set'],
+    settings: ['onChanged', 'read', 'set'],
     out: ['copy', 'kinds', 'saveAs'],
+    window: ['close', 'open', 'start'],
     platform: process.platform,
     readIsOurs: true,
   });

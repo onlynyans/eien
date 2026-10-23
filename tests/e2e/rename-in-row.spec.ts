@@ -45,8 +45,9 @@ test('a row’s menu: its name at the head, a word and its key for each choice, 
   const last = items.last();
   await expect(last).toHaveClass(/is-danger/);
   await expect(last).toHaveText(/trash|Recycle Bin/);
-  // The keyboard: the first choice has it, ↓ moves, Esc gives it back to the row.
-  await expect(rename).toBeFocused();
+  // The keyboard: the first choice has it (where the note opens, on the desktop), ↓ moves, Esc
+  // gives it back to the row.
+  await expect(items.first()).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(items.nth(1)).toBeFocused();
   await page.keyboard.press('Escape');

@@ -28,11 +28,17 @@ const bridge: Bridge = {
     trash: (path) => ipcRenderer.invoke(CHANNEL.trash, path),
     makeFolder: (path) => ipcRenderer.invoke(CHANNEL.makeFolder, path),
     importFolder: () => ipcRenderer.invoke(CHANNEL.importFolder),
-    onChange: (listener) => listen<string[]>(CHANNEL.changed, listener),
+    onChange: (listener) => {
+      const handler = (_event: IpcRendererEvent, paths: string[], local: string[]) =>
+        listener(paths, local);
+      ipcRenderer.on(CHANNEL.changed, handler);
+      return () => ipcRenderer.removeListener(CHANNEL.changed, handler);
+    },
   },
   settings: {
     read: () => ipcRenderer.invoke(CHANNEL.settingsRead),
     set: (key, value) => ipcRenderer.invoke(CHANNEL.settingsSet, key, value),
+    onChanged: (listener) => listen<void>(CHANNEL.settingsChanged, listener),
   },
   out: {
     kinds: ['html', 'epub', 'docx', 'pdf'],
@@ -47,6 +53,11 @@ const bridge: Bridge = {
     });
   },
   paintControls: (paint) => ipcRenderer.invoke(CHANNEL.paintControls, paint),
+  window: {
+    open: (note) => ipcRenderer.invoke(CHANNEL.windowOpen, note),
+    close: () => ipcRenderer.invoke(CHANNEL.windowClose),
+    start: () => ipcRenderer.invoke(CHANNEL.windowStart),
+  },
 };
 
 contextBridge.exposeInMainWorld('eien', bridge);

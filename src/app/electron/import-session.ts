@@ -40,7 +40,9 @@ export function serveImport(window: BrowserWindow, session: VaultSession): void 
     });
     const source = picked.filePaths[0];
     if (picked.canceled || !source) return null;
-    const report = await importFolder(source, root, vault);
+    // The folder it fills is this window's write, before and after, to the other windows.
+    const report = await importFolder(source, root, vault, (into) => session.wrote([into]));
+    if (report.folder) session.wrote([report.folder]);
     if (report.left.length > 0 && !window.isDestroyed()) {
       await dialog.showMessageBox(window, { type: 'info', ...leftOutMessage(report) });
     }

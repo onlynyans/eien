@@ -27,6 +27,7 @@ export const ICONS = {
   plus: '<path d="M8 3.5v9M3.5 8h9"/>',
   tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
   pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
+  window: '<path d="M2.5 4h9v8.5h-9z"/><path d="M5 4V2.5h8.5V10H11.5"/>',
   sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
   search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
   close: '<path d="M4 4l8 8M12 4l-8 8"/>',

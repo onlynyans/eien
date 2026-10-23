@@ -31,12 +31,14 @@ const utf8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 /**
  * Copy the notes and images in `source` (a folder outside the vault at
- * `vaultRoot`) into a new folder at the top of `vault`.
+ * `vaultRoot`) into a new folder at the top of `vault`. `writing` hears that
+ * folder's name before anything is written to it.
  */
 export async function importFolder(
   source: string,
   vaultRoot: string,
   vault: OpenVault,
+  writing: (folder: string) => void = () => {},
 ): Promise<ImportReport> {
   const from = await realpath(source);
   const to = await realpath(vaultRoot);
@@ -48,6 +50,7 @@ export async function importFolder(
   const top = await readdir(to);
   const limits = { note: MAX_NOTE_BYTES, image: MAX_BYTES_READ } as const;
   const plan = planImport(listed.files, basename(source), top, limits);
+  if (plan.folder) writing(plan.folder);
   const left: LeftOut[] = [...listed.left, ...plan.left];
   const written: Copy[] = [];
 

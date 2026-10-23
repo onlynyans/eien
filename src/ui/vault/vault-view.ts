@@ -32,6 +32,7 @@ import { PaneDrawer } from './pane-drawer';
 import { phoneView } from './phone-view';
 import { renameInRow } from './rename-in-row';
 import { type Selection, VaultState } from './vault-state';
+import { nameWindow } from './window-name';
 
 export interface ShownVault {
   /** Save whatever is unsaved. */
@@ -40,6 +41,10 @@ export interface ShownVault {
   stop(): Promise<void>;
   /** The system's back (a phone's): whether it went back. */
   back(): boolean;
+  /** The open note, or none. */
+  notePath(): string | null;
+  /** Show the note at `path`. */
+  openNote(path: string): Promise<void>;
 }
 
 /** Show the vault named `name` in `root`; `syncthing` when Syncthing syncs it (the sidebar's sync status). */
@@ -151,8 +156,8 @@ export async function showVault(
   );
   // The sync status at the sidebar's foot: a note changed that this window didn't change.
   const sync = new SyncStatus(sidebar.foot.sync, syncthing);
-  const stopSync = bridge.vault.onChange((paths) => {
-    if (own.foreign(paths).length > 0) sync.changedElsewhere();
+  const stopSync = bridge.vault.onChange((paths, local) => {
+    if (own.foreign(paths, local).length > 0) sync.changedElsewhere();
   });
   const listSearch = h('div', { class: 'list__search' });
   const listBody = h('div', { class: 'list__body' });
@@ -217,6 +222,7 @@ export async function showVault(
     },
     vaultName: name,
     trashName,
+    openInNewWindow: bridge.window ? (path) => void bridge.window?.open(path) : undefined,
     act: (operation) => void act(operation),
     renameNote: (path) => renameNote(path),
     newNote: (folder) => {
@@ -293,6 +299,7 @@ export async function showVault(
     parts.sync();
     sync.draw();
     chrome.refresh();
+    nameWindow(note.path, name);
     return draw.all().then(() => phone.stack.rename());
   };
 
@@ -377,6 +384,8 @@ export async function showVault(
   await refresh();
   return {
     back: () => phone.back(),
+    notePath: () => note.path,
+    openNote: (path) => openNote(path),
     // The note's words first; then a seal or a move under way finishes (a quit waits for both).
     flush: async () => {
       await note.flush();

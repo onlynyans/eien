@@ -52,8 +52,12 @@ export interface VaultBridge {
    * importing (the phone) or the folder can't be (the vault itself).
    */
   importFolder(): Promise<ImportReport | null>;
-  /** Paths that changed on disk, as they change. Returns a function to stop. */
-  onChange(listener: (paths: string[]) => void): () => void;
+  /**
+   * Paths that changed on disk, as they change, and of those (`local`, the
+   * desktop's only) the ones another window on this device wrote. Returns a
+   * function to stop.
+   */
+  onChange(listener: (paths: string[], local?: readonly string[]) => void): () => void;
 }
 
 /** Settings (spec §6): this device's and the open vault's, checked by the main process. */
@@ -62,6 +66,11 @@ export interface SettingsBridge {
   read(): Promise<SettingValues>;
   /** Change one setting; resolves to every value after it, or rejects when it can't be kept. */
   set<K extends SettingKey>(key: K, value: SettingValues[K]): Promise<SettingValues>;
+  /**
+   * Another window on this device changed a setting: read them again. The
+   * desktop's only (a phone has one window). Returns a function to stop.
+   */
+  onChanged?(listener: () => void): () => void;
 }
 
 /** A note's or a book's exports (spec §8). */
@@ -89,6 +98,8 @@ export interface OutBridge {
 export type MenuCommand =
   | 'open-vault'
   | 'new-note'
+  | 'new-window'
+  | 'close-window'
   | 'settings'
   | 'search'
   | 'zoom:in'
@@ -132,6 +143,8 @@ export interface Bridge {
   readonly vault: VaultBridge;
   readonly settings: SettingsBridge;
   readonly out: OutBridge;
+  /** The desktop's windows: a phone has one, and none of this. */
+  readonly window?: WindowBridge;
   onMenu(listener: (command: MenuCommand) => void): () => void;
   /**
    * The system's back (Android's back button or gesture). Each handler is
@@ -150,6 +163,21 @@ export interface Bridge {
    * macOS's traffic lights take no colour, and a phone has none.
    */
   paintControls(paint: ControlsPaint): Promise<void>;
+}
+
+/** What a window was opened on: a note to show, or none (spec §4, New Window). */
+export interface WindowStart {
+  readonly note: string | null;
+}
+
+/** The desktop's windows: each its own vault, note, panes and split. */
+export interface WindowBridge {
+  /** A new window, on this window's vault, showing `note` (or none). */
+  open(note: string | null): Promise<void>;
+  /** Close this window, once what's typed is saved. */
+  close(): Promise<void>;
+  /** What this window was opened on, asked once it shows its vault. */
+  start(): Promise<WindowStart>;
 }
 
 /** The IPC channel names, shared by the preload and the main process. */
@@ -171,12 +199,16 @@ export const CHANNEL = {
   changed: 'vault:changed',
   settingsRead: 'settings:read',
   settingsSet: 'settings:set',
+  settingsChanged: 'settings:changed',
   outCopy: 'out:copy',
   outSaveAs: 'out:save-as',
   menu: 'app:menu',
   beforeClose: 'app:before-close',
   closeReady: 'app:close-ready',
   paintControls: 'app:paint-controls',
+  windowOpen: 'window:open',
+  windowClose: 'window:close',
+  windowStart: 'window:start',
 } as const;
 
 declare global {
