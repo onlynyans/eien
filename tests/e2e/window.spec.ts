@@ -91,7 +91,7 @@ test('the bridge exposes only its own calls, and the page cannot change them', a
       'write',
       'writeNew',
     ],
-    settings: ['read', 'set'],
+    settings: ['onChanged', 'read', 'set'],
     out: ['copy', 'kinds', 'saveAs'],
     platform: process.platform,
     readIsOurs: true,
