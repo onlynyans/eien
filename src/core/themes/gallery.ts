@@ -11,7 +11,6 @@ export interface GalleryTheme {
   /** The palette setting's value. */
   readonly id: string;
   readonly name: string;
-  readonly kanji: string;
   /** What it is, in a line. */
   readonly note: string;
   readonly palette: Palette;
@@ -30,14 +29,12 @@ const palette = (colors: Colors): Palette => ({ ...statusInksFor(colors), ...col
 const theme = (
   id: string,
   name: string,
-  kanji: string,
   note: string,
   colors: Colors,
   inSheet?: true,
 ): GalleryTheme => ({
   id,
   name,
-  kanji,
   note,
   palette: palette(colors),
   ...(inSheet ? { inSheet } : {}),
@@ -47,7 +44,6 @@ export const GALLERY: readonly GalleryTheme[] = [
   theme(
     'paper',
     'Paper',
-    '和紙',
     'The default: off-white paper and black ink',
     {
       desk: ['#d9d2c8', '#110e0b'],
@@ -66,7 +62,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     },
     true,
   ),
-  theme('linen', 'Linen', '生成り', 'Warmer, yellow-tinted paper with an orange accent', {
+  theme('linen', 'Linen', 'Warmer, yellow-tinted paper with an orange accent', {
     desk: ['#d8cfb8', '#14110a'],
     blotter: ['#e9e2cd', '#1c180f'],
     band: ['#f3eedd', '#231e14'],
@@ -78,7 +74,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#7b6d56', '#88806d'],
     seal: ['#b8432a', '#dc6a43'],
   }),
-  theme('indigo', 'Indigo', '藍染', 'Cool paper with blue-black text', {
+  theme('indigo', 'Indigo', 'Cool paper with blue-black text', {
     desk: ['#c9cfd8', '#0b0e14'],
     blotter: ['#dfe3e9', '#121620'],
     band: ['#edf0f4', '#181d28'],
@@ -90,7 +86,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#5f6a80', '#7a8599'],
     seal: ['#c4472d', '#e3664a'],
   }),
-  theme('moss', 'Moss', '苔', 'Green-grey background with softer text', {
+  theme('moss', 'Moss', 'Green-grey background with softer text', {
     desk: ['#cdd2c4', '#0d100b'],
     blotter: ['#e1e5d9', '#141811'],
     band: ['#eef0e8', '#1a1f16'],
@@ -102,7 +98,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#67705a', '#808a72'],
     seal: ['#a8432f', '#d76a4e'],
   }),
-  theme('candlelight', 'Candlelight', '蝋燭', 'Amber tones with no blue light at night', {
+  theme('candlelight', 'Candlelight', 'Amber tones with no blue light at night', {
     desk: ['#dccab2', '#120c06'],
     blotter: ['#ecdfcb', '#1b130b'],
     band: ['#f5ece0', '#22180e'],
@@ -114,7 +110,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#7f6a53', '#8f7c64'],
     seal: ['#b9442b', '#e8763f'],
   }),
-  theme('ink', 'Ink', '墨', 'Highest contrast, for easier reading', {
+  theme('ink', 'Ink', 'Highest contrast, for easier reading', {
     desk: ['#cfcfcc', '#000000'],
     blotter: ['#e6e6e3', '#0a0a0a'],
     band: ['#f2f2ef', '#141414'],
@@ -126,7 +122,7 @@ export const GALLERY: readonly GalleryTheme[] = [
     faded: ['#5e5e5e', '#8f8f8a'],
     seal: ['#c4361d', '#ff6a45'],
   }),
-  theme('blossom', 'Blossom', '桜鼠', 'Pink-grey tones with plum text and a rose accent', {
+  theme('blossom', 'Blossom', 'Pink-grey tones with plum text and a rose accent', {
     desk: ['#d8cdcc', '#120d0e'],
     blotter: ['#e9e1e0', '#1b1415'],
     band: ['#f3eeed', '#221a1b'],
@@ -141,7 +137,6 @@ export const GALLERY: readonly GalleryTheme[] = [
   theme(
     'slate',
     'Slate',
-    '',
     'Cool grey around warm paper, with a burnt-orange accent',
     {
       desk: ['#cfd4d2', '#0c0f0e'],

@@ -25,6 +25,9 @@ export default defineConfig({
       // Every asset stays a file: the security policy refuses data: fonts, and
       // small font subsets would otherwise be inlined as data: URLs.
       assetsInlineLimit: 0,
+      // electron-vite leaves the renderer unminified; its styles ship minified,
+      // as the phone's page already does (a third smaller, nothing changes on screen).
+      cssMinify: 'lightningcss',
     },
   },
 });

@@ -26,6 +26,7 @@ const DERIVED = {
     dayNight(mixed(p.paper[0], p.band[0], 0.7), mixed(p.paper[1], p.blotter[1], 0.6)),
   hover: (p: Palette) => washOf(p.ink, 0.045, 0.05),
   press: (p: Palette) => washOf(p.ink, 0.1, 0.1),
+  field: (p: Palette) => washOf(p.ink, 0.06, 0.07),
   'rule-soft': (p: Palette) => washOf(p.ink, 0.07, 0.07),
   rule: (p: Palette) => washOf(p.ink, 0.13, 0.14),
   'rule-strong': (p: Palette) => washOf(p.ink, 0.26, 0.26),

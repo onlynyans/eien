@@ -100,7 +100,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       }
       case 'pane.list': {
         const shut = panes.isShut('list');
-        if (panes.two) return { disabled: true, tip: 'Two panes: the sidebar lists the notes' };
+        if (panes.two)
+          return { disabled: true, tip: 'Off with two panes: the sidebar lists the notes' };
         return { pressed: !shut, tip: shut ? 'Show the note list' : 'Hide the note list' };
       }
       case 'view.live':
@@ -111,7 +112,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
         return { icon: page.mode, tip: `${NAMES[page.mode]} · next view` };
       case 'compare': {
         const word = COMPARE_WORD[versions.compareMode];
-        if (!versions.canCompare) return { disabled: true, pressed: false, tip: 'Not sealed yet' };
+        if (!versions.canCompare)
+          return { disabled: true, pressed: false, tip: 'No versions to compare yet' };
         return { pressed: word !== '', tip: word ? `Compare · ${word}` : undefined };
       }
       case 'versions':
@@ -170,7 +172,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   tips.watch(of.sidebar.foot.sync);
   // The lens's controls: in the list's head (its rows drawn only in sight, so the pane is cheap
   // to watch), and with two panes in the sidebar's lens.
-  tips.watch(of.sidebar.lens);
+  tips.watch(of.sidebar.lens.tools);
+  tips.watch(of.sidebar.lens.chips);
   const listPane = of.shell.querySelector<HTMLElement>('.list');
   if (listPane) tips.watch(listPane);
   const chrome = new Chrome({

@@ -1,13 +1,11 @@
 // A theme as a card (system.md, "Themes"): its desk, its paper with the ink
-// on it by day, its paper and seal by night; then its name, its kanji and a
-// note. The Gallery and Custom tabs both draw them, from a palette.
+// on it by day, its paper and seal by night; then its name and a note. The Gallery and Custom tabs both draw them, from a palette.
 
 import type { Palette } from '../../core/themes';
 import { h } from '../dom';
 
 export interface CardOf {
   readonly name: string;
-  readonly kanji?: string;
   readonly note: string;
   /** Null for a theme whose colours can't be worked out (a file that isn't one). */
   readonly palette: Palette | null;
@@ -43,12 +41,7 @@ export function themeCard(of: CardOf, choose: () => void): HTMLButtonElement {
       on: { click: choose },
     },
     swatch,
-    h(
-      'span',
-      { class: 'theme__title' },
-      h('span', { class: 'theme__name', text: of.name }),
-      of.kanji ? h('span', { class: 'theme__kanji', text: of.kanji }) : null,
-    ),
+    h('span', { class: 'theme__title' }, h('span', { class: 'theme__name', text: of.name })),
     h('span', { class: 'label theme__note', text: of.note }),
   );
 }

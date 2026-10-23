@@ -98,7 +98,7 @@ test.describe('Arrange mode', () => {
       await fic(page);
       await expect(titles(page)).toHaveText(['A', 'B', 'C']);
       await expect(page.locator('.list__locked')).toHaveText(
-        'Your order. Choose Arrange to move notes.',
+        'This is your order. Choose Arrange to move notes.',
       );
       await dragOnto(page, 'C', 'A');
       await page.waitForTimeout(500);

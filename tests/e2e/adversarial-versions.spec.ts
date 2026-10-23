@@ -330,7 +330,7 @@ test.describe('a seal that can’t be written', () => {
     writeFileSync(at(vault, `.eien/versions/${ID}`), 'not a folder');
     await open(page, 'Sealed');
     await seal(app);
-    await expect(page.locator('.list__notice')).toHaveText(/seal/i, { timeout: 3000 });
+    await expect(page.locator('.list__notice')).toHaveText(/version/i, { timeout: 3000 });
   });
 
   test('⌘S when the latest seal can’t be read still seals the note, or says why not', async ({
@@ -416,7 +416,7 @@ test.describe('restoring while old seals are thinned', () => {
     await clickMenu(app, 'View', 'Versions');
     await panelOf(page).getByRole('button', { name: 'Restore “the old ending”' }).click();
     await typeAtEnd(page, ' Typed while restoring.');
-    await expect(sealLine(page)).toHaveText('Restored — the draft was sealed first', {
+    await expect(sealLine(page)).toHaveText('Restored. The previous draft was saved as a version', {
       timeout: 20_000,
     });
     await page.waitForTimeout(1500); // past the autosave pause

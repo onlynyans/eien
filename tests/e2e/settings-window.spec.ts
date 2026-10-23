@@ -172,19 +172,32 @@ test('This vault’s settings stand apart, and go to the vault’s own file', as
     .toEqual({ 'appearance.density': 'compact' });
 });
 
-test('the machine voice’s face and the weight of names show in the window', async ({ page }) => {
+test('the interface font, the Source font and the weight of names show in the window', async ({
+  page,
+}) => {
   await page.locator('.tree-row__label', { hasText: 'Book' }).click();
   await page.locator('.note-row', { hasText: 'One' }).click();
   await page.getByRole('button', { name: 'Settings' }).click();
   await goTo(page, 'Type');
 
-  // The machine voice in a text face, at that face's own sizes.
+  // The interface in a text face, at that face's own sizes.
   expect(await style(page, '.colophon', 'font-family')).toContain('IBM Plex Mono');
-  await choose(page, 'Machine voice', 'Literata');
+  await choose(page, 'Interface font', 'Literata');
   await expect.poll(() => style(page, '.colophon', 'font-family')).toContain('Literata Variable');
   expect(await style(page, '.label', 'font-size')).toBe('10.5px');
-  await choose(page, 'Machine voice', 'IBM Plex Mono');
+  await choose(page, 'Interface font', 'IBM Plex Mono');
   await expect.poll(() => style(page, '.label', 'font-size')).toBe('10px');
+
+  // The Source font is its own: the Source view's face and size change, the interface's don't.
+  const sourceFace = () =>
+    page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--eien-face-source'),
+    );
+  await choose(page, 'Source font', 'Comic Mono');
+  await expect.poll(sourceFace).toContain('Comic Mono');
+  expect(await style(page, '.colophon', 'font-family')).toContain('IBM Plex Mono');
+  await choose(page, 'Source font', 'IBM Plex Mono');
+  await expect.poll(sourceFace).toContain('IBM Plex Mono');
 
   // The weights: the sidebar's names, the list's titles; the chosen title a step heavier, at most 700.
   const weight = (selector: string) => style(page, selector, 'font-weight');

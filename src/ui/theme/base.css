@@ -41,10 +41,29 @@ body {
   font-size: calc(var(--eien-seal-size) * 0.68);
   line-height: 1;
   user-select: none;
+  /* A stamp's corners, from the layout it sits in (ui/chrome/*.css): the small
+     step, never past a fifth of its side, so a small seal still reads square. */
+  border-radius: min(var(--eien-radius-s), 20%);
 }
 .seal--small {
   --eien-seal-size: 10px;
   font-size: 0; /* too small for the glyph: the square alone */
+}
+
+/* ── A row's name, centred by its capitals ──────────────────────────────
+   A line box centres a face's ascent and descent, not its letters: with most
+   faces the descent is the deeper, so a name sat above the row's middle. The
+   box is trimmed to the capitals and the baseline, then given back half the
+   rest above and half below: the same height as the line, its capitals in
+   the middle, for any face, size or density. A count beside it keeps to its
+   baseline. The padding holds what a name draws past the trim (descenders,
+   accents), inside its clip. */
+@supports (text-box: trim-both cap alphabetic) {
+  .tree-row__label,
+  .note-row__title {
+    text-box: trim-both cap alphabetic;
+    padding-block: calc((1lh - 1cap) / 2);
+  }
 }
 
 /* ── Machine voice: the mono, whatever the text face ──────────────────── */
@@ -104,24 +123,66 @@ body {
   cursor: default;
 }
 
-/* A field: a slip of paper let into the band or the desk, edged by a hairline. */
+/* A field: set into the pane, not laid on it. At rest a wash of ink with no edge to see;
+   the pointer finds its hairline; focused, it's a slip of paper (the well) with the focus
+   ring on its own edge, inside it, so nothing grows round it. */
 .field {
   appearance: none;
   width: 100%;
-  border: var(--eien-hairline) solid var(--eien-rule);
+  border: var(--eien-hairline) solid transparent;
   border-radius: var(--eien-radius-s);
-  background: var(--eien-well);
+  background: var(--eien-field);
   padding: var(--eien-space-2) var(--eien-space-3);
   font-family: var(--eien-face-mono);
   font-size: var(--eien-size-meta);
   color: var(--eien-ink);
+  transition:
+    background-color var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
 }
 .field::placeholder {
   color: var(--eien-faded);
 }
+@media (hover: hover) {
+  .field:hover:not(:focus) {
+    border-color: var(--eien-rule);
+  }
+}
 .field:focus {
+  background: var(--eien-well);
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}
+
+/* A name being edited where it stands (a folder, a new tag, a note): the row's own words in
+   its own face, no box round them; under them the focus mark, and the row lit as chosen
+   (ui/list/list.css and ui/sidebar/tree.css). */
+.rename {
+  appearance: none;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: var(--eien-mark-w) solid var(--eien-focus);
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: var(--eien-ink);
+  caret-color: var(--eien-seal);
+}
+/* The mark under the words is its focus: no ring as well. Away (another app), a hairline. */
+.rename:focus,
+.rename:focus-visible {
   outline: none;
-  border-color: var(--eien-focus);
+}
+.rename:not(:focus) {
+  border-bottom-color: var(--eien-rule-strong);
+}
+.rename::selection {
+  background: var(--eien-seal-wash);
+}
+.rename::placeholder {
+  color: var(--eien-faded);
 }
 
 /* Scene break: `***` in the file, spaced asterisks on the page. The indent

@@ -114,7 +114,7 @@ export class VersionsUI {
     if (result.kind === 'refused') return this.#parts.tell(result.reason);
     if (!target.open()) return; // sealed, but another note is on the page now
     this.#id = result.id;
-    if (result.kind === 'same') this.#line.say('Nothing new to seal');
+    if (result.kind === 'same') this.#line.say('No changes since the last version');
     else this.#line.stamp();
     await this.#load();
     // Compare was showing the last seal: it shows the one just made.
@@ -125,7 +125,7 @@ export class VersionsUI {
   /** The next of draft → changes → sealed, or `to` (a phone's back: the draft). */
   async cycleCompare(to?: CompareMode): Promise<void> {
     if (!this.#parts.note.session) return;
-    if (this.#seals.length === 0) return this.#line.say('Not sealed yet');
+    if (this.#seals.length === 0) return this.#line.say('No versions to compare yet');
     const after =
       this.#mode === 'draft' ? 'changes' : this.#mode === 'changes' ? 'sealed' : 'draft';
     await this.#show(to ?? after);
@@ -204,7 +204,7 @@ export class VersionsUI {
     if (show !== this.#shows || this.#parts.note.session !== session) return;
     if (seal === null) {
       await this.#load();
-      return this.#parts.tell('That seal isn’t there any more.');
+      return this.#parts.tell('That version no longer exists.');
     }
     const label = { name: against.name, when: sealedWhen(against.at, Date.now()) };
     const showing =
@@ -253,10 +253,10 @@ export class VersionsUI {
     // Another note is on the page now: the restore was finished in the note's own file.
     if (!target.open()) {
       return this.#parts.tell(
-        `“${titleOf(baseName(target.path))}” is restored; its draft was sealed first.`,
+        `“${titleOf(baseName(target.path))}” is restored. Its previous draft was saved as a version first.`,
       );
     }
-    this.#line.say('Restored — the draft was sealed first');
+    this.#line.say('Restored. The previous draft was saved as a version');
     await this.#load();
   }
 
@@ -273,13 +273,15 @@ export class VersionsUI {
     try {
       await this.#versions.remove(this.#id, version);
     } catch (error) {
-      this.#parts.tell(`The seal couldn’t go to the trash, so it’s kept: ${String(error)}`);
+      this.#parts.tell(
+        `The version couldn’t be moved to the trash, so it was kept: ${String(error)}`,
+      );
       return;
     }
     // The seal Compare shows (chosen, or the latest) is gone: the draft again.
     if (this.#mode !== 'draft' && this.#compared()?.file === version.file) this.#setMode('draft');
     if (this.#against?.file === version.file) this.#against = null;
-    this.#parts.tell('The seal is in the trash.');
+    this.#parts.tell('The version was moved to the trash.');
     await this.#load();
   }
 

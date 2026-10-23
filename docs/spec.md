@@ -560,9 +560,10 @@ CommonMark plus GitHub extensions, and three common additions:
     keeps it out at once; a plain click still chooses the tag. A tag in the
     filter shows it on its row: a tick when wanted, struck in carmine with a
     dash when kept out. With 3,000 notes it holds to the speed budget.
-  - **With two panes** the tree lists the notes, and the chosen row's lens is
-    in the sidebar, under the search field: the same controls and chips,
-    acting on that row's notes in the tree.
+  - **With two panes** the tree lists the notes, and no list head shows in
+    the sidebar: the chosen row's filter and sort are quiet icons at the end
+    of the search field's row (a group named "Sort and filter <row>"), its
+    chips under it while a lens is on, acting on that row's notes in the tree.
 - **Books:** Make it a book / Not a book, in a folder's menu.
 - **Pinned** notes are listed under Library, in the order pinned
   (`.eien/pinned.json`, watched like the settings). ⇧⌘P (Ctrl+Shift+P) on a
@@ -841,8 +842,8 @@ does nothing.
   (day, night or the system's), palette, the layout (band, slip or running
   head), text face, text size (90–130%),
   density (comfortable or compact), page frame (sheet or full), the page's
-  zoom and the interface's (each 50–200%), the machine voice's face, the
-  weight of the sidebar's names and the list's titles, the Running head's
+  zoom and the interface's (each 50–200%), the interface font, the Source
+  font, the weight of the sidebar's names and the list's titles, the Running head's
   ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar,
   whether Live shows the Markdown marks, and spellcheck (macOS). A setting may be one system's alone (`platforms` in the
   schema): the screen shows it only there.
@@ -904,13 +905,18 @@ larger inset (64px above and below, 112px at the sides).
 
 ### Type and the Running head
 
-- **Faces:** one list, `core/config/faces.ts` (FACES), feeds both face
-  settings: Typeface (the eight text faces) and **Machine voice** (IBM Plex
-  Mono, the default, or any of the eight). Each face carries its own machine
-  sizes (counts, labels, the Source view), so a proportional face reads at
-  the mono's size; its family is one token in `tokens.css`
-  (`--eien-family-<id>`). A face added later is one entry there, and its
-  tokens.
+- **Faces:** one list, `core/config/faces.ts` (FACES), feeds the three face
+  settings: Typeface (the eight text faces), **Interface font** (labels,
+  buttons, counts and the status bar) and **Source font** (the Source view's
+  Markdown, and code), each IBM Plex Mono by default or any face in the list:
+  eleven monospaced faces (IBM Plex Mono, JetBrains Mono, Fira Code, Cascadia
+  Code, Source Code Pro, Iosevka, Commit Mono, Space Mono, Victor Mono,
+  Monaspace Radon, Comic Mono) and the eight text faces. Each face carries its
+  own machine sizes (counts, labels, the Source view), so any face reads at
+  Plex Mono's size; its family is one token in `tokens.css`
+  (`--eien-family-<id>`). The monos other than Plex Mono bring only their
+  Latin and Latin Extended files (`ui/theme/monos.css`). A face added later is
+  one entry there, and its tokens.
 - **Weight of names:** two settings, 400 to 700: the sidebar's names
   (`--eien-weight-tree`) and the list's titles (`--eien-weight-list`). A
   chosen list title is 100 heavier, at most 700 (so 500 at the default); the
@@ -941,9 +947,9 @@ larger inset (64px above and below, 112px at the sides).
   ink, ink-soft, pencil and the status inks reach 4.5:1, faded and the seal
   3:1, on each of the five surfaces (`core/themes/contrast-rules.ts`). The
   verdict says so in words, or names the first colour that falls short.
-- **The gallery**, Eien's own (`core/themes/gallery.ts`): Paper 和紙 (the
-  default, tokens.css's own colours), Linen 生成り, Indigo 藍染, Moss 苔,
-  Candlelight 蝋燭, Ink 墨, Blossom 桜鼠, and Slate (its own sheet,
+- **The gallery**, Eien's own (`core/themes/gallery.ts`): Paper (the
+  default, tokens.css's own colours), Linen, Indigo, Moss, Candlelight, Ink,
+  Blossom, and Slate (its own sheet,
   `slate.css`, from the Otaku design). Each keeps Eien's order of surfaces (darker is further
   back) and its contrast.
 - **Your own themes** are one file each in the vault's `.eien/themes/`, so
@@ -987,7 +993,7 @@ larger inset (64px above and below, 112px at the sides).
 - **Settings → Themes** has two tabs (`ui/settings/themes-tabs.ts`), and a
   theme chosen in either is worn on the whole window at once:
   - **Gallery:** Eien's own, as cards (desk | paper with ink | night paper
-    with the seal; the name, its kanji, a note).
+    with the seal; the name, a note).
   - **Custom:** the writer's own, a card for each file in `.eien/themes`
     (its colours worked out from the file's mix; one that can't be read says
     so), and a "New theme" card, which makes `Untitled.json` (numbered when
@@ -1214,7 +1220,7 @@ seal** (docs/design).
   copy in `.eien/versions/<id>/<UTC time>.md`, the time to the second
   (`2026-10-19T16-40-02Z.md`); a second one in the same second is
   `2026-10-19T16-40-02Z~2.md`. Nothing is made if the note matches its last
-  checkpoint ("Nothing new to seal"); a checkpoint dated ahead (another
+  checkpoint ("No changes since the last version"); a checkpoint dated ahead (another
   device's clock) isn't taken as the last. The note is saved as it's sealed,
   a note that can't be saved isn't sealed, and a seal pressed while the note
   is being renamed or moved waits for that, then seals. What can't be done is

@@ -14,7 +14,7 @@ import type { SearchField } from '../list/search-field';
 import { FolderField } from './folder-field';
 import { Folds } from './folds';
 import { SidebarFoot } from './foot';
-import { drawLensSlot, type SlotLens } from './lens-slot';
+import { drawLensSlot, type LensSlot, type SlotLens } from './lens-slot';
 import { RowCache } from './row-cache';
 import { type FolderMove, folderRowEvents, tagRowEvents } from './row-keys';
 import { foldingSection, plainSection } from './sections';
@@ -52,8 +52,14 @@ export class Sidebar {
   readonly element: HTMLElement;
   /** Where the search field goes when there's no list in sight. */
   readonly searchSlot = h('div', { class: 'sidebar__search' });
-  /** With two panes, the chosen row's lens (../list/lens-bar.ts): its sort and tag filter. */
-  readonly lens = h('div', { class: 'sidebar__lens quiet-row', attrs: { hidden: true } });
+  /** With two panes, the chosen row's lens (../list/lens-bar.ts): its sort and tag filter, at the search field's end. */
+  readonly lens: LensSlot = {
+    tools: h('span', {
+      class: 'list__tools sidebar__tools',
+      attrs: { role: 'group', hidden: true },
+    }),
+    chips: h('div', { class: 'sidebar__lens', attrs: { hidden: true } }),
+  };
   /** The count, and the window's controls the layout draws there. */
   readonly foot = new SidebarFoot();
   readonly #search: SearchField;
@@ -150,8 +156,9 @@ export class Sidebar {
         // The vault itself takes a dropped note, out of whatever folder it was in.
         h('span', { class: 'sidebar__vault', text: name, attrs: { 'data-folder': '' } }),
       ),
-      this.searchSlot,
-      this.lens,
+      // The search field's row: the field, then (two panes) the chosen row's lens, quiet till hovered.
+      h('div', { class: 'sidebar__find quiet-row' }, this.searchSlot, this.lens.tools),
+      this.lens.chips,
       this.#body,
       this.foot.element,
     );

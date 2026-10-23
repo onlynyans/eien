@@ -54,11 +54,6 @@
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-row);
 }
-.theme__kanji {
-  margin-left: 6px;
-  font-family: var(--eien-face-seal);
-  color: var(--eien-pencil);
-}
 .theme__note {
   font-size: 9px;
 }

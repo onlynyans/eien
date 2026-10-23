@@ -5,6 +5,7 @@
 // its words, so a search carries on in its new place.
 
 import { h, wordButton } from '../dom';
+import { icon } from '../icons';
 
 /** How long typing must pause before the search runs. */
 const SEARCH_AFTER_MS = 150;
@@ -48,9 +49,13 @@ export class SearchField {
       'aria-label': 'Clear search',
       hidden: true,
     });
+    // The icon says what the field is for at a glance, as its edge shows only to the pointer.
+    const glass = icon('search');
+    glass.classList.add('search__icon');
     this.element = h(
       'div',
       { class: 'search', attrs: { role: 'search' } },
+      glass,
       this.#input,
       this.#clear,
     );

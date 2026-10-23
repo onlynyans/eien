@@ -82,7 +82,7 @@ test('⌘S seals the note: its id in its front matter, its words in .eien/versio
   await page.getByRole('button', { name: 'Live', exact: true }).click();
 
   await seal(app); // nothing new
-  await expect(sealLine(page)).toHaveText('Nothing new to seal');
+  await expect(sealLine(page)).toHaveText('No changes since the last version');
   expect(sealsOf(vault, id)).toHaveLength(1);
 });
 
@@ -134,14 +134,17 @@ test('Compare shows the changes since the seal, then the seal, then the draft; t
   await page.keyboard.type('!');
   await expect(editorContent(page)).toBeVisible();
   await expect(editorContent(page)).toContainText('!');
-  await expect(compareButton(page)).toHaveAttribute('data-tip', 'Compare with the last seal');
+  await expect(compareButton(page)).toHaveAttribute(
+    'data-tip',
+    'Compare with the last saved version',
+  );
   await expect(compareButton(page)).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('Compare can’t be used before the first seal', async ({ app, page }) => {
   await row(page, 'Needle').click();
   await expect(compareButton(page)).toBeDisabled();
-  await expect(compareButton(page)).toHaveAttribute('data-tip', 'Not sealed yet');
+  await expect(compareButton(page)).toHaveAttribute('data-tip', 'No versions to compare yet');
   await compare(app);
   await expect(sealLine(page)).toHaveText('Not sealed yet');
   await expect(editorContent(page)).toBeVisible();
@@ -174,7 +177,7 @@ test('the panel names, compares, restores and deletes seals', async ({ app, page
 
     // Restored: the draft is sealed first, then the seal's words come back.
     await panel.getByRole('button', { name: /^Restore/ }).click();
-    await expect(sealLine(page)).toHaveText('Restored — the draft was sealed first');
+    await expect(sealLine(page)).toHaveText('Restored. The previous draft was saved as a version');
     await expect.poll(() => sealsOf(vault, id)).toHaveLength(2);
     await expect
       .poll(() => read(vault, 'Needle.md'))
@@ -187,7 +190,7 @@ test('the panel names, compares, restores and deletes seals', async ({ app, page
     await panel
       .getByRole('button', { name: /^Send “before the bone needles” to the trash/ })
       .click();
-    await expect(page.locator('.list__notice')).toHaveText('The seal is in the trash.');
+    await expect(page.locator('.list__notice')).toHaveText('The version was moved to the trash.');
     await expect
       .poll(() => readdirSync(trash))
       .toEqual([expect.stringMatching(/--before the bone needles\.md$/)]);

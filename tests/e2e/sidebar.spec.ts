@@ -230,6 +230,33 @@ test.describe('sections, guides and books', () => {
   });
 });
 
+test.describe('a row’s name', () => {
+  test.use({ vaultFiles: { 'Work/Plan.md': 'Plans.\n', 'To-Do.md': 'Things.\n' } });
+
+  test('is centred by its capitals: trimmed to them, the rest given back evenly, the row’s height', async ({
+    page,
+  }) => {
+    const name = page.locator('.tree-row__label', { hasText: exactly('Work') });
+    await expect(name).toBeVisible();
+    const look = () =>
+      name.evaluate((label) => {
+        const style = getComputedStyle(label);
+        const row = label.closest('.tree-row__name')?.getBoundingClientRect().height ?? 0;
+        return {
+          trim: style.getPropertyValue('text-box-trim'),
+          even: style.paddingTop === style.paddingBottom && Number.parseFloat(style.paddingTop) > 0,
+          fills: Math.abs(label.getBoundingClientRect().height - row) < 0.5,
+        };
+      });
+    expect(await look()).toEqual({ trim: 'trim-both', even: true, fills: true });
+    // Compact rows are shorter; the name is still centred in them.
+    await page.evaluate(() => {
+      document.documentElement.dataset.density = 'compact';
+    });
+    expect(await look()).toEqual({ trim: 'trim-both', even: true, fills: true });
+  });
+});
+
 test.describe('the foot’s count', () => {
   test.use({ vaultFiles: { 'Only.md': 'One note, alone.\n' } });
 

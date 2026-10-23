@@ -42,7 +42,8 @@ hues darkened, never grey-blue).
 | `--eien-band` | the list's head, the page's control strip, the colophon, a panel's head |
 | `--eien-paper` | the note list and the sheet |
 | `--eien-paper-raised` | what floats: menus, the versions panel, a row being dragged |
-| `--eien-well` | inside a field |
+| `--eien-field` | a field at rest: a wash of the ink |
+| `--eien-well` | inside a field with the keyboard |
 | `--eien-selected` | the chosen row, beside the seal's rule |
 | `--eien-hover`, `--eien-press` | a row or button under the pointer, and pressed |
 
@@ -100,9 +101,16 @@ machine count it, or do you press it?* The mono.
   22px, title 36px, list heading 23px, row 16px, preview 14px.
 - **Machine voice**, IBM Plex Mono by default: labels 10px in capitals
   tracked 0.12em (`--eien-size-label`, `--eien-track-label`), counts and
-  dates 11px with tabular figures (`--eien-size-meta`). Its face becomes the
-  writer's choice too (changed 2026-10-20, #24): `--eien-face-mono` is set
-  by that setting, so everything in the machine voice follows it.
+  dates 11px with tabular figures (`--eien-size-meta`). Its face is the
+  writer's choice too (changed 2026-10-20, #24): the **Interface font**
+  setting sets `--eien-face-mono`, so everything in the machine voice
+  follows it.
+- **Source**: the Source view's raw Markdown, and code, in
+  `--eien-face-source` at `--eien-size-source` (14px), set by the **Source
+  font** setting apart from the interface (2026-10-22). Both choose from the
+  eleven monos (Plex Mono, JetBrains Mono, Fira Code, Cascadia Code, Source
+  Code Pro, Iosevka, Commit Mono, Space Mono, Victor Mono, Monaspace Radon,
+  Comic Mono) and the eight text faces.
 - Weights: 400; 500 for a note's title and the list's heading; 600 for the
   vault's name and `strong`. A label is never bold: it's quiet by size,
   tracking and pencil ink.
@@ -129,7 +137,7 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 
 | Family | Tokens | Values | Set by |
 |---|---|---|---|
-| Surfaces | `--eien-desk`, `-blotter`, `-band`, `-paper`, `-paper-raised`, `-well`, `-selected`, `-hover`, `-press`, `-scrim` | light-dark pairs (Paper) | theme |
+| Surfaces | `--eien-desk`, `-blotter`, `-band`, `-paper`, `-paper-raised`, `-well`, `-field`, `-selected`, `-hover`, `-press`, `-scrim` | light-dark pairs (Paper) | theme |
 | Inks | `--eien-ink`, `-ink-soft`, `-pencil`, `-faded`, `-focus` | four strengths; focus = ink-soft | theme |
 | Seal | `--eien-seal`, `-seal-wash` | vermilion | theme (one seal colour per theme) |
 | Status | `--eien-added`, `-removed` (= `-danger`), `-caution`, each `-wash` | moss, carmine, ochre | theme |
@@ -137,8 +145,8 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Depth | `--eien-shadow-sheet`, `--eien-shadow-float` | two shadows, no more | – |
 | Corners | `--eien-radius-s`, `-m`, `-l` | A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10 | layout |
 | Icons | `--eien-icon` 16px, `--eien-icon-stroke` 1.25, `--eien-control` 28px (desktop), `--eien-touch` 44px | | – |
-| Faces | `--eien-family-*` (nine: plex-mono, newsreader, literata, plex-sans, source-sans, atkinson, schibsted, hanken, instrument); `--eien-face-text`, `--eien-face-mono`, `--eien-face-seal` | the two voices point at a family | settings: Text face, Machine voice (both from one FACES list, `src/core/config/faces.ts`) |
-| Sizes | `--eien-size-prose`, `-title`, `-heading`, `-row`, `-preview` (each face's own, × `--eien-text-scale`); `--eien-size-label` 10px, `-meta` 11px, `-source` 14px (each machine face's own) | Newsreader: 22, 36, 23, 16, 14 | settings: Text size (`--eien-text-scale`, 0.9–1.3), the faces |
+| Faces | `--eien-family-*` (nineteen: eleven monos, plex-mono first, and the eight text faces); `--eien-face-text`, `--eien-face-mono`, `--eien-face-source`, `--eien-face-seal` | each voice points at a family | settings: Typeface, Interface font, Source font (all from one FACES list, `src/core/config/faces.ts`) |
+| Sizes | `--eien-size-prose`, `-title`, `-heading`, `-row`, `-preview` (each face's own, × `--eien-text-scale`); `--eien-size-label` 10px, `-meta` 11px (the interface font's own), `-source` 14px (the Source font's own) | Newsreader: 22, 36, 23, 16, 14 | settings: Text size (`--eien-text-scale`, 0.9–1.3), the faces |
 | Weights | `--eien-weight-tree`, `--eien-weight-list`, `--eien-weight-list-chosen`; `--eien-track-label` 0.12em | 400, 400, 500 | settings: Row weights (chosen = list + 100, at most 700) |
 | Space | `--eien-space-1` … `-8` | 4, 8, 12, 16, 24, 32, 48, 72 | – |
 | Lengths | `--eien-row-h` 30px × text scale (26 compact), `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |
@@ -167,9 +175,18 @@ if a theme should change it, it joins `THEME_TOKENS`.
   seal's colour. Disabled: faded.
 - **Label** (`.label`): mono, 10px, capitals, tracked, pencil.
 - **Count** (`.count`): mono, 11px, tabular figures, pencil.
-- **Field** (`.field`): full width, well ground, a rule hairline, padding
-  8px 12px, mono 11px in ink, a faded placeholder; on focus the border turns
-  to the focus ink, with no ring.
+- **Field** (`.field`, changed 2026-10-22): set into the pane, not laid on
+  it. At rest `--eien-field` (a wash of the ink) with a transparent hairline,
+  `--eien-radius-s`; the hairline turns `--eien-rule` under the pointer;
+  focused, the well ground and a 2px focus-ink ring on its own edge, inset,
+  so nothing grows round it. Padding 8px 12px, mono 11px in ink, a faded
+  placeholder. The search field is the pane's width, so `--eien-radius-m`,
+  with the search icon in pencil set into its left.
+- **Rename** (`.rename`, 2026-10-22): a name edited where it stands (a
+  folder, a new tag, a note): the row's own face, size and weight, no box, no
+  ground; the 2px focus mark under the words (a hairline in rule-strong while
+  the window is away), the caret in the seal, and the row lit
+  `--eien-selected`, so it reads as the row being edited.
 - **Section label** (`.section__label`): LIBRARY, FOLDERS, TAGS. A button the
   row's height, label type, pencil (ink-soft on hover). Clicking folds the
   section; its twisty shows on hover, focus, or while folded.
@@ -285,7 +302,7 @@ page there shows them working.
     face, swatches of theme surfaces, or a stepper.
 - **Themes:** a category of two tabs.
   - **Gallery:** Eien's own themes as cards: desk | paper with ink | night
-    paper with the seal, then the name, its kanji, a note.
+    paper with the seal, then the name and a note (no kanji: 2026-10-22).
   - **Custom:** the writer's own, one named file each in `.eien/themes/`,
     as the same cards, plus a dashed "New theme" card. The chosen one opens
     a mix panel on the band: its name as an in-place field, its file in
@@ -365,15 +382,16 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   drawn from `data-keys` so the choice's name is its word alone); the trash
   last after a rule, in `--eien-danger`. No keys on a coarse pointer.
 - **Name field** (`ui/list/name-field.ts`): laid over the row's name in its
-  own face, size and weight (copied from the name); a hairline in
-  `--eien-focus` under it, caret in the seal; a note's `.md` after it in mono,
+  own face, size and weight (copied from the name), a `.rename`: the 2px
+  focus mark under it, caret in the seal, the row under it lit
+  `--eien-selected`; a note's `.md` after it in mono,
   meta size, faded. A problem shows under it: label size, mono,
   `--eien-caution` on `--eien-caution-wash`, `--eien-radius-s`.
 - **Quiet controls** (`icon-button--quiet`, `chrome/chrome.css`): the + that
   makes something (`ui/add-button.ts`: New folder and New tag at a section
   label's right, New note in the list's head) and the lens's filter, sort and
   Arrange. One rule for every pane: opacity 0 until the row they sit in
-  (`.quiet-row`: a sidebar section, the list's head, the sidebar's lens) is
+  (`.quiet-row`: a sidebar section, the list's head, the sidebar's search row, where two panes put the chosen row's filter and sort, with no head) is
   hovered, or they have the keyboard, are open (`aria-expanded`), pressed or
   on; always shown on `hover: none`. Their own hover, press and focus are the
   icon button's.

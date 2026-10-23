@@ -73,7 +73,7 @@
 /* Each named: a bare :not() here would restyle the whole window as the sidebar shuts. */
 .shell[data-sidebar-shut]
   .sidebar
-  > :is(.sidebar__head, .sidebar__search, .sidebar__body, .sidebar__foot) {
+  > :is(.sidebar__head, .sidebar__find, .sidebar__lens, .sidebar__body, .sidebar__foot) {
   display: none;
 }
 .sidebar__vault {
@@ -87,12 +87,20 @@
 
 /* The search field, when no list is in sight: a slip let into the desk, under
    the vault's name. With a list, it's on the list's band, and this is empty. */
-.sidebar__search {
+.sidebar__find {
   flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-1);
   padding: 0 var(--eien-space-4) var(--eien-space-2);
 }
-.sidebar__search:empty {
+/* The field is in the list's band (three panes): nothing on this row. */
+.sidebar__find:not(:has(.search)) {
   display: none;
+}
+.sidebar__search {
+  flex: 1;
+  min-width: 0;
 }
 /* Everything that redraws: the trees, and the foot pinned beneath them. */
 .sidebar__body {
@@ -235,24 +243,15 @@
   height: 14px;
 }
 
-/* With two panes, the chosen row's lens: its name, the filter and the sort, and its chips. */
-.sidebar__lens {
-  display: grid;
-  gap: var(--eien-space-1);
-  padding: 0 var(--eien-space-2) var(--eien-space-2) var(--eien-space-4);
+/* With two panes, the chosen row's lens: the filter and the sort at the search field's end
+   (no head: the chosen row says what they act on), and its chips under it while one is on. */
+.sidebar__tools {
+  flex: none;
 }
+.sidebar__tools[hidden],
 .sidebar__lens[hidden] {
   display: none;
 }
-.sidebar__lens-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--eien-space-2);
-  min-height: var(--eien-control);
-}
-.sidebar__lens-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.sidebar__lens {
+  padding: 0 var(--eien-space-4) var(--eien-space-2);
 }

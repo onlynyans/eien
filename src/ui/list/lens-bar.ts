@@ -117,7 +117,7 @@ export function lensParts(
             attrs: {
               type: 'button',
               'aria-label': arrange.on ? 'Done arranging' : 'Arrange',
-              'data-tip': arrange.on ? 'Done arranging' : 'Arrange: drag rows into your order',
+              'data-tip': arrange.on ? 'Done arranging' : 'Arrange: drag rows to reorder them',
               'aria-pressed': String(arrange.on),
               'data-key': `lens-arrange:${where}`,
             },
@@ -196,9 +196,9 @@ export function lensLine(list: NoteList, arrange: Arrange = NO_ARRANGE): HTMLEle
   const text = !orderable
     ? null
     : !inOwnOrder(list)
-      ? 'Sorted or filtered: your order is kept underneath. Clear it to drag.'
+      ? 'Clear your sort or filters above to restore your order.'
       : arrange.mode
-        ? 'Your order. Choose Arrange to move notes.'
+        ? 'This is your order. Choose Arrange to move notes.'
         : null;
   return text ? h('p', { class: 'list__locked', text }) : null;
 }

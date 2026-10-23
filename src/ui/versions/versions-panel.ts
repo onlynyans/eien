@@ -55,7 +55,7 @@ export class VersionsPanel {
       this.#list,
       h('p', {
         class: 'versions__note',
-        text: 'Restoring seals the draft first, so nothing is lost. Named seals are kept until you delete them; other seals older than 30 days are thinned to one a day.',
+        text: 'Restoring a version first saves your current draft as a version, so you can go back to it. Named versions are kept until you delete them. Other versions older than 30 days are reduced to one a day.',
       }),
     );
     // Esc closes it, as it does the outline cards. A name being typed has its own Esc first: it
@@ -107,7 +107,7 @@ export class VersionsPanel {
         ? [
             h('li', {
               class: 'versions__empty',
-              text: `Not sealed yet. ${model.sealKeys} seals the draft.`,
+              text: `No versions yet. ${model.sealKeys} saves the draft as a version.`,
             }),
           ]
         : []),
@@ -192,7 +192,7 @@ export class VersionsPanel {
       class: 'field version__field',
       attrs: {
         type: 'text',
-        'aria-label': 'Name this seal',
+        'aria-label': 'Name this version',
         spellcheck: 'false',
         placeholder: 'Name',
       },

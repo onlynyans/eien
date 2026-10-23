@@ -54,7 +54,7 @@ describe('the note’s tags', () => {
     expect(button('Take #draft off')).toBeDefined();
     expect(button('Take #wip off')).toBeUndefined();
     expect(set.element.querySelector('.tag--text')?.getAttribute('data-tip')).toBe(
-      'In the text · show where',
+      'Typed in the note · click to find it',
     );
   });
 

@@ -85,7 +85,7 @@ export function compareView(
         ...(label.name ? [`“${label.name}” · `] : []),
         `Sealed ${label.when} — read only`,
       ),
-      h('span', {}, 'Type to return to the draft'),
+      h('span', {}, 'Start typing to go back to the draft'),
     );
     body = prose(lines, 'Sealed text, read only');
   }

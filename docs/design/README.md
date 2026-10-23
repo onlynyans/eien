@@ -58,7 +58,8 @@ so permanence is the theme.
 | Band | `--eien-band` | the list's head, the page's control strip, the colophon, Compare's strip |
 | Paper | `--eien-paper` | the note list (the phone's index) and the sheet |
 | Raised paper | `--eien-paper-raised` | menus, the versions panel, the phone's bottom sheet, a row being dragged |
-| Well | `--eien-well` | inside a field |
+| Field | `--eien-field` | a field at rest: a wash of the ink, so it's set into the pane (2026-10-22) |
+| Well | `--eien-well` | inside a field with the keyboard |
 | Selected | `--eien-selected` | the chosen row, beside the seal's rule |
 
 ### The seal
@@ -239,12 +240,15 @@ and the design pass brings the mockups up to it. Each is in
   `tokens.css` (Band's 2/4/8), each layout setting its own in its stylesheet
   (`src/ui/chrome/*.css`); with them, the icons' tokens `--eien-icon`,
   `--eien-icon-stroke` and `--eien-control`.
-- **The machine voice's face is a setting** (#24), IBM Plex Mono by default.
+- **The machine voice's face is a setting** (#24), Interface font, IBM Plex
+  Mono by default; the Source view's is another, Source font (2026-10-22).
   Built: each bundled face's family is one token, `--eien-family-<id>`
-  (`plex-mono`, `newsreader` … `instrument`); `--eien-face-mono` and each
-  `[data-face]`'s `--eien-face-text` name one. The setting sets
-  `--eien-face-mono` and the three machine sizes (`--eien-size-meta`,
-  `-label`, `-source`) from the face's own (`src/core/config/faces.ts`).
+  (eleven monos, `plex-mono` … `comic-mono`, then `newsreader` …
+  `instrument`); `--eien-face-mono`, `--eien-face-source` and each
+  `[data-face]`'s `--eien-face-text` name one. Interface font sets
+  `--eien-face-mono` and two machine sizes (`--eien-size-meta`, `-label`);
+  Source font sets `--eien-face-source` and `--eien-size-source`, each from
+  the face's own (`src/core/config/faces.ts`).
 - **Row names' weight is a setting** (#25): the sidebar's names and the
   list's titles, 400–700 each. A selected list title is 100 heavier, at most
   700. Built: `--eien-weight-tree`, `--eien-weight-list` and

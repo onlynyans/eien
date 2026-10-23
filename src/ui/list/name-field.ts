@@ -34,7 +34,7 @@ export function editName(spec: NameFieldSpec): boolean {
   if (!first) return false;
   open?.finish(true);
   const field = h('input', {
-    class: 'name-field__input',
+    class: 'rename name-field__input',
     attrs: { type: 'text', 'aria-label': `Rename ${spec.name}`, spellcheck: 'false' },
   });
   const said = h('p', { class: 'name-field__problem', attrs: { role: 'status', hidden: true } });

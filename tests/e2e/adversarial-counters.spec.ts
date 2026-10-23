@@ -109,7 +109,9 @@ test('⌘Z after a restore isn’t writing: today doesn’t gain the words the r
     .getByRole('button', { name: /^Restore/ })
     .first()
     .click();
-  await expect(page.locator('.seal-line')).toHaveText('Restored — the draft was sealed first');
+  await expect(page.locator('.seal-line')).toHaveText(
+    'Restored. The previous draft was saved as a version',
+  );
   await expect(words(page)).toHaveText('3 words');
   await expect(today(page)).toHaveText('Today +5'); // the restore isn't writing
 

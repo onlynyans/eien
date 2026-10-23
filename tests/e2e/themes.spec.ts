@@ -147,7 +147,7 @@ test('a custom theme made, worn, mixed, renamed and sent to the trash, its file 
     );
     await expect.poll(() => readTheme(vault, 'Untitled').mix).toEqual(sealed);
     await expect(dialog(page).locator('.mix__verdict')).toHaveText(
-      'Every ink keeps Eien’s contrast, by day and by night.',
+      'Every color has enough contrast to read, by day and by night.',
     );
 
     // Renamed in place: the file is renamed, the worn theme follows it; a taken name is refused.

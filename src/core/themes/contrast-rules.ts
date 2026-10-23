@@ -58,10 +58,10 @@ export function shortfalls(palette: Palette): Shortfall[] {
 export function verdictOf(palette: Palette): { readonly keeps: boolean; readonly words: string } {
   const [first] = shortfalls(palette);
   if (!first)
-    return { keeps: true, words: 'Every ink keeps Eien’s contrast, by day and by night.' };
+    return { keeps: true, words: 'Every color has enough contrast to read, by day and by night.' };
   const when = first.scheme === 0 ? 'by day' : 'by night';
   return {
     keeps: false,
-    words: `Under Eien’s contrast: ${first.color} on ${first.surface} ${when}, ${first.ratio.toFixed(1)}:1 of ${first.least}:1.`,
+    words: `Not enough contrast ${when}: ${first.color} on ${first.surface} is ${first.ratio.toFixed(1)}:1, and needs ${first.least}:1.`,
   };
 }

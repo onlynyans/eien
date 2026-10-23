@@ -123,6 +123,43 @@ test('every typeface shows in itself and loads under the security policy', async
   expect(errors).toEqual([]);
 });
 
+/** The monos beside Plex Mono, each with its family's name (ui/theme/monos.css). */
+const MONOS = {
+  'JetBrains Mono': 'JetBrains Mono Variable',
+  'Fira Code': 'Fira Code Variable',
+  'Cascadia Code': 'Cascadia Code Variable',
+  'Source Code Pro': 'Source Code Pro Variable',
+  Iosevka: 'Iosevka',
+  'Commit Mono': 'Commit Mono',
+  'Space Mono': 'Space Mono',
+  'Victor Mono': 'Victor Mono Variable',
+  'Monaspace Radon': 'Monaspace Radon',
+  'Comic Mono': 'Comic Mono',
+};
+
+test('every mono loads from its bundled files, as the interface font', async ({ page }) => {
+  await openBook(page);
+  await page.locator('.note-row', { hasText: 'One' }).click();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await goTo(page, 'Type');
+  for (const [name, family] of Object.entries(MONOS)) {
+    await choose(page, 'Interface font', name);
+    await expect.poll(() => style(page, '.colophon', 'font-family')).toContain(family);
+    const fonts = await page.evaluate(async (wanted) => {
+      await document.fonts.ready;
+      const faces = [...document.fonts].filter(
+        (font) => font.family.replaceAll('"', '') === wanted,
+      );
+      return {
+        loaded: faces.some((font) => font.status === 'loaded'),
+        failed: faces.filter((font) => font.status === 'error').length,
+      };
+    }, family);
+    expect(fonts, family).toEqual({ loaded: true, failed: 0 });
+  }
+  await choose(page, 'Interface font', 'IBM Plex Mono');
+});
+
 test('palette, density, page and text size change the look at once', async ({ page }) => {
   await openBook(page);
   await page.locator('.note-row', { hasText: 'One' }).click();

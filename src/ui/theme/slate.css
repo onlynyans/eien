@@ -39,6 +39,10 @@
     rgb(25 26 22 / 0.1),
     rgb(236 235 231 / 0.1)
   ); /* derived: the same ink, pressed */
+  --eien-field: light-dark(
+    rgb(25 26 22 / 0.06),
+    rgb(236 235 231 / 0.07)
+  ); /* derived: the same ink, a field at rest */
   --eien-selected: light-dark(
     #e8eae7,
     #353733

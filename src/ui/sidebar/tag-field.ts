@@ -47,7 +47,7 @@ export class TagField {
     const editing = this.#editing;
     if (!editing) return [];
     const field = h('input', {
-      class: 'field tree-row__field',
+      class: 'rename tree-row__field',
       attrs: { type: 'text', 'aria-label': 'New tag', placeholder: 'a tag', spellcheck: 'false' },
     });
     const said = h('li', { class: 'tree-hint tree-hint--problem', attrs: { role: 'status' } });

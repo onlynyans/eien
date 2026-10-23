@@ -103,7 +103,9 @@ describe('lensParts', () => {
 describe('lensLine', () => {
   it('says why a folder’s rows don’t drag while it’s sorted or filtered', () => {
     expect(lensLine(list())).toBeNull();
-    expect(lensLine(list({ sort: 'title' }))?.textContent).toMatch(/your order is kept underneath/);
+    expect(lensLine(list({ sort: 'title' }))?.textContent).toMatch(
+      /Clear your sort or filters above to restore your order\./,
+    );
     expect(lensLine(list({ filter: { tags: [['a', 'in']], match: 'all' } }))).not.toBeNull();
     expect(lensLine(list({ kind: 'tag', folder: undefined, sort: 'title' }))).toBeNull();
   });
@@ -222,11 +224,11 @@ describe('arranging', () => {
 
   it('says why rows don’t move: a lens on, or not arranging; nothing while arranging', () => {
     expect(lensLine(list(), arranged(false))?.textContent).toBe(
-      'Your order. Choose Arrange to move notes.',
+      'This is your order. Choose Arrange to move notes.',
     );
     expect(lensLine(list(), arranged(true))).toBeNull();
     expect(lensLine(list({ kind: 'all', folder: undefined, sort: 'title' }))?.textContent).toMatch(
-      /kept underneath/,
+      /Clear your sort or filters above to restore your order\./,
     );
   });
 });

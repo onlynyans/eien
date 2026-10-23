@@ -34,6 +34,14 @@ const key = (input: HTMLInputElement, name: string) =>
   input.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true }));
 
 describe('TagField', () => {
+  it('names the tag where it will stand: a .rename, never a boxed .field', () => {
+    const { tags, draw } = field();
+    tags.start();
+    const input = draw();
+    expect(input?.classList.contains('rename')).toBe(true);
+    expect(input?.classList.contains('field')).toBe(false);
+  });
+
   it('draws nothing until started', () => {
     const { tags, draw } = field();
     expect(tags.active).toBe(false);
