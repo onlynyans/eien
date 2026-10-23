@@ -5,7 +5,7 @@ large enough to judge. Switch day and night, and the icon stroke, in the bar.
 
 ## Icons (#26)
 
-- **One set, drawn for Eien:** 52 icons, the formatting bar's bold, italic,
+- **One set, drawn for Eien:** 53 icons, the formatting bar's bold, italic,
   underline and strikethrough among them, on a 16-unit grid, with round ends and
   joins, stroked in `currentColor`. They're inline SVG; there's no icon font
   and nothing is fetched. In the app they'd live in one module (`ui/icons.ts`)

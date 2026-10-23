@@ -35,6 +35,12 @@ export interface VaultBridge {
   /** An image's bytes, to show it; null when it's missing or too big. */
   readBytes(path: string): Promise<Uint8Array | null>;
   write(path: string, text: string, expected: string | null): Promise<WriteResult>;
+  /**
+   * Write an image's bytes as a new file, making the folders above it, only
+   * where nothing is (see Storage.writeNew): false, and nothing written, when
+   * the name is taken. Refused for anything but an image a note shows.
+   */
+  writeNew(path: string, bytes: Uint8Array): Promise<boolean>;
   /** Move or rename a note or folder (see Storage.move). */
   move(from: string, to: string): Promise<MoveResult>;
   /** Send a note or folder to the system's trash; rejects, leaving it, when it can't. */
@@ -157,6 +163,7 @@ export const CHANNEL = {
   read: 'vault:read',
   readBytes: 'vault:read-bytes',
   write: 'vault:write',
+  writeNew: 'vault:write-new',
   move: 'vault:move',
   trash: 'vault:trash',
   makeFolder: 'vault:make-folder',

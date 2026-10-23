@@ -20,7 +20,16 @@ import {
 import type { QuoteStyle } from '../../core/typography';
 import { activeFormats } from './active-formats';
 import { eienChange, eienUndo, writtenBy } from './eien-change';
-import { hiddenFrontMatter, keepFrontMatter, livePreview, previewMode } from './live-preview';
+import { hiddenMarkEditing } from './hidden-marks';
+import { imageDrop } from './image-drop';
+import {
+  hiddenFrontMatter,
+  keepFrontMatter,
+  livePreview,
+  previewMode,
+  showMarks,
+} from './live-preview';
+import { tableCells } from './live-tables';
 import { eienMarkdown } from './syntax';
 import { editorTheme, markdownColours } from './theme';
 import { htmlPaste, quoteTyping } from './typing';
@@ -47,6 +56,8 @@ export interface EditorEvents {
   follow(target: { readonly kind: 'url' | 'note'; readonly value: string }): void;
   /** The caret moved, or the text changed under it: what's on at the caret may differ. */
   moved?(): void;
+  /** Images were dropped at `at`, or pasted at the caret (null): add them to the note (./image-drop.ts). */
+  images?(files: readonly File[], at: number | null): void;
 }
 
 export class NoteEditor {
@@ -61,6 +72,9 @@ export class NoteEditor {
   /** Focus mode and typewriter scrolling, as this device's settings say. */
   readonly #tools = new Compartment();
   #toolsOn: WritingTools = NO_TOOLS;
+  /** Live's marks on the caret's lines, or hidden there too, as this device's setting says. */
+  readonly #marks = new Compartment();
+  #marksShown = true;
   /** Held still while its note is moved or trashed: no typing reaches it. */
   #locked = false;
   readonly #events: EditorEvents;
@@ -164,6 +178,28 @@ export class NoteEditor {
     this.#view.focus();
   }
 
+  /**
+   * Put `text` at `at` (where an image was dropped; the selection's place,
+   * for null) as the writer's own edit, which ⌘Z takes back; the caret after
+   * it. False, changing nothing, while the text is read only or held still.
+   */
+  insert(text: string, at: number | null, userEvent: 'input.drop' | 'input.paste'): boolean {
+    const state = this.#view.state;
+    if (state.readOnly) return false;
+    const { from, to } =
+      at === null
+        ? state.selection.main
+        : { from: Math.min(at, state.doc.length), to: Math.min(at, state.doc.length) };
+    this.#view.dispatch({
+      changes: { from, to, insert: text },
+      selection: { anchor: from + text.length },
+      userEvent,
+      scrollIntoView: true,
+    });
+    this.#view.focus();
+    return true;
+  }
+
   /** The Format menu's commands on at the caret (./active-formats.ts). */
   get formats(): ReadonlySet<FormatCommandId> {
     return activeFormats(this.#view.state);
@@ -205,6 +241,13 @@ export class NoteEditor {
     if (tools.typewriter && !before.typewriter) centreCaret(this.#view);
   }
 
+  /** Live shows the Markdown marks on the caret's lines (true), or keeps them hidden (spec §4). */
+  setMarks(shown: boolean): void {
+    if (shown === this.#marksShown) return;
+    this.#marksShown = shown;
+    this.#view.dispatch({ effects: this.#marks.reconfigure(marksExtensions(shown)) });
+  }
+
   /** Hold the text still (true) or let the writer type again (false). */
   setLocked(locked: boolean): void {
     this.#locked = locked;
@@ -224,6 +267,12 @@ export class NoteEditor {
       this.#lock.of(lockExtensions(this.#locked)),
       this.#quotes.of(quoteTyping(this.#quoteStyle)),
       this.#tools.of(writingTools(this.#toolsOn)),
+      this.#marks.of(marksExtensions(this.#marksShown)),
+      imageDrop((files, at) => {
+        if (!this.#events.images) return false;
+        this.#events.images(files, at);
+        return true;
+      }),
       htmlPaste,
       keymap.of([
         ...formatKeys,
@@ -301,19 +350,23 @@ function linkAt(view: EditorView, event: MouseEvent): Parameters<EditorEvents['f
   return null;
 }
 
+const marksExtensions = (shown: boolean): Extension =>
+  shown ? [] : [showMarks.of(false), hiddenMarkEditing];
+
 const lockExtensions = (locked: boolean): Extension =>
   locked ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : [];
 
 function modeExtensions(mode: EditorMode): Extension {
   switch (mode) {
     case 'live':
-      return [previewMode.of('live'), livePreview, keepFrontMatter];
+      return [previewMode.of('live'), livePreview, tableCells, keepFrontMatter];
     case 'source':
       return [EditorView.editorAttributes.of({ class: 'eien-source' })];
     case 'reading':
       return [
         previewMode.of('reading'),
         livePreview,
+        tableCells,
         keepFrontMatter,
         EditorState.readOnly.of(true),
         EditorView.editable.of(false),

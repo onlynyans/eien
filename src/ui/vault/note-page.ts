@@ -4,8 +4,10 @@
 
 import { baseName, titleOf } from '../../core/paths';
 import { tagChoices } from '../../core/tags';
+import type { VaultBridge } from '../../platform/bridge';
 import { PageView } from '../page/page';
 import type { SettingsState } from '../settings/settings-state';
+import { copyImages } from './note-images';
 import { crumbsOf, type OpenNote } from './open-note';
 import type { Organizer } from './organize';
 import type { VaultState } from './vault-state';
@@ -20,6 +22,8 @@ export interface NotePageParts {
   openNote(path: string): void;
   /** Run a file operation, then read the vault again (one at a time). */
   act(operation: () => Promise<unknown>): void;
+  /** Where images dropped or pasted into the note are written (./note-images.ts). */
+  readonly vault: Pick<VaultBridge, 'writeNew'>;
 }
 
 export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
@@ -32,6 +36,15 @@ export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
         const path = parts.state.findByTitle(target.value);
         if (path) parts.openNote(path);
       }
+    },
+    images: (files, at) => {
+      const session = parts.note().session;
+      if (!session) return;
+      void copyImages(parts.vault, session.path, files, parts.tell).then((shown) => {
+        // Put where it was dropped, if the note is still the one open; else the images wait in its folder.
+        if (shown && parts.note().session === session)
+          page.editor.insert(shown, at, at === null ? 'input.paste' : 'input.drop');
+      });
     },
     tags: {
       choices: (typed, has) => tagChoices(parts.state.tags, has, typed),
@@ -60,6 +73,7 @@ export function followSettings(page: PageView, settings: SettingsState): () => v
       typewriter: values['editor.typewriter'] === 'on',
       spellcheck: values['editor.spellcheck'] === 'on',
     });
+    page.editor.setMarks(values['editor.marks'] === 'on');
   };
   follow(settings.values);
   return settings.onChange(follow);

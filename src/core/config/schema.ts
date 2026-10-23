@@ -223,6 +223,18 @@ export const SETTINGS = [
     default: 'off',
   },
   {
+    key: 'editor.marks',
+    label: 'Show Markdown marks',
+    description:
+      'Show the Markdown symbols around the text you’re editing in Live mode. Also in View → Show Markdown Marks.',
+    scope: 'device',
+    group: 'Editor',
+    type: 'choice',
+    choices: { off: 'Off', on: 'On' },
+    // On, as Live has always been: the marks show the writer where a format starts and ends.
+    default: 'on',
+  },
+  {
     key: 'editor.spellcheck',
     label: 'Spellcheck',
     description:
@@ -338,6 +350,7 @@ export const TOGGLES = [
   'editor.focus',
   'editor.formatBar',
   'editor.typewriter',
+  'editor.marks',
   'editor.spellcheck',
 ] as const satisfies readonly SettingKey[];
 export type ToggleKey = (typeof TOGGLES)[number];

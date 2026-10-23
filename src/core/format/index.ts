@@ -19,3 +19,4 @@ export {
 } from './inline';
 export { headingLevel, type LineFormat, toggleCheck, toggleLines } from './lines';
 export { insertLink } from './link';
+export { insertTable, NEW_TABLE } from './table';

@@ -125,6 +125,7 @@ export class PageView {
         events.changed(text, written);
       },
       follow: events.follow,
+      ...(events.images ? { images: events.images } : {}),
       moved: () => {
         for (const listener of this.#caret) listener();
       },

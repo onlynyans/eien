@@ -46,6 +46,7 @@ const BAR_FORMATS = {
   bullet: 'bullets',
   numbered: 'numbers',
   checklist: 'checklist',
+  table: 'table',
 } as const satisfies Partial<Record<FormatCommandId, IconName>>;
 type BarFormat = keyof typeof BAR_FORMATS;
 

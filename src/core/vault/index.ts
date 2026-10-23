@@ -1,4 +1,14 @@
 export {
+  ASSETS_SUFFIX,
+  assetLinkOf,
+  assetsFolderOf,
+  imageNameFor,
+  isAssetsFolder,
+  linkPathOf,
+  numberedName,
+  relinkAssets,
+} from './assets';
+export {
   type EntryKind,
   imageTypeOf,
   isNoteName,

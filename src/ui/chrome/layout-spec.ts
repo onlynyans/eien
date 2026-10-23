@@ -81,6 +81,8 @@ export const formatBar = (name: string): HostSpec => ({
     'format.bullet',
     'format.numbered',
     'format.checklist',
+    '|',
+    'format.table',
   ],
 });
 
