@@ -4,7 +4,7 @@
 // without the room is refused, and says why.
 
 import type { Page } from '@playwright/test';
-import { boxOf, expect, test } from './launch';
+import { expect, test } from './launch';
 
 const row = (page: Page, title: string) => page.locator('.note-row', { hasText: title });
 const leaves = (page: Page) => page.locator('.page__pages > .page__leaf');
@@ -41,13 +41,22 @@ test.describe('tools that follow', () => {
     await row(page, 'Chapter').click();
     await row(page, 'Notes').click({ modifiers: ['ControlOrMeta'] });
     await expect(page.locator('.page__main[data-follow-side="1"]')).toHaveCount(1);
-    const colophon = page.locator('.colophon');
-    const right = await boxOf(leaves(page).nth(1));
-    expect(Math.round((await boxOf(colophon)).x)).toBe(Math.round(right.x));
+    // Where the colophon and the active page start, read together once the panes' slide (the
+    // list stepping aside) has finished: mid-slide, each is read at another moment of it.
+    const starts = () =>
+      page.evaluate(() => {
+        for (const animation of document.getAnimations()) animation.finish();
+        const x = (selector: string) =>
+          Math.round(document.querySelector(selector)?.getBoundingClientRect().x ?? -1);
+        return { colophon: x('.colophon'), page: x('.page__leaf[data-active]') };
+      });
+    const right = await starts();
+    expect(right.colophon).toBe(right.page);
     await leaves(page).nth(0).locator('.cm-content').click();
     await expect(page.locator('.page__main[data-follow-side="0"]')).toHaveCount(1);
-    const left = await boxOf(leaves(page).nth(0));
-    await expect.poll(async () => Math.round((await boxOf(colophon)).x)).toBe(Math.round(left.x));
+    const left = await starts();
+    expect(left.colophon).toBe(left.page);
+    expect(left.page).toBeLessThan(right.page);
     // The keyboard stayed in the words it went to: nothing was moved out from under it.
     await expect(leaves(page).nth(0).locator('.cm-content')).toBeFocused();
   });
