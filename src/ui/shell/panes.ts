@@ -2,7 +2,9 @@
 // stepped with the arrow keys once it has the keyboard; the sidebar and the
 // note list shut and open again (⌘\, ⌘⇧\, the layout's chevrons or running
 // head (../chrome), the seal).
-// With two panes the list is gone and the sidebar's tree holds the notes.
+// With two panes the list is gone and the sidebar's tree holds the notes; so
+// while a split with Tools that follow has the list step aside, not saved as
+// shut, until it's brought back.
 // Widths and what's shut are remembered on this device (./pane-state.ts).
 
 import { h } from '../dom';
@@ -46,6 +48,10 @@ export class PaneLayout {
   readonly #edges: Record<Shuttable, HTMLElement>;
   #panes: Panes;
   #two: boolean;
+  /** The list stepped aside for a split (Tools that follow): out of sight, never saved as shut. */
+  #aside = false;
+  /** What the split last asked: a list brought back stays back until the split asks again. */
+  #asideAsked = false;
   readonly #onResize = () => this.#apply();
 
   constructor(parts: PaneParts, two: boolean) {
@@ -58,9 +64,19 @@ export class PaneLayout {
     this.#apply();
   }
 
-  /** Two panes: the tree lists the notes. Never on a phone, which shows one pane at a time. */
+  /** Two panes (or the list stepped aside): the tree lists the notes. Never on a phone, one pane at a time. */
   get two(): boolean {
-    return this.#two && !this.#parts.phone();
+    return (this.#two || this.#aside) && !this.#parts.phone();
+  }
+
+  /** The note list's width on screen: none while it's out of sight. */
+  get listWidth(): number {
+    return this.isShut('list') ? 0 : this.#shown().list;
+  }
+
+  /** Whether the list has stepped aside for a split, to be brought back by its toggle. */
+  get aside(): boolean {
+    return this.#aside && !this.#parts.phone();
   }
 
   /** Whether this is a phone's layout, one pane at a time. */
@@ -72,7 +88,9 @@ export class PaneLayout {
   isShut(pane: Shuttable): boolean {
     const phone = this.#parts.phone();
     if (phone) return phone !== pane;
-    return pane === 'list' ? this.#two || this.#panes.listShut : this.#panes.sidebarShut;
+    return pane === 'list'
+      ? this.#two || this.#aside || this.#panes.listShut
+      : this.#panes.sidebarShut;
   }
 
   /** Shut `pane` if it's open, open it if it's shut. The list has nothing to do with two panes. */
@@ -80,6 +98,7 @@ export class PaneLayout {
     const phone = this.#parts.phone();
     // On a phone, "Hide sidebar" (the tree's seal) goes on to the notes.
     if (phone === 'sidebar' && pane === 'sidebar') this.#parts.showPhone('list');
+    else if (!phone && pane === 'list' && this.#aside) this.#stepBack();
     else if (!phone && !(pane === 'list' && this.two)) this.#set(pane, !this.isShut(pane));
   }
 
@@ -94,6 +113,7 @@ export class PaneLayout {
       this.#parts.showPhone(pane);
       return true;
     }
+    if (pane === 'list' && this.#aside) this.#stepBack();
     if (pane === 'list' && this.two) return false;
     if (this.isShut(pane)) this.#set(pane, false);
     return true;
@@ -124,8 +144,27 @@ export class PaneLayout {
     this.#parts.changed();
   }
 
+  /** A split with Tools that follow begins (true) or ends (false): the list steps aside, or back. */
+  stepAside(on: boolean): void {
+    if (on === this.#asideAsked) return;
+    this.#asideAsked = on;
+    if (on === this.#aside) return;
+    const hadFocus = this.#holds('list');
+    this.#aside = on;
+    this.#apply();
+    if (on && hadFocus) this.#parts.leave(); // the list stepped aside with the keyboard in it
+    this.#parts.changed();
+  }
+
   stop(): void {
     window.removeEventListener('resize', this.#onResize);
+  }
+
+  /** The list brought back from aside, the split going on. */
+  #stepBack(): void {
+    this.#aside = false;
+    this.#apply();
+    this.#parts.changed();
   }
 
   /** Whether the keyboard is in `pane`, or on its edge. */

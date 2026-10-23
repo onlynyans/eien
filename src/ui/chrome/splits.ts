@@ -21,10 +21,12 @@ export interface SplitSpec {
   readonly measure: Measure;
   /**
    * With less room: the two `fold` into the active page, a pager naming
-   * both; the book `close`s to it, the other's edge beside it; or the second
-   * goes `under` the first, the divider measuring by `under`.
+   * both; the book `close`s to it, the other's edge beside it; the second
+   * goes `under` the first, the divider measuring by `under`; or the active
+   * page shows alone while the other `wait`s, the colophon saying so (and a
+   * split asked for without the room is refused, ../vault/note-actions.ts).
    */
-  readonly narrow: 'fold' | 'close' | 'under';
+  readonly narrow: 'fold' | 'close' | 'under' | 'wait';
   readonly under?: Measure;
   /**
    * A page's own host while split: the commands it holds for its note (out
@@ -49,6 +51,10 @@ export interface SplitSpec {
   readonly mark: boolean;
   /** A note dropped on a lone page past this share of it opens beside it, as the preview says (../vault/page-drop.ts). */
   readonly drop: { readonly past: number; readonly label: string };
+  /** The pane's furniture (its bar, formatting bar, colophon) stands over the active page alone, placed by grid. */
+  readonly follows: boolean;
+  /** The note list steps aside while split, not saved as shut; ⇧⌘\ brings it back. */
+  readonly listAside: boolean;
 }
 
 const NO_OWN = { items: [], on: 'each', at: 'foot' } as const;
@@ -65,6 +71,8 @@ export const SPLIT_SPECS: Readonly<Record<SplitMode, SplitSpec>> = {
     figures: 'active',
     mark: false,
     drop: { past: 0.6, label: 'Open to the side' },
+    follows: false,
+    listAside: false,
   },
   // 4 · Facing pages: the book's tools at the top; each note's own in its folio.
   facing: {
@@ -81,6 +89,8 @@ export const SPLIT_SPECS: Readonly<Record<SplitMode, SplitSpec>> = {
     figures: 'pages',
     mark: true,
     drop: { past: 0.6, label: 'Open as the facing page' },
+    follows: false,
+    listAside: false,
   },
   // 5 · Companion: the page keeps every tool; the companion, at the right edge, its own few.
   companion: {
@@ -94,6 +104,22 @@ export const SPLIT_SPECS: Readonly<Record<SplitMode, SplitSpec>> = {
     figures: 'second',
     mark: false,
     drop: { past: 0.7, label: 'Open as the companion' },
+    follows: false,
+    listAside: false,
+  },
+  // 6 · Tools that follow: the list steps aside; one set of furniture, over the page you're in.
+  follow: {
+    least: 2 * PAGE_MIN,
+    measure: SHARE,
+    narrow: 'wait',
+    own: NO_OWN,
+    tools: [],
+    toolsFor: 'active',
+    figures: 'active',
+    mark: false,
+    drop: { past: 0.6, label: 'Open to the side' },
+    follows: true,
+    listAside: true,
   },
 };
 
