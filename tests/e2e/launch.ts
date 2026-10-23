@@ -219,6 +219,19 @@ export const windowZoom = (app: ElectronApplication): Promise<number> =>
     ({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.getZoomFactor() ?? 0,
   );
 
+/** Where the window controls overlay leaves the page free, in the page's pixels. */
+export const freeArea = (page: Page) =>
+  page.evaluate(() => {
+    // The window controls overlay's API, which TypeScript's DOM types don't have yet.
+    const overlay = (
+      navigator as Navigator & {
+        windowControlsOverlay: { visible: boolean; getTitlebarAreaRect(): DOMRect };
+      }
+    ).windowControlsOverlay;
+    const { x, width } = overlay.getTitlebarAreaRect();
+    return { visible: overlay.visible, left: x, right: innerWidth - x - width };
+  });
+
 /** The note editor's lines, as they show (Live hides the marks away from the caret). */
 export const editorLines = (page: Page) => page.locator('.cm-line');
 

@@ -6,25 +6,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { clickMenu, expect, test, windowZoom } from './launch';
+import { clickMenu, expect, freeArea, test, windowZoom } from './launch';
 
 test.use({ vaultFiles: { 'Note.md': 'Words.\n' } });
 
 const MAC = process.platform === 'darwin';
 const BANDS = ['.sidebar__head', '.list__search', '.list__head', '.page__bar'];
-
-/** Where the window controls overlay leaves the page free, in the page's pixels. */
-const freeArea = (page: Page) =>
-  page.evaluate(() => {
-    // The window controls overlay's API, which TypeScript's DOM types don't have yet.
-    const overlay = (
-      navigator as Navigator & {
-        windowControlsOverlay: { visible: boolean; getTitlebarAreaRect(): DOMRect };
-      }
-    ).windowControlsOverlay;
-    const { x, width } = overlay.getTitlebarAreaRect();
-    return { visible: overlay.visible, left: x, right: innerWidth - x - width };
-  });
 
 const box = (page: Page, selector: string) =>
   page
@@ -85,28 +72,6 @@ test('the window has no title bar: the system’s controls sit over the bands', 
     const bar = await box(page, '.page__bar');
     expect(bar.paddingRight).toBeGreaterThanOrEqual(free.right);
   }
-});
-
-test('with the sidebar shut, nothing sits under the traffic lights', async ({ app, page }) => {
-  test.skip(!MAC, 'the traffic lights are macOS’s');
-  await expect(page.locator('.page__bar')).toBeVisible();
-  await clickMenu(app, 'View', 'Toggle Sidebar');
-  const strip = page.locator('.sidebar__strip .seal-button');
-  await expect(strip).toBeVisible();
-  const free = await freeArea(page);
-  const lights = await app.evaluate(({ BrowserWindow }) =>
-    BrowserWindow.getAllWindows()[0]?.getWindowButtonPosition(),
-  );
-  const seal = await strip.boundingBox();
-  // The strip is narrower than the lights: its seal waits below them.
-  expect(seal?.y).toBeGreaterThanOrEqual((lights?.y ?? 0) + 16);
-  // The list's head begins after them.
-  await expect
-    .poll(async () => {
-      const head = await box(page, '.list__search'); // the list's top band: its search
-      return head.left + head.paddingLeft;
-    })
-    .toBeGreaterThan(free.left);
 });
 
 test('the panes’ top bands drag the window; every control in them stays clickable', async ({

@@ -93,6 +93,18 @@ export const SETTINGS = [
     default: 'band',
   },
   {
+    key: 'appearance.shutSidebar',
+    label: 'Shut sidebar',
+    description:
+      'What stays at the window’s left edge when the sidebar is hidden, in the Band and Slip layouts: the seal alone, or a narrow strip with the seal on it. Running head always keeps the strip.',
+    wide: true,
+    scope: 'device',
+    group: 'Appearance',
+    type: 'choice',
+    choices: { seal: 'The seal alone', strip: 'A strip of desk' },
+    default: 'seal',
+  },
+  {
     key: 'appearance.runheadGround',
     label: 'Running head',
     description:

@@ -104,6 +104,11 @@ export class PaneLayout {
     if (this.#parts.phone()) this.#parts.showPhone('page');
   }
 
+  /** Fit the panes again: a shut sidebar's strip may have changed (the layout, or Shut sidebar). */
+  refit(): void {
+    this.#apply();
+  }
+
   /** Lay the panes out again, and draw them: the window became a phone's, or the pane shown changed. */
   relayout(): void {
     this.#apply();
@@ -142,7 +147,7 @@ export class PaneLayout {
 
   #apply(): void {
     const { shell, list } = this.#parts;
-    const shown = shownWidths(this.#panes, this.two, window.innerWidth);
+    const shown = this.#shown();
     // Through the style API: the security policy refuses style attributes.
     shell.style.setProperty('--pane-sidebar', `${shown.sidebar}px`);
     shell.style.setProperty('--pane-list', `${shown.list}px`);
@@ -157,6 +162,12 @@ export class PaneLayout {
       edge.setAttribute('aria-valuemin', String(min));
       edge.setAttribute('aria-valuemax', String(max));
     }
+  }
+
+  /** The widths on screen: a shut sidebar is as wide as the layout makes its strip (--strip, ./shell.css). */
+  #shown(): ReturnType<typeof shownWidths> {
+    const strip = getComputedStyle(this.#parts.shell).getPropertyValue('--strip');
+    return shownWidths(this.#panes, this.two, window.innerWidth, Number.parseFloat(strip));
   }
 
   #edgeOf(pane: Shuttable): Edge {
@@ -192,7 +203,7 @@ export class PaneLayout {
         'aria-label': pane === 'sidebar' ? 'Sidebar width' : 'Note list width',
       },
     });
-    const width = () => shownWidths(this.#panes, this.two, window.innerWidth)[pane];
+    const width = () => this.#shown()[pane];
     edge.addEventListener('pointerdown', (down) => {
       if (down.button !== 0) return;
       down.preventDefault(); // no text selected on the way

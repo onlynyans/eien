@@ -8,7 +8,6 @@ import {
   readPanes,
   resized,
   STEP,
-  STRIP,
   shownWidths,
 } from './pane-state';
 
@@ -117,58 +116,75 @@ describe('dragged', () => {
 
 describe('shownWidths', () => {
   const wide = 1600;
+  /** A strip of desk, as wide as Band's bands are tall (--band). */
+  const STRIP = 56;
 
   it('shows the remembered widths in a wide window', () => {
-    expect(shownWidths(DEFAULT_PANES, false, wide)).toEqual({ sidebar: 264, list: 316 });
-    expect(shownWidths(DEFAULT_PANES, true, wide)).toEqual({ sidebar: 312, list: 0 });
+    expect(shownWidths(DEFAULT_PANES, false, wide, STRIP)).toEqual({ sidebar: 264, list: 316 });
+    expect(shownWidths(DEFAULT_PANES, true, wide, STRIP)).toEqual({ sidebar: 312, list: 0 });
   });
 
   it('shows the strip for a shut sidebar, and nothing for a shut list', () => {
     const shut = { ...DEFAULT_PANES, sidebarShut: true, listShut: true };
-    expect(shownWidths(shut, false, wide)).toEqual({ sidebar: STRIP, list: 0 });
-    expect(shownWidths(shut, true, wide)).toEqual({ sidebar: STRIP, list: 0 });
+    expect(shownWidths(shut, false, wide, STRIP)).toEqual({ sidebar: STRIP, list: 0 });
+    expect(shownWidths(shut, true, wide, STRIP)).toEqual({ sidebar: STRIP, list: 0 });
   });
 
   it('has no list with two panes, whatever was remembered for it', () => {
-    expect(shownWidths({ ...DEFAULT_PANES, listShut: false }, true, wide).list).toBe(0);
+    expect(shownWidths({ ...DEFAULT_PANES, listShut: false }, true, wide, STRIP).list).toBe(0);
   });
 
   it('keeps the page PAGE_MIN wide by narrowing the list first, then the sidebar', () => {
     const panes = { ...DEFAULT_PANES, sidebar: 400, list: 450 };
     // 400 + 450 + 360 = 1210: in 1100, the list gives 110.
-    expect(shownWidths(panes, false, 1100)).toEqual({ sidebar: 400, list: 340 });
+    expect(shownWidths(panes, false, 1100, STRIP)).toEqual({ sidebar: 400, list: 340 });
     // In 900 the list is at its narrowest (260), and the sidebar gives the rest.
-    expect(shownWidths(panes, false, 900)).toEqual({ sidebar: 280, list: 260 });
+    expect(shownWidths(panes, false, 900, STRIP)).toEqual({ sidebar: 280, list: 260 });
   });
 
   it('never narrows a pane past its narrowest, even in the smallest window', () => {
     // The window's own minimum is 640 wide (window.ts): the page gets what's left.
-    const { sidebar, list } = shownWidths(DEFAULT_PANES, false, 640);
+    const { sidebar, list } = shownWidths(DEFAULT_PANES, false, 640, STRIP);
     expect(sidebar).toBe(LIMITS.sidebar[0]);
     expect(list).toBe(LIMITS.list[0]);
     for (const window of [0, -100, 1]) {
-      expect(shownWidths(DEFAULT_PANES, false, window)).toEqual({
+      expect(shownWidths(DEFAULT_PANES, false, window, STRIP)).toEqual({
         sidebar: LIMITS.sidebar[0],
         list: LIMITS.list[0],
       });
     }
   });
 
+  it('shows a shut sidebar as wide as its strip: none for the seal alone, never a fraction', () => {
+    const shut = { ...DEFAULT_PANES, sidebarShut: true };
+    expect(shownWidths(shut, false, wide, 0)).toEqual({ sidebar: 0, list: 316 });
+    expect(shownWidths(shut, false, wide, 47.6)).toEqual({ sidebar: 48, list: 316 });
+    for (const strip of [Number.NaN, -56, Number.POSITIVE_INFINITY]) {
+      expect(shownWidths(shut, false, wide, strip).sidebar, String(strip)).toBe(0);
+    }
+  });
+
   it('never narrows the strip', () => {
     const shut = { ...DEFAULT_PANES, sidebarShut: true };
-    expect(shownWidths(shut, false, 300)).toEqual({ sidebar: STRIP, list: LIMITS.list[0] });
+    expect(shownWidths(shut, false, 300, STRIP)).toEqual({ sidebar: STRIP, list: LIMITS.list[0] });
   });
 
   it('gives the panes back as the window widens again', () => {
     const panes = { ...DEFAULT_PANES, list: 480 };
-    expect(shownWidths(panes, false, 800).list).toBeLessThan(480);
-    expect(shownWidths(panes, false, 264 + 480 + PAGE_MIN)).toEqual({ sidebar: 264, list: 480 });
+    expect(shownWidths(panes, false, 800, STRIP).list).toBeLessThan(480);
+    expect(shownWidths(panes, false, 264 + 480 + PAGE_MIN, STRIP)).toEqual({
+      sidebar: 264,
+      list: 480,
+    });
   });
 
   it('narrows the two-pane sidebar to its own narrowest', () => {
     const panes = { ...DEFAULT_PANES, sidebarTwo: 520 };
-    expect(shownWidths(panes, true, 700)).toEqual({ sidebar: 340, list: 0 });
-    expect(shownWidths(panes, true, 400)).toEqual({ sidebar: LIMITS.sidebarTwo[0], list: 0 });
+    expect(shownWidths(panes, true, 700, STRIP)).toEqual({ sidebar: 340, list: 0 });
+    expect(shownWidths(panes, true, 400, STRIP)).toEqual({
+      sidebar: LIMITS.sidebarTwo[0],
+      list: 0,
+    });
   });
 });
 

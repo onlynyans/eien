@@ -22,10 +22,10 @@ function fakeRoot() {
 }
 
 describe('applyLook', () => {
-  it('sets nothing but the layout and the scales at the defaults', () => {
+  it('sets nothing but the layout, the shut sidebar and the scales at the defaults', () => {
     const { root, dataset, properties } = fakeRoot();
     applyLook(DEFAULT_SETTINGS, root);
-    expect(dataset).toEqual({ layout: 'band' });
+    expect(dataset).toEqual({ layout: 'band', shutSidebar: 'seal' });
     expect(Object.fromEntries(properties)).toEqual({
       '--eien-text-scale': '1',
       '--eien-zoom': '1',
@@ -64,9 +64,32 @@ describe('applyLook', () => {
       { ...DEFAULT_SETTINGS, 'appearance.scheme': 'day', 'appearance.face': 'hanken' },
       root,
     );
-    expect(dataset).toEqual({ theme: 'light', face: 'hanken', layout: 'band' });
+    expect(dataset).toEqual({
+      theme: 'light',
+      face: 'hanken',
+      layout: 'band',
+      shutSidebar: 'seal',
+    });
     applyLook(DEFAULT_SETTINGS, root);
-    expect(dataset).toEqual({ layout: 'band' });
+    expect(dataset).toEqual({ layout: 'band', shutSidebar: 'seal' });
+  });
+
+  it('says how a shut sidebar looks in Band and Slip, and nothing in Running head', () => {
+    const { root, dataset } = fakeRoot();
+    const look = (
+      layout: SettingValues['appearance.layout'],
+      shutSidebar: SettingValues['appearance.shutSidebar'],
+    ) =>
+      applyLook(
+        { ...DEFAULT_SETTINGS, 'appearance.layout': layout, 'appearance.shutSidebar': shutSidebar },
+        root,
+      );
+    look('slip', 'strip');
+    expect(dataset.shutSidebar).toBe('strip');
+    look('runhead', 'strip');
+    expect(dataset).not.toHaveProperty('shutSidebar');
+    look('band', 'seal');
+    expect(dataset.shutSidebar).toBe('seal');
   });
 });
 

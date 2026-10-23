@@ -16,6 +16,13 @@ body {
   overflow: hidden;
 }
 
+/* A shut sidebar's width (below), registered so ./panes.ts reads it as a length. */
+@property --strip {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
 /* The top band all three panes share, so their heads line up. */
 :root {
   --band: calc(var(--eien-space-7) + var(--eien-space-2));
@@ -27,6 +34,13 @@ body {
      none on a phone), and the band at that edge keeps clear of them. */
   --controls-left: env(titlebar-area-x, 0px);
   --controls-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
+  /* The seal's square, open or shut: on the gutter, past macOS's lights. */
+  --seal-x: calc(var(--controls-left) + var(--eien-space-4));
+  /* Where the next band's words may start, clear of what stands in the window's top-left
+     corner: the system's controls, or a shut sidebar's seal or shoulder (../sidebar/sidebar.css). */
+  --corner: var(--controls-left);
+  /* A shut sidebar: a strip of desk as wide as the bands are tall, or none (the seal alone). */
+  --strip: var(--band);
 }
 .shell {
   position: relative;
@@ -115,6 +129,7 @@ body {
    or in a browser, app-region means nothing. */
 .sidebar__head,
 .sidebar__strip,
+.sidebar__strip::before,
 .list__search,
 .list__head,
 .page__bar,

@@ -112,7 +112,7 @@
   top: calc((var(--band) - var(--eien-control)) / 2 - var(--eien-space-1) / 2);
   left: max(
     var(--eien-space-3),
-    calc(var(--controls-left) - var(--pane-sidebar, 0px) - var(--pane-list, 0px))
+    calc(var(--corner) - var(--pane-sidebar, 0px) - var(--pane-list, 0px))
   );
 }
 @container page (width < 720px) {

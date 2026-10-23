@@ -81,7 +81,8 @@ and 48 rarely.
 - 4: icon gaps, a dot's size. 8: inside a control. 12: row padding.
   16: pane gutters. 24: between groups.
 - Layout lengths, made from tokens: the band that tops all three panes,
-  `--band` = space-7 + space-2 (56px); the shut sidebar's strip, 48px; tree
+  `--band` = space-7 + space-2 (56px); the shut sidebar's strip, `--strip`,
+  as wide as the band is tall (none for the seal alone); tree
   indent 16px a level; the twisty 12px; a row `--eien-row-h` 30px (26px
   compact); sidebar 264px, list 316px, versions panel 284px; a touch target at
   least `--eien-touch` 44px.
@@ -264,8 +265,8 @@ page there shows them working.
 - **Seal button:** no background; a hairline border, transparent until
   hover, then `--eien-rule`.
 - **Shut panes:** a pane's ‹ (on hover, at its head) shuts it; the way back
-  is a › in the same spot of the pane beside it. A shut sidebar leaves a
-  strip of desk with the traffic lights and the seal, which opens it.
+  is a › in the same spot of the pane beside it. How a sidebar shuts is a
+  setting (below, "A shut sidebar").
 - **Page parts each have a row** (`.page`: bar, formatting bar, scroll,
   status), and the status bar has a fixed height (`--status-h`, 40px), so
   nothing grows into a hidden part's space.
@@ -341,10 +342,9 @@ the sync icon's place at the sidebar's foot (`SidebarFoot.sync`), and C's
 strip ground (`--runhead-ground`: the Running head setting, one of the
 theme's surfaces, the desk by default; built in 3G).
 
-## Decided, not built yet (2026-10-22)
+## Tables in Live (decided and built 2026-10-22)
 
-From `docs/design/explorations/tables.md` and `corner.md`; each page there
-shows it working.
+From `docs/design/explorations/tables.md`; the page shows it working.
 
 - **Tables in Live** (`table-menus.html`): a GFM table edited in place, the
   file a plain Markdown table.
@@ -360,17 +360,28 @@ shows it working.
     targets.
   - Keys: Tab, arrows and Enter between cells; ⌥⌘ arrows add, ⌥⌘⌫ removes,
     ⌘Z puts back.
-- **A shut sidebar** (`corner-stay.html`, `corner-shoulder.html`): a
-  setting for A · Band and B · Slip, "Shut sidebar".
-  - The seal alone: no strip; the seal stays in the top row, beside macOS's
-    lights.
-  - A strip of desk: a strip `--band` wide (56px), widening at its top into a
-    shoulder of desk that holds macOS's lights, its outer corner
-    `--eien-radius-l`.
-  - C · Running head: always a strip as wide as its own bands are tall
-    (48px, C's `--band`).
-  - In full screen (no lights), the seal sits in the top row, never a band
-    down.
+
+## A shut sidebar (decided and built 2026-10-22)
+
+From `docs/design/explorations/corner.md` ("Building both"): a setting for
+A · Band and B · Slip, "Shut sidebar" (`appearance.shutSidebar`, as
+`data-shut-sidebar` on `<html>`; none in C).
+
+- **The seal alone** (the default): no strip (`--strip` 0). The seal stays
+  where it was in the top row, on `--seal-x` (the gutter past the lights),
+  laid over the next pane's band, which starts `--eien-space-4` past it.
+- **A strip of desk:** `--strip` is `--band` wide, the seal in its middle. On
+  macOS, its top widens into a shoulder of desk (`--controls-left` +
+  `--eien-space-2`, one band tall, a rule hairline at its edge, its outer
+  corner `--eien-radius-l`) that holds the lights; the seal waits under them,
+  and the next band starts `--eien-space-4` past the shoulder.
+- **C · Running head:** always the strip, C's `--band` wide (48px), the seal
+  at its top; the running head holds the lights.
+- **Full screen** has no lights: `env(titlebar-area-x)` is unset there, and
+  `data-controls-left` (`shell/controls-left.ts`, from the window controls
+  overlay) goes, so the seal is in the top row and there's no shoulder.
+- One length says where the corner's things end, `--corner`
+  (`shell/shell.css`); every band that could run under them keeps clear of it.
 
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 

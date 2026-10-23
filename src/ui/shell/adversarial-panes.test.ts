@@ -11,7 +11,6 @@ import {
   readPanes,
   resized,
   STEP,
-  STRIP,
   shownWidths,
   sidebarEdge,
 } from './pane-state';
@@ -107,7 +106,8 @@ describe('resized', () => {
   });
 });
 
-describe('shownWidths, at every window width', () => {
+// A shut sidebar's strip: the seal alone's none, Running head's band, Band's and Slip's band.
+describe.each([0, 48, 56])('shownWidths, at every window width, a shut sidebar %ipx', (STRIP) => {
   const stored: Panes[] = [
     DEFAULT_PANES,
     { ...DEFAULT_PANES, sidebar: 420, sidebarTwo: 520, list: 480 },
@@ -141,7 +141,7 @@ describe('shownWidths, at every window width', () => {
     for (const panes of stored) {
       for (const two of [false, true]) {
         for (const window of [...windows, Number.NaN, Number.POSITIVE_INFINITY]) {
-          const { sidebar, list } = shownWidths(panes, two, window);
+          const { sidebar, list } = shownWidths(panes, two, window, STRIP);
           const where = `${JSON.stringify(panes)} two=${two} window=${window}`;
           expect(Number.isInteger(sidebar), where).toBe(true);
           expect(Number.isInteger(list), where).toBe(true);
@@ -164,9 +164,9 @@ describe('shownWidths, at every window width', () => {
   it('never narrows a pane as the window widens', () => {
     for (const panes of stored) {
       for (const two of [false, true]) {
-        let before = shownWidths(panes, two, windows[0] as number);
+        let before = shownWidths(panes, two, windows[0] as number, STRIP);
         for (const window of windows.slice(1)) {
-          const now = shownWidths(panes, two, window);
+          const now = shownWidths(panes, two, window, STRIP);
           const where = `${JSON.stringify(panes)} two=${two} window=${window}`;
           expect(now.sidebar, where).toBeGreaterThanOrEqual(before.sidebar);
           expect(now.list, where).toBeGreaterThanOrEqual(before.list);
@@ -184,7 +184,7 @@ describe('shownWidths, at every window width', () => {
           (panes.sidebarShut ? STRIP : LIMITS[edge][0]) +
           (two || panes.listShut ? 0 : LIMITS.list[0]);
         for (let window = narrowest + PAGE_MIN; window <= 2000; window += 7) {
-          const { sidebar, list } = shownWidths(panes, two, window);
+          const { sidebar, list } = shownWidths(panes, two, window, STRIP);
           expect(window - sidebar - list, `${JSON.stringify(panes)} two=${two} ${window}`).toBe(
             Math.max(
               PAGE_MIN,
@@ -201,11 +201,14 @@ describe('shownWidths, at every window width', () => {
   it('two panes, the sidebar shut, the tiniest window: the strip alone', () => {
     const shut = { ...DEFAULT_PANES, sidebarShut: true };
     for (const window of [0, 1, STRIP, 100]) {
-      expect(shownWidths(shut, true, window)).toEqual({ sidebar: STRIP, list: 0 });
+      expect(shownWidths(shut, true, window, STRIP)).toEqual({ sidebar: STRIP, list: 0 });
     }
   });
 
   it('a window with no width (NaN, as a detached window reports) shows the remembered widths', () => {
-    expect(shownWidths(DEFAULT_PANES, false, Number.NaN)).toEqual({ sidebar: 264, list: 316 });
+    expect(shownWidths(DEFAULT_PANES, false, Number.NaN, STRIP)).toEqual({
+      sidebar: 264,
+      list: 316,
+    });
   });
 });

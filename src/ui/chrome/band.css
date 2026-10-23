@@ -16,12 +16,9 @@
   justify-content: space-between;
   gap: var(--eien-space-4);
   height: var(--band);
-  /* Clear of the system's window controls, at either edge. */
+  /* Clear of the system's window controls at either edge, and of the window's corner. */
   padding: 0 max(var(--eien-space-3), var(--controls-right)) 0
-    max(
-      var(--eien-space-3),
-      calc(var(--controls-left) - var(--pane-sidebar, 0px) - var(--pane-list, 0px))
-    );
+    max(var(--eien-space-3), calc(var(--corner) - var(--pane-sidebar, 0px) - var(--pane-list, 0px)));
   background: var(--eien-band);
   border-bottom: var(--eien-hairline) solid var(--eien-rule);
 }
@@ -46,9 +43,18 @@
   border: 0;
   z-index: 3;
 }
-/* The list shut: its › stands at the band's left end, and the views make room. */
+/* The list shut: its › stands at the band's left end, clear of the window's corner, and the
+   views make room. */
+[data-layout="band"] .shell[data-list-shut] {
+  --list-chevron-x: max(calc(var(--pane-sidebar) + var(--eien-space-2)), var(--corner));
+}
 [data-layout="band"] .shell[data-list-shut]:not([data-panes="two"], [data-strip-shut]) .page__bar {
-  padding-left: calc(var(--eien-control) + var(--eien-space-2) * 2);
+  padding-left: calc(
+    var(--list-chevron-x) -
+    var(--pane-sidebar) +
+    var(--eien-control) +
+    var(--eien-space-2)
+  );
 }
 /* Each named by its class, never a bare :not(): a rule ending in one restyles the whole window
    whenever the layout, or the strip, changes. */
@@ -79,7 +85,8 @@
 }
 
 /* The chevrons (#15): each at its pane's head, on hover; the way back in the
-   same spot of the pane beside it. A shut sidebar's is under the strip's seal. */
+   same spot of the pane beside it. A shut sidebar's is under the strip's seal (none beside
+   the seal alone, ./chrome.css). */
 [data-layout="band"] .chevron-slot {
   top: calc((var(--band) - var(--eien-control)) / 2);
   opacity: 0;
@@ -95,7 +102,7 @@
   left: calc(var(--pane-sidebar) + var(--pane-list) - var(--eien-control) - var(--eien-space-2));
 }
 [data-layout="band"] .shell[data-list-shut] > .chevron-slot--list {
-  left: max(calc(var(--pane-sidebar) + var(--eien-space-2)), var(--controls-left));
+  left: var(--list-chevron-x);
 }
 [data-layout="band"] .sidebar:hover ~ .chevron-slot--sidebar,
 [data-layout="band"] .list:hover ~ .chevron-slot--list,
@@ -110,7 +117,7 @@
   padding-right: calc(var(--eien-control) + var(--eien-space-3));
 }
 /* macOS's lights are over the strip's top: its seal waits a band lower (../sidebar/sidebar.css). */
-:root[data-layout="band"][data-platform="darwin"]
+:root[data-layout="band"][data-shut-sidebar="strip"][data-controls-left]
   .shell[data-sidebar-shut]
   > .chevron-slot--sidebar {
   top: calc(var(--band) * 2);

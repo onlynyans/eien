@@ -142,8 +142,11 @@
     left var(--eien-calm) var(--eien-ease),
     opacity var(--eien-calm) var(--eien-ease);
 }
+/* Nothing to show: an empty slot, the list's with two panes, and a shut sidebar's beside the
+   seal alone, which is its own way back (../sidebar/sidebar.css). */
 .chevron-slot:empty,
-.shell[data-panes="two"] > .chevron-slot--list {
+.shell[data-panes="two"] > .chevron-slot--list,
+:root[data-shut-sidebar="seal"] .shell[data-sidebar-shut] > .chevron-slot--sidebar {
   display: none;
 }
 /* A chevron is the pane's way out, and back: ‹ while it's open, › once it's shut. */

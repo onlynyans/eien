@@ -54,6 +54,9 @@ export function follow(of: FollowOf): () => void {
   });
   const stopSettings = settings.onChange((values, before) => {
     of.panes.setTwo(values['layout.panes'] === 'two'); // redraws when it changes
+    // A shut sidebar's strip is the layout's and Shut sidebar's (../shell/shell.css).
+    const strip = ['appearance.layout', 'appearance.shutSidebar'] as const;
+    if (strip.some((key) => values[key] !== before[key])) of.panes.refit();
     if (values['books.numerals'] !== before['books.numerals']) void of.redraw();
   });
   const onBlur = () => void note.flush();

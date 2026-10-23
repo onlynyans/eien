@@ -15,6 +15,10 @@
   /* The system's window controls sit in the strip, in its ground. */
   --controls-h: var(--runhead-h);
   --controls-ground: var(--runhead-ground);
+  /* The lights are in the strip, over no pane: the seal is on the gutter, and the panes' bands
+     keep clear of nothing. */
+  --seal-x: var(--eien-space-4);
+  --corner: 0px;
 }
 
 [data-layout="runhead"] .shell:not([data-phone]) {
@@ -49,14 +53,6 @@
 }
 [data-layout="runhead"] .pane-edge {
   top: var(--runhead-h);
-}
-
-/* The lights are in the strip: the sidebar's head, and a shut sidebar's seal, start at the gutter. */
-[data-layout="runhead"] .sidebar__head {
-  padding-left: calc(var(--eien-space-4) - var(--eien-space-1) - var(--eien-hairline));
-}
-:root[data-layout="runhead"][data-platform="darwin"] .sidebar__strip {
-  margin-top: 0;
 }
 
 /* On a phone: a rail of the page's tools at its foot. */

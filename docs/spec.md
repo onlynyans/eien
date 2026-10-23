@@ -269,8 +269,9 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   page's bar, the running head, the versions panel's head) drag the window;
   every control, field and pane edge in them stays a control. On macOS the traffic lights
   sit over the sidebar's head, in the middle of its band at any zoom, and the
-  head starts after them; with the sidebar shut, the strip's seal waits below
-  them and the next pane's head starts after them. On Windows and Linux the
+  head starts after them; with the sidebar shut, the corner keeps clear of
+  them as Shut sidebar says (Collapsing, below), and in full screen, which has
+  no lights, nothing waits for them. On Windows and Linux the
   system's own minimize, maximize and close are drawn over the page's band,
   in the band's colours (they follow day, night and the palette) and at its
   height, and the band keeps clear of them. Where the controls are comes from
@@ -286,11 +287,24 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   the notes), the list 260–480. In a window too narrow for all three, the
   list and then the sidebar give way, down to their narrowest, so the page
   keeps 360 px; widening the window gives them back.
-- **Collapsing.** The sidebar shuts to a strip holding the seal; the seal
-  shuts and opens it. The layout's pane controls and the View menu shut and
-  open either: in Band and Slip a chevron at the pane's edge (‹ on hover
-  shuts it; the way back is a › in the same spot of the pane beside it, and
-  a shut sidebar's under the strip's seal), in Running head the strip's
+- **Collapsing.** The seal shuts and opens the sidebar. What's left of it is
+  a device setting in Band and Slip, **Shut sidebar** (`appearance.shutSidebar`,
+  Settings → Look → Appearance; [corner.md](design/explorations/corner.md)):
+  - **The seal alone** (the default): no strip. The seal stays where it was
+    in the top row (beside the traffic lights on macOS, at the gutter in full
+    screen and on Windows and Linux), and the next pane's band starts past it.
+  - **A strip of desk**, as wide as the bands are tall, the seal in its
+    middle. On macOS its top widens into a shoulder of desk just wide enough
+    for the traffic lights, one band tall, and the seal waits under them; in
+    full screen, and on Windows and Linux, there's no shoulder and the seal is
+    at the strip's top.
+
+  In Running head a shut sidebar is always its strip, its band's width, the
+  seal at its top (the running head holds the lights). The layout's pane
+  controls and the View menu shut and open either pane: in Band and Slip a
+  chevron at the pane's edge (‹ on hover shuts it; the way back is a › in the
+  same spot of the pane beside it, and a shut sidebar's is beside the strip's
+  seal; the seal alone is its own way back), in Running head the strip's
   sidebar and list icons, always in sight. A pane shut with the keyboard in it gives the
   keyboard to the page. ⌘1–3 open a shut pane before giving it the keyboard.
 - **Two panes** (Layout → Panes, or the pair at the sidebar's foot): the list
