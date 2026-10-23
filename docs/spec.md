@@ -243,7 +243,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      added ink it says "Synced · Syncthing"; for 15 minutes after a note
      changes that this window didn't change, it's in pencil and says
      "Changed on another device 4m ago". The window tells the two apart by
-     remembering its own writes for a moment (`ui/vault/own-writes.ts`). Eien
+     remembering its own writes for a moment (`ui/vault/own-writes.ts`), and
+     the main process names what another window on this device wrote. Eien
      only listens: it never starts a sync, and the status writes nothing.
      With no Syncthing, nothing shows
 2. **Note list** — the notes in the selected folder or tag: title, a line of

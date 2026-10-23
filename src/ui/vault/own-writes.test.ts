@@ -79,3 +79,10 @@ describe('ownWrites', () => {
     expect(typeof own.vault.onChange(() => {})).toBe('function');
   });
 });
+
+describe('ownWrites, with other windows on this device', () => {
+  it('a note another window here wrote, as the main process says, isn’t from elsewhere', () => {
+    const own = ownWrites(fake(), () => 0);
+    expect(own.foreign(['Ideas.md', 'Thaw.md'], ['Ideas.md'])).toEqual(['Thaw.md']);
+  });
+});

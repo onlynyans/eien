@@ -30,6 +30,8 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
     wearChosen();
     repaintControls();
   });
+  // Another window here changed a setting: this one follows.
+  bridge.settings.onChanged?.(() => void settings.reload());
   themes.onChange(() => {
     wearChosen();
     repaintControls();

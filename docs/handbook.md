@@ -91,8 +91,12 @@ so core can't reach for the DOM by accident.
   the menu and the window. The window (`src/ui/`) is sandboxed: context
   isolation, no Node, a strict content security policy (no inline scripts or
   styles, nothing remote), and it reaches the disk only through `window.eien`,
-  the bridge (`src/platform/bridge.ts`), set by the preload. Every IPC handler
-  answers one window (`src/app/electron/ipc.ts`).
+  the bridge (`src/platform/bridge.ts`), set by the preload. Each IPC channel
+  is listened to once, and each call is answered by the window that sent it
+  (`src/app/electron/ipc.ts`). A folder is opened once however many windows
+  show it (`src/app/electron/vaults.ts`): one index, one watcher, and a
+  crash's leftovers recovered only by the first. A setting changed in one
+  window is read again by the others.
 - **Phone:** the same window code, built by `vite.mobile.config.ts`, inside a
   Capacitor WebView. `src/app/mobile/preload.ts` sets `window.eien` to the same
   bridge, implemented over Capacitor's Filesystem (and Eien's own native
@@ -144,7 +148,9 @@ differs by case from one already there (Syncthing couldn't carry both).
   reports paths → `ui/vault/follow.ts` settles the burst → the vault state
   refreshes what changed → the panes redraw; the open note reloads if it
   changed and you hadn't. `own-writes.ts` tells the window's own echoes from
-  another device's changes, for the sync status.
+  another device's changes, for the sync status (the rule in
+  `core/vault/recent-writes.ts`); the main process names the changes another
+  window on this device made, so they're not taken for a sync.
 - **A rename:** the row's field (`rename-in-row.ts`) → `Organizer.renameNote`
   → `Storage.move` → the folder's order, the pins and All Notes' order follow
   (`small-files.ts`) → refresh.

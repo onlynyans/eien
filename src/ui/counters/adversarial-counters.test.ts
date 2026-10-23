@@ -69,6 +69,35 @@ const sprint = (counters: Counters) => part(counters, 2).textContent;
 const words = (n: number) => Array.from({ length: n }, (_, i) => `w${i}`).join(' ');
 
 describe('today’s words in the colophon', () => {
+  it('adds two windows’ words together, each reading the tally afresh (New Window)', () => {
+    // Each window read the tally once, when it opened, and wrote back its own: the second
+    // window's words overwrote the first's, and the day lost them.
+    vi.setSystemTime(new Date(2026, 9, 20, 9));
+    const first = new Counters({ tell: () => {} });
+    const second = new Counters({ tell: () => {} });
+    first.wrote(10);
+    second.wrote(5);
+    expect(today(second)).toBe('Today +15');
+    first.wrote(1);
+    expect(today(first)).toBe('Today +16');
+    expect(JSON.parse(storage.getItem('eien.today') ?? 'null')).toMatchObject({ words: 16 });
+  });
+
+  it('shows another window’s words as they’re kept, and stops listening when stopped', () => {
+    vi.setSystemTime(new Date(2026, 9, 20, 9));
+    const heard = new Set<(event: { key: string }) => void>();
+    vi.stubGlobal('addEventListener', (_type: string, listener: never) => heard.add(listener));
+    vi.stubGlobal('removeEventListener', (_type: string, listener: never) =>
+      heard.delete(listener),
+    );
+    const counters = new Counters({ tell: () => {} });
+    storage.setItem('eien.today', JSON.stringify({ day: '2026-10-20', words: 42 }));
+    for (const listener of heard) listener({ key: 'eien.today' });
+    expect(today(counters)).toBe('Today +42');
+    counters.stop();
+    expect(heard.size).toBe(0);
+  });
+
   it('starts again at midnight, though no sprint is running and nothing is typed', () => {
     // counters.ts only redraws Today on wrote() and on a sprint's tick: with no sprint, a window
     // left open overnight shows yesterday's tally as today's until the writer next types — the

@@ -151,8 +151,8 @@ export async function showVault(
   );
   // The sync status at the sidebar's foot: a note changed that this window didn't change.
   const sync = new SyncStatus(sidebar.foot.sync, syncthing);
-  const stopSync = bridge.vault.onChange((paths) => {
-    if (own.foreign(paths).length > 0) sync.changedElsewhere();
+  const stopSync = bridge.vault.onChange((paths, local) => {
+    if (own.foreign(paths, local).length > 0) sync.changedElsewhere();
   });
   const listSearch = h('div', { class: 'list__search' });
   const listBody = h('div', { class: 'list__body' });

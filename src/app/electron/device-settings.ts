@@ -120,7 +120,7 @@ function tellKeptOutOfVault(vault: string, { home, old }: Places): void {
     detail: `Your vault (${vault}) holds ${dirname(home)}, where they’d go, and a vault syncs to your other devices. So Eien keeps this device’s settings in ${dirname(old)} instead.`,
   };
   // On the window, where there is one: a sheet on macOS, which waits for the writer without stopping Eien.
-  const [window] = BrowserWindow.getAllWindows();
+  const window = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
   void (window ? dialog.showMessageBox(window, message) : dialog.showMessageBox(message));
 }
 

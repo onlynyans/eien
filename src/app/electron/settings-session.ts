@@ -2,7 +2,7 @@
 // vault's from .eien/config.json, through the shared SettingsStore
 // (platform/settings-store.ts). The scheme and the menu's checks follow them.
 
-import { type BrowserWindow, nativeTheme } from 'electron';
+import { BrowserWindow, nativeTheme } from 'electron';
 import { type SettingValues, withDefaults } from '../../core/config';
 import { CHANNEL } from '../../platform/bridge';
 import { type DeviceStore, SettingsStore } from '../../platform/settings-store';
@@ -38,7 +38,11 @@ export function serveSettings(window: BrowserWindow, vault: VaultSession): void 
     const values = await store.set(key, value);
     applyScheme(values);
     checkToggles(values);
-    zoomWindow(window, zoomFactorOf(values));
+    // This device's settings are every window's: each is zoomed, and the others read them again.
+    for (const each of BrowserWindow.getAllWindows()) {
+      zoomWindow(each, zoomFactorOf(values));
+      if (each !== window) each.webContents.send(CHANNEL.settingsChanged);
+    }
     return values;
   });
 }
