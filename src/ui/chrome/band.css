@@ -23,6 +23,12 @@
   border-bottom: var(--eien-hairline) solid var(--eien-rule);
 }
 
+/* The views and the tools keep their width: short of room, the pager between them gives way
+   (../page/split.css), and a control is never covered by the next. */
+[data-layout="band"] .page__bar > .host {
+  flex: none;
+}
+
 /* Nothing interrupts the writer: the controls wait for the pointer or the keyboard. */
 [data-layout="band"] .host--band-views,
 [data-layout="band"] .host--band-tools {
@@ -59,6 +65,7 @@
 /* Each named by its class, never a bare :not(): a rule ending in one restyles the whole window
    whenever the layout, or the strip, changes. */
 [data-layout="band"] .shell[data-strip-shut] .host--band-views,
+[data-layout="band"] .shell[data-strip-shut] .page__pager,
 [data-layout="band"] .shell[data-strip-shut] .host--band-tools > .host__rule,
 [data-layout="band"]
   .shell[data-strip-shut]

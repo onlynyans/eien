@@ -114,17 +114,22 @@
 }
 
 /* Folded: the two pages by name, with the page's tools; the active one pressed. */
+/* Short of room, the names give way, each to an ellipsis in a control's square, and the
+   pager no further: it never lies over the tools beside it. */
 .page__pager {
+  --pager-gap: calc(var(--eien-space-1) / 2);
   display: flex;
   align-items: center;
-  gap: calc(var(--eien-space-1) / 2);
-  min-width: 0;
+  gap: var(--pager-gap);
+  min-width: calc(2 * var(--eien-control) + var(--pager-gap));
 }
 .page__pager[hidden] {
   display: none;
 }
 .page__pager .word-button {
-  min-width: 0;
+  min-width: var(--eien-control);
+  padding-block: 0;
+  line-height: calc(var(--eien-control) - 2 * var(--eien-hairline));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

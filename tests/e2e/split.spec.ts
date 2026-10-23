@@ -27,6 +27,8 @@ test.describe('the split', () => {
       'Notes.md': 'Snow on the walls.\n',
     },
   });
+  // Room for two pages side by side; under it they fold (that test narrows the window itself).
+  test.beforeEach(({ page }) => page.setViewportSize({ width: 1600, height: 900 }));
 
   test('opens a note beside the page with Ctrl/⌘-click, the list marking both', async ({
     page,
@@ -61,7 +63,9 @@ test.describe('the split', () => {
     await expect(pages(page)).toHaveCount(2);
     const [left, right] = [editorIn(pages(page).nth(0)), editorIn(pages(page).nth(1))];
     await right.click();
-    await page.keyboard.press('ControlOrMeta+End');
+    // At the end of the words, not past the file's last line break.
+    await page.keyboard.press('ControlOrMeta+Home');
+    await page.keyboard.press('End');
     await page.keyboard.type(' Then rain.');
     await expect(left).toContainText('The gate held. Then rain.');
     await expect
@@ -118,7 +122,6 @@ test.describe('the split', () => {
   });
 
   test('moves the divider by a drag, and evens it with a double-click', ALONE, async ({ page }) => {
-    await page.setViewportSize({ width: 1600, height: 900 });
     await openNote(page, 'Chapter', 'The gate held.');
     await row(page, 'Notes').click({ modifiers: ['ControlOrMeta'] });
     const divider = page.getByRole('separator', { name: 'Between the two pages' });
