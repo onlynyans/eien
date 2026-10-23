@@ -8,7 +8,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { clickMenu, editorContent, expect, test } from './launch';
+import { clickMenu, editorContent, expect, readQuietly, test } from './launch';
 
 const CHAPTER = [
   '---',
@@ -42,8 +42,8 @@ test.use({
   },
 });
 
-const readIn = (vault: string | null, path: string) =>
-  readFileSync(join(vault ?? '', path), 'utf8');
+/** For expect.poll: '' until the file is there (./launch.ts). */
+const readIn = (vault: string | null, path: string) => readQuietly(join(vault ?? '', path));
 
 async function open(page: Page, title: string): Promise<void> {
   await page.locator('.note-row', { hasText: title }).click();
@@ -199,7 +199,7 @@ test('a vault set to straight quotes keeps them as typed', async ({ app, page, v
   await dialog.getByRole('button', { name: 'Rule alone', exact: true }).click();
   await page.keyboard.press('Escape');
   await expect
-    .poll(() => JSON.parse(readIn(vault, '.eien/config.json')))
+    .poll(() => JSON.parse(readIn(vault, '.eien/config.json') || '{}'))
     .toEqual({ 'typography.quotes': 'straight', 'html.sceneBreak': 'rule' });
 
   await editorContent(page).click();
