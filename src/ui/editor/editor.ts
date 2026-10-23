@@ -7,46 +7,32 @@
 // where a <style> element would be refused. The design tokens still reach
 // it; custom properties inherit into shadow roots.
 
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import { syntaxTree } from '@codemirror/language';
 import { Compartment, EditorSelection, EditorState, type Extension } from '@codemirror/state';
-import { EditorView, keymap } from '@codemirror/view';
-import {
-  FORMAT_COMMANDS,
-  type FormatCommand,
-  type FormatCommandId,
-  keyOn,
-} from '../../core/format';
+import { EditorView } from '@codemirror/view';
+import type { FormatCommand, FormatCommandId } from '../../core/format';
 import type { QuoteStyle } from '../../core/typography';
 import { h } from '../dom';
 import { activeFormats } from './active-formats';
-import { eienChange, eienUndo, writtenBy } from './eien-change';
-import { hiddenMarkEditing } from './hidden-marks';
+import { editorKeys, historyInput } from './editor-keys';
+import { lockExtensions, marksExtensions, modeExtensions } from './editor-modes';
+import { writtenBy } from './eien-change';
 import { imageDrop } from './image-drop';
-import {
-  hiddenFrontMatter,
-  keepFrontMatter,
-  livePreview,
-  previewMode,
-  showMarks,
-} from './live-preview';
-import { tableCells } from './live-tables';
+import { linkFollowing } from './links';
+import { hiddenFrontMatter } from './live-preview';
+import { isEcho, type NoteDoc } from './note-doc';
 import { eienMarkdown } from './syntax';
 import { caretTable } from './table-at';
-import { tableEditing, tableEditor } from './table-editor';
+import { tableEditor } from './table-editor';
 import { openCellMenu } from './table-menus';
 import { editorTheme, markdownColours } from './theme';
 import { htmlPaste, quoteTyping } from './typing';
 import { type ImageLoader, imageLoader } from './widgets';
-import {
-  centreCaret,
-  NO_TOOLS,
-  sceneBreak,
-  type WritingTools,
-  writingTools,
-} from './writing-tools';
+import { centreCaret, NO_TOOLS, type WritingTools, writingTools } from './writing-tools';
 
 export type EditorMode = 'live' | 'source' | 'reading';
+
+/** No images: an editor with no note. */
+const NO_IMAGES: ImageLoader = async () => null;
 export const EDITOR_MODES: readonly EditorMode[] = ['live', 'source', 'reading'];
 
 export interface EditorEvents {
@@ -70,7 +56,6 @@ export class NoteEditor {
   readonly #view: EditorView;
   readonly #mode = new Compartment();
   readonly #images = new Compartment();
-  readonly #history = new Compartment();
   readonly #lock = new Compartment();
   /** Typed quotes, as the vault's setting asks. */
   readonly #quotes = new Compartment();
@@ -85,8 +70,8 @@ export class NoteEditor {
   #locked = false;
   readonly #events: EditorEvents;
   #current: EditorMode = 'live';
-  /** Changes we make ourselves aren't the writer's typing. */
-  #quiet = false;
+  /** The note shown: its text and its history, shared with any other view of it (./note-doc.ts). */
+  #doc: NoteDoc | null = null;
 
   /**
    * Where a table's grips and + are drawn (./table-tools.ts): the editor's
@@ -98,7 +83,14 @@ export class NoteEditor {
   constructor(host: HTMLElement, events: EditorEvents) {
     this.#events = events;
     const root = host.attachShadow({ mode: 'open' });
-    this.#view = new EditorView({ root, parent: root, state: this.#state('', async () => null) });
+    this.#view = new EditorView({
+      root,
+      parent: root,
+      state: this.#state('', NO_IMAGES),
+      // Every change goes through the note's document, which keeps its history and its other views.
+      dispatchTransactions: (trs, view) =>
+        this.#doc ? this.#doc.dispatch(view, trs) : view.update(trs),
+    });
   }
 
   get view(): EditorView {
@@ -111,34 +103,34 @@ export class NoteEditor {
     return this.#current;
   }
 
-  /** A new note: new text, new undo history, images from `loadImage`. */
-  setText(text: string, loadImage: ImageLoader): void {
-    const state = this.#state(text, loadImage);
+  /** A note: its document's text and history (./note-doc.ts), images from `loadImage`. */
+  show(doc: NoteDoc, loadImage: ImageLoader): void {
+    this.#doc?.detach(this.#view);
+    this.#doc = doc;
+    const state = this.#state(doc.text, loadImage);
     // The caret starts where the writing does, after any front matter kept out of sight.
     const start = hiddenFrontMatter(state);
     this.#view.setState(start > 0 ? state.update({ selection: { anchor: start } }).state : state);
     this.#view.scrollDOM.scrollTop = 0;
+    doc.attach(this.#view);
+  }
+
+  /** No note: the document is let go, and the editor holds nothing of it. */
+  release(): void {
+    this.#doc?.detach(this.#view);
+    this.#doc = null;
+    this.#view.setState(this.#state('', NO_IMAGES));
   }
 
   /**
-   * The same note's text, changed elsewhere: keep the selection where it can
-   * stay, and start the undo history afresh. A reload only comes when nothing
-   * here is unsaved, so the history holds nothing to lose; and an undo must
-   * never step back over the other device's words.
+   * The same note's text, changed elsewhere: every view of it keeps its
+   * selection where it can stay, and the undo history starts afresh. A
+   * reload only comes when nothing here is unsaved, so the history holds
+   * nothing to lose; and an undo must never step back over the other
+   * device's words.
    */
   replaceText(text: string): void {
-    const { main } = this.#view.state.selection;
-    this.#quiet = true;
-    this.#view.dispatch({
-      changes: { from: 0, to: this.#view.state.doc.length, insert: text },
-      selection: EditorSelection.range(
-        Math.min(main.anchor, text.length),
-        Math.min(main.head, text.length),
-      ),
-      effects: this.#history.reconfigure([]),
-    });
-    this.#view.dispatch({ effects: this.#history.reconfigure(history()) });
-    this.#quiet = false;
+    this.#doc?.replace(text);
   }
 
   /**
@@ -148,21 +140,8 @@ export class NoteEditor {
    * id a seal adds). False, changing nothing, while the text is held still.
    */
   amend(next: string, undoable: boolean): boolean {
-    if (this.#locked) return false;
-    const doc = this.#view.state.doc.toString();
-    let start = 0;
-    while (start < doc.length && start < next.length && doc[start] === next[start]) start++;
-    let end = doc.length;
-    let endNext = next.length;
-    while (end > start && endNext > start && doc[end - 1] === next[endNext - 1]) {
-      end--;
-      endNext--;
-    }
-    if (start === end && start === endNext) return true;
-    this.#view.dispatch({
-      changes: { from: start, to: end, insert: next.slice(start, endNext) },
-      ...eienChange(undoable),
-    });
+    if (this.#locked || !this.#doc) return false;
+    this.#doc.amend(this.#view, next, undoable);
     return true;
   }
 
@@ -277,15 +256,7 @@ export class NoteEditor {
   }
 
   #state(text: string, loadImage: ImageLoader): EditorState {
-    // CodeMirror takes `mac` on a Mac, `key` elsewhere.
-    const formatKeys = FORMAT_COMMANDS.map((command) => ({
-      key: keyOn(command, false),
-      mac: keyOn(command, true),
-      run: () => this.format(command),
-    }));
     const extensions: Extension[] = [
-      this.#history.of(history()),
-      eienUndo,
       this.#lock.of(lockExtensions(this.#locked)),
       this.#quotes.of(quoteTyping(this.#quoteStyle)),
       this.#tools.of(writingTools(this.#toolsOn)),
@@ -296,12 +267,10 @@ export class NoteEditor {
         return true;
       }),
       htmlPaste,
-      keymap.of([
-        ...formatKeys,
-        { key: 'Enter', run: sceneBreak },
-        ...historyKeymap,
-        ...defaultKeymap,
-      ]),
+      editorKeys(
+        (command) => this.format(command),
+        (command) => this.#doc?.run(this.#view, command) ?? false,
+      ),
       eienMarkdown(),
       markdownColours,
       editorTheme,
@@ -316,84 +285,17 @@ export class NoteEditor {
       this.#mode.of(modeExtensions(this.#current)),
       EditorView.updateListener.of((update) => {
         if (update.docChanged || update.selectionSet) this.#events.moved?.();
-        if (!update.docChanged || this.#quiet) return;
-        this.#events.changed(update.state.doc.toString(), update.transactions.some(writtenBy));
+        // A change made in this view, told once: an echo of another view's was told there.
+        const told = update.transactions.filter((tr) => tr.docChanged && !isEcho(tr));
+        if (told.length === 0) return;
+        this.#events.changed(update.state.doc.toString(), told.some(writtenBy));
       }),
-      EditorView.domEventHandlers({
-        // ⌘-click follows on the press, before the caret moves: in Live a caret on
-        // the link's line would show its marks and slide the words from under the pointer.
-        mousedown: (event, view) => modClick(event) && this.#follow(event, view),
-        // In Reading a plain click follows, as on a page; nothing there moves.
-        click: (event, view) =>
-          this.#current === 'reading' && !modClick(event) && this.#follow(event, view),
-      }),
+      historyInput((command) => this.#doc?.run(this.#view, command) ?? false),
+      linkFollowing(
+        (target) => this.#events.follow(target),
+        () => this.#current,
+      ),
     ];
     return EditorState.create({ doc: text, extensions });
-  }
-
-  /** Follow the link under the pointer, if there is one. */
-  #follow(event: MouseEvent, view: EditorView): boolean {
-    const target = linkAt(view, event);
-    if (!target) return false;
-    event.preventDefault();
-    this.#events.follow(target);
-    return true;
-  }
-}
-
-const MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-
-/** A click with ⌘ on a Mac, or Ctrl elsewhere (Ctrl-click on a Mac is the context menu). */
-const modClick = (event: MouseEvent): boolean =>
-  event.button === 0 && (MAC ? event.metaKey : event.ctrlKey);
-
-/** The link under the pointer: a web address, or a [[note]] by its title. */
-function linkAt(view: EditorView, event: MouseEvent): Parameters<EditorEvents['follow']>[0] | null {
-  const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-  if (pos === null) return null;
-  const text = (from: number, to: number) => view.state.doc.sliceString(from, to);
-  for (let node = syntaxTree(view.state).resolveInner(pos, 1); node.parent; node = node.parent) {
-    if (node.name === 'WikiLink') {
-      return {
-        kind: 'note',
-        value:
-          text(node.from + 2, node.to - 2)
-            .split('|')[0]
-            ?.trim() ?? '',
-      };
-    }
-    const url =
-      node.name === 'URL'
-        ? node
-        : node.name === 'Link' || node.name === 'Autolink'
-          ? node.getChild('URL')
-          : null;
-    if (url) return { kind: 'url', value: text(url.from, url.to) };
-  }
-  return null;
-}
-
-const marksExtensions = (shown: boolean): Extension =>
-  shown ? [] : [showMarks.of(false), hiddenMarkEditing];
-
-const lockExtensions = (locked: boolean): Extension =>
-  locked ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : [];
-
-function modeExtensions(mode: EditorMode): Extension {
-  switch (mode) {
-    case 'live':
-      return [previewMode.of('live'), livePreview, tableCells, keepFrontMatter, tableEditing];
-    case 'source':
-      return [EditorView.editorAttributes.of({ class: 'eien-source' })];
-    case 'reading':
-      return [
-        previewMode.of('reading'),
-        livePreview,
-        tableCells,
-        keepFrontMatter,
-        EditorState.readOnly.of(true),
-        EditorView.editable.of(false),
-        EditorView.editorAttributes.of({ class: 'eien-reading' }),
-      ];
   }
 }

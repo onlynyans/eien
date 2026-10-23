@@ -4,6 +4,7 @@
 import { baseName, parentOf, titleOf } from '../../core/paths';
 import type { VaultBridge } from '../../platform/bridge';
 import { type NoteImages, noteImages } from '../editor/image-loader';
+import { NoteDoc } from '../editor/note-doc';
 import { NoteSession } from '../notes/note-session';
 import type { PageView } from '../page/page';
 
@@ -60,7 +61,7 @@ export class OpenNote {
       page.show({
         crumbs: crumbsOf(path),
         title: this.#session.title,
-        text: this.#session.text,
+        doc: new NoteDoc(this.#session.text),
         loadImage: this.#images.load,
       });
     } else page.showNothing();

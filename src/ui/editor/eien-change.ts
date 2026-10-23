@@ -23,6 +23,10 @@ export const eienChange = (
   annotations: undoable ? [isolateHistory.of('full')] : [Transaction.addToHistory.of(false)],
 });
 
+/** Of `tr`'s effects, the mark of Eien's change, carried to where the change goes next (./note-doc.ts). */
+export const eienEffects = (tr: Transaction): StateEffect<null>[] =>
+  tr.effects.filter((effect): effect is StateEffect<null> => effect.is(byEien));
+
 /** Whether `tr` is the writer's: typed, cut, pasted, formatted, undone — not Eien's. */
 export const writtenBy = (tr: Transaction): boolean =>
   tr.docChanged &&

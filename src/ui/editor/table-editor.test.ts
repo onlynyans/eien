@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vite
 import { FORMAT_COMMANDS } from '../../core/format';
 import { closeMenu } from '../menu/menu';
 import { NoteEditor } from './editor';
+import { NoteDoc } from './note-doc';
 import { TableBar } from './table-bar';
 
 const TABLE = '| Name | Age |\n|---|---|\n| Mara | 30 |\n| Levi | 41 |';
@@ -19,7 +20,7 @@ beforeEach(() => {
   said = vi.fn<(words: string) => void>();
   const host = document.body.appendChild(document.createElement('div'));
   editor = new NoteEditor(host, { changed: () => {}, follow: () => {}, said: (w) => said(w) });
-  editor.setText(NOTE, async () => null);
+  editor.show(new NoteDoc(NOTE), async () => null);
   // happy-dom fires selectionchange in the middle of an update when the editor has the
   // keyboard, which a browser never does: the keyboard stays out of it here.
   vi.spyOn(editor.view, 'focus').mockImplementation(() => {});
