@@ -402,27 +402,6 @@ function wireTable() {
   drawFile();
 }
 
-// 1 and 3 put controls on the table's edges, for the row and column under the
-// pointer (and the caret's): the margins round the table count as the table.
-let hover = { r: -1, c: -1 };
-function useEdges() {
-  wrap.classList.add('has-edges');
-  table.addEventListener('pointerover', (e) => {
-    const cell = e.target.closest('th, td');
-    if (!cell) return;
-    hover = { r: +cell.parentElement.dataset.r, c: +cell.dataset.c };
-    Table.onDraw();
-  });
-  wrap.addEventListener('pointerleave', () => { hover = { r: -1, c: -1 }; Table.onDraw(); });
-  wrap.addEventListener('transitionend', (e) => { if (e.target === wrap) Table.onDraw(); });
-}
-/** Lights the row or column a removal would take, before it goes. */
-function aim(kind, i) {
-  for (const el of table.querySelectorAll('.is-aimed')) el.classList.remove('is-aimed');
-  if (kind === 'col') for (const el of table.querySelectorAll(`[data-c="${i}"]:is(th, td)`)) el.classList.add('is-aimed');
-  if (kind === 'row') for (const el of table.querySelectorAll(`tr[data-r="${i}"] > *`)) el.classList.add('is-aimed');
-}
-
 /** The keys every direction shares, for its notes. */
 const SHARED_KEYS = () => `
   <h2>Keys, in all three</h2>

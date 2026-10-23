@@ -1,0 +1,33 @@
+/* The formatting bar's row, with its Table button, and the table's tools on
+   one bar (2 · Toolbar; 3 · Menus' phone). Each page says where the bar goes. */
+
+/* The formatting bar, as Band draws it: the page's second row, on the band. */
+.pane { grid-template-rows: auto minmax(0, 1fr) var(--status-h, 40px); }
+.fbar { display: flex; justify-content: center; align-items: center; gap: 2px; min-height: 40px; padding: 2px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); flex-wrap: wrap; }
+.fbar .fbar__rule { width: var(--eien-hairline); height: 18px; margin: 0 var(--eien-space-1); background: var(--eien-rule); }
+.fbar__table[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+:root[data-device='phone'] .fbar { display: none; }
+
+/* The table's tools: raised paper while it floats; one row of icons. */
+.tbar {
+  display: none; align-items: center; gap: 2px; padding: 2px; width: max-content;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono);
+}
+.tbar.is-shown { display: flex; }
+.tbar__rule { width: var(--eien-hairline); align-self: stretch; margin: var(--eien-space-1) 2px; background: var(--eien-rule); }
+.tbar__where { padding: 0 var(--eien-space-2) 0 var(--eien-space-1); white-space: nowrap; }
+.tbar .icon-button[aria-disabled='true'] { color: var(--eien-faded); }
+@media (hover: hover) { .tbar .tbar__off:not([aria-disabled='true']):hover { color: var(--eien-removed); } }
+/* Joined to the formatting bar, the table's tools are the bar's own: no float, no edge. */
+.fbar .tbar { background: none; border: 0; box-shadow: none; padding: 0; }
+.fbar .tbar.is-shown::before { content: ''; width: var(--eien-hairline); height: 18px; margin: 0 var(--eien-space-1); background: var(--eien-rule); }
+
+/* A phone: docked to the foot, above where the keyboard comes; one row that scrolls sideways. */
+.is-touch .pane > .tbar {
+  position: absolute; left: 0; right: 0; bottom: var(--status-h, 40px); width: auto; z-index: 5;
+  overflow-x: auto; border-radius: 0; border-width: var(--eien-hairline) 0 0; box-shadow: none; background: var(--eien-band);
+}
+.is-touch .tbar .icon-button { width: var(--eien-touch); height: var(--eien-touch); }
+.is-touch .tbar .tbar__where { display: none; }

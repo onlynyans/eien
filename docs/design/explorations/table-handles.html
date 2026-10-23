@@ -271,13 +271,6 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .tbl-layer { position: absolute; inset: 0; pointer-events: none; }
 .tbl-layer > * { pointer-events: auto; }
 
-/* 1 and 3 put controls on the table's edges: the margins round it count as the
-   table, so the pointer can reach them. With no hover (a phone), the table steps
-   in from the narrow margin while it's edited, to make room for the row's. */
-.tbl-wrap.has-edges { isolation: isolate; transition: margin var(--eien-calm) var(--eien-ease); }
-.tbl-wrap.has-edges::before { content: ''; position: absolute; inset: -40px -24px -16px -44px; z-index: -1; }
-.is-touch .tbl-wrap.has-edges.is-in { margin-left: 40px; }
-
 /* The file, beside the page: what Eien writes, line by line. */
 .file { min-height: 0; display: grid; grid-template-rows: var(--band, 56px) minmax(0, 1fr) auto; background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); }
 @media (max-width: 900px) { .file { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }
@@ -307,26 +300,25 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 :root[data-device='phone'] .title { font-size: calc(var(--eien-size-title) * 0.8); }
 :root[data-device='phone'] .tbl { width: max-content; min-width: 100%; }
 
+/* 1 and 3 put controls on the table's edges: the margins round it count as the
+   table, so the pointer can reach them. With no hover (a phone), the table steps
+   in from the narrow margin while it's edited, to make room for the row's. */
+.tbl-wrap.has-edges { isolation: isolate; transition: margin var(--eien-calm) var(--eien-ease); }
+.tbl-wrap.has-edges::before { content: ''; position: absolute; inset: -40px -24px -16px -44px; z-index: -1; }
+.is-touch .tbl-wrap.has-edges.is-in { margin-left: 40px; }
 
-/* 1 · Handles: the table's own edges carry its controls. A tab over each
-   column and beside each row, a + on each line between them. Quiet until the
-   pointer is over the table or the caret is in it. */
-.ins, .tab { position: absolute; translate: -50% -50%; }
-
-/* The +: a faint dot on each line between rows or columns, a + under the pointer. */
-.ins { appearance: none; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--eien-ink-soft); cursor: pointer; }
+/* The + on a line between rows or columns (1 shows a faint dot there till the pointer comes). */
+.ins { position: absolute; translate: -50% -50%; appearance: none; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--eien-ink-soft); cursor: pointer; }
 .ins--col { width: 16px; height: 24px; }
 .ins--row { width: 24px; height: 16px; }
 .ins__dot, .ins__plus { grid-area: 1 / 1; transition: opacity var(--eien-quick) var(--eien-ease); }
 .ins__dot { width: 4px; height: 4px; border-radius: var(--eien-radius-dot); background: var(--eien-faded); opacity: 0; }
-.tbl-wrap:hover .ins__dot, .tbl-wrap.is-in .ins__dot { opacity: 1; }
 .ins__plus {
   display: grid; place-items: center; width: 18px; height: 18px; opacity: 0;
   background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s);
 }
 .ins__plus svg { width: 12px; height: 12px; }
 .ins:is(:hover, :focus-visible, .is-near) .ins__plus { opacity: 1; }
-.ins:is(:hover, :focus-visible, .is-near) .ins__dot { opacity: 0; }
 .ins:focus-visible { outline: none; }
 .ins:focus-visible .ins__plus { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 1px; }
 /* Where it goes: the drop line of your order, 2px ink-soft, across or down the table. */
@@ -334,6 +326,17 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 .ins--col .ins__line { top: calc(100% + 6px); left: calc(50% - 1px); width: var(--eien-mark-w); height: var(--tbl-h); }
 .ins--row .ins__line { left: calc(100% + 6px); top: calc(50% - 1px); height: var(--eien-mark-w); width: var(--tbl-w); }
 .ins:is(:hover, :focus-visible) .ins__line { opacity: 1; }
+.ins[hidden] { display: none; }
+
+
+/* 1 · Handles: the table's own edges carry its controls. A tab over each
+   column and beside each row, a + on each line between them. Quiet until the
+   pointer is over the table or the caret is in it. */
+.tab { position: absolute; translate: -50% -50%; }
+
+/* The + on each line: a faint dot until the pointer is over it. */
+.tbl-wrap:hover .ins__dot, .tbl-wrap.is-in .ins__dot { opacity: 1; }
+.ins:is(:hover, :focus-visible, .is-near) .ins__dot { opacity: 0; }
 
 /* The tabs: a small band with a hairline, as a pane's tab is; nothing floats. */
 .tab {
@@ -345,7 +348,7 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 .tab .icon-button { width: 22px; height: 22px; }
 .tab .icon-button svg { width: 14px; height: 14px; }
 @media (hover: hover) { .tab .tab__off:hover { color: var(--eien-removed); } }
-.tab[hidden], .ins[hidden] { display: none; }
+.tab[hidden] { display: none; }
 
 /* No hover: the caret's row and column keep their handles, at a finger's size. */
 .is-touch .ins::after, .is-touch .tab .icon-button::after { content: ''; position: absolute; inset: -10px; }
@@ -941,8 +944,20 @@ function wireTable() {
   drawFile();
 }
 
-// 1 and 3 put controls on the table's edges, for the row and column under the
-// pointer (and the caret's): the margins round the table count as the table.
+/** The keys every direction shares, for its notes. */
+const SHARED_KEYS = () => `
+  <h2>Keys, in all three</h2>
+  <ul>
+    <li><kbd>Tab</kbd> <kbd>⇧Tab</kbd> next and last cell; <kbd>Tab</kbd> in the last cell adds a row</li>
+    <li>Arrows move between cells at a cell's edge; <kbd>↑</kbd> <kbd>↓</kbd> always</li>
+    <li><kbd>Enter</kbd> a new row under this one; <kbd>Esc</kbd> out of the table</li>
+    <li><kbd>${KEY('Mod-Alt-↑')}</kbd> <kbd>${KEY('Mod-Alt-↓')}</kbd> row above, below; <kbd>${KEY('Mod-Alt-←')}</kbd> <kbd>${KEY('Mod-Alt-→')}</kbd> column left, right</li>
+    <li><kbd>${KEY('Mod-Alt-⌫')}</kbd> remove the row; <kbd>${KEY('Mod-Alt-Shift-⌫')}</kbd> the column; <kbd>${KEY('Mod-Z')}</kbd> puts either back</li>
+  </ul>`;
+
+// The table's edges, for 1 · Handles and 3 · Menus: controls for the row and
+// column under the pointer or the caret, and a + on the lines between them.
+
 let hover = { r: -1, c: -1 };
 function useEdges() {
   wrap.classList.add('has-edges');
@@ -962,16 +977,27 @@ function aim(kind, i) {
   if (kind === 'row') for (const el of table.querySelectorAll(`tr[data-r="${i}"] > *`)) el.classList.add('is-aimed');
 }
 
-/** The keys every direction shares, for its notes. */
-const SHARED_KEYS = () => `
-  <h2>Keys, in all three</h2>
-  <ul>
-    <li><kbd>Tab</kbd> <kbd>⇧Tab</kbd> next and last cell; <kbd>Tab</kbd> in the last cell adds a row</li>
-    <li>Arrows move between cells at a cell's edge; <kbd>↑</kbd> <kbd>↓</kbd> always</li>
-    <li><kbd>Enter</kbd> a new row under this one; <kbd>Esc</kbd> out of the table</li>
-    <li><kbd>${KEY('Mod-Alt-↑')}</kbd> <kbd>${KEY('Mod-Alt-↓')}</kbd> row above, below; <kbd>${KEY('Mod-Alt-←')}</kbd> <kbd>${KEY('Mod-Alt-→')}</kbd> column left, right</li>
-    <li><kbd>${KEY('Mod-Alt-⌫')}</kbd> remove the row; <kbd>${KEY('Mod-Alt-Shift-⌫')}</kbd> the column; <kbd>${KEY('Mod-Z')}</kbd> puts either back</li>
-  </ul>`;
+// The + on each line, with a name that says which line.
+function insColName(c) {
+  const n = cols();
+  if (c === 0) return `Add a column before ${colName(0)}`;
+  if (c === n) return `Add a column after ${colName(n - 1)}`;
+  return `Add a column between ${colName(c - 1)} and ${colName(c)}`;
+}
+function insRowName(at) {
+  if (at === 0) return 'Add a row under the head row';
+  if (at === T.rows.length) return `Add a row after row ${at}`;
+  return `Add a row between rows ${at} and ${at + 1}`;
+}
+/** A + on the line between two columns ('col') or rows ('row'); `at` is the line's index. */
+function insertHtml(dir, at) {
+  const name = dir === 'col' ? insColName(at) : insRowName(at);
+  return `<button class="ins ins--${dir}" data-ins-${dir}="${at}" aria-label="${escHtml(name)}" data-tip="${dir === 'col' ? 'Add a column' : 'Add a row'}" data-tip-side="${dir === 'col' ? 'up' : 'left'}"><span class="ins__dot"></span><span class="ins__plus">${icon('plus')}</span><span class="ins__line"></span></button>`;
+}
+/** Where each line is: a column line's x, a row line's y, in the wrap's coordinates. */
+const colLine = (g, c) => (c < g.cols.length ? g.cols[c].x : g.cols.at(-1).x + g.cols.at(-1).w);
+const rowLine = (g, at) => (at < T.rows.length ? g.rows[at + 1].y : g.top + g.height);
+
 
 
 mountTablePage({
@@ -997,26 +1023,13 @@ useEdges();
 let built = '';
 const NEXT_ALIGN = { left: 'center', center: 'right', right: 'left' };
 
-function insColName(c) {
-  const n = cols();
-  if (c === 0) return `Add a column before ${colName(0)}`;
-  if (c === n) return `Add a column after ${colName(n - 1)}`;
-  return `Add a column between ${colName(c - 1)} and ${colName(c)}`;
-}
-function insRowName(at) {
-  if (at === 0) return 'Add a row under the head row';
-  if (at === T.rows.length) return `Add a row after row ${at}`;
-  return `Add a row between rows ${at} and ${at + 1}`;
-}
-const insert = (dir, name) => `<button class="ins ins--${dir}" aria-label="${escHtml(name)}" data-tip="${dir === 'col' ? 'Add a column' : 'Add a row'}" data-tip-side="${dir === 'col' ? 'up' : 'left'}"><span class="ins__dot"></span><span class="ins__plus">${icon('plus')}</span><span class="ins__line"></span></button>`;
-
 /** The edges' controls, made again only when the table's shape or names change. */
 function build() {
   const n = cols();
   const m = T.rows.length;
   let html = '';
   for (let c = 0; c <= n; c++) {
-    html += insert('col', insColName(c)).replace('<button', `<button data-ins-col="${c}"`);
+    html += insertHtml('col', c);
     if (c < n) {
       const a = T.align[c];
       html += `<div class="tab tab--col" data-col="${c}" role="group" aria-label="Column ${escHtml(colName(c))}">
@@ -1025,7 +1038,7 @@ function build() {
     }
   }
   for (let at = 0; at <= m; at++) {
-    html += insert('row', insRowName(at)).replace('<button', `<button data-ins-row="${at}"`);
+    html += insertHtml('row', at);
     if (at < m) {
       html += `<div class="tab tab--row" data-row="${at + 1}" role="group" aria-label="Row ${at + 1}">
         <button class="icon-button tab__off" data-off-row="${at + 1}" aria-label="Remove row ${at + 1}" data-tip="Remove row  ${KEY('Mod-Alt-⌫')}" data-tip-side="left">${icon('rowDelete')}</button></div>`;
@@ -1039,7 +1052,6 @@ function place() {
   const key = `${T.head.join('|')}/${T.align.join()}/${T.rows.length}`;
   if (key !== built && !layer.contains(document.activeElement)) { build(); built = key; }
   const g = geometry();
-  const n = g.cols.length;
   const touch = isTouch();
   layer.style.setProperty('--tbl-h', `${g.height}px`);
   layer.style.setProperty('--tbl-w', `${g.right - g.left}px`);
@@ -1048,12 +1060,11 @@ function place() {
     el.style.top = `${y}px`;
     el.hidden = x < g.left - 1 || x > g.right + 1;
   };
-  const edge = (c) => (c < n ? g.cols[c].x : g.cols[n - 1].x + g.cols[n - 1].w);
   const top = g.top - 18;
   const side = g.left - 18;
   for (const el of layer.querySelectorAll('[data-ins-col]')) {
     const c = +el.dataset.insCol;
-    at(el, edge(c), top);
+    at(el, colLine(g, c), top);
     el.classList.toggle('is-near', touch && inTable && (c === here.c || c === here.c + 1));
   }
   for (const el of layer.querySelectorAll('[data-col]')) {
@@ -1063,7 +1074,7 @@ function place() {
   }
   for (const el of layer.querySelectorAll('[data-ins-row]')) {
     const i = +el.dataset.insRow;
-    at(el, side, i < T.rows.length ? g.rows[i + 1].y : g.top + g.height);
+    at(el, side, rowLine(g, i));
     el.hidden = false;
     el.classList.toggle('is-near', touch && inTable && (i === here.r || i === here.r - 1));
   }

@@ -59,13 +59,6 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 .tbl-layer { position: absolute; inset: 0; pointer-events: none; }
 .tbl-layer > * { pointer-events: auto; }
 
-/* 1 and 3 put controls on the table's edges: the margins round it count as the
-   table, so the pointer can reach them. With no hover (a phone), the table steps
-   in from the narrow margin while it's edited, to make room for the row's. */
-.tbl-wrap.has-edges { isolation: isolate; transition: margin var(--eien-calm) var(--eien-ease); }
-.tbl-wrap.has-edges::before { content: ''; position: absolute; inset: -40px -24px -16px -44px; z-index: -1; }
-.is-touch .tbl-wrap.has-edges.is-in { margin-left: 40px; }
-
 /* The file, beside the page: what Eien writes, line by line. */
 .file { min-height: 0; display: grid; grid-template-rows: var(--band, 56px) minmax(0, 1fr) auto; background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); }
 @media (max-width: 900px) { .file { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }

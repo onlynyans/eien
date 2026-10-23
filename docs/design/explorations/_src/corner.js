@@ -78,7 +78,7 @@ const ALL_STATES = [
 
 let canvas;
 function mountCornerPage({ id, note, notes }) {
-  const pages = [['title', '1 · A title line'], ['stay', '2 · The seal stays'], ['shoulder', '3 · The desk’s shoulder']];
+  const pages = [['title', '1 · A title line'], ['stay', '2 · The seal stays (offered)'], ['shoulder', '3 · The desk’s shoulder (offered)']];
   const group = (attr, label, choices) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${choices.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
   document.body.insertAdjacentHTML('afterbegin', `
 <header class="xbar">

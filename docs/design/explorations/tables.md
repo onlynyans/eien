@@ -1,8 +1,10 @@
 # Tables in Live: three explorations
 
-**Not built yet; for the owner to choose (2026-10-22).** The table editor
-comes after the Live-mode table fixes and the formatting bar's Table button
-(another session's work, in `src/ui/editor/live-preview.ts`).
+**Chosen on 2026-10-22: 3 · Menus with 1's + on the desktop, 2's bar on the
+phone**, and the Table button in the formatting bar. Not built yet: the table
+editor comes after the Live-mode table fixes and the formatting bar's Table
+button (another session's work, in `src/ui/editor/live-preview.ts`).
+[table-menus.html](table-menus.html) shows the choice whole.
 
 In Live mode a GFM table is edited in place, as a word processor's table is,
 and the file stays a plain Markdown table. Each page shows one direction,
@@ -11,7 +13,7 @@ working:
 - [table-handles.html](table-handles.html): 1 · Handles on the edges
 - [table-toolbar.html](table-toolbar.html): 2 · A toolbar with the caret
 - [table-menus.html](table-menus.html): 3 · A menu and a grip per row and
-  column
+  column, now with 1's + and 2's phone bar (the choice)
 
 Beside each table is the file as it would be saved, redrawn as you type; the
 lines that change flash moss. The bar at the top switches Day and Night, each
@@ -121,7 +123,23 @@ padded to its widest cell) or Compact (`| a | b |`).
   grip, or a long press on a cell, opens the menu as the phone's bottom
   sheet; a long press on a grip and a drag moves the row.
 
-## Recommendation
+## The choice: 3, with 1's +, and 2 on a phone
+
+- **Desktop:** 3's grips and menus, and drag to move rows and columns.
+  1's +, lighter: no dots and nothing at rest. Point at a line between two
+  columns or rows, or at the table's outer edges, and a + comes at the line's
+  end, with the line showing where the new one goes.
+- **The formatting bar's Table button:** with the caret in a table it's
+  pressed, and opens the caret's menus; elsewhere it makes a table.
+- **Phone:** 2's bar above the keyboard, with no grips or + to aim at. A long
+  press on a cell still opens its menus, as the phone's bottom sheet, for
+  moving and aligning.
+- **Dragging** listens on the whole document and ends however the press
+  ends: released, the pointer's capture lost, or the browser taking the press
+  for its own drag. Only Esc puts the row or column back. The first version
+  could miss the release, which left the column lifted and the drop undone.
+
+## Recommendation (before the choice)
 
 **1 · Handles on the desktop, with 2's docked bar on the phone.** It is what
 was asked for, a click at the place you mean, and quiet until you point.

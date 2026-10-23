@@ -608,7 +608,7 @@ const ALL_STATES = [
 
 let canvas;
 function mountCornerPage({ id, note, notes }) {
-  const pages = [['title', '1 · A title line'], ['stay', '2 · The seal stays'], ['shoulder', '3 · The desk’s shoulder']];
+  const pages = [['title', '1 · A title line'], ['stay', '2 · The seal stays (offered)'], ['shoulder', '3 · The desk’s shoulder (offered)']];
   const group = (attr, label, choices) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${choices.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
   document.body.insertAdjacentHTML('afterbegin', `
 <header class="xbar">
@@ -680,10 +680,12 @@ function fit() {
 
 mountCornerPage({
   id: 'stay',
-  note: 'The seal never moves: shutting the sidebar takes the desk away from under it.',
+  note: 'Offered with 3, as a setting. The seal never moves: shutting the sidebar takes the desk away from under it.',
   notes: `
   <h2>2 · The seal stays</h2>
   <p>The seal never moves. Shutting the sidebar takes the whole desk away, strip and all, and the seal stays exactly where it was in the top row: beside the lights on macOS, at the window's left edge in full screen and on Windows and Linux. The list's band (or the page's, with the list shut) starts after it, so the lights and the seal read as one row, the window's own corner.</p>
+  <h2>Offered with 3</h2>
+  <p>Chosen on 2026-10-22: both 2 and 3, as a setting (Look → Appearance, "Shut sidebar": The seal alone, or A strip of desk). This is The seal alone.</p>
   <h2>For</h2>
   <ul>
     <li>Nothing jumps: the seal is where your eye left it, in every state. Full screen, it is the corner.</li>

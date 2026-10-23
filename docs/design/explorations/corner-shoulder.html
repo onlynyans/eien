@@ -336,12 +336,13 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
 @media (prefers-reduced-motion: reduce) { .win, .win * { transition: none !important; } }
 
 
-/* 3 · The desk's shoulder: the strip stays 48px, but at its top it widens
+/* 3 · The desk's shoulder: the strip is as wide as the bands are tall
+   (--band, 56px), so it meets them square; at its top it widens
    into a shoulder of desk just wide enough for macOS's lights, one band tall,
    its outer corner the layout's large radius. The seal tucks under the lights.
    With no lights (full screen, Windows, Linux) there's no shoulder, and the
    seal rises to the top. */
-.win[data-way='new'] { --shoulder-w: calc(var(--controls-left) + var(--eien-space-2)); }
+.win[data-way='new'] { --strip: var(--band); --shoulder-w: calc(var(--controls-left) + var(--eien-space-2)); }
 .win[data-way='new'] .shoulder {
   position: absolute; z-index: 4; left: calc(var(--strip) - var(--eien-hairline)); top: 0;
   width: calc(var(--shoulder-w) - var(--strip) + var(--eien-hairline)); height: var(--band);
@@ -616,7 +617,7 @@ const ALL_STATES = [
 
 let canvas;
 function mountCornerPage({ id, note, notes }) {
-  const pages = [['title', '1 · A title line'], ['stay', '2 · The seal stays'], ['shoulder', '3 · The desk’s shoulder']];
+  const pages = [['title', '1 · A title line'], ['stay', '2 · The seal stays (offered)'], ['shoulder', '3 · The desk’s shoulder (offered)']];
   const group = (attr, label, choices) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${choices.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
   document.body.insertAdjacentHTML('afterbegin', `
 <header class="xbar">
@@ -688,10 +689,12 @@ function fit() {
 
 mountCornerPage({
   id: 'shoulder',
-  note: 'The strip widens at its top into a shoulder of desk that holds the lights; the seal tucks under them.',
+  note: 'Offered with 2, as a setting. A strip as wide as the bands are tall, widening at its top into a shoulder that holds the lights.',
   notes: `
   <h2>3 · The desk's shoulder</h2>
-  <p>The strip stays 48px, but at its top it widens into a shoulder of desk just wide enough for macOS's lights: 88px, one band tall, its outer corner rounded by the layout's large radius (8px in Band, 14px in Slip). The lights sit wholly on the desk, as they do over the open sidebar, and the seal tucks into the strip under them. In full screen, and on Windows and Linux, there are no lights at the left, so there's no shoulder, and the seal rises to the strip's top.</p>
+  <p>The strip is as wide as the bands are tall (56px, <code>--band</code>), so its top is a square of desk beside the bands, and the seal sits in the middle of it as it sits in a band. On macOS, at its top it widens into a shoulder of desk just wide enough for the lights: 88px, one band tall, its outer corner rounded by the layout's large radius (8px in Band, 14px in Slip). The lights sit wholly on the desk, as they do over the open sidebar, and the seal tucks into the strip under them. In full screen, and on Windows and Linux, there are no lights at the left, so there's no shoulder, and the seal rises to the strip's top.</p>
+  <h2>Offered with 2</h2>
+  <p>Chosen on 2026-10-22: both 2 and 3, as a setting (Look → Appearance, "Shut sidebar": The seal alone, or A strip of desk). This is A strip of desk.</p>
   <h2>For</h2>
   <ul>
     <li>It keeps the decided pattern, a strip of desk with the seal, and mends only what's awkward: the lights on two surfaces, and the empty corner in full screen.</li>
@@ -701,10 +704,10 @@ mountCornerPage({
   <ul>
     <li>A new shape: an L of desk, the only one of its kind in the window, and a corner the panes don't otherwise have.</li>
     <li>On macOS the seal still sits a band below the lights, and moves up and down as the window goes full screen and back.</li>
-    <li>The list's band gives 40px more at its left while the sidebar's shut.</li>
+    <li>The strip is 8px wider than today's, and the list's band gives 32px more at its left, past the shoulder, while the sidebar's shut.</li>
   </ul>
   <h2>In the app</h2>
-  <p><code>sidebar.css</code> draws the shoulder on <code>.sidebar__strip</code> (a pseudo-element past the strip's edge, as wide as <code>--controls-left</code> plus a space) and moves the seal down only while there are lights. If <code>env(titlebar-area-x)</code> reads 0 in full screen (to be checked in Electron), <code>--controls-left</code> says so with no new code; if not, the main process tells the window on <code>enter-full-screen</code> and <code>leave-full-screen</code>. <code>list.css</code>'s keep-clear sum takes the shoulder's width.</p>
+  <p><code>sidebar.css</code> draws the shoulder on <code>.sidebar__strip</code> (a pseudo-element past the strip's edge, as wide as <code>--controls-left</code> plus a space); <code>STRIP</code> in <code>pane-state.ts</code> becomes 56, the band's height and moves the seal down only while there are lights. If <code>env(titlebar-area-x)</code> reads 0 in full screen (to be checked in Electron), <code>--controls-left</code> says so with no new code; if not, the main process tells the window on <code>enter-full-screen</code> and <code>leave-full-screen</code>. <code>list.css</code>'s keep-clear sum takes the shoulder's width.</p>
   <h2>Try</h2>
   <ul>
     <li>the seal: it shuts and opens the sidebar, as in the app</li>

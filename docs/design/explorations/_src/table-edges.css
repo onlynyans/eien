@@ -1,0 +1,27 @@
+/* 1 and 3 put controls on the table's edges: the margins round it count as the
+   table, so the pointer can reach them. With no hover (a phone), the table steps
+   in from the narrow margin while it's edited, to make room for the row's. */
+.tbl-wrap.has-edges { isolation: isolate; transition: margin var(--eien-calm) var(--eien-ease); }
+.tbl-wrap.has-edges::before { content: ''; position: absolute; inset: -40px -24px -16px -44px; z-index: -1; }
+.is-touch .tbl-wrap.has-edges.is-in { margin-left: 40px; }
+
+/* The + on a line between rows or columns (1 shows a faint dot there till the pointer comes). */
+.ins { position: absolute; translate: -50% -50%; appearance: none; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--eien-ink-soft); cursor: pointer; }
+.ins--col { width: 16px; height: 24px; }
+.ins--row { width: 24px; height: 16px; }
+.ins__dot, .ins__plus { grid-area: 1 / 1; transition: opacity var(--eien-quick) var(--eien-ease); }
+.ins__dot { width: 4px; height: 4px; border-radius: var(--eien-radius-dot); background: var(--eien-faded); opacity: 0; }
+.ins__plus {
+  display: grid; place-items: center; width: 18px; height: 18px; opacity: 0;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s);
+}
+.ins__plus svg { width: 12px; height: 12px; }
+.ins:is(:hover, :focus-visible, .is-near) .ins__plus { opacity: 1; }
+.ins:focus-visible { outline: none; }
+.ins:focus-visible .ins__plus { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 1px; }
+/* Where it goes: the drop line of your order, 2px ink-soft, across or down the table. */
+.ins__line { position: absolute; pointer-events: none; background: var(--eien-ink-soft); border-radius: var(--eien-radius-dot); opacity: 0; }
+.ins--col .ins__line { top: calc(100% + 6px); left: calc(50% - 1px); width: var(--eien-mark-w); height: var(--tbl-h); }
+.ins--row .ins__line { left: calc(100% + 6px); top: calc(50% - 1px); height: var(--eien-mark-w); width: var(--tbl-w); }
+.ins:is(:hover, :focus-visible) .ins__line { opacity: 1; }
+.ins[hidden] { display: none; }

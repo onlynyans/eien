@@ -1,6 +1,9 @@
 # The window's corner, in Band and Slip: three explorations
 
-**Not built yet; for the owner to choose (2026-10-22).**
+**Chosen on 2026-10-22: offer both 2 and 3, as a setting.** Not built yet.
+In Look → Appearance, "Shut sidebar": **The seal alone** (2) or **A strip
+of desk** (3), the strip as wide as the bands are tall. 1 stays here for
+reference.
 
 In A · Band and B · Slip, shutting the sidebar leaves a 48px strip of desk
 (`STRIP` in `src/ui/shell/pane-state.ts`) with the seal, which opens it again.
@@ -71,9 +74,12 @@ by side. The seal opens and shuts the sidebar, as in the app.
 ## 3 · The desk's shoulder
 
 - **What:**
-  - The strip stays 48px, but at its top it widens into a shoulder of desk
-    just wide enough for the lights: 88px, one band tall, its outer corner
-    the layout's large radius.
+  - The strip is as wide as the bands are tall (56px, `--band`; the owner's
+    change), so its top is a square of desk beside the bands, the seal in its
+    middle as in a band.
+  - On macOS, at its top it widens into a shoulder of desk just wide enough
+    for the lights: 88px, one band tall, its outer corner the layout's large
+    radius.
   - The seal tucks under the lights, in the strip.
   - With no lights (full screen, Windows, Linux) there's no shoulder, and
     the seal rises to the strip's top.
@@ -82,6 +88,7 @@ by side. The seal opens and shuts the sidebar, as in the app.
   - The fewest changes.
 - **Against:**
   - A new shape, an L of desk, the only one in the window.
+  - The strip is 8px wider than today's 48px.
   - On macOS the seal still sits a band below the lights, and moves up and
     down between a window and full screen.
 
@@ -94,7 +101,18 @@ by side. The seal opens and shuts the sidebar, as in the app.
 - **The seal keeps its role** in all three: it shows and hides the sidebar,
   named "Hide the sidebar" or "Show the sidebar", with `aria-expanded`.
 
-## Recommendation
+## Building both
+
+- A setting in `src/core/config/schema.ts`, beside the layout: "Shut
+  sidebar", The seal alone or A strip of desk, for A · Band and B · Slip (C's
+  strip holds the lights already).
+- The seal alone: `STRIP` is 0 and the seal stays in the top row (2's "In the
+  app").
+- A strip of desk: `STRIP` is the band's height, 56px, with the shoulder on
+  macOS (3's "In the app").
+- Both need the window to know it's full screen (above).
+
+## Recommendation (before the choice)
 
 **2 · The seal stays.** It is the simplest answer to both problems at once:
 the corner is always the lights and the seal, in one row, in every state and

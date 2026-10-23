@@ -3,15 +3,18 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Eien — Tables in Live: 3 · Menus</title>
+<title>Eien — Tables in Live: 3 · Menus, with 1’s +</title>
 <link rel="stylesheet" href="../fonts.css" />
 <style>
 /*@shared-css*/
 /*@include:table.css*/
+/*@include:table-edges.css*/
+/*@include:table-bar.css*/
 
-/* 3 · Menus: a grip on each row and column, as a list's rows have. Press it
-   for that row's or column's menu, drag it to move them; right-click a cell
-   for both. */
+/* 3 · Menus, as chosen: a grip on each row and column, as a list's rows have.
+   Press it for that row's or column's menu, drag it to move them; right-click
+   a cell for both. With 1's + on the lines between columns and rows, shown
+   only while the pointer is on a line; and 2's bar on a phone. */
 .grip {
   position: absolute; translate: -50% -50%; display: grid; place-items: center; padding: 0;
   appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none;
@@ -19,14 +22,16 @@
   transition: opacity var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease);
 }
 .grip--row { width: 20px; height: 26px; }
-.grip--col { width: 26px; height: 18px; }
+.grip--col { width: 32px; height: 20px; }
 .grip svg { width: 14px; height: 14px; }
 .grip:is(.is-shown, :hover, :focus-visible, [aria-expanded='true']) { opacity: 1; }
 @media (hover: hover) { .grip:hover { color: var(--eien-ink); background: var(--eien-hover); } }
 .grip[aria-expanded='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
 .grip[hidden] { display: none; }
-.tbl-wrap.is-dragging, .tbl-wrap.is-dragging .grip { cursor: grabbing; }
-.tbl-wrap.is-dragging .tbl { user-select: none; }
+/* While a row or column is carried: nothing selects, nothing scrolls, the + wait. */
+body.is-dragging, body.is-dragging * { cursor: grabbing; user-select: none; }
+.tbl-wrap.is-dragging .tbl-scroll { overflow: visible; }
+.tbl-wrap.is-dragging .ins { display: none; }
 .tbl .is-dragged { position: relative; z-index: 2; box-shadow: inset 0 0 0 var(--eien-hairline) var(--eien-rule-strong); }
 .tbl-wrap.is-dragging .tbl :is(th, td):not(.is-dragged) { opacity: 0.72; }
 /* The drop line, as your order's: 2px ink-soft, across or down the table. */
@@ -55,9 +60,20 @@
 .menu__dot { justify-self: end; width: 5px; height: 5px; margin-right: 4px; border-radius: var(--eien-radius-dot); background: var(--eien-ink); }
 .menu__rule { height: var(--eien-hairline); margin: var(--eien-space-1) var(--eien-space-2); background: var(--eien-rule-soft); }
 
-/* A phone: the grips at a finger's size; the menu is the phone's bottom sheet. */
-.is-touch .grip--row { width: 32px; height: 40px; }
-.is-touch .grip--col { width: 40px; height: 28px; }
+/* 1's +, lighter: no dots; it shows only while the pointer is on a line between
+   two columns or rows, or on the table's outer edges, with the line where the
+   new one goes. The row's + stands left of the grips, so the margin reaching
+   the table goes further left. */
+.ins__dot { display: none; }
+.ins.is-near .ins__line { opacity: 1; }
+.ins--col .ins__line { top: calc(50% + 14px); }
+.ins--row .ins__line { left: calc(50% + 40px); }
+.tbl-wrap.has-edges::before { left: -64px; }
+
+/* A phone: 2's bar above the keyboard; no grips or + to aim at. A long press
+   on a cell still opens its menu, as the phone's bottom sheet. */
+.is-touch .grip, .is-touch .ins { display: none; }
+.is-touch .tbl-wrap.has-edges.is-in { margin-left: 0; }
 .is-touch .pane > .menu {
   left: 0; right: 0; bottom: 0; top: auto; min-width: 0; padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-4);
   border-radius: var(--eien-radius-l) var(--eien-radius-l) 0 0; border-width: var(--eien-hairline) 0 0;
@@ -70,24 +86,29 @@
 <script>
 /*@shared-js*/
 /*@include:table.js*/
+/*@include:table-edges.js*/
+/*@include:table-bar.js*/
 
 mountTablePage({
   id: 'menus',
   name: 'the plan',
-  note: 'A grip on each row and column: press it for its menu, drag it to move. Right-click a cell for both.',
+  note: 'Chosen: a grip on each row and column (press for its menu, drag to move), a + on the line you point at, and 2’s bar on a phone.',
   notes: `
-  <h2>3 · A menu and a grip per row and column</h2>
+  <h2>3 · Menus, with 1's + (chosen)</h2>
   <p>A grip at each row's left and over each column, as a list's rows have, showing for the row and column under the pointer or the caret. Press a grip for that row's or column's menu, in the right-click menu's style (its name at the head, an icon, a word and a key per choice, removal last in carmine); drag it to move the row or column, with your order's drop line. Right-click a cell for both menus at once.</p>
+  <p>From 1, the +, lighter: no dots, nothing at rest. Point at a line between two columns or two rows, or at the table's outer edges, and a + comes at its end, with a line showing where the new column or row goes.</p>
+  <p>The formatting bar has the Table button: with the caret in a table it's pressed, and opens the caret's menus; elsewhere it makes a table.</p>
   <h2>Try</h2>
   <ul>
+    <li>point between two columns, or past the last one; then the +</li>
     <li>drag a row's grip up or down, or a column's sideways</li>
     <li>a column's menu: add, align (the dot is the column's now), move, remove</li>
-    <li>right-click a cell, or <kbd>${KEY('Shift-F10')}</kbd> in it</li>
+    <li>right-click a cell, <kbd>${KEY('Shift-F10')}</kbd> in it, or the formatting bar's Table button</li>
     <li><kbd>${KEY('Alt-↑')}</kbd> <kbd>${KEY('Alt-↓')}</kbd> in a cell move its row, as they move a line elsewhere in the editor</li>
   </ul>
   ${SHARED_KEYS()}
   <h2>On a phone</h2>
-  <p>The caret's row and column keep their grips, finger-sized. A tap on a grip, or a long press on a cell, opens the menu as the phone's bottom sheet; a long press on a grip and a drag moves the row (Show → Phone; right-click stands in for the long press).</p>`,
+  <p>2's bar: docked at the foot, above the keyboard, one row of 44px targets that scrolls sideways, there while the caret's in the table. No grips or + to aim at; a long press on a cell still opens its menus as the phone's bottom sheet, for moving and aligning (Show → Phone; right-click stands in for the long press).</p>`,
 });
 useEdges();
 
@@ -101,15 +122,28 @@ const drop = document.createElement('div');
 drop.className = 'drop';
 let built = '';
 let opener = null;
+let near = null;
+// A phone's way: 2's bar, docked above the keyboard.
+const tools = tableBar();
+// The formatting bar's Table button: in a table, the caret's menus; elsewhere it would make one.
+const fbar = formatBar(() => {
+  if (!inTable) { focusCell(1, 0); say('In the app, Table makes a new table here'); return; }
+  const cell = cellAt(here.r, here.c);
+  const b = cell.getBoundingClientRect();
+  cellMenu(here.r, here.c, cell, localOf(b.left + 8, b.bottom + 4));
+});
 
 function build() {
   const n = cols();
   let html = '';
+  for (let c = 0; c <= n; c++) html += insertHtml('col', c);
+  for (let at = 0; at <= T.rows.length; at++) html += insertHtml('row', at);
   for (let c = 0; c < n; c++) html += `<button class="grip grip--col" data-grip-col="${c}" aria-haspopup="menu" aria-expanded="false" aria-label="Column ${escHtml(colName(c))}: menu, or drag to move" data-tip="Column ${escHtml(colName(c))}: press for its menu, drag to move" data-tip-side="up">${icon('gripCol')}</button>`;
   for (let r = 1; r <= T.rows.length; r++) html += `<button class="grip grip--row" data-grip-row="${r}" aria-haspopup="menu" aria-expanded="false" aria-label="Row ${r}: menu, or drag to move" data-tip="Row ${r}: press for its menu, drag to move" data-tip-side="left">${icon('gripRow')}</button>`;
   layer.innerHTML = html;
   layer.append(drop);
   if (!isTouch()) layer.append(menu);
+  near = null;
 }
 
 function place() {
@@ -117,12 +151,21 @@ function place() {
   if (key !== built && !layer.contains(document.activeElement) && !dragging) { build(); built = key; }
   const g = geometry();
   const touch = isTouch();
+  layer.style.setProperty('--tbl-h', `${g.height}px`);
+  layer.style.setProperty('--tbl-w', `${g.right - g.left}px`);
+  const at = (el, x, y) => {
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.hidden = x < g.left - 1 || x > g.right + 1;
+  };
+  for (const el of layer.querySelectorAll('[data-ins-col]')) at(el, colLine(g, +el.dataset.insCol), g.top - 14);
+  for (const el of layer.querySelectorAll('[data-ins-row]')) {
+    el.style.left = `${g.left - 40}px`;
+    el.style.top = `${rowLine(g, +el.dataset.insRow)}px`;
+  }
   for (const el of layer.querySelectorAll('[data-grip-col]')) {
     const c = +el.dataset.gripCol;
-    const x = g.cols[c].x + g.cols[c].w / 2;
-    el.style.left = `${x}px`;
-    el.style.top = `${g.top - 14}px`;
-    el.hidden = x < g.left || x > g.right;
+    at(el, g.cols[c].x + g.cols[c].w / 2, g.top - 14);
     el.classList.toggle('is-shown', (!touch && hover.c === c) || (inTable && here.c === c));
   }
   for (const el of layer.querySelectorAll('[data-grip-row]')) {
@@ -133,9 +176,40 @@ function place() {
   }
   const home = touch ? pane : layer;
   if (menu.parentElement !== home) home.append(menu);
+  if (touch) {
+    if (tools.bar.parentElement !== pane) pane.append(tools.bar);
+    tools.sync();
+  } else tools.bar.remove();
+  fbar.querySelector('.fbar__table').setAttribute('aria-pressed', String(inTable));
 }
 Table.onDraw = place;
 Table.onMove = place;
+
+// The + shows only while the pointer is on its line: between two columns (or
+// at the table's sides), between two rows (or under the last); closer in the
+// margins, where it stands, so the pointer can reach it along its line.
+function setNear(next) {
+  if (near?.dir === next?.dir && near?.at === next?.at) return;
+  near = next;
+  for (const el of layer.querySelectorAll('.ins')) {
+    el.classList.toggle('is-near', !!near && el.dataset[near.dir === 'col' ? 'insCol' : 'insRow'] === String(near.at));
+  }
+}
+wrap.addEventListener('pointermove', (e) => {
+  if (dragging || isTouch() || e.target.closest('.ins')) return;
+  const g = geometry();
+  const p = localOf(e.clientX, e.clientY);
+  let best = null;
+  const consider = (dir, at, d, max) => { if (d <= max && (!best || d < best.d)) best = { dir, at, d }; };
+  if (p.y >= g.top - 26 && p.y <= g.top + g.height) {
+    for (let c = 0; c <= g.cols.length; c++) consider('col', c, Math.abs(p.x - colLine(g, c)), p.y < g.top ? 10 : 6);
+  }
+  if (p.x >= g.left - 52 && p.x <= g.right) {
+    for (let at = 0; at <= T.rows.length; at++) consider('row', at, Math.abs(p.y - rowLine(g, at)), p.x < g.left ? 10 : 5);
+  }
+  setNear(best);
+});
+wrap.addEventListener('pointerleave', () => setNear(null));
 
 // The menus: a row's, a column's, or a cell's (both).
 function rowItems(r) {
@@ -230,6 +304,8 @@ table.addEventListener('contextmenu', (e) => {
   cellMenu(r, c, cell, localOf(e.clientX, e.clientY));
 });
 Table.onKey = (e) => {
+  // On a phone, Alt-F10 reaches 2's bar, as on page 2.
+  if (e.key === 'F10' && e.altKey && isTouch()) { e.preventDefault(); tools.focus(); return true; }
   if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') {
     e.preventDefault();
     const cell = cellAt(here.r, here.c);
@@ -247,27 +323,32 @@ Table.onKey = (e) => {
   return false;
 };
 
-// A grip: pressed, its menu; dragged, the row or column moves, with the drop line where it would land.
+// A grip: pressed, its menu; dragged, the row or column moves, with the drop
+// line where it will land. The drag listens on the whole document and ends
+// however the press ends (released, the capture lost, or the browser taking
+// it), so a drop is never missed; only Esc puts it back.
 let dragging = null;
 layer.addEventListener('pointerdown', (e) => {
   const grip = e.target.closest('.grip');
   if (!grip || e.button !== 0) return;
   e.preventDefault();
-  grip.setPointerCapture(e.pointerId);
+  try { grip.setPointerCapture(e.pointerId); } catch {}
   const kind = grip.dataset.gripRow ? 'row' : 'col';
   const from = +(grip.dataset.gripRow ?? grip.dataset.gripCol);
-  dragging = { kind, from, grip, start: { x: e.clientX, y: e.clientY }, moved: false, to: null, g: geometry() };
+  dragging = { kind, from, grip, id: e.pointerId, start: { x: e.clientX, y: e.clientY }, moved: false, to: kind === 'row' ? from - 1 : from, g: geometry() };
 });
-layer.addEventListener('pointermove', (e) => {
+function dragTo(e) {
   const d = dragging;
-  if (!d) return;
   const dx = e.clientX - d.start.x;
   const dy = e.clientY - d.start.y;
   if (!d.moved && Math.hypot(dx, dy) < 4) return;
   if (!d.moved) {
     d.moved = true;
     closeMenu(false);
+    setNear(null);
     wrap.classList.add('is-dragging');
+    document.body.classList.add('is-dragging');
+    getSelection().removeAllRanges();
     d.cells = d.kind === 'row' ? [...table.querySelectorAll(`tr[data-r="${d.from}"] > *`)] : [...table.querySelectorAll(`[data-c="${d.from}"]:is(th, td)`)];
     for (const el of d.cells) el.classList.add('is-dragged');
   }
@@ -279,41 +360,56 @@ layer.addEventListener('pointermove', (e) => {
     d.to = rest.filter((row) => row.y + row.h / 2 < p.y).length;
     const y = d.to < rest.length ? rest[d.to].y : rest.at(-1).y + rest.at(-1).h;
     Object.assign(drop.style, { left: `${g.left}px`, width: `${g.right - g.left}px`, top: `${y - 1}px`, height: '2px' });
-    drop.classList.toggle('is-on', d.to + 1 !== d.from);
   } else {
     const rest = g.cols.filter((_, i) => i !== d.from);
     d.to = rest.filter((col) => col.x + col.w / 2 < p.x).length;
     const x = d.to < rest.length ? rest[d.to].x : rest.at(-1).x + rest.at(-1).w;
     Object.assign(drop.style, { left: `${x - 1}px`, width: '2px', top: `${g.top}px`, height: `${g.height}px` });
-    drop.classList.toggle('is-on', d.to !== d.from);
   }
-});
-function endDrag(e, cancel) {
+  drop.classList.add('is-on');
+}
+/** Ends a drag: `how` is 'up' (released), 'lost' (the capture or the press taken away) or 'esc'. */
+function endDrag(how) {
   const d = dragging;
   if (!d) return;
   dragging = null;
+  try { d.grip.releasePointerCapture(d.id); } catch {}
   drop.classList.remove('is-on');
   wrap.classList.remove('is-dragging');
+  document.body.classList.remove('is-dragging');
   for (const el of d.cells ?? []) { el.classList.remove('is-dragged'); el.style.translate = ''; }
-  if (cancel) return;
+  if (how === 'esc') return toCell();
   if (!d.moved) {
+    if (how !== 'up') return;
     const b = d.grip.getBoundingClientRect();
     const at = localOf(d.kind === 'row' ? b.right + 4 : b.left, b.bottom + 4);
     (d.kind === 'row' ? rowMenu : colMenu)(d.from, d.grip, at);
-  } else if (d.kind === 'row') ops.moveRow(d.from, d.to);
-  else ops.moveCol(d.from, d.to);
+  } else if ((d.kind === 'row' ? ops.moveRow(d.from, d.to) : ops.moveCol(d.from, d.to)) === false) toCell();
 }
-layer.addEventListener('pointerup', (e) => endDrag(e, false));
-layer.addEventListener('pointercancel', (e) => endDrag(e, true));
-// The keyboard opens a grip's menu with Enter or Space, as any button.
+const ours = (e) => dragging && e.pointerId === dragging.id;
+document.addEventListener('pointermove', (e) => { if (ours(e)) dragTo(e); });
+document.addEventListener('pointerup', (e) => { if (ours(e)) endDrag('up'); });
+document.addEventListener('pointercancel', (e) => { if (ours(e)) endDrag('lost'); });
+layer.addEventListener('lostpointercapture', (e) => { if (ours(e)) endDrag('lost'); });
+document.addEventListener('dragstart', (e) => { if (dragging) e.preventDefault(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dragging) { e.preventDefault(); endDrag('esc'); } });
+
+// A +: the pointer's press keeps the caret where it is.
+layer.addEventListener('mousedown', (e) => { if (e.target.closest('.ins')) e.preventDefault(); });
 layer.addEventListener('click', (e) => {
+  const ins = e.target.closest('.ins');
+  if (ins) {
+    if (ins.dataset.insCol) ops.insertCol(+ins.dataset.insCol);
+    else ops.insertRow(+ins.dataset.insRow, 0);
+    return;
+  }
+  // The keyboard opens a grip's menu with Enter or Space, as any button.
   const grip = e.target.closest('.grip');
   if (!grip || e.detail !== 0) return;
   const b = grip.getBoundingClientRect();
   if (grip.dataset.gripRow) rowMenu(+grip.dataset.gripRow, grip, localOf(b.right + 4, b.top));
   else colMenu(+grip.dataset.gripCol, grip, localOf(b.left, b.bottom + 4));
 });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dragging) endDrag(e, true); });
 
 requestAnimationFrame(place);
 </script>
