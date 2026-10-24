@@ -191,6 +191,7 @@
   --eien-radius-s: 2px;
   --eien-radius-m: 4px;
   --eien-radius-l: 8px;
+  --eien-radius-dot: 999px; /* fully round, whatever its size: a dot, a pill, a phone's slip */
   /* Icons (ui/icons.ts): drawn on a 16-unit grid, stroked at a hairline's weight. */
   --eien-icon: 16px;
   --eien-icon-stroke: 1.25;

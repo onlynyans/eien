@@ -15,6 +15,7 @@ import { focusList } from './commands';
 import { exportMenu } from './menu-items';
 import type { PageParts } from './page-parts';
 import type { Pages } from './pages';
+import { phoneOther } from './phone-other';
 
 export interface PhoneViewOf {
   readonly shell: HTMLElement;
@@ -23,6 +24,8 @@ export interface PhoneViewOf {
   readonly settings: SettingsState;
   readonly sidebar: Sidebar;
   readonly pages: Pages;
+  /** Whether a note is still in the vault (the other note, to go back to). */
+  has(path: string): boolean;
   parts(): PageParts;
   /** The pane shown changed, or the window became a phone's or stopped being one. */
   changed(): void;
@@ -30,6 +33,8 @@ export interface PhoneViewOf {
 
 export interface PhoneView {
   readonly stack: PhoneStack;
+  /** The window drawn: the back word named anew, and the other note's slip as it is now. */
+  drawn(): void;
   /** The system's back: a menu closes, else one pane back; false when there was nothing to do. */
   back(): boolean;
   /** The page's ⋯ menu, under `opener`. */
@@ -78,6 +83,15 @@ export function phoneView(of: PhoneViewOf): PhoneView {
     lost: () => (stack.phone ? focusPane(stack.shown ?? 'list') : of.pages.active.page.focus()),
   });
   of.shell.prepend(stack.bar);
+  // The note you came from, a tap away at the bar's right (./phone-other.ts).
+  const other = phoneOther({
+    pages: of.pages,
+    has: of.has,
+    onPage: () => stack.phone && stack.shown === 'page',
+    // Where it was left, then the window drawn (the panes laid out, which draws them).
+    open: (place) => of.pages.open(place.path, false, place).then(of.changed),
+  });
+  stack.bar.append(other.element);
   /** What lies over the page closes before the page is left: Compare, the cards, the versions. */
   const closeOver = (): boolean => {
     if (stack.shown !== 'page') return false;
@@ -91,6 +105,10 @@ export function phoneView(of: PhoneViewOf): PhoneView {
   };
   return {
     stack,
+    drawn() {
+      stack.rename();
+      other.sync();
+    },
     back: () => closeMenu() || pressEsc() || closeOver() || stack.back(),
     more,
   };

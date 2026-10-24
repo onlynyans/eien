@@ -8,6 +8,7 @@ import { ICONS } from '../icons';
 import { COMMANDS, type CommandId, commandOf, LAYOUTS, onDesktopIn } from './commands';
 import { idsIn } from './layout-spec';
 import { LAYOUT_SPECS } from './layouts';
+import { SPLIT_SPECS, type SplitMode, splitHosts } from './splits';
 
 const sorted = (ids: readonly string[]) => [...ids].sort();
 const desktopIds = (layout: (typeof LAYOUTS)[number]) =>
@@ -27,16 +28,25 @@ describe('the commands', () => {
 
   it('each run a menu command, or are among the few the window runs itself', () => {
     const local = COMMANDS.filter((command) => !('sends' in command)).map((command) => command.id);
-    expect(sorted(local)).toEqual(['format.heading', 'more', 'panes', 'scheme', 'strip']);
+    expect(sorted(local)).toEqual([
+      'format.heading',
+      'more',
+      'page.close',
+      'page.more',
+      'panes',
+      'scheme',
+      'strip',
+    ]);
   });
 
-  it('are each drawn in some layout', () => {
-    const drawn = new Set(
-      LAYOUTS.flatMap((layout) => [
+  it('are each drawn in some layout, or by some split', () => {
+    const drawn = new Set([
+      ...LAYOUTS.flatMap((layout) => [
         ...desktopIds(layout),
         ...idsIn(LAYOUT_SPECS[layout].phone.items),
       ]),
-    );
+      ...Object.values(SPLIT_SPECS).flatMap((split) => [...split.own.items, ...split.tools]),
+    ]);
     expect(sorted([...drawn])).toEqual(sorted(COMMANDS.map((command) => command.id)));
   });
 });
@@ -44,9 +54,8 @@ describe('the commands', () => {
 describe.each(LAYOUTS)('the %s layout', (layout) => {
   const spec = LAYOUT_SPECS[layout];
 
-  it('puts the split’s pager, folded, before one of its own hosts in that host’s slot', () => {
-    const before = spec.desktop.find((host) => host.name === spec.pager.before);
-    expect(before?.slot).toBe(spec.pager.slot);
+  it('names one of its own hosts as the page’s tools (where a split adds to, and its pager goes)', () => {
+    expect(spec.desktop.map((host) => host.name)).toContain(spec.tools);
   });
 
   it('draws every command its desktop offers in exactly one host', () => {
@@ -115,7 +124,7 @@ describe('switching layouts', () => {
   it('loses no command: each layout offers the same ones, but the strip only one that hides', () => {
     const offered = (layout: (typeof LAYOUTS)[number]) => new Set(desktopIds(layout));
     for (const command of COMMANDS) {
-      if (commandOf(command.id).phone) continue;
+      if (commandOf(command.id).phone || commandOf(command.id).split) continue;
       for (const layout of LAYOUTS) {
         const expected = command.id !== 'strip' || layout !== 'runhead';
         expect(offered(layout).has(command.id), `${layout}: ${command.id}`).toBe(expected);
@@ -131,3 +140,41 @@ describe('switching layouts', () => {
     expect(slotOf('slip', 'pane.list')).toBe('listChevron');
   });
 });
+
+const MODES = Object.keys(SPLIT_SPECS) as SplitMode[];
+
+describe.each(LAYOUTS.flatMap((layout) => MODES.map((mode) => [layout, mode] as const)))(
+  'the %s layout, split as %s',
+  (layout, mode) => {
+    const split = SPLIT_SPECS[mode];
+    const hosts = splitHosts(LAYOUT_SPECS[layout], split);
+    const ids = hosts.flatMap((host) => idsIn(host.items));
+
+    it('draws every command once: in the layout’s hosts, or on each page’s own', () => {
+      const offered = COMMANDS.filter((command) => onDesktopIn(command, layout)).map(
+        (command) => command.id as CommandId,
+      );
+      const kept = offered.filter((id) => !split.own.items.includes(id));
+      expect(sorted(ids)).toEqual(sorted([...kept, ...split.tools]));
+      // What a page holds for itself was the layout's, or is the split's own (a page's ×).
+      for (const id of split.own.items)
+        expect(commandOf(id).split || offered.includes(id), id).toBeTruthy();
+    });
+
+    it('leaves no rule first, last, or beside another in a host', () => {
+      for (const host of hosts) {
+        const items = host.items;
+        expect(items[0], host.name).not.toBe('|');
+        expect(items.at(-1), host.name).not.toBe('|');
+        expect(
+          items.some((item, at) => item === '|' && items[at + 1] === '|'),
+          host.name,
+        ).toBe(false);
+      }
+    });
+
+    it('draws nothing a page holds for itself in the layout’s hosts', () => {
+      expect(ids.filter((id) => split.own.items.includes(id))).toEqual([]);
+    });
+  },
+);

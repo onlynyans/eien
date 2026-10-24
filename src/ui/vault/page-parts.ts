@@ -3,7 +3,7 @@
 // the exports (./exports.ts) and outline cards (./outline.ts), each acting on
 // the active page — made together, kept in step together, stopped together.
 
-import type { Bridge } from '../../platform/bridge';
+import type { OutBridge, VaultBridge } from '../../platform/bridge';
 import type { Counters } from '../counters/counters';
 import type { Written } from '../page/word-count';
 import type { SettingsState } from '../settings/settings-state';
@@ -19,7 +19,8 @@ import type { VaultState } from './vault-state';
 export interface PagePartsOf {
   readonly pages: Pages;
   readonly state: VaultState;
-  readonly bridge: Bridge;
+  readonly vault: VaultBridge;
+  readonly out: OutBridge;
   readonly settings: SettingsState;
   readonly nav: Navigation;
   readonly organizer: Organizer;
@@ -65,14 +66,14 @@ export function pageParts(of: PagePartsOf): PageParts {
   });
   return {
     counters: counts.counters,
-    htmlCopy: htmlCopy({ active, out: of.bridge.out, settings, tell }),
+    htmlCopy: htmlCopy({ active, out: of.out, settings, tell }),
     exports: exportsOf({
       state,
       nav: of.nav,
       openPath: () => pages.active.note.path,
       openText: (path) => pages.session(path)?.text ?? null,
-      vault: of.bridge.vault,
-      out: of.bridge.out,
+      vault: of.vault,
+      out: of.out,
       settings,
       tell,
     }),

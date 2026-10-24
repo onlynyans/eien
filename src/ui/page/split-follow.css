@@ -1,0 +1,56 @@
+/* 6 · Tools that follow (../chrome/splits.ts): the note list steps aside
+   (../shell/panes.ts), and one set of the pane's furniture, its bar (A's
+   band, B's slip), its formatting bar and its colophon, stands over the page
+   you're in. It's placed there by the pane's grid, which takes the pages'
+   columns, and never moved in the DOM, so the keyboard stays where it is.
+   The other page is paper on the blotter, its × on hover. Shared parts:
+   ./split.css. */
+
+.page__main[data-follow-side] {
+  grid-template-columns:
+    calc((100% - var(--split-gap)) * var(--split-share))
+    var(--split-gap)
+    minmax(0, 1fr);
+}
+.page__main[data-follow-side] > .page__pages,
+.page__main[data-follow-side] > .table-bar,
+.page__main[data-follow-side] > .page__phone {
+  grid-column: 1 / -1;
+}
+.page__main[data-follow-side="0"] > :is(.page__bar, .page__format, .colophon) {
+  grid-column: 1;
+}
+.page__main[data-follow-side="1"] > :is(.page__bar, .page__format, .colophon) {
+  grid-column: 3;
+}
+/* Over the left page, the bar is clear of the window's edge and of the system's controls there. */
+.page__main[data-follow-side="0"] > .page__bar {
+  padding-right: var(--eien-space-3);
+}
+:root[data-split="follow"] .page__pages[data-two] .sheet {
+  position: relative;
+}
+:root[data-split="follow"] .page__pages[data-two] .sheet__close {
+  display: inline-grid;
+}
+
+/* Moving to the other page, the furniture moves across with it, and fades in there. */
+@keyframes furniture-arrives {
+  from {
+    opacity: 0;
+  }
+}
+.page__main.is-arriving > :is(.page__bar, .page__format, .colophon) {
+  animation: furniture-arrives var(--eien-calm) var(--eien-ease);
+}
+
+/* Too narrow for two: the colophon says the other page waits, and how to make room. */
+.colophon__waits {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--eien-ink-soft);
+  text-overflow: ellipsis;
+}
+.colophon__waits:empty {
+  display: none;
+}

@@ -32,6 +32,7 @@ export const ICONS = {
   sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
   search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
   close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  copy: '<path d="M5.5 5.5h8v8h-8z"/><path d="M10.5 5.5v-3h-8v8h3"/>',
   sort: '<path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3"/>',
   strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
   format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',

@@ -239,9 +239,45 @@ closes the active page instead (see Split).
 
 ### Split
 
-Two notes side by side in one window, never top and bottom: **Two sheets**,
-two papers on one blotter, with one set of the layout's tools, one
-formatting bar and one colophon, all for the active page.
+Two notes side by side in one window, never top and bottom, laid out as a
+device setting says (`appearance.split`, Settings → Look → Appearance):
+
+- **Two sheets** (the default): two papers on one blotter, with one set of
+  the layout's tools, one formatting bar and one colophon, all for the
+  active page.
+- **Facing pages**: one sheet opened like a book, the gutter between its
+  pages the divider. The book's tools stay where the layout puts them (with
+  Swap the pages among them); each note's own (Compare, Seal, Versions, Copy
+  as HTML and its ×) are in its folio at its page's foot, beside its words,
+  save and last seal, mirrored on the right page as page numbers are, and
+  showing while the pointer is over that page. The colophon keeps the
+  book's figures and today's. In the Running head, the tags go to each
+  page's own head. The active page carries a mark, a setting of its own
+  (`appearance.facingMark`): a ribbon over its top edge, its outer corner
+  turned down, or a tab at its outer edge, each arriving with a short motion
+  (none with reduced motion).
+- **Companion**: the page as it always is, every one of its tools acting on
+  it (the formatting bar on whichever words the caret is in); the second
+  note a companion at the window's right edge, 380px (at least 300, the page
+  beside it at least 400), its words at row size. It has its own head (its
+  name; Make it the page, ⇄; its ⋯ with its views, Seal, Versions, Compare,
+  Copy as HTML and Open in New Window; its ×) and foot (its words, save and
+  last seal); the colophon stays the page's. The one you aren't writing in
+  sits back a step, its paper the band's tone. With less than 700px of page
+  pane, the companion goes under the page, the divider lying across.
+- **Tools that follow**: the note list steps aside while split (never saved
+  as shut; Toggle Note List, ⇧⌘\, or its chevron brings it back), the tree
+  listing the notes as with two panes, and the two pages take its room. One
+  set of the page's furniture, A's band or B's slip, the formatting bar and
+  the colophon, stands over the page you're in, placed there by the pane's
+  grid and never moved, so the keyboard stays where it is; moving to the
+  other page, it fades in there (no motion with reduced motion). The
+  Running head's tools stay in it. The other page is paper on the blotter,
+  its × on hover. A split asked for without room for two 360px pages beside
+  the sidebar is refused, and Eien says why; a split window narrowed past
+  it shows the page you're in, and the colophon says the other waits.
+
+What follows holds for all four.
 
 - **Opening:** a row's Ctrl-click (⌘ on a Mac) or Ctrl+Enter; Open to the
   Side in its menu; a row dragged onto the page pane (past 60% of a lone
@@ -261,9 +297,11 @@ formatting bar and one colophon, all for the active page.
   them. Neither page is ever narrower than 360px; where it stands is
   remembered on this device. Which notes are split isn't remembered across a
   restart.
-- **Narrow:** below two pages' width, the two fold into one, the active
-  page, and a pager with the page's tools names both. Shutting a pane
-  unfolds them.
+- **Narrow:** below two pages' width, Two sheets fold into one, the active
+  page, and a pager with the page's tools names both; Facing pages' book
+  closes to the active page, the other page's edge beside it with its name,
+  a click (or ⌘3) turning to it; a companion goes under the page; with Tools
+  that follow, the other page waits. Shutting a pane opens them again.
 - **One note on both pages** is one document: one undo history, one save,
   its words counted once (§3).
 - **The phone** shows one page: no split, and its menus offer none.
@@ -1381,6 +1419,11 @@ Compare or Restore finishes lands on a note opened meanwhile.
   - It opens on the notes. Choosing a folder or tag shows its notes; opening
     a note shows the page. A bar above the pane goes back, naming where
     ("‹ Fic", "‹ Library"); leaving the page closes what lay over it.
+  - No split and no New Window: the phone shows one page, and its menus
+    offer neither. Instead, with the page in sight, the bar keeps the note
+    you came from a tap away at its right (⇄ and its name): a tap goes back
+    to it where you left it (its caret and how far it was scrolled), and the
+    one you were in becomes the other note.
     Android's back gesture first closes a menu or the settings, then does
     what Esc does where the keyboard is (a rename being typed stops, keeping
     nothing), then closes what lies over the page (Compare gives the draft

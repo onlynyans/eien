@@ -1,0 +1,227 @@
+/* 4 · Facing pages (../chrome/splits.ts): one sheet opened like a book, the
+   gutter its divider; each page a leaf with its folio; the active page
+   marked as appearance.facingMark says; too narrow, the book closed to one
+   page with the other's edge beside it. Shared parts: ./split.css. */
+
+/* One sheet, opened like a book, on the blotter: the pages are its leaves. */
+:root[data-split="facing"] .page__pages[data-two] {
+  --split-gap: var(--eien-space-6);
+  margin: var(--eien-page-gutter);
+  background: var(--eien-paper);
+  border: var(--eien-sheet-edge);
+  box-shadow: var(--eien-sheet-lift);
+}
+:root[data-split="facing"] .page__pages[data-two] .page__leaf {
+  --leaf-x: clamp(var(--eien-space-4), 7%, var(--eien-space-7));
+}
+:root[data-split="facing"] .page__pages[data-two] .page__scroll {
+  padding: 0;
+}
+:root[data-split="facing"] .page__pages[data-two] .sheet {
+  --pad-x: var(--leaf-x);
+  width: 100%;
+  padding-top: var(--eien-space-5);
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+/* The gutter, the fold down the middle of the sheet: a soft hairline; it's the divider. */
+:root[data-split="facing"] .divider::after {
+  background: var(--eien-rule-soft);
+}
+:root[data-split="facing"] .divider__swap {
+  display: none; /* ⇄ is the book's tool, at the top */
+}
+/* The folio: a note's own line at its page's foot, its figures outermost, its tools by the
+   gutter, mirrored on the right page as page numbers are; its tools under the pointer. */
+:root[data-split="facing"] .page__pages[data-two] .page__folio {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-3);
+  height: var(--status-h);
+  min-width: 0;
+  padding: 0 var(--leaf-x);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+  text-transform: uppercase;
+  letter-spacing: var(--eien-track-label);
+  white-space: nowrap;
+}
+:root[data-split="facing"] .page__pages[data-two] > .page__leaf[data-side="1"] .page__folio {
+  flex-direction: row-reverse;
+}
+.page__figures {
+  display: flex;
+  gap: var(--eien-space-3);
+  min-width: 0;
+  overflow: hidden;
+}
+.page__tools {
+  margin-inline-start: auto;
+  opacity: 0;
+  transition: opacity var(--eien-calm) var(--eien-ease);
+}
+.page__leaf:hover .page__tools,
+.page__tools:focus-within {
+  opacity: 1;
+}
+.page__pages > .page__leaf[data-side="1"] .page__tools {
+  margin-inline: 0 auto;
+}
+@media (hover: none) {
+  .page__tools {
+    opacity: 1;
+  }
+}
+
+/* The mark on the page you're writing in (data-facing-mark): none of them the seal's
+   colour, each arriving with its own short motion (none with reduced motion, ../theme). */
+.page__mark {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+.page__mark svg {
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* 1 · The ribbon: the book's silk marker over the sheet's top edge, its end forked. */
+:root[data-facing-mark="ribbon"] .page__mark {
+  top: calc(var(--eien-hairline) * -1);
+  left: calc((var(--leaf-x) - var(--eien-space-2)) / 2);
+  width: var(--eien-space-2);
+  height: var(--eien-space-6);
+  background: var(--eien-ink-soft);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+  animation: mark-ribbon var(--eien-calm) var(--eien-ease);
+}
+@keyframes mark-ribbon {
+  from {
+    clip-path: polygon(0 0, 100% 0, 100% 0, 50% 0, 0 0);
+  }
+}
+/* 2 · A dog-ear: the outer top corner turned down, the flap the paper's back. No ink. */
+:root[data-facing-mark="dogear"] .page__mark {
+  top: calc(var(--eien-hairline) * -1);
+  left: calc(var(--eien-hairline) * -1);
+  width: var(--eien-space-5);
+  height: var(--eien-space-5);
+}
+:root[data-facing-mark="dogear"] .page__mark svg {
+  display: block;
+}
+.page__mark-gone {
+  fill: var(--eien-page-ground);
+}
+.page__mark-flap {
+  fill: var(--eien-band);
+  stroke: var(--eien-rule-strong);
+  stroke-width: var(--eien-hairline);
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+:root[data-facing-mark="dogear"] .page__mark polygon {
+  transform-origin: 0 0;
+  animation: mark-dogear var(--eien-calm) var(--eien-ease);
+}
+@keyframes mark-dogear {
+  from {
+    transform: scale(0);
+  }
+}
+/* 3 · An edge tab: an index tab standing out from the page's outer edge, near its head. */
+:root[data-facing-mark="tab"] .page__mark {
+  top: var(--eien-space-6);
+  left: calc((var(--eien-space-1) + 2 * var(--eien-hairline)) * -1);
+  width: calc(var(--eien-space-1) + var(--eien-hairline));
+  height: var(--eien-space-7);
+  background: var(--eien-ink-soft);
+  border-radius: var(--eien-radius-s) 0 0 var(--eien-radius-s);
+  animation: mark-tab var(--eien-calm) var(--eien-ease);
+}
+@keyframes mark-tab {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+@keyframes mark-tab-right {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+/* The right page's mark is at its outer edge, the right. */
+:root[data-facing-mark="ribbon"] .page__pages > .page__leaf[data-side="1"] .page__mark {
+  left: auto;
+  right: calc((var(--leaf-x) - var(--eien-space-2)) / 2);
+}
+:root[data-facing-mark="dogear"] .page__pages > .page__leaf[data-side="1"] .page__mark {
+  left: auto;
+  right: calc(var(--eien-hairline) * -1);
+  scale: -1 1; /* the right page's outer corner is its right */
+}
+:root[data-facing-mark="tab"] .page__pages > .page__leaf[data-side="1"] .page__mark {
+  left: auto;
+  right: calc((var(--eien-space-1) + 2 * var(--eien-hairline)) * -1);
+  border-radius: 0 var(--eien-radius-s) var(--eien-radius-s) 0;
+  animation-name: mark-tab-right;
+}
+
+/* Closed to one page: the facing page's edge stays by the gutter, its name down it. */
+.page__edge {
+  display: none;
+}
+.page__pages[data-narrow="close"] {
+  grid-template-columns: minmax(0, 1fr) var(--split-gap);
+}
+.page__pages[data-narrow="close"][data-active-side="1"] {
+  grid-template-columns: var(--split-gap) minmax(0, 1fr);
+}
+.page__pages[data-narrow="close"] > .page__edge {
+  appearance: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  grid-row: 1;
+  grid-column: 2;
+  min-width: 0;
+  padding: var(--eien-space-4) 0;
+  border: 0;
+  border-left: var(--eien-hairline) solid var(--eien-rule-soft);
+  background: none;
+  color: var(--eien-pencil);
+  cursor: pointer;
+}
+.page__pages[data-narrow="close"][data-active-side="1"] > .page__edge {
+  grid-column: 1;
+  border-left: 0;
+  border-right: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.page__pages[data-narrow="close"] > .page__leaf[data-active] {
+  grid-row: 1;
+  grid-column: 1;
+}
+.page__pages[data-narrow="close"][data-active-side="1"] > .page__leaf[data-active] {
+  grid-column: 2;
+}
+.page__edge-name {
+  max-height: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+}
+.page__pages[data-active-side="1"] > .page__edge .page__edge-name {
+  rotate: 180deg;
+}
+@media (hover: hover) {
+  .page__edge:hover {
+    background: var(--eien-hover);
+    color: var(--eien-ink-soft);
+  }
+}
+.page__edge:focus-visible {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}

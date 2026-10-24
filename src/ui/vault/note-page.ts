@@ -18,7 +18,8 @@ export interface NotePageParts {
   note(): OpenNote;
   readonly state: VaultState;
   readonly organizer: Organizer;
-  openNote(path: string): void;
+  /** Open the note at `path` on this page's pane: done once it shows. */
+  openNote(path: string): Promise<void>;
   /** Run a file operation, then read the vault again (one at a time). */
   act(operation: () => Promise<unknown>): void;
   /** Where images dropped or pasted into the note are written (./note-images.ts). */
@@ -36,7 +37,7 @@ export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
         window.open(target.value); // the main process opens it in the browser
       else {
         const path = parts.state.findByTitle(target.value);
-        if (path) parts.openNote(path);
+        if (path) void parts.openNote(path);
       }
     },
     images: (files, at) => {

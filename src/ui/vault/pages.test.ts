@@ -39,7 +39,17 @@ describe('the pages, with one page', () => {
     const parts = [...(area.querySelector('.colophon')?.children ?? [])].map((part) =>
       part.className.replace(/^colophon__/, ''),
     );
-    expect(parts).toEqual(['tags', 'words', 'state', 'counters', 'seal', 'zoom', 'news', 'said']);
+    expect(parts).toEqual([
+      'tags',
+      'words',
+      'state',
+      'counters',
+      'seal',
+      'zoom',
+      'news',
+      'waits', // empty, and out of sight, unless a page waits (Tools that follow)
+      'said',
+    ]);
     // Beside the pane's parts, what floats over the page: its selection bar, kept.
     expect(area.querySelectorAll('.selection-bar')).toHaveLength(1);
   });
@@ -60,7 +70,7 @@ describe('the pages, with one page', () => {
     typeAtEnd(pages, ' The gate held.');
     await pages.flush();
     expect((await storage.read('Snow.md'))?.text).toBe('Snow. The gate held.');
-    expect(wrote).toEqual([3]);
+    expect(wrote()).toEqual([3]);
   });
 
   it('shows a note afresh when it’s opened again on its page, as when another is', async () => {

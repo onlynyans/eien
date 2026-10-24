@@ -93,6 +93,33 @@ export const SETTINGS = [
     default: 'band',
   },
   {
+    key: 'appearance.split',
+    label: 'Split',
+    description:
+      'How two notes side by side are laid out. Two sheets: two pages on one desk, one set of tools. Facing pages: one sheet opened like a book, each note’s own tools at its page’s foot. Companion: the second note beside the page, narrower, with its own few tools. Tools that follow: the note list steps aside, and the page’s tools stand over the page you’re in.',
+    scope: 'device',
+    group: 'Appearance',
+    type: 'choice',
+    choices: {
+      sheets: 'Two sheets',
+      facing: 'Facing pages',
+      companion: 'Companion',
+      follow: 'Tools that follow',
+    },
+    default: 'sheets',
+  },
+  {
+    key: 'appearance.facingMark',
+    label: 'Facing pages’ mark',
+    description:
+      'What marks the page you’re writing in, with Facing pages: a ribbon over its top edge, its corner turned down, or a tab at its outer edge.',
+    scope: 'device',
+    group: 'Appearance',
+    type: 'choice',
+    choices: { ribbon: 'Ribbon', dogear: 'Dog-ear', tab: 'Edge tab' },
+    default: 'ribbon',
+  },
+  {
     key: 'appearance.shutSidebar',
     label: 'Shut sidebar',
     description:

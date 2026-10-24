@@ -4,19 +4,28 @@
 // commands, the pane's tools and the window-wide parts (./page-parts.ts) act
 // on the active page.
 
+import type { OutBridge } from '../../platform/bridge';
+import { SPLIT_SPECS, type SplitSpec } from '../chrome/splits';
 import type { ShownNotes } from '../list/shown-notes';
 import type { NoteSession } from '../notes/note-session';
 import { PagePane } from '../page/page-pane';
+import type { Written } from '../page/word-count';
 import type { SettingsState } from '../settings/settings-state';
 import { sealTargetOf } from '../versions/seal-target';
+import type { Navigation } from './navigation';
+import type { NotePlace } from './open-note';
 import { OpenNotes } from './open-notes';
 import type { OrganizeContext } from './organize';
+import { type PageParts, pageParts } from './page-parts';
 import { closeSide, followSettings, makeSide, type Side, type SideOf } from './page-side';
 
 export type { Side } from './page-side';
 
-export interface PagesOf extends SideOf {
+export interface PagesOf extends Omit<SideOf, 'wrote' | 'counted'> {
   readonly settings: SettingsState;
+  /** Where Copy as HTML and the exports go. */
+  readonly out: OutBridge;
+  readonly nav: Navigation;
   /** A note changed under the window (its words kept as a copy): read the vault again. */
   refresh(): void;
   /** The pages changed (one opened beside, closed, swapped, another made active): the window draws them. */
@@ -27,6 +36,8 @@ const inside = (path: string, folder: string) => path === folder || path.startsW
 
 export class Pages {
   readonly pane: PagePane;
+  /** What the pages share, acting on the active one: counters, Copy as HTML, exports, outline cards. */
+  readonly parts: PageParts;
   readonly #of: PagesOf;
   readonly #notes: OpenNotes;
   /** Left to right: one page, or two while the window is split. */
@@ -47,9 +58,15 @@ export class Pages {
       },
       swap: () => this.swap(),
     });
+    this.parts = pageParts({
+      ...of,
+      pages: this,
+      act: of.act,
+    });
     // The pages as the settings say: the pane's zoom, and each editor's quotes, tools and marks.
-    const follow = (values: SettingsState['values']) => {
+    const follow = (values: SettingsState['values'], before?: SettingsState['values']) => {
       this.pane.showZoom(values['page.zoom']);
+      if (before && values['appearance.split'] !== before['appearance.split']) this.#place();
       for (const { page } of this.#sides) followSettings(page, values);
     };
     follow(of.settings.values);
@@ -74,6 +91,11 @@ export class Pages {
     return this.#sides.length === 2;
   }
 
+  /** How two pages are laid out (appearance.split): the mode's spec, split or not. */
+  get mode(): SplitSpec {
+    return SPLIT_SPECS[this.#of.settings.values['appearance.split']];
+  }
+
   notes(): ShownNotes {
     return { active: this.#active.note.path, other: this.other?.note.path ?? null };
   }
@@ -89,7 +111,7 @@ export class Pages {
    * page, made for it, or, split already, the other page. Either way that
    * page is then the active one.
    */
-  async open(path: string, beside = false): Promise<void> {
+  async open(path: string, beside = false, place?: NotePlace): Promise<void> {
     if (beside) {
       const other = this.other ?? this.#make();
       if (!this.#sides.includes(other)) {
@@ -98,7 +120,7 @@ export class Pages {
       }
       this.activate(other);
     }
-    await this.#active.note.open(path);
+    await this.#active.note.open(path, place);
     this.pane.renamed();
   }
 
@@ -201,14 +223,16 @@ export class Pages {
     for (const { versions } of this.#sides) void versions.diskChanged(changed);
   }
 
-  /** Another note open, or the vault read again: each page's seals see it. */
+  /** Another note open, or the vault read again: each page's seals, and what the pages share, see it. */
   sync(): void {
     for (const { versions } of this.#sides) versions.sync();
+    this.parts.sync();
   }
 
   stop(): void {
     this.#stopSettings();
     this.pane.stop();
+    this.parts.stop();
     for (const { versions } of this.#sides) versions.stop();
   }
 
@@ -216,13 +240,19 @@ export class Pages {
     this.pane.place(
       this.#sides.map(({ page }) => page),
       this.#active.page,
+      this.mode,
     );
     this.#of.rearranged();
   }
 
   /** A page, its note and its seals; the active one when the writer goes into it. */
   #make(): Side {
-    const side: Side = makeSide(this.#of, this.#notes, {
+    const of = {
+      ...this.#of,
+      wrote: (added: number, when: Written) => this.parts.wrote(added, when),
+      counted: () => this.parts.counted(),
+    };
+    const side: Side = makeSide(of, this.#notes, {
       close: () => this.close(side),
       caret: () => {
         if (this.#active === side) for (const listener of this.#caret) listener();

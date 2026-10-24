@@ -22,11 +22,13 @@ async function split(files: Record<string, string> = {}) {
   return made;
 }
 
-/** The pages' row: which elements lie in it, left to right. */
+/** The pages' row: the pages and the divider in it, left to right (the closed book's edge aside). */
 const row = (area: HTMLElement) =>
-  [...(area.querySelector('.page__pages')?.children ?? [])].map((part) =>
-    part.classList.contains('divider') ? 'divider' : (part.getAttribute('aria-label') ?? 'page'),
-  );
+  [...(area.querySelector('.page__pages')?.children ?? [])]
+    .filter((part) => !part.classList.contains('page__edge'))
+    .map((part) =>
+      part.classList.contains('divider') ? 'divider' : (part.getAttribute('aria-label') ?? 'page'),
+    );
 
 describe('opening a note beside the one open', () => {
   it('makes a second page, the active one, with the divider between', async () => {
@@ -78,14 +80,14 @@ describe('one note on both pages', () => {
     expect(pages.other?.page.editor.text).toBe('Snow fell. The gate held.');
     await pages.flush();
     expect((await storage.read('Snow.md'))?.text).toBe('Snow fell. The gate held.');
-    expect(wrote).toEqual([3]); // counted once, by the page it was typed in
+    expect(wrote()).toEqual([3]); // counted once, by the page it was typed in
     // The other page's count follows, and adds nothing when its own writer types.
     const other = pages.other;
     if (!other) throw new Error('not split');
     pages.activate(other);
     typeAtEnd(pages, ' Then rain.');
     await pages.flush();
-    expect(wrote).toEqual([3, 2]);
+    expect(wrote()).toEqual([3, 2]);
     expect(other.page.words.words).toBe(7);
   });
 });
@@ -158,7 +160,7 @@ describe('the pane too narrow for two pages', () => {
     vi.spyOn(row, 'clientWidth', 'get').mockImplementation(() => width);
     pages.pane.renamed(); // as a resize does: laid out again
     pages.activate(pages.sides[0] as (typeof pages.sides)[number]);
-    expect(row.hasAttribute('data-folded')).toBe(true);
+    expect(row.dataset.narrow === 'fold').toBe(true);
     const pager = pages.pane.pager;
     expect(pager.hidden).toBe(false);
     expect(
@@ -175,7 +177,7 @@ describe('the pane too narrow for two pages', () => {
 
     width = 2 * PAGE_MIN;
     pages.swap(); // anything that lays them out
-    expect(row.hasAttribute('data-folded')).toBe(false);
+    expect(row.dataset.narrow === 'fold').toBe(false);
     expect(pager.hidden).toBe(true);
   });
 });

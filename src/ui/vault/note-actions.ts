@@ -27,6 +27,10 @@ export interface NoteActionsOf {
   /** Read the vault again, then draw. */
   refresh(): Promise<void>;
   redraw(): Promise<void>;
+  /** Say why something wasn't done, where the window says such things. */
+  tell(message: string): void;
+  /** The key that shuts the sidebar, as this system writes it: what makes room for two pages. */
+  readonly sidebarKey: string;
 }
 
 export interface NoteActions {
@@ -46,9 +50,26 @@ export function noteActions(of: NoteActionsOf): NoteActions {
   const { state, nav, pages, phone } = of;
 
   async function openNote(path: string, beside = false): Promise<void> {
+    if (beside && !pages.split && !roomForTwo()) {
+      of.tell(
+        `Too narrow for two pages beside the sidebar: shut it (${of.sidebarKey}) to make room.`,
+      );
+      return;
+    }
     await pages.open(path, beside && !phone.stack.phone); // a phone shows one page
     await of.redraw();
     phone.stack.show('page');
+  }
+
+  /**
+   * Whether two pages would fit beside each other, the list stepping aside
+   * for a mode that has it; a mode that folds, closes or docks always fits.
+   */
+  function roomForTwo(): boolean {
+    const { mode } = pages;
+    if (mode.narrow !== 'wait') return true;
+    const room = pages.pane.pagesArea.clientWidth + (mode.listAside ? of.panes.listWidth : 0);
+    return room >= mode.least;
   }
 
   async function renameOnPage(path: string): Promise<void> {
