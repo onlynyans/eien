@@ -59,7 +59,10 @@ test.describe('All Notes in your order', () => {
 
   test('a new note shows at the top until it’s placed', async ({ page, vault }) => {
     await allNotes(page);
-    await row(page, 'Thaw').focus();
+    // The top row, whichever it is: written in one clock tick (Windows'), the three tie on their
+    // time and sort by path, and the last of them can't go down.
+    await expect(titles(page)).toHaveCount(3);
+    await row(page, (await titles(page).first().textContent()) ?? '').focus();
     await page.keyboard.press('Alt+ArrowDown');
     await expect.poll(() => order(vault)).toHaveLength(3);
     await page.getByRole('button', { name: 'New note' }).click();
