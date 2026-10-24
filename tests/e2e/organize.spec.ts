@@ -5,7 +5,16 @@
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { ALONE, closeApp, editorContent, expect, fakeTrash, launchApp, test } from './launch';
+import {
+  ALONE,
+  closeApp,
+  editorContent,
+  expect,
+  fakeTrash,
+  launchApp,
+  readQuietly,
+  test,
+} from './launch';
 
 const BOOK = 'Fic/Scarf';
 test.use({
@@ -23,7 +32,8 @@ test.use({
 });
 
 const at = (vault: string | null, path: string) => join(vault ?? '', ...path.split('/'));
-const read = (vault: string | null, path: string) => readFileSync(at(vault, path), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const read = (vault: string | null, path: string) => readQuietly(at(vault, path));
 const order = (vault: string | null) =>
   (JSON.parse(read(vault, `${BOOK}/.eien-folder.json`)) as { order: string[] }).order;
 const row = (page: Page, title: string) =>
@@ -81,7 +91,7 @@ test.describe('renaming', () => {
       .poll(() => order(vault))
       .toEqual(['The Tear.md', 'Needle and Thread.md', 'Seventeen.md']);
     await expect
-      .poll(() => JSON.parse(read(vault, '.eien/pinned.json')))
+      .poll(() => JSON.parse(read(vault, '.eien/pinned.json') || '{}'))
       .toEqual([`${BOOK}/Needle and Thread.md`]);
     await expect(page.locator('.note-row__ord')).toHaveText(['i', 'ii', 'iii']);
 
@@ -297,7 +307,7 @@ test.describe('books, folders and pins', () => {
     await folder(page, 'Research').click();
     await expect(page.locator('.list__count')).toHaveText('1 note · Book');
     await expect
-      .poll(() => JSON.parse(read(vault, 'Research/.eien-folder.json')))
+      .poll(() => JSON.parse(read(vault, 'Research/.eien-folder.json') || '{}'))
       .toEqual({ book: {} });
     await folder(page, 'Research').click({ button: 'right' });
     await menuItem(page, 'Not a book').click();
@@ -329,7 +339,7 @@ test.describe('books, folders and pins', () => {
     await menuItem(page, 'Unpin').click();
     await expect(page.locator('.note-row__title')).toHaveText(['Seventeen']);
     await expect
-      .poll(() => JSON.parse(read(vault, '.eien/pinned.json')))
+      .poll(() => JSON.parse(read(vault, '.eien/pinned.json') || '{}'))
       .toEqual([`${BOOK}/Seventeen.md`]);
   });
 });

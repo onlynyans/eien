@@ -2,10 +2,9 @@
 // removed and moved in Live, by key, by grip and by +, the file a plain GFM
 // table throughout; a removal says ⌘Z puts it back, and it does.
 
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { ALONE, editorContent, expect, test } from './launch';
+import { ALONE, editorContent, expect, readQuietly, test } from './launch';
 
 const TABLE = '| Who | When |\n|---|---|\n| Mara | 30 |\n| Levi | 41 |\n';
 const NOTE = `Before.\n\n${TABLE}\nAfter.\n`;
@@ -13,7 +12,8 @@ const NOTE = `Before.\n\n${TABLE}\nAfter.\n`;
 test.use({ vaultFiles: { 'Table.md': NOTE } });
 
 const MAC = process.platform === 'darwin';
-const readIn = (vault: string | null) => readFileSync(join(vault ?? '', 'Table.md'), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const readIn = (vault: string | null) => readQuietly(join(vault ?? '', 'Table.md'));
 const saved = (vault: string | null) => expect.poll(() => readIn(vault), { timeout: 5000 });
 const cell = (page: Page, words: string) =>
   editorContent(page).locator('.eien-cell', { hasText: words });

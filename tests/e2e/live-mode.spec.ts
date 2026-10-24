@@ -2,10 +2,9 @@
 // formatted and editable; and "Show Markdown marks" off keeps the marks
 // hidden on the caret's line too, from Settings or the View menu.
 
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { clickMenu, editorContent, expect, test } from './launch';
+import { clickMenu, editorContent, expect, readQuietly, test } from './launch';
 
 const TABLE = '| **Project** | Due |\n|---|---|\n| Mara | 30 |\n';
 
@@ -15,8 +14,8 @@ test.use({
   },
 });
 
-const readIn = (vault: string | null, path: string) =>
-  readFileSync(join(vault ?? '', path), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const readIn = (vault: string | null, path: string) => readQuietly(join(vault ?? '', path));
 const checked = (app: ElectronApplication, id: string) =>
   app.evaluate(({ Menu }, id) => Menu.getApplicationMenu()?.getMenuItemById(id)?.checked, id);
 

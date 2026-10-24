@@ -4,16 +4,15 @@
 // or View → Formatting Bar, kept as this device's setting; each button runs
 // the menu's command, and shows pressed where its format is on at the caret.
 
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { clickMenu, editorContent, expect, test } from './launch';
+import { clickMenu, editorContent, expect, readQuietly, test } from './launch';
 
 test.use({ vaultFiles: { 'Note.md': 'Some plain words.\n' } });
 
 const MAC = process.platform === 'darwin';
-const readIn = (vault: string | null, path: string) =>
-  readFileSync(join(vault ?? '', path), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const readIn = (vault: string | null, path: string) => readQuietly(join(vault ?? '', path));
 const bar = (page: Page) => page.getByRole('toolbar', { name: 'Format' });
 const button = (page: Page, command: string) => bar(page).locator(`[data-command="${command}"]`);
 const toggle = (page: Page) =>

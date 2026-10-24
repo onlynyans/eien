@@ -3,7 +3,7 @@
 // window does to the widths remembered; two panes' tree under drags,
 // look-alike names and many notes; hostile stored state.
 
-import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
 import {
@@ -15,6 +15,7 @@ import {
   expect,
   fakeTrash,
   launchApp,
+  readQuietly,
   test,
   type VaultFiles,
 } from './launch';
@@ -537,7 +538,10 @@ test.describe('two panes’ tree', () => {
     await page.keyboard.press('Enter');
     await expect(treeNote(page, 'Pin')).toHaveCount(4);
     await expect.poll(() => readdirSync(at(vault, 'Fic/Scarf')).sort()).toContain('Pin.md');
-    expect(readFileSync(at(vault, '.eien/pinned.json'), 'utf8')).toContain('Fic/Scarf/Pin.md');
+    // The pins are rewritten after the rename, not with it.
+    await expect
+      .poll(() => readQuietly(at(vault, '.eien/pinned.json')))
+      .toContain('Fic/Scarf/Pin.md');
   });
 });
 
@@ -756,7 +760,7 @@ test.describe('changing the panes mid-sentence', () => {
     await page.keyboard.type(' And more.');
     await page.getByRole('button', { name: 'Two panes', pressed: true }).click();
     await expect
-      .poll(() => readFileSync(at(vault, 'Ideas.md'), 'utf8'))
+      .poll(() => readQuietly(at(vault, 'Ideas.md')))
       .toMatch(/^Snow on the walls\. #winter\s*More snow fell\. And more\.\s*$/);
   });
 });
@@ -848,9 +852,7 @@ test.describe('three thousand notes', () => {
       await editorContent(page).click();
       await page.keyboard.press('ControlOrMeta+End');
       await page.keyboard.type(' The writer keeps typing along here.', { delay: 60 });
-      await expect
-        .poll(() => readFileSync(at(vault, 'Chapter.md'), 'utf8'))
-        .toContain('along here');
+      await expect.poll(() => readQuietly(at(vault, 'Chapter.md'))).toContain('along here');
       // Saved, it's the newest: first under All Notes, moved there without a redraw. Asked with
       // querySelector, which costs the window nothing, unlike a locator over six thousand rows.
       await page.waitForFunction(

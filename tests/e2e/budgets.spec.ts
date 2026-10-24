@@ -4,10 +4,10 @@
 // only the rows in sight (src/ui/shell/windowed-rows.ts), and the keyboard
 // still reaches every row. Each runs alone (ALONE), so it measures Eien.
 
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { ALONE, expect, test, type VaultFiles } from './launch';
+import { ALONE, expect, readQuietly, test, type VaultFiles } from './launch';
 
 /** The budget for anything a writer does: no task holds the window longer than this. */
 const STALL = 200;
@@ -279,9 +279,8 @@ test.describe('a long book in its own order', () => {
       // Chapter 299 now stands just before Chapter 296, in the book's own order on disk.
       await expect
         .poll(() => {
-          const order = JSON.parse(
-            readFileSync(join(vault ?? '', 'Big', '.eien-folder.json'), 'utf8'),
-          ).order as string[];
+          const folder = readQuietly(join(vault ?? '', 'Big', '.eien-folder.json'));
+          const order = (JSON.parse(folder || '{}').order ?? []) as string[];
           return order.indexOf('Chapter 299.md') === order.indexOf('Chapter 296.md') - 1;
         })
         .toBe(true);

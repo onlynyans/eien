@@ -14,7 +14,7 @@ import {
   mixPalette,
   rgbOf,
 } from '../../src/core/themes';
-import { closeApp, expect, fakeTrash, launchApp, test } from './launch';
+import { closeApp, expect, fakeTrash, launchApp, readQuietly, test } from './launch';
 
 const LATE: Mix = { paper: 215, warmth: 10, ink: 225, seal: 8 };
 const ORCHARD: Mix = { paper: 42, warmth: 30, ink: 120, seal: 20 };
@@ -35,8 +35,9 @@ const card = (page: Page, name: string) =>
   dialog(page).locator('.themes__cards').getByRole('button', { name, exact: true });
 const choose = (page: Page, name: string) => card(page, name).click();
 const themesIn = (vault: string | null) => readdirSync(join(vault ?? '', '.eien', 'themes'));
+/** {} while the file can't be read, so a poll tries again (./launch.ts). */
 const readTheme = (vault: string | null, title: string) =>
-  JSON.parse(readFileSync(join(vault ?? '', '.eien', 'themes', `${title}.json`), 'utf8'));
+  JSON.parse(readQuietly(join(vault ?? '', '.eien', 'themes', `${title}.json`)) || '{}');
 const rgb = (hex: Hex) => `rgb(${rgbOf(hex).join(', ')})`;
 /** The sidebar is the desk: by day, as the tests' systems are. */
 const desk = (page: Page) => page.locator('.sidebar');
@@ -68,7 +69,7 @@ test('choosing a theme repaints the window, and it’s worn again after a restar
   await expect(card(page, 'Linen')).toHaveAttribute('aria-pressed', 'false');
   const deviceFile = join(userData, 'settings.json');
   await expect
-    .poll(() => JSON.parse(readFileSync(deviceFile, 'utf8')).settings)
+    .poll(() => JSON.parse(readQuietly(deviceFile) || '{}').settings)
     .toEqual({ 'appearance.palette': 'mine:Late Train' });
   await closeApp(app);
 

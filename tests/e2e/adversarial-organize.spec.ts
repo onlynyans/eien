@@ -5,7 +5,7 @@
 import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { editorContent, expect, fakeTrash, test } from './launch';
+import { editorContent, expect, fakeTrash, readQuietly, test } from './launch';
 
 const BOOK = 'Fic/Scarf';
 test.use({
@@ -103,7 +103,7 @@ test('a note renamed to a long title goes on saving', async ({ page, vault }) =>
   await page.keyboard.press('ControlOrMeta+End');
   await page.keyboard.type(' An hour of new words.');
   await expect
-    .poll(() => readFileSync(at(vault, name), 'utf8'), { timeout: 5000 })
+    .poll(() => readQuietly(at(vault, name)), { timeout: 5000 })
     .toContain('An hour of new words.');
 });
 

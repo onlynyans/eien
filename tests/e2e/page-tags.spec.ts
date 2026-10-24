@@ -4,10 +4,9 @@
 // on disk changes there and nowhere else, and a #tag typed in the words has
 // no ×, staying where the writer put it.
 
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
-import { ALONE, type Box, editorContent, expect, test } from './launch';
+import { ALONE, type Box, editorContent, expect, readQuietly, test } from './launch';
 
 const NOTE = '---\ntitle: "Kept: as written"  # mine\ntags: [fic/aot]\n---\nA scene. #draft\n';
 test.use({
@@ -22,8 +21,8 @@ const PLACES: Record<Layout, string> = {
   runhead: '.colophon__tags',
 };
 
-const readIn = (vault: string | null, path: string) =>
-  readFileSync(join(vault ?? '', path), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const readIn = (vault: string | null, path: string) => readQuietly(join(vault ?? '', path));
 
 /** Where `locator` is once it has stopped moving: two looks in a row agree. */
 async function settled(locator: Locator): Promise<Box> {

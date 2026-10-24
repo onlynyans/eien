@@ -3,10 +3,19 @@
 // then the seal, then the draft; the versions panel compares, restores,
 // names and deletes; seals follow a renamed note and survive a restart.
 
-import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { clickMenu, closeApp, editorContent, expect, fakeTrash, launchApp, test } from './launch';
+import {
+  clickMenu,
+  closeApp,
+  editorContent,
+  expect,
+  fakeTrash,
+  launchApp,
+  readQuietly,
+  test,
+} from './launch';
 
 test.use({
   vaultFiles: {
@@ -16,8 +25,8 @@ test.use({
 });
 
 const at = (vault: string | null, ...parts: string[]) => join(vault ?? '', ...parts);
-const read = (vault: string | null, path: string) =>
-  readFileSync(at(vault, ...path.split('/')), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const read = (vault: string | null, path: string) => readQuietly(at(vault, ...path.split('/')));
 /** The open note's id, from its front matter on disk. */
 const idOf = (vault: string | null, path = 'Needle.md') =>
   /^---\nid: (\S+)\n---\n/.exec(read(vault, path))?.[1] ?? null;
@@ -287,7 +296,8 @@ test('a copied note gets its own id on its first seal, and keeps the seals made 
   await row(page, 'Needle copy').click();
   await typeAtEnd(page, ' A copy.');
   await seal(app);
-  await expect.poll(() => idOf(vault, 'Needle copy.md')).not.toBe(id);
+  // A read that comes back empty finds no id: taken as the original's, so the poll tries again.
+  await expect.poll(() => idOf(vault, 'Needle copy.md') ?? id).not.toBe(id);
   const copyId = idOf(vault, 'Needle copy.md');
   expect(copyId).toMatch(/^[A-Z]/);
   expect(sealsOf(vault, copyId)).toHaveLength(2); // the one before the copy, and its own

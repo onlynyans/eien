@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { clickMenu, editorContent, expect, test } from './launch';
+import { clickMenu, editorContent, expect, readQuietly, test } from './launch';
 
 const LONG = Array.from({ length: 80 }, (_, i) => `Paragraph ${i + 1} of the chapter.`).join(
   '\n\n',
@@ -20,8 +20,8 @@ test.use({
   },
 });
 
-const readIn = (vault: string | null, path: string) =>
-  readFileSync(join(vault ?? '', path), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const readIn = (vault: string | null, path: string) => readQuietly(join(vault ?? '', path));
 
 async function open(page: Page, title: string): Promise<void> {
   await page.locator('.note-row', { hasText: title }).click();
@@ -54,7 +54,10 @@ test('Enter on an empty line after an empty line makes a scene break', async ({ 
   await expect(page.locator('.eien-scene-break')).toBeVisible();
   // ⌘Z takes the scene break back with the typing.
   await page.keyboard.press('ControlOrMeta+z');
-  await expect.poll(() => readIn(vault, 'Scene.md')).not.toContain('***');
+  // The text before it, and no break after: a read that comes back empty isn't taken for the undo.
+  await expect
+    .poll(() => readIn(vault, 'Scene.md'))
+    .toMatch(/^She left\.\n\nWait\.\n(?![\s\S]*\*\*\*)/u);
 });
 
 test('View → Focus Mode fades back every paragraph but the caret’s, and the check follows', async ({

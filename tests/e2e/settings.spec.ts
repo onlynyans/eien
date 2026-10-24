@@ -12,6 +12,7 @@ import {
   editorLines,
   expect,
   launchApp,
+  readQuietly,
   test,
   windowZoom,
 } from './launch';
@@ -51,7 +52,8 @@ const style = (page: Page, selector: string, property: string) =>
     .locator(selector)
     .first()
     .evaluate((element, name) => getComputedStyle(element).getPropertyValue(name), property);
-const readJson = (file: string): unknown => JSON.parse(readFileSync(file, 'utf8'));
+/** {} while the file can't be read, so a poll tries again (./launch.ts). */
+const readJson = (file: string): unknown => JSON.parse(readQuietly(file) || '{}');
 const settingsMenu = process.platform === 'darwin' ? 'Eien' : 'File';
 const themeSource = (app: ElectronApplication) =>
   app.evaluate(({ nativeTheme }) => nativeTheme.themeSource);
@@ -237,9 +239,7 @@ test('this device’s choices come back after a restart; chapter numbers travel 
 
   const deviceFile = join(userData, 'settings.json');
   const vaultFile = join(vault ?? '', '.eien', 'config.json');
-  await expect
-    .poll(() => existsSync(vaultFile) && readJson(vaultFile))
-    .toEqual({ 'books.numerals': 'arabic' });
+  await expect.poll(() => readJson(vaultFile)).toEqual({ 'books.numerals': 'arabic' });
   expect(readJson(deviceFile)).toEqual({
     settings: { 'appearance.face': 'literata', 'appearance.scheme': 'night' },
   });
@@ -321,7 +321,7 @@ test.describe('page zoom', () => {
     await page.mouse.dblclick(box.x, box.y);
     await page.keyboard.type('GAMMA');
     await expect
-      .poll(() => readFileSync(join(vault ?? '', 'Book', 'One.md'), 'utf8'), { timeout: 5000 })
+      .poll(() => readQuietly(join(vault ?? '', 'Book', 'One.md')), { timeout: 5000 })
       .toBe('alpha beta GAMMA delta\n');
 
     await clickMenu(app, 'View', 'Actual Size');

@@ -3,14 +3,7 @@
 // against the writer's keys, Compare in Reading, the panel's keyboard, and
 // seals that can't be written.
 
-import {
-  chmodSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
 import {
@@ -19,6 +12,7 @@ import {
   editorContent,
   expect,
   fakeTrash,
+  readQuietly,
   test,
   type VaultFiles,
 } from './launch';
@@ -38,7 +32,8 @@ test.use({
 });
 
 const at = (vault: string | null, path: string) => join(vault ?? '', ...path.split('/'));
-const read = (vault: string | null, path: string) => readFileSync(at(vault, path), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const read = (vault: string | null, path: string) => readQuietly(at(vault, path));
 const idOf = (text: string) => /^---\nid: (\S+)\n---\n/.exec(text)?.[1] ?? null;
 const sealsOf = (vault: string | null, id: string) => {
   const folder = at(vault, `.eien/versions/${id}`);

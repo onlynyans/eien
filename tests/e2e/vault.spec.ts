@@ -22,6 +22,7 @@ import {
   editorLines,
   expect,
   ROOT,
+  readQuietly,
   test,
 } from './launch';
 
@@ -45,7 +46,8 @@ const fileIn = (vault: string | null, path: string) => {
   if (!vault) throw new Error('no vault');
   return join(vault, ...path.split('/'));
 };
-const readIn = (vault: string | null, path: string) => readFileSync(fileIn(vault, path), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const readIn = (vault: string | null, path: string) => readQuietly(fileIn(vault, path));
 
 test('shows the vault’s folders and notes, and a book’s chapters in order', async ({ page }) => {
   await expect(page.locator('.tree-row__label', { hasText: 'All Notes' })).toBeVisible();

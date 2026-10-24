@@ -4,11 +4,10 @@
 // the vault's file; the machine voice's face and the weight of names show
 // in the window; the Running head's strip takes the ground chosen.
 
-import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { galleryTheme, type Hex, rgbOf } from '../../src/core/themes';
-import { ALONE, type Box, boxOf, closeApp, expect, launchApp, test } from './launch';
+import { ALONE, type Box, boxOf, closeApp, expect, launchApp, readQuietly, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -166,14 +165,14 @@ test('This vault’s settings stand apart, and go to the vault’s own file', as
   const vaultFile = join(vault ?? '', '.eien', 'config.json');
   await expect
     // Asked before the first write lands, the file isn't there yet: a read that throws ends a poll.
-    .poll(() => existsSync(vaultFile) && JSON.parse(readFileSync(vaultFile, 'utf8')))
+    .poll(() => JSON.parse(readQuietly(vaultFile) || '{}'))
     .toEqual({ 'typography.quotes': 'straight', 'html.sceneBreak': 'rule' });
   // None of this device's: nothing written to its own file.
   await goTo(page, 'Appearance');
   await choose(page, 'Density', 'Compact');
   const deviceFile = join(userData, 'settings.json');
   await expect
-    .poll(() => existsSync(deviceFile) && JSON.parse(readFileSync(deviceFile, 'utf8')).settings)
+    .poll(() => JSON.parse(readQuietly(deviceFile) || '{}').settings)
     .toEqual({ 'appearance.density': 'compact' });
 });
 

@@ -1,15 +1,8 @@
 // Adversarial: ways the real app can lose or damage what's on disk.
 
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  renameSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { closeApp, editorContent, expect, test } from './launch';
+import { closeApp, editorContent, expect, readQuietly, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -22,7 +15,8 @@ const fileIn = (vault: string | null, path: string) => {
   if (!vault) throw new Error('no vault');
   return join(vault, ...path.split('/'));
 };
-const readIn = (vault: string | null, path: string) => readFileSync(fileIn(vault, path), 'utf8');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
+const readIn = (vault: string | null, path: string) => readQuietly(fileIn(vault, path));
 
 for (const rewrite of [
   // The control: nobody else touches the file.

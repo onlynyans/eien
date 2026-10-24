@@ -3,10 +3,9 @@
 // everything in them: macOS's traffic lights at the sidebar's head, Windows'
 // and Linux's minimize, maximize and close over the page's band, in its colours.
 
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { clickMenu, expect, freeArea, test, windowZoom } from './launch';
+import { clickMenu, expect, freeArea, readQuietly, test, windowZoom } from './launch';
 
 test.use({ vaultFiles: { 'Note.md': 'Words.\n' } });
 
@@ -165,7 +164,7 @@ test.describe('zoom', () => {
     for (let i = 0; i < 18; i++) await clickMenu(app, 'View', 'Zoom Out');
     await expect.poll(() => windowZoom(app)).toBe(0.5);
     await expect
-      .poll(() => JSON.parse(readFileSync(join(userData, 'settings.json'), 'utf8')).settings)
+      .poll(() => JSON.parse(readQuietly(join(userData, 'settings.json')) || '{}').settings)
       .toMatchObject({ 'window.zoom': 50 });
   });
 });

@@ -3,10 +3,19 @@
 // test can't show it: CodeMirror's undo of a restore, and a quit. A comment
 // on a test describes the defect it caught, as it was before the fix.
 
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { ALONE, clickMenu, closeApp, editorContent, expect, launchApp, test } from './launch';
+import {
+  ALONE,
+  clickMenu,
+  closeApp,
+  editorContent,
+  expect,
+  launchApp,
+  readQuietly,
+  test,
+} from './launch';
 
 test.use({
   vaultFiles: {
@@ -21,8 +30,9 @@ test.use({
 const today = (page: Page) => page.locator('.colophon__today');
 const book = (page: Page) => page.locator('.colophon__book');
 const words = (page: Page) => page.locator('.colophon__words');
+/** '' while the file can't be read, so a poll tries again (./launch.ts). */
 const read = (vault: string | null, path: string) =>
-  readFileSync(join(vault ?? '', ...path.split('/')), 'utf8');
+  readQuietly(join(vault ?? '', ...path.split('/')));
 
 async function open(page: Page, title: string): Promise<void> {
   await page.locator('.note-row', { hasText: title }).click();
