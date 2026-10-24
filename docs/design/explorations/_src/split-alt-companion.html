@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Split window: 5 · A companion</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:split-alt.css*/
+
+/* 5 · A companion: the second note isn't a second page. It's a companion at the
+   window's right edge, where Versions opens: narrower, set in a smaller hand,
+   with its own head and foot. The page keeps all its tools, and they act on it.
+   The companion has its own few. Whichever one you aren't writing in sits back a
+   step: its paper takes the band's tone. */
+.pair { display: grid; min-width: 0; min-height: 0; height: 100%; }
+.pair > * { min-width: 0; min-height: 0; }
+.companion { display: grid; grid-template-rows: var(--band) minmax(0, 1fr) var(--status-h); background: var(--eien-paper); transition: background-color var(--eien-calm) var(--eien-ease); }
+.companion__head { display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-2) 0 var(--eien-space-4); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.companion__name { flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.companion__scroll { overflow: auto; padding: var(--eien-space-4) var(--eien-space-5) var(--eien-space-6); }
+.companion .tagset { margin-bottom: var(--eien-space-3); }
+/* A smaller hand: a note beside the chapter, read more than written. */
+.companion .prose { font-size: var(--eien-size-row); }
+.companion .prose p { margin-bottom: var(--eien-space-3); }
+.companion__foot { display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-4); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; }
+/* Sitting back a step: the paper you aren't writing in takes the band's tone, darker being further back. */
+.sheet { transition: background-color var(--eien-calm) var(--eien-ease); }
+.is-resting, .sheet.is-resting { background: var(--eien-band); }
+@media (prefers-reduced-motion: reduce) { .sheet, .companion { transition: none; } }
+/* C: the running head's page part sits over the page; the companion keeps its own head. */
+.runhead__page, .runhead__pair { display: grid; height: 100%; min-width: 0; }
+.runhead__seg { display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-3); }
+.runhead__seg .crumb { flex: 1; text-align: center; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:split-alt.js*/
+
+const MAIN_MIN = 400; // the page keeps the text's measure, with a margin
+const COMP_MIN = 300; // a companion can be narrower: its hand is smaller
+const COMP_W = 380;
+/** Too narrow to stand beside: the companion goes under the page, as on a phone. */
+const isUnder = (ctx) => ctx.room < MAIN_MIN + COMP_MIN;
+const compW = (ctx) => Math.round(Math.min(Math.max(S.compW, COMP_MIN), ctx.room - MAIN_MIN));
+
+/** The page as it always is: its tools act on it alone. */
+function mainHtml(ctx) {
+  const resting = ctx.split && ctx.active !== 0;
+  const tools = `<span class="tools" role="group" aria-label="Page tools">${['compare', 'versions', 'copy', 'focus', 'cards', 'format'].map((t) => ctx.tool(t, 0)).join('')}${ctx.spare(0)}</span>`;
+  const top = ctx.layout === 'band' ? `<div class="band"><span class="quiet">${ctx.views()}</span><span class="quiet">${tools}</span></div>`
+    : ctx.layout === 'slip' ? `<div class="topline"><span class="slip quiet">${ctx.views()}<span class="tools-rule" aria-hidden="true"></span>${tools}</span></div>` : '';
+  return `<div class="page hover-scope${ctx.fmt ? ' has-fmt' : ''}${ctx.layout === 'runhead' && ctx.fmt ? ' has-rail' : ''}" data-side="0" role="region" aria-label="${esc(ctx.note(0).title)}, the page${ctx.split && !resting ? ', where you’re writing' : ''}">
+    ${top}${ctx.fmtBar()}
+    <div class="blotter" data-scroll="main-${S.sides[0]}"><article class="sheet${resting ? ' is-resting' : ''}">${ctx.head(0)}${ctx.words(0)}</article></div>
+    <footer class="colophon">${ctx.figures(0, { ord: false, today: true })}${ctx.layout === 'runhead' ? `<span class="dot" aria-hidden="true">·</span>${ctx.pills(0)}` : ''}${ctx.said()}</footer>
+  </div>`;
+}
+/** The companion: its name and its few tools at its head, its words, its figures at its foot. */
+function companionHtml(ctx) {
+  const n = ctx.note(1);
+  const resting = ctx.active !== 1;
+  return `<section class="companion hover-scope${resting ? ' is-resting' : ''}" data-side="1" role="region" aria-label="Companion: ${esc(n.title)}${resting ? '' : ', where you’re writing'}">
+    <div class="companion__head"><span class="companion__name">${esc(n.title)}</span><span class="tools quiet">${ctx.btn('swap', 'Make it the page', { attrs: 'data-swap' })}${ctx.btn('more', `More for ${n.title}`, { attrs: 'data-more="1" aria-haspopup="menu"' })}${ctx.closeBtn(1)}</span></div>
+    <div class="companion__scroll" data-scroll="comp-${S.sides[1]}">${ctx.tagset(1)}${ctx.words(1, { title: false })}</div>
+    <footer class="companion__foot">${ctx.figures(1, { ord: false })}</footer>
+  </section>`;
+}
+
+const companion = {
+  id: 'companion',
+  line: 'The second note is a companion at the window’s edge: the page keeps its tools; the one you aren’t in sits back a step.',
+  state: (ctx) => (ctx.split && isUnder(ctx) ? 'companion under the page' : ''),
+  grid: (name, ctx) => {
+    if (isUnder(ctx)) return name === 'strip' ? ['gridTemplateColumns', 'minmax(0, 1fr)'] : ['gridTemplateRows', `minmax(0, 1fr) auto ${Math.round(S.compH * 100)}%`];
+    return ['gridTemplateColumns', `minmax(0, 1fr) ${name === 'strip' ? '' : 'auto '}${compW(ctx)}px`];
+  },
+  valueNow: (ctx) => Math.round(isUnder(ctx) ? (1 - S.compH) * 100 : (1 - compW(ctx) / ctx.room) * 100),
+  resize: (f, px, ctx) => {
+    if (isUnder(ctx)) S.compH = Math.min(0.7, Math.max(0.25, 1 - f));
+    else S.compW = Math.min(px - MAIN_MIN, Math.max(COMP_MIN, (1 - f) * px));
+  },
+  nudge: (step, ctx) => {
+    if (isUnder(ctx)) S.compH = Math.min(0.7, Math.max(0.25, S.compH - step * 0.02));
+    else S.compW = Math.min(ctx.room - MAIN_MIN, Math.max(COMP_MIN, compW(ctx) - step * 16));
+  },
+  even: () => { S.compW = COMP_W; S.compH = 0.42; },
+  page(ctx) {
+    if (!ctx.split) return mainHtml(ctx);
+    const under = isUnder(ctx);
+    return `<div class="pair" data-dock="${under ? 'under' : 'beside'}" ${gridStyle('pair', ctx)}>${mainHtml(ctx)}${dividerHtml(ctx, { axis: under ? 'y' : 'x', label: 'Between the page and its companion' })}${companionHtml(ctx)}</div>`;
+  },
+  strip(ctx) {
+    const seg = `<div class="runhead__seg">${ctx.crumb(0)}${ctx.views()}<span class="tools-rule" aria-hidden="true"></span><span class="tools">${['compare', 'versions', 'copy', 'focus', 'cards', 'format'].map((t) => ctx.tool(t, 0)).join('')}${ctx.spare(0)}</span></div>`;
+    return ctx.split ? `<div class="runhead__pair" ${gridStyle('strip', ctx)}>${seg}<span></span></div>` : seg;
+  },
+  drop(ctx, x, y) {
+    const t = (i) => NOTES[S.sides[i]].title;
+    const page = { side: 0, box: [0, 0, 1, 1], edge: 'none', label: `Open on the page, in place of ${t(0)}` };
+    if (!ctx.split) {
+      if (isUnder(ctx)) return y > 0.6 ? { side: 'new', box: [0, 0.58, 1, 1], edge: 'top', label: 'Open as the companion, under the page' } : page;
+      const at = 1 - COMP_W / ctx.room;
+      return x > 0.7 ? { side: 'new', box: [at, 0, 1, 1], label: 'Open as the companion' } : page;
+    }
+    if (isUnder(ctx)) return y > 1 - S.compH ? { side: 1, box: [0, 1 - S.compH, 1, 1], edge: 'none', label: `Open in the companion, in place of ${t(1)}` } : { ...page, box: [0, 0, 1, 1 - S.compH] };
+    const at = 1 - compW(ctx) / ctx.room;
+    return x > at ? { side: 1, box: [at, 0, 1, 1], edge: 'none', label: `Open in the companion, in place of ${t(1)}` } : { ...page, box: [0, 0, at, 1] };
+  },
+  opened: (ctx) => (isUnder(ctx) ? 'Too narrow to stand beside: the companion goes under the page' : ''),
+  /** The companion's ⋯: what the page's tools do, for the companion. */
+  more: (ctx, i) => {
+    const t = ctx.note(i).title;
+    const said = (w) => () => say(w);
+    return { head: t, items: [
+      ['live', 'Live', '', said(`${t}: Live`)], ['source', 'Source', '', said(`${t}: Source`)], ['reading', 'Reading', '', said(`${t}: Reading`)], '|',
+      ['', 'Seal', KEY('Mod-S'), said(`Sealed ${t}`)], ['versions', 'Versions', '', said(`Versions: ${t}'s seals open at the window's right edge, over the companion`)],
+      ['compare', 'Compare', '', said(`Compare: ${t} against its last seal, in the companion`)], ['copy', 'Copy as HTML', '', said(`Copied ${t} as HTML`)], '|',
+      ['window', 'Open in New Window', '', said('A new window opens on this note: see New window & phone')],
+    ] };
+  },
+};
+
+mountAlt({
+  ...companion,
+  notes: `
+  <h2>Checkpoint</h2>
+  <dl class="checkpoint">
+    <dt>Intent</dt><dd>A chapter on the desk, and the notes for it on a card beside it. The writer reads one and writes in the other.</dd>
+    <dt>Palette</dt><dd>Paper and band. No colour of its own: the cue is a tone Eien already has.</dd>
+    <dt>Depth</dt><dd>A pane edge and hairlines, no new shadow. The companion is a pane, not something floating.</dd>
+    <dt>Surfaces</dt><dd>The page you aren't in goes from paper to band, a step back, because darker is further back.</dd>
+    <dt>Type</dt><dd>The companion in a smaller hand (row size) and its name in the text face. Its figures in the machine voice.</dd>
+    <dt>Spacing</dt><dd>A 4px base. The companion is 380px (at least 300), with a 16px gutter and 24px inside.</dd>
+  </dl>
+  <h2>5 · A companion</h2>
+  <p>The page pane isn't split. The second note opens as a companion at the window's right edge, where Versions opens: narrower, its words in a smaller hand, its own head and foot. The page keeps every tool it has (A's band, B's slip, C's running head), and they act on the page. The companion carries its own few.</p>
+  <ul>
+    <li><b>Side by side</b> while there's room. The companion's edge is the divider: drag it, or use <kbd>←</kbd> <kbd>→</kbd> on it, and double-click or <kbd>Enter</kbd> to put it back to 380px. The page keeps at least ${MAIN_MIN}px and the companion ${COMP_MIN}px.</li>
+    <li><b>Top and bottom</b> is offered only where it's needed. In a page pane narrower than ${MAIN_MIN + COMP_MIN}px (about 1,280px of window with both panes, 1,020px with the sidebar shut), the companion goes under the page, and its edge drags up and down. That's what the phone does too.</li>
+    <li><b>The page's tools</b> stay where the layout puts them and act on the page: the views, Compare, Versions, Copy as HTML, Focus mode, Outline cards. <b>The formatting bar</b> is the page's, and it formats whatever words the caret is in, the companion's too, as the keys do.</li>
+    <li><b>The companion's tools</b> sit at its head, quiet till the pointer is over it: ⇄ makes it the page (a swap), ⋯ has its views, Seal, Versions, Compare, Copy as HTML and Open in New Window, and × closes it. Its foot has its words and last seal. Its tags sit at the top of its words in all three layouts.</li>
+    <li><b>The active one</b> has the caret, and the other sits back a step: its paper takes the band's tone. There's no colour and no new mark. A click, or <kbd>${KEY('Mod-3')}</kbd>, moves between them.</li>
+    <li><b>Choosing a note</b> in the list opens it in whichever one is active. Usually that's the page, so the companion stays put while you move through chapters.</li>
+    <li><b>Closing:</b> the companion's ×. <kbd>${KEY('Mod-W')}</kbd> on the page closes the page, and the companion takes its place.</li>
+    <li><b>On a phone:</b> the companion is a sheet pulled up from the page's foot by its name, half the screen, and a swipe down puts it away.</li>
+  </ul>
+  <h2>For</h2>
+  <ul><li>It fits how a chapter and its notes are really used: one is written, the other consulted. The page is never cut in half.</li><li>The page is exactly Eien's page. Every tool sits by what it acts on, and there's no second set.</li><li>Its narrow answer, under the page, is also the phone's, so one idea covers both.</li></ul>
+  <h2>Against</h2>
+  <ul><li>It isn't symmetrical. Two chapters side by side make one of them the companion, in a smaller hand.</li><li>The band's tone is a quiet cue, and it's the only one besides the caret.</li><li>The companion takes the place where Versions opens, so Versions lies over it while open.</li></ul>`,
+});
+</script>
+</body>
+</html>

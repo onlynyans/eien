@@ -28,7 +28,26 @@ components as they shipped. Those under "Not built yet" are still to choose.
 | [themes.html](themes.html) · [md](themes.md) | Six new themes beside Washi; Gallery and Custom; contrast checked live | #20 |
 | [order.html](order.html) · [md](order.md) | Your order and a lens over it, across both panes; moving folders out; drag anytime or Arrange mode; a three-way tag filter | #12 |
 
-## Not built yet (2026-10-22)
+## Split window (2026-10-23): for the owner to choose
+
+Six directions for two notes side by side in one window, each working in all
+three layouts, and one page for New Window and the phone. All six use ⌘D to open
+a note beside itself (⌥⌘\\ is the editor's Indent Selection). [split.md](split.md)
+has 1–3, recommending 3 · Two sheets on one blotter;
+[split-alt.md](split-alt.md) has 4–6, recommending 5 · A companion, and
+compares all six.
+
+| Page | Direction | For | Against |
+|---|---|---|---|
+| [split-apart.html](split-apart.html) · [md](split.md) | **1 · Two whole pages**: each page its own band, slip or half of the running head, formatting bar and colophon; a 2px ink-soft rule tops the active one | Every tool beside the page it acts on | Twice the furniture; C's running head splits |
+| [split-shared.html](split-shared.html) · [md](split.md) | **2 · One set of tools**, acting on the active page; the other page's words soften | The calmest; nothing new to learn | A tool's target isn't always beside it; a quiet cue |
+| [split-sheets.html](split-sheets.html) · [md](split.md) | **3 · Two sheets on one blotter** (recommended): one set of tools; the active sheet lies on top, with the sheet's shadow | Eien's own picture and depth; a pane's edge between | 48px of blotter between; a subtle cue by Night |
+| [split-alt-facing.html](split-alt-facing.html) · [md](split-alt.md) | **4 · Facing pages**: one sheet opened like a book, the gutter the divider; each note's own tools in its folio; a ribbon marks the active page | The tools split by what they act on; the strongest cue, by Night too | A second status line on each page; a new mark |
+| [split-alt-companion.html](split-alt-companion.html) · [md](split-alt.md) | **5 · A companion** (recommended of 4–6): the second note at the window's right edge, narrower and set smaller; the one you aren't in takes the band's tone | The page stays exactly as it is; one idea for narrow windows and the phone | Not symmetrical: two chapters make one the companion |
+| [split-alt-follow.html](split-alt-follow.html) · [md](split-alt.md) | **6 · Tools that follow**: the list steps aside; one set of the page's tools moves to the page you're in | Every tool beside its page, one of each; wider pages | The window changes when you split; refused below about 990px |
+| [split-window.html](split-window.html) · [md](split.md) | **New Window and the phone**, once for all three: File → New Window (⇧⌘N), Open in New Window; the phone's "other note" | | |
+
+## Tables and the window's corner (2026-10-22, built in #57 and #58)
 
 Two sets of three, a page per direction. Each set's `.md` has the trade-offs
 and the choice. **Chosen:** for tables, 3 · Menus with 1's + on the desktop
@@ -51,5 +70,6 @@ The pages are built from `_src/` by `python3 _build.py`, which puts the
 shared tokens, icons and face list (`_src/shared.css`, `_src/shared.js`)
 inside each page, and a family's own shared files where a page asks for them
 with `/*@include:name*/` (the tables' `table.*`, `table-edges.*` and
-`table-bar.*`, the corners' `corner.*`, both families' `layouts.css`). Edit
+`table-bar.*`, the corners' `corner.*`, the split's `split.*`; `layouts.css`,
+`seal-button.css` and `keys.js` shared between families). Edit
 `_src/` and build; don't edit the built pages.

@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Split window: New window and phone</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/* Shared by every exploration (inlined into each page by _build.py).
+   The tokens are the approved ones from ../tokens.css (Washi, day and night),
+   plus what the design pass adds: a radius scale, icon sizes, the machine
+   face as a setting, and row weights. New tokens are marked NEW. */
+
+:root { color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+:root {
+  --eien-desk: light-dark(#d9d2c8, #110e0b);
+  --eien-blotter: light-dark(#eae5dd, #1a1713);
+  --eien-band: light-dark(#f4f1ea, #201d19);
+  --eien-paper: light-dark(#fdfbf7, #28241f);
+  --eien-paper-raised: light-dark(#ffffff, #312d28);
+  --eien-well: light-dark(#f9f7f3, #24201c);
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05));
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1));
+  --eien-selected: light-dark(#ede9e3, #38332e);
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5));
+  --eien-shadow-sheet: 0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float: 0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  --eien-ink: light-dark(#23201c, #e9e2d4);
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7);
+  --eien-pencil: light-dark(#5d5348, #a7a095);
+  --eien-faded: light-dark(#766d62, #837c73);
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07));
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.14));
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.26));
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px;
+  --eien-seal: light-dark(#c4472d, #e0603f);
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12));
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714);
+  --eien-focus: var(--eien-ink-soft);
+  --eien-added: light-dark(#485c2c, #9cb880);
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0);
+  --eien-caution: light-dark(#6b501f, #d0a659);
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+
+  /* The machine voice: IBM Plex Mono by default, now a setting (NEW: set from FACES). */
+  --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --eien-size-meta: 11px;
+  --eien-size-label: 10px;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em;
+  --eien-space-1: 4px; --eien-space-2: 8px; --eien-space-3: 12px; --eien-space-4: 16px;
+  --eien-space-5: 24px; --eien-space-6: 32px; --eien-space-7: 48px; --eien-space-8: 72px;
+  --eien-row-h: 30px;
+  --eien-touch: 44px;
+  --eien-seal-size: 22px;
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms;
+  --eien-calm: 220ms;
+  --eien-leading-tighten: 0;
+  --eien-sheet-pad-x: var(--eien-space-8);
+  --eien-sheet-pad-top: var(--eien-space-7);
+  --eien-page-gutter: var(--eien-space-5);
+  --eien-title-gap: var(--eien-space-6);
+  --eien-paragraph-gap: var(--eien-space-4);
+  --eien-row-pad-y: var(--eien-space-3);
+
+  /* NEW: corners. Not everything is square. A small scale: s for what you press
+     (buttons, fields, chips), m for what floats (menus, popovers, the tool slip),
+     l for what covers the window (a sheet over it, the phone's bottom sheet).
+     Paper itself (the sheet, the panes) stays square. Each exploration sets its own. */
+  --eien-radius-s: 3px;
+  --eien-radius-m: 6px;
+  --eien-radius-l: 10px;
+  --eien-radius-dot: 999px;
+
+  /* NEW: icons. Drawn on a 16-unit grid, stroked in the ink they sit in. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
+
+  /* NEW: row names' weight, two settings (400–700). A selected list title is 100 heavier. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+}
+
+/* The text voice: the writer's choice, sizes tuned per face (from ../tokens.css). */
+:root, [data-face='newsreader'] { --eien-face-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; --eien-size-prose: 22px; --eien-size-title: 36px; --eien-size-heading: 23px; --eien-size-row: 16px; --eien-size-preview: 14px; --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten)); --eien-measure: 29em; }
+[data-face='literata'] { --eien-face-text: 'Literata', Georgia, serif; --eien-size-prose: 19px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten)); --eien-measure: 34em; }
+[data-face='plex-sans'] { --eien-face-text: 'IBM Plex Sans', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='source-sans'] { --eien-face-text: 'Source Sans 3', Arial, sans-serif; --eien-size-prose: 20px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+[data-face='atkinson'] { --eien-face-text: 'Atkinson Hyperlegible Next', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='schibsted'] { --eien-face-text: 'Schibsted Grotesk', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 33em; }
+[data-face='hanken'] { --eien-face-text: 'Hanken Grotesk', Arial, sans-serif; --eien-size-prose: 19px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='instrument'] { --eien-face-text: 'Instrument Sans', Arial, sans-serif; --eien-size-prose: 18.5px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--eien-seal-wash); }
+:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+
+.seal {
+  display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-seal-size); height: var(--eien-seal-size);
+  background: var(--eien-seal); color: var(--eien-on-seal);
+  font-family: var(--eien-face-seal); font-size: calc(var(--eien-seal-size) * 0.68); line-height: 1;
+  border-radius: calc(var(--eien-radius-s) / 2);
+  user-select: none;
+}
+.seal--small { --eien-seal-size: 10px; font-size: 0; }
+
+.label {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil);
+}
+.count {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums; color: var(--eien-pencil);
+}
+
+/* Where a word stays (menus, choices of a setting). */
+.word-button {
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; padding: var(--eien-space-1) var(--eien-space-2);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.word-button[aria-pressed='true'], .word-button[aria-checked='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* NEW: the icon control. The word button's states, a square of --eien-control. */
+.icon-button {
+  appearance: none; display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-control); height: var(--eien-control); padding: 0;
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; position: relative;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon-button svg, .icon { width: var(--eien-icon); height: var(--eien-icon); display: block; }
+.icon { stroke-width: var(--eien-icon-stroke); }
+.icon-button[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.icon-button:disabled { color: var(--eien-faded); cursor: default; }
+@media (hover: hover) {
+  .word-button:hover, .icon-button:not(:disabled):hover { color: var(--eien-ink); background: var(--eien-hover); }
+}
+.word-button:active, .icon-button:not(:disabled):active { background: var(--eien-press); border-color: var(--eien-rule-strong); }
+
+/* NEW: a tooltip names an icon and its key: raised paper, the machine voice. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip); position: absolute; z-index: 50; pointer-events: none;
+  left: 50%; top: calc(100% + 6px); translate: -50% 0;
+  white-space: pre; padding: 3px 7px; border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em;
+  text-transform: none; color: var(--eien-ink-soft);
+  opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease);
+}
+[data-tip-side='up']::after { top: auto; bottom: calc(100% + 6px); }
+[data-tip-side='right']::after { left: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+[data-tip-side='left']::after { left: auto; right: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+@media (hover: hover) { [data-tip]:hover::after { opacity: 1; transition-delay: 450ms; } }
+[data-tip]:focus-visible::after { opacity: 1; }
+
+.field {
+  appearance: none; width: 100%; border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-s); background: var(--eien-well);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink);
+}
+.field::placeholder { color: var(--eien-faded); }
+.field:focus { outline: none; border-color: var(--eien-focus); }
+
+/* Explorations' own bar: outside the app, like the mockups' bar. */
+.xbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--eien-space-1) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-paper-raised); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.xbar__name { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); font-weight: 600; }
+.xbar__group { display: flex; align-items: center; gap: 2px; }
+.xbar__label { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); margin-right: var(--eien-space-1); }
+.xnote { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+
+/* Shared by the split-window explorations (split-*.html): Eien's window at its
+   real size, in A · Band, B · Slip or C · Running head, its page pane holding
+   one note or two. Each direction draws the page pane its own way (split.js's
+   Split.page); the window, the sidebar, the list, the menus, the divider and the
+   keys are the same in all three. */
+/* Each layout's corners, as src/ui/chrome/*.css sets them on :root[data-layout]:
+   A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10. */
+:root[data-layout='band'] { --eien-radius-s: 2px; --eien-radius-m: 4px; --eien-radius-l: 8px; }
+:root[data-layout='slip'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; }
+:root[data-layout='runhead'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; }
+a.word-button { text-decoration: none; }
+.word-button[aria-current='page'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* The seal as a button, as the app draws it: no ground, a hairline that shows on hover.
+   Shared by the corner and split explorations. */
+.seal-button { appearance: none; display: grid; place-items: center; padding: var(--eien-space-1); border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; cursor: pointer; transition: border-color var(--eien-quick) var(--eien-ease); }
+@media (hover: hover) { .seal-button:hover { border-color: var(--eien-rule); } }
+.seal-button:active { background: var(--eien-press); }
+
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 45%); } }
+/* A quiet desktop the window sits on, outside Eien; the window scales to fit it. */
+.canvas { min-height: 0; overflow: auto; padding: var(--eien-space-4); background: color-mix(in srgb, var(--eien-desk) 84%, var(--eien-ink)); }
+.fit { position: relative; margin: 0 auto; }
+.fit > .win { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.notes { min-height: 0; overflow: auto; padding: var(--eien-space-4); background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); font-size: var(--eien-size-preview); line-height: 1.55; color: var(--eien-ink-soft); }
+@media (max-width: 900px) { .notes { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }
+.notes h2 { margin: var(--eien-space-4) 0 var(--eien-space-1); font: inherit; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); font-weight: 400; }
+.notes h2:first-child { margin-top: 0; }
+.notes p { margin: 0 0 var(--eien-space-2); }
+.notes ul { margin: 0 0 var(--eien-space-2); padding-left: 1.1em; }
+.notes code { font-family: var(--eien-face-mono); font-size: 0.9em; }
+kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-paper); white-space: nowrap; }
+.xbar input[type='range'] { width: 120px; accent-color: var(--eien-ink-soft); }
+.xbar output { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); min-width: 7ch; }
+
+/* The window. Its lengths are the app's: --band 56px (48 in C), C's running
+   head 40px, the colophon 40px; the sidebar's and the list's widths
+   (--eien-sidebar-w, --eien-list-w) come from split.js, which also measures
+   with them. The seal's button is the seal and its padding and hairline. */
+.win {
+  --band: calc(var(--eien-space-7) + var(--eien-space-2)); --status-h: calc(var(--eien-space-6) + var(--eien-space-2));
+  --head-h: 0px; --controls-left: 80px;
+  --seal-btn: calc(var(--eien-seal-size) + 2 * var(--eien-space-1) + 2 * var(--eien-hairline));
+  --sb: var(--eien-sidebar-w);
+  width: var(--win-w); height: var(--win-h); overflow: hidden; position: relative;
+  display: grid; grid-template-rows: var(--head-h) minmax(0, 1fr); grid-template-columns: var(--sb) var(--eien-list-w) minmax(0, 1fr);
+  background: var(--eien-desk); color: var(--eien-ink); font-size: var(--eien-size-row);
+  border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 10px; box-shadow: var(--eien-shadow-float);
+}
+.win[data-layout='runhead'] { --band: var(--eien-space-7); --head-h: calc(var(--eien-space-6) + var(--eien-space-2)); }
+/* Shut, the sidebar is the seal alone in A and B (the default), and C's 48px strip. */
+.win[data-sb='shut'] { --sb: 0px; }
+.win[data-layout='runhead'][data-sb='shut'] { --sb: var(--band); }
+/* The seal: beside the lights in A and B, open or shut; on C's sidebar head. */
+.win { --seal-x: calc(var(--controls-left) + var(--eien-space-3)); --seal-y: calc((var(--band) - var(--seal-btn)) / 2); }
+.win[data-layout='runhead'] { --seal-x: var(--eien-space-3); --seal-y: calc(var(--head-h) + (var(--band) - var(--seal-btn)) / 2); }
+.win[data-layout='runhead'][data-sb='shut'] { --seal-x: calc((var(--band) - var(--seal-btn)) / 2); }
+.seal-btn { position: absolute; z-index: 6; left: var(--seal-x); top: var(--seal-y); }
+.win > .sb, .win > .ls, .win > .pg { grid-row: 2; min-width: 0; min-height: 0; overflow: hidden; }
+/* macOS's own lights, in macOS's own colours. */
+.lights { position: absolute; z-index: 5; left: 20px; top: 22px; display: flex; gap: 8px; }
+.win[data-layout='runhead'] .lights { top: 14px; }
+.lights i { width: 12px; height: 12px; border-radius: var(--eien-radius-dot); background: #ff5f57; box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.18); }
+.lights i:nth-child(2) { background: #febc2e; }
+.lights i:nth-child(3) { background: #28c840; }
+
+/* C's running head: one strip across the window; its page part is the direction's. */
+.strip { grid-row: 1; grid-column: 1 / -1; display: grid; grid-template-columns: var(--sb) var(--eien-list-w) minmax(0, 1fr); background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); min-width: 0; }
+.strip__panes { grid-column: 1 / 3; display: flex; align-items: center; gap: 2px; padding-left: calc(var(--controls-left) + var(--eien-space-2)); }
+.strip__page { grid-column: 3; min-width: 0; display: flex; align-items: center; }
+.crumb { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The sidebar: the desk. */
+.sb { display: flex; flex-direction: column; border-right: var(--eien-hairline) solid var(--eien-rule); }
+.win[data-sb='shut'] .sb { visibility: hidden; }
+/* Its contents keep their width as it shuts, so nothing reflows mid-slide. */
+.sb > * { width: var(--eien-sidebar-w); }
+.sb__head { flex: none; display: flex; align-items: center; height: var(--band); padding-left: calc(var(--seal-x) + var(--seal-btn) + var(--eien-space-2)); font-weight: 600; }
+.sb__sec { display: flex; align-items: center; height: var(--eien-row-h); padding: 0 var(--eien-space-4); margin-top: var(--eien-space-2); }
+.trow { position: relative; display: flex; align-items: baseline; gap: var(--eien-space-2); height: var(--eien-row-h); line-height: var(--eien-row-h); padding: 0 var(--eien-space-4) 0 calc(var(--eien-space-4) + var(--d, 0) * 16px); color: var(--eien-ink-soft); }
+.trow .n { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trow.is-chosen { background: var(--eien-selected); color: var(--eien-ink); }
+.trow.is-chosen::before, .row.is-chosen::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: var(--eien-mark-w); background: var(--eien-seal); }
+.book { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); padding: 0 3px; border: var(--eien-hairline) solid var(--eien-rule); color: var(--eien-pencil); line-height: 14px; }
+
+/* The list: paper, its search on a band. A note open on the other side keeps a
+   fainter rule, in pencil and with no fill, so both open notes are findable. */
+.ls { background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); }
+.ls__band { display: flex; align-items: center; height: var(--band); padding: 0 var(--eien-space-4); background: var(--eien-band); }
+.win[data-sb='shut']:not([data-layout='runhead']) .ls__band { padding-left: calc(var(--seal-x) + var(--seal-btn) + var(--eien-space-3)); }
+.ls__band .field { padding: 6px var(--eien-space-3); color: var(--eien-faded); }
+.ls__head { padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.ls__title { font-size: var(--eien-size-heading); font-weight: 500; line-height: 1.3; }
+.row {
+  appearance: none; position: relative; display: grid; grid-template-columns: var(--eien-space-6) 1fr auto; gap: 0 var(--eien-space-1); width: 100%;
+  padding: var(--eien-space-3) var(--eien-space-4); border: 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); background: none;
+  text-align: left; cursor: pointer; font: inherit; color: var(--eien-ink);
+}
+@media (hover: hover) { .row:hover { background: var(--eien-hover); } }
+.row .ord { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); padding-top: 2px; }
+.row .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .p { grid-column: 2 / 4; font-size: var(--eien-size-preview); color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row.is-chosen { background: var(--eien-selected); }
+.row.is-beside::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: var(--eien-mark-w); background: var(--eien-pencil); opacity: 0.6; }
+.row:focus-visible { outline-offset: -2px; }
+.row.is-dragged { opacity: 0.72; }
+
+/* The page pane and its parts, which each direction arranges. A page's parts
+   keep their rows whether or not the formatting bar is there: the band (or B's
+   top line), the formatting bar, the sheet's blotter, the colophon. */
+.pg { position: relative; display: grid; grid-template-rows: minmax(0, 1fr); background: var(--eien-blotter); }
+.pg > * { min-width: 0; min-height: 0; }
+.duo { display: grid; min-width: 0; min-height: 0; }
+.side, .page { position: relative; min-width: 0; min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+:is(.side, .page) > :is(.band, .topline) { grid-row: 1; }
+:is(.side, .page) > .fmt { grid-row: 2; }
+:is(.side, .page) > :is(.blotter, .duo) { grid-row: 3; }
+:is(.side, .page) > .colophon { grid-row: 4; height: var(--status-h); }
+.topline { display: flex; align-items: center; justify-content: flex-end; gap: var(--eien-space-2); height: var(--band); padding: 0 var(--eien-space-3); min-width: 0; }
+.win[data-layout='slip'] .blotter { padding-top: 0; }
+.band { display: flex; align-items: center; justify-content: space-between; gap: var(--eien-space-2); height: var(--band); padding: 0 var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); min-width: 0; }
+.tools { display: flex; gap: 2px; min-width: 0; }
+.tools .icon-button { color: var(--eien-pencil); }
+.quiet { opacity: 0; transition: opacity var(--eien-calm) var(--eien-ease); }
+.pg:hover .quiet, .quiet:focus-within { opacity: 1; }
+.slip { display: flex; gap: 2px; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+/* The blotter scrolls its sheet; the sheet fills what's left of it, so a short note never
+   overflows by the blotter's own padding (which showed a scrollbar in the gap). */
+.blotter { position: relative; min-height: 0; overflow: auto; display: flex; flex-direction: column; padding: var(--eien-space-4) var(--eien-space-4) 0; }
+/* The sheet at the face's own sizes, leading and measure; its margins narrow with
+   a narrow page, as the app's do. */
+.sheet {
+  position: relative; flex: 1 0 auto; width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto;
+  padding: var(--eien-space-6) clamp(var(--eien-space-4), 8%, var(--eien-space-8));
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet);
+  font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose);
+  transition: box-shadow var(--eien-calm) var(--eien-ease), border-color var(--eien-calm) var(--eien-ease);
+}
+.win[data-layout='slip'] .sheet { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.sheet__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eien-space-3); min-height: 18px; }
+.sheet h1 { font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; margin: var(--eien-space-4) 0 var(--eien-space-5); }
+.prose { outline: none; caret-color: var(--eien-seal); }
+.prose p { margin: 0 0 var(--eien-paragraph-gap); }
+.tagset { display: flex; gap: var(--eien-space-2); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); white-space: nowrap; }
+.slips { display: flex; gap: var(--eien-space-1); margin: calc(var(--eien-space-3) * -1) 0 var(--eien-space-4); }
+.slips span { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); padding: 1px 8px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-band); }
+.colophon { display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-4); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; }
+.colophon .dot { color: var(--eien-faded); }
+.colophon .pill { text-transform: none; padding: 0 6px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-dot); }
+.colophon .said { margin-left: auto; color: var(--eien-ink-soft); overflow: hidden; text-overflow: ellipsis; }
+
+/* The formatting bar, where each layout puts it: A's band's second row, B's
+   raised slip at the blotter's top left, C's raised rail down the margin. */
+.fmt { display: flex; justify-content: center; gap: 2px; padding: 2px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.fmt .icon-button { color: var(--eien-ink-soft); }
+.win[data-layout='slip'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-3); top: calc((var(--band) - var(--eien-control) - 6px) / 2); padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.win[data-layout='runhead'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-2); top: var(--eien-space-4); flex-direction: column; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+
+/* The divider between two pages, as a pane's edge is: its own column (a
+   hairline wide, or wider where a direction says), a hairline drawn down its
+   middle, an 8px handle round it to grab; rule-strong on hover, the focus ink
+   at 2px while dragged or focused; its swap shows on hover. */
+.divider { position: relative; z-index: 4; cursor: col-resize; outline: none; touch-action: none; }
+.divider::before { content: ''; position: absolute; inset: 0 calc(var(--eien-space-1) * -1); }
+.divider::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; translate: -50% 0; width: var(--eien-hairline); background: var(--eien-rule); transition: background var(--eien-quick) var(--eien-ease); }
+.divider:hover::after { background: var(--eien-rule-strong); }
+.divider:focus-visible::after, .divider.is-dragging::after { width: var(--eien-mark-w); background: var(--eien-focus); }
+.divider__swap { position: absolute; z-index: 1; left: 50%; top: 50%; translate: -50% -50%; width: var(--eien-space-5); height: var(--eien-space-5); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); background: var(--eien-paper-raised); opacity: 0; }
+.divider__swap svg { width: 12px; height: 12px; }
+.divider:is(:hover, :focus-within) .divider__swap, .divider__swap:focus-visible { opacity: 1; }
+
+/* A side's own close, quiet till its head is hovered; the pager when folded. */
+.close-side { color: var(--eien-pencil); }
+.same { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); white-space: nowrap; }
+.pager { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.pager .word-button { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Dropping a note on the page's right edge: where the new page would stand. */
+.drop-preview { position: absolute; z-index: 8; top: 0; bottom: 0; right: 0; display: grid; place-items: center; pointer-events: none; background: color-mix(in srgb, var(--eien-paper-raised) 82%, transparent); border-left: var(--eien-mark-w) solid var(--eien-ink-soft); }
+.drop-preview .label { color: var(--eien-ink-soft); padding: var(--eien-space-1) var(--eien-space-2); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); }
+
+/* The row's menu, as the sidebar's is. */
+.menu { position: fixed; z-index: 40; min-width: 18em; padding: var(--eien-space-1); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.menu[hidden] { display: none; }
+.menu__head { padding: 6px var(--eien-space-2) 4px; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+.menu__item { appearance: none; display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: var(--eien-space-2); width: 100%; padding: 5px var(--eien-space-2); border: 0; border-radius: var(--eien-radius-s); background: none; cursor: pointer; text-align: left; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); }
+.menu__item:focus { outline: none; background: var(--eien-selected); color: var(--eien-ink); }
+@media (hover: hover) { .menu__item:hover { background: var(--eien-hover); color: var(--eien-ink); } }
+.menu__key { font-size: var(--eien-size-label); color: var(--eien-pencil); }
+.menu__rule { height: var(--eien-hairline); margin: var(--eien-space-1) var(--eien-space-2); background: var(--eien-rule-soft); }
+
+/* The page's tools in a row; C's running head over the page, one segment a page. */
+.tools-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.strip__page > * { flex: 1; height: 100%; }
+.seg { display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-3); }
+.seg .crumb { flex: 1; text-align: center; }
+/* C's formatting rail keeps a margin of its own, so it never lies over the words. */
+.win[data-layout='runhead'] :is(.side, .page):has(> .fmt) .blotter { padding-left: calc(var(--eien-control) + var(--eien-space-5)); }
+/* B's slip and C's rail float: placed in the page's own box, not in the bar's row. */
+.win:is([data-layout='slip'], [data-layout='runhead']) :is(.side, .page) > .fmt { grid-row: auto; }
+
+
+/* New Window and the phone: shown once, the same whichever split direction is chosen. */
+.canvas { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--eien-space-6); align-items: start; padding: var(--eien-space-5); }
+@media (max-width: 1100px) { .canvas { grid-template-columns: 1fr; } }
+.part__name { display: block; margin-bottom: var(--eien-space-3); }
+
+/* macOS's menu bar with Eien's File menu open, and a note's menu beside it. */
+.menubar { display: flex; align-items: center; gap: var(--eien-space-4); height: var(--eien-space-5); padding: 0 var(--eien-space-3); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); font-size: var(--eien-size-preview); }
+.menubar b { font-weight: 600; }
+.menubar .is-open { padding: 0 var(--eien-space-2); border-radius: var(--eien-radius-s); background: var(--eien-selected); }
+.menus { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--eien-space-5); margin: var(--eien-space-1) 0 0 var(--eien-space-8); }
+.menus .menu { position: static; }
+/* Real Eien windows, scaled: the one you're in, and the one New Window opens over it. */
+.windows { position: relative; margin-top: var(--eien-space-6); }
+.windows .fit { margin: 0; }
+.windows .win { pointer-events: none; }
+.window--new { position: absolute; transition: opacity var(--eien-calm) var(--eien-ease), translate var(--eien-calm) var(--eien-ease); }
+.window--new[hidden] { display: block; opacity: 0; translate: calc(var(--eien-space-5) * -1) calc(var(--eien-space-5) * -1); }
+
+/* The phone: no split. The back bar keeps the other note a tap away. */
+/* A phone's own size and corner, not Eien's. */
+.phone { width: 340px; height: 680px; display: grid; grid-template-rows: var(--eien-touch) minmax(0, 1fr) calc(var(--eien-touch) + var(--eien-space-3)); overflow: hidden; position: relative; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 36px; box-shadow: var(--eien-shadow-float); }
+.backbar { display: flex; align-items: center; gap: var(--eien-space-1); padding: 0 var(--eien-space-2); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.backbar .back { display: flex; align-items: center; gap: var(--eien-space-1); flex: 1; min-width: 0; height: var(--eien-touch); padding: 0 var(--eien-space-1); border: 0; background: none; color: var(--eien-ink-soft); font: inherit; font-size: var(--eien-size-preview); white-space: nowrap; overflow: hidden; }
+.backbar .other { display: flex; align-items: center; gap: var(--eien-space-1); height: var(--eien-space-6); max-width: 12em; padding: 0 var(--eien-space-2); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-dot); background: var(--eien-paper); color: var(--eien-ink-soft); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: nowrap; overflow: hidden; cursor: pointer; }
+.backbar .other::after { content: ''; position: absolute; inset: -6px; }
+.backbar .other { position: relative; }
+.backbar .other svg { flex: none; width: var(--eien-space-3); height: var(--eien-space-3); }
+/* A phone's page: the face's prose and title, a size down for a hand-held measure. */
+.phone .page-body { overflow: auto; padding: var(--eien-space-4); font-size: calc(var(--eien-size-prose) * 0.82); line-height: var(--eien-leading-prose); }
+.phone h1 { font-size: calc(var(--eien-size-title) * 0.72); font-weight: 500; line-height: 1.2; margin: var(--eien-space-2) 0 var(--eien-space-3); }
+.phone .slips { margin: 0 0 var(--eien-space-3); }
+.rail { display: flex; justify-content: space-around; align-items: center; background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); }
+.rail .icon-button { width: var(--eien-touch); height: var(--eien-touch); }
+.sheet-menu { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-5); background: var(--eien-paper-raised); border-top: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-l) var(--eien-radius-l) 0 0; box-shadow: var(--eien-shadow-float); }
+.sheet-menu[hidden] { display: none; }
+.sheet-menu .menu__item { min-height: var(--eien-touch); }
+.phone-list { display: grid; }
+.phone-list button { appearance: none; text-align: left; padding: var(--eien-space-3) var(--eien-space-4); min-height: var(--eien-touch); border: 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); background: none; font: inherit; color: var(--eien-ink); cursor: pointer; }
+</style>
+</head>
+<body>
+<header class="xbar">
+  <span class="xbar__name">Eien · Split window</span>
+  <nav class="xbar__group" aria-label="Directions"><a class="word-button" href="split-apart.html">1 · Two whole pages</a><a class="word-button" href="split-shared.html">2 · One set of tools</a><a class="word-button" href="split-sheets.html">3 · Two sheets</a><a class="word-button" href="split-window.html" aria-current="page">New window &amp; phone</a></nav>
+  <div class="xbar__group" data-x-set="layout"><span class="xbar__label">Layout</span><button class="word-button" data-value="band">A · Band</button><button class="word-button" data-value="slip">B · Slip</button><button class="word-button" data-value="runhead">C · Running head</button></div>
+  <div class="xbar__group" data-x-set="theme"><span class="xbar__label">Light</span><button class="word-button" data-value="light">Day</button><button class="word-button" data-value="dark">Night</button></div>
+  <span class="xnote">New Window and the phone, once: the same whichever split is chosen.</span>
+</header>
+<main class="stage">
+  <div class="canvas">
+    <section aria-labelledby="nw">
+      <span class="label part__name" id="nw">New window</span>
+      <div class="menubar" aria-hidden="true"><b>Eien</b><span class="is-open">File</span><span>Edit</span><span>Format</span><span>View</span><span>Window</span><span>Help</span></div>
+      <div class="menus">
+        <div class="menu" role="menu" aria-label="File">
+          <div class="menu__head" aria-hidden="true">File</div>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-N"><span></span><span>New Note</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-new-window="iv" data-key-row="Mod-Shift-N"><span data-icon="window"></span><span>New Window</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-S"><span></span><span>Seal</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-O"><span></span><span>Open Vault…</span><span class="menu__key"></span></button>
+          <div class="menu__rule" role="separator"></div>
+          <button class="menu__item" role="menuitem"><span></span><span>Export Note</span><span class="menu__key">›</span></button>
+          <div class="menu__rule" role="separator"></div>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-W"><span></span><span>Close Window</span><span class="menu__key"></span></button>
+        </div>
+        <div class="menu" role="menu" aria-label="Below the Gate">
+          <div class="menu__head" aria-hidden="true">Below the Gate</div>
+          <button class="menu__item" role="menuitem"><span data-icon="open"></span><span>Open</span><span class="menu__key">Enter</span></button>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-click"><span data-icon="side"></span><span>Open to the Side</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-new-window="iii"><span data-icon="window"></span><span>Open in New Window</span><span class="menu__key"></span></button>
+          <div class="menu__rule" role="separator"></div>
+          <button class="menu__item" role="menuitem" data-key-row="F2"><span data-icon="rename"></span><span>Rename</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem"><span data-icon="move"></span><span>Move to…</span><span class="menu__key"></span></button>
+        </div>
+      </div>
+      <div class="windows" aria-label="Eien's windows"></div>
+    </section>
+    <section aria-labelledby="ph">
+      <span class="label part__name" id="ph">The phone: no split</span>
+      <div class="phone">
+        <div class="backbar">
+          <button class="back" aria-label="Back to Beneath the Walls"><span data-icon="back"></span>Beneath the Walls</button>
+          <button class="other" data-other aria-label="Switch to the other note: Erwin"><span data-icon="swap"></span><span data-other-name>Erwin</span></button>
+        </div>
+        <div class="page-body" data-press>
+          <span class="crumb" data-phone-crumb>Fic / Beneath the Walls / iv</span>
+          <h1 data-phone-title>What the Recruits Say</h1>
+          <div class="slips" data-phone-tags><span>#fic/aot</span><span>#draft</span></div>
+          <div data-phone-text><p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p><p>Instead he takes the late watch, every night of the week.</p></div>
+        </div>
+        <div class="rail"><button class="icon-button" data-icon="live" aria-label="Live"></button><button class="icon-button" data-icon="reading" aria-label="Reading"></button><button class="icon-button" data-icon="focus" aria-label="Focus mode"></button><button class="icon-button" data-icon="more" aria-label="More"></button></div>
+        <div class="sheet-menu" role="menu" aria-label="Erwin" hidden>
+          <div class="menu__head" aria-hidden="true">Erwin, in the list</div>
+          <button class="menu__item" role="menuitem" data-phone-open><span data-icon="open"></span><span>Open</span><span></span></button>
+          <button class="menu__item" role="menuitem"><span data-icon="rename"></span><span>Rename</span><span></span></button>
+          <button class="menu__item" role="menuitem"><span data-icon="move"></span><span>Move to…</span><span></span></button>
+          <button class="menu__item" role="menuitem" data-phone-close><span data-icon="close"></span><span>Close</span><span></span></button>
+        </div>
+      </div>
+      <p class="xnote" style="max-width: 340px; margin-top: var(--eien-space-3)">Long-press a row in the list for its menu: <button class="word-button" data-show-sheet>Show it</button></p>
+    </section>
+  </div>
+  <aside class="notes">
+    <h2>New window</h2>
+    <ul>
+      <li><b>File → New Window</b>, <kbd data-key="Mod-Shift-N"></kbd> (free: <kbd data-key="Mod-N"></kbd> is New Note). It opens on the vault and note this window shows; File → Open Vault… in it changes its vault. Each window is its own: its vault, its note, its panes, its split.</li>
+      <li><b>Open in New Window</b>, in a note's right-click menu beside Open to the Side: a window on that note.</li>
+      <li><b>Close Window</b>, <kbd data-key="Mod-W"></kbd>. While a window is split, <kbd data-key="Mod-W"></kbd> closes the active side first; the window's red light closes the window whatever it holds.</li>
+      <li>macOS's <b>Window</b> menu lists each window by its note, as it does for any app. On Windows and Linux each is its own window in the taskbar.</li>
+      <li>Two windows on the same vault see each other's saves as they land (the vault is one folder, watched as it is now). The same note in two windows is one file: the second window shows the first's typing when it's saved, as it does for an edit from another app.</li>
+    </ul>
+    <h2>The phone</h2>
+    <ul>
+      <li><b>No split, and no New Window:</b> a phone shows one page, and the split's commands aren't in its menus.</li>
+      <li><b>The other note</b> instead: the back bar keeps the note you came from a tap away, at its right (⇄ and its name). A tap switches; the two keep their places, so working between a chapter and its notes is one tap, not back and forward again.</li>
+      <li>Try ⇄, then open another note from the long-press menu: the one you left becomes the other note.</li>
+    </ul>
+  </aside>
+</main>
+<script>
+// Shared by every exploration (inlined into each page by _build.py).
+
+// Eien's icons: one set, drawn here on a 16-unit grid with round ends, stroked
+// in the ink of whatever they sit in. No icon font, nothing fetched. Each is
+// the inside of an <svg viewBox="0 0 16 16">.
+const ICONS = {
+  live: '<path d="M10.6 2.9l2.5 2.5-7.3 7.3-3.2.8.8-3.2z"/><path d="M9.2 4.3l2.5 2.5"/><path d="M8.5 13.5h5"/>',
+  source: '<path d="M5.5 4.5L2 8l3.5 3.5"/><path d="M10.5 4.5L14 8l-3.5 3.5"/><path d="M9.2 3l-2.4 10"/>',
+  reading: '<path d="M8 4.6C6.6 3.6 4.7 3.1 2.2 3.1v9.4c2.5 0 4.4.5 5.8 1.5 1.4-1 3.3-1.5 5.8-1.5V3.1c-2.5 0-4.4.5-5.8 1.5z"/><path d="M8 4.6V14"/>',
+  compare: '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
+  versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',
+  sidebar: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/>',
+  list: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/><path d="M8.5 6h3M8.5 8.5h3M8.5 11h2"/>',
+  panes3: '<path d="M2 3h12v10H2z"/><path d="M5.5 3v10M9 3v10"/>',
+  panes2: '<path d="M2 3h12v10H2z"/><path d="M6 3v10"/>',
+  left: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  right: '<path d="M6 3.5l4.5 4.5L6 12.5"/>',
+  up: '<path d="M3.5 10L8 5.5l4.5 4.5"/>',
+  down: '<path d="M3.5 6L8 10.5 12.5 6"/>',
+  sun: '<circle cx="8" cy="8" r="2.6"/><path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1"/>',
+  moon: '<path d="M13.2 9.6A5.4 5.4 0 1 1 6.4 2.8a4.3 4.3 0 0 0 6.8 6.8z"/>',
+  settings: '<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><path d="M5.5 3v3M10.5 6.5v3M7 10v3"/>',
+  plus: '<path d="M8 3.5v9M3.5 8h9"/>',
+  tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
+  pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
+  sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
+  search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
+  close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  sort: '<path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3"/>',
+  strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
+  format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',
+  link: '<path d="M6.8 9.2l2.4-2.4"/><path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/>',
+  quote: '<path d="M3 8.5h3.5v4H3zM3 8.5c0-2.5.8-4 3-5M9.5 8.5H13v4H9.5zM9.5 8.5c0-2.5.8-4 3-5"/>',
+  bullets: '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
+  numbers: '<path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7"/><path d="M2.5 3.5l1-.7v3.2M2.4 9.2c.2-.6 1.6-.7 1.6.2 0 .7-1.6 1.2-1.6 1.8h1.7"/>',
+  checklist: '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
+  table: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6.3h11M2.5 9.7h11M8 3v10"/>',
+  highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
+  heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
+  grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
+  more: '<circle cx="3.5" cy="8" r=".8"/><circle cx="8" cy="8" r=".8"/><circle cx="12.5" cy="8" r=".8"/>',
+  outdent: '<path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h10"/><path d="M13.5 3v10"/>',
+  filter: '<path d="M2.5 3.5h11l-4.3 5.2v4l-2.4 1.3V8.7z"/>',
+  check: '<path d="M3 8.5l3 3 7-7"/>',
+  back: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
+  palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
+  type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+  bold: '<path d="M4.5 2.8h4.2a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 8h4.9a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 2.8v10.4"/>',
+  italic: '<path d="M7.2 2.8h5M3.8 13.2h5M10 2.8L6 13.2"/>',
+  underline: '<path d="M4.5 2.8v4.6a3.5 3.5 0 0 0 7 0V2.8"/><path d="M3.5 13.5h9"/>',
+  strike: '<path d="M2.5 8h11"/><path d="M11.2 4.4c-.6-1-1.8-1.6-3.2-1.6-1.8 0-3.2 1-3.2 2.4 0 .9.5 1.6 1.6 2.1"/><path d="M5 11.4c.6 1.1 1.8 1.8 3.3 1.8 1.9 0 3.3-1 3.3-2.5 0-.6-.2-1.1-.6-1.5"/>',
+  focus: '<path d="M2.5 4h11" opacity=".35"/><path d="M2.5 8h11"/><path d="M2.5 12h8" opacity=".35"/><path d="M1 6v4M15 6v4"/>',
+  rename: '<path d="M3 11.5h6.5"/><path d="M11.5 3v10M10 3h3M10 13h3"/>',
+  trash: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/>',
+  move: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/><path d="M6.5 9.5h4M9 8l1.5 1.5L9 11"/>',
+  include: '<path d="M8 4v8M4 8h8"/>',
+  exclude: '<path d="M4 8h8"/>',
+  resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
+};
+
+/** An icon as SVG markup, stroked in currentColor. */
+function icon(name, label) {
+  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
+  return `<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" ${a11y}>${ICONS[name]}</svg>`;
+}
+
+/** Fill every [data-icon] with its icon. */
+function drawIcons(root = document) {
+  for (const el of root.querySelectorAll('[data-icon]')) {
+    el.innerHTML = icon(el.dataset.icon) + (el.dataset.iconText ?? '');
+  }
+}
+
+// One list of faces drives every face setting: the text face and the machine
+// voice both choose from it. A face added later is one more entry here (in the
+// app: one entry in core/config, its fonts and its tuning in tokens.css).
+const FACES = [
+  { id: 'plex-mono', name: 'IBM Plex Mono', family: "'IBM Plex Mono', ui-monospace, monospace", mono: true },
+  { id: 'newsreader', name: 'Newsreader', family: "'Newsreader', Georgia, serif" },
+  { id: 'literata', name: 'Literata', family: "'Literata', Georgia, serif" },
+  { id: 'plex-sans', name: 'IBM Plex Sans', family: "'IBM Plex Sans', Arial, sans-serif" },
+  { id: 'source-sans', name: 'Source Sans 3', family: "'Source Sans 3', Arial, sans-serif" },
+  { id: 'atkinson', name: 'Atkinson Hyperlegible Next', family: "'Atkinson Hyperlegible Next', Arial, sans-serif" },
+  { id: 'schibsted', name: 'Schibsted Grotesk', family: "'Schibsted Grotesk', Arial, sans-serif" },
+  { id: 'hanken', name: 'Hanken Grotesk', family: "'Hanken Grotesk', Arial, sans-serif" },
+  { id: 'instrument', name: 'Instrument Sans', family: "'Instrument Sans', Arial, sans-serif" },
+];
+/** The faces the text voice offers (all but the mono), and the machine voice (all). */
+const TEXT_FACES = FACES.filter((face) => !face.mono);
+const MACHINE_FACES = FACES;
+
+function setMachineFace(id) {
+  const face = FACES.find((each) => each.id === id) ?? FACES[0];
+  document.documentElement.style.setProperty('--eien-face-mono', face.family);
+}
+function setTextFace(id) {
+  if (id === 'newsreader') delete document.documentElement.dataset.face;
+  else document.documentElement.dataset.face = id;
+}
+
+/** The explorations' bar: [data-x-set="attr"] groups set data-<attr> on <html>. */
+function wireBar(onChange = () => {}) {
+  for (const group of document.querySelectorAll('[data-x-set]')) {
+    const attr = group.dataset.xSet;
+    const buttons = [...group.querySelectorAll('button[data-value]')];
+    const pick = (value) => {
+      document.documentElement.dataset[attr] = value;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.value === value));
+      onChange(attr, value);
+    };
+    for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
+    pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
+  }
+}
+
+// Themes: [day, night] for each colour token. The rules are the ink at low
+// strength, so they follow it. Washi is tokens.css's own; the rest are new.
+const THEME_TOKENS = ['desk', 'blotter', 'band', 'paper', 'selected', 'ink', 'ink-soft', 'pencil', 'faded', 'seal'];
+const THEMES = {
+  washi: { name: 'Washi', kanji: '和紙', note: 'Eien’s own: paper and sumi ink', t: {
+    desk: ['#d9d2c8', '#110e0b'], blotter: ['#eae5dd', '#1a1713'], band: ['#f4f1ea', '#201d19'], paper: ['#fdfbf7', '#28241f'], selected: ['#ede9e3', '#38332e'],
+    ink: ['#23201c', '#e9e2d4'], 'ink-soft': ['#51473c', '#c3b9a7'], pencil: ['#5d5348', '#a7a095'], faded: ['#766d62', '#837c73'], seal: ['#c4472d', '#e0603f'] } },
+  kinari: { name: 'Kinari', kanji: '生成り', note: 'Unbleached cloth: yellower paper, a persimmon seal', t: {
+    desk: ['#d8cfb8', '#14110a'], blotter: ['#e9e2cd', '#1c180f'], band: ['#f3eedd', '#231e14'], paper: ['#fcf9ee', '#2b251a'], selected: ['#ece5d1', '#3b3426'],
+    ink: ['#2a2418', '#ece3cc'], 'ink-soft': ['#574a33', '#c8bb9c'], pencil: ['#5f523d', '#ab9f86'], faded: ['#7b6d56', '#88806d'], seal: ['#b8432a', '#dc6a43'] } },
+  aizome: { name: 'Aizome', kanji: '藍染', note: 'Indigo dye: cool paper, blue-black ink', t: {
+    desk: ['#c9cfd8', '#0b0e14'], blotter: ['#dfe3e9', '#121620'], band: ['#edf0f4', '#181d28'], paper: ['#fbfcfd', '#1f2533'], selected: ['#e3e8ef', '#2e3648'],
+    ink: ['#17213a', '#dde4f0'], 'ink-soft': ['#34405c', '#b3bfd6'], pencil: ['#3f4b64', '#97a3ba'], faded: ['#5f6a80', '#7a8599'], seal: ['#c4472d', '#e3664a'] } },
+  koke: { name: 'Koke', kanji: '苔', note: 'A moss garden: green-grey desk, quiet ink', t: {
+    desk: ['#cdd2c4', '#0d100b'], blotter: ['#e1e5d9', '#141811'], band: ['#eef0e8', '#1a1f16'], paper: ['#fafbf6', '#21271c'], selected: ['#e5e9dc', '#30382a'],
+    ink: ['#1f2619', '#e2e8d6'], 'ink-soft': ['#3e4833', '#bcc6ab'], pencil: ['#48523c', '#a0aa90'], faded: ['#67705a', '#808a72'], seal: ['#a8432f', '#d76a4e'] } },
+  rosoku: { name: 'Rōsoku', kanji: '蝋燭', note: 'Candlelight: amber at night, no blue light', t: {
+    desk: ['#dccab2', '#120c06'], blotter: ['#ecdfcb', '#1b130b'], band: ['#f5ece0', '#22180e'], paper: ['#fdf8f0', '#2a1f13'], selected: ['#efe3d1', '#3c2d1e'],
+    ink: ['#2b1d10', '#f0dcc0'], 'ink-soft': ['#5a4129', '#d2b894'], pencil: ['#634d37', '#b39b7c'], faded: ['#7f6a53', '#8f7c64'], seal: ['#b9442b', '#e8763f'] } },
+  sumi: { name: 'Sumi', kanji: '墨', note: 'For tired eyes: the most contrast there is', t: {
+    desk: ['#cfcfcc', '#000000'], blotter: ['#e6e6e3', '#0a0a0a'], band: ['#f2f2ef', '#141414'], paper: ['#ffffff', '#1b1b1b'], selected: ['#e8e8e4', '#2c2c2c'],
+    ink: ['#000000', '#f5f5f2'], 'ink-soft': ['#262626', '#d9d9d4'], pencil: ['#3a3a3a', '#bdbdb8'], faded: ['#5e5e5e', '#8f8f8a'], seal: ['#c4361d', '#ff6a45'] } },
+  sakura: { name: 'Sakura-nezumi', kanji: '桜鼠', note: 'Cherry-grey: plum ink, a rose seal', t: {
+    desk: ['#d8cdcc', '#120d0e'], blotter: ['#e9e1e0', '#1b1415'], band: ['#f3eeed', '#221a1b'], paper: ['#fdfafa', '#2a2122'], selected: ['#eee6e5', '#3a2f30'],
+    ink: ['#2a1e20', '#efe1e2'], 'ink-soft': ['#573f43', '#cbb5b8'], pencil: ['#5f464a', '#ad989b'], faded: ['#7c6468', '#8d7b7d'], seal: ['#b2394a', '#e0697a'] } },
+};
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function luminance(h) {
+  return hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; })
+    .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+/**
+ * An ink of hue `h` and saturation `sat`, starting at lightness `l` and stepped
+ * darker by day (`dir` -1) or lighter by night (+1) until it reaches `min`
+ * contrast on every one of `grounds`: the hue stays, the contrast holds.
+ */
+function fitInk(h, sat, l, grounds, min, dir) {
+  let ink = hsl(h, sat, l);
+  while (grounds.some((g) => contrast(ink, g) < min + 0.1) && l > 0 && l < 100) { l += dir; ink = hsl(h, sat, l); }
+  return ink;
+}
+/** "Custom": four choices, and every token worked out from them, day and night. */
+function mixTheme({ paper: ph, warmth: w, ink: ih, seal: sh }, name = 'My Room') {
+  const surf = (dl, nl) => [hsl(ph, w, dl), hsl(ph, Math.min(w, 22), nl)];
+  const t = { desk: surf(83, 5), blotter: surf(89, 8), band: surf(94, 11), paper: surf(98.5, 14), selected: surf(91, 19), seal: [hsl(sh, 63, 47), hsl(sh, 72, 56)] };
+  const grounds = (s) => ['desk', 'band', 'paper', 'selected'].map((k) => t[k][s]);
+  // The inks carry their hue, saturated enough to see by day, each as light as Eien's contrast allows.
+  const ink = (sat, dl, nsat, nl, min) => [fitInk(ih, sat, dl, grounds(0), min, -1), fitInk(ih, nsat, nl, grounds(1), min, 1)];
+  Object.assign(t, { ink: ink(48, 16, 38, 88, 7), 'ink-soft': ink(38, 30, 30, 70, 4.5), pencil: ink(30, 34, 20, 62, 4.5), faded: ink(20, 46, 12, 52, 3) });
+  return { name, kanji: '', note: 'Your own', t };
+}
+/** A theme on the whole page: each token as light-dark(day, night); the rules from the ink. */
+function applyTheme(theme, el = document.documentElement) {
+  for (const k of THEME_TOKENS) el.style.setProperty(`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`);
+  const [d, n] = theme.t.ink.map((c) => hexRgb(c).join(' '));
+  el.style.setProperty('--eien-rule-soft', `light-dark(rgb(${d} / 0.07), rgb(${n} / 0.07))`);
+  el.style.setProperty('--eien-rule', `light-dark(rgb(${d} / 0.13), rgb(${n} / 0.14))`);
+  el.style.setProperty('--eien-rule-strong', `light-dark(rgb(${d} / 0.26), rgb(${n} / 0.26))`);
+  el.style.setProperty('--eien-paper-raised', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 45%, #fff), color-mix(in srgb, ${theme.t.paper[1]} 88%, #fff))`);
+  el.style.setProperty('--eien-well', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 70%, ${theme.t.band[0]}), color-mix(in srgb, ${theme.t.paper[1]} 60%, ${theme.t.blotter[1]}))`);
+}
+
+// A key as this system writes it, shared by the table and split explorations.
+
+const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+const mod = (e) => (MAC ? e.metaKey : e.ctrlKey);
+/** A key as this system writes it: KEY('Mod-Alt-↓') is ⌥⌘↓ on a Mac (its order), Ctrl+Alt+↓ elsewhere. */
+function KEY(k) {
+  const parts = k.split('-');
+  const key = parts.pop();
+  const has = (m) => parts.includes(m);
+  return MAC
+    ? `${has('Alt') ? '⌥' : ''}${has('Shift') ? '⇧' : ''}${has('Mod') ? '⌘' : ''}${key}`
+    : [has('Mod') && 'Ctrl', has('Alt') && 'Alt', has('Shift') && 'Shift', key].filter(Boolean).join('+');
+}
+
+// Shared by the split-window explorations (split-*.html): Eien's window in
+// any layout, its page pane holding one note or two. Each direction sets
+// Split.page(ctx), the page pane's inside, and Split.strip(ctx), C's running
+// head over the page; everything else is here, the same in all three: the
+// notes, opening, closing and swapping sides, the divider, the menu, the keys.
+
+Object.assign(ICONS, {
+  swap: '<path d="M3 5.5h9.5M10 3l2.5 2.5L10 8"/><path d="M13 10.5H3.5M6 8l-2.5 2.5L6 13"/>',
+  side: '<path d="M2.5 3h11v10h-11z"/><path d="M8 3v10"/><path d="M10 6.5v3M8.5 8h3"/>',
+  window: '<path d="M2.5 4h9v8.5h-9z"/><path d="M5 4V2.5h8.5V10H11.5"/>',
+  open: '<path d="M3 3h10v10H3z"/><path d="M6 8h4"/>',
+});
+
+const NOTES = {
+  i: { ord: 'i', title: 'The Late Watch', rest: 2815, crumb: 'Fic / Beneath the Walls / i', tags: ['fic/aot'], sealed: 'Sep 2',
+    html: '<p>He takes the late watch, every night of the week, and nobody asks why.</p><p>The wall is colder at night than anyone tells the recruits.</p>' },
+  ii: { ord: 'ii', title: 'Rations', rest: 2181, crumb: 'Fic / Beneath the Walls / ii', tags: ['fic/aot'], sealed: 'Sep 9',
+    html: '<p>Half a loaf, a strip of dried meat, and a promise from the quartermaster.</p><p>The promise is the part that runs out first.</p>' },
+  iii: { ord: 'iii', title: 'Below the Gate', rest: 3389, crumb: 'Fic / Beneath the Walls / iii', tags: ['fic/aot', 'draft'], sealed: 'yesterday',
+    html: '<p>The water came up through the stones first, before anyone heard it.</p><p>By the time the bell rang, the lower stair was gone.</p>' },
+  iv: { ord: 'iv', title: 'What the Recruits Say', rest: 2999, crumb: 'Fic / Beneath the Walls / iv', tags: ['fic/aot', 'draft'], sealed: '2h ago',
+    html: '<p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p><p>Instead he takes the late watch, every night of the week, and lets them talk around the brazier as if he were part of the stone.</p><p>Erwin finds him there an hour before dawn, and says nothing either.</p>' },
+  v: { ord: 'v', title: 'The Long Way Round', rest: 1898, crumb: 'Fic / Beneath the Walls / v', tags: ['fic/aot', 'draft'], sealed: 'not yet',
+    html: '<p>Nobody had walked the outer road in years.</p>' },
+};
+const LIST = ['i', 'ii', 'iii', 'iv', 'v'];
+// A note is plain paragraphs, drawn escaped: what's typed is text, never markup.
+for (const n of Object.values(NOTES)) {
+  n.paras = n.html.match(/<p>.*?<\/p>/g).map((para) => para.slice(3, -4));
+  delete n.html;
+}
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const paraHtml = (id) => NOTES[id].paras.map((t) => `<p>${esc(t)}</p>`).join('');
+const plain = (id) => NOTES[id].paras.join(' ');
+// A chapter is longer than the lines shown here: `rest` is the words above them.
+const wordsOf = (id) => NOTES[id].rest + plain(id).split(/\s+/).filter(Boolean).length;
+const MIN_SIDE = 360; // a page narrower than this can't hold the text's measure with any margin
+// The app's widths (--eien-sidebar-w, --eien-list-w, C's strip), and the window's height here.
+const SIDEBAR_W = 264;
+const LIST_W = 316;
+const C_STRIP = 48;
+const WIN_H = 860;
+
+// The split: one or two notes, which side is active, where the divider is.
+const S = { sides: ['iv'], active: 0, ratio: 0.5 };
+const Split = { page: () => '', strip: () => '' };
+let canvas;
+const root = document.documentElement;
+
+/** The bar's choices as the window may use them: one of the known values, a width as a number. */
+const LAYOUTS = ['band', 'slip', 'runhead'];
+function choices() {
+  const d = root.dataset;
+  return {
+    layout: LAYOUTS.includes(d.layout) ? d.layout : 'band',
+    sb: d.sb === 'shut' ? 'shut' : 'open',
+    width: Math.round(Math.min(2400, Math.max(600, Number(d.width) || 1440))),
+  };
+}
+
+/** What a direction draws with: the state, and the pieces every layout shares. */
+function context() {
+  const d = root.dataset;
+  const { layout, sb, width: winW } = choices();
+  const sbW = sb === 'shut' ? (layout === 'runhead' ? C_STRIP : 0) : SIDEBAR_W;
+  const pageW = winW - sbW - LIST_W;
+  const split = S.sides.length === 2;
+  // Too narrow for two pages: they fold into one, with a pager between them.
+  const folded = split && pageW < MIN_SIDE * 2;
+  const ctx = {
+    layout, split, folded, pageW, active: S.active, fmt: d.fmt === 'on',
+    shown: !split ? [0] : folded ? [S.active] : [0, 1],
+    same: split && S.sides[0] === S.sides[1],
+    id: (i) => S.sides[i],
+    note: (i) => NOTES[S.sides[i]],
+    /** Two pages' columns, the divider between: `gap` wide. */
+    columns: (gap = 'var(--eien-hairline)') => `calc((100% - ${gap}) * ${S.ratio}) ${gap} minmax(0, 1fr)`,
+    tools: (names, cls = '') => `<span class="tools ${cls}">${names.map(([n, w]) => `<button class="icon-button" data-icon="${n}" aria-label="${w}" data-tip="${w}"></button>`).join('')}</span>`,
+    views: () => ctx.tools([['live', 'Live'], ['source', 'Source'], ['reading', 'Reading']]),
+    pageTools: () => ctx.tools([['compare', 'Compare'], ['versions', 'Versions'], ['focus', 'Focus mode'], ['format', 'Formatting bar']]),
+    closeBtn: (i) => `<button class="icon-button close-side" data-close-side="${i}" data-icon="close" aria-label="Close this side: ${NOTES[S.sides[i]].title}" data-tip="Close this side  ${KEY('Mod-W')}"></button>`,
+    fmtBar: () => (ctx.fmt ? `<div class="fmt" role="toolbar" aria-label="Formatting">${['bold', 'italic', 'underline', 'strike', 'heading', 'quote', 'bullets', 'link', 'table'].map((n) => `<button class="icon-button" data-icon="${n}" aria-label="${n}" data-tip="${n[0].toUpperCase() + n.slice(1)}"></button>`).join('')}</div>` : ''),
+    tagset: (i) => `<span class="tagset">${ctx.note(i).tags.map((t) => `<span>#${t}</span>`).join('')}</span>`,
+    /** A note's sheet: its running head (A), slips (B), title and words; `flat` lays it flat on the blotter. */
+    sheet: (i, { flat = false, close = false } = {}) => {
+      const n = ctx.note(i);
+      const head = layout === 'band' ? `<div class="sheet__head"><span class="crumb">${n.crumb}</span>${ctx.tagset(i)}</div>` : layout === 'slip' ? `<div class="sheet__head"><span class="crumb">${n.crumb}</span></div>` : '';
+      const slips = layout === 'slip' ? `<div class="slips">${n.tags.map((t) => `<span>#${t}</span>`).join('')}</div>` : '';
+      return `<article class="sheet${flat ? ' sheet--flat' : ''}" data-side="${i}">${close ? ctx.closeBtn(i).replace('close-side', 'close-side sheet__close quiet') : ''}${head}<h1>${n.title}</h1>${slips}
+        <div class="prose" contenteditable="true" spellcheck="true" data-note="${S.sides[i]}" data-side="${i}" aria-label="${n.title}">${paraHtml(S.sides[i])}</div></article>`;
+    },
+    /** A note's colophon: its words and last seal; today's tally and what Eien says, on the active one. */
+    colophon: (i, { today = i === S.active } = {}) => {
+      const n = ctx.note(i);
+      const tags = layout === 'runhead' ? n.tags.map((t) => `<span class="pill">#${t}</span>`).join('') : '';
+      return `<footer class="colophon" data-side="${i}">${ctx.split ? `${n.ord} <span class="dot">·</span>` : ''}<span data-words="${S.sides[i]}">${wordsOf(S.sides[i]).toLocaleString('en')}</span> words${today ? ' <span class="dot">·</span> today 412' : ''} <span class="dot">·</span> sealed ${n.sealed}${tags ? ` <span class="dot">·</span> ${tags}` : ''}${i === S.active ? '<span class="said" role="status" aria-live="polite"></span>' : ''}</footer>`;
+    },
+    /** The divider between two pages; its swap shows on hover. */
+    divider: () => `<div class="divider" role="separator" aria-orientation="vertical" aria-label="Between the two pages" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(S.ratio * 100)}" tabindex="0" data-tip="Drag to resize · double-click to even"><button class="icon-button divider__swap" data-swap data-icon="swap" aria-label="Swap the sides" data-tip="Swap the sides"></button></div>`,
+    /** Folded: one page shows, and a pager names both. */
+    pager: () => `<span class="pager" role="group" aria-label="The two pages">${[0, 1].map((i) => `<button class="word-button" data-show-side="${i}" aria-pressed="${i === S.active}">${NOTES[S.sides[i]].title}</button>`).join('')}</span>`,
+  };
+  return ctx;
+}
+
+function windowHtml(ctx) {
+  const d = choices();
+  const row = (id) => {
+    const n = NOTES[id];
+    const chosen = S.sides[S.active] === id;
+    const beside = ctx.split && !chosen && S.sides.includes(id);
+    return `<button class="row${chosen ? ' is-chosen' : ''}${beside ? ' is-beside' : ''}" draggable="true" data-note-row="${id}" aria-current="${chosen ? 'page' : 'false'}"${beside ? ' aria-description="Open on the other side"' : ''}><span class="ord">${n.ord}</span><span class="t">${n.title}</span><span class="count">${wordsOf(id).toLocaleString('en')}</span><span class="p">${esc(plain(id))}</span></button>`;
+  };
+  const sbRow = (name, count, dd = 0, extra = '') => `<div class="trow${extra}" style="--d:${dd}"><span class="n">${name}</span>${count}</div>`;
+  return `<div class="win" data-layout="${ctx.layout}" data-sb="${d.sb}" style="--win-w:${d.width}px; --win-h:${WIN_H}px; --eien-sidebar-w:${SIDEBAR_W}px; --eien-list-w:${LIST_W}px">
+  ${ctx.layout === 'runhead' ? `<div class="strip"><div class="strip__panes">${ctx.tools([['sidebar', 'Sidebar'], ['list', 'Note list']])}</div><div class="strip__page">${Split.strip(ctx)}</div></div>` : ''}
+  <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+  <button class="seal-button seal-btn" data-seal aria-label="${d.sb === 'open' ? 'Hide' : 'Show'} the sidebar" aria-expanded="${d.sb === 'open'}" data-tip="${d.sb === 'open' ? 'Hide' : 'Show'} the sidebar  ${KEY('Mod-\\')}"><span class="seal">永</span></button>
+  <aside class="sb"><div class="sb__head">Eien</div>
+    <div class="sb__sec"><span class="label">Library</span></div>${sbRow('All notes', '<span class="count">214</span>')}${sbRow('Pinned', '<span class="count">3</span>')}
+    <div class="sb__sec"><span class="label">Folders</span></div>${sbRow('Fic', '<span class="count">41</span>')}${sbRow('Beneath the Walls', '<span class="book">BOOK</span><span class="count">14</span>', 1, ' is-chosen')}${sbRow('Ideas', '<span class="count">57</span>')}
+  </aside>
+  <section class="ls" aria-label="Notes"><div class="ls__band"><span class="field">Search</span></div>
+    <div class="ls__head"><div class="ls__title">Beneath the Walls</div><span class="label">14 notes · 33,206 words · book</span></div>
+    <div role="list">${LIST.map(row).join('')}</div></section>
+  <main class="pg" data-active="${S.active}" aria-label="${ctx.split && !ctx.folded ? 'Two pages' : 'Page'}">${Split.page(ctx)}</main>
+</div>`;
+}
+
+let drawn = null;
+/** Draws the window, keeping the caret and each page's scroll where they were. */
+function draw() {
+  const d = root.dataset;
+  if (!d.layout || !d.theme || !d.sb || !d.fmt || !d.width) return;
+  const caret = keepCaret();
+  const scrolls = [...canvas.querySelectorAll('.blotter')].map((b) => b.scrollTop);
+  const ctx = context();
+  canvas.innerHTML = `<div class="fit">${windowHtml(ctx)}</div>`;
+  drawIcons(canvas);
+  canvas.querySelectorAll('.blotter').forEach((b, i) => { b.scrollTop = scrolls[i] ?? 0; });
+  drawn = ctx;
+  fit();
+  caret();
+  document.querySelector('.xbar output').textContent = `${d.width} px${ctx.folded ? ' · folded' : ''}`;
+}
+/** Where the caret is, by side and character, to put it back after a draw. */
+function keepCaret() {
+  const el = document.activeElement;
+  const sel = getSelection();
+  if (!el?.classList?.contains('prose') || !sel.rangeCount) return () => {};
+  const range = sel.getRangeAt(0).cloneRange();
+  range.selectNodeContents(el);
+  range.setEnd(sel.getRangeAt(0).endContainer, sel.getRangeAt(0).endOffset);
+  const at = range.toString().length;
+  const side = el.dataset.side;
+  return () => {
+    const prose = canvas.querySelector(`.prose[data-side="${side}"]`);
+    if (prose) placeCaret(prose, at);
+  };
+}
+function placeCaret(prose, at) {
+  const walk = document.createTreeWalker(prose, NodeFilter.SHOW_TEXT);
+  let left = at;
+  let node = walk.nextNode();
+  while (node && left > node.length) { left -= node.length; node = walk.nextNode(); }
+  prose.focus({ preventScroll: true });
+  const range = document.createRange();
+  if (node) range.setStart(node, left); else range.selectNodeContents(prose);
+  range.collapse(node ? true : false);
+  getSelection().removeAllRanges();
+  getSelection().addRange(range);
+}
+function fit() {
+  const box = canvas.querySelector('.fit');
+  const win = box?.firstElementChild;
+  if (!win) return;
+  const w = +root.dataset.width;
+  const scale = Math.min(1, (canvas.clientWidth - 32) / w, (canvas.clientHeight - 32) / WIN_H);
+  win.style.transform = `scale(${scale})`;
+  box.style.width = `${w * scale}px`;
+  box.style.height = `${WIN_H * scale}px`;
+}
+
+let saidTimer;
+function say(words) {
+  const el = canvas.querySelector('.said');
+  if (!el) return;
+  el.textContent = words;
+  clearTimeout(saidTimer);
+  saidTimer = setTimeout(() => { el.textContent = ''; }, 5000);
+}
+
+// What the writer does.
+const act = {
+  /** A side becomes the active one: the list, the tools and the keys follow it. */
+  activate(i, focus = false) {
+    if (i === S.active || i >= S.sides.length) return;
+    S.active = i;
+    draw();
+    if (focus) canvas.querySelector(`.prose[data-side="${i}"]`)?.focus();
+  },
+  /** A note chosen in the list or sidebar opens in the active page. */
+  open(id) { S.sides[S.active] = id; draw(); },
+  /** Open to the Side: a second page, or the other one, now active. */
+  toSide(id) {
+    const at = S.sides.length === 1 ? 1 : 1 - S.active;
+    S.sides[at] = id;
+    S.active = at;
+    draw();
+    if (context().folded) say('Too narrow for two pages: they fold into one');
+    canvas.querySelector(`.prose[data-side="${S.active}"]`)?.focus();
+  },
+  close(i) { S.sides.splice(i, 1); S.active = 0; draw(); say('Closed; the note is where it was'); },
+  swap() { S.sides.reverse(); S.active = 1 - S.active; draw(); say('Swapped'); },
+  /** ⌘D: the note to the side, or, split, the other side closed. */
+  toggle() { if (S.sides.length === 2) act.close(1 - S.active); else act.toSide(S.sides[0]); },
+};
+
+function wire() {
+  // A click in a page makes it the active one, once the caret has landed, so it stays
+  // where it was put; the keyboard's focus does the same.
+  const activateFrom = (el) => {
+    const side = el?.closest?.('[data-side]');
+    if (side && drawn?.split && +side.dataset.side !== S.active) act.activate(+side.dataset.side);
+  };
+  canvas.addEventListener('click', (e) => { if (!e.target.closest('button, .divider')) activateFrom(e.target); });
+  canvas.addEventListener('focusin', (e) => { if (e.target.classList.contains('prose')) setTimeout(() => activateFrom(document.activeElement)); });
+  // Typing: one document, so the same note in both sides shows it in both.
+  canvas.addEventListener('input', (e) => {
+    const prose = e.target.closest('.prose');
+    if (!prose) return;
+    const id = prose.dataset.note;
+    NOTES[id].paras = prose.innerText.split(/\n+/).filter((t) => t.trim());
+    for (const other of canvas.querySelectorAll(`.prose[data-note="${id}"]`)) {
+      if (other === prose) continue;
+      other.replaceChildren(...NOTES[id].paras.map((t) => Object.assign(document.createElement('p'), { textContent: t })));
+    }
+    for (const el of canvas.querySelectorAll(`[data-words="${id}"]`)) el.textContent = wordsOf(id).toLocaleString('en');
+  });
+  canvas.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const d = b.dataset;
+    if (d.noteRow) (mod(e) ? act.toSide : act.open)(d.noteRow);
+    else if (d.closeSide) act.close(+d.closeSide);
+    else if ('swap' in d) act.swap();
+    else if (d.showSide) act.activate(+d.showSide, true);
+    else if ('seal' in d) document.querySelector(`[data-x-set="sb"] [data-value="${root.dataset.sb === 'open' ? 'shut' : 'open'}"]`).click();
+  });
+  canvas.addEventListener('keydown', (e) => {
+    const row = e.target.closest('[data-note-row]');
+    if (row && e.key === 'Enter') { e.preventDefault(); (mod(e) ? act.toSide : act.open)(row.dataset.noteRow); }
+    if (row && (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey))) { e.preventDefault(); const r = row.getBoundingClientRect(); openMenu(row.dataset.noteRow, r.left + 24, r.bottom); }
+  });
+  canvas.addEventListener('contextmenu', (e) => {
+    const row = e.target.closest('[data-note-row]');
+    if (!row) return;
+    e.preventDefault();
+    openMenu(row.dataset.noteRow, e.clientX, e.clientY);
+  });
+  wireDivider();
+  wireDrop();
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMenu();
+    if (!mod(e)) return;
+    // ⌘3 goes to the page; pressed in a page, to the other page.
+    if (e.key === '3' && !e.altKey && !e.shiftKey) {
+      e.preventDefault();
+      const inPage = document.activeElement?.classList.contains('prose');
+      if (inPage && S.sides.length === 2) act.activate(1 - S.active, true);
+      else canvas.querySelector(`.prose[data-side="${S.active}"]`)?.focus();
+    }
+    if (e.key.toLowerCase() === 'd' && !e.altKey && !e.shiftKey) { e.preventDefault(); act.toggle(); }
+  });
+}
+
+function wireDivider() {
+  let drag = null;
+  const set = (ratio) => {
+    const ctx = context();
+    const min = MIN_SIDE / ctx.pageW;
+    S.ratio = Math.min(1 - min, Math.max(min, ratio));
+    const pg = canvas.querySelector('.pg');
+    for (const el of canvas.querySelectorAll('[data-columns]')) el.style.gridTemplateColumns = ctx.columns(el.dataset.columns || undefined);
+    pg.querySelector('.divider')?.setAttribute('aria-valuenow', String(Math.round(S.ratio * 100)));
+  };
+  canvas.addEventListener('pointerdown', (e) => {
+    const div = e.target.closest('.divider');
+    if (!div || e.target.closest('button')) return;
+    e.preventDefault();
+    div.setPointerCapture(e.pointerId);
+    div.classList.add('is-dragging');
+    drag = { div, rect: div.parentElement.getBoundingClientRect() };
+  });
+  canvas.addEventListener('pointermove', (e) => { if (drag) set((e.clientX - drag.rect.left) / drag.rect.width); });
+  const end = () => { if (drag) { drag.div.classList.remove('is-dragging'); drag = null; } };
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointercancel', end);
+  canvas.addEventListener('dblclick', (e) => { if (e.target.closest('.divider')) set(0.5); });
+  canvas.addEventListener('keydown', (e) => {
+    if (!e.target.classList?.contains('divider')) return;
+    const step = { ArrowLeft: -0.02, ArrowRight: 0.02 }[e.key];
+    if (step) { e.preventDefault(); set(S.ratio + step); }
+    if (e.key === 'Home') { e.preventDefault(); set(0); }
+    if (e.key === 'End') { e.preventDefault(); set(1); }
+    if (e.key === 'Enter') { e.preventDefault(); set(0.5); }
+  });
+}
+
+// Dragging a note from the list: onto the page's right edge, a new page beside;
+// onto a page, that page.
+function wireDrop() {
+  let dragged = null;
+  const preview = document.createElement('div');
+  preview.className = 'drop-preview';
+  const where = (e) => {
+    const pg = canvas.querySelector('.pg');
+    const r = pg.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width;
+    if (S.sides.length === 1 || drawn.folded) return x > 0.6 ? { side: 'new', left: 0.5 } : { side: S.active, left: 0 };
+    return x > S.ratio ? { side: 1, left: S.ratio } : { side: 0, left: 0, right: 1 - S.ratio };
+  };
+  canvas.addEventListener('dragstart', (e) => {
+    const row = e.target.closest('[data-note-row]');
+    if (!row) return;
+    dragged = row.dataset.noteRow;
+    e.dataTransfer.setData('text/plain', NOTES[dragged].title);
+    e.dataTransfer.effectAllowed = 'copy';
+    row.classList.add('is-dragged');
+  });
+  canvas.addEventListener('dragover', (e) => {
+    if (!dragged || !e.target.closest('.pg')) { preview.remove(); return; }
+    e.preventDefault();
+    const w = where(e);
+    const pg = canvas.querySelector('.pg');
+    if (preview.parentElement !== pg) pg.append(preview);
+    preview.style.left = `${w.left * 100}%`;
+    preview.style.right = `${(w.right ?? 0) * 100}%`;
+    preview.innerHTML = `<span class="label">${w.side === 'new' ? 'Open to the side' : `Open here, in place of ${NOTES[S.sides[w.side]].title}`}</span>`;
+  });
+  canvas.addEventListener('dragleave', (e) => { if (!e.relatedTarget || !canvas.querySelector('.pg')?.contains(e.relatedTarget)) preview.remove(); });
+  canvas.addEventListener('drop', (e) => {
+    if (!dragged || !e.target.closest('.pg')) return;
+    e.preventDefault();
+    const w = where(e);
+    const id = dragged;
+    preview.remove();
+    if (w.side === 'new') act.toSide(id);
+    else { S.active = w.side; act.open(id); }
+  });
+  canvas.addEventListener('dragend', () => { dragged = null; preview.remove(); canvas.querySelector('.is-dragged')?.classList.remove('is-dragged'); });
+}
+
+// A note's right-click menu, with the split's choices.
+const menu = document.createElement('div');
+menu.className = 'menu';
+menu.setAttribute('role', 'menu');
+menu.hidden = true;
+let menuBack = null;
+function openMenu(id, x, y) {
+  menuBack = document.activeElement;
+  const split = S.sides.length === 2;
+  const item = (icon, word, key, run) => `<button class="menu__item" role="menuitem" data-run="${run}">${ICONS[icon] ? `<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[icon]}</svg>` : '<span></span>'}<span>${word}</span><span class="menu__key">${key}</span></button>`;
+  menu.innerHTML = `<div class="menu__head" aria-hidden="true">${NOTES[id].title}</div>
+    ${item('open', 'Open', 'Enter', 'open')}
+    ${item('side', 'Open to the Side', `${KEY('Mod-')}click`, 'side')}
+    ${item('window', 'Open in New Window', '', 'window')}
+    ${split ? `<div class="menu__rule" role="separator"></div>${item('swap', 'Swap Sides', '', 'swap')}${item('close', 'Close the Other Side', KEY('Mod-D'), 'close')}` : ''}`;
+  menu.setAttribute('aria-label', NOTES[id].title);
+  menu.hidden = false;
+  menu.style.left = `${Math.min(x, innerWidth - 280)}px`;
+  menu.style.top = `${Math.min(y, innerHeight - menu.offsetHeight - 8)}px`;
+  menu.onclick = (e) => {
+    const run = e.target.closest('[data-run]')?.dataset.run;
+    if (!run) return;
+    closeMenu(false);
+    if (run === 'open') act.open(id);
+    if (run === 'side') act.toSide(id);
+    if (run === 'window') say('In the app, a new window opens on this note: see New window & phone');
+    if (run === 'swap') act.swap();
+    if (run === 'close') act.close(1 - S.active);
+  };
+  menu.onkeydown = (e) => {
+    const items = [...menu.querySelectorAll('.menu__item')];
+    const i = items.indexOf(document.activeElement);
+    const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: items.length - 1 }[e.key];
+    if (to !== undefined) { e.preventDefault(); items[(to + items.length) % items.length].focus(); }
+    if (e.key === 'Tab') { e.preventDefault(); closeMenu(); }
+  };
+  menu.querySelector('.menu__item').focus();
+}
+function closeMenu(back = true) {
+  if (menu.hidden) return;
+  menu.hidden = true;
+  if (back) menuBack?.focus?.();
+}
+document.addEventListener('pointerdown', (e) => { if (!menu.contains(e.target)) closeMenu(false); });
+
+/** The page: the bar, the window and the notes beside it. `bar`: a direction's own choices. */
+function mountSplitPage({ id, note, notes, bar = '' }) {
+  const pages = [['apart', '1 · Two whole pages'], ['shared', '2 · One set of tools'], ['sheets', '3 · Two sheets'], ['window', 'New window & phone']];
+  const group = (attr, label, choices) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${choices.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
+  document.body.insertAdjacentHTML('afterbegin', `
+<header class="xbar">
+  <span class="xbar__name">Eien · Split window</span>
+  <nav class="xbar__group" aria-label="Directions">${pages.map(([p, w]) => `<a class="word-button" href="split-${p}.html"${p === id ? ' aria-current="page"' : ''}>${w}</a>`).join('')}</nav>
+  ${group('layout', 'Layout', [['band', 'A · Band'], ['slip', 'B · Slip'], ['runhead', 'C · Running head']])}
+  ${group('theme', 'Light', [['light', 'Day'], ['dark', 'Night']])}
+  ${group('sb', 'Sidebar', [['open', 'Open'], ['shut', 'Shut']])}
+  ${group('fmt', 'Formatting bar', [['on', 'On'], ['off', 'Off']])}
+  ${bar}
+  <label class="xbar__group"><span class="xbar__label">Window</span><input type="range" min="900" max="1680" step="20" value="1440" data-win-width aria-label="Window width" /><output></output></label>
+  <span class="xnote">${note}</span>
+</header>
+<main class="stage"><div class="canvas"></div><aside class="notes">${notes}${COMMON_NOTES()}</aside></main>`);
+  document.body.append(menu);
+  canvas = document.querySelector('.canvas');
+  root.dataset.theme ??= matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  const width = document.querySelector('[data-win-width]');
+  root.dataset.width = width.value;
+  width.addEventListener('input', () => { root.dataset.width = width.value; draw(); });
+  wire();
+  wireBar(draw);
+  addEventListener('resize', fit);
+  // Open to the side from the start, so the split shows; one key or click puts it back.
+  S.sides = ['iv', 'iii'];
+  S.active = 0;
+  draw();
+}
+
+/** The same in all three directions. */
+const COMMON_NOTES = () => `
+  <h2>In all three</h2>
+  <ul>
+    <li><b>Side by side</b>, a divider between: drag it, <kbd>←</kbd> <kbd>→</kbd> on it, double-click to even it; neither page narrower than ${MIN_SIDE}px. Top and bottom isn't offered: prose wants its measure, and two short pages of it read worse than one.</li>
+    <li><b>Opening:</b> a note's right-click, Open to the Side; <kbd>${KEY('Mod-')}click</kbd> or <kbd>${KEY('Mod-Enter')}</kbd> on a row; drag a row onto the page's right edge; <kbd>${KEY('Mod-D')}</kbd> opens the note beside itself, and split, closes the other side (it's free: <kbd>${KEY('Mod-\\')}</kbd> is Toggle Sidebar, and <kbd>${KEY('Alt-Mod-\\')}</kbd> the editor's Indent Selection).</li>
+    <li><b>Active page:</b> a click in it, or <kbd>${KEY('Mod-3')}</kbd> (Go to Page), which pressed in a page goes to the other one. The list's chosen row is the active page's note; the other side's note keeps a fainter rule, in pencil, with no fill.</li>
+    <li><b>Choosing a note</b> in the list (or the sidebar, with two panes) opens it in the active page.</li>
+    <li><b>Closing a side:</b> its × on hover, <kbd>${KEY('Mod-W')}</kbd> in it (the window's ⌘W, while split), or <kbd>${KEY('Mod-D')}</kbd> again for the other side. Nothing is lost: the note is where it was. <b>Swapping:</b> the ⇄ on the divider, or the row's menu.</li>
+    <li><b>The same note on both sides</b> is one document: type in one and it shows in the other (try ${KEY('Mod-D')} with one note open).</li>
+    <li><b>Narrow:</b> below ${MIN_SIDE * 2}px of page (the window less the panes beside it), the two pages fold into one, with a pager naming both; <kbd>${KEY('Mod-3')}</kbd> turns between them. Shutting the sidebar or the list unfolds them. The split is never refused, only folded.</li>
+    <li><b>Copy as HTML</b>, <b>Seal</b>, <b>Versions</b>, <b>Outline cards</b>, the formatting keys and Find all act on the active page.</li>
+  </ul>`;
+
+
+// One page, as all three directions draw a single note.
+Split.page = (ctx) => {
+  const top = ctx.layout === 'band' ? `<div class="band">${ctx.views()}${ctx.pageTools()}</div>`
+    : ctx.layout === 'slip' ? `<div class="topline"><span class="slip">${ctx.views()}${ctx.pageTools()}</span></div>` : '';
+  return `<div class="page">${top}<div class="duo"><div class="blotter">${ctx.sheet(0)}</div></div>${ctx.colophon(0)}</div>`;
+};
+Split.strip = (ctx) => `<div class="seg"><span class="crumb">${ctx.note(0).crumb}</span><span class="tools-row">${ctx.views()}${ctx.pageTools()}</span></div>`;
+
+root.dataset.theme ??= matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+Object.assign(root.dataset, { width: '1280', sb: 'open', fmt: 'off' });
+const windows = document.querySelector('.windows');
+let newNote = null;
+/** A window on note `id`, scaled to `scale`. */
+function smallWindow(id, scale) {
+  S.sides = [id];
+  S.active = 0;
+  const html = windowHtml(context());
+  return `<div class="fit" style="width:${1280 * scale}px; height:${WIN_H * scale}px">${html.replace('class="win"', 'class="win" inert').replace('style="--win-w', `style="transform:scale(${scale}); --win-w`)}</div>`;
+}
+function drawWindows() {
+  const scale = Math.min(0.42, (windows.clientWidth - 48) / 1280);
+  windows.style.height = `${WIN_H * scale + 48}px`;
+  windows.innerHTML = smallWindow('iv', scale) + `<div class="window--new" style="left:48px; top:48px"${newNote ? '' : ' hidden'}>${smallWindow(newNote ?? 'iv', scale)}</div>`;
+  drawIcons(windows);
+}
+wireBar(() => { if (root.dataset.layout && root.dataset.theme) drawWindows(); });
+addEventListener('resize', drawWindows);
+for (const el of document.querySelectorAll('[data-key-row]')) el.querySelector('.menu__key').textContent = el.dataset.keyRow === 'Mod-click' ? `${KEY('Mod-')}click` : KEY(el.dataset.keyRow);
+for (const el of document.querySelectorAll('kbd[data-key]')) el.textContent = KEY(el.dataset.key);
+drawIcons();
+
+// New Window opens on the note this window shows; Open in New Window, on the row's note.
+for (const b of document.querySelectorAll('[data-new-window]')) {
+  b.addEventListener('click', () => { newNote = b.dataset.newWindow; drawWindows(); });
+}
+
+// The phone: the note you came from stays a tap away.
+const PHONE = {
+  iv: { crumb: 'Fic / Beneath the Walls / iv', title: 'What the Recruits Say', tags: ['fic/aot', 'draft'], text: '<p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p><p>Instead he takes the late watch, every night of the week.</p>' },
+  erwin: { crumb: 'Fic / Beneath the Walls / Notes', title: 'Erwin', tags: ['character'], text: '<p>Commander. Speaks last in any room, and never twice.</p><p>Knows the recruits’ name for Levi. Has never used it.</p>' },
+  ii: { crumb: 'Fic / Beneath the Walls / ii', title: 'Rations', tags: ['fic/aot'], text: '<p>Half a loaf, a strip of dried meat, and a promise from the quartermaster.</p>' },
+};
+let now = 'iv';
+let other = 'erwin';
+function show() {
+  const n = PHONE[now];
+  document.querySelector('[data-phone-crumb]').textContent = n.crumb;
+  document.querySelector('[data-phone-title]').textContent = n.title;
+  document.querySelector('[data-phone-tags]').innerHTML = n.tags.map((t) => `<span>#${t}</span>`).join('');
+  document.querySelector('[data-phone-text]').innerHTML = n.text;
+  document.querySelector('[data-other-name]').textContent = PHONE[other].title;
+  document.querySelector('[data-other]').setAttribute('aria-label', `Switch to the other note: ${PHONE[other].title}`);
+}
+document.querySelector('[data-other]').addEventListener('click', () => { [now, other] = [other, now]; show(); });
+const sheet = document.querySelector('.sheet-menu');
+document.querySelector('[data-show-sheet]').addEventListener('click', () => { sheet.querySelector('.menu__head').textContent = 'Rations, in the list'; sheet.hidden = false; sheet.querySelector('.menu__item').focus(); });
+document.querySelector('[data-phone-open]').addEventListener('click', () => { other = now; now = 'ii'; sheet.hidden = true; show(); });
+document.querySelector('[data-phone-close]').addEventListener('click', () => { sheet.hidden = true; });
+show();
+</script>
+</body>
+</html>

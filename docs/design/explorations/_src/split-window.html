@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Split window: New window and phone</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:split.css*/
+
+/* New Window and the phone: shown once, the same whichever split direction is chosen. */
+.canvas { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--eien-space-6); align-items: start; padding: var(--eien-space-5); }
+@media (max-width: 1100px) { .canvas { grid-template-columns: 1fr; } }
+.part__name { display: block; margin-bottom: var(--eien-space-3); }
+
+/* macOS's menu bar with Eien's File menu open, and a note's menu beside it. */
+.menubar { display: flex; align-items: center; gap: var(--eien-space-4); height: var(--eien-space-5); padding: 0 var(--eien-space-3); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); font-size: var(--eien-size-preview); }
+.menubar b { font-weight: 600; }
+.menubar .is-open { padding: 0 var(--eien-space-2); border-radius: var(--eien-radius-s); background: var(--eien-selected); }
+.menus { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--eien-space-5); margin: var(--eien-space-1) 0 0 var(--eien-space-8); }
+.menus .menu { position: static; }
+/* Real Eien windows, scaled: the one you're in, and the one New Window opens over it. */
+.windows { position: relative; margin-top: var(--eien-space-6); }
+.windows .fit { margin: 0; }
+.windows .win { pointer-events: none; }
+.window--new { position: absolute; transition: opacity var(--eien-calm) var(--eien-ease), translate var(--eien-calm) var(--eien-ease); }
+.window--new[hidden] { display: block; opacity: 0; translate: calc(var(--eien-space-5) * -1) calc(var(--eien-space-5) * -1); }
+
+/* The phone: no split. The back bar keeps the other note a tap away. */
+/* A phone's own size and corner, not Eien's. */
+.phone { width: 340px; height: 680px; display: grid; grid-template-rows: var(--eien-touch) minmax(0, 1fr) calc(var(--eien-touch) + var(--eien-space-3)); overflow: hidden; position: relative; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 36px; box-shadow: var(--eien-shadow-float); }
+.backbar { display: flex; align-items: center; gap: var(--eien-space-1); padding: 0 var(--eien-space-2); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.backbar .back { display: flex; align-items: center; gap: var(--eien-space-1); flex: 1; min-width: 0; height: var(--eien-touch); padding: 0 var(--eien-space-1); border: 0; background: none; color: var(--eien-ink-soft); font: inherit; font-size: var(--eien-size-preview); white-space: nowrap; overflow: hidden; }
+.backbar .other { display: flex; align-items: center; gap: var(--eien-space-1); height: var(--eien-space-6); max-width: 12em; padding: 0 var(--eien-space-2); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-dot); background: var(--eien-paper); color: var(--eien-ink-soft); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: nowrap; overflow: hidden; cursor: pointer; }
+.backbar .other::after { content: ''; position: absolute; inset: -6px; }
+.backbar .other { position: relative; }
+.backbar .other svg { flex: none; width: var(--eien-space-3); height: var(--eien-space-3); }
+/* A phone's page: the face's prose and title, a size down for a hand-held measure. */
+.phone .page-body { overflow: auto; padding: var(--eien-space-4); font-size: calc(var(--eien-size-prose) * 0.82); line-height: var(--eien-leading-prose); }
+.phone h1 { font-size: calc(var(--eien-size-title) * 0.72); font-weight: 500; line-height: 1.2; margin: var(--eien-space-2) 0 var(--eien-space-3); }
+.phone .slips { margin: 0 0 var(--eien-space-3); }
+.rail { display: flex; justify-content: space-around; align-items: center; background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); }
+.rail .icon-button { width: var(--eien-touch); height: var(--eien-touch); }
+.sheet-menu { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: var(--eien-space-2) var(--eien-space-2) var(--eien-space-5); background: var(--eien-paper-raised); border-top: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-l) var(--eien-radius-l) 0 0; box-shadow: var(--eien-shadow-float); }
+.sheet-menu[hidden] { display: none; }
+.sheet-menu .menu__item { min-height: var(--eien-touch); }
+.phone-list { display: grid; }
+.phone-list button { appearance: none; text-align: left; padding: var(--eien-space-3) var(--eien-space-4); min-height: var(--eien-touch); border: 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); background: none; font: inherit; color: var(--eien-ink); cursor: pointer; }
+</style>
+</head>
+<body>
+<header class="xbar">
+  <span class="xbar__name">Eien · Split window</span>
+  <nav class="xbar__group" aria-label="Directions"><a class="word-button" href="split-apart.html">1 · Two whole pages</a><a class="word-button" href="split-shared.html">2 · One set of tools</a><a class="word-button" href="split-sheets.html">3 · Two sheets</a><a class="word-button" href="split-window.html" aria-current="page">New window &amp; phone</a></nav>
+  <div class="xbar__group" data-x-set="layout"><span class="xbar__label">Layout</span><button class="word-button" data-value="band">A · Band</button><button class="word-button" data-value="slip">B · Slip</button><button class="word-button" data-value="runhead">C · Running head</button></div>
+  <div class="xbar__group" data-x-set="theme"><span class="xbar__label">Light</span><button class="word-button" data-value="light">Day</button><button class="word-button" data-value="dark">Night</button></div>
+  <span class="xnote">New Window and the phone, once: the same whichever split is chosen.</span>
+</header>
+<main class="stage">
+  <div class="canvas">
+    <section aria-labelledby="nw">
+      <span class="label part__name" id="nw">New window</span>
+      <div class="menubar" aria-hidden="true"><b>Eien</b><span class="is-open">File</span><span>Edit</span><span>Format</span><span>View</span><span>Window</span><span>Help</span></div>
+      <div class="menus">
+        <div class="menu" role="menu" aria-label="File">
+          <div class="menu__head" aria-hidden="true">File</div>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-N"><span></span><span>New Note</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-new-window="iv" data-key-row="Mod-Shift-N"><span data-icon="window"></span><span>New Window</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-S"><span></span><span>Seal</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-O"><span></span><span>Open Vault…</span><span class="menu__key"></span></button>
+          <div class="menu__rule" role="separator"></div>
+          <button class="menu__item" role="menuitem"><span></span><span>Export Note</span><span class="menu__key">›</span></button>
+          <div class="menu__rule" role="separator"></div>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-W"><span></span><span>Close Window</span><span class="menu__key"></span></button>
+        </div>
+        <div class="menu" role="menu" aria-label="Below the Gate">
+          <div class="menu__head" aria-hidden="true">Below the Gate</div>
+          <button class="menu__item" role="menuitem"><span data-icon="open"></span><span>Open</span><span class="menu__key">Enter</span></button>
+          <button class="menu__item" role="menuitem" data-key-row="Mod-click"><span data-icon="side"></span><span>Open to the Side</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem" data-new-window="iii"><span data-icon="window"></span><span>Open in New Window</span><span class="menu__key"></span></button>
+          <div class="menu__rule" role="separator"></div>
+          <button class="menu__item" role="menuitem" data-key-row="F2"><span data-icon="rename"></span><span>Rename</span><span class="menu__key"></span></button>
+          <button class="menu__item" role="menuitem"><span data-icon="move"></span><span>Move to…</span><span class="menu__key"></span></button>
+        </div>
+      </div>
+      <div class="windows" aria-label="Eien's windows"></div>
+    </section>
+    <section aria-labelledby="ph">
+      <span class="label part__name" id="ph">The phone: no split</span>
+      <div class="phone">
+        <div class="backbar">
+          <button class="back" aria-label="Back to Beneath the Walls"><span data-icon="back"></span>Beneath the Walls</button>
+          <button class="other" data-other aria-label="Switch to the other note: Erwin"><span data-icon="swap"></span><span data-other-name>Erwin</span></button>
+        </div>
+        <div class="page-body" data-press>
+          <span class="crumb" data-phone-crumb>Fic / Beneath the Walls / iv</span>
+          <h1 data-phone-title>What the Recruits Say</h1>
+          <div class="slips" data-phone-tags><span>#fic/aot</span><span>#draft</span></div>
+          <div data-phone-text><p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p><p>Instead he takes the late watch, every night of the week.</p></div>
+        </div>
+        <div class="rail"><button class="icon-button" data-icon="live" aria-label="Live"></button><button class="icon-button" data-icon="reading" aria-label="Reading"></button><button class="icon-button" data-icon="focus" aria-label="Focus mode"></button><button class="icon-button" data-icon="more" aria-label="More"></button></div>
+        <div class="sheet-menu" role="menu" aria-label="Erwin" hidden>
+          <div class="menu__head" aria-hidden="true">Erwin, in the list</div>
+          <button class="menu__item" role="menuitem" data-phone-open><span data-icon="open"></span><span>Open</span><span></span></button>
+          <button class="menu__item" role="menuitem"><span data-icon="rename"></span><span>Rename</span><span></span></button>
+          <button class="menu__item" role="menuitem"><span data-icon="move"></span><span>Move to…</span><span></span></button>
+          <button class="menu__item" role="menuitem" data-phone-close><span data-icon="close"></span><span>Close</span><span></span></button>
+        </div>
+      </div>
+      <p class="xnote" style="max-width: 340px; margin-top: var(--eien-space-3)">Long-press a row in the list for its menu: <button class="word-button" data-show-sheet>Show it</button></p>
+    </section>
+  </div>
+  <aside class="notes">
+    <h2>New window</h2>
+    <ul>
+      <li><b>File → New Window</b>, <kbd data-key="Mod-Shift-N"></kbd> (free: <kbd data-key="Mod-N"></kbd> is New Note). It opens on the vault and note this window shows; File → Open Vault… in it changes its vault. Each window is its own: its vault, its note, its panes, its split.</li>
+      <li><b>Open in New Window</b>, in a note's right-click menu beside Open to the Side: a window on that note.</li>
+      <li><b>Close Window</b>, <kbd data-key="Mod-W"></kbd>. While a window is split, <kbd data-key="Mod-W"></kbd> closes the active side first; the window's red light closes the window whatever it holds.</li>
+      <li>macOS's <b>Window</b> menu lists each window by its note, as it does for any app. On Windows and Linux each is its own window in the taskbar.</li>
+      <li>Two windows on the same vault see each other's saves as they land (the vault is one folder, watched as it is now). The same note in two windows is one file: the second window shows the first's typing when it's saved, as it does for an edit from another app.</li>
+    </ul>
+    <h2>The phone</h2>
+    <ul>
+      <li><b>No split, and no New Window:</b> a phone shows one page, and the split's commands aren't in its menus.</li>
+      <li><b>The other note</b> instead: the back bar keeps the note you came from a tap away, at its right (⇄ and its name). A tap switches; the two keep their places, so working between a chapter and its notes is one tap, not back and forward again.</li>
+      <li>Try ⇄, then open another note from the long-press menu: the one you left becomes the other note.</li>
+    </ul>
+  </aside>
+</main>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:split.js*/
+
+// One page, as all three directions draw a single note.
+Split.page = (ctx) => {
+  const top = ctx.layout === 'band' ? `<div class="band">${ctx.views()}${ctx.pageTools()}</div>`
+    : ctx.layout === 'slip' ? `<div class="topline"><span class="slip">${ctx.views()}${ctx.pageTools()}</span></div>` : '';
+  return `<div class="page">${top}<div class="duo"><div class="blotter">${ctx.sheet(0)}</div></div>${ctx.colophon(0)}</div>`;
+};
+Split.strip = (ctx) => `<div class="seg"><span class="crumb">${ctx.note(0).crumb}</span><span class="tools-row">${ctx.views()}${ctx.pageTools()}</span></div>`;
+
+root.dataset.theme ??= matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+Object.assign(root.dataset, { width: '1280', sb: 'open', fmt: 'off' });
+const windows = document.querySelector('.windows');
+let newNote = null;
+/** A window on note `id`, scaled to `scale`. */
+function smallWindow(id, scale) {
+  S.sides = [id];
+  S.active = 0;
+  const html = windowHtml(context());
+  return `<div class="fit" style="width:${1280 * scale}px; height:${WIN_H * scale}px">${html.replace('class="win"', 'class="win" inert').replace('style="--win-w', `style="transform:scale(${scale}); --win-w`)}</div>`;
+}
+function drawWindows() {
+  const scale = Math.min(0.42, (windows.clientWidth - 48) / 1280);
+  windows.style.height = `${WIN_H * scale + 48}px`;
+  windows.innerHTML = smallWindow('iv', scale) + `<div class="window--new" style="left:48px; top:48px"${newNote ? '' : ' hidden'}>${smallWindow(newNote ?? 'iv', scale)}</div>`;
+  drawIcons(windows);
+}
+wireBar(() => { if (root.dataset.layout && root.dataset.theme) drawWindows(); });
+addEventListener('resize', drawWindows);
+for (const el of document.querySelectorAll('[data-key-row]')) el.querySelector('.menu__key').textContent = el.dataset.keyRow === 'Mod-click' ? `${KEY('Mod-')}click` : KEY(el.dataset.keyRow);
+for (const el of document.querySelectorAll('kbd[data-key]')) el.textContent = KEY(el.dataset.key);
+drawIcons();
+
+// New Window opens on the note this window shows; Open in New Window, on the row's note.
+for (const b of document.querySelectorAll('[data-new-window]')) {
+  b.addEventListener('click', () => { newNote = b.dataset.newWindow; drawWindows(); });
+}
+
+// The phone: the note you came from stays a tap away.
+const PHONE = {
+  iv: { crumb: 'Fic / Beneath the Walls / iv', title: 'What the Recruits Say', tags: ['fic/aot', 'draft'], text: '<p>They have a name for him in the barracks, and none of them will say it where he can hear. He does not ask.</p><p>Instead he takes the late watch, every night of the week.</p>' },
+  erwin: { crumb: 'Fic / Beneath the Walls / Notes', title: 'Erwin', tags: ['character'], text: '<p>Commander. Speaks last in any room, and never twice.</p><p>Knows the recruits’ name for Levi. Has never used it.</p>' },
+  ii: { crumb: 'Fic / Beneath the Walls / ii', title: 'Rations', tags: ['fic/aot'], text: '<p>Half a loaf, a strip of dried meat, and a promise from the quartermaster.</p>' },
+};
+let now = 'iv';
+let other = 'erwin';
+function show() {
+  const n = PHONE[now];
+  document.querySelector('[data-phone-crumb]').textContent = n.crumb;
+  document.querySelector('[data-phone-title]').textContent = n.title;
+  document.querySelector('[data-phone-tags]').innerHTML = n.tags.map((t) => `<span>#${t}</span>`).join('');
+  document.querySelector('[data-phone-text]').innerHTML = n.text;
+  document.querySelector('[data-other-name]').textContent = PHONE[other].title;
+  document.querySelector('[data-other]').setAttribute('aria-label', `Switch to the other note: ${PHONE[other].title}`);
+}
+document.querySelector('[data-other]').addEventListener('click', () => { [now, other] = [other, now]; show(); });
+const sheet = document.querySelector('.sheet-menu');
+document.querySelector('[data-show-sheet]').addEventListener('click', () => { sheet.querySelector('.menu__head').textContent = 'Rations, in the list'; sheet.hidden = false; sheet.querySelector('.menu__item').focus(); });
+document.querySelector('[data-phone-open]').addEventListener('click', () => { other = now; now = 'ii'; sheet.hidden = true; show(); });
+document.querySelector('[data-phone-close]').addEventListener('click', () => { sheet.hidden = true; });
+show();
+</script>
+</body>
+</html>

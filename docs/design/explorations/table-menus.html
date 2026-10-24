@@ -472,6 +472,7 @@ const ICONS = {
   bullets: '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
   numbers: '<path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7"/><path d="M2.5 3.5l1-.7v3.2M2.4 9.2c.2-.6 1.6-.7 1.6.2 0 .7-1.6 1.2-1.6 1.8h1.7"/>',
   checklist: '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
+  table: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6.3h11M2.5 9.7h11M8 3v10"/>',
   highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
   heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
   grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
@@ -617,6 +618,20 @@ function applyTheme(theme, el = document.documentElement) {
   el.style.setProperty('--eien-well', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 70%, ${theme.t.band[0]}), color-mix(in srgb, ${theme.t.paper[1]} 60%, ${theme.t.blotter[1]}))`);
 }
 
+// A key as this system writes it, shared by the table and split explorations.
+
+const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+const mod = (e) => (MAC ? e.metaKey : e.ctrlKey);
+/** A key as this system writes it: KEY('Mod-Alt-↓') is ⌥⌘↓ on a Mac (its order), Ctrl+Alt+↓ elsewhere. */
+function KEY(k) {
+  const parts = k.split('-');
+  const key = parts.pop();
+  const has = (m) => parts.includes(m);
+  return MAC
+    ? `${has('Alt') ? '⌥' : ''}${has('Shift') ? '⇧' : ''}${has('Mod') ? '⌘' : ''}${key}`
+    : [has('Mod') && 'Ctrl', has('Alt') && 'Alt', has('Shift') && 'Shift', key].filter(Boolean).join('+');
+}
+
 // Shared by the three table explorations (table-*.html): a GFM table as the
 // file holds it, drawn as cells you type in; the keys, the undo, the file and
 // the colophon every direction shares. Each page adds only its controls, by
@@ -640,17 +655,6 @@ Object.assign(ICONS, {
 });
 const ALIGN_ICON = { left: 'alignLeft', center: 'alignCenter', right: 'alignRight' };
 
-const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
-const mod = (e) => (MAC ? e.metaKey : e.ctrlKey);
-/** A key as this system writes it: KEY('Mod-Alt-↓') is ⌥⌘↓ on a Mac (its order), Ctrl+Alt+↓ elsewhere. */
-function KEY(k) {
-  const parts = k.split('-');
-  const key = parts.pop();
-  const has = (m) => parts.includes(m);
-  return MAC
-    ? `${has('Alt') ? '⌥' : ''}${has('Shift') ? '⇧' : ''}${has('Mod') ? '⌘' : ''}${key}`
-    : [has('Mod') && 'Ctrl', has('Alt') && 'Alt', has('Shift') && 'Shift', key].filter(Boolean).join('+');
-}
 const escHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // The table, as the file holds it. Row 0 is the head row, which GFM always has.
