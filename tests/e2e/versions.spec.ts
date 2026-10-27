@@ -300,7 +300,8 @@ test('a copied note gets its own id on its first seal, and keeps the seals made 
   await expect.poll(() => idOf(vault, 'Needle copy.md') ?? id).not.toBe(id);
   const copyId = idOf(vault, 'Needle copy.md');
   expect(copyId).toMatch(/^[A-Z]/);
-  expect(sealsOf(vault, copyId)).toHaveLength(2); // the one before the copy, and its own
+  // The one before the copy, and its own: written after the id, so it may land a moment later.
+  await expect.poll(() => sealsOf(vault, copyId)).toHaveLength(2);
   expect(sealsOf(vault, id)).toHaveLength(1);
   expect(idOf(vault)).toBe(id);
 });
