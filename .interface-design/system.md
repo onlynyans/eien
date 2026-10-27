@@ -420,6 +420,10 @@ corners and colours the layout's own.
     and the seal's rule); the other open note keeps a fainter rule, pencil,
     no fill.
   - Closing (×, or ⌘W while split) never touches a note. Swap is ⇄.
+  - A page's own × only where its mode has no other: Two sheets (each
+    sheet's top right, on hover) and Tools that follow (the other page's).
+    Facing pages' × is in the folio, a companion's in its head: never two
+    on one page.
   - One note on both sides is one document: one history, one save, one
     count.
   - A divider is a pane's edge: a hairline in its own column, an
@@ -432,7 +436,12 @@ corners and colours the layout's own.
   active sheet has `--eien-shadow-sheet` and a `--eien-rule` edge; the other
   lies flat, a `--eien-rule-soft` edge. In Page frame Full, the divider parts
   two pages of paper and a 2px ink-soft rule tops the active one. Below two
-  pages' width, the pair folds into one with a pager naming both.
+  pages' width, the pair folds into one with a pager naming both, before
+  the tools: each name a word button in a control's square (`--eien-control`
+  high, at least as wide), the active one pressed. Short of room the names
+  give way to an ellipsis, down to two squares and no further; the band's
+  views and tools keep their width, so a control never lies over another.
+  The band hidden (#16) takes the pager with it.
 - **4 · Facing pages:** one sheet opened like a book; the gutter
   (`--eien-space-6`, a `--eien-rule-soft` hairline) is the divider. The
   book's tools where the layout puts them; each note's own (its number,
@@ -465,6 +474,8 @@ corners and colours the layout's own.
   and colophon; B's slip, resting folded; C's running-head tools and that
   page's crumb in ink-soft) stands on the active page, placed by grid, never
   moved in the DOM. The other page is paper on the blotter, its × on hover.
+  Over the left page the bar keeps no room for the system's window
+  controls: they stand over the right one.
   Too narrow for two pages beside the sidebar, the split is refused, and
   Eien says why.
 - **New Window:** File → New Window (⇧⌘N) and a row's Open in New Window; a
@@ -480,6 +491,10 @@ corners and colours the layout's own.
   `src/ui/shell/split-state.ts`). One token is new, `--eien-radius-dot`
   (fully round: the phone's other-note slip, the theme cards' pills). Every
   other length above is a space, rule, mark or radius token.
+- **Open** (`docs/backlog.md` #36): Band's views and tools need about 290px,
+  and Windows' controls take 138px of its right end, so a page under about
+  450px (three panes in a 1000px window) runs the tools under them. Nothing
+  covers a control, but the band has no second row to go to yet.
 
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 
