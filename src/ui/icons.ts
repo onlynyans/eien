@@ -90,16 +90,16 @@ export const ICONS = {
   exclude: '<path d="M4 8h8"/>',
   swap: '<path d="M3 5.5h9.5M10 3l2.5 2.5L10 8"/><path d="M13 10.5H3.5M6 8l-2.5 2.5L6 13"/>',
   resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
-  // Find's (ui/editor/find-bar.ts): its three options, and a line put in another's place, once or all.
+  // Find's (ui/editor/find-bar.ts), in the set's own rhythm: an A and an a with air between, a
+  // word over its bracket, a pattern's .*, and lines (3.5 apart, as the lists') turned into others.
   matchCase:
-    '<path d="M1.8 12.5L4.9 3.5h.6l3.1 9M3 9.5h4.4"/><circle cx="12" cy="10.3" r="2.2"/><path d="M14.2 8v4.5"/>',
-  wholeWord:
-    '<path d="M2 11.2v1.8h12v-1.8"/><circle cx="5" cy="7.3" r="2"/><path d="M7 5.3v4M9 3v6.3"/><circle cx="11" cy="7.3" r="2"/>',
-  pattern:
-    '<circle cx="4" cy="12" r=".9"/><path d="M11 2.8v5.4M8.7 4.2l4.6 2.6M13.3 4.2l-4.6 2.6"/>',
-  replace: '<path d="M2.5 4h7"/><path d="M2.5 12h7"/><path d="M12.5 4v7.5M10.5 9.5l2 2 2-2"/>',
+    '<path d="M1.5 12.5L4 4h1L7.5 12.5"/><path d="M2.5 9.5h4"/><path d="M14 8v4.5"/><circle cx="11.75" cy="10.25" r="2.25"/>',
+  wholeWord: '<path d="M3 9.5V12h10V9.5"/><path d="M5 6.5h6"/>',
+  pattern: '<path d="M10.5 3.5v6M7.9 5l5.2 3M13.1 5l-5.2 3"/><circle cx="4.5" cy="11.5" r=".6"/>',
+  replace:
+    '<path d="M2.5 4.5h6M2.5 11.5h6"/><path d="M10 4.5h1a1.5 1.5 0 0 1 1.5 1.5v5.5"/><path d="M10.8 9.8l1.7 1.7 1.7-1.7"/>',
   replaceAll:
-    '<path d="M2.5 3h7M2.5 5.5h7"/><path d="M2.5 10.5h7M2.5 13h7"/><path d="M12.5 3v9.5M10.5 10.5l2 2 2-2"/>',
+    '<path d="M2.5 4.5h6M2.5 8h6M2.5 11.5h6"/><path d="M10 4.5h1a1.5 1.5 0 0 1 1.5 1.5v5.5"/><path d="M10.8 9.8l1.7 1.7 1.7-1.7"/>',
 } as const;
 
 export type IconName = keyof typeof ICONS;
