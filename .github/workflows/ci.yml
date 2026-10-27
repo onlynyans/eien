@@ -59,6 +59,37 @@ jobs:
             test-results/
           retention-days: 14
 
+  reader-extension:
+    name: Reader extension (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Built, loaded into Chromium as a writer loads it, and driven over the test's own story pages
+      # (playwright.extension.config.ts).
+      - run: npm run test:extension
+      # To try it: unzip, then Load unpacked (chrome://extensions) or Load Temporary Add-on (about:debugging).
+      - uses: actions/upload-artifact@v7
+        with:
+          name: eien-reader-extension
+          path: out/extension/
+          retention-days: 14
+      - name: Keep the report of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reader-extension-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
   android:
     name: Android debug build
     runs-on: ubuntu-latest

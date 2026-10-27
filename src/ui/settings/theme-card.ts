@@ -30,19 +30,28 @@ export function paintSwatch(swatch: HTMLElement, palette: Palette | null): void 
   );
 }
 
+/** Each card's note's id, unique on the page: a note describes its card. */
+let notes = 0;
+
 export function themeCard(of: CardOf, choose: () => void): HTMLButtonElement {
   const swatch = h('span', { class: 'theme__sw', attrs: { 'aria-hidden': 'true' } });
   paintSwatch(swatch, of.palette);
+  const noteId = `theme-note-${++notes}`;
+  // Called by its name, the note told after it: a name is what the words it shows begin with.
   return h(
     'button',
     {
       class: 'theme',
-      attrs: { type: 'button', 'data-value': of.value, 'aria-label': of.name },
+      attrs: { type: 'button', 'data-value': of.value, 'aria-describedby': noteId },
       on: { click: choose },
     },
     swatch,
     h('span', { class: 'theme__title' }, h('span', { class: 'theme__name', text: of.name })),
-    h('span', { class: 'label theme__note', text: of.note }),
+    h('span', {
+      class: 'label theme__note',
+      text: of.note,
+      attrs: { id: noteId, 'aria-hidden': 'true' },
+    }),
   );
 }
 

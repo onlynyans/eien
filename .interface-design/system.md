@@ -628,3 +628,42 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   band ground; Slip's own raised slip at the blotter's top left; Running
   head's raised rail down the margin. Its buttons have the icon control's
   states, pressed where the format is on at the caret.
+
+## The reader extension (built 2026-10-27)
+
+Eien Reader (spec §14) shows a story from AO3 or FanFiction.Net in Eien's
+look, out of the same tokens, faces and pieces; its own styles are
+`src/ui/reader/reader-page.css` and `popup-page.css`.
+
+- **The page:** Band's furniture without the panes: a band of `--band`
+  (the seal and the site's name in label type at its left; previous and
+  next chapter, a hairline, day or night and × as icon controls at its
+  right), the blotter with the sheet, and the colophon (words · chapter ii
+  of 12 · 41% read, the dots faded).
+- **The sheet:** the app's own (`page/page.css`): the running head in label
+  type (FANDOM / TITLE / II), the title, then "by Rook" in the text face at
+  row size in ink-soft. What the site says of the work is a fold, "About
+  this work" in label type, its facts a two-column list: the labels in
+  label type, the values in the text face at preview size, joined by " · ".
+- **The site's notes** (a summary, the author's notes, before and after a
+  chapter): a hairline in `--eien-rule` at their left, the name in label
+  type above, the words at row size in ink-soft, so the story's own words
+  stay the loudest thing on the sheet.
+- **A chapter:** its number centred in label type (CHAPTER IV, in the
+  chosen numerals), its own title under it in the text face at heading
+  size, 500. The words at the face's prose size, leading and measure,
+  paragraphs `--eien-paragraph-gap` apart; a rule is Eien's scene break; a
+  quote has a 2px `--eien-rule-strong` mark; a link is ink, underlined in
+  `--eien-rule-strong`; where the site centres or right-aligns a block, so
+  does the sheet. The turns to the chapters beside are word buttons at the
+  sheet's foot, after a soft rule.
+- **On the site's page:** the seal itself, 44px (a touch target), in the
+  page's bottom-right corner, 16px from its edges, in the theme's seal colour
+  by day or night with the glyph in `--eien-on-seal`'s colours, the
+  stamp's 2px corners. It is the reader's way in, so it is the seal: the
+  mark of the app.
+- **The popup:** a band head with the seal and "Eien Reader"; the page's
+  story and Read in Eien; then the settings as Settings draws them (theme
+  cards two to a row, face cards, the segmented wells, the stepper), names
+  only: the app's descriptions speak of the app.
+

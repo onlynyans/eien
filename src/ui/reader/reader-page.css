@@ -1,0 +1,215 @@
+/* The reader (./reader-view.ts): the band, the blotter with the sheet, the
+   colophon, one above the other; the story's words in the text face at the
+   face's own size, leading and measure. Only tokens. */
+
+html,
+body {
+  height: 100%;
+}
+body {
+  background: var(--eien-page-ground);
+}
+
+.reader {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) var(--status-h);
+  height: 100%;
+}
+.reader__main {
+  display: grid;
+  min-height: 0;
+}
+.reader__scroll:focus {
+  outline: none;
+}
+
+.reader__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--eien-space-4);
+  height: var(--band);
+  padding: 0 var(--eien-space-3) 0 var(--eien-space-4);
+  background: var(--eien-band);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.reader__mark {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-3);
+}
+
+/* The page's own grid places the app's colophon; here it's the reader's third row. */
+.reader__colophon {
+  grid-row: 3;
+  color: var(--eien-pencil);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+}
+.reader__dot {
+  color: var(--eien-faded);
+}
+
+/* ── The sheet ─────────────────────────────────────────────────────────── */
+.reader__byline {
+  margin: calc(var(--eien-title-gap) * -0.5) 0 var(--eien-space-5);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  color: var(--eien-ink-soft);
+}
+
+.reader__facts {
+  margin: 0 0 var(--eien-space-5);
+}
+.reader__facts summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.reader__facts dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--eien-space-2) var(--eien-space-4);
+  margin: var(--eien-space-3) 0 0;
+}
+.reader__facts dt {
+  padding-top: 0.2em;
+}
+.reader__facts dd {
+  margin: 0;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  color: var(--eien-ink-soft);
+}
+
+/* A summary or the author's notes: the site's words, a step quieter than the story's. */
+.reader__aside {
+  margin: 0 0 var(--eien-space-6);
+  padding-left: var(--eien-space-4);
+  border-left: var(--eien-hairline) solid var(--eien-rule);
+}
+.reader__aside > .label {
+  margin: 0 0 var(--eien-space-1);
+}
+.reader__aside--end {
+  margin-top: var(--eien-space-6);
+}
+
+.reader__chapter + .reader__chapter {
+  margin-top: var(--eien-space-8);
+}
+.reader__chapter-head {
+  margin: var(--eien-title-gap) 0;
+  text-align: center;
+}
+.reader__chapter-head > .label {
+  margin: 0;
+}
+.reader__chapter-title {
+  margin: var(--eien-space-2) 0 0;
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-heading);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.reader__turns {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--eien-space-4);
+  margin-top: var(--eien-space-7);
+  padding-top: var(--eien-space-4);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.reader__turns > :only-child {
+  margin-left: auto;
+}
+
+/* ── The story's words ─────────────────────────────────────────────────── */
+.prose {
+  font-family: var(--eien-face-text);
+  line-height: var(--eien-leading-prose);
+  overflow-wrap: break-word;
+}
+.prose--aside {
+  font-size: var(--eien-size-row);
+  line-height: 1.55;
+  color: var(--eien-ink-soft);
+}
+.prose p,
+.prose ul,
+.prose ol,
+.prose dl,
+.prose pre,
+.prose table,
+.prose figure,
+.prose details {
+  margin: 0 0 var(--eien-paragraph-gap);
+}
+.prose > :last-child {
+  margin-bottom: 0;
+}
+.prose [data-align="center"] {
+  text-align: center;
+}
+.prose [data-align="right"] {
+  text-align: right;
+}
+.prose [data-align="justify"] {
+  text-align: justify;
+}
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  margin: 1.4em 0 0.6em;
+  font-size: var(--eien-size-heading);
+  font-weight: 500;
+  line-height: 1.25;
+}
+.prose blockquote {
+  margin: 0 0 var(--eien-paragraph-gap);
+  padding-left: var(--eien-space-4);
+  border-left: var(--eien-mark-w) solid var(--eien-rule-strong);
+  color: var(--eien-ink-soft);
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.4em;
+}
+.prose a {
+  color: inherit;
+  text-decoration-color: var(--eien-rule-strong);
+  text-underline-offset: 0.18em;
+}
+@media (hover: hover) {
+  .prose a:hover {
+    text-decoration-color: currentColor;
+  }
+}
+.prose img {
+  max-width: 100%;
+  height: auto;
+}
+.prose code,
+.prose pre {
+  font-family: var(--eien-face-source);
+  font-size: 0.85em;
+}
+.prose pre {
+  white-space: pre-wrap;
+}
+.prose table {
+  border-collapse: collapse;
+  font-size: var(--eien-size-row);
+}
+.prose td,
+.prose th {
+  padding: var(--eien-space-1) var(--eien-space-2);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  vertical-align: top;
+}
+.prose small {
+  font-size: 0.85em;
+}

@@ -1,0 +1,6 @@
+/* The extension's popup (./popup.html): Eien's look, settings drawn as
+   Settings draws them, then the popup's own. */
+@import "./eien-look.css";
+@import "../settings/controls.css";
+@import "../settings/themes.css";
+@import "./popup-page.css";

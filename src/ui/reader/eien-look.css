@@ -1,0 +1,8 @@
+/* What each of the extension's pages wears (spec §14): Eien's faces, tokens
+   and shared pieces, and its icon controls. ./reader.css and ./popup.css
+   add their own. */
+@import "../theme/fonts.css";
+@import "../theme/tokens.css";
+@import "../theme/slate.css";
+@import "../theme/base.css";
+@import "../chrome/chrome.css";

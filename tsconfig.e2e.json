@@ -11,6 +11,8 @@
     "tests/android",
     "playwright.android.config.ts",
     "tests/mobile",
+    "tests/extension",
+    "playwright.extension.config.ts",
     "playwright.mobile.config.ts",
     "src/platform/bridge.ts",
     "playwright.config.ts",
