@@ -99,23 +99,13 @@ export function phoneView(of: PhoneViewOf): PhoneView {
   });
   of.shell.prepend(stack.bar);
   const stopRoom = of.settings.onChange(() => stack.roomChanged());
-  // Two pages: the notes slide over the page, which is inert under them (../phone/phone-stack.ts),
-  // and a tap anywhere but on them, or the bar, puts them away.
-  const putAway = (event: PointerEvent) => {
-    const on = event.target instanceof Element ? event.target : null;
-    if (on?.closest('.shell > .sidebar, .shell > .list, .phone-bar') || !putAwayNotes()) return;
-    event.preventDefault();
-    event.stopPropagation();
-  };
-  of.shell.addEventListener('pointerdown', putAway, true);
-  // The note you came from, a tap away at the bar's right (./phone-other.ts): where two pages
-  // may open, it opens beside this one.
+  // The note you came from, a tap away at the bar's right (./phone-other.ts).
   const other = phoneOther({
     pages: of.pages,
     has: of.has,
     onPage: () => stack.phone && stack.shown === 'page' && !of.pages.split,
     // Where it was left, then the window drawn (the panes laid out, which draws them).
-    open: (place) => of.pages.open(place.path, stack.splits, place).then(of.changed),
+    open: (place) => of.pages.open(place.path, false, place).then(of.changed),
   });
   stack.bar.append(other.element);
   /** What lies over the page closes before the page is left: Compare, the cards, the versions. */
@@ -129,23 +119,16 @@ export function phoneView(of: PhoneViewOf): PhoneView {
     else return false;
     return true;
   };
-  const putAwayNotes = (): boolean => {
-    if (stack.room !== 'pages' || stack.shown === 'page') return false;
-    stack.show('page');
-    return true;
-  };
   return {
     stack,
     drawn() {
       stack.rename();
       other.sync();
     },
-    // With two pages, the notes over the page go first: back puts them away, the page still there.
-    back: () => closeMenu() || pressEsc() || closeOver() || putAwayNotes() || stack.back(),
+    back: () => closeMenu() || pressEsc() || closeOver() || stack.back(),
     more,
     stop() {
       stopRoom();
-      of.shell.removeEventListener('pointerdown', putAway, true);
       stack.stop();
     },
   };

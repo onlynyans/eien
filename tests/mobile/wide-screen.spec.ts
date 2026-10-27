@@ -1,15 +1,14 @@
 // Wide screen (spec §10, backlog #46): a foldable opened, a tablet, a phone on
 // its side, used as the writer chooses: the desktop's panes at a finger's
-// size, one at a time, side by side, or two pages with the notes sliding over.
+// size, one at a time, or side by side. A second page opens with the panes alone.
 // A finger here, as on a Pixel 7: hasTouch makes the pointer coarse.
 
 import { devices, expect, type Page, test } from '@playwright/test';
-import { catchBackButton, open, putOutside, systemBack, titles } from './outside';
+import { open, putOutside, titles } from './outside';
 
 test.use({ ...devices['Pixel 7'] });
-test.beforeEach(({ page }) => catchBackButton(page));
 
-type Room = 'panes' | 'one' | 'side' | 'pages';
+type Room = 'panes' | 'one' | 'side';
 type Pane = 'sidebar' | 'list' | 'page';
 const PANES: readonly Pane[] = ['sidebar', 'list', 'page'];
 
@@ -185,69 +184,39 @@ test.describe('side by side', () => {
   });
 });
 
-test.describe('two pages', () => {
-  test('the notes slide over the page, which stays; a tap on it, or back, puts them away', async ({
-    page,
-  }) => {
-    await withRoom(page, 'pages', TABLET);
-    await back(page).click();
+/** A long press (a right click here) on the note `title` in the list, and the menu it opens. */
+async function pressNote(page: Page, title: string) {
+  await titles(page).filter({ hasText: title }).click({ button: 'right' });
+  return page.locator('.menu [role^="menuitem"]', { hasText: /^Open to the Side$/ });
+}
+
+test.describe('a second page', () => {
+  test('with the desktop’s panes, a note’s long press opens it to the side', async ({ page }) => {
+    await withRoom(page, 'panes', TABLET);
     await openInFic(page, 'Tear');
-    await inSight(page, 'page');
-    await back(page).click(); // ‹ Fic: the notes come to the page
-    await inSight(page, 'list', 'page');
-    const list = await pane(page, 'list').boundingBox();
-    expect(list?.width).toBeLessThan(TABLET.width / 2);
-    // A tap on the page beside the notes puts them away, and opens nothing.
-    await page.mouse.click(TABLET.width - 40, TABLET.height / 2);
-    await inSight(page, 'page');
-    await expect(titlesOnPage(page)).toHaveText('Tear');
-    // A note chosen from them opens on the page.
-    await back(page).click();
-    await titles(page).filter({ hasText: 'Mend' }).click();
-    await inSight(page, 'page');
-    await expect(titlesOnPage(page)).toHaveText('Mend');
+    await (await pressNote(page, 'Mend')).click();
+    await expect(titlesOnPage(page)).toHaveText(['Tear', 'Mend']);
   });
 
-  test('the system’s back puts the notes away, and leaves the page as it was', async ({ page }) => {
-    await withRoom(page, 'pages', TABLET);
-    await back(page).click();
-    await openInFic(page, 'Tear');
-    await back(page).click();
-    await inSight(page, 'list', 'page');
-    await systemBack(page);
-    await inSight(page, 'page');
-    await expect(titlesOnPage(page)).toHaveText('Tear');
-  });
+  for (const room of ['one', 'side'] as const) {
+    test(`${room === 'one' ? 'one at a time' : 'side by side'} offers no Open to the Side`, async ({
+      page,
+    }) => {
+      await withRoom(page, room, TABLET);
+      await expect(await pressNote(page, 'Mend')).toHaveCount(0);
+      await expect(page.locator('.menu')).toBeVisible(); // the note's menu, without it
+    });
+  }
 
-  test('the note you came from opens as the facing page; folded, it’s a tap away again', async ({
-    page,
-  }) => {
-    await withRoom(page, 'pages', TABLET, { 'appearance.split': 'facing' });
-    await back(page).click();
+  test('folded, the page beside closes, its note a tap away', async ({ page }) => {
+    await withRoom(page, 'panes', TABLET);
     await openInFic(page, 'Tear');
-    await back(page).click();
-    await titles(page).filter({ hasText: 'Mend' }).click();
-    await expect(other(page)).toHaveAccessibleName('Switch to the other note: Tear');
-    await other(page).click();
-    await expect(titlesOnPage(page)).toHaveText(['Mend', 'Tear']);
-    await expect(other(page)).toBeHidden(); // it's on the facing page now
-    // Folded: one page, the one you're in; the facing note a tap away.
+    await (await pressNote(page, 'Mend')).click(); // Mend's page, the one you're in
+    await expect(titlesOnPage(page)).toHaveCount(2);
     await page.setViewportSize(PHONE);
     await expect(titlesOnPage(page)).toHaveCount(1);
-    await expect(titlesOnPage(page)).toHaveText('Tear');
-    await expect(other(page)).toHaveAccessibleName('Switch to the other note: Mend');
-  });
-
-  test('a note’s long press opens it to the side; side by side has no such choice', async ({
-    page,
-  }) => {
-    await withRoom(page, 'pages', TABLET);
-    await back(page).click();
-    await openInFic(page, 'Tear');
-    await back(page).click();
-    await titles(page).filter({ hasText: 'Mend' }).click({ button: 'right' });
-    await page.locator('.menu [role^="menuitem"]', { hasText: /^Open to the Side$/ }).click();
-    await expect(titlesOnPage(page)).toHaveCount(2);
+    await expect(titlesOnPage(page)).toHaveText('Mend');
+    await expect(other(page)).toHaveAccessibleName('Switch to the other note: Tear');
   });
 });
 
@@ -272,31 +241,26 @@ test.describe('changed in Settings', () => {
     await inSight(page, 'sidebar', 'list');
   });
 
-  test('leaving two pages for a room with one closes the page beside, its note a tap away', async ({
+  test('leaving the panes for a room with one page closes the page beside, its note a tap away', async ({
     page,
   }) => {
-    await withRoom(page, 'pages', TABLET);
-    await back(page).click();
+    await withRoom(page, 'panes', TABLET);
     await openInFic(page, 'Tear');
-    await back(page).click();
-    await titles(page).filter({ hasText: 'Mend' }).click();
-    await other(page).click();
+    await (await pressNote(page, 'Mend')).click();
     await expect(titlesOnPage(page)).toHaveCount(2);
-    await page.getByRole('button', { name: 'More' }).click();
-    await page.locator('.menu [role^="menuitem"]', { hasText: /^Settings$/ }).click();
+    await page.getByRole('button', { name: 'Settings' }).click();
     const sheet = page.getByRole('dialog', { name: 'Settings' });
     await sheet
       .getByRole('group', { name: 'Wide screen' })
       .getByRole('button', { name: 'Side by side' })
       .click();
     await sheet.getByRole('button', { name: 'Close settings' }).click();
-    await expect(titlesOnPage(page)).toHaveCount(1);
-    await expect(titlesOnPage(page)).toHaveText('Tear');
-    await expect(other(page)).toHaveAccessibleName('Switch to the other note: Mend');
+    await expect(titlesOnPage(page)).toHaveText('Mend');
+    await expect(other(page)).toHaveAccessibleName('Switch to the other note: Tear');
   });
 });
 
-for (const room of ['panes', 'side', 'pages'] as const) {
+for (const room of ['panes', 'side'] as const) {
   test(`a phone, folded or upright, is one at a time with ${room} chosen`, async ({ page }) => {
     await withRoom(page, room, PHONE);
     await inSight(page, 'list');
@@ -308,14 +272,6 @@ test.describe('a Galaxy Z Fold 5 opened upright, about 590px', () => {
     await withRoom(page, 'side', FOLD5_UPRIGHT);
     await inSight(page, 'sidebar', 'list');
     await openInFic(page, 'Tear');
-    await inSight(page, 'list', 'page');
-  });
-
-  test('two pages slide the notes over the page', async ({ page }) => {
-    await withRoom(page, 'pages', FOLD5_UPRIGHT);
-    await back(page).click();
-    await openInFic(page, 'Tear');
-    await back(page).click();
     await inSight(page, 'list', 'page');
   });
 

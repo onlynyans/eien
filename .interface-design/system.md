@@ -557,11 +557,6 @@ is always Panes.
   (`--pane-sidebar`, `--pane-list`), dragged by its pane edge under the bar,
   a `--eien-rule` hairline at its right, the bar across both. Back names the
   pane it brings into sight.
-- **Two pages:** the page always in sight; the notes or the contents slide
-  over it from the left: `--eien-paper-raised`, a `--eien-rule-strong` edge,
-  `--eien-shadow-float`, `min(85%, --eien-list-w + --eien-space-7)` wide, on
-  the scrim, the page inert under them. A second page is the split, as the
-  Split setting lays it out; ⇄ opens the other note beside.
 - Settings shows a `wide` setting only while the room has panes, live.
 
 ## Built patterns (stage 3, wave 2, 2026-10-21)

@@ -1035,7 +1035,7 @@ does nothing.
   hidden, spellcheck (macOS), and on the phone how a wide screen is used (§10). A
   setting may be one system's alone (`platforms` in the schema): the screen shows it
   only there. A setting that needs panes side by side (`wide` in the schema: Panes,
-  Shut sidebar, Arranging, the formatting bar) shows only while the window has them,
+  Shut sidebar, Split, Facing pages' mark, Arranging, the formatting bar) shows only while the window has them,
   and comes and goes as that changes (a phone turned, a foldable opened, Wide screen
   set).
 - An unknown or invalid value in a file is ignored with a warning in the log,
@@ -1540,13 +1540,9 @@ Compare or Restore finishes lands on a note opened meanwhile.
     beside the page keeps its own width (the sidebar's or the list's, as on
     the desktop), dragged by its edge (a finger wide) and remembered, giving
     way so the page keeps 240 px.
-  - **Two pages:** the phone's way, but the page stays in sight: the notes and
-    the contents slide over it from the left (the bar's back word brings them,
-    and goes on through them to the contents); a tap beside them, or Android's
-    back, puts them away (the page under them takes no keys or taps till then). A
-    second page may open, laid out as Split says (Facing pages: an open book):
-    the note you came from (⇄) opens beside this one, and a note's long press
-    offers Open to the Side.
+  - Only Panes opens a second page (Open to the Side, Split Page); One at a
+    time and Side by side have one page. A device that chose Two pages, a
+    room Eien no longer has, reads as Panes.
   - Folding, turning the phone, or choosing a room with one page closes the
     page you're not in, never its note: it's the other note, ⇄, where it was
     left. Whatever room, the pane you were at stays. In a room with one page,
@@ -1556,7 +1552,7 @@ Compare or Restore finishes lands on a note opened meanwhile.
     a note shows the page. A bar above the pane goes back, naming where
     ("‹ Fic", "‹ Library"); leaving the page closes what lay over it.
   - No split and no New Window: the phone shows one page (but with Wide
-    screen's Panes or Two pages), and its menus offer neither. Instead, with
+    screen's Panes), and its menus offer neither. Instead, with
     the page in sight, the bar keeps the note
     you came from a tap away at its right (⇄ and its name): a tap goes back
     to it where you left it (its caret and how far it was scrolled), and the
