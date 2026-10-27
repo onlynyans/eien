@@ -29,6 +29,7 @@ import { h } from '../dom';
 import type { IconName } from '../icons';
 import { iconButton, quietButton } from '../quiet-button';
 import { countMatches, firstMatchFrom } from './find-matches';
+import { shownMatch } from './front-matter-hidden';
 
 const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -229,6 +230,8 @@ export class FindBar {
       regexp: this.#pressed('regexp'),
       // A writer's \n is the two letters, unless it's a pattern.
       literal: true,
+      // The front matter kept out of sight is neither found nor replaced.
+      test: shownMatch,
     });
   }
 

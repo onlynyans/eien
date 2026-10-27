@@ -296,6 +296,19 @@ export const SETTINGS = [
     default: 'on',
   },
   {
+    key: 'editor.hideTagsAndIds',
+    label: 'Hide tags and IDs',
+    description:
+      'Hide the tags: and id: lines at the top of a note, in Live, Source and Reading. They’re kept and saved as they are, and the note’s tags still show on the page.',
+    scope: 'device',
+    group: 'Editor',
+    type: 'choice',
+    choices: { off: 'Off', on: 'On' },
+    // Off, as Eien has been: Source shows the file as it is, and the id a seal adds is already
+    // out of sight in Live and Reading while it's all the front matter holds.
+    default: 'off',
+  },
+  {
     key: 'editor.spellcheck',
     label: 'Spellcheck',
     description:

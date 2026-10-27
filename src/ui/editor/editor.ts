@@ -14,13 +14,18 @@ import type { QuoteStyle } from '../../core/typography';
 import { h } from '../dom';
 import { activeFormats } from './active-formats';
 import { editorKeys, historyInput } from './editor-keys';
-import { lockExtensions, marksExtensions, modeExtensions } from './editor-modes';
+import {
+  lockExtensions,
+  marksExtensions,
+  modeExtensions,
+  tagsAndIdsExtensions,
+} from './editor-modes';
 import { writtenBy } from './eien-change';
 import { findInNote } from './find';
 import { FindBar } from './find-bar';
+import { frontMatterHidden, writingStart } from './front-matter-hidden';
 import { imageDrop } from './image-drop';
 import { linkFollowing } from './links';
-import { hiddenFrontMatter } from './live-preview';
 import { isEcho, type NoteDoc } from './note-doc';
 import { eienMarkdown } from './syntax';
 import { caretTable } from './table-at';
@@ -70,6 +75,9 @@ export class NoteEditor {
   /** Live's marks on the caret's lines, or hidden there too, as this device's setting says. */
   readonly #marks = new Compartment();
   #marksShown = true;
+  /** The front matter's tags: and id: lines out of sight, as this device's setting says. */
+  readonly #tagsAndIds = new Compartment();
+  #tagsAndIdsHidden = false;
   /** Held still while its note is moved or trashed: no typing reaches it. */
   #locked = false;
   readonly #events: EditorEvents;
@@ -117,7 +125,7 @@ export class NoteEditor {
     this.#doc = doc;
     const state = this.#state(doc.text, loadImage);
     // The caret starts where the writing does, after any front matter kept out of sight.
-    const start = hiddenFrontMatter(state);
+    const start = writingStart(state);
     this.#view.setState(start > 0 ? state.update({ selection: { anchor: start } }).state : state);
     this.#view.scrollDOM.scrollTop = 0;
     doc.attach(this.#view);
@@ -252,6 +260,13 @@ export class NoteEditor {
     this.#view.dispatch({ effects: this.#marks.reconfigure(marksExtensions(shown)) });
   }
 
+  /** The front matter's tags: and id: lines hidden in every view (true), or shown (backlog #45). */
+  setTagsAndIdsHidden(hidden: boolean): void {
+    if (hidden === this.#tagsAndIdsHidden) return;
+    this.#tagsAndIdsHidden = hidden;
+    this.#view.dispatch({ effects: this.#tagsAndIds.reconfigure(tagsAndIdsExtensions(hidden)) });
+  }
+
   /** Hold the text still (true) or let the writer type again (false). */
   setLocked(locked: boolean): void {
     this.#locked = locked;
@@ -264,6 +279,8 @@ export class NoteEditor {
       this.#quotes.of(quoteTyping(this.#quoteStyle)),
       this.#tools.of(writingTools(this.#toolsOn)),
       this.#marks.of(marksExtensions(this.#marksShown)),
+      this.#tagsAndIds.of(tagsAndIdsExtensions(this.#tagsAndIdsHidden)),
+      frontMatterHidden,
       imageDrop((files, at) => {
         if (!this.#events.images) return false;
         this.#events.images(files, at);
