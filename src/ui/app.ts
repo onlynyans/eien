@@ -1,12 +1,13 @@
 // The window: the settings and the look, the menu, and the vault shown —
 // or the welcome, before one is chosen.
 
-import { offeredOn, settingOf, type ToggleKey } from '../core/config';
+import type { ToggleKey } from '../core/config';
 import type { Bridge } from '../platform/bridge';
 import { MenuBus } from './menu/menu-bus';
 import { applyLook } from './settings/look';
 import { SettingsScreen } from './settings/settings-screen';
 import { SettingsState } from './settings/settings-state';
+import { fitViewport, followViewport } from './settings/viewport';
 import { isZoomCommand, keyboardInPage, zoomedBy, zoomKeyFor } from './settings/zoom';
 import { followControlsLeft } from './shell/controls-left';
 import { paintWindowControls } from './shell/window-controls';
@@ -22,11 +23,15 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
   // The vault's own themes come with the vault: until then, one of them is worn as Paper.
   const wearChosen = () => wear(wornFor(settings.values['appearance.palette'], themes.list));
   applyLook(settings.values);
+  // A phone's interface zoom (the desktop's is Electron's). The page starts at 100%, so a zoom
+  // set lays it out again once, as the window opens, before the vault is drawn.
+  followViewport(() => settings.values['window.zoom']);
   wearChosen();
   const repaintControls = paintWindowControls(bridge);
   followControlsLeft();
   settings.onChange((values) => {
     applyLook(values);
+    fitViewport(values['window.zoom']);
     wearChosen();
     repaintControls();
   });
@@ -38,8 +43,6 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
   });
   const screen = new SettingsScreen(document.body, settings, bridge.platform, themes);
   const menu = new MenuBus(bridge);
-  const whole = settingOf('window.zoom');
-  const wholeZoom = whole !== undefined && offeredOn(whole, bridge.platform);
   let shown: ShownVault | null = null;
 
   const openNow = async () => {
@@ -71,7 +74,7 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
       if (!shown?.closePage()) void bridge.window?.close();
     } else if (command === 'settings') screen.open();
     else if (isZoomCommand(command)) {
-      const key = zoomKeyFor(keyboardInPage(), wholeZoom);
+      const key = zoomKeyFor(keyboardInPage());
       const now = settings.values[key];
       const next = zoomedBy(command, key, now);
       if (next !== now) void settings.set(key, next).catch(console.error);

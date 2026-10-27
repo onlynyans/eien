@@ -384,9 +384,9 @@ export const SETTINGS = [
     key: 'window.zoom',
     label: 'Interface zoom',
     description:
-      'Zoom the whole window. Also in View → Zoom In and Zoom Out, or with the keyboard when the page isn’t focused.',
-    // Electron's own zoom (webContents): a phone has none.
-    platforms: ['darwin', 'win32', 'linux'],
+      'Zoom the whole interface, as a browser zooms: everything larger or smaller, and laid out again to fit, so smaller gives more room. On the desktop, also View → Zoom In and Zoom Out, or the keyboard when the page isn’t focused.',
+    // The desktop's window by Electron (app/electron/frame.ts); a phone's page by its viewport
+    // (ui/settings/viewport.ts).
     scope: 'device',
     group: 'Appearance',
     type: 'number',
