@@ -1,8 +1,0 @@
-/* The reader's page (./reader.html): Eien's look, the window's lengths (the
-   band, the colophon) as the shell sets them, the sheet and colophon as the
-   app draws them, then the reader's own. Linked from the page, so it loads
-   under its content security policy. */
-@import "./eien-look.css";
-@import "../shell/shell.css";
-@import "../page/page.css";
-@import "./reader-page.css";

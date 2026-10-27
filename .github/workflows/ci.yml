@@ -59,8 +59,8 @@ jobs:
             test-results/
           retention-days: 14
 
-  reader-extension:
-    name: Reader extension (Chromium)
+  extension:
+    name: Browser extension (Chromium)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -84,7 +84,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: reader-extension-report
+          name: extension-report
           path: |
             playwright-report/
             test-results/

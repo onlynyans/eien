@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Pages 3 · Columns to the pane</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:epub.css*/
+
+/* Pages 3 · Columns to the pane. Page frame Full, for books: no sheet, the
+   pane is paper, and the book flows in as many columns of at least 20em as the
+   pane holds (one, two or three), a soft hairline between them. A turn moves a
+   whole screen. Nothing but the words and the colophon. */
+.paperfield { position: relative; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); background: var(--eien-paper); padding: var(--eien-space-5) var(--eien-space-7) var(--eien-space-4); }
+.paperfield .sheet__head { margin-bottom: var(--eien-space-5); }
+.paperfield .leaves { --leaf-gap: var(--eien-space-7); }
+.paperfield .flow { column-rule: var(--eien-hairline) solid var(--eien-rule-soft); }
+.paperfield .turn { width: var(--eien-space-7); }
+/* A's band and C's head sit on paper too: the band keeps its hairline, as Full has it. */
+.win[data-layout='slip'] .paperfield { padding-top: 0; }
+.cols-says { color: var(--eien-faded); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:epub.js*/
+
+/** As many columns of at least 20em as the pane holds, up to three. */
+function columnsFor(ctx) {
+  const prose = parseFloat(getComputedStyle(root).getPropertyValue('--eien-size-prose')) || 22;
+  const avail = ctx.pageW - 2 * 48;
+  return clamp(Math.floor((avail + 48) / (20 * prose + 48)), 1, 3);
+}
+
+Epub.tools = (ctx) => ctx.contentsTool();
+Epub.page = (ctx) => {
+  const n = columnsFor(ctx);
+  return `<div class="page">${ctx.top()}<div class="paperfield">
+    <button class="turn turn--prev" data-turn="-1" data-k="turn-prev" aria-label="Previous screen" data-tip="Previous screen  ←" data-tip-side="right">${icon('left')}</button>
+    <button class="turn turn--next" data-turn="1" data-k="turn-next" aria-label="Next screen" data-tip="Next screen  →" data-tip-side="left">${icon('right')}</button>
+    ${ctx.head()}${ctx.leaves(R.c, { span: n })}</div>${ctx.colophon([CHAPTERS[R.c].ord, '<span data-col-page></span>', '<span data-col-ch></span>', `<span class="cols-says">${n} column${n === 1 ? '' : 's'}</span>`])}</div>`;
+};
+Epub.phone = (ctx) => `<div class="phone__page">${ctx.leaves(R.c)}<div class="phone__foot"><span class="count">${CHAPTERS[R.c].ord}</span><span class="count" data-col-page></span></div></div>`;
+Epub.phoneTools = (ctx) => ctx.tool('contents', 'Contents', '', 'data-contents');
+Epub.after = (ctx, n) => {
+  if (!n?.paged) return;
+  const last = Math.min(n.page + n.span - 1, n.page + (n.chPages - n.chPage));
+  const set = (sel, text) => { for (const el of canvas.querySelectorAll(sel)) el.textContent = text; };
+  set('[data-col-page]', last > n.page ? `pages ${n.page}–${last} of ${n.pages}` : `page ${n.page} of ${n.pages}`);
+  set('[data-col-ch]', `${Math.max(0, n.chPages - n.chPage - n.span + 1)} more in the chapter`);
+  for (const b of canvas.querySelectorAll('.turn--prev')) b.disabled = n.page <= 1;
+};
+
+mountEpubPage({
+  id: 'columns',
+  note: 'The pane is the page: Full frame, as many columns of 20em as fit, a screen to a turn.',
+  notes: `
+  <h2>Pages 3 · Columns to the pane</h2>
+  <p>Page frame Full, for books. There is no sheet: the page pane is paper, and the chapter flows into as many columns of at least 20em as the pane holds: one with three panes, two with the list hidden, three in a wide window with the sidebar shut. A soft hairline stands between them. A turn moves the whole screen.</p>
+  <ul>
+    <li><b>Most words in sight</b>, nothing else: the running head at the top (A, B), the colophon at the foot with the pages shown, of the book's, and how many are left in the chapter.</li>
+    <li><b>Turning:</b> the arrow keys, Space, Page Up and Down, or the pane's side gutters (an arrow shows there under the pointer).</li>
+    <li><b>Resizing</b> the window, or opening and shutting panes, changes the columns and keeps your place (the first words on the screen stay first).</li>
+    <li>It follows the writer's own Page frame: in Sheet, a book could be Pages 2; in Full, this.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>One column, the full screen, a tap in either outer third or a swipe to turn; the pages in the foot.</p>
+  <h2>For</h2>
+  <ul><li>The most reading per screen at any width, and the calmest: paper, words, two hairlines.</li><li>No new object: it's Page frame Full and columns.</li></ul>
+  <h2>Against</h2>
+  <ul><li>Not a book's picture: no page, no edges; how far you are lives only in the colophon.</li><li>Your eye jumps from the foot of one column to the head of the next, which wide screens make a long way.</li><li>The number of columns changes as panes open and shut: the page you knew moves.</li></ul>`,
+});
+</script>
+</body>
+</html>

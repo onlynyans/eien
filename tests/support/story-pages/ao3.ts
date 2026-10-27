@@ -1,7 +1,7 @@
 // AO3's pages as its markup has them (otwarchive's work views, written out by
 // hand: the archive isn't reachable from where these tests run), trimmed to
-// what the reader reads and what sits round it. A change on the site that
-// breaks the reader should be copied in here, so the test shows it.
+// what the extension reads and what sits round it. A change on the site that
+// breaks the extension should be copied in here, so the test shows it.
 
 const head = `<!DOCTYPE html><html lang="en"><head><title>Beneath the Walls - Chapter 2 - Rook - Harry Potter</title>
 <style>#workskin p { color: red }</style><script>window.page = 1</script></head><body>

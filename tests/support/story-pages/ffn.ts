@@ -1,7 +1,7 @@
 // FanFiction.Net's story pages as its markup has them, the desktop site's
 // and the phone site's, written out by hand (the site isn't reachable from
-// where these tests run) and trimmed to what the reader reads and what sits
-// round it. A change on the site that breaks the reader should be copied in
+// where these tests run) and trimmed to what the extension reads and what sits
+// round it. A change on the site that breaks the extension should be copied in
 // here, so the test shows it.
 
 /** Chapter 2 of 3 on www.fanfiction.net. */

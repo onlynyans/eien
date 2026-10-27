@@ -640,11 +640,11 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   head's raised rail down the margin. Its buttons have the icon control's
   states, pressed where the format is on at the caret.
 
-## The reader extension (built 2026-10-27)
+## The browser extension (Eien Reader)
 
-Eien Reader (spec §14) shows a story from AO3 or FanFiction.Net in Eien's
+The extension (spec §14) shows a story from AO3 or FanFiction.Net in Eien's
 look, out of the same tokens, faces and pieces; its own styles are
-`src/ui/reader/reader-page.css` and `popup-page.css`.
+`src/ui/extension/story-page.css` and `popup-page.css`.
 
 - **The page:** Band's furniture without the panes: a band of `--band`
   (the seal and the site's name in label type at its left; previous and
