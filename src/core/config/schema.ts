@@ -93,6 +93,19 @@ export const SETTINGS = [
     default: 'band',
   },
   {
+    key: 'appearance.room',
+    label: 'Wide screen',
+    description:
+      'How a screen wider than a phone’s (a foldable opened, a tablet, a phone turned sideways) is used. Panes: the desktop’s panes, at a finger’s size. One at a time: as on a phone. Side by side: the pane you came from beside the one you’re in. Two pages: the note you came from opens beside this one, laid out as Split says, and the notes slide over the page.',
+    // The phone's build (web: its page in tests/mobile): the desktop's window is always panes.
+    platforms: ['android', 'ios', 'web'],
+    scope: 'device',
+    group: 'Appearance',
+    type: 'choice',
+    choices: { panes: 'Panes', one: 'One at a time', side: 'Side by side', pages: 'Two pages' },
+    default: 'panes',
+  },
+  {
     key: 'appearance.split',
     label: 'Split',
     description:

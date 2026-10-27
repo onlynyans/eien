@@ -85,3 +85,56 @@ describe('the back bar’s other note', () => {
     expect(other.element.hidden).toBe(true);
   });
 });
+
+describe('the other note, with two pages', () => {
+  it('is the facing page while there is one, and stays it, where it was, once that closes', async () => {
+    const made = await pagesWith({
+      'Chapter.md': 'The gate held. It held all night.',
+      'Notes.md': 'Erwin.',
+      'Map.md': 'The wall, the gate, the stair.',
+    });
+    stops.push(() => made.pages.stop());
+    const { pages } = made;
+    const open = vi.fn(async () => {});
+    const other = phoneOther({ pages, has: () => true, onPage: () => true, open });
+    await pages.open('Map.md');
+    await pages.open('Chapter.md'); // Map is the note this page left
+    other.sync();
+    await pages.open('Notes.md', true); // Notes on a facing page, the one you're in
+    const facing = pages.other; // Chapter's page
+    if (!facing) throw new Error('no facing page');
+    facing.page.editor.view.dispatch({ selection: { anchor: 4, head: 8 } });
+    other.sync();
+    // Folded: the facing page closes, and its note is the other one, not the older Map.
+    pages.close(facing);
+    other.sync();
+    expect(other.element.hidden).toBe(false);
+    other.element.click();
+    expect(open).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'Chapter.md', anchor: 4, head: 8 }),
+    );
+  });
+
+  it('is the facing page still, though the page you’re in opened another meanwhile', async () => {
+    const made = await pagesWith({
+      'Chapter.md': 'The gate held.',
+      'Notes.md': 'Erwin.',
+      'Map.md': 'The wall.',
+    });
+    stops.push(() => made.pages.stop());
+    const { pages } = made;
+    const open = vi.fn(async () => {});
+    const other = phoneOther({ pages, has: () => true, onPage: () => true, open });
+    await pages.open('Chapter.md');
+    await pages.open('Notes.md', true); // Notes facing Chapter, the one you're in
+    other.sync();
+    await pages.open('Map.md'); // the page you're in leaves Notes for Map
+    other.sync();
+    const facing = pages.other; // Chapter's
+    if (!facing) throw new Error('no facing page');
+    pages.close(facing); // folded
+    other.sync();
+    other.element.click();
+    expect(open).toHaveBeenCalledWith(expect.objectContaining({ path: 'Chapter.md' }));
+  });
+});

@@ -2,7 +2,7 @@
 // what shuts, what the keyboard does when its pane shuts, and what is remembered.
 
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
-import type { PhonePane } from '../phone/phone-stack';
+import type { PhonePane } from '../phone/room';
 import { DEFAULT_PANES, LIMITS, STEP } from './pane-state';
 import { PaneLayout, type PaneParts, paneKeys, type Shuttable } from './panes';
 
@@ -37,6 +37,8 @@ beforeEach(() => {
     leave: vi.fn<(pane: Shuttable) => void>(),
     changed: vi.fn<() => void>(),
     phone: () => phone,
+    inSight: (pane) => pane === phone,
+    beside: () => null,
     showPhone: vi.fn(),
   };
   document.body.replaceChildren(root);
@@ -217,6 +219,60 @@ describe('PaneLayout', () => {
       phone = 'sidebar';
       make().toggle('sidebar');
       expect(parts.showPhone).toHaveBeenCalledWith('list');
+    });
+  });
+
+  describe('side by side, the pane beside the page', () => {
+    it('is as wide as it was left, and its edge steps it, remembered', () => {
+      phone = 'page';
+      parts = { ...parts, inSight: (pane) => pane !== 'sidebar', beside: () => 'list' };
+      make();
+      expect(shell().style.getPropertyValue('--pane-list')).toBe(`${DEFAULT_PANES.list}px`);
+      edge('list').dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowRight', cancelable: true }),
+      );
+      expect(stored().list).toBe(DEFAULT_PANES.list + STEP);
+      expect(shell().style.getPropertyValue('--pane-list')).toBe(`${DEFAULT_PANES.list + STEP}px`);
+    });
+
+    it('keeps its width though the sidebar was shut on the desktop’s panes', () => {
+      phone = 'list';
+      parts = { ...parts, inSight: (pane) => pane !== 'page', beside: () => 'sidebar' };
+      localStorage.setItem(KEY, JSON.stringify({ sidebarShut: true }));
+      make();
+      expect(shell().style.getPropertyValue('--pane-sidebar')).toBe(`${DEFAULT_PANES.sidebar}px`);
+    });
+  });
+
+  describe('side by side, the pane before in sight too', () => {
+    it('counts the contents in sight beside a folder’s notes as open', () => {
+      phone = 'list';
+      parts = { ...parts, inSight: (pane) => pane !== 'page' };
+      const panes = make();
+      expect(panes.isShut('sidebar')).toBe(false);
+      expect(panes.isShut('list')).toBe(false);
+      expect(panes.two).toBe(false); // the notes are the list's, not the tree's
+    });
+
+    it('hiding the contents, beside the notes, goes on past them to the page', () => {
+      phone = 'list';
+      parts = { ...parts, inSight: (pane) => pane !== 'page' };
+      make().toggle('sidebar');
+      expect(parts.showPhone).toHaveBeenCalledWith('page');
+    });
+
+    it('hiding the contents, at them, goes past the notes beside to the page', () => {
+      phone = 'sidebar';
+      parts = { ...parts, inSight: (pane) => pane !== 'page' };
+      make().toggle('sidebar');
+      expect(parts.showPhone).toHaveBeenCalledWith('page');
+    });
+
+    it('hiding the contents does nothing once they’re out of sight', () => {
+      phone = 'page';
+      parts = { ...parts, inSight: (pane) => pane !== 'sidebar' };
+      make().toggle('sidebar');
+      expect(parts.showPhone).not.toHaveBeenCalled();
     });
   });
 });

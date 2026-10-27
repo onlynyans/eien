@@ -3,50 +3,15 @@
 // names what a writer would see or lose; each failed against 9f7d1d9 for the
 // reason its comment gives.
 //
-// Android's back is played through Capacitor's own web App plugin. On the web
-// the plugin's implementation is loaded lazily, and the preload's first
-// listeners race to load it: two instances are made, and the back listener
-// isn't always on the one the proxy keeps. So every instance is caught as it
-// is made, and the back goes to whichever holds a listener for it.
+// Android's back is played through Capacitor's own web App plugin
+// (./outside.ts, systemBack).
 
 import { devices, expect, type Page, test } from '@playwright/test';
-import { listOutside, open, putOutside, titles } from './outside';
+import { catchBackButton, listOutside, open, putOutside, systemBack, titles } from './outside';
 
 test.use({ ...devices['Pixel 7'] });
 
-interface WebPlugin {
-  readonly listeners: Record<string, unknown[] | undefined>;
-  notifyListeners(event: string, data: object): void;
-}
-
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    const plugins: object[] = [];
-    Object.defineProperty(window, '__webPlugins', { value: plugins });
-    // Capacitor's WebPlugin constructor assigns this field: each instance is caught here.
-    Object.defineProperty(Object.prototype, 'retainedEventArguments', {
-      configurable: true,
-      set(value) {
-        plugins.push(this);
-        Object.defineProperty(this, 'retainedEventArguments', {
-          value,
-          writable: true,
-          configurable: true,
-          enumerable: true,
-        });
-      },
-    });
-  });
-});
-
-/** Android's back button or gesture. */
-const systemBack = (page: Page) =>
-  page.evaluate(() => {
-    const plugins = (window as unknown as { __webPlugins: WebPlugin[] }).__webPlugins;
-    const holding = plugins.filter((plugin) => (plugin.listeners?.backButton?.length ?? 0) > 0);
-    if (holding.length === 0) throw new Error('nothing listens for the back button');
-    for (const plugin of holding) plugin.notifyListeners('backButton', { canGoBack: false });
-  });
+test.beforeEach(({ page }) => catchBackButton(page));
 
 const shell = (page: Page) => page.locator('.shell');
 const back = (page: Page) => page.locator('.phone-bar__back');
@@ -273,7 +238,8 @@ test.describe('what a phone offers', () => {
     await more(page).click();
     await menuItem(page, 'Settings').click();
     await expect(page.locator('dialog[open]')).toBeVisible();
-    expect(await page.locator('dialog .setting__label').allTextContents()).not.toContain('Panes');
+    // Drawn for the wider room a foldable may open into, but out of sight one pane at a time.
+    await expect(page.locator('dialog [data-setting="layout.panes"]')).toBeHidden();
   });
 
   test('the tree’s seal does something on a phone, or isn’t there', async ({ page }) => {

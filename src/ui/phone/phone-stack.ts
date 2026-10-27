@@ -3,19 +3,29 @@
 // Android's back gesture) goes the other way. The page's tools are the
 // layout's (../chrome): in the bar's `controls` (A's), or at the page's foot. A window narrower than any
 // desktop window can be is a phone's, whatever the system: an upright phone
-// (430 px at most), not a tablet; and the phone's page in tests.
+// (430 px at most), not a tablet; and the phone's page in tests. Wider, the
+// room (./room.ts) says how: the desktop's panes, one at a time still, the
+// pane before kept in sight beside, or the notes over two pages.
 
 import { h, wordButton } from '../dom';
-
-export type PhonePane = 'sidebar' | 'list' | 'page';
-
-const ORDER: readonly PhonePane[] = ['sidebar', 'list', 'page'];
-
-/** Narrower than any desktop window (app/electron/window.ts: 640, less a Windows frame's 16). */
-export const NARROW = '(max-width: 599.98px)';
+import {
+  backTo,
+  inSight,
+  NARROW,
+  onePane,
+  PHONE_ORDER,
+  type PhonePane,
+  type Room,
+  twoPages,
+  UPRIGHT_PHONE,
+  type Width,
+  widthNow,
+} from './room';
 
 export interface PhoneParts {
   readonly shell: HTMLElement;
+  /** The room this window uses at `width` (./room.ts). */
+  room(width: Width): Room;
   /** What the bar's back names: where it goes. */
   backName(to: PhonePane): string;
   /** The keyboard to the pane now shown (never left in one gone from sight). */
@@ -35,8 +45,83 @@ export class PhoneStack {
   readonly controls = h('div', { class: 'phone-bar__controls' });
   readonly #parts: PhoneParts;
   readonly #back: HTMLButtonElement;
-  readonly #narrow = window.matchMedia(NARROW);
-  readonly #onNarrow = () => {
+  /** The widths a room changes at: the desktop's panes', and an upright phone's. */
+  readonly #widths = [window.matchMedia(NARROW), window.matchMedia(UPRIGHT_PHONE)];
+  readonly #onWidth = () => this.roomChanged();
+  #shown: PhonePane = 'list';
+  #room: Room;
+
+  constructor(parts: PhoneParts) {
+    this.#parts = parts;
+    this.#room = parts.room(widthNow());
+    this.#back = wordButton('', () => this.back());
+    this.#back.classList.add('phone-bar__back');
+    this.bar = h(
+      'nav',
+      { class: 'phone-bar', attrs: { 'aria-label': 'Back' } },
+      this.#back,
+      this.controls,
+    );
+    for (const width of this.#widths) width.addEventListener('change', this.#onWidth);
+    this.#apply();
+  }
+
+  /** The room this window uses now. */
+  get room(): Room {
+    return this.#room;
+  }
+
+  /** Whether the window goes the phone's way: one pane, or a step, at a time. */
+  get phone(): boolean {
+    return onePane(this.#room);
+  }
+
+  /** Whether a second page may open beside the first. */
+  get splits(): boolean {
+    return twoPages(this.#room);
+  }
+
+  /** The pane the writer is at, the phone's way; null with the desktop's panes, where all are. */
+  get shown(): PhonePane | null {
+    return this.phone ? this.#shown : null;
+  }
+
+  /** Side by side, the pane kept in sight beside the one you're in: its width is the writer's to drag. */
+  get beside(): 'sidebar' | 'list' | null {
+    if (this.#room !== 'side') return null;
+    return this.#shown === 'page' ? 'list' : 'sidebar';
+  }
+
+  /** Whether `pane` is in sight (every one with the desktop's panes; ./room.ts). */
+  inSight(pane: PhonePane): boolean {
+    return inSight(this.#room, this.#shown, pane);
+  }
+
+  /** Bring `pane` into sight (the phone's way) with the keyboard in it. */
+  show(pane: PhonePane): void {
+    if (pane === this.#shown) return;
+    if (this.#leaves(this.#room, pane)) this.#parts.leavingPage();
+    this.#shown = pane;
+    this.#apply();
+    if (!this.phone) return;
+    this.#parts.changed();
+    this.#parts.focus(pane);
+  }
+
+  /** One pane back; false when there's none (the contents in sight) or the window has the desktop's panes. */
+  back(): boolean {
+    const before = backTo(this.#room, this.#shown);
+    if (!this.phone || !before) return false;
+    this.show(before);
+    return true;
+  }
+
+  /** The room may have changed (the window turned or unfolded, or Wide screen was set): lay it out again. */
+  roomChanged(): void {
+    const room = this.#parts.room(widthNow());
+    if (room === this.#room) return;
+    if (this.#leaves(room, this.#shown)) this.#parts.leavingPage();
+    this.#room = room;
     this.#apply();
     this.#parts.changed();
     const at = document.activeElement;
@@ -46,64 +131,36 @@ export class PhoneStack {
       at.closest('[inert]') !== null ||
       !at.checkVisibility({ visibilityProperty: true });
     if (gone) this.#parts.lost();
-  };
-  #shown: PhonePane = 'list';
-
-  constructor(parts: PhoneParts) {
-    this.#parts = parts;
-    this.#back = wordButton('', () => this.back());
-    this.#back.classList.add('phone-bar__back');
-    this.bar = h(
-      'nav',
-      { class: 'phone-bar', attrs: { 'aria-label': 'Back' } },
-      this.#back,
-      this.controls,
-    );
-    this.#narrow.addEventListener('change', this.#onNarrow);
-    this.#apply();
-  }
-
-  /** Whether the window is a phone's: one pane at a time. */
-  get phone(): boolean {
-    return this.#narrow.matches;
-  }
-
-  /** The pane in sight on a phone; null on a wider window, where all are. */
-  get shown(): PhonePane | null {
-    return this.phone ? this.#shown : null;
-  }
-
-  /** Bring `pane` into sight (on a phone) with the keyboard in it. */
-  show(pane: PhonePane): void {
-    if (pane === this.#shown) return;
-    if (this.#shown === 'page') this.#parts.leavingPage();
-    this.#shown = pane;
-    this.#apply();
-    if (!this.phone) return;
-    this.#parts.changed();
-    this.#parts.focus(pane);
-  }
-
-  /** One pane back; false when there's none (the tree) or the window isn't a phone's. */
-  back(): boolean {
-    const at = ORDER.indexOf(this.#shown);
-    const before = ORDER[at - 1];
-    if (!this.phone || !before) return false;
-    this.show(before);
-    return true;
   }
 
   stop(): void {
-    this.#narrow.removeEventListener('change', this.#onNarrow);
+    for (const width of this.#widths) width.removeEventListener('change', this.#onWidth);
+  }
+
+  /** Whether the page, in sight now, goes from sight in `room` with `shown` the pane at. */
+  #leaves(room: Room, shown: PhonePane): boolean {
+    return this.inSight('page') && !inSight(room, shown, 'page');
   }
 
   #apply(): void {
     const { shell } = this.#parts;
+    const before = backTo(this.#room, this.#shown);
     shell.toggleAttribute('data-phone', this.phone);
+    shell.dataset.room = this.#room;
     shell.dataset.shown = this.#shown;
-    const before = ORDER[ORDER.indexOf(this.#shown) - 1];
+    shell.dataset.sight = PHONE_ORDER.filter((pane) => this.inSight(pane)).join(' ');
+    const beside = this.beside;
+    if (beside) shell.dataset.beside = beside;
+    else delete shell.dataset.beside;
+    // Two pages: the page under the notes is only to be seen until they're put away.
+    const covered = this.#room === 'pages' && this.#shown !== 'page';
+    shell.querySelector(':scope > .page')?.toggleAttribute('inert', covered);
     this.bar.hidden = !this.phone || !before;
-    this.#back.textContent = before ? `‹ ${this.#parts.backName(before)}` : '';
+    // Back names what it brings into sight: side by side, the contents, beside the notes in sight.
+    const comes =
+      before &&
+      PHONE_ORDER.find((pane) => inSight(this.#room, before, pane) && !this.inSight(pane));
+    this.#back.textContent = before ? `‹ ${this.#parts.backName(comes ?? before)}` : '';
   }
 
   /** The back word, named anew (the list's heading changed). */

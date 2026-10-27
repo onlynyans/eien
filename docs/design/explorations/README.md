@@ -77,13 +77,15 @@ compares all six.
 | [split-alt-follow.html](split-alt-follow.html) · [md](split-alt.md) | **6 · Tools that follow**: the list steps aside; one set of the page's tools moves to the page you're in | Every tool beside its page, one of each; wider pages | The window changes when you split; refused below about 990px |
 | [split-window.html](split-window.html) · [md](split.md) | **New Window and the phone**, once for all three: File → New Window (⇧⌘N), Open in New Window; the phone's "other note" | | |
 
-## Foldables and tablets (2026-10-27): for the owner to choose
+## Foldables and tablets (2026-10-27): all three chosen, built as Wide screen
 
 Backlog #46: three directions for a foldable's open screen and a tablet, each
 on a phone, a foldable folded and open (with its fold), and a tablet upright
 and sideways, by Day and Night, in all three layouts, touch first.
-[tablet.md](tablet.md) has the trade-offs and recommends 2 · The stack,
-opened out.
+[tablet.md](tablet.md) has the trade-offs. **Chosen:** all three, as one
+setting of the phone's, Wide screen: 1 is Panes (the default), 2 is Side by
+side, 3 is Two pages (as Split lays them out; Facing pages for the book), and
+One at a time keeps the phone.
 
 | Page | Direction | For | Against |
 |---|---|---|---|

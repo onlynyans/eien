@@ -1,4 +1,4 @@
-// The phone's other note (spec §10; the phone has no split): the back bar
+// The phone's other note (spec §10; one page, the phone's way): the back bar
 // keeps the note you came from a tap away, at its right, ⇄ and its name. A
 // tap goes back to it where you left it, and the note you were in becomes
 // the other one, so working between a chapter and its notes is one tap, not
@@ -41,13 +41,19 @@ export function phoneOther(of: PhoneOtherOf): PhoneOther {
   );
   /** Where the note you came from was left. */
   let other: NotePlace | null = null;
+  /** The page's last note left, as last seen: a new one is the other note. */
+  let seen: NotePlace | null = null;
   return {
     element,
     sync() {
       const { note } = of.pages.active;
-      const left = note.left;
-      // The note last left on the page is the other one, unless it's the one shown now.
-      if (left && left.path !== note.path) other = left;
+      // The page beside, while there is one (so a page closed as the window folds is the other
+      // note, where it was); else the note the page last left, when it leaves another.
+      const beside = of.pages.other?.note.place;
+      const fresh = note.left !== seen;
+      seen = note.left;
+      if (beside) other = beside;
+      else if (fresh && seen) other = seen;
       const shown = other !== null && other.path !== note.path && of.has(other.path);
       element.hidden = !shown || !of.onPage();
       if (!shown || !other) return;

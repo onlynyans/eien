@@ -100,6 +100,14 @@
     color: var(--eien-ink);
   }
 }
+/* What the window has no room for now (one pane, the phone's way: no panes to choose) is out
+   of sight, though drawn, and comes back as the room does (./settings-screen.ts, #fit). */
+.settings__part[hidden],
+.settings__tab[hidden],
+.setting[hidden] {
+  display: none;
+}
+
 /* The chosen tab as a chosen row: the selected fill and the seal's rule. */
 .settings__tab[aria-current="true"] {
   background: var(--eien-selected);

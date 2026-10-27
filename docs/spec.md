@@ -995,8 +995,12 @@ does nothing.
   zoom and the interface's (each 50–200%), the interface font, the Source
   font, the weight of the sidebar's names and the list's titles, the Running head's
   ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar,
-  whether Live shows the Markdown marks, and spellcheck (macOS). A setting may be one system's alone (`platforms` in the
-  schema): the screen shows it only there.
+  whether Live shows the Markdown marks, spellcheck (macOS), and on the phone how a
+  wide screen is used (§10). A setting may be one system's alone (`platforms` in the
+  schema): the screen shows it only there. A setting that needs panes side by side
+  (`wide` in the schema: Panes, Shut sidebar, Arranging, the formatting bar) shows
+  only while the window has them, and comes and goes as that changes (a phone turned,
+  a foldable opened, Wide screen set).
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.
 - Writing a file changes one key and keeps every other key as it is, even ones
@@ -1472,13 +1476,45 @@ Compare or Restore finishes lands on a note opened meanwhile.
   installing it on a device needs Xcode and an Apple ID.
 - **The phone layout** is one pane at a time: tree → list → page. A window
   narrower than 600 px (narrower than any desktop window can be) is a
-  phone's, whatever the system; turned sideways, a phone wide enough shows
-  the three panes.
+  phone's, whatever the system.
+- **Wide screen** (backlog #46; `appearance.room`, Settings → Look →
+  Appearance, the phone's alone, this device's): wider than a phone held
+  upright (520 px; a Galaxy Z Fold 5 opened upright is about 590), the phone
+  uses the room as the writer chooses (a foldable opened, a tablet, a phone
+  turned sideways) ([tablet.md](design/explorations/tablet.md)). The rules are
+  `src/ui/phone/room.ts`; the desktop is always Panes.
+  - **Panes** (the default, as before): the desktop's three panes, or two, and
+    the split, as on the desktop, with every control and row a finger's
+    (`--eien-touch`, 44 px; a compact row 36 px) where a finger is the
+    pointer. They need the desktop's 600 px: narrower, one at a time. Tools
+    that don't fit their bar scroll in it under a finger; the page never runs
+    past the screen, and a phone's browser never zooms out to show it.
+  - **One at a time:** the phone, wider.
+  - **Side by side:** the phone's way, with the pane you came from kept in
+    sight beside the one you're in: the notes beside the page, the contents
+    beside the notes. Back moves the pair a step, naming what it brings into
+    sight; with the contents in sight there's nothing to go back to. The pane
+    beside the page keeps its own width (the sidebar's or the list's, as on
+    the desktop), dragged by its edge (a finger wide) and remembered, giving
+    way so the page keeps 240 px.
+  - **Two pages:** the phone's way, but the page stays in sight: the notes and
+    the contents slide over it from the left (the bar's back word brings them,
+    and goes on through them to the contents); a tap beside them, or Android's
+    back, puts them away (the page under them takes no keys or taps till then). A
+    second page may open, laid out as Split says (Facing pages: an open book):
+    the note you came from (⇄) opens beside this one, and a note's long press
+    offers Open to the Side.
+  - Folding, turning the phone, or choosing a room with one page closes the
+    page you're not in, never its note: it's the other note, ⇄, where it was
+    left. Whatever room, the pane you were at stays. In a room with one page,
+    Split Page (⌘D, from a keyboard) opens nothing; a split still closes.
+    (A desktop window zoomed under 600 px keeps its split for when it widens.)
   - It opens on the notes. Choosing a folder or tag shows its notes; opening
     a note shows the page. A bar above the pane goes back, naming where
     ("‹ Fic", "‹ Library"); leaving the page closes what lay over it.
-  - No split and no New Window: the phone shows one page, and its menus
-    offer neither. Instead, with the page in sight, the bar keeps the note
+  - No split and no New Window: the phone shows one page (but with Wide
+    screen's Panes or Two pages), and its menus offer neither. Instead, with
+    the page in sight, the bar keeps the note
     you came from a tap away at its right (⇄ and its name): a tap goes back
     to it where you left it (its caret and how far it was scrolled), and the
     one you were in becomes the other note.
@@ -1502,7 +1538,8 @@ Compare or Restore finishes lands on a note opened meanwhile.
   - A finger scrolls a list, and never lifts a row: a note moves by its menu
     (a long press: Move up, Move down, Move to…), an outline card by its own
     (Move earlier, Move later). Two panes aren't offered, here or in the
-    settings: one shows at a time. The tree's seal goes on to the notes.
+    settings: one shows at a time. The tree's seal goes on a step: to the
+    notes, or side by side, past them to the page.
   - Controls that wait for the pointer on the desktop stay in sight on a
     touch screen, which has no hover.
 

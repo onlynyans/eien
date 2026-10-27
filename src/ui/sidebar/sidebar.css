@@ -48,6 +48,17 @@
 .seal-button:active .seal {
   transform: scale(0.94);
 }
+/* A finger's reach round it, where a finger is the pointer: the seal stays where it is. */
+@media (pointer: coarse) {
+  .seal-button {
+    position: relative;
+  }
+  .seal-button::after {
+    content: "";
+    position: absolute;
+    inset: calc(var(--eien-space-2) * -1);
+  }
+}
 
 /* Shut: the strip holds the seal alone; everything else waits. How it's shut is Band's and
    Slip's setting, Shut sidebar (data-shut-sidebar, ../settings/look.ts); Running head's is

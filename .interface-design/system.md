@@ -492,7 +492,8 @@ corners and colours the layout's own.
   note's name. ⌘W closes the active side while split, the window otherwise.
 - **The phone:** no split and no New Window; the back bar keeps the note you
   came from a tap away (⇄ and its name, a `--eien-radius-dot` slip at the
-  bar's right), each keeping its place.
+  bar's right), each keeping its place. Wider, Wide screen's rooms (below) may show
+  two pages.
 - **Lengths** (as built): the ones the arithmetic needs live once, in
   TypeScript beside it, not as CSS tokens: a page in a split at least 360px
   (`PAGE_MIN`, `src/ui/shell/pane-state.ts`); a companion 380px, at least
@@ -504,6 +505,36 @@ corners and colours the layout's own.
   and Windows' controls take 138px of its right end, so a page under about
   450px (three panes in a 1000px window) runs the tools under them. Nothing
   covers a control, but the band has no second row to go to yet.
+
+## Wide screen: foldables and tablets (decided 2026-10-27, built)
+
+From `docs/design/explorations/tablet.md`: the owner chose all three, as one
+setting of the phone's, **Wide screen** (`appearance.room`, as `data-room` on
+the shell; the rules in `src/ui/phone/room.ts`). Under 520px (a phone held
+upright) the phone is the phone; Panes needs the desktop's 600px; the desktop
+is always Panes.
+
+- **Panes** (the default): the desktop's panes and split, as built. Where a
+  finger is the pointer (`pointer: coarse`), `--eien-control` and
+  `--eien-row-h` are `--eien-touch` on the shell (a compact row
+  `--eien-touch` less `--eien-space-2`), a pane's edge is `--eien-touch` wide
+  to take hold of, its hairline in the middle, the page's tool bars scroll
+  rather than run past the screen, and Running head's strip
+  grows to `--eien-space-7` to hold them; the views' well keeps its inner
+  buttons a step smaller, as the phone's bar does. The seal's button keeps its
+  size and place, its reach a finger's.
+- **One at a time:** the phone's stack at any width.
+- **Side by side:** the phone's stack with the pane before in sight
+  (`data-sight`): the pane beside (`data-beside`) as wide as its pane is
+  (`--pane-sidebar`, `--pane-list`), dragged by its pane edge under the bar,
+  a `--eien-rule` hairline at its right, the bar across both. Back names the
+  pane it brings into sight.
+- **Two pages:** the page always in sight; the notes or the contents slide
+  over it from the left: `--eien-paper-raised`, a `--eien-rule-strong` edge,
+  `--eien-shadow-float`, `min(85%, --eien-list-w + --eien-space-7)` wide, on
+  the scrim, the page inert under them. A second page is the split, as the
+  Split setting lays it out; ⇄ opens the other note beside.
+- Settings shows a `wide` setting only while the room has panes, live.
 
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 

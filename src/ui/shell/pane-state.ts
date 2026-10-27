@@ -33,6 +33,9 @@ export const DEFAULT_PANES: Panes = Object.freeze({
 /** In a narrow window the list, then the sidebar, give way until the page has this much. */
 export const PAGE_MIN = 360;
 
+/** Side by side, the phone's way (../phone/room.ts): the page beside a pane keeps a phone's width at least. */
+export const BESIDE_PAGE_MIN = 240;
+
 /** One arrow key's step when a pane edge has the keyboard (--eien-space-4). */
 export const STEP = 16;
 
@@ -85,6 +88,14 @@ export function dragged(panes: Panes, edge: Edge, shown: number, by: number): Pa
 
 /** The sidebar's own edge in this layout. */
 export const sidebarEdge = (two: boolean): Edge => (two ? 'sidebarTwo' : 'sidebar');
+
+/**
+ * Side by side, the width of the pane beside the page (the contents, or the notes): as wide as the
+ * writer left it, shut or not, giving way (not past its narrowest) so the page keeps BESIDE_PAGE_MIN.
+ */
+export function besideWidth(panes: Panes, pane: 'sidebar' | 'list', window: number): number {
+  return Math.round(Math.max(LIMITS[pane][0], Math.min(panes[pane], window - BESIDE_PAGE_MIN)));
+}
 
 /**
  * The widths the window shows: a shut sidebar is its `strip` (--strip, which

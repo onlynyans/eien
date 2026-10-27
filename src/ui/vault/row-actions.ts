@@ -19,8 +19,8 @@ export interface RowActionsOf {
   readonly trashName: string;
   /** A note in a window of its own: the desktop's only. */
   readonly openInNewWindow?: (path: string) => void;
-  /** Whether the window shows one pane at a time (a phone's): one page, no split. */
-  phone(): boolean;
+  /** Whether a second page may open (not one page at a time, the phone's way: ../phone/room.ts). */
+  splits(): boolean;
   /** Made after the rows, whose panes they need. */
   actions(): NoteActions;
   exports(): Exports;
@@ -46,7 +46,7 @@ export function rowActions(of: RowActionsOf): {
     trashName: of.trashName,
     openInNewWindow: of.openInNewWindow,
     get openBeside() {
-      return of.phone() ? undefined : beside;
+      return of.splits() ? beside : undefined;
     },
     act,
     renameNote: (path) => of.actions().renameNote(path),

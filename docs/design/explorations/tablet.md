@@ -1,6 +1,16 @@
 # Foldables and tablets: three explorations
 
-**For the owner to choose (2026-10-27), backlog #46.** Nothing is built. On a
+**Chosen (2026-10-27), backlog #46: all three, built** as one setting of
+the phone's, **Wide screen** (`appearance.room`; spec §10): **Panes** (1, the
+default: today's panes at a finger's size), **One at a time**, **Side by side**
+(2) and **Two pages** (3: the second page laid out as the Split setting says,
+Facing pages for the book). What the build changed from these pages, after a
+senior review: the room is the phone build's (its platform), not the pointer's,
+so a trackpad doesn't close pages mid-session; Page alone (2) is left to One at
+a time; the facing page opens when ⇄ is tapped, not on its own as the screen
+unfolds (nothing moves the writer didn't ask to move); folding closes the page
+you're not in and keeps it as ⇄. The pages below are the explorations as
+proposed. On a
 foldable's open screen or a tablet, Eien may use the room tablet apps use,
 with more than one pane at a time, built from the panes and layouts that
 already exist. It's an option and never forced: the one-pane phone layout

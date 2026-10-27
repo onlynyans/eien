@@ -34,8 +34,14 @@ export async function deviceSettings(): Promise<SettingValues> {
 export function serveSettings(window: BrowserWindow, vault: VaultSession): void {
   const store = new SettingsStore(deviceFile, () => vault.open?.storage ?? null);
   answer(window, CHANNEL.settingsRead, () => store.all());
+  let latest = 0;
   answer(window, CHANNEL.settingsSet, async (key, value) => {
+    const turn = ++latest;
     const values = await store.set(key, value);
+    // The writes go in order, but the reads after them may finish out of it (a slow disk): an
+    // older answer, read before a newer change was written, would zoom the window back. Only the
+    // latest change's answer is applied: it was read after every change before it.
+    if (turn !== latest) return values;
     applyScheme(values);
     checkToggles(values);
     // This device's settings are every window's: each is zoomed, and the others read them again.

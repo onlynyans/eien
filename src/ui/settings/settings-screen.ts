@@ -4,10 +4,10 @@
 // breadcrumb, SETTINGS / CATEGORY / TAB. Every change shows at once, so
 // there is nothing to save. Esc closes it and gives the keyboard back.
 
-import type { SettingKey, SettingValues } from '../../core/config';
+import { offeredOn, type SettingKey, type SettingValues } from '../../core/config';
 import { h } from '../dom';
 import { icon } from '../icons';
-import { NARROW } from '../phone/phone-stack';
+import { NARROW, onePane, roomOf, UPRIGHT_PHONE, widthNow } from '../phone/room';
 import { reasonOf } from '../reason';
 import type { WriterThemes } from '../theme/writer-themes';
 import { settingRow } from './controls';
@@ -23,6 +23,8 @@ interface Drawn {
   readonly button: HTMLButtonElement;
   readonly body: HTMLElement;
   show(values: SettingValues): void;
+  /** Its rows as offered `phone` or not (one pane, the phone's way, offers no panes): whether any shows. */
+  fit(phone: boolean): boolean;
   flush?(): Promise<void>;
 }
 
@@ -49,6 +51,7 @@ export class SettingsScreen {
     attrs: { role: 'alert', hidden: true },
   });
   readonly #tabs: Drawn[] = [];
+  readonly #platform: string;
   #shown: Drawn;
   /** The data-key of what had the keyboard when Settings opened: a redraw may replace it. */
   #openerKey: string | null = null;
@@ -61,14 +64,15 @@ export class SettingsScreen {
     themes: WriterThemes,
   ) {
     this.#settings = settings;
-    const phone = matchMedia(NARROW).matches; // one pane at a time: no panes to choose
+    this.#platform = platform;
     const set = (key: SettingKey, value: string | number) => void this.#set(key, value);
     const nav = h('nav', { class: 'settings__nav', attrs: { 'aria-label': 'Categories' } });
     const body = h('div', { class: 'settings__body' }, this.#problem);
-    for (const category of placesHere(platform, phone)) {
+    // Every setting this system has is drawn; those that need panes show only while there are (#fit).
+    for (const category of placesHere(platform)) {
       const labelId = `settings-category-${category.name.toLowerCase().replace(' ', '-')}`;
       const buttons = category.tabs.map((tab) => {
-        const drawn = this.#draw(category, tab, platform, phone, themes, set);
+        const drawn = this.#draw(category, tab, platform, themes, set);
         body.append(drawn.body);
         this.#tabs.push(drawn);
         return drawn.button;
@@ -128,6 +132,9 @@ export class SettingsScreen {
     this.#place = box.place;
     container.append(this.#dialog);
     settings.onChange((values) => this.#show(values));
+    // Folded or opened, turned, with Settings open: what the room offers follows.
+    for (const width of [NARROW, UPRIGHT_PHONE])
+      matchMedia(width).addEventListener('change', () => this.#fit(settings.values));
     this.#show(settings.values);
     this.#choose(this.#shown);
   }
@@ -141,6 +148,7 @@ export class SettingsScreen {
   open(): void {
     if (this.#dialog.open) return;
     this.#problem.hidden = true;
+    this.#fit(this.#settings.values); // the window may have turned, or unfolded, since
     const opener = document.activeElement;
     this.#openerKey = opener instanceof HTMLElement ? (opener.dataset.key ?? null) : null;
     this.#place();
@@ -156,7 +164,6 @@ export class SettingsScreen {
     category: Category,
     tab: Tab,
     platform: string,
-    phone: boolean,
     themes: WriterThemes,
     set: (key: SettingKey, value: string | number) => void,
   ): Drawn {
@@ -169,7 +176,7 @@ export class SettingsScreen {
       category,
       tab,
       button,
-      ...this.#bodyOf(category, tab, platform, phone, themes, set),
+      ...this.#bodyOf(category, tab, platform, themes, set),
     };
     button.addEventListener('click', () => this.#choose(drawn));
     return drawn;
@@ -179,10 +186,9 @@ export class SettingsScreen {
     category: Category,
     tab: Tab,
     platform: string,
-    phone: boolean,
     themes: WriterThemes,
     set: (key: SettingKey, value: string | number) => void,
-  ): Pick<Drawn, 'body' | 'show' | 'flush'> {
+  ): Pick<Drawn, 'body' | 'show' | 'fit' | 'flush'> {
     const label = `${category.name}: ${tab.name}`;
     const body = h('section', {
       class: 'settings__tab-body',
@@ -196,10 +202,14 @@ export class SettingsScreen {
       return {
         body,
         show: (values) => drawn.show(values['appearance.palette']),
+        fit: () => true,
         flush: drawn.flush,
       };
     }
-    const rows = settingsIn(tab, platform, phone).map((setting) => settingRow(setting, set));
+    const rows = settingsIn(tab, platform).map((setting) => ({
+      setting,
+      ...settingRow(setting, set),
+    }));
     body.append(
       category.scope === 'vault'
         ? h('p', { class: 'setting__about settings__scope', text: VAULT_ABOUT })
@@ -210,7 +220,11 @@ export class SettingsScreen {
     const show = (values: SettingValues) => {
       for (const row of rows) row.show(values);
     };
-    return { body, show };
+    const fit = (phone: boolean) => {
+      for (const row of rows) row.element.hidden = !offeredOn(row.setting, platform, phone);
+      return rows.some((row) => !row.element.hidden);
+    };
+    return { body, show, fit };
   }
 
   #choose(drawn: Drawn): void {
@@ -233,6 +247,20 @@ export class SettingsScreen {
 
   #show(values: SettingValues): void {
     for (const tab of this.#tabs) tab.show(values);
+    this.#fit(values);
+  }
+
+  /** Show what's offered in the room the window uses now: one pane, the phone's way, offers no panes. */
+  #fit(values: SettingValues): void {
+    const phone = onePane(roomOf(widthNow(), this.#platform, values));
+    for (const tab of this.#tabs) tab.button.hidden = !tab.fit(phone);
+    for (const part of this.#dialog.querySelectorAll<HTMLElement>('.settings__part')) {
+      part.hidden = [...part.querySelectorAll<HTMLElement>('.settings__tab')].every(
+        (b) => b.hidden,
+      );
+    }
+    if (this.#shown.button.hidden)
+      this.#choose(this.#tabs.find((tab) => !tab.button.hidden) ?? this.#shown);
   }
 
   async #set(key: SettingKey, value: string | number): Promise<void> {

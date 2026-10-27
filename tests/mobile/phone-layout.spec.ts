@@ -200,7 +200,7 @@ test('the ⋯ opens the settings, a full sheet: its tabs in a strip, nothing to 
   await nav.getByRole('button', { name: 'Writing', exact: true }).click();
   await expect(sheet.getByRole('group', { name: 'Scene breaks' })).toBeVisible();
   // No panes to choose on a phone.
-  await expect(nav.getByRole('button', { name: 'Lists', exact: true })).toHaveCount(0);
+  await expect(nav.getByRole('button', { name: 'Lists', exact: true })).toBeHidden();
 
   await sheet.getByRole('button', { name: 'Close settings' }).click();
   await expect(sheet).toBeHidden();

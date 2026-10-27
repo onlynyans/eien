@@ -5,7 +5,7 @@
 
 import { h } from '../dom';
 import { icon } from '../icons';
-import { NARROW } from '../phone/phone-stack';
+import { NARROW } from '../phone/room';
 import { type Area, type Box, dragged, firstBox, fitted, GRIPS, type Grip, readBox } from './box';
 
 const KEY = 'eien.settingsBox';

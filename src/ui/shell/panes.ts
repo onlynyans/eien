@@ -8,8 +8,9 @@
 // Widths and what's shut are remembered on this device (./pane-state.ts).
 
 import { h } from '../dom';
-import type { PhonePane } from '../phone/phone-stack';
+import type { PhonePane } from '../phone/room';
 import {
+  besideWidth,
   dragged,
   type Edge,
   LIMITS,
@@ -33,9 +34,13 @@ export interface PaneParts {
   leave(pane: Shuttable): void;
   /** A pane shut or opened, or the panes changed from three to two. */
   changed(): void;
-  /** On a phone, the one pane in sight (../phone/phone-stack.ts); null on a wider window. */
+  /** The phone's way, the pane the writer is at (../phone/phone-stack.ts); null with the desktop's panes. */
   phone(): PhonePane | null;
-  /** On a phone, bring a pane into sight. */
+  /** The phone's way, whether `pane` is in sight (the pane before may be, beside it). */
+  inSight(pane: PhonePane): boolean;
+  /** Side by side, the pane kept in sight beside the one you're in, its edge dragged; else null. */
+  beside(): Shuttable | null;
+  /** The phone's way, bring a pane into sight. */
   showPhone(pane: PhonePane): void;
 }
 
@@ -84,10 +89,9 @@ export class PaneLayout {
     return this.#parts.phone() !== null;
   }
 
-  /** Whether `pane` is out of sight: shut, or, for the list, there are two panes; on a phone, not the one shown. */
+  /** Whether `pane` is out of sight: shut, or, for the list, there are two panes; the phone's way, not in sight. */
   isShut(pane: Shuttable): boolean {
-    const phone = this.#parts.phone();
-    if (phone) return phone !== pane;
+    if (this.#parts.phone()) return !this.#parts.inSight(pane);
     return pane === 'list'
       ? this.#two || this.#aside || this.#panes.listShut
       : this.#panes.sidebarShut;
@@ -96,8 +100,9 @@ export class PaneLayout {
   /** Shut `pane` if it's open, open it if it's shut. The list has nothing to do with two panes. */
   toggle(pane: Shuttable): void {
     const phone = this.#parts.phone();
-    // On a phone, "Hide sidebar" (the tree's seal) goes on to the notes.
-    if (phone === 'sidebar' && pane === 'sidebar') this.#parts.showPhone('list');
+    // The phone's way, "Hide sidebar" (the tree's seal) goes on a step: to the notes, or past them to the page.
+    if (phone && pane === 'sidebar' && this.#parts.inSight('sidebar'))
+      this.#parts.showPhone(this.#parts.inSight('list') ? 'page' : 'list');
     else if (!phone && pane === 'list' && this.#aside) this.#stepBack();
     else if (!phone && !(pane === 'list' && this.two)) this.#set(pane, !this.isShut(pane));
   }
@@ -217,10 +222,17 @@ export class PaneLayout {
     }
   }
 
-  /** The widths on screen: a shut sidebar is as wide as the layout makes its strip (--strip, ./shell.css). */
+  /**
+   * The widths on screen: a shut sidebar is as wide as the layout makes its strip (--strip,
+   * ./shell.css); side by side, the pane beside the page as the writer left it (./pane-state.ts).
+   */
   #shown(): ReturnType<typeof shownWidths> {
     const strip = getComputedStyle(this.#parts.shell).getPropertyValue('--strip');
-    return shownWidths(this.#panes, this.two, window.innerWidth, Number.parseFloat(strip));
+    const shown = shownWidths(this.#panes, this.two, window.innerWidth, Number.parseFloat(strip));
+    const beside = this.#parts.beside();
+    return beside
+      ? { ...shown, [beside]: besideWidth(this.#panes, beside, window.innerWidth) }
+      : shown;
   }
 
   #edgeOf(pane: Shuttable): Edge {

@@ -65,7 +65,7 @@ describe('a split asked for without the room', () => {
       nav: {} as never,
       organizer: {} as never,
       pages,
-      phone: { stack: { phone: false, show: () => {} } } as unknown as PhoneView,
+      phone: { stack: { phone: false, splits: true, show: () => {} } } as unknown as PhoneView,
       panes: { listWidth: 300 } as unknown as PaneLayout,
       sidebar: {} as never,
       act: async () => {},

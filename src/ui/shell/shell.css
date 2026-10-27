@@ -125,6 +125,20 @@ body {
   width: var(--eien-mark-w);
   background: var(--eien-focus);
 }
+/* A finger's width to take hold of, where a finger is the pointer; the hairline stays in its middle. */
+@media (pointer: coarse) {
+  .pane-edge {
+    width: var(--eien-touch);
+    margin-left: calc(var(--eien-touch) / -2);
+  }
+  .pane-edge::after {
+    left: calc(var(--eien-touch) / 2 - var(--eien-hairline));
+  }
+  .pane-edge:focus-visible::after,
+  .pane-edge.is-dragging::after {
+    left: calc(var(--eien-touch) / 2 - var(--eien-mark-w) / 2);
+  }
+}
 .shell:is(.is-resizing, .is-fitting) > :is(.pane-edge, .chevron-slot) {
   transition: none;
 }

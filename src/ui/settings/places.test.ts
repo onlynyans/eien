@@ -15,8 +15,10 @@ describe('the categories', () => {
 
   it('put every setting in one tab, the vault’s own only under This vault', () => {
     for (const setting of SETTINGS) {
+      // Each where it's offered: a system's own on the first system it names.
+      const platform = 'platforms' in setting ? setting.platforms[0] : 'darwin';
       const holding = tabs.filter(({ tab }) =>
-        settingsIn(tab, 'darwin', false).some((each) => each.key === setting.key),
+        settingsIn(tab, platform).some((each) => each.key === setting.key),
       );
       expect(holding, setting.key).toHaveLength(1);
       expect(holding[0]?.category.scope, setting.key).toBe(setting.scope);
@@ -26,16 +28,14 @@ describe('the categories', () => {
     ]);
   });
 
-  it('show only the tabs with something in them here: no Lists on a phone, Themes always', () => {
-    const phone = placesHere('android', true);
-    expect(phone.find((category) => category.name === 'Writing')?.tabs.map((t) => t.name)).toEqual([
-      'Editor',
-    ]);
-    expect(phone.find((category) => category.name === 'Themes')?.tabs.map((t) => t.name)).toEqual([
-      'Gallery',
-      'Custom',
-    ]);
-    expect(placesHere('darwin', false).map((category) => category.name)).toEqual([
+  it('show only the tabs with something in them here, Themes always', () => {
+    // A phone's Lists, all panes' settings, shows only while there are panes (settings-screen.test.ts).
+    expect(
+      placesHere('android')
+        .find((category) => category.name === 'Themes')
+        ?.tabs.map((t) => t.name),
+    ).toEqual(['Gallery', 'Custom']);
+    expect(placesHere('darwin').map((category) => category.name)).toEqual([
       'Look',
       'Themes',
       'Writing',

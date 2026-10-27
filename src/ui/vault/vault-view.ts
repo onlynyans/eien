@@ -110,7 +110,7 @@ export async function showVault(
     vaultName: name,
     trashName,
     openInNewWindow,
-    phone: () => phone.stack.phone,
+    splits: () => phone.stack.splits,
     actions: () => actions,
     exports: () => pages.parts.exports,
     choose: lens.choose,
@@ -169,6 +169,7 @@ export async function showVault(
   const { parts } = pages;
   const phone = phoneView({
     shell,
+    platform: bridge.platform,
     list,
     menu,
     settings,
@@ -190,6 +191,8 @@ export async function showVault(
       },
       changed: () => void redraw(),
       phone: () => phone.stack.shown,
+      inSight: (pane) => phone.stack.inSight(pane),
+      beside: () => phone.stack.beside,
       showPhone: (pane) => phone.stack.show(pane),
     },
     settings.values['layout.panes'] === 'two',
@@ -283,6 +286,7 @@ export async function showVault(
       newNote: () => void actions.newNote(),
       drawList: () => draw.list(),
       parts,
+      splits: () => phone.stack.splits,
     },
   });
   await refresh();
@@ -302,7 +306,7 @@ export async function showVault(
       stopSync();
       chrome.stop();
       panes.stop();
-      phone.stack.stop();
+      phone.stop();
       notice.stop();
       pages.stop();
     },
