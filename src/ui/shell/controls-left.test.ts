@@ -95,7 +95,36 @@ describe('followControlsLeft', () => {
     }
     // Held still, the overlay caught up: measured again, the same width.
     overlay.controls = 138;
+    overlay.dispatchEvent(new Event('geometrychange'));
     await frames(4);
+    expect(width()).toBe('138px');
+    stop();
+  });
+
+  it('waits for the overlay to catch up, however many frames it takes (Linux)', async () => {
+    resize(1200);
+    const overlay = fakeOverlay(true, 0, 138);
+    const stop = followControlsLeft();
+    resize(1240);
+    overlay.controls = 178; // the area still the narrower window's
+    dispatchEvent(new Event('resize'));
+    await frames(6);
+    expect(width()).toBe('138px');
+    overlay.controls = 138; // caught up, and says so
+    overlay.dispatchEvent(new Event('geometrychange'));
+    await frames(4);
+    expect(width()).toBe('138px');
+    stop();
+  });
+
+  it('keeps the window’s width for a page sized without it (a test’s viewport)', async () => {
+    resize(1200);
+    const overlay = fakeOverlay(true, 0, 138);
+    const stop = followControlsLeft();
+    resize(1600);
+    overlay.controls = 538; // the area the window's, the page's width not
+    dispatchEvent(new Event('resize'));
+    await frames(6);
     expect(width()).toBe('138px');
     stop();
   });
@@ -104,13 +133,18 @@ describe('followControlsLeft', () => {
     resize(1200);
     const overlay = fakeOverlay(true, 0, 138);
     const stop = followControlsLeft();
-    overlay.controls = 150; // a zoom: the controls wider in the page's pixels
+    // A zoom: the page narrower in its own pixels, the controls wider in them.
+    resize(1000);
+    overlay.controls = 150;
+    dispatchEvent(new Event('resize'));
     overlay.dispatchEvent(new Event('geometrychange'));
     expect(width()).toBe('138px');
     await frames(4);
     expect(width()).toBe('150px');
+    resize(1440); // full screen: no controls
     overlay.visible = false;
     overlay.dispatchEvent(new Event('geometrychange'));
+    dispatchEvent(new Event('resize'));
     await frames(4);
     expect(width()).toBe('0px');
     stop();
