@@ -51,6 +51,16 @@ features that came after, and the plan for them (below the table).
 | 34 | Speed with thousands of notes | fix | Sidebar, list | Two panes with 3,000 notes drew 6,000 rows: laying them out held the window for most of a second on a slow machine, and CI's timing test failed on macOS. Draw only the rows in sight, keep the keyboard through every row, and hold the common actions to a time in CI. | **Done** ([#37](https://github.com/onlynyans/eien/pull/37)): long lists draw the rows in sight (`ui/shell/windowed-rows.ts`); the speed budgets (`tests/e2e/budgets.spec.ts`): no task over 200 ms | – | you |
 | 35 | The keyboard kept through a long list's redraw | fix | List | With a long note list (200 notes or more, drawn by the rows in sight), a redraw that moves the note with the keyboard out of sight (a sync makes it the newest) drops the keyboard to nowhere. `renderList` asks which row had it only after `WindowedRows.set` has handed it to the list, then puts the list back, which loses it. Read the row first; `src/ui/list/render-list.test.ts` has the test, marked `.fails` until then. | **Done** ([#49](https://github.com/onlynyans/eien/pull/49)): `renderList` reads which row has the keyboard before the long list is given its rows | – | test foundation |
 | 36 | A narrow band on Windows | fix | Page | Band's views and tools need about 290 px, and Windows' controls take 138 px at its right end: a page under about 450 px (three panes in a 1000 px window) runs the tools under the controls. Since the split, nothing covers a control (the folded pager's names give way first), but the band has no second row to go to. | Open | yes | review |
+| 37 | Paste keeps plain text as typed | fix | Editor | Markdown copied from Sublime pasted with backslashes (`\[[1](…)…\]`). Likely the editor's styled HTML copy beside the plain text, which Eien prefers: check the clipboard's flavours first. Take the plain text when the HTML is only styled spans of it, and escape `[ ] * < ~ ^` only where they'd really form Markdown, so HTML from a web page still pastes as it should. | Open | – | you |
+| 38 | A link's tooltip in Live | feature | Editor | Hovering a link in Live shows where it goes, and lets you edit it or open it. Three HTML explorations first (interface-design). | Open | yes: 3 explorations | you |
+| 39 | Table grips and + on hover only | fix | Editor | The table editor's + and grips show over every row and column; they should show only over the row or column divider, or the cell, under the pointer. Suspect a hiding rule overridden by the icon button's own `display`, as the split's × was. | Open | – | you |
+| 40 | Reading EPUBs | feature | Vault, sidebar, page | Books are `.epub` files in the vault, in any folder (Cooking can hold notes and cookbooks); a sidebar section lists them, a lens over the one folder tree (all books, and the folders that hold any), so the folders aren't reworked. Scrolling and turning pages, both. Place, bookmarks and highlights kept in `.eien/`, keyed by the book's contents. No new dependency (zlib on the desktop, the browser's decompression on the phone); a chapter in a sandboxed frame, no scripts and no network; sizes capped against zip bombs, no path out of the zip. Nine explorations first: three for turning pages, three for scrolling, three for the features (page count, bookmark, highlight, search). Built in phases: the shelf and opening a book safely; scrolling; turning pages; place, bookmarks and page count; highlights and search. | Open | yes: 9 explorations | you |
+| 41 | Find and replace in the note | feature | Editor | ⌘F (Ctrl+F) finds in the open note, with replace. CodeMirror's own search, in Eien's look. | Open | – | you |
+| 42 | Notes in subfolders | feature | List | A toggle: a folder lists its subfolders' notes too. Your order holds: each subfolder's notes a group under its name, in your folder order, each in its own order; Arrange reorders within a group, and moving to another group is a move. | Open | – | you |
+| 43 | Panes keep their place | fix | Panes | Shutting and opening a pane brings it back scrolled to the top; it should keep its place. | Open | – | you |
+| 44 | A steady top bar while the window resizes | fix | Window | Resizing the window makes the top bar's controls jitter and jump. | Open | – | you |
+| 45 | Hide tags and IDs | feature | Editor | A setting to hide the front matter's `tags:` and `id:` lines in Live, Source and Reading, so they aren't edited by accident; kept and saved as they are. | Open | – | you |
+| 46 | Foldables and tablets | feature | Phone | On a foldable's or a tablet's wider screen, the room tablet apps use, as an option, never forced: more than one pane at a time, from the layouts already built. Three explorations first. | Open | yes: 3 explorations | you |
 
 ## Plan
 
@@ -128,6 +138,16 @@ speed budgets in CI.
 
 Then #23, the first release.
 
+### Stage 4 (drafted 2026-10-27)
+
+#37 to #46. Each line is its own session and pull request, from main.
+
+| Wave | Items | Notes |
+|---|---|---|
+| 1, now, side by side | #37 paste, #39 table controls, #43 panes' place, #44 resize jitter; the explorations for #38 (3), #40 (9, in one session so the three sets share one look) and #46 (3) | The fixes touch different files; the explorations are docs only |
+| 2, as wave 1 lands | #41 find and replace, then #45 hide tags and IDs (both in the editor: one after the other); #42 subfolders | |
+| 3, once you've chosen the designs | #38 the link tooltip; #40 the EPUB reader, in its phases; #46 foldables and tablets | |
+
 ### Later
 
 #22 smaller downloads (left for now).
@@ -159,7 +179,12 @@ explorations, before stage 3 builds each part.
 
 ## Questions for you
 
-None open: every exploration is decided (2026-10-21).
+- **#40: what the books' section is called.** "Book" is already a folder
+  marked as a manuscript (the BOOK mark, Export Book), and LIBRARY is the
+  sidebar's first section: SHELF, READING or BOOKSHELF?
+- **#38: does a plain click follow a link in Live?** Now ⌘-click (Ctrl-click)
+  does in Live and Source, a plain click in Reading; the explorations can
+  show both.
 
 ## Design audit, 2026-10-20
 
