@@ -5,13 +5,23 @@
 // spacer above and below keeping the list its whole height, so the scrollbar,
 // guide lines and positions read as if every row were there.
 //
-// Rows are all one height (measured from a drawn row). A row keeps its
-// element while it shows the same; scrolling moves rows in and out without
-// touching the rest. The keyboard moves through every row, drawn or not
-// (↑ ↓ Home End PageUp PageDown); a row with the keyboard that scrolls out of
-// sight leaves it with the list, which carries on from that row.
+// Rows are all one height (measured from a drawn row), but for a group's
+// head (a folder's subfolders' notes, backlog #42), which has its own. A row
+// keeps its element while it shows the same; scrolling moves rows in and out
+// without touching the rest. The keyboard moves through every row, drawn or
+// not (↑ ↓ Home End PageUp PageDown), over the heads; a row with the keyboard
+// that scrolls out of sight leaves it with the list, which carries on from
+// that row.
 
-import { type Range, revealTop, type Viewport, windowRange } from './window-range';
+import {
+  evenRows,
+  mixedRows,
+  type Range,
+  type RowSizes,
+  revealTop,
+  type Viewport,
+  windowRange,
+} from './window-range';
 
 export interface WindowedRow {
   /** The row's lasting name in the list. */
@@ -19,6 +29,8 @@ export interface WindowedRow {
   /** What it shows, as a string: the same string, the same element. */
   readonly shows: string;
   make(): HTMLElement;
+  /** A group's head: its own height, and never the keyboard's stop. */
+  readonly head?: boolean;
 }
 
 const NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
@@ -49,6 +61,13 @@ export class WindowedRows {
   /** Elements made, by key, kept while their row shows the same. */
   #made = new Map<string, { shows: string; element: HTMLElement }>();
   #rowHeight = 0;
+  #headHeight = 0;
+  /** Where the rows lie, for the heights measured; made again when either changes. */
+  #sizes: RowSizes | null = null;
+  /** Each row's place among the rows that aren't heads (1 on), for aria-posinset. */
+  #places: number[] = [];
+  /** How many rows aren't heads. */
+  #placed = 0;
   #scroller: HTMLElement | null = null;
   #frame = 0;
   /** The row the keyboard was on when it scrolled out of the window: the list holds it meanwhile. */
@@ -79,6 +98,10 @@ export class WindowedRows {
   set(rows: readonly WindowedRow[]): void {
     this.#rows = rows;
     this.#index = new Map(rows.map((row, at) => [row.key, at]));
+    let place = 0;
+    this.#places = rows.map((row) => (row.head ? 0 : ++place));
+    this.#placed = place;
+    this.#sizes = null;
     for (const key of this.#made.keys()) if (!this.#index.has(key)) this.#made.delete(key);
     if (this.#held !== null && !this.#index.has(this.#held)) this.#held = null;
     this.render();
@@ -88,20 +111,51 @@ export class WindowedRows {
   render(): void {
     const scroller = this.#attach();
     if (!scroller) return;
-    const height = this.#rowHeight || this.#estimate;
+    const sizes = this.#measures();
     const view = this.#view(scroller);
-    const range = windowRange(this.#rows.length, height, view);
+    const range = windowRange(sizes, view);
     this.#hold(range);
-    this.#top.style.setProperty('height', `${range.first * height}px`);
-    this.#bottom.style.setProperty('height', `${(this.#rows.length - range.last) * height}px`);
+    this.#top.style.setProperty('height', `${sizes.top(range.first)}px`);
+    this.#bottom.style.setProperty(
+      'height',
+      `${sizes.top(this.#rows.length) - sizes.top(range.last)}px`,
+    );
     this.#place(range);
-    // Rows are one height: the first one drawn says what it is.
-    const drawn = this.#top.nextElementSibling;
-    const measured = drawn && drawn !== this.#bottom ? drawn.getBoundingClientRect().height : 0;
-    if (measured > 0 && Math.abs(measured - this.#rowHeight) > 0.5) {
-      this.#rowHeight = measured;
+    // Rows are one height, and heads another: the first of each drawn says what it is.
+    let changed = false;
+    const measure = (head: boolean, known: number) => {
+      const drawn = [...this.element.children].find(
+        (child) =>
+          child !== this.#top &&
+          child !== this.#bottom &&
+          Boolean(
+            this.#rows[this.#index.get((child as HTMLElement).dataset.windowKey ?? '') ?? -1]?.head,
+          ) === head,
+      );
+      const measured = drawn ? drawn.getBoundingClientRect().height : 0;
+      if (measured > 0 && Math.abs(measured - known) > 0.5) {
+        changed = true;
+        return measured;
+      }
+      return known;
+    };
+    this.#rowHeight = measure(false, this.#rowHeight);
+    this.#headHeight = measure(true, this.#headHeight);
+    if (changed) {
+      this.#sizes = null;
       this.render();
     }
+  }
+
+  /** Where the rows lie: all one height, unless heads are among them. */
+  #measures(): RowSizes {
+    if (this.#sizes) return this.#sizes;
+    const row = this.#rowHeight || this.#estimate;
+    const head = this.#headHeight || row;
+    this.#sizes = this.#rows.some((one) => one.head)
+      ? mixedRows(this.#rows.map((one) => (one.head ? head : row)))
+      : evenRows(this.#rows.length, row);
+    return this.#sizes;
   }
 
   /** Bring the row named `key` into sight and give it the keyboard; false if there's none. */
@@ -174,16 +228,18 @@ export class WindowedRows {
       element.dataset.windowKey = row.key;
       this.#made.set(row.key, { shows: row.shows, element });
     }
-    element.setAttribute('aria-setsize', String(this.#rows.length));
-    element.setAttribute('aria-posinset', String(at + 1));
+    // A head isn't one of the list's rows: the rows are counted without them.
+    if (!row.head) {
+      element.setAttribute('aria-setsize', String(this.#placed));
+      element.setAttribute('aria-posinset', String(this.#places[at]));
+    }
     return element;
   }
 
   #revealAt(at: number): HTMLElement {
     const scroller = this.#attach();
     if (scroller) {
-      const height = this.#rowHeight || this.#estimate;
-      scroller.scrollTop = revealTop(at, height, this.#view(scroller));
+      scroller.scrollTop = revealTop(this.#measures(), at, this.#view(scroller));
       this.render();
     }
     return this.#element(at);
@@ -195,7 +251,17 @@ export class WindowedRows {
     (row.querySelector<HTMLElement>('button, [tabindex]') ?? row).focus();
   }
 
-  /** ↑ ↓ Home End PageUp PageDown through every row, drawn or not. */
+  /** The row at `at`, or the nearest one that isn't a head, that way first (`by`), else back. */
+  #stopAt(at: number, by: -1 | 1): number {
+    const last = this.#rows.length - 1;
+    const clamped = Math.min(Math.max(at, 0), last);
+    for (const step of [by, -by]) {
+      for (let i = clamped; i >= 0 && i <= last; i += step) if (!this.#rows[i]?.head) return i;
+    }
+    return clamped;
+  }
+
+  /** ↑ ↓ Home End PageUp PageDown through every row, drawn or not, over the heads. */
   #key(event: KeyboardEvent): void {
     if (!NAV_KEYS.has(event.key) || event.altKey || event.metaKey || event.ctrlKey) return;
     const target = event.target as HTMLElement;
@@ -218,6 +284,7 @@ export class WindowedRows {
       PageDown: from + page,
     }[event.key] as number;
     event.preventDefault();
-    this.#focusAt(Math.min(Math.max(to, 0), last));
+    const by = event.key === 'ArrowUp' || event.key === 'PageUp' || event.key === 'End' ? -1 : 1;
+    this.#focusAt(this.#stopAt(to, by));
   }
 }

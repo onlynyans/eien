@@ -279,6 +279,21 @@
   margin: 0;
   padding: 0;
 }
+/* A group's head (backlog #42): a subfolder's notes under its name, its path
+   below the folder listed. A section, not a card: label type on the paper,
+   the space between groups above it and the row's gutter at its sides; the
+   row above's own soft rule closes the group before. One line, so a long
+   list lays heads out at one height (../shell/windowed-rows.ts). */
+.note-group {
+  padding: var(--eien-space-5) var(--eien-space-4) var(--eien-space-2);
+}
+.note-group__name {
+  margin: 0;
+  font-weight: 400; /* a label is never bold, though it's a heading */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 /* A row: the title and its date on one line, a line of preview under them
    (compact density hides it). A book's rows lead with the chapter number. */
 .note-row {
@@ -506,7 +521,8 @@
 .rows.is-arranging .note-row {
   cursor: grab;
 }
-.list__tools .list__arrange[aria-pressed="true"] {
+/* A toggle in the head that's on (Arrange while arranging, Include subfolders). */
+.list__tools .icon-button[aria-pressed="true"] {
   color: var(--eien-ink);
   background: var(--eien-selected);
 }

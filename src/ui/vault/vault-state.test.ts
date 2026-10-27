@@ -145,6 +145,118 @@ describe('VaultState', () => {
     expect((await state.search('knitted', { kind: 'folder', path: 'Fic' })).total).toBe(0);
   });
 
+  describe('a folder with its subfolders’ notes (backlog #42)', () => {
+    const fic = () =>
+      vault({
+        'Fic/Own b.md': '',
+        'Fic/Own a.md': '#draft',
+        'Fic/Arc 1/Knit.md': '#draft',
+        'Fic/Arc 1/Cast on.md': '',
+        'Fic/Arc 1/Cut/Dropped.md': '#draft',
+        'Fic/Arc 2/Bind off.md': 'The scarf, bound off.',
+        'Fic/Empty/.keep': '',
+        'Fic/.eien-folder.json': JSON.stringify({ order: ['Arc 2', 'Arc 1', 'Own b.md'] }),
+        'Fic/Arc 1/.eien-folder.json': JSON.stringify({ order: ['Knit.md', 'Cast on.md'] }),
+        'Other.md': 'Another scarf.',
+      });
+    const paths = (list: { notes: readonly { path: string }[] }) =>
+      list.notes.map((note) => note.path);
+
+    it('lists its own notes first, then each subfolder’s, at every depth, in your order', async () => {
+      const state = await fic();
+      const list = await state.notesFor(
+        { kind: 'folder', path: 'Fic' },
+        'roman',
+        'order',
+        undefined,
+        true,
+      );
+      expect(paths(list)).toEqual([
+        'Fic/Own b.md',
+        'Fic/Own a.md',
+        'Fic/Arc 2/Bind off.md',
+        'Fic/Arc 1/Knit.md',
+        'Fic/Arc 1/Cast on.md',
+        'Fic/Arc 1/Cut/Dropped.md',
+      ]);
+      expect(list.nested).toBe(true);
+      expect(list.total).toBe(6);
+      expect(list.groups?.map((group) => group.name)).toEqual([
+        'Arc 2',
+        'Arc 1',
+        'Arc 1 / Cut',
+        'Empty',
+      ]);
+    });
+
+    it('sorts within each group, the groups staying in your order', async () => {
+      const state = await fic();
+      const list = await state.notesFor(
+        { kind: 'folder', path: 'Fic' },
+        'roman',
+        'title',
+        undefined,
+        true,
+      );
+      expect(paths(list)).toEqual([
+        'Fic/Own a.md',
+        'Fic/Own b.md',
+        'Fic/Arc 2/Bind off.md',
+        'Fic/Arc 1/Cast on.md',
+        'Fic/Arc 1/Knit.md',
+        'Fic/Arc 1/Cut/Dropped.md',
+      ]);
+    });
+
+    it('filters across the groups, counting how many of how many', async () => {
+      const state = await fic();
+      const list = await state.notesFor(
+        { kind: 'folder', path: 'Fic' },
+        'roman',
+        'order',
+        { tags: [['draft', 'in']], match: 'all' },
+        true,
+      );
+      expect(paths(list)).toEqual([
+        'Fic/Own a.md',
+        'Fic/Arc 1/Knit.md',
+        'Fic/Arc 1/Cut/Dropped.md',
+      ]);
+      expect([list.total, list.of]).toEqual([3, 6]);
+    });
+
+    it('off, is the folder’s own notes as before; with no subfolders, has no toggle', async () => {
+      const state = await fic();
+      const off = await state.notesFor(
+        { kind: 'folder', path: 'Fic' },
+        'roman',
+        'order',
+        undefined,
+        false,
+      );
+      expect(paths(off)).toEqual(['Fic/Own b.md', 'Fic/Own a.md']);
+      expect([off.nested, off.groups]).toEqual([false, undefined]);
+      const leaf = await state.notesFor(
+        { kind: 'folder', path: 'Fic/Arc 2' },
+        'roman',
+        undefined,
+        undefined,
+        true,
+      );
+      expect([leaf.nested, leaf.groups]).toEqual([undefined, undefined]);
+      // The tree's lists never ask: no toggle there.
+      expect((await state.notesFor({ kind: 'folder', path: 'Fic' })).nested).toBeUndefined();
+    });
+
+    it('searches the subfolders’ notes too, the hits in their groups', async () => {
+      const state = await fic();
+      const list = await state.search('scarf', { kind: 'folder', path: 'Fic' }, true);
+      expect(paths(list)).toEqual(['Fic/Arc 2/Bind off.md']);
+      expect(list.groups?.map((group) => group.path)).toContain('Fic/Arc 2');
+      expect(paths(await state.search('scarf', { kind: 'folder', path: 'Fic' }))).toEqual([]);
+    });
+  });
+
   it('names each list, as its heading and its search field say it', async () => {
     const state = await vault({ 'Fic/a.md': '#Draft', 'b.md': '' });
     expect(state.nameOf({ kind: 'all' })).toBe('All Notes');

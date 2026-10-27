@@ -227,4 +227,80 @@ describe('WindowedRows', () => {
       expect(focusedAt()).toBe(1);
     });
   });
+
+  describe('with groups’ heads among the rows (backlog #42)', () => {
+    /** Every 10th row (0, 10, 20…) a head, with no button: 1000 rows, 100 heads. */
+    const grouped = () =>
+      rowsOf(COUNT).map((row, i) =>
+        i % 10 === 0
+          ? {
+              ...row,
+              head: true,
+              make: () => {
+                const item = document.createElement('li');
+                item.className = 'head';
+                return item;
+              },
+            }
+          : row,
+      );
+
+    it('lays heads out at their own height, measured, and counts only the rows', () => {
+      const rows = new WindowedRows(list, ROW);
+      document.body.append(list);
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        const height = !this.dataset.windowKey ? 0 : this.classList.contains('head') ? 40 : 20;
+        return new DOMRect(0, 0, 100, height);
+      });
+      try {
+        rows.set(grouped());
+        // 100 heads of 40px and 900 rows of 20px.
+        const [above, below] = spacers().map((height) => Number.parseFloat(height));
+        const drawnHeight = drawn().reduce(
+          (sum, row) => sum + (row.classList.contains('head') ? 40 : 20),
+          0,
+        );
+        expect((above ?? 0) + drawnHeight + (below ?? 0)).toBe(100 * 40 + 900 * 20);
+        const row = drawn().find((one) => !one.classList.contains('head'));
+        expect(row?.getAttribute('aria-setsize')).toBe('900');
+        expect(row?.getAttribute('aria-posinset')).toBe('1');
+        expect(
+          drawn()
+            .find((one) => one.classList.contains('head'))
+            ?.hasAttribute('aria-posinset'),
+        ).toBe(false);
+      } finally {
+        vi.restoreAllMocks();
+      }
+    });
+
+    it('moves the keyboard over the heads: the arrows, Home and End stop only on rows', () => {
+      const rows = new WindowedRows(list, ROW);
+      document.body.append(list);
+      rows.set(grouped());
+      rows.focusKey('k9');
+      press('ArrowDown');
+      expect(
+        document.activeElement?.closest('[data-window-key]')?.getAttribute('data-window-key'),
+      ).toBe('k11');
+      press('ArrowUp');
+      expect(
+        document.activeElement?.closest('[data-window-key]')?.getAttribute('data-window-key'),
+      ).toBe('k9');
+      press('Home');
+      expect(
+        document.activeElement?.closest('[data-window-key]')?.getAttribute('data-window-key'),
+      ).toBe('k1');
+      press('ArrowUp');
+      expect(
+        document.activeElement?.closest('[data-window-key]')?.getAttribute('data-window-key'),
+      ).toBe('k1');
+      press('End');
+      expect(
+        document.activeElement?.closest('[data-window-key]')?.getAttribute('data-window-key'),
+      ).toBe('k999');
+    });
+  });
 });

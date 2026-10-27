@@ -28,8 +28,8 @@ export interface FollowOf {
   dropFolder(path: string, to: FolderDrop): void;
   /** A note dragged onto the page pane (./page-drop.ts). */
   readonly pageDrop: PageDrop;
-  /** A note dragged into place in the list showing. */
-  placeNote(path: string, before: string | null): void;
+  /** A note dragged into place in the list showing; in `group`'s folder, where the list has groups. */
+  placeNote(path: string, before: string | null, group?: string): void;
   /** Whether folders drag in the tree: not in Arrange mode, where order changes only on purpose. */
   folderDrags(): boolean;
   /** Read the vault again (what the watcher named, read afresh), then draw. */
@@ -70,7 +70,8 @@ export function follow(of: FollowOf): () => void {
   const drags = {
     moveTo: (path: string, folder: string) =>
       void of.act(() => of.organizer.moveInto(path, folder, true)),
-    placeBefore: (path: string, before: string | null) => of.placeNote(path, before),
+    placeBefore: (path: string, before: string | null, group?: string) =>
+      of.placeNote(path, before, group),
     page: of.pageDrop,
   };
   watchDrags(of.commands.list, { ...drags, orderable: of.listOrdered });

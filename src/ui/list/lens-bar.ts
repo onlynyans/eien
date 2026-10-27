@@ -24,6 +24,8 @@ export interface LensActions {
   tags(): readonly FilterTag[];
   /** Start arranging the list (Arrange mode), or stop. */
   arrange?(on: boolean): void;
+  /** Show the folder's subfolders' notes too, or not (backlog #42). */
+  nest?(on: boolean): void;
 }
 
 /**
@@ -53,7 +55,7 @@ export const ownSort = (list: NoteList): NoteSort =>
   list.sorts.includes('order') ? 'order' : 'modified';
 
 const iconButton = (
-  name: 'sort' | 'filter',
+  name: 'sort' | 'filter' | 'subfolders',
   label: string,
   tip: string,
   run: (button: HTMLButtonElement) => void,
@@ -126,7 +128,20 @@ export function lensParts(
           icon('grip'),
         )
       : null;
-  if (arrange.on && arranger) return { controls: [arranger], chips: null };
+  // Not a lens: your order holds with it on, so it stays while arranging. Only where it'd change something.
+  const nested = list.nested;
+  const nester =
+    nested !== undefined && actions.nest
+      ? iconButton(
+          'subfolders',
+          'Include subfolders',
+          'Include subfolders',
+          () => actions.nest?.(!nested),
+          { 'aria-pressed': String(nested), 'data-key': `lens-subfolders:${where}` },
+        )
+      : null;
+  const kept = [arranger, nester].filter((control) => control !== null);
+  if (arrange.on && arranger) return { controls: kept, chips: null };
   const sort = list.sort;
   const filter = list.filter;
   const own = ownSort(list);
@@ -184,7 +199,7 @@ export function lensParts(
     }
   }
   return {
-    controls: arranger ? [arranger, filterButton, sortButton] : [filterButton, sortButton],
+    controls: [...kept, filterButton, sortButton],
     chips: parts.length > 0 ? h('div', { class: 'list__lens' }, ...parts) : null,
   };
 }

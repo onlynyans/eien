@@ -2,9 +2,12 @@
 // search (narrowed to that list's notes, from the field on the list's band,
 // ./search-field.ts). Each row: the title, the date (a book's chapters: their words),
 // and a line of preview. A row is dragged, right-clicked, or worked from the
-// keyboard (./row-events.ts).
+// keyboard (./row-events.ts); ↑ ↓ move between rows. A folder showing its
+// subfolders' notes (backlog #42) heads each subfolder's with its name.
 
+import { parentOf } from '../../core/paths';
 import { filtering } from '../../core/tags';
+import { type Subfolder, withHeads } from '../../core/vault';
 import { addButton } from '../add-button';
 import { h, wordButton } from '../dom';
 import { icon } from '../icons';
@@ -48,13 +51,33 @@ export function listLabel(list: NoteList): string {
       : `${matched}${within}`;
   }
   // Filtered: how many of how many.
-  if (list.of !== undefined) {
-    const of = `${list.total.toLocaleString()} of ${notes(list.of)}`;
-    return list.kind === 'book' ? `${of} · Book` : list.kind === 'tag' ? `${of} · Tag` : of;
-  }
-  if (list.kind === 'book') return `${notes(list.total)} · Book`;
-  if (list.kind === 'tag') return `${notes(list.total)} · Tag`;
-  return notes(list.total);
+  const count =
+    list.of !== undefined
+      ? `${list.total.toLocaleString()} of ${notes(list.of)}`
+      : notes(list.total);
+  const kind = list.kind === 'book' ? ' · Book' : list.kind === 'tag' ? ' · Tag' : '';
+  return `${count}${kind}${list.nested ? ' · With subfolders' : ''}`;
+}
+
+/** A group's head: the subfolder's path below the list's folder, in label type; a drop names it. */
+const groupHead = (group: Subfolder) =>
+  h(
+    'li',
+    { class: 'note-group', attrs: { 'data-group': group.path } },
+    h('h3', { class: 'label note-group__name', text: group.name, attrs: { title: group.name } }),
+  );
+
+/** ↑ ↓ Home End between a short list's rows, over the groups' heads (a long one's are its own). */
+function moveBetweenRows(event: KeyboardEvent): void {
+  const step = { ArrowUp: -1, ArrowDown: 1, Home: -Infinity, End: Infinity }[event.key];
+  if (step === undefined || event.altKey || event.metaKey || event.ctrlKey || event.shiftKey)
+    return;
+  const list = event.currentTarget as HTMLElement;
+  const rows = [...list.querySelectorAll<HTMLElement>('.note-row')];
+  const from = rows.indexOf(document.activeElement as HTMLElement);
+  if (from < 0) return;
+  event.preventDefault();
+  rows[Math.min(Math.max(from + step, 0), rows.length - 1)]?.focus();
 }
 
 /** Each list pane's long list (../shell/windowed-rows.ts), kept from draw to draw. */
@@ -66,7 +89,7 @@ const left = new WeakMap<HTMLElement, string>();
 
 /** The same list, as a redraw sees it: another one (a folder, a sort) starts at the top. */
 const placeOf = (list: NoteList) =>
-  JSON.stringify([list.kind, list.heading, list.folder ?? '', list.sort ?? '']);
+  JSON.stringify([list.kind, list.heading, list.folder ?? '', list.sort ?? '', !!list.groups]);
 
 /** The pane shuts with the keyboard on a row: that row is where `focusList` goes back to. */
 export function keepPlace(container: HTMLElement): void {
@@ -120,6 +143,8 @@ export function renderList(
   const grips = arrange.on && inOwnOrder(list);
   // In your order, nothing filtered out: ⌥↑ ⌥↓ move a row (a drag too, as Arranging says).
   const ordered = inOwnOrder(list);
+  // With groups, each row says which, so a drag knows when it's let go in another (./drag.ts).
+  const grouped = list.groups !== undefined;
   const row = (note: ListedNote) =>
     h(
       'li',
@@ -131,6 +156,7 @@ export function renderList(
           attrs: {
             type: 'button',
             'data-path': note.path,
+            'data-group': grouped ? parentOf(note.path) : undefined,
             ...shownAttrs(note.path, shown),
             'aria-keyshortcuts': rowKeys(ordered),
           },
@@ -196,14 +222,25 @@ export function renderList(
       ? (container.querySelector<HTMLElement>(':scope > .rows')?.scrollTop ?? 0)
       : 0;
   drawn.set(container, place);
+  const items = withHeads(list.notes, list.groups ?? []);
+  const rowsClass = `${book ? 'rows rows--book' : 'rows'}${grips ? ' is-arranging' : ''}`;
   if (long && windowed) {
-    windowed.element.className = `${book ? 'rows rows--book' : 'rows'}${grips ? ' is-arranging' : ''}`;
+    windowed.element.className = rowsClass;
     windowed.set(
-      list.notes.map((note) => ({
-        key: note.path,
-        shows: rowShows(note, book, ordered, shown) + (grips ? 'g' : ''),
-        make: () => row(note),
-      })),
+      items.map((item) =>
+        'head' in item
+          ? {
+              key: `group:${item.head.path}`,
+              shows: item.head.name,
+              make: () => groupHead(item.head),
+              head: true,
+            }
+          : {
+              key: item.note.path,
+              shows: rowShows(item.note, book, ordered, shown) + (grips ? 'g' : ''),
+              make: () => row(item.note),
+            },
+      ),
     );
   }
   container.replaceChildren(
@@ -228,8 +265,8 @@ export function renderList(
       : list.notes.length > 0
         ? h(
             'ul',
-            { class: `${book ? 'rows rows--book' : 'rows'}${grips ? ' is-arranging' : ''}` },
-            ...list.notes.map(row),
+            { class: rowsClass, on: { keydown: moveBetweenRows } },
+            ...items.map((item) => ('head' in item ? groupHead(item.head) : row(item.note))),
           )
         : empty,
   );
