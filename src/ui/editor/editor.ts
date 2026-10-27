@@ -16,6 +16,8 @@ import { activeFormats } from './active-formats';
 import { editorKeys, historyInput } from './editor-keys';
 import { lockExtensions, marksExtensions, modeExtensions } from './editor-modes';
 import { writtenBy } from './eien-change';
+import { findInNote } from './find';
+import { FindBar } from './find-bar';
 import { imageDrop } from './image-drop';
 import { linkFollowing } from './links';
 import { hiddenFrontMatter } from './live-preview';
@@ -82,6 +84,9 @@ export class NoteEditor {
    * it turns on itself, not by the sheet's hover (../chrome/chrome.css).
    */
   readonly tableTools = h('div', { class: 'table-tools quiet-own' });
+
+  /** Find and replace in the note (./find-bar.ts): the window's own slip, which the page lays over it. */
+  readonly find: FindBar = new FindBar(() => this.#view);
 
   constructor(host: HTMLElement, events: EditorEvents) {
     this.#events = events;
@@ -265,6 +270,7 @@ export class NoteEditor {
         return true;
       }),
       htmlPaste,
+      findInNote(this.find),
       editorKeys(
         (command) => this.format(command),
         (command) => this.#doc?.run(this.#view, command) ?? false,

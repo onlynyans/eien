@@ -131,7 +131,20 @@ test('the ⋯ turns focus mode on, and shows it chosen', async ({ page }) => {
   await expect(menuItem(page, 'Focus mode')).toHaveAttribute('aria-checked', 'true');
   // On or off by itself, not one of several: a keyboard's Enter mustn't land on it to turn it off.
   await expect(menuItem(page, 'Focus mode')).toHaveAttribute('role', 'menuitemcheckbox');
-  await expect(menuItem(page, 'Seal')).toBeFocused();
+  await expect(menuItem(page, 'Find')).toBeFocused();
+});
+
+test('the ⋯ finds in the note, as Edit → Find does', async ({ page }) => {
+  await withNotes(page);
+  await titles(page).filter({ hasText: 'Tear' }).click();
+  await more(page).click();
+  await menuItem(page, 'Find').click();
+  const field = page.locator('.find').getByRole('textbox', { name: 'Find' });
+  await expect(field).toBeFocused();
+  await page.keyboard.type('the');
+  await expect(page.locator('.find').getByRole('status')).toHaveText('1 of 2');
+  await page.locator('.find').getByRole('button', { name: 'Close' }).click();
+  await expect(page.locator('.find')).toBeHidden();
 });
 
 test('the ⋯ exports the note as its own menu does, into Documents/Eien/Exports', async ({

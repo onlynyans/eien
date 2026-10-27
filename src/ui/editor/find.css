@@ -1,0 +1,106 @@
+/* Find and replace in the note (./find-bar.ts): a slip laid at the top right
+   of the page, over the blotter or the paper. Borders only: raised paper in a
+   strong hairline and no shadow, so it lies on the page as a slip of paper
+   would, quieter than the words. Its field is the softer field, in the
+   machine's voice, its count in pencil; Find's row, then Replace's, unfolded
+   by the twisty. */
+.find {
+  position: absolute;
+  top: var(--eien-space-2);
+  right: var(--eien-space-4);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    "twisty query count options moves"
+    ". replace replace replace acts";
+  align-items: center;
+  gap: var(--eien-space-1);
+  width: min(
+    calc(100% - 2 * var(--eien-space-4)),
+    calc(var(--eien-list-w) + 2 * var(--eien-space-7))
+  );
+  padding: var(--eien-space-1);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m);
+}
+.find[hidden] {
+  display: none;
+}
+.find__twisty {
+  grid-area: twisty;
+}
+/* The twisty turns, as the tree's does, rather than swapping. */
+.find__twisty .icon {
+  transition: transform var(--eien-quick) var(--eien-ease);
+}
+.find__twisty[aria-expanded="true"] .icon {
+  transform: rotate(90deg);
+}
+.find__field {
+  min-width: 0;
+  height: var(--eien-control);
+  padding-block: 0;
+}
+.find__query {
+  grid-area: query;
+}
+.find__replace {
+  grid-area: replace;
+}
+.find__field:disabled {
+  color: var(--eien-faded);
+}
+.find__count {
+  grid-area: count;
+  padding-inline: var(--eien-space-1);
+  white-space: nowrap;
+}
+.find__count:empty {
+  padding: 0;
+}
+/* A pattern that can't be read: its count says so, in caution's ink. */
+.find__query[aria-invalid="true"] + .find__count {
+  color: var(--eien-caution);
+}
+.find__options,
+.find__moves,
+.find__acts {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--eien-space-1) / 2);
+}
+.find__options {
+  grid-area: options;
+}
+.find__moves {
+  grid-area: moves;
+}
+.find__acts {
+  grid-area: acts;
+  justify-content: flex-end;
+}
+.find__replace[hidden],
+.find__acts[hidden] {
+  display: none;
+}
+
+/* A narrow page: the options and the count drop under the field. */
+@container page (width < 520px) {
+  .find {
+    right: var(--eien-space-2);
+    width: calc(100% - 2 * var(--eien-space-2));
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "twisty query moves"
+      ". count options"
+      ". replace acts";
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .find__twisty .icon {
+    transition: none;
+  }
+}

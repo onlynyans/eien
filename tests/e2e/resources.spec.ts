@@ -27,9 +27,10 @@ const FIRST_LIST_MS = 1500;
  * minified from #54 on (electron.vite.config.ts): about 110,000 then, with room for the
  * shut sidebar (#57) and the table editor (#58). CSS 118,374 with Two sheets and Facing
  * pages (ui/page/split.css, #66, #67); 122,671 with the split's four modes, one stylesheet
- * each (ui/page/split*.css, #66–#69).
+ * each (ui/page/split*.css, #66–#69). JS 1,842,280 before find and replace, 1,884,696 with it
+ * (@codemirror/search and the find bar, backlog #41).
  */
-const RENDERER = { js: 1_860_000, css: 134_000 };
+const RENDERER = { js: 2_070_000, css: 134_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);

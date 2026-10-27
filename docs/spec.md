@@ -744,6 +744,33 @@ paragraph of more than 64 lines is read in pieces of 64, as the parser takes
 seconds over one long paragraph full of brackets. Tags count as
 words, as on the page.
 
+### Find in the note
+
+⌘F (Ctrl+F elsewhere) finds in the open note, in Live, Source and Reading,
+on the active page of a split: each page finds in its own note. Edit → Find
+holds Find…, Find and Replace… (⌥⌘F; Ctrl+H off the Mac, where Ctrl+Alt is
+AltGr), Find Next (⌘G) and Find Previous (⇧⌘G); on a phone it's the page's
+⋯ → Find. It's CodeMirror's search (`@codemirror/search`), drawn as Eien's
+own slip at the page's top right (`ui/editor/find-bar.ts`).
+
+- The Find field opens with the chosen words in it (a word or a phrase on one
+  line), or the last query. Typing goes to the first match from the
+  selection's start, so each letter narrows rather than stepping past; Enter
+  and ⇧Enter step to the next and previous match, round the note.
+- Every match is marked in the text, the current one apart: it is the
+  selection. A count says "3 of 12", "12 matches" while the selection is on
+  none, "No matches", or "Not a valid pattern"; it stops at 1,000 ("1,000+").
+- Three quiet toggles: Match case, Whole word, and Pattern (a regular
+  expression, `$1` in the replacement). Without Pattern, what's typed is
+  found as written.
+- The twisty (or ⌥⌘F) unfolds Replace. Replace (Enter in its field) changes
+  the current match and goes to the next; the first press only goes to one.
+  Replace all (⌥⌘↵) changes every match. Each is one change, one step of the
+  note's history: ⌘Z puts it back, on every page showing the note. Nothing
+  can be replaced in Reading or while the note is held still.
+- Esc, from the bar or the text, shuts it, and gives the keyboard back to
+  the text on the current match. Showing another note shuts it too.
+
 ### Writing tools
 
 - **Scene break:** Enter on an empty line after an empty line inserts `***`,
