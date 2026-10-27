@@ -1,25 +1,21 @@
 /* Find and replace in the note (./find-bar.ts): a slip laid at the top right
    of the page, over the blotter or the paper. Borders only: raised paper in a
    strong hairline and no shadow, so it lies on the page as a slip of paper
-   would, quieter than the words. Find's row: the twisty, the field with its
-   three options set into its well, then the count and the moves; Replace's
-   row, unfolded by the twisty, lines up under it. Every control is in sight:
-   a slim slip, never one with holes in it. */
+   would, quieter than the words. Its field is the softer field, in the
+   machine's voice, its count in pencil; Find's row, then Replace's, unfolded
+   by the twisty. */
 .find {
-  /* An option in the field's well: a control less the well's own inset, top and bottom. */
-  --find-option: calc(var(--eien-control) - var(--eien-space-1));
   position: absolute;
   top: var(--eien-space-2);
   right: var(--eien-space-4);
   z-index: 5;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   grid-template-areas:
-    "twisty query trail"
-    ". replace acts";
+    "twisty query count options moves"
+    ". replace replace replace acts";
   align-items: center;
-  /* Rows are parted by Replace's own margin, not a gap: a folded row leaves no room behind. */
-  column-gap: var(--eien-space-1);
+  gap: var(--eien-space-1);
   width: min(
     calc(100% - 2 * var(--eien-space-4)),
     calc(var(--eien-list-w) + 2 * var(--eien-space-7))
@@ -47,87 +43,59 @@
   height: var(--eien-control);
   padding-block: 0;
 }
-.find__field:disabled {
-  color: var(--eien-faded);
-}
-/* The Find field and its options share one cell: the options over the field's end, the
-   field's words kept clear of them. */
-.find__box {
-  grid-area: query;
-  display: grid;
-  min-width: 0;
-}
-.find__box > * {
-  grid-area: 1 / 1;
-}
 .find__query {
-  padding-inline-end: calc(3 * var(--find-option) + var(--eien-space-2));
-}
-.find__options {
-  display: flex;
-  align-self: center;
-  justify-self: end;
-  margin-inline-end: calc((var(--eien-control) - var(--find-option)) / 2);
-}
-/* In pencil, as a label is, until pressed: then a choice in a segmented well, raised paper
-   in a hairline (chrome.css, .host__group). */
-.find__option {
-  width: var(--find-option);
-  height: var(--find-option);
-  color: var(--eien-pencil);
-}
-.find__option[aria-pressed="true"] {
-  color: var(--eien-ink);
-  background: var(--eien-paper-raised);
-  border-color: var(--eien-rule);
+  grid-area: query;
 }
 .find__replace {
   grid-area: replace;
 }
-.find__trail,
+.find__field:disabled {
+  color: var(--eien-faded);
+}
+.find__count {
+  grid-area: count;
+  padding-inline: var(--eien-space-1);
+  white-space: nowrap;
+}
+.find__count:empty {
+  padding: 0;
+}
+/* A pattern that can't be read: its count says so, in caution's ink. */
+.find__query[aria-invalid="true"] + .find__count {
+  color: var(--eien-caution);
+}
+.find__options,
+.find__moves,
 .find__acts {
   display: flex;
   align-items: center;
   gap: calc(var(--eien-space-1) / 2);
 }
-.find__trail {
-  grid-area: trail;
+.find__options {
+  grid-area: options;
+}
+.find__moves {
+  grid-area: moves;
 }
 .find__acts {
   grid-area: acts;
   justify-content: flex-end;
 }
-.find__replace,
-.find__acts {
-  margin-top: var(--eien-space-1);
-}
 .find__replace[hidden],
 .find__acts[hidden] {
   display: none;
 }
-/* The count, once there's a query: wide enough for "12 of 340" that the field doesn't shift
-   as it counts; none at all before. */
-.find__count {
-  min-width: 10ch;
-  padding-inline: var(--eien-space-1);
-  white-space: nowrap;
-}
-.find__count:empty {
-  display: none;
-}
-/* A pattern that can't be read: its count says so, in caution's ink. */
-.find__count[data-invalid] {
-  color: var(--eien-caution);
-}
 
-/* A narrow page (a phone): the field keeps what room there is, the count only what it says. */
+/* A narrow page: the options and the count drop under the field. */
 @container page (width < 520px) {
   .find {
     right: var(--eien-space-2);
     width: calc(100% - 2 * var(--eien-space-2));
-  }
-  .find__count {
-    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "twisty query moves"
+      ". count options"
+      ". replace acts";
   }
 }
 

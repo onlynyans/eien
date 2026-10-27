@@ -27,7 +27,7 @@ import { EditorView, type Panel, runScopeHandlers, type ViewUpdate } from '@code
 import { countWords, type FindCommandId, findKey, findLabel } from '../../core/find';
 import { h } from '../dom';
 import type { IconName } from '../icons';
-import { iconButton } from '../quiet-button';
+import { iconButton, quietButton } from '../quiet-button';
 import { countMatches, firstMatchFrom } from './find-matches';
 import { shownMatch } from './front-matter-hidden';
 
@@ -56,8 +56,6 @@ interface Parts {
   readonly twisty: HTMLButtonElement;
   readonly replaceTools: HTMLElement;
   readonly acts: readonly HTMLButtonElement[];
-  /** Previous and next: faded while there's no match to go to. */
-  readonly moves: readonly HTMLButtonElement[];
 }
 
 export class FindBar {
@@ -65,7 +63,7 @@ export class FindBar {
   #parts: Parts | null = null;
   /** The slip, the window's own (not in the editor's shadow root); the page lays it over the sheet. */
   readonly element = h('div', {
-    class: 'find',
+    class: 'find quiet-row',
     attrs: { role: 'search', 'aria-label': 'Find in the note', hidden: true },
   });
 
@@ -89,8 +87,7 @@ export class FindBar {
     const replace = field('Replace', 'find__replace');
     const button = (id: FindCommandId, icon: IconName, run: () => void) =>
       iconButton({ label: findLabel(id), icon, keys: findKey(id, MAC), run });
-    // Always in sight, the twisty and the options: a slip with holes in it until it's hovered is no slip.
-    const twisty = iconButton({
+    const twisty = quietButton({
       label: findLabel('replace'),
       icon: 'right',
       keys: findKey('replace', MAC),
@@ -99,22 +96,13 @@ export class FindBar {
     });
     const options = new Map<Option, HTMLButtonElement>();
     for (const { id, icon, label } of OPTIONS) {
-      const toggle = iconButton({
-        label,
-        icon,
-        class: 'find__option',
-        run: () => this.#toggle(id),
-      });
+      const toggle = quietButton({ label, icon, run: () => this.#toggle(id) });
       toggle.setAttribute('aria-pressed', 'false');
       options.set(id, toggle);
     }
     const acts = [
       button('replace-one', 'replace', () => this.replaceOne()),
       button('replace-all', 'replaceAll', () => this.replaceAll()),
-    ];
-    const moves = [
-      button('previous', 'up', () => this.previous()),
-      button('next', 'down', () => this.next()),
     ];
     const parts: Parts = {
       find,
@@ -124,22 +112,17 @@ export class FindBar {
       twisty,
       replaceTools: h('span', { class: 'find__acts' }, ...acts),
       acts,
-      moves,
     };
     this.element.append(
       twisty,
-      // The options lie in the field's own well, at its end, as a segmented control's choices do.
+      find,
+      parts.count,
+      h('span', { class: 'find__options' }, ...options.values()),
       h(
         'span',
-        { class: 'find__box' },
-        find,
-        h('span', { class: 'find__options' }, ...options.values()),
-      ),
-      h(
-        'span',
-        { class: 'find__trail' },
-        parts.count,
-        ...moves,
+        { class: 'find__moves' },
+        button('previous', 'up', () => this.previous()),
+        button('next', 'down', () => this.next()),
         iconButton({ label: 'Close', icon: 'close', keys: 'Escape', run: () => this.close() }),
       ),
       replace,
@@ -321,14 +304,9 @@ export class FindBar {
     const { state } = this.#view();
     const count = countMatches(state, getSearchQuery(state));
     this.#p.count.textContent = countWords(this.#p.find.value, count);
-    this.#p.count.toggleAttribute('data-invalid', count === 'invalid');
     if (count === 'invalid') this.#p.find.setAttribute('aria-invalid', 'true');
     else this.#p.find.removeAttribute('aria-invalid');
     this.#p.replace.disabled = state.readOnly;
-    // Nothing to go to, or to replace: faded, as a control that can't act is, and still pressable.
-    const none = count === 'invalid' || count.total === 0;
-    for (const button of [...this.#p.moves, ...this.#p.acts])
-      button.setAttribute('aria-disabled', String(none));
     for (const act of this.#p.acts) act.disabled = state.readOnly;
   }
 }

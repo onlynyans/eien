@@ -119,21 +119,6 @@ describe('find in the note', () => {
     expect(count()).toBe('3 of 3');
   });
 
-  it('shows every control at once, the options in the field, and fades what can’t act', () => {
-    editor.find.open(true);
-    // None is quiet (out of sight till hovered): a slip with holes in it is no slip.
-    expect(bar().querySelector('.icon-button--quiet')).toBeNull();
-    expect(field('Find').parentElement?.contains(button('Match case'))).toBe(true);
-    const faded = () =>
-      ['Previous match', 'Next match', 'Replace', 'Replace all'].map((name) =>
-        button(name).getAttribute('aria-disabled'),
-      );
-    type(field('Find'), 'bell');
-    expect(faded()).toEqual(['false', 'false', 'false', 'false']);
-    type(field('Find'), 'gong');
-    expect(faded()).toEqual(['true', 'true', 'true', 'true']);
-  });
-
   it('matches case, whole words and patterns when they’re pressed', () => {
     editor.find.open(false);
     type(field('Find'), 'bell');

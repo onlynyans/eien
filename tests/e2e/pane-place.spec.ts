@@ -1,7 +1,8 @@
 // A pane shut and opened again comes back where it was (backlog #43): the
 // same rows in sight, and the keyboard back on the row it left. The note list
 // and the sidebar's tree, a short list and a long one drawn by the rows in
-// sight, with three panes and two. Kept for the session only.
+// sight, with three panes and two. Kept for the session only. A folder opened
+// or closed in the tree leaves the tree where it was too.
 
 import type { ElectronApplication, Page } from '@playwright/test';
 import { clickMenu, expect, test, type VaultFiles } from './launch';
@@ -158,5 +159,45 @@ test.describe("the sidebar's tree, two panes", () => {
     await allNotes(page);
     await expect(page.locator('.tree-window li[aria-setsize="400"]').first()).toBeVisible();
     await keepsItsPlace(app, page, 'sidebar', TREE);
+  });
+});
+
+test.describe('a folder opened or closed in the tree', () => {
+  // Each folder holds another, so each has its twisty; the first one sorts to the top.
+  test.use({
+    vaultFiles: Object.fromEntries(
+      Array.from({ length: 40 }, (_, i) => [
+        `Folder ${String(i).padStart(2, '0')}/Within/Inside.md`,
+        'Words.\n',
+      ]),
+    ),
+  });
+
+  test('leaves the tree where it was, its row in the same spot', async ({ page }) => {
+    const shown = await scrollDown(page, TREE);
+    // The first folder in sight, maybe half hidden at the top: drawn from the top, or brought
+    // into sight as the keyboard is given back to it, the tree would move.
+    const name = shown.find((label) => label.startsWith('Folder')) as string;
+    const twist = (verb: string) => page.getByRole('button', { name: `${verb} ${name}` });
+    const spot = (verb: string) =>
+      twist(verb).evaluate((element) => {
+        const tree = document.querySelector('.sidebar__tree') as HTMLElement;
+        return Math.round(element.getBoundingClientRect().top - tree.getBoundingClientRect().top);
+      });
+    // Clicked as a mouse clicks: the keyboard to it, and no scroll (Playwright's click scrolls).
+    const click = (verb: string) =>
+      twist(verb).evaluate((element: HTMLElement) => {
+        element.focus({ preventScroll: true });
+        element.click();
+      });
+    const before = await spot('Open');
+    await click('Open');
+    await expect(twist('Close')).toHaveAttribute('aria-expanded', 'true');
+    expect(await spot('Close')).toBe(before);
+    expect((await inSight(page, TREE))[0]).toBe(shown[0]);
+    await click('Close');
+    await expect(twist('Open')).toHaveAttribute('aria-expanded', 'false');
+    expect(await spot('Open')).toBe(before);
+    expect(await inSight(page, TREE)).toEqual(shown);
   });
 });
