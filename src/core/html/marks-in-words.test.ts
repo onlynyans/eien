@@ -23,7 +23,9 @@ describe('the page’s own marks, escaped only where they’d read as Markdown',
 
   it('keeps the page’s brackets round a link it holds, and escapes those inside the link', () => {
     expect(fromHtml('<p>[<a href="https://x.org">1</a>]</p>')).toBe('[[1](https://x.org)]');
-    expect(fromHtml('<p><a href="https://x.org">a ] b</a></p>')).toBe('[a \\] b](https://x.org)');
+    expect(fromHtml('<p><a href="https://x.org">a ] b\\</a></p>')).toBe(
+      '[a \\] b\\\\](https://x.org)',
+    );
     expect(fromHtml('<p>Wow!<a href="https://x.org">a</a></p>')).toBe('Wow\\![a](https://x.org)');
   });
 
@@ -62,6 +64,6 @@ describe('the page’s own marks, escaped only where they’d read as Markdown',
 
   it('escapes them all in a block of more brackets than it reads', () => {
     const many = '[x] '.repeat(201).trim();
-    expect(settle(hold(many))).toBe(many.replace(/[[\]]/gu, '\\$&'));
+    expect(settle(hold(many))).toBe(many.replace(/[\\[\]]/gu, '\\$&'));
   });
 });

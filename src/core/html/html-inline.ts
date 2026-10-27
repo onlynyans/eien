@@ -7,7 +7,7 @@
 import { flanking } from '../markdown';
 import { safeAddress } from './addresses';
 import type { HtmlNode } from './html';
-import { escapeBrackets, hold, shown } from './marks-in-words';
+import { escapeLinkWords, hold, shown } from './marks-in-words';
 
 /** All of an element's words, as written. */
 export const textOf = (nodes: readonly HtmlNode[]): string =>
@@ -20,12 +20,12 @@ export const textOf = (nodes: readonly HtmlNode[]): string =>
 /**
  * Words as Markdown: the characters that could make a mark held, and so
  * written as typed unless they'd read as one; in a link's words, its
- * brackets escaped, as one would end the link.
+ * brackets and backslashes escaped, as one could end the link.
  */
 function escapeInline(text: string, inLink: boolean): string {
   const held = hold(text);
   return (
-    (inLink ? escapeBrackets(held) : held)
+    (inLink ? escapeLinkWords(held) : held)
       // A "#" that would start a tag: the page showed a word, not a tag.
       .replace(/(?<=^|\s)#(?=[\p{L}\p{M}\p{N}_-])/gu, '\\#')
   );

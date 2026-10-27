@@ -17,7 +17,7 @@ const HELD_CHAR = new RegExp(
   'gu',
 );
 const MARK_CHAR = new RegExp(`[${HELD.replace(/[\\[\]^]/gu, '\\$&')}]`, 'gu');
-const BRACKET = new RegExp(`[${heldOf.get('[')}${heldOf.get(']')}]`, 'gu');
+const LINK_ENDS = new RegExp(`[${heldOf.get('\\')}${heldOf.get('[')}${heldOf.get(']')}]`, 'gu');
 const ANY_BRACKET = new RegExp(`[[\\]${heldOf.get('[')}${heldOf.get(']')}]`, 'gu');
 
 /** Unicode's noncharacters U+FDD0–U+FDEF: no page means one, and held marks stand in them. */
@@ -33,9 +33,9 @@ export const shown = (char: string): string => {
   return i >= 0 && i < HELD.length ? (HELD[i] as string) : char;
 };
 
-/** `text` with its held "[" and "]" escaped now: inside a link's words, where one would end it. */
-export const escapeBrackets = (text: string): string =>
-  text.replace(BRACKET, (char) => `\\${shown(char)}`);
+/** `text` with its held "\\", "[" and "]" escaped now: inside a link's words, where one could end it. */
+export const escapeLinkWords = (text: string): string =>
+  text.replace(LINK_ENDS, (char) => `\\${shown(char)}`);
 
 /** Nodes whose first character makes them: a held one there is a mark, and nothing inside is looked at. */
 const WHOLE = new Set([
