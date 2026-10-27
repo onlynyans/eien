@@ -32,11 +32,8 @@ body {
      lights at the left, Windows' and Linux's minimize, maximize and close at
      the right. The window controls overlay says where (env(titlebar-area-*);
      none on a phone), and the band at that edge keeps clear of them.
-     Taken from the area's width alone: at each step of a resize on a Mac, AppKit puts
-     the lights back at its own spot for a frame, and titlebar-area-x with them (13px),
-     but the width the controls take stays the same (#44). Which edge they're at is
-     ./controls-left.ts's to say. */
-  --controls-w: calc(100vw - env(titlebar-area-width, 100vw));
+     How wide they stand, and at which edge, is ./controls-left.ts's to say (#44). */
+  --controls-w: 0px;
   --controls-left: 0px;
   --controls-right: var(--controls-w);
   /* The seal's square, open or shut: on the gutter, past macOS's lights. */
