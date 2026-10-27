@@ -606,16 +606,24 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   at the page's top right (under a companion's head), `--eien-space-2` from
   its top, `--eien-space-4` from its edge: raised paper in a `--eien-rule-strong`
   hairline, `--eien-radius-m`, and no shadow (borders only: it lies on the
-  page, quieter than the words). Its rows: the quiet twisty (Find and
-  replace, turning 90°), the Find field (`.field`, a control high), the
-  count (`.count`; caution ink for a pattern that can't be read), the three
-  options as quiet toggles (Match case, Whole word, Pattern; on is the icon
-  button's pressed state), then previous, next and close; unfolded, the
-  Replace field under them and Replace and Replace all under the moves. A
-  narrow page drops the count and options under the field. In the text, a
-  match is `--eien-selected` over a `--eien-rule-strong` hairline; the
-  current one is the selection, `--eien-seal-wash` over a `--eien-mark-w`
-  mark in the focus ink.
+  page, quieter than the words). Every control is in sight, none quiet: a
+  slim slip, never one with holes in it till it's hovered. Find's row: the
+  twisty (Find and replace, turning 90°), the Find field (`.field`, a
+  control high) with its three options set into its well at its end (Match
+  case, Whole word, Pattern: a control less `--eien-space-1` square, pencil
+  at rest, pressed as a segmented well's choice is, raised paper in a
+  `--eien-rule` hairline), then the count (`.count`, 10ch once there's a
+  query so the field doesn't shift, none before; caution ink for a pattern
+  that can't be read), previous, next and close. Unfolded, the Replace field
+  under the Find field, Replace and Replace all under the moves. Rows are
+  parted by the second row's margin, not a grid gap, so the slip's padding is
+  even above and below. Previous, next and the replaces fade
+  (`aria-disabled`) with no match. In the text, a match is `--eien-selected`
+  over a `--eien-rule-strong` hairline; the current one is the selection,
+  `--eien-seal-wash` over a `--eien-mark-w` mark in the focus ink. Its five
+  icons keep the set's rhythm: an A and an a with air between, a word line
+  over its bracket, `.*` with a bullet's dot, and lines 3.5 apart (as the
+  lists' are) turned into others.
 - **Formatting bar**: the `format` slot's host. Band's second row on the
   band ground; Slip's own raised slip at the blotter's top left; Running
   head's raised rail down the margin. Its buttons have the icon control's
