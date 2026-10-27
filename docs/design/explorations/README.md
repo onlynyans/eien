@@ -57,6 +57,7 @@ on the page.
 | Pages | [The spread](reader-spread.html) | [One leaf, its edges](reader-leaf.html) | [Columns to the pane](reader-columns.html) |
 | Scroll | [A chapter a sheet](reader-chapter.html) | [One roll](reader-roll.html) | [Beside a note](reader-beside.html) |
 | Features | [On the page](reader-margin.html) | [In the list](reader-index.html) | [On the edge](reader-edge.html) |
+| Showcase | [The reading room](reader-room.html) | [Set as a book](reader-set.html) | [By lamplight](reader-lamp.html) |
 
 ## Split window (2026-10-23): for the owner to choose
 

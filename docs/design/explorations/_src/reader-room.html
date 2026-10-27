@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Showcase 1 · The reading room</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:reader.css*/
+
+/* Showcase 1 · The reading room. Asked for (R, or the room tool), the window
+   steps back: the sidebar, the list, the bands and their rules go, and what's
+   left is the desk with one sheet on it. Two surfaces instead of five: desk,
+   then paper, so the sheet is the only object in the room. The seal stays in
+   the corner (its first place, the app's mark), the lights beside it; the
+   tools wait, quiet, where the layout keeps them; the colophon is a line of
+   pencil on the desk. Out of the room, it's Pages 2's leaf. */
+
+/* The leaf and its fore-edge (Pages 2's): the pages to come stacked at the
+   sheet's right, the pages read at its left, a mark's width apart. */
+.stack { position: relative; isolation: isolate; flex: 1 1 auto; display: flex; width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto; min-height: 0; }
+.stack .sheet { margin: 0; z-index: 1; }
+.edge { position: absolute; top: calc(var(--i) * var(--eien-hairline)); bottom: calc(var(--i) * var(--eien-hairline)); background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); z-index: calc(-1 * var(--i)); }
+.win[data-layout='slip'] .edge { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.edge--after { left: 0; right: calc(var(--i) * -1 * var(--eien-mark-w)); }
+.edge--before { right: 0; left: calc(var(--i) * -1 * var(--eien-mark-w)); }
+.edges { position: absolute; top: 0; bottom: 0; z-index: 0; width: var(--eien-space-3); }
+.edges--after { left: 100%; }
+.edges--before { right: 100%; }
+.edges button { appearance: none; position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: e-resize; }
+.edges--before button { cursor: w-resize; }
+.stack .folio .count:last-child { margin-left: auto; }
+
+/* In the room: the panes go, and the page pane is the desk. */
+:root[data-room='in'] .win, :root[data-room='in'] .strip { grid-template-columns: 0px 0px minmax(0, 1fr); }
+:root[data-room='in'] .win > :is(.sb, .ls), :root[data-room='in'] .strip__panes { display: none; }
+:root[data-room='in'] .pg { background: var(--eien-desk); }
+/* The bands give their ground and rule to the desk; their tools stay quiet until the pointer comes. */
+:root[data-room='in'] :is(.band, .colophon, .strip) { background: none; border-color: transparent; }
+:root[data-room='in'] .strip { background: var(--eien-desk); }
+/* The corner: the lights, then the seal, in every layout's top row; the bands start past them. */
+:root[data-room='in'] .win[data-layout] { --seal-x: calc(var(--controls-left) + var(--eien-space-3)); --seal-y: calc((var(--band) - var(--seal-btn)) / 2); }
+:root[data-room='in'] .win[data-layout='runhead'] { --seal-y: calc((var(--head-h) - var(--seal-btn)) / 2); }
+:root[data-room='in'] :is(.band, .strip__page .seg) { padding-left: calc(var(--seal-x) + var(--seal-btn) + var(--eien-space-3)); }
+:root[data-room='in'] .blotter.is-paged { padding: var(--eien-space-2) var(--eien-space-5) 0; }
+:root[data-room='in'] .win[data-layout='runhead'] .blotter.is-paged { padding-top: var(--eien-space-5); }
+/* The colophon, a line of pencil on the desk under the sheet. */
+:root[data-room='in'] .colophon { justify-content: center; }
+:root[data-room='in'] .colophon .said { position: absolute; right: var(--eien-space-4); }
+.colophon { position: relative; }
+
+/* The phone: in the room, the page is the whole screen; a tap in its middle brings the bar. */
+.phone__head { display: flex; justify-content: space-between; gap: var(--eien-space-3); padding-bottom: var(--eien-space-4); }
+.phone .phone__page { position: relative; grid-template-rows: auto minmax(0, 1fr) auto; }
+.phone .phone-edge { position: absolute; top: var(--eien-space-5); bottom: var(--eien-space-7); right: 0; width: var(--eien-space-2); }
+.phone .phone-edge i { position: absolute; top: 0; bottom: 0; right: calc(var(--i) * var(--eien-mark-w)); width: var(--eien-hairline); background: var(--eien-rule); }
+:root[data-room='in']:not([data-phonebar='shown']) .phone { grid-template-rows: minmax(0, 1fr); }
+:root[data-room='in']:not([data-phonebar='shown']) .phone :is(.backbar, .rail, .phone__slip) { display: none; }
+:root[data-room='in']:not([data-phonebar='shown']) .phone .phone__page { padding-top: var(--eien-space-6); }
+
+/* Going in and out is asked for: one calm cross-fade, none with reduced motion. */
+::view-transition-group(root), ::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--eien-calm); animation-timing-function: var(--eien-ease); }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(root), ::view-transition-old(root), ::view-transition-new(root) { animation: none; } }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:reader.js*/
+
+// A sheet standing on the desk's edge: the room.
+ICONS.room = '<path d="M2 13.5h12"/><path d="M4.5 2.5h7v8.5h-7z"/><path d="M6.5 5.5h3M6.5 7.5h3"/>';
+
+const inRoom = () => root.dataset.room === 'in';
+/** In or out, as the bar's Room says: one calm cross-fade where the browser has them. */
+function room(on) {
+  // The book keeps the keyboard, in the room and out of it.
+  const go = () => { document.querySelector(`[data-x-set="room"] [data-value="${on ? 'in' : 'out'}"]`)?.click(); main()?.focus({ preventScroll: true }); };
+  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(go);
+  else go();
+  say(on ? `The reading room: Esc or R to leave` : 'Out of the reading room');
+}
+
+/** How many edges show: the pages left (or read), in sixths of the book, at least one while any are. */
+const EDGES = 6;
+const edgesFor = (n, before) => {
+  if (!n) return 0;
+  const frac = before ? (n.page - 1) / n.pages : (n.pages - n.page - n.span + 1) / n.pages;
+  return frac <= 0 ? 0 : Math.max(1, Math.round(frac * EDGES));
+};
+const edgeHtml = (side, k) => Array.from({ length: k }, (_, i) => `<span class="edge edge--${side}" style="--i:${i + 1}" aria-hidden="true"></span>`).join('');
+/** Minutes left in the chapter from the page's first words, at 250 words a minute (5.6 characters a word). */
+const minutesLeft = (n) => Math.max(1, Math.ceil((CHAPTERS[R.c].chars - n.start) / 5.6 / 250));
+
+const roomTool = (ctx) => ctx.tool('room', inRoom() ? 'Leave the reading room' : 'The reading room', 'R', `data-room-tool aria-pressed="${inRoom()}"`);
+Reader.tools = (ctx) => `${ctx.contentsTool()}${roomTool(ctx)}`;
+/** In the room the sheet carries the book's own running head: its title, and the chapter. */
+const head = (ctx) => (inRoom() ? `<div class="sheet__head"><span class="crumb">${BOOK.title}</span><span class="crumb">${CHAPTERS[R.c].title}</span></div>` : ctx.head());
+Reader.page = (ctx) => `<div class="page">${ctx.top()}<div class="blotter is-paged">
+  <div class="stack">
+    <span data-edges></span>
+    <article class="sheet book-sheet">${head(ctx)}${ctx.leaves(R.c)}
+      <footer class="folio"><span class="count" data-chapter-pages></span><span class="count" data-folio></span></footer>
+    </article>
+    <span class="edges edges--before"><button data-turn="-1" data-k="edge-before" aria-label="Previous page" data-tip="Previous page  ←" data-tip-side="left"></button></span>
+    <span class="edges edges--after"><button data-turn="1" data-k="edge-after" aria-label="Next page" data-tip="Next page  →" data-tip-side="right"></button></span>
+  </div></div>${ctx.colophon([`<span>${CHAPTERS[R.c].ord}</span>`, '<span data-col-page></span>', '<span data-col-left></span>'])}</div>`;
+/** C's running head: out of the room the crumb and tools; in it, only the quiet tools, the sheet naming the book. */
+Reader.strip = (ctx) => (inRoom()
+  ? `<div class="seg"><span class="crumb"></span><span class="tools-row quiet">${ctx.views()}${Reader.tools(ctx)}</span></div>`
+  : `<div class="seg"><span class="crumb">${ctx.crumb()}</span><span class="tools-row">${ctx.views()}${Reader.tools(ctx)}</span></div>`);
+Reader.phone = () => `<div class="phone__page"><div class="phone__head"><span class="crumb">${BOOK.title}</span><span class="crumb">${CHAPTERS[R.c].ord}</span></div>${context().leaves(R.c)}<span class="phone-edge" aria-hidden="true"></span><div class="phone__foot"><span class="count" data-col-left></span><span class="count" data-folio></span></div></div>`;
+Reader.phoneTools = (ctx) => `${ctx.tool('contents', 'Contents', '', 'data-contents')}${ctx.tool('room', inRoom() ? 'Leave the reading room' : 'The reading room', '', `data-room-tool aria-pressed="${inRoom()}"`)}`;
+Reader.after = (ctx, n) => {
+  if (!n?.paged) return;
+  const set = (sel, text) => { for (const el of canvas.querySelectorAll(sel)) el.textContent = text; };
+  set('[data-folio]', `${n.page}`);
+  set('[data-chapter-pages]', `${CHAPTERS[R.c].ord} · ${n.chPage} of ${n.chPages}`);
+  set('[data-col-page]', `page ${n.page} of ${n.pages}`);
+  set('[data-col-left]', `${minutesLeft(n)} min left in the chapter`);
+  const edges = canvas.querySelector('[data-edges]');
+  if (edges) edges.innerHTML = edgeHtml('before', edgesFor(n, true)) + edgeHtml('after', edgesFor(n, false));
+  const pe = canvas.querySelector('.phone-edge');
+  if (pe) pe.innerHTML = Array.from({ length: edgesFor(n, false) }, (_, i) => `<i style="--i:${i}"></i>`).join('');
+  for (const b of canvas.querySelectorAll('.edges button')) {
+    const before = b.dataset.turn === '-1';
+    const k = before ? n.page - 1 : n.pages - n.page;
+    b.dataset.tip = `${before ? 'Previous page  ←' : 'Next page  →'}\n${k} page${k === 1 ? '' : 's'} ${before ? 'read' : 'to go'}`;
+  }
+};
+/** In the room the seal, the app's mark, is the way out; out of it, it shows and hides the sidebar as always. */
+Reader.drawn = () => {
+  const seal = canvas.querySelector('[data-seal]');
+  if (seal && inRoom()) { seal.setAttribute('aria-label', 'Leave the reading room'); seal.dataset.tip = 'Leave the reading room  Esc'; seal.removeAttribute('aria-expanded'); }
+};
+Reader.click = (b) => { if ('roomTool' in b.dataset) room(!inRoom()); };
+Reader.key = (e) => {
+  if (mod(e) || e.altKey || typing(e.target) || e.target.closest?.('.menu')) return false;
+  if (e.key === 'Escape' && inRoom()) { e.preventDefault(); room(false); return true; }
+  if (e.key.toLowerCase() === 'r' && !e.target.closest?.('.ls__rows, .sb')) { e.preventDefault(); room(!inRoom()); return true; }
+  return false;
+};
+
+mountReaderPage({
+  id: 'room',
+  bar: `<div class="xbar__group" data-x-set="room"><span class="xbar__label">Room</span><button class="word-button" data-value="in">In</button><button class="word-button" data-value="out">Out</button></div>`,
+  note: 'Asked for, the window steps back: the desk, one sheet on it, the seal in its corner.',
+  notes: `
+  <h2>Showcase 1 · The reading room</h2>
+  <p>Press <kbd>R</kbd> (or the room tool) and the window steps back. The sidebar, the list, the bands and their rules go; what's left is the desk with one sheet on it, and the rest of the book under the sheet as its fore-edge (Pages 2's). Two surfaces instead of five: desk, then paper, so the sheet is the only thing in the room. <kbd>Esc</kbd>, <kbd>R</kbd> or the seal brings the window back.</p>
+  <ul>
+    <li><b>What stays:</b> the lights and the seal in the corner (the app's mark, its first place), in every layout's top row. The tools wait where the layout keeps them, unseen till the pointer comes: A's on the desk where its band was, B's slip, C's running head with its ground and rule gone.</li>
+    <li><b>The sheet's own running head</b> names the book and the chapter in label type, as a printed book's does; its folio counts at the foot.</li>
+    <li><b>The colophon</b> is a line of pencil on the desk under the sheet: the chapter, the page of the pages, and the minutes left in the chapter at 250 words a minute.</li>
+    <li><b>Going in and out</b> is asked for, so it may move: one calm cross-fade, none with reduced motion. Nothing else moves; turning is the leaf's slide.</li>
+    <li><b>In the app</b> this is a mode over whichever reading view wins (here Pages 2), the way Focus mode is over Live: kept per device, and the panes come back as they were.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>The phone is already one pane, so its room is the page alone: the back bar and the tools go, the screen is paper from edge to edge, the book's name and chapter at its head and the minutes left and the folio at its foot. A tap in the page's middle third brings the bar and tools back (and another sends them away); the outer thirds still turn.</p>
+  <h2>For</h2>
+  <ul><li>Eien's depth, shown plainly: one object on the desk, one shadow, hairlines for the book under it. The calmest a page can be.</li><li>Nothing new to learn: the same sheet, keys and tools; one key in and out.</li><li>Works over any of the reading directions, and later over a note's Reading view too.</li></ul>
+  <h2>Against</h2>
+  <ul><li>A mode: the contents and the shelf are a key away, not in sight.</li><li>On a wide window the desk is mostly empty; Showcase 2's spread would fill it better.</li><li>The tools are found by pointing; a newcomer may not know they're there (the tooltip and the menu name the key).</li></ul>`,
+});
+// The phone's bar comes and goes with a tap in the page's middle third, in the room.
+canvas.addEventListener('click', (e) => {
+  const body = e.target.closest('.phone__body');
+  if (!body || e.target.closest('button, a') || !inRoom() || !getSelection().isCollapsed) return;
+  const r = body.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width;
+  if (x >= 0.3 && x <= 0.7) { root.dataset.phonebar = root.dataset.phonebar === 'shown' ? 'hidden' : 'shown'; R.goal = R.nums?.start ?? 0; draw(); }
+});
+// In the room, the seal leaves it (before the window's own handler shows or hides the sidebar).
+canvas.addEventListener('click', (e) => {
+  if (!e.target.closest('[data-seal]') || !inRoom()) return;
+  e.stopPropagation();
+  room(false);
+}, true);
+</script>
+</body>
+</html>

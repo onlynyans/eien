@@ -80,9 +80,13 @@ function listRows() {
     const list = hits();
     if (!list.length) return `<p class="empty-rows">No “${esc(R.find.q.trim())}” in Chapters I to III.</p>`;
     return list.map((h, i) => {
-      const before = h.p.slice(Math.max(0, h.i - 34), h.i);
-      const after = h.p.slice(h.i + (h.b - h.a), h.i + (h.b - h.a) + 60);
-      return `<button class="row row--mark${i === R.find.at ? ' is-chosen' : ''}" data-hit="${i}" data-k="hit-${i}"${i === R.find.at ? ' aria-current="true"' : ''}><span class="t">…${esc(before)}<span class="found">${esc(h.p.slice(h.i, h.i + (h.b - h.a)))}</span>${esc(after)}…</span><span class="count">${pageNo(h.c, h.a)}</span><span class="p">${CHAPTERS[h.c].title}</span></button>`;
+      // The match in its words: whole words either side, an ellipsis only where the paragraph goes on.
+      const from = Math.max(0, h.i - 40);
+      const to = Math.min(h.p.length, h.i + (h.b - h.a) + 64);
+      const before = from ? h.p.slice(from, h.i).replace(/^\S*\s/, '') : h.p.slice(0, h.i);
+      const rest = h.p.slice(h.i + (h.b - h.a), to);
+      const after = to < h.p.length ? rest.replace(/\s\S*$/, '') : rest;
+      return `<button class="row row--mark${i === R.find.at ? ' is-chosen' : ''}" data-hit="${i}" data-k="hit-${i}"${i === R.find.at ? ' aria-current="true"' : ''}><span class="t">${from ? '…' : ''}${esc(before)}<span class="found">${esc(h.p.slice(h.i, h.i + (h.b - h.a)))}</span>${esc(after)}${to < h.p.length ? '…' : ''}</span><span class="count">${pageNo(h.c, h.a)}</span><span class="p">${CHAPTERS[h.c].title}</span></button>`;
     }).join('');
   }
   return CHAPTERS.map((ch, i) => `<button class="row row--ch${i === R.c ? ' is-chosen' : ''}" data-ch="${i}" data-k="ch-${i}"${i === R.c ? ' aria-current="true"' : ''}><span class="t">${ch.title}</span><span class="count" data-fill="ch-${i}"></span></button>`).join('');
