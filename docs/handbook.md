@@ -13,7 +13,9 @@ tags, books (a folder of chapters in order), **seals** (versions you keep),
 clean HTML on copy, word counts and goals, and exports (EPUB, Word, PDF).
 It runs on macOS, Windows and Linux (Electron), and on Android and iOS
 (Capacitor). Devices sync through the files themselves, with Syncthing; there
-is no server, no account and no network use at all.
+is no server, no account and no network use at all. Beside it, Eien Reader, a
+browser extension, shows stories on AO3 and FanFiction.Net in Eien's look
+(spec §14).
 
 Its first rule is that **words are never lost**: every path that removes
 text leaves it recoverable (a seal, a sibling copy, the system trash) and
@@ -31,7 +33,7 @@ stay out of sight until the pointer or the keyboard asks for them.
 3. [spec.md](spec.md): the source of truth for behaviour, by section (vault
    on disk §2, saving and sync §3, interface §4, architecture §5, settings
    §6, themes §7, HTML and exports §8, versions §9, phones and sync §10,
-   testing §11).
+   testing §11, the reader extension §14).
 4. [AGENTS.md](../AGENTS.md): the rules for the code, the module map, every
    command, the kinds of test, releasing. Written for people and coding
    agents alike.
@@ -68,6 +70,7 @@ Each row: what it is, its section of the spec, and where to start in the code.
 | Sync status (Syncthing) | §4 Layout | `src/ui/sidebar/sync-status.ts`, `src/ui/vault/own-writes.ts` |
 | The phones | §10 | `src/app/mobile/`, `android/`, `ios/`, `src/ui/phone/` |
 | Installers, portable copies, data folders | AGENTS → Releases | `electron-builder.ts`, `src/app/electron/data-folders.ts` |
+| The reader extension: AO3 and FanFiction.Net on Eien's paper | §14 | `src/core/reader`, `src/ui/reader/`, `src/platform/extension/`, `src/app/extension/manifest.ts` |
 
 ## 4. Architecture
 

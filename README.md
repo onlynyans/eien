@@ -121,6 +121,30 @@ an update.
   days. The vault is in the Files app under On My iPhone › Eien › Vault, where
   Möbius Sync can sync it.
 
+### Reading on AO3 and FanFiction.Net
+
+Eien Reader is a browser extension that shows a story on AO3 or
+FanFiction.Net on Eien's paper: the sheet, the typeface you choose, the
+themes, day and night. It works in Chrome, Edge, Brave and Firefox. It
+isn't in the browsers' stores yet; until it is, load it yourself:
+
+1. Open the latest
+   [CI run on main](https://github.com/onlynyans/eien/actions/workflows/ci.yml?query=branch%3Amain),
+   download `eien-reader-extension` (kept for 14 days) and unzip it. Or build
+   it: `npm run build:extension` makes `out/extension`.
+2. **Chrome, Edge, Brave:** open `chrome://extensions` (`edge://extensions`),
+   turn on Developer mode, click Load unpacked and choose the folder.
+   **Firefox:** open `about:debugging#/runtime/this-firefox`, click Load
+   Temporary Add-on… and choose `manifest.json` in the folder (Firefox lets it
+   go when it quits).
+3. Open a work. Press the seal in the page's bottom-right corner to read it
+   in Eien; the × (or Esc) shows the site's page again. ← and → turn the
+   chapter. The extension's button in the toolbar holds its settings.
+
+It reads only the stories' pages, keeps its settings in the browser (synced
+with your browser's account) and where you stopped in each chapter on this
+browser, and goes online for nothing of its own.
+
 ### Updating
 
 Eien doesn't update itself, and never goes online to look for a new version.

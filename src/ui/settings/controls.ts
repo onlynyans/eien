@@ -132,9 +132,11 @@ const FACE_SAMPLES: Partial<Record<SettingKey, { readonly text: string; readonly
 function faces(setting: ChoiceSetting, labelId: string, set: Set): Row {
   const { text, kind } = FACE_SAMPLES[setting.key as SettingKey] ?? { text: 'Aa Gg' };
   const buttons = Object.entries(setting.choices).map(([value, name]) => {
+    // A sample, not a name: the card is called by its face's name alone, the words it shows.
     const sample = h('span', {
       class: `face__sample${kind ? ` face__sample--${kind}` : ''}`,
       text,
+      attrs: { 'aria-hidden': 'true' },
     });
     if (kind) sample.style.setProperty('font-family', `var(--eien-family-${value})`);
     const card = choiceButton(
@@ -144,7 +146,6 @@ function faces(setting: ChoiceSetting, labelId: string, set: Set): Row {
       sample,
       h('span', { class: 'face__name', text: name }),
     );
-    card.setAttribute('aria-label', name);
     // A text face's sizes come with it: the tokens apply inside any element that names it.
     if (!kind && faceOf(value)) card.dataset.face = value;
     return card;
