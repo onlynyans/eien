@@ -59,6 +59,40 @@ export function listLabel(list: NoteList): string {
 
 /** Each list pane's long list (../shell/windowed-rows.ts), kept from draw to draw. */
 const windows = new WeakMap<HTMLElement, WindowedRows>();
+/** Which list each pane drew last (`placeOf`): drawn again, it keeps its scroll. */
+const drawn = new WeakMap<HTMLElement, string>();
+/** The row each pane's keyboard was on as the pane shut, to go back to (`focusList`). */
+const left = new WeakMap<HTMLElement, string>();
+
+/** The same list, as a redraw sees it: another one (a folder, a sort) starts at the top. */
+const placeOf = (list: NoteList) =>
+  JSON.stringify([list.kind, list.heading, list.folder ?? '', list.sort ?? '']);
+
+/** The pane shuts with the keyboard on a row: that row is where `focusList` goes back to. */
+export function keepPlace(container: HTMLElement): void {
+  const active = document.activeElement;
+  const path =
+    active instanceof HTMLElement && container.contains(active)
+      ? active.closest<HTMLElement>('.note-row[data-path]')?.dataset.path
+      : undefined;
+  if (path !== undefined) left.set(container, path);
+  else left.delete(container);
+}
+
+/** The row the list shut on, else the list's open note, or its first row, or (empty) its first control. */
+export function focusList(container: HTMLElement): void {
+  const path = left.get(container);
+  left.delete(container);
+  const windowed = windows.get(container);
+  if (path !== undefined && windowed?.element.isConnected && windowed.focusKey(path)) return;
+  const rows = [...container.querySelectorAll<HTMLElement>('.note-row')];
+  const target =
+    rows.find((row) => row.dataset.path === path) ??
+    rows.find((row) => row.getAttribute('aria-current') === 'true') ??
+    rows[0] ??
+    container.querySelector<HTMLElement>('button');
+  target?.focus();
+}
 
 /** What a row shows, as a string: the same string, the same element. */
 const rowShows = (note: ListedNote, book: boolean, ordered: boolean, shown: ShownNotes) =>
@@ -154,7 +188,14 @@ export function renderList(
     windowed = new WindowedRows(h('ul', { class: 'rows' }), 64);
     windows.set(container, windowed);
   }
-  const scrolled = windowed?.element.scrollTop ?? 0;
+  // The same list drawn again (news from the disk, the pane opened again) keeps its scroll,
+  // though a short one's rows are a new element.
+  const place = placeOf(list);
+  const scrolled =
+    drawn.get(container) === place
+      ? (container.querySelector<HTMLElement>(':scope > .rows')?.scrollTop ?? 0)
+      : 0;
+  drawn.set(container, place);
   if (long && windowed) {
     windowed.element.className = `${book ? 'rows rows--book' : 'rows'}${grips ? ' is-arranging' : ''}`;
     windowed.set(
@@ -192,8 +233,9 @@ export function renderList(
           )
         : empty,
   );
+  const scroller = container.querySelector<HTMLElement>(':scope > .rows');
+  if (scroller) scroller.scrollTop = scrolled;
   if (long && windowed) {
-    windowed.element.scrollTop = scrolled;
     windowed.render();
     if (focused !== undefined && windowed.focusKey(focused)) return;
   }

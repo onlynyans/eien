@@ -106,6 +106,8 @@ export class Sidebar {
   readonly #addTag: HTMLButtonElement;
   /** The control to give the keyboard back to after the next redraw, by its data-key. */
   #refocus: string | null = null;
+  /** The row the keyboard was on as the sidebar shut, by its data-key: `focusTree` goes back to it. */
+  #left: string | null = null;
   /** The frame last drawn (./signature.ts): the same again isn't rebuilt. */
   #drawn = '';
   /** The notes' rows last drawn, kept where they show the same. */
@@ -170,6 +172,9 @@ export class Sidebar {
    * control there, or the search field when it's here.
    */
   focusTree(): void {
+    const left = this.#left;
+    this.#left = null;
+    if (left !== null && this.#focusKey(left)) return;
     const rows = this.#shown('.tree-row__name');
     (
       rows.find((row) => row.getAttribute('aria-current') === 'true') ??
@@ -177,6 +182,15 @@ export class Sidebar {
       this.#shown('.sidebar__tree button')[0] ??
       this.searchSlot.querySelector<HTMLElement>('input')
     )?.focus();
+  }
+
+  /** The sidebar shuts with the keyboard in it: the row it was on is where `focusTree` goes back to. */
+  keepPlace(): void {
+    const active = document.activeElement;
+    this.#left =
+      active instanceof HTMLElement && this.#body.contains(active)
+        ? (active.dataset.key ?? null)
+        : null;
   }
 
   /** After a folder's rename or move: the keyboard goes to it, at `path` (or the row `key`), with the next redraw. */
@@ -315,15 +329,22 @@ export class Sidebar {
       if (focused === null || this.#folderField.active || this.#tagField.active) return;
       // Still on the control it was on: rows put right around it, or not touched at all.
       if (asked === null && document.activeElement === active) return;
-      const same = [...this.#body.querySelectorAll<HTMLElement>('[data-key]')].find(
-        (control) => control.dataset.key === focused,
-      );
-      const visible = same?.closest('[hidden]') ? undefined : same;
-      // A note's row in a long list may be out of sight, undrawn: its list brings it back.
-      if (!visible && this.#windows.focusKey(focused)) return;
-      const rows = visible || focusedAt < 0 ? [] : this.#shown('.tree-row__name');
-      (visible ?? rows[Math.min(focusedAt, rows.length - 1)])?.focus();
+      if (this.#focusKey(focused) || focusedAt < 0) return;
+      const rows = this.#shown('.tree-row__name');
+      rows[Math.min(focusedAt, rows.length - 1)]?.focus();
     };
+  }
+
+  /** Give the keyboard to the control `key` names, if it's in sight or a long list holds it. */
+  #focusKey(key: string): boolean {
+    const same = [...this.#body.querySelectorAll<HTMLElement>('[data-key]')].find(
+      (control) => control.dataset.key === key,
+    );
+    const visible = same?.closest('[hidden]') ? undefined : same;
+    // A note's row in a long list may be out of sight, undrawn: its list brings it back.
+    if (!visible) return this.#windows.focusKey(key);
+    visible.focus();
+    return true;
   }
 
   /** The controls `selector` finds that are in sight: none in a folded section. */

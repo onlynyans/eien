@@ -7,6 +7,7 @@
 import { SPRINT_MINUTES } from '../../core/counters';
 import { formatCommand } from '../../core/format';
 import type { ExportFormat, MenuCommand } from '../../platform/bridge';
+import { focusList } from '../list/list';
 import type { SearchField } from '../list/search-field';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
@@ -83,14 +84,4 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     const format = formatCommand(command.slice('format:'.length));
     if (format) page.editor.format(format);
   }
-}
-
-/** The list's open note, or its first row, or (an empty list) its first control. */
-export function focusList(list: HTMLElement): void {
-  const rows = [...list.querySelectorAll<HTMLElement>('.note-row')];
-  const target =
-    rows.find((row) => row.getAttribute('aria-current') === 'true') ??
-    rows[0] ??
-    list.querySelector<HTMLElement>('button');
-  target?.focus();
 }

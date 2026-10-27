@@ -29,8 +29,8 @@ export interface PaneParts {
   readonly shell: HTMLElement;
   readonly sidebar: HTMLElement;
   readonly list: HTMLElement;
-  /** Where the keyboard goes when the pane it was in shuts. */
-  leave(): void;
+  /** Where the keyboard goes when `pane`, which had it, shuts: the pane keeps the row it was on. */
+  leave(pane: Shuttable): void;
   /** A pane shut or opened, or the panes changed from three to two. */
   changed(): void;
   /** On a phone, the one pane in sight (../phone/phone-stack.ts); null on a wider window. */
@@ -140,7 +140,7 @@ export class PaneLayout {
     const hadFocus = this.#holds('list');
     this.#two = two;
     this.#apply();
-    if (two && hadFocus) this.#parts.leave(); // the list is gone, with the keyboard in it
+    if (two && hadFocus) this.#parts.leave('list'); // the list is gone, with the keyboard in it
     this.#parts.changed();
   }
 
@@ -152,7 +152,7 @@ export class PaneLayout {
     const hadFocus = this.#holds('list');
     this.#aside = on;
     this.#apply();
-    if (on && hadFocus) this.#parts.leave(); // the list stepped aside with the keyboard in it
+    if (on && hadFocus) this.#parts.leave('list'); // the list stepped aside with the keyboard in it
     this.#parts.changed();
   }
 
@@ -180,7 +180,7 @@ export class PaneLayout {
     this.#apply();
     this.#save();
     // A shut pane can't keep the keyboard: it goes to the page, never to nowhere.
-    if (shut && hadFocus) this.#parts.leave();
+    if (shut && hadFocus) this.#parts.leave(pane);
     this.#parts.changed();
   }
 

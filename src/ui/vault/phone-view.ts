@@ -5,13 +5,13 @@
 // bring up the phone's keyboard.
 
 import type { MenuCommand } from '../../platform/bridge';
+import { focusList } from '../list/list';
 import { closeMenu, openMenu } from '../menu/menu';
 import type { MenuBus } from '../menu/menu-bus';
 import { moreItems } from '../phone/more-menu';
 import { type PhonePane, PhoneStack } from '../phone/phone-stack';
 import type { SettingsState } from '../settings/settings-state';
 import type { Sidebar } from '../sidebar/sidebar';
-import { focusList } from './commands';
 import { exportMenu } from './menu-items';
 import type { PageParts } from './page-parts';
 import type { Pages } from './pages';

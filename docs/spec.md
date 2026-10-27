@@ -395,6 +395,10 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   seal; the seal alone is its own way back), in Running head the strip's
   sidebar and list icons, always in sight. A pane shut with the keyboard in it gives the
   keyboard to the page. ⌘1–3 open a shut pane before giving it the keyboard.
+  A pane opened again comes back where it was, for as long as the window is
+  open: the same rows in sight, and ⌘1 or ⌘2 gives the keyboard back to the
+  row it was on as the pane shut. The same list drawn again keeps its scroll;
+  another list, or another sort, starts at the top.
 - **Two panes** (Layout → Panes, or the pair at the sidebar's foot): the list
   is gone and the tree lists the notes, under the vault, each open folder (in
   the folder's own order and sort, a book's numbered), All Notes, Pinned and
