@@ -6,6 +6,7 @@
 
 import type { Bridge } from '../../platform/bridge';
 import { h } from '../dom';
+import { keepPlace } from '../list/list';
 import { SearchField } from '../list/search-field';
 import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
@@ -182,7 +183,11 @@ export async function showVault(
       shell,
       sidebar: sidebar.element,
       list,
-      leave: () => pages.active.page.focus(),
+      leave: (pane) => {
+        if (pane === 'sidebar') sidebar.keepPlace();
+        else keepPlace(listBody);
+        pages.active.page.focus();
+      },
       changed: () => void redraw(),
       phone: () => phone.stack.shown,
       showPhone: (pane) => phone.stack.show(pane),

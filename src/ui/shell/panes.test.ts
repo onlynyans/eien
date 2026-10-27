@@ -4,11 +4,11 @@
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import type { PhonePane } from '../phone/phone-stack';
 import { DEFAULT_PANES, LIMITS, STEP } from './pane-state';
-import { PaneLayout, type PaneParts, paneKeys } from './panes';
+import { PaneLayout, type PaneParts, paneKeys, type Shuttable } from './panes';
 
 const KEY = 'eien.panes';
 
-let parts: PaneParts & { leave: Mock<() => void>; changed: Mock<() => void> };
+let parts: PaneParts & { leave: Mock<(pane: Shuttable) => void>; changed: Mock<() => void> };
 let phone: PhonePane | null;
 let layout: PaneLayout | undefined;
 
@@ -34,7 +34,7 @@ beforeEach(() => {
     shell: root,
     sidebar,
     list,
-    leave: vi.fn<() => void>(),
+    leave: vi.fn<(pane: Shuttable) => void>(),
     changed: vi.fn<() => void>(),
     phone: () => phone,
     showPhone: vi.fn(),
@@ -100,7 +100,7 @@ describe('PaneLayout', () => {
     parts.list.querySelector('button')?.focus();
     panes.toggle('list');
     expect(parts.list.inert).toBe(true);
-    expect(parts.leave).toHaveBeenCalledOnce();
+    expect(parts.leave).toHaveBeenCalledWith('list');
 
     // Shutting a pane the keyboard isn't in leaves the keyboard be.
     panes.toggle('list');
