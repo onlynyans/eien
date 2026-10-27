@@ -78,9 +78,10 @@ export class NoteEditor {
   /**
    * Where a table's grips and + are drawn (./table-tools.ts): the editor's
    * own, kept from note to note; the page lays it over the editor, outside
-   * its shadow root, so they're the window's own controls.
+   * its shadow root, so they're the window's own controls. Quiet controls
+   * it turns on itself, not by the sheet's hover (../chrome/chrome.css).
    */
-  readonly tableTools = h('div', { class: 'table-tools' });
+  readonly tableTools = h('div', { class: 'table-tools quiet-own' });
 
   constructor(host: HTMLElement, events: EditorEvents) {
     this.#events = events;

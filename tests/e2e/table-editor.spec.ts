@@ -4,7 +4,7 @@
 
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { ALONE, editorContent, expect, readQuietly, test } from './launch';
+import { ALONE, editorContent, editorLines, expect, readQuietly, test } from './launch';
 
 const TABLE = '| Who | When |\n|---|---|\n| Mara | 30 |\n| Levi | 41 |\n';
 const NOTE = `Before.\n\n${TABLE}\nAfter.\n`;
@@ -92,6 +92,60 @@ test('a + on the line between two columns adds one there', async ({ page, vault 
   await saved(vault).toContain('| Who |  | When |\n|---| --- |---|\n| Mara |  | 30 |');
   await page.keyboard.press('ControlOrMeta+z');
   await saved(vault).toBe(NOTE);
+});
+
+test('a grip shows only for the pointer’s or the caret’s row and column, a + only on its line', async ({
+  page,
+}) => {
+  await open(page);
+  /**
+   * The table's controls in sight, by name, each read with its fade finished: what's read is
+   * the rule's answer, not a frame part-way (docs/flake-hardening.md).
+   */
+  const shown = () =>
+    page.locator('.table-tools').evaluate((layer) =>
+      [...layer.querySelectorAll('button')]
+        .filter((control) => {
+          for (const fade of control.getAnimations()) fade.finish();
+          return getComputedStyle(control).opacity !== '0';
+        })
+        .map((control) => control.getAttribute('aria-label')),
+    );
+  /** The pointer at (x, y) until `names` are what show (a hover can miss its first move). */
+  const pointAt = async (x: number, y: number, names: string[]) => {
+    await expect(async () => {
+      await page.mouse.move(x, y);
+      await page.mouse.move(x + 1, y);
+      expect(await shown()).toEqual(names);
+    }).toPass({ timeout: 5000 });
+  };
+  const mara = await cell(page, 'Mara').boundingBox();
+  const when = await cell(page, 'When').boundingBox();
+  const after = await editorLines(page).filter({ hasText: 'After.' }).boundingBox();
+  if (!mara || !when || !after) throw new Error('not laid out');
+  const middle = mara.y + mara.height / 2;
+
+  // A cell under the pointer: its row's grip and its column's, and no +.
+  await pointAt(mara.x + mara.width / 2, middle, [
+    'Column Who: menu, or drag to move',
+    'Row 1: menu, or drag to move',
+  ]);
+  // On the line between Who and When: that line's + too, and only it.
+  await pointAt(when.x + 1, middle, [
+    'Add a column between Who and When',
+    'Column When: menu, or drag to move',
+    'Row 1: menu, or drag to move',
+  ]);
+  // The pointer on the sheet, off the table, the caret moved by key: the caret's grips alone.
+  await cell(page, 'Mara').click();
+  await pointAt(after.x + after.width / 2, after.y + after.height / 2, [
+    'Column Who: menu, or drag to move',
+    'Row 1: menu, or drag to move',
+  ]);
+  await page.keyboard.press('ArrowDown');
+  await expect
+    .poll(shown)
+    .toEqual(['Column Who: menu, or drag to move', 'Row 2: menu, or drag to move']);
 });
 
 test(
