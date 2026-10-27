@@ -670,6 +670,23 @@ CommonMark plus GitHub extensions, and three common additions:
     the sidebar: the chosen row's filter and sort are quiet icons at the end
     of the search field's row (a group named "Sort and filter <row>"), its
     chips under it while a lens is on, acting on that row's notes in the tree.
+- **Include subfolders** (backlog #42): a folder with folders in it has a
+  quiet toggle in its list's head, beside the filter and sort, that lists its
+  subfolders' notes too, at every depth. Kept per folder on this device, as
+  the lens is, and following a folder renamed or moved; off, the list is the
+  folder's own notes. Your order holds: the folder's own notes first, then
+  each subfolder's under a head with its path below the folder ("ARC 2 /
+  CUT", label type), the groups in your folder order (each folder just
+  before the folders in it), each group in its own order or the list's sort.
+  A subfolder with no notes listed has no head. It isn't a lens: rows still
+  move with it on, and Arrange keeps it. ⌥↑ ⌥↓ and a drag move a note within
+  its group; let go among another group's rows, a note moves to that folder
+  (as onto the folder in the sidebar, keeping order and pins in step), placed
+  where it was let go. The tag filter and a search in the list take in the
+  subfolders' notes too, a search's hits in their groups, best first in each;
+  the count says "· With subfolders". With two panes the tree lists each
+  folder's notes under its own row, as always, never twice. ↑ ↓ (Home, End)
+  move from row to row in any note list, over the heads, which are no stop.
 - **Books:** Make it a book / Not a book, in a folder's menu.
 - **Pinned** notes are listed under Library, in the order pinned
   (`.eien/pinned.json`, watched like the settings). ⇧⌘P (Ctrl+Shift+P) on a

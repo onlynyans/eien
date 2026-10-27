@@ -9,7 +9,7 @@
 import { type Arrange, canDrag, lensParts } from '../list/lens-bar';
 import { type ListActions, renderList } from '../list/list';
 import type { ShownNotes } from '../list/shown-notes';
-import { filterFor, listKey, sortFor } from '../list/sorts';
+import { filterFor, listKey, nestedFor, sortFor } from '../list/sorts';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
@@ -110,14 +110,17 @@ export class PaneDrawer {
     const words = nav.query.trim();
     const arrange = this.#parts.arrange();
     const key = listKey(nav.selection);
+    // Subfolders' notes too (backlog #42): the list's alone; the tree already shows each folder's.
+    const nested = nestedFor(key);
     // Arranging: your order shows, the lens set aside until Done.
     const notes = words
-      ? await state.search(words, inList ? nav.selection : null)
+      ? await state.search(words, inList ? nav.selection : null, nested)
       : await state.notesFor(
           nav.selection,
           settings.values['books.numerals'],
           arrange.on ? 'order' : sortFor(key),
           arrange.on ? undefined : filterFor(key),
+          nested,
         );
     if (turn !== this.#listTurn) return;
     this.#listOrdered = canDrag(notes, arrange) && !words;

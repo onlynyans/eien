@@ -2,8 +2,8 @@
 // arrow, its menu or a drag, and a tag by ⌥↑ ⌥↓. Each runs as a file
 // operation, then the keyboard goes with what moved, wherever it is now.
 
-import { parentOf } from '../../core/paths';
-import { placedBefore } from '../../core/vault';
+import { joinPath, parentOf } from '../../core/paths';
+import { FOLDER_SETTINGS_NAME, placedBefore } from '../../core/vault';
 import type { FolderMove, Sidebar } from '../sidebar/sidebar';
 import {
   dropFolder,
@@ -65,10 +65,20 @@ export function orderActions(of: OrderActionsOf) {
       [shown[at], shown[at + by]] = [shown[at + by] as string, shown[at] as string];
       void act(() => organizer.setAllOrder(shown));
     },
-    /** A note dragged into place in the list showing, before `before` (last, for null). */
-    placeNote(path: string, before: string | null): void {
+    /**
+     * A note dragged into place in the list showing, before `before` (last, for
+     * null). Let go in another group (a subfolder's notes, backlog #42), it
+     * moves to that group's folder first: the same move as onto its folder.
+     */
+    placeNote(path: string, before: string | null, group?: string): void {
       if (nav.selection.kind !== 'all') {
-        void act(() => organizer.placeBefore(path, before));
+        void act(async () => {
+          const into = group ?? parentOf(path);
+          const at = await organizer.moveInto(path, into, true);
+          if (at === null) return; // it couldn't move: the writer is told why
+          if (at !== path) await state.refresh([joinPath(into, FOLDER_SETTINGS_NAME)]);
+          await organizer.placeBefore(at, before);
+        });
         return;
       }
       void act(() => organizer.setAllOrder(placedBefore(state.allOrder(), path, before)));

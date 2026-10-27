@@ -34,4 +34,5 @@ export {
 } from './folder-settings';
 export { HOME_EXPORTS, HOME_FOLDER, HOME_VAULT } from './home';
 export { inYourOrder, movedPins, parsePins, pinsText, withoutPins, withPin } from './pins';
+export { type Grouped, inGroups, type Subfolder, subfoldersOf, withHeads } from './subfolders';
 export { buildTree, byName, type FolderNode } from './tree';

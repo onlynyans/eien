@@ -70,6 +70,9 @@ export const ICONS = {
   check: '<path d="M3 8.5l3 3 7-7"/>',
   back: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
   folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
+  // A folder's notes and, indented under it, its subfolders' (the list's Include subfolders).
+  subfolders:
+    '<path d="M2.5 3.5h7"/><path d="M4.5 3.5v8.5h2M4.5 8h2"/><path d="M8.5 8h5M8.5 12h5"/>',
   palette:
     '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
   type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',

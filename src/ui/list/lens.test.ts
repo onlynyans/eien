@@ -46,6 +46,39 @@ describe('lensParts', () => {
     expect(parts.controls.some((control) => control.classList.contains('is-on'))).toBe(false);
   });
 
+  it('a folder with subfolders: Include subfolders, pressed while on, and kept while arranging', () => {
+    const run = { ...actions(), nest: vi.fn(), arrange: vi.fn() };
+    const labels = (parts: ReturnType<typeof lensParts>) =>
+      parts.controls.map((control) => control.getAttribute('aria-label'));
+    const off = lensParts(list({ nested: false }), run);
+    expect(labels(off)).toEqual(['Include subfolders', 'Filter by tag', 'Sorted by order']);
+    expect(off.controls[0]?.getAttribute('aria-pressed')).toBe('false');
+    (off.controls[0] as HTMLButtonElement).click();
+    expect(run.nest).toHaveBeenCalledWith(true);
+    const on = lensParts(list({ nested: true }), run);
+    expect(on.controls[0]?.getAttribute('aria-pressed')).toBe('true');
+    (on.controls[0] as HTMLButtonElement).click();
+    expect(run.nest).toHaveBeenLastCalledWith(false);
+    // Not a lens: it isn't set aside while arranging, and it's no chip.
+    expect(on.chips).toBeNull();
+    expect(
+      labels(lensParts(list({ nested: true }), run, 'list', { mode: true, on: true })),
+    ).toEqual(['Done arranging', 'Include subfolders']);
+    // No subfolders, or no way to show them (the tree's lists): no toggle.
+    expect(labels(lensParts(list(), run))).not.toContain('Include subfolders');
+    expect(labels(lensParts(list({ nested: true }), actions()))).not.toContain(
+      'Include subfolders',
+    );
+  });
+
+  it('says how many notes, and that they’re with the subfolders’', () => {
+    expect(listLabel(list({ nested: true }))).toBe('4 notes · With subfolders');
+    expect(listLabel(list({ nested: false }))).toBe('4 notes');
+    expect(listLabel(list({ nested: true, kind: 'book', total: 2, of: 5 }))).toBe(
+      '2 of 5 notes · Book · With subfolders',
+    );
+  });
+
   it('a search has no lens', () => {
     const search: NoteList = { kind: 'search', heading: 'x', notes: [], total: 0, sorts: [] };
     expect(lensParts(search, actions())).toEqual({ controls: [], chips: null });

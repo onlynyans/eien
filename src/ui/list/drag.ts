@@ -1,6 +1,8 @@
 // Dragging a note (spec §4): onto a folder in the sidebar to move it there,
 // in a folder's own order between the list's rows to place it, or onto the
-// page pane to open it there (../vault/page-drop.ts). The row
+// page pane to open it there (../vault/page-drop.ts). Where the rows are in
+// groups (a folder's subfolders' notes, backlog #42), a row let go among
+// another group's goes into that group's folder. The row
 // lifts off the paper and follows the pointer; a hairline marks where it
 // will go (docs/design). Esc puts it back. The keyboard has the same moves:
 // the row's menu, and Alt+↑/↓.
@@ -10,8 +12,11 @@ export interface DragActions {
   orderable(): boolean;
   /** Move the note at `path` into `folder` ("" for the vault itself). */
   moveTo(path: string, folder: string): void;
-  /** Place the note at `path` just before the note at `before` (last, for null). */
-  placeBefore(path: string, before: string | null): void;
+  /**
+   * Place the note at `path` just before the note at `before` (last, for null);
+   * in the group `group` names (its row's `data-group`), where the rows have groups.
+   */
+  placeBefore(path: string, before: string | null, group?: string): void;
   /** The page pane, where a note let go opens. */
   readonly page?: PageDrop;
 }
@@ -29,7 +34,10 @@ export interface PageDrop {
 /** How far the pointer goes before a press becomes a drag, in pixels. */
 export const DRAG_AFTER = 5;
 
-type Drop = { readonly folder: string } | { readonly before: string | null } | 'page';
+type Drop =
+  | { readonly folder: string }
+  | { readonly before: string | null; readonly group?: string }
+  | 'page';
 
 /**
  * Let `list`'s rows (`rows`: the note list's, or the sidebar tree's notes)
@@ -144,7 +152,8 @@ export function watchDrags(
         const next = after
           ? (over.closest('li')?.nextElementSibling?.querySelector<HTMLElement>(rows) ?? null)
           : over;
-        drop = { before: next?.dataset.path ?? null };
+        // The group of the row it's let go beside: "after the last" stays in that row's group.
+        drop = { before: next?.dataset.path ?? null, group: over.dataset.group };
         // Across, the line goes halfway into the gap: "after this" and "before the next" are one place.
         const half = across ? Number.parseFloat(getComputedStyle(list).columnGap) / 2 || 0 : 0;
         if (across) mark(after ? rect.right + half : rect.left - half, rect);
@@ -180,9 +189,12 @@ export function watchDrags(
       actions.page?.leave();
       if (!commit || !target || target === 'page') return;
       if ('folder' in target) actions.moveTo(path, target.folder);
-      // Before itself, or before the one already after it: where it is. Nothing to write.
-      else if (target.before !== path && target.before !== nextOf(row, rows)) {
-        actions.placeBefore(path, target.before);
+      // Before itself, or before the one already after it in its own group: where it is. Nothing to write.
+      else if (
+        target.before !== path &&
+        (target.before !== nextOf(row, rows) || target.group !== row.dataset.group)
+      ) {
+        actions.placeBefore(path, target.before, target.group);
       }
     };
     // Where it was let go counts, though its last move may have come only with the release.

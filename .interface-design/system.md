@@ -227,6 +227,15 @@ if a theme should change it, it joins `THEME_TOKENS`.
   while filtered) and the lens's quiet icons (Arrange in Arrange mode, the
   filter, the sort); the lens's chips under that, then the locked line when
   rows can't move.
+- **Group head** (backlog #42, a folder's list with its subfolders' notes):
+  a section, not a card. The subfolder's path below the folder in label type
+  ("ARC 2 / CUT", never bold, one line), on the paper, 24px above (between
+  groups), 8px below, the row's 16px at its sides; the row above's soft rule
+  closes the group before. No ground, no rule of its own, no count, and no
+  stop for the keyboard.
+- **A toggle in the list's head** (Arrange while arranging, Include
+  subfolders): a quiet icon; on, ink on the selected ground in a rule-strong
+  hairline (`aria-pressed`). A lens control that's on has the dot instead.
 - **Note row:** padding 12px above and below (`--eien-row-pad-y`, 8px compact)
   and 16px at the sides, a soft rule beneath; title in
   row size, count or date in mono at the right; a line of preview in pencil

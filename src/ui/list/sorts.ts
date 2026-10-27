@@ -1,13 +1,15 @@
 // The lens over each list, remembered on this device (spec §2: per-device
 // state stays out of the vault), in the window's own storage: how it's
 // sorted, and the tag filter laid over it (docs/design/explorations/order.md).
-// Neither ever changes the list's own order.
+// Neither ever changes the list's own order. Beside them, whether a folder's
+// list shows its subfolders' notes too (backlog #42).
 
 import { NO_FILTER, readFilter, type TagFilter } from '../../core/tags';
 import type { NoteSort, Selection } from '../vault/vault-state';
 
 const SORTS_KEY = 'eien.sorts';
 const FILTERS_KEY = 'eien.filters';
+const NESTED_KEY = 'eien.subfolders';
 const SORTS: readonly NoteSort[] = ['order', 'title', 'modified'];
 
 /** The list a selection shows, as its lens is remembered by. */
@@ -55,9 +57,17 @@ export function rememberFilter(list: string, filter: TagFilter): void {
   store(FILTERS_KEY, filter.tags.length === 0 ? rest : { ...rest, [list]: filter });
 }
 
+/** Whether a list shows its subfolders' notes too: a folder's, when chosen; off until then. */
+export const nestedFor = (list: string): boolean => stored(NESTED_KEY)[list] === true;
+
+export function rememberNested(list: string, nested: boolean): void {
+  const { [list]: _, ...rest } = stored(NESTED_KEY);
+  store(NESTED_KEY, nested ? { ...rest, [list]: true } : rest);
+}
+
 /** A folder renamed or moved: the lens of it and of the folders in it follows. */
 export function followSorts(from: string, to: string): void {
-  for (const key of [SORTS_KEY, FILTERS_KEY]) {
+  for (const key of [SORTS_KEY, FILTERS_KEY, NESTED_KEY]) {
     const moved = Object.entries(stored(key)).map(([list, value]) => {
       const path = list.startsWith('folder:') ? list.slice('folder:'.length) : null;
       const inside = path !== null && (path === from || path.startsWith(`${from}/`));

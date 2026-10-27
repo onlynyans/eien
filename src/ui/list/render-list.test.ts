@@ -198,6 +198,76 @@ describe('renderList', () => {
     expect(run.sort).toHaveBeenCalledWith('title');
   });
 
+  describe('with its subfolders’ notes (backlog #42)', () => {
+    const groups = [
+      { path: 'Drafts/Arc 1', name: 'Arc 1' },
+      { path: 'Drafts/Arc 1/Cut', name: 'Arc 1 / Cut' },
+    ];
+    const nested = folder(['Drafts/own.md', 'Drafts/Arc 1/a.md', 'Drafts/Arc 1/Cut/b.md'], {
+      nested: true,
+      groups,
+    });
+    const shape = () =>
+      [...container.querySelectorAll('ul.rows > li')].map((item) =>
+        item.classList.contains('note-group')
+          ? `# ${item.textContent}`
+          : (item.querySelector<HTMLElement>('.note-row')?.dataset.path ?? ''),
+      );
+
+    it('heads each subfolder’s notes with its name, a heading and no stop; the folder’s own first', () => {
+      renderList(container, nested, NONE_SHOWN, actions());
+      expect(shape()).toEqual([
+        'Drafts/own.md',
+        '# Arc 1',
+        'Drafts/Arc 1/a.md',
+        '# Arc 1 / Cut',
+        'Drafts/Arc 1/Cut/b.md',
+      ]);
+      const head = container.querySelector('.note-group');
+      expect(head?.querySelector('h3')?.textContent).toBe('Arc 1');
+      expect(head?.querySelector('button, [tabindex]')).toBeNull();
+      // Each row says its group, for a drag let go among another's.
+      expect(row('Drafts/Arc 1/a.md').dataset.group).toBe('Drafts/Arc 1');
+      expect(container.querySelector('.list__count')?.textContent).toBe(
+        '3 notes · With subfolders',
+      );
+    });
+
+    it('the arrows move from row to row across the groups, over the heads', () => {
+      renderList(container, nested, NONE_SHOWN, actions());
+      row('Drafts/own.md').focus();
+      key(document.activeElement as Element, { key: 'ArrowDown' });
+      expect(document.activeElement).toBe(row('Drafts/Arc 1/a.md'));
+      key(document.activeElement as Element, { key: 'ArrowDown' });
+      expect(document.activeElement).toBe(row('Drafts/Arc 1/Cut/b.md'));
+      key(document.activeElement as Element, { key: 'ArrowDown' });
+      expect(document.activeElement).toBe(row('Drafts/Arc 1/Cut/b.md'));
+      key(document.activeElement as Element, { key: 'Home' });
+      expect(document.activeElement).toBe(row('Drafts/own.md'));
+      key(document.activeElement as Element, { key: 'End' });
+      expect(document.activeElement).toBe(row('Drafts/Arc 1/Cut/b.md'));
+      key(document.activeElement as Element, { key: 'ArrowUp' });
+      expect(document.activeElement).toBe(row('Drafts/Arc 1/a.md'));
+    });
+
+    it('a long list draws heads among its rows, counted apart from them', () => {
+      const paths = Array.from({ length: 300 }, (_, i) =>
+        i < 100 ? `Drafts/n${i}.md` : `Drafts/Arc 1/n${i}.md`,
+      );
+      const list = folder(paths, { nested: true, groups });
+      renderList(container, list, NONE_SHOWN, actions());
+      const rows = container.querySelector<HTMLElement>('ul.rows') as HTMLElement;
+      rows.style.overflowY = 'auto';
+      Object.defineProperty(rows, 'clientHeight', { value: 400, configurable: true });
+      rows.scrollTop = 100 * 64 - 100;
+      renderList(container, list, NONE_SHOWN, actions());
+      const head = container.querySelector('ul.rows > li.note-group');
+      expect(head?.textContent).toBe('Arc 1');
+      expect(head?.hasAttribute('aria-posinset')).toBe(false);
+      expect(row('Drafts/Arc 1/n100.md').closest('li')?.getAttribute('aria-setsize')).toBe('300');
+    });
+  });
+
   describe('thousands of notes', () => {
     const many = (first = 'n0.md') =>
       folder([first, ...Array.from({ length: 2999 }, (_, i) => `n${i + 1}.md`)]);

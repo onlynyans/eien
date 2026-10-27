@@ -30,6 +30,7 @@ import {
   FOLDER_SETTINGS_NAME,
   type FolderNode,
   type FolderSettings,
+  inGroups,
   inYourOrder,
   isSyncConflictName,
   NO_FOLDER_SETTINGS,
@@ -37,6 +38,8 @@ import {
   orderNames,
   parseFolderSettings,
   parsePins,
+  type Subfolder,
+  subfoldersOf,
   type VaultEntry,
 } from '../../core/vault';
 import type { VaultBridge } from '../../platform/bridge';
@@ -78,6 +81,13 @@ export interface NoteList {
   /** The tag filter laid over it, when one is; `of`, how many there were before it. */
   readonly filter?: TagFilter;
   readonly of?: number;
+  /**
+   * A folder with folders in it: whether its list shows their notes too (the
+   * toggle's state; absent where there's no toggle, as for the tree's lists).
+   */
+  readonly nested?: boolean;
+  /** Showing subfolders' notes: the subfolders, in your order, each a group under its name. */
+  readonly groups?: readonly Subfolder[];
 }
 
 /** A book's words, as the index has them. */
@@ -266,18 +276,19 @@ export class VaultState {
   }
 
   /**
-   * The notes to list for `selection`, sorted by `sort` (else the list's own
-   * default); a book's numbered in `numerals`, by the book's order however
-   * the list is sorted.
+   * The notes `selection` lists, sorted by `sort` (else its own), through
+   * `filter` if one is laid over it; a book's numbered in `numerals`, by the
+   * book's order however the list is sorted. A folder's, with `nested`, has
+   * its subfolders' notes too, each folder's a group (backlog #42).
    */
-  /** The notes `selection` lists, sorted by `sort` (else its own), through `filter` if one is laid over it. */
   async notesFor(
     selection: Selection,
     numerals: NumeralStyle = 'roman',
     sort?: NoteSort,
     filter: TagFilter = NO_FILTER,
+    nested?: boolean,
   ): Promise<NoteList> {
-    const list = await this.#notesFor(selection, numerals, sort);
+    const list = await this.#notesFor(selection, numerals, sort, nested);
     if (!filtering(filter)) return list;
     const notes = list.notes.filter((note) =>
       passes(this.#notes.get(note.path)?.tags ?? [], filter),
@@ -289,6 +300,7 @@ export class VaultState {
     selection: Selection,
     numerals: NumeralStyle,
     sort?: NoteSort,
+    nested?: boolean,
   ): Promise<NoteList> {
     const sorted = (notes: ListedNote[], by: NoteSort) => {
       if (by === 'title') return notes.sort((a, b) => byName(a.title, b.title));
@@ -339,20 +351,26 @@ export class VaultState {
     }
 
     const folder = findFolder(this.#tree, selection.path) ?? this.#tree;
-    const settings = await this.folderSettings(folder.path);
-    const book = settings.book !== null;
-    const names = orderNames(folder.notes.map(baseName), settings.order);
-    // A book, or a folder put in order by hand, opens in its own order.
-    const by = sort ?? (book || settings.order.length > 0 ? 'order' : 'modified');
-    const notes = sorted(
-      names.map((name, i) =>
-        this.#listed(
-          joinPath(folder.path, name),
-          book ? chapterNumber(i + 1, numerals) : undefined,
-        ),
-      ),
-      by,
+    const subfolders = subfoldersOf(folder);
+    const groups = nested && subfolders.length > 0 ? subfolders : [];
+    const settings = await Promise.all(
+      [folder.path, ...groups.map((group) => group.path)].map((path) => this.folderSettings(path)),
     );
+    const own = settings[0] ?? NO_FOLDER_SETTINGS;
+    const book = own.book !== null;
+    // A book, or a folder put in order by hand, opens in its own order.
+    const by = sort ?? (book || own.order.length > 0 ? 'order' : 'modified');
+    // Each folder's notes in its own order (a book's numbered), sorted within it: the groups stay in yours.
+    const notes = [folder.path, ...groups.map((group) => group.path)].flatMap((path, at) => {
+      const { order, book: isBook } = settings[at] ?? NO_FOLDER_SETTINGS;
+      const names = orderNames((findFolder(folder, path)?.notes ?? []).map(baseName), order);
+      return sorted(
+        names.map((name, i) =>
+          this.#listed(joinPath(path, name), isBook ? chapterNumber(i + 1, numerals) : undefined),
+        ),
+        by,
+      );
+    });
     return {
       kind: book ? 'book' : 'folder',
       heading: this.nameOf(selection),
@@ -361,6 +379,8 @@ export class VaultState {
       sort: by,
       sorts: ['order', 'title', 'modified'],
       folder: folder.path,
+      ...(nested !== undefined && subfolders.length > 0 ? { nested } : {}),
+      ...(groups.length > 0 ? { groups } : {}),
     };
   }
 
@@ -374,23 +394,26 @@ export class VaultState {
 
   /**
    * The notes holding every word of `query`, with the words around the
-   * match: the whole vault's, or, `within` a list, only the notes it holds.
+   * match: the whole vault's, or, `within` a list, only the notes it holds
+   * (a folder's subfolders' too, `nested`, the hits in its groups).
    */
-  async search(query: string, within: Selection | null = null): Promise<NoteList> {
+  async search(query: string, within: Selection | null = null, nested = false): Promise<NoteList> {
     // All Notes holds every note: the index needn't be told which.
-    const among =
+    const list =
       within && within.kind !== 'all'
-        ? (await this.notesFor(within)).notes.map((note) => note.path)
+        ? await this.notesFor(within, undefined, undefined, undefined, nested)
         : null;
-    const result = await this.#vault.search(query, among);
-    const notes = result.hits.map((hit) => ({ ...this.#listed(hit.path), preview: hit.snippet }));
+    const result = await this.#vault.search(query, list?.notes.map((note) => note.path) ?? null);
+    const hits = result.hits.map((hit) => ({ ...this.#listed(hit.path), preview: hit.snippet }));
+    const groups = list?.groups;
     return {
       kind: 'search',
       heading: `“${query.trim()}”`,
-      notes,
+      notes: groups ? inGroups(hits, groups) : hits,
       total: result.total,
       sorts: [],
       ...(within ? { within: this.nameOf(within) } : {}),
+      ...(groups ? { groups } : {}),
     };
   }
 
