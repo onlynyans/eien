@@ -162,12 +162,14 @@
 /* A quiet control (the + in a section or the list's head, the lens's filter, sort and
    Arrange): out of sight until the row it sits in (`.quiet-row`) is hovered, or it has the
    keyboard, is open or is on; always in sight on a phone, which has no hover. One rule for
-   every pane. Its own hover, press and focus are the icon button's, above. */
+   every pane. Its own hover, press and focus are the icon button's, above. A layer that
+   turns its own on (`.quiet-own`: the table's grips and +, by where the pointer and caret
+   are) isn't lit by the row round it, as the sheet is a row for its ×. */
 .icon-button--quiet {
   opacity: 0;
   transition: opacity var(--eien-calm) var(--eien-ease);
 }
-.quiet-row:hover .icon-button--quiet,
+.quiet-row:hover .icon-button--quiet:not(.quiet-own *),
 .icon-button--quiet:focus-visible,
 .icon-button--quiet[aria-expanded="true"],
 .icon-button--quiet[aria-pressed="true"],

@@ -49,8 +49,24 @@ function unboundAfterAttribute(selector: string): boolean {
   return unboundAfter(selector, (compound) => compound.includes('['));
 }
 
+/** `selector`'s compounds, split at its combinators but not inside a :not(), :has() or :nth-child(). */
+function compoundsOf(selector: string): string[] {
+  const compounds: string[] = [];
+  let depth = 0;
+  let compound = '';
+  for (const char of selector) {
+    if (char === '(') depth++;
+    if (char === ')') depth--;
+    if (depth === 0 && /[\s>+~]/.test(char)) {
+      if (compound) compounds.push(compound);
+      compound = '';
+    } else compound += char;
+  }
+  return compound ? [...compounds, compound] : compounds;
+}
+
 function unboundAfter(selector: string, changes: (compound: string) => boolean): boolean {
-  const compounds = selector.split(/\s*[>+~]\s*|\s+/).filter(Boolean);
+  const compounds = compoundsOf(selector);
   const last = compounds[compounds.length - 1] ?? '';
   const ancestors = compounds.slice(0, -1);
   if (!ancestors.some(changes)) return false;
@@ -67,6 +83,8 @@ describe('unboundAfterState', () => {
     expect(unboundAfterState('.page__tools:focus-within')).toBe(false);
     expect(unboundAfterState('.row:hover > button')).toBe(false);
     expect(unboundAfterState('.row:hover [data-x]')).toBe(false);
+    expect(unboundAfterState('.row:hover .button:not(.layer *)')).toBe(false);
+    expect(unboundAfterState('.row:hover :not(.layer *)')).toBe(true);
   });
 });
 
