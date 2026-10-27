@@ -1,7 +1,7 @@
 // The window's top-left corner knows whether macOS's traffic lights are in it:
 // in a window, yes; in full screen, and on Windows and Linux (controls at the
-// right), no. And the bands know how wide the system's controls stand, as the
-// overlay last told, whatever the window's width does between (#44).
+// right), no. And the bands know how wide the system's controls stand,
+// measured once the window holds still, never in the middle of a resize (#44).
 
 import { afterEach, describe, expect, it } from 'vitest';
 import { followControlsLeft } from './controls-left';
@@ -65,31 +65,54 @@ describe('followControlsLeft', () => {
 
   const width = () => root.style.getPropertyValue('--controls-w');
 
-  it('keeps the bands clear by the controls’ width, measured until a resize', () => {
+  /** The next `count` frames drawn. */
+  const frames = (count: number) =>
+    new Promise<void>((done) => {
+      const next = (left: number) =>
+        left === 0 ? done() : requestAnimationFrame(() => next(left - 1));
+      next(count);
+    });
+
+  it('keeps the bands clear by the controls’ width, held through a resize', async () => {
     resize(1200);
     const overlay = fakeOverlay(true, 0, 138); // Windows' or Linux's, at the right
     const stop = followControlsLeft();
     expect(width()).toBe('138px');
-    // Told in the middle of a resize, the area a step behind the window's width (Linux) or
-    // ahead of it (a Mac): the width holds.
-    resize(1400);
-    overlay.controls = 338;
+    // Each step of a resize told with the area a step behind the window's width (Linux) or
+    // ahead of it (a Mac): the width holds, each frame, as long as the resize goes on.
+    for (const [step, off] of [
+      [1240, 40],
+      [1280, -40],
+      [1320, 40],
+    ] as const) {
+      resize(step);
+      dispatchEvent(new Event('resize'));
+      overlay.controls = 138 + off;
+      overlay.dispatchEvent(new Event('geometrychange'));
+      expect(width()).toBe('138px');
+      await frames(1);
+      expect(width()).toBe('138px');
+    }
+    // Held still, the overlay caught up: measured again, the same width.
+    overlay.controls = 138;
+    await frames(4);
+    expect(width()).toBe('138px');
+    stop();
+  });
+
+  it('measures again once still, after a zoom or full screen', async () => {
+    resize(1200);
+    const overlay = fakeOverlay(true, 0, 138);
+    const stop = followControlsLeft();
+    overlay.controls = 150; // a zoom: the controls wider in the page's pixels
     overlay.dispatchEvent(new Event('geometrychange'));
     expect(width()).toBe('138px');
-    overlay.controls = -62;
-    overlay.dispatchEvent(new Event('geometrychange'));
-    expect(width()).toBe('138px');
-    // A taller band (a zoom), or full screen and back: measured again.
-    overlay.controls = 150;
-    overlay.height = 48;
-    overlay.dispatchEvent(new Event('geometrychange'));
+    await frames(4);
     expect(width()).toBe('150px');
     overlay.visible = false;
     overlay.dispatchEvent(new Event('geometrychange'));
+    await frames(4);
     expect(width()).toBe('0px');
-    overlay.visible = true;
-    overlay.dispatchEvent(new Event('geometrychange'));
-    expect(width()).toBe('150px');
     stop();
   });
 
