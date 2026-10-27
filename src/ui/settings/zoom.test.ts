@@ -3,12 +3,8 @@ import { isZoomCommand, zoomedBy, zoomKeyFor } from './zoom';
 
 describe('which zoom ⌘+ and ⌘− change (spec §4)', () => {
   it('is the page’s with the keyboard in it, the whole window’s elsewhere', () => {
-    expect(zoomKeyFor(true, true)).toBe('page.zoom');
-    expect(zoomKeyFor(false, true)).toBe('window.zoom');
-  });
-
-  it('is the page’s wherever the window has no zoom of its own (a phone)', () => {
-    expect(zoomKeyFor(false, false)).toBe('page.zoom');
+    expect(zoomKeyFor(true)).toBe('page.zoom');
+    expect(zoomKeyFor(false)).toBe('window.zoom');
   });
 
   it('steps by 10%, stops at 50% and 200%, and ⌘0 puts back 100%', () => {

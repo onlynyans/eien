@@ -1051,9 +1051,14 @@ does nothing.
   properties on `<html>` that the tokens follow.
 - Zoom (⌘+, ⌘−, ⌘0, and the View menu) is two settings, as §4 says: the
   page's (Page zoom) scales the sheet only, with its margins and line, the
-  panes keeping their size; the interface's (Interface zoom, desktop only)
-  scales every pane, set by the main process on the window. Text size scales
-  the text face everywhere.
+  panes keeping their size; the interface's (Interface zoom) scales
+  everything, as a browser zooms: laid out again at the width it leaves, so
+  a smaller zoom is more room (a Galaxy Z Fold 5 sideways at 80% lays out at
+  about 880px, not 706, and its Wide screen room follows). The desktop's is
+  set by the main process on the window; a phone's by the page's viewport
+  (`ui/settings/viewport.ts`; Android's WebView reads it as a browser does
+  with its wide viewport on), never smaller than chosen (the app takes no
+  pinch). Text size scales the text face everywhere.
 
 ### Settings over the window
 

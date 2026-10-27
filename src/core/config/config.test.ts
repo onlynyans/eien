@@ -54,6 +54,10 @@ describe('the schema', () => {
     expect(offeredOn(spellcheck, 'linux')).toBe(false);
     // The phone's build: Capacitor's android and ios, and web, its page in a browser (tests/mobile).
     for (const phone of ['android', 'ios', 'web']) expect(offeredOn(room, phone)).toBe(true);
+    // Interface zoom everywhere: the desktop's window by Electron, a phone's page by its viewport.
+    const zoom = settingOf('window.zoom');
+    for (const each of ['android', 'ios', 'web', 'darwin', 'win32', 'linux'])
+      expect(zoom && offeredOn(zoom, each), each).toBe(true);
     for (const desktop of ['darwin', 'win32', 'linux'])
       expect(offeredOn(room, desktop)).toBe(false);
     for (const setting of SETTINGS) {

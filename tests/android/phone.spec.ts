@@ -270,3 +270,46 @@ test('an export goes to Documents/Eien/Exports', async ({ device }) => {
   ).toBe('Eien/Exports/Tear.html');
   expect(await readOnPhone(device, `${EXPORTS}/Tear.html`)).toBe('﻿<p>“One.”</p>');
 });
+
+test('Interface zoom lays the page out again in Android’s WebView, smaller and larger', async ({
+  device,
+}) => {
+  // Chromium's phone emulation (tests/mobile/phone-zoom.spec.ts) can't speak for the WebView,
+  // which treats a page's viewport its own way: this is the WebView itself.
+  const page = await startEien(device);
+  await expect(page.locator('.shell')).toBeVisible();
+  const measure = () =>
+    page.evaluate(() => ({
+      width: innerWidth,
+      over: document.documentElement.scrollWidth - innerWidth,
+      scale: window.visualViewport?.scale ?? 0,
+    }));
+  const start = await measure();
+  /** Settings › Look › Appearance › Interface zoom, `times` steps on `button`. */
+  const step = async (button: 'Smaller' | 'Larger', times: number) => {
+    await page.locator('.phone-bar__back').click(); // the contents, with Settings at their foot
+    await page.getByRole('button', { name: 'Settings' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Settings' });
+    await sheet
+      .getByRole('navigation')
+      .getByRole('button', { name: 'Appearance', exact: true })
+      .click();
+    const zoom = sheet.locator('[data-setting="window.zoom"]');
+    for (let at = 0; at < times; at++) await zoom.getByRole('button', { name: button }).click();
+    await sheet.getByRole('button', { name: 'Close settings' }).click();
+    await page.locator('.sidebar').getByText('All Notes').click();
+  };
+  await step('Smaller', 2); // 80%: wider, more room
+  /** Laid out at the screen's width over `scale` (to a pixel either way), nothing past it. */
+  const at = (scale: number) =>
+    measure().then(
+      // Scaled to fit too: a WebView can lay the page out wider and leave it running off the screen.
+      (now) =>
+        now.over <= 0 &&
+        Math.abs(now.width - start.width / scale) <= 1 &&
+        Math.abs(now.scale - scale) < 0.01,
+    );
+  await expect.poll(() => at(0.8)).toBe(true);
+  await step('Larger', 7); // 150%: narrower, laid out again, nothing past the screen
+  await expect.poll(() => at(1.5)).toBe(true);
+});
