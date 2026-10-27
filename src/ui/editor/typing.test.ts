@@ -3,6 +3,7 @@
 import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state';
 import { describe, expect, it } from 'vitest';
+import { GOOGLE_ANSWER, SUBLIME_COPY_AS_HTML } from '../../../tests/support/clipboards';
 import { eienMarkdown } from './syntax';
 import { isLiteralAt, pastedText, typedText } from './typing';
 
@@ -183,6 +184,21 @@ describe('pastedText', () => {
     expect(pastedText(at('12. Item |').state, html, 'x')).toBe('One.\n\n    Two.');
     expect(pastedText(at('Plain |').state, html, 'x')).toBe('One.\n\nTwo.');
     expect(pastedText(at('|> quote').state, html, 'x')).toBe('One.\n\nTwo.'); // before its mark
+  });
+
+  it('pastes a page’s brackets as written, and an editor’s styled copy as typed', () => {
+    const { state } = at('Note |');
+    expect(pastedText(state, GOOGLE_ANSWER.html, GOOGLE_ANSWER.text)).toContain(
+      'technical tools. [[1](https://www.geeksforgeeks.org/software-engineering/difference-between-ci-cd-and-devops/)]',
+    );
+    const sublime = pastedText(
+      at('> |').state,
+      SUBLIME_COPY_AS_HTML.html,
+      SUBLIME_COPY_AS_HTML.text,
+    );
+    expect(sublime).toBe(
+      '# Notes\n>\n> See [[1](https://example.com/a), [2](https://example.com/b)] and *this*.\n>\n> - a ~~b~~ <kbd>x</kbd> ^2^\n>',
+    );
   });
 
   it('pastes into code, or into a read-only note, as it is', () => {

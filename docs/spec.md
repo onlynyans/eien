@@ -1160,11 +1160,21 @@ the note's name. An empty note copies nothing and says so.
   wraps the whole paste in `<b style="font-weight:normal">`, which is no bold.
   A link's underline is the link's. An inline element round blocks goes inside
   each block, so paragraphs stay paragraphs.
-- What would read as Markdown in the words is escaped, so the note shows what
-  the page showed.
+- What would read as Markdown in the words is escaped, and only that, so the
+  note shows what the page showed and reads as it did: Eien's own parser
+  reads each pasted block, and a `[ ] * _ < ~ ^ = & ! \` or backtick of the
+  page's that it reads as a mark is escaped. `[1]`, `[sic]`, `a < b`, `5 * 3`
+  and `x^2` stay as written; `*word*`, `<b>`, `[a](b)` and `[^1]` in the words
+  are escaped. A page's brackets round its links (Google's citations,
+  `[[1](…), [2](…)]`) stay as written. Should that ever show other than
+  escaping all of them, all are escaped.
+- List items a page wraps in `<div>`s or `<span>`s inside its list (Google's
+  answers) are the list's items.
 - A code editor's copy (all of it in one `<pre>`, or one block set in a
   fixed-width face or `white-space: pre`) pastes as its plain text, and so
-  does anything pasted into code.
+  does anything pasted into code. So does Sublime Text's Copy as HTML (one
+  block kept as typed, `pre-wrap` with its `tab-size` set, in any face): its
+  words as typed, as its plain text is the same HTML.
 
 **Typing:** with curly quotes, a quote opens at a line's start and after a
 space, bracket, dash or slash (emphasis marks and an opening tag before it

@@ -163,9 +163,10 @@ describe('Paste from any HTML', () => {
     );
   });
 
-  it('escapes what would read as Markdown in the words', () => {
+  it('escapes what would read as Markdown in the words, and only that', () => {
+    // "[d]" links nowhere, "x^2" and "a==b" close nothing: they read as words already.
     expect(fromHtml('<p>2*3*4, a_b, _x_, `c`, [d], ~e~, x^2, a==b, &amp;amp;</p>')).toBe(
-      '2\\*3\\*4, a_b, \\_x\\_, \\`c\\`, \\[d\\], \\~e\\~, x\\^2, a\\=\\=b, \\&amp;',
+      '2\\*3\\*4, a_b, \\_x\\_, \\`c\\`, [d], \\~e\\~, x^2, a==b, \\&amp;',
     );
     expect(
       fromHtml(
@@ -195,7 +196,7 @@ describe('Paste from any HTML', () => {
   it('forgives HTML that isn’t closed, or is closed wrong', () => {
     expect(fromHtml('<p>one<p>two<div>three')).toBe('one\n\ntwo\n\nthree');
     expect(fromHtml('<p><em>open</p><p>next</em></p>')).toBe('*open*\n\nnext');
-    expect(fromHtml('a < b and <unknown attr=1>c')).toBe('a \\< b and c');
+    expect(fromHtml('a < b and <unknown attr=1>c')).toBe('a < b and c');
     expect(parseHtml('')).toEqual([]);
   });
 });
@@ -218,7 +219,7 @@ describe('the round trip, Markdown → HTML → Markdown', () => {
       '"Look," he began.\nShe didn\'t.',
       '> A letter, read aloud.\n> Twice.',
       '***',
-      '**She** mended it with ~~wool~~ <u>silk</u> by the fire: 2 \\* 3 is six.',
+      '**She** mended it with ~~wool~~ <u>silk</u> by the fire: 2 * 3 is six.',
       '## After',
       'The end.',
     ].join('\n\n');
