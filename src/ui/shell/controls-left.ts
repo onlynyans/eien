@@ -1,9 +1,9 @@
 // Whether the system's controls stand in the window's top-left corner:
 // macOS's traffic lights, in a window but not in full screen, which has none
-// (spec §4). The window controls overlay says, as it says where they end
-// (env(titlebar-area-x), ./shell.css), and tells again as the window goes full
-// screen and back. `data-controls-left` on <html> is what the corner's styles
-// follow (../sidebar/sidebar.css, ../chrome/band.css).
+// (spec §4). The window controls overlay says, and tells again as the window
+// goes full screen and back. `data-controls-left` on <html> puts the width the
+// controls take (--controls-w, ./shell.css) at the window's left edge, and is
+// what the corner's styles follow (../sidebar/sidebar.css, ../chrome/band.css).
 
 /** The window controls overlay's API, which TypeScript's DOM types don't have yet. */
 interface ControlsOverlay extends EventTarget {

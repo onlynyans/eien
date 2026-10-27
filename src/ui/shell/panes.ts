@@ -52,7 +52,7 @@ export class PaneLayout {
   #aside = false;
   /** What the split last asked: a list brought back stays back until the split asks again. */
   #asideAsked = false;
-  readonly #onResize = () => this.#apply();
+  readonly #onResize = () => this.#fit();
 
   constructor(parts: PaneParts, two: boolean) {
     this.#parts = parts;
@@ -182,6 +182,20 @@ export class PaneLayout {
     // A shut pane can't keep the keyboard: it goes to the page, never to nowhere.
     if (shut && hadFocus) this.#parts.leave(pane);
     this.#parts.changed();
+  }
+
+  /**
+   * Fit the panes to the window as it's resized, at once: the slide is for a pane opening or
+   * shutting. Slid, a pane squeezed by a narrower window would trail it by a step each frame,
+   * and everything after it, the page's bar too, jump about as it caught up (#44).
+   */
+  #fit(): void {
+    const { shell } = this.#parts;
+    shell.classList.add('is-fitting');
+    this.#apply();
+    // The new widths are styled while nothing slides; taken off after, they're already there.
+    void getComputedStyle(shell).gridTemplateColumns;
+    shell.classList.remove('is-fitting');
   }
 
   #apply(): void {
