@@ -156,6 +156,31 @@ for (const scheme of ['day', 'night'] as const) {
   });
 }
 
+for (const scheme of ['day', 'night'] as const) {
+  test.describe(`find by ${scheme}`, () => {
+    test.use({ deviceFile: { settings: { 'appearance.scheme': scheme } } });
+
+    test('its bar, Replace, an option on and the matches have no serious violation', async ({
+      page,
+    }) => {
+      await ready(page);
+      await page.locator('.cm-content').click();
+      await page.keyboard.press(process.platform === 'darwin' ? 'Meta+Alt+f' : 'Control+h');
+      const bar = page.locator('.find');
+      await expect(bar.getByRole('textbox', { name: 'Find' })).toBeFocused();
+      await page.keyboard.type('Words');
+      await expect(bar.getByRole('status')).toHaveText('1 of 1');
+      await bar.getByRole('button', { name: 'Match case' }).click();
+      await expect(bar.getByRole('status')).toHaveText('1 of 1');
+      expect(await violationsUnder(page, ['.find', '.page']), 'find').toEqual([]);
+      await bar.getByRole('button', { name: 'Pattern (regular expression)' }).click();
+      await bar.getByRole('textbox', { name: 'Find' }).fill('Words(');
+      await expect(bar.getByRole('status')).toHaveText('Not a valid pattern');
+      expect(await seriousViolations(page), 'a pattern that can’t be read').toEqual([]);
+    });
+  });
+}
+
 // Shut sidebar's other choice, Band's and Slip's: a strip of desk, with its shoulder on macOS.
 for (const layout of ['band', 'slip'] as const) {
   for (const scheme of ['day', 'night'] as const) {

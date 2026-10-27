@@ -31,6 +31,8 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     toggle: true,
   });
   return [
+    item('Find', 'find'),
+    'separator',
     item('Seal', 'seal'),
     item('Compare', 'compare'),
     item('Versions', 'versions'),

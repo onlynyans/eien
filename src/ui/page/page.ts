@@ -151,6 +151,7 @@ export class PageView {
     this.board = new BoardHost(scroll);
     scroll.append(this.board.element);
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(scroll));
+    this.element.append(this.editor.find.element);
     this.foot = {
       tags: this.tagSlots.colophon,
       words: this.words.element,
@@ -292,6 +293,14 @@ export class PageView {
     else if (typing || !matchMedia('(hover: none)').matches) this.editor.focus();
     else if (!this.#title.element.hidden) this.#title.element.focus();
     else (document.activeElement as HTMLElement | null)?.blur(); // the title is the note's own heading
+  }
+
+  /**
+   * Find in the note (Replace unfolded, for `replace`): only where its text is
+   * on the page, not outline cards nor a seal compared in its place.
+   */
+  find(replace: boolean): void {
+    if (!this.#sheet.hidden && !this.comparing && !this.board.shown) this.editor.find.open(replace);
   }
 
   /** Rename the note: its title becomes a field, the words chosen; Enter keeps them, Esc doesn't. */

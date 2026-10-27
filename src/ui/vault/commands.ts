@@ -39,7 +39,11 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     // The field in sight: the list's, or, with no list, the sidebar's, opened first if it's shut.
     if (ctx.search.isIn(sidebar.searchSlot)) panes.open('sidebar');
     ctx.search.focus();
-  } else if (command === 'view:next') page.nextMode();
+  } else if (command === 'find' || command === 'find:replace')
+    page.find(command === 'find:replace');
+  else if (command === 'find:next' && page.writable) page.editor.find.next();
+  else if (command === 'find:previous' && page.writable) page.editor.find.previous();
+  else if (command === 'view:next') page.nextMode();
   else if (command === 'view:live' || command === 'view:source' || command === 'view:reading') {
     page.setMode(command.slice('view:'.length) as 'live' | 'source' | 'reading');
   } else if (command === 'panes:sidebar') panes.toggle('sidebar');

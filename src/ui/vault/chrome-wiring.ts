@@ -241,6 +241,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       tips.watch(page.editor.tableTools);
       tips.watch(page.tableBar.element);
       tips.watch(page.closer);
+      tips.watch(page.editor.find.element);
     }
   };
   /** The bar shown or not, as the setting says; the tags where the layout (or a phone) puts them. */
