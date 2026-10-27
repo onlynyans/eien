@@ -22,10 +22,15 @@ export interface QuietButton {
 }
 
 export function quietButton(of: QuietButton): HTMLButtonElement {
+  return iconButton({ ...of, class: `icon-button--quiet${of.class ? ` ${of.class}` : ''}` });
+}
+
+/** The same icon button, always in sight: for a bar that is itself what was asked for (find). */
+export function iconButton(of: QuietButton): HTMLButtonElement {
   return h(
     'button',
     {
-      class: `icon-button icon-button--quiet${of.class ? ` ${of.class}` : ''}`,
+      class: `icon-button${of.class ? ` ${of.class}` : ''}`,
       attrs: {
         type: 'button',
         'aria-label': of.label,

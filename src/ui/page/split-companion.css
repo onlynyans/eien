@@ -30,6 +30,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Find's slip under the companion's head, not over its tools. */
+:root[data-split="companion"] .page__pages[data-two] > .page__leaf[data-side="1"] > .find {
+  top: calc(var(--band) + var(--eien-space-2));
+}
 :root[data-split="companion"] .page__leaf[data-side="1"] .page__scroll {
   padding: var(--eien-space-4) var(--eien-space-5) var(--eien-space-6);
 }

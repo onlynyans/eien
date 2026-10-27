@@ -567,6 +567,20 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   is a host on the band (its rules `host__rule`, its buttons at
   `--eien-touch`) docked under the sheet. A column's alignment shows: right
   in tabular figures.
+- **Find** (`ui/editor/find-bar.ts`, `editor/find.css`, #41): a slip laid
+  at the page's top right (under a companion's head), `--eien-space-2` from
+  its top, `--eien-space-4` from its edge: raised paper in a `--eien-rule-strong`
+  hairline, `--eien-radius-m`, and no shadow (borders only: it lies on the
+  page, quieter than the words). Its rows: the quiet twisty (Find and
+  replace, turning 90°), the Find field (`.field`, a control high), the
+  count (`.count`; caution ink for a pattern that can't be read), the three
+  options as quiet toggles (Match case, Whole word, Pattern; on is the icon
+  button's pressed state), then previous, next and close; unfolded, the
+  Replace field under them and Replace and Replace all under the moves. A
+  narrow page drops the count and options under the field. In the text, a
+  match is `--eien-selected` over a `--eien-rule-strong` hairline; the
+  current one is the selection, `--eien-seal-wash` over a `--eien-mark-w`
+  mark in the focus ink.
 - **Formatting bar**: the `format` slot's host. Band's second row on the
   band ground; Slip's own raised slip at the blotter's top left; Running
   head's raised rail down the margin. Its buttons have the icon control's

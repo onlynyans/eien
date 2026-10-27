@@ -2,6 +2,7 @@ import { app, type BaseWindow, Menu, type MenuItemConstructorOptions } from 'ele
 import { type SettingValues, TOGGLES, type ToggleKey } from '../../core/config';
 import { SPRINT_MINUTES } from '../../core/counters';
 import { EXPORT_LABELS } from '../../core/export';
+import { type FindCommandId, findKey } from '../../core/find';
 import { acceleratorOf, FORMAT_COMMANDS, type FormatCommandId, keyOn } from '../../core/format';
 import type { ExportFormat, MenuCommand } from '../../platform/bridge';
 
@@ -55,6 +56,9 @@ export function buildMenu(send: SendCommand): Menu {
     },
   });
   const settings = item('Settings…', 'settings', 'CmdOrCtrl+,');
+  /** Find in the note: its words and keys are the find bar's own (core/find). */
+  const find = (id: FindCommandId, label: string, command: MenuCommand) =>
+    item(label, command, acceleratorOf(findKey(id, mac)));
   const template: MenuItemConstructorOptions[] = [
     ...(mac
       ? [
@@ -129,6 +133,16 @@ export function buildMenu(send: SendCommand): Menu {
             ]
           : []),
         { type: 'separator' },
+        // In the open note (spec §4, Find in the note); Search Notes looks through the vault.
+        {
+          label: 'Find',
+          submenu: [
+            find('find', 'Find…', 'find'),
+            find('replace', 'Find and Replace…', 'find:replace'),
+            find('next', 'Find Next', 'find:next'),
+            find('previous', 'Find Previous', 'find:previous'),
+          ],
+        },
         item('Search Notes…', 'search', 'CmdOrCtrl+Shift+F'),
       ],
     },
