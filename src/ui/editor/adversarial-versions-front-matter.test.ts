@@ -5,14 +5,15 @@
 import { EditorSelection, EditorState, Transaction } from '@codemirror/state';
 import { describe, expect, it } from 'vitest';
 import { noteIdOf } from '../../core/versions';
-import { hiddenFrontMatter, keepFrontMatter, livePreview, previewMode } from './live-preview';
+import { frontMatterHidden, writingStart } from './front-matter-hidden';
+import { livePreview, previewMode } from './live-preview';
 import { eienMarkdown } from './syntax';
 
 const live = (doc: string, caret: number) =>
   EditorState.create({
     doc,
     selection: EditorSelection.cursor(caret),
-    extensions: [eienMarkdown(), previewMode.of('live'), livePreview, keepFrontMatter],
+    extensions: [eienMarkdown(), previewMode.of('live'), livePreview, frontMatterHidden],
   });
 
 const typed = (state: EditorState, text: string, event = 'input.type') =>
@@ -24,7 +25,7 @@ describe('a note that is only its id', () => {
   it('typing in it, when no line end follows the closing "---", keeps the id', () => {
     // Opened with the caret where the writing starts: the first letter joins "---" and the id is gone.
     const doc = '---\nid: ABCDEFGHJK\n---';
-    const state = live(doc, hiddenFrontMatter(live(doc, 0)));
+    const state = live(doc, writingStart(live(doc, 0)));
     const after = typed(state, 'Hello');
     expect(noteIdOf(after.doc.toString())).toBe('ABCDEFGHJK');
     expect(after.doc.toString()).toContain('Hello');

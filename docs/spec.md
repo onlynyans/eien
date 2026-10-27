@@ -531,6 +531,23 @@ between them goes too; at a line's start Backspace takes the line's format
 off (a heading, a quote, a list item); a table's cell edge stays put.
 Typing `**` still formats, the marks hiding once the pair is whole.
 
+**Hide tags and IDs** (Settings → Writing → Editor; a device setting, off
+at first, so Source shows the file as it is). On, the front matter's `tags:`
+and `id:` lines, each with its list's items, its block's lines and a comment
+after it, are out of sight in Live, Source and Reading, so they aren't edited
+by accident; the note's tags still show on the page, where they're added and
+taken off (§2, Tags). The writer's other keys stay in sight, between the
+`---` lines; front matter that holds only tags and the id goes out of sight
+whole. The lines are kept and saved as they are (`ui/editor/front-matter-hidden.ts`,
+the lines found by `core/note/tag-id-lines.ts`): the caret never rests in
+them or in the `---` lines around them; the writer's edits go round them, so
+Select All and typing or deleting keeps them, with their `---` lines, and
+what's typed follows them; a Backspace or Delete that would join a line in
+sight to them does nothing; find neither counts nor replaces a match in them;
+a copy leaves them out. Eien's own changes (a seal's id, the page's tags, a
+restore, a reload, undo) come through. Front matter YAML can't read is left
+in sight.
+
 **Tables** in Live and Reading are drawn in place, row by row
 (`ui/editor/live-tables.ts`): each row a line of equal columns with
 hairlines between, the header on the band, the pipes and the delimiter row
@@ -995,12 +1012,13 @@ does nothing.
   zoom and the interface's (each 50–200%), the interface font, the Source
   font, the weight of the sidebar's names and the list's titles, the Running head's
   ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar,
-  whether Live shows the Markdown marks, spellcheck (macOS), and on the phone how a
-  wide screen is used (§10). A setting may be one system's alone (`platforms` in the
-  schema): the screen shows it only there. A setting that needs panes side by side
-  (`wide` in the schema: Panes, Shut sidebar, Arranging, the formatting bar) shows
-  only while the window has them, and comes and goes as that changes (a phone turned,
-  a foldable opened, Wide screen set).
+  whether Live shows the Markdown marks, whether the front matter's tags and id are
+  hidden, spellcheck (macOS), and on the phone how a wide screen is used (§10). A
+  setting may be one system's alone (`platforms` in the schema): the screen shows it
+  only there. A setting that needs panes side by side (`wide` in the schema: Panes,
+  Shut sidebar, Arranging, the formatting bar) shows only while the window has them,
+  and comes and goes as that changes (a phone turned, a foldable opened, Wide screen
+  set).
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.
 - Writing a file changes one key and keeps every other key as it is, even ones
@@ -1404,7 +1422,8 @@ seal** (docs/design).
 - Front matter holding only that `id` is Eien's bookkeeping: Live and Reading
   keep it out of sight (Source shows it), the caret never rests in it, and the
   writer's edits never reach into it (typing after a closing `---` that ends
-  the note starts a new line).
+  the note starts a new line). With Hide tags and IDs on (§4), every view
+  keeps the `id:` line out of sight, and the `tags:` lines too.
 - Another device's seal (synced into `.eien/versions/`) shows at once.
 
 ### The compare button

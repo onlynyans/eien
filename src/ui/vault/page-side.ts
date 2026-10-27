@@ -73,7 +73,7 @@ export function closeSide(side: Side): void {
   side.page.dispose();
 }
 
-/** A page as the settings say: the quotes typed on it, its writing tools, Live's marks. */
+/** A page as the settings say: the quotes typed on it, its writing tools, Live's marks, the tags and ids hidden. */
 export function followSettings(page: PageView, values: SettingsState['values']): void {
   page.editor.setQuotes(values['typography.quotes']);
   page.editor.setTools({
@@ -82,4 +82,5 @@ export function followSettings(page: PageView, values: SettingsState['values']):
     spellcheck: values['editor.spellcheck'] === 'on',
   });
   page.editor.setMarks(values['editor.marks'] === 'on');
+  page.editor.setTagsAndIdsHidden(values['editor.hideTagsAndIds'] === 'on');
 }

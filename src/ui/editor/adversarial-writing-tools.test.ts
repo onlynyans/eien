@@ -24,7 +24,8 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { readSettings, SETTINGS, TOGGLES, valueProblem, withDefaults } from '../../core/config';
 import { frontMatterEnd } from '../../core/text';
-import { keepFrontMatter, livePreview, previewMode } from './live-preview';
+import { frontMatterHidden } from './front-matter-hidden';
+import { livePreview, previewMode } from './live-preview';
 import { eienMarkdown } from './syntax';
 import { SceneBreakWidget } from './widgets';
 import { currentParagraph, sceneBreakAt, typewriter } from './writing-tools';
@@ -33,7 +34,7 @@ import { currentParagraph, sceneBreakAt, typewriter } from './writing-tools';
 const CARET = '‸';
 
 /** Live, as the editor sets it up: the id-only front matter kept out of sight and whole. */
-const LIVE: Extension = [previewMode.of('live'), livePreview, keepFrontMatter];
+const LIVE: Extension = [previewMode.of('live'), livePreview, frontMatterHidden];
 
 /** `marked` with the caret at "‸" (removed), parsed. */
 function at(marked: string, extensions: Extension = []): EditorState {

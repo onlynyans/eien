@@ -11,7 +11,7 @@ export const hide = Decoration.replace({});
 export const hideLineMark = Decoration.replace({});
 /** A table's pipe out of sight: the edge between two cells. */
 export const hidePipe = Decoration.replace({});
-/** Whole lines out of sight: the front matter that only holds the note's id, a table's delimiter row. */
+/** Whole lines out of sight: front matter kept out of sight (./front-matter-hidden.ts), a table's delimiter row. */
 export const hideLines = Decoration.replace({ block: true });
 
 /** A mark Live keeps out of sight: inline ("**"), a line's own ("## "), or a table's pipe. */
