@@ -28,9 +28,11 @@ function fakeOverlay(visible: boolean, x: number, controls = 94) {
   return overlay;
 }
 
-/** The window's width, as a resize leaves it. */
-const resize = (width: number) =>
+/** The page's width, as a resize leaves it; the window's too, unless `page` alone (a zoom). */
+const resize = (width: number, page = false) => {
   Object.defineProperty(window, 'innerWidth', { value: width, configurable: true });
+  if (!page) Object.defineProperty(window, 'outerWidth', { value: width, configurable: true });
+};
 
 afterEach(() => {
   Reflect.deleteProperty(navigator, 'windowControlsOverlay');
@@ -117,15 +119,15 @@ describe('followControlsLeft', () => {
     stop();
   });
 
-  it('keeps the window’s width for a page sized without it (a test’s viewport)', async () => {
+  it('measures a page sized without the window as it is (a test’s viewport)', async () => {
     resize(1200);
     const overlay = fakeOverlay(true, 0, 138);
     const stop = followControlsLeft();
-    resize(1600);
+    resize(1600, true);
     overlay.controls = 538; // the area the window's, the page's width not
     dispatchEvent(new Event('resize'));
-    await frames(6);
-    expect(width()).toBe('138px');
+    await frames(4);
+    expect(width()).toBe('538px');
     stop();
   });
 
@@ -134,7 +136,7 @@ describe('followControlsLeft', () => {
     const overlay = fakeOverlay(true, 0, 138);
     const stop = followControlsLeft();
     // A zoom: the page narrower in its own pixels, the controls wider in them.
-    resize(1000);
+    resize(1000, true);
     overlay.controls = 150;
     dispatchEvent(new Event('resize'));
     overlay.dispatchEvent(new Event('geometrychange'));

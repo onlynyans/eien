@@ -6,15 +6,14 @@
 // (../sidebar/sidebar.css, ../chrome/band.css), and `--controls-w` how far the
 // bands keep clear of the controls (./shell.css).
 //
-// The width is measured once the window holds still, and the overlay has
-// caught up with it: a resize and the overlay's word since the last time, then
-// the same two frames running with neither between (#44). Measured in the
-// middle of a resize it's off by the whole step, either way: on Linux the
-// overlay's area reaches the page frames after the window's new width, on a
-// Mac a frame before it; and at each step on a Mac AppKit puts the lights back
-// at its own spot for a frame, so the area's x moves 13px (x is only read for
-// which edge). A page sized without the window (a test's viewport) hears no
-// word from the overlay, and keeps the window's width.
+// The width is measured once the page holds still: the same two frames
+// running (#44). If the window itself was resized (its outerWidth changed),
+// it also waits for the overlay's word since, as the overlay's area may reach
+// the page frames after the window's new width (Linux) or a frame before it
+// (a Mac): measured in between it's off by the whole step. And at each step
+// on a Mac AppKit puts the lights back at its own spot for a frame, so the
+// area's x moves 13px (x is only read for which edge). A page resized without
+// the window, by a zoom or a test's viewport, is measured as it is.
 
 /** The window controls overlay's API, which TypeScript's DOM types don't have yet. */
 interface ControlsOverlay extends EventTarget {
@@ -34,23 +33,23 @@ export function followControlsLeft(root: HTMLElement = document.documentElement)
   // Through the style API: the security policy refuses style attributes.
   const write = (width: number) => root.style.setProperty('--controls-w', `${width}px`);
   let frame = 0;
-  /** Since the last measure: whether the window was resized, and whether the overlay told. */
-  let resized = false;
+  /** The window's own width at the last measure, and whether the overlay told since. */
+  let windowWidth = outerWidth;
   let told = false;
-  /** Measure again once both have come and the window holds still; either starts over. */
+  /** Measure again once the page holds still; a resize or the overlay's word starts over. */
   const settle = () => {
     cancelAnimationFrame(frame);
-    if (!resized || !told) return;
-    let last: number | null = null;
+    let last: string | null = null;
     const look = () => {
-      const now = widthNow();
-      if (now === last) {
-        write(now);
-        resized = told = false;
-      } else {
+      const now = `${widthNow()} ${outerWidth}`;
+      if (now !== last) {
         last = now;
         frame = requestAnimationFrame(look);
-      }
+      } else if (outerWidth === windowWidth || told) {
+        write(widthNow());
+        windowWidth = outerWidth;
+        told = false;
+      } // else the window resized, and the overlay hasn't caught up: its word starts over
     };
     frame = requestAnimationFrame(look);
   };
@@ -60,18 +59,14 @@ export function followControlsLeft(root: HTMLElement = document.documentElement)
     told = true;
     settle();
   };
-  const onResize = () => {
-    resized = true;
-    settle();
-  };
   overlay.addEventListener('geometrychange', tell);
-  addEventListener('resize', onResize);
+  addEventListener('resize', settle);
   tell();
   write(widthNow()); // the window still as it opens
   told = false;
   return () => {
     cancelAnimationFrame(frame);
     overlay.removeEventListener('geometrychange', tell);
-    removeEventListener('resize', onResize);
+    removeEventListener('resize', settle);
   };
 }
