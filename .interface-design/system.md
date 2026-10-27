@@ -153,8 +153,9 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Lengths | `--eien-row-h` 30px × text scale (26 compact), `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |
 | Page rhythm | `--eien-measure` and `--eien-leading-prose` (each face's own: 29–34em, 1.5–1.76, less `--eien-leading-tighten`), `--eien-leading-row` 1.35; `--eien-title-gap`, `-paragraph-gap`, `-scene-gap`; `--eien-sheet-pad-x`, `-sheet-pad-top`, `--eien-page-gutter`; `--eien-list-preview` | comfortable: 32, 16, 1.4em; 72, 48, 24; tighten 0; preview shown. Compact: 16, 8, 0.8em; 48, 24, 8; tighten 0.14; no preview | the faces; density |
 | Frame | `--eien-page-ground`, `--eien-sheet-lift` | Sheet: the blotter, the sheet's shadow. Full: paper, none, gutter 0 | setting: Page |
-| Layout controls | `--controls-h`, `--controls-ground`; `--controls-left`, `--controls-right`; `--corner`, `--seal-x`, `--strip` | A: `--band` on the band; B: `--band` on the page ground; C: `--runhead-h` on `--runhead-ground`. Left is macOS's traffic lights, right Windows' and Linux's buttons, from the window controls overlay (0 where there are none: full screen, a phone). The corner's three: "A shut sidebar" below | layout; the window |
+| Layout controls | `--controls-h`, `--controls-ground`; `--controls-w`, `--controls-left`, `--controls-right`; `--corner`, `--seal-x`, `--strip` | A: `--band` on the band; B: `--band` on the page ground; C: `--runhead-h` on `--runhead-ground`. `--controls-w` is how wide the window's own controls stand: from the overlay's width, not where its free area starts (a Mac's resize moves that), and measured once still, never mid-resize (#44); `data-controls-left` puts them at the left. Left is macOS's traffic lights, right Windows' and Linux's buttons, from the window controls overlay (0 where there are none: full screen, a phone). The corner's three: "A shut sidebar" below | layout; the window |
 | Page | `--eien-zoom` (0.5–2), `--eien-dimmed` 0.32 (focus mode's faded paragraphs), `--eien-sheet-edge` | | settings: Page zoom |
+| Split | `--split-gap`, `--leaf-x`, `--pager-gap` | the divider's track a hairline (Facing pages: the book's gutter, `--eien-space-6`); a facing leaf's side margin, clamp(space-4, 7%, space-7); half of space-1 between a folded split's pager names | the split's mode |
 | C's strip | `--runhead-ground` | one of the theme's surfaces, the desk by default | setting: Running head ground |
 | Motion | `--eien-quick` 120ms, `--eien-calm` 220ms, `--eien-ease` | cubic-bezier(0.2, 0.7, 0.2, 1) | – |
 
@@ -267,6 +268,29 @@ if a theme should change it, it joins `THEME_TOKENS`.
 - **Dragged row:** raised paper, a rule-strong outline, the float shadow; the
   rest at 72% opacity; a hairline drop marker with a dot.
 - **Empty:** centred, the text face in italic, ink-soft.
+- **Find slip** (`.find`, `editor/find.css`, 2026-10-27): find and replace
+  on a slip laid at the page's top right (`--eien-space-2` down,
+  `--eien-space-4` in), as wide as the list plus 48px each side and no wider
+  than the page allows. Raised paper in a rule-strong hairline,
+  `--eien-radius-m`, and no shadow: it lies on the page, quieter than the
+  words. A twisty (turning, as the tree's) unfolds Replace's row under Find's.
+  The fields are the softer field at `--eien-control` height, the options
+  (match case, whole word, pattern) inside the field's row as quiet icons,
+  the count in pencil, in caution's ink for a pattern that can't be read.
+  With no match, the moves and replaces fade. Under 520px of page the options
+  and count drop under the field.
+- **A list's group head** (`.note-group`, 2026-10-27): with Include
+  subfolders on, each subfolder's notes under its name. A section, not a
+  card: label type on the paper, never bold, one line with an ellipsis,
+  padding space-5 above, space-2 below, space-4 at the sides. The row above's
+  soft rule closes the group before. The heads all stand at one height, so a
+  long, windowed list can lay them out.
+- **A bar that folds** (`chrome/fold.ts`, 2026-10-27): tools that don't fit
+  their bar fold behind one ⋯, the bar's last control, rather than run past
+  the page, the screen or the window's controls. A bar folds as one, across
+  its hosts, in the order the layout's `folds` lists give (the views as one
+  step); what no list names never folds (the strip's toggle, the way back
+  from a shut band). In C, the breadcrumb gives way first, then the tools.
 
 ## States
 
