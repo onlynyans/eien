@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — A link in Live: 2 · In place</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:link.css*/
+
+/* 2 · In place: nothing floats. With the caret in it, the link's own Markdown
+   opens where it stands, for that link alone, as a name opens for Rename: the
+   marks faded, as Live shows them; the address in the Source font; the 2px
+   focus mark under the part with the keyboard; the caret in the seal. Where a
+   link goes on hover is said in the colophon, as a browser's status line does. */
+:root { --eien-face-source: var(--eien-face-mono); }
+.isle { white-space: normal; }
+.mk { color: var(--eien-faded); }
+.lk.is-open { text-decoration-thickness: var(--eien-mark-w); text-decoration-color: var(--eien-focus); text-decoration-style: solid; }
+.prose:has(.addr:focus) .lk.is-open { text-decoration-thickness: var(--eien-hairline); text-decoration-color: var(--eien-rule-strong); }
+.addr {
+  font-family: var(--eien-face-source); font-size: var(--eien-size-source); color: var(--eien-ink-soft);
+  overflow-wrap: anywhere; outline: none; caret-color: var(--eien-seal); padding: 0 1px;
+}
+.addr--note { font-family: var(--eien-face-text); font-size: inherit; color: var(--eien-ink-soft); }
+.addr:focus { color: var(--eien-ink); box-shadow: 0 var(--eien-mark-w) 0 var(--eien-focus); }
+.addr:empty::before { content: attr(data-empty); color: var(--eien-faded); }
+.ghost-in { color: var(--eien-faded); }
+.addr--note + .ghost-in { font-family: var(--eien-face-text); }
+.addr:not(.addr--note) + .ghost-in { font-family: var(--eien-face-source); font-size: var(--eien-size-source); }
+/* Its one control, after the closing mark: open, or make the note. */
+.open-in {
+  vertical-align: middle; margin-inline-start: var(--eien-space-1);
+  width: calc(var(--eien-control) - var(--eien-space-1)); height: calc(var(--eien-control) - var(--eien-space-1));
+  color: var(--eien-pencil);
+}
+/* A phone: the same reach as any control, without making the line taller. */
+.is-touch .open-in::before { content: ''; position: absolute; inset: calc((var(--eien-touch) - var(--eien-control)) / -2); }
+/* The colophon tells where a link goes: the arrow in faded, the rest as said. */
+.colophon__said .to { color: var(--eien-faded); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:link.js*/
+
+mountLinkPage({
+  id: 'inline',
+  note: 'Put the caret in a link: its Markdown opens in place. Point at one: the colophon says where it goes.',
+  notes: `
+  <h2>2 · In place</h2>
+  <p>Nothing floats. Put the caret in a link and its own Markdown opens where it stands, for that link alone, as a name opens for Rename: <code>[words](address)</code> or <code>[[note|words]]</code>, the marks faded as Live shows them, the address in the Source font, the 2px focus mark under whichever part has the keyboard. Leave the link and it closes.</p>
+  <p>Point at a link and the colophon, the page's status line, says where it goes, as a browser's status line does; with the caret in a link it stays said there. One small control follows the link while it's open: open it, or make the note.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>arrow into <em>fandom wiki</em>; <kbd>→</kbd> at the end of its words walks into the address, and on out</li>
+    <li><kbd>${KEY('Mod-K')}</kbd> in <em>Below the Gate</em>: its note's name opens before the words, to point it elsewhere (<kbd>Tab</kbd> finishes a name)</li>
+    <li>point at <em>chapter iv</em> and read the colophon</li>
+    <li>A plain click → Follows: a click opens; <kbd>${ALT_CLICK}</kbd> or the arrows open it in place</li>
+  </ul>
+  ${SHARED_NOTES()}
+  <h2>A plain click</h2>
+  <p>This direction wants <strong>Places the caret</strong>: opening in place is what the click does, and following is <kbd>${MOD_CLICK}</kbd>, <kbd>${KEY('Alt-↩')}</kbd> or the ↗ that comes with it. With <strong>Follows</strong>, a link only opens in place from the keyboard or <kbd>${ALT_CLICK}</kbd>, and nothing on the page says so.</p>
+  <h2>On a phone</h2>
+  <p>A tap puts the caret in the link and it opens in place; the ↗ after it has a finger's reach without making the line taller, and the colophon says where it goes, as there's no hover. The address in the Source font wraps where it must (Show → Phone).</p>`,
+});
+
+Links.hoverDelay = 120;
+let firstValue = '';
+
+/** Where a link goes, said in the colophon: the arrow, then the place, then how to go. */
+function sayWhere(at, how) {
+  const d = describe(at);
+  clearTimeout(saidTimer);
+  said.replaceChildren(el('span', 'to', '→ '), `${d.short} · ${how}`);
+}
+const quiet = () => { if (cur) sayWhere(cur, `${KEY('Alt-↩')} opens`); else said.textContent = ''; };
+
+/** The open link's Markdown, round its words: marks, a field, the one control. */
+Links.render = (span, at) => {
+  if (!same(Links.opened, at)) return span;
+  const l = linkOf(at);
+  span.classList.add('is-open');
+  const isle = (...parts) => {
+    const s = el('span', 'isle');
+    s.dataset.skip = '';
+    s.contentEditable = 'false';
+    s.append(...parts);
+    return s;
+  };
+  const mk = (t) => { const m = el('span', 'mk', t); m.setAttribute('aria-hidden', 'true'); return m; };
+  const frag = document.createDocumentFragment();
+  if (l.kind === 'web') frag.append(isle(mk('[')), span, isle(mk(']('), ...field(at, 'address'), mk(')'), openIn(at)));
+  else if (l.target === null) frag.append(isle(mk('[[')), span, isle(mk(']]'), openIn(at)));
+  else frag.append(isle(mk('[['), ...field(at, 'note'), mk('|')), span, isle(mk(']]'), openIn(at)));
+  return frag;
+};
+
+function openIn(at) {
+  const d = describe(at);
+  const b = d.kind === 'missing'
+    ? iconButton('plus', `Make the note “${d.title}”`, '', () => { makeNote(d.title); reopen(at); })
+    : iconButton('openLink', d.kind === 'web' ? `Open ${d.host}` : `Open ${d.title ?? 'the link'}`, KEY('Alt-↩'), () => follow(at));
+  b.classList.add('open-in');
+  b.dataset.tipSide = 'up';
+  return b;
+}
+
+/** A field in the line: the address, or the note's name before the words. */
+function field(at, kind) {
+  const par = DOC[at.p];
+  const l = par.links[at.i];
+  const f = el('span', `addr${kind === 'note' ? ' addr--note' : ''}`, l.target);
+  f.contentEditable = 'plaintext-only';
+  f.spellcheck = false;
+  f.dataset.field = kind;
+  f.dataset.empty = kind === 'note' ? 'a note’s name' : 'an address';
+  f.setAttribute('role', 'textbox');
+  f.setAttribute('aria-label', kind === 'note' ? 'The note it goes to' : 'The address');
+  const ghost = el('span', 'ghost-in');
+  ghost.setAttribute('aria-hidden', 'true');
+  const offer = () => {
+    const end = caretIn(f) === f.textContent.length;
+    ghost.textContent = kind === 'note' && end ? completion(f.textContent) : '';
+  };
+  const apply = () => {
+    const t = f.textContent.replace(/\n/g, '');
+    if (kind === 'note') l.target = t.trim() ? t.trim() : null;
+    else l.target = t.trim();
+    drawFile();
+    markMissing();
+    // Open, or make the note: whichever the name now calls for.
+    spanOf(at)?.parentElement.querySelector('.open-in')?.replaceWith(openIn(at));
+    sayWhere(at, `${KEY('Alt-↩')} opens`);
+  };
+  f.addEventListener('focus', () => { firstValue = f.textContent; checkpoint(); offer(); sayWhere(at, `${KEY('Enter')} back to the words · esc puts back`); });
+  f.addEventListener('input', () => { apply(); offer(); });
+  f.addEventListener('keyup', offer);
+  f.addEventListener('keydown', (e) => {
+    const pos = caretIn(f);
+    const len = f.textContent.length;
+    const take = () => { e.preventDefault(); f.textContent += ghost.textContent; apply(); caretTo(f, f.textContent.length); offer(); };
+    if (e.altKey && e.key === 'Enter') { e.preventDefault(); follow(at); }
+    else if ((e.key === 'Tab' && !e.shiftKey || e.key === 'ArrowRight') && ghost.textContent && pos === len) take();
+    else if (e.key === 'ArrowLeft' && !e.shiftKey && pos === 0) { e.preventDefault(); kind === 'address' ? toText(at, 'end') : leave(at, 'before'); }
+    else if (e.key === 'ArrowRight' && !e.shiftKey && pos === len) { e.preventDefault(); kind === 'address' ? leave(at, 'after') : toText(at, 'start'); }
+    // Up and down leave the field for the words and the lines round them, as the arrows do in text.
+    else if (e.key === 'ArrowUp' && !e.shiftKey) { e.preventDefault(); kind === 'address' ? toText(at, 'end') : leave(at, 'before'); }
+    else if (e.key === 'ArrowDown' && !e.shiftKey) { e.preventDefault(); kind === 'address' ? leave(at, 'after') : toText(at, 'start'); }
+    else if (e.key === 'Enter') { e.preventDefault(); toText(at, 'end'); }
+    else if (e.key === 'Escape') { e.preventDefault(); f.textContent = firstValue; apply(); toText(at, 'end'); }
+    else if (mod(e) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+  });
+  f.addEventListener('paste', (e) => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain').replace(/\s+/g, ' ').trim()); });
+  return [f, ghost];
+}
+const caretIn = (f) => { const s = getSelection(); return s.rangeCount && f.contains(s.focusNode) ? (s.focusNode === f ? (s.focusOffset ? f.textContent.length : 0) : s.focusOffset) : 0; };
+function caretTo(f, at) {
+  f.focus();
+  const node = f.firstChild ?? f;
+  getSelection().collapse(node, Math.min(at, node.textContent.length));
+}
+const fieldOf = (at) => (same(Links.opened, at) ? spanOf(at)?.parentElement.querySelector('[data-field]') : null);
+function focusField(at, where) {
+  const f = fieldOf(at);
+  if (!f) return;
+  caretTo(f, where === 'start' ? 0 : f.textContent.length);
+  if (where === 'all') getSelection().selectAllChildren(f);
+}
+/** Back into the words, at their start or end. */
+function toText(at, where) {
+  const l = linkOf(at);
+  prose.focus({ preventScroll: true });
+  caret = { p: at.p, o: where === 'start' ? l.start : l.end };
+  select(caret);
+}
+/** Out of the link by its near or far side; it closes. */
+function leave(at, side) {
+  const l = linkOf(at);
+  const o = side === 'before' ? l.start : l.end;
+  shutAt = { p: at.p, o };
+  prose.focus({ preventScroll: true });
+  close();
+  select({ p: at.p, o });
+}
+
+function open(at) {
+  Links.opened = at;
+  const s = selRange();
+  draw(s ? { a: s.a, b: s.b } : undefined);
+  quiet();
+}
+function close() {
+  if (!Links.opened) return;
+  const l = linkOf(Links.opened);
+  // [[Below the Gate|Below the Gate]] is [[Below the Gate]]: the name goes when it's the words.
+  if (l && l.kind === 'note' && l.target !== null && l.target === wordsOf(DOC[Links.opened.p], l)) l.target = null;
+  Links.opened = null;
+  const s = selRange();
+  draw(s ? { a: s.a, b: s.b } : undefined);
+}
+function reopen(at) { Links.opened = null; open(at); toText(at, 'end'); }
+
+Links.onCaret = (at) => {
+  if (at) open(at);
+  else if (!document.activeElement?.closest?.('[data-field]')) close();
+  quiet();
+};
+Links.onHover = (at) => sayWhere(at, openHint());
+Links.onUnhover = quiet;
+Links.onEdit = (at) => {
+  const l = linkOf(at);
+  if (!same(Links.opened, at)) open(at);
+  // [[Below the Gate]]: its name opens before the words, to point it at another note.
+  if (l.kind === 'note' && l.target === null) { l.target = wordsOf(DOC[at.p], l); Links.opened = null; open(at); }
+  focusField(at, 'all');
+  if (!fieldOf(at)) toText(at, 'end');
+};
+Links.onReach = (at) => { if (!same(Links.opened, at)) open(at); spanOf(at)?.parentElement.querySelector('.open-in')?.focus(); };
+Links.onKey = (e) => {
+  const at = Links.opened;
+  if (!at || e.shiftKey || e.altKey || mod(e)) return false;
+  const s = selRange();
+  if (!s || s.a.p !== s.b.p || s.a.o !== s.b.o) return false;
+  const l = linkOf(at);
+  if (e.key === 'ArrowRight' && s.a.o === l.end && l.kind === 'web') { e.preventDefault(); focusField(at, 'start'); return true; }
+  if (e.key === 'ArrowLeft' && s.a.o === l.start && l.kind === 'note' && l.target !== null) { e.preventDefault(); focusField(at, 'end'); return true; }
+  return false;
+};
+Links.onBar = () => quiet();
+// Focus leaving the page closes the open link; the open control goes back to the words on Esc.
+pane.addEventListener('focusout', () => setTimeout(() => {
+  if (!pane.contains(document.activeElement) && Links.opened) { close(); quiet(); }
+}));
+prose.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && e.target.closest('.open-in') && Links.opened) { e.preventDefault(); toText(Links.opened, 'end'); }
+}, true);
+</script>
+</body>
+</html>

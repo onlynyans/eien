@@ -1,0 +1,154 @@
+/* Shared by the three link explorations (link-*.html): the page pane in each
+   layout, the note in Live with its links, the file beside it, the colophon.
+   Each page adds only its own way of showing a link. */
+
+/*@include:layouts.css*/
+
+:root {
+  /* From tokens.css, which shared.css predates: a field at rest is a wash of
+     the ink; the Source font's size; the colophon's and C's strip's heights. */
+  --eien-field: light-dark(rgb(35 32 28 / 0.06), rgb(233 226 212 / 0.07));
+  --eien-size-source: 14px;
+  --eien-list-w: 316px;
+  --eien-danger: var(--eien-removed);
+  --band: calc(var(--eien-space-7) + var(--eien-space-2));
+  --status-h: calc(var(--eien-space-6) + var(--eien-space-2));
+  --runhead-h: calc(var(--eien-space-6) + var(--eien-space-2));
+}
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); background: var(--eien-blotter); }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 40%); } }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The page pane: its top (each layout's), the formatting bar, the sheet on the blotter, the colophon. */
+.pane { position: relative; min-width: 0; min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) var(--status-h); }
+.ptop { grid-row: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--eien-space-2); height: var(--band); padding: 0 var(--eien-space-3); min-width: 0; }
+.ptop__tools { display: flex; gap: 2px; }
+.ptop__tools .icon-button { color: var(--eien-pencil); }
+.ptop__crumb, .phone-back { display: none; }
+/* A · Band: the band, a rule beneath. */
+:root[data-layout='band'] .ptop { background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+/* The views and tools are one slip in B; in A and C they sit apart in the row. */
+.ptop__slip { display: contents; }
+/* B · Slip: no band; the views and tools ride a raised slip on the blotter, a hairline between. */
+:root[data-layout='slip'] .ptop { justify-content: flex-end; }
+:root[data-layout='slip'] .ptop__slip { display: flex; gap: 2px; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+:root[data-layout='slip'] .ptop__views { padding-right: 2px; border-right: var(--eien-hairline) solid var(--eien-rule); }
+/* C · Running head: a strip of desk, the crumb in its middle, the tools at its right. */
+:root[data-layout='runhead'] .ptop { height: var(--runhead-h); background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+:root[data-layout='runhead'] .ptop__crumb { display: block; flex: 1; text-align: center; }
+:root[data-layout='runhead'] .sheet__head .label { visibility: hidden; }
+
+/* The formatting bar, where each layout puts it: A's band's second row, B's
+   raised slip at the blotter's top left, C's raised rail down the margin. */
+.fmt { grid-row: 2; display: none; justify-content: center; gap: 2px; padding: 2px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+:root[data-fmt='on'] .fmt { display: flex; }
+.fmt__rule { width: var(--eien-hairline); height: 18px; align-self: center; margin: 0 var(--eien-space-1); background: var(--eien-rule); }
+/* B's slip and C's rail float: placed in the pane's own box, not in the bar's row. */
+:root:is([data-layout='slip'], [data-layout='runhead']) .fmt { grid-row: auto; }
+:root[data-layout='slip'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-3); top: calc((var(--band) - var(--eien-control) - 6px) / 2); padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+:root[data-layout='runhead'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-2); top: calc(var(--runhead-h) + var(--eien-space-4)); flex-direction: column; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+:root[data-layout='runhead'] .fmt__rule { width: 18px; height: var(--eien-hairline); margin: var(--eien-space-1) auto; }
+:root[data-layout='runhead'][data-fmt='on'] .page { padding-left: calc(var(--eien-control) + var(--eien-space-5)); }
+
+/* The sheet at the face's own sizes, leading and measure, on the blotter. */
+.page { grid-row: 3; min-height: 0; overflow: auto; display: flex; flex-direction: column; padding: var(--eien-space-4) var(--eien-space-4) 0; }
+:root[data-layout='slip'] .page { padding-top: 0; }
+.sheet {
+  position: relative; flex: 1 0 auto; width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto;
+  padding: var(--eien-space-6) clamp(var(--eien-space-4), 8%, var(--eien-space-8)) var(--eien-space-8);
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet);
+  font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose);
+}
+:root[data-layout='slip'] .sheet { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.sheet__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--eien-space-3); }
+.tagset { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); white-space: nowrap; }
+.title { font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; margin: var(--eien-space-4) 0 var(--eien-space-5); }
+.prose { outline: none; caret-color: var(--eien-seal); }
+.prose p { margin: 0 0 var(--eien-paragraph-gap); }
+.prose code, .file__notes code { font-family: var(--eien-face-mono); font-size: 0.9em; }
+
+/* A link, as Live draws it (editor/theme.ts): the words in ink, underlined in
+   rule-strong. No colour of its own. The caret's link underlines in ink-soft;
+   a note not made yet, dotted (NEW). */
+.lk {
+  color: var(--eien-ink); text-decoration: underline; text-decoration-color: var(--eien-rule-strong);
+  text-decoration-thickness: var(--eien-hairline); text-underline-offset: 0.18em;
+  transition: text-decoration-color var(--eien-quick) var(--eien-ease);
+}
+.lk.is-missing { text-decoration-style: dotted; }
+.lk.is-here { text-decoration-color: var(--eien-ink-soft); }
+@media (hover: hover) { .lk:hover { text-decoration-color: var(--eien-ink-soft); } }
+:root[data-click='follow'] .lk, :root.is-mod .lk { cursor: pointer; }
+
+/* What floats over the page: raised paper, a rule-strong hairline, the float shadow. */
+.float {
+  position: absolute; z-index: 20;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float);
+  font-size: var(--eien-size-row); line-height: var(--eien-leading-row);
+}
+.float[hidden] { display: none; }
+.icon-button--word { width: auto; grid-auto-flow: column; gap: var(--eien-space-1); padding: 0 var(--eien-space-2); }
+.icon-button__word { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; }
+.icon-button--danger { color: var(--eien-ink-soft); }
+@media (hover: hover) { .icon-button--danger:hover { color: var(--eien-danger) !important; } }
+
+/* A field, as system.md has it: set into what holds it, a wash of ink at rest,
+   a 2px focus ring on its own edge when it has the keyboard. */
+.lf {
+  appearance: none; width: 100%; min-width: 0; margin: 0;
+  padding: var(--eien-space-2) var(--eien-space-3); border: var(--eien-hairline) solid transparent;
+  border-radius: var(--eien-radius-s); background: var(--eien-field); color: var(--eien-ink);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  transition: border-color var(--eien-quick) var(--eien-ease);
+}
+.lf--words { font-family: var(--eien-face-text); font-size: var(--eien-size-row); }
+@media (hover: hover) { .lf:hover { border-color: var(--eien-rule); } }
+.lf:focus { outline: none; background: var(--eien-well); box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.lf::placeholder { color: var(--eien-faded); }
+/* A note's name, finished from the vault: the rest of it faded after what's typed. */
+.ghost-wrap { position: relative; display: block; }
+.ghost { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; padding: var(--eien-hairline) calc(var(--eien-space-3) + var(--eien-hairline)); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: pre; overflow: hidden; }
+.ghost__typed { visibility: hidden; }
+.ghost__rest { color: var(--eien-faded); }
+
+/* The colophon: the status line, mono capitals, what was done said at its right. */
+.colophon { grid-row: 4; display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-4); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); letter-spacing: 0.04em; text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; }
+.colophon__where { flex: none; }
+.colophon__said { margin-left: auto; min-width: 0; color: var(--eien-ink-soft); overflow: hidden; text-overflow: ellipsis; }
+
+/* The file, beside the page: what Eien writes, line by line. */
+.file { min-height: 0; display: grid; grid-template-rows: var(--band) auto minmax(0, 1fr); background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); }
+@media (max-width: 900px) { .file { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }
+.file__head { display: flex; align-items: center; gap: var(--eien-space-3); padding: 0 var(--eien-space-4); border-bottom: var(--eien-hairline) solid var(--eien-rule); background: var(--eien-band); min-width: 0; }
+.file__head .count { margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file__src {
+  margin: 0; padding: var(--eien-space-3) var(--eien-space-2); max-height: 34vh; overflow: auto; background: var(--eien-paper);
+  font-family: var(--eien-face-mono); font-size: 12px; line-height: 1.75; color: var(--eien-ink-soft); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.ln { display: block; white-space: pre-wrap; overflow-wrap: anywhere; padding: 0 var(--eien-space-2); border-radius: var(--eien-radius-s); min-height: 1.75em; }
+.ln.is-here { background: var(--eien-selected); color: var(--eien-ink); }
+.ln.is-changed { animation: changed 1.6s var(--eien-ease); }
+@keyframes changed { from { background: var(--eien-added-wash); } }
+@media (prefers-reduced-motion: reduce) { .ln.is-changed { animation: none; } *, *::before, *::after { transition: none !important; } }
+.file__notes { min-height: 0; padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-4); overflow: auto; font-size: var(--eien-size-preview); line-height: 1.55; color: var(--eien-ink-soft); }
+.file__notes h2 { margin: var(--eien-space-4) 0 var(--eien-space-1); font: inherit; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); font-weight: 400; }
+.file__notes h2:first-child { margin-top: 0; }
+.file__notes ul { margin: 0; padding-left: 1.1em; }
+.file__notes p { margin: 0 0 var(--eien-space-2); }
+kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-paper); white-space: nowrap; }
+
+/* A phone: one pane in a phone's width, its back bar on top, no margins to spare, nothing hovers. */
+:root[data-device='phone'] .pane { width: 390px; max-width: 100%; justify-self: center; border-inline: var(--eien-hairline) solid var(--eien-rule-strong); background: var(--eien-paper); }
+:root[data-device='phone'] .ptop { height: var(--band); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); justify-content: flex-start; }
+:root[data-device='phone'] .ptop > :not(.phone-back), :root[data-device='phone'] .fmt { display: none !important; }
+:root[data-device='phone'] .phone-back { display: flex; align-items: center; gap: var(--eien-space-2); flex: 1; min-width: 0; }
+:root[data-device='phone'] .phone-back .icon-button { width: var(--eien-touch); height: var(--eien-touch); color: var(--eien-ink-soft); }
+:root[data-device='phone'] .phone-back__name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root[data-device='phone'] .page { padding: 0; }
+:root[data-device='phone'] .sheet { border: 0; box-shadow: none; border-radius: 0; padding: var(--eien-space-4) var(--eien-space-4) var(--eien-space-8); }
+:root[data-device='phone'] .sheet__head .label { visibility: visible; }
+:root[data-device='phone'] .title { font-size: calc(var(--eien-size-title) * 0.8); }
+.is-touch .icon-button[data-tip]::after { display: none; }
