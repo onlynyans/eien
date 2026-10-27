@@ -28,6 +28,9 @@ export default defineConfig(({ mode }) =>
             name: 'eienReader',
             fileName: () => 'content.js',
           },
+          // Chrome refuses a content script that isn't strict UTF-8, which has no noncharacters
+          // (core/html/marks-in-words.ts holds marks in U+FDD0 on): every character escaped.
+          rolldownOptions: { output: { minify: { codegen: { asciiOnly: true } } } },
         },
       }
     : {
