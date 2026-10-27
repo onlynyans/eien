@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en" data-device="open" data-layout="band">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Foldables and tablets: 2 · The stack, opened out</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:tablet.css*/
+
+/* 2 · The stack, opened out: the phone's one-at-a-time stays the model (the contents, a folder's
+   notes, the page, a bar back), and with room the step you came from stays in sight beside the
+   one you're in. One bar across the top, cut where the panes are; the phone's full paper. */
+.pair { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.pair > * { min-width: 0; min-height: 0; }
+.pair > .bar { padding-inline: var(--eien-space-1); }
+/* The step behind: a hairline at its right, and on the fold the crease is that hairline. */
+.pair > .is-behind { border-right: var(--eien-hairline) solid var(--eien-rule); }
+.pair[data-on-fold] > .is-behind { border-right-color: transparent; }
+.bar__vault { flex: 1; min-width: 0; margin-left: var(--eien-space-2); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar .seal { margin-left: var(--eien-space-2); }
+.bar .search { flex: 1; margin: 0 var(--eien-space-2); }
+</style>
+</head>
+<body>
+<header class="xbar">
+  <span class="xbar__name">Foldables &amp; tablets</span>
+  <nav class="xbar__group" aria-label="Directions"><a class="word-button" href="tablet-desk.html">1 · The desk</a><a class="word-button" href="tablet-stack.html" aria-current="page">2 · The stack, opened</a><a class="word-button" href="tablet-book.html">3 · An open book</a></nav>
+  <div class="xbar__group" data-x-set="device" role="group" aria-label="Screen"><span class="xbar__label">Screen</span><button class="word-button" data-value="phone">Phone</button><button class="word-button" data-value="folded">Folded</button><button class="word-button" data-value="open">Open</button><button class="word-button" data-value="upright">Tablet upright</button><button class="word-button" data-value="sideways">Tablet sideways</button></div>
+  <div class="xbar__group" data-x-set="theme" role="group" aria-label="Day or night"><button class="word-button" data-value="light">Day</button><button class="word-button" data-value="dark">Night</button></div>
+  <div class="xbar__group" data-x-set="layout" role="group" aria-label="Layout"><span class="xbar__label">Layout</span><button class="word-button" data-value="band">A · Band</button><button class="word-button" data-value="slip">B · Slip</button><button class="word-button" data-value="runhead">C · Running head</button></div>
+</header>
+<main class="stage">
+  <div class="canvas">
+    <div class="fit"><div class="device"><div class="screen" role="region"><div class="sys" aria-hidden="true"><span>9:41</span><span class="sys__dots">●●●</span></div><div class="app"></div></div></div></div>
+    <p class="said" data-said role="status" aria-live="polite"></p>
+  </div>
+  <aside class="notes">
+    <h2>2 · The stack, opened out</h2>
+    <p>The phone’s one pane at a time stays the model: the contents, a folder’s notes, the page, and a bar to go back. With room, <b>the step you came from stays beside the one you’re in</b>. The list sits beside the page, and back moves the pair one step, so the contents sit beside the list.</p>
+    <dl class="checkpoint">
+      <dt>Intent</dt><dd>The writer who writes on their phone, folded, one thumb, on the train, and opens the fold to keep going. They go from the index to a chapter and back many times. It should feel like the phone with the step before still in sight: a pocket notebook opened flat, the index on the left leaf and the chapter on the right.</dd>
+      <dt>Palette</dt><dd>Washi’s tokens. The bar is on the desk, as the phone’s bar is. The index and the page are paper, the phone’s Page frame Full, and the seal is in its places only.</dd>
+      <dt>Depth</dt><dd>Tone and hairlines only. There’s no sheet shadow, because the phone’s page is full paper. One hairline parts the two steps, and on the fold the crease is that hairline. The float shadow is only on the ⋯ menu and Settings.</dd>
+      <dt>Surfaces</dt><dd>The desk (the bar, the contents) behind paper (the index, the page): darker is further back. The bar’s cut lines up with the panes’ edge, so the bar reads as two halves of one strip.</dd>
+      <dt>Type</dt><dd>The phone’s two voices: the back word and labels in the machine voice, names and prose in the text face. A size down under 600px, and the face’s own size with room.</dd>
+      <dt>Spacing</dt><dd>The 4px scale. The bar is the phone’s 48px, and every target is 44px.</dd>
+    </dl>
+    <h2>Try</h2>
+    <ul>
+      <li><b>Screen:</b> on Folded, open a note. Then <b>Open</b> the fold: the list you came from comes in beside the page, with its edge on the fold.</li>
+      <li>Tap another note in the list. Only the page changes. Then <b>‹ Library</b>: the pair moves one step, so the contents sit beside the list.</li>
+      <li>The <b>page alone</b> icon (at the page half’s left) gives the page the whole width. Back brings the list again.</li>
+      <li><b>⋯ › Side by side</b> turns it off here and now.</li>
+    </ul>
+    <h2>Where the option lives</h2>
+    <ul>
+      <li><b>Settings › Look › Appearance › Side by side:</b> When there’s room · Unfolded only · Never. It’s kept per device. “Unfolded only” keeps a tablet to one at a time and lets a foldable open out.</li>
+      <li><b>⋯ › Side by side</b> on the page is the same setting, with a tick, so it’s a tap away while writing. On a phone it’s greyed, and says it needs a wider screen.</li>
+      <li>Never is exactly today’s phone, at any width.</li>
+    </ul>
+    <h2>Each screen</h2>
+    <table>
+      <tr><th>Screen</th><th>Side by side</th></tr>
+      <tr><td>Phone, folded</td><td>One at a time, as now</td></tr>
+      <tr><td>Open, 720</td><td>Two halves, 360 · 360, the cut on the fold</td></tr>
+      <tr><td>Upright, 820</td><td>Step behind 340 · step you’re in 480</td></tr>
+      <tr><td>Sideways, 1180</td><td>Step behind 400 · step you’re in 780</td></tr>
+    </table>
+    <h2>For</h2>
+    <ul>
+      <li>It’s the phone. Back, the ⋯, the layout’s phone tools and the other note’s ⇄ all stay, so folding and unfolding change the room and not the app.</li>
+      <li>The open fold splits exactly at the crease, two steps on two leaves, and nothing crosses the crease unless the page is alone.</li>
+      <li>It builds on what the phone already draws, <code>phone-stack.ts</code> and the phone bottoms. Its rule is one line: show the step before, too.</li>
+      <li>Fewest parts: one bar, one set of tools, nothing to drag.</li>
+    </ul>
+    <h2>Against</h2>
+    <ul>
+      <li>It never shows three panes. A sideways tablet could hold the contents, the list and the page, and this shows two.</li>
+      <li>The desktop’s layouts keep only their phone tools (A’s bar, B’s slip at the foot, C’s rail). Running head’s strip, the colophon and the bands don’t come.</li>
+      <li>A writer who knows the desktop meets a different window on the tablet.</li>
+      <li>The page is paper to the edges on a big tablet, with no blotter round it. It’s calm, but it isn’t the sheet.</li>
+    </ul>
+  </aside>
+</main>
+<script>
+/*@shared-js*/
+/*@include:tablet.js*/
+
+/** Whether the step behind shows: the setting, and the room (never under 600px). */
+function sideBySide(ctx) {
+  if (ctx.narrow) return false;
+  return S.opt === 'room' || (S.opt === 'open' && ctx.dev.kind === 'open');
+}
+/** The step behind: half the fold, or a list's width and a little more as the room grows. */
+const behindW = (ctx) => ctx.hinge ?? (ctx.W >= 1000 ? 400 : 340);
+
+mountTablet({
+  state: { lastMove: 'right', alone: false },
+  option: {
+    tab: 'Appearance', at: 2, where: 'Look › Appearance', label: 'Side by side',
+    about: 'With room, the step you came from stays beside the one you’re in: the list beside the page, the contents beside the list. Never: one at a time, as on a phone, however wide the screen.',
+    choices: { room: 'When there’s room', open: 'Unfolded only', never: 'Never' }, default: 'room',
+    now: (ctx) => `This screen: ${sideBySide(ctx) ? 'side by side' : 'one at a time'}${ctx.narrow ? ' (under 600px)' : ''}`,
+  },
+  unfoldSay: (was, now) => (was.w < PHONE_MAX && now.w >= PHONE_MAX ? (S.opt === 'never' ? 'Unfolded: one at a time, wider (Side by side is off)' : 'Unfolded: the step you came from comes in beside the one you’re in')
+    : was.w >= PHONE_MAX && now.w < PHONE_MAX ? 'Folded: the step you’re in; back goes to the other' : `Now ${now.name}`),
+  draw(ctx) {
+    if (!sideBySide(ctx)) return phoneStack(ctx, { frame: 'full' });
+    const move = `from-${S.lastMove}`;
+    const onPage = S.shown === 'page';
+    const fold = ctx.hinge ? ' data-on-fold' : '';
+    if (onPage && S.alone) {
+      const t = ctx.place('phone', S.note);
+      return `<div class="pair arrives" style="grid-template-columns:minmax(0, 1fr)">
+        ${ctx.bar(folderOf(S.folder).name, `<span class="spacer"></span>${ctx.otherSlip()}${t.bar ?? ''}`)}
+        ${ctx.page(S.note, { frame: 'full', kind: 'phone' })}</div>`;
+    }
+    const cols = `grid-template-columns:${behindW(ctx)}px minmax(0, 1fr)`;
+    if (onPage) {
+      const t = ctx.place('phone', S.note);
+      return `<div class="pair"${fold} style="${cols}">
+        ${ctx.bar('Library', `<span class="spacer"></span>${ctx.btn('search', 'Search', 'data-act="say" data-say="Search: every note in the vault"')}`).replace('class="bar"', 'class="bar is-behind"')}
+        ${ctx.bar('', `${ctx.btn('alone', 'Page alone', 'data-act="alone"')}<span class="spacer"></span>${ctx.otherSlip()}${t.bar ?? ''}`)}
+        <div class="is-behind ${move}" style="display:grid">${ctx.index({ band: false })}</div>
+        <div class="${move}" style="display:grid">${ctx.page(S.note, { frame: 'full', kind: 'phone' })}</div></div>`;
+    }
+    return `<div class="pair"${fold} style="${cols}">
+      <nav class="bar is-behind" aria-label="Vault"><span class="seal" aria-hidden="true">永</span><span class="bar__vault">Vault</span></nav>
+      <div class="bar"><span class="search">${icon('search')}<span>Search</span></span></div>
+      <div class="is-behind ${move}" style="display:grid;min-height:0">${ctx.tree({ head: false, chosen: S.folder, foot: ctx.foot() })}</div>
+      <div class="${move}" style="display:grid;min-height:0">${ctx.index({ band: false })}</div></div>`;
+  },
+  act(name, el, ctx) {
+    if (name === 'open-note') { S.lastMove = S.shown === 'page' ? 'none' : 'right'; S.alone = false; return false; }
+    if (name === 'back') {
+      if (sideBySide(ctx) && S.alone) { S.alone = false; S.lastMove = 'left'; say('The list beside the page again'); render('in'); return true; }
+      S.lastMove = 'left';
+      return false;
+    }
+    if (name === 'folder') { S.lastMove = sideBySide(ctx) ? 'none' : 'right'; return false; }
+    if (name === 'alone') { S.alone = true; S.lastMove = 'none'; say('The page alone: back brings the list beside it'); render('in'); return true; }
+    return false;
+  },
+  menuItems: (ctx) => [{ icon: 'side', word: 'Side by side', act: 'opt', value: sideBySide(ctx) ? 'never' : 'room', role: 'menuitemcheckbox', dot: sideBySide(ctx), disabled: ctx.narrow, why: ctx.narrow ? 'Needs a wider screen: unfold it' : '' }],
+  onOption(v, ctx) { S.lastMove = 'none'; say(`Side by side: ${{ room: 'when there’s room', open: 'unfolded only', never: 'never' }[v]}`); },
+  long(el) { openMenu(noteMenu(el.dataset.id), el); },
+});
+</script>
+</body>
+</html>

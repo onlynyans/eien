@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en" data-device="open" data-layout="band">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Foldables and tablets: 1 · The desk, at a finger’s size</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:tablet.css*/
+
+/* 1 · The desk, at a finger's size: the desktop's panes, as built (the contents, the index, the
+   page on its blotter), with every target a finger's. How many is the Panes setting the desktop
+   already has, with One added; the screen's room caps it, as the desktop's window does. */
+.panes { display: grid; min-height: 0; }
+.panes > * { min-width: 0; min-height: 0; }
+.panes > .tree, .panes > .index { border-right: var(--eien-hairline) solid var(--eien-rule); }
+/* On the fold the desk's edge lands on the crease: the hairline is the fold's own. */
+.panes[data-on-fold] > .tree { border-right-color: transparent; }
+.tree__head .seal { margin-right: var(--eien-space-1); }
+</style>
+</head>
+<body>
+<header class="xbar">
+  <span class="xbar__name">Foldables &amp; tablets</span>
+  <nav class="xbar__group" aria-label="Directions"><a class="word-button" href="tablet-desk.html" aria-current="page">1 · The desk</a><a class="word-button" href="tablet-stack.html">2 · The stack, opened</a><a class="word-button" href="tablet-book.html">3 · An open book</a></nav>
+  <div class="xbar__group" data-x-set="device" role="group" aria-label="Screen"><span class="xbar__label">Screen</span><button class="word-button" data-value="phone">Phone</button><button class="word-button" data-value="folded">Folded</button><button class="word-button" data-value="open">Open</button><button class="word-button" data-value="upright">Tablet upright</button><button class="word-button" data-value="sideways">Tablet sideways</button></div>
+  <div class="xbar__group" data-x-set="theme" role="group" aria-label="Day or night"><button class="word-button" data-value="light">Day</button><button class="word-button" data-value="dark">Night</button></div>
+  <div class="xbar__group" data-x-set="layout" role="group" aria-label="Layout"><span class="xbar__label">Layout</span><button class="word-button" data-value="band">A · Band</button><button class="word-button" data-value="slip">B · Slip</button><button class="word-button" data-value="runhead">C · Running head</button></div>
+</header>
+<main class="stage">
+  <div class="canvas">
+    <div class="fit"><div class="device"><div class="screen" role="region"><div class="sys" aria-hidden="true"><span>9:41</span><span class="sys__dots">●●●</span></div><div class="app"></div></div></div></div>
+    <p class="said" data-said role="status" aria-live="polite"></p>
+  </div>
+  <aside class="notes">
+    <h2>1 · The desk, at a finger’s size</h2>
+    <p>With room, the phone shows the desktop’s panes as they are built: the contents on the desk, the index on paper, the page on its blotter, at a finger’s size. How many is the <b>Panes</b> setting the desktop already has, with <b>One at a time</b> added.</p>
+    <dl class="checkpoint">
+      <dt>Intent</dt><dd>The writer who knows Eien’s desktop, on the sofa with a tablet or with a foldable opened on the train. They find a note and write the next scene, and their hands find what their eyes already know. It should feel like the desk window, held.</dd>
+      <dt>Palette</dt><dd>Washi’s tokens, nothing new: the desk for the contents, paper for the index and the sheet, the blotter round it, the band for bands. Vermilion only in the seal’s places: the chosen row’s rule, the caret, ▪ sealed, the mark at the contents’ head.</dd>
+      <dt>Depth</dt><dd>Tone and hairlines. The sheet’s shadow once, on the page; the float shadow only on the ⋯ menu and Settings. On the fold, the desk’s edge lands on the crease, so the fold is the pane edge.</dd>
+      <dt>Surfaces</dt><dd>Darker is further back: desk, blotter, band, paper, raised. Night is inkstone, in the same order.</dd>
+      <dt>Type</dt><dd>The text face for names and prose at the face’s desktop sizes, because a tablet is read from a laptop’s distance. The machine voice for labels, counts and the colophon.</dd>
+      <dt>Spacing</dt><dd>The 4px scale and 16px gutters. Every target is <code>--eien-touch</code> (44px), where the desktop has a 28px control and a 30px row.</dd>
+    </dl>
+    <h2>Try</h2>
+    <ul>
+      <li><b>Screen:</b> Folded is the phone. <b>Open</b> it and the contents arrive on the left half, with the page you were on at the right.</li>
+      <li>The <b>panes icon</b> at the contents’ foot gives One, Two or Three. Three is greyed where it won’t fit, with the reason.</li>
+      <li><b>‹</b> at the contents’ head shuts them, and <b>›</b> at the page’s top brings them back.</li>
+      <li>Long-press a note for its menu. A finger never lifts a row.</li>
+    </ul>
+    <h2>Where the option lives</h2>
+    <ul>
+      <li><b>Settings › Writing › Lists › Panes:</b> One at a time · Two · Three. It’s the desktop’s setting, offered here because the screen is wide. It’s kept per device, so the tablet and the Mac can differ.</li>
+      <li>The <b>panes icon</b> at the contents’ foot changes the same setting, as it does on the desktop.</li>
+      <li>One at a time is the phone’s layout on the big screen, and turning it on keeps it for good.</li>
+    </ul>
+    <h2>Each screen</h2>
+    <table>
+      <tr><th>Screen</th><th>Two (default)</th><th>Three</th></tr>
+      <tr><td>Phone, folded</td><td colspan="2">One at a time: under 600px, always</td></tr>
+      <tr><td>Open, 720</td><td>Contents with notes 360 · page 360, the edge on the fold</td><td>Won’t fit: two</td></tr>
+      <tr><td>Upright, 820</td><td>Contents with notes 264 · page 556</td><td>Won’t fit: two</td></tr>
+      <tr><td>Sideways, 1180</td><td>Contents with notes · page 916</td><td>264 · 316 · page 600</td></tr>
+    </table>
+    <h2>For</h2>
+    <ul>
+      <li>Nothing new to learn. The panes, the two-pane tree with the notes in it, the bands, the colophon and the Panes setting are already built.</li>
+      <li>The layouts’ desktop places (Band’s band, Slip’s slip, Running head’s strip) show the page’s tools with room, so the views and Compare are a tap away.</li>
+      <li>The rule for how many panes fit is the desktop’s, with touch sizes.</li>
+    </ul>
+    <h2>Against</h2>
+    <ul>
+      <li>It’s the densest of the three. Three panes and a band of tools at 44px fill a sideways tablet, and an upright one never gets three.</li>
+      <li>On the open fold the page is 360px wide, a phone’s width beside the contents. Writing there is cramped.</li>
+      <li>Two edges per pane (a shut ‹ and a drag) are made for a pointer. A finger gets the chevrons and no drag.</li>
+      <li>Unfolding changes what’s on the screen: a phone writer gets a desk they may never have seen.</li>
+    </ul>
+  </aside>
+</main>
+<script>
+/*@shared-js*/
+/*@include:tablet.js*/
+
+const THREE_MIN = 264 + 316 + 480; // three panes, and a page that keeps the text's measure with a margin
+const TWO_MIN = 264 + 360; // two, and a page no narrower than a split's (PAGE_MIN)
+/** The panes shown: the setting, capped by the room. Under 600px it's always one, as now. */
+function panesNow(ctx) {
+  if (ctx.narrow || S.opt === 'one' || ctx.W < TWO_MIN) return 'one';
+  return S.opt === 'three' && ctx.W >= THREE_MIN ? 'three' : 'two';
+}
+/** The panes icon at the contents' foot: its icon says how many, its menu chooses. */
+const panesButton = (ctx) => ctx.btn({ one: 'panes1', two: 'panes2', three: 'panes3' }[panesNow(ctx)], 'Panes', 'data-act="panes" aria-haspopup="menu"');
+
+mountTablet({
+  option: {
+    tab: 'Lists', at: 0, where: 'Writing › Lists', label: 'Panes',
+    about: 'With two panes, notes appear in the contents instead of a separate list. One at a time is the phone’s: the contents, a list, the page, a bar back. A screen too narrow for the panes chosen shows fewer.',
+    choices: { one: 'One at a time', two: 'Two', three: 'Three' }, default: 'two',
+    now: (ctx) => (ctx.narrow ? 'This screen: one at a time (under 600px)' : `This screen: ${{ one: 'one at a time', two: 'two', three: 'three' }[panesNow(ctx)]}`),
+  },
+  unfoldSay: (was, now) => (was.w < PHONE_MAX && now.w >= PHONE_MAX ? 'Unfolded: the page you were on stays; the panes arrive at its left'
+    : was.w >= PHONE_MAX && now.w < PHONE_MAX ? 'Folded: the page you were on, one pane at a time' : `Now ${now.name}`),
+  draw(ctx) {
+    const mode = panesNow(ctx);
+    if (mode === 'one') return phoneStack(ctx, { frame: ctx.narrow ? 'full' : 'sheet', foot: ctx.narrow ? '' : panesButton(ctx) });
+    const shut = S.shut;
+    const sbW = ctx.hinge ?? 264;
+    const cols = shut ? 'minmax(0, 1fr)' : mode === 'three' ? `${sbW}px 316px minmax(0, 1fr)` : `${sbW}px minmax(0, 1fr)`;
+    const shutBtn = ctx.btn('left', 'Shut the contents', 'data-act="shut"');
+    const tree = ctx.tree({ notes: mode === 'two', foot: ctx.foot(panesButton(ctx)), headExtra: shutBtn });
+    const lead = shut ? ctx.btn('right', 'Show the contents', 'data-act="unshut"') : '';
+    return `<div class="panes arrives"${ctx.hinge && !shut ? ' data-on-fold' : ''} style="grid-template-columns:${cols}">
+      ${shut ? '' : tree}${!shut && mode === 'three' ? ctx.index() : ''}${ctx.page(S.note, { frame: 'sheet', kind: 'desk', lead })}</div>`;
+  },
+  act(name, el, ctx) {
+    if (name === 'panes') {
+      const fits3 = !ctx.narrow && ctx.W >= THREE_MIN;
+      openMenu({ head: 'Panes', items: [
+        { icon: 'panes1', word: 'One at a time', act: 'opt', value: 'one', role: 'menuitemradio', dot: S.opt === 'one' },
+        { icon: 'panes2', word: 'Two', act: 'opt', value: 'two', role: 'menuitemradio', dot: S.opt === 'two' },
+        { icon: 'panes3', word: 'Three', act: 'opt', value: 'three', role: 'menuitemradio', dot: S.opt === 'three', disabled: !fits3, why: fits3 ? '' : `Needs ${THREE_MIN}px: turn the tablet sideways` },
+        { rule: true },
+        { icon: 'settings', word: 'In Settings', act: 'settings' },
+      ] }, el);
+      return true;
+    }
+    if (name === 'shut' || name === 'unshut') { S.shut = name === 'shut'; say(S.shut ? 'The contents shut: › brings them back' : 'The contents back'); render('in'); return true; }
+    if (name === 'folder' && panesNow(ctx) !== 'one') { if (!folderOf(el.dataset.id)) return true; S.folder = el.dataset.id === 'fic' ? 'walls' : el.dataset.id; say(`${folderOf(S.folder).name}: its notes`); render(); return true; }
+    if (name === 'open-note' && panesNow(ctx) !== 'one') {
+      S.menu = null;
+      const id = el.dataset.id ?? el.dataset.value;
+      if (!Object.hasOwn(NOTES, id)) return true;
+      if (id !== S.note) { S.other = S.note; S.note = id; }
+      S.shown = 'page';
+      say(`${NOTES[id].title}: on the page`);
+      render();
+      return true;
+    }
+    return false;
+  },
+  onOption(v, ctx) { say(`Panes: ${{ one: 'one at a time', two: 'two', three: 'three' }[v]}${panesNow(ctx) !== v && !ctx.narrow ? ', where it fits' : ''}`); },
+  long(el) { openMenu(noteMenu(el.dataset.id), el); },
+});
+</script>
+</body>
+</html>
