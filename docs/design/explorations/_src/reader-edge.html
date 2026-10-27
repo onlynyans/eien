@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Features 3 · On the edge</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:reader.css*/
+
+/* Features 3 · On the edge. The whole book as a thumb index along the page's
+   outer edge: a hairline for each chapter, your place as the split's edge tab,
+   bookmarks as pencil tabs, highlights as pencil ticks, Find's matches as ink
+   dots. Point at it to see where; click, or its arrow keys, to go. On the page,
+   a highlight is a pencil bracket in the margin. */
+.seg .find { flex: 1; justify-content: center; }
+.holder { position: relative; flex: 1 1 auto; display: flex; width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto; min-height: 0; }
+.holder .sheet { margin: 0; }
+.holder .leaves { overflow: clip; overflow-clip-margin: var(--eien-space-5); }
+/* The strip: the book from top to foot, on the blotter beside the sheet. */
+.thumb { position: absolute; z-index: 2; top: 0; bottom: 0; left: calc(100% + var(--eien-hairline)); width: var(--eien-space-5); cursor: pointer; outline: none; touch-action: none; }
+.thumb:focus-visible { box-shadow: 0 0 0 var(--eien-mark-w) var(--eien-focus); border-radius: var(--eien-radius-s); }
+.thumb i { position: absolute; left: 0; display: block; }
+.thumb .t-ch { height: var(--eien-hairline); width: var(--eien-space-2); background: var(--eien-rule-strong); }
+.thumb .t-ch.is-tenth { width: var(--eien-space-3); background: var(--eien-pencil); }
+.thumb .t-hl { height: var(--eien-mark-w); width: var(--eien-space-3); background: var(--eien-pencil); left: var(--eien-space-1); }
+.thumb .t-bm { width: var(--eien-space-1); height: var(--eien-space-3); left: var(--eien-space-3); border: var(--eien-hairline) solid var(--eien-pencil); background: var(--eien-paper); border-radius: 0 var(--eien-radius-s) var(--eien-radius-s) 0; translate: 0 -50%; }
+.thumb .t-hit { width: var(--eien-space-1); height: var(--eien-space-1); left: var(--eien-space-2); background: var(--eien-ink); border-radius: var(--eien-radius-dot); translate: 0 -50%; }
+/* Your place: the edge tab, ink-soft, standing out from the sheet's edge. */
+.thumb .t-here { left: calc(-1 * var(--eien-hairline)); width: calc(var(--eien-space-1) + var(--eien-hairline)); height: var(--eien-space-5); background: var(--eien-ink-soft); border-radius: 0 var(--eien-radius-s) var(--eien-radius-s) 0; translate: 0 -50%; transition: top var(--eien-calm) var(--eien-ease); }
+@media (prefers-reduced-motion: reduce) { .thumb .t-here { transition: none; } }
+.thumb-tip { position: absolute; z-index: 5; left: calc(100% + var(--eien-space-2)); translate: 0 -50%; white-space: nowrap; padding: 3px 7px; border-radius: var(--eien-radius-s); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); box-shadow: var(--eien-shadow-float); font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em; color: var(--eien-ink-soft); pointer-events: none; }
+.thumb-tip[hidden] { display: none; }
+/* A highlight: a pencil bracket in the margin, from its first line to its last. */
+.brackets { position: absolute; inset: 0; pointer-events: none; }
+.bracket { position: absolute; width: var(--eien-mark-w); background: var(--eien-pencil); }
+.bracket::before, .bracket::after { content: ''; position: absolute; left: 0; width: var(--eien-space-1); height: var(--eien-mark-w); background: var(--eien-pencil); }
+.bracket::before { top: 0; }
+.bracket::after { bottom: 0; }
+.icon-button[data-bookmark][aria-pressed='true'] svg { fill: currentColor; }
+.folio .count:last-child { margin-left: auto; }
+.blotter.is-paged { padding-right: calc(var(--eien-space-5) + var(--eien-space-6)); }
+/* The phone: the strip down the screen's right edge, a finger wide to touch, a hairline to see. */
+.phone__page.edge-page { position: relative; padding-right: var(--eien-space-7); }
+.phone .thumb { left: auto; right: 0; top: var(--eien-space-5); bottom: var(--eien-space-7); width: var(--eien-touch); }
+.phone .thumb::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: var(--eien-hairline); background: var(--eien-rule); }
+.phone .thumb-tip { left: auto; right: calc(100% + var(--eien-space-1)); }
+.phone-find:not(:empty) { padding-bottom: var(--eien-space-3); }
+.phone-find .find { flex-wrap: wrap; }
+.phone-find .find__field { flex: 1; width: auto; }
+.phone__page.edge-page { grid-template-rows: auto minmax(0, 1fr) auto; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:reader.js*/
+Reader.marks = true;
+Reader.findInBar = true;
+// Marks kept on earlier evenings, further in than this exploration's text goes, so the strip shows a read book.
+R.bookmarks.push({ c: 17, o: 0 }, { c: 33, o: 1200 }, { c: 42, o: 300 });
+R.highlights.push({ id: 90, c: 33, a: 500, b: 900 }, { id: 91, c: 33, a: 2400, b: 2600 }, { id: 92, c: 57, a: 100, b: 400 });
+
+const where = (c, o) => (charsBefore(c) + o) / BOOK_CHARS;
+const pageMarked = () => !!R.nums && R.bookmarks.some((b) => b.c === R.c && b.o >= R.nums.start && b.o <= Math.max(R.nums.end, R.nums.start));
+/** The thumb index: every chapter, your place, your marks, and what Find found, by where they fall in the book. */
+function thumbHtml() {
+  const pct = (f) => `${(f * 100).toFixed(3)}%`;
+  const chs = CHAPTERS.map((_, c) => `<i class="t-ch${c % 10 === 0 ? ' is-tenth' : ''}" style="top:${pct(where(c, 0))}"></i>`).join('');
+  const hls = R.highlights.map((h) => `<i class="t-hl" style="top:${pct(where(h.c, h.a))}"></i>`).join('');
+  const bms = R.bookmarks.map((b) => `<i class="t-bm" style="top:${pct(where(b.c, b.o))}"></i>`).join('');
+  const found = hits().map((h) => `<i class="t-hit" style="top:${pct(where(h.c, h.a))}"></i>`).join('');
+  return `<div class="thumb" role="slider" tabindex="0" data-k="thumb" aria-label="The whole book" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-orientation="vertical">${chs}${hls}${bms}${found}<i class="t-here" data-here></i><span class="thumb-tip" hidden></span></div>`;
+}
+/** A point on the strip, as a place in the book: its chapter and where in it. */
+function placeOnThumb(thumb, clientY) {
+  const r = thumb.getBoundingClientRect();
+  const f = clamp((clientY - r.top) / r.height, 0, 0.9999);
+  const at = f * BOOK_CHARS;
+  let c = 0;
+  while (c < CHAPTERS.length - 1 && charsBefore(c + 1) <= at) c++;
+  return { c, o: Math.round(at - charsBefore(c)), f };
+}
+
+Reader.tools = (ctx) => `${ctx.contentsTool()}${ctx.tool('search', 'Find in the book', KEY('Mod-F'), 'data-open-find')}${ctx.tool('ribbon', 'Bookmark this page', 'B', `data-bookmark aria-pressed="${pageMarked()}"`)}${ctx.tool('highlight', 'Highlight the selection', 'H', 'data-highlight')}`;
+Reader.page = (ctx) => `<div class="page">${ctx.top()}<div class="blotter is-paged">
+  <div class="holder">
+    <article class="sheet book-sheet">
+      <button class="turn turn--prev" data-turn="-1" data-k="turn-prev" aria-label="Previous page" data-tip="Previous page  ←" data-tip-side="right">${icon('left')}</button>
+      <button class="turn turn--next" data-turn="1" data-k="turn-next" aria-label="Next page" data-tip="Next page  →" data-tip-side="left">${icon('right')}</button>
+      ${ctx.head()}${ctx.leaves(R.c)}<div class="brackets" aria-hidden="true"></div>
+      <footer class="folio"><span class="count">${CHAPTERS[R.c].ord}</span><span class="count" data-folio></span></footer>
+    </article>${thumbHtml()}
+  </div></div>${ctx.colophon([CHAPTERS[R.c].ord, '<span data-col-page></span>', '<span data-fill="pct"></span>', '<span data-col-mark></span>'])}</div>`;
+Reader.phone = (ctx) => `<div class="phone__page edge-page"><div class="phone-find">${R.find.open ? finder.field() : ''}</div>${ctx.leaves(R.c)}<div class="phone__foot"><span class="count">${CHAPTERS[R.c].ord}</span><span class="count" data-col-page></span></div>${thumbHtml()}<div class="brackets" aria-hidden="true"></div></div>`;
+Reader.phoneTools = (ctx) => `${ctx.tool('contents', 'Contents', '', 'data-contents')}${ctx.tool('search', 'Find in the book', '', 'data-open-find')}${ctx.tool('ribbon', 'Bookmark this page', '', `data-bookmark aria-pressed="${pageMarked()}"`)}${ctx.tool('highlight', 'Highlight the selection', '', 'data-highlight')}`;
+
+/** The brackets for the highlights on this page, drawn in the margin by their lines. */
+function drawBrackets() {
+  const lv = main();
+  const box = canvas.querySelector('.brackets');
+  if (!lv || !box) return;
+  box.replaceChildren();
+  const flow = lv.querySelector('.flow');
+  const holder = box.parentElement.getBoundingClientRect();
+  const s = holder.width / box.parentElement.offsetWidth || 1;
+  const lr = lv.getBoundingClientRect();
+  for (const h of R.highlights.filter((x) => x.c === R.c)) {
+    const rects = [...rangeOf(flow, h.a, h.b).getClientRects()].filter((r) => r.width > 1 && r.left >= lr.left - 2 && r.right <= lr.right + 2);
+    if (!rects.length) continue;
+    const top = Math.min(...rects.map((r) => r.top));
+    const bottom = Math.max(...rects.map((r) => r.bottom));
+    const b = document.createElement('span');
+    b.className = 'bracket';
+    Object.assign(b.style, { left: `${(lr.left - holder.left) / s - 16}px`, top: `${(top - holder.top) / s}px`, height: `${(bottom - top) / s}px` });
+    box.append(b);
+  }
+}
+Reader.after = (ctx, n) => {
+  if (!n?.paged) return;
+  const set = (sel, text) => { for (const el of canvas.querySelectorAll(sel)) el.textContent = text; };
+  set('[data-col-page]', `page ${n.page} of ${n.pages}`);
+  set('[data-folio]', String(n.page));
+  const on = pageMarked();
+  set('[data-col-mark]', on ? 'bookmarked' : '');
+  for (const b of canvas.querySelectorAll('[data-bookmark]')) { b.setAttribute('aria-pressed', String(on)); b.dataset.tip = `${on ? 'Take the bookmark off' : 'Bookmark this page'}  B`; }
+  for (const b of canvas.querySelectorAll('.turn--prev')) b.disabled = n.page <= 1;
+  const f = where(R.c, n.start);
+  for (const here of canvas.querySelectorAll('[data-here]')) here.style.top = `${(f * 100).toFixed(3)}%`;
+  for (const t of canvas.querySelectorAll('.thumb')) { t.setAttribute('aria-valuenow', String(n.pct)); t.setAttribute('aria-valuetext', `${CHAPTERS[R.c].title}, page ${n.page} of ${n.pages}`); }
+  drawBrackets();
+};
+Reader.click = (b) => { if ('openFind' in b.dataset) finder.open(); };
+
+// The strip: point to see where, click to go; drag on a phone to scrub.
+let scrub = null;
+const tipAt = (thumb, e) => {
+  const at = placeOnThumb(thumb, e.clientY);
+  const tip = thumb.querySelector('.thumb-tip');
+  const s = thumb.getBoundingClientRect().height / thumb.offsetHeight || 1;
+  tip.hidden = false;
+  tip.textContent = `${CHAPTERS[at.c].title} · page ${R.nums?.pageAt ? R.nums.pageAt(at.c, at.o) : ''}`;
+  tip.style.top = `${(e.clientY - thumb.getBoundingClientRect().top) / s}px`;
+  return at;
+};
+addEventListener('pointermove', (e) => {
+  const thumb = e.target.closest?.('.thumb');
+  for (const t of canvas.querySelectorAll('.thumb-tip')) if (!thumb || !t.closest('.thumb').isSameNode(thumb)) t.hidden = true;
+  if (thumb) scrub = scrub ? tipAt(thumb, e) : (tipAt(thumb, e), null);
+});
+addEventListener('pointerdown', (e) => { const thumb = e.target.closest?.('.thumb'); if (thumb) { e.preventDefault(); scrub = tipAt(thumb, e); } });
+addEventListener('pointerup', () => { if (scrub) { const { c, o } = scrub; scrub = null; act.go(c, o); canvas.querySelector('.thumb')?.focus(); } });
+// Its keys: ↑ ↓ a chapter, Page Up and Down ten, Home and End the book's ends.
+addEventListener('keydown', (e) => {
+  if (!e.target.classList?.contains('thumb')) return;
+  const to = { ArrowUp: R.c - 1, ArrowDown: R.c + 1, PageUp: R.c - 10, PageDown: R.c + 10, Home: 0, End: CHAPTERS.length - 1 }[e.key];
+  if (to === undefined) return;
+  e.preventDefault();
+  e.stopPropagation();
+  act.go(clamp(to, 0, CHAPTERS.length - 1));
+}, true);
+
+mountReaderPage({
+  id: 'edge',
+  note: 'The whole book as a thumb index on the page’s edge: chapters, your place, your marks, what Find found.',
+  notes: `
+  <h2>Features 3 · On the edge</h2>
+  <p>Beside the page's outer edge lies the whole book, top to foot, as a thumb index: a hairline for each chapter (a longer one each tenth), your place as the edge tab (the split's, ink-soft), bookmarks as pencil tabs, highlights as pencil ticks, and while Find is open, every match as an ink dot. Where the dots cluster is where the book talks about it. (This exploration's text is Chapters I to III, the first 2% of the book, so its matches sit at the strip's top; some marks kept further in show the rest.)</p>
+  <ul>
+    <li><b>Going:</b> point at the strip to see the chapter and page under the pointer; click to go there. With the keyboard it's a slider: <kbd>Tab</kbd> to it, <kbd>↑</kbd> <kbd>↓</kbd> a chapter, <kbd>PgUp</kbd> <kbd>PgDn</kbd> ten, <kbd>Home</kbd> <kbd>End</kbd> the book's ends.</li>
+    <li><b>Page count:</b> the folio, the colophon (page, of the book's pages, the share read, "bookmarked"), and the tab's place on the strip.</li>
+    <li><b>Bookmark:</b> <kbd>B</kbd>, or the tool: a pencil tab on the strip where the page is, and the colophon says so.</li>
+    <li><b>Highlight:</b> select (drag, or <kbd>⇧→</kbd> a sentence at a time) and <kbd>H</kbd>: a pencil bracket in the margin from its first line to its last, the words left as printed; a tick on the strip. <kbd>H</kbd> on it takes it off; <kbd>${KEY('Mod-Z')}</kbd> puts it back. <kbd>]</kbd> and <kbd>[</kbd> walk the marks.</li>
+    <li><b>Find:</b> <kbd>${KEY('Mod-F')}</kbd>, its field where the layout's tools are (as Features 1); the matches on the page, and on the strip as dots, all of them at once.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>The strip runs down the screen's right edge, a hairline to see and a finger's width to touch: drag along it to scrub through the book, the chapter and page showing beside your finger; lift to go. The rest as on the desktop.</p>
+  <h2>For</h2>
+  <ul><li>The whole book at a glance: how far, where your marks are, where a word clusters.</li><li>The bracket leaves the words as printed: the quietest highlight.</li><li>Moving anywhere in one gesture, like thumbing a paperback.</li></ul>
+  <h2>Against</h2>
+  <ul><li>A new object, and the most furniture: the strip is always there beside the page.</li><li>A long book's chapters crowd into hairlines a few pixels apart; a short one's leave the strip mostly empty.</li><li>The bracket is by the line, so a highlight inside a line is less exact than an underline.</li></ul>`,
+});
+</script>
+</body>
+</html>

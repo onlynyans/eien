@@ -42,6 +42,22 @@ places the caret, as today.
 | [link-inline.html](link-inline.html) · [md](links.md) | **2 · In place**: the caret opens that link's own Markdown where it stands, as Rename opens a name; the colophon says where it goes | Nothing floats; you edit what the file holds | The line reflows under the pointer; hover only in the colophon |
 | [link-bar.html](link-bar.html) · [md](links.md) | **3 · A bar with the caret** (on the phone): the selection bar's sibling over the link's line; a hover gets the window's tooltip | Nothing new to learn; docks above a phone's keyboard | Covers the line above; a hover shows only the address |
 
+## Reading EPUBs (2026-10-27): for the owner to choose
+
+Backlog #40, nine pages in three sets: turning pages, scrolling, and the
+features. Each works by Day and Night, in all three layouts, from the
+keyboard, and on the phone. The bar's Section control offers the books'
+section as SHELF, READING or BOOKSHELF. [reader.md](reader.md) has every
+direction's trade-offs and recommends **Pages 2** (opening to 1's spread
+when there's room), **Scroll 1** (then 3), and **Features 2** with 1's marks
+on the page.
+
+| Set | 1 | 2 | 3 |
+|---|---|---|---|
+| Pages | [The spread](reader-spread.html) | [One leaf, its edges](reader-leaf.html) | [Columns to the pane](reader-columns.html) |
+| Scroll | [A chapter a sheet](reader-chapter.html) | [One roll](reader-roll.html) | [Beside a note](reader-beside.html) |
+| Features | [On the page](reader-margin.html) | [In the list](reader-index.html) | [On the edge](reader-edge.html) |
+
 ## Split window (2026-10-23): for the owner to choose
 
 Six directions for two notes side by side in one window, each working in all
@@ -84,7 +100,6 @@ The pages are built from `_src/` by `python3 _build.py`, which puts the
 shared tokens, icons and face list (`_src/shared.css`, `_src/shared.js`)
 inside each page, and a family's own shared files where a page asks for them
 with `/*@include:name*/` (the tables' `table.*`, `table-edges.*` and
-`table-bar.*`, the corners' `corner.*`, the split's `split.*`, the links'
-`link.*`; `layouts.css`,
+`table-bar.*`, the corners' `corner.*`, the split's `split.*`, the links' `link.*`, the reader's `reader.*` and its text, `reader-text.js`; `layouts.css`,
 `seal-button.css` and `keys.js` shared between families). Edit
 `_src/` and build; don't edit the built pages.

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Scroll 3 · Beside a note</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:reader.css*/
+
+/* Scroll 3 · Beside a note. The book opens to the side of the note you're
+   writing, as a second note does: the split's Two sheets (its default mode),
+   the book scrolling on the right. One set of tools for the sheet you're in;
+   the other lies flat. Select in the book and Quote puts it in the note, with
+   where it came from. */
+.duo[data-columns] > .blotter { padding: var(--eien-space-5) var(--eien-space-5) 0; }
+.duo[data-columns] .sheet { max-width: none; }
+.sheet--flat { box-shadow: none; border-color: var(--eien-rule-soft); }
+.duo .blotter { outline: none; }
+.duo .blotter:focus-visible { box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.divider { cursor: default; }
+/* The note, as Live draws it; a quote set off by a hairline, its source in pencil. */
+.note-prose blockquote { margin: 0 0 var(--eien-paragraph-gap); padding-left: var(--eien-space-4); border-left: var(--eien-hairline) solid var(--eien-rule-strong); color: var(--eien-ink-soft); }
+.note-prose blockquote p { margin: 0; }
+.note-prose .cite { font-size: var(--eien-size-preview); color: var(--eien-pencil); margin-top: var(--eien-space-1); }
+.note-prose p { margin: 0 0 var(--eien-paragraph-gap); }
+.note-prose blockquote.is-new { animation: arrive var(--eien-calm) var(--eien-ease); }
+@keyframes arrive { from { background: var(--eien-seal-wash); } }
+@media (prefers-reduced-motion: reduce) { .note-prose blockquote.is-new { animation: none; } }
+/* The selection's own small menu, over the book: the row menu's raised paper. */
+.sel-menu { position: fixed; z-index: 30; display: flex; gap: 2px; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.sel-menu[hidden] { display: none; }
+.sel-menu .word-button { display: inline-flex; align-items: center; gap: var(--eien-space-1); }
+.sel-menu .word-button svg { width: var(--eien-space-3); height: var(--eien-space-3); }
+.sel-menu .menu__key { margin-left: var(--eien-space-1); }
+/* The phone: the other one a tap away in the back bar, as the phone keeps a note you came from. */
+.backbar .other { display: flex; align-items: center; gap: var(--eien-space-1); height: var(--eien-space-6); max-width: 12em; padding: 0 var(--eien-space-2); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-dot); background: var(--eien-paper); color: var(--eien-ink-soft); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: nowrap; overflow: hidden; cursor: pointer; position: relative; }
+.backbar .other svg { flex: none; width: var(--eien-space-3); height: var(--eien-space-3); }
+.phone__page.is-scroll { display: block; overflow: auto; padding-bottom: var(--eien-space-5); }
+.phone .note-prose { font-size: var(--eien-size-prose-phone); line-height: var(--eien-leading-prose); }
+.phone h1 { font-size: calc(var(--eien-size-title) * 0.72); font-weight: 500; line-height: 1.2; margin: 0 0 var(--eien-space-3); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:reader.js*/
+Reader.paged = false;
+
+// The note you're writing: a scene of your own, beside the book it answers.
+const NOTE = {
+  title: 'At the Assembly', crumb: 'Fic / Research / At the Assembly',
+  body: [
+    { p: 'She hears it from two chairs away, and the worst of it is how bored he sounds.' },
+    { p: 'Write the scene from Charlotte’s side: she sees Lizzy hear it, and sees her decide to laugh.' },
+  ],
+};
+let side = 'book'; // the sheet you're in: 'note' or 'book'
+let phoneSide = 'book';
+
+const noteHtml = () => NOTE.body.map((b) => (b.q
+  ? `<blockquote${b.fresh ? ' class="is-new"' : ''}><p>${esc(b.q)}</p><p class="cite">— ${esc(b.cite)}</p></blockquote>`
+  : `<p>${esc(b.p)}</p>`)).join('');
+const bookHtml = () => `<div class="book-text" data-c="${R.c}">${chapterHtml(R.c)}</div>`;
+const noteSheet = (ctx, flat) => `<article class="sheet${flat ? ' sheet--flat' : ''}">${ctx.layout === 'runhead' ? '' : `<div class="sheet__head"><span class="crumb">${NOTE.crumb}</span></div>`}<h1>${NOTE.title}</h1>
+  <div class="prose note-prose" contenteditable="true" spellcheck="true" data-note data-k="note" aria-label="${NOTE.title}">${noteHtml()}</div></article>`;
+const bookSheet = (ctx, flat) => `<article class="sheet${flat ? ' sheet--flat' : ''}">${ctx.head()}${bookHtml()}</article>`;
+
+Reader.tools = (ctx) => (side === 'book'
+  ? `${ctx.contentsTool()}${ctx.tool('quote', 'Quote in the note', 'Q', 'data-quote')}`
+  : ctx.tool('compare', 'Compare') + ctx.tool('versions', 'Versions') + ctx.tool('focus', 'Focus mode'));
+// The views follow the sheet you're in: the book's Pages and Scroll, or the note's three.
+const noteViews = (ctx) => `<span class="tools" role="group" aria-label="Views">${ctx.tool('live', 'Live', '', 'aria-pressed="true"')}${ctx.tool('source', 'Source')}${ctx.tool('reading', 'Reading')}</span>`;
+function topFor(ctx) {
+  const views = side === 'book' ? ctx.views() : noteViews(ctx);
+  if (ctx.layout === 'band') return `<div class="band"><span class="tools-row quiet">${views}</span><span class="tools-row quiet">${Reader.tools(ctx)}</span></div>`;
+  if (ctx.layout === 'slip') return `<div class="topline"><span class="slip quiet">${views}<span class="tools-rule" aria-hidden="true"></span>${Reader.tools(ctx)}</span></div>`;
+  return '';
+}
+Reader.strip = (ctx) => `<div class="seg"><span class="crumb">${side === 'book' ? ctx.crumb() : NOTE.crumb}</span><span class="tools-row">${side === 'book' ? ctx.views() : noteViews(ctx)}${Reader.tools(ctx)}</span></div>`;
+Reader.page = (ctx) => {
+  const folded = ctx.pageW < 2 * 360;
+  const pane = (which) => `<div class="blotter" data-side="${which}" ${which === 'book' ? `data-main-scroll="chapter" data-keep-scroll="bk${R.c}" tabindex="0" role="region" aria-roledescription="book" aria-label="${BOOK.title}${side === 'book' ? ', where you are' : ''}"` : `data-keep-scroll="note" role="region" aria-label="${NOTE.title}${side === 'note' ? ', where you are' : ''}"`}>${which === 'book' ? bookSheet(ctx, side !== 'book') : noteSheet(ctx, side !== 'note')}</div>`;
+  const pager = `<span class="pager" role="group" aria-label="The two pages">${[['note', NOTE.title], ['book', BOOK.title]].map(([k, w]) => `<button class="word-button" data-show="${k}" data-k="show-${k}" aria-pressed="${side === k}">${w}</button>`).join('')}</span>`;
+  const body = folded ? `<div class="duo">${pane(side)}</div>` : `<div class="duo" data-columns style="grid-template-columns: minmax(0, 1fr) var(--eien-hairline) minmax(0, 1fr)">${pane('note')}<div class="divider" role="separator" aria-orientation="vertical" aria-label="Between the note and the book"></div>${pane('book')}</div>`;
+  const items = side === 'book' ? [CHAPTERS[R.c].ord, '<span data-col-ch></span>', '<span data-col-book></span>'] : ['2 quotes from ' + BOOK.title, '86 words'];
+  const top = topFor(ctx);
+  return `<div class="page">${folded ? top.replace(/(<div class="(?:band|topline)">)/, `$1${pager}`) : top}${body}${ctx.colophon(items)}</div>`;
+};
+Reader.phone = () => (phoneSide === 'book'
+  ? `<div class="phone__page is-scroll" data-main-scroll="chapter" data-keep-scroll="pbk${R.c}" tabindex="0">${bookHtml()}</div>`
+  : `<div class="phone__page is-scroll" data-keep-scroll="pnote"><h1>${NOTE.title}</h1><div class="prose note-prose" contenteditable="true" data-note data-k="pnote" aria-label="${NOTE.title}">${noteHtml()}</div></div>`);
+Reader.phoneTools = (ctx) => (phoneSide === 'book' ? ctx.tool('contents', 'Contents', '', 'data-contents') + ctx.tool('quote', 'Quote in the note', '', 'data-quote') : '');
+Reader.after = (ctx, n) => {
+  const set = (sel, text) => { for (const el of canvas.querySelectorAll(sel)) el.textContent = text; };
+  set('[data-col-ch]', `${n.chPct}% of the chapter`);
+  set('[data-col-book]', `${n.pct}% of the book`);
+};
+Reader.drawn = (ctx) => {
+  // The phone's back bar keeps the other one a tap away.
+  const bar = canvas.querySelector('.phone .backbar');
+  if (bar && R.phoneView === 'page') bar.insertAdjacentHTML('beforeend', `<button class="other" data-other data-k="other" aria-label="Switch to ${phoneSide === 'book' ? NOTE.title : BOOK.title}">${icon('swap')}<span>${phoneSide === 'book' ? NOTE.title : BOOK.title}</span></button>`);
+  for (const q of canvas.querySelectorAll('blockquote.is-new')) setTimeout(() => q.classList.remove('is-new'), 400);
+  for (const b of NOTE.body) delete b.fresh;
+};
+/** The sheet you're in changes: the tools follow, and a selection in the book stays. */
+function activate(which) {
+  if (which === side) return;
+  const sel = getSelection();
+  const flow = canvas.querySelector('.book-text');
+  const kept = flow && sel.rangeCount && !sel.isCollapsed && flow.contains(sel.anchorNode)
+    ? [offsetOf(sel.getRangeAt(0).startContainer, sel.getRangeAt(0).startOffset), offsetOf(sel.getRangeAt(0).endContainer, sel.getRangeAt(0).endOffset)] : null;
+  side = which;
+  draw();
+  if (kept?.every((o) => o != null)) { sel.removeAllRanges(); sel.addRange(rangeOf(canvas.querySelector('.book-text'), ...kept)); }
+}
+
+/** Q: the book's selection into the note, with where it came from; the note keeps its own words. */
+function quote() {
+  const sel = getSelection();
+  const flow = canvas.querySelector('.book-text');
+  if (!flow || !sel.rangeCount || sel.isCollapsed || !flow.contains(sel.anchorNode)) { say('Select some words in the book first'); return; }
+  const text = sel.toString().replace(/\s+/g, ' ').trim();
+  NOTE.body.push({ q: text, cite: `${BOOK.title}, ${CHAPTERS[R.c].title}`, fresh: true });
+  sel.removeAllRanges();
+  selMenu.hidden = true;
+  say('Quoted in At the Assembly');
+  draw();
+  const note = canvas.querySelector('[data-note]');
+  note?.lastElementChild?.scrollIntoView({ block: 'nearest' });
+}
+Reader.click = (b) => {
+  const d = b.dataset;
+  if (d.show) activate(d.show);
+  else if ('quote' in d) quote();
+  else if ('other' in d) { phoneSide = phoneSide === 'book' ? 'note' : 'book'; draw(); }
+};
+Reader.key = (e) => {
+  if (e.key.toLowerCase() === 'q' && !mod(e) && !e.altKey && !typing(e.target) && side === 'book') { e.preventDefault(); quote(); return true; }
+  return false;
+};
+
+// A click or the keyboard in a sheet makes it the one you're in.
+const selMenu = Object.assign(document.createElement('div'), { className: 'sel-menu', hidden: true });
+selMenu.setAttribute('role', 'toolbar');
+selMenu.setAttribute('aria-label', 'The selection');
+selMenu.innerHTML = `<button class="word-button" data-sel-quote>${icon('quote')}Quote in the note<span class="menu__key">Q</span></button><button class="word-button" data-sel-copy>${icon('copy')}Copy<span class="menu__key">${KEY('Mod-C')}</span></button>`;
+document.body.append(selMenu);
+selMenu.addEventListener('pointerdown', (e) => e.preventDefault());
+selMenu.addEventListener('click', (e) => {
+  if (e.target.closest('[data-sel-quote]')) quote();
+  if (e.target.closest('[data-sel-copy]')) { navigator.clipboard?.writeText(getSelection().toString()); selMenu.hidden = true; say('Copied'); }
+});
+document.addEventListener('selectionchange', () => {
+  const sel = getSelection();
+  const flow = canvas?.querySelector('.win .book-text');
+  if (!flow || sel.isCollapsed || !sel.rangeCount || !flow.contains(sel.anchorNode)) { selMenu.hidden = true; return; }
+  const r = sel.getRangeAt(0).getBoundingClientRect();
+  selMenu.hidden = false;
+  selMenu.style.left = `${clamp(r.left, 8, innerWidth - selMenu.offsetWidth - 8)}px`;
+  selMenu.style.top = `${r.top - selMenu.offsetHeight - 8 > 8 ? r.top - selMenu.offsetHeight - 8 : r.bottom + 8}px`;
+});
+addEventListener('pointerup', (e) => {
+  const s = e.target.closest?.('.duo .blotter[data-side]');
+  if (s) activate(s.dataset.side);
+}, true);
+addEventListener('focusin', (e) => {
+  const s = e.target.closest?.('.duo .blotter[data-side]');
+  if (s && s.dataset.side !== side) setTimeout(() => activate(s.dataset.side));
+});
+// The note's words are kept as typed (drawn escaped on the next draw).
+addEventListener('input', (e) => {
+  const note = e.target.closest?.('[data-note]');
+  if (!note) return;
+  NOTE.body = [...note.children].map((el) => (el.tagName === 'BLOCKQUOTE'
+    ? { q: el.querySelector('p')?.textContent ?? '', cite: (el.querySelector('.cite')?.textContent ?? '').replace(/^—\s*/, '') }
+    : { p: el.textContent })).filter((b) => b.q || b.p?.trim());
+});
+
+mountReaderPage({
+  id: 'beside',
+  note: 'The book to the side of the note you’re writing (the split’s Two sheets); Quote lifts a passage into the note.',
+  notes: `
+  <h2>Scroll 3 · Beside a note</h2>
+  <p>Writers read to write: canon beside the fic, a cookbook beside the recipe note. So a book opens to the side of a note, as a second note does: the split's Two sheets (its default mode), the note on the left, the book on the right, scrolling a chapter at a time as Scroll 1 does. One set of tools for the sheet you're in; the other lies flat.</p>
+  <ul>
+    <li><b>Opening:</b> a book's right-click menu, Open to the Side; <kbd>${KEY('Mod-')}click</kbd> or <kbd>${KEY('Mod-Enter')}</kbd> on its row in the shelf; or drag it onto the page's right edge. <kbd>${KEY('Mod-D')}</kbd> closes it again, as for a note.</li>
+    <li><b>Quote:</b> select in the book and a small menu shows over the selection: <b>Quote in the note</b> (<kbd>Q</kbd>) and Copy. Quote puts the words in the note as a Markdown quote, with where they came from under them (<code>&gt; …</code> then <code>&gt; — Pride and Prejudice, Chapter III</code>); the note's own words are never touched, and ${KEY('Mod-Z')} in the note takes it out.</li>
+    <li><b>The tools follow you:</b> in the book, Pages and Scroll, Contents and Quote; in the note, its views, Compare, Versions and Focus. A click in a sheet makes it the one you're in.</li>
+    <li><b>Narrow:</b> below two pages' width, the two fold into one with a pager naming both, as notes do.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>No split on a phone: the book and the note are a tap apart, the other one's name in a slip at the back bar's right (⇄), as the phone keeps the note you came from. Quote sits in the book's tools; it puts the selection at the end of the note.</p>
+  <h2>For</h2>
+  <ul><li>What a writer reads books for, right beside the writing: quote with its source in one key.</li><li>Nothing new to learn: it's the split, with a book on one side.</li></ul>
+  <h2>Against</h2>
+  <ul><li>Two narrower pages: each reads at less than the full measure in a small window.</li><li>A mode on top of a reading mode: it needs Scroll 1 (or a paged one) to be built first.</li></ul>`,
+});
+</script>
+</body>
+</html>
