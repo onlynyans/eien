@@ -14,18 +14,44 @@ export const PHONE_ORDER: readonly PhonePane[] = ['sidebar', 'list', 'page'];
 
 export type Room = SettingValues['appearance.room'];
 
-/** Narrower than any desktop window (app/electron/window.ts: 640, less a Windows frame's 16). */
+/**
+ * Narrower than any desktop window (app/electron/window.ts: 640, less a Windows frame's 16): no
+ * room for the desktop's panes.
+ */
 export const NARROW = '(max-width: 599.98px)';
+
+/**
+ * A phone held upright (440px at most), or a foldable's cover screen: one pane at a time, whatever
+ * is chosen. A foldable opened is wider (a Galaxy Z Fold 5's inner screen upright, about 590px).
+ */
+export const UPRIGHT_PHONE = '(max-width: 519.98px)';
+
+/** What the window's width has room for: the desktop's panes (600px), two panes the phone's way (520px). */
+export interface Width {
+  readonly panes: boolean;
+  readonly two: boolean;
+}
+
+/** The window's width now. */
+export const widthNow = (): Width => ({
+  panes: !matchMedia(NARROW).matches,
+  two: !matchMedia(UPRIGHT_PHONE).matches,
+});
 
 const wide = settingOf('appearance.room');
 
 /** Whether this system has Wide screen: the phone's build. */
 const phoneBuild = (platform: string): boolean => wide !== undefined && offeredOn(wide, platform);
 
-/** The room now: one pane under 600px; where Wide screen isn't offered (the desktop), panes; else the choice. */
-export function roomOf(narrow: boolean, platform: string, values: SettingValues): Room {
-  if (narrow) return 'one';
-  return phoneBuild(platform) ? values['appearance.room'] : 'panes';
+/**
+ * The room now. The desktop: its panes, or one at a time under 600px. The phone's build: one at a
+ * time held upright; wider, the choice, but Panes only with the desktop's room for them.
+ */
+export function roomOf(width: Width, platform: string, values: SettingValues): Room {
+  if (!phoneBuild(platform)) return width.panes ? 'panes' : 'one';
+  const chosen = values['appearance.room'];
+  if (!width.two || (chosen === 'panes' && !width.panes)) return 'one';
+  return chosen;
 }
 
 /**

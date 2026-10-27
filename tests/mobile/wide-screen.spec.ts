@@ -17,10 +17,18 @@ const PANES: readonly Pane[] = ['sidebar', 'list', 'page'];
 const OPEN_FOLD = { width: 720, height: 820 };
 /** A tablet, turned sideways. */
 const TABLET = { width: 1180, height: 820 };
-/** The phone (Pixel 7), and a foldable folded: under 600px. */
+/** The phone (Pixel 7), and a foldable folded: under 520px. */
 const PHONE = { width: 412, height: 915 };
+/** A Galaxy Z Fold 5 opened, upright and sideways: its inner screen, about 590 by 706. */
+const FOLD5_UPRIGHT = { width: 590, height: 706 };
+const FOLD5_SIDEWAYS = { width: 706, height: 590 };
 
 const pane = (page: Page, name: Pane) => page.locator(`.shell > .${name}`);
+/** The width the panes give the pane beside the page, side by side (not its box, which slides there). */
+const besideWidth = (page: Page, name: 'sidebar' | 'list') =>
+  page
+    .locator('.shell')
+    .evaluate((shell, name) => shell.style.getPropertyValue(`--pane-${name}`), name);
 const back = (page: Page) => page.locator('.phone-bar__back');
 const other = (page: Page) => page.locator('.phone-bar__other');
 const titlesOnPage = (page: Page) => page.locator('.page .title');
@@ -58,10 +66,9 @@ async function withRoom(
   await putOutside(page, 'Eien/Vault/Ideas.md', 'An idea.\n');
   await page.setViewportSize(screen);
   await page.reload(); // the settings as this device keeps them, read as the window starts
-  await expect(page.locator('.shell')).toHaveAttribute(
-    'data-room',
-    screen.width < 600 ? 'one' : room,
-  );
+  // An upright phone is one at a time (under 520px); the desktop's panes need 600px.
+  const fits = screen.width >= 600 || (screen.width >= 520 && room !== 'panes');
+  await expect(page.locator('.shell')).toHaveAttribute('data-room', fits ? room : 'one');
   await expect(titles(page)).toHaveCount(3, { timeout: 10_000 }); // All Notes, at first
 }
 
@@ -137,24 +144,32 @@ test.describe('side by side', () => {
     await inSight(page, 'sidebar', 'list');
   });
 
-  test('on a foldable opened, the two meet at the fold', async ({ page }) => {
-    await withRoom(page, 'side', OPEN_FOLD);
-    await openInFic(page, 'Tear');
-    const list = await pane(page, 'list').boundingBox();
-    const page_ = await pane(page, 'page').boundingBox();
-    expect(list?.x).toBe(0);
-    expect(list?.width).toBe(OPEN_FOLD.width / 2);
-    expect(page_?.x).toBe(OPEN_FOLD.width / 2);
-  });
-
-  test('on a tablet, the pane behind is a list’s width, and the page has the rest', async ({
+  test('the notes keep their width beside the page, dragged by their edge, and kept', async ({
     page,
   }) => {
+    await withRoom(page, 'side', OPEN_FOLD);
+    await openInFic(page, 'Tear');
+    await expect.poll(() => besideWidth(page, 'list')).toBe('316px'); // the list's own width
+    const edge = await page.locator('.pane-edge--list').boundingBox();
+    if (!edge) throw new Error('no edge beside the page');
+    expect(edge.width).toBeGreaterThanOrEqual(44); // a finger's to take hold of
+    const x = edge.x + edge.width / 2;
+    const y = edge.y + edge.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 40, y, { steps: 4 });
+    await page.mouse.up();
+    await expect.poll(() => besideWidth(page, 'list')).toBe('356px');
+    await expect.poll(async () => (await pane(page, 'page').boundingBox())?.x).toBe(356);
+    await page.reload();
+    await openInFic(page, 'Mend');
+    await expect.poll(() => besideWidth(page, 'list')).toBe('356px');
+  });
+
+  test('on a tablet, the notes are a list’s width beside the page', async ({ page }) => {
     await withRoom(page, 'side', TABLET);
     await openInFic(page, 'Tear');
-    const list = await pane(page, 'list').boundingBox();
-    expect(list?.width).toBeLessThan(TABLET.width / 2);
-    expect(list?.width).toBeGreaterThanOrEqual(316);
+    await expect.poll(() => besideWidth(page, 'list')).toBe('316px');
   });
 
   test('folded, it’s the phone again, at the pane you were at; opened, the pane before is back', async ({
@@ -287,3 +302,68 @@ for (const room of ['panes', 'side', 'pages'] as const) {
     await inSight(page, 'list');
   });
 }
+
+test.describe('a Galaxy Z Fold 5 opened upright, about 590px', () => {
+  test('side by side keeps the contents beside the notes', async ({ page }) => {
+    await withRoom(page, 'side', FOLD5_UPRIGHT);
+    await inSight(page, 'sidebar', 'list');
+    await openInFic(page, 'Tear');
+    await inSight(page, 'list', 'page');
+  });
+
+  test('two pages slide the notes over the page', async ({ page }) => {
+    await withRoom(page, 'pages', FOLD5_UPRIGHT);
+    await back(page).click();
+    await openInFic(page, 'Tear');
+    await back(page).click();
+    await inSight(page, 'list', 'page');
+  });
+
+  test('panes, which need 600px, are one at a time here', async ({ page }) => {
+    await withRoom(page, 'panes', FOLD5_UPRIGHT);
+    await inSight(page, 'list');
+  });
+});
+
+test.describe('the desktop’s panes on a Fold 5 sideways', () => {
+  for (const layout of ['band', 'slip', 'runhead'] as const) {
+    test(`${layout}: the tools that don’t fit scroll in their bar; the window never runs past the screen`, async ({
+      page,
+    }) => {
+      await withRoom(page, 'panes', FOLD5_SIDEWAYS, { 'appearance.layout': layout });
+      await titles(page).filter({ hasText: 'Ideas' }).click();
+      await expect(titlesOnPage(page)).toHaveText('Ideas');
+      const fits = await page.evaluate(() => ({
+        scale: window.visualViewport?.scale,
+        viewport: document.querySelector('meta[name="viewport"]')?.getAttribute('content'),
+        wide: document.documentElement.scrollWidth,
+        tall: document.documentElement.scrollHeight,
+        width: innerWidth,
+        height: innerHeight,
+        // Every tool is inside the window, or inside a bar that scrolls to it.
+        outside: [...document.querySelectorAll<HTMLElement>('.shell .icon-button')]
+          .filter((tool) => tool.checkVisibility())
+          .filter((tool) => {
+            const box = tool.getBoundingClientRect();
+            const bar = tool.closest<HTMLElement>('.page__bar, .window-head');
+            const scrolls = bar !== null && getComputedStyle(bar).overflowX === 'auto';
+            return box.right > innerWidth + 0.5 && !scrolls;
+          })
+          .map((tool) => tool.getAttribute('aria-label')),
+      }));
+      expect(fits.scale).toBe(1);
+      // A phone's browser zooms out to show what runs past the screen (a Fold 5 did, leaving the
+      // window's lower half blank), which Chromium's phone emulation doesn't: the page forbids it.
+      expect(fits.viewport).toContain('minimum-scale=1');
+      expect(fits.wide).toBeLessThanOrEqual(fits.width);
+      expect(fits.tall).toBeLessThanOrEqual(fits.height);
+      expect(fits.outside).toEqual([]);
+    });
+  }
+
+  test('compact takes space from the contents’ rows, still a finger’s reach', async ({ page }) => {
+    await withRoom(page, 'panes', TABLET, { 'appearance.density': 'compact' });
+    const row = page.locator('.sidebar .tree-row').first();
+    expect((await row.boundingBox())?.height).toBe(36);
+  });
+});

@@ -20,25 +20,40 @@ const choosing = (room: Room): SettingValues => ({ ...DEFAULT_SETTINGS, 'appeara
 const sight = (room: Room, shown: PhonePane) =>
   PHONE_ORDER.filter((pane) => inSight(room, shown, pane));
 
+/** An upright phone; a foldable opened upright (a Galaxy Z Fold 5, about 590px); a tablet, or a fold sideways. */
+const PHONE = { panes: false, two: false };
+const FOLD = { panes: false, two: true };
+const WIDE = { panes: true, two: true };
+
 describe('the room', () => {
-  it('is one pane at a time under 600px, whatever is chosen, on any system', () => {
+  it('is one pane at a time on a phone held upright, whatever is chosen, on any system', () => {
     for (const room of ROOMS) {
-      expect(roomOf(true, 'android', choosing(room))).toBe('one');
-      expect(roomOf(true, 'darwin', choosing(room))).toBe('one');
+      expect(roomOf(PHONE, 'android', choosing(room))).toBe('one');
+      expect(roomOf(PHONE, 'darwin', choosing(room))).toBe('one');
     }
   });
 
-  it('is the writer’s choice on a wider phone’s screen, and always panes on the desktop', () => {
+  it('is the writer’s choice on a wider phone’s screen, and always panes on a wide desktop', () => {
     for (const room of ROOMS) {
       for (const phone of ['android', 'ios', 'web'])
-        expect(roomOf(false, phone, choosing(room))).toBe(room);
+        expect(roomOf(WIDE, phone, choosing(room))).toBe(room);
       for (const desktop of ['darwin', 'win32', 'linux'])
-        expect(roomOf(false, desktop, choosing(room))).toBe('panes');
+        expect(roomOf(WIDE, desktop, choosing(room))).toBe('panes');
     }
+  });
+
+  it('on a foldable opened upright, is any room but the desktop’s panes, which need 600px', () => {
+    expect(ROOMS.map((room) => roomOf(FOLD, 'android', choosing(room)))).toEqual([
+      'one',
+      'one',
+      'side',
+      'pages',
+    ]);
+    expect(roomOf(FOLD, 'darwin', choosing('side'))).toBe('one'); // a desktop window that narrow
   });
 
   it('is today’s panes until the writer chooses', () => {
-    expect(roomOf(false, 'android', DEFAULT_SETTINGS)).toBe('panes');
+    expect(roomOf(WIDE, 'android', DEFAULT_SETTINGS)).toBe('panes');
   });
 
   it('goes the phone’s way in every room but panes, and opens two pages only with panes or two pages', () => {

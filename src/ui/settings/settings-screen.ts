@@ -7,7 +7,7 @@
 import { offeredOn, type SettingKey, type SettingValues } from '../../core/config';
 import { h } from '../dom';
 import { icon } from '../icons';
-import { NARROW, onePane, roomOf } from '../phone/room';
+import { NARROW, onePane, roomOf, UPRIGHT_PHONE, widthNow } from '../phone/room';
 import { reasonOf } from '../reason';
 import type { WriterThemes } from '../theme/writer-themes';
 import { settingRow } from './controls';
@@ -133,7 +133,8 @@ export class SettingsScreen {
     container.append(this.#dialog);
     settings.onChange((values) => this.#show(values));
     // Folded or opened, turned, with Settings open: what the room offers follows.
-    matchMedia(NARROW).addEventListener('change', () => this.#fit(settings.values));
+    for (const width of [NARROW, UPRIGHT_PHONE])
+      matchMedia(width).addEventListener('change', () => this.#fit(settings.values));
     this.#show(settings.values);
     this.#choose(this.#shown);
   }
@@ -251,7 +252,7 @@ export class SettingsScreen {
 
   /** Show what's offered in the room the window uses now: one pane, the phone's way, offers no panes. */
   #fit(values: SettingValues): void {
-    const phone = onePane(roomOf(matchMedia(NARROW).matches, this.#platform, values));
+    const phone = onePane(roomOf(widthNow(), this.#platform, values));
     for (const tab of this.#tabs) tab.button.hidden = !tab.fit(phone);
     for (const part of this.#dialog.querySelectorAll<HTMLElement>('.settings__part')) {
       part.hidden = [...part.querySelectorAll<HTMLElement>('.settings__tab')].every(

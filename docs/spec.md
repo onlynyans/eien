@@ -1478,20 +1478,25 @@ Compare or Restore finishes lands on a note opened meanwhile.
   narrower than 600 px (narrower than any desktop window can be) is a
   phone's, whatever the system.
 - **Wide screen** (backlog #46; `appearance.room`, Settings → Look →
-  Appearance, the phone's alone, this device's): wider than 600 px (a foldable
-  opened, a tablet, a phone turned sideways), the phone uses the room as the
-  writer chooses ([tablet.md](design/explorations/tablet.md)). The rules are
+  Appearance, the phone's alone, this device's): wider than a phone held
+  upright (520 px; a Galaxy Z Fold 5 opened upright is about 590), the phone
+  uses the room as the writer chooses (a foldable opened, a tablet, a phone
+  turned sideways) ([tablet.md](design/explorations/tablet.md)). The rules are
   `src/ui/phone/room.ts`; the desktop is always Panes.
   - **Panes** (the default, as before): the desktop's three panes, or two, and
     the split, as on the desktop, with every control and row a finger's
-    (`--eien-touch`, 44 px) where a finger is the pointer.
+    (`--eien-touch`, 44 px; a compact row 36 px) where a finger is the
+    pointer. They need the desktop's 600 px: narrower, one at a time. Tools
+    that don't fit their bar scroll in it under a finger; the page never runs
+    past the screen, and a phone's browser never zooms out to show it.
   - **One at a time:** the phone, wider.
   - **Side by side:** the phone's way, with the pane you came from kept in
     sight beside the one you're in: the notes beside the page, the contents
     beside the notes. Back moves the pair a step, naming what it brings into
     sight; with the contents in sight there's nothing to go back to. The pane
-    behind is half the screen at most, so on a foldable opened the two meet at
-    the fold, and a list's width plus a margin on a tablet.
+    beside the page keeps its own width (the sidebar's or the list's, as on
+    the desktop), dragged by its edge (a finger wide) and remembered, giving
+    way so the page keeps 240 px.
   - **Two pages:** the phone's way, but the page stays in sight: the notes and
     the contents slide over it from the left (the bar's back word brings them,
     and goes on through them to the contents); a tap beside them, or Android's

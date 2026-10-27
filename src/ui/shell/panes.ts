@@ -10,6 +10,7 @@
 import { h } from '../dom';
 import type { PhonePane } from '../phone/room';
 import {
+  besideWidth,
   dragged,
   type Edge,
   LIMITS,
@@ -37,6 +38,8 @@ export interface PaneParts {
   phone(): PhonePane | null;
   /** The phone's way, whether `pane` is in sight (the pane before may be, beside it). */
   inSight(pane: PhonePane): boolean;
+  /** Side by side, the pane kept in sight beside the one you're in, its edge dragged; else null. */
+  beside(): Shuttable | null;
   /** The phone's way, bring a pane into sight. */
   showPhone(pane: PhonePane): void;
 }
@@ -219,10 +222,17 @@ export class PaneLayout {
     }
   }
 
-  /** The widths on screen: a shut sidebar is as wide as the layout makes its strip (--strip, ./shell.css). */
+  /**
+   * The widths on screen: a shut sidebar is as wide as the layout makes its strip (--strip,
+   * ./shell.css); side by side, the pane beside the page as the writer left it (./pane-state.ts).
+   */
   #shown(): ReturnType<typeof shownWidths> {
     const strip = getComputedStyle(this.#parts.shell).getPropertyValue('--strip');
-    return shownWidths(this.#panes, this.two, window.innerWidth, Number.parseFloat(strip));
+    const shown = shownWidths(this.#panes, this.two, window.innerWidth, Number.parseFloat(strip));
+    const beside = this.#parts.beside();
+    return beside
+      ? { ...shown, [beside]: besideWidth(this.#panes, beside, window.innerWidth) }
+      : shown;
   }
 
   #edgeOf(pane: Shuttable): Edge {

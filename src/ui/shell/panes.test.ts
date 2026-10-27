@@ -38,6 +38,7 @@ beforeEach(() => {
     changed: vi.fn<() => void>(),
     phone: () => phone,
     inSight: (pane) => pane === phone,
+    beside: () => null,
     showPhone: vi.fn(),
   };
   document.body.replaceChildren(root);
@@ -218,6 +219,28 @@ describe('PaneLayout', () => {
       phone = 'sidebar';
       make().toggle('sidebar');
       expect(parts.showPhone).toHaveBeenCalledWith('list');
+    });
+  });
+
+  describe('side by side, the pane beside the page', () => {
+    it('is as wide as it was left, and its edge steps it, remembered', () => {
+      phone = 'page';
+      parts = { ...parts, inSight: (pane) => pane !== 'sidebar', beside: () => 'list' };
+      make();
+      expect(shell().style.getPropertyValue('--pane-list')).toBe(`${DEFAULT_PANES.list}px`);
+      edge('list').dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowRight', cancelable: true }),
+      );
+      expect(stored().list).toBe(DEFAULT_PANES.list + STEP);
+      expect(shell().style.getPropertyValue('--pane-list')).toBe(`${DEFAULT_PANES.list + STEP}px`);
+    });
+
+    it('keeps its width though the sidebar was shut on the desktop’s panes', () => {
+      phone = 'list';
+      parts = { ...parts, inSight: (pane) => pane !== 'page', beside: () => 'sidebar' };
+      localStorage.setItem(KEY, JSON.stringify({ sidebarShut: true }));
+      make();
+      expect(shell().style.getPropertyValue('--pane-sidebar')).toBe(`${DEFAULT_PANES.sidebar}px`);
     });
   });
 

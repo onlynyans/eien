@@ -50,7 +50,9 @@ describe('side by side', () => {
   });
 
   it('keeps the list beside the page, and back moves the pair a step', () => {
+    expect(shell().dataset.beside).toBe('sidebar'); // the contents beside the notes
     stack.show('page');
+    expect(shell().dataset.beside).toBe('list');
     expect(shell().dataset.room).toBe('side');
     expect(shell().dataset.sight).toBe('list page');
     expect(back().textContent).toBe('‹ Library'); // what back brings into sight: the notes are
@@ -140,6 +142,7 @@ describe('the room changing', () => {
     expect(stack.phone).toBe(false);
     expect(stack.shown).toBeNull();
     expect(shell().hasAttribute('data-phone')).toBe(false);
+    expect(shell().dataset.beside).toBeUndefined();
     expect(shell().dataset.sight).toBe('sidebar list page');
     expect(stack.bar.hidden).toBe(true);
     expect(stack.back()).toBe(false);

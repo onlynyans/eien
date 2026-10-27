@@ -192,6 +192,7 @@ export async function showVault(
       changed: () => void redraw(),
       phone: () => phone.stack.shown,
       inSight: (pane) => phone.stack.inSight(pane),
+      beside: () => phone.stack.beside,
       showPhone: (pane) => phone.stack.show(pane),
     },
     settings.values['layout.panes'] === 'two',

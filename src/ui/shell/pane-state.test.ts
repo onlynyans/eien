@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BESIDE_PAGE_MIN,
+  besideWidth,
   DEFAULT_PANES,
   dragged,
   LIMITS,
@@ -190,6 +192,21 @@ describe('shownWidths', () => {
 
 // That the defaults are the design's tokens (--eien-sidebar-w and the rest) is checked in the
 // running window, where the tokens are computed: tests/e2e/panes.spec.ts.
+describe('besideWidth', () => {
+  it('is the pane’s own width, side by side, shut or not', () => {
+    expect(besideWidth(DEFAULT_PANES, 'list', 720)).toBe(DEFAULT_PANES.list);
+    expect(besideWidth({ ...DEFAULT_PANES, sidebarShut: true }, 'sidebar', 720)).toBe(
+      DEFAULT_PANES.sidebar,
+    );
+  });
+
+  it('gives way so the page keeps a phone’s width, but not past the pane’s narrowest', () => {
+    const wide = { ...DEFAULT_PANES, list: 460 };
+    expect(besideWidth(wide, 'list', 590)).toBe(590 - BESIDE_PAGE_MIN);
+    expect(besideWidth(wide, 'list', 400)).toBe(LIMITS.list[0]);
+  });
+});
+
 describe('the defaults', () => {
   it('can’t be changed by whoever reads them', () => {
     const read = readPanes('not json'); // garbage gives the defaults themselves

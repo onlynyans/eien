@@ -97,10 +97,22 @@
 }
 
 /* Side by side: the pane you came from beside the one you're in, the bar over both. The pane
-   behind is a list's width at most, and half the screen on a foldable opened, so their edge is
-   the fold. */
-.shell[data-phone][data-room="side"] {
-  grid-template-columns: min(50%, calc(var(--eien-list-w) + var(--eien-space-7))) minmax(0, 1fr);
+   beside is as wide as the writer drags it (its edge, ../shell/panes.ts), the page keeping a
+   phone's width at least. */
+.shell[data-phone][data-room="side"][data-beside="sidebar"] {
+  grid-template-columns: var(--pane-sidebar) minmax(0, 1fr);
+}
+.shell[data-phone][data-room="side"][data-beside="list"] {
+  grid-template-columns: var(--pane-list) minmax(0, 1fr);
+}
+.shell[data-phone][data-room="side"][data-beside="sidebar"] > .pane-edge--sidebar,
+.shell[data-phone][data-room="side"][data-beside="list"] > .pane-edge--list {
+  display: block;
+}
+/* The notes' edge, beside the page: under the bar, which goes back. */
+.shell[data-phone][data-room="side"][data-beside="list"] > .pane-edge--list {
+  top: calc(var(--eien-space-7) + var(--eien-hairline));
+  left: var(--pane-list);
 }
 .shell[data-room="side"] > .phone-bar {
   grid-column: 1 / -1;
@@ -143,6 +155,17 @@
     --eien-control: var(--eien-touch);
     --eien-row-h: var(--eien-touch);
     --runhead-h: var(--eien-space-7);
+  }
+  /* Compact still takes space away: a row a step under a finger's, never under WCAG's 24px. */
+  :root[data-density="compact"] .shell[data-room="panes"] {
+    --eien-row-h: calc(var(--eien-touch) - var(--eien-space-2));
+  }
+  /* The page's tools keep their size: short of room, their bar scrolls under a finger, rather
+     than run past the window (which a phone's browser would zoom out to show). */
+  .shell[data-room="panes"] :is(.page__bar, .window-head) {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
   }
 }
 /* No edges to drag, no chevrons to shut a pane (back stands in for them), no

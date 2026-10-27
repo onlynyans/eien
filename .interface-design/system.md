@@ -510,20 +510,25 @@ corners and colours the layout's own.
 
 From `docs/design/explorations/tablet.md`: the owner chose all three, as one
 setting of the phone's, **Wide screen** (`appearance.room`, as `data-room` on
-the shell; the rules in `src/ui/phone/room.ts`). Under 600px the phone is the
-phone; the desktop is always Panes.
+the shell; the rules in `src/ui/phone/room.ts`). Under 520px (a phone held
+upright) the phone is the phone; Panes needs the desktop's 600px; the desktop
+is always Panes.
 
 - **Panes** (the default): the desktop's panes and split, as built. Where a
   finger is the pointer (`pointer: coarse`), `--eien-control` and
-  `--eien-row-h` are `--eien-touch` on the shell, and Running head's strip
+  `--eien-row-h` are `--eien-touch` on the shell (a compact row
+  `--eien-touch` less `--eien-space-2`), a pane's edge is `--eien-touch` wide
+  to take hold of, its hairline in the middle, the page's tool bars scroll
+  rather than run past the screen, and Running head's strip
   grows to `--eien-space-7` to hold them; the views' well keeps its inner
   buttons a step smaller, as the phone's bar does. The seal's button keeps its
   size and place, its reach a finger's.
 - **One at a time:** the phone's stack at any width.
 - **Side by side:** the phone's stack with the pane before in sight
-  (`data-sight`): the behind pane `min(50%, --eien-list-w + --eien-space-7)`,
-  a `--eien-rule` hairline at its right, the bar across both; on an open
-  foldable the edge is the fold. Back names the pane it brings into sight.
+  (`data-sight`): the pane beside (`data-beside`) as wide as its pane is
+  (`--pane-sidebar`, `--pane-list`), dragged by its pane edge under the bar,
+  a `--eien-rule` hairline at its right, the bar across both. Back names the
+  pane it brings into sight.
 - **Two pages:** the page always in sight; the notes or the contents slide
   over it from the left: `--eien-paper-raised`, a `--eien-rule-strong` edge,
   `--eien-shadow-float`, `min(85%, --eien-list-w + --eien-space-7)` wide, on

@@ -17,12 +17,15 @@ import {
   type PhonePane,
   type Room,
   twoPages,
+  UPRIGHT_PHONE,
+  type Width,
+  widthNow,
 } from './room';
 
 export interface PhoneParts {
   readonly shell: HTMLElement;
-  /** The room this window uses, `narrow` or not (./room.ts). */
-  room(narrow: boolean): Room;
+  /** The room this window uses at `width` (./room.ts). */
+  room(width: Width): Room;
   /** What the bar's back names: where it goes. */
   backName(to: PhonePane): string;
   /** The keyboard to the pane now shown (never left in one gone from sight). */
@@ -42,14 +45,15 @@ export class PhoneStack {
   readonly controls = h('div', { class: 'phone-bar__controls' });
   readonly #parts: PhoneParts;
   readonly #back: HTMLButtonElement;
-  readonly #narrow = window.matchMedia(NARROW);
-  readonly #onNarrow = () => this.roomChanged();
+  /** The widths a room changes at: the desktop's panes', and an upright phone's. */
+  readonly #widths = [window.matchMedia(NARROW), window.matchMedia(UPRIGHT_PHONE)];
+  readonly #onWidth = () => this.roomChanged();
   #shown: PhonePane = 'list';
   #room: Room;
 
   constructor(parts: PhoneParts) {
     this.#parts = parts;
-    this.#room = parts.room(this.#narrow.matches);
+    this.#room = parts.room(widthNow());
     this.#back = wordButton('', () => this.back());
     this.#back.classList.add('phone-bar__back');
     this.bar = h(
@@ -58,7 +62,7 @@ export class PhoneStack {
       this.#back,
       this.controls,
     );
-    this.#narrow.addEventListener('change', this.#onNarrow);
+    for (const width of this.#widths) width.addEventListener('change', this.#onWidth);
     this.#apply();
   }
 
@@ -80,6 +84,12 @@ export class PhoneStack {
   /** The pane the writer is at, the phone's way; null with the desktop's panes, where all are. */
   get shown(): PhonePane | null {
     return this.phone ? this.#shown : null;
+  }
+
+  /** Side by side, the pane kept in sight beside the one you're in: its width is the writer's to drag. */
+  get beside(): 'sidebar' | 'list' | null {
+    if (this.#room !== 'side') return null;
+    return this.#shown === 'page' ? 'list' : 'sidebar';
   }
 
   /** Whether `pane` is in sight (every one with the desktop's panes; ./room.ts). */
@@ -108,7 +118,7 @@ export class PhoneStack {
 
   /** The room may have changed (the window turned or unfolded, or Wide screen was set): lay it out again. */
   roomChanged(): void {
-    const room = this.#parts.room(this.#narrow.matches);
+    const room = this.#parts.room(widthNow());
     if (room === this.#room) return;
     if (this.#leaves(room, this.#shown)) this.#parts.leavingPage();
     this.#room = room;
@@ -124,7 +134,7 @@ export class PhoneStack {
   }
 
   stop(): void {
-    this.#narrow.removeEventListener('change', this.#onNarrow);
+    for (const width of this.#widths) width.removeEventListener('change', this.#onWidth);
   }
 
   /** Whether the page, in sight now, goes from sight in `room` with `shown` the pane at. */
@@ -139,6 +149,9 @@ export class PhoneStack {
     shell.dataset.room = this.#room;
     shell.dataset.shown = this.#shown;
     shell.dataset.sight = PHONE_ORDER.filter((pane) => this.inSight(pane)).join(' ');
+    const beside = this.beside;
+    if (beside) shell.dataset.beside = beside;
+    else delete shell.dataset.beside;
     // Two pages: the page under the notes is only to be seen until they're put away.
     const covered = this.#room === 'pages' && this.#shown !== 'page';
     shell.querySelector(':scope > .page')?.toggleAttribute('inert', covered);
