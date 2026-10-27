@@ -31,9 +31,11 @@ body {
   /* The system's own window controls sit over the bands: macOS's traffic
      lights at the left, Windows' and Linux's minimize, maximize and close at
      the right. The window controls overlay says where (env(titlebar-area-*);
-     none on a phone), and the band at that edge keeps clear of them. */
-  --controls-left: env(titlebar-area-x, 0px);
-  --controls-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
+     none on a phone), and the band at that edge keeps clear of them.
+     How wide they stand, and at which edge, is ./controls-left.ts's to say (#44). */
+  --controls-w: 0px;
+  --controls-left: 0px;
+  --controls-right: var(--controls-w);
   /* The seal's square, open or shut: on the gutter, past macOS's lights. */
   --seal-x: calc(var(--controls-left) + var(--eien-space-4));
   /* Where the next band's words may start, clear of what stands in the window's top-left
@@ -41,6 +43,10 @@ body {
   --corner: var(--controls-left);
   /* A shut sidebar: a strip of desk as wide as the bands are tall, or none (the seal alone). */
   --strip: var(--band);
+}
+:root[data-controls-left] {
+  --controls-left: var(--controls-w);
+  --controls-right: 0px;
 }
 .shell {
   position: relative;
@@ -56,9 +62,12 @@ body {
   min-width: 0;
   overflow: hidden;
 }
-/* While an edge is dragged: the panes follow the pointer at once, and nothing else takes it. */
-.shell.is-resizing {
+/* While an edge is dragged, or the window resized (./panes.ts): the panes follow at once. */
+.shell:is(.is-resizing, .is-fitting) {
   transition: none;
+}
+/* Dragged, nothing else takes the pointer. */
+.shell.is-resizing {
   cursor: col-resize;
   user-select: none;
 }
@@ -116,7 +125,7 @@ body {
   width: var(--eien-mark-w);
   background: var(--eien-focus);
 }
-.shell.is-resizing .pane-edge {
+.shell:is(.is-resizing, .is-fitting) > :is(.pane-edge, .chevron-slot) {
   transition: none;
 }
 .shell[data-sidebar-shut] .pane-edge--sidebar,

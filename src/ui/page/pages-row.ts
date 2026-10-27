@@ -133,7 +133,8 @@ export class PagesRow {
         `${page.name || 'No note'}${page === this.#active ? ', the active page' : ''}`,
       );
     }
-    if (!this.pager.hidden) this.#drawPager();
+    // Drawn whether it's in sight or not: folding and unfolding only shows and hides it (#44).
+    this.#drawPager();
     const other = this.#other();
     if (other) {
       const name = other.name || 'No note';
@@ -171,7 +172,6 @@ export class PagesRow {
     if (under) this.element.dataset.dock = 'under';
     else delete this.element.dataset.dock;
     this.pager.hidden = one !== 'fold';
-    if (one === 'fold') this.#drawPager();
     const other = this.#other();
     this.waits.textContent =
       one === 'wait' && other
