@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — A link in Live: 1 · A card</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:link.css*/
+
+/* 1 · A card under the link: a slip tucked under the line. It reads as a row
+   of the note list does (the crumb, the title, a first line, the count), so a
+   note link shows the note it opens, and is as wide as the list; then the
+   link's four tools. Raised paper, as everything that floats. */
+.lcard { width: min(var(--eien-list-w), calc(100% - var(--eien-space-4))); }
+.lcard__body { display: grid; gap: var(--eien-space-1); padding: var(--eien-space-3); }
+.lcard__title { font-weight: 500; color: var(--eien-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lcard__title.is-missing { font-style: italic; font-weight: 400; color: var(--eien-ink-soft); }
+.lcard__line { font-size: var(--eien-size-preview); color: var(--eien-pencil); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+/* An address is the machine's: the host in ink, the rest in pencil, broken anywhere. */
+.lcard__host { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink); overflow-wrap: anywhere; }
+.lcard__path { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.lcard__tools { display: flex; align-items: center; gap: 2px; padding: var(--eien-space-1); border-top: var(--eien-hairline) solid var(--eien-rule-soft); }
+.lcard__tools .icon-button { color: var(--eien-ink-soft); }
+.lcard__hint { margin-left: auto; padding-right: var(--eien-space-2); white-space: nowrap; }
+.lcard__edit { display: grid; gap: var(--eien-space-2); padding: var(--eien-space-3); }
+.lcard__edit .label { display: block; margin-bottom: 2px; }
+.lcard__keys { color: var(--eien-faded); }
+/* A phone: the card the sheet's width under the link, its tools at a finger's size, each with its word. */
+.is-touch .lcard { width: calc(100% - var(--eien-space-4)); }
+.is-touch .lcard__tools { flex-wrap: wrap; }
+.is-touch .lcard__tools .icon-button { height: var(--eien-touch); }
+.is-touch .lcard__hint { display: none; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:link.js*/
+
+mountLinkPage({
+  id: 'card',
+  note: 'Point at a link, or put the caret in one: a card under it says where it goes.',
+  notes: `
+  <h2>1 · A card under the link</h2>
+  <p>Point at a link for a moment, or put the caret in it, and a card comes under it: raised paper, as a menu is. A note link's card reads as that note's row in the list: its place in the book, its title, its first line, its words and its last seal. A web link's card is its address, the site in ink, the rest in pencil. A note not made yet says so.</p>
+  <p>Under that, its four tools: open (or make the note), edit, copy, and take the link off (the words stay). Edit turns the card into two fields, the words and where it goes; <kbd>↩</kbd> keeps, <kbd>Esc</kbd> puts back, and leaving keeps, as renaming does.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>point at <em>chapter iv</em>, then at <em>the timeline</em>'s note, which isn't made yet</li>
+    <li>click into <em>fandom wiki</em>; <kbd>${KEY('Mod-K')}</kbd>, and type a note's name over the address: it becomes a wiki link</li>
+    <li>select some plain words and <kbd>${KEY('Mod-K')}</kbd> to make a link</li>
+    <li>A plain click → Follows, then click a link; <kbd>${ALT_CLICK}</kbd> puts the caret in it instead</li>
+  </ul>
+  ${SHARED_NOTES()}
+  <h2>A plain click</h2>
+  <p>Either works with a card. <strong>Places the caret</strong> (today): the card comes under the click, so opening is one more click, just below; nothing jumps away while you're writing. <strong>Follows</strong>: the card is still there on hover to edit, and the keyboard reaches every link; <kbd>${ALT_CLICK}</kbd> to put the caret in one. The card is what makes Follows safe, since nothing then needs the click to edit.</p>
+  <h2>On a phone</h2>
+  <p>No hover: a tap puts the caret in the link and the card comes under it, the sheet's width, its tools at 44px with their words beside them (there are no tooltips to name them). With Follows a tap opens the link and a long press puts the caret in it (Show → Phone).</p>`,
+});
+
+const card = el('div', 'float lcard');
+card.dataset.linkPart = '';
+card.setAttribute('role', 'group');
+card.hidden = true;
+sheet.append(card);
+
+let shownFor = null;
+let by = null; // 'hover' or 'caret': what brought the card
+let editing = null; // the link being edited, and how it began
+
+function show(at, how) {
+  if (!linkOf(at)) return hide();
+  shownFor = at;
+  by = how;
+  card.replaceChildren(...view(at));
+  card.hidden = false;
+  card.setAttribute('aria-label', `Link to ${describe(at).short}`);
+  place();
+}
+function hide() {
+  card.hidden = true;
+  shownFor = null;
+  by = null;
+  editing = null;
+}
+function place() {
+  if (!shownFor || card.hidden) return;
+  const box = linkBox(shownFor);
+  if (!box) return hide();
+  placeBy(card, box, 'below');
+}
+
+/** The card's face: where the link goes, then its tools. */
+function view(at) {
+  const d = describe(at);
+  const body = el('div', 'lcard__body');
+  if (d.kind === 'note') {
+    body.append(el('span', 'label', d.crumb), el('span', 'lcard__title', d.title));
+    if (d.first) body.append(el('span', 'lcard__line', d.first));
+    body.append(el('span', 'count', `${d.words.toLocaleString('en')} words · sealed ${d.sealed}`.toUpperCase()));
+  } else if (d.kind === 'missing') {
+    body.append(el('span', 'label', 'No note yet'), el('span', 'lcard__title is-missing', d.title), el('span', 'lcard__line', `Make it, and it opens empty in ${BOOK.split(' / ').pop()}.`));
+  } else if (d.kind === 'web') {
+    body.append(el('span', 'label', 'The web'), el('span', 'lcard__host', d.host));
+    if (d.path && d.path !== '/') body.append(el('span', 'lcard__path', d.path));
+  } else {
+    body.append(el('span', 'label', 'No address yet'), el('span', 'lcard__line', 'Edit it to say where it goes.'));
+  }
+  const tools = el('div', 'lcard__tools');
+  tools.setAttribute('role', 'toolbar');
+  tools.setAttribute('aria-label', 'Link');
+  const word = isTouch();
+  const open = d.kind === 'missing'
+    ? iconButton('plus', `Make the note “${d.title}”`, '', () => { makeNote(d.title); show(at, by); focusFirst(); }, { word: word && 'Make' })
+    : iconButton('openLink', d.kind === 'web' ? `Open ${d.host}` : d.kind === 'note' ? `Open ${d.title}` : 'Open', KEY('Alt-↩'), () => follow(at), { word: word && 'Open' });
+  tools.append(
+    open,
+    iconButton('rename', 'Edit the link', KEY('Mod-K'), () => edit(at), { word: word && 'Edit' }),
+    iconButton('copy', d.kind === 'web' ? 'Copy the address' : 'Copy the link', '', () => copyLink(at), { word: word && 'Copy' }),
+    iconButton('unlink', 'Take the link off: the words stay', '', () => removeLink(at), { word: word && 'Take off' }),
+    el('span', 'lcard__hint label', d.kind === 'missing' ? '' : openHint()),
+  );
+  roving(tools);
+  tools.querySelectorAll('button').forEach((b, i) => { b.tabIndex = i ? -1 : 0; });
+  tools.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); toCaret(); } });
+  return [body, tools];
+}
+const focusFirst = () => card.querySelector('.lcard__tools button')?.focus();
+
+/** The card's other face: the words and where it goes, as two fields. */
+function edit(at, { made = false } = {}) {
+  if (shownFor === null || !same(shownFor, at)) show(at, 'caret');
+  editing = { at, made };
+  const par = DOC[at.p];
+  const l = par.links[at.i];
+  const form = el('form', 'lcard__edit');
+  form.setAttribute('aria-label', 'Edit the link');
+  const words = el('input', 'lf lf--words');
+  words.value = wordsOf(par, l);
+  const goes = el('input', 'lf');
+  goes.value = targetOf(par, l) ?? '';
+  goes.placeholder = 'A note’s name, or an address';
+  goes.spellcheck = false;
+  for (const [input, id, label] of [[words, 'lk-words', 'Words'], [goes, 'lk-goes', 'Goes to']]) input.id = id;
+  const ghost = el('span', 'ghost');
+  const typed = el('span', 'ghost__typed');
+  const rest = el('span', 'ghost__rest');
+  ghost.append(typed, rest);
+  const wrap = el('span', 'ghost-wrap');
+  wrap.append(goes, ghost);
+  const finish = () => {
+    const isNote = !isAddress(goes.value.trim());
+    typed.textContent = goes.value;
+    rest.textContent = isNote && goes.selectionStart === goes.value.length ? completion(goes.value) : '';
+  };
+  goes.addEventListener('input', finish);
+  goes.addEventListener('keyup', finish);
+  goes.addEventListener('keydown', (e) => {
+    if ((e.key === 'Tab' && !e.shiftKey || e.key === 'ArrowRight') && rest.textContent && goes.selectionStart === goes.value.length) {
+      e.preventDefault();
+      goes.value += rest.textContent;
+      finish();
+    }
+  });
+  const lw = el('label', 'label', 'Words');
+  lw.htmlFor = 'lk-words';
+  const lg = el('label', 'label', 'Goes to');
+  lg.htmlFor = 'lk-goes';
+  const field = (label, input) => { const d = el('div'); d.append(label, input); return d; };
+  form.append(field(lw, words), field(lg, wrap), el('span', 'lcard__keys label', '↩ keeps · esc puts back'));
+  let done = false;
+  const keep = () => {
+    if (done) return;
+    done = true;
+    const w = words.value.trim();
+    const t = goes.value.trim();
+    if (made && !t) { dropIfEmpty(at); hide(); toCaret(); return say('No address: the words stay as they were'); }
+    const changed = w !== wordsOf(par, l) || t !== (targetOf(par, l) ?? '');
+    if (changed) setLink(at, { words: w || undefined, target: t });
+    editing = null;
+    return changed;
+  };
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    keep();
+    const l2 = linkOf(at);
+    caret = { p: at.p, o: l2 ? l2.end : caret.o };
+    toCaret();
+    show(at, 'caret');
+  });
+  form.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    done = true;
+    if (made) { dropIfEmpty(at); hide(); } else show(at, 'caret');
+    toCaret();
+  });
+  // Leaving keeps, as renaming does.
+  form.addEventListener('focusout', () => setTimeout(() => {
+    if (done || form.contains(document.activeElement)) return;
+    keep();
+    if (!card.contains(document.activeElement)) hide();
+  }));
+  card.replaceChildren(form);
+  place();
+  (made ? goes : words).focus();
+  (made ? goes : words).select();
+  finish();
+}
+
+Links.hoverDelay = 400;
+Links.onHover = (at) => { if (!editing) show(at, 'hover'); };
+Links.onUnhover = () => {
+  if (editing || by !== 'hover' || card.contains(document.activeElement)) return;
+  cur ? show(cur, 'caret') : hide();
+};
+Links.onCaret = (at, byEdit) => {
+  if (editing || byEdit) return;
+  if (at) show(at, 'caret');
+  else if (by === 'caret') hide();
+};
+// Never while typing: the card goes, and comes back when the caret is moved.
+Links.onTyping = () => { if (!editing && by === 'caret') hide(); };
+Links.onPlace = (at, byEdit) => { if (at && !byEdit && !editing && card.hidden) show(at, 'caret'); };
+Links.onEdit = (at, opts) => edit(at, opts);
+Links.onReach = (at) => { show(at, 'caret'); focusFirst(); };
+Links.onLayout = place;
+Links.onBar = (attr) => { if (shownFor && !editing && (attr === 'click' || attr === 'device')) show(shownFor, by); };
+prose.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !card.hidden) { e.preventDefault(); Links.forgetHover(); hide(); }
+});
+</script>
+</body>
+</html>

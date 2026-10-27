@@ -1,0 +1,1518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — A link in Live: 1 · A card</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/* Shared by every exploration (inlined into each page by _build.py).
+   The tokens are the approved ones from ../tokens.css (Washi, day and night),
+   plus what the design pass adds: a radius scale, icon sizes, the machine
+   face as a setting, and row weights. New tokens are marked NEW. */
+
+:root { color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+:root {
+  --eien-desk: light-dark(#d9d2c8, #110e0b);
+  --eien-blotter: light-dark(#eae5dd, #1a1713);
+  --eien-band: light-dark(#f4f1ea, #201d19);
+  --eien-paper: light-dark(#fdfbf7, #28241f);
+  --eien-paper-raised: light-dark(#ffffff, #312d28);
+  --eien-well: light-dark(#f9f7f3, #24201c);
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05));
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1));
+  --eien-selected: light-dark(#ede9e3, #38332e);
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5));
+  --eien-shadow-sheet: 0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float: 0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  --eien-ink: light-dark(#23201c, #e9e2d4);
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7);
+  --eien-pencil: light-dark(#5d5348, #a7a095);
+  --eien-faded: light-dark(#766d62, #837c73);
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07));
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.14));
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.26));
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px;
+  --eien-seal: light-dark(#c4472d, #e0603f);
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12));
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714);
+  --eien-focus: var(--eien-ink-soft);
+  --eien-added: light-dark(#485c2c, #9cb880);
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0);
+  --eien-caution: light-dark(#6b501f, #d0a659);
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+
+  /* The machine voice: IBM Plex Mono by default, now a setting (NEW: set from FACES). */
+  --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --eien-size-meta: 11px;
+  --eien-size-label: 10px;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em;
+  --eien-space-1: 4px; --eien-space-2: 8px; --eien-space-3: 12px; --eien-space-4: 16px;
+  --eien-space-5: 24px; --eien-space-6: 32px; --eien-space-7: 48px; --eien-space-8: 72px;
+  --eien-row-h: 30px;
+  --eien-touch: 44px;
+  --eien-seal-size: 22px;
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms;
+  --eien-calm: 220ms;
+  --eien-leading-tighten: 0;
+  --eien-sheet-pad-x: var(--eien-space-8);
+  --eien-sheet-pad-top: var(--eien-space-7);
+  --eien-page-gutter: var(--eien-space-5);
+  --eien-title-gap: var(--eien-space-6);
+  --eien-paragraph-gap: var(--eien-space-4);
+  --eien-row-pad-y: var(--eien-space-3);
+
+  /* NEW: corners. Not everything is square. A small scale: s for what you press
+     (buttons, fields, chips), m for what floats (menus, popovers, the tool slip),
+     l for what covers the window (a sheet over it, the phone's bottom sheet).
+     Paper itself (the sheet, the panes) stays square. Each exploration sets its own. */
+  --eien-radius-s: 3px;
+  --eien-radius-m: 6px;
+  --eien-radius-l: 10px;
+  --eien-radius-dot: 999px;
+
+  /* NEW: icons. Drawn on a 16-unit grid, stroked in the ink they sit in. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
+
+  /* NEW: row names' weight, two settings (400–700). A selected list title is 100 heavier. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+}
+
+/* The text voice: the writer's choice, sizes tuned per face (from ../tokens.css). */
+:root, [data-face='newsreader'] { --eien-face-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; --eien-size-prose: 22px; --eien-size-title: 36px; --eien-size-heading: 23px; --eien-size-row: 16px; --eien-size-preview: 14px; --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten)); --eien-measure: 29em; }
+[data-face='literata'] { --eien-face-text: 'Literata', Georgia, serif; --eien-size-prose: 19px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten)); --eien-measure: 34em; }
+[data-face='plex-sans'] { --eien-face-text: 'IBM Plex Sans', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='source-sans'] { --eien-face-text: 'Source Sans 3', Arial, sans-serif; --eien-size-prose: 20px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+[data-face='atkinson'] { --eien-face-text: 'Atkinson Hyperlegible Next', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='schibsted'] { --eien-face-text: 'Schibsted Grotesk', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 33em; }
+[data-face='hanken'] { --eien-face-text: 'Hanken Grotesk', Arial, sans-serif; --eien-size-prose: 19px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='instrument'] { --eien-face-text: 'Instrument Sans', Arial, sans-serif; --eien-size-prose: 18.5px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--eien-seal-wash); }
+:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+
+.seal {
+  display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-seal-size); height: var(--eien-seal-size);
+  background: var(--eien-seal); color: var(--eien-on-seal);
+  font-family: var(--eien-face-seal); font-size: calc(var(--eien-seal-size) * 0.68); line-height: 1;
+  border-radius: calc(var(--eien-radius-s) / 2);
+  user-select: none;
+}
+.seal--small { --eien-seal-size: 10px; font-size: 0; }
+
+.label {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil);
+}
+.count {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums; color: var(--eien-pencil);
+}
+
+/* Where a word stays (menus, choices of a setting). */
+.word-button {
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; padding: var(--eien-space-1) var(--eien-space-2);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.word-button[aria-pressed='true'], .word-button[aria-checked='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* NEW: the icon control. The word button's states, a square of --eien-control. */
+.icon-button {
+  appearance: none; display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-control); height: var(--eien-control); padding: 0;
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; position: relative;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon-button svg, .icon { width: var(--eien-icon); height: var(--eien-icon); display: block; }
+.icon { stroke-width: var(--eien-icon-stroke); }
+.icon-button[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.icon-button:disabled { color: var(--eien-faded); cursor: default; }
+@media (hover: hover) {
+  .word-button:hover, .icon-button:not(:disabled):hover { color: var(--eien-ink); background: var(--eien-hover); }
+}
+.word-button:active, .icon-button:not(:disabled):active { background: var(--eien-press); border-color: var(--eien-rule-strong); }
+
+/* NEW: a tooltip names an icon and its key: raised paper, the machine voice. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip); position: absolute; z-index: 50; pointer-events: none;
+  left: 50%; top: calc(100% + 6px); translate: -50% 0;
+  white-space: pre; padding: 3px 7px; border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em;
+  text-transform: none; color: var(--eien-ink-soft);
+  opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease);
+}
+[data-tip-side='up']::after { top: auto; bottom: calc(100% + 6px); }
+[data-tip-side='right']::after { left: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+[data-tip-side='left']::after { left: auto; right: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+@media (hover: hover) { [data-tip]:hover::after { opacity: 1; transition-delay: 450ms; } }
+[data-tip]:focus-visible::after { opacity: 1; }
+
+.field {
+  appearance: none; width: 100%; border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-s); background: var(--eien-well);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink);
+}
+.field::placeholder { color: var(--eien-faded); }
+.field:focus { outline: none; border-color: var(--eien-focus); }
+
+/* Explorations' own bar: outside the app, like the mockups' bar. */
+.xbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--eien-space-1) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-paper-raised); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.xbar__name { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); font-weight: 600; }
+.xbar__group { display: flex; align-items: center; gap: 2px; }
+.xbar__label { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); margin-right: var(--eien-space-1); }
+.xnote { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+
+/* Shared by the three link explorations (link-*.html): the page pane in each
+   layout, the note in Live with its links, the file beside it, the colophon.
+   Each page adds only its own way of showing a link. */
+
+/* Each layout's corners, as src/ui/chrome/*.css sets them on :root[data-layout]:
+   A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10. */
+:root[data-layout='band'] { --eien-radius-s: 2px; --eien-radius-m: 4px; --eien-radius-l: 8px; }
+:root[data-layout='slip'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; }
+:root[data-layout='runhead'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; }
+a.word-button { text-decoration: none; }
+.word-button[aria-current='page'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+
+:root {
+  /* From tokens.css, which shared.css predates: a field at rest is a wash of
+     the ink; the Source font's size; the colophon's and C's strip's heights. */
+  --eien-field: light-dark(rgb(35 32 28 / 0.06), rgb(233 226 212 / 0.07));
+  --eien-size-source: 14px;
+  --eien-list-w: 316px;
+  --eien-danger: var(--eien-removed);
+  --band: calc(var(--eien-space-7) + var(--eien-space-2));
+  --status-h: calc(var(--eien-space-6) + var(--eien-space-2));
+  --runhead-h: calc(var(--eien-space-6) + var(--eien-space-2));
+}
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); background: var(--eien-blotter); }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 40%); } }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The page pane: its top (each layout's), the formatting bar, the sheet on the blotter, the colophon. */
+.pane { position: relative; min-width: 0; min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) var(--status-h); }
+.ptop { grid-row: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--eien-space-2); height: var(--band); padding: 0 var(--eien-space-3); min-width: 0; }
+.ptop__tools { display: flex; gap: 2px; }
+.ptop__tools .icon-button { color: var(--eien-pencil); }
+.ptop__crumb, .phone-back { display: none; }
+/* A · Band: the band, a rule beneath. */
+:root[data-layout='band'] .ptop { background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+/* The views and tools are one slip in B; in A and C they sit apart in the row. */
+.ptop__slip { display: contents; }
+/* B · Slip: no band; the views and tools ride a raised slip on the blotter, a hairline between. */
+:root[data-layout='slip'] .ptop { justify-content: flex-end; }
+:root[data-layout='slip'] .ptop__slip { display: flex; gap: 2px; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+:root[data-layout='slip'] .ptop__views { padding-right: 2px; border-right: var(--eien-hairline) solid var(--eien-rule); }
+/* C · Running head: a strip of desk, the crumb in its middle, the tools at its right. */
+:root[data-layout='runhead'] .ptop { height: var(--runhead-h); background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+:root[data-layout='runhead'] .ptop__crumb { display: block; flex: 1; text-align: center; }
+:root[data-layout='runhead'] .sheet__head .label { visibility: hidden; }
+
+/* The formatting bar, where each layout puts it: A's band's second row, B's
+   raised slip at the blotter's top left, C's raised rail down the margin. */
+.fmt { grid-row: 2; display: none; justify-content: center; gap: 2px; padding: 2px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+:root[data-fmt='on'] .fmt { display: flex; }
+.fmt__rule { width: var(--eien-hairline); height: 18px; align-self: center; margin: 0 var(--eien-space-1); background: var(--eien-rule); }
+/* B's slip and C's rail float: placed in the pane's own box, not in the bar's row. */
+:root:is([data-layout='slip'], [data-layout='runhead']) .fmt { grid-row: auto; }
+:root[data-layout='slip'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-3); top: calc((var(--band) - var(--eien-control) - 6px) / 2); padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+:root[data-layout='runhead'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-2); top: calc(var(--runhead-h) + var(--eien-space-4)); flex-direction: column; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+:root[data-layout='runhead'] .fmt__rule { width: 18px; height: var(--eien-hairline); margin: var(--eien-space-1) auto; }
+:root[data-layout='runhead'][data-fmt='on'] .page { padding-left: calc(var(--eien-control) + var(--eien-space-5)); }
+
+/* The sheet at the face's own sizes, leading and measure, on the blotter. */
+.page { grid-row: 3; min-height: 0; overflow: auto; display: flex; flex-direction: column; padding: var(--eien-space-4) var(--eien-space-4) 0; }
+:root[data-layout='slip'] .page { padding-top: 0; }
+.sheet {
+  position: relative; flex: 1 0 auto; width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto;
+  padding: var(--eien-space-6) clamp(var(--eien-space-4), 8%, var(--eien-space-8)) var(--eien-space-8);
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet);
+  font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose);
+}
+:root[data-layout='slip'] .sheet { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.sheet__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--eien-space-3); }
+.tagset { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); white-space: nowrap; }
+.title { font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; margin: var(--eien-space-4) 0 var(--eien-space-5); }
+.prose { outline: none; caret-color: var(--eien-seal); }
+.prose p { margin: 0 0 var(--eien-paragraph-gap); }
+.prose code, .file__notes code { font-family: var(--eien-face-mono); font-size: 0.9em; }
+
+/* A link, as Live draws it (editor/theme.ts): the words in ink, underlined in
+   rule-strong. No colour of its own. The caret's link underlines in ink-soft;
+   a note not made yet, dotted (NEW). */
+.lk {
+  color: var(--eien-ink); text-decoration: underline; text-decoration-color: var(--eien-rule-strong);
+  text-decoration-thickness: var(--eien-hairline); text-underline-offset: 0.18em;
+  transition: text-decoration-color var(--eien-quick) var(--eien-ease);
+}
+.lk.is-missing { text-decoration-style: dotted; }
+.lk.is-here { text-decoration-color: var(--eien-ink-soft); }
+@media (hover: hover) { .lk:hover { text-decoration-color: var(--eien-ink-soft); } }
+:root[data-click='follow'] .lk, :root.is-mod .lk { cursor: pointer; }
+
+/* What floats over the page: raised paper, a rule-strong hairline, the float shadow. */
+.float {
+  position: absolute; z-index: 20;
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float);
+  font-size: var(--eien-size-row); line-height: var(--eien-leading-row);
+}
+.float[hidden] { display: none; }
+.icon-button--word { width: auto; grid-auto-flow: column; gap: var(--eien-space-1); padding: 0 var(--eien-space-2); }
+.icon-button__word { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; }
+.icon-button--danger { color: var(--eien-ink-soft); }
+@media (hover: hover) { .icon-button--danger:hover { color: var(--eien-danger) !important; } }
+
+/* A field, as system.md has it: set into what holds it, a wash of ink at rest,
+   a 2px focus ring on its own edge when it has the keyboard. */
+.lf {
+  appearance: none; width: 100%; min-width: 0; margin: 0;
+  padding: var(--eien-space-2) var(--eien-space-3); border: var(--eien-hairline) solid transparent;
+  border-radius: var(--eien-radius-s); background: var(--eien-field); color: var(--eien-ink);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  transition: border-color var(--eien-quick) var(--eien-ease);
+}
+.lf--words { font-family: var(--eien-face-text); font-size: var(--eien-size-row); }
+@media (hover: hover) { .lf:hover { border-color: var(--eien-rule); } }
+.lf:focus { outline: none; background: var(--eien-well); box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.lf::placeholder { color: var(--eien-faded); }
+/* A note's name, finished from the vault: the rest of it faded after what's typed. */
+.ghost-wrap { position: relative; display: block; }
+.ghost { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; padding: var(--eien-hairline) calc(var(--eien-space-3) + var(--eien-hairline)); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: pre; overflow: hidden; }
+.ghost__typed { visibility: hidden; }
+.ghost__rest { color: var(--eien-faded); }
+
+/* The colophon: the status line, mono capitals, what was done said at its right. */
+.colophon { grid-row: 4; display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-4); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); letter-spacing: 0.04em; text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; }
+.colophon__where { flex: none; }
+.colophon__said { margin-left: auto; min-width: 0; color: var(--eien-ink-soft); overflow: hidden; text-overflow: ellipsis; }
+
+/* The file, beside the page: what Eien writes, line by line. */
+.file { min-height: 0; display: grid; grid-template-rows: var(--band) auto minmax(0, 1fr); background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); }
+@media (max-width: 900px) { .file { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }
+.file__head { display: flex; align-items: center; gap: var(--eien-space-3); padding: 0 var(--eien-space-4); border-bottom: var(--eien-hairline) solid var(--eien-rule); background: var(--eien-band); min-width: 0; }
+.file__head .count { margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file__src {
+  margin: 0; padding: var(--eien-space-3) var(--eien-space-2); max-height: 34vh; overflow: auto; background: var(--eien-paper);
+  font-family: var(--eien-face-mono); font-size: 12px; line-height: 1.75; color: var(--eien-ink-soft); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.ln { display: block; white-space: pre-wrap; overflow-wrap: anywhere; padding: 0 var(--eien-space-2); border-radius: var(--eien-radius-s); min-height: 1.75em; }
+.ln.is-here { background: var(--eien-selected); color: var(--eien-ink); }
+.ln.is-changed { animation: changed 1.6s var(--eien-ease); }
+@keyframes changed { from { background: var(--eien-added-wash); } }
+@media (prefers-reduced-motion: reduce) { .ln.is-changed { animation: none; } *, *::before, *::after { transition: none !important; } }
+.file__notes { min-height: 0; padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-4); overflow: auto; font-size: var(--eien-size-preview); line-height: 1.55; color: var(--eien-ink-soft); }
+.file__notes h2 { margin: var(--eien-space-4) 0 var(--eien-space-1); font: inherit; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); font-weight: 400; }
+.file__notes h2:first-child { margin-top: 0; }
+.file__notes ul { margin: 0; padding-left: 1.1em; }
+.file__notes p { margin: 0 0 var(--eien-space-2); }
+kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-paper); white-space: nowrap; }
+
+/* A phone: one pane in a phone's width, its back bar on top, no margins to spare, nothing hovers. */
+:root[data-device='phone'] .pane { width: 390px; max-width: 100%; justify-self: center; border-inline: var(--eien-hairline) solid var(--eien-rule-strong); background: var(--eien-paper); }
+:root[data-device='phone'] .ptop { height: var(--band); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); justify-content: flex-start; }
+:root[data-device='phone'] .ptop > :not(.phone-back), :root[data-device='phone'] .fmt { display: none !important; }
+:root[data-device='phone'] .phone-back { display: flex; align-items: center; gap: var(--eien-space-2); flex: 1; min-width: 0; }
+:root[data-device='phone'] .phone-back .icon-button { width: var(--eien-touch); height: var(--eien-touch); color: var(--eien-ink-soft); }
+:root[data-device='phone'] .phone-back__name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root[data-device='phone'] .page { padding: 0; }
+:root[data-device='phone'] .sheet { border: 0; box-shadow: none; border-radius: 0; padding: var(--eien-space-4) var(--eien-space-4) var(--eien-space-8); }
+:root[data-device='phone'] .sheet__head .label { visibility: visible; }
+:root[data-device='phone'] .title { font-size: calc(var(--eien-size-title) * 0.8); }
+.is-touch .icon-button[data-tip]::after { display: none; }
+
+
+/* 1 · A card under the link: a slip tucked under the line. It reads as a row
+   of the note list does (the crumb, the title, a first line, the count), so a
+   note link shows the note it opens, and is as wide as the list; then the
+   link's four tools. Raised paper, as everything that floats. */
+.lcard { width: min(var(--eien-list-w), calc(100% - var(--eien-space-4))); }
+.lcard__body { display: grid; gap: var(--eien-space-1); padding: var(--eien-space-3); }
+.lcard__title { font-weight: 500; color: var(--eien-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lcard__title.is-missing { font-style: italic; font-weight: 400; color: var(--eien-ink-soft); }
+.lcard__line { font-size: var(--eien-size-preview); color: var(--eien-pencil); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+/* An address is the machine's: the host in ink, the rest in pencil, broken anywhere. */
+.lcard__host { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink); overflow-wrap: anywhere; }
+.lcard__path { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.lcard__tools { display: flex; align-items: center; gap: 2px; padding: var(--eien-space-1); border-top: var(--eien-hairline) solid var(--eien-rule-soft); }
+.lcard__tools .icon-button { color: var(--eien-ink-soft); }
+.lcard__hint { margin-left: auto; padding-right: var(--eien-space-2); white-space: nowrap; }
+.lcard__edit { display: grid; gap: var(--eien-space-2); padding: var(--eien-space-3); }
+.lcard__edit .label { display: block; margin-bottom: 2px; }
+.lcard__keys { color: var(--eien-faded); }
+/* A phone: the card the sheet's width under the link, its tools at a finger's size, each with its word. */
+.is-touch .lcard { width: calc(100% - var(--eien-space-4)); }
+.is-touch .lcard__tools { flex-wrap: wrap; }
+.is-touch .lcard__tools .icon-button { height: var(--eien-touch); }
+.is-touch .lcard__hint { display: none; }
+</style>
+</head>
+<body>
+<script>
+// Shared by every exploration (inlined into each page by _build.py).
+
+// Eien's icons: one set, drawn here on a 16-unit grid with round ends, stroked
+// in the ink of whatever they sit in. No icon font, nothing fetched. Each is
+// the inside of an <svg viewBox="0 0 16 16">.
+const ICONS = {
+  live: '<path d="M10.6 2.9l2.5 2.5-7.3 7.3-3.2.8.8-3.2z"/><path d="M9.2 4.3l2.5 2.5"/><path d="M8.5 13.5h5"/>',
+  source: '<path d="M5.5 4.5L2 8l3.5 3.5"/><path d="M10.5 4.5L14 8l-3.5 3.5"/><path d="M9.2 3l-2.4 10"/>',
+  reading: '<path d="M8 4.6C6.6 3.6 4.7 3.1 2.2 3.1v9.4c2.5 0 4.4.5 5.8 1.5 1.4-1 3.3-1.5 5.8-1.5V3.1c-2.5 0-4.4.5-5.8 1.5z"/><path d="M8 4.6V14"/>',
+  compare: '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
+  versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',
+  sidebar: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/>',
+  list: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/><path d="M8.5 6h3M8.5 8.5h3M8.5 11h2"/>',
+  panes3: '<path d="M2 3h12v10H2z"/><path d="M5.5 3v10M9 3v10"/>',
+  panes2: '<path d="M2 3h12v10H2z"/><path d="M6 3v10"/>',
+  left: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  right: '<path d="M6 3.5l4.5 4.5L6 12.5"/>',
+  up: '<path d="M3.5 10L8 5.5l4.5 4.5"/>',
+  down: '<path d="M3.5 6L8 10.5 12.5 6"/>',
+  sun: '<circle cx="8" cy="8" r="2.6"/><path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1"/>',
+  moon: '<path d="M13.2 9.6A5.4 5.4 0 1 1 6.4 2.8a4.3 4.3 0 0 0 6.8 6.8z"/>',
+  settings: '<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><path d="M5.5 3v3M10.5 6.5v3M7 10v3"/>',
+  plus: '<path d="M8 3.5v9M3.5 8h9"/>',
+  tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
+  pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
+  sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
+  search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
+  close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  sort: '<path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3"/>',
+  strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
+  format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',
+  link: '<path d="M6.8 9.2l2.4-2.4"/><path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/>',
+  quote: '<path d="M3 8.5h3.5v4H3zM3 8.5c0-2.5.8-4 3-5M9.5 8.5H13v4H9.5zM9.5 8.5c0-2.5.8-4 3-5"/>',
+  bullets: '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
+  numbers: '<path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7"/><path d="M2.5 3.5l1-.7v3.2M2.4 9.2c.2-.6 1.6-.7 1.6.2 0 .7-1.6 1.2-1.6 1.8h1.7"/>',
+  checklist: '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
+  table: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6.3h11M2.5 9.7h11M8 3v10"/>',
+  highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
+  heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
+  grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
+  more: '<circle cx="3.5" cy="8" r=".8"/><circle cx="8" cy="8" r=".8"/><circle cx="12.5" cy="8" r=".8"/>',
+  outdent: '<path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h10"/><path d="M13.5 3v10"/>',
+  filter: '<path d="M2.5 3.5h11l-4.3 5.2v4l-2.4 1.3V8.7z"/>',
+  check: '<path d="M3 8.5l3 3 7-7"/>',
+  back: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
+  palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
+  type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+  bold: '<path d="M4.5 2.8h4.2a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 8h4.9a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 2.8v10.4"/>',
+  italic: '<path d="M7.2 2.8h5M3.8 13.2h5M10 2.8L6 13.2"/>',
+  underline: '<path d="M4.5 2.8v4.6a3.5 3.5 0 0 0 7 0V2.8"/><path d="M3.5 13.5h9"/>',
+  strike: '<path d="M2.5 8h11"/><path d="M11.2 4.4c-.6-1-1.8-1.6-3.2-1.6-1.8 0-3.2 1-3.2 2.4 0 .9.5 1.6 1.6 2.1"/><path d="M5 11.4c.6 1.1 1.8 1.8 3.3 1.8 1.9 0 3.3-1 3.3-2.5 0-.6-.2-1.1-.6-1.5"/>',
+  focus: '<path d="M2.5 4h11" opacity=".35"/><path d="M2.5 8h11"/><path d="M2.5 12h8" opacity=".35"/><path d="M1 6v4M15 6v4"/>',
+  rename: '<path d="M3 11.5h6.5"/><path d="M11.5 3v10M10 3h3M10 13h3"/>',
+  trash: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/>',
+  move: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/><path d="M6.5 9.5h4M9 8l1.5 1.5L9 11"/>',
+  include: '<path d="M8 4v8M4 8h8"/>',
+  exclude: '<path d="M4 8h8"/>',
+  resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
+};
+
+/** An icon as SVG markup, stroked in currentColor. */
+function icon(name, label) {
+  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
+  return `<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" ${a11y}>${ICONS[name]}</svg>`;
+}
+
+/** Fill every [data-icon] with its icon. */
+function drawIcons(root = document) {
+  for (const el of root.querySelectorAll('[data-icon]')) {
+    el.innerHTML = icon(el.dataset.icon) + (el.dataset.iconText ?? '');
+  }
+}
+
+// One list of faces drives every face setting: the text face and the machine
+// voice both choose from it. A face added later is one more entry here (in the
+// app: one entry in core/config, its fonts and its tuning in tokens.css).
+const FACES = [
+  { id: 'plex-mono', name: 'IBM Plex Mono', family: "'IBM Plex Mono', ui-monospace, monospace", mono: true },
+  { id: 'newsreader', name: 'Newsreader', family: "'Newsreader', Georgia, serif" },
+  { id: 'literata', name: 'Literata', family: "'Literata', Georgia, serif" },
+  { id: 'plex-sans', name: 'IBM Plex Sans', family: "'IBM Plex Sans', Arial, sans-serif" },
+  { id: 'source-sans', name: 'Source Sans 3', family: "'Source Sans 3', Arial, sans-serif" },
+  { id: 'atkinson', name: 'Atkinson Hyperlegible Next', family: "'Atkinson Hyperlegible Next', Arial, sans-serif" },
+  { id: 'schibsted', name: 'Schibsted Grotesk', family: "'Schibsted Grotesk', Arial, sans-serif" },
+  { id: 'hanken', name: 'Hanken Grotesk', family: "'Hanken Grotesk', Arial, sans-serif" },
+  { id: 'instrument', name: 'Instrument Sans', family: "'Instrument Sans', Arial, sans-serif" },
+];
+/** The faces the text voice offers (all but the mono), and the machine voice (all). */
+const TEXT_FACES = FACES.filter((face) => !face.mono);
+const MACHINE_FACES = FACES;
+
+function setMachineFace(id) {
+  const face = FACES.find((each) => each.id === id) ?? FACES[0];
+  document.documentElement.style.setProperty('--eien-face-mono', face.family);
+}
+function setTextFace(id) {
+  if (id === 'newsreader') delete document.documentElement.dataset.face;
+  else document.documentElement.dataset.face = id;
+}
+
+/** The explorations' bar: [data-x-set="attr"] groups set data-<attr> on <html>. */
+function wireBar(onChange = () => {}) {
+  for (const group of document.querySelectorAll('[data-x-set]')) {
+    const attr = group.dataset.xSet;
+    const buttons = [...group.querySelectorAll('button[data-value]')];
+    const pick = (value) => {
+      document.documentElement.dataset[attr] = value;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.value === value));
+      onChange(attr, value);
+    };
+    for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
+    pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
+  }
+}
+
+// Themes: [day, night] for each colour token. The rules are the ink at low
+// strength, so they follow it. Washi is tokens.css's own; the rest are new.
+const THEME_TOKENS = ['desk', 'blotter', 'band', 'paper', 'selected', 'ink', 'ink-soft', 'pencil', 'faded', 'seal'];
+const THEMES = {
+  washi: { name: 'Washi', kanji: '和紙', note: 'Eien’s own: paper and sumi ink', t: {
+    desk: ['#d9d2c8', '#110e0b'], blotter: ['#eae5dd', '#1a1713'], band: ['#f4f1ea', '#201d19'], paper: ['#fdfbf7', '#28241f'], selected: ['#ede9e3', '#38332e'],
+    ink: ['#23201c', '#e9e2d4'], 'ink-soft': ['#51473c', '#c3b9a7'], pencil: ['#5d5348', '#a7a095'], faded: ['#766d62', '#837c73'], seal: ['#c4472d', '#e0603f'] } },
+  kinari: { name: 'Kinari', kanji: '生成り', note: 'Unbleached cloth: yellower paper, a persimmon seal', t: {
+    desk: ['#d8cfb8', '#14110a'], blotter: ['#e9e2cd', '#1c180f'], band: ['#f3eedd', '#231e14'], paper: ['#fcf9ee', '#2b251a'], selected: ['#ece5d1', '#3b3426'],
+    ink: ['#2a2418', '#ece3cc'], 'ink-soft': ['#574a33', '#c8bb9c'], pencil: ['#5f523d', '#ab9f86'], faded: ['#7b6d56', '#88806d'], seal: ['#b8432a', '#dc6a43'] } },
+  aizome: { name: 'Aizome', kanji: '藍染', note: 'Indigo dye: cool paper, blue-black ink', t: {
+    desk: ['#c9cfd8', '#0b0e14'], blotter: ['#dfe3e9', '#121620'], band: ['#edf0f4', '#181d28'], paper: ['#fbfcfd', '#1f2533'], selected: ['#e3e8ef', '#2e3648'],
+    ink: ['#17213a', '#dde4f0'], 'ink-soft': ['#34405c', '#b3bfd6'], pencil: ['#3f4b64', '#97a3ba'], faded: ['#5f6a80', '#7a8599'], seal: ['#c4472d', '#e3664a'] } },
+  koke: { name: 'Koke', kanji: '苔', note: 'A moss garden: green-grey desk, quiet ink', t: {
+    desk: ['#cdd2c4', '#0d100b'], blotter: ['#e1e5d9', '#141811'], band: ['#eef0e8', '#1a1f16'], paper: ['#fafbf6', '#21271c'], selected: ['#e5e9dc', '#30382a'],
+    ink: ['#1f2619', '#e2e8d6'], 'ink-soft': ['#3e4833', '#bcc6ab'], pencil: ['#48523c', '#a0aa90'], faded: ['#67705a', '#808a72'], seal: ['#a8432f', '#d76a4e'] } },
+  rosoku: { name: 'Rōsoku', kanji: '蝋燭', note: 'Candlelight: amber at night, no blue light', t: {
+    desk: ['#dccab2', '#120c06'], blotter: ['#ecdfcb', '#1b130b'], band: ['#f5ece0', '#22180e'], paper: ['#fdf8f0', '#2a1f13'], selected: ['#efe3d1', '#3c2d1e'],
+    ink: ['#2b1d10', '#f0dcc0'], 'ink-soft': ['#5a4129', '#d2b894'], pencil: ['#634d37', '#b39b7c'], faded: ['#7f6a53', '#8f7c64'], seal: ['#b9442b', '#e8763f'] } },
+  sumi: { name: 'Sumi', kanji: '墨', note: 'For tired eyes: the most contrast there is', t: {
+    desk: ['#cfcfcc', '#000000'], blotter: ['#e6e6e3', '#0a0a0a'], band: ['#f2f2ef', '#141414'], paper: ['#ffffff', '#1b1b1b'], selected: ['#e8e8e4', '#2c2c2c'],
+    ink: ['#000000', '#f5f5f2'], 'ink-soft': ['#262626', '#d9d9d4'], pencil: ['#3a3a3a', '#bdbdb8'], faded: ['#5e5e5e', '#8f8f8a'], seal: ['#c4361d', '#ff6a45'] } },
+  sakura: { name: 'Sakura-nezumi', kanji: '桜鼠', note: 'Cherry-grey: plum ink, a rose seal', t: {
+    desk: ['#d8cdcc', '#120d0e'], blotter: ['#e9e1e0', '#1b1415'], band: ['#f3eeed', '#221a1b'], paper: ['#fdfafa', '#2a2122'], selected: ['#eee6e5', '#3a2f30'],
+    ink: ['#2a1e20', '#efe1e2'], 'ink-soft': ['#573f43', '#cbb5b8'], pencil: ['#5f464a', '#ad989b'], faded: ['#7c6468', '#8d7b7d'], seal: ['#b2394a', '#e0697a'] } },
+};
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function luminance(h) {
+  return hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; })
+    .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+/**
+ * An ink of hue `h` and saturation `sat`, starting at lightness `l` and stepped
+ * darker by day (`dir` -1) or lighter by night (+1) until it reaches `min`
+ * contrast on every one of `grounds`: the hue stays, the contrast holds.
+ */
+function fitInk(h, sat, l, grounds, min, dir) {
+  let ink = hsl(h, sat, l);
+  while (grounds.some((g) => contrast(ink, g) < min + 0.1) && l > 0 && l < 100) { l += dir; ink = hsl(h, sat, l); }
+  return ink;
+}
+/** "Custom": four choices, and every token worked out from them, day and night. */
+function mixTheme({ paper: ph, warmth: w, ink: ih, seal: sh }, name = 'My Room') {
+  const surf = (dl, nl) => [hsl(ph, w, dl), hsl(ph, Math.min(w, 22), nl)];
+  const t = { desk: surf(83, 5), blotter: surf(89, 8), band: surf(94, 11), paper: surf(98.5, 14), selected: surf(91, 19), seal: [hsl(sh, 63, 47), hsl(sh, 72, 56)] };
+  const grounds = (s) => ['desk', 'band', 'paper', 'selected'].map((k) => t[k][s]);
+  // The inks carry their hue, saturated enough to see by day, each as light as Eien's contrast allows.
+  const ink = (sat, dl, nsat, nl, min) => [fitInk(ih, sat, dl, grounds(0), min, -1), fitInk(ih, nsat, nl, grounds(1), min, 1)];
+  Object.assign(t, { ink: ink(48, 16, 38, 88, 7), 'ink-soft': ink(38, 30, 30, 70, 4.5), pencil: ink(30, 34, 20, 62, 4.5), faded: ink(20, 46, 12, 52, 3) });
+  return { name, kanji: '', note: 'Your own', t };
+}
+/** A theme on the whole page: each token as light-dark(day, night); the rules from the ink. */
+function applyTheme(theme, el = document.documentElement) {
+  for (const k of THEME_TOKENS) el.style.setProperty(`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`);
+  const [d, n] = theme.t.ink.map((c) => hexRgb(c).join(' '));
+  el.style.setProperty('--eien-rule-soft', `light-dark(rgb(${d} / 0.07), rgb(${n} / 0.07))`);
+  el.style.setProperty('--eien-rule', `light-dark(rgb(${d} / 0.13), rgb(${n} / 0.14))`);
+  el.style.setProperty('--eien-rule-strong', `light-dark(rgb(${d} / 0.26), rgb(${n} / 0.26))`);
+  el.style.setProperty('--eien-paper-raised', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 45%, #fff), color-mix(in srgb, ${theme.t.paper[1]} 88%, #fff))`);
+  el.style.setProperty('--eien-well', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 70%, ${theme.t.band[0]}), color-mix(in srgb, ${theme.t.paper[1]} 60%, ${theme.t.blotter[1]}))`);
+}
+
+// A key as this system writes it, shared by the table and split explorations.
+
+const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+const mod = (e) => (MAC ? e.metaKey : e.ctrlKey);
+/** A key as this system writes it: KEY('Mod-Alt-↓') is ⌥⌘↓ on a Mac (its order), Ctrl+Alt+↓ elsewhere. */
+function KEY(k) {
+  const parts = k.split('-');
+  const key = parts.pop();
+  const has = (m) => parts.includes(m);
+  return MAC
+    ? `${has('Alt') ? '⌥' : ''}${has('Shift') ? '⇧' : ''}${has('Mod') ? '⌘' : ''}${key}`
+    : [has('Mod') && 'Ctrl', has('Alt') && 'Alt', has('Shift') && 'Shift', key].filter(Boolean).join('+');
+}
+
+// Shared by the three link explorations (link-*.html): a note in Live with
+// [[wiki links]] and web links in it, typed in as the page is; the file beside
+// it, redrawn as it changes; the keys, the click, following, undo. Each page
+// adds only its own way of showing and editing a link, by setting the hooks
+// on `Links` (onHover, onCaret, onEdit, ...) and, for 2, Links.render.
+//
+// What's typed is text, never markup: the page is drawn with DOM nodes and
+// textContent, so nothing typed or read from the page goes through innerHTML.
+
+Object.assign(ICONS, {
+  openLink: '<path d="M9.5 2.5h4v4"/><path d="M13.5 2.5L8 8"/><path d="M11.5 9.5v4h-9v-9h4"/>',
+  copy: '<path d="M5.5 5.5h8v8h-8z"/><path d="M10.5 5.5v-3h-8v8h3"/>',
+  unlink: '<path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/><path d="M3 3l1.6 1.6M13 13l-1.6-1.6"/>',
+  note: '<path d="M4 2.5h5.5L12 5v8.5H4z"/><path d="M9.5 2.5V5H12"/><path d="M6 8h4M6 10.5h3"/>',
+  web: '<circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11"/><path d="M8 2.5c1.5 1.6 2.3 3.4 2.3 5.5S9.5 11.9 8 13.5C6.5 11.9 5.7 10.1 5.7 8S6.5 4.1 8 2.5z"/>',
+});
+
+const MAC_KEYS = /Mac|iPhone|iPad/.test(navigator.platform);
+/** ⌘-click or Ctrl-click, as this system writes it. */
+const MOD_CLICK = MAC_KEYS ? '⌘-click' : 'Ctrl-click';
+const ALT_CLICK = MAC_KEYS ? '⌥-click' : 'Alt-click';
+
+// The vault's notes a [[link]] can name, as the card and the bar describe them.
+const BOOK = 'Fic / Beneath the Walls';
+const VAULT = {
+  'The Late Watch': { ord: 'i', words: 2840, sealed: 'Sep 2', first: 'He takes the late watch, every night of the week, and nobody asks why.' },
+  Rations: { ord: 'ii', words: 2204, sealed: 'Sep 9', first: 'Half a loaf, a strip of dried meat, and a promise from the quartermaster.' },
+  'Below the Gate': { ord: 'iii', words: 3412, sealed: 'yesterday', first: 'The water came up through the stones first, before anyone heard it.' },
+  'What the Recruits Say': { ord: 'iv', words: 3051, sealed: '2h ago', first: 'They have a name for him in the barracks, and none of them will say it where he can hear.' },
+  'The Long Way Round': { ord: 'v', words: 1912, sealed: 'not yet', first: 'Nobody had walked the outer road in years.' },
+};
+/** A note by its title, as a wiki link names it: case doesn't matter. */
+const titleOf = (name) => Object.keys(VAULT).find((t) => t.toLowerCase() === name.trim().toLowerCase());
+/** The first note whose title starts with what's typed: what a field offers to finish. */
+const completion = (typed) => {
+  const t = typed.toLowerCase();
+  if (!t) return '';
+  const hit = Object.keys(VAULT).find((title) => title.toLowerCase().startsWith(t) && title.length > t.length);
+  return hit ? hit.slice(typed.length) : '';
+};
+
+// The note, as the file holds it: one paragraph a line.
+const SOURCE = [
+  'Erwin’s speech in [[What the Recruits Say|chapter iv]] needs the wall’s height: fifty metres, by the [fandom wiki](https://attackontitan.fandom.com/wiki/Wall_Maria).',
+  'Check the flood against [[Below the Gate]] before it’s posted, and the timeline in [[The Outer Road]], once that note exists.',
+  'Post to [AO3](https://archiveofourown.org/works/48151623) on Friday, with Levi’s line from [[Rations]] as the summary.',
+];
+const FILE_PATH = 'fic/beneath-the-walls/notes-for-iv.md';
+
+// A paragraph is its words and the links over them: what Live shows with the marks hidden.
+// A note link's target is null while its words are its target ([[Below the Gate]]).
+const LINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]|\[((?:\\.|[^\]\\])+)\]\(([^)\s]*)\)/g;
+function parse(line) {
+  let text = '';
+  let last = 0;
+  const links = [];
+  for (const m of line.matchAll(LINK_RE)) {
+    text += line.slice(last, m.index);
+    const start = text.length;
+    // A web link's words keep \\, \[ and \] escaped in the file; the page shows them plain.
+    text += m[1] !== undefined ? (m[2] ?? m[1]) : m[3].replace(/\\([\\[\]])/g, '$1');
+    links.push(m[1] !== undefined
+      ? { kind: 'note', target: m[2] !== undefined ? m[1].trim() : null, start, end: text.length }
+      : { kind: 'web', target: m[4], start, end: text.length });
+    last = m.index + m[0].length;
+  }
+  return { text: text + line.slice(last), links };
+}
+/** The paragraph back as Markdown: what Eien saves. */
+function markdown(par) {
+  let out = '';
+  let at = 0;
+  for (const l of par.links) {
+    const words = par.text.slice(l.start, l.end);
+    out += par.text.slice(at, l.start);
+    if (l.kind === 'note') out += l.target === null ? `[[${words}]]` : `[[${l.target}|${words}]]`;
+    else out += `[${words.replace(/([\\[\]])/g, '\\$1')}](${l.target.replace(/ /g, '%20').replace(/\)/g, '%29')})`;
+    at = l.end;
+  }
+  return out + par.text.slice(at);
+}
+const wordsOf = (par, l) => par.text.slice(l.start, l.end);
+const targetOf = (par, l) => (l.kind === 'note' ? (l.target ?? wordsOf(par, l)) : l.target);
+/** What a typed target is: an address goes to the web; anything else names a note. */
+const isAddress = (s) => /^(https?:|mailto:)/i.test(s) || /^www\./i.test(s) || /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(s);
+const asAddress = (s) => (/^[a-z][\w+.-]*:/i.test(s) ? s : `https://${s}`);
+
+let DOC = SOURCE.map(parse);
+
+/** The hooks each direction sets. `at` is a link: { p, i }, its paragraph and its place there. */
+const Links = {
+  hoverDelay: 400,
+  onHover() {}, onUnhover() {},
+  onCaret() {}, onPlace() {}, onTyping() {},
+  onEdit() {}, onReach() {}, onKey() { return false; },
+  onLayout() {}, onBar() {},
+  /** Draws a link's span, or something round it; 2 opens the Markdown here. */
+  render: null,
+  /** The link the caret is held in, drawn its way (2's open link). */
+  opened: null,
+};
+const same = (a, b) => !!a && !!b && a.p === b.p && a.i === b.i;
+const linkOf = (at) => DOC[at.p]?.links[at.i];
+
+/** Where a link goes, as the card, the bar and the colophon say it. */
+function describe(at) {
+  const par = DOC[at.p];
+  const l = par.links[at.i];
+  const words = wordsOf(par, l);
+  if (l.kind === 'note') {
+    const name = targetOf(par, l);
+    const title = titleOf(name);
+    if (!title) return { kind: 'missing', title: name.trim(), words, short: `${name.trim()} · no note yet` };
+    const n = VAULT[title];
+    return { kind: 'note', title, words, ...n, crumb: `${BOOK} / ${n.ord}`, short: `${n.ord} · ${title}` };
+  }
+  if (!l.target) return { kind: 'empty', words, short: 'no address yet' };
+  const m = l.target.match(/^[a-z][\w+.-]*:\/\/([^/?#]+)(.*)$/i);
+  const host = m ? m[1].replace(/^www\./, '') : l.target;
+  const path = m ? m[2] : '';
+  return { kind: 'web', words, url: l.target, host, path, short: host + (path.length > 18 ? `${path.slice(0, 17)}…` : path) };
+}
+
+// ---- The page every direction shares: the explorations' bar, the window's page pane, the file.
+
+let prose, sheet, page, pane, src, whereEl, said, sr;
+function mountLinkPage({ id, note, notes, bar = '' }) {
+  const pages = [['card', '1 · A card'], ['inline', '2 · In place'], ['bar', '3 · A bar']];
+  const group = (attr, label, choices) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${choices.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
+  const tool = (n, w) => `<button class="icon-button" data-icon="${n}" data-view="${n}" aria-label="${w}" data-tip="${w}"></button>`;
+  document.body.insertAdjacentHTML('afterbegin', `
+<header class="xbar">
+  <span class="xbar__name">Eien · A link in Live</span>
+  <nav class="xbar__group" aria-label="Directions">${pages.map(([p, w]) => `<a class="word-button" href="link-${p}.html"${p === id ? ' aria-current="page"' : ''}>${w}</a>`).join('')}</nav>
+  ${group('theme', 'Light', [['light', 'Day'], ['dark', 'Night']])}
+  ${group('layout', 'Layout', [['band', 'A · Band'], ['slip', 'B · Slip'], ['runhead', 'C · Running head']])}
+  ${group('device', 'Show', [['desktop', 'Desktop'], ['phone', 'Phone']])}
+  ${group('click', 'A plain click', [['caret', 'Places the caret'], ['follow', 'Follows']])}
+  ${group('fmt', 'Formatting bar', [['off', 'Off'], ['on', 'On']])}
+  ${bar}
+  <span class="xnote">${note}</span>
+</header>
+<main class="stage">
+  <div class="pane">
+    <div class="ptop">
+      <span class="phone-back">${tool('back', 'Back to the list')}<span class="phone-back__name">Notes for iv</span>${tool('more', 'More')}</span>
+      <span class="ptop__slip">
+        <span class="ptop__tools ptop__views" role="group" aria-label="Views">${tool('live', 'Live')}${tool('source', 'Source')}${tool('reading', 'Reading')}</span>
+        <span class="ptop__crumb label">Fic / Beneath the Walls / Notes</span>
+        <span class="ptop__tools">${tool('compare', 'Compare')}${tool('versions', 'Versions')}${tool('focus', 'Focus mode')}${tool('format', 'Formatting bar')}</span>
+      </span>
+    </div>
+    <div class="fmt" role="toolbar" aria-label="Formatting">
+      ${['bold', 'italic', 'underline', 'strike'].map((n) => tool(n, n[0].toUpperCase() + n.slice(1))).join('')}<span class="fmt__rule"></span>
+      ${tool('heading', 'Heading')}${tool('highlight', 'Highlight')}<button class="icon-button fmt__link" data-icon="link" aria-label="Link" aria-pressed="false" data-tip="Link  ${KEY('Mod-K')}"></button><span class="fmt__rule"></span>
+      ${['quote', 'bullets', 'numbers', 'checklist'].map((n) => tool(n, n[0].toUpperCase() + n.slice(1))).join('')}
+    </div>
+    <div class="page">
+      <article class="sheet">
+        <div class="sheet__head"><span class="label">Fic / Beneath the Walls / Notes</span><span class="tagset">fic/aot · planning</span></div>
+        <h1 class="title">Notes for iv</h1>
+        <div class="prose" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Notes for iv, in Live"></div>
+      </article>
+    </div>
+    <footer class="colophon"><span class="colophon__where"></span><span class="colophon__said" role="status" aria-live="polite"></span></footer>
+    <span class="sr" role="status" aria-live="polite"></span>
+  </div>
+  <aside class="file" aria-label="The file">
+    <div class="file__head"><span class="label">The file</span><span class="count">${FILE_PATH}</span></div>
+    <pre class="file__src" aria-label="The note’s Markdown, as saved"></pre>
+    <div class="file__notes">${notes}</div>
+  </aside>
+</main>`);
+  pane = document.querySelector('.pane');
+  page = pane.querySelector('.page');
+  sheet = pane.querySelector('.sheet');
+  prose = pane.querySelector('.prose');
+  src = document.querySelector('.file__src');
+  whereEl = pane.querySelector('.colophon__where');
+  said = pane.querySelector('.colophon__said');
+  sr = pane.querySelector('.sr');
+  const root = document.documentElement;
+  root.dataset.theme ??= matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  wireBar((attr) => {
+    if (attr === 'device') setTouch();
+    Links.onBar(attr);
+    requestAnimationFrame(() => Links.onLayout());
+  });
+  matchMedia('(hover: none)').addEventListener('change', setTouch);
+  addEventListener('resize', () => Links.onLayout());
+  page.addEventListener('scroll', () => Links.onLayout());
+  drawIcons();
+  wireChrome();
+  wireProse();
+  draw();
+}
+/** Touch: a phone shown here, or a pointer that can't hover. Nothing waits for a hover then. */
+function setTouch() {
+  const root = document.documentElement;
+  root.classList.toggle('is-touch', root.dataset.device === 'phone' || matchMedia('(hover: none)').matches);
+}
+const isTouch = () => document.documentElement.classList.contains('is-touch');
+const clickFollows = () => document.documentElement.dataset.click === 'follow';
+/** How the pointer opens a link now: what every hint says. */
+const openHint = () => (clickFollows() ? 'click opens' : `${MOD_CLICK} opens`);
+
+/** The page's own controls: only the formatting bar's toggle and its Link button do anything here. */
+function wireChrome() {
+  const root = document.documentElement;
+  const setFmt = (on) => {
+    root.dataset.fmt = on ? 'on' : 'off';
+    for (const b of document.querySelectorAll('[data-x-set="fmt"] button')) b.setAttribute('aria-pressed', String(b.dataset.value === root.dataset.fmt));
+    requestAnimationFrame(() => Links.onLayout());
+  };
+  pane.querySelector('.ptop').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-view]');
+    if (!b) return;
+    if (b.dataset.view === 'format') setFmt(root.dataset.fmt !== 'on');
+    else if (b.dataset.view === 'reading') say('In Reading a plain click follows, as on a page: not shown here');
+    else if (b.dataset.view !== 'live') say(`${b.getAttribute('aria-label')}: not in this exploration`);
+  });
+  pane.querySelector('[data-view="live"]').setAttribute('aria-pressed', 'true');
+  const fmt = pane.querySelector('.fmt');
+  fmt.addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+  fmt.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.classList.contains('fmt__link')) linkCommand();
+    else say(`${b.getAttribute('aria-label')}: not in this exploration`);
+  });
+}
+
+// ---- Drawing: the paragraphs from DOC, each link a span over its words.
+
+function draw(sel) {
+  prose.replaceChildren(...DOC.map(drawPara));
+  drawFile();
+  if (sel) select(sel.a, sel.b);
+  markHere();
+}
+function drawPara(par, p) {
+  const el = document.createElement('p');
+  el.dataset.p = p;
+  let at = 0;
+  par.links.forEach((l, i) => {
+    if (l.start > at) el.append(par.text.slice(at, l.start));
+    const span = document.createElement('span');
+    span.className = 'lk';
+    span.dataset.p = p;
+    span.dataset.i = i;
+    span.textContent = wordsOf(par, l);
+    el.append(Links.render ? Links.render(span, { p, i }) : span);
+    at = l.end;
+  });
+  if (at < par.text.length) el.append(par.text.slice(at));
+  if (!par.text.length) el.append(document.createElement('br'));
+  markMissing(el);
+  return el;
+}
+/** A note link to a note that isn't made yet: a dotted underline, the wiki's old "red link" without the red. */
+function markMissing(root = prose) {
+  for (const span of root.querySelectorAll('.lk')) {
+    const at = { p: +span.dataset.p, i: +span.dataset.i };
+    span.classList.toggle('is-missing', describe(at).kind === 'missing');
+  }
+}
+const spanOf = (at) => prose.querySelector(`.lk[data-p="${at.p}"][data-i="${at.i}"]`);
+/** The caret's link wears its own underline, so the card or bar is plainly its. */
+function markHere() {
+  for (const span of prose.querySelectorAll('.lk')) span.classList.toggle('is-here', same(cur, { p: +span.dataset.p, i: +span.dataset.i }));
+  const btn = pane.querySelector('.fmt__link');
+  if (btn) btn.setAttribute('aria-pressed', String(!!cur));
+}
+
+// ---- Places in the text: { p, o }, a paragraph and an offset in its words. A part of
+// the page marked data-skip (2's marks and fields) isn't the paragraph's words.
+
+const notSkipped = (n) => (n.parentElement.closest('[data-skip]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT);
+function posOf(node, offset) {
+  const pEl = (node.nodeType === 1 ? node : node.parentElement).closest('p[data-p]');
+  if (!pEl || !prose.contains(pEl)) {
+    const kids = prose.children;
+    if (!kids.length) return { p: 0, o: 0 };
+    if (offset >= kids.length) return { p: kids.length - 1, o: DOC[kids.length - 1].text.length };
+    return { p: offset, o: 0 };
+  }
+  const p = +pEl.dataset.p;
+  const r = document.createRange();
+  r.setStart(pEl, 0);
+  r.setEnd(node, offset);
+  const f = r.cloneContents();
+  for (const x of f.querySelectorAll('[data-skip]')) x.remove();
+  return { p, o: Math.min(f.textContent.length, DOC[p].text.length) };
+}
+/** The DOM point for a place; at a link's edge, inside the link if it's the one held open. */
+function domAt(p, o) {
+  const pEl = prose.children[p];
+  const walker = document.createTreeWalker(pEl, NodeFilter.SHOW_TEXT, { acceptNode: notSkipped });
+  let acc = 0;
+  let first = null;
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (o >= acc && o <= acc + n.length) {
+      const point = { node: n, offset: o - acc };
+      const span = n.parentElement.closest('.lk');
+      if (Links.opened && span && same(Links.opened, { p: +span.dataset.p, i: +span.dataset.i })) return point;
+      first ??= point;
+    }
+    acc += n.length;
+  }
+  return first ?? { node: pEl, offset: 0 };
+}
+function select(a, b = a) {
+  const s = getSelection();
+  const x = domAt(a.p, a.o);
+  const y = domAt(b.p, b.o);
+  s.setBaseAndExtent(x.node, x.offset, y.node, y.offset);
+}
+const before = (a, b) => a.p < b.p || (a.p === b.p && a.o < b.o);
+/** The selection in the text, start first; null when it isn't in the text. */
+function selRange() {
+  const s = getSelection();
+  if (!s.rangeCount || !prose.contains(s.anchorNode) || s.anchorNode.parentElement?.closest('[data-field]')) return null;
+  const a = posOf(s.anchorNode, s.anchorOffset);
+  const b = posOf(s.focusNode, s.focusOffset);
+  return before(b, a) ? { a: b, b: a, focus: b } : { a, b, focus: b };
+}
+const linkAt = (p, o) => {
+  const i = DOC[p]?.links.findIndex((l) => l.start <= o && o <= l.end) ?? -1;
+  return i < 0 ? null : { p, i };
+};
+/** Where the caret was last in the text: where Esc from a card or bar goes back to. */
+let caret = { p: 0, o: 0 };
+let cur = null;
+/** The caret's link. A direction may hold a place shut (2, leaving a link by its far side). */
+let shutAt = null;
+
+/** Whether the caret's last move was a change's own (typing), not the writer moving it. */
+let movedByEdit = false;
+function caretMoved() {
+  const s = selRange();
+  if (!s) return;
+  const byEdit = movedByEdit;
+  movedByEdit = false;
+  caret = s.focus;
+  if (shutAt && (shutAt.p !== caret.p || shutAt.o !== caret.o)) shutAt = null;
+  const found = shutAt ? null : linkAt(caret.p, caret.o);
+  if (!same(found, cur)) {
+    cur = found;
+    markHere();
+    if (cur) sr.textContent = `Link to ${describe(cur).short}. ${KEY('Alt-↩')} opens, ${KEY('Mod-K')} edits, ${KEY('Alt-F10')} its tools.`;
+    Links.onCaret(cur, byEdit);
+  } else Links.onPlace(cur, byEdit);
+  drawWhere();
+}
+const toCaret = () => {
+  prose.focus({ preventScroll: true });
+  select(caret);
+};
+
+// ---- Changes, each one step of the history: ⌘Z puts back what any of them took.
+
+const past = [];
+const future = [];
+let lastTyped = 0;
+const snapshot = () => JSON.stringify({ DOC, caret, vault: Object.keys(VAULT) });
+function checkpoint(typing = false) {
+  if (typing && Date.now() - lastTyped < 1500) { lastTyped = Date.now(); return; }
+  lastTyped = typing ? Date.now() : 0;
+  past.push(snapshot());
+  future.length = 0;
+}
+function restore(json) {
+  const s = JSON.parse(json);
+  DOC = s.DOC;
+  for (const t of Object.keys(VAULT)) if (!s.vault.includes(t)) delete VAULT[t];
+  Links.opened = null;
+  draw({ a: s.caret });
+  toCaret();
+}
+function undo() {
+  if (!past.length) return say('Nothing to undo');
+  future.push(snapshot());
+  restore(past.pop());
+  lastTyped = 0;
+  say('Undone');
+}
+function redo() {
+  if (!future.length) return say('Nothing to redo');
+  past.push(snapshot());
+  restore(future.pop());
+  say('Redone');
+}
+
+/** Replaces [a, b) with `text` (one line). A link keeps whatever of its words are left. */
+function replaceRange(a, b, text) {
+  const len = text.length;
+  if (a.p === b.p) {
+    const par = DOC[a.p];
+    const gone = b.o - a.o;
+    par.text = par.text.slice(0, a.o) + text + par.text.slice(b.o);
+    for (const l of par.links) {
+      if (!gone) {
+        // Typed at a link's start, the words go before it; at its end, after it; inside, into it.
+        if (l.start >= a.o) l.start += len;
+        if (l.end > a.o) l.end += len;
+        continue;
+      }
+      // Over a selection: what's typed joins a link the selection began in, or began at its start.
+      const start = l.start <= a.o ? l.start : l.start >= b.o ? l.start - gone + len : a.o + len;
+      l.end = l.end <= a.o ? l.end : l.end >= b.o ? l.end - gone + len : start <= a.o ? a.o + len : start;
+      l.start = start;
+    }
+    const had = par.links.length;
+    par.links = par.links.filter((l) => l.end > l.start);
+    return { at: { p: a.p, o: a.o + len }, lost: had - par.links.length };
+  }
+  const first = DOC[a.p];
+  const last = DOC[b.p];
+  const shift = a.o + len - b.o;
+  const kept = first.links.filter((l) => l.start < a.o).map((l) => ({ ...l, end: Math.min(l.end, a.o) }));
+  const after = last.links.filter((l) => l.end > b.o).map((l) => ({ ...l, start: Math.max(l.start, b.o) + shift, end: l.end + shift }));
+  const lost = DOC.slice(a.p, b.p + 1).reduce((n, par) => n + par.links.length, 0) - kept.length - after.length;
+  DOC.splice(a.p, b.p - a.p + 1, { text: first.text.slice(0, a.o) + text + last.text.slice(b.o), links: [...kept, ...after] });
+  return { at: { p: a.p, o: a.o + len }, lost };
+}
+/** Enter: the paragraph parts at the caret; a link across it goes on in both halves. */
+function split(at) {
+  const par = DOC[at.p];
+  const head = { text: par.text.slice(0, at.o), links: par.links.filter((l) => l.start < at.o).map((l) => ({ ...l, end: Math.min(l.end, at.o) })) };
+  const tail = { text: par.text.slice(at.o), links: par.links.filter((l) => l.end > at.o).map((l) => ({ ...l, start: Math.max(l.start, at.o) - at.o, end: l.end - at.o })) };
+  DOC.splice(at.p, 1, head, tail);
+  return { p: at.p + 1, o: 0 };
+}
+
+function edit(a, b, text, typing = false) {
+  checkpoint(typing);
+  const { at, lost } = replaceRange(a, b, text);
+  Links.opened = null;
+  movedByEdit = true;
+  draw({ a: at });
+  if (lost) say(`${lost === 1 ? 'A link' : `${lost} links`} went with ${lost === 1 ? 'its' : 'their'} words · ${KEY('Mod-Z')} puts ${lost === 1 ? 'it' : 'them'} back`);
+  Links.onTyping();
+}
+
+/** Sets a link's words or where it goes; what's typed there says whether it's a note or the web. */
+function setLink(at, { words, target }) {
+  const par = DOC[at.p];
+  const l = par.links[at.i];
+  checkpoint();
+  if (words !== undefined && words !== wordsOf(par, l) && words.length) {
+    const was = l.kind === 'note' && l.target === null ? wordsOf(par, l) : null;
+    replaceRange({ p: at.p, o: l.start }, { p: at.p, o: l.end }, words);
+    // [[Rations]] renamed in its words keeps going to Rations: the old words become its target.
+    if (was !== null && target === undefined) l.target = was;
+  }
+  if (target !== undefined) {
+    const t = target.trim();
+    if (isAddress(t)) { l.kind = 'web'; l.target = asAddress(t); }
+    else if (l.kind === 'web' && !t) l.target = '';
+    else { l.kind = 'note'; l.target = !t || t === wordsOf(par, l) ? null : t; }
+  }
+  Links.opened = null;
+  draw();
+}
+function removeLink(at) {
+  checkpoint();
+  DOC[at.p].links.splice(at.i, 1);
+  Links.opened = null;
+  cur = null;
+  draw();
+  toCaret();
+  say(`Link taken off; the words stay · ${KEY('Mod-Z')} puts it back`);
+}
+function makeNote(title) {
+  checkpoint();
+  VAULT[title] = { ord: 'vi', words: 0, sealed: 'not yet', first: '' };
+  draw();
+  say(`Made “${title}” in Beneath the Walls, empty`);
+}
+/** ⌘K, and the formatting bar's Link: the caret's link to edit, or the selected words made one. */
+function linkCommand() {
+  if (cur) return Links.onEdit(cur);
+  const s = selRange() ?? { a: caret, b: caret };
+  const par = DOC[s.a.p];
+  if (s.a.p !== s.b.p || s.a.o === s.b.o) return say('Select some words to make them a link');
+  if (par.links.some((l) => l.start < s.b.o && l.end > s.a.o)) return say('Those words hold a link already');
+  checkpoint();
+  par.links.push({ kind: 'web', target: '', start: s.a.o, end: s.b.o });
+  par.links.sort((x, y) => x.start - y.start);
+  const i = par.links.findIndex((l) => l.start === s.a.o);
+  cur = { p: s.a.p, i };
+  caret = s.b;
+  draw({ a: s.b });
+  Links.onEdit(cur, { made: true });
+}
+/** A new link put back, if it was left with nowhere to go. */
+function dropIfEmpty(at) {
+  const l = linkOf(at);
+  if (l && l.kind === 'web' && !l.target) { past.pop(); DOC[at.p].links.splice(at.i, 1); cur = null; draw(); }
+}
+async function copyLink(at) {
+  const par = DOC[at.p];
+  const l = par.links[at.i];
+  const text = l.kind === 'note' ? `[[${targetOf(par, l)}]]` : l.target;
+  try { await navigator.clipboard.writeText(text); say(l.kind === 'note' ? 'Copied the link to the note' : 'Copied the address'); }
+  catch { say('Couldn’t reach the clipboard here'); }
+}
+/** Following: in the app a note opens on the page and an address in the browser. */
+function follow(at) {
+  const d = describe(at);
+  if (d.kind === 'note') say(`Opened ${d.ord} · ${d.title}: in the app the page turns to it`);
+  else if (d.kind === 'missing') say(`No note called “${d.title}” yet: make it from the link’s tools`);
+  else if (d.kind === 'web') say(`Opened ${d.host} in your browser`);
+  else say('This link goes nowhere yet');
+}
+
+// ---- The text's own events: typing, the keys, the pointer.
+
+function wireProse() {
+  document.addEventListener('selectionchange', () => {
+    const s = getSelection();
+    if (s.rangeCount && prose.contains(s.anchorNode) && !s.anchorNode.parentElement?.closest('[data-field]')) caretMoved();
+  });
+  prose.addEventListener('beforeinput', (e) => {
+    if (e.target.closest?.('[data-field]')) return; // 2's fields type for themselves
+    e.preventDefault();
+    const s = selRange();
+    if (!s) return;
+    const t = e.inputType;
+    const data = (e.dataTransfer?.getData('text/plain') ?? e.data ?? '').replace(/\s*\n\s*/g, ' ');
+    if (t === 'insertText' || t === 'insertReplacementText' || t === 'insertFromPaste' || t === 'insertFromDrop') {
+      if (t === 'insertReplacementText' && e.getTargetRanges().length) {
+        const r = e.getTargetRanges()[0];
+        return edit(posOf(r.startContainer, r.startOffset), posOf(r.endContainer, r.endOffset), data);
+      }
+      return edit(s.a, s.b, data, t === 'insertText');
+    }
+    if (t === 'insertParagraph' || t === 'insertLineBreak') {
+      checkpoint();
+      replaceRange(s.a, s.b, '');
+      const to = split(s.a);
+      Links.opened = null;
+      draw({ a: to });
+      return;
+    }
+    if (t === 'historyUndo') return undo();
+    if (t === 'historyRedo') return redo();
+    if (t.startsWith('delete')) {
+      let { a, b } = s;
+      const r = e.getTargetRanges()[0];
+      if (r) { a = posOf(r.startContainer, r.startOffset); b = posOf(r.endContainer, r.endOffset); }
+      else if (a.p === b.p && a.o === b.o) {
+        if (t.includes('Backward')) a = a.o > 0 ? { p: a.p, o: a.o - 1 } : a.p > 0 ? { p: a.p - 1, o: DOC[a.p - 1].text.length } : a;
+        else b = b.o < DOC[b.p].text.length ? { p: b.p, o: b.o + 1 } : b.p < DOC.length - 1 ? { p: b.p + 1, o: 0 } : b;
+      }
+      if (before(b, a)) [a, b] = [b, a];
+      if (a.p === b.p && a.o === b.o) return;
+      return edit(a, b, '', true);
+    }
+  });
+  prose.addEventListener('keydown', (e) => {
+    if (e.target !== prose) return;
+    document.documentElement.classList.toggle('is-mod', mod(e));
+    if (Links.onKey(e)) return;
+    const k = e.key.toLowerCase();
+    if (mod(e) && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+    else if (mod(e) && k === 'y' && !MAC_KEYS) { e.preventDefault(); redo(); }
+    else if (mod(e) && k === 'k') { e.preventDefault(); linkCommand(); }
+    else if (e.altKey && e.key === 'Enter') { e.preventDefault(); cur ? follow(cur) : say('No link at the caret'); }
+    else if (e.altKey && e.key === 'F10') { e.preventDefault(); cur ? Links.onReach(cur) : say('No link at the caret'); }
+    else if (mod(e) && ['b', 'i', 'u'].includes(k)) { e.preventDefault(); say('Formatting: not in this exploration'); }
+  });
+  addEventListener('keyup', (e) => document.documentElement.classList.toggle('is-mod', mod(e)));
+  addEventListener('blur', () => document.documentElement.classList.remove('is-mod'));
+
+  // The pointer: ⌘-click always follows; a plain click follows only when the bar says so,
+  // and then ⌥-click puts the caret in the link instead.
+  prose.addEventListener('mousedown', (e) => {
+    const span = e.target.closest?.('.lk');
+    if (!span || e.button !== 0) return;
+    const at = { p: +span.dataset.p, i: +span.dataset.i };
+    if (mod(e) || (clickFollows() && !e.altKey)) { e.preventDefault(); follow(at); }
+  });
+  let hoverTimer;
+  let leaveTimer;
+  let hovered = null;
+  prose.addEventListener('mouseover', (e) => {
+    if (isTouch()) return;
+    const span = e.target.closest?.('.lk');
+    if (!span) return;
+    clearTimeout(leaveTimer);
+    const at = { p: +span.dataset.p, i: +span.dataset.i };
+    if (same(at, hovered)) return;
+    clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(() => { hovered = at; Links.onHover(at, span); }, Links.hoverDelay);
+  });
+  prose.addEventListener('mouseout', (e) => {
+    const span = e.target.closest?.('.lk');
+    if (!span || span.contains(e.relatedTarget)) return;
+    clearTimeout(hoverTimer);
+    leaveSoon();
+  });
+  // A floating part (data-link-part) keeps the hover while the pointer is over it.
+  const leaveSoon = () => {
+    clearTimeout(leaveTimer);
+    leaveTimer = setTimeout(() => {
+      if (document.querySelector('[data-link-part]:hover, .lk:hover')) return;
+      if (hovered) { hovered = null; Links.onUnhover(); }
+    }, 300);
+  };
+  document.addEventListener('mouseout', (e) => { if (e.target.closest?.('[data-link-part]') && !e.target.closest('[data-link-part]').contains(e.relatedTarget)) leaveSoon(); });
+  Links.forgetHover = () => { clearTimeout(hoverTimer); hovered = null; };
+}
+
+// ---- The file and the colophon.
+
+let shown = [];
+function drawFile() {
+  const lines = DOC.flatMap((par, p) => (p ? ['', markdown(par)] : [markdown(par)]));
+  let first = 0;
+  while (first < lines.length && lines[first] === shown[first]) first++;
+  let tail = 0;
+  while (tail < lines.length - first && lines[lines.length - 1 - tail] === shown[shown.length - 1 - tail]) tail++;
+  if (first < lines.length || lines.length !== shown.length) {
+    src.replaceChildren(...lines.map((l, i) => {
+      const ln = document.createElement('span');
+      ln.className = 'ln';
+      if (shown.length && i >= first && i < lines.length - tail) ln.classList.add('is-changed');
+      // Each line ends in its newline, so the file copies as it's saved.
+      ln.textContent = `${l}\n`;
+      return ln;
+    }));
+    shown = lines;
+  }
+  drawWhere();
+}
+function drawWhere() {
+  const all = DOC.reduce((n, par) => n + par.links.length, 0);
+  const words = DOC.reduce((n, par) => n + par.text.split(/\s+/).filter(Boolean).length, 0);
+  const kinds = { note: 'to a note', missing: 'to a note not made yet', web: 'to the web', empty: 'with no address yet' };
+  let n = 0;
+  if (cur) for (let p = 0; p < cur.p; p++) n += DOC[p].links.length;
+  whereEl.textContent = cur && linkOf(cur)
+    ? `Link ${n + cur.i + 1} of ${all} · ${kinds[describe(cur).kind]}`
+    : `Notes for iv · ${words} words · ${all} links`;
+  // The caret's line in the file, once there's a caret in the text.
+  const inText = !!cur || prose.contains(document.activeElement);
+  src.querySelectorAll('.ln').forEach((ln, i) => ln.classList.toggle('is-here', inText && i === caret.p * 2));
+}
+let saidTimer;
+/** Says it in the colophon a while; `stay` keeps it there until something else is said. */
+function say(words, stay = false) {
+  said.textContent = words;
+  clearTimeout(saidTimer);
+  if (!stay) saidTimer = setTimeout(() => { said.textContent = ''; }, 6000);
+}
+
+// ---- What the directions build with.
+
+/** An element, its class and text; never markup. */
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+/** An icon button: its name for a screen reader, its tooltip with the key; `word` shown beside the icon where asked. */
+function iconButton(name, label, key, run, { word } = {}) {
+  const b = el('button', 'icon-button');
+  b.type = 'button';
+  b.setAttribute('aria-label', label);
+  b.dataset.tip = key ? `${label}  ${key}` : label;
+  b.insertAdjacentHTML('afterbegin', icon(name));
+  if (word) { b.classList.add('icon-button--word'); b.append(el('span', 'icon-button__word', word)); }
+  b.addEventListener('mousedown', (e) => e.preventDefault());
+  b.addEventListener('click', run);
+  return b;
+}
+/** Arrows along a row of buttons (one tab stop), Esc back to the caret. */
+function roving(row) {
+  row.addEventListener('keydown', (e) => {
+    const bs = [...row.querySelectorAll('button')];
+    const i = bs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: bs.length - 1 }[e.key];
+    if (to !== undefined) { e.preventDefault(); bs[(to + bs.length) % bs.length].focus(); }
+  });
+  row.addEventListener('focusin', () => row.querySelectorAll('button').forEach((b) => { b.tabIndex = b === document.activeElement ? 0 : -1; }));
+}
+/** The link's box on the sheet: the line the caret is on, or its first. */
+function linkBox(at) {
+  const span = spanOf(at);
+  if (!span) return null;
+  const rects = [...span.getClientRects()];
+  let r = rects[0];
+  const s = getSelection();
+  if (s.rangeCount && span.contains(s.focusNode)) {
+    const c = s.getRangeAt(0).getBoundingClientRect();
+    r = rects.find((x) => c.top >= x.top - 2 && c.top <= x.bottom) ?? r;
+  }
+  const base = sheet.getBoundingClientRect();
+  return { left: r.left - base.left, right: r.right - base.left, top: r.top - base.top, bottom: r.bottom - base.top, viewTop: r.top, viewBottom: r.bottom };
+}
+/** Lays a floating part under (or, with no room, over) a box, kept inside the sheet. */
+function placeBy(part, box, side = 'below') {
+  const gap = 4;
+  const w = part.offsetWidth;
+  const h = part.offsetHeight;
+  const room = page.getBoundingClientRect();
+  let below = side === 'below';
+  if (below && box.viewBottom + gap + h > room.bottom && box.viewTop - gap - h > room.top) below = false;
+  if (!below && box.viewTop - gap - h < room.top) below = true;
+  const pad = 8;
+  part.style.left = `${Math.max(pad, Math.min(box.left, sheet.clientWidth - w - pad))}px`;
+  part.style.top = `${below ? box.bottom + gap : box.top - gap - h}px`;
+  part.dataset.side = below ? 'below' : 'above';
+}
+
+/** The shared notes' keys and the click question, for each page's notes. */
+const SHARED_NOTES = () => `
+  <h2>Keys, in all three</h2>
+  <ul>
+    <li>arrows into a link: its tools come with the caret, and a screen reader hears where it goes</li>
+    <li><kbd>${KEY('Alt-↩')}</kbd> opens the caret's link; <kbd>${MOD_CLICK}</kbd> opens any link</li>
+    <li><kbd>${KEY('Mod-K')}</kbd> edits the caret's link, or makes the selected words one (the formatting bar's Link too)</li>
+    <li><kbd>${KEY('Alt-F10')}</kbd> from the text to the link's tools; <kbd>Esc</kbd> back</li>
+    <li><kbd>${KEY('Mod-Z')}</kbd> puts back any change, a link taken off or its words typed over</li>
+  </ul>
+  <h2>Where it goes</h2>
+  <p>Type an address and it's a web link, <code>[words](address)</code>; type a note's name and it's a <code>[[wiki link]]</code>, its name finished for you from the vault (<kbd>Tab</kbd> or <kbd>→</kbd> takes it). A note not made yet has a dotted underline, and its tools offer to make it.</p>`;
+
+
+mountLinkPage({
+  id: 'card',
+  note: 'Point at a link, or put the caret in one: a card under it says where it goes.',
+  notes: `
+  <h2>1 · A card under the link</h2>
+  <p>Point at a link for a moment, or put the caret in it, and a card comes under it: raised paper, as a menu is. A note link's card reads as that note's row in the list: its place in the book, its title, its first line, its words and its last seal. A web link's card is its address, the site in ink, the rest in pencil. A note not made yet says so.</p>
+  <p>Under that, its four tools: open (or make the note), edit, copy, and take the link off (the words stay). Edit turns the card into two fields, the words and where it goes; <kbd>↩</kbd> keeps, <kbd>Esc</kbd> puts back, and leaving keeps, as renaming does.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>point at <em>chapter iv</em>, then at <em>the timeline</em>'s note, which isn't made yet</li>
+    <li>click into <em>fandom wiki</em>; <kbd>${KEY('Mod-K')}</kbd>, and type a note's name over the address: it becomes a wiki link</li>
+    <li>select some plain words and <kbd>${KEY('Mod-K')}</kbd> to make a link</li>
+    <li>A plain click → Follows, then click a link; <kbd>${ALT_CLICK}</kbd> puts the caret in it instead</li>
+  </ul>
+  ${SHARED_NOTES()}
+  <h2>A plain click</h2>
+  <p>Either works with a card. <strong>Places the caret</strong> (today): the card comes under the click, so opening is one more click, just below; nothing jumps away while you're writing. <strong>Follows</strong>: the card is still there on hover to edit, and the keyboard reaches every link; <kbd>${ALT_CLICK}</kbd> to put the caret in one. The card is what makes Follows safe, since nothing then needs the click to edit.</p>
+  <h2>On a phone</h2>
+  <p>No hover: a tap puts the caret in the link and the card comes under it, the sheet's width, its tools at 44px with their words beside them (there are no tooltips to name them). With Follows a tap opens the link and a long press puts the caret in it (Show → Phone).</p>`,
+});
+
+const card = el('div', 'float lcard');
+card.dataset.linkPart = '';
+card.setAttribute('role', 'group');
+card.hidden = true;
+sheet.append(card);
+
+let shownFor = null;
+let by = null; // 'hover' or 'caret': what brought the card
+let editing = null; // the link being edited, and how it began
+
+function show(at, how) {
+  if (!linkOf(at)) return hide();
+  shownFor = at;
+  by = how;
+  card.replaceChildren(...view(at));
+  card.hidden = false;
+  card.setAttribute('aria-label', `Link to ${describe(at).short}`);
+  place();
+}
+function hide() {
+  card.hidden = true;
+  shownFor = null;
+  by = null;
+  editing = null;
+}
+function place() {
+  if (!shownFor || card.hidden) return;
+  const box = linkBox(shownFor);
+  if (!box) return hide();
+  placeBy(card, box, 'below');
+}
+
+/** The card's face: where the link goes, then its tools. */
+function view(at) {
+  const d = describe(at);
+  const body = el('div', 'lcard__body');
+  if (d.kind === 'note') {
+    body.append(el('span', 'label', d.crumb), el('span', 'lcard__title', d.title));
+    if (d.first) body.append(el('span', 'lcard__line', d.first));
+    body.append(el('span', 'count', `${d.words.toLocaleString('en')} words · sealed ${d.sealed}`.toUpperCase()));
+  } else if (d.kind === 'missing') {
+    body.append(el('span', 'label', 'No note yet'), el('span', 'lcard__title is-missing', d.title), el('span', 'lcard__line', `Make it, and it opens empty in ${BOOK.split(' / ').pop()}.`));
+  } else if (d.kind === 'web') {
+    body.append(el('span', 'label', 'The web'), el('span', 'lcard__host', d.host));
+    if (d.path && d.path !== '/') body.append(el('span', 'lcard__path', d.path));
+  } else {
+    body.append(el('span', 'label', 'No address yet'), el('span', 'lcard__line', 'Edit it to say where it goes.'));
+  }
+  const tools = el('div', 'lcard__tools');
+  tools.setAttribute('role', 'toolbar');
+  tools.setAttribute('aria-label', 'Link');
+  const word = isTouch();
+  const open = d.kind === 'missing'
+    ? iconButton('plus', `Make the note “${d.title}”`, '', () => { makeNote(d.title); show(at, by); focusFirst(); }, { word: word && 'Make' })
+    : iconButton('openLink', d.kind === 'web' ? `Open ${d.host}` : d.kind === 'note' ? `Open ${d.title}` : 'Open', KEY('Alt-↩'), () => follow(at), { word: word && 'Open' });
+  tools.append(
+    open,
+    iconButton('rename', 'Edit the link', KEY('Mod-K'), () => edit(at), { word: word && 'Edit' }),
+    iconButton('copy', d.kind === 'web' ? 'Copy the address' : 'Copy the link', '', () => copyLink(at), { word: word && 'Copy' }),
+    iconButton('unlink', 'Take the link off: the words stay', '', () => removeLink(at), { word: word && 'Take off' }),
+    el('span', 'lcard__hint label', d.kind === 'missing' ? '' : openHint()),
+  );
+  roving(tools);
+  tools.querySelectorAll('button').forEach((b, i) => { b.tabIndex = i ? -1 : 0; });
+  tools.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); toCaret(); } });
+  return [body, tools];
+}
+const focusFirst = () => card.querySelector('.lcard__tools button')?.focus();
+
+/** The card's other face: the words and where it goes, as two fields. */
+function edit(at, { made = false } = {}) {
+  if (shownFor === null || !same(shownFor, at)) show(at, 'caret');
+  editing = { at, made };
+  const par = DOC[at.p];
+  const l = par.links[at.i];
+  const form = el('form', 'lcard__edit');
+  form.setAttribute('aria-label', 'Edit the link');
+  const words = el('input', 'lf lf--words');
+  words.value = wordsOf(par, l);
+  const goes = el('input', 'lf');
+  goes.value = targetOf(par, l) ?? '';
+  goes.placeholder = 'A note’s name, or an address';
+  goes.spellcheck = false;
+  for (const [input, id, label] of [[words, 'lk-words', 'Words'], [goes, 'lk-goes', 'Goes to']]) input.id = id;
+  const ghost = el('span', 'ghost');
+  const typed = el('span', 'ghost__typed');
+  const rest = el('span', 'ghost__rest');
+  ghost.append(typed, rest);
+  const wrap = el('span', 'ghost-wrap');
+  wrap.append(goes, ghost);
+  const finish = () => {
+    const isNote = !isAddress(goes.value.trim());
+    typed.textContent = goes.value;
+    rest.textContent = isNote && goes.selectionStart === goes.value.length ? completion(goes.value) : '';
+  };
+  goes.addEventListener('input', finish);
+  goes.addEventListener('keyup', finish);
+  goes.addEventListener('keydown', (e) => {
+    if ((e.key === 'Tab' && !e.shiftKey || e.key === 'ArrowRight') && rest.textContent && goes.selectionStart === goes.value.length) {
+      e.preventDefault();
+      goes.value += rest.textContent;
+      finish();
+    }
+  });
+  const lw = el('label', 'label', 'Words');
+  lw.htmlFor = 'lk-words';
+  const lg = el('label', 'label', 'Goes to');
+  lg.htmlFor = 'lk-goes';
+  const field = (label, input) => { const d = el('div'); d.append(label, input); return d; };
+  form.append(field(lw, words), field(lg, wrap), el('span', 'lcard__keys label', '↩ keeps · esc puts back'));
+  let done = false;
+  const keep = () => {
+    if (done) return;
+    done = true;
+    const w = words.value.trim();
+    const t = goes.value.trim();
+    if (made && !t) { dropIfEmpty(at); hide(); toCaret(); return say('No address: the words stay as they were'); }
+    const changed = w !== wordsOf(par, l) || t !== (targetOf(par, l) ?? '');
+    if (changed) setLink(at, { words: w || undefined, target: t });
+    editing = null;
+    return changed;
+  };
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    keep();
+    const l2 = linkOf(at);
+    caret = { p: at.p, o: l2 ? l2.end : caret.o };
+    toCaret();
+    show(at, 'caret');
+  });
+  form.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    done = true;
+    if (made) { dropIfEmpty(at); hide(); } else show(at, 'caret');
+    toCaret();
+  });
+  // Leaving keeps, as renaming does.
+  form.addEventListener('focusout', () => setTimeout(() => {
+    if (done || form.contains(document.activeElement)) return;
+    keep();
+    if (!card.contains(document.activeElement)) hide();
+  }));
+  card.replaceChildren(form);
+  place();
+  (made ? goes : words).focus();
+  (made ? goes : words).select();
+  finish();
+}
+
+Links.hoverDelay = 400;
+Links.onHover = (at) => { if (!editing) show(at, 'hover'); };
+Links.onUnhover = () => {
+  if (editing || by !== 'hover' || card.contains(document.activeElement)) return;
+  cur ? show(cur, 'caret') : hide();
+};
+Links.onCaret = (at, byEdit) => {
+  if (editing || byEdit) return;
+  if (at) show(at, 'caret');
+  else if (by === 'caret') hide();
+};
+// Never while typing: the card goes, and comes back when the caret is moved.
+Links.onTyping = () => { if (!editing && by === 'caret') hide(); };
+Links.onPlace = (at, byEdit) => { if (at && !byEdit && !editing && card.hidden) show(at, 'caret'); };
+Links.onEdit = (at, opts) => edit(at, opts);
+Links.onReach = (at) => { show(at, 'caret'); focusFirst(); };
+Links.onLayout = place;
+Links.onBar = (attr) => { if (shownFor && !editing && (attr === 'click' || attr === 'device')) show(shownFor, by); };
+prose.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !card.hidden) { e.preventDefault(); Links.forgetHover(); hide(); }
+});
+</script>
+</body>
+</html>

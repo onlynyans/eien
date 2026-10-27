@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — A link in Live: 3 · A bar</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:link.css*/
+
+/* 3 · A bar with the caret: the selection bar's sibling. With the caret in a
+   link, a small bar sits over its line, as the selection bar sits over a
+   selection, in that bar's own surface (editor.css): raised paper, a rule
+   hairline, radius-m, the float shadow, 4px round. Where the link goes, then
+   its tools. A hover gets only the window's tooltip, the address and its key. */
+.lbar { display: flex; align-items: center; gap: 2px; padding: var(--eien-space-1); border-color: var(--eien-rule); max-width: calc(100% - var(--eien-space-4)); }
+.lbar .icon-button { color: var(--eien-ink-soft); }
+.lbar__kind { flex: none; display: grid; place-items: center; width: var(--eien-control); color: var(--eien-pencil); }
+.lbar__to {
+  appearance: none; min-width: 0; max-width: 26ch; height: var(--eien-control); padding: 0 var(--eien-space-2);
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; cursor: text;
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lbar__to.is-note { font-family: var(--eien-face-text); font-size: var(--eien-size-preview); }
+.lbar__to.is-missing { font-family: var(--eien-face-text); font-size: var(--eien-size-preview); font-style: italic; color: var(--eien-pencil); }
+@media (hover: hover) { .lbar__to:hover { color: var(--eien-ink); background: var(--eien-hover); } }
+.lbar__rule { flex: none; width: var(--eien-hairline); align-self: stretch; margin: var(--eien-space-1) 2px; background: var(--eien-rule); }
+.lbar .ghost-wrap { width: 26ch; }
+/* The window's tooltip, as every control has: raised paper, the machine voice, the key in pencil. */
+.ltip {
+  padding: 3px 7px; border-radius: var(--eien-radius-s); pointer-events: none; max-width: 36ch;
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em; color: var(--eien-ink-soft);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ltip__key { color: var(--eien-pencil); margin-left: var(--eien-space-2); }
+/* A phone: docked at the foot, above where the keyboard comes, as the table's bar is: the band, 44px targets. */
+.is-touch .pane > .lbar {
+  left: 0; right: 0; top: auto; bottom: var(--status-h); max-width: none; border-radius: 0;
+  border-width: var(--eien-hairline) 0 0; border-color: var(--eien-rule); box-shadow: none; background: var(--eien-band);
+}
+.is-touch .lbar .icon-button, .is-touch .lbar__to { height: var(--eien-touch); }
+.is-touch .lbar .icon-button { width: var(--eien-touch); }
+.is-touch .lbar__to { flex: 1; max-width: none; text-align: left; }
+.is-touch .lbar .ghost-wrap { flex: 1; width: auto; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:link.js*/
+
+mountLinkPage({
+  id: 'bar',
+  note: 'Put the caret in a link: a bar of its tools sits over its line. Point at one: a tooltip names where it goes.',
+  notes: `
+  <h2>3 · A bar with the caret</h2>
+  <p>The selection bar's sibling. With the caret in a link, a small bar sits over its line, as the selection bar sits over a selection, in the same surface: where the link goes (a note's place and title, or the address), then open, edit, copy and take off. It goes while you type and comes back when you move.</p>
+  <p>Edit turns where it goes into a field in the bar; the words you edit on the page, where they are. A hover gets only the window's tooltip: the address and the key that opens it, as every control has.</p>
+  <h2>Try</h2>
+  <ul>
+    <li>click into <em>AO3</em>; press the address in the bar to edit it, or <kbd>${KEY('Mod-K')}</kbd></li>
+    <li>type a note's name there: the link becomes a wiki link</li>
+    <li>type in a link's words: the bar steps aside, and comes back when you move</li>
+    <li>point at <em>Rations</em> for the tooltip; A plain click → Follows, and click it</li>
+  </ul>
+  ${SHARED_NOTES()}
+  <h2>A plain click</h2>
+  <p><strong>Places the caret</strong> (today): the bar comes over the line you clicked, its open a short reach up. <strong>Follows</strong>: the bar only comes from the keyboard or <kbd>${ALT_CLICK}</kbd>, and the tooltip says so; editing a link by pointer takes a modifier, which nothing on the page teaches.</p>
+  <h2>On a phone</h2>
+  <p>Where 3 is at home: the bar docks at the foot, above the keyboard, as the table's bar does, one row of 44px targets, where the link goes taking the room that's left. Nothing floats over the words a thumb is in (Show → Phone).</p>`,
+});
+
+Links.hoverDelay = 450;
+const bar = el('div', 'float lbar');
+bar.dataset.linkPart = '';
+bar.setAttribute('role', 'toolbar');
+bar.hidden = true;
+const tip = el('div', 'float ltip');
+tip.setAttribute('role', 'tooltip');
+tip.hidden = true;
+sheet.append(bar, tip);
+let barFor = null;
+let editingBar = false;
+
+function home() {
+  const to = isTouch() ? pane : sheet;
+  if (bar.parentElement !== to) to.append(bar);
+}
+function showBar(at) {
+  if (!linkOf(at)) return hideBar();
+  barFor = at;
+  editingBar = false;
+  home();
+  bar.replaceChildren(...barParts(at));
+  bar.setAttribute('aria-label', `Link to ${describe(at).short}`);
+  bar.hidden = false;
+  hideTip();
+  placeBar();
+}
+function hideBar() { bar.hidden = true; barFor = null; editingBar = false; }
+function placeBar() {
+  if (!barFor || bar.hidden) return;
+  if (isTouch()) { bar.style.left = bar.style.top = ''; return; }
+  const box = linkBox(barFor);
+  if (!box) return hideBar();
+  placeBy(bar, box, 'above');
+}
+
+function barParts(at) {
+  const d = describe(at);
+  const kind = el('span', 'lbar__kind');
+  kind.insertAdjacentHTML('afterbegin', icon(d.kind === 'web' || d.kind === 'empty' ? 'web' : 'note'));
+  const to = el('button', `lbar__to${d.kind === 'note' ? ' is-note' : d.kind === 'missing' ? ' is-missing' : ''}`,
+    d.kind === 'web' ? d.host + d.path : d.kind === 'note' ? `${d.ord} · ${d.title}` : d.kind === 'missing' ? `${d.title}, not made yet` : 'No address yet');
+  to.type = 'button';
+  to.setAttribute('aria-label', `Goes to ${d.short}: edit`);
+  to.dataset.tip = `Edit where it goes  ${KEY('Mod-K')}`;
+  to.addEventListener('mousedown', (e) => e.preventDefault());
+  to.addEventListener('click', () => editBar(at));
+  const open = d.kind === 'missing'
+    ? iconButton('plus', `Make the note “${d.title}”`, '', () => { makeNote(d.title); showBar(at); })
+    : iconButton('openLink', d.kind === 'web' ? `Open ${d.host}` : d.kind === 'note' ? `Open ${d.title}` : 'Open', KEY('Alt-↩'), () => follow(at));
+  const rule = el('span', 'lbar__rule');
+  rule.setAttribute('aria-hidden', 'true');
+  const parts = [kind, to, rule, open,
+    iconButton('rename', 'Edit where it goes', KEY('Mod-K'), () => editBar(at)),
+    iconButton('copy', d.kind === 'web' ? 'Copy the address' : 'Copy the link', '', () => copyLink(at)),
+    iconButton('unlink', 'Take the link off: the words stay', '', () => removeLink(at))];
+  for (const p of parts) if (p.tagName === 'BUTTON') p.tabIndex = -1;
+  open.tabIndex = 0;
+  for (const b of parts.filter((p) => p.dataset?.tip)) b.dataset.tipSide = 'up';
+  return parts;
+}
+roving(bar);
+bar.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !editingBar) { e.preventDefault(); toCaret(); } });
+
+/** Where it goes, as a field in the bar; the words stay on the page. */
+function editBar(at, { made = false } = {}) {
+  if (!same(barFor, at) || bar.hidden) showBar(at);
+  editingBar = true;
+  const par = DOC[at.p];
+  const l = par.links[at.i];
+  const input = el('input', 'lf');
+  input.value = targetOf(par, l) ?? '';
+  input.placeholder = 'A note’s name, or an address';
+  input.spellcheck = false;
+  input.setAttribute('aria-label', 'Goes to: a note’s name, or an address');
+  const ghost = el('span', 'ghost');
+  const typed = el('span', 'ghost__typed');
+  const rest = el('span', 'ghost__rest');
+  ghost.append(typed, rest);
+  const wrap = el('span', 'ghost-wrap');
+  wrap.append(input, ghost);
+  const offer = () => {
+    typed.textContent = input.value;
+    rest.textContent = !isAddress(input.value.trim()) && input.selectionStart === input.value.length ? completion(input.value) : '';
+  };
+  let done = false;
+  const keep = () => {
+    if (done) return;
+    done = true;
+    const t = input.value.trim();
+    if (made && !t) { dropIfEmpty(at); hideBar(); return say('No address: the words stay as they were'); }
+    if (t !== (targetOf(par, l) ?? '')) setLink(at, { target: t });
+    editingBar = false;
+  };
+  input.addEventListener('input', offer);
+  input.addEventListener('keyup', offer);
+  input.addEventListener('keydown', (e) => {
+    if ((e.key === 'Tab' && !e.shiftKey || e.key === 'ArrowRight') && rest.textContent && input.selectionStart === input.value.length) {
+      e.preventDefault(); input.value += rest.textContent; offer();
+    } else if (e.key === 'Enter') {
+      e.preventDefault(); keep(); toCaret(); showBar(at);
+    } else if (e.key === 'Escape') {
+      e.preventDefault(); done = true;
+      if (made) { dropIfEmpty(at); hideBar(); } else showBar(at);
+      toCaret();
+    }
+  });
+  // Leaving keeps, as renaming does.
+  input.addEventListener('blur', () => setTimeout(() => { if (!done) { keep(); if (!bar.contains(document.activeElement)) hideBar(); } }));
+  const kind = bar.querySelector('.lbar__kind');
+  bar.replaceChildren(kind, wrap);
+  placeBar();
+  input.focus();
+  input.select();
+  offer();
+}
+
+function showTip(at) {
+  if (same(at, barFor) && !bar.hidden) return;
+  const d = describe(at);
+  tip.replaceChildren(`→ ${d.kind === 'web' ? d.host + d.path : d.short}`, el('span', 'ltip__key', clickFollows() ? `click · ${ALT_CLICK} edits` : MOD_CLICK));
+  tip.hidden = false;
+  const box = linkBox(at);
+  if (box) placeBy(tip, box, 'below');
+}
+function hideTip() { tip.hidden = true; }
+
+Links.onHover = (at) => showTip(at);
+Links.onUnhover = hideTip;
+Links.onCaret = (at, byEdit) => {
+  if (editingBar) return;
+  if (at && !byEdit) showBar(at);
+  else if (!at) hideBar();
+};
+// Never while typing: the bar steps aside, and comes back when the caret is moved.
+Links.onTyping = () => { if (!editingBar) hideBar(); };
+Links.onPlace = (at, byEdit) => { if (at && !byEdit && !editingBar && bar.hidden) showBar(at); };
+Links.onEdit = (at, opts) => editBar(at, opts);
+Links.onReach = (at) => { showBar(at); bar.querySelector('button[tabindex="0"]')?.focus(); };
+Links.onLayout = () => { placeBar(); hideTip(); };
+Links.onBar = (attr) => { if (barFor && !editingBar && (attr === 'device' || attr === 'click')) showBar(barFor); };
+prose.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !bar.hidden) { e.preventDefault(); hideBar(); }
+});
+pane.addEventListener('focusout', () => setTimeout(() => { if (!pane.contains(document.activeElement) && !editingBar) hideBar(); }));
+</script>
+</body>
+</html>

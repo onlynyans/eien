@@ -28,6 +28,20 @@ components as they shipped. Those under "Not built yet" are still to choose.
 | [themes.html](themes.html) · [md](themes.md) | Six new themes beside Washi; Gallery and Custom; contrast checked live | #20 |
 | [order.html](order.html) · [md](order.md) | Your order and a lens over it, across both panes; moving folders out; drag anytime or Arrange mode; a three-way tag filter | #12 |
 
+## A link in Live (2026-10-27): for the owner to choose
+
+Backlog #38: hovering a link, or the caret in it, shows where it goes, and
+lets you edit and open it. Each page also answers "should a plain click follow
+a link in Live?" with a switch. [links.md](links.md) has the trade-offs and
+recommends 1 on the desktop with 3's bar on the phone, and a plain click that
+places the caret, as today.
+
+| Page | Direction | For | Against |
+|---|---|---|---|
+| [link-card.html](link-card.html) · [md](links.md) | **1 · A card under the link** (recommended): a note link's card is its row in the list (crumb, title, first line, words); a web link's, its address; four tools, and Edit as two fields | Answers "which chapter is that?" on a hover; the same for hover and caret | Covers the lines under the link; a new surface |
+| [link-inline.html](link-inline.html) · [md](links.md) | **2 · In place**: the caret opens that link's own Markdown where it stands, as Rename opens a name; the colophon says where it goes | Nothing floats; you edit what the file holds | The line reflows under the pointer; hover only in the colophon |
+| [link-bar.html](link-bar.html) · [md](links.md) | **3 · A bar with the caret** (on the phone): the selection bar's sibling over the link's line; a hover gets the window's tooltip | Nothing new to learn; docks above a phone's keyboard | Covers the line above; a hover shows only the address |
+
 ## Split window (2026-10-23): for the owner to choose
 
 Six directions for two notes side by side in one window, each working in all
@@ -70,6 +84,7 @@ The pages are built from `_src/` by `python3 _build.py`, which puts the
 shared tokens, icons and face list (`_src/shared.css`, `_src/shared.js`)
 inside each page, and a family's own shared files where a page asks for them
 with `/*@include:name*/` (the tables' `table.*`, `table-edges.*` and
-`table-bar.*`, the corners' `corner.*`, the split's `split.*`; `layouts.css`,
+`table-bar.*`, the corners' `corner.*`, the split's `split.*`, the links'
+`link.*`; `layouts.css`,
 `seal-button.css` and `keys.js` shared between families). Edit
 `_src/` and build; don't edit the built pages.
