@@ -2,12 +2,14 @@
 // Paragraphs; empty ones (spacer paragraphs) dropped, so spacer, rule, spacer is
 // one `***`; emphasis, strikethrough, underline, line breaks, quotes,
 // headings, lists, links and images as their Markdown; other tags keep
-// their text. What would read as Markdown in the words is escaped, so the
-// note says what the HTML said, and Copy as HTML gives the HTML back.
+// their text. What would read as Markdown in the words is escaped, and only
+// that (./marks-in-words.ts), so the note says what the HTML said, and Copy
+// as HTML gives the HTML back.
 
 import { declarations } from './css';
 import { type HtmlElement, type HtmlNode, parseHtml, trimSpaces } from './html';
 import { inline, textOf } from './html-inline';
+import { NONCHARACTERS, settle } from './marks-in-words';
 import { BLOCK, tidy } from './tidy';
 
 const isBlock = (node: HtmlNode) => node.kind === 'element' && BLOCK.has(node.name);
@@ -41,16 +43,29 @@ function paragraphs(markdown: string): string[] {
     .filter((paragraph) => paragraph.replace(/[\s ]/gu, '') !== '');
 }
 
-/** A list's items; `other` gives bullets "*" (a list right after another, which "-" would join). */
+/** Whether `node` is an <li>, or wraps one in elements of no meaning ("<div><li>", as Google's answers write them). */
+const holdsItem = (node: HtmlNode): boolean =>
+  node.kind === 'element' &&
+  (node.name === 'li' || (/^(?:div|span)$/u.test(node.name) && node.children.some(holdsItem)));
+
+/** A list's children with the wrappers round its items taken off. */
+const unwrapped = (nodes: readonly HtmlNode[]): HtmlNode[] =>
+  nodes.flatMap((node) =>
+    node.kind === 'element' && node.name !== 'li' && holdsItem(node)
+      ? unwrapped(node.children)
+      : [node],
+  );
+
 /**
- * A list's items: its <li>s, and what's beside them — a list nested straight
- * inside its parent list (as Google Docs nests them) goes in the item before
- * it, and words outside any item are an item of their own.
+ * A list's items: its <li>s (out of any wrappers), and what's beside them —
+ * a list nested straight inside its parent list (as Google Docs nests them)
+ * goes in the item before it, and words outside any item are an item of
+ * their own.
  */
 function itemsOf(element: HtmlElement): HtmlNode[][] {
   const items: HtmlNode[][] = [];
   let loose = false;
-  for (const child of element.children) {
+  for (const child of unwrapped(element.children)) {
     if (child.kind === 'element' && child.name === 'li') {
       items.push([...child.children]);
       loose = false;
@@ -191,16 +206,26 @@ function blocks(nodes: readonly HtmlNode[]): string[] {
   return out;
 }
 
-/** `html` as Markdown: its blocks parted by blank lines. */
-export function fromHtml(html: string): string {
-  return blocks(tidy(parseHtml(html))).join('\n\n');
-}
+/** HTML read for pasting: a noncharacter is a held mark's (no page means one). */
+const pasted = (html: string) => parseHtml(html.replace(NONCHARACTERS, ''));
+
+/** `nodes` as Markdown: their blocks, each settled, parted by blank lines. */
+const markdownOf = (nodes: readonly HtmlNode[]): string =>
+  blocks(tidy(nodes)).map(settle).join('\n\n');
+
+/** `html` as Markdown. */
+export const fromHtml = (html: string): string => markdownOf(pasted(html));
+
+/** Words with their runs of spaces and line ends as one space: to tell the same words apart from their layout. */
+const wordsOf = (text: string) => text.replace(/\s+/gu, ' ').trim();
 
 /**
- * Whether `nodes` are code, as a code editor copies it: all of it in one
- * <pre> or <code>, or in one element set in a fixed-width face or as `pre`.
+ * Whether `nodes` are an editor's copy of `typed`, the text as written: all
+ * of it in one <pre> or <code>, or in one element set in a fixed-width face
+ * or as `pre` (a code editor's); or kept as typed with its tabs set
+ * (Sublime Text's Copy as HTML, in any face) and the same words.
  */
-function isCode(nodes: readonly HtmlNode[]): boolean {
+function isTyped(nodes: readonly HtmlNode[], typed: string): boolean {
   const shownOf = (list: readonly HtmlNode[]) =>
     list.filter((node) =>
       node.kind === 'element' ? node.name !== 'meta' : node.text.trim() !== '',
@@ -220,21 +245,31 @@ function isCode(nodes: readonly HtmlNode[]): boolean {
   const css = declarations(only.attrs.style ?? '');
   return (
     css.get('white-space') === 'pre' ||
-    /monospace|courier|menlo|monaco|consolas/u.test(css.get('font-family') ?? '')
+    /monospace|courier|menlo|monaco|consolas/u.test(css.get('font-family') ?? '') ||
+    // Kept as typed with tabs set: an editor's, as a page copied from a browser never sets them.
+    (css.get('white-space') === 'pre-wrap' &&
+      (css.has('tab-size') || css.has('-moz-tab-size')) &&
+      wordsOf(textOf([only])) === wordsOf(typed))
   );
 }
 
 /**
  * What a paste becomes in a note: its HTML (or its plain text, when that is
  * really HTML) as Markdown; null to paste the plain text as it is, as for
- * code copied from a code editor, or HTML with nothing in it.
+ * code copied from a code editor, or HTML with nothing in it. An editor's
+ * copy is its text as typed: the plain text, or the HTML's own words when
+ * the plain text is that HTML too (Sublime Text's Copy as HTML).
  */
 export function pastedMarkdown(html: string, text: string): string | null {
-  const source = html || (looksLikeHtml(text) ? text : '');
+  const textIsHtml = looksLikeHtml(text);
+  const source = html || (textIsHtml ? text : '');
   if (!source) return null;
-  const nodes = parseHtml(source);
-  if (html && text && isCode(nodes)) return null;
-  const markdown = blocks(tidy(nodes)).join('\n\n');
+  const nodes = pasted(source);
+  if (html && text) {
+    const typed = textIsHtml ? textOf(nodes) : text;
+    if (isTyped(nodes, typed)) return textIsHtml ? typed : null;
+  }
+  const markdown = markdownOf(nodes);
   if (!markdown) return null;
   if (markdown.includes('\n')) return markdown;
   // Words pasted into a line keep the spaces at their edges: "He said" + " hello".

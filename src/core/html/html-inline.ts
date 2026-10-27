@@ -1,11 +1,13 @@
 // Paste, inline: HTML's words and inline elements as Markdown. Emphasis,
 // strikethrough and underline by Markdown's marks where they'd read as marks,
 // else as the tags a note may hold; links, images and code; the rest as words,
-// with what would read as Markdown escaped. ./from-html.ts reads the blocks.
+// their mark characters held (./marks-in-words.ts) until the block is read.
+// ./from-html.ts reads the blocks.
 
 import { flanking } from '../markdown';
 import { safeAddress } from './addresses';
 import type { HtmlNode } from './html';
+import { escapeBrackets, hold, shown } from './marks-in-words';
 
 /** All of an element's words, as written. */
 export const textOf = (nodes: readonly HtmlNode[]): string =>
@@ -15,15 +17,15 @@ export const textOf = (nodes: readonly HtmlNode[]): string =>
     )
     .join('');
 
-/** Characters that would read as Markdown inside a line. */
-function escapeInline(text: string): string {
+/**
+ * Words as Markdown: the characters that could make a mark held, and so
+ * written as typed unless they'd read as one; in a link's words, its
+ * brackets escaped, as one would end the link.
+ */
+function escapeInline(text: string, inLink: boolean): string {
+  const held = hold(text);
   return (
-    text
-      .replace(/[\\`*[\]<~^]/gu, '\\$&')
-      .replace(/==/gu, '\\=\\=')
-      .replace(/&(?=#?[A-Za-z0-9]+;)/gu, '\\&')
-      // An underscore not inside a word, each one of a run ("__init__").
-      .replace(/(?<![\p{L}\p{N}])_|_(?![\p{L}\p{N}])/gu, '\\_')
+    (inLink ? escapeBrackets(held) : held)
       // A "#" that would start a tag: the page showed a word, not a tag.
       .replace(/(?<=^|\s)#(?=[\p{L}\p{M}\p{N}_-])/gu, '\\#')
   );
@@ -68,8 +70,8 @@ function marked(part: Marked, before: string, after: string): string {
   const [, lead = '', words = '', trail = ''] = match ?? [];
   if (!words) return part.inner;
   const [marks, core] = bothOf(part.marks, words) ?? [part.marks, words];
-  const opens = flanking(lead ? lead.slice(-1) : before, core.slice(0, 1)).open;
-  const closes = flanking(core.slice(-1), trail ? trail.slice(0, 1) : after).close;
+  const opens = flanking(lead ? lead.slice(-1) : before, shown(core.slice(0, 1))).open;
+  const closes = flanking(shown(core.slice(-1)), trail ? trail.slice(0, 1) : after).close;
   // Marks against marks of the same kind would run together ("*" round "*x*" reads as "**x**").
   const mark = marks.slice(0, 1);
   const runsTogether = mark !== '' && (core.startsWith(mark) || core.endsWith(mark));
@@ -98,7 +100,7 @@ const destination = (url: string) =>
   /[\s()<>]/u.test(url) ? `<${url.replace(/[<>]/gu, '')}>` : url;
 
 function part(node: HtmlNode, within: ReadonlySet<string>): string | Marked {
-  if (node.kind === 'text') return escapeInline(collapse(node.text));
+  if (node.kind === 'text') return escapeInline(collapse(node.text), within.has('a'));
   const kind = MARKED[node.name];
   // Italic inside italic is italic once: "<em><em>x</em></em>" is "*x*".
   if (kind && within.has(kind.tag)) return inline(node.children, within);
@@ -115,14 +117,14 @@ function part(node: HtmlNode, within: ReadonlySet<string>): string | Marked {
       return code.trim() ? `${fence}${code}${fence}` : code;
     }
     case 'a': {
-      const text = inline(node.children, within);
+      const text = inline(node.children, new Set([...within, 'a']));
       const href = node.attrs.href?.trim() ?? '';
       return safeAddress(href) && text.trim() ? `[${text}](${destination(href)})` : text;
     }
     case 'img': {
       const src = node.attrs.src?.trim() ?? '';
       return safeAddress(src)
-        ? `![${escapeInline(collapse(node.attrs.alt ?? ''))}](${destination(src)})`
+        ? `![${escapeInline(collapse(node.attrs.alt ?? ''), true)}](${destination(src)})`
         : '';
     }
     default:
@@ -155,11 +157,11 @@ export function inline(
       next === undefined
         ? ''
         : typeof next === 'string'
-          ? next.slice(0, 1)
+          ? shown(next.slice(0, 1))
           : /^\s/u.test(next.inner)
             ? ' '
             : '*';
-    out += marked(piece, out.slice(-1), after);
+    out += marked(piece, shown(out.slice(-1)), after);
   });
   return out;
 }
