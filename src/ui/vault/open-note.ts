@@ -57,6 +57,12 @@ export class OpenNote implements NoteHolder {
     return this.#entry?.session.path ?? null;
   }
 
+  /** Where the page is in its note now, or null with none open. */
+  get place(): NotePlace | null {
+    const { path } = this;
+    return path ? this.#place(path) : null;
+  }
+
   /** The note this page showed before this one, and where it was left in it (the phone's other note). */
   get left(): NotePlace | null {
     return this.#left;

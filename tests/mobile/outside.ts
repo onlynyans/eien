@@ -80,3 +80,44 @@ export const bytesOutside = (page: Page, path: string) =>
       ),
     [path, DOCUMENTS] as const,
   );
+
+interface WebPlugin {
+  readonly listeners: Record<string, unknown[] | undefined>;
+  notifyListeners(event: string, data: object): void;
+}
+
+/**
+ * Catch Capacitor's web plugins as they're made, before the page loads, so
+ * systemBack can reach the App plugin's back listener. On the web the
+ * plugin's implementation is loaded lazily, and the preload's first listeners
+ * race to load it: two instances are made, and the back listener isn't
+ * always on the one the proxy keeps. So every instance is caught as it is
+ * made, and the back goes to whichever holds a listener for it.
+ */
+export const catchBackButton = (page: Page) =>
+  page.addInitScript(() => {
+    const plugins: object[] = [];
+    Object.defineProperty(window, '__webPlugins', { value: plugins });
+    // Capacitor's WebPlugin constructor assigns this field: each instance is caught here.
+    Object.defineProperty(Object.prototype, 'retainedEventArguments', {
+      configurable: true,
+      set(value) {
+        plugins.push(this);
+        Object.defineProperty(this, 'retainedEventArguments', {
+          value,
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
+      },
+    });
+  });
+
+/** Android's back button or gesture (catchBackButton first). */
+export const systemBack = (page: Page) =>
+  page.evaluate(() => {
+    const plugins = (window as unknown as { __webPlugins: WebPlugin[] }).__webPlugins;
+    const holding = plugins.filter((plugin) => (plugin.listeners?.backButton?.length ?? 0) > 0);
+    if (holding.length === 0) throw new Error('nothing listens for the back button');
+    for (const plugin of holding) plugin.notifyListeners('backButton', { canGoBack: false });
+  });

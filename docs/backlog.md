@@ -60,7 +60,7 @@ features that came after, and the plan for them (below the table).
 | 43 | Panes keep their place | fix | Panes | Shutting and opening a pane brings it back scrolled to the top; it should keep its place. | **Done**: the same rows in sight, a short list or a long one, the tree with three panes or two; ⌘1 or ⌘2 goes back to the row the keyboard left; kept for the window's session | – | you |
 | 44 | A steady top bar while the window resizes | fix | Window | Resizing the window makes the top bar's controls jitter and jump. | **Done** ([#76](https://github.com/onlynyans/eien/pull/76)): the corner's insets from the overlay's width, which a Mac's resize doesn't move (its `x` jumped 13px each step); the panes fit a resized window at once, the slide kept for opening and shutting; the split's pager only shown or hidden by a resize, not made again | – | you |
 | 45 | Hide tags and IDs | feature | Editor | A setting to hide the front matter's `tags:` and `id:` lines in Live, Source and Reading, so they aren't edited by accident; kept and saved as they are. | Open | – | you |
-| 46 | Foldables and tablets | feature | Phone | On a foldable's or a tablet's wider screen, the room tablet apps use, as an option, never forced: more than one pane at a time, from the layouts already built. Three explorations first. | Open | yes: 3 explorations | you |
+| 46 | Foldables and tablets | feature | Phone | On a foldable's or a tablet's wider screen, the room tablet apps use, as an option, never forced: more than one pane at a time, from the layouts already built. Three explorations first. | **Done**: all three, as Wide screen (Panes, One at a time, Side by side, Two pages) | yes: [tablet](design/explorations/tablet.md) | you |
 
 ## Plan
 

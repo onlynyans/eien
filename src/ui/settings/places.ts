@@ -58,19 +58,20 @@ export const CATEGORIES: readonly Category[] = [
   },
 ];
 
-/** The settings a tab holds, offered here (`platform`, a phone or not), in the schema's order. */
-export function settingsIn(tab: Tab, platform: string, phone: boolean): Setting[] {
-  return SETTINGS.filter(
-    (setting) => setting.group === tab.group && offeredOn(setting, platform, phone),
-  );
+/**
+ * The settings a tab holds on the system named `platform`, in the schema's order: those that need
+ * panes too, which Settings shows only while the window has them (./settings-screen.ts).
+ */
+export function settingsIn(tab: Tab, platform: string): Setting[] {
+  return SETTINGS.filter((setting) => setting.group === tab.group && offeredOn(setting, platform));
 }
 
 /** Every category, with only the tabs that show something here. */
-export function placesHere(platform: string, phone: boolean): Category[] {
+export function placesHere(platform: string): Category[] {
   return CATEGORIES.map((category) => ({
     ...category,
     tabs: category.tabs.filter(
-      (tab) => tab.themes !== undefined || settingsIn(tab, platform, phone).length > 0,
+      (tab) => tab.themes !== undefined || settingsIn(tab, platform).length > 0,
     ),
   })).filter((category) => category.tabs.length > 0);
 }

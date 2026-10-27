@@ -1,6 +1,7 @@
 /* A phone: one pane at a time (spec §10, ./phone-stack.ts). The shell's
    grid becomes one column, and the pane shown fills it under the bar that
-   goes back. */
+   goes back. Wider, the Wide screen setting's room (./room.ts, data-room)
+   may keep two in sight (data-sight): side by side, or the notes over the page. */
 
 .phone-bar {
   display: none;
@@ -89,10 +90,60 @@
   grid-column: 1;
   border-right: 0;
 }
-.shell[data-phone]:not([data-shown="sidebar"]) > .sidebar,
-.shell[data-phone]:not([data-shown="list"]) > .list,
-.shell[data-phone]:not([data-shown="page"]) > .page {
+.shell[data-phone]:not([data-sight~="sidebar"]) > .sidebar,
+.shell[data-phone]:not([data-sight~="list"]) > .list,
+.shell[data-phone]:not([data-sight~="page"]) > .page {
   display: none;
+}
+
+/* Side by side: the pane you came from beside the one you're in, the bar over both. The pane
+   behind is a list's width at most, and half the screen on a foldable opened, so their edge is
+   the fold. */
+.shell[data-phone][data-room="side"] {
+  grid-template-columns: min(50%, calc(var(--eien-list-w) + var(--eien-space-7))) minmax(0, 1fr);
+}
+.shell[data-room="side"] > .phone-bar {
+  grid-column: 1 / -1;
+}
+.shell[data-phone][data-room="side"] > :is(.sidebar, .list, .page) {
+  grid-column: auto;
+}
+.shell[data-phone][data-room="side"] > :is(.sidebar, .list) {
+  border-right: var(--eien-hairline) solid var(--eien-rule);
+}
+
+/* Two pages: the notes, or the contents, slide over the page from the left as raised paper,
+   the page under the scrim; a tap on it puts them away (../vault/phone-view.ts). */
+.shell[data-phone][data-room="pages"]:not([data-shown="page"]) > .page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 30; /* over all the page holds: a dragged note's preview, the selection bar, the cards */
+  background: var(--eien-scrim);
+}
+.shell[data-phone][data-room="pages"]:not([data-shown="page"]) > :is(.sidebar, .list) {
+  position: relative;
+  z-index: 4;
+  width: min(85%, calc(var(--eien-list-w) + var(--eien-space-7)));
+  background: var(--eien-paper-raised);
+  border-right: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  animation: slide-over var(--eien-calm) var(--eien-ease);
+}
+@keyframes slide-over {
+  from {
+    translate: -100% 0;
+  }
+}
+
+/* The desktop's panes on a touch screen: every target a finger's (spec §10). Running head's
+   strip grows to hold its controls. */
+@media (pointer: coarse) {
+  .shell[data-room="panes"] {
+    --eien-control: var(--eien-touch);
+    --eien-row-h: var(--eien-touch);
+    --runhead-h: var(--eien-space-7);
+  }
 }
 /* No edges to drag, no chevrons to shut a pane (back stands in for them), no
    three panes or two: one at a time. The desktop's page controls give way to

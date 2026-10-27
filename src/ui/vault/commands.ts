@@ -29,6 +29,8 @@ export interface CommandContext {
   readonly parts: PageParts;
   /** File → Import Markdown Folder… (./importing.ts). */
   importFolder(): void;
+  /** Whether a second page may open here (not one page, the phone's way: ../phone/room.ts). */
+  splits(): boolean;
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
@@ -61,8 +63,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     panes.openPage();
     if (inPage && ctx.pages.split) ctx.pages.focusOther();
     else page.focus();
-  } else if (command === 'split') void ctx.pages.toggle();
-  else if (command === 'split:swap') ctx.pages.swap();
+  } else if (command === 'split') {
+    if (ctx.pages.split || ctx.splits()) void ctx.pages.toggle(); // a split closes in any room
+  } else if (command === 'split:swap') ctx.pages.swap();
   else if (command === 'seal') void versions.seal();
   else if (command === 'compare') void versions.cycleCompare();
   else if (command === 'versions') versions.showPanel(!versions.panelOpen);

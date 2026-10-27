@@ -56,7 +56,7 @@ export function noteActions(of: NoteActionsOf): NoteActions {
       );
       return;
     }
-    await pages.open(path, beside && !phone.stack.phone); // a phone shows one page
+    await pages.open(path, beside && phone.stack.splits); // one page, the phone's way
     await of.redraw();
     phone.stack.show('page');
   }

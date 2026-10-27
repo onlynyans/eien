@@ -45,15 +45,35 @@ describe('the schema', () => {
     }
   });
 
-  it('offers spellcheck on macOS alone, and everything else everywhere', () => {
+  it('offers spellcheck on macOS alone, Wide screen on the phone alone, and everything else everywhere', () => {
     const spellcheck = settingOf('editor.spellcheck');
-    if (!spellcheck) throw new Error('missing spellcheck');
+    const room = settingOf('appearance.room');
+    if (!spellcheck || !room) throw new Error('missing a setting');
     expect(offeredOn(spellcheck, 'darwin')).toBe(true);
     expect(offeredOn(spellcheck, 'win32')).toBe(false);
     expect(offeredOn(spellcheck, 'linux')).toBe(false);
+    // The phone's build: Capacitor's android and ios, and web, its page in a browser (tests/mobile).
+    for (const phone of ['android', 'ios', 'web']) expect(offeredOn(room, phone)).toBe(true);
+    for (const desktop of ['darwin', 'win32', 'linux'])
+      expect(offeredOn(room, desktop)).toBe(false);
     for (const setting of SETTINGS) {
-      if (setting.key !== 'editor.spellcheck') expect(offeredOn(setting, 'linux')).toBe(true);
+      if (setting.key !== 'editor.spellcheck' && setting.key !== 'appearance.room')
+        expect(offeredOn(setting, 'linux')).toBe(true);
     }
+  });
+
+  it('keeps today’s panes on a wide screen unless the writer chooses otherwise', () => {
+    const room = settingOf('appearance.room');
+    expect(room?.type === 'choice' && Object.keys(room.choices)).toEqual([
+      'panes',
+      'one',
+      'side',
+      'pages',
+    ]);
+    expect(room?.default).toBe('panes');
+    expect(room?.scope).toBe('device'); // a tablet and a phone that share a vault each choose their own
+    // It's the whole window's: offered on a phone too, so a foldable can choose before it opens.
+    expect(room && 'wide' in room).toBe(false);
   });
 
   it('has the eight text faces, Newsreader first and the default', () => {
