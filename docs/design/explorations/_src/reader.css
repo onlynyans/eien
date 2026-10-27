@@ -1,0 +1,116 @@
+/* Shared by the reader explorations (reader-*.html): the split family's window
+   (split.css), with a book open in the page pane, and the phone. What's new
+   here is only what a book needs: the shelf section, the contents in the list,
+   a book's page and its type, pages in columns, and the phone's reading page. */
+/*@include:split.css*/
+
+/* The app's field token (src/ui/theme/tokens.css), which the explorations'
+   shared tokens predate: a wash of the ink, set into what holds it. */
+:root { --eien-field: light-dark(rgb(35 32 28 / 0.06), rgb(233 226 212 / 0.07)); }
+
+.xbar__break { flex-basis: 100%; height: 0; }
+a.icon-button { text-decoration: none; }
+.notes .said-note { margin-top: var(--eien-space-4); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+.tools-rule { width: var(--eien-hairline); height: var(--eien-space-4); margin: 0 var(--eien-space-1); background: var(--eien-rule); align-self: center; }
+.win[data-list='hidden'] > .ls { display: none; }
+.win > .sb { grid-column: 1; } .win > .ls { grid-column: 2; } .win > .pg { grid-column: 3; }
+
+/* The sidebar's sections fold; the twisty shows on hover, focus, or folded. */
+.section { appearance: none; display: flex; align-items: center; gap: var(--eien-space-1); height: 100%; padding: 0; border: 0; background: none; cursor: pointer; color: var(--eien-pencil); }
+.section .twisty { color: var(--eien-faded); opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease), rotate var(--eien-quick) var(--eien-ease); rotate: 90deg; }
+.section .twisty svg { width: var(--eien-space-3); height: var(--eien-space-3); }
+.section[aria-expanded='false'] .twisty { rotate: 0deg; opacity: 1; }
+.section:is(:hover, :focus-visible) .twisty { opacity: 1; }
+@media (hover: hover) { .section:hover .label { color: var(--eien-ink-soft); } }
+
+/* The books' section: a lens over the folder tree. Folders as the tree draws them,
+   a hairline guide down each open one; books in the text face, how far you've read at the right. */
+.sb { overflow: auto; }
+.sb__lens { margin-top: auto; padding-bottom: var(--eien-space-4); }
+button.trow { appearance: none; width: 100%; border: 0; background: none; text-align: left; font: inherit; cursor: pointer; }
+@media (hover: hover) { button.trow:not(.is-chosen):hover { background: var(--eien-hover); color: var(--eien-ink); } }
+button.trow:focus-visible { outline-offset: -2px; }
+.trow .count { flex: none; }
+.trow--book::after { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--eien-space-4) + (var(--d) - 1) * 16px + 6px); width: var(--eien-hairline); background: var(--eien-rule); }
+.trow--book.is-chosen::after { display: none; }
+.book-mark { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); padding: 0 3px; border: var(--eien-hairline) solid var(--eien-rule); color: var(--eien-pencil); line-height: 14px; }
+
+/* The list, as the book's contents: rows of chapters, the page each starts on. */
+.ls { display: flex; flex-direction: column; }
+.ls__rows { flex: 1; min-height: 0; overflow: auto; }
+.row--ch { grid-template-columns: 1fr auto; padding-block: var(--eien-space-2); }
+.row--ch .t { font-size: var(--eien-size-row); }
+
+/* A book's page: the face's prose, set as a book sets it: indented paragraphs, no gap. */
+.book-text { font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose); hyphens: auto; -webkit-hyphens: auto; }
+.book-text p { margin: 0; text-indent: var(--eien-space-6); }
+.book-text .ch-head + p, .book-text p.not-held { text-indent: 0; }
+.ch-head { font-size: var(--eien-size-heading); font-weight: 500; line-height: 1.3; margin: 0 0 var(--eien-space-6); color: var(--eien-ink); break-after: avoid; }
+.book-text p.not-held { font-style: italic; color: var(--eien-ink-soft); }
+.book-text ::selection { background: var(--eien-seal-wash); }
+.book-text .hit { background: var(--eien-field); box-shadow: 0 0 0 var(--eien-hairline) var(--eien-rule-strong); border-radius: 1px; }
+.book-text .hit.is-at { background: var(--eien-seal-wash); box-shadow: 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+
+/* Pages: a chapter flows in columns as tall as the page, and a turn slides it one page. */
+.leaves { position: relative; min-height: 0; overflow: hidden; outline: none; --leaf-gap: var(--eien-space-7); }
+.leaves:focus-visible { box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.flow { column-fill: auto; transition: transform var(--eien-calm) var(--eien-ease); }
+.flow--measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .flow { transition: none; } }
+
+/* A book's sheet, holding pages: as tall as the blotter leaves it, never scrolling. */
+.blotter.is-paged { overflow: hidden; padding-bottom: var(--eien-space-4); }
+.sheet.book-sheet { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; flex: 1 1 auto; padding-bottom: var(--eien-space-4); }
+.book-sheet .sheet__head { margin-bottom: var(--eien-space-5); }
+.folio { display: flex; justify-content: space-between; align-items: center; gap: var(--eien-space-3); min-height: var(--eien-space-6); padding-top: var(--eien-space-3); }
+.folio .count { white-space: nowrap; }
+
+/* Turning by the margins: the sheet's outer margins are buttons, quiet till the pointer finds them. */
+.turn { appearance: none; position: absolute; z-index: 2; top: 0; bottom: 0; width: clamp(var(--eien-space-4), 8%, var(--eien-space-8)); padding: 0; border: 0; background: none; display: grid; place-items: center; color: var(--eien-faded); cursor: pointer; opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease), color var(--eien-quick) var(--eien-ease); }
+.turn--prev { left: 0; cursor: w-resize; }
+.turn--next { right: 0; cursor: e-resize; }
+@media (hover: hover) { .turn:hover { opacity: 1; color: var(--eien-ink-soft); } }
+.turn:focus-visible { opacity: 1; outline-offset: -4px; }
+.turn:disabled { display: none; }
+
+/* The phone: its own size and corner, not Eien's; one page at a time. */
+.phone { width: 360px; height: 740px; display: grid; grid-template-rows: var(--eien-touch) minmax(0, 1fr) auto; overflow: hidden; position: relative; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 36px; box-shadow: var(--eien-shadow-float); --eien-size-prose-phone: calc(var(--eien-size-prose) * 0.82); }
+.backbar { display: flex; align-items: center; gap: var(--eien-space-1); padding: 0 var(--eien-space-2) 0 var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.backbar .back { appearance: none; display: flex; align-items: center; gap: var(--eien-space-1); flex: 1; min-width: 0; height: var(--eien-touch); padding: 0 var(--eien-space-1); border: 0; background: none; color: var(--eien-ink-soft); font: inherit; font-size: var(--eien-size-preview); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.phone .icon-button { width: var(--eien-touch); height: var(--eien-touch); }
+.phone__body { position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); background: var(--eien-paper); }
+.phone .book-text { font-size: var(--eien-size-prose-phone); }
+.phone .ch-head { font-size: calc(var(--eien-size-heading) * 0.9); margin-bottom: var(--eien-space-4); }
+.phone .book-text p { text-indent: var(--eien-space-5); }
+.phone .book-text .ch-head + p { text-indent: 0; }
+.phone__page { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; padding: var(--eien-space-5) var(--eien-space-5) 0; }
+.phone__foot { display: flex; justify-content: space-between; align-items: center; min-height: var(--eien-space-7); }
+.phone__slip { position: absolute; z-index: 3; right: var(--eien-space-3); bottom: var(--eien-space-7); }
+.phone .rail { display: flex; justify-content: space-around; align-items: center; min-height: calc(var(--eien-touch) + var(--eien-space-3)); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); }
+.phone__list { overflow: auto; }
+.phone__title { padding: var(--eien-space-4) var(--eien-space-4) var(--eien-space-2); }
+.phone__group { padding: var(--eien-space-4) var(--eien-space-4) var(--eien-space-1); }
+.phone__row { appearance: none; display: flex; align-items: center; justify-content: space-between; gap: var(--eien-space-3); width: 100%; min-height: var(--eien-touch); padding: var(--eien-space-2) var(--eien-space-4); border: 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); background: none; font: inherit; color: var(--eien-ink); text-align: left; cursor: pointer; position: relative; }
+.phone__row.is-chosen { background: var(--eien-selected); }
+.phone__row.is-chosen::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: var(--eien-mark-w); background: var(--eien-seal); }
+.phone__row:focus-visible { outline-offset: -2px; }
+
+/* The contents as a menu: as long as the window lets it be. */
+.menu--contents { max-height: min(70vh, 520px); overflow: auto; min-width: 14em; }
+.menu__item[aria-current='true'] { color: var(--eien-ink); }
+.menu__item[aria-current='true'] .menu__key::before { content: ''; display: inline-block; width: var(--eien-space-1); height: var(--eien-space-1); margin-right: var(--eien-space-2); border-radius: var(--eien-radius-dot); background: var(--eien-ink); vertical-align: middle; }
+
+/* Find in the book: the field as system.md sets it (a wash of ink at rest, the
+   well and an inset focus ring with the keyboard), its count, and the steps. */
+.find { position: relative; display: flex; align-items: center; gap: 2px; min-width: 0; }
+.find__icon { position: absolute; left: var(--eien-space-2); top: 50%; translate: 0 -50%; color: var(--eien-pencil); pointer-events: none; }
+.find__icon svg { width: var(--eien-space-3); height: var(--eien-space-3); }
+.find__field { width: 15em; min-width: 6em; flex: 0 1 auto; padding: var(--eien-space-1) var(--eien-space-2) var(--eien-space-1) calc(var(--eien-space-2) + var(--eien-space-4)); background: var(--eien-field); border-color: transparent; border-radius: var(--eien-radius-s); color: var(--eien-ink); }
+@media (hover: hover) { .find__field:hover { border-color: var(--eien-rule); } }
+.find__field:focus { background: var(--eien-well); border-color: transparent; box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.find__field::-webkit-search-cancel-button { display: none; }
+.find__says { min-width: 7.5em; padding: 0 var(--eien-space-2); white-space: nowrap; text-align: right; }
+.find .icon-button { color: var(--eien-pencil); }
+.find .icon-button svg { width: var(--eien-space-3); height: var(--eien-space-3); }
+/* While finding, the band's tools stay in sight. */
+.is-finding .quiet, .quiet.is-finding { opacity: 1; }

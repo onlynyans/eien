@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Pages 1 · The spread</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:reader.css*/
+
+/* Pages 1 · The spread. The book lies open on the blotter: one sheet, two
+   pages facing across the gutter, as Facing pages (the split's mode 4) lays
+   two notes. Each page has its running head (the book's title on the left, the
+   chapter on the right) and its folio, mirrored as a printed book's are.
+   Too narrow for two pages, the book closes to one. */
+.blotter.is-paged { padding: var(--eien-space-5) var(--eien-space-5) var(--eien-space-4); }
+.spread { max-width: none; position: relative; }
+.spread .leaves { --leaf-gap: var(--eien-space-8); }
+/* The gutter: a soft hairline down the middle, between the two text blocks. */
+.spread[data-open] .leaves::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: var(--eien-hairline); background: var(--eien-rule-soft); }
+.spread[data-open] .leaves { overflow: hidden; }
+.pair { display: grid; grid-template-columns: 1fr var(--eien-space-8) 1fr; align-items: baseline; }
+.pair > :nth-child(2) { grid-column: 3; text-align: right; }
+.spread:not([data-open]) .pair { grid-template-columns: 1fr auto; }
+.spread:not([data-open]) .pair > :nth-child(2) { grid-column: 2; }
+.spread .sheet__head { margin-bottom: var(--eien-space-5); }
+.spread .folio { padding-top: var(--eien-space-3); }
+.closed-note { color: var(--eien-faded); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:reader.js*/
+
+/** Room for two pages: each text block at least 20em of the face's prose, with the sheet's margins and the gutter. */
+function canOpen(ctx) {
+  const prose = parseFloat(getComputedStyle(root).getPropertyValue('--eien-size-prose')) || 22;
+  const sheet = ctx.pageW - 2 * 24;
+  const margins = 2 * Math.min(72, Math.max(16, sheet * 0.08));
+  return (sheet - margins - 72) / 2 >= 20 * prose;
+}
+
+Reader.tools = (ctx) => ctx.contentsTool();
+Reader.page = (ctx) => {
+  const open = canOpen(ctx);
+  const heads = ctx.layout === 'runhead' ? '' : `<div class="sheet__head pair"><span class="crumb">${open ? BOOK.title : ctx.crumb()}</span><span class="crumb" data-recto>${open ? CHAPTERS[R.c].title : BOOK.author}</span></div>`;
+  return `<div class="page">${ctx.top()}<div class="blotter is-paged">
+  <article class="sheet book-sheet spread"${open ? ' data-open' : ''}>
+    <button class="turn turn--prev" data-turn="-1" data-k="turn-prev" aria-label="Previous ${open ? 'pages' : 'page'}" data-tip="Previous ${open ? 'pages' : 'page'}  ←" data-tip-side="right">${icon('left')}</button>
+    <button class="turn turn--next" data-turn="1" data-k="turn-next" aria-label="Next ${open ? 'pages' : 'page'}" data-tip="Next ${open ? 'pages' : 'page'}  →" data-tip-side="left">${icon('right')}</button>
+    ${heads}${ctx.leaves(R.c, { span: open ? 2 : 1 })}
+    <footer class="folio pair"><span class="count" data-verso></span><span class="count" data-recto-n></span></footer>
+  </article></div>${ctx.colophon([CHAPTERS[R.c].ord, '<span data-col-page></span>', open ? '' : '<span class="closed-note">one page: too narrow for two</span>'])}</div>`;
+};
+Reader.strip = (ctx) => `<div class="seg"><span class="crumb">${canOpen(ctx) ? `${BOOK.title} · ${CHAPTERS[R.c].title}` : ctx.crumb()}</span><span class="tools-row">${ctx.views()}${Reader.tools(ctx)}</span></div>`;
+Reader.phone = (ctx) => `<div class="phone__page">${ctx.leaves(R.c)}<div class="phone__foot"><span class="count">${CHAPTERS[R.c].ord}</span><span class="count" data-recto-n></span></div></div>`;
+Reader.phoneTools = (ctx) => ctx.tool('contents', 'Contents', '', 'data-contents');
+Reader.after = (ctx, n) => {
+  if (!n?.paged) return;
+  const two = n.span === 2;
+  const set = (sel, text) => { for (const el of canvas.querySelectorAll(sel)) el.textContent = text; };
+  set('[data-verso]', two ? String(n.page) : `${CHAPTERS[R.c].ord} · ${n.chPage} of ${n.chPages}`);
+  set('[data-recto-n]', two ? (n.chPage + 1 <= n.chPages ? String(n.page + 1) : '') : String(n.page));
+  set('[data-col-page]', two ? `pages ${n.page}–${n.page + 1} of ${n.pages}` : `page ${n.page} of ${n.pages}`);
+  const first = n.page <= 1;
+  for (const b of canvas.querySelectorAll('.turn--prev')) b.disabled = first;
+};
+
+mountReaderPage({
+  id: 'spread',
+  list: 'hidden',
+  note: 'The book open on the blotter: two pages across the gutter, as Facing pages lays two notes.',
+  notes: `
+  <h2>Pages 1 · The spread</h2>
+  <p>The book lies open: one sheet, two pages facing each other across the gutter, as the split's Facing pages lays two notes. Each page has its running head, the book's title over the left and the chapter over the right, and its folio at the foot, mirrored as a printed book's are. A turn moves a whole spread.</p>
+  <ul>
+    <li><b>Room:</b> a spread needs each page's text block at least 20em of your face (about 440px in Newsreader). With three panes at 1440px there isn't: the book closes to one page and the colophon says so. Hide the list (the bar's List, or C's list tool) and it opens. That's the same rule Facing pages has, and the page is shown at your size, never shrunk to fit.</li>
+    <li><b>Turning:</b> the arrow keys, Space, Page Up and Down, or the outer margins (an arrow shows there under the pointer).</li>
+    <li><b>A chapter starts on its own spread</b>, as a printed chapter starts on its own page; its last spread may hold one page.</li>
+    <li><b>C · Running head</b> names both halves over the page: the book and the chapter.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>Never two pages: a phone's screen holds one at the face's size. One page, turned by a tap in either outer third or a swipe; the folio below.</p>
+  <h2>For</h2>
+  <ul><li>The most book-like: the picture every reader knows, with Eien's own gutter and folios.</li><li>Uses a wide window: two pages of 20em read faster than one stretched page.</li><li>Shares its look with Facing pages, so the window has one idea of "two pages".</li></ul>
+  <h2>Against</h2>
+  <ul><li>Needs room: with three panes it's one page, so the spread is mostly a two-pane or wide-window thing.</li><li>A chapter's last spread may be half empty.</li><li>Two places to look for "where am I" (two folios).</li></ul>`,
+});
+</script>
+</body>
+</html>

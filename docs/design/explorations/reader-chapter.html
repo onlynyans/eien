@@ -1,0 +1,1586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Scroll 1 · A chapter a sheet</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/* Shared by every exploration (inlined into each page by _build.py).
+   The tokens are the approved ones from ../tokens.css (Washi, day and night),
+   plus what the design pass adds: a radius scale, icon sizes, the machine
+   face as a setting, and row weights. New tokens are marked NEW. */
+
+:root { color-scheme: light dark; }
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+:root {
+  --eien-desk: light-dark(#d9d2c8, #110e0b);
+  --eien-blotter: light-dark(#eae5dd, #1a1713);
+  --eien-band: light-dark(#f4f1ea, #201d19);
+  --eien-paper: light-dark(#fdfbf7, #28241f);
+  --eien-paper-raised: light-dark(#ffffff, #312d28);
+  --eien-well: light-dark(#f9f7f3, #24201c);
+  --eien-hover: light-dark(rgb(35 32 28 / 0.045), rgb(233 226 212 / 0.05));
+  --eien-press: light-dark(rgb(35 32 28 / 0.1), rgb(233 226 212 / 0.1));
+  --eien-selected: light-dark(#ede9e3, #38332e);
+  --eien-scrim: light-dark(rgb(35 32 28 / 0.22), rgb(0 0 0 / 0.5));
+  --eien-shadow-sheet: 0 1px 2px light-dark(rgb(58 44 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 6px 24px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45));
+  --eien-shadow-float: 0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
+    0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  --eien-ink: light-dark(#23201c, #e9e2d4);
+  --eien-ink-soft: light-dark(#51473c, #c3b9a7);
+  --eien-pencil: light-dark(#5d5348, #a7a095);
+  --eien-faded: light-dark(#766d62, #837c73);
+  --eien-rule-soft: light-dark(rgb(35 32 28 / 0.07), rgb(233 226 212 / 0.07));
+  --eien-rule: light-dark(rgb(35 32 28 / 0.13), rgb(233 226 212 / 0.14));
+  --eien-rule-strong: light-dark(rgb(35 32 28 / 0.26), rgb(233 226 212 / 0.26));
+  --eien-hairline: 1px;
+  --eien-mark-w: 2px;
+  --eien-seal: light-dark(#c4472d, #e0603f);
+  --eien-seal-wash: light-dark(rgb(196 71 45 / 0.08), rgb(224 96 63 / 0.12));
+  --eien-on-seal: light-dark(#fbf8f2, #1a1714);
+  --eien-focus: var(--eien-ink-soft);
+  --eien-added: light-dark(#485c2c, #9cb880);
+  --eien-added-wash: light-dark(rgb(79 107 58 / 0.13), rgb(156 184 128 / 0.14));
+  --eien-removed: light-dark(#93304a, #e98aa0);
+  --eien-caution: light-dark(#6b501f, #d0a659);
+  --eien-caution-wash: light-dark(rgb(138 100 32 / 0.11), rgb(208 166 89 / 0.12));
+
+  /* The machine voice: IBM Plex Mono by default, now a setting (NEW: set from FACES). */
+  --eien-face-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --eien-face-seal: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif;
+  --eien-size-meta: 11px;
+  --eien-size-label: 10px;
+  --eien-leading-row: 1.35;
+  --eien-track-label: 0.12em;
+  --eien-space-1: 4px; --eien-space-2: 8px; --eien-space-3: 12px; --eien-space-4: 16px;
+  --eien-space-5: 24px; --eien-space-6: 32px; --eien-space-7: 48px; --eien-space-8: 72px;
+  --eien-row-h: 30px;
+  --eien-touch: 44px;
+  --eien-seal-size: 22px;
+  --eien-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --eien-quick: 120ms;
+  --eien-calm: 220ms;
+  --eien-leading-tighten: 0;
+  --eien-sheet-pad-x: var(--eien-space-8);
+  --eien-sheet-pad-top: var(--eien-space-7);
+  --eien-page-gutter: var(--eien-space-5);
+  --eien-title-gap: var(--eien-space-6);
+  --eien-paragraph-gap: var(--eien-space-4);
+  --eien-row-pad-y: var(--eien-space-3);
+
+  /* NEW: corners. Not everything is square. A small scale: s for what you press
+     (buttons, fields, chips), m for what floats (menus, popovers, the tool slip),
+     l for what covers the window (a sheet over it, the phone's bottom sheet).
+     Paper itself (the sheet, the panes) stays square. Each exploration sets its own. */
+  --eien-radius-s: 3px;
+  --eien-radius-m: 6px;
+  --eien-radius-l: 10px;
+  --eien-radius-dot: 999px;
+
+  /* NEW: icons. Drawn on a 16-unit grid, stroked in the ink they sit in. */
+  --eien-icon: 16px;
+  --eien-icon-stroke: 1.25;
+  --eien-control: 28px; /* an icon control's square, desktop */
+
+  /* NEW: row names' weight, two settings (400–700). A selected list title is 100 heavier. */
+  --eien-weight-tree: 400;
+  --eien-weight-list: 400;
+}
+
+/* The text voice: the writer's choice, sizes tuned per face (from ../tokens.css). */
+:root, [data-face='newsreader'] { --eien-face-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; --eien-size-prose: 22px; --eien-size-title: 36px; --eien-size-heading: 23px; --eien-size-row: 16px; --eien-size-preview: 14px; --eien-leading-prose: calc(1.5 - var(--eien-leading-tighten)); --eien-measure: 29em; }
+[data-face='literata'] { --eien-face-text: 'Literata', Georgia, serif; --eien-size-prose: 19px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.72 - var(--eien-leading-tighten)); --eien-measure: 34em; }
+[data-face='plex-sans'] { --eien-face-text: 'IBM Plex Sans', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.76 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='source-sans'] { --eien-face-text: 'Source Sans 3', Arial, sans-serif; --eien-size-prose: 20px; --eien-size-title: 32px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+[data-face='atkinson'] { --eien-face-text: 'Atkinson Hyperlegible Next', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='schibsted'] { --eien-face-text: 'Schibsted Grotesk', Arial, sans-serif; --eien-size-prose: 18px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.62 - var(--eien-leading-tighten)); --eien-measure: 33em; }
+[data-face='hanken'] { --eien-face-text: 'Hanken Grotesk', Arial, sans-serif; --eien-size-prose: 19px; --eien-size-title: 31px; --eien-size-heading: 21px; --eien-size-row: 15px; --eien-size-preview: 13px; --eien-leading-prose: calc(1.66 - var(--eien-leading-tighten)); --eien-measure: 32em; }
+[data-face='instrument'] { --eien-face-text: 'Instrument Sans', Arial, sans-serif; --eien-size-prose: 18.5px; --eien-size-title: 30px; --eien-size-heading: 20px; --eien-size-row: 14.5px; --eien-size-preview: 12.5px; --eien-leading-prose: calc(1.7 - var(--eien-leading-tighten)); --eien-measure: 31em; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--eien-blotter);
+  color: var(--eien-ink);
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--eien-seal-wash); }
+:focus-visible { outline: var(--eien-mark-w) solid var(--eien-focus); outline-offset: 2px; }
+
+.seal {
+  display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-seal-size); height: var(--eien-seal-size);
+  background: var(--eien-seal); color: var(--eien-on-seal);
+  font-family: var(--eien-face-seal); font-size: calc(var(--eien-seal-size) * 0.68); line-height: 1;
+  border-radius: calc(var(--eien-radius-s) / 2);
+  user-select: none;
+}
+.seal--small { --eien-seal-size: 10px; font-size: 0; }
+
+.label {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil);
+}
+.count {
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta);
+  font-variant-numeric: tabular-nums; color: var(--eien-pencil);
+}
+
+/* Where a word stays (menus, choices of a setting). */
+.word-button {
+  appearance: none; border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; padding: var(--eien-space-1) var(--eien-space-2);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink-soft);
+  cursor: pointer;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.word-button[aria-pressed='true'], .word-button[aria-checked='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* NEW: the icon control. The word button's states, a square of --eien-control. */
+.icon-button {
+  appearance: none; display: inline-grid; place-items: center; flex: none;
+  width: var(--eien-control); height: var(--eien-control); padding: 0;
+  border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s);
+  background: none; color: var(--eien-ink-soft); cursor: pointer; position: relative;
+  transition: color var(--eien-quick) var(--eien-ease), background var(--eien-quick) var(--eien-ease),
+    border-color var(--eien-quick) var(--eien-ease);
+}
+.icon-button svg, .icon { width: var(--eien-icon); height: var(--eien-icon); display: block; }
+.icon { stroke-width: var(--eien-icon-stroke); }
+.icon-button[aria-pressed='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+.icon-button:disabled { color: var(--eien-faded); cursor: default; }
+@media (hover: hover) {
+  .word-button:hover, .icon-button:not(:disabled):hover { color: var(--eien-ink); background: var(--eien-hover); }
+}
+.word-button:active, .icon-button:not(:disabled):active { background: var(--eien-press); border-color: var(--eien-rule-strong); }
+
+/* NEW: a tooltip names an icon and its key: raised paper, the machine voice. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip); position: absolute; z-index: 50; pointer-events: none;
+  left: 50%; top: calc(100% + 6px); translate: -50% 0;
+  white-space: pre; padding: 3px 7px; border-radius: var(--eien-radius-s);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: 0.06em;
+  text-transform: none; color: var(--eien-ink-soft);
+  opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease);
+}
+[data-tip-side='up']::after { top: auto; bottom: calc(100% + 6px); }
+[data-tip-side='right']::after { left: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+[data-tip-side='left']::after { left: auto; right: calc(100% + 6px); top: 50%; translate: 0 -50%; }
+@media (hover: hover) { [data-tip]:hover::after { opacity: 1; transition-delay: 450ms; } }
+[data-tip]:focus-visible::after { opacity: 1; }
+
+.field {
+  appearance: none; width: 100%; border: var(--eien-hairline) solid var(--eien-rule);
+  border-radius: var(--eien-radius-s); background: var(--eien-well);
+  padding: var(--eien-space-2) var(--eien-space-3);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink);
+}
+.field::placeholder { color: var(--eien-faded); }
+.field:focus { outline: none; border-color: var(--eien-focus); }
+
+/* Explorations' own bar: outside the app, like the mockups' bar. */
+.xbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--eien-space-1) var(--eien-space-4);
+  padding: var(--eien-space-2) var(--eien-space-4);
+  background: var(--eien-paper-raised); border-bottom: var(--eien-hairline) solid var(--eien-rule);
+}
+.xbar__name { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-ink); font-weight: 600; }
+.xbar__group { display: flex; align-items: center; gap: 2px; }
+.xbar__label { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); margin-right: var(--eien-space-1); }
+.xnote { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+
+/* Shared by the reader explorations (reader-*.html): the split family's window
+   (split.css), with a book open in the page pane, and the phone. What's new
+   here is only what a book needs: the shelf section, the contents in the list,
+   a book's page and its type, pages in columns, and the phone's reading page. */
+/* Shared by the split-window explorations (split-*.html): Eien's window at its
+   real size, in A · Band, B · Slip or C · Running head, its page pane holding
+   one note or two. Each direction draws the page pane its own way (split.js's
+   Split.page); the window, the sidebar, the list, the menus, the divider and the
+   keys are the same in all three. */
+/* Each layout's corners, as src/ui/chrome/*.css sets them on :root[data-layout]:
+   A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10. */
+:root[data-layout='band'] { --eien-radius-s: 2px; --eien-radius-m: 4px; --eien-radius-l: 8px; }
+:root[data-layout='slip'] { --eien-radius-s: 4px; --eien-radius-m: 8px; --eien-radius-l: 14px; }
+:root[data-layout='runhead'] { --eien-radius-s: 3px; --eien-radius-m: 6px; --eien-radius-l: 10px; }
+a.word-button { text-decoration: none; }
+.word-button[aria-current='page'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); }
+
+/* The seal as a button, as the app draws it: no ground, a hairline that shows on hover.
+   Shared by the corner and split explorations. */
+.seal-button { appearance: none; display: grid; place-items: center; padding: var(--eien-space-1); border: var(--eien-hairline) solid transparent; border-radius: var(--eien-radius-s); background: none; cursor: pointer; transition: border-color var(--eien-quick) var(--eien-ease); }
+@media (hover: hover) { .seal-button:hover { border-color: var(--eien-rule); } }
+.seal-button:active { background: var(--eien-press); }
+
+
+body { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
+.stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 45%); } }
+/* A quiet desktop the window sits on, outside Eien; the window scales to fit it. */
+.canvas { min-height: 0; overflow: auto; padding: var(--eien-space-4); background: color-mix(in srgb, var(--eien-desk) 84%, var(--eien-ink)); }
+.fit { position: relative; margin: 0 auto; }
+.fit > .win { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.notes { min-height: 0; overflow: auto; padding: var(--eien-space-4); background: var(--eien-desk); border-left: var(--eien-hairline) solid var(--eien-rule); font-size: var(--eien-size-preview); line-height: 1.55; color: var(--eien-ink-soft); }
+@media (max-width: 900px) { .notes { border-left: 0; border-top: var(--eien-hairline) solid var(--eien-rule); } }
+.notes h2 { margin: var(--eien-space-4) 0 var(--eien-space-1); font: inherit; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); font-weight: 400; }
+.notes h2:first-child { margin-top: 0; }
+.notes p { margin: 0 0 var(--eien-space-2); }
+.notes ul { margin: 0 0 var(--eien-space-2); padding-left: 1.1em; }
+.notes code { font-family: var(--eien-face-mono); font-size: 0.9em; }
+kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-paper); white-space: nowrap; }
+.xbar input[type='range'] { width: 120px; accent-color: var(--eien-ink-soft); }
+.xbar output { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); min-width: 7ch; }
+
+/* The window. Its lengths are the app's: --band 56px (48 in C), C's running
+   head 40px, the colophon 40px; the sidebar's and the list's widths
+   (--eien-sidebar-w, --eien-list-w) come from split.js, which also measures
+   with them. The seal's button is the seal and its padding and hairline. */
+.win {
+  --band: calc(var(--eien-space-7) + var(--eien-space-2)); --status-h: calc(var(--eien-space-6) + var(--eien-space-2));
+  --head-h: 0px; --controls-left: 80px;
+  --seal-btn: calc(var(--eien-seal-size) + 2 * var(--eien-space-1) + 2 * var(--eien-hairline));
+  --sb: var(--eien-sidebar-w);
+  width: var(--win-w); height: var(--win-h); overflow: hidden; position: relative;
+  display: grid; grid-template-rows: var(--head-h) minmax(0, 1fr); grid-template-columns: var(--sb) var(--eien-list-w) minmax(0, 1fr);
+  background: var(--eien-desk); color: var(--eien-ink); font-size: var(--eien-size-row);
+  border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 10px; box-shadow: var(--eien-shadow-float);
+}
+.win[data-layout='runhead'] { --band: var(--eien-space-7); --head-h: calc(var(--eien-space-6) + var(--eien-space-2)); }
+/* Shut, the sidebar is the seal alone in A and B (the default), and C's 48px strip. */
+.win[data-sb='shut'] { --sb: 0px; }
+.win[data-layout='runhead'][data-sb='shut'] { --sb: var(--band); }
+/* The seal: beside the lights in A and B, open or shut; on C's sidebar head. */
+.win { --seal-x: calc(var(--controls-left) + var(--eien-space-3)); --seal-y: calc((var(--band) - var(--seal-btn)) / 2); }
+.win[data-layout='runhead'] { --seal-x: var(--eien-space-3); --seal-y: calc(var(--head-h) + (var(--band) - var(--seal-btn)) / 2); }
+.win[data-layout='runhead'][data-sb='shut'] { --seal-x: calc((var(--band) - var(--seal-btn)) / 2); }
+.seal-btn { position: absolute; z-index: 6; left: var(--seal-x); top: var(--seal-y); }
+.win > .sb, .win > .ls, .win > .pg { grid-row: 2; min-width: 0; min-height: 0; overflow: hidden; }
+/* macOS's own lights, in macOS's own colours. */
+.lights { position: absolute; z-index: 5; left: 20px; top: 22px; display: flex; gap: 8px; }
+.win[data-layout='runhead'] .lights { top: 14px; }
+.lights i { width: 12px; height: 12px; border-radius: var(--eien-radius-dot); background: #ff5f57; box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.18); }
+.lights i:nth-child(2) { background: #febc2e; }
+.lights i:nth-child(3) { background: #28c840; }
+
+/* C's running head: one strip across the window; its page part is the direction's. */
+.strip { grid-row: 1; grid-column: 1 / -1; display: grid; grid-template-columns: var(--sb) var(--eien-list-w) minmax(0, 1fr); background: var(--eien-desk); border-bottom: var(--eien-hairline) solid var(--eien-rule); min-width: 0; }
+.strip__panes { grid-column: 1 / 3; display: flex; align-items: center; gap: 2px; padding-left: calc(var(--controls-left) + var(--eien-space-2)); }
+.strip__page { grid-column: 3; min-width: 0; display: flex; align-items: center; }
+.crumb { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The sidebar: the desk. */
+.sb { display: flex; flex-direction: column; border-right: var(--eien-hairline) solid var(--eien-rule); }
+.win[data-sb='shut'] .sb { visibility: hidden; }
+/* Its contents keep their width as it shuts, so nothing reflows mid-slide. */
+.sb > * { width: var(--eien-sidebar-w); }
+.sb__head { flex: none; display: flex; align-items: center; height: var(--band); padding-left: calc(var(--seal-x) + var(--seal-btn) + var(--eien-space-2)); font-weight: 600; }
+.sb__sec { display: flex; align-items: center; height: var(--eien-row-h); padding: 0 var(--eien-space-4); margin-top: var(--eien-space-2); }
+.trow { position: relative; display: flex; align-items: baseline; gap: var(--eien-space-2); height: var(--eien-row-h); line-height: var(--eien-row-h); padding: 0 var(--eien-space-4) 0 calc(var(--eien-space-4) + var(--d, 0) * 16px); color: var(--eien-ink-soft); }
+.trow .n { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trow.is-chosen { background: var(--eien-selected); color: var(--eien-ink); }
+.trow.is-chosen::before, .row.is-chosen::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: var(--eien-mark-w); background: var(--eien-seal); }
+.book { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); padding: 0 3px; border: var(--eien-hairline) solid var(--eien-rule); color: var(--eien-pencil); line-height: 14px; }
+
+/* The list: paper, its search on a band. A note open on the other side keeps a
+   fainter rule, in pencil and with no fill, so both open notes are findable. */
+.ls { background: var(--eien-paper); border-right: var(--eien-hairline) solid var(--eien-rule); }
+.ls__band { display: flex; align-items: center; height: var(--band); padding: 0 var(--eien-space-4); background: var(--eien-band); }
+.win[data-sb='shut']:not([data-layout='runhead']) .ls__band { padding-left: calc(var(--seal-x) + var(--seal-btn) + var(--eien-space-3)); }
+.ls__band .field { padding: 6px var(--eien-space-3); color: var(--eien-faded); }
+.ls__head { padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.ls__title { font-size: var(--eien-size-heading); font-weight: 500; line-height: 1.3; }
+.row {
+  appearance: none; position: relative; display: grid; grid-template-columns: var(--eien-space-6) 1fr auto; gap: 0 var(--eien-space-1); width: 100%;
+  padding: var(--eien-space-3) var(--eien-space-4); border: 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); background: none;
+  text-align: left; cursor: pointer; font: inherit; color: var(--eien-ink);
+}
+@media (hover: hover) { .row:hover { background: var(--eien-hover); } }
+.row .ord { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); padding-top: 2px; }
+.row .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .p { grid-column: 2 / 4; font-size: var(--eien-size-preview); color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row.is-chosen { background: var(--eien-selected); }
+.row.is-beside::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: var(--eien-mark-w); background: var(--eien-pencil); opacity: 0.6; }
+.row:focus-visible { outline-offset: -2px; }
+.row.is-dragged { opacity: 0.72; }
+
+/* The page pane and its parts, which each direction arranges. A page's parts
+   keep their rows whether or not the formatting bar is there: the band (or B's
+   top line), the formatting bar, the sheet's blotter, the colophon. */
+.pg { position: relative; display: grid; grid-template-rows: minmax(0, 1fr); background: var(--eien-blotter); }
+.pg > * { min-width: 0; min-height: 0; }
+.duo { display: grid; min-width: 0; min-height: 0; }
+.side, .page { position: relative; min-width: 0; min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+:is(.side, .page) > :is(.band, .topline) { grid-row: 1; }
+:is(.side, .page) > .fmt { grid-row: 2; }
+:is(.side, .page) > :is(.blotter, .duo) { grid-row: 3; }
+:is(.side, .page) > .colophon { grid-row: 4; height: var(--status-h); }
+.topline { display: flex; align-items: center; justify-content: flex-end; gap: var(--eien-space-2); height: var(--band); padding: 0 var(--eien-space-3); min-width: 0; }
+.win[data-layout='slip'] .blotter { padding-top: 0; }
+.band { display: flex; align-items: center; justify-content: space-between; gap: var(--eien-space-2); height: var(--band); padding: 0 var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); min-width: 0; }
+.tools { display: flex; gap: 2px; min-width: 0; }
+.tools .icon-button { color: var(--eien-pencil); }
+.quiet { opacity: 0; transition: opacity var(--eien-calm) var(--eien-ease); }
+.pg:hover .quiet, .quiet:focus-within { opacity: 1; }
+.slip { display: flex; gap: 2px; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+/* The blotter scrolls its sheet; the sheet fills what's left of it, so a short note never
+   overflows by the blotter's own padding (which showed a scrollbar in the gap). */
+.blotter { position: relative; min-height: 0; overflow: auto; display: flex; flex-direction: column; padding: var(--eien-space-4) var(--eien-space-4) 0; }
+/* The sheet at the face's own sizes, leading and measure; its margins narrow with
+   a narrow page, as the app's do. */
+.sheet {
+  position: relative; flex: 1 0 auto; width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto;
+  padding: var(--eien-space-6) clamp(var(--eien-space-4), 8%, var(--eien-space-8));
+  background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet);
+  font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose);
+  transition: box-shadow var(--eien-calm) var(--eien-ease), border-color var(--eien-calm) var(--eien-ease);
+}
+.win[data-layout='slip'] .sheet { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.sheet__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--eien-space-3); min-height: 18px; }
+.sheet h1 { font-size: var(--eien-size-title); font-weight: 500; line-height: 1.2; margin: var(--eien-space-4) 0 var(--eien-space-5); }
+.prose { outline: none; caret-color: var(--eien-seal); }
+.prose p { margin: 0 0 var(--eien-paragraph-gap); }
+.tagset { display: flex; gap: var(--eien-space-2); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-pencil); white-space: nowrap; }
+.slips { display: flex; gap: var(--eien-space-1); margin: calc(var(--eien-space-3) * -1) 0 var(--eien-space-4); }
+.slips span { font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); padding: 1px 8px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-s); background: var(--eien-band); }
+.colophon { display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-4); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; }
+.colophon .dot { color: var(--eien-faded); }
+.colophon .pill { text-transform: none; padding: 0 6px; border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-dot); }
+.colophon .said { margin-left: auto; color: var(--eien-ink-soft); overflow: hidden; text-overflow: ellipsis; }
+
+/* The formatting bar, where each layout puts it: A's band's second row, B's
+   raised slip at the blotter's top left, C's raised rail down the margin. */
+.fmt { display: flex; justify-content: center; gap: 2px; padding: 2px var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.fmt .icon-button { color: var(--eien-ink-soft); }
+.win[data-layout='slip'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-3); top: calc((var(--band) - var(--eien-control) - 6px) / 2); padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.win[data-layout='runhead'] .fmt { position: absolute; z-index: 3; left: var(--eien-space-2); top: var(--eien-space-4); flex-direction: column; padding: 2px; background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+
+/* The divider between two pages, as a pane's edge is: its own column (a
+   hairline wide, or wider where a direction says), a hairline drawn down its
+   middle, an 8px handle round it to grab; rule-strong on hover, the focus ink
+   at 2px while dragged or focused; its swap shows on hover. */
+.divider { position: relative; z-index: 4; cursor: col-resize; outline: none; touch-action: none; }
+.divider::before { content: ''; position: absolute; inset: 0 calc(var(--eien-space-1) * -1); }
+.divider::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; translate: -50% 0; width: var(--eien-hairline); background: var(--eien-rule); transition: background var(--eien-quick) var(--eien-ease); }
+.divider:hover::after { background: var(--eien-rule-strong); }
+.divider:focus-visible::after, .divider.is-dragging::after { width: var(--eien-mark-w); background: var(--eien-focus); }
+.divider__swap { position: absolute; z-index: 1; left: 50%; top: 50%; translate: -50% -50%; width: var(--eien-space-5); height: var(--eien-space-5); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); background: var(--eien-paper-raised); opacity: 0; }
+.divider__swap svg { width: 12px; height: 12px; }
+.divider:is(:hover, :focus-within) .divider__swap, .divider__swap:focus-visible { opacity: 1; }
+
+/* A side's own close, quiet till its head is hovered; the pager when folded. */
+.close-side { color: var(--eien-pencil); }
+.same { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-faded); white-space: nowrap; }
+.pager { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.pager .word-button { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Dropping a note on the page's right edge: where the new page would stand. */
+.drop-preview { position: absolute; z-index: 8; top: 0; bottom: 0; right: 0; display: grid; place-items: center; pointer-events: none; background: color-mix(in srgb, var(--eien-paper-raised) 82%, transparent); border-left: var(--eien-mark-w) solid var(--eien-ink-soft); }
+.drop-preview .label { color: var(--eien-ink-soft); padding: var(--eien-space-1) var(--eien-space-2); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-s); }
+
+/* The row's menu, as the sidebar's is. */
+.menu { position: fixed; z-index: 40; min-width: 18em; padding: var(--eien-space-1); background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float); }
+.menu[hidden] { display: none; }
+.menu__head { padding: 6px var(--eien-space-2) 4px; font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+.menu__item { appearance: none; display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: var(--eien-space-2); width: 100%; padding: 5px var(--eien-space-2); border: 0; border-radius: var(--eien-radius-s); background: none; cursor: pointer; text-align: left; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink-soft); }
+.menu__item:focus { outline: none; background: var(--eien-selected); color: var(--eien-ink); }
+@media (hover: hover) { .menu__item:hover { background: var(--eien-hover); color: var(--eien-ink); } }
+.menu__key { font-size: var(--eien-size-label); color: var(--eien-pencil); }
+.menu__rule { height: var(--eien-hairline); margin: var(--eien-space-1) var(--eien-space-2); background: var(--eien-rule-soft); }
+
+/* The page's tools in a row; C's running head over the page, one segment a page. */
+.tools-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.strip__page > * { flex: 1; height: 100%; }
+.seg { display: flex; align-items: center; gap: var(--eien-space-2); min-width: 0; padding: 0 var(--eien-space-3); }
+.seg .crumb { flex: 1; text-align: center; }
+/* C's formatting rail keeps a margin of its own, so it never lies over the words. */
+.win[data-layout='runhead'] :is(.side, .page):has(> .fmt) .blotter { padding-left: calc(var(--eien-control) + var(--eien-space-5)); }
+/* B's slip and C's rail float: placed in the page's own box, not in the bar's row. */
+.win:is([data-layout='slip'], [data-layout='runhead']) :is(.side, .page) > .fmt { grid-row: auto; }
+
+
+/* The app's field token (src/ui/theme/tokens.css), which the explorations'
+   shared tokens predate: a wash of the ink, set into what holds it. */
+:root { --eien-field: light-dark(rgb(35 32 28 / 0.06), rgb(233 226 212 / 0.07)); }
+
+.xbar__break { flex-basis: 100%; height: 0; }
+a.icon-button { text-decoration: none; }
+.notes .said-note { margin-top: var(--eien-space-4); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
+.tools-rule { width: var(--eien-hairline); height: var(--eien-space-4); margin: 0 var(--eien-space-1); background: var(--eien-rule); align-self: center; }
+.win[data-list='hidden'] > .ls { display: none; }
+.win > .sb { grid-column: 1; } .win > .ls { grid-column: 2; } .win > .pg { grid-column: 3; }
+
+/* The sidebar's sections fold; the twisty shows on hover, focus, or folded. */
+.section { appearance: none; display: flex; align-items: center; gap: var(--eien-space-1); height: 100%; padding: 0; border: 0; background: none; cursor: pointer; color: var(--eien-pencil); }
+.section .twisty { color: var(--eien-faded); opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease), rotate var(--eien-quick) var(--eien-ease); rotate: 90deg; }
+.section .twisty svg { width: var(--eien-space-3); height: var(--eien-space-3); }
+.section[aria-expanded='false'] .twisty { rotate: 0deg; opacity: 1; }
+.section:is(:hover, :focus-visible) .twisty { opacity: 1; }
+@media (hover: hover) { .section:hover .label { color: var(--eien-ink-soft); } }
+
+/* The books' section: a lens over the folder tree. Folders as the tree draws them,
+   a hairline guide down each open one; books in the text face, how far you've read at the right. */
+.sb { overflow: auto; }
+.sb__lens { margin-top: auto; padding-bottom: var(--eien-space-4); }
+button.trow { appearance: none; width: 100%; border: 0; background: none; text-align: left; font: inherit; cursor: pointer; }
+@media (hover: hover) { button.trow:not(.is-chosen):hover { background: var(--eien-hover); color: var(--eien-ink); } }
+button.trow:focus-visible { outline-offset: -2px; }
+.trow .count { flex: none; }
+.trow--book::after { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--eien-space-4) + (var(--d) - 1) * 16px + 6px); width: var(--eien-hairline); background: var(--eien-rule); }
+.trow--book.is-chosen::after { display: none; }
+.book-mark { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); padding: 0 3px; border: var(--eien-hairline) solid var(--eien-rule); color: var(--eien-pencil); line-height: 14px; }
+
+/* The list, as the book's contents: rows of chapters, the page each starts on. */
+.ls { display: flex; flex-direction: column; }
+.ls__rows { flex: 1; min-height: 0; overflow: auto; }
+.row--ch { grid-template-columns: 1fr auto; padding-block: var(--eien-space-2); }
+.row--ch .t { font-size: var(--eien-size-row); }
+
+/* A book's page: the face's prose, set as a book sets it: indented paragraphs, no gap. */
+.book-text { font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose); hyphens: auto; -webkit-hyphens: auto; }
+.book-text p { margin: 0; text-indent: var(--eien-space-6); }
+.book-text .ch-head + p, .book-text p.not-held { text-indent: 0; }
+.ch-head { font-size: var(--eien-size-heading); font-weight: 500; line-height: 1.3; margin: 0 0 var(--eien-space-6); color: var(--eien-ink); break-after: avoid; }
+.book-text p.not-held { font-style: italic; color: var(--eien-ink-soft); }
+.book-text ::selection { background: var(--eien-seal-wash); }
+.book-text .hit { background: var(--eien-field); box-shadow: 0 0 0 var(--eien-hairline) var(--eien-rule-strong); border-radius: 1px; }
+.book-text .hit.is-at { background: var(--eien-seal-wash); box-shadow: 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+
+/* Pages: a chapter flows in columns as tall as the page, and a turn slides it one page. */
+.leaves { position: relative; min-height: 0; overflow: hidden; outline: none; --leaf-gap: var(--eien-space-7); }
+.leaves:focus-visible { box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.flow { column-fill: auto; transition: transform var(--eien-calm) var(--eien-ease); }
+.flow--measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .flow { transition: none; } }
+
+/* A book's sheet, holding pages: as tall as the blotter leaves it, never scrolling. */
+.blotter.is-paged { overflow: hidden; padding-bottom: var(--eien-space-4); }
+.sheet.book-sheet { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; flex: 1 1 auto; padding-bottom: var(--eien-space-4); }
+.book-sheet .sheet__head { margin-bottom: var(--eien-space-5); }
+.folio { display: flex; justify-content: space-between; align-items: center; gap: var(--eien-space-3); min-height: var(--eien-space-6); padding-top: var(--eien-space-3); }
+.folio .count { white-space: nowrap; }
+
+/* Turning by the margins: the sheet's outer margins are buttons, quiet till the pointer finds them. */
+.turn { appearance: none; position: absolute; z-index: 2; top: 0; bottom: 0; width: clamp(var(--eien-space-4), 8%, var(--eien-space-8)); padding: 0; border: 0; background: none; display: grid; place-items: center; color: var(--eien-faded); cursor: pointer; opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease), color var(--eien-quick) var(--eien-ease); }
+.turn--prev { left: 0; cursor: w-resize; }
+.turn--next { right: 0; cursor: e-resize; }
+@media (hover: hover) { .turn:hover { opacity: 1; color: var(--eien-ink-soft); } }
+.turn:focus-visible { opacity: 1; outline-offset: -4px; }
+.turn:disabled { display: none; }
+
+/* The phone: its own size and corner, not Eien's; one page at a time. */
+.phone { width: 360px; height: 740px; display: grid; grid-template-rows: var(--eien-touch) minmax(0, 1fr) auto; overflow: hidden; position: relative; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule-strong); border-radius: 36px; box-shadow: var(--eien-shadow-float); --eien-size-prose-phone: calc(var(--eien-size-prose) * 0.82); }
+.backbar { display: flex; align-items: center; gap: var(--eien-space-1); padding: 0 var(--eien-space-2) 0 var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.backbar .back { appearance: none; display: flex; align-items: center; gap: var(--eien-space-1); flex: 1; min-width: 0; height: var(--eien-touch); padding: 0 var(--eien-space-1); border: 0; background: none; color: var(--eien-ink-soft); font: inherit; font-size: var(--eien-size-preview); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.phone .icon-button { width: var(--eien-touch); height: var(--eien-touch); }
+.phone__body { position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); background: var(--eien-paper); }
+.phone .book-text { font-size: var(--eien-size-prose-phone); }
+.phone .ch-head { font-size: calc(var(--eien-size-heading) * 0.9); margin-bottom: var(--eien-space-4); }
+.phone .book-text p { text-indent: var(--eien-space-5); }
+.phone .book-text .ch-head + p { text-indent: 0; }
+.phone__page { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; padding: var(--eien-space-5) var(--eien-space-5) 0; }
+.phone__foot { display: flex; justify-content: space-between; align-items: center; min-height: var(--eien-space-7); }
+.phone__slip { position: absolute; z-index: 3; right: var(--eien-space-3); bottom: var(--eien-space-7); }
+.phone .rail { display: flex; justify-content: space-around; align-items: center; min-height: calc(var(--eien-touch) + var(--eien-space-3)); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); }
+.phone__list { overflow: auto; }
+.phone__title { padding: var(--eien-space-4) var(--eien-space-4) var(--eien-space-2); }
+.phone__group { padding: var(--eien-space-4) var(--eien-space-4) var(--eien-space-1); }
+.phone__row { appearance: none; display: flex; align-items: center; justify-content: space-between; gap: var(--eien-space-3); width: 100%; min-height: var(--eien-touch); padding: var(--eien-space-2) var(--eien-space-4); border: 0; border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); background: none; font: inherit; color: var(--eien-ink); text-align: left; cursor: pointer; position: relative; }
+.phone__row.is-chosen { background: var(--eien-selected); }
+.phone__row.is-chosen::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: var(--eien-mark-w); background: var(--eien-seal); }
+.phone__row:focus-visible { outline-offset: -2px; }
+
+/* The contents as a menu: as long as the window lets it be. */
+.menu--contents { max-height: min(70vh, 520px); overflow: auto; min-width: 14em; }
+.menu__item[aria-current='true'] { color: var(--eien-ink); }
+.menu__item[aria-current='true'] .menu__key::before { content: ''; display: inline-block; width: var(--eien-space-1); height: var(--eien-space-1); margin-right: var(--eien-space-2); border-radius: var(--eien-radius-dot); background: var(--eien-ink); vertical-align: middle; }
+
+/* Find in the book: the field as system.md sets it (a wash of ink at rest, the
+   well and an inset focus ring with the keyboard), its count, and the steps. */
+.find { position: relative; display: flex; align-items: center; gap: 2px; min-width: 0; }
+.find__icon { position: absolute; left: var(--eien-space-2); top: 50%; translate: 0 -50%; color: var(--eien-pencil); pointer-events: none; }
+.find__icon svg { width: var(--eien-space-3); height: var(--eien-space-3); }
+.find__field { width: 15em; min-width: 6em; flex: 0 1 auto; padding: var(--eien-space-1) var(--eien-space-2) var(--eien-space-1) calc(var(--eien-space-2) + var(--eien-space-4)); background: var(--eien-field); border-color: transparent; border-radius: var(--eien-radius-s); color: var(--eien-ink); }
+@media (hover: hover) { .find__field:hover { border-color: var(--eien-rule); } }
+.find__field:focus { background: var(--eien-well); border-color: transparent; box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.find__field::-webkit-search-cancel-button { display: none; }
+.find__says { min-width: 7.5em; padding: 0 var(--eien-space-2); white-space: nowrap; text-align: right; }
+.find .icon-button { color: var(--eien-pencil); }
+.find .icon-button svg { width: var(--eien-space-3); height: var(--eien-space-3); }
+/* While finding, the band's tools stay in sight. */
+.is-finding .quiet, .quiet.is-finding { opacity: 1; }
+
+
+/* Scroll 1 · A chapter a sheet. A chapter reads as a note does in Reading:
+   one sheet on the blotter, scrolling. At its foot the next chapter waits, a
+   word button; nothing loads or moves until it's pressed. The chapter is what
+   the EPUB holds as one file, so it's one sandboxed frame in the app. */
+.blotter[data-main-scroll] { outline: none; }
+.blotter[data-main-scroll]:focus-visible { box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.sheet.ch-sheet { flex: 1 0 auto; }
+.ch-end { display: flex; justify-content: space-between; align-items: center; gap: var(--eien-space-3); margin-top: var(--eien-space-7); padding-top: var(--eien-space-4); border-top: var(--eien-hairline) solid var(--eien-rule-soft); }
+.ch-end .word-button { display: inline-flex; align-items: center; gap: var(--eien-space-1); text-transform: none; letter-spacing: 0; font-size: var(--eien-size-meta); }
+.ch-end .word-button svg { width: var(--eien-space-3); height: var(--eien-space-3); }
+.ch-end .label { color: var(--eien-faded); }
+.phone__page.is-scroll { display: block; overflow: auto; padding-bottom: var(--eien-space-5); }
+</style>
+</head>
+<body>
+<script>
+// Shared by every exploration (inlined into each page by _build.py).
+
+// Eien's icons: one set, drawn here on a 16-unit grid with round ends, stroked
+// in the ink of whatever they sit in. No icon font, nothing fetched. Each is
+// the inside of an <svg viewBox="0 0 16 16">.
+const ICONS = {
+  live: '<path d="M10.6 2.9l2.5 2.5-7.3 7.3-3.2.8.8-3.2z"/><path d="M9.2 4.3l2.5 2.5"/><path d="M8.5 13.5h5"/>',
+  source: '<path d="M5.5 4.5L2 8l3.5 3.5"/><path d="M10.5 4.5L14 8l-3.5 3.5"/><path d="M9.2 3l-2.4 10"/>',
+  reading: '<path d="M8 4.6C6.6 3.6 4.7 3.1 2.2 3.1v9.4c2.5 0 4.4.5 5.8 1.5 1.4-1 3.3-1.5 5.8-1.5V3.1c-2.5 0-4.4.5-5.8 1.5z"/><path d="M8 4.6V14"/>',
+  compare: '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
+  versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',
+  sidebar: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/>',
+  list: '<path d="M2.5 3h11v10h-11z"/><path d="M6.5 3v10"/><path d="M8.5 6h3M8.5 8.5h3M8.5 11h2"/>',
+  panes3: '<path d="M2 3h12v10H2z"/><path d="M5.5 3v10M9 3v10"/>',
+  panes2: '<path d="M2 3h12v10H2z"/><path d="M6 3v10"/>',
+  left: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  right: '<path d="M6 3.5l4.5 4.5L6 12.5"/>',
+  up: '<path d="M3.5 10L8 5.5l4.5 4.5"/>',
+  down: '<path d="M3.5 6L8 10.5 12.5 6"/>',
+  sun: '<circle cx="8" cy="8" r="2.6"/><path d="M8 1.8v1.4M8 12.8v1.4M1.8 8h1.4M12.8 8h1.4M3.6 3.6l1 1M11.4 11.4l1 1M3.6 12.4l1-1M11.4 4.6l1-1"/>',
+  moon: '<path d="M13.2 9.6A5.4 5.4 0 1 1 6.4 2.8a4.3 4.3 0 0 0 6.8 6.8z"/>',
+  settings: '<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><path d="M5.5 3v3M10.5 6.5v3M7 10v3"/>',
+  plus: '<path d="M8 3.5v9M3.5 8h9"/>',
+  tag: '<path d="M6.2 2.5L4.8 13.5M11.2 2.5L9.8 13.5M3 5.8h10.5M2.5 10.2H13"/>',
+  pin: '<path d="M4.5 2.5h7v11L8 11l-3.5 2.5z"/>',
+  sync: '<path d="M12.8 6.3A5 5 0 0 0 3.6 5"/><path d="M3.2 9.7a5 5 0 0 0 9.2 1.3"/><path d="M13 3.2v3.3H9.7M3 12.8V9.5h3.3"/>',
+  search: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.3 3.3"/>',
+  close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  sort: '<path d="M2.5 4.5h11M4.5 8h7M6.5 11.5h3"/>',
+  strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
+  format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',
+  link: '<path d="M6.8 9.2l2.4-2.4"/><path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/>',
+  quote: '<path d="M3 8.5h3.5v4H3zM3 8.5c0-2.5.8-4 3-5M9.5 8.5H13v4H9.5zM9.5 8.5c0-2.5.8-4 3-5"/>',
+  bullets: '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
+  numbers: '<path d="M6.5 4.5h7M6.5 8h7M6.5 11.5h7"/><path d="M2.5 3.5l1-.7v3.2M2.4 9.2c.2-.6 1.6-.7 1.6.2 0 .7-1.6 1.2-1.6 1.8h1.7"/>',
+  checklist: '<path d="M2.5 3h3.5v3.5H2.5zM2.5 9.5h3.5V13H2.5z"/><path d="M3.3 11.2l.9.9 1.4-1.8M8.5 4.8h5M8.5 11.2h5"/>',
+  table: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6.3h11M2.5 9.7h11M8 3v10"/>',
+  highlight: '<path d="M9.5 2.8l3.7 3.7-5.6 5.6H3.9V8.4z"/><path d="M2.5 13.8h11"/>',
+  heading: '<path d="M3.5 3v10M10.5 3v10M3.5 8h7"/><path d="M12.5 13v-3.5l1-.5"/>',
+  grip: '<circle cx="6" cy="4" r=".7"/><circle cx="10" cy="4" r=".7"/><circle cx="6" cy="8" r=".7"/><circle cx="10" cy="8" r=".7"/><circle cx="6" cy="12" r=".7"/><circle cx="10" cy="12" r=".7"/>',
+  more: '<circle cx="3.5" cy="8" r=".8"/><circle cx="8" cy="8" r=".8"/><circle cx="12.5" cy="8" r=".8"/>',
+  outdent: '<path d="M7 4.5L3.5 8 7 11.5"/><path d="M3.5 8h10"/><path d="M13.5 3v10"/>',
+  filter: '<path d="M2.5 3.5h11l-4.3 5.2v4l-2.4 1.3V8.7z"/>',
+  check: '<path d="M3 8.5l3 3 7-7"/>',
+  back: '<path d="M10 3.5L5.5 8l4.5 4.5"/>',
+  folder: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/>',
+  palette: '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
+  type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
+  bold: '<path d="M4.5 2.8h4.2a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 8h4.9a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 2.8v10.4"/>',
+  italic: '<path d="M7.2 2.8h5M3.8 13.2h5M10 2.8L6 13.2"/>',
+  underline: '<path d="M4.5 2.8v4.6a3.5 3.5 0 0 0 7 0V2.8"/><path d="M3.5 13.5h9"/>',
+  strike: '<path d="M2.5 8h11"/><path d="M11.2 4.4c-.6-1-1.8-1.6-3.2-1.6-1.8 0-3.2 1-3.2 2.4 0 .9.5 1.6 1.6 2.1"/><path d="M5 11.4c.6 1.1 1.8 1.8 3.3 1.8 1.9 0 3.3-1 3.3-2.5 0-.6-.2-1.1-.6-1.5"/>',
+  focus: '<path d="M2.5 4h11" opacity=".35"/><path d="M2.5 8h11"/><path d="M2.5 12h8" opacity=".35"/><path d="M1 6v4M15 6v4"/>',
+  rename: '<path d="M3 11.5h6.5"/><path d="M11.5 3v10M10 3h3M10 13h3"/>',
+  trash: '<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/>',
+  move: '<path d="M2.5 4.5h4l1.2 1.5h5.8v6.5h-11z"/><path d="M6.5 9.5h4M9 8l1.5 1.5L9 11"/>',
+  include: '<path d="M8 4v8M4 8h8"/>',
+  exclude: '<path d="M4 8h8"/>',
+  resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
+};
+
+/** An icon as SVG markup, stroked in currentColor. */
+function icon(name, label) {
+  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
+  return `<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" ${a11y}>${ICONS[name]}</svg>`;
+}
+
+/** Fill every [data-icon] with its icon. */
+function drawIcons(root = document) {
+  for (const el of root.querySelectorAll('[data-icon]')) {
+    el.innerHTML = icon(el.dataset.icon) + (el.dataset.iconText ?? '');
+  }
+}
+
+// One list of faces drives every face setting: the text face and the machine
+// voice both choose from it. A face added later is one more entry here (in the
+// app: one entry in core/config, its fonts and its tuning in tokens.css).
+const FACES = [
+  { id: 'plex-mono', name: 'IBM Plex Mono', family: "'IBM Plex Mono', ui-monospace, monospace", mono: true },
+  { id: 'newsreader', name: 'Newsreader', family: "'Newsreader', Georgia, serif" },
+  { id: 'literata', name: 'Literata', family: "'Literata', Georgia, serif" },
+  { id: 'plex-sans', name: 'IBM Plex Sans', family: "'IBM Plex Sans', Arial, sans-serif" },
+  { id: 'source-sans', name: 'Source Sans 3', family: "'Source Sans 3', Arial, sans-serif" },
+  { id: 'atkinson', name: 'Atkinson Hyperlegible Next', family: "'Atkinson Hyperlegible Next', Arial, sans-serif" },
+  { id: 'schibsted', name: 'Schibsted Grotesk', family: "'Schibsted Grotesk', Arial, sans-serif" },
+  { id: 'hanken', name: 'Hanken Grotesk', family: "'Hanken Grotesk', Arial, sans-serif" },
+  { id: 'instrument', name: 'Instrument Sans', family: "'Instrument Sans', Arial, sans-serif" },
+];
+/** The faces the text voice offers (all but the mono), and the machine voice (all). */
+const TEXT_FACES = FACES.filter((face) => !face.mono);
+const MACHINE_FACES = FACES;
+
+function setMachineFace(id) {
+  const face = FACES.find((each) => each.id === id) ?? FACES[0];
+  document.documentElement.style.setProperty('--eien-face-mono', face.family);
+}
+function setTextFace(id) {
+  if (id === 'newsreader') delete document.documentElement.dataset.face;
+  else document.documentElement.dataset.face = id;
+}
+
+/** The explorations' bar: [data-x-set="attr"] groups set data-<attr> on <html>. */
+function wireBar(onChange = () => {}) {
+  for (const group of document.querySelectorAll('[data-x-set]')) {
+    const attr = group.dataset.xSet;
+    const buttons = [...group.querySelectorAll('button[data-value]')];
+    const pick = (value) => {
+      document.documentElement.dataset[attr] = value;
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.value === value));
+      onChange(attr, value);
+    };
+    for (const b of buttons) b.addEventListener('click', () => pick(b.dataset.value));
+    pick(document.documentElement.dataset[attr] ?? buttons[0].dataset.value);
+  }
+}
+
+// Themes: [day, night] for each colour token. The rules are the ink at low
+// strength, so they follow it. Washi is tokens.css's own; the rest are new.
+const THEME_TOKENS = ['desk', 'blotter', 'band', 'paper', 'selected', 'ink', 'ink-soft', 'pencil', 'faded', 'seal'];
+const THEMES = {
+  washi: { name: 'Washi', kanji: '和紙', note: 'Eien’s own: paper and sumi ink', t: {
+    desk: ['#d9d2c8', '#110e0b'], blotter: ['#eae5dd', '#1a1713'], band: ['#f4f1ea', '#201d19'], paper: ['#fdfbf7', '#28241f'], selected: ['#ede9e3', '#38332e'],
+    ink: ['#23201c', '#e9e2d4'], 'ink-soft': ['#51473c', '#c3b9a7'], pencil: ['#5d5348', '#a7a095'], faded: ['#766d62', '#837c73'], seal: ['#c4472d', '#e0603f'] } },
+  kinari: { name: 'Kinari', kanji: '生成り', note: 'Unbleached cloth: yellower paper, a persimmon seal', t: {
+    desk: ['#d8cfb8', '#14110a'], blotter: ['#e9e2cd', '#1c180f'], band: ['#f3eedd', '#231e14'], paper: ['#fcf9ee', '#2b251a'], selected: ['#ece5d1', '#3b3426'],
+    ink: ['#2a2418', '#ece3cc'], 'ink-soft': ['#574a33', '#c8bb9c'], pencil: ['#5f523d', '#ab9f86'], faded: ['#7b6d56', '#88806d'], seal: ['#b8432a', '#dc6a43'] } },
+  aizome: { name: 'Aizome', kanji: '藍染', note: 'Indigo dye: cool paper, blue-black ink', t: {
+    desk: ['#c9cfd8', '#0b0e14'], blotter: ['#dfe3e9', '#121620'], band: ['#edf0f4', '#181d28'], paper: ['#fbfcfd', '#1f2533'], selected: ['#e3e8ef', '#2e3648'],
+    ink: ['#17213a', '#dde4f0'], 'ink-soft': ['#34405c', '#b3bfd6'], pencil: ['#3f4b64', '#97a3ba'], faded: ['#5f6a80', '#7a8599'], seal: ['#c4472d', '#e3664a'] } },
+  koke: { name: 'Koke', kanji: '苔', note: 'A moss garden: green-grey desk, quiet ink', t: {
+    desk: ['#cdd2c4', '#0d100b'], blotter: ['#e1e5d9', '#141811'], band: ['#eef0e8', '#1a1f16'], paper: ['#fafbf6', '#21271c'], selected: ['#e5e9dc', '#30382a'],
+    ink: ['#1f2619', '#e2e8d6'], 'ink-soft': ['#3e4833', '#bcc6ab'], pencil: ['#48523c', '#a0aa90'], faded: ['#67705a', '#808a72'], seal: ['#a8432f', '#d76a4e'] } },
+  rosoku: { name: 'Rōsoku', kanji: '蝋燭', note: 'Candlelight: amber at night, no blue light', t: {
+    desk: ['#dccab2', '#120c06'], blotter: ['#ecdfcb', '#1b130b'], band: ['#f5ece0', '#22180e'], paper: ['#fdf8f0', '#2a1f13'], selected: ['#efe3d1', '#3c2d1e'],
+    ink: ['#2b1d10', '#f0dcc0'], 'ink-soft': ['#5a4129', '#d2b894'], pencil: ['#634d37', '#b39b7c'], faded: ['#7f6a53', '#8f7c64'], seal: ['#b9442b', '#e8763f'] } },
+  sumi: { name: 'Sumi', kanji: '墨', note: 'For tired eyes: the most contrast there is', t: {
+    desk: ['#cfcfcc', '#000000'], blotter: ['#e6e6e3', '#0a0a0a'], band: ['#f2f2ef', '#141414'], paper: ['#ffffff', '#1b1b1b'], selected: ['#e8e8e4', '#2c2c2c'],
+    ink: ['#000000', '#f5f5f2'], 'ink-soft': ['#262626', '#d9d9d4'], pencil: ['#3a3a3a', '#bdbdb8'], faded: ['#5e5e5e', '#8f8f8a'], seal: ['#c4361d', '#ff6a45'] } },
+  sakura: { name: 'Sakura-nezumi', kanji: '桜鼠', note: 'Cherry-grey: plum ink, a rose seal', t: {
+    desk: ['#d8cdcc', '#120d0e'], blotter: ['#e9e1e0', '#1b1415'], band: ['#f3eeed', '#221a1b'], paper: ['#fdfafa', '#2a2122'], selected: ['#eee6e5', '#3a2f30'],
+    ink: ['#2a1e20', '#efe1e2'], 'ink-soft': ['#573f43', '#cbb5b8'], pencil: ['#5f464a', '#ad989b'], faded: ['#7c6468', '#8d7b7d'], seal: ['#b2394a', '#e0697a'] } },
+};
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function luminance(h) {
+  return hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; })
+    .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const hsl = (h, s, l) => { s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12; const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+/**
+ * An ink of hue `h` and saturation `sat`, starting at lightness `l` and stepped
+ * darker by day (`dir` -1) or lighter by night (+1) until it reaches `min`
+ * contrast on every one of `grounds`: the hue stays, the contrast holds.
+ */
+function fitInk(h, sat, l, grounds, min, dir) {
+  let ink = hsl(h, sat, l);
+  while (grounds.some((g) => contrast(ink, g) < min + 0.1) && l > 0 && l < 100) { l += dir; ink = hsl(h, sat, l); }
+  return ink;
+}
+/** "Custom": four choices, and every token worked out from them, day and night. */
+function mixTheme({ paper: ph, warmth: w, ink: ih, seal: sh }, name = 'My Room') {
+  const surf = (dl, nl) => [hsl(ph, w, dl), hsl(ph, Math.min(w, 22), nl)];
+  const t = { desk: surf(83, 5), blotter: surf(89, 8), band: surf(94, 11), paper: surf(98.5, 14), selected: surf(91, 19), seal: [hsl(sh, 63, 47), hsl(sh, 72, 56)] };
+  const grounds = (s) => ['desk', 'band', 'paper', 'selected'].map((k) => t[k][s]);
+  // The inks carry their hue, saturated enough to see by day, each as light as Eien's contrast allows.
+  const ink = (sat, dl, nsat, nl, min) => [fitInk(ih, sat, dl, grounds(0), min, -1), fitInk(ih, nsat, nl, grounds(1), min, 1)];
+  Object.assign(t, { ink: ink(48, 16, 38, 88, 7), 'ink-soft': ink(38, 30, 30, 70, 4.5), pencil: ink(30, 34, 20, 62, 4.5), faded: ink(20, 46, 12, 52, 3) });
+  return { name, kanji: '', note: 'Your own', t };
+}
+/** A theme on the whole page: each token as light-dark(day, night); the rules from the ink. */
+function applyTheme(theme, el = document.documentElement) {
+  for (const k of THEME_TOKENS) el.style.setProperty(`--eien-${k}`, `light-dark(${theme.t[k][0]}, ${theme.t[k][1]})`);
+  const [d, n] = theme.t.ink.map((c) => hexRgb(c).join(' '));
+  el.style.setProperty('--eien-rule-soft', `light-dark(rgb(${d} / 0.07), rgb(${n} / 0.07))`);
+  el.style.setProperty('--eien-rule', `light-dark(rgb(${d} / 0.13), rgb(${n} / 0.14))`);
+  el.style.setProperty('--eien-rule-strong', `light-dark(rgb(${d} / 0.26), rgb(${n} / 0.26))`);
+  el.style.setProperty('--eien-paper-raised', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 45%, #fff), color-mix(in srgb, ${theme.t.paper[1]} 88%, #fff))`);
+  el.style.setProperty('--eien-well', `light-dark(color-mix(in srgb, ${theme.t.paper[0]} 70%, ${theme.t.band[0]}), color-mix(in srgb, ${theme.t.paper[1]} 60%, ${theme.t.blotter[1]}))`);
+}
+
+// A key as this system writes it, shared by the table and split explorations.
+
+const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+const mod = (e) => (MAC ? e.metaKey : e.ctrlKey);
+/** A key as this system writes it: KEY('Mod-Alt-↓') is ⌥⌘↓ on a Mac (its order), Ctrl+Alt+↓ elsewhere. */
+function KEY(k) {
+  const parts = k.split('-');
+  const key = parts.pop();
+  const has = (m) => parts.includes(m);
+  return MAC
+    ? `${has('Alt') ? '⌥' : ''}${has('Shift') ? '⇧' : ''}${has('Mod') ? '⌘' : ''}${key}`
+    : [has('Mod') && 'Ctrl', has('Alt') && 'Alt', has('Shift') && 'Shift', key].filter(Boolean).join('+');
+}
+
+// Shared by the reader explorations (reader-*.html): Eien's window, in any
+// layout, with a book from the vault open in the page pane; or the phone. The
+// window is the split family's (split.css), drawn here without a split. Each
+// direction sets the page pane (Reader.page), C's running head over it
+// (Reader.strip), the phone's page (Reader.phone) and its own keys; the
+// book, the shelf section, the contents, paging, marks, finding and the keys
+// they share are here.
+// The book the reader explorations open: Pride and Prejudice (Jane Austen,
+// 1813; public domain), its first three chapters as the text, and the rest of
+// its sixty-one chapters as lengths only, so page counts and progress read as
+// the whole book's would. Shared by reader-*.html through reader.js.
+
+const BOOK_TEXT = [
+  [
+    'It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.',
+    'However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered the rightful property of some one or other of their daughters.',
+    '“My dear Mr. Bennet,” said his lady to him one day, “have you heard that Netherfield Park is let at last?”',
+    'Mr. Bennet replied that he had not.',
+    '“But it is,” returned she; “for Mrs. Long has just been here, and she told me all about it.”',
+    'Mr. Bennet made no answer.',
+    '“Do you not want to know who has taken it?” cried his wife impatiently.',
+    '“You want to tell me, and I have no objection to hearing it.”',
+    'This was invitation enough.',
+    '“Why, my dear, you must know, Mrs. Long says that Netherfield is taken by a young man of large fortune from the north of England; that he came down on Monday in a chaise and four to see the place, and was so much delighted with it, that he agreed with Mr. Morris immediately; that he is to take possession before Michaelmas, and some of his servants are to be in the house by the end of next week.”',
+    '“What is his name?”',
+    '“Bingley.”',
+    '“Is he married or single?”',
+    '“Oh! Single, my dear, to be sure! A single man of large fortune; four or five thousand a year. What a fine thing for our girls!”',
+    '“How so? How can it affect them?”',
+    '“My dear Mr. Bennet,” replied his wife, “how can you be so tiresome! You must know that I am thinking of his marrying one of them.”',
+    '“Is that his design in settling here?”',
+    '“Design! Nonsense, how can you talk so! But it is very likely that he may fall in love with one of them, and therefore you must visit him as soon as he comes.”',
+    '“I see no occasion for that. You and the girls may go, or you may send them by themselves, which perhaps will be still better, for as you are as handsome as any of them, Mr. Bingley may like you the best of the party.”',
+    '“My dear, you flatter me. I certainly have had my share of beauty, but I do not pretend to be anything extraordinary now. When a woman has five grown-up daughters, she ought to give over thinking of her own beauty.”',
+    '“In such cases, a woman has not often much beauty to think of.”',
+    '“But, my dear, you must indeed go and see Mr. Bingley when he comes into the neighbourhood.”',
+    '“It is more than I engage for, I assure you.”',
+    '“But consider your daughters. Only think what an establishment it would be for one of them. Sir William and Lady Lucas are determined to go, merely on that account, for in general, you know, they visit no newcomers. Indeed you must go, for it will be impossible for us to visit him if you do not.”',
+    '“You are over-scrupulous, surely. I dare say Mr. Bingley will be very glad to see you; and I will send a few lines by you to assure him of my hearty consent to his marrying whichever he chooses of the girls; though I must throw in a good word for my little Lizzy.”',
+    '“I desire you will do no such thing. Lizzy is not a bit better than the others; and I am sure she is not half so handsome as Jane, nor half so good-humoured as Lydia. But you are always giving her the preference.”',
+    '“They have none of them much to recommend them,” replied he; “they are all silly and ignorant like other girls; but Lizzy has something more of quickness than her sisters.”',
+    '“Mr. Bennet, how can you abuse your own children in such a way? You take delight in vexing me. You have no compassion for my poor nerves.”',
+    '“You mistake me, my dear. I have a high respect for your nerves. They are my old friends. I have heard you mention them with consideration these last twenty years at least.”',
+    '“Ah, you do not know what I suffer.”',
+    '“But I hope you will get over it, and live to see many young men of four thousand a year come into the neighbourhood.”',
+    '“It will be no use to us, if twenty such should come, since you will not visit them.”',
+    '“Depend upon it, my dear, that when there are twenty, I will visit them all.”',
+    'Mr. Bennet was so odd a mixture of quick parts, sarcastic humour, reserve, and caprice, that the experience of three-and-twenty years had been insufficient to make his wife understand his character. Her mind was less difficult to develop. She was a woman of mean understanding, little information, and uncertain temper. When she was discontented, she fancied herself nervous. The business of her life was to get her daughters married; its solace was visiting and news.',
+  ],
+  [
+    'Mr. Bennet was among the earliest of those who waited on Mr. Bingley. He had always intended to visit him, though to the last always assuring his wife that he should not go; and till the evening after the visit was paid she had no knowledge of it. It was then disclosed in the following manner. Observing his second daughter employed in trimming a hat, he suddenly addressed her with:',
+    '“I hope Mr. Bingley will like it, Lizzy.”',
+    '“We are not in a way to know what Mr. Bingley likes,” said her mother resentfully, “since we are not to visit.”',
+    '“But you forget, mamma,” said Elizabeth, “that we shall meet him at the assemblies, and that Mrs. Long promised to introduce him.”',
+    '“I do not believe Mrs. Long will do any such thing. She has two nieces of her own. She is a selfish, hypocritical woman, and I have no opinion of her.”',
+    '“No more have I,” said Mr. Bennet; “and I am glad to find that you do not depend on her serving you.”',
+    'Mrs. Bennet deigned not to make any reply, but, unable to contain herself, began scolding one of her daughters.',
+    '“Don’t keep coughing so, Kitty, for Heaven’s sake! Have a little compassion on my nerves. You tear them to pieces.”',
+    '“Kitty has no discretion in her coughs,” said her father; “she times them ill.”',
+    '“I do not cough for my own amusement,” replied Kitty fretfully. “When is your next ball to be, Lizzy?”',
+    '“To-morrow fortnight.”',
+    '“Aye, so it is,” cried her mother, “and Mrs. Long does not come back till the day before; so it will be impossible for her to introduce him, for she will not know him herself.”',
+    '“Then, my dear, you may have the advantage of your friend, and introduce Mr. Bingley to her.”',
+    '“Impossible, Mr. Bennet, impossible, when I am not acquainted with him myself; how can you be so teasing?”',
+    '“I honour your circumspection. A fortnight’s acquaintance is certainly very little. One cannot know what a man really is by the end of a fortnight. But if we do not venture somebody else will; and after all, Mrs. Long and her nieces must stand their chance; and, therefore, as she will think it an act of kindness, if you decline the office, I will take it on myself.”',
+    'The girls stared at their father. Mrs. Bennet said only, “Nonsense, nonsense!”',
+    '“What can be the meaning of that emphatic exclamation?” cried he. “Do you consider the forms of introduction, and the stress that is laid on them, as nonsense? I cannot quite agree with you there. What say you, Mary? For you are a young lady of deep reflection, I know, and read great books and make extracts.”',
+    'Mary wished to say something sensible, but knew not how.',
+    '“While Mary is adjusting her ideas,” he continued, “let us return to Mr. Bingley.”',
+    '“I am sick of Mr. Bingley,” cried his wife.',
+    '“I am sorry to hear that; but why did not you tell me that before? If I had known as much this morning I certainly would not have called on him. It is very unlucky; but as I have actually paid the visit, we cannot escape the acquaintance now.”',
+    'The astonishment of the ladies was just what he wished; that of Mrs. Bennet perhaps surpassing the rest; though, when the first tumult of joy was over, she began to declare that it was what she had expected all the while.',
+    '“How good it was in you, my dear Mr. Bennet! But I knew I should persuade you at last. I was sure you loved your girls too well to neglect such an acquaintance. Well, how pleased I am! and it is such a good joke, too, that you should have gone this morning and never said a word about it till now.”',
+    '“Now, Kitty, you may cough as much as you choose,” said Mr. Bennet; and, as he spoke, he left the room, fatigued with the raptures of his wife.',
+    '“What an excellent father you have, girls!” said she, when the door was shut. “I do not know how you will ever make him amends for his kindness; or me, either, for that matter. At our time of life it is not so pleasant, I can tell you, to be making new acquaintances every day; but for your sakes, we would do anything. Lydia, my love, though you are the youngest, I dare say Mr. Bingley will dance with you at the next ball.”',
+    '“Oh!” said Lydia stoutly, “I am not afraid; for though I am the youngest, I’m the tallest.”',
+    'The rest of the evening was spent in conjecturing how soon he would return Mr. Bennet’s visit, and determining when they should ask him to dinner.',
+  ],
+  [
+    'Not all that Mrs. Bennet, however, with the assistance of her five daughters, could ask on the subject, was sufficient to draw from her husband any satisfactory description of Mr. Bingley. They attacked him in various ways—with barefaced questions, ingenious suppositions, and distant surmises; but he eluded the skill of them all, and they were at last obliged to accept the second-hand intelligence of their neighbour, Lady Lucas. Her report was highly favourable. Sir William had been delighted with him. He was quite young, wonderfully handsome, extremely agreeable, and, to crown the whole, he meant to be at the next assembly with a large party. Nothing could be more delightful! To be fond of dancing was a certain step towards falling in love; and very lively hopes of Mr. Bingley’s heart were entertained.',
+    '“If I can but see one of my daughters happily settled at Netherfield,” said Mrs. Bennet to her husband, “and all the others equally well married, I shall have nothing to wish for.”',
+    'In a few days Mr. Bingley returned Mr. Bennet’s visit, and sat about ten minutes with him in his library. He had entertained hopes of being admitted to a sight of the young ladies, of whose beauty he had heard much; but he saw only the father. The ladies were somewhat more fortunate, for they had the advantage of ascertaining from an upper window that he wore a blue coat, and rode a black horse.',
+    'An invitation to dinner was soon afterwards dispatched; and already had Mrs. Bennet planned the courses that were to do credit to her housekeeping, when an answer arrived which deferred it all. Mr. Bingley was obliged to be in town the following day, and, consequently, unable to accept the honour of their invitation, etc. Mrs. Bennet was quite disconcerted. She could not imagine what business he could have in town so soon after his arrival in Hertfordshire; and she began to fear that he might be always flying about from one place to another, and never settled at Netherfield as he ought to be. Lady Lucas quieted her fears a little by starting the idea of his being gone to London only to get a large party for the ball; and a report soon followed that Mr. Bingley was to bring twelve ladies and seven gentlemen with him to the assembly. The girls grieved over such a number of ladies, but were comforted the day before the ball by hearing, that instead of twelve he brought only six with him from London—his five sisters and a cousin. And when the party entered the assembly room it consisted of only five altogether—Mr. Bingley, his two sisters, the husband of the eldest, and another young man.',
+    'Mr. Bingley was good-looking and gentlemanlike; he had a pleasant countenance, and easy, unaffected manners. His sisters were fine women, with an air of decided fashion. His brother-in-law, Mr. Hurst, merely looked the gentleman; but his friend Mr. Darcy soon drew the attention of the room by his fine, tall person, handsome features, noble mien, and the report which was in general circulation within five minutes after his entrance, of his having ten thousand a year. The gentlemen pronounced him to be a fine figure of a man, the ladies declared he was much handsomer than Mr. Bingley, and he was looked at with great admiration for about half the evening, till his manners gave a disgust which turned the tide of his popularity; for he was discovered to be proud; to be above his company, and above being pleased; and not all his large estate in Derbyshire could then save him from having a most forbidding, disagreeable countenance, and being unworthy to be compared with his friend.',
+    'Mr. Bingley had soon made himself acquainted with all the principal people in the room; he was lively and unreserved, danced every dance, was angry that the ball closed so early, and talked of giving one himself at Netherfield. Such amiable qualities must speak for themselves. What a contrast between him and his friend! Mr. Darcy danced only once with Mrs. Hurst and once with Miss Bingley, declined being introduced to any other lady, and spent the rest of the evening in walking about the room, speaking occasionally to one of his own party. His character was decided. He was the proudest, most disagreeable man in the world, and everybody hoped that he would never come there again. Amongst the most violent against him was Mrs. Bennet, whose dislike of his general behaviour was sharpened into particular resentment by his having slighted one of her daughters.',
+    'Elizabeth Bennet had been obliged, by the scarcity of gentlemen, to sit down for two dances; and during part of that time, Mr. Darcy had been standing near enough for her to hear a conversation between him and Mr. Bingley, who came from the dance for a few minutes, to press his friend to join it.',
+    '“Come, Darcy,” said he, “I must have you dance. I hate to see you standing about by yourself in this stupid manner. You had much better dance.”',
+    '“I certainly shall not. You know how I detest it, unless I am particularly acquainted with my partner. At such an assembly as this it would be insupportable. Your sisters are engaged, and there is not another woman in the room whom it would not be a punishment to me to stand up with.”',
+    '“I would not be so fastidious as you are,” cried Mr. Bingley, “for a kingdom! Upon my honour, I never met with so many pleasant girls in my life as I have this evening; and there are several of them you see uncommonly pretty.”',
+    '“You are dancing with the only handsome girl in the room,” said Mr. Darcy, looking at the eldest Miss Bennet.',
+    '“Oh! She is the most beautiful creature I ever beheld! But there is one of her sisters sitting down just behind you, who is very pretty, and I dare say very agreeable. Do let me ask my partner to introduce you.”',
+    '“Which do you mean?” and turning round he looked for a moment at Elizabeth, till catching her eye, he withdrew his own and coldly said: “She is tolerable, but not handsome enough to tempt me; I am in no humour at present to give consequence to young ladies who are slighted by other men. You had better return to your partner and enjoy her smiles, for you are wasting your time with me.”',
+    'Mr. Bingley followed his advice. Mr. Darcy walked off; and Elizabeth remained with no very cordial feelings toward him. She told the story, however, with great spirit among her friends; for she had a lively, playful disposition, which delighted in anything ridiculous.',
+  ],
+];
+
+
+Object.assign(ICONS, {
+  pages: '<path d="M3.5 2.5h6l3 3v8h-9z"/><path d="M9.5 2.5v3h3"/>',
+  scroll: '<path d="M4.5 2.5h7v11h-7z"/><path d="M8 5.5v5M6.5 7L8 5.5 9.5 7M6.5 9L8 10.5 9.5 9"/>',
+  contents: '<path d="M2.5 4h1.5M2.5 8h1.5M2.5 12h1.5"/><path d="M6 4h7.5M6 8h7.5M6 12h5"/>',
+  ribbon: '<path d="M5.5 1.5v12.5L8 11.5l2.5 2.5V1.5"/>',
+  twisty: '<path d="M6 4.5L10 8l-4 3.5z" fill="currentColor" stroke="none"/>',
+  swap: '<path d="M3 5.5h9.5M10 3l2.5 2.5L10 8"/><path d="M13 10.5H3.5M6 8l-2.5 2.5L6 13"/>',
+  copy: '<path d="M5.5 5.5h8v8h-8z"/><path d="M10.5 5.5v-3h-8v8h3"/>',
+});
+
+// The book. Sixty-one chapters; the first three are its text, the rest their
+// lengths alone (spread as the novel's are), so the whole book is counted.
+const roman = (n) => [[50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]
+  .reduce((s, [v, r]) => { while (n >= v) { s += r; n -= v; } return s; }, '');
+const BOOK = { title: 'Pride and Prejudice', author: 'Jane Austen', folder: 'Novels', file: 'Novels/Pride and Prejudice.epub' };
+const heldChars = BOOK_TEXT.flat().join('').length;
+const restEach = (684000 - heldChars) / 58;
+const CHAPTERS = Array.from({ length: 61 }, (_, i) => {
+  const paras = BOOK_TEXT[i] ?? null;
+  const chars = paras ? paras.join('').length : Math.round(restEach * (0.72 + ((i * 37) % 57) / 100));
+  return { ord: roman(i + 1), title: `Chapter ${roman(i + 1)}`, paras, chars };
+});
+const HELD = BOOK_TEXT.length;
+const BOOK_CHARS = CHAPTERS.reduce((s, ch) => s + ch.chars, 0);
+const charsBefore = (c) => CHAPTERS.slice(0, c).reduce((s, ch) => s + ch.chars, 0);
+
+// The vault's books, in the folders that hold them: a lens over the one tree.
+const SHELF = [
+  { name: 'Cooking', d: 0, books: [{ title: 'The Boston Cooking-School Cook Book', read: '' }] },
+  { name: 'Fic', d: 0, books: [] },
+  { name: 'Research', d: 1, books: [{ title: 'The Elements of Style', read: '18%' }] },
+  { name: 'Novels', d: 0, books: [{ title: 'North and South', read: 'read' }, { title: 'Persuasion', read: '62%' }, { title: BOOK.title, id: 'pp' }] },
+];
+const SECTION_NAMES = { shelf: 'Shelf', reading: 'Reading', bookshelf: 'Bookshelf' };
+const LAYOUTS = ['band', 'slip', 'runhead'];
+const SIDEBAR_W = 264;
+const LIST_W = 316;
+const C_STRIP = 48;
+const WIN_H = 860;
+const PHONE = { w: 360, h: 740 };
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
+const root = document.documentElement;
+
+// Where you are and what you've kept. In the app: .eien/reading/, keyed by the book's contents.
+const R = {
+  c: 2, p: 0, goal: null, nums: null, folds: {},
+  bookmarks: [{ c: 0, o: 0 }],
+  highlights: [{ id: 1, c: 0, a: 0, b: 117 }, { id: 2, c: 2, a: 0, b: 0 }],
+  find: { open: false, q: '', at: -1 },
+  phoneView: 'page',
+};
+let nextHl = 3;
+{
+  // The second kept highlight: Darcy's "tolerable", wherever it falls.
+  const t = CHAPTERS[2].paras;
+  let o = 0;
+  for (const para of t) { const i = para.indexOf('She is tolerable'); if (i >= 0) { R.highlights[1].a = o + i; R.highlights[1].b = o + i + 'She is tolerable, but not handsome enough to tempt me'.length; break; } o += para.length; }
+}
+
+const Reader = {
+  id: '', paged: true, list: 'shown',
+  page: () => '', strip: null, tools: () => '', phone: () => '', phoneTools: () => '',
+  after: () => {}, key: () => false, colophon: null,
+};
+let canvas;
+const STORE = 'eien-reader-explorations';
+const kept = (() => { try { return JSON.parse(sessionStorage.getItem(STORE)) ?? {}; } catch { return {}; } })();
+function keep() {
+  const d = root.dataset;
+  try { sessionStorage.setItem(STORE, JSON.stringify({ layout: d.layout, theme: d.theme, sb: d.sb, name: d.name, device: d.device, width: d.width, c: R.c, o: R.nums?.start ?? 0 })); } catch {}
+}
+
+function choices() {
+  const d = root.dataset;
+  return {
+    layout: LAYOUTS.includes(d.layout) ? d.layout : 'band',
+    sb: d.sb === 'shut' ? 'shut' : 'open',
+    list: d.list === 'hidden' ? 'hidden' : 'shown',
+    device: d.device === 'phone' ? 'phone' : 'desktop',
+    name: SECTION_NAMES[d.name] ? d.name : 'shelf',
+    width: clamp(Number(d.width) || 1440, 900, 1680),
+  };
+}
+
+/** What a direction draws with: the choices, the place, and the pieces every direction shares. */
+function context() {
+  const ch = choices();
+  const sbW = ch.sb === 'shut' ? (ch.layout === 'runhead' ? C_STRIP : 0) : SIDEBAR_W;
+  const listW = ch.list === 'hidden' ? 0 : LIST_W;
+  const ctx = {
+    ...ch, sbW, listW, pageW: ch.width - sbW - listW, c: R.c, chapter: CHAPTERS[R.c],
+    section: SECTION_NAMES[ch.name],
+    crumb: () => `${BOOK.folder} / ${BOOK.title} / ${CHAPTERS[R.c].ord}`,
+    tool: (name, word, key = '', attrs = '') => `<button class="icon-button" data-icon="${name}" data-k="tool-${name}" aria-label="${word}" data-tip="${word}${key ? `  ${key}` : ''}" ${attrs}></button>`,
+    /** The views' place holds the book's two: Pages and Scroll. The other one is its exploration. */
+    views: () => {
+      const v = (icon, word, on, href) => (on
+        ? `<button class="icon-button" data-icon="${icon}" data-k="view-${icon}" aria-pressed="true" aria-label="${word}" data-tip="${word}"></button>`
+        : `<a class="icon-button" href="${href}" data-icon="${icon}" aria-label="${word}" data-tip="${word}: opens ${href === 'reader-leaf.html' ? 'Pages 2' : 'Scroll 1'} here"></a>`);
+      return `<span class="tools" role="group" aria-label="How the book reads">${v('pages', 'Pages', Reader.paged, 'reader-leaf.html')}${v('scroll', 'Scroll', !Reader.paged, 'reader-chapter.html')}</span>`;
+    },
+    contentsTool: () => ctx.tool('contents', 'Contents', KEY('Mod-2'), 'data-contents aria-haspopup="menu"'),
+    /** The page's top: A's band, B's slip; C's tools are in the running head. */
+    top: () => {
+      const tools = Reader.tools(ctx);
+      const f = ctx.findHere();
+      if (ch.layout === 'band') return `<div class="band${f ? ' is-finding' : ''}"><span class="tools-row quiet">${ctx.views()}</span>${f}<span class="tools-row quiet">${tools}</span></div>`;
+      if (ch.layout === 'slip') return `<div class="topline"><span class="slip quiet${f ? ' is-finding' : ''}">${ctx.views()}<span class="tools-rule" aria-hidden="true"></span>${f ? `${f}<span class="tools-rule" aria-hidden="true"></span>` : ''}${tools}</span></div>`;
+      return '';
+    },
+    /** Find's field, where the layout's tools are, while it's open (Features 1 and 3). */
+    findHere: () => (Reader.findInBar && R.find.open ? finder.field() : ''),
+    /** The sheet's running head: A's crumb and the author; B's crumb; C's is over the page. */
+    head: () => (ch.layout === 'runhead' ? '' : `<div class="sheet__head"><span class="crumb">${ctx.crumb()}</span>${ch.layout === 'band' ? `<span class="crumb">${BOOK.author}</span>` : ''}</div>`),
+    colophon: (items) => `<footer class="colophon">${items.filter(Boolean).join(' <span class="dot">·</span> ')}<span class="said" role="status" aria-live="polite"></span></footer>`,
+    /** A chapter as pages: its flow in columns, `span` of them side by side. */
+    leaves: (c, { span = 1, cls = '' } = {}) => `<div class="leaves ${cls}" data-main data-span="${span}" tabindex="0" role="region" aria-roledescription="book" aria-label="${BOOK.title}"><div class="flow book-text" data-c="${c}">${chapterHtml(c)}</div></div>`,
+  };
+  return ctx;
+}
+
+// The text, drawn escaped, with kept highlights and what Find found marked in it.
+const fold = (s) => s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+let hitCache = { q: null, list: [] };
+function hits() {
+  const q = fold(R.find.q.trim());
+  if (!R.find.open || q.length < 2) return [];
+  if (hitCache.q === q) return hitCache.list;
+  const list = [];
+  CHAPTERS.forEach((ch, c) => {
+    if (!ch.paras) return;
+    let o = 0;
+    for (const t of ch.paras) {
+      const low = fold(t);
+      for (let i = low.indexOf(q); i >= 0; i = low.indexOf(q, i + q.length)) list.push({ c, a: o + i, b: o + i + q.length, p: t, i });
+      o += t.length;
+    }
+  });
+  hitCache = { q, list };
+  return list;
+}
+function marked(c, o, t) {
+  const end = o + t.length;
+  const rs = [];
+  for (const h of R.highlights) if (h.c === c && h.a < end && h.b > o) rs.push({ a: Math.max(h.a, o) - o, b: Math.min(h.b, end) - o, cls: 'hl', id: h.id });
+  hits().forEach((h, i) => { if (h.c === c && h.a >= o && h.b <= end) rs.push({ a: h.a - o, b: h.b - o, cls: i === R.find.at ? 'hit is-at' : 'hit' }); });
+  if (!rs.length) return esc(t);
+  const cuts = [...new Set([0, t.length, ...rs.flatMap((r) => [r.a, r.b])])].sort((x, y) => x - y);
+  let html = '';
+  for (let k = 0; k < cuts.length - 1; k++) {
+    const [a, b] = [cuts[k], cuts[k + 1]];
+    const on = rs.filter((r) => r.a <= a && r.b >= b);
+    const id = on.find((r) => r.id)?.id;
+    html += on.length ? `<span class="${on.map((r) => r.cls).join(' ')}"${id ? ` data-hl="${id}"` : ''}>${esc(t.slice(a, b))}</span>` : esc(t.slice(a, b));
+  }
+  return html;
+}
+/** A chapter's heading and paragraphs, each paragraph knowing where it starts in the chapter. */
+function chapterHtml(c) {
+  const ch = CHAPTERS[c];
+  const head = `<h2 class="ch-head" data-o="0" data-head>${ch.title}</h2>`;
+  if (!ch.paras) return `${head}<p class="not-held">This exploration holds Chapters I to III; the app reads the whole book.</p>`;
+  let o = 0;
+  return head + ch.paras.map((t) => {
+    const lit = R.highlights.some((h) => h.c === c && h.a < o + t.length && h.b > o);
+    const html = `<p data-o="${o}"${lit ? ' class="has-hl"' : ''}>${marked(c, o, t)}</p>`;
+    o += t.length;
+    return html;
+  }).join('');
+}
+
+/** A place in a chapter (its characters from the start) as a DOM point, and back. */
+function pointAt(flow, off) {
+  let p = flow.querySelector('p[data-o]');
+  for (const each of flow.querySelectorAll('p[data-o]')) if (+each.dataset.o <= off) p = each;
+  if (!p) return [flow, 0];
+  let left = off - +p.dataset.o;
+  const walk = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+  for (let node = walk.nextNode(); node; node = walk.nextNode()) { if (left <= node.length) return [node, left]; left -= node.length; }
+  return [p, p.childNodes.length];
+}
+function offsetOf(node, offset) {
+  const el = (node.nodeType === 3 ? node.parentElement : node)?.closest?.('[data-o]');
+  if (!el) return null;
+  if ('head' in el.dataset) return 0;
+  const pre = document.createRange();
+  pre.selectNodeContents(el);
+  pre.setEnd(node, offset);
+  return +el.dataset.o + pre.toString().length;
+}
+/** The chapter and place under a point on screen. */
+function placeAt(x, y) {
+  const r = document.caretRangeFromPoint?.(x, y);
+  if (!r) return null;
+  const o = offsetOf(r.startContainer, r.startOffset);
+  const c = (r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer)?.closest?.('[data-c]');
+  return o == null || !c ? null : { c: +c.dataset.c, o };
+}
+function rangeOf(flow, a, b) {
+  const range = document.createRange();
+  range.setStart(...pointAt(flow, a));
+  range.setEnd(...pointAt(flow, b));
+  return range;
+}
+
+// Pages: a chapter flows in columns as tall as the page; a turn moves it a page.
+const pageCache = {};
+const main = () => canvas.querySelector('.leaves[data-main]');
+function layoutLeaves(lv) {
+  const flow = lv.querySelector('.flow');
+  const span = +lv.dataset.span || 1;
+  const gap = parseFloat(getComputedStyle(lv).getPropertyValue('--leaf-gap')) || 48;
+  const W = (lv.clientWidth - (span - 1) * gap) / span;
+  const H = lv.clientHeight;
+  for (const f of [flow, ...lv.querySelectorAll('.flow--measure')]) Object.assign(f.style, { columnCount: String(span), columnGap: `${gap}px`, height: `${H}px`, width: `${lv.clientWidth}px` });
+  const count = (f) => Math.max(1, Math.round((f.scrollWidth + gap) / (W + gap)));
+  lv._ = { step: W + gap, span, W, gap, pages: count(flow) };
+  // Each held chapter measured at this size, once, so every page has its number.
+  const key = `${Math.round(W)}x${Math.round(H)}:${root.dataset.face ?? ''}:${span}`;
+  if (!pageCache[key]) {
+    pageCache[key] = BOOK_TEXT.map((_, c) => {
+      if (c === +flow.dataset.c) return lv._.pages;
+      const m = document.createElement('div');
+      m.className = 'flow book-text flow--measure';
+      m.innerHTML = chapterHtml(c);
+      Object.assign(m.style, { columnCount: String(span), columnGap: `${gap}px`, height: `${H}px`, width: `${lv.clientWidth}px` });
+      lv.append(m);
+      const n = count(m);
+      m.remove();
+      return n;
+    });
+  }
+  lv._.held = pageCache[key];
+  return lv._;
+}
+/** Pages in each chapter, at this size: the held ones measured, the rest by their length. */
+function pagesOf(lv, c) {
+  const held = lv._.held;
+  if (c < HELD) return Math.ceil(held[c] / lv._.span) * lv._.span;
+  const perPage = heldChars / held.reduce((s, n) => s + n, 0);
+  return Math.max(lv._.span, Math.round(CHAPTERS[c].chars / perPage / lv._.span) * lv._.span);
+}
+function pagesBefore(lv, c) { let n = 0; for (let k = 0; k < c; k++) n += pagesOf(lv, k); return n; }
+/** The page a place falls on, in the chapter shown. */
+function pageOf(lv, off) {
+  const flow = lv.querySelector('.flow');
+  const rect = rangeOf(flow, off, off).getClientRects()[0] ?? rangeOf(flow, off, Math.min(off + 1, CHAPTERS[+flow.dataset.c].chars)).getBoundingClientRect();
+  const fr = flow.getBoundingClientRect();
+  const scale = fr.width / flow.offsetWidth || 1;
+  return clamp(Math.floor((rect.left - fr.left) / scale / lv._.step + 0.02), 0, lv._.pages - 1);
+}
+function place(lv, still = false) {
+  const flow = lv.querySelector('.flow');
+  if (still) flow.style.transition = 'none';
+  flow.style.transform = `translateX(${-R.p * lv._.step}px)`;
+  if (still) { flow.getBoundingClientRect(); flow.style.transition = ''; }
+  // Where the page starts is read off the screen, so read it again once the slide is done.
+  else flow.addEventListener('transitionend', () => settle(), { once: true });
+}
+/** Where the shown page starts and ends, in the chapter's characters. */
+function pageSpan(lv) {
+  const r = lv.getBoundingClientRect();
+  const s = r.width / lv.offsetWidth || 1;
+  const start = placeAt(r.left + 6 * s, r.top + 6 * s);
+  const end = placeAt(r.right - 6 * s, r.bottom - 10 * s);
+  const c = +lv.querySelector('.flow').dataset.c;
+  return { start: start?.c === c ? start.o : 0, end: end?.c === c ? end.o : CHAPTERS[c].chars };
+}
+
+/** Numbers for the colophon, folios and marks: where you are in the chapter and the book. */
+function numbers() {
+  const lv = main();
+  if (lv?._) {
+    const { start, end } = pageSpan(lv);
+    const before = pagesBefore(lv, R.c);
+    let pages = 0;
+    for (let c = 0; c < CHAPTERS.length; c++) pages += pagesOf(lv, c);
+    return { paged: true, start, end, page: before + R.p + 1, pages, chPage: R.p + 1, chPages: lv._.pages, span: lv._.span, pct: Math.round(((charsBefore(R.c) + start) / BOOK_CHARS) * 100), chapterStart: (c) => pagesBefore(lv, c) + 1,
+      /** The page a place falls on, anywhere in the book (within a chapter, by its share of the chapter). */
+      pageAt: (c, o) => (c === R.c ? pagesBefore(lv, c) + pageOf(lv, o) + 1 : pagesBefore(lv, c) + Math.floor((o / CHAPTERS[c].chars) * pagesOf(lv, c)) + 1) };
+  }
+  const sc = canvas.querySelector('[data-main-scroll]');
+  if (!sc) return null;
+  const r = sc.getBoundingClientRect();
+  const s = r.width / sc.offsetWidth || 1;
+  const pad = 24 * s;
+  const at = placeAt(r.left + r.width / 2, r.top + pad) ?? placeAt(r.left + r.width / 3, r.top + pad * 3) ?? { c: R.c, o: 0 };
+  if (at.c !== R.c) { R.c = at.c; Reader.chapterChanged?.(); }
+  const chFrac = sc.dataset.mainScroll === 'chapter' ? sc.scrollTop / Math.max(1, sc.scrollHeight - sc.clientHeight) : at.o / CHAPTERS[at.c].chars;
+  return { paged: false, start: at.o, end: at.o, pct: Math.round(((charsBefore(at.c) + at.o) / BOOK_CHARS) * 100), chPct: Math.round(chFrac * 100), chapterStart: null };
+}
+
+// What the reader does.
+const act = {
+  turn(dir) {
+    const lv = main();
+    if (!lv?._) return;
+    const np = R.p + dir * lv._.span;
+    if (np >= 0 && np < lv._.pages) { R.p = np; place(lv); settle(); }
+    else if (dir > 0 && R.c < CHAPTERS.length - 1) { R.c++; R.p = 0; draw(); }
+    else if (dir < 0 && R.c > 0) { R.c--; R.p = Infinity; draw(); }
+    else say(dir > 0 ? 'The end of the book' : 'The beginning of the book');
+  },
+  /** Open a chapter at a place in it (its first page by default). */
+  go(c, o = 0) { R.c = clamp(c, 0, CHAPTERS.length - 1); R.p = 0; R.goal = o; draw(); },
+  chapterEdge(end) { const lv = main(); if (!lv?._) return; R.p = end ? lv._.pages - 1 - ((lv._.pages - 1) % lv._.span) : 0; place(lv); settle(); },
+  /** B: a bookmark on this page, or off it. */
+  bookmark() {
+    const n = R.nums;
+    if (!n) return;
+    const i = R.bookmarks.findIndex((b) => b.c === R.c && b.o >= n.start && b.o <= Math.max(n.end, n.start));
+    if (i >= 0) { R.bookmarks.splice(i, 1); say('Bookmark taken off'); } else { R.bookmarks.push({ c: R.c, o: n.start }); say('Bookmarked'); }
+    Reader.marksChanged?.();
+    draw();
+  },
+  /** H: the selection kept as a highlight; on a highlight, it's taken off. */
+  highlight() {
+    const flow = canvas.querySelector(`.book-text[data-c="${R.c}"]`) ?? canvas.querySelector('.book-text[data-c]');
+    const sel = getSelection();
+    if (!flow || !sel.rangeCount || sel.isCollapsed) { say('Select some words first: drag over them, or ⇧→'); return; }
+    const range = sel.getRangeAt(0);
+    const c = +(range.startContainer.parentElement?.closest('[data-c]')?.dataset.c ?? R.c);
+    const a = offsetOf(range.startContainer, range.startOffset);
+    const b = offsetOf(range.endContainer, range.endOffset);
+    if (a == null || b == null || b <= a) return;
+    const over = R.highlights.find((h) => h.c === c && h.a <= a && h.b >= b);
+    if (over) { R.highlights = R.highlights.filter((h) => h !== over); say('Highlight taken off; ⌘Z puts it back'.replace('⌘Z', KEY('Mod-Z'))); undo = over; } else { R.highlights.push({ id: nextHl++, c, a, b }); say('Highlighted'); }
+    sel.removeAllRanges();
+    kb = null;
+    Reader.marksChanged?.();
+    draw();
+  },
+};
+/** Finding in the book: what's typed is matched as text, and only ever drawn escaped. */
+const finder = {
+  open() { R.find.open = true; draw(); const f = canvas.querySelector('[data-find]'); f?.focus(); f?.select(); },
+  close() { R.find = { open: false, q: '', at: -1 }; hitCache = { q: null, list: [] }; draw(); (main() ?? canvas.querySelector('[data-main-scroll]'))?.focus(); },
+  set(q) {
+    R.find.q = q;
+    const list = hits();
+    // The first match at or after where you are.
+    const here = charsBefore(R.c) + (R.nums?.start ?? 0);
+    R.find.at = list.length ? Math.max(0, list.findIndex((h) => charsBefore(h.c) + h.a >= here)) : -1;
+    if (R.find.at >= 0) { const h = list[R.find.at]; R.c = h.c; R.p = 0; R.goal = h.a; }
+    draw();
+    const f = canvas.querySelector('[data-find]');
+    if (f) f.setSelectionRange(f.value.length, f.value.length);
+  },
+  step(dir) {
+    const list = hits();
+    if (!list.length) return;
+    R.find.at = (R.find.at + dir + list.length) % list.length;
+    const h = list[R.find.at];
+    R.c = h.c; R.p = 0; R.goal = h.a;
+    draw();
+  },
+  /** "3 of 41", or why there's nothing. */
+  says() {
+    const q = R.find.q.trim();
+    if (q.length < 2) return 'Two letters or more';
+    const n = hits().length;
+    return n ? `${R.find.at + 1} of ${n}` : 'Not in Chapters I–III';
+  },
+  field(cls = '') {
+    return `<span class="find ${cls}" role="search"><span class="find__icon" aria-hidden="true">${icon('search')}</span><input class="field find__field" data-find data-k="find" type="search" value="${esc(R.find.q)}" placeholder="Find in ${esc(BOOK.title)}" aria-label="Find in ${esc(BOOK.title)}" aria-describedby="find-says" autocomplete="off" spellcheck="false" /><span class="count find__says" id="find-says" aria-live="polite">${esc(finder.says())}</span><button class="icon-button" data-find-step="-1" data-k="find-prev" aria-label="Previous match" data-tip="Previous  ${KEY('Shift-Enter')}">${icon('up')}</button><button class="icon-button" data-find-step="1" data-k="find-next" aria-label="Next match" data-tip="Next  Enter">${icon('down')}</button><button class="icon-button" data-find-close data-k="find-close" aria-label="Close Find" data-tip="Close  Esc">${icon('close')}</button></span>`;
+  },
+};
+/** Every kept mark, in the book's order: bookmarks and highlights. */
+function marksInOrder() {
+  return [...R.bookmarks.map((b) => ({ kind: 'bookmark', c: b.c, o: b.o, b })), ...R.highlights.map((h) => ({ kind: 'highlight', c: h.c, o: h.a, h }))]
+    .sort((x, y) => x.c - y.c || x.o - y.o);
+}
+/** ] and [: to the next mark, or the one before. */
+function stepMark(dir) {
+  const all = marksInOrder();
+  if (!all.length) return;
+  const here = charsBefore(R.c) + (dir > 0 ? (R.nums?.end ?? 0) + 1 : (R.nums?.start ?? 0) - 1);
+  const at = (m) => charsBefore(m.c) + m.o;
+  const next = dir > 0 ? all.find((m) => at(m) >= here) ?? all[0] : [...all].reverse().find((m) => at(m) <= here) ?? all.at(-1);
+  act.go(next.c, next.o);
+  say(next.kind === 'bookmark' ? 'Bookmark' : 'Highlight');
+}
+/** A highlight's words, for a list or a tooltip. */
+const hlText = (h) => { const t = CHAPTERS[h.c].paras?.join('') ?? ''; return t.slice(h.a, h.b); };
+let undo = null;
+let kb = null; // a selection made from the keyboard, a sentence at a time: { c, a, b }
+
+/** ⇧→ selects the page's first sentence, then one more each time; ⇧← one fewer. */
+function sentenceSelect(dir) {
+  const n = R.nums;
+  const ch = CHAPTERS[R.c];
+  if (!n || !ch.paras) return;
+  const ends = [];
+  let o = 0;
+  for (const t of ch.paras) {
+    const re = /[.!?;][”’]?(\s|$)/g;
+    let m;
+    while ((m = re.exec(t))) ends.push(o + m.index + m[0].trimEnd().length);
+    o += t.length;
+    if (ends.at(-1) !== o) ends.push(o);
+  }
+  const starts = [0, ...ends];
+  if (!kb || kb.c !== R.c) {
+    const a = starts.find((s) => s >= n.start) ?? n.start;
+    kb = { c: R.c, a: skipSpace(a), b: ends.find((e) => e > a + 1) ?? a };
+  } else if (dir > 0) kb.b = ends.find((e) => e > kb.b) ?? kb.b;
+  else { const prev = [...ends].reverse().find((e) => e < kb.b && e > kb.a); if (prev) kb.b = prev; }
+  const flow = canvas.querySelector(`.book-text[data-c="${R.c}"]`);
+  const sel = getSelection();
+  sel.removeAllRanges();
+  sel.addRange(rangeOf(flow, kb.a, kb.b));
+  // Keep the selection's end in sight: turn the page when it runs over.
+  const lv = main();
+  if (lv?._ && kb.b > n.end) { const p = pageOf(lv, kb.b); if (p !== R.p) { R.p = p - (p % lv._.span); place(lv); settle(); } }
+  function skipSpace(at) { const all = ch.paras.join(''); while (/\s/.test(all[at] ?? '')) at++; return at; }
+}
+
+/** The page has moved: the numbers, and what each direction shows from them. */
+function settle() {
+  R.nums = numbers();
+  if (!R.nums) return;
+  for (const el of canvas.querySelectorAll('[data-fill="pct"]')) el.textContent = `${R.nums.pct}%`;
+  if (R.nums.chapterStart) for (const el of canvas.querySelectorAll('[data-fill^="ch-"]')) el.textContent = String(R.nums.chapterStart(+el.dataset.fill.slice(3)));
+  const lv = main();
+  if (lv) lv.setAttribute('aria-label', `${BOOK.title}, ${CHAPTERS[R.c].title}${R.nums.paged ? `, page ${R.nums.page} of ${R.nums.pages}` : ''}`);
+  Reader.after(context(), R.nums);
+  keep();
+}
+
+// Drawing: the whole window (or the phone) from the state, keeping focus and scroll.
+function sidebarHtml(ctx) {
+  const sec = (key, label, body) => {
+    const open = !R.folds[key];
+    return `<div class="sb__sec"><button class="section" data-fold="${key}" data-k="sec-${key}" aria-expanded="${open}"><span class="label">${label}</span><span class="twisty" data-icon="twisty"></span></button></div>${open ? body : ''}`;
+  };
+  const row = (name, count, d = 0, cls = '', attrs = '') => `<div class="trow${cls}" style="--d:${d}" ${attrs}><span class="n">${name}</span>${count}</div>`;
+  const shelf = SHELF.map((f) => row(f.name, f.books.length ? `<span class="count">${f.books.length}</span>` : '', f.d, ' trow--folder')
+    + f.books.map((b) => `<button class="trow trow--book${b.id ? ' is-chosen' : ''}" style="--d:${f.d + 1}" data-book="${b.id ?? ''}" data-k="book-${esc(b.title)}"${b.id ? ' aria-current="true"' : ''}><span class="n">${esc(b.title)}</span><span class="count"${b.id ? ' data-fill="pct"' : ''}>${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`).join('')).join('');
+  return `<aside class="sb" aria-label="Sidebar"><div class="sb__head">Eien</div>
+    ${sec('library', 'Library', row('All notes', '<span class="count">214</span>') + row('Pinned', '<span class="count">3</span>'))}
+    ${sec('folders', 'Folders', row('Cooking', '<span class="count">12</span>') + row('Fic', '<span class="count">41</span>') + row('Beneath the Walls', '<span class="book-mark">BOOK</span><span class="count">14</span>', 1) + row('Research', '<span class="count">9</span>', 1) + row('Ideas', '<span class="count">57</span>') + row('Novels', '<span class="count">2</span>'))}
+    ${sec('tags', 'Tags', row('#draft', '<span class="count">23</span>') + row('#fic/aot', '<span class="count">31</span>'))}
+    <div class="sb__lens">${sec('shelf', `<span class="section-name">${ctx.section}</span>`, `<div class="shelf" role="group" aria-label="${ctx.section}: the vault's books">${shelf}</div>`)}</div>
+  </aside>`;
+}
+function listHtml() {
+  const row = (ch, i) => `<button class="row row--ch${i === R.c ? ' is-chosen' : ''}" data-ch="${i}" data-k="ch-${i}"${i === R.c ? ' aria-current="true"' : ''}><span class="t">${ch.title}</span><span class="count" data-fill="ch-${i}"></span></button>`;
+  return `<section class="ls" aria-label="Contents of ${BOOK.title}"><div class="ls__band">${Reader.listBand?.() ?? '<span class="field">Search</span>'}</div>
+    <div class="ls__head"><div class="ls__title">${BOOK.title}</div><span class="label">${BOOK.author} · 61 chapters · <span data-fill="pct">${R.nums?.pct ?? 0}%</span> read</span></div>
+    ${Reader.listHead?.() ?? ''}
+    <div class="ls__rows" role="list" data-keep-scroll="list">${Reader.listRows?.() ?? CHAPTERS.map(row).join('')}</div></section>`;
+}
+function windowHtml(ctx) {
+  const strip = Reader.strip ? Reader.strip(ctx) : `<div class="seg">${ctx.findHere() || `<span class="crumb">${ctx.crumb()}</span>`}<span class="tools-row">${ctx.views()}${Reader.tools(ctx)}</span></div>`;
+  return `<div class="win" data-layout="${ctx.layout}" data-sb="${ctx.sb}" data-list="${ctx.list}" style="--win-w:${ctx.width}px; --win-h:${WIN_H}px; --eien-sidebar-w:${SIDEBAR_W}px; --eien-list-w:${ctx.listW}px">
+  ${ctx.layout === 'runhead' ? `<div class="strip"><div class="strip__panes">${ctx.tool('sidebar', 'Sidebar', KEY('Mod-\\'))}${ctx.tool('list', 'Contents list', '', 'data-toggle-list')}</div><div class="strip__page">${strip}</div></div>` : ''}
+  <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+  <button class="seal-button seal-btn" data-seal data-k="seal" aria-label="${ctx.sb === 'open' ? 'Hide' : 'Show'} the sidebar" aria-expanded="${ctx.sb === 'open'}" data-tip="${ctx.sb === 'open' ? 'Hide' : 'Show'} the sidebar  ${KEY('Mod-\\')}"><span class="seal">永</span></button>
+  ${sidebarHtml(ctx)}
+  ${ctx.list === 'shown' ? listHtml() : '<section class="ls" hidden></section>'}
+  <main class="pg" aria-label="${BOOK.title}">${Reader.page(ctx)}</main>
+</div>`;
+}
+function phoneHtml(ctx) {
+  const view = R.phoneView;
+  const shelf = `<div class="phone__shelf">${SHELF.filter((f) => f.books.length).map((f) => `<div class="label phone__group">${f.name}</div>${f.books.map((b) => `<button class="phone__row" data-book="${b.id ?? ''}" data-k="pbook-${esc(b.title)}"><span>${esc(b.title)}</span><span class="count">${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`).join('')}`).join('')}</div>`;
+  const contents = `<div class="phone__shelf">${CHAPTERS.map((ch, i) => `<button class="phone__row${i === R.c ? ' is-chosen' : ''}" data-ch="${i}" data-k="pch-${i}"><span>${ch.title}</span><span class="count">${i < HELD ? '' : ''}</span></button>`).join('')}</div>`;
+  const back = view === 'page' ? `<button class="back" data-phone-view="shelf" data-k="pback"><span data-icon="back"></span>${ctx.section}</button>`
+    : `<button class="back" data-phone-view="page" data-k="pback"><span data-icon="back"></span>${BOOK.title}</button>`;
+  const body = Reader.phoneViews?.[view] ? Reader.phoneViews[view](ctx)
+    : view === 'shelf' ? `<div class="phone__list"><div class="label phone__title">${ctx.section}</div>${shelf}</div>`
+      : view === 'contents' ? `<div class="phone__list"><div class="label phone__title">Contents</div>${contents}</div>`
+        : Reader.phone(ctx);
+  const tools = view === 'page' ? Reader.phoneTools(ctx) : '';
+  return `<div class="phone" data-layout="${ctx.layout}" data-view="${view}">
+    <div class="backbar">${back}${ctx.layout === 'band' ? `<span class="tools-row">${tools}</span>` : ''}</div>
+    <div class="phone__body">${body}</div>
+    ${ctx.layout === 'slip' && tools ? `<div class="slip phone__slip">${tools}</div>` : ''}
+    ${ctx.layout === 'runhead' ? `<div class="rail">${tools}</div>` : ''}
+  </div>`;
+}
+
+let drawn = false;
+function draw() {
+  const ctx = context();
+  if (!canvas) return;
+  const focusKey = document.activeElement?.closest?.('[data-k]')?.dataset.k;
+  const scrolls = {};
+  for (const el of canvas.querySelectorAll('[data-keep-scroll]')) scrolls[el.dataset.keepScroll] = el.scrollTop;
+  canvas.innerHTML = ctx.device === 'phone' ? `<div class="fit">${phoneHtml(ctx)}</div>` : `<div class="fit">${windowHtml(ctx)}</div>`;
+  drawIcons(canvas);
+  fit();
+  for (const el of canvas.querySelectorAll('[data-keep-scroll]')) if (scrolls[el.dataset.keepScroll] != null) el.scrollTop = scrolls[el.dataset.keepScroll];
+  const lv = main();
+  if (lv) {
+    layoutLeaves(lv);
+    if (R.goal != null) { R.p = pageOf(lv, R.goal); R.goal = null; }
+    R.p = clamp(R.p === Infinity ? lv._.pages - 1 : R.p, 0, lv._.pages - 1);
+    R.p -= R.p % lv._.span;
+    place(lv, true);
+  } else if (R.goal != null) {
+    // Scrolling: the place kept (from another exploration, or before a redraw) at the top.
+    const sc = canvas.querySelector('[data-main-scroll]');
+    const flow = sc?.querySelector(`.book-text[data-c="${R.c}"]`);
+    if (flow && R.goal > 0) {
+      const r = rangeOf(flow, R.goal, R.goal).getBoundingClientRect();
+      const s = sc.getBoundingClientRect();
+      sc.scrollTop += (r.top - s.top) / (s.width / sc.offsetWidth || 1) - 48;
+    } else if (flow && sc.dataset.mainScroll === 'roll') sc.scrollTop += (flow.getBoundingClientRect().top - sc.getBoundingClientRect().top) / (sc.getBoundingClientRect().width / sc.offsetWidth || 1) - 48;
+    R.goal = null;
+  }
+  Reader.drawn?.(ctx);
+  settle();
+  canvas.querySelector('.row.is-chosen')?.scrollIntoView({ block: 'nearest' });
+  if (focusKey) canvas.querySelector(`[data-k="${CSS.escape(focusKey)}"]`)?.focus({ preventScroll: true });
+  const out = document.querySelector('.xbar output');
+  if (out) out.textContent = ctx.device === 'phone' ? 'phone' : `${ctx.width} px`;
+  drawn = true;
+}
+function fit() {
+  const box = canvas.querySelector('.fit');
+  const el = box?.firstElementChild;
+  if (!el) return;
+  const phone = choices().device === 'phone';
+  const [w, h] = phone ? [PHONE.w, PHONE.h] : [choices().width, WIN_H];
+  const scale = Math.min(1, (canvas.clientWidth - 32) / w, (canvas.clientHeight - 32) / h);
+  el.style.transform = `scale(${scale})`;
+  box.style.width = `${w * scale}px`;
+  box.style.height = `${h * scale}px`;
+}
+let saidTimer;
+function say(words) {
+  const el = canvas.querySelector('.said') ?? document.querySelector('.xsaid');
+  if (!el) return;
+  el.textContent = words;
+  clearTimeout(saidTimer);
+  saidTimer = setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
+// The contents as a menu, where the list isn't shown (and the phone's ⋯).
+const menu = document.createElement('div');
+menu.className = 'menu menu--contents';
+menu.setAttribute('role', 'menu');
+menu.hidden = true;
+let menuBack = null;
+function openMenu(items, label, x, y) {
+  menuBack = document.activeElement;
+  menu.innerHTML = `<div class="menu__head" aria-hidden="true">${esc(label)}</div>${items.map((it) => (it.rule ? '<div class="menu__rule" role="separator"></div>' : `<button class="menu__item" role="menuitem" data-run="${it.run}"${it.current ? ' aria-current="true"' : ''}>${it.icon ? icon(it.icon) : '<span></span>'}<span>${esc(it.word)}</span><span class="menu__key">${esc(it.key ?? '')}</span></button>`)).join('')}`;
+  menu.setAttribute('aria-label', label);
+  menu.hidden = false;
+  const r = menu.getBoundingClientRect();
+  menu.style.left = `${clamp(x, 8, innerWidth - r.width - 8)}px`;
+  menu.style.top = `${clamp(y, 8, innerHeight - r.height - 8)}px`;
+  menu._run = (run) => items.find((it) => it.run === run)?.go();
+  (menu.querySelector('[aria-current="true"]') ?? menu.querySelector('.menu__item'))?.focus();
+  menu.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' });
+}
+function closeMenu(back = true) {
+  if (menu.hidden) return;
+  menu.hidden = true;
+  if (back) menuBack?.focus?.();
+}
+menu.addEventListener('click', (e) => { const run = e.target.closest('[data-run]')?.dataset.run; if (run) { closeMenu(false); menu._run(run); } });
+menu.addEventListener('keydown', (e) => {
+  const items = [...menu.querySelectorAll('.menu__item')];
+  const i = items.indexOf(document.activeElement);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: items.length - 1 }[e.key];
+  if (to !== undefined) { e.preventDefault(); e.stopPropagation(); items[(to + items.length) % items.length].focus(); }
+  if (e.key === 'Tab') { e.preventDefault(); closeMenu(); }
+  if (e.key === 'Escape') { e.stopPropagation(); closeMenu(); }
+});
+document.addEventListener('pointerdown', (e) => { if (!menu.contains(e.target)) closeMenu(false); });
+function contentsMenu(anchor) {
+  const r = anchor.getBoundingClientRect();
+  openMenu(CHAPTERS.map((ch, i) => ({ run: `ch${i}`, word: ch.title, key: R.nums?.chapterStart ? String(R.nums.chapterStart(i)) : '', current: i === R.c, go: () => act.go(i) })), 'Contents', r.left - 180, r.bottom + 6);
+}
+
+const typing = (el) => el?.closest?.('input, textarea, [contenteditable="true"]');
+function wire() {
+  canvas.addEventListener('click', (e) => {
+    const b = e.target.closest('button, [data-turn]');
+    if (!b) {
+      // The phone's page: a tap in its outer thirds turns, as a finger does.
+      const body = e.target.closest('.phone__body');
+      if (body && Reader.paged && R.phoneView === 'page' && getSelection().isCollapsed) {
+        const r = body.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width;
+        if (x < 0.3) act.turn(-1); else if (x > 0.7) act.turn(1);
+      }
+      return;
+    }
+    const d = b.dataset;
+    if (d.turn) act.turn(+d.turn);
+    else if (d.ch) { R.phoneView = 'page'; act.go(+d.ch); }
+    else if ('book' in d) { if (d.book) { R.phoneView = 'page'; draw(); } else say('This exploration holds one book: Pride and Prejudice'); }
+    else if (d.fold) { R.folds[d.fold] = !R.folds[d.fold]; draw(); }
+    else if ('contents' in d) { if (choices().device === 'phone') { R.phoneView = 'contents'; draw(); } else if (choices().list === 'shown') canvas.querySelector('.row.is-chosen')?.focus(); else contentsMenu(b); }
+    else if ('toggleList' in d) document.querySelector(`[data-x-set="list"] [data-value="${choices().list === 'shown' ? 'hidden' : 'shown'}"]`)?.click();
+    else if (d.phoneView) { R.phoneView = d.phoneView; draw(); }
+    else if ('seal' in d) document.querySelector(`[data-x-set="sb"] [data-value="${choices().sb === 'open' ? 'shut' : 'open'}"]`)?.click();
+    else if ('bookmark' in d) act.bookmark();
+    else if ('highlight' in d) act.highlight();
+    else Reader.click?.(b, e);
+  });
+  canvas.addEventListener('input', (e) => { if (e.target.matches('[data-find]')) finder.set(e.target.value); });
+  canvas.addEventListener('keydown', (e) => {
+    if (!e.target.matches('[data-find]')) return;
+    if (e.key === 'Enter') { e.preventDefault(); finder.step(e.shiftKey ? -1 : 1); canvas.querySelector('[data-find]')?.focus(); }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finder.close(); }
+  });
+  canvas.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-find-step], [data-find-close], [data-mark-go]');
+    if (!b) return;
+    e.stopPropagation();
+    if (b.dataset.findStep) { finder.step(+b.dataset.findStep); canvas.querySelector('[data-find]')?.focus(); }
+    else if ('findClose' in b.dataset) finder.close();
+    else { const [c, o] = b.dataset.markGo.split(':').map(Number); R.phoneView = 'page'; act.go(c, o); }
+  }, true);
+  canvas.addEventListener('scroll', (e) => { if (e.target.matches?.('[data-main-scroll]')) settle(); }, true);
+  // Rows move with the arrows, as Eien's lists do.
+  canvas.addEventListener('keydown', (e) => {
+    const row = e.target.closest('.row, .trow--book, .phone__row');
+    if (!row || !['ArrowDown', 'ArrowUp'].includes(e.key)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rows = [...row.parentElement.closest('.ls__rows, .shelf, .phone__shelf, .sb').querySelectorAll('.row, .trow--book, .phone__row')];
+    rows[clamp(rows.indexOf(row) + (e.key === 'ArrowDown' ? 1 : -1), 0, rows.length - 1)]?.focus();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !menu.hidden) return;
+    if (Reader.key(e)) return;
+    if (mod(e) && e.key === '2') { e.preventDefault(); const row = canvas.querySelector('.row.is-chosen'); if (row) row.focus(); else contentsMenu(canvas.querySelector('[data-contents]') ?? canvas); return; }
+    if (Reader.marks && mod(e) && e.key.toLowerCase() === 'f' && !e.altKey) { e.preventDefault(); finder.open(); return; }
+    if (mod(e) && e.key === '3') { e.preventDefault(); (main() ?? canvas.querySelector('[data-main-scroll]'))?.focus(); return; }
+    if (mod(e) && e.key.toLowerCase() === 'z' && undo) { e.preventDefault(); R.highlights.push(undo); undo = null; Reader.marksChanged?.(); draw(); say('Highlight put back'); return; }
+    if (mod(e) || e.altKey || typing(e.target) || e.target.closest?.('.menu, .ls__rows, .sb, .phone__shelf, input')) return;
+    const paged = !!main();
+    if (paged && (['ArrowRight', 'PageDown'].includes(e.key) || (e.key === ' ' && !e.shiftKey)) && !e.shiftKey) { e.preventDefault(); act.turn(1); }
+    else if (paged && (['ArrowLeft', 'PageUp'].includes(e.key) || (e.key === ' ' && e.shiftKey)) && !(e.shiftKey && e.key !== ' ')) { e.preventDefault(); act.turn(-1); }
+    else if (paged && e.key === 'Home') { e.preventDefault(); act.chapterEdge(false); }
+    else if (paged && e.key === 'End') { e.preventDefault(); act.chapterEdge(true); }
+    else if (Reader.marks && e.shiftKey && ['ArrowRight', 'ArrowLeft'].includes(e.key)) { e.preventDefault(); sentenceSelect(e.key === 'ArrowRight' ? 1 : -1); }
+    else if (Reader.marks && e.key.toLowerCase() === 'b') { e.preventDefault(); act.bookmark(); }
+    else if (Reader.marks && e.key.toLowerCase() === 'h') { e.preventDefault(); act.highlight(); }
+    else if (Reader.marks && (e.key === ']' || e.key === '[')) { e.preventDefault(); stepMark(e.key === ']' ? 1 : -1); }
+    else if (e.key === 'Escape') { kb = null; getSelection().removeAllRanges(); }
+  });
+}
+
+/** The page: the bar, the window and the notes beside it. */
+function mountReaderPage({ id, note, notes, bar = '', list = 'shown' }) {
+  Reader.id = id;
+  const groups = [
+    ['Pages', [['spread', '1 · The spread'], ['leaf', '2 · One leaf'], ['columns', '3 · Columns']]],
+    ['Scroll', [['chapter', '1 · A chapter'], ['roll', '2 · One roll'], ['beside', '3 · Beside a note']]],
+    ['Features', [['margin', '1 · On the page'], ['index', '2 · In the list'], ['edge', '3 · On the edge']]],
+  ];
+  const group = (attr, label, opts) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${opts.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
+  document.body.insertAdjacentHTML('afterbegin', `
+<header class="xbar">
+  <span class="xbar__name">Eien · Reading EPUBs</span>
+  ${groups.map(([g, pages]) => `<nav class="xbar__group" aria-label="${g}"><span class="xbar__label">${g}</span>${pages.map(([p, w]) => `<a class="word-button" href="reader-${p}.html"${p === id ? ' aria-current="page"' : ''}>${w}</a>`).join('')}</nav>`).join('')}
+  <span class="xbar__break" aria-hidden="true"></span>
+  ${group('device', 'Device', [['desktop', 'Desktop'], ['phone', 'Phone']])}
+  ${group('layout', 'Layout', [['band', 'A · Band'], ['slip', 'B · Slip'], ['runhead', 'C · Running head']])}
+  ${group('theme', 'Light', [['light', 'Day'], ['dark', 'Night']])}
+  ${group('name', 'Section', [['shelf', 'Shelf'], ['reading', 'Reading'], ['bookshelf', 'Bookshelf']])}
+  ${group('sb', 'Sidebar', [['open', 'Open'], ['shut', 'Shut']])}
+  ${group('list', 'List', [['shown', 'Shown'], ['hidden', 'Hidden']])}
+  ${bar}
+  <label class="xbar__group"><span class="xbar__label">Window</span><input type="range" min="900" max="1680" step="20" value="1440" data-win-width aria-label="Window width" /><output></output></label>
+  <span class="xnote">${note}</span>
+</header>
+<main class="stage"><div class="canvas"></div><aside class="notes">${notes}${COMMON_NOTES()}</aside></main>`);
+  document.body.append(menu);
+  canvas = document.querySelector('.canvas');
+  for (const k of ['layout', 'theme', 'sb', 'name', 'device', 'width']) if (kept[k]) root.dataset[k] = kept[k];
+  root.dataset.list = list;
+  root.dataset.theme ??= matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (Number.isInteger(kept.c) && kept.c < HELD) { R.c = kept.c; R.goal = kept.o ?? 0; }
+  const width = document.querySelector('[data-win-width]');
+  width.value = root.dataset.width ?? '1440';
+  root.dataset.width = width.value;
+  width.addEventListener('input', () => { root.dataset.width = width.value; draw(); });
+  wire();
+  wireBar(() => { if (R.nums) R.goal = R.nums.start; draw(); });
+  addEventListener('resize', () => { fit(); });
+  document.fonts?.ready.then(() => { R.goal = R.nums?.start ?? 0; draw(); });
+}
+
+/** The same in all nine. */
+const COMMON_NOTES = () => `
+  <h2>In all nine</h2>
+  <ul>
+    <li><b>Books are files in the vault</b>, <code>.epub</code>, in any folder: Cooking holds its recipe notes and a cookbook side by side. The sidebar's last section lists them, a lens over the one folder tree: every book, under the folders that hold one, at their depth (Fic holds none itself, so it shows only as the way to Research). Its row's count is how far you've read. The folders aren't reworked: choosing Cooking under FOLDERS lists its notes, as now.</li>
+    <li><b>The section's name is the owner's call.</b> The bar's Section control renames it in place: <b>Shelf</b> (short, a thing on a desk), <b>Reading</b> (says what you do there, but Reading is already a view of a note: Live · Source · Reading), <b>Bookshelf</b> (plain, but long beside LIBRARY, FOLDERS, TAGS). Book and Library are taken.</li>
+    <li><b>Opening a book</b> reads it in the page pane; the note list becomes its contents, chapters in the book's order, each with the page it starts on; the chosen row is the chapter you're in (the selected fill and the seal's rule, as a note's row). With the list hidden, the Contents tool (or ${KEY('Mod-2')}) opens them as a menu.</li>
+    <li><b>The views' place holds the book's two:</b> Pages and Scroll, a pressed pair as Live · Source · Reading are. Here the other one opens its exploration, keeping your place.</li>
+    <li><b>The book's words are set as Eien sets yours:</b> your Typeface, its size, leading and measure; ${KEY('Mod-+')} and ${KEY('Mod--')} zoom them as they zoom a note. The book's own styles keep only its structure (italics, headings, a centred line), never its fonts or colours, so it reads by Night too.</li>
+    <li><b>Safely:</b> each chapter is drawn in a sandboxed frame, with no scripts and no network; the zip is read with sizes capped and no path out of it. Nothing in a book can reach the vault.</li>
+    <li><b>Where you were</b>, and your bookmarks and highlights, are kept in <code>.eien/reading/</code>, keyed by the book's contents, so a renamed or moved book keeps them, and they sync with the vault. The book file is never written.</li>
+    <li><b>Keys</b> (the book has the keyboard after a click in it, or ${KEY('Mod-3')}): <kbd>→</kbd> <kbd>Space</kbd> <kbd>PgDn</kbd> next page, <kbd>←</kbd> <kbd>⇧Space</kbd> <kbd>PgUp</kbd> back, <kbd>Home</kbd> <kbd>End</kbd> the chapter's start and end; in the list, <kbd>↑</kbd> <kbd>↓</kbd> and <kbd>Enter</kbd>. Scrolling, the usual keys scroll.</li>
+    <li><b>The phone</b> (the bar's Device): the book is a page in the phone's stack, the shelf behind its back bar; the book's tools where the layout keeps a phone's (A in the bar, B a floating slip, C a rail).</li>
+  </ul>
+  <p class="said-note">Text: <i>Pride and Prejudice</i>, Jane Austen (1813), public domain; Chapters I to III here.</p>`;
+
+Reader.paged = false;
+
+const chEnd = () => {
+  const prev = R.c > 0 ? `<button class="word-button" data-go="${R.c - 1}" data-k="go-prev">${icon('left')}${CHAPTERS[R.c - 1].title}</button>` : '<span></span>';
+  const next = R.c < CHAPTERS.length - 1 ? `<button class="word-button" data-go="${R.c + 1}" data-k="go-next">${CHAPTERS[R.c + 1].title}${icon('right')}</button>` : '<span class="label">The end</span>';
+  return `<nav class="ch-end" aria-label="Chapters">${prev}${next}</nav>`;
+};
+const textHtml = () => `<div class="book-text" data-c="${R.c}">${chapterHtml(R.c)}</div>`;
+Reader.tools = (ctx) => ctx.contentsTool();
+Reader.page = (ctx) => `<div class="page">${ctx.top()}<div class="blotter" data-main-scroll="chapter" data-keep-scroll="ch${R.c}" tabindex="0" role="region" aria-roledescription="book" aria-label="${BOOK.title}, ${CHAPTERS[R.c].title}">
+  <article class="sheet ch-sheet">${ctx.head()}${textHtml()}${chEnd()}</article></div>${ctx.colophon([CHAPTERS[R.c].ord, '<span data-col-ch></span>', '<span data-col-book></span>'])}</div>`;
+Reader.phone = () => `<div class="phone__page is-scroll" data-main-scroll="chapter" data-keep-scroll="pch${R.c}" tabindex="0">${textHtml()}${chEnd()}</div>`;
+Reader.phoneTools = (ctx) => ctx.tool('contents', 'Contents', '', 'data-contents');
+Reader.after = (ctx, n) => {
+  const set = (sel, text) => { for (const el of canvas.querySelectorAll(sel)) el.textContent = text; };
+  set('[data-col-ch]', `${n.chPct}% of the chapter`);
+  set('[data-col-book]', `${n.pct}% of the book`);
+};
+Reader.click = (b) => { if (b.dataset.go) act.go(+b.dataset.go); };
+// A new chapter opens at its top.
+const go = act.go;
+act.go = (c) => { go(c); const sc = canvas.querySelector('[data-main-scroll]'); if (sc) sc.scrollTop = 0; settle(); };
+
+mountReaderPage({
+  id: 'chapter',
+  note: 'A chapter is a sheet that scrolls, as a note does in Reading; the next waits at its foot.',
+  notes: `
+  <h2>Scroll 1 · A chapter a sheet</h2>
+  <p>A chapter reads as a note does in the Reading view: one sheet on the blotter, the same width, margins and type, and it scrolls. At its foot, after a soft rule, the chapter before and the chapter after are word buttons. Nothing loads or moves until one is pressed: the end of a chapter is a place to stop.</p>
+  <ul>
+    <li><b>Keys:</b> the usual scrolling keys (arrows, Space, Page Up and Down, Home, End) once the book has the keyboard; Tab reaches the next chapter's button.</li>
+    <li><b>Where you are:</b> the list's chosen row is the chapter; the colophon says how far through the chapter and the book; the shelf's row, how far through the book.</li>
+    <li><b>A chapter is one of the EPUB's files</b>, so it's one sandboxed frame in the app: the simplest build, and the one the plan's phases start from.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>The chapter fills the screen and scrolls under the thumb; the chapter buttons wait at its foot, at a finger's size.</p>
+  <h2>For</h2>
+  <ul><li>Exactly how a note reads, so nothing to learn; every width, every layout, the phone.</li><li>The simplest to build safely: one chapter, one frame.</li><li>The chapter's end is a natural pause.</li></ul>
+  <h2>Against</h2>
+  <ul><li>A press at every chapter's end: reading straight through, that's a stop you didn't ask for.</li><li>Progress through a chapter is only the scroll bar and the colophon.</li></ul>`,
+});
+</script>
+</body>
+</html>

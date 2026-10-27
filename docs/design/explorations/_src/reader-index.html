@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Features 2 · In the list</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:reader.css*/
+
+/* Features 2 · In the list. The note list is the book's index: Contents, Marks
+   and Found, three lenses on one list, in its own rows (a title, a count, a
+   line of preview). The list's search field searches the book while it's
+   open. On the page: a dog-ear for a bookmark, an ink wash for a highlight. */
+.ls__band .find { flex: 1; }
+.ls__band .find__field { width: 100%; }
+.ls__band .find .icon-button, .ls__band .find__says { display: none; }
+.lenses { display: flex; gap: 2px; padding: var(--eien-space-2) var(--eien-space-4); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.lenses .count { margin-left: var(--eien-space-1); color: inherit; }
+.row--mark { grid-template-columns: 1fr auto; }
+.row--mark .t { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.row--mark .p { grid-column: 1 / 3; }
+.row--mark .found { background: var(--eien-field); box-shadow: 0 0 0 var(--eien-hairline) var(--eien-rule-strong); border-radius: 1px; }
+.empty-rows { padding: var(--eien-space-6) var(--eien-space-4); text-align: center; font-style: italic; color: var(--eien-ink-soft); font-size: var(--eien-size-preview); }
+/* On the page: highlights in a wash of ink; matches outlined only, so the two never look alike. */
+.book-text .hl { background: var(--eien-field); box-shadow: 0 0 0 var(--eien-hairline) var(--eien-field); }
+.book-text .hit { background: none; box-shadow: 0 0 0 var(--eien-hairline) var(--eien-rule-strong); }
+.book-text .hit.is-at { background: var(--eien-seal-wash); box-shadow: 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+/* A bookmark is the page's outer top corner turned down (the split's dog-ear). */
+.index-sheet { position: relative; }
+[data-dogear] { display: contents; }
+.dogear { position: absolute; z-index: 3; top: calc(-1 * var(--eien-hairline)); right: calc(-1 * var(--eien-hairline)); width: var(--eien-space-5); height: var(--eien-space-5); scale: -1 1; pointer-events: none; }
+.dogear svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.dogear__gone { fill: var(--eien-blotter); }
+.dogear__flap { fill: var(--eien-band); stroke: var(--eien-rule-strong); stroke-width: var(--eien-hairline); stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.dogear polygon { transform-origin: 0 0; animation: fold var(--eien-calm) var(--eien-ease); }
+@keyframes fold { from { transform: scale(0); } }
+@media (prefers-reduced-motion: reduce) { .dogear polygon { animation: none; } }
+.phone .dogear .dogear__gone { fill: var(--eien-band); }
+.phone__page.index-sheet { position: relative; }
+.folio .count:last-child { margin-left: auto; }
+.icon-button[data-bookmark][aria-pressed='true'] svg { fill: currentColor; }
+.phone .lenses { padding-inline: var(--eien-space-3); }
+.phone .lenses .word-button { min-height: var(--eien-touch); }
+.phone .ls__band { display: flex; align-items: center; padding: var(--eien-space-2) var(--eien-space-3); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.phone .row { min-height: var(--eien-touch); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:reader.js*/
+Reader.marks = true;
+R.find.open = true; // the list's field is always there; it searches the book while one is open
+let lens = 'contents';
+const DOGEAR = '<span class="dogear" role="img" aria-label="Bookmarked"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon class="dogear__gone" points="0,0 24,0 0,24"/><polygon class="dogear__flap" points="24,0 24,24 0,24"/></svg></span>';
+const pageMarked = () => !!R.nums && R.bookmarks.some((b) => b.c === R.c && b.o >= R.nums.start && b.o <= Math.max(R.nums.end, R.nums.start));
+const pageNo = (c, o) => (R.nums?.pageAt ? String(R.nums.pageAt(c, o)) : '');
+/** Words from the book at a place: a bookmark's first words, a match's surroundings. */
+const textOf = (c) => CHAPTERS[c].paras?.join('') ?? '';
+const firstWords = (c, o) => { const t = textOf(c).slice(o, o + 90); return `${t.slice(0, t.lastIndexOf(' '))}…`; };
+
+function listLenses() {
+  const n = { contents: CHAPTERS.length, marks: R.bookmarks.length + R.highlights.length, found: R.find.q.trim().length >= 2 ? hits().length : null };
+  const tab = (k, w) => `<button class="word-button" role="tab" data-lens="${k}" data-k="lens-${k}" aria-selected="${lens === k}" aria-pressed="${lens === k}"${k === 'found' && n.found == null ? ' disabled' : ''}>${w}${n[k] != null ? `<span class="count">${n[k]}</span>` : ''}</button>`;
+  return `<div class="lenses" role="tablist" aria-label="The book's index">${tab('contents', 'Contents')}${tab('marks', 'Marks')}${tab('found', 'Found')}</div>`;
+}
+function listRows() {
+  if (lens === 'marks') {
+    const all = marksInOrder();
+    if (!all.length) return '<p class="empty-rows">Nothing kept yet. B bookmarks a page; H keeps the words you select.</p>';
+    return all.map((m, i) => {
+      const t = m.kind === 'bookmark' ? firstWords(m.c, m.o) : hlText(m.h);
+      return `<button class="row row--mark" data-mark-go="${m.c}:${m.o}" data-mark="${i}" data-k="mark-${m.kind}-${m.c}-${m.o}"><span class="t">${esc(t)}</span><span class="count">${pageNo(m.c, m.o)}</span><span class="p">${CHAPTERS[m.c].title} · ${m.kind}</span></button>`;
+    }).join('');
+  }
+  if (lens === 'found') {
+    const list = hits();
+    if (!list.length) return `<p class="empty-rows">No “${esc(R.find.q.trim())}” in Chapters I to III.</p>`;
+    return list.map((h, i) => {
+      const before = h.p.slice(Math.max(0, h.i - 34), h.i);
+      const after = h.p.slice(h.i + (h.b - h.a), h.i + (h.b - h.a) + 60);
+      return `<button class="row row--mark${i === R.find.at ? ' is-chosen' : ''}" data-hit="${i}" data-k="hit-${i}"${i === R.find.at ? ' aria-current="true"' : ''}><span class="t">…${esc(before)}<span class="found">${esc(h.p.slice(h.i, h.i + (h.b - h.a)))}</span>${esc(after)}…</span><span class="count">${pageNo(h.c, h.a)}</span><span class="p">${CHAPTERS[h.c].title}</span></button>`;
+    }).join('');
+  }
+  return CHAPTERS.map((ch, i) => `<button class="row row--ch${i === R.c ? ' is-chosen' : ''}" data-ch="${i}" data-k="ch-${i}"${i === R.c ? ' aria-current="true"' : ''}><span class="t">${ch.title}</span><span class="count" data-fill="ch-${i}"></span></button>`).join('');
+}
+Reader.listBand = () => finder.field();
+Reader.listHead = listLenses;
+Reader.listRows = listRows;
+// Typing in the list's field turns to Found; clearing it, back to Contents.
+const set = finder.set;
+finder.set = (q) => { lens = q.trim().length >= 2 ? 'found' : 'contents'; set(q); };
+finder.close = () => { R.find.q = ''; R.find.at = -1; hitCache = { q: null, list: [] }; lens = 'contents'; draw(); main()?.focus(); };
+finder.open = () => { if (choices().device === 'phone') { R.phoneView = 'contents'; draw(); } else if (choices().list === 'hidden') document.querySelector('[data-x-set="list"] [data-value="shown"]').click(); canvas.querySelector('[data-find]')?.focus(); };
+Reader.marksChanged = () => { if (lens === 'contents') lens = 'marks'; };
+
+Reader.tools = (ctx) => `${ctx.tool('contents', 'The book’s index', KEY('Mod-2'), 'data-contents')}${ctx.tool('search', 'Find in the book', KEY('Mod-F'), 'data-open-find')}${ctx.tool('ribbon', 'Bookmark this page', 'B', `data-bookmark aria-pressed="${pageMarked()}"`)}${ctx.tool('highlight', 'Highlight the selection', 'H', 'data-highlight')}`;
+Reader.page = (ctx) => `<div class="page">${ctx.top()}<div class="blotter is-paged">
+  <article class="sheet book-sheet index-sheet"><span data-dogear></span>
+    <button class="turn turn--prev" data-turn="-1" data-k="turn-prev" aria-label="Previous page" data-tip="Previous page  ←" data-tip-side="right">${icon('left')}</button>
+    <button class="turn turn--next" data-turn="1" data-k="turn-next" aria-label="Next page" data-tip="Next page  →" data-tip-side="left">${icon('right')}</button>
+    ${ctx.head()}${ctx.leaves(R.c)}
+    <footer class="folio"><span class="count">${CHAPTERS[R.c].ord}</span><span class="count" data-folio></span></footer>
+  </article></div>${ctx.colophon([CHAPTERS[R.c].ord, '<span data-col-page></span>', '<span data-fill="pct"></span>'])}</div>`;
+Reader.phone = (ctx) => `<div class="phone__page index-sheet"><span data-dogear></span>${ctx.leaves(R.c)}<div class="phone__foot"><span class="count">${CHAPTERS[R.c].ord}</span><span class="count" data-col-page></span></div></div>`;
+Reader.phoneTools = (ctx) => `${ctx.tool('contents', 'The book’s index', '', 'data-contents')}${ctx.tool('ribbon', 'Bookmark this page', '', `data-bookmark aria-pressed="${pageMarked()}"`)}${ctx.tool('highlight', 'Highlight the selection', '', 'data-highlight')}`;
+// The phone's index is its own page in the stack: the field, the three lenses, the rows.
+Reader.phoneViews = { contents: () => `<div class="phone__list"><div class="ls__band">${finder.field()}</div>${listLenses()}<div class="ls__rows">${listRows()}</div></div>` };
+Reader.after = (ctx, n) => {
+  if (!n?.paged) return;
+  const setText = (sel, text) => { for (const el of canvas.querySelectorAll(sel)) el.textContent = text; };
+  setText('[data-col-page]', `page ${n.page} of ${n.pages}`);
+  setText('[data-folio]', String(n.page));
+  const on = pageMarked();
+  for (const el of canvas.querySelectorAll('[data-dogear]')) el.innerHTML = on ? DOGEAR : '';
+  for (const b of canvas.querySelectorAll('[data-bookmark]')) { b.setAttribute('aria-pressed', String(on)); b.dataset.tip = `${on ? 'Take the bookmark off' : 'Bookmark this page'}  B`; }
+  for (const b of canvas.querySelectorAll('.turn--prev')) b.disabled = n.page <= 1;
+  // The marks' page numbers are known once the pages are counted.
+  const rows = canvas.querySelector('.ls__rows');
+  if (rows && lens !== 'contents' && !rows.dataset.counted) { rows.dataset.counted = '1'; rows.innerHTML = listRows(); }
+};
+Reader.click = (b) => {
+  const d = b.dataset;
+  if (d.lens) { lens = d.lens; draw(); canvas.querySelector(`[data-k="lens-${d.lens}"]`)?.focus(); }
+  else if (d.hit) { R.find.at = +d.hit; const h = hits()[R.find.at]; R.phoneView = 'page'; act.go(h.c, h.a); }
+  else if ('openFind' in d) finder.open();
+};
+// Delete on a mark's row takes it off; ⌘Z puts it back.
+addEventListener('keydown', (e) => {
+  const row = e.target.closest?.('[data-mark]');
+  if (!row || !['Delete', 'Backspace'].includes(e.key)) return;
+  e.preventDefault();
+  const m = marksInOrder()[+row.dataset.mark];
+  if (m.kind === 'bookmark') R.bookmarks = R.bookmarks.filter((b) => b !== m.b); else { R.highlights = R.highlights.filter((h) => h !== m.h); undo = m.h; }
+  say(m.kind === 'bookmark' ? 'Bookmark taken off' : `Highlight taken off; ${KEY('Mod-Z')} puts it back`);
+  draw();
+});
+
+mountReaderPage({
+  id: 'index',
+  note: 'The list is the book’s index: Contents, Marks, Found; its search field searches the book.',
+  notes: `
+  <h2>Features 2 · In the list</h2>
+  <p>The note list is already an index; with a book open it's the book's. Three lenses over it, in its head: <b>Contents</b>, <b>Marks</b>, <b>Found</b>, each a list of rows as notes are, a title, a count (the page) and a line of preview. Choose a row and the page turns there.</p>
+  <ul>
+    <li><b>Page count:</b> every row's count is its page; the colophon and the folio say where you are; the head says how far.</li>
+    <li><b>Bookmark:</b> <kbd>B</kbd>, or the tool. The page's outer top corner turns down, the split's dog-ear: no ink at all, the quietest mark. In Marks, a bookmark is its page's first words.</li>
+    <li><b>Highlight:</b> select (drag, or <kbd>⇧→</kbd> a sentence at a time) and <kbd>H</kbd>. The words take a wash of ink. In Marks, a highlight is its own words, so the list reads as a commonplace book. <kbd>Delete</kbd> on a row takes it off, <kbd>${KEY('Mod-Z')}</kbd> puts it back.</li>
+    <li><b>Find:</b> the list's search field searches the book while one is open (its placeholder says so), and <kbd>${KEY('Mod-F')}</kbd> goes there. Typing turns to Found: each match a row with its words around it, and the page shows it outlined, the current one in the selection's wash. <kbd>Enter</kbd> and <kbd>⇧Enter</kbd> step; <kbd>Esc</kbd> clears it back to Contents.</li>
+    <li><b>]</b> and <b>[</b> walk the marks on the page too.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>The index is a page of its own in the phone's stack, behind the Contents tool: the search field, the three lenses as a finger's buttons, the rows. A row turns the book to its page and comes back to it.</p>
+  <h2>For</h2>
+  <ul><li>Marks you can see all at once, and read: highlights as a list of quotations, each with its page.</li><li>Found shows every match in its words before you go to one.</li><li>All in a part Eien already has, in its own rows; the page itself stays nearly bare.</li></ul>
+  <h2>Against</h2>
+  <ul><li>Needs the list: with two panes, or the list shut, it's a menu or a pane away.</li><li>The list's search field means two things: the vault's notes, or this book. The placeholder says which, but it's a mode.</li></ul>`,
+});
+</script>
+</body>
+</html>
