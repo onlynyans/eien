@@ -652,7 +652,7 @@ const FILE_PATH = 'fic/beneath-the-walls/notes-for-iv.md';
 
 // A paragraph is its words and the links over them: what Live shows with the marks hidden.
 // A note link's target is null while its words are its target ([[Below the Gate]]).
-const LINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]|\[([^\]]+)\]\(([^)\s]*)\)/g;
+const LINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]|\[((?:\\.|[^\]\\])+)\]\(([^)\s]*)\)/g;
 function parse(line) {
   let text = '';
   let last = 0;
@@ -660,7 +660,8 @@ function parse(line) {
   for (const m of line.matchAll(LINK_RE)) {
     text += line.slice(last, m.index);
     const start = text.length;
-    text += m[1] !== undefined ? (m[2] ?? m[1]) : m[3];
+    // A web link's words keep \\, \[ and \] escaped in the file; the page shows them plain.
+    text += m[1] !== undefined ? (m[2] ?? m[1]) : m[3].replace(/\\([\\[\]])/g, '$1');
     links.push(m[1] !== undefined
       ? { kind: 'note', target: m[2] !== undefined ? m[1].trim() : null, start, end: text.length }
       : { kind: 'web', target: m[4], start, end: text.length });
@@ -676,7 +677,7 @@ function markdown(par) {
     const words = par.text.slice(l.start, l.end);
     out += par.text.slice(at, l.start);
     if (l.kind === 'note') out += l.target === null ? `[[${words}]]` : `[[${l.target}|${words}]]`;
-    else out += `[${words.replace(/([[\]])/g, '\\$1')}](${l.target.replace(/ /g, '%20').replace(/\)/g, '%29')})`;
+    else out += `[${words.replace(/([\\[\]])/g, '\\$1')}](${l.target.replace(/ /g, '%20').replace(/\)/g, '%29')})`;
     at = l.end;
   }
   return out + par.text.slice(at);
