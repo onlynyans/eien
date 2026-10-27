@@ -108,6 +108,8 @@ export class Sidebar {
   #refocus: string | null = null;
   /** The row the keyboard was on as the sidebar shut, by its data-key: `focusTree` goes back to it. */
   #left: string | null = null;
+  /** Whether the tree drawn whole last was a search's results. */
+  #drawnResults = false;
   /** The frame last drawn (./signature.ts): the same again isn't rebuilt. */
   #drawn = '';
   /** The notes' rows last drawn, kept where they show the same. */
@@ -297,11 +299,19 @@ export class Sidebar {
           ),
         ];
 
+    // The tree drawn whole is a new scroller: it takes the old one's scroll, or a folder opened
+    // or closed would send it to the top (and the keyboard given back, a few rows from there).
+    // A search's results start at the top.
+    const scrolled =
+      results || this.#drawnResults
+        ? 0
+        : (this.#body.querySelector('.sidebar__tree')?.scrollTop ?? 0);
+    this.#drawnResults = results !== null;
+    const nav = h('nav', { class: 'sidebar__tree', attrs: { 'aria-label': 'Notes' } }, ...tree);
     this.#drawing = true;
-    this.#body.replaceChildren(
-      h('nav', { class: 'sidebar__tree', attrs: { 'aria-label': 'Notes' } }, ...tree),
-    );
+    this.#body.replaceChildren(nav);
     this.#drawing = false;
+    nav.scrollTop = scrolled;
     this.#rows.settle();
     // In the window now: each long list draws the rows in sight.
     this.#windows.settle();
@@ -329,21 +339,23 @@ export class Sidebar {
       if (focused === null || this.#folderField.active || this.#tagField.active) return;
       // Still on the control it was on: rows put right around it, or not touched at all.
       if (asked === null && document.activeElement === active) return;
-      if (this.#focusKey(focused) || focusedAt < 0) return;
+      // The control it was on, drawn anew where the scroll kept it: given back without a scroll,
+      // as a half-hidden row clicked would otherwise jump into sight. One asked for may have moved.
+      if (this.#focusKey(focused, asked !== null) || focusedAt < 0) return;
       const rows = this.#shown('.tree-row__name');
       rows[Math.min(focusedAt, rows.length - 1)]?.focus();
     };
   }
 
   /** Give the keyboard to the control `key` names, if it's in sight or a long list holds it. */
-  #focusKey(key: string): boolean {
+  #focusKey(key: string, scroll = true): boolean {
     const same = [...this.#body.querySelectorAll<HTMLElement>('[data-key]')].find(
       (control) => control.dataset.key === key,
     );
     const visible = same?.closest('[hidden]') ? undefined : same;
     // A note's row in a long list may be out of sight, undrawn: its list brings it back.
     if (!visible) return this.#windows.focusKey(key);
-    visible.focus();
+    visible.focus({ preventScroll: !scroll });
     return true;
   }
 

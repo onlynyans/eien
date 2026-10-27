@@ -398,7 +398,8 @@ Every pane can be resized and collapsed. Keyboard: ⌘1/⌘2/⌘3 focus a pane,
   A pane opened again comes back where it was, for as long as the window is
   open: the same rows in sight, and ⌘1 or ⌘2 gives the keyboard back to the
   row it was on as the pane shut. The same list drawn again keeps its scroll;
-  another list, or another sort, starts at the top.
+  another list, or another sort, starts at the top. A folder opened or closed
+  in the tree leaves the tree where it was, the folder's row in the same spot.
 - **Two panes** (Layout → Panes, or the pair at the sidebar's foot): the list
   is gone and the tree lists the notes, under the vault, each open folder (in
   the folder's own order and sort, a book's numbered), All Notes, Pinned and
