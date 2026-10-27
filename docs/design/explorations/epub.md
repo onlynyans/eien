@@ -1,0 +1,457 @@
+# Reading EPUBs: nine explorations
+
+**For the owner to choose (2026-10-27).** Backlog #40. Nothing is built. Three
+sets of three, in one family so they share one look: turning pages, scrolling,
+and the features (page count, bookmarks, highlights, search in the book).
+
+Each page works, by Day and Night, in A · Band, B · Slip and C · Running head,
+with the sidebar open or shut, the list shown or hidden, the window as wide or
+narrow as you like, and on the phone (the bar's Device). Each works from the
+keyboard, and each says what the phone does. The text is *Pride and Prejudice*
+(1813, public domain): its first three chapters, with the other fifty-eight
+counted by their length, so page counts and progress are the whole book's.
+Your place carries from page to page, so you can compare them on the same
+words.
+
+| Group | Page | Direction |
+|---|---|---|
+| Pages | [epub-spread.html](epub-spread.html) | 1 · The spread |
+| | [epub-leaf.html](epub-leaf.html) | **2 · One leaf, its edges** (recommended) |
+| | [epub-columns.html](epub-columns.html) | 3 · Columns to the pane |
+| Scroll | [epub-chapter.html](epub-chapter.html) | **1 · A chapter a sheet** (recommended) |
+| | [epub-roll.html](epub-roll.html) | 2 · One roll |
+| | [epub-beside.html](epub-beside.html) | 3 · Beside a note (recommended later, as a mode on 1) |
+| Features | [epub-margin.html](epub-margin.html) | 1 · On the page (its marks recommended) |
+| | [epub-index.html](epub-index.html) | **2 · In the list** (recommended, with 1's marks) |
+| | [epub-edge.html](epub-edge.html) | 3 · On the edge |
+| Showcase | [epub-room.html](epub-room.html) | 1 · The reading room (recommended as a mode, after 2) |
+| | [epub-set.html](epub-set.html) | **2 · Set as a book** (recommended, for Pages) |
+| | [epub-lamp.html](epub-lamp.html) | 3 · By lamplight (recommended later, as a mode on Scroll) |
+
+## What all nine share
+
+- **Books are files in the vault**, `.epub`, in any folder: Cooking holds its
+  recipe notes and a cookbook side by side.
+- **A sidebar section lists them**: a lens over the one folder tree. It shows
+  every book, under the folders that hold one, at their depth. A folder that
+  holds none itself shows only as the way to one deeper (Fic → Research). The
+  folders aren't reworked: choosing Cooking under FOLDERS lists its notes, as
+  now. A book's row counts how far you've read ("41%", "read"). The section
+  sits last, after TAGS (the writing first), and folds per device as every
+  section does.
+- **Opening a book** reads it in the page pane. The note list becomes its
+  contents: chapters in the book's order, each with the page it starts on.
+  The chosen row is your chapter, with the selected fill and the seal's rule,
+  as a note's row has. With the list hidden, the Contents tool or ⌘2 opens
+  them as a menu.
+- **The views' place holds the book's two**, Pages and Scroll, a pressed pair
+  as Live · Source · Reading are. In the pages, the other one opens its
+  exploration and keeps your place.
+- **Your type, not the publisher's.** The book is set in your Typeface, with
+  its size, leading and measure; ⌘+ and ⌘− zoom it as they zoom a note.
+  Paragraphs are indented with no gap, as a book sets them. The book's own
+  styles keep only its structure (italics, headings, a centred line), never
+  its fonts or colours, so it reads by Night.
+- **Safely**, as #40 plans: each chapter is drawn in a sandboxed frame, with
+  no scripts and no network; the zip is read with sizes capped and no path out
+  of it. The book file is never written.
+- **What's kept**: your place, bookmarks and highlights, in `.eien/reading/`,
+  keyed by the book's contents. A renamed or moved book keeps them, and they
+  sync with the vault.
+- **Keys**, once the book has the keyboard (a click in it, or ⌘3):
+  - paged: → Space PgDn turn on; ← ⇧Space PgUp turn back; Home and End go to
+    the chapter's start and end;
+  - scrolling: the usual scrolling keys;
+  - in the list: ↑ ↓ and Enter.
+- **The phone:** the book is a page in the phone's stack, with the shelf
+  behind its back bar. Its tools sit where the layout keeps a phone's: A in
+  the bar, B a floating slip, C a rail. Paged books turn with a tap in either
+  outer third, or a swipe.
+
+### Nothing new in the system's terms
+
+Every value is a token from `.interface-design/system.md`. The one token the
+explorations' shared CSS lacked, `--eien-field`, is the app's own (the
+field's wash). The marks reuse what the split's Facing pages already decided:
+
+- the **ribbon** (ink-soft, forked, over the sheet's top edge);
+- the **dog-ear** (the corner gone to the blotter, the flap in band with a
+  rule-strong hairline);
+- the **edge tab** (ink-soft, standing out from the outer edge).
+
+Reading marks are pencil and ink, never the seal: the seal keeps its five
+places. The current Find match uses the selection's wash, because Find
+selects it.
+
+## The section's name (an open question)
+
+"Book" already means a folder marked as a manuscript (the BOOK mark, Export
+Book), and LIBRARY is the sidebar's first section. The bar's **Section**
+control renames the section in place on every page:
+
+- **SHELF**: short, and a thing on the desk, the interface's own picture
+  (desk, blotter, paper). It sits well beside LIBRARY, FOLDERS, TAGS.
+- **READING**: says what you do there, but Reading is already a view of a
+  note (Live · Source · Reading), so "Reading" would name two things a click
+  apart.
+- **BOOKSHELF**: plain, but the longest label in the sidebar, and it has
+  "book" in it, the word the manuscript folders already own.
+
+The recommendation is **SHELF**.
+
+## Turning pages
+
+| | For | Against |
+|---|---|---|
+| **1 · The spread** | The most book-like; Eien's own gutter and folios; uses a wide window; the same picture as Facing pages | Needs room: each page 20em, so with three panes at 1440px it closes to one page; a chapter's last spread may be half empty |
+| **2 · One leaf, its edges** | The note's own sheet, so nothing to learn and every width works; how far you are shows as the book's fore-edge, in paper and hairlines, before any number | A wide window shows one page with blotter beside it; six edges are coarse |
+| **3 · Columns to the pane** | The most words in sight, the calmest (Page frame Full and columns) | Not a book: no page, no edges; the eye runs foot-to-head across a wide screen; the columns change as panes open and shut |
+
+### 1 · The spread
+
+- **What:** one sheet, two pages facing across the gutter, as the split's
+  Facing pages lays two notes. Running heads: the book's title over the left
+  page, the chapter over the right. Folios at the foot, mirrored. A turn moves
+  a spread; the outer margins turn too.
+- **Narrow:** below two 20em pages it closes to one page, and the colophon
+  says so. The page is never shrunk to fit.
+- **Phone:** one page, always.
+- **Intent:** the writer with room to open the book flat. *Palette:* paper and
+  ink; the gutter is Facing pages' soft hairline. *Depth:* one sheet, one
+  shadow, no fold shading (no gradients). *Type:* the text face; heads and
+  folios in the machine voice. *Spacing:* the gutter is `--eien-space-8`
+  between the text blocks.
+
+### 2 · One leaf, its edges
+
+- **What:** a book opens as a note does: one sheet, the same width and
+  margins. Under it lies the rest of the book. The pages still to read stack
+  at its right edge, and the pages read at its left, up to six paper edges
+  `--eien-mark-w` apart, each in a `--eien-rule` hairline.
+- **Turning:** the arrow keys, or click the edges. Hover an edge for "212
+  pages to go".
+- **Folio:** the chapter's page of its pages, and the book's page.
+- **Page frame Full:** no sheet, so no edges; the colophon still counts.
+- **Phone:** the fore-edge stays as hairlines down the page's right side.
+- **Intent:** one page at a time beside the contents, knowing how far without
+  reading a number. *Palette:* paper, blotter, ink; the edges are paper.
+  *Depth:* the sheet's shadow on the top leaf alone, the stack in hairlines.
+  *Spacing:* the edges are a mark's width apart.
+
+### 3 · Columns to the pane
+
+- **What:** Page frame Full for books. The pane is paper. The chapter flows
+  into as many columns of at least 20em as fit (one, two or three), a soft
+  hairline between them. A turn moves the whole screen; the side gutters turn
+  too.
+- **Intent:** the most words in sight. *Depth:* flat, as Full is. *Spacing:*
+  `--eien-space-7` gutters.
+
+### Recommendation: 2 · One leaf, opening to 1's spread when there's room
+
+- **One leaf** is the note's own sheet, so a book looks like it belongs in
+  Eien. It works at every width and on the phone, and the fore-edge is a
+  quiet progress no other reader has.
+- **When the page has room for two 20em pages**, open the book to 1's spread.
+  That's the same rule Facing pages has, so the window has one idea of "two
+  pages"; the edges then stand at the spread's outer sides.
+- **3 is Full frame's answer** rather than a direction: in Page frame Full, a
+  leaf has no edges, so it reads as one column. Columns could come later as an
+  option.
+
+## Scrolling
+
+| | For | Against |
+|---|---|---|
+| **1 · A chapter a sheet** | Exactly how a note reads; one chapter is one EPUB file is one sandboxed frame, the simplest safe build; the chapter's end is a pause | A press at each chapter's end; progress through a chapter is only the scroll bar and the colophon |
+| **2 · One roll** | Reads straight through; the head and the list follow you; time left, plainly | The hardest to build (frames stacked, drawn and dropped, a place that holds while they load); the scroll bar is too fine; a band always over the sheet |
+| **3 · Beside a note** | What a writer reads for: the source beside the writing, a quote with its source in one key; nothing new (it's the split) | Two narrower pages; a mode on top of a reading mode |
+
+### 1 · A chapter a sheet
+
+- **What:** a chapter reads as a note does in Reading: one sheet that scrolls.
+  At its foot, after a soft rule, the chapters before and after are word
+  buttons. Nothing loads or moves until one is pressed.
+- **Colophon:** how far through the chapter and the book.
+- **Intent:** reading as you read your own notes. *Depth:* the note's sheet.
+  *Type:* the text face; "next" in the machine voice.
+
+### 2 · One roll
+
+- **What:** the whole book on one long sheet, chapters running on with their
+  headings and a wide space between.
+- **Following you:** the sheet's running head stays at its top as a band,
+  naming the chapter you're in, and the list's chosen row follows as you
+  scroll. The colophon gives the time left at 250 words a minute.
+- **Intent:** reading straight through. *Surfaces:* the head is a band
+  (system.md's band pattern) over paper.
+
+### 3 · Beside a note
+
+- **What:** a book opens to the side of a note as a second note does: the
+  split's Two sheets, the note on the left, the book on the right, scrolling a
+  chapter at a time.
+- **Tools:** one set, for the sheet you're in.
+- **Quote:** select in the book and a small raised menu offers **Quote in the
+  note** (`Q`) and Copy. Quote adds a Markdown quote to the note, with
+  `— Pride and Prejudice, Chapter III` under it, and never touches the note's
+  own words.
+- **Phone:** the book and the note are a tap apart, the other's name in the
+  back bar's slip (⇄), as the phone keeps the note you came from.
+
+### Recommendation: 1 · A chapter a sheet; 3 after it
+
+- **1 is the build's first phase** (#40: "the shelf and opening a book
+  safely; scrolling"). It needs nothing the page doesn't already do, one
+  frame at a time, and it's the phone's natural reader.
+- **3 is the reason a writer opens a book in Eien rather than elsewhere**: a
+  later step, once 1 and the split are both there. Quote with its source is
+  small and worth it.
+- **2 reads best straight through**, but costs the most to build safely.
+  1's chapter buttons could later move on by themselves at the foot, if the
+  pause is missed.
+
+## The features
+
+All three do all four: page count, bookmarks, highlights, Find (⌘F, as #41
+gives a note). They differ in **where the marks live**, and each tries its
+own look for a highlight:
+
+| | Bookmark | Highlight | Find | Page count | Finding a mark again |
+|---|---|---|---|---|---|
+| **1 · On the page** | The ribbon over the page's top edge | Pencil underline, 2px, and a pencil tick in the margin | A field in the layout's bar; matches in a wash of ink | Folio and colophon; three ways to count, compared | `]` and `[` walk them |
+| **2 · In the list** | A dog-ear | A wash of ink | The list's own search field; every match a row in its words | Each row's page; the folio and colophon | Marks and Found, lenses over the list, as rows |
+| **3 · On the edge** | A pencil tab on the strip | A pencil bracket in the margin, the words left as printed | The bar's field; every match a dot on the strip | The edge tab's place, the folio, the colophon | The strip: point, click, or its arrow keys |
+
+Shared by all three:
+
+- **B** bookmarks the page (again, takes it off); **H** keeps the selected
+  words (on a highlight, takes it off; ⌘Z puts it back).
+- **From the keyboard**, `⇧→` selects the page's first sentence, then one
+  more each time, and `⇧←` one fewer, so highlighting needs no mouse.
+- **`]` and `[`** walk your marks in the book's order.
+
+| | For | Against |
+|---|---|---|
+| **1 · On the page** | Nothing new opens; every mark in place, like a used paperback; the fewest parts | No list: thirty highlights later, walking is slow; a long underlined passage reads as the book's own emphasis |
+| **2 · In the list** | Marks you can read all at once, a commonplace book with pages; every match in its words before you go; in a part Eien already has | Needs the list; the list's search field means the vault's notes or this book (the placeholder says which) |
+| **3 · On the edge** | The whole book at a glance; where a word clusters; anywhere in one gesture; the quietest highlight | A new object always beside the page; chapters crowd in a long book; a bracket is by the line, not the word |
+
+### Page count: three ways (Features 1's bar)
+
+- **The screen's** (what Pages 1–3 show): exact for what you see, but it
+  changes with the window, the panes and the zoom, so "page 212" means nothing
+  tomorrow.
+- **Steady:** a page is 1,500 characters of the book, whatever the screen.
+  Its number never moves, and it's the same on the phone.
+- **Print:** many EPUBs carry the printed edition's pages (a page-list).
+  Where one does, its numbers match the paper copy, for citing.
+- **Recommended:** Print where the book has it, else Steady, and the screen's
+  turns underneath (a page number may then hold for a turn or two).
+
+### Recommendation: 2 · In the list, with 1's marks on the page
+
+- **2's index** (Contents, Marks, Found) is where a writer goes back to what
+  they kept. Highlights listed as their own words, each with its page, are a
+  commonplace book; Found shows every match in context. It's all in the
+  list's own rows.
+- **1's marks on the page:**
+  - The **ribbon** for a bookmark: the most findable, and already Eien's.
+  - The **pencil underline** with its margin tick for a highlight: quieter
+    than a wash, and it leaves the wash to Find's matches, so the two never
+    look alike (2 has to outline its matches to tell them apart).
+  - 1's **page numbers**: Print, else Steady.
+- **3's strip** is the most original, and Found's dots on it are the best map
+  of a word. It's a lot of new furniture for a first build: keep it for later,
+  perhaps as the scroll bar's marks.
+- **One thing to settle when building:** in a split in Facing pages mode, the
+  active page's mark is a ribbon, dog-ear or tab (`appearance.facingMark`). A
+  book there would wear two ribbons. The bookmark should take whichever of
+  the three the facing mark isn't, or the book should open beside a note only
+  in Two sheets.
+
+## The checks
+
+Run on each page before it was called done:
+
+- **Swap:** with a generic serif and a reader template, every page would
+  change. The type is the writer's own face and the machine voice. The
+  window is Eien's, with its panes, bands and colophon. The marks are
+  Eien's objects.
+- **Squint:** nothing jumps. The fore-edge, gutter, ticks and brackets are
+  hairlines or pencil; the strongest mark is the ink-soft ribbon or tab, one
+  at a time.
+- **Signature:** the book as a physical thing, drawn only in Eien's depth:
+  - the fore-edge (2 · One leaf);
+  - the gutter and mirrored folios (1 · The spread);
+  - the ribbon (Features 1);
+  - the dog-ear (Features 2);
+  - the edge tab and thumb index (Features 3);
+  - pencil underline and bracket marginalia.
+- **Tokens:** every colour, space, line and radius is a `--eien-*` token, and
+  none is new. The local lengths come from them: `--leaf-gap` is a space token,
+  and the phone frame copies the split's.
+
+## Showcase
+
+**Added 2026-10-27, after the nine.** The owner asked what could show off the
+craft of Eien's design for reading. These three directions are each something
+the owner could choose, and each puts one part of the system in front: the
+depth (paper on a desk), the type (the writer's face and the machine's
+voice), and the calm (Night as inkstone; nothing moves you didn't move). All
+three keep to the nine's rules. They use the same window, the same keys, the
+phone and all three layouts by Day and Night, and they add no token, shadow,
+gradient or accent. The seal stays in its five places.
+
+| | Puts in front | Mode or view |
+|---|---|---|
+| **1 · The reading room** | Depth: one sheet on the desk, the window stepped back | A mode over a reading view (here Pages 2) |
+| **2 · Set as a book** | Type: a compositor's page in the writer's own face; the two voices | How Pages sets the text |
+| **3 · By lamplight** | Calm, by Night: your place a lit paragraph on a still line | A mode over Scroll |
+
+### 1 · The reading room
+
+- **What:** press `R` (or the room tool) and the window steps back. The
+  sidebar, the list, the bands and their rules go. What's left is the desk
+  with one sheet on it, and the book's fore-edge under the sheet. That makes
+  two surfaces instead of five. The lights and the seal stay in the corner (the
+  app's mark) in every layout's top row. The tools wait where the layout keeps
+  them, unseen until the pointer comes: A's on the desk where the band was,
+  B's slip, and C's running head with its ground and rule gone. The colophon
+  is a line of pencil on the desk: the chapter, the page, and the minutes left
+  in the chapter. `Esc`, `R` or the seal brings the window back, with one calm
+  cross-fade (none with reduced motion).
+- **The sheet's own running head** names the book and the chapter, as a
+  printed book's does.
+- **Phone:** the page alone, paper edge to edge. A tap in its middle third
+  brings the bar and the tools back; the outer thirds still turn.
+- **Intent:** the writer, the night's scene done, reading another author's
+  chapter in the room where they write. *Palette:* desk, paper, ink; pencil
+  for the colophon. *Depth:* the sheet's shadow on the top leaf, the edges in
+  hairlines, B's slip the float. *Surfaces:* desk straight to paper ("darker
+  is further back"). *Type:* the text face; heads and colophon in label type.
+  *Spacing:* the sheet's own margins, `--eien-space-5` of desk above it.
+
+### 2 · Set as a book
+
+- **What:** the book set with a compositor's care, in the writer's own
+  Typeface (the bar's Typeface shows all eight). The two voices become a rule
+  a reader can see. What the book's author and publisher wrote (the title,
+  the author, a chapter's heading, the text) is in the text face. What Eien
+  knows and counts (the running heads, the folios, the imprint) is in the
+  machine's.
+- **The title page** is made from the book's own details, not the
+  publisher's page. The title is set high on the page at display size (the
+  optical-size axis gives Newsreader and Literata their display cuts), with a
+  short hairline under it and the author in the face's capitals. The folder
+  it's shelved in is at the foot. `T` or the title-page tool goes there.
+- **The imprint**, facing the title page, is Eien's record of this copy in
+  the machine voice. It gives the book's length and how it's set, read off
+  the page as it is: the face's name in that face, its size on its leading,
+  the line's length, justified or ragged. It also says where the book came
+  from and where your marks are kept. Change the Typeface and the imprint
+  says so.
+- **A chapter opens low on its page**, four lines down. CHAPTER is set in the
+  face's tracked capitals, the numeral large on two lines, so the opening
+  stays on the book's line grid (facing pages line up line for line). The
+  first line runs in capitals a step down. None of the bundled faces has small
+  capitals of its own (checked: no `smcp` in any of them), so these are
+  capitals at 80%, lightly tracked.
+- **The text** is justified and hyphenated (`hyphens: auto`,
+  `hyphenate-limit-chars: 6 3 2`). `text-wrap: pretty` evens the lines, and no
+  line is left alone at a page's head or foot (`widows` and `orphans` 2). The
+  bar's Lines sets it ragged, as a note is. Opening quotes hang in the margin
+  where `hanging-punctuation` is honoured (WebKit, so the iPhone); Chromium
+  ignores it.
+- **Running heads and folios:** the book's title on the left page and the
+  chapter on the right, in label type, with folios at the outer corners. An
+  opening page leaves its head off, and the front matter has neither, as a
+  printed book does. Each keeps its line, so the text never moves. Pages are
+  counted from the title page, so Chapter I starts on page 3. Two pages show
+  when each can have 20em (Facing pages' rule), else one.
+- **Phone:** one page, set the same, but ragged right (hyphenated): a phone's
+  measure is too short to justify without rivers.
+- **Intent:** a writer who cares how a page is set, reading in their own
+  face. *Palette:* paper and ink; pencil for heads, folios and imprint;
+  rule-soft for the gutter. *Depth:* one open sheet, its shadow, Facing
+  pages' soft gutter. *Type:* the two voices, made visible; display optical
+  sizes. *Spacing:* every line, the opening included, on `--line` (the
+  shared grid); the sink is four lines.
+
+### 3 · By lamplight
+
+- **What:** Eien's own writing tools, Focus mode and typewriter scrolling,
+  turned to reading. Your place is a paragraph. It's in full ink, the rest of
+  the chapter is in pencil, and it stands on the reading line, a third of the
+  way down the pane. `↓`, `J` or `Space` lights the next paragraph and the
+  page glides up under it (the calm time; a jump with reduced motion), so the
+  eye stays still and the book comes to it. `↑`, `K` or `⇧Space` goes back.
+  Past a chapter's end comes the next chapter's first paragraph. `L` or the
+  lamp tool (Focus mode's icon) turns it off and on.
+- **By Night** (it opens by Night) one paragraph is lit on inkstone; by Day
+  it whispers. There's no glow and no new colour: the light is an ink's
+  strength, and pencil still passes contrast, so you can always read ahead
+  (Focus mode's 0.32 dimming wouldn't).
+- **Nothing moves you didn't move:** scroll by hand and the lamp comes to the
+  paragraph on the line; click a paragraph and it's lit where it stands; a
+  redraw (a layout, a width, Day or Night) keeps your paragraph on the line.
+  The sheet's foot runs on so the last paragraph can reach the line.
+- **Your place is exact**, a paragraph, whatever the window. The colophon
+  counts by it: the paragraph of the chapter's, the minutes left, the share
+  of the book.
+- **Phone:** the chapter scrolls under the thumb and the lamp follows the
+  line; a tap lights a paragraph; the lamp's tool sits beside Contents.
+- **Intent:** the writer reading late, tired eyes, wanting never to hunt for
+  their place. *Palette:* Night's inkstone; ink for the lit paragraph, pencil
+  for the rest. *Depth:* the note's sheet. *Type:* the text face; the
+  colophon's counts in the mono. *Spacing:* the reading line at a third; the
+  foot's run is two thirds of the pane.
+
+### For and against
+
+| | For | Against |
+|---|---|---|
+| **1 · The reading room** | Eien's depth plainly: one object, one shadow, hairlines. The calmest a page can be; one key in and out; works over any reading view, later over a note's Reading view too | A mode: the contents and the shelf are a key away. A wide window is mostly empty desk. The tools are found by pointing |
+| **2 · Set as a book** | Shows the writer's face as a book face; the two voices as a rule a reader can see; the imprint tells how this copy is set and where your marks are, which nothing else does; costs little to build (styles, and two pages made from the book's details) | Justified text in a narrow pane opens rivers, and hyphenation depends on the system's dictionary. Capitals at 80% are lighter than real small capitals. Two front pages to turn past (the contents skip them) |
+| **3 · By lamplight** | Reuses two writing tools: nothing new to learn. A place you never lose. The eye stays on one line; calm for tired eyes, at night, on a phone in bed | Faint by Day. A paragraph is an uneven step. Scrolling only |
+
+### Recommendation: 2 for Pages, then 1, then 3
+
+- **2 · Set as a book is how Pages should set a book**, whichever of the
+  first set wins. The opening, the first line in capitals, running heads off
+  an opening page, outer folios, the line grid, and the title page with its
+  imprint are styles and two generated pages: no new control. Justify only
+  where a page is a full measure (Pages on the desktop); ragged on the phone
+  and in Scroll, as notes are. Drop the bar's Lines and Typeface (they're
+  the explorations' way of comparing; the Typeface setting already exists).
+- **1 · The reading room next**, as a mode with one key over both views. It
+  needs nothing the window doesn't already do (shut panes, a quiet band),
+  and it shows Eien's depth most plainly.
+- **3 · By lamplight later**, as a mode on Scroll 1, once Focus mode and
+  typewriter scrolling are in the app to share code with. It's the strongest
+  case for reading by Night, and the phone's best reader, but it's faint by
+  Day.
+- **Settle when building:** Set's sink and opening are on the shared `--line`
+  grid, so they hold in any face. The imprint's "Your place, bookmarks and
+  highlights" line should follow whatever Features decides.
+
+### The checks
+
+- **Swap:** with a generic serif and a reader template, all three change. The
+  room is Eien's desk and sheet, the fore-edge and the seal in its corner.
+  Set's whole point is the writer's face and the machine's, side by side.
+  The lamp is Focus mode's ink against pencil, with Focus mode's icon.
+- **Squint:** nothing jumps. The room is two tones and a hairline stack; the
+  set page's strongest mark is the numeral, in ink, alone on a quiet page; the
+  lamp is one paragraph a step brighter.
+- **Signature:** in the room, the seal alone in the corner, the fore-edge and
+  the colophon on the desk. In Set, the imprint (the face's name in that
+  face), the opening on the grid, and the running head that leaves the
+  opening page. In the lamp, the lit paragraph on a still reading line and the
+  colophon counting by paragraph.
+- **Tokens:** every colour, space, line, radius, shadow and duration is a
+  `--eien-*` token. The local lengths come from them or from the pane: the
+  sink is `4 × --line`, the numeral `1.5 × --eien-size-title`, the capitals'
+  tracking half `--eien-track-label`, and `--lamp-run` two thirds of the
+  pane's height. The room's cross-fade is `--eien-calm` on `--eien-ease`.
+

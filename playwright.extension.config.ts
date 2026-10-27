@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-// The reader extension (npm run build:extension first) in Chromium, loaded as
+// The extension (npm run build:extension first) in Chromium, loaded as
 // a writer loads it unpacked. The story sites are the test's own pages
 // (tests/support/story-pages), served for their addresses, so nothing is
 // fetched from the web.

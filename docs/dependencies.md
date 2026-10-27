@@ -22,7 +22,7 @@ runtime.
 | `@axe-core/playwright` | axe-core's accessibility rules (WCAG 2.2 A and AA, colour contrast) run over the app and the phone's page in the end-to-end tests (MPL-2.0, its axe-core too; a development tool only, never shipped) |
 | `fast-check` | Property tests (`*.property.test.ts`): generated inputs by the thousand, shrunk to the smallest one a rule fails on (spec §11) |
 | `@stryker-mutator/core` | Mutation testing (`npm run test:mutation`, weekly in CI): edits the rules in core and platform one at a time, runs `vitest run` on each, and reports the edits no test catches |
-| `@playwright/test` | End-to-end tests that drive the real Electron app, the phone's page in Chromium, the reader extension in Chromium, and the Android app's WebView over adb |
+| `@playwright/test` | End-to-end tests that drive the real Electron app, the phone's page in Chromium, the browser extension (Eien Reader) in Chromium, and the Android app's WebView over adb |
 | `electron-builder` | Makes the installers from electron-vite's build (`electron-builder.ts`, `npm run package`): a universal `.dmg`, a per-user NSIS setup for Windows and a Linux AppImage, with signing and notarizing built in for when there are certificates. Chosen over Electron Forge, which has no NSIS installer of its own (its Windows ones are Squirrel, MSI and MSIX) and needs a maker package per format |
 | `@capacitor/cli` | Copies the phone's page into the Android project (`npm run android`, `cap sync`) and adds its plugins there |
 

@@ -1,4 +1,4 @@
-// The few parts of a browser's extension API the reader uses (spec §14), typed
+// The few parts of a browser's extension API the extension uses (spec §14), typed
 // here rather than with a package of the whole API: Chrome's and Firefox's
 // agree on these, and both answer with promises in Manifest V3. Firefox names
 // it `browser`, Chromium `chrome`.
@@ -13,7 +13,7 @@ export interface StorageChange {
 }
 
 export interface BrowserStorage {
-  /** Kept on this browser: where you stopped, whether the reader is open. */
+  /** Kept on this browser: where you stopped, whether the story page is open. */
   readonly local: StorageArea;
   /** Kept with the browser's account, on each of its devices: the settings. */
   readonly sync: StorageArea;
@@ -52,6 +52,6 @@ export interface BrowserApi {
 export function browserApi(): BrowserApi {
   const scope = globalThis as { browser?: BrowserApi; chrome?: BrowserApi };
   const api = scope.browser?.storage ? scope.browser : scope.chrome;
-  if (!api?.storage) throw new Error('Eien’s reader runs only as a browser extension.');
+  if (!api?.storage) throw new Error('Eien Reader runs only as a browser extension.');
   return api;
 }

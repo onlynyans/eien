@@ -911,7 +911,7 @@ src/core/            (✓ = built)
   html/         ✓ Markdown → HTML (and a book's HTML); HTML (a story site's, Google Docs', Word's, a page's) → Markdown
   export/       ✓ a note as a chapter (headings, footnotes); EPUB, Word and the PDF's page; a store-only zip
   import/       ✓ which files of a folder from elsewhere come in, under what names, and why the rest don't
-  reader/       ✓ the reader extension's story, its sites, its messages, where you stopped, a site's HTML cleaned (§14)
+  extension/    ✓ the browser extension (Eien Reader): its story, its sites, its messages, where you stopped, a site's HTML cleaned (§14)
 src/platform/
   bridge.ts     ✓ what the window may ask of the system (window.eien)
   storage.ts    ✓ the Storage interface: read, write, list, watch
@@ -921,7 +921,7 @@ src/platform/
   capacitor/    ✓ Storage over the phone's file system: writes through a temp file (on iOS coordinated with other apps), case-only renames in two steps, trash in .eien/trash, polling for changes, recovery after a crash
   case-twin.ts  ✓ no storage makes a name its folder has in another case
   theme-files.ts ✓ the writer's own themes in .eien/themes: list, read, create, write, rename, trash (§7)
-  extension/    ✓ the reader extension's browser API and what it keeps in the browser's storage (§14)
+  extension/    ✓ the extension's browser API and what it keeps in the browser's storage (§14)
 src/ui/
   app.ts        ✓ the window: panes, vault and note kept in step
   shell/        ✓ the panes: resizing, collapsing, three or two, kept per device
@@ -941,11 +941,11 @@ src/ui/
   counters/     ✓ the colophon's today, book and sprint
   settings/     ✓ Settings over the window: categories and tabs, drawn from the schema; the Themes tabs; the look they set on <html>
   phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
-  reader/       ✓ the reader extension's pages: the reader, the popup, the content script and each site's markup (§14)
+  extension/    ✓ the extension's pages: the story page, the popup, the content script and each site's markup (§14)
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture
-  extension/    ✓ the reader extension's manifest (§14)
+  extension/    ✓ the extension's manifest (§14)
 ```
 
 ### Rules for the code
@@ -1681,8 +1681,8 @@ On every push and pull request:
 4. The phone's page in Chromium
 5. Android debug build, kept for 14 days to install on a phone
 6. iOS: the Swift file operations, and the app on a simulator
-7. The reader extension in Chromium, its build kept for 14 days to load in a
-   browser
+7. The browser extension (Eien Reader) in Chromium, its build kept for 14
+   days to load in a browser
 
 On a version tag: the installers (a universal `.dmg`, a Windows setup, a
 Linux AppImage), each built on its own system, installed and started there
@@ -1723,7 +1723,7 @@ are built (2026-10-20); what comes next is in the [backlog](backlog.md).
 - Translations of the interface (strings stay in one place so they can come
   later).
 
-## 14. The reader extension
+## 14. The browser extension (Eien Reader)
 
 A browser extension that shows a story from a fanfiction site on Eien's
 paper: its sheet on the blotter, its typefaces at their own sizes and
@@ -1734,18 +1734,19 @@ and it never fetches anything.
   Android), from one Manifest V3 build (`npm run build:extension`, into
   `out/extension`). The sites are AO3 (`archiveofourown.org`) and
   FanFiction.Net (`www.` and `m.fanfiction.net`), listed once in
-  `core/reader/sites.ts`, which the manifest and the content script read.
+  `core/extension/sites.ts`, which the manifest and the content script read.
   Safari (Mac and iPhone) is later: it needs Xcode and an Apple developer
   account.
 - **What it asks for.** Storage, and the sites' pages: nothing in the
   background, no other host, no network use of its own.
 - **Opening.** On a page that shows a work (one chapter, or the whole work
   at once), the seal stands in the page's bottom-right corner. Pressing it,
-  or Read in Eien in the extension's popup, lays the reader over the page.
-  The reader stays open as chapters turn, until it's closed (its ×, or Esc),
-  and then stays closed until it's opened again. A page with no work (a
-  search, AO3's question before a work for adults) gets no seal.
-- **The reader.** A band (the seal and the site's name; previous and next
+  or Read in Eien in the extension's popup, lays the story page over
+  the site's. The story page stays open as chapters turn, until it's closed
+  (its ×, or Esc), and then stays closed until it's opened again. A page
+  with no work (a search, AO3's question before a work for adults) gets no
+  seal.
+- **The story page.** A band (the seal and the site's name; previous and next
   chapter, day or night, back to the site's page), then the sheet: the
   running head (fandom / title / chapter), the title, who wrote it, what the
   site says of the work (rating, warnings, tags, words; folded), the
@@ -1758,13 +1759,13 @@ and it never fetches anything.
   (§6), drawn as Settings draws them: the theme (the gallery's), day or
   night, the typeface, text size, density, page and chapter numbers. They're
   kept in the browser's synced storage, so each of its devices reads alike,
-  and every open reader wears a change at once. A theme of your own from a
+  and every open story page wears a change at once. A theme of your own from a
   vault isn't the browser's to read, so it's Paper here.
 - **Where you stopped.** How far down each chapter you read is kept on this
   browser (the 500 newest), and a chapter opens there again.
 - **Safety.** The site's HTML is read by Eien's own parser and kept to what
   words and their shapes need (paragraphs, emphasis, quotes, lists, tables,
-  scene breaks, links to the web, images over https); the reader builds its
+  scene breaks, links to the web, images over https); the extension builds its
   page from those nodes, never from HTML, under a policy that runs only the
   extension's own scripts. Its page is the extension's, in a frame: the
   site's styles and script don't reach it. It asks the content script only

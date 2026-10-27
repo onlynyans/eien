@@ -1,16 +1,16 @@
-// The reader extension (spec §14), built into out/extension, loadable as it
+// The extension (spec §14), built into out/extension, loadable as it
 // is (chrome://extensions, about:debugging) or zipped for a store. Two builds:
-// the extension's pages, the reader and the popup, with the manifest and the
+// the extension's pages, the story page and the popup, with the manifest and the
 // seal's icons beside them; then (--mode content) the content script, alone
 // as one plain script, since a content script can't be a module.
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
-import { ICON_SIZES, readerManifest } from './src/app/extension/manifest';
+import { extensionManifest, ICON_SIZES } from './src/app/extension/manifest';
 
 const root = import.meta.dirname;
-const reader = resolve(root, 'src/ui/reader');
+const pages = resolve(root, 'src/ui/extension');
 const outDir = resolve(root, 'out/extension');
 const { version } = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')) as {
   version: string;
@@ -23,9 +23,9 @@ export default defineConfig(({ mode }) =>
           outDir,
           emptyOutDir: false,
           lib: {
-            entry: resolve(reader, 'content.ts'),
+            entry: resolve(pages, 'content.ts'),
             formats: ['iife'],
-            name: 'eienReader',
+            name: 'eienContent',
             fileName: () => 'content.js',
           },
           // Chrome refuses a content script that isn't strict UTF-8, which has no noncharacters
@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) =>
         },
       }
     : {
-        root: reader,
+        root: pages,
         base: './',
         plugins: [
           {
@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) =>
               this.emitFile({
                 type: 'asset',
                 fileName: 'manifest.json',
-                source: `${JSON.stringify(readerManifest(version), null, 2)}\n`,
+                source: `${JSON.stringify(extensionManifest(version), null, 2)}\n`,
               });
               for (const size of ICON_SIZES) {
                 this.emitFile({
@@ -62,8 +62,8 @@ export default defineConfig(({ mode }) =>
           assetsInlineLimit: 0,
           rollupOptions: {
             input: {
-              reader: resolve(reader, 'reader.html'),
-              popup: resolve(reader, 'popup.html'),
+              story: resolve(pages, 'story.html'),
+              popup: resolve(pages, 'popup.html'),
             },
           },
         },

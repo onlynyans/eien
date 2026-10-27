@@ -98,7 +98,7 @@ export interface BookCount {
   readonly goal?: number;
 }
 
-type VaultReader = Pick<VaultBridge, 'list' | 'notes' | 'read' | 'search'>;
+type VaultSource = Pick<VaultBridge, 'list' | 'notes' | 'read' | 'search'>;
 
 export class VaultState {
   readonly name: string;
@@ -113,9 +113,9 @@ export class VaultState {
   #made: readonly string[] = [];
   /** Whether each folder is a book, as its settings last read said (the sidebar's BOOK mark). */
   #settingsOf = new Map<string, FolderSettings>();
-  readonly #vault: VaultReader;
+  readonly #vault: VaultSource;
 
-  constructor(vault: VaultReader, name: string) {
+  constructor(vault: VaultSource, name: string) {
     this.#vault = vault;
     this.name = name;
     this.#tree = buildTree([], name);

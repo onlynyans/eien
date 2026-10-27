@@ -1,7 +1,7 @@
 // A card is called what it shows as its name (WCAG 2.5.3, label in name):
 // a face card by its face's name, its sample left out; a theme card by its
 // theme's, its note telling more after it. axe's label-content-name-mismatch
-// found both, in the reader extension's popup, which draws them as Settings does.
+// found both, in the extension's popup, which draws them as Settings does.
 
 import { describe, expect, it } from 'vitest';
 import { type Setting, settingOf } from '../../core/config';
