@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en" data-device="open" data-layout="band">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Foldables and tablets: 3 · An open book</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:tablet.css*/
+
+/* 3 · An open book: the room goes to the pages, not the panes. The note you came from (the
+   phone's ⇄) faces the one you're in, as Facing pages does on the desktop: one sheet opened
+   like a book, the fold its gutter, the ribbon on the page you're in, each note's own figures
+   in its folio. The contents come to you: the bar's back word slides them over the page. */
+.room { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; position: relative; }
+.room > * { min-width: 0; min-height: 0; }
+.book { position: relative; display: grid; min-height: 0; padding: var(--eien-space-4); background: var(--eien-blotter); }
+/* On the fold there's no blotter to spare: the sheet is the screen, the crease its gutter. */
+.book[data-bleed] { padding: 0; background: var(--eien-paper); }
+.spread { display: grid; grid-template-columns: minmax(0, 1fr) var(--gutter) minmax(0, 1fr); min-height: 0; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); box-shadow: var(--eien-shadow-sheet); --gutter: var(--eien-space-6); }
+:root[data-layout='slip'] .spread { border-radius: calc(var(--eien-radius-s) - var(--eien-hairline)); }
+.book[data-bleed] .spread { --gutter: 0px; border: 0; box-shadow: none; border-radius: 0; }
+.gutter { position: relative; }
+.gutter::after { content: ''; position: absolute; top: var(--eien-space-5); bottom: var(--eien-space-5); left: calc(50% - var(--eien-hairline) / 2); width: var(--eien-hairline); background: var(--eien-rule-soft); }
+.book[data-bleed] .gutter::after { display: none; }
+.leaf { position: relative; display: grid; grid-template-rows: minmax(0, 1fr) auto; min-width: 0; min-height: 0; cursor: text; }
+.leaf .scroll { padding: var(--eien-space-6) var(--eien-space-5) var(--eien-space-7); }
+.leaf .sheet { padding: 0; min-height: 0; max-width: var(--eien-measure); background: none; }
+.leaf .title { margin-top: var(--eien-space-3); }
+/* A leaf a phone's width sets its words a step down, as the phone does (tablet.css, --hand). */
+/* The ribbon: the book's silk marker over the top edge, in the outer margin of the page you're
+   in. Ink-soft, never the seal. It drops in. */
+.ribbon { position: absolute; z-index: 2; top: calc(var(--eien-hairline) * -1); width: var(--eien-space-2); height: var(--eien-space-6); background: var(--eien-ink-soft);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - var(--eien-space-2)), 0 100%); }
+.leaf[data-side='left'] .ribbon { left: var(--eien-space-4); }
+.leaf[data-side='right'] .ribbon { right: var(--eien-space-4); }
+@keyframes drop { from { translate: 0 calc(var(--eien-space-6) * -1); } }
+.ribbon.is-new { animation: drop var(--eien-calm) var(--eien-ease); }
+/* The folio: each note's own figures at its page's foot, mirrored as page numbers are. */
+.folio { display: flex; align-items: center; gap: var(--eien-space-2); min-height: var(--eien-touch); padding: 0 var(--eien-space-1) 0 var(--eien-space-5); border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+  font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; }
+.leaf[data-side='right'] .folio { flex-direction: row-reverse; padding: 0 var(--eien-space-5) 0 var(--eien-space-1); }
+.folio .icon-button { margin-left: auto; color: var(--eien-pencil); }
+.leaf[data-side='right'] .folio .icon-button { margin-left: 0; margin-right: auto; }
+.folio__words { overflow: hidden; text-overflow: ellipsis; }
+/* The contents, come to you: raised paper over the page from the left, the float shadow, on the scrim. */
+.drawer { position: absolute; z-index: 35; top: 0; bottom: 0; left: 0; width: var(--drawer-w); display: grid; grid-template-rows: minmax(0, 1fr); background: var(--eien-paper-raised); border-right: var(--eien-hairline) solid var(--eien-rule-strong); box-shadow: var(--eien-shadow-float); }
+.drawer > * { min-height: 0; }
+.drawer .stack { background: var(--eien-paper-raised); }
+.drawer .bar { background: var(--eien-paper-raised); }
+.drawer .tree { background: var(--eien-paper-raised); }
+.scrim--room { z-index: 34; }
+@keyframes slide { from { translate: -100% 0; } }
+.drawer.is-new { animation: slide var(--eien-calm) var(--eien-ease); }
+@media (prefers-reduced-motion: reduce) { .ribbon.is-new, .drawer.is-new { animation: none; } }
+.bar .back--drawer { max-width: 50%; }
+/* B's slip stands above the folios, so no page's figures or × lie under it. */
+.book > .slip--foot { bottom: calc(var(--eien-touch) + var(--eien-space-6)); right: var(--eien-space-6); }
+</style>
+</head>
+<body>
+<header class="xbar">
+  <span class="xbar__name">Foldables &amp; tablets</span>
+  <nav class="xbar__group" aria-label="Directions"><a class="word-button" href="tablet-desk.html">1 · The desk</a><a class="word-button" href="tablet-stack.html">2 · The stack, opened</a><a class="word-button" href="tablet-book.html" aria-current="page">3 · An open book</a></nav>
+  <div class="xbar__group" data-x-set="device" role="group" aria-label="Screen"><span class="xbar__label">Screen</span><button class="word-button" data-value="phone">Phone</button><button class="word-button" data-value="folded">Folded</button><button class="word-button" data-value="open">Open</button><button class="word-button" data-value="upright">Tablet upright</button><button class="word-button" data-value="sideways">Tablet sideways</button></div>
+  <div class="xbar__group" data-x-set="theme" role="group" aria-label="Day or night"><button class="word-button" data-value="light">Day</button><button class="word-button" data-value="dark">Night</button></div>
+  <div class="xbar__group" data-x-set="layout" role="group" aria-label="Layout"><span class="xbar__label">Layout</span><button class="word-button" data-value="band">A · Band</button><button class="word-button" data-value="slip">B · Slip</button><button class="word-button" data-value="runhead">C · Running head</button></div>
+</header>
+<main class="stage">
+  <div class="canvas">
+    <div class="fit"><div class="device"><div class="screen" role="region"><div class="sys" aria-hidden="true"><span>9:41</span><span class="sys__dots">●●●</span></div><div class="app"></div></div></div></div>
+    <p class="said" data-said role="status" aria-live="polite"></p>
+  </div>
+  <aside class="notes">
+    <h2>3 · An open book</h2>
+    <p>The room goes to <b>pages, not panes</b>. The note you came from, the phone’s ⇄, gets a page of its own and faces the one you’re in, as Facing pages does on the desktop. On the fold the crease is the gutter. The contents come to you: the bar’s back word slides them over the page.</p>
+    <dl class="checkpoint">
+      <dt>Intent</dt><dd>The writer drafting a chapter beside its notes (chapter iv beside Erwin’s sheet), on a foldable held open like a paperback or a tablet on the knee. They write in one and glance at the other. It should feel like an open book on the desk at night, with the fold as its gutter.</dd>
+      <dt>Palette</dt><dd>Washi’s tokens. One sheet of paper on the blotter, and the ribbon in ink-soft, which is Facing pages’ decided mark. Vermilion only in the seal’s places: the caret, ▪ sealed, the chosen row in the contents.</dd>
+      <dt>Depth</dt><dd>One sheet with the sheet’s shadow, opened at a soft-ruled gutter. On the fold the sheet is the screen and the crease is its gutter. The contents slide over as raised paper with the float shadow, because they float above the page.</dd>
+      <dt>Surfaces</dt><dd>The blotter round the sheet on a tablet, the bar on the desk, and the drawer raised over the scrim. Darker is further back, by Day and by Night.</dd>
+      <dt>Type</dt><dd>Each page in the text face. A leaf a phone’s width or narrower (the fold’s halves, an upright tablet) sets its words a size down, as the phone does. The folio, the crumbs and the back word are in the machine voice.</dd>
+      <dt>Spacing</dt><dd>The gutter is <code>--eien-space-6</code>, as decided for Facing pages, or the crease itself on the fold. The folio is a finger high (44px), so its × is a real target.</dd>
+    </dl>
+    <h2>Try</h2>
+    <ul>
+      <li><b>Screen:</b> Folded shows the phone: What the Recruits Say, with <b>⇄ Erwin</b> in the bar. <b>Open</b> it, and Erwin faces the chapter across the fold.</li>
+      <li>Tap the facing page to write there: the ribbon moves. <b>⇄</b> in the bar swaps the pages.</li>
+      <li><b>‹ Beneath the Walls</b> slides the list over the page. A tap opens the note on the page you’re in, and long-press gives “Open on the facing page”.</li>
+      <li>A page’s <b>×</b> in its folio closes it. One page stays, centred. Folding back keeps the facing note as the ⇄.</li>
+    </ul>
+    <h2>Where the option lives</h2>
+    <ul>
+      <li><b>Settings › Look › Appearance › Facing pages:</b> Facing pages · One page, kept per device. One page is the phone’s page, wider, with the other note a tap away.</li>
+      <li><b>⋯ › Facing pages</b> on the page is the same setting, with a tick. On a phone it’s greyed.</li>
+      <li>It sits beside the desktop’s <b>Split</b> setting, whose Facing pages it borrows. If the desktop’s split mode is chosen to follow there too, this setting could become Split’s own value on a touch screen.</li>
+    </ul>
+    <h2>Each screen</h2>
+    <table>
+      <tr><th>Screen</th><th>Facing pages</th></tr>
+      <tr><td>Phone, folded</td><td>The phone: one page, ⇄ the other</td></tr>
+      <tr><td>Open, 720</td><td>Two leaves of 360, the crease the gutter, paper to the edges</td></tr>
+      <tr><td>Upright, 820</td><td>A sheet on the blotter, two leaves of about 360, words a size down</td></tr>
+      <tr><td>Sideways, 1180</td><td>A sheet on the blotter, two leaves of about 540, the face’s own size</td></tr>
+    </table>
+    <h2>For</h2>
+    <ul>
+      <li>The room goes to the writing. A chapter and its notes is the case a bigger screen helps most.</li>
+      <li>The fold means something: a book’s gutter. Folding and unfolding turn the phone’s ⇄ into a facing page and back, so nothing is lost or moved.</li>
+      <li>It builds on what’s decided: Facing pages (the gutter, the ribbon, the folio), the phone’s other note, Settings over the window.</li>
+      <li>The phone’s stack stays whole. It comes in as a drawer, by the same back word.</li>
+    </ul>
+    <h2>Against</h2>
+    <ul>
+      <li>The list is never in sight while you write. Finding a note always goes through the drawer, which is one tap more than 1 or 2.</li>
+      <li>Two leaves of 360 are each a phone’s width, so the words are set smaller than on the tablet’s one page.</li>
+      <li>The phone has never had a split: this brings two open notes, an active one, a ribbon and folios to a touch screen. That’s more to learn.</li>
+      <li>On a wide screen the facing page stays put when you open a note, but folded, the phone’s rule (the note you came from) holds. That’s two rules for the other note.</li>
+    </ul>
+  </aside>
+</main>
+<script>
+/*@shared-js*/
+/*@include:tablet.js*/
+
+/** Two pages: the setting, room for two, and a second note to show. */
+const facing = (ctx) => !ctx.narrow && S.opt === 'facing' && !!S.other && S.other !== S.note;
+const drawerW = (ctx) => ctx.hinge ?? Math.min(400, Math.round(ctx.W * 0.42));
+
+/** A leaf: the ribbon on the page you're in, its head, its words, its folio. */
+function leafHtml(ctx, id, side, small) {
+  const n = NOTES[id];
+  const active = id === S.note;
+  const tags = n.tags.map((t) => `<span>#${esc(t)}</span>`).join('');
+  return `<section class="leaf${small ? ' leaf--small' : ''}" data-side="${side}" data-act="leaf" aria-label="${esc(n.title)}${active ? ', where you’re writing' : ', the facing page'}">
+    ${active ? `<span class="ribbon${S.ribbonNew ? ' is-new' : ''}" aria-hidden="true"></span>` : ''}
+    <div class="scroll" data-keep="leaf-${side}"><article class="sheet"><div class="sheet__head"><span class="crumb">${esc(crumbOf(id))}</span>${ctx.layout === 'band' && !small ? `<span class="tagset">${tags}</span>` : ''}</div>
+      <h1 class="title">${esc(n.title)}</h1>${ctx.layout === 'slip' && tags ? `<div class="slips">${tags}</div>` : ''}
+      <div class="prose" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="${esc(n.title)}: its words">${n.paras.map((t) => `<p>${esc(t)}</p>`).join('')}</div></article></div>
+    <footer class="folio">${n.ord && n.ord !== '·' ? `<span>${esc(n.ord)}</span><span class="dot" aria-hidden="true">·</span>` : ''}<span class="folio__words">${words(id)} words</span><span class="dot" aria-hidden="true">·</span><span><span class="sealmark" aria-hidden="true">▪</span> ${esc(n.sealed)}</span>${ctx.btn('close', `Close ${n.title}`, `data-act="close-leaf" data-value="${esc(id)}"`)}</footer>
+  </section>`;
+}
+
+/** The contents, come to you: the phone's stack (the list, back to the vault) in a drawer. */
+function drawerHtml(ctx) {
+  if (!S.drawer) return '';
+  const close = ctx.btn('close', 'Close the contents', 'data-act="drawer-close"');
+  const inner = S.drawerAt === 'tree'
+    ? ctx.tree({ headExtra: close, chosen: S.folder, foot: ctx.foot() })
+    : `<div class="stack">${ctx.bar('Library', `<span class="spacer"></span>${close}`).replace('data-act="back"', 'data-act="drawer-tree"')}${ctx.index()}</div>`;
+  return `<div class="scrim scrim--room" data-act="drawer-close"></div><aside class="drawer${S.drawerNew ? ' is-new' : ''}" style="--drawer-w:${drawerW(ctx)}px" aria-label="Contents">${inner}</aside>`;
+}
+
+mountTablet({
+  state: { side: 'right', drawer: false, drawerAt: 'list', ribbonNew: false, drawerNew: false },
+  option: {
+    tab: 'Appearance', at: 2, where: 'Look › Appearance', label: 'Facing pages',
+    about: 'With room for two pages, the note you came from faces the one you’re in: the fold, or the sheet’s middle, is the gutter, and the contents slide over from the left. One page: the phone’s page, wider, the other note a tap away.',
+    choices: { facing: 'Facing pages', one: 'One page' }, default: 'facing',
+    now: (ctx) => `This screen: ${ctx.narrow ? 'one page (under 600px)' : S.opt === 'facing' ? 'facing pages' : 'one page'}`,
+  },
+  onDevice(was, now) { S.drawer = false; S.ribbonNew = true; },
+  unfoldSay: (was, now) => (was.w < PHONE_MAX && now.w >= PHONE_MAX
+    ? (S.opt === 'facing' && S.other ? `Unfolded: ${NOTES[S.other].title} faces ${NOTES[S.note].title}, the fold its gutter` : 'Unfolded: one page, wider')
+    : was.w >= PHONE_MAX && now.w < PHONE_MAX ? `Folded: ${NOTES[S.note].title}${S.other ? `, and ⇄ ${NOTES[S.other].title} a tap away` : ''}` : `Now ${now.name}`),
+  draw(ctx) {
+    S.besideNote = null;
+    if (ctx.narrow) return phoneStack(ctx, { frame: 'full' });
+    const t = ctx.place('phone', S.note);
+    const two = facing(ctx);
+    S.besideNote = two ? S.other : null; // the list marks the facing note with the split's fainter rule
+    const back = `<button class="back back--drawer" data-act="drawer" aria-haspopup="dialog">${icon('back')}<span>${esc(folderOf(S.folder).name)}</span></button>`;
+    const bar = `<nav class="bar" aria-label="Book">${back}<span class="spacer"></span>${two ? ctx.btn('swap', 'Swap the pages', 'data-act="swap"') : ctx.otherSlip()}${t.bar ?? ''}</nav>`;
+    let body;
+    if (two) {
+      const bleed = !!ctx.hinge;
+      const leafW = bleed ? ctx.hinge : (ctx.W - 2 * 16 - 32) / 2;
+      const small = leafW < 420;
+      const [left, right] = S.side === 'right' ? [S.other, S.note] : [S.note, S.other];
+      const cols = bleed ? `style="grid-template-columns:${ctx.hinge}px 0 minmax(0, 1fr)"` : '';
+      body = `<div class="book"${bleed ? ' data-bleed' : ''}><div class="spread" ${cols}>${leafHtml(ctx, left, 'left', small)}<span class="gutter" aria-hidden="true"></span>${leafHtml(ctx, right, 'right', small)}</div>${t.float ?? ''}</div>`;
+    } else {
+      body = `<div style="display:grid;min-height:0;position:relative">${ctx.page(S.note, { frame: 'sheet', kind: 'phone' })}</div>`;
+    }
+    S.ribbonNew = false;
+    const out = `<div class="room">${bar}${body}${two ? (t.foot ?? '') : ''}${drawerHtml(ctx)}</div>`;
+    S.drawerNew = false;
+    return out;
+  },
+  act(name, el, ctx) {
+    if (ctx.narrow) return false;
+    const v = el.dataset.value;
+    // An id read from the page is only ever looked up, and only the vault's own are taken.
+    if (['close-leaf', 'open-note', 'open-facing'].includes(name) && !Object.hasOwn(NOTES, el.dataset.id ?? v)) return true;
+    if (name === 'folder' && !folderOf(v ?? el.dataset.id)) return true;
+    switch (name) {
+      case 'leaf':
+        if (el.dataset.side === S.side) return true;
+        [S.note, S.other] = [S.other, S.note];
+        S.side = el.dataset.side;
+        S.ribbonNew = true;
+        say(`Writing in ${NOTES[S.note].title}: the ribbon marks it`);
+        render();
+        return true;
+      case 'swap': S.side = S.side === 'right' ? 'left' : 'right'; S.ribbonNew = true; say('The pages swapped'); render('in'); return true;
+      case 'close-leaf':
+        if (v === S.note) { S.note = S.other; }
+        S.other = null;
+        say(`${NOTES[v].title} closed: it’s in the list as it was`);
+        render('in');
+        return true;
+      case 'drawer': S.drawer = true; S.drawerAt = 'list'; S.drawerNew = true; say('The contents slide over the page'); render(); return true;
+      case 'drawer-close': S.drawer = false; render(); return true;
+      case 'drawer-tree': S.drawerAt = 'tree'; render(); return true;
+      case 'folder': S.folder = v ?? el.dataset.id; if (S.folder === 'fic') S.folder = 'walls'; S.drawerAt = 'list'; render(); return true;
+      case 'open-note': case 'open-facing': {
+        const id = el.dataset.id ?? v;
+        S.menu = null;
+        S.drawer = false;
+        if (name === 'open-facing' && facing(ctx)) { if (id !== S.note) S.other = id; say(`${NOTES[id].title}: on the facing page`); }
+        else if (id === S.other) { [S.note, S.other] = [S.other, S.note]; S.side = S.side === 'right' ? 'left' : 'right'; S.ribbonNew = true; say(`Writing in ${NOTES[S.note].title}`); }
+        else { if (!S.other || S.opt === 'one') S.other = S.note === id ? S.other : S.note; S.note = id; S.folder = NOTES[id].folder; say(`${NOTES[id].title}: on the page you’re in`); }
+        render();
+        return true;
+      }
+      default: return false;
+    }
+  },
+  menuItems: (ctx) => [{ icon: 'side', word: 'Facing pages', act: 'opt', value: S.opt === 'facing' ? 'one' : 'facing', role: 'menuitemcheckbox', dot: S.opt === 'facing', disabled: ctx.narrow, why: ctx.narrow ? 'Needs a wider screen: unfold it' : '' }],
+  onOption(v) { S.ribbonNew = v === 'facing'; say(v === 'facing' ? 'Facing pages: the other note faces this one' : 'One page: the other note is a tap away, at the bar’s right'); },
+  long(el, ctx) {
+    const id = el.dataset.id;
+    const first = facing(ctx) ? [{ icon: 'open', word: 'Open on this page', act: 'open-note', value: id }, { icon: 'side', word: 'Open on the facing page', act: 'open-facing', value: id }] : undefined;
+    openMenu(noteMenu(id, first), el);
+  },
+});
+</script>
+</body>
+</html>

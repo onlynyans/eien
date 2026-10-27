@@ -77,6 +77,20 @@ compares all six.
 | [split-alt-follow.html](split-alt-follow.html) · [md](split-alt.md) | **6 · Tools that follow**: the list steps aside; one set of the page's tools moves to the page you're in | Every tool beside its page, one of each; wider pages | The window changes when you split; refused below about 990px |
 | [split-window.html](split-window.html) · [md](split.md) | **New Window and the phone**, once for all three: File → New Window (⇧⌘N), Open in New Window; the phone's "other note" | | |
 
+## Foldables and tablets (2026-10-27): for the owner to choose
+
+Backlog #46: three directions for a foldable's open screen and a tablet, each
+on a phone, a foldable folded and open (with its fold), and a tablet upright
+and sideways, by Day and Night, in all three layouts, touch first.
+[tablet.md](tablet.md) has the trade-offs and recommends 2 · The stack,
+opened out.
+
+| Page | Direction | For | Against |
+|---|---|---|---|
+| [tablet-desk.html](tablet-desk.html) · [md](tablet.md) | **1 · The desk, at a finger's size**: the desktop's panes at 44px; Panes gains One at a time | Nothing new to learn; closest to today | Dense; a 360px page on the open fold |
+| [tablet-stack.html](tablet-stack.html) · [md](tablet.md) | **2 · The stack, opened out** (recommended): the phone's stack, the step you came from beside the one you're in, cut on the fold; Side by side | It's the phone, opened; the smallest build | Never three panes; the desktop's bands don't come |
+| [tablet-book.html](tablet-book.html) · [md](tablet.md) | **3 · An open book**: the ⇄ note faces the one you're in, the fold the gutter; the contents slide over; Facing pages | The room goes to writing | The list is a drawer away; a split on touch |
+
 ## Tables and the window's corner (2026-10-22, built in #57 and #58)
 
 Two sets of three, a page per direction. Each set's `.md` has the trade-offs
@@ -100,6 +114,6 @@ The pages are built from `_src/` by `python3 _build.py`, which puts the
 shared tokens, icons and face list (`_src/shared.css`, `_src/shared.js`)
 inside each page, and a family's own shared files where a page asks for them
 with `/*@include:name*/` (the tables' `table.*`, `table-edges.*` and
-`table-bar.*`, the corners' `corner.*`, the split's `split.*`, the links' `link.*`, the reader's `reader.*` and its text, `reader-text.js`; `layouts.css`,
+`table-bar.*`, the corners' `corner.*`, the split's `split.*`, the links' `link.*`, the reader's `reader.*` and its text, `reader-text.js`, the tablets' `tablet.*`; `layouts.css`,
 `seal-button.css` and `keys.js` shared between families). Edit
 `_src/` and build; don't edit the built pages.
