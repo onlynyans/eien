@@ -25,6 +25,9 @@ export const test = base.extend<{ context: BrowserContext; pages: Record<string,
         : { channel: 'chromium' }),
       args: [`--disable-extensions-except=${EXTENSION}`, `--load-extension=${EXTENSION}`],
     });
+    // Nothing reaches the web: a story page's own images (FanFiction.Net's from its CDN) would wait
+    // on the network, and the page's load with them. The sites' routes below are tried first.
+    await context.route(/^https?:/u, (route) => route.abort());
     for (const host of ['https://archiveofourown.org/**', 'https://*.fanfiction.net/**']) {
       await context.route(host, (route) => {
         const url = new URL(route.request().url());
