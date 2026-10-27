@@ -457,6 +457,20 @@ its key (after a short hover, or at once from the keyboard) and its state
 reaches every control. A switch leaves the keyboard on the same command in
 the new layout, or on the page. Whether the strip is hidden is per device.
 
+**Short of room** (backlog #36, `ui/chrome/fold.ts`): a page's bar (Band's
+band and its formatting row, Slip's slip, Running head's strip) never runs
+past the page, the screen, or the system's window controls. The tools that
+don't fit fold behind one ⋯ at the bar's end, as few as it takes, in one
+order: Versions, Compare, the formatting bar's toggle, Focus, the views (as
+one), then the Seal (the formatting row: from Table back, bold and italic
+staying). The strip's own control never folds: it's the shut band's way back.
+The ⋯ lists what folded in the bar's order, each with its icon, key and state,
+and runs it; arrows reach it, and the keyboard on a tool that folds goes to
+it. They unfold as the bar's room comes back (the window, a pane, the split's
+pager, a touch screen's larger controls). Slip's and Running head's
+formatting slips float, with no bar to fold against: they wrap to a second
+row or column instead.
+
 **Tags on the page** (backlog #13): Band shows them at the right of the
 sheet's running head, mono words with a + on hover; Slip as label slips under
 the title; Running head as pills at the colophon's left; a phone, in every

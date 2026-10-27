@@ -39,7 +39,27 @@ export interface HostSpec {
   readonly first?: true;
   /** A command drawn with another icon here (a pane's chevron, not its picture). */
   readonly icons?: Partial<Record<CommandId, IconName>>;
+  /**
+   * Short of room in its bar, these fold behind a ⋯, first first (./fold.ts); the rest never
+   * do. Only a host that's a row across its bar has them.
+   */
+  readonly folds?: readonly CommandId[];
 }
+
+/**
+ * The page's tools, as they fold: the least asked for first; the views (as one) only on a page
+ * too narrow for them and a ⋯, and the seal last. Never the strip: the shut band's way back.
+ */
+export const TOOL_FOLDS: readonly CommandId[] = [
+  'versions',
+  'compare',
+  'format-bar',
+  'focus',
+  'view.live',
+  'view.source',
+  'view.reading',
+  'seal',
+];
 
 /** Where a layout shows the note's tags (backlog #13), each a slot the page keeps (../page/page.ts). */
 export type TagSlot = 'runningHead' | 'underTitle' | 'colophon';
@@ -68,7 +88,11 @@ export const VIEWS: HostItem = {
   ids: ['view.live', 'view.source', 'view.reading'],
 };
 
-/** The formatting bar (#14): the Format menu's commands, in its runs; shown by the setting. */
+/**
+ * The formatting bar (#14): the Format menu's commands, in its runs; shown by the setting. A row
+ * across the page (A's) folds, as FORMAT_FOLDS says; a floating slip or rail (B's, C's) wraps
+ * instead (./slip.css, ./runhead.css), having no bar to measure against.
+ */
 export const formatBar = (name: string): HostSpec => ({
   name,
   slot: 'format',
@@ -121,3 +145,6 @@ export const CHEVRONS: readonly HostSpec[] = [
 /** The commands `items` holds, in order. */
 export const idsIn = (items: readonly HostItem[]): CommandId[] =>
   items.flatMap((item) => (item === '|' ? [] : typeof item === 'string' ? [item] : item.ids));
+
+/** The formatting bar's commands as they fold: from its end, bold and italic staying. */
+export const FORMAT_FOLDS: readonly CommandId[] = idsIn(formatBar('').items).slice(2).reverse();

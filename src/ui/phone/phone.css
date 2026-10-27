@@ -160,12 +160,12 @@
   :root[data-density="compact"] .shell[data-room="panes"] {
     --eien-row-h: calc(var(--eien-touch) - var(--eien-space-2));
   }
-  /* The page's tools keep their size: short of room, their bar scrolls under a finger, rather
-     than run past the window (which a phone's browser would zoom out to show). */
-  .shell[data-room="panes"] :is(.page__bar, .window-head) {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
+  /* B's formatting slip, at a finger's size, never fits beside the tools' slip: it goes under. */
+  [data-layout="slip"] .shell[data-room="panes"] .page__format {
+    top: var(--band);
+  }
+  [data-layout="slip"] .shell[data-room="panes"][data-format-bar] .page__scroll {
+    padding-top: calc(var(--eien-control) + var(--eien-space-3));
   }
 }
 /* No edges to drag, no chevrons to shut a pane (back stands in for them), no

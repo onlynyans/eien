@@ -3,7 +3,7 @@
 // every page tool, always in sight (#1); on a phone, a rail of tools at the
 // page's foot. Styles in ./runhead.css.
 
-import { FOOT, formatBar, type LayoutSpec, VIEWS } from './layout-spec';
+import { FOOT, formatBar, type LayoutSpec, TOOL_FOLDS, VIEWS } from './layout-spec';
 
 export const RUNHEAD: LayoutSpec = {
   desktop: [
@@ -19,6 +19,7 @@ export const RUNHEAD: LayoutSpec = {
       slot: 'top',
       label: 'Page',
       items: [VIEWS, 'compare', 'seal', 'versions', '|', 'format-bar', 'focus'],
+      folds: TOOL_FOLDS,
     },
     formatBar('runhead-format'),
     FOOT,

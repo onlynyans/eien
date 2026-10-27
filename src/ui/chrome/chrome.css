@@ -77,6 +77,11 @@
   gap: calc(var(--eien-space-1) / 2);
   min-width: 0;
 }
+/* Folded behind its ⋯ (./fold.ts), or a rule with no run on one side: out of the row. Named
+   here, as the icon button's own display would otherwise keep it. */
+.host [hidden] {
+  display: none;
+}
 .host__rule {
   flex: none;
   width: var(--eien-hairline);

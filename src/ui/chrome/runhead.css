@@ -39,6 +39,10 @@
   background: var(--runhead-ground);
   border-bottom: var(--eien-hairline) solid var(--eien-rule);
 }
+/* Each host at its own width: the breadcrumb gives way first, then the tools fold (./fold.ts). */
+[data-layout="runhead"] .shell:not([data-phone]) > .window-head > .host {
+  flex: none;
+}
 [data-layout="runhead"] .running-crumbs {
   flex: 1;
   min-width: 0;
@@ -77,6 +81,9 @@
 }
 [data-layout="runhead"] .host--runhead-format {
   flex-direction: column;
+  /* Taller than the page has room for (44px controls on a short screen), a second column. */
+  flex-wrap: wrap;
+  max-height: calc(100dvh - var(--runhead-h) - 2 * var(--eien-space-6));
   padding: calc(var(--eien-space-1) / 2);
   background: var(--eien-paper-raised);
   border: var(--eien-hairline) solid var(--eien-rule-strong);
