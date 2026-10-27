@@ -17,9 +17,8 @@ const STEPS: Readonly<Record<ZoomCommand, number>> = {
 export const isZoomCommand = (command: MenuCommand): command is ZoomCommand =>
   Object.hasOwn(STEPS, command);
 
-/** Which zoom a key changes: the page's with the keyboard in it, or where the interface has no zoom of its own. */
-export const zoomKeyFor = (inPage: boolean, wholeZoom: boolean): ZoomKey =>
-  inPage || !wholeZoom ? 'page.zoom' : 'window.zoom';
+/** Which zoom a key changes: the page's with the keyboard in it, the whole interface's elsewhere. */
+export const zoomKeyFor = (inPage: boolean): ZoomKey => (inPage ? 'page.zoom' : 'window.zoom');
 
 /** `now`, zoomed by `command`: a step in or out (no further than the setting goes), or back to 100%. */
 export function zoomedBy(command: ZoomCommand, key: ZoomKey, now: number): number {
