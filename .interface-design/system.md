@@ -501,10 +501,14 @@ corners and colours the layout's own.
   `src/ui/shell/split-state.ts`). One token is new, `--eien-radius-dot`
   (fully round: the phone's other-note slip, the theme cards' pills). Every
   other length above is a space, rule, mark or radius token.
-- **Open** (`docs/backlog.md` #36): Band's views and tools need about 290px,
-  and Windows' controls take 138px of its right end, so a page under about
-  450px (three panes in a 1000px window) runs the tools under them. Nothing
-  covers a control, but the band has no second row to go to yet.
+- **Short of room** (decided and built 2026-10-28, #36): a bar's tools
+  that don't fit fold behind one ⋯ at its end (`ui/chrome/fold.ts`, the
+  "priority+" way): an `.icon-button` with the `more` icon, named "More
+  tools", its menu the row menu's (icon, word, key; Focus mode a toggle's
+  check, the views one choice with the dot), in the bar's order. Fit means every control inside the bar's content box,
+  whose padding keeps clear of the corner and the system's controls. The
+  order is `TOOL_FOLDS` (`ui/chrome/layout-spec.ts`); the strip never folds.
+  Floating format slips wrap instead.
 
 ## Wide screen: foldables and tablets (decided 2026-10-27, built)
 

@@ -19,6 +19,9 @@
 .page__main {
   position: relative;
   display: grid;
+  /* The page's width, whatever a row holds: a row of tools wider than the page folds them
+     (../chrome/fold.ts) rather than widen every row past the page. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr) auto var(--status-h) auto;
   min-width: 0;
   min-height: 0;

@@ -1,10 +1,14 @@
 // The window's chrome: the layout chosen (appearance.layout), drawn as its
 // hosts in the window's slots. Switching layouts takes one layout's hosts out
 // and puts the other's in; nothing else changes. A command pressed runs the
-// menu's command it sends, or one of the window's own.
+// menu's command it sends, or one of the window's own. Short of room, a host
+// folds its tools behind a ⋯ (./fold.ts), fitted whenever its bar's room
+// changes.
 
 import type { MenuCommand } from '../../platform/bridge';
+import { openMenu } from '../menu/menu';
 import { type CommandId, commandOf, type Layout, type LocalCommandId } from './commands';
+import { fitBar, foldMenu } from './fold';
 import { Host, type HostOf } from './host';
 import type { SlotName } from './layout-spec';
 import { LAYOUT_SPECS } from './layouts';
@@ -22,6 +26,8 @@ export interface ChromeOf extends Omit<HostOf, 'press'> {
   watch(host: HTMLElement): void;
   /** The split's pager, folded (../page/page-pane.ts): placed where the layout says. */
   readonly pager?: HTMLElement;
+  /** Whether a host fits its bar as drawn now: ./fold.ts measures it (tests say, with no layout). */
+  readonly fits?: (host: HTMLElement, bar: HTMLElement) => boolean;
 }
 
 export class Chrome {
@@ -31,6 +37,14 @@ export class Chrome {
   #layout: Layout | null = null;
   /** The split the hosts were drawn for: none with one page. */
   #split: SplitSpec | null = null;
+  /**
+   * Watches the bars the folding hosts stand in, whose room the page and the window give them:
+   * folding changes a host, never its bar, so fitting never makes it fire again.
+   */
+  readonly #bars =
+    typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => this.fit());
+  /** What each bar has folded behind its ⋯, in its order. */
+  readonly #folded = new Map<HTMLElement, readonly CommandId[]>();
 
   constructor(of: ChromeOf) {
     this.#of = of;
@@ -38,6 +52,7 @@ export class Chrome {
       mac: of.mac,
       look: (id) => of.look(id),
       press: (id, opener) => this.press(id, opener),
+      more: (opener) => this.#more(opener),
     };
   }
 
@@ -71,9 +86,22 @@ export class Chrome {
     if (this.#of.pager && tools) tools.element.before(this.#of.pager);
     this.#layout = layout;
     this.#split = split;
+    for (const host of this.#hosts) {
+      const bar = host.element.parentElement;
+      if (host.spec.folds && bar) this.#bars?.observe(bar);
+    }
+    // The split's pager stands in the tools' bar: drawn or not, it changes their room, not the bar's.
+    if (this.#of.pager) this.#bars?.observe(this.#of.pager);
+    this.fit();
     if (active instanceof HTMLElement && !active.isConnected) {
+      // The same command in the new layout, or the ⋯ it's folded behind there.
       const twin = held
-        ? this.#hosts.map((host) => host.button(held)).find((button) => button?.checkVisibility())
+        ? this.#hosts
+            .map((host) => {
+              const button = host.button(held);
+              return button?.hidden ? this.#moreOf(host) : button;
+            })
+            .find((button) => button?.checkVisibility())
         : undefined;
       if (twin) twin.focus();
       else this.#of.lost();
@@ -82,6 +110,8 @@ export class Chrome {
 
   /** Take the hosts out of the window. */
   unmount(): void {
+    this.#bars?.disconnect();
+    this.#folded.clear();
     for (const host of this.#hosts) host.element.remove();
     this.#hosts = [];
     this.#layout = null;
@@ -93,8 +123,60 @@ export class Chrome {
     const sends = commandOf(id).sends;
     if (sends) this.#of.send(sends, id);
     else this.#of.local(id as LocalCommandId, opener);
-    // What it changed shows once it's done: a menu command is heard by others first.
-    queueMicrotask(() => this.refresh());
+    // What it changed shows once it's done: a menu command is heard by others first. The strip,
+    // folded or opened, changes the slip's room with no resize: its hosts fit again.
+    queueMicrotask(() => {
+      this.refresh();
+      if (id === 'strip') this.fit();
+    });
+  }
+
+  /**
+   * Fold each bar's tools as its room says now. A bar not drawn (a phone's) is left as it is; the
+   * keyboard on a tool that folds goes to the ⋯ it went behind.
+   */
+  fit(): void {
+    const bars = new Map<HTMLElement, Host[]>();
+    for (const host of this.#hosts) {
+      const bar = host.element.parentElement;
+      if (host.spec.folds && bar) bars.set(bar, [...(bars.get(bar) ?? []), host]);
+    }
+    const had = document.activeElement;
+    for (const [bar, hosts] of bars) {
+      if (bar.getClientRects().length === 0) continue;
+      this.#folded.set(bar, fitBar(hosts, bar, this.#of.fits));
+      const more = hosts.at(-1)?.more;
+      if (had instanceof HTMLElement && had.hidden && bar.contains(had)) more?.focus();
+    }
+  }
+
+  /** The commands folded behind the ⋯ in `bar` now. */
+  folded(bar: HTMLElement): readonly CommandId[] {
+    return this.#folded.get(bar) ?? [];
+  }
+
+  /** The ⋯ the tools of `host`'s bar fold behind: its last folding host's. */
+  #moreOf(host: Host): HTMLButtonElement | null {
+    const bar = host.element.parentElement;
+    const last = this.#hosts
+      .filter((each) => each.spec.folds && each.element.parentElement === bar)
+      .at(-1);
+    return last?.more ?? null;
+  }
+
+  /** A ⋯ pressed: its bar's folded tools, as a menu under it. */
+  #more(opener: HTMLElement): void {
+    const bar = opener.closest('.host')?.parentElement;
+    if (!bar) return;
+    // A group's commands (the views) are one choice: radios, not toggles.
+    const chosen = new Set(
+      this.#hosts.flatMap((host) =>
+        host.spec.items.flatMap((item) => (typeof item === 'object' ? item.ids : [])),
+      ),
+    );
+    const press = (id: CommandId, from: HTMLElement) => this.press(id, from);
+    const items = foldMenu(this.folded(bar), this.#of.look, press, opener, chosen);
+    openMenu(items, { opener }, 'More tools');
   }
 
   /** Show every command as it is now. */

@@ -327,37 +327,74 @@ test.describe('a Galaxy Z Fold 5 opened upright, about 590px', () => {
 
 test.describe('the desktop’s panes on a Fold 5 sideways', () => {
   for (const layout of ['band', 'slip', 'runhead'] as const) {
-    test(`${layout}: the tools that don’t fit scroll in their bar; the window never runs past the screen`, async ({
+    test(`${layout}: the tools that don’t fit fold behind a ⋯; nothing runs past the page or the screen`, async ({
       page,
     }) => {
-      await withRoom(page, 'panes', FOLD5_SIDEWAYS, { 'appearance.layout': layout });
+      await withRoom(page, 'panes', FOLD5_SIDEWAYS, {
+        'appearance.layout': layout,
+        'editor.formatBar': 'on',
+      });
       await titles(page).filter({ hasText: 'Ideas' }).click();
       await expect(titlesOnPage(page)).toHaveText('Ideas');
-      const fits = await page.evaluate(() => ({
-        scale: window.visualViewport?.scale,
-        viewport: document.querySelector('meta[name="viewport"]')?.getAttribute('content'),
-        wide: document.documentElement.scrollWidth,
-        tall: document.documentElement.scrollHeight,
-        width: innerWidth,
-        height: innerHeight,
-        // Every tool is inside the window, or inside a bar that scrolls to it.
-        outside: [...document.querySelectorAll<HTMLElement>('.shell .icon-button')]
-          .filter((tool) => tool.checkVisibility())
-          .filter((tool) => {
-            const box = tool.getBoundingClientRect();
-            const bar = tool.closest<HTMLElement>('.page__bar, .window-head');
-            const scrolls = bar !== null && getComputedStyle(bar).overflowX === 'auto';
-            return box.right > innerWidth + 0.5 && !scrolls;
-          })
-          .map((tool) => tool.getAttribute('aria-label')),
-      }));
-      expect(fits.scale).toBe(1);
+      const bar = page.locator(layout === 'runhead' ? '.window-head' : '.page__bar');
+      const more = bar.getByRole('button', { name: 'More tools' });
+      const drawn = await bar.evaluate((bar) => {
+        const box = bar.getBoundingClientRect();
+        const style = getComputedStyle(bar);
+        // Inside the bar, and the bar inside its page (A's and B's) and the screen.
+        const room = bar.closest('.page')?.getBoundingClientRect().right ?? innerWidth;
+        const left = box.left + Number.parseFloat(style.paddingLeft);
+        const right = Math.min(box.right - Number.parseFloat(style.paddingRight), room, innerWidth);
+        const controls = [...bar.querySelectorAll<HTMLElement>('button')]
+          .filter((button) => button.checkVisibility())
+          .map((button) => ({
+            name: button.getAttribute('aria-label'),
+            box: button.getBoundingClientRect(),
+          }));
+        return {
+          outside: controls
+            .filter(({ box }) => box.left < left - 0.5 || box.right > right + 0.5)
+            .map(({ name }) => name),
+          overlapping: controls.flatMap((one, at) =>
+            controls
+              .slice(at + 1)
+              .filter(({ box }) => box.left < one.box.right - 0.5 && one.box.left < box.right - 0.5)
+              .filter(({ box }) => box.top < one.box.bottom - 0.5 && one.box.top < box.bottom - 0.5)
+              .map(({ name }) => `${one.name} over ${name}`),
+          ),
+          scrolls: getComputedStyle(bar).overflowX,
+          // The formatting row (A's) too, when it's on.
+          formatOutside: [...document.querySelectorAll<HTMLElement>('.page__format button')]
+            .filter((button) => button.checkVisibility())
+            .filter(
+              (button) => button.getBoundingClientRect().right > Math.min(room, innerWidth) + 0.5,
+            )
+            .map((button) => button.getAttribute('aria-label')),
+          folded: [...bar.querySelectorAll<HTMLElement>('.host [data-command][hidden]')].map(
+            (button) => button.getAttribute('aria-label'),
+          ),
+          scale: window.visualViewport?.scale,
+          viewport: document.querySelector('meta[name="viewport"]')?.getAttribute('content'),
+        };
+      });
+      expect(drawn.outside).toEqual([]);
+      expect(drawn.formatOutside).toEqual([]);
+      expect(drawn.overlapping).toEqual([]);
+      expect(drawn.scrolls).not.toBe('auto');
+      // A and B's bar is the page's, 246px here: tools fold. C's is the window's, and they fit.
+      expect(drawn.folded.length > 0).toBe(layout !== 'runhead');
+      expect(drawn.scale).toBe(1);
       // A phone's browser zooms out to show what runs past the screen (a Fold 5 did, leaving the
       // window's lower half blank), which Chromium's phone emulation doesn't: the page forbids it.
-      expect(fits.viewport).toContain('minimum-scale=1');
-      expect(fits.wide).toBeLessThanOrEqual(fits.width);
-      expect(fits.tall).toBeLessThanOrEqual(fits.height);
-      expect(fits.outside).toEqual([]);
+      expect(drawn.viewport).toContain('minimum-scale=1');
+      if (drawn.folded.length === 0) {
+        await expect(more).toBeHidden();
+        return;
+      }
+      // The ⋯ offers just what folded.
+      await more.click();
+      const offered = page.locator('.menu [role^="menuitem"]');
+      await expect(offered).toHaveText(drawn.folded.map((name) => name ?? ''));
     });
   }
 
