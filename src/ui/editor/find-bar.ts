@@ -176,6 +176,19 @@ export class FindBar {
     return true;
   }
 
+  /**
+   * The key held for the key being handled had Shift (set from each keydown,
+   * in the text and in the bar): ⇧⌘G is the previous match however its G
+   * arrives. CodeMirror reads Shift from a letter's case first, and with Caps
+   * Lock (or a key sent as "g") it's ⌘G's lower-case g with Shift held.
+   */
+  shifted = false;
+
+  /** ⌘G: the next match, or the previous one with Shift held. */
+  step(): boolean {
+    return this.shifted ? this.previous() : this.next();
+  }
+
   next(): boolean {
     return this.#query().valid ? findNext(this.#view()) : this.open(false);
   }
@@ -264,6 +277,7 @@ export class FindBar {
   /** A key anywhere in the bar: the find keymap's (./find.ts) first, then Enter's own in a field. */
   #key(event: KeyboardEvent): void {
     if (event.isComposing) return;
+    this.shifted = event.shiftKey;
     if (runScopeHandlers(this.#view(), event, FIND_SCOPE)) {
       event.preventDefault();
       return;

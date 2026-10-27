@@ -106,6 +106,19 @@ describe('find in the note', () => {
     expect(count()).toBe('2 of 3');
   });
 
+  it('goes back with Ctrl+Shift+G however its G arrives: Caps Lock sends a lower-case g', () => {
+    editor.find.open(false);
+    type(field('Find'), 'bell');
+    expect(count()).toBe('1 of 3');
+    press(field('Find'), 'g', { ctrlKey: true, shiftKey: true, keyCode: 71 });
+    expect(count()).toBe('3 of 3');
+    press(editor.view.contentDOM, 'g', { ctrlKey: true, shiftKey: true, keyCode: 71 });
+    expect(count()).toBe('2 of 3');
+    // And Ctrl+G, Shift let go, goes on again.
+    press(editor.view.contentDOM, 'g', { ctrlKey: true, keyCode: 71 });
+    expect(count()).toBe('3 of 3');
+  });
+
   it('matches case, whole words and patterns when they’re pressed', () => {
     editor.find.open(false);
     type(field('Find'), 'bell');

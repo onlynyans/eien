@@ -25,11 +25,20 @@ export function findInNote(bar: FindBar): Extension {
       createPanel: (view) => bar.panel(view),
       scrollToMatch: (range) => bar.scrollTo(range),
     }),
+    // Shift as held, before any keymap reads the key (FindBar.shifted).
+    Prec.highest(
+      EditorView.domEventHandlers({
+        keydown: (event) => {
+          bar.shifted = event.shiftKey;
+          return false;
+        },
+      }),
+    ),
     Prec.high(
       keymap.of([
         bind('find', () => bar.open(false)),
         bind('replace', () => bar.open(true)),
-        bind('next', () => bar.next()),
+        bind('next', () => bar.step()),
         bind('previous', () => bar.previous()),
         bind('replace-all', () => bar.replaceAll(), FIND_SCOPE),
         { key: 'Escape', run: () => bar.close(), scope: both },
