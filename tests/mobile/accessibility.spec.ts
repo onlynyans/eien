@@ -58,30 +58,25 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
   }
 }
 
-// Wide screen (spec §10): a tablet sideways, side by side and with two pages, the notes over the page.
-for (const room of ['side', 'pages'] as const) {
-  for (const scheme of ['day', 'night'] as const) {
-    test(`wide screen, ${room} by ${scheme}: the panes in sight, and the notes over the page`, async ({
-      page,
-    }) => {
-      await open(page);
-      await page.evaluate(
-        async ([room, scheme]) => {
-          await window.eien.settings.set('appearance.room', room);
-          await window.eien.settings.set('appearance.scheme', scheme);
-        },
-        [room, scheme] as const,
-      );
-      await putOutside(page, 'Eien/Vault/Ideas.md', '# Ideas\n\nAn *idea*, #draft.\n');
-      await page.setViewportSize({ width: 1180, height: 820 });
-      await page.reload();
-      await expect(page.locator('.shell')).toHaveAttribute('data-room', room);
-      await titles(page).first().click();
-      await expect(page.locator('.page .title')).toHaveText('Ideas');
-      expect(await seriousViolations(page), 'the page').toEqual([]);
-      await page.locator('.phone-bar__back').click();
-      await expect(titles(page)).toBeVisible();
-      expect(await seriousViolations(page), 'the notes beside or over the page').toEqual([]);
-    });
-  }
+// Wide screen (spec §10): a tablet sideways, side by side.
+for (const scheme of ['day', 'night'] as const) {
+  test(`wide screen, side by side by ${scheme}: the pane you came from beside the one you’re in`, async ({
+    page,
+  }) => {
+    await open(page);
+    await page.evaluate(async (scheme) => {
+      await window.eien.settings.set('appearance.room', 'side');
+      await window.eien.settings.set('appearance.scheme', scheme);
+    }, scheme);
+    await putOutside(page, 'Eien/Vault/Ideas.md', '# Ideas\n\nAn *idea*, #draft.\n');
+    await page.setViewportSize({ width: 1180, height: 820 });
+    await page.reload();
+    await expect(page.locator('.shell')).toHaveAttribute('data-room', 'side');
+    await titles(page).first().click();
+    await expect(page.locator('.page .title')).toHaveText('Ideas');
+    expect(await seriousViolations(page), 'the page').toEqual([]);
+    await page.locator('.phone-bar__back').click();
+    await expect(titles(page)).toBeVisible();
+    expect(await seriousViolations(page), 'the contents beside the notes').toEqual([]);
+  });
 }

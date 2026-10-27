@@ -52,16 +52,19 @@ describe('Wide screen, on a phone wider than 600px', () => {
     expect(tab('Lists')?.hidden).toBe(false);
     expect(row('layout.panes')?.hidden).toBe(false);
     expect(row('appearance.shutSidebar')?.hidden).toBe(false);
-    for (const room of ['one', 'side', 'pages'] as const) {
+    for (const room of ['one', 'side'] as const) {
       await settings.set('appearance.room', room);
       expect(tab('Lists')?.hidden, room).toBe(true); // nothing in it the phone's way
       expect(row('layout.panes')?.hidden, room).toBe(true);
       expect(row('appearance.shutSidebar')?.hidden, room).toBe(true);
-      expect(row('appearance.split')?.hidden, room).toBe(false); // two pages lays them out by it
+      // A second page opens with the panes alone: how two are laid out goes with them.
+      expect(row('appearance.split')?.hidden, room).toBe(true);
+      expect(row('appearance.facingMark')?.hidden, room).toBe(true);
     }
     await settings.set('appearance.room', 'panes');
     expect(tab('Lists')?.hidden).toBe(false);
     expect(row('layout.panes')?.hidden).toBe(false);
+    expect(row('appearance.split')?.hidden).toBe(false);
   });
 
   it('leaves a tab that just went from sight for one in sight', async () => {

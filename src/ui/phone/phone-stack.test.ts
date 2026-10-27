@@ -69,39 +69,21 @@ describe('side by side', () => {
   });
 });
 
-describe('two pages', () => {
-  beforeEach(() => {
-    room = 'pages';
-    stack.roomChanged();
-  });
-
-  it('slides the notes over the page, which stays, inert under them: nothing on it closes', () => {
-    const page = document.createElement('main');
-    page.className = 'page';
-    shell().append(page);
-    stack.show('page');
-    expect(page.inert).toBe(false);
-    stack.show('list');
-    expect(shell().dataset.sight).toBe('list page');
-    expect(page.inert).toBe(true);
-    expect(parts.leavingPage).not.toHaveBeenCalled();
-    expect(back().textContent).toBe('‹ Library');
-    stack.show('page');
-    expect(shell().dataset.sight).toBe('page');
-    expect(page.inert).toBe(false);
-  });
-
-  it('may open a second page; side by side and one at a time may not', () => {
-    expect(stack.splits).toBe(true);
-    room = 'side';
-    stack.roomChanged();
-    expect(stack.splits).toBe(false);
+describe('a second page', () => {
+  it('may open with the desktop’s panes, and in no room of the phone’s way', () => {
+    const rooms: readonly Room[] = ['panes', 'one', 'side'];
+    const splits = rooms.map((each) => {
+      room = each;
+      stack.roomChanged();
+      return stack.splits;
+    });
+    expect(splits).toEqual([true, false, false]);
   });
 });
 
 describe('the room changing', () => {
   it('lays the panes out again, and closes what lay over a page gone from sight', () => {
-    room = 'pages';
+    room = 'panes';
     stack.roomChanged();
     stack.show('page');
     vi.mocked(parts.changed).mockClear();
@@ -116,9 +98,9 @@ describe('the room changing', () => {
   });
 
   it('closes what lay over the page when the room takes it from sight', () => {
-    room = 'pages';
+    room = 'panes';
     stack.roomChanged();
-    stack.show('list'); // the notes over the page: it's still in sight
+    stack.show('list'); // the notes beside the page: it's still in sight
     expect(parts.leavingPage).not.toHaveBeenCalled();
     room = 'one'; // the notes alone now
     stack.roomChanged();

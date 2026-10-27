@@ -12,10 +12,9 @@ import {
   type PhonePane,
   type Room,
   roomOf,
-  twoPages,
 } from './room';
 
-const ROOMS: readonly Room[] = ['panes', 'one', 'side', 'pages'];
+const ROOMS: readonly Room[] = ['panes', 'one', 'side'];
 const choosing = (room: Room): SettingValues => ({ ...DEFAULT_SETTINGS, 'appearance.room': room });
 const sight = (room: Room, shown: PhonePane) =>
   PHONE_ORDER.filter((pane) => inSight(room, shown, pane));
@@ -47,7 +46,6 @@ describe('the room', () => {
       'one',
       'one',
       'side',
-      'pages',
     ]);
     expect(roomOf(FOLD, 'darwin', choosing('side'))).toBe('one'); // a desktop window that narrow
   });
@@ -56,9 +54,8 @@ describe('the room', () => {
     expect(roomOf(WIDE, 'android', DEFAULT_SETTINGS)).toBe('panes');
   });
 
-  it('goes the phone’s way in every room but panes, and opens two pages only with panes or two pages', () => {
-    expect(ROOMS.filter(onePane)).toEqual(['one', 'side', 'pages']);
-    expect(ROOMS.filter(twoPages)).toEqual(['panes', 'pages']);
+  it('goes the phone’s way, one page, in every room but panes', () => {
+    expect(ROOMS.filter(onePane)).toEqual(['one', 'side']);
   });
 });
 
@@ -83,19 +80,12 @@ describe('what’s in sight', () => {
     expect(sight('side', 'list')).toEqual(['sidebar', 'list']);
     expect(sight('side', 'sidebar')).toEqual(['sidebar', 'list']);
   });
-
-  it('with two pages, the page always, the notes or contents over it', () => {
-    expect(sight('pages', 'page')).toEqual(['page']);
-    expect(sight('pages', 'list')).toEqual(['list', 'page']);
-    expect(sight('pages', 'sidebar')).toEqual(['sidebar', 'page']);
-  });
 });
 
 describe('back', () => {
   it('goes a pane back while the contents are out of sight, and nowhere once they’re in it', () => {
     expect(PHONE_ORDER.map((shown) => backTo('one', shown))).toEqual([null, 'sidebar', 'list']);
     expect(PHONE_ORDER.map((shown) => backTo('side', shown))).toEqual([null, null, 'list']);
-    expect(PHONE_ORDER.map((shown) => backTo('pages', shown))).toEqual([null, 'sidebar', 'list']);
     expect(PHONE_ORDER.map((shown) => backTo('panes', shown))).toEqual([null, null, null]);
   });
 });

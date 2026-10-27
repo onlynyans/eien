@@ -64,12 +64,7 @@ describe('the schema', () => {
 
   it('keeps today’s panes on a wide screen unless the writer chooses otherwise', () => {
     const room = settingOf('appearance.room');
-    expect(room?.type === 'choice' && Object.keys(room.choices)).toEqual([
-      'panes',
-      'one',
-      'side',
-      'pages',
-    ]);
+    expect(room?.type === 'choice' && Object.keys(room.choices)).toEqual(['panes', 'one', 'side']);
     expect(room?.default).toBe('panes');
     expect(room?.scope).toBe('device'); // a tablet and a phone that share a vault each choose their own
     // It's the whole window's: offered on a phone too, so a foldable can choose before it opens.
@@ -222,6 +217,12 @@ describe('readSettings', () => {
       expect.stringMatching(/^page\.zoom must be 50 to 200/),
       expect.stringMatching(/^Unknown setting "future\.setting"/),
     ]);
+  });
+
+  it('reads Wide screen’s Two pages, which Eien no longer has, as Panes', () => {
+    const { values, problems } = readSettings({ 'appearance.room': 'pages' }, 'device');
+    expect(withDefaults(values)['appearance.room']).toBe('panes');
+    expect(problems).toEqual([expect.stringMatching(/^appearance\.room must be one of .*"panes"/)]);
   });
 
   it('reads a vault file for vault settings only', () => {
