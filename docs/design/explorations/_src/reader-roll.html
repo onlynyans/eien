@@ -14,12 +14,14 @@
    naming the chapter you're in, and the list's chosen row follows you. */
 .blotter[data-main-scroll] { outline: none; }
 .blotter[data-main-scroll]:focus-visible { box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
-.roll { padding-top: 0; }
-.roll .sheet__head { position: sticky; top: calc(-1 * var(--eien-space-4)); z-index: 2; margin: 0 calc(-1 * clamp(var(--eien-space-4), 8%, var(--eien-space-8))) var(--eien-space-5); padding: var(--eien-space-3) clamp(var(--eien-space-4), 8%, var(--eien-space-8)); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
+.roll { padding-top: 0; border-top: 0; }
+/* The head stays at the top of the pane, as wide as the sheet (its em is the prose's, as the sheet's is), a band laid across its top edge. */
+.roll-band { font-size: var(--eien-size-prose); position: sticky; top: calc(-1 * var(--eien-space-4)); z-index: 2; flex: none; display: flex; justify-content: space-between; gap: var(--eien-space-3); width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto; padding: var(--eien-space-3) clamp(var(--eien-space-4), 8%, var(--eien-space-8)); background: var(--eien-band); border: var(--eien-hairline) solid var(--eien-rule); }
+.win[data-layout='slip'] .roll-band { top: 0; }
+.roll-band + .roll { padding-top: var(--eien-space-5); }
 .roll .book-text + .book-text { margin-top: var(--eien-space-8); }
 .roll-end { margin: var(--eien-space-8) 0 var(--eien-space-6); text-align: center; font-style: italic; color: var(--eien-ink-soft); }
-.win[data-layout='runhead'] .roll { padding-top: var(--eien-space-6); }
-.win[data-layout='slip'] .roll .sheet__head { top: 0; }
+.win[data-layout='runhead'] .roll { padding-top: var(--eien-space-6); border-top: var(--eien-hairline) solid var(--eien-rule); }
 .phone__page.is-scroll { display: block; overflow: auto; padding-top: 0; }
 .phone .roll-head { position: sticky; top: 0; z-index: 2; margin: 0 calc(-1 * var(--eien-space-5)) var(--eien-space-4); padding: var(--eien-space-2) var(--eien-space-5); background: var(--eien-band); border-bottom: var(--eien-hairline) solid var(--eien-rule); }
 </style>
@@ -40,7 +42,7 @@ const timeLeft = (n) => {
 };
 Reader.tools = (ctx) => ctx.contentsTool();
 Reader.page = (ctx) => `<div class="page">${ctx.top()}<div class="blotter" data-main-scroll="roll" data-keep-scroll="roll" tabindex="0" role="region" aria-roledescription="book" aria-label="${BOOK.title}">
-  <article class="sheet roll">${ctx.layout === 'runhead' ? '' : `<div class="sheet__head"><span class="crumb" data-roll-crumb>${ctx.crumb()}</span>${ctx.layout === 'band' ? `<span class="crumb">${BOOK.author}</span>` : ''}</div>`}${rollHtml()}</article></div>${ctx.colophon(['<span data-col-ch></span>', '<span data-col-book></span>', '<span data-col-left></span>'])}</div>`;
+  ${ctx.layout === 'runhead' ? '' : `<div class="roll-band"><span class="crumb" data-roll-crumb>${ctx.crumb()}</span>${ctx.layout === 'band' ? `<span class="crumb">${BOOK.author}</span>` : ''}</div>`}<article class="sheet roll">${rollHtml()}</article></div>${ctx.colophon(['<span data-col-ch></span>', '<span data-col-book></span>', '<span data-col-left></span>'])}</div>`;
 Reader.strip = (ctx) => `<div class="seg"><span class="crumb" data-roll-crumb>${ctx.crumb()}</span><span class="tools-row">${ctx.views()}${Reader.tools(ctx)}</span></div>`;
 Reader.phone = () => `<div class="phone__page is-scroll" data-main-scroll="roll" data-keep-scroll="proll" tabindex="0"><div class="roll-head crumb" data-roll-crumb></div>${rollHtml()}</div>`;
 Reader.phoneTools = (ctx) => ctx.tool('contents', 'Contents', '', 'data-contents');
@@ -65,7 +67,7 @@ act.go = (c) => {
   if (!target) { if (c < HELD) { R.pendingGo = c; draw(); } else say('This exploration holds Chapters I to III'); return; }
   const sc = canvas.querySelector('[data-main-scroll]');
   const s = sc.getBoundingClientRect().width / sc.offsetWidth || 1;
-  const head = sc.querySelector('.sheet__head, .roll-head')?.offsetHeight ?? 0;
+  const head = sc.querySelector('.roll-band, .roll-head')?.offsetHeight ?? 0;
   sc.scrollTop += (target.getBoundingClientRect().top - sc.getBoundingClientRect().top) / s - head - 16;
 };
 Reader.drawn = () => { if (R.pendingGo != null) { act.go(R.pendingGo); R.pendingGo = null; } };

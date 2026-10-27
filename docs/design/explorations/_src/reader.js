@@ -37,7 +37,7 @@ const charsBefore = (c) => CHAPTERS.slice(0, c).reduce((s, ch) => s + ch.chars, 
 const SHELF = [
   { name: 'Cooking', d: 0, books: [{ title: 'The Boston Cooking-School Cook Book', read: '' }] },
   { name: 'Fic', d: 0, books: [] },
-  { name: 'Research', d: 1, books: [{ title: 'The Elements of Style', read: '18%' }] },
+  { name: 'Research', d: 1, parent: 'Fic', books: [{ title: 'The Elements of Style', read: '18%' }] },
   { name: 'Novels', d: 0, books: [{ title: 'North and South', read: 'read' }, { title: 'Persuasion', read: '62%' }, { title: BOOK.title, id: 'pp' }] },
 ];
 const SECTION_NAMES = { shelf: 'Shelf', reading: 'Reading', bookshelf: 'Bookshelf' };
@@ -122,7 +122,8 @@ function context() {
     findHere: () => (Reader.findInBar && R.find.open ? finder.field() : ''),
     /** The sheet's running head: A's crumb and the author; B's crumb; C's is over the page. */
     head: () => (ch.layout === 'runhead' ? '' : `<div class="sheet__head"><span class="crumb">${ctx.crumb()}</span>${ch.layout === 'band' ? `<span class="crumb">${BOOK.author}</span>` : ''}</div>`),
-    colophon: (items) => `<footer class="colophon">${items.filter(Boolean).join(' <span class="dot">·</span> ')}<span class="said" role="status" aria-live="polite"></span></footer>`,
+    /** The colophon: its first item always; the second dropped only when very narrow, the rest when narrow. */
+    colophon: (items) => `<footer class="colophon">${items.filter(Boolean).map((it, i) => `<span class="item${i >= 2 ? ' opt' : i === 1 ? ' opt2' : ''}">${i ? '<span class="dot">·</span> ' : ''}${it}</span>`).join('')}<span class="said" role="status" aria-live="polite"></span></footer>`,
     /** A chapter as pages: its flow in columns, `span` of them side by side. */
     leaves: (c, { span = 1, cls = '' } = {}) => `<div class="leaves ${cls}" data-main data-span="${span}" tabindex="0" role="region" aria-roledescription="book" aria-label="${BOOK.title}"><div class="flow book-text" data-c="${c}">${chapterHtml(c)}</div></div>`,
   };
@@ -221,7 +222,9 @@ function layoutLeaves(lv) {
   const span = +lv.dataset.span || 1;
   const gap = parseFloat(getComputedStyle(lv).getPropertyValue('--leaf-gap')) || 48;
   const W = (lv.clientWidth - (span - 1) * gap) / span;
-  const H = lv.clientHeight;
+  // A page ends on a whole line: its height is the lines that fit, so no line is cut and facing pages line up.
+  const line = parseFloat(getComputedStyle(flow).lineHeight) || 1;
+  const H = Math.max(line, Math.floor(lv.clientHeight / line) * line);
   for (const f of [flow, ...lv.querySelectorAll('.flow--measure')]) Object.assign(f.style, { columnCount: String(span), columnGap: `${gap}px`, height: `${H}px`, width: `${lv.clientWidth}px` });
   const count = (f) => Math.max(1, Math.round((f.scrollWidth + gap) / (W + gap)));
   lv._ = { step: W + gap, span, W, gap, pages: count(flow) };
@@ -441,16 +444,24 @@ function settle() {
 function sidebarHtml(ctx) {
   const sec = (key, label, body) => {
     const open = !R.folds[key];
-    return `<div class="sb__sec"><button class="section" data-fold="${key}" data-k="sec-${key}" aria-expanded="${open}"><span class="label">${label}</span><span class="twisty" data-icon="twisty"></span></button></div>${open ? body : ''}`;
+    return `<div class="sb__sec"><button class="section" data-fold="${key}" data-k="sec-${key}" aria-expanded="${open}"><span class="label">${label}</span><span class="twisty" aria-hidden="true"></span></button></div>${open ? body : ''}`;
   };
-  const row = (name, count, d = 0, cls = '', attrs = '') => `<div class="trow${cls}" style="--d:${d}" ${attrs}><span class="n">${name}</span>${count}</div>`;
-  const shelf = SHELF.map((f) => row(f.name, f.books.length ? `<span class="count">${f.books.length}</span>` : '', f.d, ' trow--folder')
-    + f.books.map((b) => `<button class="trow trow--book${b.id ? ' is-chosen' : ''}" style="--d:${f.d + 1}" data-book="${b.id ?? ''}" data-k="book-${esc(b.title)}"${b.id ? ' aria-current="true"' : ''}><span class="n">${esc(b.title)}</span><span class="count"${b.id ? ' data-fill="pct"' : ''}>${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`).join('')).join('');
+  // A row of the tree: a twisty's column (a folder's twisty, or nothing), its name, its count.
+  const twist = (open) => `<span class="tw" aria-hidden="true">${open == null ? '' : `<span class="twisty${open ? ' is-open' : ''}"></span>`}</span>`;
+  const row = (name, count, d = 0, open = null) => `<div class="trow" style="--d:${d}">${twist(open)}<span class="n">${name}</span>${count}</div>`;
+  const group = (d, rows) => `<div class="tgroup" style="--d:${d}">${rows}</div>`;
+  const n = (k) => `<span class="count">${k}</span>`;
+  const book = (b, d) => `<button class="trow trow--book${b.id ? ' is-chosen' : ''}" style="--d:${d}" data-book="${b.id ?? ''}" data-k="book-${esc(b.title)}"${b.id ? ' aria-current="true"' : ''}>${twist(null)}<span class="n">${esc(b.title)}</span><span class="count"${b.id ? ' data-fill="pct"' : ''}>${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`;
+  // The shelf keeps the tree's shape: each folder that holds a book, or a folder that does, at its depth.
+  const shelfTree = (d, parent) => SHELF.filter((f) => f.d === d && (f.parent ?? null) === parent).map((f) => {
+    const inner = shelfTree(d + 1, f.name) + f.books.map((b) => book(b, d + 1)).join('');
+    return row(f.name, f.books.length ? n(f.books.length) : '', d, true) + group(d, inner);
+  }).join('');
   return `<aside class="sb" aria-label="Sidebar"><div class="sb__head">Eien</div>
-    ${sec('library', 'Library', row('All notes', '<span class="count">214</span>') + row('Pinned', '<span class="count">3</span>'))}
-    ${sec('folders', 'Folders', row('Cooking', '<span class="count">12</span>') + row('Fic', '<span class="count">41</span>') + row('Beneath the Walls', '<span class="book-mark">BOOK</span><span class="count">14</span>', 1) + row('Research', '<span class="count">9</span>', 1) + row('Ideas', '<span class="count">57</span>') + row('Novels', '<span class="count">2</span>'))}
-    ${sec('tags', 'Tags', row('#draft', '<span class="count">23</span>') + row('#fic/aot', '<span class="count">31</span>'))}
-    <div class="sb__lens">${sec('shelf', `<span class="section-name">${ctx.section}</span>`, `<div class="shelf" role="group" aria-label="${ctx.section}: the vault's books">${shelf}</div>`)}</div>
+    ${sec('library', 'Library', row('All notes', n(214)) + row('Pinned', n(3)))}
+    ${sec('folders', 'Folders', row('Cooking', n(12), 0, false) + row('Fic', n(41), 0, true) + group(0, row('Beneath the Walls', `<span class="book-mark">BOOK</span>${n(14)}`, 1, false) + row('Research', n(9), 1, false)) + row('Ideas', n(57), 0, false) + row('Novels', n(2), 0, false))}
+    ${sec('tags', 'Tags', row('#draft', n(23)) + row('#fic/aot', n(31)))}
+    ${sec('shelf', `<span class="section-name">${ctx.section}</span>`, `<div class="shelf" role="group" aria-label="${ctx.section}: the vault's books">${shelfTree(0, null)}</div>`)}
   </aside>`;
 }
 function listHtml() {
@@ -473,8 +484,9 @@ function windowHtml(ctx) {
 }
 function phoneHtml(ctx) {
   const view = R.phoneView;
-  const shelf = `<div class="phone__shelf">${SHELF.filter((f) => f.books.length).map((f) => `<div class="label phone__group">${f.name}</div>${f.books.map((b) => `<button class="phone__row" data-book="${b.id ?? ''}" data-k="pbook-${esc(b.title)}"><span>${esc(b.title)}</span><span class="count">${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`).join('')}`).join('')}</div>`;
-  const contents = `<div class="phone__shelf">${CHAPTERS.map((ch, i) => `<button class="phone__row${i === R.c ? ' is-chosen' : ''}" data-ch="${i}" data-k="pch-${i}"><span>${ch.title}</span><span class="count">${i < HELD ? '' : ''}</span></button>`).join('')}</div>`;
+  // The phone lists the shelf's folders by their path, the open book chosen.
+  const shelf = `<div class="phone__shelf">${SHELF.filter((f) => f.books.length).map((f) => `<div class="label phone__group">${f.parent ? `${f.parent} / ` : ''}${f.name}</div>${f.books.map((b) => `<button class="phone__row${b.id ? ' is-chosen' : ''}" data-book="${b.id ?? ''}" data-k="pbook-${esc(b.title)}"${b.id ? ' aria-current="true"' : ''}><span>${esc(b.title)}</span><span class="count">${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`).join('')}`).join('')}</div>`;
+  const contents = `<div class="phone__shelf">${CHAPTERS.map((ch, i) => `<button class="phone__row${i === R.c ? ' is-chosen' : ''}" data-ch="${i}" data-k="pch-${i}"><span>${ch.title}</span><span class="count">${R.nums?.chapterStart ? R.nums.chapterStart(i) : ''}</span></button>`).join('')}</div>`;
   const back = view === 'page' ? `<button class="back" data-phone-view="shelf" data-k="pback"><span data-icon="back"></span>${ctx.section}</button>`
     : `<button class="back" data-phone-view="page" data-k="pback"><span data-icon="back"></span>${BOOK.title}</button>`;
   const body = Reader.phoneViews?.[view] ? Reader.phoneViews[view](ctx)
@@ -482,7 +494,7 @@ function phoneHtml(ctx) {
       : view === 'contents' ? `<div class="phone__list"><div class="label phone__title">Contents</div>${contents}</div>`
         : Reader.phone(ctx);
   const tools = view === 'page' ? Reader.phoneTools(ctx) : '';
-  return `<div class="phone" data-layout="${ctx.layout}" data-view="${view}">
+  return `<div class="phone" data-layout="${ctx.layout}" data-view="${view}" style="--slip-n:${(tools.match(/icon-button/g) ?? []).length}">
     <div class="backbar">${back}${ctx.layout === 'band' ? `<span class="tools-row">${tools}</span>` : ''}</div>
     <div class="phone__body">${body}</div>
     ${ctx.layout === 'slip' && tools ? `<div class="slip phone__slip">${tools}</div>` : ''}
@@ -495,6 +507,8 @@ function draw() {
   const ctx = context();
   if (!canvas) return;
   const focusKey = document.activeElement?.closest?.('[data-k]')?.dataset.k;
+  // The book itself has the keyboard: it keeps it through a redraw.
+  const hadBook = !!document.activeElement?.matches?.('.leaves[data-main], [data-main-scroll]');
   const scrolls = {};
   for (const el of canvas.querySelectorAll('[data-keep-scroll]')) scrolls[el.dataset.keepScroll] = el.scrollTop;
   canvas.innerHTML = ctx.device === 'phone' ? `<div class="fit">${phoneHtml(ctx)}</div>` : `<div class="fit">${windowHtml(ctx)}</div>`;
@@ -523,6 +537,7 @@ function draw() {
   settle();
   canvas.querySelector('.row.is-chosen')?.scrollIntoView({ block: 'nearest' });
   if (focusKey) canvas.querySelector(`[data-k="${CSS.escape(focusKey)}"]`)?.focus({ preventScroll: true });
+  else if (hadBook) (main() ?? canvas.querySelector('[data-main-scroll]'))?.focus({ preventScroll: true });
   const out = document.querySelector('.xbar output');
   if (out) out.textContent = ctx.device === 'phone' ? 'phone' : `${ctx.width} px`;
   drawn = true;
@@ -664,6 +679,7 @@ function mountReaderPage({ id, note, notes, bar = '', list = 'shown' }) {
     ['Pages', [['spread', '1 · The spread'], ['leaf', '2 · One leaf'], ['columns', '3 · Columns']]],
     ['Scroll', [['chapter', '1 · A chapter'], ['roll', '2 · One roll'], ['beside', '3 · Beside a note']]],
     ['Features', [['margin', '1 · On the page'], ['index', '2 · In the list'], ['edge', '3 · On the edge']]],
+    ['Showcase', [['room', '1 · The room'], ['set', '2 · Set as a book'], ['lamp', '3 · By lamplight']]],
   ];
   const group = (attr, label, opts) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${opts.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
   document.body.insertAdjacentHTML('afterbegin', `
@@ -695,7 +711,10 @@ function mountReaderPage({ id, note, notes, bar = '', list = 'shown' }) {
   wire();
   wireBar(() => { if (R.nums) R.goal = R.nums.start; draw(); });
   addEventListener('resize', () => { fit(); });
-  document.fonts?.ready.then(() => { R.goal = R.nums?.start ?? 0; draw(); });
+  // Pages are counted in the face as it draws: once a face's font arrives, count again, keeping your place.
+  const recount = () => { for (const k of Object.keys(pageCache)) delete pageCache[k]; R.goal = R.nums?.start ?? 0; draw(); };
+  document.fonts?.ready.then(recount);
+  document.fonts?.addEventListener('loadingdone', recount);
 }
 
 /** The same in all nine. */

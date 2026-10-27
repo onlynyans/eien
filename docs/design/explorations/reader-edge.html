@@ -417,30 +417,40 @@ kbd { font-family: var(--eien-face-mono); font-size: 11px; padding: 0 4px; borde
 :root { --eien-field: light-dark(rgb(35 32 28 / 0.06), rgb(233 226 212 / 0.07)); }
 
 .xbar__break { flex-basis: 100%; height: 0; }
+/* C's running head is outside the page pane, so its quiet tools show while the window has the pointer. */
+.win:hover .strip .quiet, .strip .quiet:focus-within { opacity: 1; }
 a.icon-button { text-decoration: none; }
 .notes .said-note { margin-top: var(--eien-space-4); font-size: var(--eien-size-meta); color: var(--eien-pencil); }
 .tools-rule { width: var(--eien-hairline); height: var(--eien-space-4); margin: 0 var(--eien-space-1); background: var(--eien-rule); align-self: center; }
 .win[data-list='hidden'] > .ls { display: none; }
 .win > .sb { grid-column: 1; } .win > .ls { grid-column: 2; } .win > .pg { grid-column: 3; }
 
-/* The sidebar's sections fold; the twisty shows on hover, focus, or folded. */
-.section { appearance: none; display: flex; align-items: center; gap: var(--eien-space-1); height: 100%; padding: 0; border: 0; background: none; cursor: pointer; color: var(--eien-pencil); }
-.section .twisty { color: var(--eien-faded); opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease), rotate var(--eien-quick) var(--eien-ease); rotate: 90deg; }
-.section .twisty svg { width: var(--eien-space-3); height: var(--eien-space-3); }
-.section[aria-expanded='false'] .twisty { rotate: 0deg; opacity: 1; }
-.section:is(:hover, :focus-visible) .twisty { opacity: 1; }
+/* The sidebar as the app draws it (src/ui/sidebar/sidebar.css, tree.css). A section's
+   label is a row's height, its twisty at the right, shown on hover, focus, or folded. */
+.sb { overflow: auto; padding-bottom: var(--eien-space-4); }
+.sb__sec { padding: 0; }
+.section { appearance: none; display: flex; align-items: center; justify-content: space-between; width: 100%; height: var(--eien-row-h); padding: 0 var(--eien-space-4); border: 0; background: none; cursor: pointer; color: var(--eien-pencil); }
+.section .twisty { opacity: 0; transition: opacity var(--eien-quick) var(--eien-ease); }
+.section:is(:hover, :focus-visible) .twisty, .section[aria-expanded='false'] .twisty { opacity: 1; }
+.section:focus-visible { outline-offset: calc(var(--eien-mark-w) * -1); }
 @media (hover: hover) { .section:hover .label { color: var(--eien-ink-soft); } }
-
-/* The books' section: a lens over the folder tree. Folders as the tree draws them,
-   a hairline guide down each open one; books in the text face, how far you've read at the right. */
-.sb { overflow: auto; }
-.sb__lens { margin-top: auto; padding-bottom: var(--eien-space-4); }
+.section:active { background: var(--eien-press); }
+/* Disclosure: a small triangle in faded ink that turns rather than swaps. */
+.twisty { display: inline-grid; place-items: center; flex: none; width: var(--eien-space-3); height: var(--eien-space-3); color: var(--eien-faded); }
+.twisty::before { content: ''; width: calc(var(--eien-space-1) + var(--eien-hairline)); height: calc(var(--eien-space-2) - var(--eien-hairline)); background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); transition: transform var(--eien-quick) var(--eien-ease); }
+.twisty.is-open::before, .section[aria-expanded='true'] .twisty::before { transform: rotate(90deg); }
+/* The tree's rows: each level a space-4 deeper, a twisty's column before every name
+   (empty for a book or a note), and a hairline guide down an open folder's rows from
+   its twisty's centre. The books' section is the same tree, holding only books. */
+.sb .trow { align-items: center; gap: 0; padding: 0 var(--eien-space-4) 0 calc(var(--eien-space-2) + var(--d, 0) * var(--eien-space-4)); }
+.sb .trow .n { margin-right: var(--eien-space-2); }
+.tw { flex: none; display: grid; place-items: center; width: var(--eien-space-5); height: var(--eien-row-h); }
+.tgroup { position: relative; }
+.tgroup::before { content: ''; position: absolute; top: 0; bottom: calc(var(--eien-row-h) / 2); left: calc(var(--eien-space-2) + var(--d, 0) * var(--eien-space-4) + var(--eien-space-5) / 2); width: var(--eien-hairline); background: var(--eien-rule); }
 button.trow { appearance: none; width: 100%; border: 0; background: none; text-align: left; font: inherit; cursor: pointer; }
 @media (hover: hover) { button.trow:not(.is-chosen):hover { background: var(--eien-hover); color: var(--eien-ink); } }
-button.trow:focus-visible { outline-offset: -2px; }
+button.trow:focus-visible { outline-offset: calc(var(--eien-mark-w) * -1); }
 .trow .count { flex: none; }
-.trow--book::after { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--eien-space-4) + (var(--d) - 1) * 16px + 6px); width: var(--eien-hairline); background: var(--eien-rule); }
-.trow--book.is-chosen::after { display: none; }
 .book-mark { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); padding: 0 3px; border: var(--eien-hairline) solid var(--eien-rule); color: var(--eien-pencil); line-height: 14px; }
 
 /* The list, as the book's contents: rows of chapters, the page each starts on. */
@@ -450,10 +460,12 @@ button.trow:focus-visible { outline-offset: -2px; }
 .row--ch .t { font-size: var(--eien-size-row); }
 
 /* A book's page: the face's prose, set as a book sets it: indented paragraphs, no gap. */
-.book-text { font-size: var(--eien-size-prose); line-height: var(--eien-leading-prose); hyphens: auto; -webkit-hyphens: auto; }
-.book-text p { margin: 0; text-indent: var(--eien-space-6); }
+/* Ragged right, as a note is, so no hyphens; every line on one grid, the chapter's
+   heading included, so facing pages and columns line up line for line. */
+.book-text { --line: calc(var(--eien-size-prose) * var(--eien-leading-prose)); font-size: var(--eien-size-prose); line-height: var(--line); hanging-punctuation: first; }
+.book-text p { margin: 0; text-indent: var(--indent, var(--eien-space-6)); }
 .book-text .ch-head + p, .book-text p.not-held { text-indent: 0; }
-.ch-head { font-size: var(--eien-size-heading); font-weight: 500; line-height: 1.3; margin: 0 0 var(--eien-space-6); color: var(--eien-ink); break-after: avoid; }
+.ch-head { font-size: var(--eien-size-heading); font-weight: 500; line-height: var(--line); margin: 0 0 var(--line); color: var(--eien-ink); break-after: avoid; }
 .book-text p.not-held { font-style: italic; color: var(--eien-ink-soft); }
 .book-text ::selection { background: var(--eien-seal-wash); }
 .book-text .hit { background: var(--eien-field); box-shadow: 0 0 0 var(--eien-hairline) var(--eien-rule-strong); border-radius: 1px; }
@@ -487,13 +499,18 @@ button.trow:focus-visible { outline-offset: -2px; }
 .backbar .back { appearance: none; display: flex; align-items: center; gap: var(--eien-space-1); flex: 1; min-width: 0; height: var(--eien-touch); padding: 0 var(--eien-space-1); border: 0; background: none; color: var(--eien-ink-soft); font: inherit; font-size: var(--eien-size-preview); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .phone .icon-button { width: var(--eien-touch); height: var(--eien-touch); }
 .phone__body { position: relative; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); background: var(--eien-paper); }
-.phone .book-text { font-size: var(--eien-size-prose-phone); }
-.phone .ch-head { font-size: calc(var(--eien-size-heading) * 0.9); margin-bottom: var(--eien-space-4); }
-.phone .book-text p { text-indent: var(--eien-space-5); }
-.phone .book-text .ch-head + p { text-indent: 0; }
+/* The phone's shelf is its contents, so it's the desk, as the sidebar is. */
+.phone:is([data-view='shelf']) .phone__body { background: var(--eien-desk); }
+.phone[data-view='shelf'] .phone__row { border-bottom-color: var(--eien-rule-soft); }
+.phone .book-text { --line: calc(var(--eien-size-prose-phone) * var(--eien-leading-prose)); font-size: var(--eien-size-prose-phone); }
+.phone .ch-head { font-size: calc(var(--eien-size-heading) * 0.9); }
+/* The phone's indent a step less, as a token the page's own rules can still set. */
+.phone .book-text { --indent: var(--eien-space-5); }
 .phone__page { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; padding: var(--eien-space-5) var(--eien-space-5) 0; }
 .phone__foot { display: flex; justify-content: space-between; align-items: center; min-height: var(--eien-space-7); }
-.phone__slip { position: absolute; z-index: 3; right: var(--eien-space-3); bottom: var(--eien-space-7); }
+/* B's floating slip rests in the page's foot, the folio stepping aside for it, so it never lies over the words. */
+.phone__slip { position: absolute; z-index: 3; right: var(--eien-space-3); bottom: var(--eien-space-2); padding: 2px; }
+.phone[data-layout='slip'] .phone__foot { min-height: calc(var(--eien-touch) + var(--eien-space-4)); padding-right: calc(var(--eien-touch) * var(--slip-n, 1) + var(--eien-space-5)); }
 .phone .rail { display: flex; justify-content: space-around; align-items: center; min-height: calc(var(--eien-touch) + var(--eien-space-3)); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); }
 .phone__list { overflow: auto; }
 .phone__title { padding: var(--eien-space-4) var(--eien-space-4) var(--eien-space-2); }
@@ -510,18 +527,36 @@ button.trow:focus-visible { outline-offset: -2px; }
 
 /* Find in the book: the field as system.md sets it (a wash of ink at rest, the
    well and an inset focus ring with the keyboard), its count, and the steps. */
-.find { position: relative; display: flex; align-items: center; gap: 2px; min-width: 0; }
+.find { position: relative; display: flex; align-items: center; gap: 2px; min-width: 0; flex: 0 1 auto; }
 .find__icon { position: absolute; left: var(--eien-space-2); top: 50%; translate: 0 -50%; color: var(--eien-pencil); pointer-events: none; }
 .find__icon svg { width: var(--eien-space-3); height: var(--eien-space-3); }
-.find__field { width: 15em; min-width: 6em; flex: 0 1 auto; padding: var(--eien-space-1) var(--eien-space-2) var(--eien-space-1) calc(var(--eien-space-2) + var(--eien-space-4)); background: var(--eien-field); border-color: transparent; border-radius: var(--eien-radius-s); color: var(--eien-ink); }
-@media (hover: hover) { .find__field:hover { border-color: var(--eien-rule); } }
-.find__field:focus { background: var(--eien-well); border-color: transparent; box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.find .find__field { width: 15em; min-width: 6em; flex: 0 1 auto; padding: var(--eien-space-1) var(--eien-space-2) var(--eien-space-1) calc(var(--eien-space-2) + var(--eien-space-4)); background: var(--eien-field); border-color: transparent; border-radius: var(--eien-radius-s); color: var(--eien-ink); }
+@media (hover: hover) { .find .find__field:hover { border-color: var(--eien-rule); } }
+.find .find__field:focus { background: var(--eien-well); border-color: transparent; box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
 .find__field::-webkit-search-cancel-button { display: none; }
-.find__says { min-width: 7.5em; padding: 0 var(--eien-space-2); white-space: nowrap; text-align: right; }
+.find__says { min-width: 0; padding: 0 var(--eien-space-2); white-space: nowrap; text-align: right; }
 .find .icon-button { color: var(--eien-pencil); }
 .find .icon-button svg { width: var(--eien-space-3); height: var(--eien-space-3); }
-/* While finding, the band's tools stay in sight. */
+/* While finding, the band's tools stay in sight; where the bar is too narrow for
+   both, the field takes it alone until Esc gives the tools back. */
 .is-finding .quiet, .quiet.is-finding { opacity: 1; }
+.band, .seg, .topline { container-type: inline-size; }
+@container (max-width: 640px) {
+  .is-finding > .tools-row, .find ~ .tools-row, .is-finding > .tools, .is-finding > .tools-rule, .slip.is-finding > .icon-button { display: none; }
+}
+
+/* The colophon keeps to one line: the items it can spare go first when it's narrow. */
+.colophon { container-type: inline-size; }
+.colophon .item { white-space: nowrap; }
+@container (max-width: 460px) { .colophon .item.opt { display: none; } }
+@container (max-width: 300px) { .colophon .item.opt2 { display: none; } }
+
+/* Folded, the pager's names give way to an ellipsis, down to a control's square. */
+.pager { flex: 0 1 auto; overflow: hidden; }
+.pager .word-button { flex: 0 1 auto; min-width: var(--eien-control); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.band .tools-row { flex: none; }
+/* Scrolling under B's floating slip, the page's end can always scroll clear of it. */
+.phone[data-layout='slip'] .phone__page.is-scroll { padding-bottom: calc(var(--eien-touch) + var(--eien-space-6)); }
 
 
 /* Features 3 · On the edge. The whole book as a thumb index along the page's
@@ -892,7 +927,7 @@ const charsBefore = (c) => CHAPTERS.slice(0, c).reduce((s, ch) => s + ch.chars, 
 const SHELF = [
   { name: 'Cooking', d: 0, books: [{ title: 'The Boston Cooking-School Cook Book', read: '' }] },
   { name: 'Fic', d: 0, books: [] },
-  { name: 'Research', d: 1, books: [{ title: 'The Elements of Style', read: '18%' }] },
+  { name: 'Research', d: 1, parent: 'Fic', books: [{ title: 'The Elements of Style', read: '18%' }] },
   { name: 'Novels', d: 0, books: [{ title: 'North and South', read: 'read' }, { title: 'Persuasion', read: '62%' }, { title: BOOK.title, id: 'pp' }] },
 ];
 const SECTION_NAMES = { shelf: 'Shelf', reading: 'Reading', bookshelf: 'Bookshelf' };
@@ -977,7 +1012,8 @@ function context() {
     findHere: () => (Reader.findInBar && R.find.open ? finder.field() : ''),
     /** The sheet's running head: A's crumb and the author; B's crumb; C's is over the page. */
     head: () => (ch.layout === 'runhead' ? '' : `<div class="sheet__head"><span class="crumb">${ctx.crumb()}</span>${ch.layout === 'band' ? `<span class="crumb">${BOOK.author}</span>` : ''}</div>`),
-    colophon: (items) => `<footer class="colophon">${items.filter(Boolean).join(' <span class="dot">·</span> ')}<span class="said" role="status" aria-live="polite"></span></footer>`,
+    /** The colophon: its first item always; the second dropped only when very narrow, the rest when narrow. */
+    colophon: (items) => `<footer class="colophon">${items.filter(Boolean).map((it, i) => `<span class="item${i >= 2 ? ' opt' : i === 1 ? ' opt2' : ''}">${i ? '<span class="dot">·</span> ' : ''}${it}</span>`).join('')}<span class="said" role="status" aria-live="polite"></span></footer>`,
     /** A chapter as pages: its flow in columns, `span` of them side by side. */
     leaves: (c, { span = 1, cls = '' } = {}) => `<div class="leaves ${cls}" data-main data-span="${span}" tabindex="0" role="region" aria-roledescription="book" aria-label="${BOOK.title}"><div class="flow book-text" data-c="${c}">${chapterHtml(c)}</div></div>`,
   };
@@ -1076,7 +1112,9 @@ function layoutLeaves(lv) {
   const span = +lv.dataset.span || 1;
   const gap = parseFloat(getComputedStyle(lv).getPropertyValue('--leaf-gap')) || 48;
   const W = (lv.clientWidth - (span - 1) * gap) / span;
-  const H = lv.clientHeight;
+  // A page ends on a whole line: its height is the lines that fit, so no line is cut and facing pages line up.
+  const line = parseFloat(getComputedStyle(flow).lineHeight) || 1;
+  const H = Math.max(line, Math.floor(lv.clientHeight / line) * line);
   for (const f of [flow, ...lv.querySelectorAll('.flow--measure')]) Object.assign(f.style, { columnCount: String(span), columnGap: `${gap}px`, height: `${H}px`, width: `${lv.clientWidth}px` });
   const count = (f) => Math.max(1, Math.round((f.scrollWidth + gap) / (W + gap)));
   lv._ = { step: W + gap, span, W, gap, pages: count(flow) };
@@ -1296,16 +1334,24 @@ function settle() {
 function sidebarHtml(ctx) {
   const sec = (key, label, body) => {
     const open = !R.folds[key];
-    return `<div class="sb__sec"><button class="section" data-fold="${key}" data-k="sec-${key}" aria-expanded="${open}"><span class="label">${label}</span><span class="twisty" data-icon="twisty"></span></button></div>${open ? body : ''}`;
+    return `<div class="sb__sec"><button class="section" data-fold="${key}" data-k="sec-${key}" aria-expanded="${open}"><span class="label">${label}</span><span class="twisty" aria-hidden="true"></span></button></div>${open ? body : ''}`;
   };
-  const row = (name, count, d = 0, cls = '', attrs = '') => `<div class="trow${cls}" style="--d:${d}" ${attrs}><span class="n">${name}</span>${count}</div>`;
-  const shelf = SHELF.map((f) => row(f.name, f.books.length ? `<span class="count">${f.books.length}</span>` : '', f.d, ' trow--folder')
-    + f.books.map((b) => `<button class="trow trow--book${b.id ? ' is-chosen' : ''}" style="--d:${f.d + 1}" data-book="${b.id ?? ''}" data-k="book-${esc(b.title)}"${b.id ? ' aria-current="true"' : ''}><span class="n">${esc(b.title)}</span><span class="count"${b.id ? ' data-fill="pct"' : ''}>${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`).join('')).join('');
+  // A row of the tree: a twisty's column (a folder's twisty, or nothing), its name, its count.
+  const twist = (open) => `<span class="tw" aria-hidden="true">${open == null ? '' : `<span class="twisty${open ? ' is-open' : ''}"></span>`}</span>`;
+  const row = (name, count, d = 0, open = null) => `<div class="trow" style="--d:${d}">${twist(open)}<span class="n">${name}</span>${count}</div>`;
+  const group = (d, rows) => `<div class="tgroup" style="--d:${d}">${rows}</div>`;
+  const n = (k) => `<span class="count">${k}</span>`;
+  const book = (b, d) => `<button class="trow trow--book${b.id ? ' is-chosen' : ''}" style="--d:${d}" data-book="${b.id ?? ''}" data-k="book-${esc(b.title)}"${b.id ? ' aria-current="true"' : ''}>${twist(null)}<span class="n">${esc(b.title)}</span><span class="count"${b.id ? ' data-fill="pct"' : ''}>${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`;
+  // The shelf keeps the tree's shape: each folder that holds a book, or a folder that does, at its depth.
+  const shelfTree = (d, parent) => SHELF.filter((f) => f.d === d && (f.parent ?? null) === parent).map((f) => {
+    const inner = shelfTree(d + 1, f.name) + f.books.map((b) => book(b, d + 1)).join('');
+    return row(f.name, f.books.length ? n(f.books.length) : '', d, true) + group(d, inner);
+  }).join('');
   return `<aside class="sb" aria-label="Sidebar"><div class="sb__head">Eien</div>
-    ${sec('library', 'Library', row('All notes', '<span class="count">214</span>') + row('Pinned', '<span class="count">3</span>'))}
-    ${sec('folders', 'Folders', row('Cooking', '<span class="count">12</span>') + row('Fic', '<span class="count">41</span>') + row('Beneath the Walls', '<span class="book-mark">BOOK</span><span class="count">14</span>', 1) + row('Research', '<span class="count">9</span>', 1) + row('Ideas', '<span class="count">57</span>') + row('Novels', '<span class="count">2</span>'))}
-    ${sec('tags', 'Tags', row('#draft', '<span class="count">23</span>') + row('#fic/aot', '<span class="count">31</span>'))}
-    <div class="sb__lens">${sec('shelf', `<span class="section-name">${ctx.section}</span>`, `<div class="shelf" role="group" aria-label="${ctx.section}: the vault's books">${shelf}</div>`)}</div>
+    ${sec('library', 'Library', row('All notes', n(214)) + row('Pinned', n(3)))}
+    ${sec('folders', 'Folders', row('Cooking', n(12), 0, false) + row('Fic', n(41), 0, true) + group(0, row('Beneath the Walls', `<span class="book-mark">BOOK</span>${n(14)}`, 1, false) + row('Research', n(9), 1, false)) + row('Ideas', n(57), 0, false) + row('Novels', n(2), 0, false))}
+    ${sec('tags', 'Tags', row('#draft', n(23)) + row('#fic/aot', n(31)))}
+    ${sec('shelf', `<span class="section-name">${ctx.section}</span>`, `<div class="shelf" role="group" aria-label="${ctx.section}: the vault's books">${shelfTree(0, null)}</div>`)}
   </aside>`;
 }
 function listHtml() {
@@ -1328,8 +1374,9 @@ function windowHtml(ctx) {
 }
 function phoneHtml(ctx) {
   const view = R.phoneView;
-  const shelf = `<div class="phone__shelf">${SHELF.filter((f) => f.books.length).map((f) => `<div class="label phone__group">${f.name}</div>${f.books.map((b) => `<button class="phone__row" data-book="${b.id ?? ''}" data-k="pbook-${esc(b.title)}"><span>${esc(b.title)}</span><span class="count">${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`).join('')}`).join('')}</div>`;
-  const contents = `<div class="phone__shelf">${CHAPTERS.map((ch, i) => `<button class="phone__row${i === R.c ? ' is-chosen' : ''}" data-ch="${i}" data-k="pch-${i}"><span>${ch.title}</span><span class="count">${i < HELD ? '' : ''}</span></button>`).join('')}</div>`;
+  // The phone lists the shelf's folders by their path, the open book chosen.
+  const shelf = `<div class="phone__shelf">${SHELF.filter((f) => f.books.length).map((f) => `<div class="label phone__group">${f.parent ? `${f.parent} / ` : ''}${f.name}</div>${f.books.map((b) => `<button class="phone__row${b.id ? ' is-chosen' : ''}" data-book="${b.id ?? ''}" data-k="pbook-${esc(b.title)}"${b.id ? ' aria-current="true"' : ''}><span>${esc(b.title)}</span><span class="count">${b.id ? `${R.nums?.pct ?? 0}%` : b.read}</span></button>`).join('')}`).join('')}</div>`;
+  const contents = `<div class="phone__shelf">${CHAPTERS.map((ch, i) => `<button class="phone__row${i === R.c ? ' is-chosen' : ''}" data-ch="${i}" data-k="pch-${i}"><span>${ch.title}</span><span class="count">${R.nums?.chapterStart ? R.nums.chapterStart(i) : ''}</span></button>`).join('')}</div>`;
   const back = view === 'page' ? `<button class="back" data-phone-view="shelf" data-k="pback"><span data-icon="back"></span>${ctx.section}</button>`
     : `<button class="back" data-phone-view="page" data-k="pback"><span data-icon="back"></span>${BOOK.title}</button>`;
   const body = Reader.phoneViews?.[view] ? Reader.phoneViews[view](ctx)
@@ -1337,7 +1384,7 @@ function phoneHtml(ctx) {
       : view === 'contents' ? `<div class="phone__list"><div class="label phone__title">Contents</div>${contents}</div>`
         : Reader.phone(ctx);
   const tools = view === 'page' ? Reader.phoneTools(ctx) : '';
-  return `<div class="phone" data-layout="${ctx.layout}" data-view="${view}">
+  return `<div class="phone" data-layout="${ctx.layout}" data-view="${view}" style="--slip-n:${(tools.match(/icon-button/g) ?? []).length}">
     <div class="backbar">${back}${ctx.layout === 'band' ? `<span class="tools-row">${tools}</span>` : ''}</div>
     <div class="phone__body">${body}</div>
     ${ctx.layout === 'slip' && tools ? `<div class="slip phone__slip">${tools}</div>` : ''}
@@ -1350,6 +1397,8 @@ function draw() {
   const ctx = context();
   if (!canvas) return;
   const focusKey = document.activeElement?.closest?.('[data-k]')?.dataset.k;
+  // The book itself has the keyboard: it keeps it through a redraw.
+  const hadBook = !!document.activeElement?.matches?.('.leaves[data-main], [data-main-scroll]');
   const scrolls = {};
   for (const el of canvas.querySelectorAll('[data-keep-scroll]')) scrolls[el.dataset.keepScroll] = el.scrollTop;
   canvas.innerHTML = ctx.device === 'phone' ? `<div class="fit">${phoneHtml(ctx)}</div>` : `<div class="fit">${windowHtml(ctx)}</div>`;
@@ -1378,6 +1427,7 @@ function draw() {
   settle();
   canvas.querySelector('.row.is-chosen')?.scrollIntoView({ block: 'nearest' });
   if (focusKey) canvas.querySelector(`[data-k="${CSS.escape(focusKey)}"]`)?.focus({ preventScroll: true });
+  else if (hadBook) (main() ?? canvas.querySelector('[data-main-scroll]'))?.focus({ preventScroll: true });
   const out = document.querySelector('.xbar output');
   if (out) out.textContent = ctx.device === 'phone' ? 'phone' : `${ctx.width} px`;
   drawn = true;
@@ -1519,6 +1569,7 @@ function mountReaderPage({ id, note, notes, bar = '', list = 'shown' }) {
     ['Pages', [['spread', '1 · The spread'], ['leaf', '2 · One leaf'], ['columns', '3 · Columns']]],
     ['Scroll', [['chapter', '1 · A chapter'], ['roll', '2 · One roll'], ['beside', '3 · Beside a note']]],
     ['Features', [['margin', '1 · On the page'], ['index', '2 · In the list'], ['edge', '3 · On the edge']]],
+    ['Showcase', [['room', '1 · The room'], ['set', '2 · Set as a book'], ['lamp', '3 · By lamplight']]],
   ];
   const group = (attr, label, opts) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${opts.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
   document.body.insertAdjacentHTML('afterbegin', `
@@ -1550,7 +1601,10 @@ function mountReaderPage({ id, note, notes, bar = '', list = 'shown' }) {
   wire();
   wireBar(() => { if (R.nums) R.goal = R.nums.start; draw(); });
   addEventListener('resize', () => { fit(); });
-  document.fonts?.ready.then(() => { R.goal = R.nums?.start ?? 0; draw(); });
+  // Pages are counted in the face as it draws: once a face's font arrives, count again, keeping your place.
+  const recount = () => { for (const k of Object.keys(pageCache)) delete pageCache[k]; R.goal = R.nums?.start ?? 0; draw(); };
+  document.fonts?.ready.then(recount);
+  document.fonts?.addEventListener('loadingdone', recount);
 }
 
 /** The same in all nine. */
