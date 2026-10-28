@@ -577,8 +577,19 @@ readers, and what it costs Eien.
     at the hand's own speed and landing in about 1.5 × calm. A throw hard
     enough to carry past its mark stops there, so it never bounces back.
   - **Catch it:** a page in flight can be caught and dragged on or back.
-  - **Keys and clicks:** a key is a throw from near the foot of the outer
-    edge, the corner lifting a little.
+  - **Keys and clicks:** a key is a hand's turn. The corner rides an upward
+    arc from the outer edge, up and over and down as it lands, and no two
+    turns are alike. Four things vary, each by at most a third of its range
+    from the last turn's, never past its bounds (turned back at a bound
+    rather than held there):
+    - where it's taken: 74–94% of the way down the edge;
+    - how high it rises: 6–16% of the page;
+    - its pace: ±10%;
+    - where the arc peaks: a little early or late.
+
+    So the turns differ the way one hand's do, and never jump. Checked over
+    40 turns: every value in bounds, no step over a third, every turn rose
+    and landed where it was taken, each in about 330–350ms.
   - **Never stuck:** each frame has a timer behind it, so a turn lands even
     where frames stall.
 - **The exception it asks for.** A curl reads as paper because of light,

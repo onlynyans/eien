@@ -256,8 +256,9 @@ function finish() {
 function settleTo(c, T) {
   c.T = T;
   c.stop();
-  // Critically damped, it closes to within half a pixel of two page-widths in about 10/ω: so, within 1.5 calm times.
-  const w = 11 / turnTime(1.5);
+  // Critically damped, it closes to within half a pixel of two page-widths in about 10/ω: so, within 1.5 calm times
+  // (a key's turn at its own pace).
+  const w = 11 / turnTime(1.5 * (c.pace ?? 1));
   let last = performance.now();
   const tick = (now) => {
     let dt = Math.min(48, now - last);
@@ -267,6 +268,12 @@ function settleTo(c, T) {
       dt -= h;
       const was = c.F.slice();
       for (const k of [0, 1]) { const a = -w * w * (c.F[k] - T[k]) - 2 * w * c.V[k]; c.V[k] += a * h; c.F[k] += c.V[k] * h; }
+      // A key's turn: the corner's height follows how far across it is, up and over and down as it lands.
+      if (c.arc) {
+        const p = clamp(c.dir > 0 ? (c.C0[0] - c.F[0]) / (2 * c.W) : (c.F[0] + c.W) / (2 * c.W), 0, 1);
+        c.F[1] = c.arc.y - c.arc.lift * Math.sin(Math.PI * p ** c.arc.skew);
+        c.V[1] = 0;
+      }
       // A throw hard enough to carry it past where it's going stops there: it lands, it never bounces back.
       if (dot(sub(c.F, T), sub(was, T)) < 0) { c.F = T.slice(); c.V = [0, 0]; dt = 0; }
     }
@@ -277,13 +284,31 @@ function settleTo(c, T) {
   c.stop = nextFrame(tick);
 }
 
-// A key or a click: a throw from near the foot of the outer edge, the corner lifting a little as it goes.
+/**
+ * A key or a click is a hand's turn, and a hand never turns two pages alike. Where it takes the
+ * edge (grip, of the page's height), how high the corner rises (lift), how fast (pace) and where
+ * the arc peaks (skew) each wander from the last turn's by at most a third of their range, and
+ * never past their bounds: the turns differ, but always as one hand's would.
+ */
+const STROKE = { grip: [0.74, 0.94], lift: [0.06, 0.16], pace: [0.9, 1.1], skew: [0.8, 1.25] };
+const stroke = { grip: 0.86, lift: 0.11, pace: 1, skew: 1 };
+function nextStroke() {
+  for (const [k, [lo, hi]] of Object.entries(STROKE)) {
+    const v = stroke[k] + (Math.random() * 2 - 1) * ((hi - lo) / 3);
+    // Turned back at a bound rather than held there, so a run of turns never sticks at an edge.
+    stroke[k] = v > hi ? 2 * hi - v : v < lo ? 2 * lo - v : v;
+  }
+  return { ...stroke };
+}
 act.turn = (dir) => {
+  const s = nextStroke();
   const sheet = sheetOf(main());
-  const c = begin(dir, (sheet?.offsetHeight ?? 0) * 0.86);
+  const c = begin(dir, (sheet?.offsetHeight ?? 0) * s.grip);
   if (!c) return;
-  const t = turnTime(1.5);
-  c.V = [(-dir * c.W) / t, (-c.H * 0.12) / t];
+  c.pace = s.pace;
+  // The corner rides an upward arc from where it's taken to where it lands, peaking a little early or late.
+  c.arc = { y: c.C0[1], lift: s.lift * c.H, skew: s.skew };
+  c.V = [(-dir * c.W) / turnTime(1.5 * s.pace), 0];
   settleTo(c, c.done);
 };
 
@@ -301,7 +326,7 @@ queueMicrotask(() => {
     const r = sheet.getBoundingClientRect();
     hand = { id: e.pointerId, x0: e.clientX, y0: e.clientY, s: r.width / sheet.offsetWidth || 1, top: r.top, samples: [] };
     // A page in flight, caught: it stops where it is and follows the hand from there.
-    if (catching) { curl.stop(); hand.c = curl; hand.F0 = curl.F.slice(); curl.T = null; }
+    if (catching) { curl.stop(); curl.arc = null; hand.c = curl; hand.F0 = curl.F.slice(); curl.T = null; }
   });
   addEventListener('pointermove', (e) => {
     if (!hand || e.pointerId !== hand.id) return;
@@ -358,7 +383,7 @@ mountEpubPage({
     <li><b>Let go and your speed decides:</b> the throw is projected from the last moments of the drag. A flick turns the page from a few centimetres in; a slow drag past a quarter of the page from the spine turns it; anything short falls back.</li>
     <li><b>Never a fixed time:</b> the finish is a spring with exactly enough damping never to overshoot. It starts at the speed your hand left it and settles in about one and a half calm times, so a hard throw is quick and a soft one is gentle, and it never bounces.</li>
     <li><b>Catch it:</b> press on a page in flight and it stops under your hand; drag it on or back.</li>
-    <li><b>A key or a click</b> is a throw from near the foot of the outer edge, the corner lifting a little as it goes; a key mid-turn finishes it.</li>
+    <li><b>A key or a click</b> is a hand's turn: the corner rides an upward arc from the outer edge, up and over and down as it lands. No two are alike: where it's taken (between 74% and 94% of the way down the edge), how high it rises (6–16% of the page), its pace (±10%) and where the arc peaks each wander from the last turn's by at most a third of their range, never past their bounds, so the turns differ the way one hand's do and never jump. A key mid-turn finishes it.</li>
     <li><b>Live, not a picture:</b> what stays, what lifts and the page beneath are each the page itself, clipped along the fold and mirrored. In the app the book's frame would be drawn the same way, so nothing waits on a snapshot.</li>
   </ul>
   <h2>The exception it asks for</h2>
