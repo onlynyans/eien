@@ -1,5 +1,5 @@
 // axe-core over the phone's page (../e2e/axe.ts): each layout, by day and by
-// night, on the notes, the page, its table bar, its ⋯ menu and Settings. No
+// night, on the notes, the page, its table bar, its ⋯ menu, the quick look and Settings. No
 // serious or critical violation, colour contrast included.
 
 import { devices, expect, type Page, test } from '@playwright/test';
@@ -50,6 +50,15 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       await expect(page.locator('.menu')).toBeVisible();
       expect(await seriousViolations(page), 'the ⋯ menu').toEqual([]);
       await page.keyboard.press('Escape');
+      // The quick look's sheet (#49), from the layout's Look control.
+      await page
+        .locator('.phone-bar__controls [data-command="look"], .page__phone [data-command="look"]')
+        .click();
+      const look = page.getByRole('dialog', { name: 'Look: Notes' });
+      await expect(look).toBeVisible();
+      expect(await seriousViolations(page), 'the quick look').toEqual([]);
+      await look.getByRole('button', { name: 'Done' }).click();
+      await expect(look).toBeHidden();
 
       await page.locator('.phone-bar__back').click();
       await expect(titles(page)).toBeVisible();
