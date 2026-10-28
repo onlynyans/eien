@@ -90,7 +90,7 @@ export const ICONS = {
   exclude: '<path d="M4 8h8"/>',
   swap: '<path d="M3 5.5h9.5M10 3l2.5 2.5L10 8"/><path d="M13 10.5H3.5M6 8l-2.5 2.5L6 13"/>',
   resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
-  // Find's (ui/editor/find-bar.ts): its three options, and a line put in another's place, once or all.
+  // Find's (ui/find/find-bar.ts): its three options, and a line put in another's place, once or all.
   matchCase:
     '<path d="M1.8 12.5L4.9 3.5h.6l3.1 9M3 9.5h4.4"/><circle cx="12" cy="10.3" r="2.2"/><path d="M14.2 8v4.5"/>',
   wholeWord:

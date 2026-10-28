@@ -25,7 +25,7 @@ the controller's readers reached `side.note.path`, `side.page.editor` and
 (`PageLeaf`: element, head, folio) with what the pane, the row and the
 window ask of any page: its `name` (the pager, the closed book's edge, its
 label), `runningCrumbs`, `aside` (a note's versions panel), `under` (a
-note's table bar), `foot`, `tipped` (its controls with tooltips: its ×, a
+note's table bar), `foot`, `find`, `tipped` (its controls with tooltips: its ×, a
 note's tags' +), `focus`, `key` (a key on the pane: a note's #) and
 `dispose`.
 
@@ -37,6 +37,31 @@ is the seam for **an EPUB's own colophon items**.
 
 `PageView` implements it, its colophon items `page/note-foot.ts`'s
 `NoteFoot`; `PagePane` and `PagesRow` take `PaneLeaf`.
+
+### Find on a page: `PaneLeaf.find`
+
+The menu's Find, Find and Replace, Find Next and Find Previous (and a
+phone's ⋯ → Find) go to the active page's `find` (`PageFind`: `open(replace)`,
+`next`, `previous`), whatever it holds: Find is a page's command, not a
+note's, so the menu greying by `on` (Phase 1) leaves it on. A note's does
+nothing where its text isn't on the page (outline cards, a seal compared).
+
+The find bar (`find/find-bar.ts`, added in Phase 0's third refactor)
+searches nothing itself. What it searches is a `FindTarget`: `open`,
+`close`, `chosen`, `valid`, `query(query, narrow)`, `next`, `previous`,
+`count`, and, where the text can change, `replace` (`one`, `all`,
+`locked`); without `replace` the bar draws no Replace. It tells the bar
+`shown(open)` and `changed()`. A note's is `editor/find.ts`'s `NoteFind`,
+CodeMirror's search as it was. Phase 5's EPUB page makes a `FindBar` over
+its own target, a matcher over its drawn chapters, and gives a `PageFind`
+over it. Its keys: Esc is the bar's own; the target's `key` (optional)
+comes first (a note's: CodeMirror's find keymap, Shift as held for ⇧⌘G).
+A book's bar gets ⌘F, ⌘G and ⇧⌘G on the desktop through the Electron
+menu; a phone with a hardware keyboard has no menu, so ⌘G in its bar needs
+a `key` on the book's target or a key matcher of the bar's own, and
+`PaneLeaf.key` can take ⌘F outside a field. Playwright's key presses never
+reach the native menu, so Phase 5's end-to-end tests can't test that route
+by keyboard.
 
 ### What the controller holds per page: `vault/page-side.ts`
 

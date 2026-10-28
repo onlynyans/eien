@@ -14,7 +14,7 @@ import type { SaveState } from '../notes/note-session';
 import { BoardHost } from './board-host';
 import { NoteFoot } from './note-foot';
 import { NoteSheet } from './note-sheet';
-import { type PageLeaf, type PaneLeaf, pageLeaf } from './page-leaf';
+import { type PageFind, type PageLeaf, type PaneLeaf, pageLeaf } from './page-leaf';
 import { PageTags, type PageTagsOf } from './page-tags';
 import { WordCount } from './word-count';
 
@@ -252,13 +252,18 @@ export class PageView implements PaneLeaf {
     else (document.activeElement as HTMLElement | null)?.blur(); // the title is the note's own heading
   }
 
-  /**
-   * Find in the note (Replace unfolded, for `replace`): only where its text is
-   * on the page, not outline cards nor a seal compared in its place.
-   */
-  find(replace: boolean): void {
-    if (this.writable) this.editor.find.open(replace);
-  }
+  /** Find in the note: only where its text is on the page, not outline cards nor a seal compared in its place. */
+  readonly find: PageFind = {
+    open: (replace) => {
+      if (this.writable) this.editor.find.open(replace);
+    },
+    next: () => {
+      if (this.writable) this.editor.find.next();
+    },
+    previous: () => {
+      if (this.writable) this.editor.find.previous();
+    },
+  };
 
   /** Rename the note: its title becomes a field, the words chosen; Enter keeps them, Esc doesn't. */
   editTitle(): void {
