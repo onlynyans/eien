@@ -54,8 +54,8 @@ all three" below where they and the other directions disagree.
   values are #40 Phase 1's look settings, made from the mark.
 - **Its words and the sun:** the head says SHELF for an EPUB; the sidebar's
   sun stays beside the popover's Day or night ("Answered", below).
-- **When it's built:** beside #40, after the phase that lets a page hold an
-  EPUB. #40's session places it in its phases.
+- **When it's built:** in two halves: the notes' once #40 Phase 0b has
+  merged, the shelf's in Phase 1.
 
 ## In all three
 
