@@ -50,7 +50,9 @@ keyboard, and on the phone. The bar's Section control offers the books'
 section as SHELF, READING or BOOKSHELF. [epub.md](epub.md) has every
 direction's trade-offs and recommends **Pages 2** (opening to 1's spread
 when there's room), **Scroll 1** (then 3), and **Features 2** with 1's marks
-on the page.
+on the page. Turning (2026-10-28), three motions for the page, recommends
+**3**'s words stepping for a key or a click and **2**'s sheet, carried, for a
+hand.
 
 | Set | 1 | 2 | 3 |
 |---|---|---|---|
@@ -58,6 +60,8 @@ on the page.
 | Scroll | [A chapter a sheet](epub-chapter.html) | [One roll](epub-roll.html) | [Beside a note](epub-beside.html) |
 | Features | [On the page](epub-margin.html) | [In the list](epub-index.html) | [On the edge](epub-edge.html) |
 | Showcase | [The reading room](epub-room.html) | [Set as a book](epub-set.html) | [By lamplight](epub-lamp.html) |
+| Turning | [The leaf turns](epub-flip-turn.html) | [Set aside](epub-flip-aside.html) | [The words turn](epub-flip-ink.html) |
+| | [The curl](epub-flip-curl.html) (4, asks for an exception: light while a page moves) | | |
 
 ## A quick look, anywhere (2026-10-28): 1 chosen
 
