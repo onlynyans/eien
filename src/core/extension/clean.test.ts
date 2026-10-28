@@ -1,65 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { type CleanNode, cleanHtml, plainOf } from './clean';
+import { shown } from '../../../tests/support/clean-nodes';
+import { cleanStory } from './clean';
 
-/** Cleaned nodes written back as tags, so a test reads what the story page would draw. */
-function shown(nodes: readonly CleanNode[]): string {
-  return nodes
-    .map((node) => {
-      if (node.kind === 'text') return node.text;
-      const attrs = Object.entries(node.attrs)
-        .map(([name, value]) => ` ${name}="${value}"`)
-        .join('');
-      return `<${node.name}${attrs}>${shown(node.children)}</${node.name}>`;
-    })
-    .join('');
-}
+const clean = (html: string) => shown(cleanStory(html));
 
-const clean = (html: string) => shown(cleanHtml(html));
-
-describe('cleanHtml: what a story looks like', () => {
-  it('keeps paragraphs, emphasis, scene breaks and quotes', () => {
-    expect(
-      clean('<p>She <em>ran</em>, <strong>fast</strong>.</p><hr><blockquote><p>Q</p></blockquote>'),
-    ).toBe(
-      '<p>She <em>ran</em>, <strong>fast</strong>.</p><hr></hr><blockquote><p>Q</p></blockquote>',
-    );
-  });
-
-  it('turns a style into the tag it means, as a paste does', () => {
-    expect(clean('<p><span style="font-style: italic">soft</span></p>')).toBe(
-      '<p><em>soft</em></p>',
-    );
-  });
-
-  it('keeps where a block sits, from align, text-align or <center>', () => {
-    expect(clean('<p align="center">*</p>')).toBe('<p align="center">*</p>');
-    expect(clean('<p style="text-align: RIGHT">x</p>')).toBe('<p align="right">x</p>');
-    expect(clean('<center>end</center>')).toBe('<div align="center">end</div>');
-    expect(clean('<p align="middle">x</p>')).toBe('<p>x</p>');
-  });
-
-  it('leaves out AO3’s landmark headings, there for screen readers', () => {
-    expect(clean('<h3 class="landmark heading">Chapter Text</h3><p>Words</p>')).toBe(
-      '<p>Words</p>',
-    );
-  });
-
-  it('keeps an element it doesn’t know as its words', () => {
-    expect(clean('<p><span class="x"><font color="red">red</font></span></p>')).toBe('<p>red</p>');
-  });
-});
-
-describe('cleanHtml: nothing of the page runs or leaks', () => {
-  it('drops scripts, styles and controls with what they hold', () => {
-    expect(
-      clean('<p>a<script>alert(1)</script><style>p{}</style><button>Kudos</button>b</p>'),
-    ).toBe('<p>ab</p>');
-  });
-
-  it('keeps no handler, class, id or style', () => {
-    expect(clean('<p id="x" class="y" style="color:red" onclick="steal()">t</p>')).toBe('<p>t</p>');
-  });
-
+describe('cleanStory: a story site’s addresses', () => {
   it('keeps links to the web and to mail, and only words for the rest', () => {
     expect(clean('<a href="https://ao3.org/works/1" target="_top">w</a>')).toBe(
       '<a href="https://ao3.org/works/1">w</a>',
@@ -78,17 +23,13 @@ describe('cleanHtml: nothing of the page runs or leaks', () => {
     expect(clean('<img src="javascript:x()">')).toBe('');
   });
 
-  it('drops frames, embeds and drawings', () => {
-    expect(clean('<iframe src="https://e.x"></iframe><svg><text>s</text></svg><p>k</p>')).toBe(
-      '<p>k</p>',
+  it('reads an address as a browser does, its spaces and control characters ignored', () => {
+    expect(clean('<a href=" https://ao3.org/\nworks/1 ">w</a>')).toBe(
+      '<a href="https://ao3.org/works/1">w</a>',
     );
   });
-});
 
-describe('plainOf', () => {
-  it('parts blocks with a line, so their words are counted apart', () => {
-    expect(
-      plainOf(cleanHtml('<p>one</p><p>two<br>three</p>')).split(/\s+/u).filter(Boolean),
-    ).toEqual(['one', 'two', 'three']);
+  it('names no part of a story', () => {
+    expect(clean('<h2 class="title">One</h2><hr>')).toBe('<h2>One</h2><hr></hr>');
   });
 });

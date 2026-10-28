@@ -120,6 +120,18 @@ describe('storySheet: a chapter drawn as the story page has always drawn it', ()
   });
 });
 
+describe('storySheet: the site’s links', () => {
+  it('opens each in a tab of its own, telling the site nothing', () => {
+    const body = '<p><a href="https://example.org/">x</a> <a href="/works/2">y</a></p>';
+    const { element } = storySheet(story({ chapters: [chapter(1, { body })] }), 'roman', () => {});
+    const [web, relative] = [...element.querySelectorAll('.prose a')];
+    expect(web?.getAttribute('href')).toBe('https://example.org/');
+    expect((web as HTMLAnchorElement).target).toBe('_blank');
+    expect((web as HTMLAnchorElement).rel).toBe('noopener noreferrer');
+    expect(relative?.hasAttribute('target')).toBe(false);
+  });
+});
+
 describe('placeIn', () => {
   it('names the chapters shown, of how many', () => {
     expect(placeIn(story(), 'roman')).toBe('iv of 12');
