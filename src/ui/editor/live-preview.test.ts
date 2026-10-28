@@ -120,6 +120,19 @@ describe('Live', () => {
     expect(shown.marks).toEqual([]);
   });
 
+  it('hides a code block’s fences, and shows one on the caret’s line', () => {
+    const doc = 'Sums:\n\n```yaml\nGross = a/b\n```\n\nAfter.';
+    const away = show(doc, END, 'live');
+    expect(away.hidden).toEqual(['```yaml', '```']);
+    expect(away.lines).toEqual(expect.arrayContaining(['eien-fence@3', 'eien-fence@5']));
+    const onFence = show(doc, doc.indexOf('```yaml') + 3, 'live');
+    expect(onFence.hidden).toEqual(['```']);
+    expect(onFence.marks).toContain('eien-mark:```');
+    expect(onFence.lines).not.toContain('eien-fence@3');
+    // In the code itself the fences stay out of sight: the caret's line is the code's.
+    expect(show(doc, doc.indexOf('Gross'), 'live').hidden).toEqual(['```yaml', '```']);
+  });
+
   it('hides a quote’s ">" and rules the line', () => {
     const shown = show('> He drapes it.\n\nx', END, 'live');
     expect(shown.hidden).toEqual(['> ']);
@@ -173,6 +186,11 @@ describe('Live with its marks hidden', () => {
 });
 
 describe('Reading', () => {
+  it('hides a code block’s fences, wherever the caret is', () => {
+    const doc = '```\ncode\n```';
+    expect(show(doc, 1, 'reading').hidden).toEqual(['```', '```']);
+  });
+
   it('hides every mark, wherever the caret is', () => {
     const doc = 'A **bold** word.';
     expect(show(doc, 3, 'reading').hidden).toEqual(['**', '**']);

@@ -32,6 +32,17 @@ test.describe('a vault Syncthing syncs', () => {
     await expect(status(page)).toHaveAttribute('data-tip', 'Changed on another device just now');
   });
 
+  test('stands on the foot’s middle, as the buttons beside it do', async ({ page }) => {
+    const middle = async (icon: import('@playwright/test').Locator) => {
+      const box = await icon.boundingBox();
+      return (box?.y ?? Number.NaN) + (box?.height ?? 0) / 2;
+    };
+    const button = page.locator('.sidebar__controls .icon').first();
+    await expect(button).toBeVisible();
+    const off = (await middle(status(page).locator('.icon'))) - (await middle(button));
+    expect(Math.abs(off)).toBeLessThan(1);
+  });
+
   test('the writer’s own typing, saved, never reads as another device', async ({ page }) => {
     await page.locator('.note-row', { hasText: 'Ideas' }).click();
     await editorContent(page).click();

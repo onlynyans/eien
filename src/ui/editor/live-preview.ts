@@ -93,7 +93,13 @@ function build(state: EditorState): DecorationSet {
         case 'CodeMark':
         case 'WikiLinkMark':
           if (name === 'CodeMark' && node.node.parent?.name === 'FencedCode') {
-            out.push(mark('eien-mark').range(from, to));
+            // A fence ("```" and its language) is the block's edge, not its code: hidden
+            // as any mark is, its line left as a sliver of the block's ground.
+            if (isActive(from)) out.push(mark('eien-mark').range(from, to));
+            else {
+              hideMark(from, doc.lineAt(from).to);
+              lineClass(from, from, 'eien-fence');
+            }
             return;
           }
           if (!isActive(from)) hideMark(from, to);
