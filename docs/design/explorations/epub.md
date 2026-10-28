@@ -62,15 +62,21 @@ section where it and the directions below disagree.
   book stylesheet draws them from book tokens of their own, so chapter
   titles, dividers and the like can be tuned in one place without touching
   notes.
-- **The book's look is its own.** The book's typeface, size, line spacing
-  and width are settings apart from the notes', so changing a note's look
-  never changes a book's (shaped by #49, the quick look).
+- **The book's look is its own.** The book's typeface, size, line spacing,
+  width and frame are kept apart from the notes', so changing a note's look
+  never changes a book's.
+  - **Made from #49's mark:** they're made from the same schema entries #49
+    marks `quick`, kept under `epub.<key>`, with no copied entries.
+  - **Changed in the quick look:** with a book in front, the Look popover
+    (⇧⌘L, LOOK / SHELF) sets them; with a note, the notes' look.
+    `look.md` has the rest.
 - **Fonts:** always the writer's chosen faces, never the publisher's.
 
 ### The sidebar and the vault
 
 - **SHELF**, above TAGS: LIBRARY, FOLDERS, SHELF, TAGS. A lens over the
-  folder tree, as explored.
+  folder tree, as explored. Confirmed by the owner, so #49's popover head
+  reads LOOK / SHELF.
 - **Books are only under SHELF,** never in a folder's note list.
 - **Reading state** (place, bookmarks, highlights) in `.eien/reading/`,
   keyed by the book's contents.
@@ -159,6 +165,11 @@ Each phase is its own session and pull request, from main.
      its keys and its count.
 
   1 can run beside 2; 3 follows 2.
+- **#49's notes half,** once 2 has merged: the `quick` mark, Line spacing
+  (`appearance.leading`), Page width (`page.width`), the Look command
+  (⇧⌘L) and its popover, for notes. It's built beside 3 and Phase 1, its
+  own session and pull request, and holds to the same testing bar. Its
+  shelf half switches on in Phase 1.
 - **Phase 1, the shelf and opening a book safely:**
   - the zip reader (the browser's decompression, in the window, on desktop
     and phone alike);
@@ -168,7 +179,8 @@ Each phase is its own session and pull request, from main.
   - books in the vault's index;
   - the contents in the list;
   - a chapter drawn from cleaned nodes, with its pictures;
-  - the book's look settings;
+  - the book's look, made from #49's `quick` mark (`epub.<key>`), which
+    switches on the quick look's shelf half;
   - the reading state's file;
   - the fixture books.
 - **Phase 2, scrolling:** a chapter a sheet, the scroll style, the place
