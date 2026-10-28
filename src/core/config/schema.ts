@@ -133,6 +133,19 @@ export const SETTINGS = [
     default: 'ribbon',
   },
   {
+    key: 'appearance.narrowPages',
+    label: 'Two pages when narrow',
+    description:
+      'Two notes stay side by side however narrow the screen (a foldable opened upright), each half of it. Off, short of room they do as Split says: fold into one page, close the book, put the companion under the page, or wait.',
+    // The phone's build, where a screen can be too narrow for two and still show them.
+    platforms: ['android', 'ios', 'web'],
+    scope: 'device',
+    group: 'Appearance',
+    type: 'choice',
+    choices: { off: 'Off', on: 'On' },
+    default: 'off',
+  },
+  {
     key: 'appearance.shutSidebar',
     label: 'Shut sidebar',
     description:

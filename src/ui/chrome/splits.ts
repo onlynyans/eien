@@ -123,6 +123,15 @@ export const SPLIT_SPECS: Readonly<Record<SplitMode, SplitSpec>> = {
   },
 };
 
+/** The modes as Two pages when narrow has them: side by side at any width, never folded. */
+const ANY_WIDTH: Readonly<Record<SplitMode, SplitSpec>> = Object.fromEntries(
+  Object.entries(SPLIT_SPECS).map(([mode, spec]) => [mode, { ...spec, least: 0 }]),
+) as Record<SplitMode, SplitSpec>;
+
+/** How `mode` lays two pages out; `anyWidth`, side by side however narrow. Each the same object every time. */
+export const splitSpecOf = (mode: SplitMode, anyWidth: boolean): SplitSpec =>
+  (anyWidth ? ANY_WIDTH : SPLIT_SPECS)[mode];
+
 /** `layout`'s hosts as `split` draws them: its pages' own commands taken out, its tools added. */
 export function splitHosts(layout: LayoutSpec, split: SplitSpec | null): readonly HostSpec[] {
   if (!split) return layout.desktop;

@@ -5,7 +5,7 @@
 // on the active page.
 
 import type { OutBridge } from '../../platform/bridge';
-import { SPLIT_SPECS, type SplitSpec } from '../chrome/splits';
+import { type SplitSpec, splitSpecOf } from '../chrome/splits';
 import type { ShownNotes } from '../list/shown-notes';
 import type { NoteSession } from '../notes/note-session';
 import { PagePane } from '../page/page-pane';
@@ -33,6 +33,10 @@ export interface PagesOf extends Omit<SideOf, 'wrote' | 'counted'> {
 }
 
 const inside = (path: string, folder: string) => path === folder || path.startsWith(`${folder}/`);
+
+/** How two pages are laid out, as `values` say (appearance.split, appearance.narrowPages). */
+const specFor = (values: SettingsState['values']): SplitSpec =>
+  splitSpecOf(values['appearance.split'], values['appearance.narrowPages'] === 'on');
 
 export class Pages {
   readonly pane: PagePane;
@@ -66,7 +70,7 @@ export class Pages {
     // The pages as the settings say: the pane's zoom, and each editor's quotes, tools and marks.
     const follow = (values: SettingsState['values'], before?: SettingsState['values']) => {
       this.pane.showZoom(values['page.zoom']);
-      if (before && values['appearance.split'] !== before['appearance.split']) this.#place();
+      if (before && specFor(values) !== specFor(before)) this.#place();
       for (const { page } of this.#sides) followSettings(page, values);
     };
     follow(of.settings.values);
@@ -91,9 +95,9 @@ export class Pages {
     return this.#sides.length === 2;
   }
 
-  /** How two pages are laid out (appearance.split): the mode's spec, split or not. */
+  /** How two pages are laid out: the mode's spec, split or not. */
   get mode(): SplitSpec {
-    return SPLIT_SPECS[this.#of.settings.values['appearance.split']];
+    return specFor(this.#of.settings.values);
   }
 
   notes(): ShownNotes {

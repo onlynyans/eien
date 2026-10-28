@@ -45,23 +45,26 @@ describe('the schema', () => {
     }
   });
 
-  it('offers spellcheck on macOS alone, Wide screen on the phone alone, and everything else everywhere', () => {
+  it('offers spellcheck on macOS alone, Wide screen and Two pages when narrow on the phone alone, and everything else everywhere', () => {
     const spellcheck = settingOf('editor.spellcheck');
-    const room = settingOf('appearance.room');
-    if (!spellcheck || !room) throw new Error('missing a setting');
+    const phoneOnly = ['appearance.room', 'appearance.narrowPages'].map((key) => settingOf(key));
+    if (!spellcheck || phoneOnly.some((setting) => !setting)) throw new Error('missing a setting');
     expect(offeredOn(spellcheck, 'darwin')).toBe(true);
     expect(offeredOn(spellcheck, 'win32')).toBe(false);
     expect(offeredOn(spellcheck, 'linux')).toBe(false);
     // The phone's build: Capacitor's android and ios, and web, its page in a browser (tests/mobile).
-    for (const phone of ['android', 'ios', 'web']) expect(offeredOn(room, phone)).toBe(true);
+    for (const setting of phoneOnly)
+      for (const phone of ['android', 'ios', 'web'])
+        expect(setting && offeredOn(setting, phone)).toBe(true);
     // Interface zoom everywhere: the desktop's window by Electron, a phone's page by its viewport.
     const zoom = settingOf('window.zoom');
     for (const each of ['android', 'ios', 'web', 'darwin', 'win32', 'linux'])
       expect(zoom && offeredOn(zoom, each), each).toBe(true);
-    for (const desktop of ['darwin', 'win32', 'linux'])
-      expect(offeredOn(room, desktop)).toBe(false);
+    for (const setting of phoneOnly)
+      for (const desktop of ['darwin', 'win32', 'linux'])
+        expect(setting && offeredOn(setting, desktop)).toBe(false);
     for (const setting of SETTINGS) {
-      if (setting.key !== 'editor.spellcheck' && setting.key !== 'appearance.room')
+      if (setting !== spellcheck && !phoneOnly.includes(setting))
         expect(offeredOn(setting, 'linux')).toBe(true);
     }
   });

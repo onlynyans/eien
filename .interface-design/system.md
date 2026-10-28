@@ -564,7 +564,9 @@ is always Panes.
   Split setting lays it out: the second note chosen from a list opens beside the first,
   and ⇄ opens the other note beside. The page isolates its stacking, so its
   scrim dims all it holds and never the notes over it. Folded, the split's
-  pager stands in the phone's bar, before its tools.
+  pager stands in the phone's bar, before its tools. With Two pages when
+  narrow, nothing folds: every mode's `least` is 0 (`splitSpecOf`), and
+  under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
 
 ## Built patterns (stage 3, wave 2, 2026-10-21)

@@ -66,14 +66,18 @@ export const SHARE: Measure = {
 const width = (value: number, room: number) =>
   clamp(value, COMPANION.least, Math.max(COMPANION.least, room - COMPANION.page));
 
+/** Room for the page and the companion each at its least; short of it (Two pages when narrow), they halve it. */
+const besideFits = (room: number) => room >= COMPANION.least + COMPANION.page;
+
 export const BESIDE: Measure = {
   key: 'eien.companion',
   axis: 'x',
   even: COMPANION.width,
   read: (text) => readValue(text, COMPANION.width, (value) => value >= COMPANION.least),
-  shown: (value, room) => (room > 0 ? 1 - width(value, room) / room : 0.5),
+  shown: (value, room) => (besideFits(room) ? 1 - width(value, room) / room : 0.5),
   // Right is narrower: the companion gives the page what the divider moves over.
-  moved: (value, room, by) => (finite(by) ? width(width(value, room) - by, room) : value),
+  moved: (value, room, by) =>
+    finite(by) && besideFits(room) ? width(width(value, room) - by, room) : value,
 };
 
 /** Under the page: the companion's share of the height. */

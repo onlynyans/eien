@@ -1554,6 +1554,10 @@ Compare or Restore finishes lands on a note opened meanwhile.
     a note's long press offers Open to the Side. Short of the split's room (a
     Fold 5 upright, about 590 px, under Two sheets' 720), the two fold into
     the page you're in, and the bar names both, a tap turning to the other.
+    **Two pages when narrow** (`appearance.narrowPages`, the phone's, this
+    device's, off by default) keeps them side by side however narrow, in
+    every Split mode, each half the room while it's short of the mode's own
+    (the divider moves them again once there's room).
     The notes over the page are never under its scrim.
   - Folding, turning the phone, or choosing a room with one page closes the
     page you're not in, never its note: it's the other note, ⇄, where it was

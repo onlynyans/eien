@@ -355,6 +355,41 @@ test.describe('a Galaxy Z Fold 5 opened upright, about 590px', () => {
     await expect(page.getByRole('region', { name: 'Tear, the active page' })).toBeVisible();
   });
 
+  for (const split of ['sheets', 'facing', 'companion', 'follow'] as const) {
+    test(`two pages, with Two pages when narrow (${split}): side by side, each half the screen, nothing past its page`, async ({
+      page,
+    }) => {
+      await withRoom(page, 'pages', FOLD5_UPRIGHT, {
+        'appearance.narrowPages': 'on',
+        'appearance.split': split,
+      });
+      await back(page).click();
+      await openInFic(page, 'Tear');
+      await back(page).click();
+      await titles(page).filter({ hasText: 'Mend' }).click();
+      await expect(titlesOnPage(page)).toHaveText(['Tear', 'Mend']);
+      await expect(page.getByRole('group', { name: 'The two pages' })).toBeHidden();
+      const leaves = await page.locator('.page__pages > .page__leaf').evaluateAll((sheets) =>
+        sheets.map((sheet) => {
+          const box = sheet.getBoundingClientRect();
+          const past = [...sheet.querySelectorAll<HTMLElement>('button')]
+            .filter((button) => button.checkVisibility())
+            .filter((button) => {
+              const at = button.getBoundingClientRect();
+              return at.left < box.left - 0.5 || at.right > box.right + 0.5;
+            })
+            .map((button) => button.getAttribute('aria-label'));
+          return { width: box.width, past };
+        }),
+      );
+      expect(leaves.map(({ past }) => past)).toEqual([[], []]);
+      // Even halves of the room (Facing pages' gutter and margins aside).
+      const [left, right] = leaves.map(({ width }) => width);
+      expect(Math.abs((left ?? 0) - (right ?? 0))).toBeLessThan(2);
+      expect(left).toBeGreaterThan(FOLD5_UPRIGHT.width * 0.4);
+    });
+  }
+
   test('panes, which need 600px, are one at a time here', async ({ page }) => {
     await withRoom(page, 'panes', FOLD5_UPRIGHT);
     await inSight(page, 'list');

@@ -97,6 +97,16 @@ describe('two pages', () => {
     await actions.openNote('Notes.md', 'chosen');
     expect(notesShown(pages)).toEqual(['Notes.md']);
   });
+
+  it('opens the second note beside however narrow, with Two pages when narrow', async () => {
+    const panes = { listWidth: 280, phone: true };
+    const narrow = { 'appearance.split': 'follow', 'appearance.narrowPages': 'on' } as const;
+    const { pages, actions } = await inRoom('pages', narrow, panes);
+    Object.defineProperty(pages.pane.pagesArea, 'clientWidth', { value: 590 });
+    await actions.openNote('Chapter.md', 'chosen');
+    await actions.openNote('Notes.md', 'chosen');
+    expect(notesShown(pages)).toEqual(['Chapter.md', 'Notes.md']);
+  });
 });
 
 describe('one at a time', () => {
