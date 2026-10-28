@@ -1,0 +1,107 @@
+/* Shared by the quick look's explorations (look-*.html, backlog #49): the EPUB
+   family's window and phone (epub.css), a note beside the book, each page in
+   its own look, and the popover. What's new is only the popover and what a
+   look sets on a page: its face, size, leading, width and frame. */
+/*@include:epub.css*/
+
+/* A page in its look: the face's own tokens (data-face on the sheet), then the
+   writer's steps over them: size, leading and measure, each a multiple. */
+[data-look] { font-family: var(--eien-face-text); }
+.sheet[data-look] {
+  font-size: calc(var(--eien-size-prose) * var(--look-scale, 1));
+  line-height: calc(var(--eien-leading-prose) * var(--look-lead, 1));
+  max-width: calc(var(--eien-measure) * var(--look-width, 1) + 2 * var(--eien-space-8));
+  transition: max-width var(--eien-calm) var(--eien-ease), background var(--eien-calm) var(--eien-ease), box-shadow var(--eien-calm) var(--eien-ease);
+}
+.sheet[data-look] h1 { font-size: calc(var(--eien-size-title) * var(--look-scale, 1)); }
+[data-look] .book-text { font-size: inherit; --line: calc(var(--eien-size-prose) * var(--look-scale, 1) * var(--eien-leading-prose) * var(--look-lead, 1)); }
+[data-look] .ch-head { font-size: calc(var(--eien-size-heading) * var(--look-scale, 1)); }
+.note-prose p { margin: 0 0 var(--eien-paragraph-gap); }
+/* Page: Full. The paper fills the pane, edge to edge; the words keep their measure. */
+.blotter[data-frame='full'] { padding: 0; background: var(--eien-paper); }
+.blotter[data-frame='full'] > .sheet { max-width: none; border: 0; border-radius: 0; box-shadow: none; padding-inline: max(var(--eien-space-5), calc((100% - var(--eien-measure) * var(--look-width, 1)) / 2)); }
+
+/* Two pages: the one you're in has the sheet's shadow, the other lies flat (the
+   split's Two sheets). While the popover is open, the page it doesn't change
+   sits back a step, as a companion does: its paper takes the band's tone. */
+.duo[data-columns] > .blotter { padding: var(--eien-space-5) var(--eien-space-5) 0; }
+.duo[data-columns] > .blotter[data-frame='full'] { padding: 0; }
+.duo[data-columns] .sheet { max-width: calc(var(--eien-measure) * var(--look-width, 1) + 2 * var(--eien-space-6)); }
+.duo[data-columns] > .blotter[data-frame='full'] > .sheet { max-width: none; }
+.sheet--flat { box-shadow: none; border-color: var(--eien-rule-soft); }
+.blotter.is-back > .sheet, .blotter.is-back[data-frame='full'] { background: var(--eien-band); }
+.blotter { transition: background var(--eien-calm) var(--eien-ease); }
+.duo .blotter { outline: none; }
+.duo .blotter:focus-visible { box-shadow: inset 0 0 0 var(--eien-mark-w) var(--eien-focus); }
+.divider { cursor: default; }
+@media (prefers-reduced-motion: reduce) { .sheet[data-look], .blotter { transition: none; } }
+
+/* A quiet control stays in sight while its popover is open. */
+.quiet:has([aria-expanded='true']) { opacity: 1; }
+.row--note { grid-template-columns: 1fr auto; }
+.row--note .p { grid-column: 1 / -1; }
+
+/* The phone: its page in its look; Sheet lays it on a margin of blotter. */
+.phone__page[data-look] .book-text, .phone__page[data-look] .note-prose { font-size: calc(var(--eien-size-prose) * 0.82 * var(--look-scale, 1)); line-height: calc(var(--eien-leading-prose) * var(--look-lead, 1)); --line: calc(var(--eien-size-prose) * 0.82 * var(--look-scale, 1) * var(--eien-leading-prose) * var(--look-lead, 1)); }
+.phone__page[data-look] h1 { font-size: calc(var(--eien-size-title) * 0.72 * var(--look-scale, 1)); font-weight: 500; line-height: 1.2; margin: 0 0 var(--eien-space-3); }
+.phone__page[data-look] { padding-inline: max(var(--eien-space-5), calc((100% - var(--eien-measure) * 0.82 * var(--look-width, 1)) / 2)); }
+.phone__body:has(> .phone__page[data-frame='sheet']) { background: var(--eien-blotter); padding: var(--eien-space-2) var(--eien-space-2) 0; }
+.phone__page[data-frame='sheet'] { background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); border-bottom: 0; box-shadow: var(--eien-shadow-sheet); }
+.phone__page.is-scroll { display: block; overflow: auto; padding-bottom: var(--eien-space-5); }
+/* The other page a tap away in the back bar, as the phone keeps the note you came from. */
+.backbar .other { display: flex; align-items: center; gap: var(--eien-space-1); height: var(--eien-space-6); max-width: 12em; padding: 0 var(--eien-space-2); border: var(--eien-hairline) solid var(--eien-rule); border-radius: var(--eien-radius-dot); background: var(--eien-paper); color: var(--eien-ink-soft); font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); white-space: nowrap; overflow: hidden; cursor: pointer; }
+.backbar .other svg { flex: none; width: var(--eien-space-3); height: var(--eien-space-3); }
+
+/* A setting as Settings draws it (settings.html; src/ui/settings/controls.css):
+   its name in the text face, then its control. */
+.setting { display: grid; gap: var(--eien-space-1); }
+.setting__name { font-size: var(--eien-size-row); color: var(--eien-ink); }
+.choices { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px; justify-self: start; border-radius: var(--eien-radius-m); background: var(--eien-press); }
+.choices .word-button[aria-checked='true'] { background: var(--eien-paper-raised); border-color: var(--eien-rule); color: var(--eien-ink); }
+.faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--eien-space-1); }
+.face { appearance: none; display: grid; gap: 2px; min-width: 0; text-align: left; padding: var(--eien-space-2) 10px; border: var(--eien-hairline) solid var(--eien-rule-soft); border-radius: var(--eien-radius-s); background: var(--eien-paper); cursor: pointer; color: var(--eien-ink-soft); }
+@media (hover: hover) { .face:hover { border-color: var(--eien-rule-strong); } }
+.face[aria-checked='true'] { border-color: var(--eien-rule-strong); color: var(--eien-ink); box-shadow: inset 0 0 0 var(--eien-hairline) var(--eien-rule-strong); }
+.face__sample { font-size: 22px; line-height: 1.1; }
+.face__name { font-family: var(--eien-face-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--eien-pencil); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stepper { display: inline-flex; align-items: center; gap: 2px; justify-self: start; }
+.stepper output { min-width: 4.5em; text-align: center; font-family: var(--eien-face-mono); font-size: var(--eien-size-meta); color: var(--eien-ink); }
+
+/* The quick look: what floats is raised paper, a rule-strong hairline, the
+   layout's --eien-radius-m and the float shadow. As wide as the list, so two
+   face cards stand side by side at Settings' own size. */
+.ql {
+  position: absolute; z-index: 30; width: var(--eien-list-w);
+  max-height: calc(100% - 2 * var(--eien-space-2)); overflow: auto;
+  padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2);
+  background: var(--eien-paper-raised); border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m); box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-text); text-align: left;
+}
+.ql.is-arriving { animation: ql-in var(--eien-quick) var(--eien-ease); }
+@keyframes ql-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ql { animation: none; } }
+/* The head names whose look it is, in Settings' breadcrumb voice. */
+.ql__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--eien-space-3); padding-bottom: var(--eien-space-2); margin-bottom: var(--eien-space-3); border-bottom: var(--eien-hairline) solid var(--eien-rule-soft); }
+.ql__head .crumb { color: var(--eien-pencil); }
+.ql__slash { color: var(--eien-faded); }
+.ql__whose { color: var(--eien-ink-soft); }
+.ql__what { font-size: var(--eien-size-preview); font-style: italic; color: var(--eien-pencil); white-space: nowrap; }
+.ql__row { margin-bottom: var(--eien-space-3); }
+.ql__name { display: flex; align-items: baseline; gap: var(--eien-space-2); }
+.ql__aside { font-family: var(--eien-face-mono); font-size: var(--eien-size-label); letter-spacing: var(--eien-track-label); text-transform: uppercase; color: var(--eien-pencil); }
+.ql__foot { display: flex; justify-content: space-between; align-items: center; padding-top: var(--eien-space-2); border-top: var(--eien-hairline) solid var(--eien-rule-soft); }
+.ql__foot .word-button { display: inline-flex; align-items: center; gap: var(--eien-space-2); }
+.ql__foot .menu__key { letter-spacing: 0; }
+/* The strip: wider and shorter, the faces beside the rest. */
+.ql--strip { width: calc(2 * var(--eien-list-w)); }
+.ql__cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--eien-space-5); }
+/* The phone's sheet: from the screen's foot, at a finger's size, no scrim, so the
+   words above show each change. The faces are one row that scrolls sideways. */
+.ql--sheet { left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 62%; border-bottom: 0; border-radius: var(--eien-radius-l) var(--eien-radius-l) 0 0; padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-3); }
+.ql--sheet.is-arriving { animation-name: ql-up; animation-duration: var(--eien-calm); }
+@keyframes ql-up { from { translate: 0 var(--eien-space-6); opacity: 0; } }
+.ql--sheet .faces { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 132px; overflow-x: auto; padding-bottom: var(--eien-space-1); }
+.ql--sheet .choices .word-button, .ql--sheet .ql__foot .word-button { min-height: var(--eien-touch); padding-inline: var(--eien-space-3); }
+.ql--sheet .stepper .icon-button { width: var(--eien-touch); height: var(--eien-touch); }
+.ql--sheet .face { min-height: var(--eien-touch); }
