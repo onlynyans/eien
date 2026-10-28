@@ -187,6 +187,14 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
+      # Windows' runner has a 1024×768 screen, and Windows keeps a window inside its screen, so
+      # the window Eien opens (1280×800, app/electron/window.ts) would be narrower there alone,
+      # and the page's tools fold behind their ⋯ (#36) on Windows and nowhere else.
+      - name: A screen as wide as Eien's window (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+
       - name: End-to-end tests (Linux, virtual display)
         if: runner.os == 'Linux'
         run: xvfb-run --auto-servernum npx playwright test --grep-invert @alone
