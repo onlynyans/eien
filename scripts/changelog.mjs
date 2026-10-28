@@ -5,6 +5,10 @@
 // before it's committed with the version (AGENTS.md → Releases). With no
 // version, it only prints what the section would say. `--since <ref>` starts
 // somewhere other than the last tag.
+//
+// `--notes 0.5.0` prints that release's section as it was committed, or fails
+// when there's none: the release workflow holds a tag to it, and drafts the
+// GitHub release's notes from it.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -64,8 +68,35 @@ export function withSection(changelog, section) {
   return `${changelog.slice(0, newest)}${section}\n${changelog.slice(newest)}`;
 }
 
+/**
+ * What CHANGELOG.md says under `version`'s heading, or null when it has no section for it.
+ * @param {string} changelog
+ * @param {string} version
+ */
+export function notesOf(changelog, version) {
+  const escaped = version.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const heading = new RegExp(`^## ${escaped}(?: — .*)?\n`, 'mu').exec(changelog);
+  if (!heading) return null;
+  const after = changelog.slice(heading.index + heading[0].length);
+  const next = after.search(/^## /mu);
+  const notes = (next === -1 ? after : after.slice(0, next)).trim();
+  return notes === '' ? null : `${notes}\n`;
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
+  const changelogPath = resolve(fileURLToPath(import.meta.url), '../../CHANGELOG.md');
+  const notesAt = args.indexOf('--notes');
+  if (notesAt !== -1) {
+    const version = args[notesAt + 1] ?? '';
+    const notes = notesOf(readFileSync(changelogPath, 'utf8'), version);
+    if (notes === null) {
+      console.error(`CHANGELOG.md has no section for "${version}" (AGENTS.md → Releases).`);
+      process.exit(1);
+    }
+    process.stdout.write(notes);
+    process.exit(0);
+  }
   const sinceAt = args.indexOf('--since');
   const since = sinceAt === -1 ? null : args.splice(sinceAt, 2)[1];
   const version = args[0] ?? null;
@@ -79,8 +110,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (!version) {
     console.log(section);
   } else {
-    const path = resolve(fileURLToPath(import.meta.url), '../../CHANGELOG.md');
-    writeFileSync(path, withSection(readFileSync(path, 'utf8'), section));
+    writeFileSync(changelogPath, withSection(readFileSync(changelogPath, 'utf8'), section));
     console.log(`CHANGELOG.md: ${version}, ${subjects.length} changes since ${from}.`);
   }
 }

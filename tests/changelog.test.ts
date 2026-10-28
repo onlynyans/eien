@@ -1,7 +1,11 @@
 // CHANGELOG.md's next section, from main's commit subjects (scripts/changelog.mjs).
 
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { entryOf, sectionOf, withSection } from '../scripts/changelog.mjs';
+import { entryOf, notesOf, sectionOf, withSection } from '../scripts/changelog.mjs';
+import { buildNumber } from '../scripts/version.mjs';
+
+const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 describe('a changelog entry', () => {
   it('names the scope, the words and the pull request', () => {
@@ -104,5 +108,73 @@ describe('the changelog with a new section', () => {
 
   it('starts the list in a changelog with no release yet', () => {
     expect(withSection('# Changelog\n', NEW)).toBe(`# Changelog\n\n${NEW}`);
+  });
+});
+
+describe('a release’s notes', () => {
+  const CHANGELOG = [
+    '# Changelog',
+    '',
+    '## Unreleased',
+    '',
+    '- to come',
+    '',
+    '## 0.10.0 — 2026-12-01',
+    '',
+    '### Fixes',
+    '',
+    '- ten (#10)',
+    '',
+    '## 0.1.0 — 2026-10-22',
+    '',
+    '### Features',
+    '',
+    '- first (#1)',
+    '',
+  ].join('\n');
+
+  it('are the section under its version’s heading, the newest or the last', () => {
+    expect(notesOf(CHANGELOG, '0.10.0')).toBe('### Fixes\n\n- ten (#10)\n');
+    expect(notesOf(CHANGELOG, '0.1.0')).toBe('### Features\n\n- first (#1)\n');
+  });
+
+  it('are nothing for a version with no section, or one only like it', () => {
+    for (const version of [
+      '0.4.0',
+      '0.1',
+      '0.1.0.1',
+      '0x1.0',
+      '0.10',
+      'Unreleased'.slice(0, 3),
+      '',
+    ]) {
+      expect(notesOf(CHANGELOG, version), version).toBeNull();
+    }
+    expect(notesOf('## 0.4.0 — 2026-12-01\n\n', '0.4.0')).toBeNull();
+  });
+});
+
+describe('CHANGELOG.md', () => {
+  const changelog = read('CHANGELOG.md');
+  const headings = [...changelog.matchAll(/^## (.*)$/gmu)].map((match) => match[1] ?? '');
+
+  it('names each release by its version and date, newest first, under any Unreleased', () => {
+    const releases = headings.filter((heading) => heading !== 'Unreleased');
+    expect(headings.indexOf('Unreleased')).toBeLessThanOrEqual(0);
+    for (const heading of releases) expect(heading).toMatch(/^\d+\.\d+\.\d+ — \d{4}-\d{2}-\d{2}$/u);
+    const numbers = releases.map((heading) => buildNumber(heading.split(' ')[0] ?? ''));
+    expect(numbers).toEqual([...numbers].sort((a, b) => b - a));
+    expect(releases.at(-1)).toBe('0.1.0 — 2026-10-22');
+  });
+
+  it('has a section for every version the release workflow builds', () => {
+    // A tag stops at its first check without one, and the draft's notes are that section.
+    const release = read('.github/workflows/release.yml');
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: the shell's own expansion, as release.yml has it.
+    const notes = 'node scripts/changelog.mjs --notes "${GITHUB_REF_NAME#v}"';
+    expect(release).toContain(`run: ${notes} > /dev/null`);
+    expect(release).toMatch(/--notes-file "\$RUNNER_TEMP\/notes\.md"/u);
+    expect(release).not.toContain('--generate-notes');
+    expect(release.indexOf(`run: ${notes}`)).toBeLessThan(release.indexOf('run: npm ci'));
   });
 });

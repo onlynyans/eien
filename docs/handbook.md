@@ -284,9 +284,10 @@ out at 5 s on a slow Windows runner.
   `npm run changelog -- 0.5.0` drafts its section of
   [CHANGELOG.md](../CHANGELOG.md) from pull requests' titles; edit it, merge,
   then tag `main` (`git tag v0.5.0 origin/main && git push origin v0.5.0`).
-  `release.yml` checks the tag matches, builds each installer on its own
-  system, installs and starts it there, and attaches all three to a **draft**
-  release that the owner publishes by hand. AGENTS → Releases has each step,
+  `release.yml` checks the tag matches and the changelog has its section,
+  builds each installer on its own system, installs and starts it there, and
+  attaches all three to a **draft** release, its notes that section, that the
+  owner publishes by hand. AGENTS → Releases has each step,
   and the proposal to cut 0.4.0 next.
 - **Signing** isn't set up: macOS gets an ad-hoc signature, Windows none, and
   README → Install tells writers how to open them. The secrets the workflow

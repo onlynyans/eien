@@ -224,7 +224,9 @@ folder, and Eien says so once.
   Other. `npm run changelog` prints what the next section would say, from
   main's subjects since the last tag; `npm run changelog -- 0.5.0` writes it
   in place of the Unreleased section (or above the newest release).
-  `--since <ref>` starts somewhere other than the last tag.
+  `--since <ref>` starts somewhere other than the last tag. The release
+  workflow holds each tag to it: `npm run changelog -- --notes 0.5.0` prints
+  a release's section as committed, and fails without one.
 
 To cut a release, on a branch from `main`:
 
@@ -237,9 +239,10 @@ To cut a release, on a branch from `main`:
    version and the date instead.)
 3. A pull request, `chore: release 0.5.0`; merge it once CI passes.
 4. Tag `main` with it: `git fetch origin && git tag v0.5.0 origin/main && git push origin v0.5.0`.
-   `.github/workflows/release.yml` checks the tag matches the version, builds
-   each installer on its own system, installs and starts it there, and
-   attaches all three to a draft release, which the owner publishes by hand.
+   `.github/workflows/release.yml` checks the tag matches the version and
+   that CHANGELOG.md has its section, builds each installer on its own
+   system, installs and starts it there, and attaches all three to a draft
+   release whose notes are that section, which the owner publishes by hand.
    Run by hand (Actions → Release → Run workflow), it builds and tries the
    installers with no release, keeping them as the run's artifacts.
 
@@ -248,7 +251,8 @@ the commit named under its heading; nothing was built for them. Their tags are
 the owner's to add, if wanted:
 `git tag v0.2.0 ab9a78c && git tag v0.3.0 2491dbd && git push origin v0.2.0 v0.3.0`.
 Each starts `release.yml`, which stops within a minute, red, at its first
-check (`package.json` at those commits still says 0.1.0), and makes no release.
+check (`package.json` at those commits still says 0.1.0, and CHANGELOG.md
+wasn't there yet), and makes no release.
 
 **Next: 0.4.0, proposed.** CHANGELOG.md's Unreleased section, stage 4 (the
 extension, Wide screen, find and replace, subfolders) and the EPUB reader's
