@@ -552,14 +552,20 @@ Asked for after the first three: the tight, held turn of the best EPUB
 readers, and what it costs Eien.
 
 - **The geometry:** the page bends.
-  - **The corner follows you:** the corner you hold stays under the pointer.
-    The paper folds over the perpendicular bisector between where the corner
-    rests and where it is now, so a top corner peels on a slant and the
-    middle of the edge rolls straight.
+  - **The corner follows you:** the corner you hold stays under the pointer,
+    and the paper rolls over a cylinder whose axis follows it, then lies back
+    on itself on top. A top corner peels on a slant; the middle of the edge
+    rolls straight.
+  - **The roll is round:** drawn in twelve strips of the live page, each laid
+    where its part of the cylinder falls, so the free edges curve. The front
+    turns away, its words squeezing; then the back comes over. Each strip is
+    shaded by how it faces you (edge-on darkest, a glint past the top),
+    ramped so the roll reads as one curve. Flat at rest, roundest half way (a
+    fifth of the page), flat again as it lands.
   - **The paper can't stretch:** the spine's edge always stays down.
-  - **Three cuts of the live page:** what stays, what lifts (mirrored over
-    the fold, its back showing the words faintly through the paper) and the
-    page beneath, each clipped along the fold.
+  - **Cuts of the live page:** what stays, the roll's strips, what lies back
+    on top (its back showing the words faintly through the paper) and the
+    page beneath.
   - **No snapshot:** nothing is pictured, so the book's sandboxed frame could
     be drawn the same way in the app.
 - **The physics:** this is where the tightness lives.
@@ -588,7 +594,7 @@ readers, and what it costs Eien.
 
 | | For | Against |
 |---|---|---|
-| **4 · The curl** | The turn people know from the best readers: held, thrown, caught; the paper never trails the finger; live text throughout | Bends two of Eien's rules (gradients, two shadows), if only in motion; three clipped copies of the page per frame cost the most, on a slow phone most of all; the roll's thickness is suggested by light, not drawn (a WebGL mesh could, with a snapshot the phone can't take of the frame) |
+| **4 · The curl** | The turn people know from the best readers: held, thrown, caught; the paper never trails the finger; live text throughout | Bends two of Eien's rules (gradients, two shadows), if only in motion; fourteen clipped copies of the page per frame cost the most, on a slow phone most of all; the roll is twelve flat strips, faceted up close (a WebGL mesh would be exact, but needs a snapshot the phone can't take of the frame) |
 
 **If it's chosen:** 4 would take 2's place under a hand (a drag, or a finger
 on the phone), and keys and clicks would stay 3's quiet step. Its physics

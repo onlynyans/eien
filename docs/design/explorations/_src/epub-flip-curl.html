@@ -11,11 +11,12 @@
 /*@include:epub-flip.css*/
 
 /* Turning 4 · The curl. The page bends: the corner you hold is under your
-   finger, and the paper folds over a line that follows it (the perpendicular
-   bisector between where the corner rests and where it is now). What stays,
-   what lifts and the page beneath are each the live page, clipped along that
-   line; what lifts is mirrored across it and shows its back, the words faint
-   through the paper. No picture of the page is taken.
+   finger, and the paper rolls over a cylinder whose axis follows it, then lies
+   back on itself on top. The roll is drawn in strips of the live page, each
+   laid where its part of the cylinder falls and shaded by how it faces you:
+   the front turning away, then the back coming over, the words faint through
+   the paper. The roll is round half way and flat at rest and once turned.
+   No picture of the page is taken.
 
    The exception it asks for (system.md allows no gradient and two shadows):
    the light on a bending page, only while a page moves, as three tokens a
@@ -36,7 +37,9 @@
 .curl-page > .curl-wash { position: absolute; inset: 0; z-index: 5; }
 /* The back: the page's own paper over its mirrored words, so they show through faintly. */
 .curl-paper { position: absolute; inset: 0; z-index: 4; background: var(--eien-paper); opacity: calc(1 - var(--eien-curl-through)); }
-.curl-back { transform-origin: 0 0; }
+.curl-back, .curl-strip { transform-origin: 0 0; }
+/* A strip of the roll: the shade where it turns from you, the glint where its back tops the roll. */
+.curl-tone { position: absolute; inset: 0; z-index: 5; }
 /* The lifted paper's one soft shadow on the page it lies over: the exception's third shadow. */
 .curl-flap { filter: drop-shadow(0 0 var(--eien-space-2) var(--eien-curl-shade)); }
 .phone .phone__page, .sheet { touch-action: pan-y; }
@@ -71,17 +74,48 @@ function cut(poly, P, n) {
   return out;
 }
 const clipOf = (pts) => (pts.length > 2 ? `polygon(${pts.map(([x, y]) => `${x.toFixed(2)}px ${y.toFixed(2)}px`).join(', ')})` : 'polygon(0 0, 0 0, 0 0)');
-/** The fold: the perpendicular bisector between where the corner rests (C0) and where it is (F); n points to what lifts. */
-const foldOf = (C0, F) => ({ M: along(C0, F, 0.5), n: unit(sub(C0, F)) });
-/** Paper doesn't stretch: the spine's edge always stays on the side that stays. */
+/** How round the roll is: flat at rest and flat once turned, roundest half way, a fifth of the page's width. */
+const radiusOf = (c, D) => (c.W / 5) * Math.sin(Math.PI * clamp(D / (2 * c.W), 0, 1));
+/**
+ * The paper over a cylinder: it leaves the page at the line L, rolls over a cylinder of radius r,
+ * and lies back on itself beyond. The corner rests at C0 and is at F; L is where that holds:
+ * the corner is (D + πr) / 2 of paper from L, and lands πr less than that back again.
+ */
+function rollOf(c, F) {
+  const D = Math.hypot(c.C0[0] - F[0], c.C0[1] - F[1]);
+  const n = unit(sub(c.C0, F));
+  const r = radiusOf(c, D);
+  const back = (D + Math.PI * r) / 2;
+  return { L: [c.C0[0] - n[0] * back, c.C0[1] - n[1] * back], n, r, D };
+}
+/** Paper doesn't stretch: the spine's edge always stays on the page. */
 function held(c) {
-  const ok = (f) => { const { M, n } = foldOf(c.C0, f); return dot(sub([0, 0], M), n) <= 0.5 && dot(sub([0, c.H], M), n) <= 0.5; };
+  const ok = (f) => { const { L, n } = rollOf(c, f); return dot(sub([0, 0], L), n) <= 0.5 && dot(sub([0, c.H], L), n) <= 0.5; };
   if (ok(c.F)) return c.F;
   let lo = 0;
   let hi = 1;
   for (let k = 0; k < 14; k++) { const t = (lo + hi) / 2; if (ok(along(c.C0, c.F, t))) lo = t; else hi = t; }
   return along(c.C0, c.F, lo);
 }
+/** Where paper s from L lies once rolled, along n: round the cylinder, then back on itself. */
+const rolled = (s, r) => (r > 0 && s <= Math.PI * r ? r * Math.sin(s / r) : Math.PI * r - s);
+const onLine = (L, n, t) => [L[0] + n[0] * t, L[1] + n[1] * t];
+/**
+ * A strip of the paper, s from sa to sb past L, laid as one flat piece where the roll puts its
+ * edges: squeezed along n where the cylinder turns it away, mirrored where it comes back over.
+ */
+function lay(el, c, roll, sa, sb) {
+  const { L, n, r } = roll;
+  const page = [[0, 0], [c.W, 0], [c.W, c.H], [0, c.H]];
+  const [da, db] = [rolled(sa, r), rolled(sb, r)];
+  const k = (db - da) / (sb - sa);
+  const T = da - k * sa - (k - 1) * dot(L, n);
+  const [a, b, d] = [1 + (k - 1) * n[0] * n[0], (k - 1) * n[0] * n[1], 1 + (k - 1) * n[1] * n[1]];
+  el.style.transform = `matrix(${a}, ${b}, ${b}, ${d}, ${n[0] * T}, ${n[1] * T})`;
+  // A hair of overlap between strips, so no seam of the page beneath shows through.
+  el.style.clipPath = clipOf(cut(cut(page, onLine(L, n, sa - 0.4), n), onLine(L, n, sb + 0.4), [-n[0], -n[1]]));
+}
+const STRIPS = 12;
 /** A wash along the fold: `ink` at the fold line, gone `len` px away in direction g. */
 function wash(el, c, M, g, ink, len) {
   const deg = (Math.atan2(g[0], -g[1]) * 180) / Math.PI;
@@ -91,29 +125,48 @@ function wash(el, c, M, g, ink, len) {
   el.style.background = `linear-gradient(${deg.toFixed(2)}deg, transparent ${(s0 - 0.5).toFixed(1)}px, ${ink} ${s0.toFixed(1)}px, transparent ${(s0 + len).toFixed(1)}px)`;
 }
 const space = (n) => px(`--eien-space-${n}`);
+/** An ink across a strip of the paper, s from sa to sb past L: `from` of it at one edge, `to` at the other. */
+function ramp(el, c, roll, sa, sb, ink, from, to) {
+  const { L, n } = roll;
+  const deg = (Math.atan2(n[0], -n[1]) * 180) / Math.PI;
+  const rad = (deg * Math.PI) / 180;
+  const len = Math.abs(c.W * Math.sin(rad)) + Math.abs(c.H * Math.cos(rad));
+  const pos = (t) => (dot(sub(onLine(L, n, t), [c.W / 2, c.H / 2]), n) + len / 2).toFixed(1);
+  const mix = (k) => `color-mix(in srgb, ${ink} ${(k * 100).toFixed(1)}%, transparent)`;
+  el.style.background = `linear-gradient(${deg.toFixed(2)}deg, ${mix(from)} ${pos(sa)}px, ${mix(to)} ${pos(sb)}px)`;
+}
 
-/** The page at this moment: what stays, what lifts (mirrored, its back), and the light on both. */
+/**
+ * The page at this moment: what stays flat; the roll, in strips, the front of the paper turning
+ * away and then its back coming over, each strip as light as it faces you; what lies back on top;
+ * and the roll's shadow on the page beneath.
+ */
 function frame(c) {
   const F = held(c);
   const page = [[0, 0], [c.W, 0], [c.W, c.H], [0, c.H]];
-  if (Math.hypot(F[0] - c.C0[0], F[1] - c.C0[1]) < 0.5) {
-    c.front.style.clipPath = 'none';
-    for (const el of [c.flap, c.cast]) el.style.visibility = 'hidden';
-    return;
-  }
-  for (const el of [c.flap, c.cast]) el.style.visibility = '';
-  const { M, n } = foldOf(c.C0, F);
-  const stays = [-n[0], -n[1]];
-  const lifts = cut(page, M, n);
-  c.front.style.clipPath = clipOf(cut(page, M, stays));
-  c.back.style.clipPath = clipOf(lifts);
-  c.cast.style.clipPath = clipOf(lifts);
-  // Mirrored across the fold: x' = R(x − M) + M, R = I − 2nnᵀ.
-  const [a, b, d] = [1 - 2 * n[0] * n[0], -2 * n[0] * n[1], 1 - 2 * n[1] * n[1]];
-  c.back.style.transform = `matrix(${a}, ${b}, ${b}, ${d}, ${M[0] - (a * M[0] + b * M[1])}, ${M[1] - (b * M[0] + d * M[1])})`;
-  wash(c.cast, c, M, n, 'var(--eien-curl-shade)', space(6));
-  wash(c.shade, c, M, stays, 'var(--eien-curl-shade)', space(5));
-  wash(c.light, c, M, n, 'var(--eien-curl-light)', space(5));
+  const roll = rollOf(c, F);
+  const { L, n, r } = roll;
+  const resting = roll.D < 0.5;
+  for (const el of [c.flap, c.cast, ...c.strips]) el.style.visibility = resting ? 'hidden' : '';
+  if (resting) { c.front.style.clipPath = 'none'; return; }
+  c.front.style.clipPath = clipOf(cut(page, onLine(L, n, 0.4), [-n[0], -n[1]]));
+  c.cast.style.clipPath = clipOf(cut(page, L, n));
+  wash(c.cast, c, onLine(L, n, r), n, 'var(--eien-curl-shade)', space(6));
+  const step = (Math.PI * r) / STRIPS;
+  c.strips.forEach((el, i) => {
+    if (r < 1) { el.style.visibility = 'hidden'; return; }
+    lay(el, c, roll, i * step, (i + 1) * step);
+    // Light by how it faces you, ramped across each strip so the roll has no bands: edge-on its
+    // darkest, facing you none; past the top, a glint where the back catches the light.
+    const [ta, tb] = [(i * Math.PI) / STRIPS, ((i + 1) * Math.PI) / STRIPS];
+    const shadeAt = (t) => 1 - Math.abs(Math.cos(t));
+    const glintAt = (t) => Math.max(0, Math.cos(t - 0.78 * Math.PI)) ** 6;
+    ramp(el.querySelector('.curl-tone'), c, roll, i * step, (i + 1) * step, 'var(--eien-curl-shade)', shadeAt(ta), shadeAt(tb));
+    const glint = el.querySelector('.curl-glint');
+    if (glint) ramp(glint, c, roll, i * step, (i + 1) * step, 'var(--eien-curl-light)', glintAt(ta), glintAt(tb));
+  });
+  lay(c.back, c, roll, Math.PI * r, Math.PI * r + 4 * (c.W + c.H));
+  wash(c.light, c, onLine(L, n, Math.PI * r), n, 'var(--eien-curl-light)', space(5));
 }
 
 let curl = null;
@@ -147,25 +200,33 @@ function begin(dir, grabY) {
   // Forward, the page you leave curls away over the next; back, the page before curls back over this one.
   const moving = dir > 0 ? leaving : copyOf(to);
   if (dir < 0) { leaving.classList.add('curl-page'); root.append(leaving); to.style.visibility = 'hidden'; }
-  const cast = Object.assign(document.createElement('div'), { className: 'curl-wash' });
+  const div = (className) => Object.assign(document.createElement('div'), { className });
+  const cast = div('curl-wash');
   const front = moving;
   front.classList.add('curl-page');
-  const shade = Object.assign(document.createElement('div'), { className: 'curl-wash' });
-  front.append(shade);
+  // The roll's strips: the first half the paper's front turning away, the second its back coming over.
+  const strips = Array.from({ length: STRIPS }, (_, i) => {
+    const strip = copyOf(moving);
+    strip.classList.add('curl-page', 'curl-strip');
+    if (i >= STRIPS / 2) strip.append(div('curl-paper'), div('curl-tone'), div('curl-wash curl-glint'));
+    else strip.append(div('curl-tone'));
+    return strip;
+  });
   const back = copyOf(moving);
   back.classList.add('curl-page', 'curl-back');
-  const paper = Object.assign(document.createElement('div'), { className: 'curl-paper' });
-  const light = Object.assign(document.createElement('div'), { className: 'curl-wash' });
-  back.append(paper, light);
-  const flap = Object.assign(document.createElement('div'), { className: 'curl-flap' });
-  flap.append(back);
-  // In this order, whatever the page's own rules would stack: the page beneath, its shade, what stays, what lifts.
+  const light = div('curl-wash');
+  back.append(div('curl-paper'), light);
+  // The back half of the roll and what lies on top cast the lifted paper's one soft shadow together.
+  const flap = div('curl-flap');
+  flap.append(...strips.slice(STRIPS / 2), back);
+  // In this order, whatever the page's own rules would stack: the page beneath, the roll's shadow,
+  // what stays, the front of the roll, then what comes back over it.
   if (dir < 0) leaving.style.zIndex = '0';
-  [cast, front, flap].forEach((el, i) => { el.style.zIndex = String(i + 1); });
-  root.append(cast, front, flap);
+  [cast, front, ...strips.slice(0, STRIPS / 2), flap].forEach((el, i) => { el.style.zIndex = String(i + 1); });
+  root.append(cast, front, ...strips.slice(0, STRIPS / 2), flap);
   to.parentElement.append(root);
   const y = clamp(grabY, 0, H);
-  const c = { at, dir, W, H, to, root, cast, front, shade, back, light, flap, C0: [W, y], V: [0, 0], stop: () => {} };
+  const c = { at, dir, W, H, to, root, cast, front, strips, back, light, flap, C0: [W, y], V: [0, 0], stop: () => {} };
   c.done = dir > 0 ? [-W, y] : [W, y];
   c.F = dir > 0 ? c.C0.slice() : [-W, y];
   curl = c;
@@ -287,7 +348,11 @@ mountEpubPage({
   note: 'The page bends: the corner under your finger, the fold following it, its back showing the words through; let go and your speed decides.',
   notes: `
   <h2>Turning 4 · The curl</h2>
-  <p>The page bends, as paper does. The corner you hold stays under your finger, and the paper folds over a line that follows it: the perpendicular bisector between where the corner rests and where it is now. Take the top corner and it peels on a slant; take the middle of the edge and it rolls straight. What lifts is mirrored over the fold and shows its back, the words faint through the paper; the next page lies beneath, the roll's shadow on it.</p>
+  <p>The page bends, as paper does. The corner you hold stays under your finger, and the paper rolls over a cylinder whose axis follows it, then lies back on itself on top. Take the top corner and it peels on a slant; take the middle of the edge and it rolls straight. On the roll you see the page's front turning away, its words squeezing as they go, then its back coming over, the words faint through the paper; the next page lies beneath, the roll's shadow on it.</p>
+  <ul>
+    <li><b>The roll:</b> drawn in twelve strips of the live page, each laid where its part of the cylinder falls and shaded by how it faces you: edge-on its darkest, facing you not at all, a glint where the back tops the roll. The shade is ramped across each strip, so the roll reads as one curve, not bands.</li>
+    <li><b>How round:</b> flat at rest, roundest half way (a fifth of the page's width), flat again as it lands, so the page sets down rather than snapping flat.</li>
+  </ul>
   <ul>
     <li><b>One to one:</b> the corner is wherever the pointer is, every frame, with no delay and no easing between them. The paper can't stretch: the spine's edge stays down however far you pull.</li>
     <li><b>Let go and your speed decides:</b> the throw is projected from the last moments of the drag. A flick turns the page from a few centimetres in; a slow drag past a quarter of the page from the spine turns it; anything short falls back.</li>
@@ -309,7 +374,7 @@ mountEpubPage({
   <h2>For</h2>
   <ul><li>The turn people know from the best readers: held, thrown, caught.</li><li>A drag that feels tight: the paper never trails the finger, and the finish carries the hand's speed.</li><li>Live text throughout, so it works with the book's frame and your own type.</li></ul>
   <h2>Against</h2>
-  <ul><li>It bends two of Eien's rules (gradients, two shadows), if only in motion.</li><li>Clipping three copies of the page every frame costs more than the other three motions, on a slow phone most of all.</li><li>The fold is a straight line: the roll's thickness is suggested by light, not drawn, which a shader could do and this can't.</li><li>The longest to build and to test.</li></ul>
+  <ul><li>It bends two of Eien's rules (gradients, two shadows), if only in motion.</li><li>Fourteen clipped copies of the page every frame cost more than the other three motions, on a slow phone most of all (fewer strips there would do).</li><li>The roll is twelve flat strips: smooth at reading size, faceted if you look closely; a shader would be exact.</li><li>The longest to build and to test.</li></ul>
   ${FLIP_NOTES()}`,
 });
 </script>
