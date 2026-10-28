@@ -8,9 +8,10 @@
 // back, the keyboard then back where it was.
 
 import type { Setting, SettingKey, SettingValues } from '../../core/config';
-import { ariaKeys, keyText } from '../chrome/keys';
+import { commandOf } from '../chrome/commands';
+import { keysOf } from '../chrome/keys';
 import { h } from '../dom';
-import { float } from '../menu/menu';
+import { float, touch } from '../menu/menu';
 import { settingRow } from '../settings/controls';
 import { quickIn } from '../settings/places';
 import { quickKey, setStops, stopsIn } from './quick-keys';
@@ -46,8 +47,6 @@ export interface QuickLookOf {
   changed(): void;
 }
 
-const ALL_SETTINGS_KEY = 'Mod-,';
-
 export class QuickLook {
   readonly #of: QuickLookOf;
   #close: (() => void) | null = null;
@@ -59,11 +58,6 @@ export class QuickLook {
 
   get isOpen(): boolean {
     return this.#close !== null;
-  }
-
-  /** Whose look is open, if one is. */
-  get subject(): LookSubject | null {
-    return this.#subject;
   }
 
   /** The key again, or the control: open `subject`'s look under `opener`, or close it. */
@@ -93,11 +87,13 @@ export class QuickLook {
           ?.append(h('span', { class: 'quick-look__aside', text: 'every page' }));
       return { setting, ...row };
     });
+    // Settings' own key, shown as a menu shows keys: not where there's no keyboard to press it.
+    const keys = touch() ? null : keysOf(commandOf('settings'), of.mac);
     const allSettings = h(
       'button',
       {
         class: 'word-button',
-        attrs: { type: 'button', 'aria-keyshortcuts': ariaKeys(ALL_SETTINGS_KEY, of.mac) },
+        attrs: { type: 'button', 'aria-keyshortcuts': keys?.aria },
         on: {
           click: () => {
             // Closed first, so Settings gives the keyboard back to the control, not to this.
@@ -107,11 +103,9 @@ export class QuickLook {
         },
       },
       'All settings',
-      h('span', {
-        class: 'quick-look__key',
-        text: keyText(ALL_SETTINGS_KEY, of.mac),
-        attrs: { 'aria-hidden': 'true' },
-      }),
+      keys
+        ? h('span', { class: 'quick-look__key', text: keys.text, attrs: { 'aria-hidden': 'true' } })
+        : null,
     );
     const done = phone
       ? h('button', {
@@ -132,9 +126,10 @@ export class QuickLook {
         { class: 'quick-look__head' },
         h(
           'span',
-          { class: 'label quick-look__crumb' },
+          // Settings' own breadcrumb (../settings/settings.css).
+          { class: 'label settings__crumbs quick-look__crumb' },
           'Look',
-          h('span', { class: 'quick-look__slash', text: '/', attrs: { 'aria-hidden': 'true' } }),
+          h('span', { class: 'settings__slash', text: '/', attrs: { 'aria-hidden': 'true' } }),
           h('b', { text: subject.crumb }),
         ),
         h('span', { class: 'quick-look__every', text: subject.every }),
@@ -147,6 +142,12 @@ export class QuickLook {
       for (const row of rows) row.show(storeOf(row.setting).values);
       setStops(panel, had);
     };
+    // The keyboard gone on to somewhere else (⌘3 into the other page): it closes, leaving it there.
+    panel.addEventListener('focusout', (event) => {
+      const to = event.relatedTarget;
+      // Its control taking it is a press on it, which toggles.
+      if (to instanceof Node && !panel.contains(to) && to !== opener) this.close();
+    });
     panel.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') this.close();
       else if (!quickKey(event, panel)) return;

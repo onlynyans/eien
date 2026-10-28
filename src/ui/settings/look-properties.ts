@@ -44,8 +44,8 @@ function sourceFace(id: string): LookProperties {
 }
 
 /** Line spacing and page width: a step either side of the face's own leading and measure. */
-export const LEADING = { tight: 0.9, set: 1, loose: 1.12 } as const;
-export const WIDTH = { narrow: 0.84, set: 1, wide: 1.18 } as const;
+const LEADING = { tight: 0.9, set: 1, loose: 1.12 } as const;
+const WIDTH = { narrow: 0.84, set: 1, wide: 1.18 } as const;
 
 /** A multiplier, taken off at 1, so `var(--look-…, 1)` stands. */
 const times = (by: number) => (by === 1 ? null : String(by));

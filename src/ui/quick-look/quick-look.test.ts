@@ -133,6 +133,19 @@ describe('the quick look', () => {
     expect(quick.isOpen).toBe(false);
   });
 
+  it('closes when the keyboard goes on to somewhere else (⌘3 into the other page), leaving it there', () => {
+    const elsewhere = document.createElement('button');
+    document.body.append(elsewhere);
+    const quick = new QuickLook(of);
+    quick.open(subject, opener);
+    elsewhere.focus();
+    expect(quick.isOpen).toBe(false);
+    expect(document.activeElement).toBe(elsewhere);
+    quick.open(subject, opener);
+    opener.focus(); // its control, pressed: that's the control's toggle, not a leaving
+    expect(quick.isOpen).toBe(true);
+  });
+
   it('gives a value that can’t be kept to the console, not to the writer as a throw', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const store = { ...settings, values: settings.values, onChange: () => () => {} };
@@ -258,6 +271,20 @@ describe('the quick look on the phone', () => {
     quick.open(subject, opener);
     expect(closeMenu()).toBe(true);
     expect(quick.isOpen).toBe(false);
+  });
+
+  it('shows no key for All settings where there’s no keyboard to press it', () => {
+    const coarse = vi
+      .spyOn(window, 'matchMedia')
+      .mockImplementation(
+        (query) => ({ matches: query === '(pointer: coarse)' }) as MediaQueryList,
+      );
+    phone = true;
+    new QuickLook({ ...of, platform: 'android' }).open(subject, opener);
+    const all = panel()?.querySelector('.quick-look__foot button');
+    expect(all?.textContent).toBe('All settings');
+    expect(all?.hasAttribute('aria-keyshortcuts')).toBe(false);
+    coarse.mockRestore();
   });
 
   it('has no Done on the desktop', () => {

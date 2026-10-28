@@ -1125,8 +1125,9 @@ without Settings.
   (Narrow, As set, Wide: × 0.84, 1, 1.18 of its measure), and Page (sheet or
   full), each marked `page`. A setting marked later shows there with nothing
   else to build. Page width needs room round a page (`wide`): a phone's page
-  and each of two pages side by side already fill theirs, so it isn't offered
-  there; Narrow also narrows a sheet that fills its pane.
+  already fills its screen, so it isn't offered there. Narrow also narrows a
+  sheet that fills its pane; Two sheets and Facing pages lay each page to
+  its half, which it doesn't change.
 - **A change shows at once**, nothing to confirm; the popover stays open,
   Day or night turning the window with it. All settings (⌘,) at its foot
   opens Settings at Look.
@@ -1135,7 +1136,9 @@ without Settings.
   choose at once (↑ ↓ a row of the faces); in the stepper they move between
   − and +, which Enter and Space press. Esc, the key again, a click
   elsewhere or the phone's back closes it, the keyboard back where it was
-  (the control, if it was pressed). Choosing the other page closes it.
+  (the control, if it was pressed). Choosing the other page, or the keyboard
+  going on into it, closes it. With the band or slip put away, it hangs under
+  the strip's control.
 - **Whose look:** the active page's. Today that's the notes'; on a page of
   another kind the control is disabled. #40 Phase 1 gives an EPUB the shelf's
   own look, LOOK / SHELF, the same marked settings kept under `epub.<key>`.

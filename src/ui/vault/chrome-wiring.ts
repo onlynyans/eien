@@ -175,7 +175,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     if (!subject || !actsOn('look', side.kind)) return;
     lookSide = side;
     // On the phone's way too: a press on its control is then a toggle, not a close and open again.
-    quick.toggle(subject, chrome.inSight('look') ?? null);
+    // With the band or slip put away, under the strip's control, the way back to them.
+    quick.toggle(subject, chrome.inSight('look') ?? chrome.inSight('strip') ?? null);
   };
   const stopLook = of.menu.on((command) => {
     if (command === 'look') toggleLook();

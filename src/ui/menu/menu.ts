@@ -11,7 +11,7 @@ import { type IconName, icon } from '../icons';
 
 const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
 /** No keyboard to press them on: a phone's menu leaves the keys out. */
-const touch = () => window.matchMedia('(pointer: coarse)').matches;
+export const touch = (): boolean => window.matchMedia('(pointer: coarse)').matches;
 
 export type MenuItem =
   | {
@@ -38,7 +38,10 @@ let open: { close(): void } | null = null;
 export interface Place {
   readonly at?: { x: number; y: number };
   readonly opener?: HTMLElement;
-  /** Under the opener, its end lined up with the opener's (the quick look's column). */
+  /**
+   * Under the opener, its end lined up with the opener's, and kept under it however tall (it
+   * scrolls instead, by its own max-height from --menu-y): the quick look's column.
+   */
   readonly end?: true;
 }
 
@@ -85,16 +88,20 @@ export function float(panel: HTMLElement, place: Place, closed?: () => void): ()
   const anchor = place.opener?.getBoundingClientRect();
   const y = place.at?.y ?? (anchor ? anchor.bottom + 4 : 0);
   const placeIn = () => {
+    const under = Boolean(place.end && anchor);
+    // Its top first, so a height held by --menu-y is the one measured.
+    if (under) panel.style.setProperty('--menu-y', `${y}px`);
     const size = panel.getBoundingClientRect();
     const x = place.at?.x ?? (anchor ? (place.end ? anchor.right - size.width : anchor.left) : 0);
     panel.style.setProperty(
       '--menu-x',
       `${Math.max(4, Math.min(x, window.innerWidth - size.width - 4))}px`,
     );
-    panel.style.setProperty(
-      '--menu-y',
-      `${Math.max(4, Math.min(y, window.innerHeight - size.height - 4))}px`,
-    );
+    if (!under)
+      panel.style.setProperty(
+        '--menu-y',
+        `${Math.max(4, Math.min(y, window.innerHeight - size.height - 4))}px`,
+      );
   };
   placeIn();
   document.addEventListener('pointerdown', outside, true);

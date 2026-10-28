@@ -3,8 +3,9 @@
 // under its control; a page of another kind has none yet (#40 Phase 1 gives
 // the shelf one); choosing the other page closes it.
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
+import * as menuModule from '../menu/menu';
 import { closeMenu } from '../menu/menu';
 import type { MenuBus } from '../menu/menu-bus';
 import type { PaneLayout } from '../shell/panes';
@@ -84,6 +85,22 @@ describe('the Look control', () => {
     control()?.click();
     expect(popover()).not.toBeNull();
     expect(control()?.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('hangs under the strip’s control while the band is put away, its own out of sight', async () => {
+    const { menu, chrome, popover } = await shown();
+    const strip = () => document.querySelector<HTMLButtonElement>('[data-command="strip"]');
+    const float = vi.spyOn(menuModule, 'float');
+    // The band put away: its tools aren't drawn (band.css), the strip's control alone is.
+    strip()?.click();
+    await Promise.resolve();
+    chrome.refresh();
+    for (const button of document.querySelectorAll<HTMLElement>('[data-command]'))
+      button.checkVisibility = () => button.dataset.command === 'strip';
+    menu.run('look');
+    expect(popover()).not.toBeNull();
+    expect(float.mock.calls.at(-1)?.[1].opener).toBe(strip());
+    float.mockRestore();
   });
 
   it('is off, and the menu’s Look does nothing, while the active page holds another kind', async () => {

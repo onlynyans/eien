@@ -278,7 +278,7 @@ export const SETTINGS = [
     label: 'Page width',
     description:
       'Lines a little shorter or longer than the typeface sets them, on a page with room round it.',
-    // A phone's page, and each of two side by side, is already narrower than any face's line.
+    // A phone's page is already narrower than any face's line.
     wide: true,
     scope: 'device',
     group: 'Page',

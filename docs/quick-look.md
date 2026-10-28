@@ -26,9 +26,10 @@ readonly quick?: 'window' | 'page';
 - **Line spacing**, `appearance.leading` (Type): `tight` Tight, `set` As
   set, `loose` Loose; default `set`.
 - **Page width**, `page.width` (Page): `narrow` Narrow, `set` As set, `wide`
-  Wide; default `set`. Marked `wide`: a phone's page, and each of two pages
-  side by side, is already narrower than any face's measure, so it changes
-  only a page with room round it. In the schema before `appearance.frame`, so the
+  Wide; default `set`. Marked `wide`: a phone's page is already narrower
+  than any face's measure. Narrow also narrows a sheet that fills its pane;
+  Two sheets and Facing pages lay each page to its half, which it doesn't
+  change. In the schema before `appearance.frame`, so the
   popover's order (the schema's) is the decided one: Day or night, Typeface,
   Text size, Line spacing, Page width, Page.
 
@@ -136,9 +137,12 @@ Each face keeps its own tuning; the writer's step goes over it.
 ## The wiring: `vault/chrome-wiring.ts`
 
 - The menu bus's `look` toggles the popover for `pages.active.kind`.
-- The anchor: the look control in sight (`chrome.buttons('look')`), else the
-  ⋯ of its bar it folded behind; on the phone's way (`phone.stack.phone`)
-  the sheet needs none.
+- The anchor: the look control in sight (`chrome.inSight('look')`), else the
+  ⋯ of its bar it folded behind, else (the band or slip put away) the
+  strip's control; passed on the phone's way too (`phone.stack.phone`), so
+  a press on the control toggles the sheet.
+- The keyboard leaving it for somewhere else (⌘3 into the other page, a
+  companion's) closes it, the keyboard left there.
 - Choosing the other page closes it (the next `refresh` finds the active
   page changed).
 - `command-looks.ts` gives `look` its `expanded` (`LooksOf.lookOpen()`); the

@@ -198,6 +198,16 @@ describe('float, for a popover (#49)', () => {
     expect(panel.style.getPropertyValue('--menu-x')).toBe('130px');
   });
 
+  it('stays under its opener however tall, for its own height to scroll, not over the opener', () => {
+    const panel = document.createElement('div');
+    vi.spyOn(opener, 'getBoundingClientRect').mockReturnValue(new DOMRect(300, 20, 30, 30));
+    vi.spyOn(panel, 'getBoundingClientRect').mockReturnValue(
+      new DOMRect(0, 0, 200, window.innerHeight + 200),
+    );
+    float(panel, { opener, end: true });
+    expect(panel.style.getPropertyValue('--menu-y')).toBe('54px');
+  });
+
   it('leaves a press on its opener to the opener’s click, so the opener can toggle it', () => {
     const panel = document.createElement('div');
     float(panel, { opener });

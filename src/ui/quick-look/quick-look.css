@@ -37,14 +37,6 @@
   padding-bottom: var(--eien-space-2);
   border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
 }
-.quick-look__crumb b {
-  font-weight: 400;
-  color: var(--eien-ink-soft);
-}
-.quick-look__slash {
-  padding: 0 3px;
-  color: var(--eien-faded);
-}
 .quick-look__every {
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-preview);
