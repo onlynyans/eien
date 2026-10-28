@@ -1,12 +1,23 @@
 // A story on Eien's sheet (spec §14): the running head (its fandom, its title,
 // the chapter), the title and who wrote it, what the site says of it, folded
 // away; then each chapter, its notes beside its words, and the turn to the
-// next. Everything the site wrote is drawn from cleaned nodes (./draw-clean.ts).
+// next. Everything the site wrote is drawn from cleaned nodes (ui/draw-clean.ts),
+// its links each opening in a tab of its own, telling the site nothing of the
+// story page.
 
-import { cleanHtml, plainOf, type Story, type StoryChapter, type Turn } from '../../core/extension';
+import { cleanStory, type Story, type StoryChapter, type Turn } from '../../core/extension';
+import { type CleanNode, plainOf } from '../../core/html';
 import { chapterNumber, countPlainWords, type NumeralStyle } from '../../core/text';
 import { h, wordButton } from '../dom';
-import { drawClean } from './draw-clean';
+import { drawClean } from '../draw-clean';
+
+const inTabOfItsOwn = (anchor: HTMLAnchorElement) => {
+  anchor.target = '_blank';
+  anchor.rel = 'noopener noreferrer';
+};
+
+/** The site's words, drawn. */
+const drawStory = (nodes: readonly CleanNode[]) => drawClean(nodes, { link: inTabOfItsOwn });
 
 export interface Sheet {
   readonly element: HTMLElement;
@@ -16,13 +27,13 @@ export interface Sheet {
 
 /** A note of the site's (a summary, the author's notes): its name, then its words, quieter than the story's. */
 function aside(name: string, html: string, className = ''): HTMLElement | null {
-  const nodes = cleanHtml(html);
+  const nodes = cleanStory(html);
   if (!plainOf(nodes).trim()) return null;
   return h(
     'aside',
     { class: `story__aside ${className}`.trim(), attrs: { 'aria-label': name } },
     h('p', { class: 'label', text: name }),
-    h('div', { class: 'prose prose--aside' }, drawClean(nodes)),
+    h('div', { class: 'prose prose--aside' }, drawStory(nodes)),
   );
 }
 
@@ -49,7 +60,7 @@ function chapter(
   shown: StoryChapter,
   numerals: NumeralStyle,
 ): { element: HTMLElement; words: number } {
-  const nodes = cleanHtml(shown.body);
+  const nodes = cleanStory(shown.body);
   const titled = shown.title !== '' || story.chapters.length > 1 || story.chapterCount !== 1;
   const heading = titled
     ? h(
@@ -69,7 +80,7 @@ function chapter(
       heading,
       aside('Summary', shown.summary),
       aside('Notes', shown.notes),
-      h('div', { class: 'prose' }, drawClean(nodes)),
+      h('div', { class: 'prose' }, drawStory(nodes)),
       aside('Notes', shown.endNotes, 'story__aside--end'),
     ),
     words: countPlainWords(plainOf(nodes)),

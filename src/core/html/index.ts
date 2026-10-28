@@ -1,4 +1,13 @@
 export { imageAddresses } from './addresses';
+export {
+  type CleanElement,
+  type CleanNode,
+  type CleanRules,
+  cleanHtml,
+  imageWords,
+  plainOf,
+} from './clean';
+export { isPart, KEPT } from './clean-elements';
 export { declarations } from './css';
 export { NAMED_ENTITIES } from './entities';
 export { fromHtml, looksLikeHtml, pastedMarkdown } from './from-html';
