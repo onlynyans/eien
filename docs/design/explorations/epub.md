@@ -32,6 +32,163 @@ words.
 | | [epub-flip-ink.html](epub-flip-ink.html) | **3 · The words turn** (recommended, for a key or a click) |
 | | [epub-flip-curl.html](epub-flip-curl.html) | 4 · The curl (asks for an exception: light while a page moves) |
 
+## Decided (2026-10-28)
+
+The owner's choices, from these explorations. The build follows this
+section where it and the directions below disagree.
+
+### How the book is drawn
+
+- **Cleaned nodes, not a sandboxed frame.** A chapter's XHTML is read by
+  Eien's own parser and kept to a whitelist of elements, then drawn
+  element by element, never from HTML. This is the browser extension's
+  pipeline (#47, `core/extension/clean.ts`, `ui/extension/draw-clean.ts`),
+  shared rather than copied (Phase 0). Nothing in a book can run, and the
+  page turns, highlights and Find work on one DOM.
+- **Fixed-layout EPUBs aren't supported** (comics, picture books), and the
+  publisher's layout is reduced to its structure. Accepted.
+- **Pictures are shown,** from the book's own zip, as blob URLs like a
+  note's images, in the formats notes support (JPEG, PNG, GIF, WebP, AVIF,
+  SVG). Each is held to the image cap and counted against the book's cap.
+  - **Calibre's wrapper:** an image wrapped in an `<svg>` frame (Calibre's
+    way with covers and plates) is unwrapped to a plain image.
+  - **Paged:** a chapter that's only a picture gets a page of its own,
+    fitted within the margins; a picture in a chapter fits the measure and
+    moves whole to the next page rather than splitting.
+  - **Scrolling:** a picture fits the sheet's width. Captions stay with
+    their pictures.
+- **Room to style the book.** The cleaner gives the book's parts names:
+  chapter title, scene break, epigraph, plate, caption, first line. One
+  book stylesheet draws them from book tokens of their own, so chapter
+  titles, dividers and the like can be tuned in one place without touching
+  notes.
+- **The book's look is its own.** The book's typeface, size, line spacing
+  and width are settings apart from the notes', so changing a note's look
+  never changes a book's (shaped by #49, the quick look).
+- **Fonts:** always the writer's chosen faces, never the publisher's.
+
+### The sidebar and the vault
+
+- **SHELF**, above TAGS: LIBRARY, FOLDERS, SHELF, TAGS. A lens over the
+  folder tree, as explored.
+- **Books are only under SHELF,** never in a folder's note list.
+- **Reading state** (place, bookmarks, highlights) in `.eien/reading/`,
+  keyed by the book's contents.
+
+### Paged
+
+- **One leaf with its stacked edges** (Pages 2); **two pages** (Pages 1's
+  spread) when the pane has room for two 20em pages.
+- **Set as a book** (Showcase 2): justified and hyphenated, a title page
+  and its imprint, chapters opening low, a capitals first line, running
+  heads and folios. The phone stays ragged.
+- **The reading room** (Showcase 1) is built after Pages, as a one-key
+  mode.
+
+### Scrolling
+
+- **A chapter a sheet** (Scroll 1).
+- **A scroll style setting:**
+  - *As a note:* exactly a note's sheet, type and paragraph gaps in the
+    Reading view. This is new: the exploration indented paragraphs as a
+    book does, so it wasn't quite a note's.
+  - *As a book:* indented paragraphs with no gap, as explored.
+- **Beside a note** (Scroll 3): the split with a book on one page, once
+  pages can hold a book (Phase 0). The split's modes, its pager, the
+  phone's ⇄ and Wide screen's rooms all carry it.
+  - **Quote's citation:** `— Pride and Prejudice, Chapter III`, with no
+    author.
+- **By lamplight** (Showcase 3), as a mode on Scroll, later.
+
+### Turning the page
+
+- **One setting, Page turn:** Curl (the default, on the desktop and the
+  phone), Slide (the sliding text, as Pages 1 and 2 first turned) and
+  Words (Turning 3).
+- **Only Curl curls.** Under Slide and Words, a drag or a swipe asks for
+  the turn, and the setting's own motion runs.
+- **A turn speed setting**, from instant (0) to four times slower; the
+  default is twice as slow as designed. It sets the finish after you let
+  go and a key's turn. A drag always follows the hand.
+- **The curl's light is approved.** Three tokens, used only while a page
+  moves, as the exception in `.interface-design/system.md` sets out:
+  `--eien-curl-shade`, `--eien-curl-light` and `--eien-curl-through`.
+
+### Marks
+
+- **A marks setting:** *In the list* (Features 2: Contents, Marks, Found;
+  the default) or *On the edge* (Features 3's thumb strip).
+- **Bookmark:** the same setting as Facing pages' mark (ribbon, dog-ear or
+  edge tab).
+  - **The clash:** only in a split in Facing pages mode with a book on one
+    page. There the one mark would mean both "the page you're in" and "a
+    bookmarked page".
+  - **Proposed:** there, the facing mark keeps its meaning, and a
+    bookmarked page says "bookmarked" in its folio, with the bookmark tool
+    pressed. Everywhere else the bookmark wears the mark.
+- **Highlight:** a pencil underline with a tick in the margin (Features 1).
+- **Find:** the list's own search field searches the book while it's open.
+- **Page numbers:** the print edition's, from the EPUB's page-list where it
+  has one, else steady pages of 1,500 characters.
+  - **No real cost:** the page-list is read once with the book, and a
+    chapter's page anchors are measured once as it's drawn.
+
+### Tests
+
+- **Fixture books made by a script**, from public-domain text and pictures
+  (*Pride and Prejudice* with Hugh Thomson's 1894 illustrations).
+  Eien's own EPUB writer makes the plain ones; hand-made variants cover the
+  rest:
+  - a picture-only chapter;
+  - Calibre's SVG-wrapped plate;
+  - EPUB 2 (NCX) and EPUB 3 (nav, with and without a page-list);
+  - and the hostile ones: a zip bomb, a path out of the zip, a script and
+    an event handler in a chapter.
+
+### The build
+
+Each phase is its own session and pull request, from main.
+
+- **Phase 0, groundwork,** with nothing new to see. Three refactors:
+  1. The cleaner and its drawing, out of the extension into shared
+     modules, used by both.
+  2. A page holds a note or a book (`vault/pages.ts`, `page/page.ts`), so
+     the split, the pager, ⇄ and Wide screen's rooms take a book with no
+     special case.
+  3. The find bar apart from CodeMirror, so a book's Find reuses the slip,
+     its keys and its count.
+
+  1 can run beside 2; 3 follows 2.
+- **Phase 1, the shelf and opening a book safely:**
+  - the zip reader (the browser's decompression, in the window, on desktop
+    and phone alike);
+  - the container, its spine and contents;
+  - the caps, and no path out of the zip;
+  - SHELF;
+  - books in the vault's index;
+  - the contents in the list;
+  - a chapter drawn from cleaned nodes, with its pictures;
+  - the book's look settings;
+  - the reading state's file;
+  - the fixture books.
+- **Phase 2, scrolling:** a chapter a sheet, the scroll style, the place
+  kept; Beside a note and Quote.
+- **Phase 3, turning pages:**
+  - paging on one line grid;
+  - the leaf and its edges, and the spread when there's room;
+  - Set as a book;
+  - Page turn (Curl, Slide, Words) and its speed;
+  - the curl's tokens into `tokens.css`.
+- **Phase 3b, the reading room.**
+- **Phase 4, place, bookmarks and page count:** print pages or steady
+  pages; Marks in the list or on the edge.
+- **Phase 5, highlights and Find.**
+- **Phase 6, by lamplight,** on Scroll.
+
+Each module holds one concept, and none passes about 300 lines: the zip,
+the container, paging, each turn, the marks, the book's stylesheet and the
+shelf each have their own.
+
 ## What all nine share
 
 - **Books are files in the vault**, `.epub`, in any folder: Cooking holds its

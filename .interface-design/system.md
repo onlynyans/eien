@@ -65,6 +65,22 @@ hairline borders, 4 shadows (the sheet's once, the float three times).
 - `--eien-shadow-sheet`: the sheet alone, the object lying on the blotter.
 - `--eien-shadow-float`: whatever floats above the window.
 - Panes, bands and rows cast none. No gradients.
+- **One exception, the curl's light** (approved 2026-10-28, #40; built in
+  its Phase 3): while a book's page turns as a curl, and only then, the
+  paper may carry light. At rest every page is flat, with two shadows and
+  no gradients.
+  - The light comes from three tokens, each a light-dark pair a theme
+    carries, added to `tokens.css` and the design README when built:
+    - `--eien-curl-shade`: the sheet shadow's own ink, where paper bends
+      away;
+    - `--eien-curl-light`: the crest of the roll;
+    - `--eien-curl-through`: how much of the words shows through the back,
+      12%.
+  - The gradients are those tokens ramped across the roll, and the lifted
+    paper casts one soft shadow in `--eien-curl-shade`: a third shadow,
+    there only while the page moves.
+  - Nothing else may use these tokens. The motion is
+    `docs/design/explorations/epub-flip-curl.html`.
 - **Corners: not everything is square** (changed 2026-10-20, #27). Three
   steps, `--eien-radius-s` (what you press), `-m` (what floats), `-l` (what
   covers the window), set by the layout (see "Layouts"). Paper stays square,
