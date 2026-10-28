@@ -52,6 +52,8 @@ all three" below where they and the other directions disagree.
   names whose look it is: LOOK / NOTES or LOOK / SHELF.
 - **Which settings:** the `quick` mark in the schema, as below. The shelf's
   values are #40 Phase 1's look settings, made from the mark.
+- **Its words and the sun:** the head says SHELF for an EPUB; the sidebar's
+  sun stays beside the popover's Day or night ("Answered", below).
 - **When it's built:** beside #40, after the phase that lets a page hold an
   EPUB. #40's session places it in its phases.
 
@@ -228,13 +230,13 @@ reading in sight. If the owner would rather the control be an icon like every
 other, 1 is the fallback: the same popover in a column, under the page's
 last tool.
 
-## Questions for you
+## Answered (2026-10-28)
 
-- **SHELF or BOOKS in the head?** The EPUB's look says SHELF, after #40's
-  section. In Eien a book is a writer's own manuscript, whose chapters are
-  notes and wear the notes' look, so LOOK / BOOKS would read as theirs.
-- **Day or Night in the popover and at the sidebar's foot,** both? The
-  explorations keep the sun, a single press where it always was.
+- **SHELF, not BOOKS, in the head.** The EPUB's look is LOOK / SHELF, after
+  #40's section. In Eien a book is a writer's own manuscript, whose chapters
+  are notes and wear the notes' look, so LOOK / BOOKS would read as theirs.
+- **Both Day or Night controls stay:** the popover's Day or night, and the
+  sun at the sidebar's foot, a single press where it always was.
 
 ## Checks (interface-design)
 

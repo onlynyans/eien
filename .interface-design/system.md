@@ -597,6 +597,9 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
     it. Each setting is one stop for Tab; arrows choose within it.
 - **Two pages:** while it's open, the page it doesn't change sits back: its
   paper takes `--eien-band`.
+- **Words and the sun:** an EPUB's look is the shelf's (SHELF, never
+  BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
+  one press for Day or Night, beside the popover's.
 
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 
