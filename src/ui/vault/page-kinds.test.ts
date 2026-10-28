@@ -141,6 +141,21 @@ describe('a file of another kind opened on a page', () => {
     await vi.waitFor(() => expect(pages.sessions().map(({ path }) => path)).toEqual(['Notes.md']));
   });
 
+  it('leaves Tools that follow’s furniture where it stands: nothing arrives', async () => {
+    const { pages, area } = await made({ 'appearance.split': 'follow' });
+    const main = area.querySelector<HTMLElement>('.page__main') as HTMLElement;
+    const pagesRow = area.querySelector<HTMLElement>('.page__pages') as HTMLElement;
+    vi.spyOn(pagesRow, 'clientWidth', 'get').mockReturnValue(2 * PAGE_MIN + 100);
+    await pages.open('Chapter.md');
+    await pages.open('Notes.md', true);
+    main.classList.remove('is-arriving');
+    await pages.open('Map.stand'); // in Notes' place, the page you're in
+    expect(pages.active.kind).toBe('epub');
+    expect(main.classList.contains('is-arriving')).toBe(false);
+    pages.activate(pages.sides[0] as Side); // moving to the other page, it does
+    expect(main.classList.contains('is-arriving')).toBe(true);
+  });
+
   it('gives the keyboard to the page in its place, when the one it took had it', async () => {
     const { pages } = await made();
     await pages.open('Chapter.md');

@@ -280,7 +280,8 @@ export class Pages {
    * its parts out first. Whether `old` had the keyboard.
    */
   #replace(old: Side, kind: PageKindOf): boolean {
-    const had = old.page.element.contains(document.activeElement);
+    const { element, aside, under } = old.page; // its panel and table bar lie outside it
+    const had = [element, aside, under].some((part) => part.contains(document.activeElement));
     const side = this.#make(kind, old.place ?? old.left);
     this.#sides = this.#sides.map((each) => (each === old ? side : each));
     if (this.#active === old) this.#active = side;

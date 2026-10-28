@@ -10,7 +10,7 @@ import type { NoteHolder, OpenEntry, OpenNotes } from './open-notes';
 import type { Place } from './page-side';
 
 /** Where a note was left on its page: its caret (or what was chosen) and how far it was scrolled. */
-export interface NotePlace extends Place {
+interface NotePlace extends Place {
   readonly anchor: number;
   readonly head: number;
   readonly scroll: number;
@@ -34,6 +34,10 @@ export class OpenNote implements NoteHolder {
    */
   #scrolled = 0;
   #shown = 0;
+  /** The page closed (`leave`): it's told nothing more. */
+  #gone = false;
+  /** The note a closed page holds till its words are saved. */
+  #leaving: OpenEntry | null = null;
   readonly #notes: OpenNotes;
   readonly #page: PageView;
 
@@ -127,19 +131,26 @@ export class OpenNote implements NoteHolder {
   }
 
   /**
-   * The page closed: its words saved first (a session let go by its last page saves
-   * nothing more), then the note let go. Nothing opens on it after.
+   * The page closed: the note held till its words are saved (a session let go by its
+   * last page saves nothing more, nor tries again), then let go. Nothing opens on the
+   * page after, and what the session says no longer reaches it.
    */
   async leave(): Promise<void> {
     this.#turn++;
+    this.#gone = true;
     const entry = this.#entry;
     this.#entry = null;
     if (!entry) return;
-    try {
-      await entry.session.flush();
-    } finally {
-      this.#notes.release(entry, this);
-    }
+    this.#leaving = entry;
+    await entry.session.flush();
+    // A save that failed tries again: the note is let go once one works (`status`).
+    if (entry.session.state === 'saved') this.#letGo();
+  }
+
+  #letGo(): void {
+    const entry = this.#leaving;
+    this.#leaving = null;
+    if (entry) this.#notes.release(entry, this);
   }
 
   /** Nothing open: the note's gone (deleted elsewhere, or sent to the trash here). */
@@ -153,21 +164,24 @@ export class OpenNote implements NoteHolder {
   }
 
   status(state: SaveState): void {
-    this.#page.state(state);
+    if (state === 'saved' && this.#leaving) this.#letGo();
+    if (!this.#gone) this.#page.state(state);
   }
 
   reloaded(text: string): void {
-    this.#page.reloaded(text);
+    if (!this.#gone) this.#page.reloaded(text);
   }
 
   movedToCopy(copy: string, from: string): void {
+    if (this.#gone) return;
     this.#page.notice(
       `“${titleOf(baseName(from))}” changed elsewhere. Your version is kept beside it as “${titleOf(baseName(copy))}”.`,
     );
   }
 
   gone(): void {
-    this.close();
+    if (this.#gone) this.#letGo();
+    else this.close();
   }
 
   moved(): void {

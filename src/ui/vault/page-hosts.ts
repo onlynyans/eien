@@ -36,7 +36,7 @@ export function pageHosts(of: PageHostsOf): PageHosts {
       const { mode, split, sides } = of.pages;
       const { on, at } = mode.own;
       sides.forEach((side, index) => {
-        // A side never changes kind (another kind opens on a page made for it): drawn once.
+        // A side keeps its kind (another kind takes its place as a new side, drawn anew).
         const items = mode.own.items.filter((id) => actsOn(id, side.kind));
         const wanted = split && items.length > 0 && (on === 'each' || index === 1);
         const had = hosts.get(side);

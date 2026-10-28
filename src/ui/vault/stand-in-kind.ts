@@ -1,4 +1,4 @@
-// For the window's tests only: a second kind of page (./page-side.ts), standing
+// For the window's tests only (nothing the app ships imports it): a second kind of page (./page-side.ts), standing
 // in for the EPUB's until it's built (backlog #40), so the tests show the
 // split, its pager, swap, ⇄ and the rooms carrying a page whatever it holds.
 // It holds `*.stand` files: its name is the file's, its colophon figure says

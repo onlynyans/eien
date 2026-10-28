@@ -11,9 +11,9 @@ import { TableBar } from '../editor/table-bar';
 import type { ImageLoader } from '../editor/widgets';
 import type { SaveState } from '../notes/note-session';
 import { quietButton } from '../quiet-button';
-import { Notice } from '../vault/notice';
 import { BoardHost } from './board-host';
-import { type LeafFoot, type PageLeaf, type PaneLeaf, pageLeaf } from './page-leaf';
+import { NoteFoot } from './note-foot';
+import { type PageLeaf, type PaneLeaf, pageLeaf } from './page-leaf';
 import { PageTags, type PageTagsOf } from './page-tags';
 import { PageTitle } from './page-title';
 import { WordCount } from './word-count';
@@ -25,9 +25,6 @@ export interface PageNote {
   readonly doc: NoteDoc;
   readonly loadImage: ImageLoader;
 }
-
-/** What the colophon says of the save: only a failure is worth a word. */
-const STATE_WORDS: Partial<Record<SaveState, string>> = { failed: 'Not saved yet — trying again' };
 
 export class PageView implements PaneLeaf {
   readonly editor: NoteEditor;
@@ -56,12 +53,6 @@ export class PageView implements PaneLeaf {
   readonly words = new WordCount();
   /** Where outline cards lie, in the sheet's place (./board-host.ts). */
   readonly board: BoardHost;
-  readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
-  /** What the table editor just did ("Row 3 removed · ⌘Z puts it back"), for a while. */
-  readonly #said = h('span', { class: 'colophon__said', attrs: { role: 'status' } });
-  readonly #saying = new Notice(() => {
-    this.#said.textContent = this.#saying.text ?? '';
-  });
   /** A phone's table tools, above the keyboard while the caret's in a table (../editor/table-bar.ts). */
   readonly tableBar: TableBar;
   readonly #sheet = h(
@@ -88,10 +79,8 @@ export class PageView implements PaneLeaf {
   /** Its own head and foot, which the split's mode fills (./page-leaf.ts). */
   readonly head: PageLeaf['head'];
   readonly folio: PageLeaf['folio'];
-  /** The last seal. */
-  readonly #sealLine = h('span', { class: 'colophon__seal' });
-  /** What the colophon says of this page's note: its tags, words, save and last seal. */
-  readonly foot: LeafFoot;
+  /** What the colophon says of this page's note: its tags, words, save and last seal (./note-foot.ts). */
+  readonly foot = new NoteFoot(this.tagSlots.colophon, this.words.element);
   /** Beside the pane: the versions panel. */
   readonly aside = h('div', { class: 'page__aside' });
   readonly #caret = new Set<() => void>();
@@ -135,7 +124,7 @@ export class PageView implements PaneLeaf {
         this.tableBar.sync();
         for (const listener of this.#caret) listener();
       },
-      said: (words) => this.#saying.tell(words),
+      said: (words) => this.foot.tell(words),
     });
     this.#editorFrame.append(this.editor.tableTools);
     this.tableBar = new TableBar(this.editor.view);
@@ -146,12 +135,6 @@ export class PageView implements PaneLeaf {
     scroll.append(this.board.element);
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(scroll));
     this.element.append(this.editor.find.element);
-    this.foot = {
-      lead: this.tagSlots.colophon,
-      figures: [this.words.element, this.#state],
-      trail: this.#sealLine,
-      said: this.#said,
-    };
     this.#selection = new SelectionBar(layer, this.editor);
     this.#closer = quietButton({
       label: 'Close this page',
@@ -169,7 +152,7 @@ export class PageView implements PaneLeaf {
     this.board.hide(); // outline cards on it are put away, not drawn again on a page gone
     this.showNothing();
     this.#selection.remove();
-    this.#saying.stop();
+    this.foot.stop();
     this.editor.destroy();
     for (const part of [this.element, this.aside, this.tableBar.element, this.runningCrumbs])
       part.remove();
@@ -214,7 +197,7 @@ export class PageView implements PaneLeaf {
 
   /** The seals' parts: a line in the colophon, a panel beside. */
   attach(parts: { readonly sealLine: HTMLElement; readonly aside: HTMLElement }): void {
-    this.#sealLine.replaceChildren(parts.sealLine);
+    this.foot.trail.replaceChildren(parts.sealLine);
     this.aside.replaceChildren(parts.aside);
   }
 
@@ -293,8 +276,7 @@ export class PageView implements PaneLeaf {
   }
 
   state(state: SaveState): void {
-    this.#state.textContent = STATE_WORDS[state] ?? '';
-    this.#state.dataset.state = state;
+    this.foot.state(state);
   }
 
   /**

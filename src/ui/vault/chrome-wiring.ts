@@ -1,11 +1,10 @@
 // The layout's controls (../chrome) for a shown vault: the slots they're
-// drawn in, how each command looks now (a view chosen, Focus on, the list
-// shut, Compare showing the changes), the commands the window runs itself,
-// and the layout drawn again when the setting changes.
+// drawn in, how each command looks now (./command-looks.ts), the commands
+// the window runs itself, and the layout drawn again when the setting changes.
 
-import { type FormatCommandId, headingLevel, nextHeading } from '../../core/format';
+import { nextHeading } from '../../core/format';
 import { Chrome } from '../chrome/chrome';
-import { actsOn, type CommandId, commandOf, type LocalCommandId } from '../chrome/commands';
+import type { CommandId, LocalCommandId } from '../chrome/commands';
 import type { CommandLook } from '../chrome/host';
 import { PHONE_TAGS } from '../chrome/layout-spec';
 import { LAYOUT_SPECS } from '../chrome/layouts';
@@ -16,10 +15,10 @@ import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
-import { COMPARE_WORD } from '../versions/seal-line';
+import { commandLooks, isNight } from './command-looks';
 import { pageHosts } from './page-hosts';
 import { pageMore } from './page-more';
-import { isNote, type NoteSide, type Pages, type Side } from './pages';
+import { isNote, type Pages, type Side } from './pages';
 import type { PhoneView } from './phone-view';
 
 export interface VaultChromeOf {
@@ -44,7 +43,6 @@ export interface VaultChrome {
   stop(): void;
 }
 
-const NAMES = { live: 'Live', source: 'Source', reading: 'Reading' } as const;
 const night = matchMedia('(prefers-color-scheme: dark)');
 
 export function vaultChrome(of: VaultChromeOf): VaultChrome {
@@ -69,10 +67,6 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   shell.toggleAttribute('data-strip-shut', strip);
   let mounted = false;
 
-  const isNight = () => {
-    const scheme = settings.values['appearance.scheme'];
-    return scheme === 'night' || (scheme === 'system' && night.matches);
-  };
   const two = () => settings.values['layout.panes'] === 'two';
   const barShown = () => settings.values['editor.formatBar'] === 'on';
 
@@ -81,31 +75,6 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   /** The split the layout's hosts are drawn for: its mode while split, none with one page. */
   const split = () => (pages.split ? pages.mode : null);
 
-  /** What's on at the caret, read once for all the bar's buttons (the editor's state the key). */
-  let formatsFor: { state: unknown; on: ReadonlySet<FormatCommandId> } | null = null;
-  const formatsOn = ({ editor }: NoteSide['page']) => {
-    const state = editor.view.state;
-    if (formatsFor?.state !== state) formatsFor = { state, on: editor.formats };
-    return formatsFor.on;
-  };
-  /** A formatting command's look: pressed where its format is on, off where there's nothing to format. */
-  const formatLook = (id: CommandId, on: NoteSide['page']): CommandLook => {
-    const { writable, mode, editor } = on;
-    if (!writable || mode === 'reading') return { disabled: true, pressed: false };
-    if (id === 'format.heading') return { pressed: headingLevel(editor.caretLine) > 0 };
-    // In a table, the caret's menus; elsewhere it puts a table in.
-    if (id === 'format.table') {
-      const inTable = editor.inTable;
-      return {
-        pressed: inTable,
-        tip: inTable ? 'Table: this row’s and column’s menus' : undefined,
-      };
-    }
-    const sends = commandOf(id).sends ?? '';
-    return { pressed: formatsOn(on).has(sends.slice('format:'.length) as FormatCommandId) };
-  };
-
-  /** How `id` looks now, for `side`'s note (a page's own host), else the active page's. */
   /**
    * The page a layout control acts on: the active one, or with a companion
    * the page itself, the formatting bar still the caret's (../chrome/splits.ts).
@@ -114,78 +83,14 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     split()?.toolsFor === 'first' && !id.startsWith('format')
       ? (pages.sides[0] ?? pages.active)
       : pages.active;
-  const look = (id: CommandId, side: Side = target(id)): CommandLook => {
-    // A command for another kind of page than the one it would act on: there, it does nothing.
-    if (!actsOn(id, side.kind)) return { disabled: true, pressed: false };
-    return isNote(side) ? noteLook(id, side) : windowLook(id);
-  };
-  /** A note's commands, and the window's. */
-  const noteLook = (id: CommandId, { versions, page: on }: NoteSide): CommandLook => {
-    const { mode } = on;
-    switch (id) {
-      case 'pane.sidebar': {
-        const shut = panes.isShut('sidebar');
-        return { pressed: !shut, tip: shut ? 'Show the sidebar' : 'Hide the sidebar' };
-      }
-      case 'pane.list': {
-        if (panes.aside) return { pressed: false, tip: 'Show the note list' };
-        const shut = panes.isShut('list');
-        if (panes.two)
-          return { disabled: true, tip: 'Off with two panes: the sidebar lists the notes' };
-        return { pressed: !shut, tip: shut ? 'Show the note list' : 'Hide the note list' };
-      }
-      case 'view.live':
-      case 'view.source':
-      case 'view.reading':
-        return { pressed: mode === id.slice('view.'.length) };
-      case 'view.next':
-        return { icon: mode, tip: `${NAMES[mode]} · next view` };
-      case 'compare': {
-        const word = COMPARE_WORD[versions.compareMode];
-        if (!versions.canCompare)
-          return { disabled: true, pressed: false, tip: 'No versions to compare yet' };
-        return { pressed: word !== '', tip: word ? `Compare · ${word}` : undefined };
-      }
-      case 'versions':
-        return { pressed: versions.panelOpen };
-      default:
-        return id.startsWith('format.') ? formatLook(id, on) : windowLook(id);
-    }
-  };
-  /** The window's commands, which act on any page. */
-  const windowLook = (id: CommandId): CommandLook => {
-    switch (id) {
-      case 'focus':
-        return { pressed: settings.values['editor.focus'] === 'on' };
-      case 'format-bar':
-        return {
-          pressed: barShown(),
-          tip: barShown() ? 'Hide the formatting bar' : 'Show the formatting bar',
-        };
-      case 'strip': {
-        const slip = chrome.layout === 'slip';
-        return {
-          icon: slip ? (strip ? 'left' : 'right') : strip ? 'down' : 'up',
-          tip: strip ? 'Show the controls' : 'Hide the controls',
-          pressed: undefined,
-        };
-      }
-      case 'scheme':
-        return {
-          icon: isNight() ? 'moon' : 'sun',
-          pressed: isNight(),
-          tip: isNight() ? 'Night · switch to day' : 'Day · switch to night',
-        };
-      case 'panes':
-        return {
-          icon: two() ? 'panes2' : 'panes3',
-          pressed: two(),
-          tip: two() ? 'Two panes · switch to three' : 'Three panes · switch to two',
-        };
-      default:
-        return {};
-    }
-  };
+  const looks = commandLooks({
+    panes,
+    settings,
+    layout: () => chrome.layout,
+    strip: () => strip,
+  });
+  /** How `id` looks now, for `side`'s page (a page's own host), else the page it acts on. */
+  const look = (id: CommandId, side: Side = target(id)): CommandLook => looks(id, side);
 
   /** The commands that send no menu command: one each, or the types say which is missing. */
   const local: Record<LocalCommandId, (opener: HTMLElement) => void> = {
@@ -196,7 +101,9 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     },
     // Day or night, whichever isn't showing; System stays in Settings.
     scheme: () =>
-      void settings.set('appearance.scheme', isNight() ? 'day' : 'night').catch(console.error),
+      void settings
+        .set('appearance.scheme', isNight(settings) ? 'day' : 'night')
+        .catch(console.error),
     panes: () => void settings.set('layout.panes', two() ? 'three' : 'two').catch(console.error),
     more: (opener) => of.phone.more(opener),
     // The bar's one heading control: the caret's line a level down each press.

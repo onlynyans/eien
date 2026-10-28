@@ -35,7 +35,8 @@ window's counters, `trail` (its last seal), the zoom and news, `said`. Where
 the split gives each page its own foot, `figures` and `trail` go there. This
 is the seam for **an EPUB's own colophon items**.
 
-`PageView` implements it; `PagePane` and `PagesRow` take `PaneLeaf`.
+`PageView` implements it, its colophon items `page/note-foot.ts`'s
+`NoteFoot`; `PagePane` and `PagesRow` take `PaneLeaf`.
 
 ### What the controller holds per page: `vault/page-side.ts`
 
@@ -50,9 +51,11 @@ is the seam for **an EPUB's own colophon items**.
 
 `vault/note-side.ts` is the note's: `NoteSide` (adding `page: PageView`,
 `note`, `versions`), `isNote`, and `noteKind`, which holds every file no other
-kind does. A note's page, closed, **saves its words before letting its note
-go**: before this, a page closed (⌘W, its ×, a phone's room closing the page
-beside) within the pause before a save dropped the last words typed.
+kind does. A note's page, closed, **holds its note till its words are
+saved**, then lets it go (a save that fails tries again, and the note is let
+go once one works), and is told nothing more meanwhile: before this, a page
+closed (⌘W, its ×, a phone's room closing the page beside) within the pause
+before a save dropped the last words typed.
 
 ### The controller: `vault/pages.ts`
 
@@ -82,7 +85,8 @@ Copy as HTML, Focus mode, the companion's ⋯ and every `format.*`.
 `actsOn(id, kind)` is the one rule:
 
 - **The layout's hosts** (shared, for the page the tools act on,
-  `chrome-wiring.ts`'s `target`): a command for another kind looks disabled,
+  `chrome-wiring.ts`'s `target`; how each looks, `vault/command-looks.ts`,
+  the window's apart from a note's): a command for another kind looks disabled,
   never hidden, as `Host.fold` owns `hidden` and its ⋯ already skips what's
   disabled. Phase 1 adds the EPUB's tools with `on: 'epub'` to the layouts'
   host lists, disabled on a note's page as a note's are on an EPUB's.

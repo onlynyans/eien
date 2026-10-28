@@ -88,7 +88,7 @@ function makeNoteSide(
     follow: (values) => followSettings(page, values),
     dispose() {
       // Its words saved before its note is let go: a page closed mid-sentence loses none.
-      void opened.leave();
+      opened.leave().catch(console.error);
       versions.stop();
       page.dispose();
     },

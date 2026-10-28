@@ -115,6 +115,24 @@ describe('closing a page', () => {
     await vi.waitFor(async () => expect(await saved()).toBe('Rain came. The roof held.'));
   });
 
+  it('holds its note till a save that failed works, then lets it go', async () => {
+    const { pages, storage } = await split();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const write = vi.spyOn(storage, 'write').mockRejectedValueOnce(new Error('disk full'));
+      typeAtEnd(pages, ' The roof held.');
+      pages.close(pages.active);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(write).toHaveBeenCalledTimes(1);
+      expect(pages.sessions().map(({ path }) => path)).toEqual(['Snow.md', 'Rain.md']);
+      await vi.advanceTimersByTimeAsync(4000); // the save tried again
+      expect((await storage.read('Rain.md'))?.text).toBe('Rain came. The roof held.');
+      expect(pages.sessions().map(({ path }) => path)).toEqual(['Snow.md']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('never closes the last page', async () => {
     const { pages } = await pagesWith({ 'Snow.md': 'Snow.' });
     stops.push(() => pages.stop());

@@ -96,6 +96,20 @@ describe('the commands for a note', () => {
     ).toBe(true);
   });
 
+  it('leave the window’s alone: the sidebar’s and the list’s chevrons look the same', async () => {
+    const { pages, chrome } = await drawn();
+    const looks = () =>
+      ['pane.sidebar', 'pane.list'].map((id) => {
+        const chevron = document.querySelector<HTMLElement>(`[data-command="${id}"]`);
+        return [chevron?.getAttribute('aria-pressed'), chevron?.dataset.tip];
+      });
+    const withStandIn = looks();
+    expect(withStandIn[0]).toEqual(['true', 'Hide the sidebar']);
+    pages.activate(pages.sides[0] as Side);
+    chrome.refresh();
+    expect(looks()).toEqual(withStandIn);
+  });
+
   it('look as the first page has them with a companion, whichever page is active', async () => {
     const files = { 'Chapter.md': 'The gate held.' };
     const made = await pagesWith(files, { 'appearance.split': 'companion' }, [standInKind]);
