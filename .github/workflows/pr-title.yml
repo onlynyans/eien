@@ -1,0 +1,33 @@
+name: Pull request title
+
+# A pull request's title becomes main's commit subject when it's squash-merged,
+# and the changelog is written from those: type(scope): subject (AGENTS.md →
+# Releases, scripts/titles.mjs). Its own workflow, not a job in ci.yml: renaming
+# a pull request runs this again, and must neither cancel nor repeat the rest
+# of CI. A new push runs it too, as a required check counts for one commit.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  title:
+    name: Pull request title
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+      # The title through the environment, never into the script's text, which it could rewrite.
+      - name: type(scope) subject
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/titles.mjs "$TITLE"

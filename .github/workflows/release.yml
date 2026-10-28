@@ -51,6 +51,10 @@ jobs:
             echo "::error::The tag is $GITHUB_REF_NAME, but package.json's version is $version."
             exit 1
           fi
+      # Before anything is built: the release's notes come from its section (the draft job).
+      - name: CHANGELOG.md has the version's section
+        if: github.ref_type == 'tag'
+        run: node scripts/changelog.mjs --notes "${GITHUB_REF_NAME#v}" > /dev/null
 
       - run: npm ci
       # The test of a new build's storage also starts the development build.
@@ -158,6 +162,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
       - uses: actions/download-artifact@v8
         with:
           pattern: downloads-*
@@ -166,10 +174,15 @@ jobs:
       - name: A draft release with the downloads
         env:
           GH_TOKEN: ${{ github.token }}
+        # The notes are the version's section of CHANGELOG.md, under how to open an unsigned app.
         # The portable copies arrive in downloads/portable/: every file, wherever it is.
         run: |
+          {
+            echo "Not signed yet: macOS and Windows ask before the first start. [How to install](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/README.md#install)"
+            echo
+            node scripts/changelog.mjs --notes "${GITHUB_REF_NAME#v}"
+          } > "$RUNNER_TEMP/notes.md"
           gh release create "$GITHUB_REF_NAME" $(find downloads -type f) \
             --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
             --title "Eien ${GITHUB_REF_NAME#v}" \
-            --notes "Not signed yet: macOS and Windows ask before the first start. [How to install](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/README.md#install)" \
-            --generate-notes
+            --notes-file "$RUNNER_TEMP/notes.md"
