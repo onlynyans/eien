@@ -1565,7 +1565,7 @@ function mountEpubPage({ id, note, notes, bar = '', list = 'shown' }) {
     ['Scroll', [['chapter', '1 · A chapter'], ['roll', '2 · One roll'], ['beside', '3 · Beside a note']]],
     ['Features', [['margin', '1 · On the page'], ['index', '2 · In the list'], ['edge', '3 · On the edge']]],
     ['Showcase', [['room', '1 · The room'], ['set', '2 · Set as a book'], ['lamp', '3 · By lamplight']]],
-    ['Turning', [['flip-turn', '1 · The leaf turns'], ['flip-aside', '2 · Set aside'], ['flip-ink', '3 · The words turn']]],
+    ['Turning', [['flip-turn', '1 · The leaf turns'], ['flip-aside', '2 · Set aside'], ['flip-ink', '3 · The words turn'], ['flip-curl', '4 · The curl']]],
   ];
   const group = (attr, label, opts) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${opts.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
   document.body.insertAdjacentHTML('afterbegin', `

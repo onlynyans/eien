@@ -30,6 +30,7 @@ words.
 | Turning | [epub-flip-turn.html](epub-flip-turn.html) | 1 · The leaf turns (the spread's, if a book's turn is wanted) |
 | | [epub-flip-aside.html](epub-flip-aside.html) | **2 · Set aside** (recommended, for a hand) |
 | | [epub-flip-ink.html](epub-flip-ink.html) | **3 · The words turn** (recommended, for a key or a click) |
+| | [epub-flip-curl.html](epub-flip-curl.html) | 4 · The curl (asks for an exception: light while a page moves) |
 
 ## What all nine share
 
@@ -544,4 +545,54 @@ Shared by all three:
   second half is out of sight.
 - **Reduced motion:** all three become an instant change, so the choice
   costs nothing there.
+
+### 4 · The curl (added 2026-10-28)
+
+Asked for after the first three: the tight, held turn of the best EPUB
+readers, and what it costs Eien.
+
+- **The geometry:** the page bends.
+  - **The corner follows you:** the corner you hold stays under the pointer.
+    The paper folds over the perpendicular bisector between where the corner
+    rests and where it is now, so a top corner peels on a slant and the
+    middle of the edge rolls straight.
+  - **The paper can't stretch:** the spine's edge always stays down.
+  - **Three cuts of the live page:** what stays, what lifts (mirrored over
+    the fold, its back showing the words faintly through the paper) and the
+    page beneath, each clipped along the fold.
+  - **No snapshot:** nothing is pictured, so the book's sandboxed frame could
+    be drawn the same way in the app.
+- **The physics:** this is where the tightness lives.
+  - **One to one:** the corner is wherever the pointer is, every frame.
+  - **Let go and your speed decides:** the throw is projected from the
+    drag's last 80ms. Past a quarter of the page from the spine it turns; a
+    flick turns it from a few centimetres in.
+  - **A spring with no bounce:** the finish is critically damped, starting
+    at the hand's own speed and landing in about 1.5 × calm. A throw hard
+    enough to carry past its mark stops there, so it never bounces back.
+  - **Catch it:** a page in flight can be caught and dragged on or back.
+  - **Keys and clicks:** a key is a throw from near the foot of the outer
+    edge, the corner lifting a little.
+  - **Never stuck:** each frame has a timer behind it, so a turn lands even
+    where frames stall.
+- **The exception it asks for.** A curl reads as paper because of light,
+  which `system.md` doesn't allow today. It asks for three tokens, used only
+  while a page moves, each a light-dark pair a theme can carry. At rest there
+  are no gradients and no third shadow.
+  - `--eien-curl-shade`: made from the sheet shadow's ink. It shades the page
+    beneath along the fold, the page curving into the fold, and the lifted
+    paper's one soft shadow (the third shadow).
+  - `--eien-curl-light`: the crest of the roll.
+  - `--eien-curl-through`: how much of the words shows through the back
+    (12%).
+
+| | For | Against |
+|---|---|---|
+| **4 · The curl** | The turn people know from the best readers: held, thrown, caught; the paper never trails the finger; live text throughout | Bends two of Eien's rules (gradients, two shadows), if only in motion; three clipped copies of the page per frame cost the most, on a slow phone most of all; the roll's thickness is suggested by light, not drawn (a WebGL mesh could, with a snapshot the phone can't take of the frame) |
+
+**If it's chosen:** 4 would take 2's place under a hand (a drag, or a finger
+on the phone), and keys and clicks would stay 3's quiet step. Its physics
+(one to one, the throw, the spring that lands, the catch) could also be
+given to 2 alone, keeping Eien's rules whole: most of what feels tight is
+there rather than in the bend.
 

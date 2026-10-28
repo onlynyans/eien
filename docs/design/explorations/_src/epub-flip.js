@@ -11,6 +11,8 @@ const Flip = {
   play: null,
   /** Whether a drag holds the motion part way (a page you can take hold of), or only starts it. */
   holds: true,
+  /** A direction that follows the pointer itself (the curl) takes no part in the hold below. */
+  own: false,
 };
 /** A motion's length: the calm time times `k`; the bar's Slow shows it four times slower. */
 const turnTime = (k = 1) => (parseFloat(getComputedStyle(root).getPropertyValue('--eien-calm')) || 220) * k * (root.dataset.speed === 'slow' ? 4 : 1);
@@ -99,6 +101,7 @@ let hold = null;
 let swallowClick = false;
 queueMicrotask(() => {
   canvas.addEventListener('pointerdown', (e) => {
+    if (Flip.own) return;
     const onEdge = e.target.closest('.edges button, .turn');
     const onPhone = e.target.closest('.phone__body .phone__page');
     if (!onEdge && !onPhone) return;
@@ -145,7 +148,7 @@ const FLIP_BAR = `<div class="xbar__group" data-x-set="speed"><span class="xbar_
 
 /** What all three turning pages share, for their notes. */
 const FLIP_NOTES = () => `
-  <h2>In all three</h2>
+  <h2>In all of them</h2>
   <ul>
     <li><b>The leaf is Pages 2's</b>, the recommended one: one page on the blotter, the book's fore-edge under it. Only the turn differs, and each ends with the fore-edge a step on.</li>
     <li><b>Turning:</b> <kbd>→</kbd> <kbd>Space</kbd> <kbd>PgDn</kbd> on, <kbd>←</kbd> <kbd>⇧Space</kbd> <kbd>PgUp</kbd> back; a click on the edges or the margins; on the phone a tap in either outer third. A key pressed mid-turn finishes the turn at once and starts the next, so reading fast never waits on a motion.</li>

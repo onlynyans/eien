@@ -61,6 +61,7 @@ hand.
 | Features | [On the page](epub-margin.html) | [In the list](epub-index.html) | [On the edge](epub-edge.html) |
 | Showcase | [The reading room](epub-room.html) | [Set as a book](epub-set.html) | [By lamplight](epub-lamp.html) |
 | Turning | [The leaf turns](epub-flip-turn.html) | [Set aside](epub-flip-aside.html) | [The words turn](epub-flip-ink.html) |
+| | [The curl](epub-flip-curl.html) (4, asks for an exception: light while a page moves) | | |
 
 ## Split window (2026-10-23): for the owner to choose
 

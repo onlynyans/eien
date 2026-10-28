@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Turning 4 · The curl</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:epub.css*/
+/*@include:epub-flip.css*/
+
+/* Turning 4 · The curl. The page bends: the corner you hold is under your
+   finger, and the paper folds over a line that follows it (the perpendicular
+   bisector between where the corner rests and where it is now). What stays,
+   what lifts and the page beneath are each the live page, clipped along that
+   line; what lifts is mirrored across it and shows its back, the words faint
+   through the paper. No picture of the page is taken.
+
+   The exception it asks for (system.md allows no gradient and two shadows):
+   the light on a bending page, only while a page moves, as three tokens a
+   theme can carry. At rest the page is flat paper, as always. */
+:root {
+  /* NEW, for the owner: the shade where paper bends away, from the sheet shadow's own ink. */
+  --eien-curl-shade: light-dark(rgb(58 44 26 / 0.18), rgb(0 0 0 / 0.5));
+  /* NEW: the crest of the roll catching the light. */
+  --eien-curl-light: light-dark(rgb(255 255 255 / 0.6), rgb(233 226 212 / 0.1));
+  /* NEW: how much of the words shows through the back of the paper. */
+  --eien-curl-through: 0.12;
+}
+.curl { position: absolute; z-index: 3; pointer-events: none; }
+.curl > * { position: absolute; inset: 0; }
+.curl-page { position: absolute; left: 0; top: 0; margin: 0; width: 100% !important; max-width: none; height: 100%; box-shadow: none; background: var(--eien-paper); }
+/* The phone's page has no paper of its own (the screen is its paper), so each copy brings it. */
+.curl-wash { pointer-events: none; }
+.curl-page > .curl-wash { position: absolute; inset: 0; z-index: 5; }
+/* The back: the page's own paper over its mirrored words, so they show through faintly. */
+.curl-paper { position: absolute; inset: 0; z-index: 4; background: var(--eien-paper); opacity: calc(1 - var(--eien-curl-through)); }
+.curl-back { transform-origin: 0 0; }
+/* The lifted paper's one soft shadow on the page it lies over: the exception's third shadow. */
+.curl-flap { filter: drop-shadow(0 0 var(--eien-space-2) var(--eien-curl-shade)); }
+.phone .phone__page, .sheet { touch-action: pan-y; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:epub.js*/
+/*@include:epub-stack.js*/
+/*@include:epub-flip.js*/
+
+// The curl follows the pointer itself, so the shared hold stays out of it.
+Flip.own = true;
+
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+const unit = (v) => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
+const along = (a, b, t) => [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])];
+/** A polygon cut by a line: the part where (p − P)·n ≥ 0. */
+function cut(poly, P, n) {
+  const out = [];
+  const side = (p) => dot(sub(p, P), n);
+  poly.forEach((a, i) => {
+    const b = poly[(i + 1) % poly.length];
+    const sa = side(a);
+    const sb = side(b);
+    if (sa >= 0) out.push(a);
+    if ((sa >= 0) !== (sb >= 0)) out.push(along(a, b, sa / (sa - sb)));
+  });
+  return out;
+}
+const clipOf = (pts) => (pts.length > 2 ? `polygon(${pts.map(([x, y]) => `${x.toFixed(2)}px ${y.toFixed(2)}px`).join(', ')})` : 'polygon(0 0, 0 0, 0 0)');
+/** The fold: the perpendicular bisector between where the corner rests (C0) and where it is (F); n points to what lifts. */
+const foldOf = (C0, F) => ({ M: along(C0, F, 0.5), n: unit(sub(C0, F)) });
+/** Paper doesn't stretch: the spine's edge always stays on the side that stays. */
+function held(c) {
+  const ok = (f) => { const { M, n } = foldOf(c.C0, f); return dot(sub([0, 0], M), n) <= 0.5 && dot(sub([0, c.H], M), n) <= 0.5; };
+  if (ok(c.F)) return c.F;
+  let lo = 0;
+  let hi = 1;
+  for (let k = 0; k < 14; k++) { const t = (lo + hi) / 2; if (ok(along(c.C0, c.F, t))) lo = t; else hi = t; }
+  return along(c.C0, c.F, lo);
+}
+/** A wash along the fold: `ink` at the fold line, gone `len` px away in direction g. */
+function wash(el, c, M, g, ink, len) {
+  const deg = (Math.atan2(g[0], -g[1]) * 180) / Math.PI;
+  const rad = (deg * Math.PI) / 180;
+  const L = Math.abs(c.W * Math.sin(rad)) + Math.abs(c.H * Math.cos(rad));
+  const s0 = dot(sub(M, [c.W / 2, c.H / 2]), g) + L / 2;
+  el.style.background = `linear-gradient(${deg.toFixed(2)}deg, transparent ${(s0 - 0.5).toFixed(1)}px, ${ink} ${s0.toFixed(1)}px, transparent ${(s0 + len).toFixed(1)}px)`;
+}
+const space = (n) => px(`--eien-space-${n}`);
+
+/** The page at this moment: what stays, what lifts (mirrored, its back), and the light on both. */
+function frame(c) {
+  const F = held(c);
+  const page = [[0, 0], [c.W, 0], [c.W, c.H], [0, c.H]];
+  if (Math.hypot(F[0] - c.C0[0], F[1] - c.C0[1]) < 0.5) {
+    c.front.style.clipPath = 'none';
+    for (const el of [c.flap, c.cast]) el.style.visibility = 'hidden';
+    return;
+  }
+  for (const el of [c.flap, c.cast]) el.style.visibility = '';
+  const { M, n } = foldOf(c.C0, F);
+  const stays = [-n[0], -n[1]];
+  const lifts = cut(page, M, n);
+  c.front.style.clipPath = clipOf(cut(page, M, stays));
+  c.back.style.clipPath = clipOf(lifts);
+  c.cast.style.clipPath = clipOf(lifts);
+  // Mirrored across the fold: x' = R(x − M) + M, R = I − 2nnᵀ.
+  const [a, b, d] = [1 - 2 * n[0] * n[0], -2 * n[0] * n[1], 1 - 2 * n[1] * n[1]];
+  c.back.style.transform = `matrix(${a}, ${b}, ${b}, ${d}, ${M[0] - (a * M[0] + b * M[1])}, ${M[1] - (b * M[0] + d * M[1])})`;
+  wash(c.cast, c, M, n, 'var(--eien-curl-shade)', space(6));
+  wash(c.shade, c, M, stays, 'var(--eien-curl-shade)', space(5));
+  wash(c.light, c, M, n, 'var(--eien-curl-light)', space(5));
+}
+
+let curl = null;
+/**
+ * The next frame, or a timer where frames stall (a window behind another, a throttled pane): a
+ * turn always lands. Whichever comes first runs, and the other is called off.
+ */
+function nextFrame(fn) {
+  let done = false;
+  const run = () => { if (!done) { done = true; cancelAnimationFrame(a); clearTimeout(b); fn(performance.now()); } };
+  const a = requestAnimationFrame(run);
+  const b = setTimeout(run, 34);
+  return () => { done = true; cancelAnimationFrame(a); clearTimeout(b); };
+}
+/** Starts a turn: the book moves on at once, and the curl is laid over it, the corner still at rest. */
+function begin(dir, grabY) {
+  finish();
+  const lv = main();
+  if (!lv?._) return null;
+  const at = { c: R.c, p: R.p };
+  const leaving = copyOf(sheetOf(lv));
+  if (!stepBook(dir)) return null;
+  if (still()) return null;
+  const to = sheetOf(main());
+  const W = to.offsetWidth;
+  const H = to.offsetHeight;
+  const root = document.createElement('div');
+  root.className = 'curl';
+  root.setAttribute('aria-hidden', 'true');
+  Object.assign(root.style, { left: `${to.offsetLeft}px`, top: `${to.offsetTop}px`, width: `${W}px`, height: `${H}px` });
+  // Forward, the page you leave curls away over the next; back, the page before curls back over this one.
+  const moving = dir > 0 ? leaving : copyOf(to);
+  if (dir < 0) { leaving.classList.add('curl-page'); root.append(leaving); to.style.visibility = 'hidden'; }
+  const cast = Object.assign(document.createElement('div'), { className: 'curl-wash' });
+  const front = moving;
+  front.classList.add('curl-page');
+  const shade = Object.assign(document.createElement('div'), { className: 'curl-wash' });
+  front.append(shade);
+  const back = copyOf(moving);
+  back.classList.add('curl-page', 'curl-back');
+  const paper = Object.assign(document.createElement('div'), { className: 'curl-paper' });
+  const light = Object.assign(document.createElement('div'), { className: 'curl-wash' });
+  back.append(paper, light);
+  const flap = Object.assign(document.createElement('div'), { className: 'curl-flap' });
+  flap.append(back);
+  // In this order, whatever the page's own rules would stack: the page beneath, its shade, what stays, what lifts.
+  if (dir < 0) leaving.style.zIndex = '0';
+  [cast, front, flap].forEach((el, i) => { el.style.zIndex = String(i + 1); });
+  root.append(cast, front, flap);
+  to.parentElement.append(root);
+  const y = clamp(grabY, 0, H);
+  const c = { at, dir, W, H, to, root, cast, front, shade, back, light, flap, C0: [W, y], V: [0, 0], stop: () => {} };
+  c.done = dir > 0 ? [-W, y] : [W, y];
+  c.F = dir > 0 ? c.C0.slice() : [-W, y];
+  curl = c;
+  frame(c);
+  return c;
+}
+/** Over: the curl goes, and if it fell back the book goes back to where it was. */
+function end(c) {
+  c.stop();
+  c.root.remove();
+  c.to.style.visibility = '';
+  if (curl === c) curl = null;
+  if (c.T !== c.done) unstep(c.at);
+}
+/** A turn in flight finishes where it was going, at once: reading fast never waits on it. */
+function finish() {
+  if (!curl) return;
+  const c = curl;
+  c.F = (c.T ?? c.done).slice();
+  c.T ??= c.done;
+  end(c);
+}
+/**
+ * The finish: a spring with exactly enough damping never to overshoot (it settles, it doesn't
+ * bounce), from the hand's own speed, landing in about one and a half calm times.
+ */
+function settleTo(c, T) {
+  c.T = T;
+  c.stop();
+  // Critically damped, it closes to within half a pixel of two page-widths in about 10/ω: so, within 1.5 calm times.
+  const w = 11 / turnTime(1.5);
+  let last = performance.now();
+  const tick = (now) => {
+    let dt = Math.min(48, now - last);
+    last = now;
+    while (dt > 0) {
+      const h = Math.min(4, dt);
+      dt -= h;
+      const was = c.F.slice();
+      for (const k of [0, 1]) { const a = -w * w * (c.F[k] - T[k]) - 2 * w * c.V[k]; c.V[k] += a * h; c.F[k] += c.V[k] * h; }
+      // A throw hard enough to carry it past where it's going stops there: it lands, it never bounces back.
+      if (dot(sub(c.F, T), sub(was, T)) < 0) { c.F = T.slice(); c.V = [0, 0]; dt = 0; }
+    }
+    frame(c);
+    if (Math.hypot(c.F[0] - T[0], c.F[1] - T[1]) < 0.5 && Math.hypot(c.V[0], c.V[1]) < 0.02) end(c);
+    else c.stop = nextFrame(tick);
+  };
+  c.stop = nextFrame(tick);
+}
+
+// A key or a click: a throw from near the foot of the outer edge, the corner lifting a little as it goes.
+act.turn = (dir) => {
+  const sheet = sheetOf(main());
+  const c = begin(dir, (sheet?.offsetHeight ?? 0) * 0.86);
+  if (!c) return;
+  const t = turnTime(1.5);
+  c.V = [(-dir * c.W) / t, (-c.H * 0.12) / t];
+  settleTo(c, c.done);
+};
+
+// The hand: the corner under the pointer, one to one; let go and its speed decides.
+let hand = null;
+let swallow = false;
+queueMicrotask(() => {
+  canvas.addEventListener('pointerdown', (e) => {
+    const sheet = sheetOf(main());
+    if (!sheet) return;
+    const onEdge = e.target.closest('.edges button, .turn');
+    const onPage = e.target.closest('.phone__page') || (e.pointerType !== 'mouse' && sheet.contains(e.target));
+    const catching = curl && e.target.closest('.stack, .phone__body');
+    if (!onEdge && !onPage && !catching) return;
+    const r = sheet.getBoundingClientRect();
+    hand = { id: e.pointerId, x0: e.clientX, y0: e.clientY, s: r.width / sheet.offsetWidth || 1, top: r.top, samples: [] };
+    // A page in flight, caught: it stops where it is and follows the hand from there.
+    if (catching) { curl.stop(); hand.c = curl; hand.F0 = curl.F.slice(); curl.T = null; }
+  });
+  addEventListener('pointermove', (e) => {
+    if (!hand || e.pointerId !== hand.id) return;
+    const dx = (e.clientX - hand.x0) / hand.s;
+    const dy = (e.clientY - hand.y0) / hand.s;
+    if (!hand.c) {
+      if (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(dy)) return;
+      hand.c = begin(dx < 0 ? 1 : -1, (hand.y0 - hand.top) / hand.s);
+      if (!hand.c) { hand = null; return; }
+      hand.F0 = hand.c.F.slice();
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+    }
+    // Back, the page comes from beyond the spine: the hand's way is half the corner's.
+    const k = hand.c.dir > 0 ? 1 : 2;
+    hand.c.F = [hand.F0[0] + dx * k, hand.F0[1] + dy];
+    hand.samples.push({ t: e.timeStamp, F: hand.c.F.slice() });
+    while (hand.samples.length > 2 && e.timeStamp - hand.samples[0].t > 80) hand.samples.shift();
+    if (!hand.queued) { hand.queued = true; requestAnimationFrame(() => { if (hand) hand.queued = false; if (curl) frame(curl); }); }
+  });
+  const letGo = (e) => {
+    if (!hand || e.pointerId !== hand.id) return;
+    const h = hand;
+    hand = null;
+    if (!h.c) return;
+    swallow = true;
+    setTimeout(() => { swallow = false; });
+    const [first, lastS] = [h.samples[0], h.samples.at(-1)];
+    const dt = Math.max(1, (lastS?.t ?? 0) - (first?.t ?? 0));
+    h.c.V = first && lastS ? [(lastS.F[0] - first.F[0]) / dt, (lastS.F[1] - first.F[1]) / dt] : [0, 0];
+    // Where the throw would carry the corner: past a quarter of the page from the spine, it turns.
+    const thrown = h.c.F[0] + h.c.V[0] * 180;
+    const turns = h.c.dir > 0 ? thrown < h.c.W * 0.25 : thrown > -h.c.W * 0.25;
+    const rest = h.c.dir > 0 ? h.c.C0 : [-h.c.W, h.c.C0[1]];
+    settleTo(h.c, turns ? h.c.done : rest);
+  };
+  addEventListener('pointerup', letGo);
+  addEventListener('pointercancel', letGo);
+  canvas.addEventListener('click', (e) => { if (swallow) { e.stopPropagation(); e.preventDefault(); } }, true);
+});
+
+mountEpubPage({
+  id: 'flip-curl',
+  bar: FLIP_BAR,
+  note: 'The page bends: the corner under your finger, the fold following it, its back showing the words through; let go and your speed decides.',
+  notes: `
+  <h2>Turning 4 · The curl</h2>
+  <p>The page bends, as paper does. The corner you hold stays under your finger, and the paper folds over a line that follows it: the perpendicular bisector between where the corner rests and where it is now. Take the top corner and it peels on a slant; take the middle of the edge and it rolls straight. What lifts is mirrored over the fold and shows its back, the words faint through the paper; the next page lies beneath, the roll's shadow on it.</p>
+  <ul>
+    <li><b>One to one:</b> the corner is wherever the pointer is, every frame, with no delay and no easing between them. The paper can't stretch: the spine's edge stays down however far you pull.</li>
+    <li><b>Let go and your speed decides:</b> the throw is projected from the last moments of the drag. A flick turns the page from a few centimetres in; a slow drag past a quarter of the page from the spine turns it; anything short falls back.</li>
+    <li><b>Never a fixed time:</b> the finish is a spring with exactly enough damping never to overshoot. It starts at the speed your hand left it and settles in about one and a half calm times, so a hard throw is quick and a soft one is gentle, and it never bounces.</li>
+    <li><b>Catch it:</b> press on a page in flight and it stops under your hand; drag it on or back.</li>
+    <li><b>A key or a click</b> is a throw from near the foot of the outer edge, the corner lifting a little as it goes; a key mid-turn finishes it.</li>
+    <li><b>Live, not a picture:</b> what stays, what lifts and the page beneath are each the page itself, clipped along the fold and mirrored. In the app the book's frame would be drawn the same way, so nothing waits on a snapshot.</li>
+  </ul>
+  <h2>The exception it asks for</h2>
+  <p>The curl reads as paper because of light, which system.md doesn't allow today. It asks for three tokens, used only while a page is moving, each with a day and a night value so a theme can carry them:</p>
+  <ul>
+    <li><code>--eien-curl-shade</code>: the shade where the paper bends away, made from the sheet shadow's own ink. It's on the page beneath along the fold (the roll's shadow) and on the page as it curves up into the fold. It's also the one soft shadow the lifted paper casts on the page it lies over: a third shadow, the exception's other half.</li>
+    <li><code>--eien-curl-light</code>: the crest of the roll catching the light.</li>
+    <li><code>--eien-curl-through</code>: how much of the words shows through the back of the paper (12%).</li>
+  </ul>
+  <p>The gradients are the light on a bending page, never decoration. At rest there's no gradient and no third shadow; the page is flat paper on the blotter as always.</p>
+  <h2>The phone</h2>
+  <p>Take hold of the page anywhere: a finger on the right of the page peels the next; drawn rightward, the page before curls back from beyond the spine. Tap the outer thirds for a turn without a hand.</p>
+  <h2>For</h2>
+  <ul><li>The turn people know from the best readers: held, thrown, caught.</li><li>A drag that feels tight: the paper never trails the finger, and the finish carries the hand's speed.</li><li>Live text throughout, so it works with the book's frame and your own type.</li></ul>
+  <h2>Against</h2>
+  <ul><li>It bends two of Eien's rules (gradients, two shadows), if only in motion.</li><li>Clipping three copies of the page every frame costs more than the other three motions, on a slow phone most of all.</li><li>The fold is a straight line: the roll's thickness is suggested by light, not drawn, which a shader could do and this can't.</li><li>The longest to build and to test.</li></ul>
+  ${FLIP_NOTES()}`,
+});
+</script>
+</body>
+</html>
