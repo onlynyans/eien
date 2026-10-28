@@ -45,7 +45,7 @@ Proposed as 0.4.0, the first version built since 0.1.0; the owner decides when.
 - **epub:** explorations: three motions for turning the page (#97); and for a quick look, anywhere (#99)
 - **epub:** one cleaner for a page's HTML, shared by the extension and, later, the EPUB reader (#100)
 - **epub:** a page holds a note or an EPUB: the page-kind seam (#101)
-- one version from `package.json` for every build, Conventional Commits on pull requests' titles, and this changelog
+- one version from `package.json` for every build, Conventional Commits on pull requests' titles, and this changelog (#102)
 
 ## 0.3.0 — 2026-10-26
 
