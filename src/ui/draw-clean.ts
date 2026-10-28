@@ -1,8 +1,9 @@
 // Cleaned nodes (core/html/clean.ts) drawn: elements made one by one, never
 // from HTML, so only what the cleaner kept can be on the page. The drawing
-// checks again what it's handed (an element the cleaner keeps, a link or an
-// image's address of a kind a page may use), so a caller's rules that let
-// something through still can't put it on the page. A scene break is Eien's
+// checks again what it's handed that could run or fetch (an element the
+// cleaner keeps, a link or an image's address of a kind a page may use, a
+// part it knows), so a caller's rules that let something through still can't
+// put it on the page; a title or an align, words and data, it takes as given. A scene break is Eien's
 // own; a part is named for a stylesheet to style.
 
 import { type CleanNode, imageWords, isPart, KEPT } from '../core/html';

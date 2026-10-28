@@ -86,7 +86,6 @@ describe('storySheet', () => {
   });
 });
 
-/** A chapter with every kind of thing the cleaner keeps, drops or turns to words. */
 /** What the story page drew for RICH before the cleaner was shared (#40, Phase 0): the same now. */
 const GOLDEN = [
   '<p>She <em>ran</em>, <strong>fast</strong>.</p>',
@@ -99,6 +98,7 @@ const GOLDEN = [
   '<p>&lt;script&gt;words&lt;/script&gt;</p>',
 ].join('');
 const WORDS = 17;
+/** A chapter with every kind of thing the cleaner keeps, drops or turns to words. */
 const RICH = [
   '<h3 class="landmark heading">Chapter Text</h3>',
   '<p id="a" class="b" style="color:red" onclick="x()">She <em>ran</em>, <span style="font-weight:700">fast</span>.</p>',

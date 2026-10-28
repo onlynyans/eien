@@ -60,6 +60,12 @@ describe('drawClean', () => {
     expect(element.querySelector('a')?.hasAttribute('target')).toBe(false);
   });
 
+  it('leaves how a link opens alone with no caller to ask', () => {
+    const a = box(cleanHtml('<a href="https://e.x">1</a>', RULES)).querySelector('a');
+    expect(a?.getAttribute('href')).toBe('https://e.x');
+    expect(a?.hasAttribute('target')).toBe(false);
+  });
+
   it('names a part for a stylesheet, a scene break’s on Eien’s break', () => {
     const element = box(cleanHtml('<h1 epub:type="title">One</h1><hr>', RULES));
     expect(element.querySelector('h1')?.dataset.part).toBe('chapter-title');
@@ -93,20 +99,26 @@ describe('drawClean: what it’s handed is checked again', () => {
           ?.hasAttribute('href'),
       ).toBe(false);
     }
-    expect(
-      box([made('a', { href: 'HTTPS://e.x' })])
-        .querySelector('a')
-        ?.getAttribute('href'),
-    ).toBe('HTTPS://e.x');
+    for (const href of ['HTTPS://e.x', 'http://e.x', 'mailto:a@b.c', '#n1']) {
+      expect(
+        box([made('a', { href })])
+          .querySelector('a')
+          ?.getAttribute('href'),
+      ).toBe(href);
+    }
   });
 
   it('shows no image but from https or the window’s own copy, only its words', () => {
     for (const src of ['http://i.example/a.png', 'javascript:x()', 'data:image/png,x', 'a.png']) {
       expect(box([made('img', { src, alt: ' Map ' })]).innerHTML).toBe('[Map]');
     }
-    expect(box([made('img', { src: 'blob:eien/1', alt: '' })]).querySelector('img')?.src).toBe(
-      'blob:eien/1',
-    );
+    for (const src of ['blob:eien/1', 'HTTPS://i.example/a.png']) {
+      expect(
+        box([made('img', { src, alt: '' })])
+          .querySelector('img')
+          ?.getAttribute('src'),
+      ).toBe(src);
+    }
   });
 
   it('names no part it doesn’t know', () => {

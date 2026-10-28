@@ -8,7 +8,7 @@ import { type CleanNode, type CleanRules, cleanHtml } from '../html';
 /** Spaces and control characters in a scheme are what a browser ignores, so they're ignored here. */
 const bare = (url: string) => url.replace(/[\s\p{Cc}]/gu, '');
 
-export const STORY_RULES: CleanRules = {
+const STORY_RULES: CleanRules = {
   link: (href) => (/^(?:https?:\/\/|mailto:)/iu.test(bare(href)) ? bare(href) : null),
   image: (src) => (/^https:\/\//iu.test(bare(src)) ? bare(src) : null),
 };

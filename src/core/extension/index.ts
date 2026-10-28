@@ -1,4 +1,4 @@
-export { cleanStory, STORY_RULES } from './clean';
+export { cleanStory } from './clean';
 export {
   type FromStory,
   type PageAnswer,

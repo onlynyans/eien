@@ -10,11 +10,11 @@ import { hostileHtml } from '../../../tests/support/hostile-html';
 import { type CleanRules, cleanHtml, plainOf } from './clean';
 import { ALIGNED, KEPT, PARTS } from './clean-elements';
 
-/** What a resolver may answer: an address of any kind, words, or no. */
+/** What a resolver may answer: an address of any kind, words, or no; never a page's own href, so one let through unasked is caught. */
 const answer = fc.option(
   fc.oneof(
     fc.string(),
-    fc.constantFrom('https://a.example/', 'blob:eien/1', 'javascript:x()', 'data:,x', '#n1'),
+    fc.constantFrom('https://a.example/', 'blob:eien/1', 'javascript:x()', 'data:,x', '#answer'),
   ),
   { nil: null },
 );
