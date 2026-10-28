@@ -563,6 +563,10 @@ button.trow:focus-visible { outline-offset: calc(var(--eien-mark-w) * -1); }
    lies; under it, the book's fore-edge: the pages still to read stacked at its
    right, the pages read at its left, each a paper edge in a soft hairline,
    2px apart, up to six. How far you are is how the book looks. */
+/* The leaf and its fore-edge (Pages 2): one page on the blotter, the pages
+   still to read stacked at its right, the pages read at its left, each a paper
+   edge in a hairline, a mark's width apart, up to six. Shared by Pages 2 and
+   the turning explorations (epub-flip-*). */
 .stack { position: relative; isolation: isolate; flex: 1 1 auto; display: flex; width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto; min-height: 0; }
 .stack .sheet { margin: 0; z-index: 1; }
 .edge { position: absolute; top: 0; bottom: 0; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); }
@@ -580,7 +584,8 @@ button.trow:focus-visible { outline-offset: calc(var(--eien-mark-w) * -1); }
 /* The phone: the fore-edge stays, narrower, on the page's right. */
 .phone .phone__page { position: relative; }
 .phone .phone-edge { position: absolute; top: var(--eien-space-5); bottom: var(--eien-space-7); right: 0; width: var(--eien-space-2); }
-.phone .phone-edge i { position: absolute; top: 0; bottom: 0; right: calc(var(--i) * 2px); width: var(--eien-hairline); background: var(--eien-rule); }
+.phone .phone-edge i { position: absolute; top: 0; bottom: 0; right: calc(var(--i) * var(--eien-mark-w)); width: var(--eien-hairline); background: var(--eien-rule); }
+
 </style>
 </head>
 <body>
@@ -1551,6 +1556,7 @@ function mountEpubPage({ id, note, notes, bar = '', list = 'shown' }) {
     ['Scroll', [['chapter', '1 · A chapter'], ['roll', '2 · One roll'], ['beside', '3 · Beside a note']]],
     ['Features', [['margin', '1 · On the page'], ['index', '2 · In the list'], ['edge', '3 · On the edge']]],
     ['Showcase', [['room', '1 · The room'], ['set', '2 · Set as a book'], ['lamp', '3 · By lamplight']]],
+    ['Turning', [['flip-turn', '1 · The leaf turns'], ['flip-aside', '2 · Set aside'], ['flip-ink', '3 · The words turn'], ['flip-curl', '4 · The curl']]],
   ];
   const group = (attr, label, opts) => `<div class="xbar__group" data-x-set="${attr}"><span class="xbar__label">${label}</span>${opts.map(([v, w]) => `<button class="word-button" data-value="${v}">${w}</button>`).join('')}</div>`;
   document.body.insertAdjacentHTML('afterbegin', `
@@ -1605,6 +1611,8 @@ const COMMON_NOTES = () => `
   <p class="said-note">Text: <i>Pride and Prejudice</i>, Jane Austen (1813), public domain; Chapters I to III here.</p>`;
 
 
+// The leaf and its fore-edge (Pages 2): the page pane, the phone's page and
+// the numbers they show. Shared by Pages 2 and the turning explorations.
 /** How many edges show: the pages left (or read), in sixths of the book, at least one while any are. */
 const EDGES = 6;
 const edgesFor = (n, before) => {
@@ -1643,6 +1651,8 @@ Epub.after = (ctx, n) => {
     b.dataset.tip = `${before ? 'Previous page  ←' : 'Next page  →'}\n${k} page${k === 1 ? '' : 's'} ${before ? 'read' : 'to go'}`;
   }
 };
+
+
 
 mountEpubPage({
   id: 'leaf',

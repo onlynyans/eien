@@ -1,0 +1,22 @@
+/* The leaf and its fore-edge (Pages 2): one page on the blotter, the pages
+   still to read stacked at its right, the pages read at its left, each a paper
+   edge in a hairline, a mark's width apart, up to six. Shared by Pages 2 and
+   the turning explorations (epub-flip-*). */
+.stack { position: relative; isolation: isolate; flex: 1 1 auto; display: flex; width: 100%; max-width: calc(var(--eien-measure) + 2 * var(--eien-space-8)); margin: 0 auto; min-height: 0; }
+.stack .sheet { margin: 0; z-index: 1; }
+.edge { position: absolute; top: 0; bottom: 0; background: var(--eien-paper); border: var(--eien-hairline) solid var(--eien-rule); }
+.edge--after { left: 0; right: calc(var(--i) * -1 * var(--eien-mark-w)); top: calc(var(--i) * var(--eien-hairline)); bottom: calc(var(--i) * var(--eien-hairline)); z-index: calc(-1 * var(--i)); }
+.edge--before { right: 0; left: calc(var(--i) * -1 * var(--eien-mark-w)); top: calc(var(--i) * var(--eien-hairline)); bottom: calc(var(--i) * var(--eien-hairline)); z-index: calc(-1 * var(--i)); }
+/* The edges are where a hand reaches to turn: they're the turn buttons' ground. */
+.edges { position: absolute; top: 0; bottom: 0; z-index: 0; }
+.edges--after { left: 100%; width: var(--eien-space-3); }
+.edges--before { right: 100%; width: var(--eien-space-3); }
+.edges button { appearance: none; position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: e-resize; }
+.edges--before button { cursor: w-resize; }
+.edges button:focus-visible { outline-offset: 0; }
+.stack .folio .count:last-child { margin-left: auto; }
+:root[data-frame='full'] .stack .edge { display: none; }
+/* The phone: the fore-edge stays, narrower, on the page's right. */
+.phone .phone__page { position: relative; }
+.phone .phone-edge { position: absolute; top: var(--eien-space-5); bottom: var(--eien-space-7); right: 0; width: var(--eien-space-2); }
+.phone .phone-edge i { position: absolute; top: 0; bottom: 0; right: calc(var(--i) * var(--eien-mark-w)); width: var(--eien-hairline); background: var(--eien-rule); }

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — A quick look: 3 · On the page</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:look.css*/
+
+/* 3 · On the page. Each page carries its own look's control at its top outer
+   corner, in the sheet's margin, quiet until the pointer is on that page. Two
+   pages, two controls: the look you change is the one on the page you pressed. */
+.page-look { position: absolute; z-index: 2; top: var(--eien-space-3); right: var(--eien-space-3); color: var(--eien-pencil); opacity: 0; transition: opacity var(--eien-calm) var(--eien-ease); }
+.blotter:hover .page-look, .page-look:focus-visible, .page-look[aria-expanded='true'] { opacity: 1; }
+@media (hover: none) { .page-look { opacity: 1; } }
+/* In Full, the paper is the pane: the control keeps to its corner. */
+.blotter[data-frame='full'] .page-look { top: var(--eien-space-2); right: var(--eien-space-2); }
+/* The phone: always shown, over the page's corner, as the page scrolls under it. */
+.phone__body > .page-look { top: var(--eien-space-2); right: var(--eien-space-2); width: var(--eien-touch); height: var(--eien-touch); opacity: 1; background: color-mix(in srgb, var(--eien-paper) 88%, transparent); border-radius: var(--eien-radius-s); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:look.js*/
+
+const cornerButton = (kind, k) => `<button class="icon-button page-look" data-icon="look" data-ql-open="${kind}" data-k="${k}" aria-haspopup="dialog" aria-expanded="false" aria-label="Look of ${kind === 'epub' ? BOOK.title : NOTE.title}: ${WHOSE[kind]}" data-tip="This page’s look  ${KEY('Mod-Shift-L')}" data-tip-side="left"></button>`;
+Look.name = 'page';
+Look.shape = 'column';
+Look.place = { y: 'below', x: 'end' };
+Look.corner = (ctx, kind) => cornerButton(kind, `ql-open-${kind}`);
+Look.phoneCorner = (kind) => cornerButton(kind, `ql-open-${kind}`);
+Look.anchor = (kind) => `ql-open-${kind}`;
+
+mountLookPage({
+  id: 'page',
+  note: 'Each page has its own look’s control, Aa at its top corner: two pages, two looks, each where it shows.',
+  notes: `
+  <h2>3 · On the page</h2>
+  <p>A look belongs to the page that wears it, so its control is on the page: <b>Aa</b> at the sheet's top outer corner, in its margin, quiet until the pointer is on that page. With a note and a book side by side there are two, one on each: the look you change is the one on the page you pressed, and the other page sits back while the popover is open. The popover hangs from the corner over the page's margin, a column of Settings' controls.</p>
+  <ul>
+    <li><b>Where it lives:</b> the same in A, B and C, since it's the page's, not the layout's: the sheet's top right, <code>--eien-space-3</code> in. In Full, the page's top right. In a split's Two sheets it stands left of the sheet's × (both show on hover); in Facing pages, at each page's outer top corner; a companion's in its head.</li>
+    <li><b>Its tooltip:</b> This page's look <kbd>${KEY('Mod-Shift-L')}</kbd>, to its left. Its name says which: "Look of Pride and Prejudice: Shelf".</li>
+    <li><b>Which look you're changing:</b> by place: the control is on the page it changes, and only that page stays lit. The head says it in words: LOOK / NOTES or LOOK / SHELF.</li>
+    <li><b>The key:</b> <kbd>${KEY('Mod-Shift-L')}</kbd> opens the look of the page you're in, as it does in 1 and 2; a click can reach the other page's without moving into it.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>Aa sits at the page's top right under the back bar, always shown and a finger's size, with the words scrolling under it. Its sheet rises from the screen's foot.</p>
+  <h2>For</h2>
+  <ul><li>The plainest answer to "which look?": the one on this page. Two pages, two controls; no head to read.</li><li>The same in every layout and every split mode; the bars keep their tools.</li><li>Reaches the other page's look without leaving the one you're in.</li></ul>
+  <h2>Against</h2>
+  <ul><li>A control on the paper, which so far holds only the words, the running head and a split's ×: the page is a little less the writer's.</li><li>Quiet until hover, so a writer who never points at the corner may not find it (the key, the menu and the tooltip help); always shown on touch, where it covers a corner of the words.</li><li>Two looks' controls side by side read as two of the same thing until you know each is its page's.</li></ul>
+  <h2>Intent</h2>
+  <ul>
+    <li><b>Intent:</b> the writer reading a book beside their draft, who wants the book larger and the draft as it is, and shouldn't have to think about which one the bar means.</li>
+    <li><b>Palette:</b> pencil for the quiet control, ink when pressed; raised paper for the popover; the page that isn't changing takes the band's tone. No seal.</li>
+    <li><b>Depth:</b> the control lies on the paper with no ground of its own (but on a phone, a wash of paper so the words under it don't show through); the popover floats.</li>
+    <li><b>Surfaces:</b> the sheet's paper; the popover one step up.</li>
+    <li><b>Typography:</b> the same as 1: names in the text face, the head and values in the machine voice.</li>
+    <li><b>Spacing:</b> space-3 in from the sheet's corner, inside its margin (space-8 at the sides, space-6 at the top), so it never meets the words.</li>
+  </ul>`,
+});
+</script>
+</body>
+</html>

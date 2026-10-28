@@ -65,6 +65,22 @@ hairline borders, 4 shadows (the sheet's once, the float three times).
 - `--eien-shadow-sheet`: the sheet alone, the object lying on the blotter.
 - `--eien-shadow-float`: whatever floats above the window.
 - Panes, bands and rows cast none. No gradients.
+- **One exception, the curl's light** (approved 2026-10-28, #40; built in
+  its Phase 3): while a book's page turns as a curl, and only then, the
+  paper may carry light. At rest every page is flat, with two shadows and
+  no gradients.
+  - The light comes from three tokens, each a light-dark pair a theme
+    carries, added to `tokens.css` and the design README when built:
+    - `--eien-curl-shade`: the sheet shadow's own ink, where paper bends
+      away;
+    - `--eien-curl-light`: the crest of the roll;
+    - `--eien-curl-through`: how much of the words shows through the back,
+      12%.
+  - The gradients are those tokens ramped across the roll, and the lifted
+    paper casts one soft shadow in `--eien-curl-shade`: a third shadow,
+    there only while the page moves.
+  - Nothing else may use these tokens. The motion is
+    `docs/design/explorations/epub-flip-curl.html`.
 - **Corners: not everything is square** (changed 2026-10-20, #27). Three
   steps, `--eien-radius-s` (what you press), `-m` (what floats), `-l` (what
   covers the window), set by the layout (see "Layouts"). Paper stays square,
@@ -574,6 +590,32 @@ is always Panes.
   narrow, nothing folds: every mode's `least` is 0 (`splitSpecOf`), and
   under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
+
+## A quick look (decided 2026-10-28, #49; not built yet)
+
+From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
+
+- **The control:** **Aa** (the `look` icon), the page's last tool after a
+  hairline, in A's band, B's slip and C's running head; on the phone, the
+  bar, slip or rail as the layout keeps them, and the ⋯. Named "Look", key
+  ⇧⌘L, View → Look…; it folds last of the tools.
+- **The popover:** what floats: raised paper, a `--eien-rule-strong`
+  hairline, `--eien-radius-m`, the float shadow; as wide as the list
+  (`--eien-list-w`), under the control, its end lined up with it. On the
+  phone, a sheet from the screen's foot (`--eien-radius-l` at its top, no
+  scrim, controls at `--eien-touch`, the faces one row that scrolls).
+  - Its head is Settings' breadcrumb, LOOK / NOTES or LOOK / SHELF, with
+    *every note* or *every book on the shelf* in pencil.
+  - Then the settings marked `quick` in the schema, as Settings draws them,
+    names only; Day or night says *every page*. All settings (⌘,) at its
+    foot.
+  - A change shows at once. Esc, the key again or a click outside closes
+    it. Each setting is one stop for Tab; arrows choose within it.
+- **Two pages:** while it's open, the page it doesn't change sits back: its
+  paper takes `--eien-band`.
+- **Words and the sun:** an EPUB's look is the shelf's (SHELF, never
+  BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
+  one press for Day or Night, beside the popover's.
 
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 

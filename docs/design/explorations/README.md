@@ -50,7 +50,9 @@ keyboard, and on the phone. The bar's Section control offers the books'
 section as SHELF, READING or BOOKSHELF. [epub.md](epub.md) has every
 direction's trade-offs and recommends **Pages 2** (opening to 1's spread
 when there's room), **Scroll 1** (then 3), and **Features 2** with 1's marks
-on the page.
+on the page. Turning (2026-10-28), three motions for the page, recommends
+**3**'s words stepping for a key or a click and **2**'s sheet, carried, for a
+hand.
 
 | Set | 1 | 2 | 3 |
 |---|---|---|---|
@@ -58,6 +60,23 @@ on the page.
 | Scroll | [A chapter a sheet](epub-chapter.html) | [One roll](epub-roll.html) | [Beside a note](epub-beside.html) |
 | Features | [On the page](epub-margin.html) | [In the list](epub-index.html) | [On the edge](epub-edge.html) |
 | Showcase | [The reading room](epub-room.html) | [Set as a book](epub-set.html) | [By lamplight](epub-lamp.html) |
+| Turning | [The leaf turns](epub-flip-turn.html) | [Set aside](epub-flip-aside.html) | [The words turn](epub-flip-ink.html) |
+| | [The curl](epub-flip-curl.html) (4, asks for an exception: light while a page moves) | | |
+
+## A quick look, anywhere (2026-10-28): 1 chosen
+
+Backlog #49: one control, in reach in every layout and on the phone, opens a
+popover of the look's everyday settings (Day or night, typeface, text size,
+line spacing, page width, page frame). With a note it sets the notes' look,
+with an EPUB the shelf's, apart. The bar's Open shows a note, an EPUB, or both.
+Which settings appear is a mark on each in the schema. [look.md](look.md) has
+the trade-offs. It recommended 2; the owner chose **1 · On the bar**.
+
+| Page | Direction | For | Against |
+|---|---|---|---|
+| [look-bar.html](look-bar.html) · [md](look.md) | **1 · On the bar** (chosen): Aa, the page's last tool; the popover hangs under it | Where a tool is looked for; the smallest build | One more icon on a bar that folds; says which look only once open |
+| [look-colophon.html](look-colophon.html) · [md](look.md) | **2 · In the colophon** (recommended, not chosen): the colophon reads the look out, NOTES · NEWSREADER · 100%, and opens it | Always in sight, and says which look before you open it | Less found than an icon; a line at the phone page's foot |
+| [look-page.html](look-page.html) · [md](look.md) | **3 · On the page**: Aa at each page's top corner, its own look | Which look is plain: the one on this page | A control on the paper; quiet until hover |
 
 ## Split window (2026-10-23): for the owner to choose
 
@@ -117,6 +136,6 @@ The pages are built from `_src/` by `python3 _build.py`, which puts the
 shared tokens, icons and face list (`_src/shared.css`, `_src/shared.js`)
 inside each page, and a family's own shared files where a page asks for them
 with `/*@include:name*/` (the tables' `table.*`, `table-edges.*` and
-`table-bar.*`, the corners' `corner.*`, the split's `split.*`, the links' `link.*`, the EPUB reader's `epub.*` and its text, `epub-text.js`, the tablets' `tablet.*`; `layouts.css`,
+`table-bar.*`, the corners' `corner.*`, the split's `split.*`, the links' `link.*`, the EPUB reader's `epub.*` and its text, `epub-text.js`, the quick look's `look.*` (on top of `epub.*`), the tablets' `tablet.*`; `layouts.css`,
 `seal-button.css` and `keys.js` shared between families). Edit
 `_src/` and build; don't edit the built pages.

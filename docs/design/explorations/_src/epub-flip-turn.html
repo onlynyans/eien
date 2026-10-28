@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Turning 1 · The leaf turns</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:epub.css*/
+/*@include:epub-flip.css*/
+
+/* Turning 1 · The leaf turns. A bound book's turn: the page lifts at its outer
+   edge and turns over the spine (its left edge), narrowing as it rises; past
+   upright it shows its back, the paper's back in the band's tone, and lies
+   down to the left, onto the pages read, and is gone. Back, the last page read
+   turns over again onto the page. In the air it wears the float shadow, as
+   anything in your hand does; at rest, the sheet's. */
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:epub.js*/
+/*@include:epub-stack.js*/
+/*@include:epub-flip.js*/
+
+const shadow = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+Flip.play = ({ from, to, dir }) => {
+  const T = turnTime(2);
+  const easing = EASE();
+  // Forward, the page you leave turns away over the one beneath; back, the page you return to turns back over it.
+  const leaf = dir > 0 ? from : to;
+  const under = dir > 0 ? to : from;
+  leaf.style.zIndex = '3';
+  under.style.zIndex = '2';
+  leaf.style.transformOrigin = 'left center';
+  // A turn in perspective a few sheet-widths off, so the outer edge rises toward you and no further.
+  const eye = `perspective(${Math.round(to.offsetWidth * 2.5)}px)`;
+  const rest = shadow('--eien-shadow-sheet');
+  const lifted = shadow('--eien-shadow-float');
+  // On Eien's ease the leaf rises quickly and settles: upright at nine tenths of the way, about half the
+  // time; then, as the next page is already there to read, a glimpse of its back lying down past the spine,
+  // fading, where a single page has no left page to lie on.
+  const at = (deg, offset, opacity = 1, sh = lifted) => ({ transform: `${eye} rotateY(${deg}deg)`, boxShadow: sh, opacity, offset });
+  const on = [at(0, 0, 1, rest), at(-90, 0.9), at(-115, 1, 0)];
+  const back = document.createElement('span');
+  back.className = 'flip-back';
+  leaf.append(back);
+  const seen = (a, b, cut) => [{ opacity: a, offset: 0 }, { opacity: a, offset: cut }, { opacity: b, offset: cut }, { opacity: b, offset: 1 }];
+  const frames = dir > 0 ? on : [...on].reverse().map((k) => ({ ...k, offset: 1 - k.offset }));
+  return [
+    leaf.animate(frames, { duration: T, easing, fill: 'both' }),
+    // Past upright, the leaf's back, not its words seen through it.
+    back.animate(dir > 0 ? seen(0, 1, 0.9) : seen(1, 0, 0.1), { duration: T, easing, fill: 'both' }),
+  ];
+};
+
+mountEpubPage({
+  id: 'flip-turn',
+  bar: FLIP_BAR,
+  note: 'A bound book’s turn: the page lifts at its edge, turns over the spine, shows its back, and lies down with the pages read.',
+  notes: `
+  <h2>Turning 1 · The leaf turns</h2>
+  <p>The page lifts at its outer edge and turns over the spine, its left edge, narrowing as it rises toward you. Past upright you see its back, the paper's back in the band's tone with a hairline, as the dog-ear's flap shows it, and it lies down to the left, onto the pages read. Back, the last page read turns over again onto the page.</p>
+  <ul>
+    <li><b>Take hold of it:</b> drag an edge (or the margin, or, on the phone, anywhere on the page) and the leaf follows your hand part way, as a thumb holds a corner. Let go past a third and it turns; short of that it falls back.</li>
+    <li><b>Depth, Eien's own:</b> the leaf in the air wears the float shadow, as anything in your hand does; the page under it lies as it always does. No shading gradient: the turn reads by the leaf narrowing and its back.</li>
+    <li><b>Time:</b> twice the calm time, 440ms, on Eien's ease: it leaves quickly and settles. A turn is the one motion in Eien that long, and it's the one you asked for.</li>
+    <li><b>The spread</b> (Pages 1) is where it's most at home: the right page turns over the gutter onto the left one, as in a printed book.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>The page follows your finger from wherever you take hold of it: the most natural thing to do with a page on glass. Let go and it finishes or falls back.</p>
+  <h2>For</h2>
+  <ul><li>Unmistakably a book: you see which way you went and that you went a page.</li><li>The drag makes it feel held, not played.</li><li>Built from the depth Eien has: the two shadows and the band's tone.</li></ul>
+  <h2>Against</h2>
+  <ul><li>The longest motion in Eien, a turn many times an hour: fast readers may find it slow (a key mid-turn finishes it).</li><li>On one page, the leaf lies down beside the sheet where no left page is; it's at its best in the spread.</li><li>3D in a window that's otherwise flat paper and hairlines.</li></ul>
+  ${FLIP_NOTES()}`,
+});
+</script>
+</body>
+</html>

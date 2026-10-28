@@ -27,6 +27,222 @@ words.
 | Showcase | [epub-room.html](epub-room.html) | 1 · The reading room (recommended as a mode, after 2) |
 | | [epub-set.html](epub-set.html) | **2 · Set as a book** (recommended, for Pages) |
 | | [epub-lamp.html](epub-lamp.html) | 3 · By lamplight (recommended later, as a mode on Scroll) |
+| Turning | [epub-flip-turn.html](epub-flip-turn.html) | 1 · The leaf turns (the spread's, if a book's turn is wanted) |
+| | [epub-flip-aside.html](epub-flip-aside.html) | **2 · Set aside** (recommended, for a hand) |
+| | [epub-flip-ink.html](epub-flip-ink.html) | **3 · The words turn** (recommended, for a key or a click) |
+| | [epub-flip-curl.html](epub-flip-curl.html) | 4 · The curl (asks for an exception: light while a page moves) |
+
+## Decided (2026-10-28)
+
+The owner's choices, from these explorations. The build follows this
+section where it and the directions below disagree.
+
+### How the book is drawn
+
+- **Cleaned nodes, not a sandboxed frame.** A chapter's XHTML is read by
+  Eien's own parser and kept to a whitelist of elements, then drawn
+  element by element, never from HTML. This is the browser extension's
+  pipeline (#47, `core/extension/clean.ts`, `ui/extension/draw-clean.ts`),
+  shared rather than copied (Phase 0). Nothing in a book can run, and the
+  page turns, highlights and Find work on one DOM.
+- **Fixed-layout EPUBs aren't supported** (comics, picture books), and the
+  publisher's layout is reduced to its structure. Accepted.
+- **Pictures are shown,** from the book's own zip, as blob URLs like a
+  note's images, in the formats notes support (JPEG, PNG, GIF, WebP, AVIF,
+  SVG). Each is held to the image cap and counted against the book's cap.
+  - **Calibre's wrapper:** an image wrapped in an `<svg>` frame (Calibre's
+    way with covers and plates) is unwrapped to a plain image.
+  - **Paged:** a chapter that's only a picture gets a page of its own,
+    fitted within the margins; a picture in a chapter fits the measure and
+    moves whole to the next page rather than splitting.
+  - **Scrolling:** a picture fits the sheet's width. Captions stay with
+    their pictures.
+- **Room to style the book.** The cleaner gives the book's parts names:
+  chapter title, scene break, epigraph, plate, caption, first line. One
+  book stylesheet draws them from book tokens of their own, so chapter
+  titles, dividers and the like can be tuned in one place without touching
+  notes.
+- **The book's look is its own.** The book's typeface, size, line spacing,
+  width and frame are kept apart from the notes', so changing a note's look
+  never changes a book's.
+  - **Made from #49's mark:** they're made from the same schema entries #49
+    marks `quick`, kept under `epub.<key>`, with no copied entries.
+  - **Changed in the quick look:** with a book in front, the Look popover
+    (⇧⌘L, LOOK / SHELF) sets them; with a note, the notes' look.
+    `look.md` has the rest.
+- **Fonts:** always the writer's chosen faces, never the publisher's.
+
+### The sidebar and the vault
+
+- **SHELF**, above TAGS: LIBRARY, FOLDERS, SHELF, TAGS. A lens over the
+  folder tree, as explored. Confirmed by the owner, so #49's popover head
+  reads LOOK / SHELF.
+- **Books are only under SHELF,** never in a folder's note list.
+- **Reading state** (place, bookmarks, highlights) in `.eien/reading/`,
+  keyed by the book's contents.
+
+### Paged
+
+- **One leaf with its stacked edges** (Pages 2); **two pages** (Pages 1's
+  spread) when the pane has room for two 20em pages.
+- **Set as a book** (Showcase 2): justified and hyphenated, a title page
+  and its imprint, chapters opening low, a capitals first line, running
+  heads and folios. The phone stays ragged.
+- **The reading room** (Showcase 1) is built after Pages, as a one-key
+  mode.
+
+### Scrolling
+
+- **A chapter a sheet** (Scroll 1).
+- **A scroll style setting:**
+  - *As a note:* exactly a note's sheet, type and paragraph gaps in the
+    Reading view. This is new: the exploration indented paragraphs as a
+    book does, so it wasn't quite a note's.
+  - *As a book:* indented paragraphs with no gap, as explored.
+- **Beside a note** (Scroll 3): the split with a book on one page, once
+  pages can hold a book (Phase 0). The split's modes, its pager, the
+  phone's ⇄ and Wide screen's rooms all carry it.
+  - **Quote's citation:** `— Pride and Prejudice, Chapter III`, with no
+    author.
+- **By lamplight** (Showcase 3), as a mode on Scroll, later.
+
+### Turning the page
+
+- **One setting, Page turn:** Curl (the default, on the desktop and the
+  phone), Slide (the sliding text, as Pages 1 and 2 first turned) and
+  Words (Turning 3).
+- **Only Curl curls.** Under Slide and Words, a drag or a swipe asks for
+  the turn, and the setting's own motion runs.
+- **A turn speed setting**, from instant (0) to four times slower; the
+  default is twice as slow as designed. It sets the finish after you let
+  go and a key's turn. A drag always follows the hand.
+- **The curl's light is approved.** Three tokens, used only while a page
+  moves, as the exception in `.interface-design/system.md` sets out:
+  `--eien-curl-shade`, `--eien-curl-light` and `--eien-curl-through`.
+
+### Marks
+
+- **A marks setting:** *In the list* (Features 2: Contents, Marks, Found;
+  the default) or *On the edge* (Features 3's thumb strip).
+- **Bookmark:** the same setting as Facing pages' mark (ribbon, dog-ear or
+  edge tab).
+  - **The clash:** only in a split in Facing pages mode with a book on one
+    page. There the one mark would mean both "the page you're in" and "a
+    bookmarked page".
+  - **Proposed:** there, the facing mark keeps its meaning, and a
+    bookmarked page says "bookmarked" in its folio, with the bookmark tool
+    pressed. Everywhere else the bookmark wears the mark.
+- **Highlight:** a pencil underline with a tick in the margin (Features 1).
+- **Find:** the list's own search field searches the book while it's open.
+- **Page numbers:** the print edition's, from the EPUB's page-list where it
+  has one, else steady pages of 1,500 characters.
+  - **No real cost:** the page-list is read once with the book, and a
+    chapter's page anchors are measured once as it's drawn.
+
+### Tests
+
+- **Fixture books made by a script**, from public-domain text and pictures
+  (*Pride and Prejudice* with Hugh Thomson's 1894 illustrations).
+  Eien's own EPUB writer makes the plain ones; hand-made variants cover the
+  rest:
+  - a picture-only chapter;
+  - Calibre's SVG-wrapped plate;
+  - EPUB 2 (NCX) and EPUB 3 (nav, with and without a page-list);
+  - and the hostile ones: a zip bomb, a path out of the zip, a script and
+    an event handler in a chapter.
+
+### The build
+
+Each phase is its own session and pull request, from main.
+
+- **Phase 0, groundwork,** with nothing new to see. Three refactors:
+  1. The cleaner and its drawing, out of the extension into shared
+     modules, used by both.
+  2. A page holds a note or a book (`vault/pages.ts`, `page/page.ts`), so
+     the split, the pager, ⇄ and Wide screen's rooms take a book with no
+     special case.
+  3. The find bar apart from CodeMirror, so a book's Find reuses the slip,
+     its keys and its count.
+
+  1 can run beside 2; 3 follows 2.
+- **#49's notes half,** once 2 has merged: the `quick` mark, Line spacing
+  (`appearance.leading`), Page width (`page.width`), the Look command
+  (⇧⌘L) and its popover, for notes. It's built beside 3 and Phase 1, its
+  own session and pull request, and holds to the same testing bar. Its
+  shelf half switches on in Phase 1.
+- **Phase 1, the shelf and opening a book safely:**
+  - the zip reader (the browser's decompression, in the window, on desktop
+    and phone alike);
+  - the container, its spine and contents;
+  - the caps, and no path out of the zip;
+  - SHELF;
+  - books in the vault's index;
+  - the contents in the list;
+  - a chapter drawn from cleaned nodes, with its pictures;
+  - the book's look, made from #49's `quick` mark (`epub.<key>`), which
+    switches on the quick look's shelf half;
+  - the reading state's file;
+  - the fixture books.
+- **Phase 2, scrolling:** a chapter a sheet, the scroll style, the place
+  kept; Beside a note and Quote.
+- **Phase 3, turning pages:**
+  - paging on one line grid;
+  - the leaf and its edges, and the spread when there's room;
+  - Set as a book;
+  - Page turn (Curl, Slide, Words) and its speed;
+  - the curl's tokens into `tokens.css`.
+- **Phase 3b, the reading room.**
+- **Phase 4, place, bookmarks and page count:** print pages or steady
+  pages; Marks in the list or on the edge.
+- **Phase 5, highlights and Find.**
+- **Phase 6, by lamplight,** on Scroll.
+
+Each module holds one concept, and none passes about 300 lines: the zip,
+the container, paging, each turn, the marks, the book's stylesheet and the
+shelf each have their own.
+
+### Testing and CI, for every phase
+
+A large feature with refactors under it, so every phase, Phase 0's
+included, is held to the same bar.
+
+**How each phase is done:**
+
+1. **Design first:** a short design note, reviewed against the real code by
+   a senior engineer (a Plan review) before building; its fixes adopted.
+2. **Built with its tests:** every kind of test the change touches (below),
+   in the same pull request, with each behaviour change shown by a test
+   that would fail without it.
+3. **The diff reviewed** by a second engineer before the pull request.
+4. **CI clean:** all of CI's checks green on the pull request.
+   - The checks: lint, types and unit tests; end to end on macOS, Windows
+     and Linux; the phone's page; the browser extension; the Android build;
+     the iOS simulator.
+   - Nothing skipped, quarantined or retried until it passes.
+   - The coverage floor never lowered (raised as the epub code lands), a
+     speed budget never raised, no new dependency, CodeQL clean.
+5. **Safety tests shown to fail:** a test that guards a safety rule (caps,
+   paths, cleaning) is shown to fail with the rule turned off, then the rule
+   is put back.
+
+**What each kind covers in #40:**
+
+| Kind | What it holds |
+|---|---|
+| Unit (`core/epub`) | The zip reader: stored and deflated entries, data descriptors, the CRC, every cap. The container: OPF, spine, manifest, nav and NCX, page-list. Paths inside the zip. The EPUB's cleaning rules: whitelist, SVG-wrapped pictures, named parts. Page numbers (print and steady). The reading state's file, keyed by the book's contents. The marks |
+| Property (fast-check) | On any bytes, the zip reader ends in a book or a reason, never an unchecked throw, never past a cap. No path ever leaves the zip. The cleaner never lets out an element or attribute it doesn't keep. A place survives a round trip to a page and back. Steady page numbers only rise. A key turn's variation stays in its bounds |
+| Adversarial | A zip bomb (by ratio and by total), a path out of the zip, duplicate names, a huge chapter, deep nesting. Script, handlers, style, iframe, object and form in a chapter. `javascript:` and remote addresses. Malformed XML. No `container.xml`. A DRM-locked book, refused and said so |
+| DOM unit (happy-dom) | SHELF's rows and keys, the contents list, the book page's parts. A turn's states: begin, hold, let go, catch, finish, reduced motion. The settings' controls. The quick look (#49) |
+| End to end (Electron, the fixture books in a real vault) | Opening from SHELF, reading, turning by key, click and drag. The place kept across a restart. Bookmarks, highlights, Find. Pictures shown. A book beside a note, Quote and its undo. The book's look apart from the notes'. The hostile books refused safely. Timed and dragging tests `ALONE` |
+| Accessibility (axe) | Day and Night, all three layouts, motion reduced: SHELF, the book paged and scrolling, the marks, Find, the quick look |
+| Speed budgets | A long book (three thousand pages): its first page drawn, fifty turns, a chapter scrolled, the whole book searched. No long task over 200 ms; measured first, then set with room |
+| Resource budgets | Elements in the window with a book open (only the chapter in sight drawn), and the heap after reading many chapters (each released) |
+| Phone page (Chromium) | SHELF, reading, turns by tap and swipe, Wide screen's rooms, a book beside a note |
+| Android and iOS | The builds on CI; from Phase 1, the iOS simulator opens a fixture book |
+| Mutation (weekly) | `core/epub` falls under it already (`src/core/**`); its survivors reviewed after each phase |
+
+**The fixture books** are made by a script into `tests/fixtures/epub/`.
+They're small, checked in, and the same each time the script runs.
 
 ## What all nine share
 
@@ -454,4 +670,158 @@ gradient or accent. The seal stays in its five places.
   sink is `4 × --line`, the numeral `1.5 × --eien-size-title`, the capitals'
   tracking half `--eien-track-label`, and `--lamp-run` two thirds of the
   pane's height. The room's cross-fade is `--eien-calm` on `--eien-ease`.
+
+## Turning: three motions for the page (2026-10-28)
+
+How a page goes when you turn it. All three turn Pages 2's leaf (the
+recommended one) so only the motion differs, and each ends with the
+fore-edge a step on. The bar's **Speed** shows a motion four times slower,
+and **Motion** shows what reduced motion does: the page changes at once, as
+Eien's rule asks ("none with reduced motion").
+
+Shared by all three:
+
+- **Asked for, so it moves:** a key, a click on an edge or margin, a tap in a
+  phone's outer third, or a drag. Nothing turns that you didn't turn.
+- **Never in the way:** a key pressed mid-turn finishes the turn at once and
+  starts the next, so fast reading never waits on a motion. The next page is
+  laid out under the motion from its first frame.
+- **Held by hand** (1 and 2): drag an edge or a margin (anywhere on the
+  phone's page) and the motion follows the pointer part way. Let go past a
+  third and it turns; short of it, it falls back. This works across a
+  chapter's end too.
+- **Tokens only:**
+  - durations are multiples of `--eien-calm`, on `--eien-ease`, with no
+    spring;
+  - depth is the two shadows: the sheet's at rest, the float shadow on a
+    sheet in your hand;
+  - a leaf's back is the band's tone in a rule-strong hairline (the dog-ear's
+    flap);
+  - no gradient shades a turn.
+- **Built** from `_src/epub-flip.js` and `epub-flip.css`. The leaf is
+  `epub-stack.*`, now shared with Pages 2.
+
+| | What moves | Time | For | Against |
+|---|---|---|---|---|
+| **1 · The leaf turns** | The page rises at its outer edge and turns over the spine; past upright, its back; it lies down with the pages read | 2 × calm (440ms) | Unmistakably a book; held by hand; Eien's depth | The longest; 3D in a flat window; on one page it lies down where no left page is (it's the spread's turn) |
+| **2 · Set aside** | The page read is lifted (float shadow) and carried off left, out past the blotter; the next lay under it | 2 × calm (440ms) | Eien's own picture, sheets on a desk; flat; the page beneath is still and readable at once | Less of a book; a long way to travel; back is on, mirrored |
+| **3 · The words turn** | Nothing but the ink: the words step out a space-2 toward where you go (quick), the next page's step in (calm) | quick + calm (340ms) | The calmest and fastest; works for every direction, width and layout; e-paper's way | The least like a book; nothing to hold on a phone |
+
+### 1 · The leaf turns
+
+- **What:** the page rises at its outer edge and turns over the spine, its
+  left edge, in perspective two and a half sheet-widths off. It narrows as
+  it rises; past upright you see its back, and it lies down to the left,
+  fading. Back, the last page read turns over onto the page.
+- **The tail:** on Eien's ease it's upright at nine tenths of the way, about
+  half the time. The rest is its back lying down, while the next page is
+  already there to read. On one page the back lies over the blotter, where
+  no left page is, so in the spread (Pages 1) it would land on the left page
+  as in print.
+- **Intent:** the reader who wants a book. *Depth:* the float shadow in the
+  air, the sheet's at rest. *Palette:* the back is the band and a rule-strong
+  hairline.
+
+### 2 · Set aside
+
+- **What:** sheets on a desk, the way Eien draws a note. The page you've
+  read is lifted in the first steps (the float shadow, as a dragged row
+  wears it) and carried off to the left, out past the blotter's edge. The
+  next page was beneath it all along. Back, the top sheet of the read pile
+  is carried back over the page and set down.
+- **Intent:** Eien's own picture, not a bound book's. *Depth:* a sheet in
+  hand floats; the one beneath lies. Nothing turns over or narrows.
+
+### 3 · The words turn
+
+- **What:** the paper never moves. The page's words step out
+  `--eien-space-2` toward where you're going, in the quick time. The next
+  page's words step in from the other side over the calm time after them, so
+  two pages' words never lie on each other.
+- **Holding it:** there's nothing to hold. A drag or a swipe asks for the
+  turn, as a key does.
+- **Intent:** the reader of a long book at night; nothing moves but ink,
+  which is all Eien moves in a note.
+
+### Recommendation: 3 for a key or a click, 2 for a hand
+
+- **The motion follows the input.** A key or a click moves no object, so its
+  turn is 3's: the words step and the page is readable in a third of a
+  second, as calm as everything else in Eien.
+- **A hand moves things.** A drag on the desktop, or a finger on the phone,
+  takes hold of the sheet as 2 sets it aside: it follows the hand and goes
+  where the hand sends it. That's the gesture a phone teaches, in Eien's
+  flat depth.
+- **1 is the spread's**, if the owner wants a book's turn. It's at its best
+  over a gutter, where the leaf has a left page to land on. On one page its
+  second half is out of sight.
+- **Reduced motion:** all three become an instant change, so the choice
+  costs nothing there.
+
+### 4 · The curl (added 2026-10-28)
+
+Asked for after the first three: the tight, held turn of the best EPUB
+readers, and what it costs Eien.
+
+- **The geometry:** the page bends.
+  - **The corner follows you:** the corner you hold stays under the pointer,
+    and the paper rolls over a cylinder whose axis follows it, then lies back
+    on itself on top. A top corner peels on a slant; the middle of the edge
+    rolls straight.
+  - **The roll is round:** drawn in twelve strips of the live page, each laid
+    where its part of the cylinder falls, so the free edges curve. The front
+    turns away, its words squeezing; then the back comes over. Each strip is
+    shaded by how it faces you (edge-on darkest, a glint past the top),
+    ramped so the roll reads as one curve. Flat at rest, roundest half way (a
+    fifth of the page), flat again as it lands.
+  - **The paper can't stretch:** the spine's edge always stays down.
+  - **Cuts of the live page:** what stays, the roll's strips, what lies back
+    on top (its back showing the words faintly through the paper) and the
+    page beneath.
+  - **No snapshot:** nothing is pictured, so the book's sandboxed frame could
+    be drawn the same way in the app.
+- **The physics:** this is where the tightness lives.
+  - **One to one:** the corner is wherever the pointer is, every frame.
+  - **Let go and your speed decides:** the throw is projected from the
+    drag's last 80ms. Past a quarter of the page from the spine it turns; a
+    flick turns it from a few centimetres in.
+  - **A spring with no bounce:** the finish is critically damped, starting
+    at the hand's own speed and landing in about 1.5 × calm. A throw hard
+    enough to carry past its mark stops there, so it never bounces back.
+  - **Catch it:** a page in flight can be caught and dragged on or back.
+  - **Keys and clicks:** a key is a hand's turn. The corner rides an upward
+    arc from the outer edge, up and over and down as it lands, and no two
+    turns are alike. Four things vary, each by at most a third of its range
+    from the last turn's, never past its bounds (turned back at a bound
+    rather than held there):
+    - where it's taken: 74–94% of the way down the edge;
+    - how high it rises: 6–16% of the page;
+    - its pace: ±10%;
+    - where the arc peaks: a little early or late.
+
+    So the turns differ the way one hand's do, and never jump. Checked over
+    40 turns: every value in bounds, no step over a third, every turn rose
+    and landed where it was taken, each in about 330–350ms.
+  - **Never stuck:** each frame has a timer behind it, so a turn lands even
+    where frames stall.
+- **The exception it asks for.** A curl reads as paper because of light,
+  which `system.md` doesn't allow today. It asks for three tokens, used only
+  while a page moves, each a light-dark pair a theme can carry. At rest there
+  are no gradients and no third shadow.
+  - `--eien-curl-shade`: made from the sheet shadow's ink. It shades the page
+    beneath along the fold, the page curving into the fold, and the lifted
+    paper's one soft shadow (the third shadow).
+  - `--eien-curl-light`: the crest of the roll.
+  - `--eien-curl-through`: how much of the words shows through the back
+    (12%).
+
+| | For | Against |
+|---|---|---|
+| **4 · The curl** | The turn people know from the best readers: held, thrown, caught; the paper never trails the finger; live text throughout | Bends two of Eien's rules (gradients, two shadows), if only in motion; fourteen clipped copies of the page per frame cost the most, on a slow phone most of all; the roll is twelve flat strips, faceted up close (a WebGL mesh would be exact, but needs a snapshot the phone can't take of the frame) |
+
+**If it's chosen:** 4 would take 2's place under a hand (a drag, or a finger
+on the phone), and keys and clicks would stay 3's quiet step. Its physics
+(one to one, the throw, the spring that lands, the catch) could also be
+given to 2 alone, keeping Eien's rules whole: most of what feels tight is
+there rather than in the bend.
 
