@@ -163,7 +163,9 @@ describe('the commands for a note', () => {
     const bar = note.page.element.querySelector<HTMLElement>('.find');
     const ctx = { pages } as unknown as CommandContext;
     note.page.compare(document.createElement('div')); // a seal in the editor's place
-    runCommand('find', ctx);
+    // Next and Previous with nothing typed would open the bar, where they may.
+    for (const command of ['find', 'find:replace', 'find:next', 'find:previous'] as const)
+      runCommand(command, ctx);
     expect(bar?.hidden).toBe(true);
     note.page.compare(null);
     runCommand('find', ctx);

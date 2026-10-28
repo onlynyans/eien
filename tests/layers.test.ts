@@ -68,7 +68,7 @@ describe('layers', () => {
 });
 
 describe('the find bar', () => {
-  // It searches nothing itself (ui/find/find-bar.ts): a book's chapters drive it with no editor.
+  // It searches nothing itself (ui/find/find-bar.ts): an EPUB's chapters drive it with no editor.
   it('leans on neither CodeMirror nor the editor', () => {
     const find = join(SRC, 'ui', 'find');
     const editor = join(SRC, 'ui', 'editor');

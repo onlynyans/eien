@@ -787,7 +787,7 @@ holds Find…, Find and Replace… (⌥⌘F; Ctrl+H off the Mac, where Ctrl+Alt 
 AltGr), Find Next (⌘G) and Find Previous (⇧⌘G); on a phone it's the page's
 ⋯ → Find. It's CodeMirror's search (`@codemirror/search`, `ui/editor/find.ts`),
 drawn as Eien's own slip at the page's top right (`ui/find/find-bar.ts`),
-which searches nothing itself, so a book's chapters can drive it too.
+which searches nothing itself, so an EPUB's chapters can drive it too.
 
 - The Find field opens with the chosen words in it (a word or a phrase on one
   line), or the last query. Typing goes to the first match from the

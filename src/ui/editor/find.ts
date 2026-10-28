@@ -9,8 +9,8 @@
 // show and hide the bar, the window's own, as the table's grips are.
 //
 // The keys run in the text and in the bar's fields alike (the 'search-panel'
-// scope), and before the editor's other keys, so Esc shuts the bar before it
-// does anything else.
+// scope), and before the editor's other keys, so Esc in the text shuts the
+// bar before it does anything else; in the bar, Esc is the bar's own.
 
 import {
   closeSearchPanel,
@@ -209,7 +209,8 @@ export function findInNote(find: NoteFind): Extension {
         bind('next', () => find.step()),
         bind('previous', () => bar.previous()),
         bind('replace-all', () => bar.replaceAll(), FIND_SCOPE),
-        { key: 'Escape', run: () => bar.close(), scope: both },
+        // In the text; in the bar's fields, Esc is the bar's own.
+        { key: 'Escape', run: () => bar.close(), scope: 'editor' },
       ]),
     ),
     // The panel CodeMirror makes room for is the bar's placeholder: the bar is drawn outside.

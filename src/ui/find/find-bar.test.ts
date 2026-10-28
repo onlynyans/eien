@@ -1,5 +1,5 @@
 // The find bar apart from what it searches (./find-bar.ts): driven here by a
-// stand-in target with a matcher of its own, as a book's chapters will drive
+// stand-in target with a matcher of its own, as an EPUB's chapters will drive
 // it (backlog #40), with and without Replace. A note's, through CodeMirror,
 // is ../editor/find.test.ts's.
 
@@ -72,7 +72,7 @@ function standIn(words: string, more: Partial<FindTarget> = {}) {
     },
     ...more,
   };
-  const bar = new FindBar(target, 'Find in the book');
+  const bar = new FindBar(target, 'Find in the EPUB');
   document.body.append(bar.element);
   return { bar, calls, query: () => query };
 }
@@ -97,7 +97,7 @@ describe('the find bar', () => {
   it('is a search landmark named as it was made, built only once it opens', () => {
     const { bar } = standIn('Snow.');
     expect(bar.element.getAttribute('role')).toBe('search');
-    expect(bar.element.getAttribute('aria-label')).toBe('Find in the book');
+    expect(bar.element.getAttribute('aria-label')).toBe('Find in the EPUB');
     expect(bar.element.hidden).toBe(true);
     expect(bar.element.children).toHaveLength(0);
     bar.open(false);
@@ -138,10 +138,27 @@ describe('the find bar', () => {
     chosen = 'x'.repeat(101);
     bar.open(false);
     expect(field(bar, 'Find')?.value).toBe('the bell');
+    chosen = 'x'.repeat(100);
+    bar.open(false);
+    expect(field(bar, 'Find')?.value).toBe(chosen);
     button(bar, 'Pattern')?.click();
     chosen = 'a.b';
     bar.open(false);
     expect(field(bar, 'Find')?.value).toBe('a\\.b');
+  });
+
+  it('is seeded before the target shows its matches, so the first count reads the words', () => {
+    const seen: (string | undefined)[] = [];
+    const made = standIn('bell bell', {
+      chosen: () => 'bell',
+      open() {
+        seen.push(field(made.bar, 'Find')?.value);
+        made.bar.shown(true);
+      },
+    });
+    made.bar.open(false);
+    expect(seen).toEqual(['bell']);
+    expect(count(made.bar)).toBe('1 of 2');
   });
 
   it('moves by Enter and ⇧Enter, but not with another modifier, nor mid-composition', () => {
@@ -153,6 +170,7 @@ describe('the find bar', () => {
     press(field(bar, 'Find'), 'Enter', { shiftKey: true });
     press(field(bar, 'Find'), 'Enter', { metaKey: true });
     press(field(bar, 'Find'), 'Enter', { altKey: true });
+    press(field(bar, 'Find'), 'Enter', { ctrlKey: true });
     press(field(bar, 'Find'), 'Enter', { isComposing: true });
     expect(calls).toEqual(['next', 'previous']);
   });
@@ -181,6 +199,10 @@ describe('the find bar', () => {
     expect(press(field(bar, 'Find'), 'Escape').defaultPrevented).toBe(true);
     expect(bar.element.hidden).toBe(true);
     expect(press(bar.element, 'Escape').defaultPrevented).toBe(false); // shut already: not taken
+    bar.open(false);
+    expect(press(field(bar, 'Find'), 'Escape', { shiftKey: true }).defaultPrevented).toBe(false);
+    expect(press(field(bar, 'Find'), 'Escape', { metaKey: true }).defaultPrevented).toBe(false);
+    expect(bar.element.hidden).toBe(false); // Esc with a modifier isn't Esc
     bar.open(false);
     button(bar, 'Close')?.click();
     expect(bar.element.hidden).toBe(true);
@@ -232,7 +254,7 @@ describe('with Replace', () => {
     expect(query()?.replace).toBe('gong');
   });
 
-  it('replaces by Enter in its field and by its buttons, and not while the text is locked', () => {
+  it('replaces by Enter in its field and by its buttons, which are off while the text is locked', () => {
     const { bar, one, all, lock } = replacing();
     bar.open(true);
     press(field(bar, 'Replace'), 'Enter');

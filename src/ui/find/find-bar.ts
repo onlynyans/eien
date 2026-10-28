@@ -7,7 +7,7 @@
 // The bar is the window's own and searches nothing itself: what it
 // searches (a `FindTarget`, ./find-target.ts) finds, counts, highlights and
 // replaces, and tells the bar when it's shown and when its count may have
-// moved. A note's is CodeMirror's search (../editor/find.ts); a book's
+// moved. A note's is CodeMirror's search (../editor/find.ts); an EPUB's
 // chapters, later (backlog #40), bring their own matcher and no Replace.
 
 import { countWords, type FindCommandId, findKey, findLabel } from '../../core/find';
@@ -233,12 +233,13 @@ export class FindBar {
       event.preventDefault();
       return;
     }
-    if (event.key === 'Escape') {
+    const plain = !(event.altKey || event.metaKey || event.ctrlKey);
+    if (event.key === 'Escape' && plain && !event.shiftKey) {
       // Taken, so a phone's Back that presses Esc (../vault/phone-view.ts) knows the bar shut.
       if (this.close()) event.preventDefault();
       return;
     }
-    if (event.key !== 'Enter' || event.altKey || event.metaKey || event.ctrlKey) return;
+    if (event.key !== 'Enter' || !plain) return;
     if (event.target === this.#p.replace?.field) this.replaceOne();
     else if (event.target !== this.#p.find) return;
     else if (event.shiftKey) this.previous();

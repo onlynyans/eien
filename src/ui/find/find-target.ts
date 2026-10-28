@@ -1,6 +1,6 @@
 // What the find bar (./find-bar.ts) searches, kept apart from the bar: a
-// note's text through CodeMirror's search (../editor/find.ts), and later a
-// book's drawn chapters with a matcher of their own and no Replace (backlog
+// note's text through CodeMirror's search (../editor/find.ts), and later an
+// EPUB's drawn chapters with a matcher of their own and no Replace (backlog
 // #40). The target finds, counts, highlights and replaces; the bar draws the
 // fields, the options and the count, and is told when to show and redraw.
 
@@ -15,7 +15,7 @@ export interface FindQuery {
   readonly regexp: boolean;
 }
 
-/** What the bar searches: a note's text (../editor/find.ts), later a book's drawn chapters. */
+/** What the bar searches: a note's text (../editor/find.ts), later an EPUB's drawn chapters. */
 export interface FindTarget {
   /** Show the matches; the target calls the bar's `shown(true)` once they are. */
   open(): void;

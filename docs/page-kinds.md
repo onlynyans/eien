@@ -46,19 +46,20 @@ phone's ⋯ → Find) go to the active page's `find` (`PageFind`: `open(replace)
 note's, so the menu greying by `on` (Phase 1) leaves it on. A note's does
 nothing where its text isn't on the page (outline cards, a seal compared).
 
-The find bar (`find/find-bar.ts`, added in Phase 0's third refactor)
-searches nothing itself. What it searches is a `FindTarget`: `open`,
+The find bar (`find/find-bar.ts`, set apart from CodeMirror in Phase 0's
+third refactor) searches nothing itself. What it searches is a `FindTarget`: `open`,
 `close`, `chosen`, `valid`, `query(query, narrow)`, `next`, `previous`,
 `count`, and, where the text can change, `replace` (`one`, `all`,
 `locked`); without `replace` the bar draws no Replace. It tells the bar
 `shown(open)` and `changed()`. A note's is `editor/find.ts`'s `NoteFind`,
 CodeMirror's search as it was. Phase 5's EPUB page makes a `FindBar` over
 its own target, a matcher over its drawn chapters, and gives a `PageFind`
-over it. Its keys: Esc is the bar's own; the target's `key` (optional)
-comes first (a note's: CodeMirror's find keymap, Shift as held for ⇧⌘G).
-A book's bar gets ⌘F, ⌘G and ⇧⌘G on the desktop through the Electron
-menu; a phone with a hardware keyboard has no menu, so ⌘G in its bar needs
-a `key` on the book's target or a key matcher of the bar's own, and
+over it. Its keys: Esc and Enter in the bar are the bar's own; the
+target's `key` (optional) comes first (a note's: CodeMirror's find keymap,
+Shift as held for ⇧⌘G). An EPUB's bar gets ⌘F, ⌘G and ⇧⌘G on the desktop
+through the Electron menu; a phone with a hardware keyboard has no menu, so
+⌘G in its bar needs a `key` on the EPUB's target or a key matcher of the
+bar's own, and
 `PaneLeaf.key` can take ⌘F outside a field. Playwright's key presses never
 reach the native menu, so Phase 5's end-to-end tests can't test that route
 by keyboard.
