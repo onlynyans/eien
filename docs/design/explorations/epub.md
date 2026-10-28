@@ -189,6 +189,49 @@ Each module holds one concept, and none passes about 300 lines: the zip,
 the container, paging, each turn, the marks, the book's stylesheet and the
 shelf each have their own.
 
+### Testing and CI, for every phase
+
+A large feature with refactors under it, so every phase, Phase 0's
+included, is held to the same bar.
+
+**How each phase is done:**
+
+1. **Design first:** a short design note, reviewed against the real code by
+   a senior engineer (a Plan review) before building; its fixes adopted.
+2. **Built with its tests:** every kind of test the change touches (below),
+   in the same pull request, with each behaviour change shown by a test
+   that would fail without it.
+3. **The diff reviewed** by a second engineer before the pull request.
+4. **CI clean:** all of CI's checks green on the pull request.
+   - The checks: lint, types and unit tests; end to end on macOS, Windows
+     and Linux; the phone's page; the browser extension; the Android build;
+     the iOS simulator.
+   - Nothing skipped, quarantined or retried until it passes.
+   - The coverage floor never lowered (raised as the epub code lands), a
+     speed budget never raised, no new dependency, CodeQL clean.
+5. **Safety tests shown to fail:** a test that guards a safety rule (caps,
+   paths, cleaning) is shown to fail with the rule turned off, then the rule
+   is put back.
+
+**What each kind covers in #40:**
+
+| Kind | What it holds |
+|---|---|
+| Unit (`core/epub`) | The zip reader: stored and deflated entries, data descriptors, the CRC, every cap. The container: OPF, spine, manifest, nav and NCX, page-list. Paths inside the zip. The EPUB's cleaning rules: whitelist, SVG-wrapped pictures, named parts. Page numbers (print and steady). The reading state's file, keyed by the book's contents. The marks |
+| Property (fast-check) | On any bytes, the zip reader ends in a book or a reason, never an unchecked throw, never past a cap. No path ever leaves the zip. The cleaner never lets out an element or attribute it doesn't keep. A place survives a round trip to a page and back. Steady page numbers only rise. A key turn's variation stays in its bounds |
+| Adversarial | A zip bomb (by ratio and by total), a path out of the zip, duplicate names, a huge chapter, deep nesting. Script, handlers, style, iframe, object and form in a chapter. `javascript:` and remote addresses. Malformed XML. No `container.xml`. A DRM-locked book, refused and said so |
+| DOM unit (happy-dom) | SHELF's rows and keys, the contents list, the book page's parts. A turn's states: begin, hold, let go, catch, finish, reduced motion. The settings' controls. The quick look (#49) |
+| End to end (Electron, the fixture books in a real vault) | Opening from SHELF, reading, turning by key, click and drag. The place kept across a restart. Bookmarks, highlights, Find. Pictures shown. A book beside a note, Quote and its undo. The book's look apart from the notes'. The hostile books refused safely. Timed and dragging tests `ALONE` |
+| Accessibility (axe) | Day and Night, all three layouts, motion reduced: SHELF, the book paged and scrolling, the marks, Find, the quick look |
+| Speed budgets | A long book (three thousand pages): its first page drawn, fifty turns, a chapter scrolled, the whole book searched. No long task over 200 ms; measured first, then set with room |
+| Resource budgets | Elements in the window with a book open (only the chapter in sight drawn), and the heap after reading many chapters (each released) |
+| Phone page (Chromium) | SHELF, reading, turns by tap and swipe, Wide screen's rooms, a book beside a note |
+| Android and iOS | The builds on CI; from Phase 1, the iOS simulator opens a fixture book |
+| Mutation (weekly) | `core/epub` falls under it already (`src/core/**`); its survivors reviewed after each phase |
+
+**The fixture books** are made by a script into `tests/fixtures/epub/`.
+They're small, checked in, and the same each time the script runs.
+
 ## What all nine share
 
 - **Books are files in the vault**, `.epub`, in any folder: Cooking holds its
