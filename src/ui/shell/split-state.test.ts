@@ -83,6 +83,14 @@ describe('a companion beside the page', () => {
   });
 });
 
+describe('a companion with less room than it and the page need (Two pages when narrow)', () => {
+  it('halves the room with the page, and keeps its width for when there’s room again', () => {
+    for (const room of [240, 520, 590, COMPANION.least + COMPANION.page - 1])
+      expect(BESIDE.shown(380, room), String(room)).toBe(0.5);
+    expect(BESIDE.moved(380, 590, 40)).toBe(380);
+  });
+});
+
 describe('a companion under the page', () => {
   it('takes its share of the height, from a quarter to seven tenths', () => {
     expect(UNDER_PAGE.shown(UNDER_PAGE.even, 800)).toBeCloseTo(0.58);

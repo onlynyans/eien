@@ -221,6 +221,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     lost: () => page().focus(),
     watch: (host) => tips.watch(host),
     pager: pane.pager,
+    phone: () => of.phone.stack.phone,
   });
   tips.watch(pane.divider);
   const own = pageHosts({

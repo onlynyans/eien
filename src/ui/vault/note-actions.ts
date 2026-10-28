@@ -4,6 +4,7 @@
 
 import { freeNoteName, joinPath } from '../../core/paths';
 import type { VaultBridge } from '../../platform/bridge';
+import { opensBeside } from '../phone/room';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
 import type { Navigation } from './navigation';
@@ -33,9 +34,15 @@ export interface NoteActionsOf {
   readonly sidebarKey: string;
 }
 
+/**
+ * How a note opens: on the active page, beside it (Open to the Side, a drop past the middle), or
+ * chosen from a list, which with Two pages is beside the note you're in (spec §10).
+ */
+export type Opening = 'here' | 'beside' | 'chosen';
+
 export interface NoteActions {
-  /** Show the note at `path` on the active page, or `beside` it (on a phone, the page shown). */
-  openNote(path: string, beside?: boolean): Promise<void>;
+  /** Show the note at `path` as `how` says (on a phone, the page shown). */
+  openNote(path: string, how?: Opening): Promise<void>;
   /** A new note, "Untitled", in `into` (else the folder chosen), open to write in. */
   newNote(into?: string): Promise<void>;
   /** A new folder in `parent`, its name in a field to type over. */
@@ -49,13 +56,19 @@ export interface NoteActions {
 export function noteActions(of: NoteActionsOf): NoteActions {
   const { state, nav, pages, phone } = of;
 
-  async function openNote(path: string, beside = false): Promise<void> {
-    if (beside && !pages.split && !roomForTwo()) {
+  async function openNote(path: string, how: Opening = 'here'): Promise<void> {
+    const asked = how === 'beside';
+    if (asked && !pages.split && !roomForTwo()) {
       of.tell(
         `Too narrow for two pages beside the sidebar: shut it (${of.sidebarKey}) to make room.`,
       );
       return;
     }
+    // Two pages (Wide screen): the second note chosen opens beside the first. Opened any other
+    // way (a link, a card, a rename, a new note), a note stays where it was asked for.
+    const second =
+      how === 'chosen' && opensBeside(phone.stack.room, pages.split, pages.active.note.path, path);
+    const beside = asked || (second && roomForTwo());
     await pages.open(path, beside && phone.stack.splits); // one page, the phone's way
     await of.redraw();
     phone.stack.show('page');
@@ -64,11 +77,13 @@ export function noteActions(of: NoteActionsOf): NoteActions {
   /**
    * Whether two pages would fit beside each other, the list stepping aside
    * for a mode that has it; a mode that folds, closes or docks always fits.
+   * The phone's way, the list lies over the page or beside it, and never steps aside.
    */
   function roomForTwo(): boolean {
     const { mode } = pages;
     if (mode.narrow !== 'wait') return true;
-    const room = pages.pane.pagesArea.clientWidth + (mode.listAside ? of.panes.listWidth : 0);
+    const aside = mode.listAside && !of.panes.phone ? of.panes.listWidth : 0;
+    const room = pages.pane.pagesArea.clientWidth + aside;
     return room >= mode.least;
   }
 

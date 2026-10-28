@@ -45,30 +45,38 @@ describe('the schema', () => {
     }
   });
 
-  it('offers spellcheck on macOS alone, Wide screen on the phone alone, and everything else everywhere', () => {
+  it('offers spellcheck on macOS alone, Wide screen and Two pages when narrow on the phone alone, and everything else everywhere', () => {
     const spellcheck = settingOf('editor.spellcheck');
-    const room = settingOf('appearance.room');
-    if (!spellcheck || !room) throw new Error('missing a setting');
+    const phoneOnly = ['appearance.room', 'appearance.narrowPages'].map((key) => settingOf(key));
+    if (!spellcheck || phoneOnly.some((setting) => !setting)) throw new Error('missing a setting');
     expect(offeredOn(spellcheck, 'darwin')).toBe(true);
     expect(offeredOn(spellcheck, 'win32')).toBe(false);
     expect(offeredOn(spellcheck, 'linux')).toBe(false);
     // The phone's build: Capacitor's android and ios, and web, its page in a browser (tests/mobile).
-    for (const phone of ['android', 'ios', 'web']) expect(offeredOn(room, phone)).toBe(true);
+    for (const setting of phoneOnly)
+      for (const phone of ['android', 'ios', 'web'])
+        expect(setting && offeredOn(setting, phone)).toBe(true);
     // Interface zoom everywhere: the desktop's window by Electron, a phone's page by its viewport.
     const zoom = settingOf('window.zoom');
     for (const each of ['android', 'ios', 'web', 'darwin', 'win32', 'linux'])
       expect(zoom && offeredOn(zoom, each), each).toBe(true);
-    for (const desktop of ['darwin', 'win32', 'linux'])
-      expect(offeredOn(room, desktop)).toBe(false);
+    for (const setting of phoneOnly)
+      for (const desktop of ['darwin', 'win32', 'linux'])
+        expect(setting && offeredOn(setting, desktop)).toBe(false);
     for (const setting of SETTINGS) {
-      if (setting.key !== 'editor.spellcheck' && setting.key !== 'appearance.room')
+      if (setting !== spellcheck && !phoneOnly.includes(setting))
         expect(offeredOn(setting, 'linux')).toBe(true);
     }
   });
 
   it('keeps today’s panes on a wide screen unless the writer chooses otherwise', () => {
     const room = settingOf('appearance.room');
-    expect(room?.type === 'choice' && Object.keys(room.choices)).toEqual(['panes', 'one', 'side']);
+    expect(room?.type === 'choice' && Object.keys(room.choices)).toEqual([
+      'panes',
+      'one',
+      'side',
+      'pages',
+    ]);
     expect(room?.default).toBe('panes');
     expect(room?.scope).toBe('device'); // a tablet and a phone that share a vault each choose their own
     // It's the whole window's: offered on a phone too, so a foldable can choose before it opens.
@@ -221,12 +229,6 @@ describe('readSettings', () => {
       expect.stringMatching(/^page\.zoom must be 50 to 200/),
       expect.stringMatching(/^Unknown setting "future\.setting"/),
     ]);
-  });
-
-  it('reads Wide screen’s Two pages, which Eien no longer has, as Panes', () => {
-    const { values, problems } = readSettings({ 'appearance.room': 'pages' }, 'device');
-    expect(withDefaults(values)['appearance.room']).toBe('panes');
-    expect(problems).toEqual([expect.stringMatching(/^appearance\.room must be one of .*"panes"/)]);
   });
 
   it('reads a vault file for vault settings only', () => {

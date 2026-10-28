@@ -271,7 +271,10 @@ export async function showVault(
     tree: sidebar.element,
     dropFolder: (path, to) => order.dropFolder(path, to),
     placeNote: (path, before, group) => order.placeNote(path, before, group),
-    pageDrop: pageDrop(pages, (path, beside) => void actions.openNote(path, beside)),
+    pageDrop: pageDrop(
+      pages,
+      (path, beside) => void actions.openNote(path, beside ? 'beside' : 'here'),
+    ),
     folderDrags: () => settings.values['lists.arranging'] !== 'mode',
     act,
     listOrdered: () => draw.listOrdered,

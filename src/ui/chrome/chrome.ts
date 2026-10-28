@@ -26,6 +26,11 @@ export interface ChromeOf extends Omit<HostOf, 'press'> {
   watch(host: HTMLElement): void;
   /** The split's pager, folded (../page/page-pane.ts): placed where the layout says. */
   readonly pager?: HTMLElement;
+  /**
+   * Whether the window goes the phone's way, its desktop bars out of sight: the pager then stands
+   * with the phone's tools (Two pages, folded).
+   */
+  readonly phone?: () => boolean;
   /** Whether a host fits its bar as drawn now: ./fold.ts measures it (tests say, with no layout). */
   readonly fits?: (host: HTMLElement, bar: HTMLElement) => boolean;
 }
@@ -82,9 +87,8 @@ export class Chrome {
       else slot.append(host.element);
       this.#of.watch(host.element);
     }
-    const tools = this.#hosts.find((host) => host.spec.name === spec.tools);
-    if (this.#of.pager && tools) tools.element.before(this.#of.pager);
     this.#layout = layout;
+    this.#placePager();
     this.#split = split;
     for (const host of this.#hosts) {
       const bar = host.element.parentElement;
@@ -181,7 +185,18 @@ export class Chrome {
 
   /** Show every command as it is now. */
   refresh(): void {
+    this.#placePager();
     for (const host of this.#hosts) host.refresh();
+  }
+
+  /** The pager before the page's tools: the layout's, or the phone's while it goes the phone's way. */
+  #placePager(): void {
+    const { pager, phone } = this.#of;
+    const spec = this.#layout && LAYOUT_SPECS[this.#layout];
+    if (!pager || !spec) return;
+    const name = phone?.() ? spec.phone.name : spec.tools;
+    const tools = this.#hosts.find((host) => host.spec.name === name);
+    if (tools && pager.nextElementSibling !== tools.element) tools.element.before(pager);
   }
 
   /** The buttons drawn for `id` in this layout (one on the desktop's window, maybe one on a phone's). */

@@ -1035,7 +1035,7 @@ does nothing.
   hidden, spellcheck (macOS), and on the phone how a wide screen is used (§10). A
   setting may be one system's alone (`platforms` in the schema): the screen shows it
   only there. A setting that needs panes side by side (`wide` in the schema: Panes,
-  Shut sidebar, Split, Facing pages' mark, Arranging, the formatting bar) shows only while the window has them,
+  Shut sidebar, Arranging, the formatting bar) shows only while the window has them,
   and comes and goes as that changes (a phone turned, a foldable opened, Wide screen
   set).
 - An unknown or invalid value in a file is ignored with a warning in the log,
@@ -1540,9 +1540,25 @@ Compare or Restore finishes lands on a note opened meanwhile.
     beside the page keeps its own width (the sidebar's or the list's, as on
     the desktop), dragged by its edge (a finger wide) and remembered, giving
     way so the page keeps 240 px.
-  - Only Panes opens a second page (Open to the Side, Split Page); One at a
-    time and Side by side have one page. A device that chose Two pages, a
-    room Eien no longer has, reads as Panes.
+  - **Two pages:** the phone's way, but the page stays in sight: the notes and
+    the contents slide over it from the left (the bar's back word brings them,
+    and goes on through them to the contents); a tap beside them, or Android's
+    back, puts them away (the page under them takes no keys or taps till then). A
+    second page opens, laid out as Split says (Facing pages: an open book):
+    the second note chosen from a list opens beside the first, and with two,
+    a note chosen opens on the page you're in (`opensBeside`,
+    `ui/phone/room.ts`); where two don't fit (Tools that follow, too narrow),
+    it opens on the one page. A note opened any other way (a link followed,
+    an outline card, a rename, a new note, a drop on the page) opens where it
+    was asked for. The note you came from (⇄) opens beside this one too, and
+    a note's long press offers Open to the Side. Short of the split's room (a
+    Fold 5 upright, about 590 px, under Two sheets' 720), the two fold into
+    the page you're in, and the bar names both, a tap turning to the other.
+    **Two pages when narrow** (`appearance.narrowPages`, the phone's, this
+    device's, off by default) keeps them side by side however narrow, in
+    every Split mode, each half the room while it's short of the mode's own
+    (the divider moves them again once there's room).
+    The notes over the page are never under its scrim.
   - Folding, turning the phone, or choosing a room with one page closes the
     page you're not in, never its note: it's the other note, ⇄, where it was
     left. Whatever room, the pane you were at stays. In a room with one page,
@@ -1552,7 +1568,7 @@ Compare or Restore finishes lands on a note opened meanwhile.
     a note shows the page. A bar above the pane goes back, naming where
     ("‹ Fic", "‹ Library"); leaving the page closes what lay over it.
   - No split and no New Window: the phone shows one page (but with Wide
-    screen's Panes), and its menus offer neither. Instead, with
+    screen's Panes or Two pages), and, but for those, its menus offer neither. Instead, with
     the page in sight, the bar keeps the note
     you came from a tap away at its right (⇄ and its name): a tap goes back
     to it where you left it (its caret and how far it was scrolled), and the

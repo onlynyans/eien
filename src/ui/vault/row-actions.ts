@@ -35,7 +35,7 @@ export function rowActions(of: RowActionsOf): {
 } {
   const { state, organizer, order } = of;
   const act = (operation: () => Promise<unknown>) => void of.act(operation);
-  const beside = (path: string) => void of.actions().openNote(path, true);
+  const beside = (path: string) => void of.actions().openNote(path, 'beside');
   const menus: MenuContext = {
     state,
     organizer,
@@ -61,7 +61,7 @@ export function rowActions(of: RowActionsOf): {
     moveFolder: (path, how) => order.moveFolder(path, how),
   };
   const rows: RowActions = {
-    open: (path) => void of.actions().openNote(path),
+    open: (path) => void of.actions().openNote(path, 'chosen'),
     openBeside: beside,
     menu: (path, at, ordered) => showNoteMenu(menus, path, at, ordered),
     nudge: (path, by) => order.nudgeNote(path, by),

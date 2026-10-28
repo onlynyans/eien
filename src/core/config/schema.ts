@@ -96,13 +96,13 @@ export const SETTINGS = [
     key: 'appearance.room',
     label: 'Wide screen',
     description:
-      'How a screen wider than a phone’s (a foldable opened, a tablet, a phone turned sideways) is used. Panes: the desktop’s panes, at a finger’s size. One at a time: as on a phone. Side by side: the pane you came from beside the one you’re in.',
+      'How a screen wider than a phone’s (a foldable opened, a tablet, a phone turned sideways) is used. Panes: the desktop’s panes, at a finger’s size. One at a time: as on a phone. Side by side: the pane you came from beside the one you’re in. Two pages: the notes slide over the page, and the second note chosen opens beside the first, laid out as Split says.',
     // The phone's build (web: its page in tests/mobile): the desktop's window is always panes.
     platforms: ['android', 'ios', 'web'],
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
-    choices: { panes: 'Panes', one: 'One at a time', side: 'Side by side' },
+    choices: { panes: 'Panes', one: 'One at a time', side: 'Side by side', pages: 'Two pages' },
     default: 'panes',
   },
   {
@@ -120,7 +120,6 @@ export const SETTINGS = [
       follow: 'Tools that follow',
     },
     default: 'sheets',
-    wide: true, // only the panes open a second page
   },
   {
     key: 'appearance.facingMark',
@@ -132,7 +131,19 @@ export const SETTINGS = [
     type: 'choice',
     choices: { ribbon: 'Ribbon', dogear: 'Dog-ear', tab: 'Edge tab' },
     default: 'ribbon',
-    wide: true,
+  },
+  {
+    key: 'appearance.narrowPages',
+    label: 'Two pages when narrow',
+    description:
+      'Two notes stay side by side however narrow the screen (a foldable opened upright), each half of it. Off, short of room they do as Split says: fold into one page, close the book, put the companion under the page, or wait.',
+    // The phone's build, where a screen can be too narrow for two and still show them.
+    platforms: ['android', 'ios', 'web'],
+    scope: 'device',
+    group: 'Appearance',
+    type: 'choice',
+    choices: { off: 'Off', on: 'On' },
+    default: 'off',
   },
   {
     key: 'appearance.shutSidebar',

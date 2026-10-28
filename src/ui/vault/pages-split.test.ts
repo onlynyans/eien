@@ -181,3 +181,34 @@ describe('the pane too narrow for two pages', () => {
     expect(pager.hidden).toBe(true);
   });
 });
+
+describe('Two pages when narrow', () => {
+  it('keeps two pages side by side in a pane too narrow for them, and folds them, live, once off', async () => {
+    const { pages, area, change } = await split();
+    const pagesRow = area.querySelector<HTMLElement>('.page__pages');
+    if (!pagesRow) throw new Error('no pages');
+    vi.spyOn(pagesRow, 'clientWidth', 'get').mockImplementation(() => 590); // a Fold 5 upright
+    change({ 'appearance.narrowPages': 'on' });
+    expect(pagesRow.dataset.narrow).toBeUndefined();
+    expect(row(area)).toEqual(['Snow', 'divider', 'Rain, the active page']);
+    expect(pages.pane.pager.hidden).toBe(true);
+    change({ 'appearance.narrowPages': 'off' });
+    expect(pagesRow.dataset.narrow).toBe('fold');
+    expect(pages.pane.pager.hidden).toBe(false);
+  });
+
+  it('keeps every mode side by side: the book stays open, Tools that follow never waits', async () => {
+    for (const mode of ['facing', 'companion', 'follow'] as const) {
+      const { area, change } = await split();
+      const pagesRow = area.querySelector<HTMLElement>('.page__pages');
+      if (!pagesRow) throw new Error('no pages');
+      vi.spyOn(pagesRow, 'clientWidth', 'get').mockImplementation(() => 590);
+      change({ 'appearance.split': mode, 'appearance.narrowPages': 'on' });
+      expect(pagesRow.dataset.narrow, mode).toBeUndefined();
+      expect(pagesRow.dataset.dock, mode).toBeUndefined();
+      // Each half the room: the companion too, which keeps its own width only where both fit.
+      const main = area.querySelector<HTMLElement>('.page__main');
+      expect(main?.style.getPropertyValue('--split-share'), mode).toBe('0.5');
+    }
+  });
+});
