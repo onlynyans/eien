@@ -59,6 +59,25 @@ My Vault/
   Ideas.md
 ```
 
+### Formats
+
+Eien's own files are JSON, and none carries a format version yet: not
+`config.json`, `pinned.json`, `tags.json`, a theme in `themes/`, nor a folder's
+`.eien-folder.json`. Each is read leniently instead (keys it doesn't know are
+kept, values it can't use are ignored), so an older Eien and a newer
+one on two synced devices read each other's files.
+
+- **A new file starts with `"version": 1`**, beside its other keys: the
+  EPUB reader's reading state (backlog #40, Phase 1) is the first.
+- An existing file takes a `"version"` only when its shape changes in a way
+  an older Eien would misread; a file without one is the shape this spec
+  describes. A bare list (`pinned.json`) becomes an object to carry it.
+- A file whose version is newer than this Eien knows is read for what it can,
+  and never written over: a newer device's settings are never lost to an
+  older one.
+- A change an older Eien would misread is a breaking change: its pull
+  request's title carries `!` (AGENTS.md → Releases).
+
 ### Notes
 
 - A note is any `.md` file in the vault, outside `.eien/`. Other files are
