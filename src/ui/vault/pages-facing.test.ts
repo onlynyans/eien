@@ -116,7 +116,7 @@ describe('the book too narrow for two pages', () => {
     expect(edge?.getAttribute('aria-label')).toBe('Turn to Snow, the facing page');
     expect(pages.pane.pager.hidden).toBe(true); // a book turns; it doesn't fold
     edge?.click();
-    expect(pages.notes().active).toBe('Snow.md');
+    expect(pages.shown().active).toBe('Snow.md');
     expect(row.dataset.activeSide).toBe('1');
   });
 });

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   conflictName,
   freeNoteName,
+  isInside,
   isValidName,
   nameKey,
   nameProblems,
@@ -208,6 +209,16 @@ describe('vaultPath', () => {
 
   it('refuses something that is not text', () => {
     expect(() => vaultPath(42 as unknown as string)).toThrow(VaultPathError);
+  });
+});
+
+describe('isInside', () => {
+  it('holds a folder itself and what lies in it, never a name that only starts the same', () => {
+    expect(isInside('Fic', 'Fic')).toBe(true);
+    expect(isInside('Fic/Rain.md', 'Fic')).toBe(true);
+    expect(isInside('Fic/Deep/Snow.md', 'Fic')).toBe(true);
+    expect(isInside('Fiction/Rain.md', 'Fic')).toBe(false);
+    expect(isInside('Rain.md', 'Fic')).toBe(false);
   });
 });
 

@@ -22,9 +22,9 @@ describe('the pages, with one page', () => {
   it('shows the note opened on the active page, and names it as the only note shown', async () => {
     const { pages, area } = await pagesWith({ 'Fic/Snow.md': 'Snow fell all night.' });
     stops.push(() => pages.stop());
-    expect(pages.notes()).toEqual({ active: null, other: null });
+    expect(pages.shown()).toEqual({ active: null, other: null });
     await pages.open('Fic/Snow.md');
-    expect(pages.notes()).toEqual({ active: 'Fic/Snow.md', other: null });
+    expect(pages.shown()).toEqual({ active: 'Fic/Snow.md', other: null });
     expect(pages.sides).toHaveLength(1);
     expect(noted(pages.active).page.element.hasAttribute('data-active')).toBe(true); // the one page
     expect(noted(pages.active).page.editor.text).toBe('Snow fell all night.');
@@ -86,7 +86,7 @@ describe('the pages, with one page', () => {
     expect(note.session).toBe(session); // the one session: nothing read twice, nothing to save twice
     await pages.open('Rain.md');
     expect(note.shown).toBe(first + 2);
-    expect(pages.sessions().map(({ path }) => path)).toEqual(['Rain.md']);
+    expect(pages.notes.sessions().map(({ path }) => path)).toEqual(['Rain.md']);
   });
 
   it('closes the page whose note went to the trash with its folder, and no other', async () => {
@@ -94,10 +94,10 @@ describe('the pages, with one page', () => {
     stops.push(() => pages.stop());
     await pages.open('Fic/Snow.md');
     pages.closed('Rain.md');
-    expect(pages.notes().active).toBe('Fic/Snow.md');
+    expect(pages.shown().active).toBe('Fic/Snow.md');
     pages.closed('Fic');
-    expect(pages.notes().active).toBeNull();
-    expect(pages.sessions()).toEqual([]);
+    expect(pages.shown().active).toBeNull();
+    expect(pages.notes.sessions()).toEqual([]);
     expect(noted(pages.active).page.writable).toBe(false);
   });
 
@@ -106,20 +106,20 @@ describe('the pages, with one page', () => {
     stops.push(() => pages.stop());
     await pages.open('Fic/Snow.md');
     const { editor } = noted(pages.active).page;
-    pages.freeze('Other', true);
+    pages.notes.freeze('Other', true);
     expect(editor.amend('Snow, still.', false)).toBe(true);
-    pages.freeze('Fic', true);
+    pages.notes.freeze('Fic', true);
     expect(editor.amend('Snow, held.', false)).toBe(false);
-    pages.freeze('Fic', false);
+    pages.notes.freeze('Fic', false);
     expect(editor.amend('Snow, let go.', false)).toBe(true);
   });
 
   it('changes an open note’s words as Eien’s own, through its page, and saves them', async () => {
     const { pages, storage } = await pagesWith({ 'Snow.md': 'Snow.' });
     stops.push(() => pages.stop());
-    expect(await pages.amendOpen('Snow.md', (text) => `${text} Amended.`)).toBeNull();
+    expect(await pages.notes.amendOpen('Snow.md', (text) => `${text} Amended.`)).toBeNull();
     await pages.open('Snow.md');
-    expect(await pages.amendOpen('Snow.md', (text) => `${text} Amended.`)).toBe(true);
+    expect(await pages.notes.amendOpen('Snow.md', (text) => `${text} Amended.`)).toBe(true);
     expect((await storage.read('Snow.md'))?.text).toBe('Snow. Amended.');
     expect(noted(pages.active).page.editor.text).toBe('Snow. Amended.');
   });

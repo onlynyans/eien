@@ -36,6 +36,10 @@ export const parentOf = (path: string): string => path.slice(0, Math.max(0, path
 /** The last part of `path`. */
 export const baseName = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
 
+/** Whether `path` is `folder` or lies inside it (a folder's name alone never matches "Fic" in "Fiction"). */
+export const isInside = (path: string, folder: string): boolean =>
+  path === folder || path.startsWith(`${folder}/`);
+
 /** `folder` and `name` joined. */
 export const joinPath = (folder: string, name: string): string =>
   folder ? `${folder}/${name}` : name;

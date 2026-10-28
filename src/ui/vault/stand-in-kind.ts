@@ -2,7 +2,8 @@
 // in for the EPUB's until it's built (backlog #40), so the tests show the
 // split, its pager, swap, ⇄ and the rooms carrying a page whatever it holds.
 // It holds `*.stand` files: its name is the file's, its colophon figure says
-// which leaf it's at, and its place is that leaf.
+// which leaf it's at, and its place is that leaf. Its kind's upkeep is told
+// to each of its pages (`told`), so a test sees which pages each kind was given.
 
 import type { SettingValues } from '../../core/config';
 import { baseName } from '../../core/paths';
@@ -21,13 +22,25 @@ export interface StandInSide extends Side {
   /** The leaf it's at: a test turns it. */
   leaf: number;
   readonly followed: SettingValues[];
+  /** The kind's upkeep this page was given to, in order: 'flush', 'diskChanged', 'followMoves', 'sync', 'stop'. */
+  readonly told: string[];
   readonly disposed: boolean;
 }
+
+/** Each of `sides` told `what`. */
+const tell = (sides: readonly Side[], what: string) => {
+  for (const side of sides) (side as StandInSide).told.push(what);
+};
 
 export const standInKind: PageKindOf = {
   kind: 'epub',
   holds: (path) => path.endsWith('.stand'),
   make: (hooks, left) => standIn(hooks.close, left),
+  flush: async (sides) => tell(sides, 'flush'),
+  diskChanged: (_changed, sides) => tell(sides, 'diskChanged'),
+  followMoves: (sides) => tell(sides, 'followMoves'),
+  sync: (sides) => tell(sides, 'sync'),
+  stop: (sides) => tell(sides, 'stop'),
 };
 
 function standIn(close: () => void, left: Place | null): StandInSide {
@@ -72,6 +85,7 @@ function standIn(close: () => void, left: Place | null): StandInSide {
     page,
     leaf: 0,
     followed,
+    told: [],
     get disposed() {
       return disposed;
     },

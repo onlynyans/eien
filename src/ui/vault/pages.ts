@@ -4,18 +4,20 @@
 // or another kind given (an EPUB's, backlog #40). A file opens on a page of
 // the kind that holds it, put in the place of one of another kind. The
 // menu's commands, the pane's tools and the window-wide parts
-// (./page-parts.ts) act on the active page.
+// (./page-parts.ts) act on the active page. This is their arrangement; what
+// a kind keeps up over its pages is the kind's (`PageKindOf`), and what the
+// window asks of notes alone is ./note-pages.ts's.
 
+import { isInside } from '../../core/paths';
 import type { OutBridge } from '../../platform/bridge';
 import { type SplitSpec, splitSpecOf } from '../chrome/splits';
 import type { ShownNotes } from '../list/shown-notes';
-import type { NoteSession } from '../notes/note-session';
 import { PagePane } from '../page/page-pane';
 import type { Written } from '../page/word-count';
 import type { SettingsState } from '../settings/settings-state';
-import { sealTargetOf } from '../versions/seal-target';
 import type { Navigation } from './navigation';
-import { isNote, type NoteSide, type NoteSideOf, noteKind } from './note-side';
+import { NotePages, noteKind } from './note-pages';
+import { isNote, type NoteSide, type NoteSideOf } from './note-side';
 import { OpenNotes } from './open-notes';
 import { type PageParts, pageParts } from './page-parts';
 import type { PageKindOf, Place, Side } from './page-side';
@@ -36,8 +38,6 @@ export interface PagesOf extends Omit<NoteSideOf, 'wrote' | 'counted'> {
   rearranged(): void;
 }
 
-const inside = (path: string, folder: string) => path === folder || path.startsWith(`${folder}/`);
-
 /** How two pages are laid out, as `values` say (appearance.split, appearance.narrowPages). */
 const specFor = (values: SettingsState['values']): SplitSpec =>
   splitSpecOf(values['appearance.split'], values['appearance.narrowPages'] === 'on');
@@ -46,8 +46,9 @@ export class Pages {
   readonly pane: PagePane;
   /** What the pages share, acting on the active one: counters, Copy as HTML, exports, outline cards. */
   readonly parts: PageParts;
+  /** What the window asks of the notes on the pages alone (the organizer, the counters). */
+  readonly notes: NotePages;
   readonly #of: PagesOf;
-  readonly #notes: OpenNotes;
   /** The kinds of page, a note's last: it holds whatever the others don't. */
   readonly #kinds: readonly PageKindOf[];
   /** Left to right: one page, or two while the window is split. */
@@ -58,17 +59,18 @@ export class Pages {
 
   constructor(of: PagesOf) {
     this.#of = of;
-    this.#notes = new OpenNotes(of.vault, of.refresh);
-    const notes = noteKind(
+    const open = new OpenNotes(of.vault, of.refresh);
+    this.notes = new NotePages(open, () => this.#sides);
+    const note = noteKind(
       {
         ...of,
         wrote: (added: number, when: Written) => this.parts.wrote(added, when),
         counted: () => this.parts.counted(),
       },
-      this.#notes,
+      open,
     );
-    this.#kinds = [...(of.kinds ?? []), notes];
-    this.#active = this.#make(notes);
+    this.#kinds = [...(of.kinds ?? []), note];
+    this.#active = this.#make(note);
     this.#sides = [this.#active];
     this.pane = new PagePane(of.area, this.#active.page, {
       activate: (page) => {
@@ -119,7 +121,7 @@ export class Pages {
     return specFor(this.#of.settings.values);
   }
 
-  notes(): ShownNotes {
+  shown(): ShownNotes {
     return { active: this.#active.path, other: this.other?.path ?? null };
   }
 
@@ -194,63 +196,31 @@ export class Pages {
     this.#place();
   }
 
-  /** Every note open, for the organizer: a move or the trash waits for its words. */
-  sessions(): NoteSession[] {
-    return this.#notes.sessions();
-  }
-
-  /** The note open at `path`, whichever page shows it. */
-  session(path: string): NoteSession | null {
-    return this.#notes.session(path);
-  }
-
   /** `path` went to the trash: the pages showing it, or a file in it, show nothing. */
   closed(path: string): void {
-    for (const side of this.#sides) if (side.path && inside(side.path, path)) side.clear();
-  }
-
-  /** Hold still (true) or let go (false) the notes' pages showing `path`, or a note in it, while it moves. */
-  freeze(path: string, frozen: boolean): void {
-    for (const { path: shown, page } of this.#noteSides())
-      if (shown && inside(shown, path)) page.editor.setLocked(frozen);
-  }
-
-  /**
-   * Change the words of the note at `path` as Eien's own edit, through a
-   * page showing it (as a seal's id is, ../versions), and save it: whether
-   * that worked, or null when no page shows it.
-   */
-  async amendOpen(path: string, change: (text: string) => string): Promise<boolean | null> {
-    const side = this.#noteSides().find((each) => each.path === path);
-    return side ? (sealTargetOf(side.note, side.page)?.amend(change, false) ?? null) : null;
-  }
-
-  /** Notes this window moved or renamed: kept, named and imaged where they are now. */
-  followMoves(): void {
-    this.#notes.followMoves();
-    this.pane.renamed();
+    for (const side of this.#sides) if (side.path && isInside(side.path, path)) side.clear();
   }
 
   /** Save whatever is unsaved, and count what was just written (today's words) without a pause. */
   async flush(): Promise<void> {
-    this.flushWords();
-    await this.#notes.flush();
+    // At once, each kind: one kind's save never waits for another's.
+    await Promise.all(this.#kinds.map((kind) => kind.flush(this.#sidesOf(kind))));
   }
 
-  /** Count what was just written on every page, now. */
-  flushWords(): void {
-    for (const { page } of this.#noteSides()) page.words.flush();
-  }
-
-  /** Files changed on disk: open notes look again, and another device may have sealed one. */
+  /** Files changed on disk: what each page shows looks again (an open note; a seal another device made). */
   diskChanged(changed: ReadonlySet<string>): void {
-    this.#notes.diskChanged(changed);
-    for (const { versions } of this.#noteSides()) void versions.diskChanged(changed);
+    for (const kind of this.#kinds) kind.diskChanged(changed, this.#sidesOf(kind));
   }
 
-  /** Another note open, or the vault read again: each page's seals, and what the pages share, see it. */
+  /** Files this window moved or renamed: kept, named and imaged where they are now. */
+  followMoves(): void {
+    for (const kind of this.#kinds) kind.followMoves(this.#sidesOf(kind));
+    this.pane.renamed();
+  }
+
+  /** Another file open, or the vault read again: each page, and what the pages share, see it. */
   sync(): void {
-    for (const { versions } of this.#noteSides()) versions.sync();
+    for (const kind of this.#kinds) kind.sync(this.#sidesOf(kind));
     this.parts.sync();
   }
 
@@ -258,7 +228,7 @@ export class Pages {
     this.#stopSettings();
     this.pane.stop();
     this.parts.stop();
-    for (const { versions } of this.#noteSides()) versions.stop();
+    for (const kind of this.#kinds) kind.stop(this.#sidesOf(kind));
   }
 
   #place(): void {
@@ -270,8 +240,9 @@ export class Pages {
     this.#of.rearranged();
   }
 
-  #noteSides(): NoteSide[] {
-    return this.#sides.filter(isNote);
+  /** The pages of `kind`: one kind per `PageKind` (a stand-in's and the EPUB's are never both given). */
+  #sidesOf(kind: PageKindOf): Side[] {
+    return this.#sides.filter((side) => side.kind === kind.kind);
   }
 
   /**

@@ -1,7 +1,8 @@
-// A page: a note on its sheet (or outline cards in its place), with what
-// the colophon says of it — its words, its save, its last seal — and its
-// versions panel, which the page pane (./page-pane.ts) puts where they go. The
-// pane holds one page, or two when the window is split.
+// A page: a note on its sheet (./note-sheet.ts; or outline cards in its
+// place), with what the colophon says of it — its words, its save, its last
+// seal — and its versions panel, which the page pane (./page-pane.ts) puts
+// where they go. The pane holds one page, or two when the window is split.
+// This wires the editor, its words and tags, and the page's frame round the sheet.
 
 import { h } from '../dom';
 import { EDITOR_MODES, type EditorEvents, type EditorMode, NoteEditor } from '../editor/editor';
@@ -10,12 +11,11 @@ import { SelectionBar } from '../editor/selection-bar';
 import { TableBar } from '../editor/table-bar';
 import type { ImageLoader } from '../editor/widgets';
 import type { SaveState } from '../notes/note-session';
-import { quietButton } from '../quiet-button';
 import { BoardHost } from './board-host';
 import { NoteFoot } from './note-foot';
+import { NoteSheet } from './note-sheet';
 import { type PageLeaf, type PaneLeaf, pageLeaf } from './page-leaf';
 import { PageTags, type PageTagsOf } from './page-tags';
-import { PageTitle } from './page-title';
 import { WordCount } from './word-count';
 
 export interface PageNote {
@@ -28,50 +28,21 @@ export interface PageNote {
 
 export class PageView implements PaneLeaf {
   readonly editor: NoteEditor;
-  readonly #crumbs = h('p', { class: 'crumbs label' });
-  /** The breadcrumb again, for a running head across the window (C's): the pane shows the active page's. */
-  readonly runningCrumbs = h('p', { class: 'label running-crumbs' });
   /** Where a layout puts the note's tags (../chrome/layout-spec.ts, TagSlot). */
   readonly tagSlots = {
     runningHead: h('div', { class: 'sheet__tags' }),
     underTitle: h('div', { class: 'title-tags' }),
     colophon: h('span', { class: 'colophon__tags' }),
   };
-  /** The note's name, renamed in place (./page-title.ts). */
-  readonly #title: PageTitle = new PageTitle({
-    rename: (typed) => this.#rename(typed),
-    done: () => this.editor.focus(),
-    text: () => this.editor.text,
-  });
-  readonly #notice = h('p', { class: 'notice', attrs: { role: 'status', hidden: true } });
-  readonly #editorHost = h('div', { class: 'editor-host' });
-  /** The editor, with its table's controls laid over it (../editor/table.css). */
-  readonly #editorFrame = h('div', { class: 'page__editor' }, this.#editorHost);
-  /** In the editor's place while a seal is compared or shown (read only). */
-  readonly #compareHost = h('div', { class: 'compare-host', attrs: { hidden: true } });
+  readonly #sheet: NoteSheet;
+  /** The breadcrumb again, for a running head across the window (C's): the pane shows the active page's. */
+  readonly runningCrumbs: HTMLElement;
   /** The note's words, and what writing adds to them (./word-count.ts). */
   readonly words = new WordCount();
   /** Where outline cards lie, in the sheet's place (./board-host.ts). */
   readonly board: BoardHost;
   /** A phone's table tools, above the keyboard while the caret's in a table (../editor/table-bar.ts). */
   readonly tableBar: TableBar;
-  readonly #sheet = h(
-    'article',
-    { class: 'sheet quiet-row' },
-    h('div', { class: 'sheet__head' }, this.#crumbs, this.tagSlots.runningHead),
-    this.#title.element,
-    this.#title.field,
-    this.tagSlots.underTitle,
-    this.#notice,
-    this.#editorFrame,
-    this.#compareHost,
-  );
-  /** With no note open; it takes the keyboard when the page is given it. */
-  readonly #empty = h('p', {
-    class: 'page__empty',
-    text: 'Choose a note, or make a new one.',
-    attrs: { tabindex: '-1' },
-  });
   /** The page's own part of the pane: the blotter round the sheet, scrolled, its head and foot round it. */
   readonly element: HTMLElement;
   /** The blotter round the sheet, which scrolls: where a note's place is kept. */
@@ -84,12 +55,9 @@ export class PageView implements PaneLeaf {
   /** Beside the pane: the versions panel. */
   readonly aside = h('div', { class: 'page__aside' });
   readonly #caret = new Set<() => void>();
-  readonly #rename: (typed: string) => void;
   /** The note's tags, in the slot the layout names (./page-tags.ts). */
   readonly tags: PageTags;
   readonly #selection: SelectionBar;
-  /** The sheet's ×, at its top right while the window is split. */
-  readonly #closer: HTMLButtonElement;
 
   /**
    * `layer` holds what floats over the page (the selection bar); `rename`
@@ -104,18 +72,28 @@ export class PageView implements PaneLeaf {
       readonly tags: Omit<PageTagsOf, 'editable'>;
     },
   ) {
-    this.#rename = events.rename;
-    this.editor = new NoteEditor(this.#editorHost, {
+    this.#sheet = new NoteSheet(
+      {
+        rename: events.rename,
+        done: () => this.editor.focus(),
+        text: () => this.editor.text,
+        close: () => events.close(),
+      },
+      this.tagSlots,
+    );
+    const { title } = this.#sheet;
+    this.runningCrumbs = this.#sheet.runningCrumbs;
+    this.editor = new NoteEditor(this.#sheet.editorHost, {
       changed: (text, written) => {
         this.words.edited(text, written);
-        this.#title.follow(text);
+        title.follow(text);
         this.tags.edited();
         events.changed(text, written);
       },
       // The same note typed in on the other page: its words, title and tags here follow.
       echoed: (text) => {
         this.words.echoed(text);
-        this.#title.follow(text);
+        title.follow(text);
         this.tags.edited();
       },
       follow: events.follow,
@@ -126,24 +104,16 @@ export class PageView implements PaneLeaf {
       },
       said: (words) => this.foot.tell(words),
     });
-    this.#editorFrame.append(this.editor.tableTools);
+    this.#sheet.editorFrame.append(this.editor.tableTools);
     this.tableBar = new TableBar(this.editor.view);
     this.tags = new PageTags(this.editor, { ...events.tags, editable: () => !this.comparing });
-    const scroll = h('div', { class: 'page__scroll' }, this.#sheet, this.#empty);
+    const scroll = h('div', { class: 'page__scroll' }, this.#sheet.element, this.#sheet.empty);
     this.scroll = scroll;
     this.board = new BoardHost(scroll);
     scroll.append(this.board.element);
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(scroll));
     this.element.append(this.editor.find.element);
     this.#selection = new SelectionBar(layer, this.editor);
-    this.#closer = quietButton({
-      label: 'Close this page',
-      icon: 'close',
-      keys: 'Mod-w',
-      class: 'sheet__close',
-      run: () => events.close(),
-    });
-    this.#sheet.prepend(this.#closer);
     this.showNothing();
   }
 
@@ -169,7 +139,7 @@ export class PageView implements PaneLeaf {
       this.tags.set.element,
       editor.tableTools,
       this.under,
-      this.#closer,
+      this.#sheet.closer,
       editor.find.element,
     ];
   }
@@ -187,12 +157,12 @@ export class PageView implements PaneLeaf {
 
   /** The note's name, as its title shows it; '' with no note on the page. */
   get name(): string {
-    return this.#sheet.hidden ? '' : this.#title.text;
+    return this.#sheet.hasNote ? this.#sheet.title.text : '';
   }
 
   /** Whether a note is on the page, its text there to change (not a seal compared). */
   get writable(): boolean {
-    return !this.#sheet.hidden && !this.comparing && !this.board.shown;
+    return this.#sheet.hasNote && !this.comparing && !this.board.shown;
   }
 
   /** The seals' parts: a line in the colophon, a panel beside. */
@@ -204,23 +174,18 @@ export class PageView implements PaneLeaf {
   /** Show `view` (read only) in the editor's place; null gives the editor back. */
   compare(view: HTMLElement | null): void {
     if (view) this.board.hide();
-    this.#compareHost.replaceChildren(...(view ? [view] : []));
-    this.#compareHost.hidden = view === null;
-    this.#editorHost.hidden = view !== null;
+    this.#sheet.compare(view);
   }
 
   /** Whether a seal is shown in the editor's place. */
   get comparing(): boolean {
-    return !this.#compareHost.hidden;
+    return this.#sheet.comparing;
   }
 
   show(note: PageNote): void {
     this.board.hide();
-    this.#sheet.hidden = false;
-    this.#empty.hidden = true;
-    this.#crumbs.textContent = this.runningCrumbs.textContent = note.crumbs;
     const { text } = note.doc;
-    this.#title.set(note.title, text);
+    this.#sheet.show(note.crumbs, note.title, text);
     this.editor.show(note.doc, note.loadImage);
     this.notice(null);
     this.state('saved');
@@ -230,27 +195,23 @@ export class PageView implements PaneLeaf {
 
   showNothing(): void {
     // The note gone (closed, trashed, gone from disk) with the keyboard in it: the page takes it.
-    const had = this.#sheet.contains(document.activeElement);
-    this.#sheet.hidden = true;
-    this.#empty.hidden = false;
-    this.runningCrumbs.textContent = '';
+    const had = this.#sheet.nothing();
     this.editor.release();
     this.words.clear();
     this.tags.clear();
     this.state('saved');
-    if (had && !this.board.shown) this.#empty.focus();
+    if (had && !this.board.shown) this.#sheet.empty.focus();
   }
 
   /** The note read again from disk: its document has the new text already (../vault/open-notes.ts). */
   reloaded(text: string): void {
     this.words.show(text);
     this.tags.show(text);
-    this.#title.follow(text);
+    this.#sheet.title.follow(text);
   }
 
   retitle(title: string, crumbs: string): void {
-    this.#title.set(title, this.editor.text);
-    this.#crumbs.textContent = this.runningCrumbs.textContent = crumbs;
+    this.#sheet.retitle(title, this.editor.text, crumbs);
   }
 
   setMode(mode: EditorMode): void {
@@ -271,8 +232,7 @@ export class PageView implements PaneLeaf {
 
   /** A quiet line on the sheet, or none. */
   notice(text: string | null): void {
-    this.#notice.hidden = text === null;
-    this.#notice.textContent = text ?? '';
+    this.#sheet.notice(text);
   }
 
   state(state: SaveState): void {
@@ -285,10 +245,10 @@ export class PageView implements PaneLeaf {
    */
   focus(typing = false): void {
     if (this.board.shown) this.board.focus();
-    else if (this.#sheet.hidden) this.#empty.focus();
-    else if (this.comparing) this.#compareHost.querySelector<HTMLElement>('[tabindex]')?.focus();
+    else if (!this.#sheet.hasNote) this.#sheet.empty.focus();
+    else if (this.comparing) this.#sheet.focusCompared();
     else if (typing || !matchMedia('(hover: none)').matches) this.editor.focus();
-    else if (!this.#title.element.hidden) this.#title.element.focus();
+    else if (!this.#sheet.title.element.hidden) this.#sheet.title.element.focus();
     else (document.activeElement as HTMLElement | null)?.blur(); // the title is the note's own heading
   }
 
@@ -297,11 +257,11 @@ export class PageView implements PaneLeaf {
    * on the page, not outline cards nor a seal compared in its place.
    */
   find(replace: boolean): void {
-    if (!this.#sheet.hidden && !this.comparing && !this.board.shown) this.editor.find.open(replace);
+    if (this.writable) this.editor.find.open(replace);
   }
 
   /** Rename the note: its title becomes a field, the words chosen; Enter keeps them, Esc doesn't. */
   editTitle(): void {
-    if (!this.#sheet.hidden) this.#title.edit();
+    if (this.#sheet.hasNote) this.#sheet.title.edit();
   }
 }

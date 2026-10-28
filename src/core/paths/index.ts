@@ -31,4 +31,4 @@ export {
   stampOf,
   titleOf,
 } from './sibling-names';
-export { baseName, joinPath, parentOf, VaultPathError, vaultPath } from './vault-path';
+export { baseName, isInside, joinPath, parentOf, VaultPathError, vaultPath } from './vault-path';

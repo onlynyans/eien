@@ -50,7 +50,7 @@ describe('a note dropped on the page pane', () => {
     expect(drop.over(200 + 100, 100)).toBe(true);
     expect(label()).toBe('Open here, in place of Snow');
     drop.drop('Hail.md');
-    expect(pages.notes().active).toBe('Snow.md');
+    expect(pages.shown().active).toBe('Snow.md');
     expect(opened).toEqual([['Hail.md', false]]);
   });
 
