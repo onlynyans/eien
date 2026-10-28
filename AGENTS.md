@@ -32,6 +32,9 @@ Each feature has one word, in code, files, CSS and docs:
   enforces it.
 - **The window never touches the disk.** All file access goes through the
   `Storage` interface in `src/platform/`.
+- **Data formats.** A new file Eien keeps (in `.eien/` or beside a note)
+  starts with `"version": 1`; a change an older Eien would misread is a
+  breaking one. Spec §2 → Formats.
 - **Settings** are added only in `src/core/config/schema.ts`. **Theme tokens**
   only in `src/ui/theme/tokens.css`, documented in `docs/design/README.md`.
 - **Verify, don't assume.** Every behavior change comes with a test that would
@@ -119,6 +122,7 @@ npm run android      # builds the phone's page and copies it into android/
 npm run test:android # builds and installs the debug APK, then tests it on the device adb sees
 npm run test:ios-files # the iOS plugin's Swift file operations, with swiftc (Command Line Tools)
 npm run test:ios     # on a Mac with Xcode: the app on an iPhone simulator (CI runs it)
+npm run changelog    # the next CHANGELOG.md section, from pull requests' titles (-- 0.5.0 writes it)
 npm run package      # builds, then this system's installer in dist/ and portable copy in dist/portable/
 npm run test:packaged  # starts the packaged apps in dist/ (or EIEN_APP, EIEN_PORTABLE_APP) (Playwright)
 ```
@@ -142,8 +146,9 @@ browser extension in Chromium (its build kept as the run's artifact) and
 the Android debug build (its APK kept as the run's artifact), and on macOS the
 iOS plugin's Swift tests and the app on an iPhone simulator, on every push to
 `main` and every pull request. All seven checks the repository's ruleset
-names must pass before a pull request merges; the extension's joins
-them once the ruleset names it. The Android tests on a device are run by hand. An end-to-end test that holds the app to a time (a draw,
+names must pass before a pull request merges; the extension's, and
+Pull request title (`.github/workflows/pr-title.yml`), join them once the
+ruleset names them. The Android tests on a device are run by hand. An end-to-end test that holds the app to a time (a draw,
 a search, typing without a stall), or drags with the pointer, is tagged
 `ALONE` (`@alone`, from `tests/e2e/launch.ts`): those run after the rest, one
 at a time, so they measure Eien and not the tests running beside them, and no
@@ -187,13 +192,73 @@ a `settings.json` from the data folder there, never over one already there;
 while the vault last opened holds `Documents/Eien`, the file stays in the data
 folder, and Eien says so once.
 
-To release, set the version in `package.json` and merge, then tag `main` with
-it: `git fetch origin && git tag v0.2.0 origin/main && git push origin v0.2.0`.
-`.github/workflows/release.yml` checks the tag matches the version, builds
-each installer on its own system, installs and starts it there, and attaches
-all three to a draft release, which the owner publishes by hand. Run by hand
-(Actions → Release → Run workflow), it builds and tries the installers with no
-release, keeping them as the run's artifacts.
+- **One version.** `package.json`'s `version` is the only one. The
+  extension's manifest takes it as it's built; `npm run android` and
+  `npm run ios` write it into the phone projects (`scripts/version.mjs`):
+  Android's `versionName` and iOS's `MARKETING_VERSION`, and as the build
+  number both stores need to rise (`versionCode`, `CURRENT_PROJECT_VERSION`)
+  major×10000 + minor×100 + patch, so 0.5.0 is 500. `tests/version.test.ts`
+  fails when any of them disagrees with `package.json`.
+- **Semantic Versioning, below 1.0** while nothing is published: a minor
+  version (0.5.0) for a release with features, a patch (0.5.1) for fixes
+  alone. 1.0 is the version the owner first publishes.
+- **Pull request titles** are Conventional Commits, as a squash merge makes
+  the title main's commit subject and the changelog is drafted from those:
+  `type(scope): subject`, and GitHub adds ` (#NN)`.
+  - Types: `feat` (something a writer can do or see that they couldn't),
+    `fix`, `perf`, `refactor`, `docs`, `test`, `ci`, `build`, `chore`.
+  - `!` before the colon for a change that breaks a vault's files or settings,
+    one an older Eien would misread (spec §2 → Formats):
+    `feat(settings)!: one file for the faces`.
+  - The scope, when there is one, is one of the Words or an area, lower case:
+    `epub`, `extension`, `editor`, `split`, `phone`, `settings`, `sidebar`,
+    `list`, `export`, `versions`, `themes`, `search`, `tags`, `sync`.
+  - The subject is in the project's voice, plain, lower case after the colon
+    (a name in capitals stays: `EPUB`, `AO3`), with no full stop:
+    `feat(epub): open an EPUB on a page`, `fix(editor): the caret stays in a cell`.
+  - The **Pull request title** check (`.github/workflows/pr-title.yml`,
+    `scripts/titles.mjs`) holds every pull request to this, and runs again when
+    a title is edited. It's its own workflow, so a rename never cancels or
+    repeats the rest of CI.
+- **CHANGELOG.md** has a section for each version, in Features, Fixes and
+  Other. `npm run changelog` prints what the next section would say, from
+  main's subjects since the last tag; `npm run changelog -- 0.5.0` writes it
+  in place of the Unreleased section (or above the newest release).
+  `--since <ref>` starts somewhere other than the last tag. The release
+  workflow holds each tag to it: `npm run changelog -- --notes 0.5.0` prints
+  a release's section as committed, and fails without one.
+
+To cut a release, on a branch from `main`:
+
+1. `npm version 0.5.0 --no-git-tag-version`: `package.json`, its lock, and the
+   phone projects (npm's `version` script runs `scripts/version.mjs`).
+2. `npm run changelog -- 0.5.0`, then read the section and edit it: say it as
+   a writer would want to hear it, join a feature's several pull requests in
+   one line, and drop what no writer meets. (0.4.0's section is written
+   already, by hand, as its titles weren't conventional: give its heading the
+   version and the date instead.)
+3. A pull request, `chore: release 0.5.0`; merge it once CI passes.
+4. Tag `main` with it: `git fetch origin && git tag v0.5.0 origin/main && git push origin v0.5.0`.
+   `.github/workflows/release.yml` checks the tag matches the version and
+   that CHANGELOG.md has its section, builds each installer on its own
+   system, installs and starts it there, and attaches all three to a draft
+   release whose notes are that section, which the owner publishes by hand.
+   Run by hand (Actions → Release → Run workflow), it builds and tries the
+   installers with no release, keeping them as the run's artifacts.
+
+0.2.0 and 0.3.0 were written into CHANGELOG.md afterwards, each ending at
+the commit named under its heading; nothing was built for them. Their tags are
+the owner's to add, if wanted:
+`git tag v0.2.0 ab9a78c && git tag v0.3.0 2491dbd && git push origin v0.2.0 v0.3.0`.
+Each starts `release.yml`, which stops within a minute, red, at its first
+check (`package.json` at those commits still says 0.1.0, and CHANGELOG.md
+wasn't there yet), and makes no release.
+
+**Next: 0.4.0, proposed.** CHANGELOG.md's Unreleased section, stage 4 (the
+extension, Wide screen, find and replace, subfolders) and the EPUB reader's
+groundwork (#40 Phases 0a and 0b), is the first build since 0.1.0. Cutting it
+before #40's next phases gives a checkpoint to go back to, and tries the
+release path once from start to end. The owner decides.
 
 - **Identity.** The product name `Eien` and app id `io.github.onlynyans.eien`
   never change. Electron names the device's data folder (userData:
