@@ -27,6 +27,9 @@ words.
 | Showcase | [epub-room.html](epub-room.html) | 1 · The reading room (recommended as a mode, after 2) |
 | | [epub-set.html](epub-set.html) | **2 · Set as a book** (recommended, for Pages) |
 | | [epub-lamp.html](epub-lamp.html) | 3 · By lamplight (recommended later, as a mode on Scroll) |
+| Turning | [epub-flip-turn.html](epub-flip-turn.html) | 1 · The leaf turns (the spread's, if a book's turn is wanted) |
+| | [epub-flip-aside.html](epub-flip-aside.html) | **2 · Set aside** (recommended, for a hand) |
+| | [epub-flip-ink.html](epub-flip-ink.html) | **3 · The words turn** (recommended, for a key or a click) |
 
 ## What all nine share
 
@@ -454,4 +457,91 @@ gradient or accent. The seal stays in its five places.
   sink is `4 × --line`, the numeral `1.5 × --eien-size-title`, the capitals'
   tracking half `--eien-track-label`, and `--lamp-run` two thirds of the
   pane's height. The room's cross-fade is `--eien-calm` on `--eien-ease`.
+
+## Turning: three motions for the page (2026-10-28)
+
+How a page goes when you turn it. All three turn Pages 2's leaf (the
+recommended one) so only the motion differs, and each ends with the
+fore-edge a step on. The bar's **Speed** shows a motion four times slower,
+and **Motion** shows what reduced motion does: the page changes at once, as
+Eien's rule asks ("none with reduced motion").
+
+Shared by all three:
+
+- **Asked for, so it moves:** a key, a click on an edge or margin, a tap in a
+  phone's outer third, or a drag. Nothing turns that you didn't turn.
+- **Never in the way:** a key pressed mid-turn finishes the turn at once and
+  starts the next, so fast reading never waits on a motion. The next page is
+  laid out under the motion from its first frame.
+- **Held by hand** (1 and 2): drag an edge or a margin (anywhere on the
+  phone's page) and the motion follows the pointer part way. Let go past a
+  third and it turns; short of it, it falls back. This works across a
+  chapter's end too.
+- **Tokens only:**
+  - durations are multiples of `--eien-calm`, on `--eien-ease`, with no
+    spring;
+  - depth is the two shadows: the sheet's at rest, the float shadow on a
+    sheet in your hand;
+  - a leaf's back is the band's tone in a rule-strong hairline (the dog-ear's
+    flap);
+  - no gradient shades a turn.
+- **Built** from `_src/epub-flip.js` and `epub-flip.css`. The leaf is
+  `epub-stack.*`, now shared with Pages 2.
+
+| | What moves | Time | For | Against |
+|---|---|---|---|---|
+| **1 · The leaf turns** | The page rises at its outer edge and turns over the spine; past upright, its back; it lies down with the pages read | 2 × calm (440ms) | Unmistakably a book; held by hand; Eien's depth | The longest; 3D in a flat window; on one page it lies down where no left page is (it's the spread's turn) |
+| **2 · Set aside** | The page read is lifted (float shadow) and carried off left, out past the blotter; the next lay under it | 2 × calm (440ms) | Eien's own picture, sheets on a desk; flat; the page beneath is still and readable at once | Less of a book; a long way to travel; back is on, mirrored |
+| **3 · The words turn** | Nothing but the ink: the words step out a space-2 toward where you go (quick), the next page's step in (calm) | quick + calm (340ms) | The calmest and fastest; works for every direction, width and layout; e-paper's way | The least like a book; nothing to hold on a phone |
+
+### 1 · The leaf turns
+
+- **What:** the page rises at its outer edge and turns over the spine, its
+  left edge, in perspective two and a half sheet-widths off. It narrows as
+  it rises; past upright you see its back, and it lies down to the left,
+  fading. Back, the last page read turns over onto the page.
+- **The tail:** on Eien's ease it's upright at nine tenths of the way, about
+  half the time. The rest is its back lying down, while the next page is
+  already there to read. On one page the back lies over the blotter, where
+  no left page is, so in the spread (Pages 1) it would land on the left page
+  as in print.
+- **Intent:** the reader who wants a book. *Depth:* the float shadow in the
+  air, the sheet's at rest. *Palette:* the back is the band and a rule-strong
+  hairline.
+
+### 2 · Set aside
+
+- **What:** sheets on a desk, the way Eien draws a note. The page you've
+  read is lifted in the first steps (the float shadow, as a dragged row
+  wears it) and carried off to the left, out past the blotter's edge. The
+  next page was beneath it all along. Back, the top sheet of the read pile
+  is carried back over the page and set down.
+- **Intent:** Eien's own picture, not a bound book's. *Depth:* a sheet in
+  hand floats; the one beneath lies. Nothing turns over or narrows.
+
+### 3 · The words turn
+
+- **What:** the paper never moves. The page's words step out
+  `--eien-space-2` toward where you're going, in the quick time. The next
+  page's words step in from the other side over the calm time after them, so
+  two pages' words never lie on each other.
+- **Holding it:** there's nothing to hold. A drag or a swipe asks for the
+  turn, as a key does.
+- **Intent:** the reader of a long book at night; nothing moves but ink,
+  which is all Eien moves in a note.
+
+### Recommendation: 3 for a key or a click, 2 for a hand
+
+- **The motion follows the input.** A key or a click moves no object, so its
+  turn is 3's: the words step and the page is readable in a third of a
+  second, as calm as everything else in Eien.
+- **A hand moves things.** A drag on the desktop, or a finger on the phone,
+  takes hold of the sheet as 2 sets it aside: it follows the hand and goes
+  where the hand sends it. That's the gesture a phone teaches, in Eien's
+  flat depth.
+- **1 is the spread's**, if the owner wants a book's turn. It's at its best
+  over a gutter, where the leaf has a left page to land on. On one page its
+  second half is out of sight.
+- **Reduced motion:** all three become an instant change, so the choice
+  costs nothing there.
 

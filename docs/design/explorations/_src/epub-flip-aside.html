@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Turning 2 · Set aside</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:epub.css*/
+/*@include:epub-flip.css*/
+
+/* Turning 2 · Set aside. Not a bound book: sheets on a desk, as Eien draws a
+   note. The page you've read is lifted (the float shadow, as a dragged row
+   wears it) and carried off to the left, onto the pile read; the next was
+   lying under it all along. Back, the top sheet of the pile is carried back
+   over the page. Nothing turns over, nothing narrows: a sheet moves flat. */
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:epub.js*/
+/*@include:epub-stack.js*/
+/*@include:epub-flip.js*/
+
+const shadow = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+Flip.play = ({ from, to, dir }) => {
+  const T = turnTime(2);
+  const easing = EASE();
+  // Forward, the page read is carried off; back, the last one read is carried back over the page.
+  const sheet = dir > 0 ? from : to;
+  const under = dir > 0 ? to : from;
+  sheet.style.zIndex = '3';
+  under.style.zIndex = '2';
+  // Far enough to clear the desk the page lies on: past the blotter's left edge, the width of its own margin more.
+  const r = to.getBoundingClientRect();
+  const clip = to.closest('.blotter, .phone__body').getBoundingClientRect();
+  const s = r.width / to.offsetWidth || 1;
+  const away = -((r.right - clip.left) / s + px('--eien-space-5'));
+  const rest = { transform: 'translateX(0)', boxShadow: shadow('--eien-shadow-sheet') };
+  const lifted = shadow('--eien-shadow-float');
+  // Lifted at once, carried, set down: the shadow rises in the first steps and stays while it moves.
+  const near = (offset) => ({ transform: `translateX(${away * 0.08}px)`, boxShadow: lifted, offset });
+  const gone = { transform: `translateX(${away}px)`, boxShadow: lifted };
+  // Back, the same path the other way: carried in, set down in the last steps.
+  const frames = dir > 0 ? [rest, near(0.12), gone] : [gone, near(0.88), rest];
+  return [sheet.animate(frames, { duration: T, easing, fill: 'both' })];
+};
+
+mountEpubPage({
+  id: 'flip-aside',
+  bar: FLIP_BAR,
+  note: 'Sheets on a desk: the page read is lifted and carried off onto the pile; the next was beneath it.',
+  notes: `
+  <h2>Turning 2 · Set aside</h2>
+  <p>Not a bound book: sheets on a desk, the way Eien already draws a note. The page you've read is lifted, wearing the float shadow as a row you drag does, and carried off to the left, out past the blotter's edge, onto the pile you've read. The next page was lying under it all along. Back, the top sheet of the pile is carried back over the page and set down.</p>
+  <ul>
+    <li><b>Take hold of it:</b> drag an edge or a margin (anywhere on the phone's page) and the sheet comes with your hand; let go past a third and it's carried off, short of it and it's set back.</li>
+    <li><b>Nothing turns over:</b> no back, no spine, no 3D; a sheet moves flat, as everything in Eien does. The fore-edge's read pile at the left grows by a hairline when it lands.</li>
+    <li><b>Time:</b> twice the calm time, 440ms, on Eien's ease: lifted in the first steps, carried, slowing as it goes.</li>
+    <li><b>In the spread</b> (Pages 1) both pages would be carried off together, as a pair of sheets: it suits one page better.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>The sheet slides away under your thumb and the next is there: the gesture a phone already teaches, with the paper's own shadow to say a sheet is in hand.</p>
+  <h2>For</h2>
+  <ul><li>Eien's own picture (sheets on a blotter, not a bound book), so it fits the window it's in.</li><li>Flat: the only motion is a sheet sliding, which the eye reads at once.</li><li>The page beneath is still while the sheet moves, so you can start reading it before the motion ends.</li></ul>
+  <h2>Against</h2>
+  <ul><li>Less of a book: you're dealing sheets, not turning pages.</li><li>A long way to travel, across the blotter, many times an hour.</li><li>Back reads the same as on, only mirrored; the read pile is what tells you where you went.</li></ul>
+  ${FLIP_NOTES()}`,
+});
+</script>
+</body>
+</html>

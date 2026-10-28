@@ -1,0 +1,13 @@
+/* Shared by the turning explorations (epub-flip-*.html): Pages 2's leaf, and
+   what a turn needs. The page you leave is a copy laid over the page you're
+   going to; a leaf's back is the paper's back, the band's tone in a
+   rule-strong hairline, as the dog-ear's flap is. No gradient shades a turn. */
+/*@include:epub-stack.css*/
+/* The turn is the only motion: Home and End, and a chapter chosen, go at once. */
+.flow { transition: none; }
+.flip-copy { pointer-events: none; }
+.flip-back { position: absolute; z-index: 4; inset: 0; background: var(--eien-band); border: var(--eien-hairline) solid var(--eien-rule-strong); opacity: 0; pointer-events: none; }
+.win[data-layout='slip'] .flip-back { border-radius: inherit; }
+/* A page you can take hold of: the phone's page turns under a drag, so a drag never selects. */
+.phone .phone__page { user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+.edges button, .turn { touch-action: pan-y; }

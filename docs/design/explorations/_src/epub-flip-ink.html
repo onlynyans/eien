@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — Reading EPUBs: Turning 3 · The words turn</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:epub.css*/
+/*@include:epub-flip.css*/
+
+/* Turning 3 · The words turn. The paper never moves: the sheet lies where it
+   lies, its shadow, head and folio as they are. Only the ink changes: the
+   page's words step out a space-2 toward where you're going, in the quick
+   time, and the next page's words step in from the other side over the calm
+   time after them, so two pages' words never lie on each other. */
+/* The copy is the words alone: its paper, edge, shadow, head and folio are the page's own, already there. */
+.flip-copy.flip-words { background: none; border-color: transparent; box-shadow: none; }
+.flip-copy.flip-words > :not(.leaves) { visibility: hidden; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:epub.js*/
+/*@include:epub-stack.js*/
+/*@include:epub-flip.js*/
+
+// Nothing to take hold of: a drag or a swipe asks for the turn, and the words do the rest.
+Flip.holds = false;
+Flip.play = ({ from, to, dir }) => {
+  const easing = EASE();
+  const quick = (parseFloat(getComputedStyle(root).getPropertyValue('--eien-quick')) || 120) * (root.dataset.speed === 'slow' ? 4 : 1);
+  const step = px('--eien-space-2') * dir;
+  from.classList.add('flip-words');
+  const leaving = from.querySelector('.leaves');
+  const coming = to.querySelector('.leaves');
+  return [
+    leaving.animate([{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: `translateX(${-step}px)` }], { duration: quick, easing, fill: 'both' }),
+    coming.animate([{ opacity: 0, transform: `translateX(${step}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: turnTime(1), delay: quick, easing, fill: 'both' }),
+  ];
+};
+
+mountEpubPage({
+  id: 'flip-ink',
+  bar: FLIP_BAR,
+  note: 'The paper never moves: the page’s words step out, the next page’s step in.',
+  notes: `
+  <h2>Turning 3 · The words turn</h2>
+  <p>The paper never moves. The sheet lies where it lies, its shadow, running head and folio as they are; only the ink changes. The page's words step out, a small step toward where you're going, in Eien's quick time; the next page's words step in from the other side over the calm time after them. They never overlap, so two pages' words never lie on each other.</p>
+  <ul>
+    <li><b>The step</b> is space-2, the smallest on the scale: enough to say which way you went, too little to watch.</li>
+    <li><b>Nothing to take hold of:</b> a drag or a swipe on the page asks for the turn, as a key does; there's no sheet to carry part way.</li>
+    <li><b>Time:</b> 120ms out, 220ms in: a third of a second, the shortest of the three, and the eye is on the new words almost at once.</li>
+    <li><b>The same in the spread and in columns</b> (Pages 1 and 3): the words change in place, whatever holds them.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>A tap in either outer third or a swipe, and the words change under your eye: the way e-paper readers turn, and the kindest to a phone's battery and to a long night's reading.</p>
+  <h2>For</h2>
+  <ul><li>The calmest: nothing moves but ink, which is all Eien ever moves in a note.</li><li>The fastest to read through: the new page is readable a third of a second after the key.</li><li>Works for every reading direction, any width, any layout, without change.</li></ul>
+  <h2>Against</h2>
+  <ul><li>The least like a book: no page goes anywhere, so the turn is felt only in the words' small step and the folio.</li><li>Nothing to hold on a phone, where a page that follows the finger is what people expect.</li></ul>
+  ${FLIP_NOTES()}`,
+});
+</script>
+</body>
+</html>
