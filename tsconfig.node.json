@@ -3,6 +3,9 @@
   "compilerOptions": {
     "lib": ["ES2024"],
     "types": ["node"],
+    // The release scripts are plain JavaScript, run by node; their JSDoc types are checked.
+    "allowJs": true,
+    "checkJs": true,
     "tsBuildInfoFile": "node_modules/.cache/tsc/node.tsbuildinfo"
   },
   "include": [
@@ -12,6 +15,9 @@
     "src/app/extension",
     "tests/*.ts",
     "tests/support",
+    "scripts/version.mjs",
+    "scripts/titles.mjs",
+    "scripts/changelog.mjs",
     "electron.vite.config.ts",
     "electron-builder.ts",
     "vite.mobile.config.ts",

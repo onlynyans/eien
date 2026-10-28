@@ -1,11 +1,16 @@
 # Weekly updates, minor and patch only, each ecosystem's in one pull request.
 # A major version is a decision, made by hand (docs/dependencies.md).
+# Titles are Conventional Commits, as every pull request's (AGENTS.md →
+# Releases): "build(deps): bump the npm group with 6 updates".
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: build
+      include: scope
     groups:
       npm:
         patterns: ['*']
@@ -17,6 +22,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: ci
+      include: scope
     groups:
       actions:
         patterns: ['*']
