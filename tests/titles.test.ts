@@ -1,7 +1,9 @@
 // A pull request's title becomes main's commit subject, and the changelog is
 // read from those (scripts/titles.mjs, CI's "Pull request title" check).
 
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
 import { readTitle } from '../scripts/titles.mjs';
 
 describe('a pull request’s title', () => {
@@ -70,6 +72,29 @@ describe('a pull request’s title', () => {
       const read = readTitle(title);
       expect(read.ok, title).toBe(false);
       if (!read.ok) expect(read.problem.length, title).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('Dependabot’s titles', () => {
+  it('are conventional too, so its pull requests pass the check', () => {
+    // With a prefix and include: scope, Dependabot writes "prefix(deps): bump …", in lower case.
+    const config = parse(
+      readFileSync(new URL('../.github/dependabot.yml', import.meta.url), 'utf8'),
+    ) as {
+      updates: {
+        'package-ecosystem': string;
+        'commit-message'?: { prefix?: string; include?: string };
+      }[];
+    };
+    for (const update of config.updates) {
+      const message = update['commit-message'];
+      const ecosystem = update['package-ecosystem'];
+      expect(message?.include, ecosystem).toBe('scope');
+      for (const scope of ['deps', 'deps-dev']) {
+        const title = `${message?.prefix}(${scope}): bump the ${ecosystem} group with 6 updates`;
+        expect(readTitle(title).ok, title).toBe(true);
+      }
     }
   });
 });
