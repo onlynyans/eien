@@ -1,6 +1,7 @@
 // The settings that are custom properties on <html> (spec §6): the interface
 // font and its sizes, the Source font and its size, the weight of names, and
-// the Running head's strip ground. Worked out here, without a window, so the
+// the Running head's strip ground, and the steps of line spacing and page
+// width over each face's own leading and measure. Worked out here, without a window, so the
 // rules are tested; ./look.ts sets them. A property at its default is taken
 // off, so tokens.css's own value stands.
 
@@ -42,6 +43,13 @@ function sourceFace(id: string): LookProperties {
   };
 }
 
+/** Line spacing and page width: a step either side of the face's own leading and measure. */
+export const LEADING = { tight: 0.9, set: 1, loose: 1.12 } as const;
+export const WIDTH = { narrow: 0.84, set: 1, wide: 1.18 } as const;
+
+/** A multiplier, taken off at 1, so `var(--look-…, 1)` stands. */
+const times = (by: number) => (by === 1 ? null : String(by));
+
 export function lookProperties(values: SettingValues): LookProperties {
   const names = values['appearance.nameWeight'];
   const titles = values['appearance.titleWeight'];
@@ -54,5 +62,7 @@ export function lookProperties(values: SettingValues): LookProperties {
     '--eien-weight-list-chosen': titles === 400 ? null : String(chosenTitleWeight(titles)),
     // One of the theme's own surfaces, so the strip follows any theme.
     '--runhead-ground': ground === 'desk' ? null : `var(--eien-${ground})`,
+    '--look-lead': times(LEADING[values['appearance.leading']]),
+    '--look-width': times(WIDTH[values['page.width']]),
   };
 }

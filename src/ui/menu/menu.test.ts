@@ -189,6 +189,43 @@ describe('float', () => {
   });
 });
 
+describe('float, for a popover (#49)', () => {
+  it('lines its end up with the opener’s, once measured', () => {
+    const panel = document.createElement('div');
+    vi.spyOn(opener, 'getBoundingClientRect').mockReturnValue(new DOMRect(300, 20, 30, 30));
+    vi.spyOn(panel, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 200, 120));
+    float(panel, { opener, end: true });
+    expect(panel.style.getPropertyValue('--menu-x')).toBe('130px');
+  });
+
+  it('leaves a press on its opener to the opener’s click, so the opener can toggle it', () => {
+    const panel = document.createElement('div');
+    float(panel, { opener });
+    opener.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    expect(panel.isConnected).toBe(true);
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    expect(panel.isConnected).toBe(false);
+  });
+
+  it('gives the keyboard back only from inside it or nowhere, not once it went on elsewhere', () => {
+    const elsewhere = document.createElement('button');
+    document.body.append(elsewhere);
+    const panel = document.createElement('div');
+    const inside = document.createElement('button');
+    panel.append(inside);
+    let close = float(panel, { opener });
+    inside.focus();
+    close();
+    expect(document.activeElement).toBe(opener);
+
+    panel.replaceChildren(inside);
+    close = float(panel, { opener });
+    elsewhere.focus(); // ⌘3: the other page took the keyboard
+    close();
+    expect(document.activeElement).toBe(elsewhere);
+  });
+});
+
 describe('closeMenu', () => {
   it('says whether a menu was open (the system’s back closes it first)', () => {
     expect(closeMenu()).toBe(false);

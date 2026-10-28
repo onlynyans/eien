@@ -1,0 +1,140 @@
+/* The quick look (#49, ./quick-look.ts): what floats is raised paper, a
+   rule-strong hairline, the layout's --eien-radius-m and the float shadow.
+   As wide as the list, so two face cards stand side by side at Settings'
+   own size; held inside the window, scrolling if it must. Its rows are
+   Settings' own (../settings/controls.css), names only. */
+
+.quick-look {
+  position: fixed;
+  left: var(--menu-x, 0);
+  top: var(--menu-y, 0);
+  z-index: 30;
+  box-sizing: border-box;
+  width: min(var(--eien-list-w), calc(100vw - 2 * var(--eien-space-2)));
+  max-height: calc(100vh - var(--menu-y, 0px) - var(--eien-space-2));
+  overflow: auto;
+  padding: var(--eien-space-3) var(--eien-space-4) var(--eien-space-2);
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m);
+  box-shadow: var(--eien-shadow-float);
+  text-align: left;
+  animation: quick-look-in var(--eien-quick) var(--eien-ease);
+}
+@keyframes quick-look-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The head names whose look it is, in Settings' breadcrumb voice. */
+.quick-look__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--eien-space-3);
+  margin-bottom: var(--eien-space-3);
+  padding-bottom: var(--eien-space-2);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.quick-look__crumb b {
+  font-weight: 400;
+  color: var(--eien-ink-soft);
+}
+.quick-look__slash {
+  padding: 0 3px;
+  color: var(--eien-faded);
+}
+.quick-look__every {
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+  font-style: italic;
+  color: var(--eien-pencil);
+  white-space: nowrap;
+}
+
+/* Names only: what each does stays in Settings. */
+.quick-look .setting {
+  margin-bottom: var(--eien-space-3);
+}
+.quick-look .setting__about {
+  display: none;
+}
+.quick-look .setting__label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--eien-space-2);
+}
+.quick-look .faces {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.quick-look__aside {
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-pencil);
+}
+
+.quick-look__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--eien-space-2);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.quick-look__foot .word-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--eien-space-2);
+}
+.quick-look__key {
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  color: var(--eien-pencil);
+}
+
+/* The phone's sheet: from the screen's foot, at a finger's size, no scrim, so
+   the words above show each change. The faces are one row that scrolls sideways. */
+.quick-look--sheet {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  width: auto;
+  max-height: 62vh;
+  padding-bottom: calc(var(--eien-space-3) + env(safe-area-inset-bottom, 0px));
+  border-bottom: 0;
+  border-radius: var(--eien-radius-l) var(--eien-radius-l) 0 0;
+  animation-name: quick-look-up;
+  animation-duration: var(--eien-calm);
+}
+@keyframes quick-look-up {
+  from {
+    translate: 0 var(--eien-space-6);
+    opacity: 0;
+  }
+}
+.quick-look--sheet .faces {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 132px;
+  overflow-x: auto;
+  padding-bottom: var(--eien-space-1);
+}
+.quick-look--sheet .face,
+.quick-look--sheet .choices .word-button,
+.quick-look--sheet .quick-look__foot .word-button {
+  min-height: var(--eien-touch);
+}
+.quick-look--sheet .choices .icon-button,
+.quick-look--sheet .stepper .icon-button {
+  width: var(--eien-touch);
+  height: var(--eien-touch);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-look {
+    animation: none;
+  }
+}

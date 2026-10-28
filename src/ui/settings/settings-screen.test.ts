@@ -73,3 +73,18 @@ describe('Wide screen, on a phone wider than 600px', () => {
     expect(document.querySelector('.settings__tab[aria-current="true"]')).not.toBeNull();
   });
 });
+
+describe('opening at a category (#49’s All settings)', () => {
+  it('shows the category’s first tab, and with none named, the tab it was left at', async () => {
+    const screen = await screenOn('darwin');
+    tab('Editor')?.click();
+    screen.open();
+    expect(tab('Editor')?.getAttribute('aria-current')).toBe('true');
+    screen.close();
+    screen.open('Look');
+    expect(tab('Appearance')?.getAttribute('aria-current')).toBe('true');
+    expect(document.querySelector('.settings__crumbs')?.textContent).toBe(
+      'Settings/Look/Appearance',
+    );
+  });
+});

@@ -27,8 +27,9 @@
   transition: opacity var(--eien-calm) var(--eien-ease);
 }
 [data-layout="slip"] .page:hover .host--slip,
-[data-layout="slip"] .host--slip:focus-within {
-  opacity: 1;
+[data-layout="slip"] .host--slip:focus-within,
+[data-layout="slip"] .page__bar:has([aria-expanded="true"]) .host--slip {
+  opacity: 1; /* and while the quick look it opened is open */
 }
 /* Folded (#16): the slip keeps only its fold. */
 [data-layout="slip"] .shell[data-strip-shut] .host--slip > .host__group,

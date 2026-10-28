@@ -62,7 +62,8 @@
    static thing may cast. */
 .sheet {
   --pad-x: var(--eien-sheet-pad-x);
-  width: min(100%, calc(var(--eien-measure) + 2 * var(--eien-space-8)));
+  /* Page width's step over the face's own measure (ui/settings/look-properties.ts). */
+  width: min(100%, calc(var(--eien-measure) * var(--look-width, 1) + 2 * var(--eien-space-8)));
   min-height: 100%;
   margin: 0 auto;
   padding: var(--eien-sheet-pad-top) var(--pad-x) var(--eien-space-8);
@@ -156,7 +157,7 @@
 
 .page__empty {
   margin: var(--eien-space-8) auto;
-  max-width: var(--eien-measure);
+  max-width: calc(var(--eien-measure) * var(--look-width, 1));
   text-align: center;
   font-family: var(--eien-face-text);
   font-style: italic;

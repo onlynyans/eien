@@ -35,6 +35,12 @@ interface Common {
   readonly platforms?: readonly string[];
   /** Only on a window wide enough for panes side by side: never a phone's (spec §10). */
   readonly wide?: true;
+  /**
+   * In the quick look (#49, ui/quick-look): one value for every page (`window`), or a page's own
+   * (`page`): the notes' under this key, and from #40 Phase 1 the shelf's under `epub.<key>`,
+   * from this same entry.
+   */
+  readonly quick?: 'window' | 'page';
 }
 
 export interface ChoiceSetting extends Common {
@@ -67,6 +73,7 @@ export const SETTINGS = [
     type: 'choice',
     choices: { system: 'System', day: 'Day', night: 'Night' },
     default: 'system',
+    quick: 'window',
   },
   {
     key: 'appearance.palette',
@@ -184,6 +191,7 @@ export const SETTINGS = [
     // One list of faces feeds both face settings (./faces.ts).
     choices: faceChoices(TEXT_FACES),
     default: 'newsreader',
+    quick: 'page',
   },
   {
     key: 'appearance.interfaceFace',
@@ -216,6 +224,19 @@ export const SETTINGS = [
     max: 130,
     step: 10,
     default: 100,
+    quick: 'page',
+  },
+  {
+    key: 'appearance.leading',
+    label: 'Line spacing',
+    description: 'Lines a little closer or further apart than the typeface sets them.',
+    scope: 'device',
+    group: 'Type',
+    type: 'choice',
+    // A step either side of each face's own leading (ui/settings/look-properties.ts).
+    choices: { tight: 'Tight', set: 'As set', loose: 'Loose' },
+    default: 'set',
+    quick: 'page',
   },
   {
     key: 'appearance.nameWeight',
@@ -253,6 +274,20 @@ export const SETTINGS = [
     default: 'comfortable',
   },
   {
+    key: 'page.width',
+    label: 'Page width',
+    description:
+      'Lines a little shorter or longer than the typeface sets them, on a page with room round it.',
+    // A phone's page, and each of two side by side, is already narrower than any face's line.
+    wide: true,
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { narrow: 'Narrow', set: 'As set', wide: 'Wide' },
+    default: 'set',
+    quick: 'page',
+  },
+  {
     key: 'appearance.frame',
     label: 'Page',
     description:
@@ -262,6 +297,7 @@ export const SETTINGS = [
     type: 'choice',
     choices: { sheet: 'Sheet', full: 'Full' },
     default: 'sheet',
+    quick: 'page',
   },
   {
     key: 'editor.focus',

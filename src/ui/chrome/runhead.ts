@@ -18,7 +18,7 @@ export const RUNHEAD: LayoutSpec = {
       name: 'runhead-tools',
       slot: 'top',
       label: 'Page',
-      items: [VIEWS, 'compare', 'seal', 'versions', '|', 'format-bar', 'focus'],
+      items: [VIEWS, 'compare', 'seal', 'versions', '|', 'format-bar', 'focus', '|', 'look'],
       folds: TOOL_FOLDS,
     },
     formatBar('runhead-format'),
@@ -30,6 +30,6 @@ export const RUNHEAD: LayoutSpec = {
     name: 'phone-rail',
     slot: 'phoneFoot',
     label: 'Page',
-    items: [VIEWS, '|', 'focus', 'seal', 'more'],
+    items: [VIEWS, '|', 'focus', 'seal', 'look', 'more'],
   },
 };

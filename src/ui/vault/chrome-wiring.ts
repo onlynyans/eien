@@ -1,10 +1,11 @@
 // The layout's controls (../chrome) for a shown vault: the slots they're
 // drawn in, how each command looks now (./command-looks.ts), the commands
-// the window runs itself, and the layout drawn again when the setting changes.
+// the window runs itself, the layout drawn again when the setting changes,
+// and the quick look (../quick-look) its Look control opens.
 
 import { nextHeading } from '../../core/format';
 import { Chrome } from '../chrome/chrome';
-import type { CommandId, LocalCommandId } from '../chrome/commands';
+import { actsOn, type CommandId, type LocalCommandId } from '../chrome/commands';
 import type { CommandLook } from '../chrome/host';
 import { PHONE_TAGS } from '../chrome/layout-spec';
 import { LAYOUT_SPECS } from '../chrome/layouts';
@@ -12,6 +13,8 @@ import { rememberStrip, stripShut } from '../chrome/strip';
 import { tooltips } from '../chrome/tooltip';
 import { h } from '../dom';
 import type { MenuBus } from '../menu/menu-bus';
+import type { PageKind } from '../page/page-leaf';
+import { type LookSubject, QuickLook } from '../quick-look/quick-look';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
@@ -31,6 +34,8 @@ export interface VaultChromeOf {
   readonly settings: SettingsState;
   readonly menu: MenuBus;
   readonly mac: boolean;
+  /** The system's name: what the quick look offers here, as Settings does. */
+  readonly platform: string;
   /** A note in a window of its own: the desktop's only (a companion's ⋯ offers it). */
   readonly openInNewWindow?: (path: string) => void;
 }
@@ -88,6 +93,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     settings,
     layout: () => chrome.layout,
     strip: () => strip,
+    lookOpen: () => quick.isOpen,
   });
   /** How `id` looks now, for `side`'s page (a page's own host), else the page it acts on. */
   const look = (id: CommandId, side: Side = target(id)): CommandLook => looks(id, side);
@@ -147,6 +153,33 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     phone: () => of.phone.stack.phone,
   });
   tips.watch(pane.divider);
+
+  /** Whose look each kind of page wears: the notes' now; #40 Phase 1 adds the shelf's. */
+  const subjects: Partial<Record<PageKind, LookSubject>> = {
+    note: { crumb: 'Notes', every: 'every note', store: settings },
+  };
+  /** The side whose look is open: choosing the other page closes it. */
+  let lookSide: Side | null = null;
+  const quick = new QuickLook({
+    platform: of.platform,
+    mac: of.mac,
+    window: settings,
+    phone: () => of.phone.stack.phone,
+    allSettings: () => of.menu.run('settings:look'),
+    changed: () => chrome.refresh(),
+  });
+  /** Look: ⇧⌘L, View → Look…, the control, a ⋯'s: the active page's look, under its control. */
+  const toggleLook = () => {
+    const side = target('look');
+    const subject = subjects[side.kind];
+    if (!subject || !actsOn('look', side.kind)) return;
+    lookSide = side;
+    // On the phone's way too: a press on its control is then a toggle, not a close and open again.
+    quick.toggle(subject, chrome.inSight('look') ?? null);
+  };
+  const stopLook = of.menu.on((command) => {
+    if (command === 'look') toggleLook();
+  });
   const own = pageHosts({
     pages,
     mac: of.mac,
@@ -181,6 +214,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   };
   const refresh = () => {
     if (!mounted) return;
+    if (quick.isOpen && lookSide !== target('look')) quick.close();
     chrome.mount(settings.values['appearance.layout'], split()); // nothing when it's the same
     own.sync();
     watchPages();
@@ -214,6 +248,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       stopCaret();
       cancelAnimationFrame(frame);
       stopMenu();
+      stopLook();
+      quick.close();
       night.removeEventListener('change', refresh);
       chrome.unmount();
     },

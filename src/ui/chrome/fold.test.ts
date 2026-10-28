@@ -98,12 +98,13 @@ describe('A · Band’s bar', () => {
       'versions',
       'format-bar',
       'focus',
+      'look',
       'strip',
     ]);
   });
 
   it('folds the least asked for first, behind one ⋯ at the bar’s end', () => {
-    fitTo(8); // three views, three tools, the strip and the ⋯
+    fitTo(9); // three views, four tools, the strip and the ⋯
     expect(chrome.folded(bar())).toEqual(['compare', 'versions']);
     expect(mores().filter((button) => !button.hidden)).toHaveLength(1);
     expect(bar().lastElementChild?.contains(more() ?? null)).toBe(true);
@@ -123,7 +124,15 @@ describe('A · Band’s bar', () => {
       'versions',
       'format-bar',
       'focus',
+      'look',
     ]);
+  });
+
+  it('folds the look last of the tools, before the views (#49)', () => {
+    fitTo(6); // three views, seal, strip, ⋯
+    expect(chrome.folded(bar())).toEqual(['compare', 'versions', 'format-bar', 'focus', 'look']);
+    fitTo(7); // the look in sight still
+    expect(shown()).toEqual(['view.live', 'view.source', 'view.reading', 'seal', 'look', 'strip']);
   });
 
   it('unfolds when the bar has room again', () => {
@@ -134,14 +143,17 @@ describe('A · Band’s bar', () => {
   });
 
   it('hides a rule with no tool in sight on one side of it', () => {
-    const rule = bar().querySelector<HTMLElement>('.host__rule') as HTMLElement;
-    expect(rule.hidden).toBe(false); // compare seal versions | format-bar focus strip
-    fitTo(7); // views, seal | focus strip ⋯: versions, compare, format-bar folded
-    expect(rule.hidden).toBe(false);
+    const [rule, last] = bar().querySelectorAll<HTMLElement>('.host__rule');
+    // compare seal versions | format-bar focus | look strip
+    expect([rule?.hidden, last?.hidden]).toEqual([false, false]);
+    fitTo(8); // views, seal | focus | look strip ⋯: versions, compare, format-bar folded
+    expect([rule?.hidden, last?.hidden]).toEqual([false, false]);
+    fitTo(7); // views, seal | look strip ⋯: focus folded, the run between gone with its rule
+    expect([rule?.hidden, last?.hidden]).toEqual([false, true]);
     fitTo(3); // seal | strip ⋯: a run on each side still
-    expect(rule.hidden).toBe(false);
-    fitTo(1); // the strip alone: no tool before the rule
-    expect(rule.hidden).toBe(true);
+    expect([rule?.hidden, last?.hidden]).toEqual([false, true]);
+    fitTo(1); // the strip alone: no tool before a rule
+    expect([rule?.hidden, last?.hidden]).toEqual([true, true]);
   });
 
   it('leaves a bar the window doesn’t draw as it is (a phone’s)', () => {
@@ -167,6 +179,7 @@ describe('the ⋯', () => {
       'Versions',
       'Formatting bar',
       'Focus mode',
+      'Look',
     ]);
     const checked = [...document.querySelectorAll('.menu [aria-checked="true"]')].map(
       (item) => `${item.textContent?.trim()} ${item.getAttribute('role')}`,
