@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — A quick look: 2 · In the colophon</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:look.css*/
+
+/* 2 · In the colophon. The look is read out at the colophon's right end, whose
+   look and what it is (NOTES · NEWSREADER · 100%), in the colophon's own voice;
+   the readout is the control. The popover rises from it, a strip: the faces
+   beside the rest, so it covers the page's foot and not its words' middle. */
+.readout { display: inline-flex; align-items: center; gap: var(--eien-space-1); flex: none; margin-left: var(--eien-space-2); padding: var(--eien-space-1) var(--eien-space-2); font-size: var(--eien-size-meta); letter-spacing: 0; color: var(--eien-pencil); }
+.readout svg { width: var(--eien-space-3); height: var(--eien-space-3); }
+.readout .readout__whose { color: var(--eien-ink-soft); }
+.readout .dot { color: var(--eien-faded); }
+.readout[aria-expanded='true'] { color: var(--eien-ink); border-color: var(--eien-rule-strong); background: var(--eien-press); }
+/* Narrow, the readout keeps whose look it is; what it is waits for the popover. */
+@container (max-width: 460px) { .colophon .readout__what { display: none; } }
+/* The phone's page has a foot of its own for it: a colophon line under the words. */
+.phone__colophon { display: flex; justify-content: flex-end; align-items: center; min-height: var(--eien-touch); padding: 0 var(--eien-space-2); background: var(--eien-band); border-top: var(--eien-hairline) solid var(--eien-rule); font-family: var(--eien-face-mono); text-transform: uppercase; container-type: inline-size; }
+.phone__colophon .readout { min-height: var(--eien-touch); }
+.phone[data-layout='slip'] .phone__colophon { justify-content: flex-start; }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:look.js*/
+
+const readout = (kind, k) => {
+  const v = V[kind];
+  const what = `${esc(faceName(v['appearance.face']))} <span class="dot">·</span> ${v['appearance.textSize']}%`;
+  return `<button class="word-button readout" data-ql-open="${kind}" data-k="${k}" aria-haspopup="dialog" aria-expanded="false" aria-label="Look: ${WHOSE[kind]}, ${esc(lookWords(kind))}" data-tip="Look  ${KEY('Mod-Shift-L')}" data-tip-side="up">${icon('look')}<span class="readout__whose">${WHOSE[kind]}</span><span class="readout__what"><span class="dot">·</span> ${what}</span></button>`;
+};
+Look.name = 'colophon';
+Look.shape = 'strip';
+Look.place = { y: 'above', x: 'end' };
+Look.colophon = (ctx, kind) => readout(kind, `ql-open-${kind}`);
+Look.phoneFoot = (kind) => `<div class="phone__colophon">${readout(kind, `ql-open-${kind}`)}</div>`;
+Look.anchor = (kind) => `ql-open-${kind}`;
+
+mountLookPage({
+  id: 'colophon',
+  note: 'The colophon reads the look out (NOTES · NEWSREADER · 100%), and the readout opens it.',
+  notes: `
+  <h2>2 · In the colophon</h2>
+  <p>The colophon already says what the machine knows about the page: its words, its last seal, where you are in a book. Now it also says the page's look, at its right end: whose, then its face and size (<b>NOTES · NEWSREADER · 100%</b>, or, reading an EPUB, <b>SHELF · LITERATA · 100%</b>). The readout is the control: pressed, the popover rises from it, a strip twice the list's width, the faces beside the rest, so it covers the page's foot rather than the middle of the words.</p>
+  <ul>
+    <li><b>Where it lives:</b> the colophon's right end, in all three layouts (in C, after the note's tags). It's never quiet: the colophon is always shown, so the look is always one click away, and always says which look the page wears. Narrow, the readout keeps whose look it is (<b>NOTES</b>) and drops the face and size; it never drops away.</li>
+    <li><b>Its tooltip:</b> Look <kbd>${KEY('Mod-Shift-L')}</kbd>, above it. Its name reads it all: "Look: Notes, Newsreader · 100%".</li>
+    <li><b>Which look you're changing:</b> you know before you open it: the readout names it, and with both open it changes as you move between the note and the book (the colophon is the page you're in). The popover's head says it again, and the other page sits back while it's open.</li>
+    <li><b>The sidebar's sun stays</b> at its foot.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>A phone has no colophon, so the page gets a line at its foot for the readout alone, a finger high (B's on the left, clear of the floating slip). It opens the sheet from the screen's foot.</p>
+  <h2>For</h2>
+  <ul><li>Always in sight and always saying which look: the clearest answer to "which am I changing?", by Day and Night, in every layout.</li><li>A word button in a line that's already there: nothing added to the bars, nothing to fold.</li><li>The strip covers the page's foot, so the words you're reading stay in sight as they change.</li></ul>
+  <h2>Against</h2>
+  <ul><li>The colophon is the machine's quiet line; a control in it is less found than a bar's icon (its tooltip and the menu's View → Look… help).</li><li>A new line at the phone page's foot, a finger high.</li><li>The widest popover: 632px, more than a narrow page has; there it falls back to the column.</li></ul>
+  <h2>Intent</h2>
+  <ul>
+    <li><b>Intent:</b> the writer wants to know what the page is set in as much as to change it: the colophon is where Eien says what it knows.</li>
+    <li><b>Palette:</b> the colophon's pencil, the look's name in ink-soft; pressed, the press tone and a rule-strong hairline, as a word button is. No seal.</li>
+    <li><b>Depth:</b> the readout lies flat in the band; only the popover floats (float shadow, rule-strong edge).</li>
+    <li><b>Surfaces:</b> the band's ground for the readout, raised paper for the strip.</li>
+    <li><b>Typography:</b> the readout in the colophon's mono at meta size in capitals; the popover's names in the text face.</li>
+    <li><b>Spacing:</b> the strip's two columns space-5 apart, each as wide as the list.</li>
+  </ul>`,
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eien — A quick look: 1 · On the bar</title>
+<link rel="stylesheet" href="../fonts.css" />
+<style>
+/*@shared-css*/
+/*@include:look.css*/
+
+/* 1 · On the bar. The look is one more of the page's tools: an icon control at
+   the end of the tools the layout already has (A's band, B's slip, C's running
+   head; the phone's bar, slip or rail), after a hairline, since it acts on the
+   page's type rather than its text. The popover hangs under it. */
+.tools-rule.ql-rule { margin: 0 var(--eien-space-1); }
+</style>
+</head>
+<body>
+<script>
+/*@shared-js*/
+/*@include:keys.js*/
+/*@include:look.js*/
+
+const lookButton = (kind, k) => `<button class="icon-button" data-icon="look" data-ql-open="${kind}" data-k="${k}" aria-haspopup="dialog" aria-expanded="false" aria-label="Look: ${WHOSE[kind]}" data-tip="Look  ${KEY('Mod-Shift-L')}"></button>`;
+Look.name = 'bar';
+Look.shape = 'column';
+Look.place = { y: 'below', x: 'end' };
+Look.control = (ctx, kind) => `<span class="tools-rule ql-rule" aria-hidden="true"></span>${lookButton(kind, `ql-open-${kind}`)}`;
+Look.phoneTool = (ctx, kind) => lookButton(kind, `ql-open-${kind}`);
+Look.anchor = (kind) => `ql-open-${kind}`;
+
+mountLookPage({
+  id: 'bar',
+  note: 'The look is the page’s last tool: Aa at the end of the band, the slip or the running head.',
+  notes: `
+  <h2>1 · On the bar</h2>
+  <p>The look is one more of the page's tools. An icon control, <b>Aa</b>, stands at the end of the tools each layout already has, after a hairline: it acts on the page's type, not its text. Pressed, the popover hangs under it, its end lined up with the control's. It's a column, exactly Settings' controls, names only.</p>
+  <ul>
+    <li><b>Where it lives:</b> A · Band, the band's right end, after Compare, Versions and Focus (an EPUB's: after Contents). B · Slip, the slip's last control. C · Running head, the running head's tools, last. The band and the slip are quiet until the pointer is over the page; the control stays in sight while its popover is open.</li>
+    <li><b>Its tooltip:</b> Look <kbd>${KEY('Mod-Shift-L')}</kbd>. Its name says whose look: "Look: Notes" or "Look: Shelf".</li>
+    <li><b>Which look you're changing:</b> the popover's head, in Settings' breadcrumb voice: <b>LOOK / NOTES</b>, <i>every note</i>, or <b>LOOK / SHELF</b>, <i>every book on the shelf</i>. With both open, the page it doesn't change sits back (its paper the band's tone) while it's open. Choose the other page and the popover closes: the bar's tools are the page you're in.</li>
+    <li><b>The sidebar's sun stays</b> at its foot, one press for Day or Night, where it always was.</li>
+  </ul>
+  <h2>The phone</h2>
+  <p>Aa joins the page's tools where the layout keeps a phone's: A in the top bar, B the floating slip, C the rail. Its sheet rises from the screen's foot.</p>
+  <h2>For</h2>
+  <ul><li>Where a writer looks for a page's tool: beside the others, with a tooltip and a key, as every control is.</li><li>The simplest to build: one command (<code>chrome/commands.ts</code>) every host already draws; the bar's folding (<code>fold.ts</code>) takes it like any tool.</li><li>Settings' own controls, so nothing new to learn.</li></ul>
+  <h2>Against</h2>
+  <ul><li>One more icon on a bar that already folds when narrow: Aa needs a place in the fold's order (last to fold, before the views).</li><li>Which look it changes is said only once it's open.</li><li>The tallest of the three: it covers the page's top right while open.</li></ul>
+  <h2>Intent</h2>
+  <ul>
+    <li><b>Intent:</b> the writer three scenes in, or a chapter into someone else's book, at night: the words too small, the room too bright. They change it without leaving the page, and are back in the words in a second.</li>
+    <li><b>Palette:</b> the theme's own: raised paper, ink-soft controls, the chosen choice ink in a rule-strong hairline. No seal: it has five places, and this isn't one.</li>
+    <li><b>Depth:</b> it floats above the window, so the float shadow and a rule-strong edge (system.md: "whatever floats above the window"); the page's own depth is untouched.</li>
+    <li><b>Surfaces:</b> raised paper over paper; the wells in the press tone and face cards on paper, as Settings has them.</li>
+    <li><b>Typography:</b> the setting's name in the text face (a person wrote it), the head and the stepper's value in the machine voice (the machine counts it).</li>
+    <li><b>Spacing:</b> 4px base: space-3 between settings, space-4 at the sides; as wide as the list (<code>--eien-list-w</code>) so two face cards fit at Settings' size.</li>
+  </ul>`,
+});
+</script>
+</body>
+</html>
