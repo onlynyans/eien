@@ -4,10 +4,9 @@
 // the other one, so working between a chapter and its notes is one tap, not
 // back and forward again.
 
-import { baseName, titleOf } from '../../core/paths';
 import { h } from '../dom';
 import { icon } from '../icons';
-import type { NotePlace } from './open-note';
+import type { Place } from './page-side';
 import type { Pages } from './pages';
 
 export interface PhoneOtherOf {
@@ -17,7 +16,7 @@ export interface PhoneOtherOf {
   /** Whether the page is the pane in sight on a phone. */
   onPage(): boolean;
   /** Open `place`'s note where it was left, then draw the window. */
-  open(place: NotePlace): Promise<void>;
+  open(place: Place): Promise<void>;
 }
 
 export interface PhoneOther {
@@ -40,24 +39,25 @@ export function phoneOther(of: PhoneOtherOf): PhoneOther {
     name,
   );
   /** Where the note you came from was left. */
-  let other: NotePlace | null = null;
+  let other: Place | null = null;
   /** The page's last note left, as last seen: a new one is the other note. */
-  let seen: NotePlace | null = null;
+  let seen: Place | null = null;
   return {
     element,
     sync() {
-      const { note } = of.pages.active;
+      const active = of.pages.active;
       // The page beside, while there is one (so a page closed as the window folds is the other
-      // note, where it was); else the note the page last left, when it leaves another.
-      const beside = of.pages.other?.note.place;
-      const fresh = note.left !== seen;
-      seen = note.left;
+      // note, where it was); else the note the page last left, when it leaves another. Whatever
+      // either holds: a page's place is only its path, to it.
+      const beside = of.pages.other?.place;
+      const fresh = active.left !== seen;
+      seen = active.left;
       if (beside) other = beside;
       else if (fresh && seen) other = seen;
-      const shown = other !== null && other.path !== note.path && of.has(other.path);
+      const shown = other !== null && other.path !== active.path && of.has(other.path);
       element.hidden = !shown || !of.onPage();
       if (!shown || !other) return;
-      const title = titleOf(baseName(other.path));
+      const title = other.name;
       name.textContent = title;
       element.setAttribute('aria-label', `Switch to the other note: ${title}`);
     },

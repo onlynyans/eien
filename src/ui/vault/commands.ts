@@ -15,7 +15,7 @@ import type { PageParts } from './page-parts';
 import type { Pages } from './pages';
 
 export interface CommandContext {
-  /** The page and its note's seals: the active page's. */
+  /** The active page, and its note's seals when it holds a note. */
   readonly pages: Pages;
   readonly panes: PaneLayout;
   readonly sidebar: Sidebar;
@@ -35,19 +35,21 @@ export interface CommandContext {
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   const { panes, sidebar } = ctx;
-  const { page, versions } = ctx.pages.active;
+  const { page } = ctx.pages.active;
+  // A note's own commands (find, views, seals, formats) do nothing on a page of another kind.
+  const note = ctx.pages.activeNote;
   if (command === 'new-note') ctx.newNote();
   else if (command === 'search') {
     // The field in sight: the list's, or, with no list, the sidebar's, opened first if it's shut.
     if (ctx.search.isIn(sidebar.searchSlot)) panes.open('sidebar');
     ctx.search.focus();
   } else if (command === 'find' || command === 'find:replace')
-    page.find(command === 'find:replace');
-  else if (command === 'find:next' && page.writable) page.editor.find.next();
-  else if (command === 'find:previous' && page.writable) page.editor.find.previous();
-  else if (command === 'view:next') page.nextMode();
+    note?.page.find(command === 'find:replace');
+  else if (command === 'find:next' && note?.page.writable) note.page.editor.find.next();
+  else if (command === 'find:previous' && note?.page.writable) note.page.editor.find.previous();
+  else if (command === 'view:next') note?.page.nextMode();
   else if (command === 'view:live' || command === 'view:source' || command === 'view:reading') {
-    page.setMode(command.slice('view:'.length) as 'live' | 'source' | 'reading');
+    note?.page.setMode(command.slice('view:'.length) as 'live' | 'source' | 'reading');
   } else if (command === 'panes:sidebar') panes.toggle('sidebar');
   else if (command === 'panes:list') panes.toggle('list');
   else if (command === 'focus:sidebar') {
@@ -70,9 +72,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   } else if (command === 'split') {
     if (ctx.pages.split || ctx.splits()) void ctx.pages.toggle(); // a split closes in any room
   } else if (command === 'split:swap') ctx.pages.swap();
-  else if (command === 'seal') void versions.seal();
-  else if (command === 'compare') void versions.cycleCompare();
-  else if (command === 'versions') versions.showPanel(!versions.panelOpen);
+  else if (command === 'seal') void note?.versions.seal();
+  else if (command === 'compare') void note?.versions.cycleCompare();
+  else if (command === 'versions') note?.versions.showPanel(!note.versions.panelOpen);
   else if (command === 'copy-html') void ctx.parts.htmlCopy.copy();
   else if (command === 'export-html') void ctx.parts.exports.openNote('html');
   else if (command.startsWith('export-note:')) {
@@ -89,6 +91,6 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   } else if (command.startsWith('format:') && !ctx.parts.outline.open) {
     // Formats act on the page: never on one the outline cards are hiding.
     const format = formatCommand(command.slice('format:'.length));
-    if (format) page.editor.format(format);
+    if (format) note?.page.editor.format(format);
   }
 }

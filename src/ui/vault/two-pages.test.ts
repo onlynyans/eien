@@ -51,7 +51,7 @@ async function inRoom(
 }
 
 const notesShown = (pages: Awaited<ReturnType<typeof inRoom>>['pages']) =>
-  pages.sides.map((side) => side.note.path);
+  pages.sides.map((side) => side.path);
 
 describe('two pages', () => {
   it('opens the second note chosen beside the first, then any other on the page you’re in', async () => {
@@ -60,7 +60,7 @@ describe('two pages', () => {
     expect(notesShown(pages)).toEqual(['Chapter.md']);
     await actions.openNote('Notes.md', 'chosen');
     expect(notesShown(pages)).toEqual(['Chapter.md', 'Notes.md']);
-    expect(pages.active.note.path).toBe('Notes.md');
+    expect(pages.active.path).toBe('Notes.md');
     await actions.openNote('Map.md', 'chosen');
     expect(notesShown(pages)).toEqual(['Chapter.md', 'Map.md']);
   });

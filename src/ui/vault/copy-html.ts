@@ -6,11 +6,11 @@ import { toHtml } from '../../core/html';
 import type { OutBridge } from '../../platform/bridge';
 import { reasonOf } from '../reason';
 import type { SettingsState } from '../settings/settings-state';
-import type { Side } from './pages';
+import type { NoteSide } from './pages';
 
 export interface HtmlCopyParts {
-  /** The active page and its note. */
-  active(): Pick<Side, 'page' | 'note'>;
+  /** The active page and its note, or null when it holds something else. */
+  active(): Pick<NoteSide, 'page' | 'note'> | null;
   readonly out: OutBridge;
   readonly settings: SettingsState;
   tell(message: string): void;
@@ -37,9 +37,9 @@ export function htmlCopy(parts: HtmlCopyParts): HtmlCopy {
   return {
     /** ⇧⌘C: the words chosen, or the whole note, onto the clipboard as HTML. */
     async copy(): Promise<void> {
-      const { note, page } = parts.active();
-      if (!note.session) return;
-      const { state } = page.editor.view;
+      const on = parts.active();
+      if (!on?.note.session) return;
+      const { state } = on.page.editor.view;
       const { from, to } = state.selection.main;
       try {
         // What's chosen is read with the whole note: its links' references, its front matter left out.

@@ -13,7 +13,7 @@ import type { SaveState } from '../notes/note-session';
 import { quietButton } from '../quiet-button';
 import { Notice } from '../vault/notice';
 import { BoardHost } from './board-host';
-import { type PageLeaf, pageLeaf } from './page-leaf';
+import { type LeafFoot, type PageLeaf, type PaneLeaf, pageLeaf } from './page-leaf';
 import { PageTags, type PageTagsOf } from './page-tags';
 import { PageTitle } from './page-title';
 import { WordCount } from './word-count';
@@ -29,7 +29,7 @@ export interface PageNote {
 /** What the colophon says of the save: only a failure is worth a word. */
 const STATE_WORDS: Partial<Record<SaveState, string>> = { failed: 'Not saved yet — trying again' };
 
-export class PageView {
+export class PageView implements PaneLeaf {
   readonly editor: NoteEditor;
   readonly #crumbs = h('p', { class: 'crumbs label' });
   /** The breadcrumb again, for a running head across the window (C's): the pane shows the active page's. */
@@ -90,14 +90,8 @@ export class PageView {
   readonly folio: PageLeaf['folio'];
   /** The last seal. */
   readonly #sealLine = h('span', { class: 'colophon__seal' });
-  /** What the colophon says of this page's note, for the pane to put in place. */
-  readonly foot: {
-    readonly tags: HTMLElement;
-    readonly words: HTMLElement;
-    readonly state: HTMLElement;
-    readonly seal: HTMLElement;
-    readonly said: HTMLElement;
-  };
+  /** What the colophon says of this page's note: its tags, words, save and last seal. */
+  readonly foot: LeafFoot;
   /** Beside the pane: the versions panel. */
   readonly aside = h('div', { class: 'page__aside' });
   readonly #caret = new Set<() => void>();
@@ -106,7 +100,7 @@ export class PageView {
   readonly tags: PageTags;
   readonly #selection: SelectionBar;
   /** The sheet's ×, at its top right while the window is split. */
-  readonly closer: HTMLButtonElement;
+  readonly #closer: HTMLButtonElement;
 
   /**
    * `layer` holds what floats over the page (the selection bar); `rename`
@@ -153,32 +147,53 @@ export class PageView {
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(scroll));
     this.element.append(this.editor.find.element);
     this.foot = {
-      tags: this.tagSlots.colophon,
-      words: this.words.element,
-      state: this.#state,
-      seal: this.#sealLine,
+      lead: this.tagSlots.colophon,
+      figures: [this.words.element, this.#state],
+      trail: this.#sealLine,
       said: this.#said,
     };
     this.#selection = new SelectionBar(layer, this.editor);
-    this.closer = quietButton({
+    this.#closer = quietButton({
       label: 'Close this page',
       icon: 'close',
       keys: 'Mod-w',
       class: 'sheet__close',
       run: () => events.close(),
     });
-    this.#sheet.prepend(this.closer);
+    this.#sheet.prepend(this.#closer);
     this.showNothing();
   }
 
   /** The page closed (a side of the split): its note let go, and all it holds with it. */
   dispose(): void {
+    this.board.hide(); // outline cards on it are put away, not drawn again on a page gone
     this.showNothing();
     this.#selection.remove();
     this.#saying.stop();
     this.editor.destroy();
     for (const part of [this.element, this.aside, this.tableBar.element, this.runningCrumbs])
       part.remove();
+  }
+
+  get under(): HTMLElement {
+    return this.tableBar.element;
+  }
+
+  get tipped(): readonly HTMLElement[] {
+    const { editor } = this;
+    // A table's grips and + are in the editor's shadow root, so watched there.
+    return [
+      this.tags.set.element,
+      editor.tableTools,
+      this.under,
+      this.#closer,
+      editor.find.element,
+    ];
+  }
+
+  /** # on the pane, outside the words and any field, opens the tags. */
+  key(event: KeyboardEvent): void {
+    this.tags.key(event);
   }
 
   /** Hear the caret move, or the text change under it; returns a function to stop. */

@@ -9,12 +9,12 @@ import type { Board } from '../page/board-host';
 import { currentBook, isBook } from './current-book';
 import type { Navigation } from './navigation';
 import type { Organizer } from './organize';
-import type { Side } from './pages';
+import type { NoteSide } from './pages';
 import type { VaultState } from './vault-state';
 
 export interface OutlineParts {
-  /** The active page and its note: the cards lie on it. */
-  active(): Pick<Side, 'page' | 'note'>;
+  /** The active page and its note, the cards lie on it; or null when it holds something else. */
+  active(): Pick<NoteSide, 'page' | 'note'> | null;
   readonly state: VaultState;
   readonly nav: Navigation;
   readonly organizer: Organizer;
@@ -38,26 +38,26 @@ export function outlineCards(parts: OutlineParts): Outline {
   /** The book shown, the page it lies on, and the note open there (its session) when it was. */
   let shown: {
     readonly folder: string;
-    readonly on: Pick<Side, 'page' | 'note'>;
+    readonly on: Pick<NoteSide, 'page' | 'note'>;
     readonly session: unknown;
   } | null = null;
-  /** The page the cards lie on, or the active one when they're down. */
-  const page = () => (shown ?? { on: parts.active() }).on.page;
+  /** The page the cards lie on, or the active one when they're down (none, with no note there). */
+  const page = () => (shown?.on ?? parts.active())?.page;
   /** Give the page back (the keyboard with it, if it was on the cards: see `held`). */
-  const close = () => page().board.hide();
+  const close = () => page()?.board.hide();
   const board = new OutlineBoard({
     open: (path) => {
       const on = page();
-      on.board.hide();
-      void parts.openNote(path).then(() => on.focus());
+      on?.board.hide();
+      void parts.openNote(path).then(() => on?.focus());
     },
     placeBefore: (path, before) => parts.act(() => parts.organizer.placeBefore(path, before)),
     moveTo: (path, folder) => parts.act(() => parts.organizer.moveInto(path, folder, true)),
     nudge: (path, by) => parts.act(() => parts.organizer.nudge(path, by)),
     close: () => {
       const on = page();
-      on.board.hide();
-      on.focus();
+      on?.board.hide();
+      on?.focus();
     },
   });
   // The page's hold on the cards: it says when it gives the page back (a view chosen, a note shown).
@@ -68,7 +68,7 @@ export function outlineCards(parts: OutlineParts): Outline {
       const on = page();
       shown = null;
       // Whatever gave the page back finishes first (a note shown, a view chosen); then the keyboard.
-      if (hadKeyboard) queueMicrotask(() => on.focus());
+      if (hadKeyboard) queueMicrotask(() => on?.focus());
     },
   };
   async function draw(): Promise<void> {
@@ -91,13 +91,14 @@ export function outlineCards(parts: OutlineParts): Outline {
     },
     async toggle() {
       if (shown) {
-        const on = page();
+        const on = shown.on.page;
         on.board.hide();
         on.focus();
         return;
       }
-      // The active chapter's book, else the folder chosen when it's a book.
+      // The active chapter's book, else the folder chosen when it's a book; the cards lie on a note's page.
       const on = parts.active();
+      if (!on) return;
       const folder = await currentBook(parts.state, parts.nav, on.note.path);
       if (folder === null) {
         parts.tell('Outline cards show a book: choose one, or open one of its chapters.');

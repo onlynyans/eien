@@ -5,7 +5,7 @@
 
 import { type FormatCommandId, headingLevel, nextHeading } from '../../core/format';
 import { Chrome } from '../chrome/chrome';
-import { type CommandId, commandOf, type LocalCommandId } from '../chrome/commands';
+import { actsOn, type CommandId, commandOf, type LocalCommandId } from '../chrome/commands';
 import type { CommandLook } from '../chrome/host';
 import { PHONE_TAGS } from '../chrome/layout-spec';
 import { LAYOUT_SPECS } from '../chrome/layouts';
@@ -19,7 +19,7 @@ import type { Sidebar } from '../sidebar/sidebar';
 import { COMPARE_WORD } from '../versions/seal-line';
 import { pageHosts } from './page-hosts';
 import { pageMore } from './page-more';
-import type { Pages, Side } from './pages';
+import { isNote, type NoteSide, type Pages, type Side } from './pages';
 import type { PhoneView } from './phone-view';
 
 export interface VaultChromeOf {
@@ -52,6 +52,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   const { pane } = pages;
   /** The page the controls act on, as each is asked how it looks. */
   const page = () => pages.active.page;
+  /** The active page's note's, for the formatting bar: the caret's. */
+  const notePage = () => pages.activeNote?.page ?? null;
   const slots = {
     top: pane.head,
     pageBar: pane.slots.bar,
@@ -81,15 +83,14 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
 
   /** What's on at the caret, read once for all the bar's buttons (the editor's state the key). */
   let formatsFor: { state: unknown; on: ReadonlySet<FormatCommandId> } | null = null;
-  const formatsOn = () => {
-    const { editor } = page();
+  const formatsOn = ({ editor }: NoteSide['page']) => {
     const state = editor.view.state;
     if (formatsFor?.state !== state) formatsFor = { state, on: editor.formats };
     return formatsFor.on;
   };
   /** A formatting command's look: pressed where its format is on, off where there's nothing to format. */
-  const formatLook = (id: CommandId): CommandLook => {
-    const { writable, mode, editor } = page();
+  const formatLook = (id: CommandId, on: NoteSide['page']): CommandLook => {
+    const { writable, mode, editor } = on;
     if (!writable || mode === 'reading') return { disabled: true, pressed: false };
     if (id === 'format.heading') return { pressed: headingLevel(editor.caretLine) > 0 };
     // In a table, the caret's menus; elsewhere it puts a table in.
@@ -101,7 +102,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       };
     }
     const sends = commandOf(id).sends ?? '';
-    return { pressed: formatsOn().has(sends.slice('format:'.length) as FormatCommandId) };
+    return { pressed: formatsOn(on).has(sends.slice('format:'.length) as FormatCommandId) };
   };
 
   /** How `id` looks now, for `side`'s note (a page's own host), else the active page's. */
@@ -114,8 +115,13 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       ? (pages.sides[0] ?? pages.active)
       : pages.active;
   const look = (id: CommandId, side: Side = target(id)): CommandLook => {
-    const { versions } = side;
-    const { mode } = side.page;
+    // A command for another kind of page than the one it would act on: there, it does nothing.
+    if (!actsOn(id, side.kind)) return { disabled: true, pressed: false };
+    return isNote(side) ? noteLook(id, side) : windowLook(id);
+  };
+  /** A note's commands, and the window's. */
+  const noteLook = (id: CommandId, { versions, page: on }: NoteSide): CommandLook => {
+    const { mode } = on;
     switch (id) {
       case 'pane.sidebar': {
         const shut = panes.isShut('sidebar');
@@ -142,6 +148,13 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       }
       case 'versions':
         return { pressed: versions.panelOpen };
+      default:
+        return id.startsWith('format.') ? formatLook(id, on) : windowLook(id);
+    }
+  };
+  /** The window's commands, which act on any page. */
+  const windowLook = (id: CommandId): CommandLook => {
+    switch (id) {
       case 'focus':
         return { pressed: settings.values['editor.focus'] === 'on' };
       case 'format-bar':
@@ -170,7 +183,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
           tip: two() ? 'Two panes · switch to three' : 'Three panes · switch to two',
         };
       default:
-        return id.startsWith('format.') ? formatLook(id) : {};
+        return {};
     }
   };
 
@@ -187,7 +200,10 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     panes: () => void settings.set('layout.panes', two() ? 'three' : 'two').catch(console.error),
     more: (opener) => of.phone.more(opener),
     // The bar's one heading control: the caret's line a level down each press.
-    'format.heading': () => of.menu.run(`format:${nextHeading(page().editor.caretLine)}`),
+    'format.heading': () => {
+      const on = notePage();
+      if (on) of.menu.run(`format:${nextHeading(on.editor.caretLine)}`);
+    },
     // A page's own ×, and a companion's ⋯: the page it's on.
     'page.close': (opener) => {
       const side = sideOf(opener);
@@ -195,7 +211,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     },
     'page.more': (opener) => {
       const side = sideOf(opener);
-      if (side) pageMore({ ...of, run: (c) => of.menu.run(c) }, side, opener);
+      if (side && isNote(side)) pageMore({ ...of, run: (c) => of.menu.run(c) }, side, opener);
     },
   };
 
@@ -231,18 +247,13 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     press: (id, opener) => chrome.press(id, opener),
     watch: (host) => tips.watch(host),
   });
-  /** Each page's own controls with tooltips (its tags' +, a table's grips, its ×): watched once, as it's made. */
+  /** Each page's own controls with tooltips (its ×, a note's tags' +): watched once, as it's made. */
   const watched = new WeakSet<object>();
   const watchPages = () => {
     for (const { page } of pages.sides) {
       if (watched.has(page)) continue;
       watched.add(page);
-      tips.watch(page.tags.set.element);
-      // A table's grips and + (in the editor's shadow root, so watched there), and a phone's table bar.
-      tips.watch(page.editor.tableTools);
-      tips.watch(page.tableBar.element);
-      tips.watch(page.closer);
-      tips.watch(page.editor.find.element);
+      for (const part of page.tipped) tips.watch(part);
     }
   };
   /** The bar shown or not, as the setting says; the tags where the layout (or a phone) puts them. */
@@ -255,9 +266,10 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
     // Where each note's figures are at its page's foot, C's tags go to the page's own head.
     // C's tags are the colophon's: a page whose figures are at its own foot has them at its own head.
     const figures = split()?.figures ?? 'active';
-    pages.sides.forEach(({ page }, index) => {
+    pages.sides.forEach((side, index) => {
+      if (!isNote(side)) return;
       const own = figures === 'pages' || (figures === 'second' && index === 1);
-      page.tags.place(page.tagSlots, own && tags === 'colophon' ? 'runningHead' : tags);
+      side.page.tags.place(side.page.tagSlots, own && tags === 'colophon' ? 'runningHead' : tags);
     });
   };
   const refresh = () => {

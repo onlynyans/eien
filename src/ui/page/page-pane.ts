@@ -3,11 +3,12 @@
 // colophon beneath, and the versions panel beside. The pages lie in its row
 // (./pages-row.ts): one, or two when the window is split. The pane's running
 // head and versions panel are the active page's; so is the colophon, unless
-// the split's mode puts each note's figures at its own page's foot.
+// the split's mode puts each note's figures at its own page's foot. A page
+// here is whatever it holds (./page-leaf.ts): it's asked for its parts.
 
 import type { SplitSpec } from '../chrome/splits';
 import { h } from '../dom';
-import type { PageView } from './page';
+import type { PaneLeaf } from './page-leaf';
 import { PagesRow, type RowEvents } from './pages-row';
 
 export class PagePane {
@@ -30,11 +31,14 @@ export class PagePane {
   readonly #colophon = h('footer', { class: 'colophon count' });
   /** The pane's grid: its slots, the pages' row, the colophon. */
   readonly #main = h('div', { class: 'page__main' });
-  #active: PageView;
+  #active: PaneLeaf;
+  /** The pages as last laid out, left to right. */
+  #shown: readonly PaneLeaf[];
 
   /** The pane in `area`, `first` its active page (made with `area` as its layer). */
-  constructor(area: HTMLElement, first: PageView, events: RowEvents) {
+  constructor(area: HTMLElement, first: PaneLeaf, events: RowEvents) {
     this.#active = first;
+    this.#shown = [first];
     this.#row = new PagesRow(this.#main, events);
     this.head = h('div', { class: 'window-head' }, first.runningCrumbs);
     this.#row.element.append(first.element);
@@ -43,18 +47,18 @@ export class PagePane {
       this.slots.bar,
       this.slots.format,
       this.#row.element,
-      first.tableBar.element,
+      first.under,
       this.#colophon,
       this.slots.phone,
     );
     // Before what the page put in the area already (its selection bar, which floats).
     area.prepend(this.#main, first.aside);
     this.#placeFigures([first], 'active');
-    // # on the pane, outside the words and any field, opens the active page's tags.
-    area.addEventListener('keydown', (event) => this.#active.tags.key(event));
+    // A key on the pane, outside the words and any field (a note's #): the active page's.
+    area.addEventListener('keydown', (event) => this.#active.key(event));
   }
 
-  get active(): PageView {
+  get active(): PaneLeaf {
     return this.#active;
   }
 
@@ -77,16 +81,21 @@ export class PagePane {
    * Lay `pages` in the pane, left to right (one, or two as `split` lays them
    * out), `active` the one the tools, the colophon and the panel are for.
    */
-  place(pages: readonly PageView[], active: PageView, split: SplitSpec): void {
+  place(pages: readonly PaneLeaf[], active: PaneLeaf, split: SplitSpec): void {
     this.#row.place(pages, active, split);
-    if (active !== this.#active && split.follows && pages.length === 2) this.#arrive();
-    if (active !== this.#active) {
+    const before = this.#active;
+    // A page put in the active one's place (another kind opened there) is where the furniture is.
+    const replaced =
+      !pages.includes(before) && this.#shown.indexOf(before) === pages.indexOf(active);
+    if (active !== before && !replaced && split.follows && pages.length === 2) this.#arrive();
+    if (active !== before) {
       // The active page's parts take the pane's places: one node each, swapped in place.
-      this.#active.runningCrumbs.replaceWith(active.runningCrumbs);
-      this.#active.tableBar.element.replaceWith(active.tableBar.element);
-      this.#active.aside.replaceWith(active.aside);
+      before.runningCrumbs.replaceWith(active.runningCrumbs);
+      before.under.replaceWith(active.under);
+      before.aside.replaceWith(active.aside);
       this.#active = active;
     }
+    this.#shown = pages;
     this.#placeFigures(pages, pages.length === 2 ? split.figures : 'active');
   }
 
@@ -128,11 +137,11 @@ export class PagePane {
    * the first page's with the second's at its own foot; or each at its own
    * page's foot, the colophon keeping the book's figures and today's.
    */
-  #placeFigures(pages: readonly PageView[], where: SplitSpec['figures']): void {
+  #placeFigures(pages: readonly PaneLeaf[], where: SplitSpec['figures']): void {
     const onFoot = where === 'pages' ? pages : where === 'second' ? pages.slice(1) : [];
     for (const page of pages) {
-      const { words, state, seal } = page.foot;
-      if (onFoot.includes(page)) page.folio.figures.replaceChildren(words, state, seal);
+      const { figures, trail } = page.foot;
+      if (onFoot.includes(page)) page.folio.figures.replaceChildren(...figures, trail);
       else page.folio.figures.replaceChildren();
     }
     if (where === 'pages') {
@@ -146,11 +155,10 @@ export class PagePane {
     }
     const { foot } = where === 'second' ? (pages[0] ?? this.#active) : this.#active;
     this.#colophon.replaceChildren(
-      foot.tags,
-      foot.words,
-      foot.state,
+      foot.lead,
+      ...foot.figures,
       this.#counters,
-      foot.seal,
+      foot.trail,
       this.#zoom,
       this.#news,
       this.#row.waits,

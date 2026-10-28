@@ -13,7 +13,7 @@ import type { PagePane } from '../page/page-pane';
 import { WordCount } from '../page/word-count';
 import { counting } from '../vault/counting';
 import { Organizer } from '../vault/organize';
-import type { Side } from '../vault/pages';
+import type { NoteSide } from '../vault/pages';
 import type { VaultState } from '../vault/vault-state';
 import { Counters } from './counters';
 
@@ -289,7 +289,7 @@ describe('the book in the colophon', () => {
     };
     const counts = counting({
       pane: { counters: () => {} } as unknown as PagePane,
-      active: () => ({ page, note: { path } }) as unknown as Side,
+      active: () => ({ page, note: { path } }) as unknown as NoteSide,
       flushWords: () => {},
       state: state as unknown as VaultState,
       tell: () => {},

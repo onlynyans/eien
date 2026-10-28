@@ -5,7 +5,7 @@
 
 import type { MenuCommand } from '../../platform/bridge';
 import { type MenuItem, openMenu } from '../menu/menu';
-import type { Pages, Side } from './pages';
+import type { NoteSide, Pages } from './pages';
 
 export interface PageMoreOf {
   readonly pages: Pages;
@@ -14,7 +14,7 @@ export interface PageMoreOf {
   readonly openInNewWindow?: (path: string) => void;
 }
 
-export function pageMore(of: PageMoreOf, side: Side, opener: HTMLElement): void {
+export function pageMore(of: PageMoreOf, side: NoteSide, opener: HTMLElement): void {
   const run = (command: MenuCommand) => () => {
     of.pages.activate(side);
     of.run(command);

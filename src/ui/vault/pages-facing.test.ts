@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PAGE_MIN } from '../shell/pane-state';
 import { pageHosts } from './page-hosts';
-import { pagesWith } from './pages-harness';
+import { noted, pagesWith } from './pages-harness';
 
 const stops: (() => void)[] = [];
 afterEach(() => {
@@ -52,11 +52,15 @@ describe('facing pages’ figures', () => {
   it('gives the colophon back to the active note as Two sheets, or with one page', async () => {
     const { pages, area, change } = await facing();
     change({ 'appearance.split': 'sheets' });
-    expect(area.querySelector('.colophon .colophon__words')).toBe(pages.active.page.foot.words);
+    expect(area.querySelector('.colophon .colophon__words')).toBe(
+      noted(pages.active).page.words.element,
+    );
     expect(names(pages.sides[0]?.page.folio.figures)).toEqual([]);
     change({ 'appearance.split': 'facing' });
     pages.close(pages.active);
-    expect(area.querySelector('.colophon .colophon__words')).toBe(pages.active.page.foot.words);
+    expect(area.querySelector('.colophon .colophon__words')).toBe(
+      noted(pages.active).page.words.element,
+    );
   });
 });
 

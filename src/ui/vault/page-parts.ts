@@ -46,7 +46,8 @@ export interface PageParts {
 
 export function pageParts(of: PagePartsOf): PageParts {
   const { pages, state, settings, tell } = of;
-  const active = () => pages.active;
+  // Each acts on a note: with another kind of page in front, there's none.
+  const active = () => pages.activeNote;
   const counts = counting({
     pane: pages.pane,
     active,
@@ -70,7 +71,7 @@ export function pageParts(of: PagePartsOf): PageParts {
     exports: exportsOf({
       state,
       nav: of.nav,
-      openPath: () => pages.active.note.path,
+      openPath: () => pages.activeNote?.note.path ?? null,
       openText: (path) => pages.session(path)?.text ?? null,
       vault: of.vault,
       out: of.out,

@@ -10,13 +10,15 @@ import { MemoryStorage } from '../../platform/memory/memory-storage';
 import type { SettingsState } from '../settings/settings-state';
 import { Navigation } from './navigation';
 import type { Organizer } from './organize';
-import { Pages } from './pages';
+import type { PageKindOf } from './page-side';
+import { isNote, type NoteSide, Pages, type Side } from './pages';
 import { VaultState } from './vault-state';
 
-/** Pages over a vault in memory, with settings that can change. */
+/** Pages over a vault in memory, with settings that can change; `kinds`, besides a note's. */
 export async function pagesWith(
   files: Record<string, string>,
   chosen: Partial<SettingValues> = {},
+  kinds: readonly PageKindOf[] = [],
 ) {
   const storage = new MemoryStorage();
   for (const [path, text] of Object.entries(files)) storage.put(path, text);
@@ -53,6 +55,7 @@ export async function pagesWith(
   /** How many times the pages said they changed (rearranged), for the window to draw. */
   let rearranged = 0;
   const pages = new Pages({
+    kinds,
     area,
     vault,
     state,
@@ -82,6 +85,7 @@ export async function pagesWith(
     pages,
     storage,
     area,
+    settings: settings as unknown as SettingsState,
     change,
     wrote: () => wrote.mock.calls.map(([added]) => added),
     rearranged: () => rearranged,
@@ -91,9 +95,15 @@ export async function pagesWith(
 
 /** Type at the end of the active page's note, as the writer does. */
 export function typeAtEnd(pages: Pages, words: string): void {
-  const { view } = pages.active.page.editor;
+  const { view } = noted(pages.active).page.editor;
   view.dispatch({
     changes: { from: view.state.doc.length, insert: words },
     userEvent: 'input.type',
   });
+}
+
+/** `side`, which holds a note: the tests that reach its editor, words or seals say so. */
+export function noted(side: Side | null | undefined): NoteSide {
+  if (!side || !isNote(side)) throw new Error('not a note’s page');
+  return side;
 }
