@@ -85,8 +85,8 @@ on a phone, a foldable folded and open (with its fold), and a tablet upright
 and sideways, by Day and Night, in all three layouts, touch first.
 [tablet.md](tablet.md) has the trade-offs. **Chosen:** all three, as one
 setting of the phone's, Wide screen: 1 is Panes (the default), 2 is Side by
-side, 3 was Two pages (as Split lays them out; Facing pages for the book; taken out
-on 2026-10-27, as Panes does what it did), and One at a time keeps the phone.
+side, 3 is Two pages (as Split lays them out; Facing pages for the book), and
+One at a time keeps the phone.
 
 | Page | Direction | For | Against |
 |---|---|---|---|

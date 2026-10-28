@@ -9,10 +9,9 @@ senior review: the room is the phone build's (its platform), not the pointer's,
 so a trackpad doesn't close pages mid-session; Page alone (2) is left to One at
 a time; the facing page opens when ⇄ is tapped, not on its own as the screen
 unfolds (nothing moves the writer didn't ask to move); folding closes the page
-you're not in and keeps it as ⇄. **Two pages was taken out the same day:** on a
-Fold 5 it did little Panes doesn't, and the notes sliding over the page cost
-more than they gave. A device that chose it reads as Panes. The pages below
-are the explorations as proposed.
+you're not in and keeps it as ⇄; and in Two pages, the second note chosen
+from a list opens beside the first. The pages below are the explorations as
+proposed.
 
 On a foldable's open screen or a tablet, Eien may use the room tablet apps use,
 with more than one pane at a time, built from the panes and layouts that

@@ -82,6 +82,21 @@ describe.each(LAYOUTS)('the %s layout, mounted', (layout) => {
     expect(new Set(watch.mock.calls.map(([host]) => host))).toEqual(new Set(hosts));
     expect(watch).toHaveBeenCalledTimes(hosts.length);
   });
+
+  it('stands the split’s pager with the page’s tools: the phone’s, while it goes the phone’s way', () => {
+    const pager = document.createElement('span');
+    let phone = false;
+    const chrome = new Chrome(of({ pager, phone: () => phone }));
+    chrome.mount(layout);
+    const inPhone = () => PHONE.some((slot) => slots[slot].contains(pager));
+    expect(pager.isConnected && !inPhone()).toBe(true);
+    phone = true; // Two pages, folded: the desktop's bars are out of sight
+    chrome.refresh();
+    expect(inPhone()).toBe(true);
+    phone = false;
+    chrome.refresh();
+    expect(pager.isConnected && !inPhone()).toBe(true);
+  });
 });
 
 describe('Chrome', () => {

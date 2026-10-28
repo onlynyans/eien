@@ -75,13 +75,13 @@ describe('a split asked for without the room', () => {
       sidebarKey: '⌘\\',
     });
     vi.spyOn(pages.pane.pagesArea, 'clientWidth', 'get').mockReturnValue(2 * PAGE_MIN - 301);
-    await actions.openNote('Notes.md', true);
+    await actions.openNote('Notes.md', 'beside');
     expect(open).not.toHaveBeenCalled();
     expect(told).toHaveBeenCalledWith(
       'Too narrow for two pages beside the sidebar: shut it (⌘\\) to make room.',
     );
     vi.spyOn(pages.pane.pagesArea, 'clientWidth', 'get').mockReturnValue(2 * PAGE_MIN - 300);
-    await actions.openNote('Notes.md', true); // the list's room makes it fit
+    await actions.openNote('Notes.md', 'beside'); // the list's room makes it fit
     expect(open).toHaveBeenCalledWith('Notes.md', true);
   });
 });

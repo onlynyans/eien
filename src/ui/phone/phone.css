@@ -1,7 +1,7 @@
 /* A phone: one pane at a time (spec §10, ./phone-stack.ts). The shell's
    grid becomes one column, and the pane shown fills it under the bar that
    goes back. Wider, the Wide screen setting's room (./room.ts, data-room)
-   may keep two in sight (data-sight): side by side. */
+   may keep two in sight (data-sight): side by side, or the notes over the page. */
 
 .phone-bar {
   display: none;
@@ -122,6 +122,35 @@
 }
 .shell[data-phone][data-room="side"] > :is(.sidebar, .list) {
   border-right: var(--eien-hairline) solid var(--eien-rule);
+}
+
+/* Two pages: the notes, or the contents, slide over the page from the left as raised paper,
+   the page under the scrim; a tap on it puts them away (../vault/phone-view.ts). The page keeps
+   its scrim to itself (its own stacking context), so the scrim covers all the page holds and
+   never the notes over it. */
+.shell[data-phone][data-room="pages"]:not([data-shown="page"]) > .page {
+  isolation: isolate;
+}
+.shell[data-phone][data-room="pages"]:not([data-shown="page"]) > .page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 30; /* over all the page holds: a dragged note's preview, the selection bar, the cards */
+  background: var(--eien-scrim);
+}
+.shell[data-phone][data-room="pages"]:not([data-shown="page"]) > :is(.sidebar, .list) {
+  position: relative;
+  z-index: 4;
+  width: min(85%, calc(var(--eien-list-w) + var(--eien-space-7)));
+  background: var(--eien-paper-raised);
+  border-right: var(--eien-hairline) solid var(--eien-rule-strong);
+  box-shadow: var(--eien-shadow-float);
+  animation: slide-over var(--eien-calm) var(--eien-ease);
+}
+@keyframes slide-over {
+  from {
+    translate: -100% 0;
+  }
 }
 
 /* The desktop's panes on a touch screen: every target a finger's (spec §10). Running head's

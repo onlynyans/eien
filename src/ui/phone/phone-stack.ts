@@ -4,8 +4,8 @@
 // layout's (../chrome): in the bar's `controls` (A's), or at the page's foot. A window narrower than any
 // desktop window can be is a phone's, whatever the system: an upright phone
 // (430 px at most), not a tablet; and the phone's page in tests. Wider, the
-// room (./room.ts) says how: the desktop's panes, one at a time still, or
-// the pane before kept in sight beside.
+// room (./room.ts) says how: the desktop's panes, one at a time still, the
+// pane before kept in sight beside, or the notes over two pages.
 
 import { h, wordButton } from '../dom';
 import {
@@ -16,6 +16,7 @@ import {
   PHONE_ORDER,
   type PhonePane,
   type Room,
+  twoPages,
   UPRIGHT_PHONE,
   type Width,
   widthNow,
@@ -75,9 +76,9 @@ export class PhoneStack {
     return onePane(this.#room);
   }
 
-  /** Whether a second page may open beside the first: with the desktop's panes only. */
+  /** Whether a second page may open beside the first. */
   get splits(): boolean {
-    return !this.phone;
+    return twoPages(this.#room);
   }
 
   /** The pane the writer is at, the phone's way; null with the desktop's panes, where all are. */
@@ -151,6 +152,9 @@ export class PhoneStack {
     const beside = this.beside;
     if (beside) shell.dataset.beside = beside;
     else delete shell.dataset.beside;
+    // Two pages: the page under the notes is only to be seen until they're put away.
+    const covered = this.#room === 'pages' && this.#shown !== 'page';
+    shell.querySelector(':scope > .page')?.toggleAttribute('inert', covered);
     this.bar.hidden = !this.phone || !before;
     // Back names what it brings into sight: side by side, the contents, beside the notes in sight.
     const comes =
