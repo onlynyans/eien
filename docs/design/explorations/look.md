@@ -1,6 +1,6 @@
 # A quick look, anywhere: three explorations
 
-**For the owner to choose (2026-10-28).** Backlog #49. Nothing is built.
+**Decided (2026-10-28): 1 · On the bar.** Backlog #49. Nothing is built yet.
 Changing Day or Night, or the text's size, now takes the sidebar's foot (Day
 or Night only) or Settings, behind the sidebar. Each direction puts one control
 in reach in every layout and on the phone. It opens a small popover of the
@@ -28,9 +28,32 @@ phone are the EPUB explorations' own (`_src/epub.*`); the quick look adds
 
 | Page | Direction | Where the control lives | How you tell which look |
 |---|---|---|---|
-| [look-bar.html](look-bar.html) | 1 · On the bar | **Aa**, the page's last tool: A's band, B's slip, C's running head | The popover's head: LOOK / NOTES or LOOK / SHELF |
-| [look-colophon.html](look-colophon.html) | **2 · In the colophon** (recommended) | The colophon's right end, which reads the look out: NOTES · NEWSREADER · 100% | The readout, always in sight, before you open it |
+| [look-bar.html](look-bar.html) | **1 · On the bar** (chosen) | **Aa**, the page's last tool: A's band, B's slip, C's running head | The popover's head: LOOK / NOTES or LOOK / SHELF |
+| [look-colophon.html](look-colophon.html) | 2 · In the colophon (recommended) | The colophon's right end, which reads the look out: NOTES · NEWSREADER · 100% | The readout, always in sight, before you open it |
 | [look-page.html](look-page.html) | 3 · On the page | **Aa** at each page's top outer corner, quiet until you point at that page | By place: it's on the page it changes |
+
+## Decided (2026-10-28)
+
+The owner chose **1 · On the bar**. The build follows this section and "In
+all three" below where they and the other directions disagree.
+
+- **The control:** a command in `ui/chrome/commands.ts`, `look`, icon
+  **Aa** (`ui/icons.ts`), named "Look", key ⇧⌘L (Ctrl+Shift+L), and the
+  menu's View → Look…. It's the last of the page's tools, after a hairline:
+  - A's band;
+  - B's slip;
+  - C's running head;
+  - the phone's bar (A), floating slip (B) or rail (C), and the phone's ⋯.
+- **Folding:** it joins `TOOL_FOLDS` (`ui/chrome/layout-spec.ts`), folding
+  last of the tools, before the views. Folded, the ⋯ menu's Look opens the
+  popover from the ⋯.
+- **The popover:** the column, under the control, its end lined up with the
+  control's. On the phone it's the sheet from the screen's foot. Its head
+  names whose look it is: LOOK / NOTES or LOOK / SHELF.
+- **Which settings:** the `quick` mark in the schema, as below. The shelf's
+  values are #40 Phase 1's look settings, made from the mark.
+- **When it's built:** beside #40, after the phase that lets a page hold an
+  EPUB. #40's session places it in its phases.
 
 ## In all three
 
@@ -128,7 +151,7 @@ interface Common {
 The pages draw from a `SCHEMA` list holding the mark (`_src/look.js`); its
 unmarked entries (Layout, Interface font, Density) never show.
 
-## 1 · On the bar
+## 1 · On the bar (chosen)
 
 **Aa** is the page's last tool, after a hairline: A's band, B's slip, C's
 running head, and the phone's bar, slip or rail. Its tooltip is "Look ⇧⌘L".
@@ -145,7 +168,7 @@ The popover hangs under it, a column.
   - It says which look it changes only once it's open.
   - It's the tallest popover, over the page's top right.
 
-## 2 · In the colophon (recommended)
+## 2 · In the colophon (recommended; not chosen)
 
 The colophon already says what the machine knows about the page. Now it also
 reads out the page's look at its right end: whose, then the face and size

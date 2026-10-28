@@ -59,19 +59,19 @@ on the page.
 | Features | [On the page](epub-margin.html) | [In the list](epub-index.html) | [On the edge](epub-edge.html) |
 | Showcase | [The reading room](epub-room.html) | [Set as a book](epub-set.html) | [By lamplight](epub-lamp.html) |
 
-## A quick look, anywhere (2026-10-28): for the owner to choose
+## A quick look, anywhere (2026-10-28): 1 chosen
 
 Backlog #49: one control, in reach in every layout and on the phone, opens a
 popover of the look's everyday settings (Day or night, typeface, text size,
 line spacing, page width, page frame). With a note it sets the notes' look,
 with an EPUB the shelf's, apart. The bar's Open shows a note, an EPUB, or both.
 Which settings appear is a mark on each in the schema. [look.md](look.md) has
-the trade-offs and recommends 2.
+the trade-offs. It recommended 2; the owner chose **1 · On the bar**.
 
 | Page | Direction | For | Against |
 |---|---|---|---|
-| [look-bar.html](look-bar.html) · [md](look.md) | **1 · On the bar**: Aa, the page's last tool; the popover hangs under it | Where a tool is looked for; the smallest build | One more icon on a bar that folds; says which look only once open |
-| [look-colophon.html](look-colophon.html) · [md](look.md) | **2 · In the colophon** (recommended): the colophon reads the look out, NOTES · NEWSREADER · 100%, and opens it | Always in sight, and says which look before you open it | Less found than an icon; a line at the phone page's foot |
+| [look-bar.html](look-bar.html) · [md](look.md) | **1 · On the bar** (chosen): Aa, the page's last tool; the popover hangs under it | Where a tool is looked for; the smallest build | One more icon on a bar that folds; says which look only once open |
+| [look-colophon.html](look-colophon.html) · [md](look.md) | **2 · In the colophon** (recommended, not chosen): the colophon reads the look out, NOTES · NEWSREADER · 100%, and opens it | Always in sight, and says which look before you open it | Less found than an icon; a line at the phone page's foot |
 | [look-page.html](look-page.html) · [md](look.md) | **3 · On the page**: Aa at each page's top corner, its own look | Which look is plain: the one on this page | A control on the paper; quiet until hover |
 
 ## Split window (2026-10-23): for the owner to choose
