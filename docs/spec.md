@@ -911,10 +911,10 @@ src/core/            (✓ = built)
   search/       ✓ folding (case, accents, quotes), query terms, snippets
   typography/   ✓ quotation marks: curled by what's around them, an apostrophe once it shows, and back
   versions/     ✓ the note's id in its front matter, seal file names, retention, word diff
-  html/         ✓ Markdown → HTML (and a book's HTML); HTML (a story site's, Google Docs', Word's, a page's) → Markdown
+  html/         ✓ Markdown → HTML (and a book's HTML); HTML (a story site's, Google Docs', Word's, a page's) → Markdown; a page's HTML cleaned to what words need, by the caller's rules
   export/       ✓ a note as a chapter (headings, footnotes); EPUB, Word and the PDF's page; a store-only zip
   import/       ✓ which files of a folder from elsewhere come in, under what names, and why the rest don't
-  extension/    ✓ the browser extension (Eien Reader): its story, its sites, its messages, where you stopped, a site's HTML cleaned (§14)
+  extension/    ✓ the browser extension (Eien Reader): its story, its sites, its messages, where you stopped, its rules for cleaning a site's HTML (§14)
 src/platform/
   bridge.ts     ✓ what the window may ask of the system (window.eien)
   storage.ts    ✓ the Storage interface: read, write, list, watch
@@ -933,6 +933,7 @@ src/ui/
   page/         ✓ the sheet, the title (renaming the note), the colophon, the layout's slots
   chrome/       ✓ the controls: commands once, hosts that draw them, the three layouts, tooltips
   icons.ts      ✓ Eien's own icons, inline SVG
+  draw-clean.ts ✓ cleaned HTML drawn element by element, never from HTML
   menu/         ✓ the small floating menu: right-click choices, sorts
   notes/        ✓ the open note: autosave, reload, conflict copies
   vault/        ✓ the vault as the window knows it, its panes drawn, the menu's commands, organizing (rename, move, trash, a note's images with it), images dropped or pasted

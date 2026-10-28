@@ -1,4 +1,4 @@
-export { type CleanElement, type CleanNode, cleanHtml, KEPT, plainOf } from './clean';
+export { cleanStory } from './clean';
 export {
   type FromStory,
   type PageAnswer,
