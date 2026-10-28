@@ -276,11 +276,18 @@ out at 5 s on a slow Windows runner.
 - `npm run dev` runs the app; `npm run package` makes this system's installer
   and portable copy in `dist/`; `npm run android` / `npm run ios` prepare the
   phone projects.
-- **A release:** set `version` in `package.json`, merge, then tag `main`
-  (`git tag v0.1.0 origin/main && git push origin v0.1.0`). `release.yml`
-  checks the tag matches, builds each installer on its own system, installs and
-  starts it there, and attaches all three to a **draft** release that the
-  owner publishes by hand.
+- **One version**, `package.json`'s: the extension takes it, and
+  `npm run android` / `npm run ios` write it into the phone projects with a
+  build number (0.4.0 is 400). Semantic Versioning below 1.0: a minor for
+  features, a patch for fixes alone; 1.0 when the owner first publishes.
+- **A release:** `npm version 0.5.0 --no-git-tag-version`, then
+  `npm run changelog -- 0.5.0` drafts its section of
+  [CHANGELOG.md](../CHANGELOG.md) from pull requests' titles; edit it, merge,
+  then tag `main` (`git tag v0.5.0 origin/main && git push origin v0.5.0`).
+  `release.yml` checks the tag matches, builds each installer on its own
+  system, installs and starts it there, and attaches all three to a **draft**
+  release that the owner publishes by hand. AGENTS → Releases has each step,
+  and the proposal to cut 0.4.0 next.
 - **Signing** isn't set up: macOS gets an ad-hoc signature, Windows none, and
   README → Install tells writers how to open them. The secrets the workflow
   takes when there are certificates are listed in AGENTS → Releases. Try a
@@ -292,7 +299,8 @@ out at 5 s on a slow Windows runner.
 ## 11. Working on Eien
 
 - **Pull requests only** into `main`; squash-merged once all seven checks
-  pass. Auto-merge on, with the app's Auto-fix watching CI, is how the work
+  pass. A title is Conventional Commits, `type(scope): subject`, as it becomes
+  main's commit subject and a line of the changelog (AGENTS → Releases). Auto-merge on, with the app's Auto-fix watching CI, is how the work
   has been run.
 - **Each change carries its test, its spec change, and its backlog row.**
   The spec changes in the pull request that changes behaviour.
