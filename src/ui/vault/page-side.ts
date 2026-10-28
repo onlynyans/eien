@@ -1,86 +1,52 @@
-// One page of the pane, as the pages controller (./pages.ts) holds it: the
-// page (../page/page.ts), its note (./open-note.ts, held in the window's
-// open notes) and that note's seals (../versions), made together when a page
-// opens and let go together when it closes, so a closed page leaves no view,
-// timer or listener behind.
+// One page of the pane, as the pages controller (./pages.ts) holds it,
+// whatever it holds: a note (./note-side.ts), or an EPUB (backlog #40, not
+// built yet; ../../../docs/page-kinds.md). The split, its pager, swap, the
+// phone's other note and Wide screen's rooms carry a Side and never ask what
+// it holds; what is a note's alone is reached through `isNote`.
 
-import type { VaultBridge } from '../../platform/bridge';
-import type { PageView } from '../page/page';
-import type { Written } from '../page/word-count';
-import type { SettingsState } from '../settings/settings-state';
-import { VersionsUI } from '../versions/versions-ui';
-import { type NotePageParts, notePage } from './note-page';
-import { OpenNote } from './open-note';
-import type { OpenNotes } from './open-notes';
+import type { SettingValues } from '../../core/config';
+import type { PageKind, PaneLeaf } from '../page/page-leaf';
 
-/** A page, the note it shows, and that note's seals. */
+/** Where a page was in what it showed: the phone's other note (⇄) goes back there. */
+export interface Place {
+  readonly path: string;
+  /** What the page called it then (a note's title, from its file's name): the slip names it so. */
+  readonly name: string;
+}
+
+/** A page, and what it shows. */
 export interface Side {
-  readonly page: PageView;
-  readonly note: OpenNote;
-  readonly versions: VersionsUI;
+  readonly kind: PageKind;
+  readonly page: PaneLeaf;
+  /** What it shows, or null with nothing open. */
+  readonly path: string | null;
+  /** Where the page is in it now, or null with nothing open. */
+  readonly place: Place | null;
+  /**
+   * What the page showed before, and where it was left: the same object until
+   * the page leaves another (../vault/phone-other.ts tells a new one by it).
+   */
+  readonly left: Place | null;
+  /** Show the file at `path`, at `place` when that's where it was left; nothing once disposed. */
+  open(path: string, place?: Place): Promise<void>;
+  /** What it shows is gone (the trash, or deleted elsewhere): it shows nothing. */
+  clear(): void;
+  /** The settings as they are now. */
+  follow(values: SettingValues): void;
+  /** The page closed: what it holds saved and let go, so it leaves no view, timer or listener. */
+  dispose(): void;
 }
 
-export interface SideOf extends Omit<NotePageParts, 'note' | 'close'> {
-  /** The pane's element (the window's `main`): what floats over a page goes in it. */
-  readonly area: HTMLElement;
-  readonly vault: VaultBridge;
-  /** The Mac's keys, for the keys the versions panel names. */
-  readonly mac: boolean;
-  /** What a seal's controls show changed (Compare's state, the panel open). */
-  changed(): void;
-  /** Run a file operation after those under way, then read the vault again (one at a time). */
-  act(operation: () => Promise<unknown>): Promise<void>;
-  /** Words the writer added on a page, for today's tally and a sprint (../counters). */
-  wrote(added: number, when: Written): void;
-  /** A page's words were counted again: the book's total moves with them. */
-  counted(): void;
-}
-
-/** What the page tells its controller: its × pressed, its caret moved, the writer in it. */
+/** What a page tells its controller: its × pressed, its caret moved. */
 export interface SideHooks {
   close(): void;
   caret(): void;
-  entered(): void;
 }
 
-export function makeSide(of: SideOf, notes: OpenNotes, hooks: SideHooks): Side {
-  let note: OpenNote | null = null;
-  const page = notePage(of.area, { ...of, note: () => note as OpenNote, close: hooks.close });
-  note = new OpenNote(notes, page);
-  page.words.onWrote(of.wrote);
-  page.words.onCounted(of.counted);
-  page.onCaret(hooks.caret);
-  // The writer in a page (a click, the keyboard): it's the active one.
-  page.element.addEventListener('focusin', hooks.entered);
-  page.element.addEventListener('pointerdown', hooks.entered);
-  const versions = new VersionsUI({
-    page,
-    note,
-    vault: of.vault,
-    notesWithId: (id) => of.state.notesWithId(id),
-    mac: of.mac,
-    tell: of.tell,
-    serial: of.act,
-    changed: of.changed,
-  });
-  return { page, note, versions };
-}
-
-/** The page closed: its words counted, its note let go (still open on another page, or closed), the rest with it. */
-export function closeSide(side: Side): void {
-  side.note.close();
-  side.versions.stop();
-  side.page.dispose();
-}
-
-/** A page as the settings say: the quotes typed on it, its writing tools, Live's marks, the tags and ids hidden. */
-export function followSettings(page: PageView, values: SettingsState['values']): void {
-  page.editor.setQuotes(values['typography.quotes']);
-  page.editor.setTools({
-    focus: values['editor.focus'] === 'on',
-    typewriter: values['editor.typewriter'] === 'on',
-    spellcheck: values['editor.spellcheck'] === 'on',
-  });
-  page.editor.setMarks(values['editor.marks'] === 'on');
-  page.editor.setTagsAndIdsHidden(values['editor.hideTagsAndIds'] === 'on');
+/** A kind of page: which files it shows, and a page of it made. */
+export interface PageKindOf {
+  readonly kind: PageKind;
+  holds(path: string): boolean;
+  /** A page of this kind; `left`, what the page in its place showed before (so ⇄ goes back to it). */
+  make(hooks: SideHooks, left: Place | null): Side;
 }

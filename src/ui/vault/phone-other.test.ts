@@ -2,7 +2,7 @@
 // back bar's slip offers it, and a tap goes back to it in place.
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { pagesWith } from './pages-harness';
+import { noted, pagesWith } from './pages-harness';
 import { phoneOther } from './phone-other';
 
 const stops: (() => void)[] = [];
@@ -23,7 +23,7 @@ async function twoNotes() {
 describe('a page’s last note', () => {
   it('is remembered where it was left, and opened there again', async () => {
     const { pages } = await twoNotes();
-    const { note, page } = pages.active;
+    const { note, page } = noted(pages.active);
     await pages.open('Chapter.md');
     page.editor.view.dispatch({ selection: { anchor: 9, head: 14 } });
     await pages.open('Notes.md');
@@ -38,20 +38,20 @@ describe('a page’s last note', () => {
   it('keeps how far it was scrolled, though the page is out of sight when the next opens', async () => {
     // On a phone, back to the list hides the page first, and a page out of sight reads 0.
     const { pages } = await twoNotes();
-    const { note, page } = pages.active;
+    const { note, page } = noted(pages.active);
     await pages.open('Chapter.md');
     const top = vi.spyOn(page.scroll, 'scrollTop', 'get').mockReturnValue(900);
     page.scroll.dispatchEvent(new Event('scroll'));
     top.mockReturnValue(0); // gone from sight
     await pages.open('Notes.md');
-    expect(note.left?.scroll).toBe(900);
+    expect(note.left).toMatchObject({ scroll: 900 });
   });
 
   it('isn’t the note reopened on its own page', async () => {
     const { pages } = await twoNotes();
     await pages.open('Chapter.md');
     await pages.open('Chapter.md');
-    expect(pages.active.note.left).toBeNull();
+    expect(pages.active.left).toBeNull();
   });
 });
 
@@ -101,7 +101,7 @@ describe('the other note, with two pages', () => {
     await pages.open('Chapter.md'); // Map is the note this page left
     other.sync();
     await pages.open('Notes.md', true); // Notes on a facing page, the one you're in
-    const facing = pages.other; // Chapter's page
+    const facing = pages.other && noted(pages.other); // Chapter's page
     if (!facing) throw new Error('no facing page');
     facing.page.editor.view.dispatch({ selection: { anchor: 4, head: 8 } });
     other.sync();

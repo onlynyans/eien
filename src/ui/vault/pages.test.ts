@@ -2,7 +2,7 @@
 // colophon in its order, and what the organizer and the window ask of it.
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { pagesWith, typeAtEnd } from './pages-harness';
+import { noted, pagesWith, typeAtEnd } from './pages-harness';
 
 const stops: (() => void)[] = [];
 afterEach(() => {
@@ -26,8 +26,8 @@ describe('the pages, with one page', () => {
     await pages.open('Fic/Snow.md');
     expect(pages.notes()).toEqual({ active: 'Fic/Snow.md', other: null });
     expect(pages.sides).toHaveLength(1);
-    expect(pages.active.page.element.hasAttribute('data-active')).toBe(true); // the one page
-    expect(pages.active.page.editor.text).toBe('Snow fell all night.');
+    expect(noted(pages.active).page.element.hasAttribute('data-active')).toBe(true); // the one page
+    expect(noted(pages.active).page.editor.text).toBe('Snow fell all night.');
     // The window's running head, which the layout puts across the window (../chrome).
     expect(pages.pane.head.querySelector('.running-crumbs')?.textContent).toBe('Fic');
     expect(area.querySelector('.colophon .colophon__words')?.textContent).toBe('4 words');
@@ -77,7 +77,7 @@ describe('the pages, with one page', () => {
     // Compare and the cards start afresh with each showing (../versions/versions-ui.ts, sync).
     const { pages } = await pagesWith({ 'Snow.md': 'Snow.', 'Rain.md': 'Rain.' });
     stops.push(() => pages.stop());
-    const { note } = pages.active;
+    const { note } = noted(pages.active);
     await pages.open('Snow.md');
     const first = note.shown;
     const session = note.session;
@@ -98,14 +98,14 @@ describe('the pages, with one page', () => {
     pages.closed('Fic');
     expect(pages.notes().active).toBeNull();
     expect(pages.sessions()).toEqual([]);
-    expect(pages.active.page.writable).toBe(false);
+    expect(noted(pages.active).page.writable).toBe(false);
   });
 
   it('holds still the page whose note is moving, and lets it go after', async () => {
     const { pages } = await pagesWith({ 'Fic/Snow.md': 'Snow.' });
     stops.push(() => pages.stop());
     await pages.open('Fic/Snow.md');
-    const { editor } = pages.active.page;
+    const { editor } = noted(pages.active).page;
     pages.freeze('Other', true);
     expect(editor.amend('Snow, still.', false)).toBe(true);
     pages.freeze('Fic', true);
@@ -121,7 +121,7 @@ describe('the pages, with one page', () => {
     await pages.open('Snow.md');
     expect(await pages.amendOpen('Snow.md', (text) => `${text} Amended.`)).toBe(true);
     expect((await storage.read('Snow.md'))?.text).toBe('Snow. Amended.');
-    expect(pages.active.page.editor.text).toBe('Snow. Amended.');
+    expect(noted(pages.active).page.editor.text).toBe('Snow. Amended.');
   });
 
   it('tells the caret’s moves on the active page to those listening, until they stop', async () => {
@@ -130,10 +130,10 @@ describe('the pages, with one page', () => {
     await pages.open('Snow.md');
     const heard = vi.fn();
     const stop = pages.onCaret(heard);
-    pages.active.page.editor.view.dispatch({ selection: { anchor: 2 } });
+    noted(pages.active).page.editor.view.dispatch({ selection: { anchor: 2 } });
     expect(heard).toHaveBeenCalledTimes(1);
     stop();
-    pages.active.page.editor.view.dispatch({ selection: { anchor: 3 } });
+    noted(pages.active).page.editor.view.dispatch({ selection: { anchor: 3 } });
     expect(heard).toHaveBeenCalledTimes(1);
   });
 });

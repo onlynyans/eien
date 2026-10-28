@@ -11,9 +11,9 @@ import { TableBar } from '../editor/table-bar';
 import type { ImageLoader } from '../editor/widgets';
 import type { SaveState } from '../notes/note-session';
 import { quietButton } from '../quiet-button';
-import { Notice } from '../vault/notice';
 import { BoardHost } from './board-host';
-import { type PageLeaf, pageLeaf } from './page-leaf';
+import { NoteFoot } from './note-foot';
+import { type PageLeaf, type PaneLeaf, pageLeaf } from './page-leaf';
 import { PageTags, type PageTagsOf } from './page-tags';
 import { PageTitle } from './page-title';
 import { WordCount } from './word-count';
@@ -26,10 +26,7 @@ export interface PageNote {
   readonly loadImage: ImageLoader;
 }
 
-/** What the colophon says of the save: only a failure is worth a word. */
-const STATE_WORDS: Partial<Record<SaveState, string>> = { failed: 'Not saved yet — trying again' };
-
-export class PageView {
+export class PageView implements PaneLeaf {
   readonly editor: NoteEditor;
   readonly #crumbs = h('p', { class: 'crumbs label' });
   /** The breadcrumb again, for a running head across the window (C's): the pane shows the active page's. */
@@ -56,12 +53,6 @@ export class PageView {
   readonly words = new WordCount();
   /** Where outline cards lie, in the sheet's place (./board-host.ts). */
   readonly board: BoardHost;
-  readonly #state = h('span', { class: 'colophon__state', attrs: { role: 'status' } });
-  /** What the table editor just did ("Row 3 removed · ⌘Z puts it back"), for a while. */
-  readonly #said = h('span', { class: 'colophon__said', attrs: { role: 'status' } });
-  readonly #saying = new Notice(() => {
-    this.#said.textContent = this.#saying.text ?? '';
-  });
   /** A phone's table tools, above the keyboard while the caret's in a table (../editor/table-bar.ts). */
   readonly tableBar: TableBar;
   readonly #sheet = h(
@@ -88,16 +79,8 @@ export class PageView {
   /** Its own head and foot, which the split's mode fills (./page-leaf.ts). */
   readonly head: PageLeaf['head'];
   readonly folio: PageLeaf['folio'];
-  /** The last seal. */
-  readonly #sealLine = h('span', { class: 'colophon__seal' });
-  /** What the colophon says of this page's note, for the pane to put in place. */
-  readonly foot: {
-    readonly tags: HTMLElement;
-    readonly words: HTMLElement;
-    readonly state: HTMLElement;
-    readonly seal: HTMLElement;
-    readonly said: HTMLElement;
-  };
+  /** What the colophon says of this page's note: its tags, words, save and last seal (./note-foot.ts). */
+  readonly foot = new NoteFoot(this.tagSlots.colophon, this.words.element);
   /** Beside the pane: the versions panel. */
   readonly aside = h('div', { class: 'page__aside' });
   readonly #caret = new Set<() => void>();
@@ -106,7 +89,7 @@ export class PageView {
   readonly tags: PageTags;
   readonly #selection: SelectionBar;
   /** The sheet's ×, at its top right while the window is split. */
-  readonly closer: HTMLButtonElement;
+  readonly #closer: HTMLButtonElement;
 
   /**
    * `layer` holds what floats over the page (the selection bar); `rename`
@@ -141,7 +124,7 @@ export class PageView {
         this.tableBar.sync();
         for (const listener of this.#caret) listener();
       },
-      said: (words) => this.#saying.tell(words),
+      said: (words) => this.foot.tell(words),
     });
     this.#editorFrame.append(this.editor.tableTools);
     this.tableBar = new TableBar(this.editor.view);
@@ -152,33 +135,48 @@ export class PageView {
     scroll.append(this.board.element);
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(scroll));
     this.element.append(this.editor.find.element);
-    this.foot = {
-      tags: this.tagSlots.colophon,
-      words: this.words.element,
-      state: this.#state,
-      seal: this.#sealLine,
-      said: this.#said,
-    };
     this.#selection = new SelectionBar(layer, this.editor);
-    this.closer = quietButton({
+    this.#closer = quietButton({
       label: 'Close this page',
       icon: 'close',
       keys: 'Mod-w',
       class: 'sheet__close',
       run: () => events.close(),
     });
-    this.#sheet.prepend(this.closer);
+    this.#sheet.prepend(this.#closer);
     this.showNothing();
   }
 
   /** The page closed (a side of the split): its note let go, and all it holds with it. */
   dispose(): void {
+    this.board.hide(); // outline cards on it are put away, not drawn again on a page gone
     this.showNothing();
     this.#selection.remove();
-    this.#saying.stop();
+    this.foot.stop();
     this.editor.destroy();
     for (const part of [this.element, this.aside, this.tableBar.element, this.runningCrumbs])
       part.remove();
+  }
+
+  get under(): HTMLElement {
+    return this.tableBar.element;
+  }
+
+  get tipped(): readonly HTMLElement[] {
+    const { editor } = this;
+    // A table's grips and + are in the editor's shadow root, so watched there.
+    return [
+      this.tags.set.element,
+      editor.tableTools,
+      this.under,
+      this.#closer,
+      editor.find.element,
+    ];
+  }
+
+  /** # on the pane, outside the words and any field, opens the tags. */
+  key(event: KeyboardEvent): void {
+    this.tags.key(event);
   }
 
   /** Hear the caret move, or the text change under it; returns a function to stop. */
@@ -199,7 +197,7 @@ export class PageView {
 
   /** The seals' parts: a line in the colophon, a panel beside. */
   attach(parts: { readonly sealLine: HTMLElement; readonly aside: HTMLElement }): void {
-    this.#sealLine.replaceChildren(parts.sealLine);
+    this.foot.trail.replaceChildren(parts.sealLine);
     this.aside.replaceChildren(parts.aside);
   }
 
@@ -278,8 +276,7 @@ export class PageView {
   }
 
   state(state: SaveState): void {
-    this.#state.textContent = STATE_WORDS[state] ?? '';
-    this.#state.dataset.state = state;
+    this.foot.state(state);
   }
 
   /**

@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { COMPANION } from '../shell/split-state';
 import { pageHosts } from './page-hosts';
 import { pageMore } from './page-more';
-import { pagesWith } from './pages-harness';
+import { noted, pagesWith } from './pages-harness';
 
 const stops: (() => void)[] = [];
 afterEach(() => {
@@ -59,7 +59,7 @@ describe('the companion', () => {
     const { pages, area } = await companion();
     const [page, beside] = pages.sides;
     expect(beside?.page.folio.figures.textContent).toContain('4 words');
-    expect(area.querySelector('.colophon .colophon__words')).toBe(page?.page.foot.words);
+    expect(area.querySelector('.colophon .colophon__words')).toBe(noted(page).page.words.element);
     expect(pages.active).toBe(beside); // the companion, opened last
   });
 
@@ -68,7 +68,7 @@ describe('the companion', () => {
     pages.swap();
     own.sync();
     const [page, beside] = pages.sides;
-    expect(page?.note.path).toBe('Notes.md');
+    expect(page?.path).toBe('Notes.md');
     expect(beside?.page.head.name.textContent).toBe('Chapter');
     expect(labels(beside?.page.head.tools)).toHaveLength(3);
     expect(labels(page?.page.head.tools)).toEqual([]);
@@ -104,7 +104,7 @@ describe('the companion’s ⋯', () => {
     pages.activate(page);
     const run = vi.fn();
     const opened = vi.fn();
-    pageMore({ pages, run, openInNewWindow: opened }, beside, document.body);
+    pageMore({ pages, run, openInNewWindow: opened }, noted(beside), document.body);
     const items = [
       ...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"], [role="menuitemradio"]'),
     ];

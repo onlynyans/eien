@@ -4,7 +4,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PAGE_MIN } from '../shell/pane-state';
-import { pagesWith, typeAtEnd } from './pages-harness';
+import { noted, pagesWith, typeAtEnd } from './pages-harness';
 
 const stops: (() => void)[] = [];
 afterEach(() => {
@@ -36,7 +36,7 @@ describe('opening a note beside the one open', () => {
     expect(pages.split).toBe(true);
     expect(pages.notes()).toEqual({ active: 'Rain.md', other: 'Snow.md' });
     expect(row(area)).toEqual(['Snow', 'divider', 'Rain, the active page']);
-    expect(pages.active.page.editor.text).toBe('Rain came.');
+    expect(noted(pages.active).page.editor.text).toBe('Rain came.');
   });
 
   it('opens on the other page once split, which becomes the active one', async () => {
@@ -77,7 +77,7 @@ describe('one note on both pages', () => {
     expect(pages.notes()).toEqual({ active: 'Snow.md', other: 'Snow.md' });
     expect(pages.sessions()).toHaveLength(1);
     typeAtEnd(pages, ' The gate held.');
-    expect(pages.other?.page.editor.text).toBe('Snow fell. The gate held.');
+    expect(noted(pages.other).page.editor.text).toBe('Snow fell. The gate held.');
     await pages.flush();
     expect((await storage.read('Snow.md'))?.text).toBe('Snow fell. The gate held.');
     expect(wrote()).toEqual([3]); // counted once, by the page it was typed in
@@ -88,22 +88,49 @@ describe('one note on both pages', () => {
     typeAtEnd(pages, ' Then rain.');
     await pages.flush();
     expect(wrote()).toEqual([3, 2]);
-    expect(other.page.words.words).toBe(7);
+    expect(noted(other).page.words.words).toBe(7);
   });
 });
 
 describe('closing a page', () => {
   it('leaves the other page whole and its note as it was, and lets the closed one go', async () => {
     const { pages, area } = await split();
-    const rain = pages.active;
+    const rain = noted(pages.active);
     const destroy = vi.spyOn(rain.page.editor.view, 'destroy');
     expect(pages.close(rain)).toBe(true);
     expect(pages.split).toBe(false);
     expect(pages.notes()).toEqual({ active: 'Snow.md', other: null });
     expect(row(area)).toEqual(['page']);
     expect(destroy).toHaveBeenCalled();
-    expect(pages.sessions().map(({ path }) => path)).toEqual(['Snow.md']);
     expect(document.querySelectorAll('.selection-bar')).toHaveLength(1);
+    // Its note let go once its words are saved.
+    await vi.waitFor(() => expect(pages.sessions().map(({ path }) => path)).toEqual(['Snow.md']));
+  });
+
+  it('saves the words typed on it, though it closes before typing pauses', async () => {
+    const { pages, storage } = await split();
+    typeAtEnd(pages, ' The roof held.');
+    pages.close(pages.active); // before the save that waits for a pause in the typing
+    const saved = async () => (await storage.read('Rain.md'))?.text;
+    await vi.waitFor(async () => expect(await saved()).toBe('Rain came. The roof held.'));
+  });
+
+  it('holds its note till a save that failed works, then lets it go', async () => {
+    const { pages, storage } = await split();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const write = vi.spyOn(storage, 'write').mockRejectedValueOnce(new Error('disk full'));
+      typeAtEnd(pages, ' The roof held.');
+      pages.close(pages.active);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(write).toHaveBeenCalledTimes(1);
+      expect(pages.sessions().map(({ path }) => path)).toEqual(['Snow.md', 'Rain.md']);
+      await vi.advanceTimersByTimeAsync(4000); // the save tried again
+      expect((await storage.read('Rain.md'))?.text).toBe('Rain came. The roof held.');
+      expect(pages.sessions().map(({ path }) => path)).toEqual(['Snow.md']);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('never closes the last page', async () => {
@@ -125,7 +152,7 @@ describe('closing a page', () => {
 
   it('closes by its ×', async () => {
     const { pages } = await split();
-    pages.sides[0]?.page.closer.click();
+    pages.sides[0]?.page.element.querySelector<HTMLElement>('.sheet__close')?.click();
     expect(pages.notes()).toEqual({ active: 'Rain.md', other: null });
   });
 });

@@ -160,7 +160,7 @@ Each phase is its own session and pull request, from main.
      modules, used by both.
   2. A page holds a note or a book (`vault/pages.ts`, `page/page.ts`), so
      the split, the pager, ⇄ and Wide screen's rooms take a book with no
-     special case.
+     special case. Built: [page-kinds.md](../../page-kinds.md).
   3. The find bar apart from CodeMirror, so a book's Find reuses the slip,
      its keys and its count.
 

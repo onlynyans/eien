@@ -68,8 +68,8 @@ export class OpenNotes {
 
   /** `holder` lets `entry` go; with no page left holding it, the note is closed. */
   release(entry: OpenEntry, holder: NoteHolder): void {
-    entry.holders.delete(holder);
-    if (entry.holders.size > 0) return;
+    // Let go once: a page closed while its open was on its way lets go of the same note twice.
+    if (!entry.holders.delete(holder) || entry.holders.size > 0) return;
     entry.session.close();
     entry.images.release();
     if (this.#open.get(entry.key) === entry) this.#open.delete(entry.key);

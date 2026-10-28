@@ -7,10 +7,10 @@ import type { ImageLoader } from '../editor/widgets';
 import type { NoteSession, SaveState } from '../notes/note-session';
 import type { PageView } from '../page/page';
 import type { NoteHolder, OpenEntry, OpenNotes } from './open-notes';
+import type { Place } from './page-side';
 
 /** Where a note was left on its page: its caret (or what was chosen) and how far it was scrolled. */
-export interface NotePlace {
-  readonly path: string;
+interface NotePlace extends Place {
   readonly anchor: number;
   readonly head: number;
   readonly scroll: number;
@@ -26,20 +26,26 @@ export class OpenNote implements NoteHolder {
   #loader: ImageLoader | null = null;
   /** Each open asked for: one that finishes after a later one lets its note go. */
   #turn = 0;
-  /** The note this page showed before the one it shows now, and where it was left. */
-  #left: NotePlace | null = null;
+  /** What this page showed before the note it shows now, and where it was left. */
+  #left: Place | null;
   /**
    * How far the page was last scrolled, kept as it scrolls: a page out of sight (a phone's,
    * gone back to the list) reads 0, so its place is taken from here, not from the page then.
    */
   #scrolled = 0;
   #shown = 0;
+  /** The page closed (`leave`): it's told nothing more. */
+  #gone = false;
+  /** The note a closed page holds till its words are saved. */
+  #leaving: OpenEntry | null = null;
   readonly #notes: OpenNotes;
   readonly #page: PageView;
 
-  constructor(notes: OpenNotes, page: PageView) {
+  /** `left`: what the page showed before, when it held something else (./pages.ts). */
+  constructor(notes: OpenNotes, page: PageView, left: Place | null = null) {
     this.#notes = notes;
     this.#page = page;
+    this.#left = left;
     page.scroll.addEventListener(
       'scroll',
       () => {
@@ -63,8 +69,8 @@ export class OpenNote implements NoteHolder {
     return path ? this.#place(path) : null;
   }
 
-  /** The note this page showed before this one, and where it was left in it (the phone's other note). */
-  get left(): NotePlace | null {
+  /** What this page showed before this note, and where it was left in it (the phone's other note). */
+  get left(): Place | null {
     return this.#left;
   }
 
@@ -77,7 +83,7 @@ export class OpenNote implements NoteHolder {
   }
 
   /** Open the note at `path`, once the one open now has saved; at `place`, where it was left there. */
-  async open(path: string, place?: NotePlace): Promise<void> {
+  async open(path: string, place?: Place): Promise<void> {
     const turn = ++this.#turn;
     await this.#entry?.session.flush();
     const entry = await this.#notes.take(path, this);
@@ -100,13 +106,13 @@ export class OpenNote implements NoteHolder {
       doc: entry.doc,
       loadImage: entry.images.load,
     });
-    if (place?.path === path) this.#return(place);
+    if (place?.path === path && isNotePlace(place)) this.#return(place);
   }
 
   /** Where the page is in its note now. */
   #place(path: string): NotePlace {
     const { anchor, head } = this.#page.editor.view.state.selection.main;
-    return { path, anchor, head, scroll: this.#scrolled };
+    return { path, name: titleOf(baseName(path)), anchor, head, scroll: this.#scrolled };
   }
 
   /** Back where the note was left: the caret where it was, scrolled as it was (or as near as the text allows). */
@@ -124,6 +130,29 @@ export class OpenNote implements NoteHolder {
     });
   }
 
+  /**
+   * The page closed: the note held till its words are saved (a session let go by its
+   * last page saves nothing more, nor tries again), then let go. Nothing opens on the
+   * page after, and what the session says no longer reaches it.
+   */
+  async leave(): Promise<void> {
+    this.#turn++;
+    this.#gone = true;
+    const entry = this.#entry;
+    this.#entry = null;
+    if (!entry) return;
+    this.#leaving = entry;
+    await entry.session.flush();
+    // A save that failed tries again: the note is let go once one works (`status`).
+    if (entry.session.state === 'saved') this.#letGo();
+  }
+
+  #letGo(): void {
+    const entry = this.#leaving;
+    this.#leaving = null;
+    if (entry) this.#notes.release(entry, this);
+  }
+
   /** Nothing open: the note's gone (deleted elsewhere, or sent to the trash here). */
   close(): void {
     this.#turn++;
@@ -135,21 +164,24 @@ export class OpenNote implements NoteHolder {
   }
 
   status(state: SaveState): void {
-    this.#page.state(state);
+    if (state === 'saved' && this.#leaving) this.#letGo();
+    if (!this.#gone) this.#page.state(state);
   }
 
   reloaded(text: string): void {
-    this.#page.reloaded(text);
+    if (!this.#gone) this.#page.reloaded(text);
   }
 
   movedToCopy(copy: string, from: string): void {
+    if (this.#gone) return;
     this.#page.notice(
       `“${titleOf(baseName(from))}” changed elsewhere. Your version is kept beside it as “${titleOf(baseName(copy))}”.`,
     );
   }
 
   gone(): void {
-    this.close();
+    if (this.#gone) this.#letGo();
+    else this.close();
   }
 
   moved(): void {
@@ -162,3 +194,6 @@ export class OpenNote implements NoteHolder {
     this.#page.editor.setImageLoader(entry.images.load);
   }
 }
+
+/** A place a note's page keeps: the place opened at, if it's in a note, is put back. */
+const isNotePlace = (place: Place): place is NotePlace => 'anchor' in place;

@@ -89,10 +89,10 @@ export function phoneView(of: PhoneViewOf): PhoneView {
     },
     leavingPage: () => {
       const { outline } = of.parts();
-      const { page, versions } = of.pages.active;
       if (outline.open) void outline.toggle();
-      if (page.comparing) void versions.cycleCompare('draft');
-      if (versions.panelOpen) versions.showPanel(false);
+      const note = of.pages.activeNote;
+      if (note?.page.comparing) void note.versions.cycleCompare('draft');
+      if (note?.versions.panelOpen) note.versions.showPanel(false);
     },
     // Turned sideways, the panes all show: a pane shut gives the page the keyboard (spec §4).
     lost: () => (stack.phone ? focusPane(stack.shown ?? 'list') : of.pages.active.page.focus()),
@@ -122,10 +122,10 @@ export function phoneView(of: PhoneViewOf): PhoneView {
   const closeOver = (): boolean => {
     if (stack.shown !== 'page') return false;
     const { outline } = of.parts();
-    const { page, versions } = of.pages.active;
+    const note = of.pages.activeNote;
     if (outline.open) void outline.toggle();
-    else if (page.comparing) void versions.cycleCompare('draft');
-    else if (versions.panelOpen) versions.showPanel(false);
+    else if (note?.page.comparing) void note.versions.cycleCompare('draft');
+    else if (note?.versions.panelOpen) note.versions.showPanel(false);
     else return false;
     return true;
   };

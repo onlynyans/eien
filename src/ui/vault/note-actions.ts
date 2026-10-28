@@ -67,7 +67,7 @@ export function noteActions(of: NoteActionsOf): NoteActions {
     // Two pages (Wide screen): the second note chosen opens beside the first. Opened any other
     // way (a link, a card, a rename, a new note), a note stays where it was asked for.
     const second =
-      how === 'chosen' && opensBeside(phone.stack.room, pages.split, pages.active.note.path, path);
+      how === 'chosen' && opensBeside(phone.stack.room, pages.split, pages.active.path, path);
     const beside = asked || (second && roomForTwo());
     await pages.open(path, beside && phone.stack.splits); // one page, the phone's way
     await of.redraw();
@@ -88,9 +88,9 @@ export function noteActions(of: NoteActionsOf): NoteActions {
   }
 
   async function renameOnPage(path: string): Promise<void> {
-    if (pages.active.note.path !== path) await openNote(path);
+    if (pages.active.path !== path) await openNote(path);
     else phone.stack.show('page'); // on a phone, from the list: the title's on the page
-    pages.active.page.editTitle();
+    pages.activeNote?.page.editTitle();
   }
 
   function editFolder(path: string): void {

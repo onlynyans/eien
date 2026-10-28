@@ -9,11 +9,11 @@ import { ariaKeys, keyText } from '../chrome/keys';
 import type { SplitSpec } from '../chrome/splits';
 import { h, wordButton } from '../dom';
 import { Divider } from './divider';
-import type { PageView } from './page';
+import type { PaneLeaf } from './page-leaf';
 
 export interface RowEvents {
   /** A page chosen in the pager, or turned to by its edge: it becomes the active one. */
-  activate(page: PageView): void;
+  activate(page: PaneLeaf): void;
   /** ⇄ on the divider. */
   swap(): void;
 }
@@ -54,8 +54,8 @@ export class PagesRow {
   readonly #mark = markOf();
   readonly #divider: Divider;
   readonly #events: RowEvents;
-  #shown: readonly PageView[] = [];
-  #active: PageView | null = null;
+  #shown: readonly PaneLeaf[] = [];
+  #active: PaneLeaf | null = null;
   #spec: SplitSpec | null = null;
   /** The row's size, as last laid out: only a change lays the pages out again. */
   #size = '';
@@ -90,14 +90,20 @@ export class PagesRow {
    * for; with two, as `spec` lays them out. A page already in place stays
    * put, so the keyboard stays where it is.
    */
-  place(pages: readonly PageView[], active: PageView, spec: SplitSpec): void {
+  place(pages: readonly PaneLeaf[], active: PaneLeaf, spec: SplitSpec): void {
     const [left, right] = pages;
     if (!left) return;
     const want = right
       ? [left.element, this.#divider.element, right.element, this.#edge]
       : [left.element];
     const have = [...this.element.children];
-    if (want.length !== have.length || want.some((part, at) => part !== have[at]))
+    const differ = want.flatMap((part, at) => (part === have[at] ? [] : [at]));
+    const [only] = differ;
+    // One page put in another's place (another kind opened there): only it changes, so the
+    // page beside keeps its scroll and the keyboard.
+    if (want.length === have.length && differ.length === 1 && only !== undefined)
+      have[only]?.replaceWith(want[only] as Element);
+    else if (differ.length > 0 || want.length !== have.length)
       this.element.replaceChildren(...want);
     this.#shown = pages;
     this.#active = active;
@@ -188,7 +194,7 @@ export class PagesRow {
     this.#wear.style.setProperty('--split-share', String(share));
   }
 
-  #other(): PageView | null {
+  #other(): PaneLeaf | null {
     return this.#shown.find((page) => page !== this.#active) ?? null;
   }
 

@@ -7,6 +7,7 @@ import type { SettingValues } from '../../core/config';
 import { FORMAT_COMMANDS, type FormatCommandId } from '../../core/format';
 import type { MenuCommand } from '../../platform/bridge';
 import type { IconName } from '../icons';
+import type { PageKind } from '../page/page-leaf';
 
 /** The window's three layouts (spec §4): A · Band, B · Slip, C · Running head. */
 export type Layout = SettingValues['appearance.layout'];
@@ -34,6 +35,11 @@ export interface CommandDef {
   readonly layouts?: readonly Layout[];
   /** Drawn only while the window is split, where the split's mode puts it (./splits.ts). */
   readonly split?: true;
+  /**
+   * The kind of page it acts on (a note's views, seals and formats); without
+   * it, any page, or the window. A page of another kind has it disabled.
+   */
+  readonly on?: PageKind;
 }
 
 /** The formatting bar's commands (#14), each the Format menu's, in the bar's order. */
@@ -61,6 +67,7 @@ const formatControl = (id: BarFormat) => {
     label: command?.label ?? id,
     key: command?.key,
     sends: `format:${id}` as const,
+    on: 'note' as const,
   };
 };
 
@@ -79,6 +86,7 @@ export const COMMANDS = [
     label: 'Live',
     tip: 'Live: formatting shown as you write',
     sends: 'view:live',
+    on: 'note',
   },
   {
     id: 'view.source',
@@ -86,6 +94,7 @@ export const COMMANDS = [
     label: 'Source',
     tip: 'Source: edit the raw Markdown',
     sends: 'view:source',
+    on: 'note',
   },
   {
     id: 'view.reading',
@@ -93,8 +102,17 @@ export const COMMANDS = [
     label: 'Reading',
     tip: 'Reading: read only',
     sends: 'view:reading',
+    on: 'note',
   },
-  { id: 'view.next', icon: 'live', label: 'View', key: 'Mod-e', sends: 'view:next', phone: true },
+  {
+    id: 'view.next',
+    icon: 'live',
+    label: 'View',
+    key: 'Mod-e',
+    sends: 'view:next',
+    phone: true,
+    on: 'note',
+  },
   {
     id: 'compare',
     icon: 'compare',
@@ -102,6 +120,7 @@ export const COMMANDS = [
     tip: 'Compare with the last saved version',
     key: 'Mod-Shift-d',
     sends: 'compare',
+    on: 'note',
   },
   {
     id: 'seal',
@@ -110,8 +129,9 @@ export const COMMANDS = [
     tip: 'Seal this version',
     key: 'Mod-s',
     sends: 'seal',
+    on: 'note',
   },
-  { id: 'versions', icon: 'versions', label: 'Versions', sends: 'versions' },
+  { id: 'versions', icon: 'versions', label: 'Versions', sends: 'versions', on: 'note' },
   {
     id: 'copy-html',
     icon: 'copy',
@@ -119,11 +139,12 @@ export const COMMANDS = [
     key: 'Mod-Shift-c',
     sends: 'copy-html',
     split: true,
+    on: 'note',
   },
   { id: 'page.close', icon: 'close', label: 'Close this page', key: 'Mod-w', split: true },
   { id: 'pages.swap', icon: 'swap', label: 'Swap the pages', sends: 'split:swap', split: true },
   { id: 'page.lead', icon: 'swap', label: 'Make it the page', sends: 'split:swap', split: true },
-  { id: 'page.more', icon: 'more', label: 'More for this note', split: true },
+  { id: 'page.more', icon: 'more', label: 'More for this note', split: true, on: 'note' },
   {
     id: 'focus',
     icon: 'focus',
@@ -131,6 +152,7 @@ export const COMMANDS = [
     tip: 'Focus mode: dim all but the current paragraph',
     key: 'Mod-Shift-Enter',
     sends: 'toggle:editor.focus',
+    on: 'note',
   },
   { id: 'strip', icon: 'up', label: 'Page controls', layouts: ['band', 'slip'] },
   { id: 'scheme', icon: 'sun', label: 'Night' },
@@ -154,6 +176,7 @@ export const COMMANDS = [
     key: 'Mod-Alt-1',
     keyOffMac: 'Mod-Shift-1',
     keyThrough: '3',
+    on: 'note',
   },
 ] as const satisfies readonly CommandDef[];
 
@@ -168,6 +191,12 @@ export type LocalCommandId = Exclude<
 const BY_ID = new Map<string, CommandDef>(COMMANDS.map((command) => [command.id, command]));
 
 export const commandOf = (id: CommandId): CommandDef => BY_ID.get(id) as CommandDef;
+
+/** Whether `id` acts on a page of `kind`: the window's commands act on any. */
+export const actsOn = (id: CommandId, kind: PageKind): boolean => {
+  const { on } = commandOf(id);
+  return on === undefined || on === kind;
+};
 
 /** Whether `command` is drawn on the desktop in `layout`, with one page (a split's own are its mode's). */
 export const onDesktopIn = (command: CommandDef, layout: Layout): boolean =>

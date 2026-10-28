@@ -290,8 +290,8 @@ What follows holds for all four.
   lies flat (with Page frame Full, a 2px rule tops the active page). The
   list's chosen row is its note; the other page's note keeps a fainter rule.
 - **Closing:** the sheet's × (on hover), Close Window (⌘W), or Split Page
-  again (the other page). A note is never touched by closing its page. The
-  last page never closes.
+  again (the other page). A note is never touched by closing its page, but
+  for the words just typed there, saved first. The last page never closes.
 - **The divider** is a pane's edge: dragged, or ← → with the keyboard, Enter
   or a double-click to even the pages; ⇄ on it (and View → Swap Pages) swaps
   them. Neither page is ever narrower than 360px; where it stands is

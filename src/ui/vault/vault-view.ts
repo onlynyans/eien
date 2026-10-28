@@ -24,7 +24,8 @@ import { orderActions } from './order-actions';
 import { Organizer } from './organize';
 import { ownWrites } from './own-writes';
 import { pageDrop } from './page-drop';
-import { Pages, pagesHeld } from './pages';
+import { Pages } from './pages';
+import { pagesHeld } from './pages-held';
 import { PaneDrawer } from './pane-drawer';
 import { phoneView } from './phone-view';
 import { rowActions } from './row-actions';
@@ -238,7 +239,7 @@ export async function showVault(
     pages.sync();
     sync.draw();
     chrome.refresh();
-    nameWindow(pages.active.note.path, name);
+    nameWindow(pages.active.path, name);
     return draw.all().then(() => phone.drawn());
   };
 
@@ -295,7 +296,7 @@ export async function showVault(
   await refresh();
   return {
     back: () => phone.back(),
-    notePath: () => pages.active.note.path,
+    notePath: () => pages.activeNote?.note.path ?? null, // New Window opens a note
     closePage: () => pages.close(pages.active),
     openNote: (path) => actions.openNote(path),
     // The note's words first; then a seal or a move under way finishes (a quit waits for both).

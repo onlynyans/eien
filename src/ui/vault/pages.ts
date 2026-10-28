@@ -1,8 +1,10 @@
 // The pages of a shown vault: the page pane (../page/page-pane.ts) and the
-// pages lying in it, each showing a note held in the window's open notes
-// (./open-notes.ts) and with seals of its own (../versions). The menu's
-// commands, the pane's tools and the window-wide parts (./page-parts.ts) act
-// on the active page.
+// pages lying in it, each of a kind (./page-side.ts): a note's, held in the
+// window's open notes (./open-notes.ts) with seals of its own (../versions),
+// or another kind given (an EPUB's, backlog #40). A file opens on a page of
+// the kind that holds it, put in the place of one of another kind. The
+// menu's commands, the pane's tools and the window-wide parts
+// (./page-parts.ts) act on the active page.
 
 import type { OutBridge } from '../../platform/bridge';
 import { type SplitSpec, splitSpecOf } from '../chrome/splits';
@@ -13,15 +15,17 @@ import type { Written } from '../page/word-count';
 import type { SettingsState } from '../settings/settings-state';
 import { sealTargetOf } from '../versions/seal-target';
 import type { Navigation } from './navigation';
-import type { NotePlace } from './open-note';
+import { isNote, type NoteSide, type NoteSideOf, noteKind } from './note-side';
 import { OpenNotes } from './open-notes';
-import type { OrganizeContext } from './organize';
 import { type PageParts, pageParts } from './page-parts';
-import { closeSide, followSettings, makeSide, type Side, type SideOf } from './page-side';
+import type { PageKindOf, Place, Side } from './page-side';
 
+export { isNote, type NoteSide } from './note-side';
 export type { Side } from './page-side';
 
-export interface PagesOf extends Omit<SideOf, 'wrote' | 'counted'> {
+export interface PagesOf extends Omit<NoteSideOf, 'wrote' | 'counted'> {
+  /** The kinds of page besides a note's (an EPUB's; a test's stand-in): the first that holds a file shows it. */
+  readonly kinds?: readonly PageKindOf[];
   readonly settings: SettingsState;
   /** Where Copy as HTML and the exports go. */
   readonly out: OutBridge;
@@ -44,6 +48,8 @@ export class Pages {
   readonly parts: PageParts;
   readonly #of: PagesOf;
   readonly #notes: OpenNotes;
+  /** The kinds of page, a note's last: it holds whatever the others don't. */
+  readonly #kinds: readonly PageKindOf[];
   /** Left to right: one page, or two while the window is split. */
   #sides: Side[] = [];
   #active: Side;
@@ -53,7 +59,16 @@ export class Pages {
   constructor(of: PagesOf) {
     this.#of = of;
     this.#notes = new OpenNotes(of.vault, of.refresh);
-    this.#active = this.#make();
+    const notes = noteKind(
+      {
+        ...of,
+        wrote: (added: number, when: Written) => this.parts.wrote(added, when),
+        counted: () => this.parts.counted(),
+      },
+      this.#notes,
+    );
+    this.#kinds = [...(of.kinds ?? []), notes];
+    this.#active = this.#make(notes);
     this.#sides = [this.#active];
     this.pane = new PagePane(of.area, this.#active.page, {
       activate: (page) => {
@@ -67,14 +82,13 @@ export class Pages {
       pages: this,
       act: of.act,
     });
-    // The pages as the settings say: the pane's zoom, and each editor's quotes, tools and marks.
-    const follow = (values: SettingsState['values'], before?: SettingsState['values']) => {
+    // The pages as the settings say: the pane's zoom, the mode, and each page's own (#make's first).
+    this.pane.showZoom(of.settings.values['page.zoom']);
+    this.#stopSettings = of.settings.onChange((values, before) => {
       this.pane.showZoom(values['page.zoom']);
       if (before && specFor(values) !== specFor(before)) this.#place();
-      for (const { page } of this.#sides) followSettings(page, values);
-    };
-    follow(of.settings.values);
-    this.#stopSettings = of.settings.onChange(follow);
+      for (const side of this.#sides) side.follow(values);
+    });
   }
 
   /** The page the commands act on. */
@@ -85,6 +99,11 @@ export class Pages {
   /** The page beside the active one, while the window is split. */
   get other(): Side | null {
     return this.#sides.find((side) => side !== this.#active) ?? null;
+  }
+
+  /** The active page when it holds a note: what a note's commands and parts act on. */
+  get activeNote(): NoteSide | null {
+    return isNote(this.#active) ? this.#active : null;
   }
 
   get sides(): readonly Side[] {
@@ -101,7 +120,7 @@ export class Pages {
   }
 
   notes(): ShownNotes {
-    return { active: this.#active.note.path, other: this.other?.note.path ?? null };
+    return { active: this.#active.path, other: this.other?.path ?? null };
   }
 
   /** Hear the active page's caret move, or its text change under it; returns a function to stop. */
@@ -111,21 +130,23 @@ export class Pages {
   }
 
   /**
-   * Show the note at `path` on the active page, or `beside` it: on a second
+   * Show the file at `path` on the active page, or `beside` it: on a second
    * page, made for it, or, split already, the other page. Either way that
-   * page is then the active one.
+   * page is then the active one; one of another kind than `path`'s gives
+   * its place to one of that kind.
    */
-  async open(path: string, beside = false, place?: NotePlace): Promise<void> {
+  async open(path: string, beside = false, place?: Place): Promise<void> {
+    const kind = this.#kinds.find((each) => each.holds(path)) as PageKindOf;
     if (beside) {
-      const other = this.other ?? this.#make();
-      if (!this.#sides.includes(other)) {
-        this.#sides = [...this.#sides, other];
-        followSettings(other.page, this.#of.settings.values);
-      }
+      const other = this.other ?? this.#make(kind);
+      if (!this.#sides.includes(other)) this.#sides = [...this.#sides, other];
       this.activate(other);
     }
-    await this.#active.note.open(path, place);
+    const had = this.#active.kind === kind.kind ? false : this.#replace(this.#active, kind);
+    const side = this.#active;
+    await side.open(path, place);
     this.pane.renamed();
+    if (had && this.#active === side) side.page.focus();
   }
 
   /** Make `side` the active page; `focus`, with the keyboard in it. */
@@ -141,7 +162,7 @@ export class Pages {
   async toggle(): Promise<void> {
     const other = this.other;
     if (other) this.close(other);
-    else if (this.#active.note.path) await this.open(this.#active.note.path, true);
+    else if (this.#active.path) await this.open(this.#active.path, true);
   }
 
   /** ⌘3 in a page: the keyboard to the other one. */
@@ -161,7 +182,7 @@ export class Pages {
     const left = this.#sides[0] as Side;
     this.#active = left;
     this.#place();
-    closeSide(side);
+    side.dispose();
     if (had) left.page.focus();
     return true;
   }
@@ -183,15 +204,15 @@ export class Pages {
     return this.#notes.session(path);
   }
 
-  /** `path` went to the trash: the pages showing it, or a note in it, show nothing. */
+  /** `path` went to the trash: the pages showing it, or a file in it, show nothing. */
   closed(path: string): void {
-    for (const { note } of this.#sides) if (note.path && inside(note.path, path)) note.close();
+    for (const side of this.#sides) if (side.path && inside(side.path, path)) side.clear();
   }
 
-  /** Hold still (true) or let go (false) the pages showing `path`, or a note in it, while it moves. */
+  /** Hold still (true) or let go (false) the notes' pages showing `path`, or a note in it, while it moves. */
   freeze(path: string, frozen: boolean): void {
-    for (const { note, page } of this.#sides)
-      if (note.path && inside(note.path, path)) page.editor.setLocked(frozen);
+    for (const { path: shown, page } of this.#noteSides())
+      if (shown && inside(shown, path)) page.editor.setLocked(frozen);
   }
 
   /**
@@ -200,7 +221,7 @@ export class Pages {
    * that worked, or null when no page shows it.
    */
   async amendOpen(path: string, change: (text: string) => string): Promise<boolean | null> {
-    const side = this.#sides.find(({ note }) => note.path === path);
+    const side = this.#noteSides().find((each) => each.path === path);
     return side ? (sealTargetOf(side.note, side.page)?.amend(change, false) ?? null) : null;
   }
 
@@ -218,18 +239,18 @@ export class Pages {
 
   /** Count what was just written on every page, now. */
   flushWords(): void {
-    for (const { page } of this.#sides) page.words.flush();
+    for (const { page } of this.#noteSides()) page.words.flush();
   }
 
   /** Files changed on disk: open notes look again, and another device may have sealed one. */
   diskChanged(changed: ReadonlySet<string>): void {
     this.#notes.diskChanged(changed);
-    for (const { versions } of this.#sides) void versions.diskChanged(changed);
+    for (const { versions } of this.#noteSides()) void versions.diskChanged(changed);
   }
 
   /** Another note open, or the vault read again: each page's seals, and what the pages share, see it. */
   sync(): void {
-    for (const { versions } of this.#sides) versions.sync();
+    for (const { versions } of this.#noteSides()) versions.sync();
     this.parts.sync();
   }
 
@@ -237,7 +258,7 @@ export class Pages {
     this.#stopSettings();
     this.pane.stop();
     this.parts.stop();
-    for (const { versions } of this.#sides) versions.stop();
+    for (const { versions } of this.#noteSides()) versions.stop();
   }
 
   #place(): void {
@@ -249,32 +270,44 @@ export class Pages {
     this.#of.rearranged();
   }
 
-  /** A page, its note and its seals; the active one when the writer goes into it. */
-  #make(): Side {
-    const of = {
-      ...this.#of,
-      wrote: (added: number, when: Written) => this.parts.wrote(added, when),
-      counted: () => this.parts.counted(),
+  #noteSides(): NoteSide[] {
+    return this.#sides.filter(isNote);
+  }
+
+  /**
+   * `old`'s place given to a page of `kind`, which goes back to what `old`
+   * showed as its other; laid out before `old` lets go, so the pane swaps
+   * its parts out first. Whether `old` had the keyboard.
+   */
+  #replace(old: Side, kind: PageKindOf): boolean {
+    const { element, aside, under } = old.page; // its panel and table bar lie outside it
+    const had = [element, aside, under].some((part) => part.contains(document.activeElement));
+    const side = this.#make(kind, old.place ?? old.left);
+    this.#sides = this.#sides.map((each) => (each === old ? side : each));
+    if (this.#active === old) this.#active = side;
+    this.#place();
+    old.dispose();
+    return had;
+  }
+
+  /** A page of `kind`, as the settings say; the active one when the writer goes into it. */
+  #make(kind: PageKindOf, left: Place | null = null): Side {
+    const side: Side = kind.make(
+      {
+        close: () => this.close(side),
+        caret: () => {
+          if (this.#active === side) for (const listener of this.#caret) listener();
+        },
+      },
+      left,
+    );
+    // The writer in a page (a click, the keyboard): it's the active one.
+    const entered = () => {
+      if (this.#active !== side) this.activate(side);
     };
-    const side: Side = makeSide(of, this.#notes, {
-      close: () => this.close(side),
-      caret: () => {
-        if (this.#active === side) for (const listener of this.#caret) listener();
-      },
-      entered: () => {
-        if (this.#active !== side) this.activate(side);
-      },
-    });
+    side.page.element.addEventListener('focusin', entered);
+    side.page.element.addEventListener('pointerdown', entered);
+    side.follow(this.#of.settings.values);
     return side;
   }
 }
-
-/** What the organizer asks of the pages (./organize.ts), which are made after it. */
-export const pagesHeld = (
-  pages: () => Pages,
-): Pick<OrganizeContext, 'sessions' | 'closed' | 'freeze' | 'amendOpen'> => ({
-  sessions: () => pages().sessions(),
-  closed: (path) => pages().closed(path),
-  freeze: (path, frozen) => pages().freeze(path, frozen),
-  amendOpen: (path, change) => pages().amendOpen(path, change),
-});

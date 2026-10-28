@@ -5,13 +5,13 @@
 import { Counters } from '../counters/counters';
 import type { PagePane } from '../page/page-pane';
 import type { Written } from '../page/word-count';
-import type { Side } from './pages';
+import type { NoteSide } from './pages';
 import type { BookCount, VaultState } from './vault-state';
 
 export interface CountingParts {
   readonly pane: PagePane;
-  /** The active page and its note. */
-  active(): Side;
+  /** The active page and its note, or null when it holds something else. */
+  active(): NoteSide | null;
   /** Count what was just written on every page, now. */
   flushWords(): void;
   readonly state: VaultState;
@@ -37,13 +37,14 @@ export function counting(parts: CountingParts): Counting {
   // The book's words with the active note's as they are now, not as last indexed; none while
   // another note is active than the one the book was read for (until it's read for that one).
   const counted = () => {
-    const { note, page } = parts.active();
-    const count = book && book.path === note.path ? book.count : null;
+    const on = parts.active();
+    const count = on && book && book.path === on.note.path ? book.count : null;
     counters.showBook(
-      count && {
-        words: count.words - count.note + page.words.words,
-        ...(count.goal ? { goal: count.goal } : {}),
-      },
+      on &&
+        count && {
+          words: count.words - count.note + on.page.words.words,
+          ...(count.goal ? { goal: count.goal } : {}),
+        },
     );
   };
   let asked = 0;
@@ -53,7 +54,7 @@ export function counting(parts: CountingParts): Counting {
     counted,
     async sync() {
       const ask = ++asked;
-      const path = parts.active().note.path;
+      const path = parts.active()?.note.path ?? null;
       const found = path ? await parts.state.bookOf(path) : null;
       if (ask !== asked) return; // a later one is on its way
       book = path && found ? { path, count: found } : null;

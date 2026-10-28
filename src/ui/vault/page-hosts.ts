@@ -1,10 +1,11 @@
 // A page's own controls while the window is split, where the split's mode
 // gives a note its own (../chrome/splits.ts): Facing pages' folio on each
 // page, a companion's head on the second. A host per page holding the mode's
-// own commands, each showing how it is for that page's note. A press in a page makes it the active one first (./page-side.ts
+// own commands for its kind of page (../chrome/commands.ts, `on`), each
+// showing how it is for that page's note. A press in a page makes it the active one first (./page-side.ts
 // hears the pointer and the keyboard go in), so its command acts on that note.
 
-import type { CommandId } from '../chrome/commands';
+import { actsOn, type CommandId } from '../chrome/commands';
 import { type CommandLook, Host, type HostDraw } from '../chrome/host';
 import type { SplitSpec } from '../chrome/splits';
 import type { Pages, Side } from './pages';
@@ -33,8 +34,10 @@ export function pageHosts(of: PageHostsOf): PageHosts {
   return {
     sync() {
       const { mode, split, sides } = of.pages;
-      const { items, on, at } = mode.own;
+      const { on, at } = mode.own;
       sides.forEach((side, index) => {
+        // A side keeps its kind (another kind takes its place as a new side, drawn anew).
+        const items = mode.own.items.filter((id) => actsOn(id, side.kind));
         const wanted = split && items.length > 0 && (on === 'each' || index === 1);
         const had = hosts.get(side);
         if (had && (!wanted || had.mode !== mode)) {
