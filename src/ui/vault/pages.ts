@@ -203,8 +203,13 @@ export class Pages {
 
   /** Save whatever is unsaved, and count what was just written (today's words) without a pause. */
   async flush(): Promise<void> {
-    // At once, each kind: one kind's save never waits for another's.
-    await Promise.all(this.#kinds.map((kind) => kind.flush(this.#sidesOf(kind))));
+    // At once, each kind: one kind's save never waits for another's, nor a failure
+    // in one cuts short the wait for the rest (a quit waits for them all).
+    const settled = await Promise.allSettled(
+      this.#kinds.map((kind) => kind.flush(this.#sidesOf(kind))),
+    );
+    const failed = settled.find((each) => each.status === 'rejected');
+    if (failed) throw failed.reason;
   }
 
   /** Files changed on disk: what each page shows looks again (an open note; a seal another device made). */

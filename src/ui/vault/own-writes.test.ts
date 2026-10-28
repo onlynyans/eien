@@ -111,7 +111,7 @@ describe('withOwnWrites', () => {
     }
   }
 
-  it('keeps the bridge’s own methods, its vault the one that remembers', async () => {
+  it('keeps the bridge’s own methods, its vault the one that remembers', () => {
     const given = new FakeBridge();
     const { bridge } = withOwnWrites(given as unknown as Bridge);
     expect(bridge.platform).toBe('linux');

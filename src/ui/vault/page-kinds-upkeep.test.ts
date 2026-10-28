@@ -22,8 +22,8 @@ async function made() {
 }
 
 describe('the kinds’ upkeep', () => {
-  it('hands each kind its own pages alone, in the order the window asks', async () => {
-    const { pages } = await made();
+  it('hands each kind its own pages alone, for each step of its upkeep', async () => {
+    const { pages } = await pagesWith({ 'Chapter.md': 'The gate held.' }, {}, [standInKind]); // stopped below
     await pages.open('Chapter.md');
     await pages.open('Map.stand', true);
     const [note, stand] = pages.sides;
@@ -49,10 +49,12 @@ describe('the kinds’ upkeep', () => {
     const { pages } = await made();
     await pages.open('Map.stand');
     const gone = pages.active as StandInSide;
+    pages.sync();
+    expect(gone.told).toEqual(['sync']);
     await pages.open('Chapter.md'); // a note takes its slot
     pages.sync();
     expect(gone.disposed).toBe(true);
-    expect(gone.told).toEqual([]);
+    expect(gone.told).toEqual(['sync']);
   });
 
   it('gives a kind with no page in the pane none', async () => {
@@ -85,6 +87,7 @@ describe('a note’s page closed while saving', () => {
     const flushing = pages.flush().then(() => {
       flushed = true;
     });
+    // Long enough for a flush that didn't wait (a per-page one, given no note's page) to resolve.
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(flushed).toBe(false); // a quit now waits for the note's words
     land();

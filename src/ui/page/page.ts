@@ -35,7 +35,7 @@ export class PageView implements PaneLeaf {
     colophon: h('span', { class: 'colophon__tags' }),
   };
   readonly #sheet: NoteSheet;
-  /** The breadcrumb again, for a running head across the window (C's): the pane shows the active page's. */
+  /** The sheet's running crumbs (./note-sheet.ts). */
   readonly runningCrumbs: HTMLElement;
   /** The note's words, and what writing adds to them (./word-count.ts). */
   readonly words = new WordCount();

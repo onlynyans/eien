@@ -64,11 +64,11 @@ the note's kind over all its pages: `noteKind`, which holds every file no
 other kind does, with its upkeep (count the words, then save every open
 note; the open notes and each page's seals told of the disk; the open notes
 follow moves; each page's seals synced and stopped), and `NotePages`, what
-the window asks of notes alone. A note's page, closed, **holds its note till its words are
-saved**, then lets it go (a save that fails tries again, and the note is let
-go once one works), and is told nothing more meanwhile: before this, a page
-closed (⌘W, its ×, a phone's room closing the page beside) within the pause
-before a save dropped the last words typed.
+the window asks of notes alone. A note's page, closed, **holds its note till
+its words are saved**, then lets it go (a save that fails tries again, and
+the note is let go once one works), and is told nothing more meanwhile:
+before this, a page closed (⌘W, its ×, a phone's room closing the page
+beside) within the pause before a save dropped the last words typed.
 
 ### The controller: `vault/pages.ts`
 
@@ -127,7 +127,9 @@ page when it holds a note: `pages.other` and `isNote`.
   for this note' and 'No note' for a page that holds one.
 - An EPUB's page moved or renamed, and its file changed on disk: the EPUB's
   kind implements `followMoves` and `diskChanged` (and `flush`, its
-  reading place; `stop`), and nothing in `pages.ts` changes.
+  reading place; `stop`), and nothing in `pages.ts` changes. Whether a book
+  is held still while it moves (a note's `freeze`, its editor locked) is
+  Phase 1's to decide; a page with nothing to type into may need none.
 - Outline cards, Copy as HTML, the exports and the book's count act on a
   note's page; with an EPUB in front they do nothing.
 
