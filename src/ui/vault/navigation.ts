@@ -2,7 +2,7 @@
 // shown open, and the search's words. Kept apart from drawing, so a rename
 // or a move can carry it along.
 
-import { parentOf } from '../../core/paths';
+import { isInside, parentOf } from '../../core/paths';
 import { followSorts } from '../list/sorts';
 import { openId } from '../sidebar/tree';
 import type { Selection } from './vault-state';
@@ -50,8 +50,7 @@ export class Navigation {
 
   /** A folder renamed or moved: the open folders, the selection and the sorts follow it. */
   follow(from: string, to: string): void {
-    const moved = (path: string) =>
-      path === from || path.startsWith(`${from}/`) ? to + path.slice(from.length) : path;
+    const moved = (path: string) => (isInside(path, from) ? to + path.slice(from.length) : path);
     for (const id of [...this.open]) {
       if (moved(id) !== id) {
         this.open.delete(id);
@@ -70,10 +69,10 @@ export class Navigation {
    */
   unselect(path: string): void {
     for (const id of [...this.open]) {
-      if (id === path || id.startsWith(`${path}/`)) this.open.delete(id);
+      if (isInside(id, path)) this.open.delete(id);
     }
     const chosen = this.#selection;
-    if (chosen.kind === 'folder' && (chosen.path === path || chosen.path.startsWith(`${path}/`))) {
+    if (chosen.kind === 'folder' && isInside(chosen.path, path)) {
       this.#selection = { kind: 'all' };
     }
   }

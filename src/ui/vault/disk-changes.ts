@@ -1,6 +1,7 @@
 // Changes another program (or device) made, as the window hears of them:
 // in bursts, settled before anything redraws.
 
+import { isInside } from '../../core/paths';
 import type { VaultBridge } from '../../platform/bridge';
 
 /** Changes from disk arrive in bursts; the panes redraw once they settle. */
@@ -37,7 +38,7 @@ export function touches(path: string, changed: Iterable<string>): boolean {
   const note = path.normalize('NFC');
   for (const changedPath of changed) {
     const at = changedPath.normalize('NFC');
-    if (note === at || note.startsWith(`${at}/`)) return true;
+    if (isInside(note, at)) return true;
   }
   return false;
 }

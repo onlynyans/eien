@@ -7,6 +7,7 @@
 import {
   baseName,
   freeName,
+  isInside,
   joinPath,
   movedPath,
   parentOf,
@@ -89,7 +90,7 @@ export class Organizer {
   /** Move a note or folder into `folder` ("" for the vault itself), under a free name there. */
   moveInto(path: string, folder: string, isNote: boolean): Promise<string | null> {
     if (parentOf(path) === folder) return Promise.resolve(path);
-    if (!isNote && (folder === path || folder.startsWith(`${path}/`))) {
+    if (!isNote && isInside(folder, path)) {
       return this.#refuse('A folder can’t go inside itself.');
     }
     return this.#move(
@@ -218,9 +219,7 @@ export class Organizer {
 
   /** The notes open at `path`, or in it. */
   #openIn(path: string): NoteSession[] {
-    return this.#ctx
-      .sessions()
-      .filter((session) => session.path === path || session.path.startsWith(`${path}/`));
+    return this.#ctx.sessions().filter((session) => isInside(session.path, path));
   }
 
   /** Move or rename `from` to `to`, keeping order, pins and the open note (and a note's images) in step. */

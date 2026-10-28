@@ -2,6 +2,7 @@
 // pure, so each can be read and tested apart from where it opens (./menus.ts).
 
 import { EXPORT_LABELS } from '../../core/export';
+import { isInside } from '../../core/paths';
 import type { FolderNode } from '../../core/vault';
 import type { OutKind } from '../../platform/bridge';
 import type { MenuItem } from '../menu/menu';
@@ -180,8 +181,7 @@ export function destinations(
   const items: MenuItem[] = [{ label: vaultName, run: () => choose(''), disabled: here === '' }];
   const walk = (node: FolderNode, depth: number) => {
     for (const folder of node.folders) {
-      const out =
-        exclude !== null && (folder.path === exclude || folder.path.startsWith(`${exclude}/`));
+      const out = exclude !== null && isInside(folder.path, exclude);
       if (out) continue;
       items.push({
         label: folder.name,
