@@ -86,6 +86,40 @@ describe('storySheet', () => {
   });
 });
 
+/** A chapter with every kind of thing the cleaner keeps, drops or turns to words. */
+/** What the story page drew for RICH before the cleaner was shared (#40, Phase 0): the same now. */
+const GOLDEN = [
+  '<p>She <em>ran</em>, <strong>fast</strong>.</p>',
+  '<p data-align="center">*</p><div class="scene-break" role="separator">***</div><div data-align="center">end</div>',
+  '<p data-align="right">To <a title="The work" href="https://ao3.org/works/1" target="_blank" rel="noopener noreferrer">the work</a>,',
+  ' <a href="mailto:a@b.c" target="_blank" rel="noopener noreferrer">mail</a>, <a>here</a>, <a>there</a>.</p>',
+  '<img title="Map" alt="A map" loading="lazy" src="https://i.example/a.png">',
+  '<p>[&lt;b&gt;plan&lt;/b&gt;]</p>',
+  '<table><tr><td data-align="right">1</td><td><abbr title="Sir">S.</abbr></td></tr></table>',
+  '<p>&lt;script&gt;words&lt;/script&gt;</p>',
+].join('');
+const WORDS = 17;
+const RICH = [
+  '<h3 class="landmark heading">Chapter Text</h3>',
+  '<p id="a" class="b" style="color:red" onclick="x()">She <em>ran</em>, <span style="font-weight:700">fast</span>.</p>',
+  '<p align="center">*</p><hr><center>end</center>',
+  '<p style="text-align: right">To <a href="https://ao3.org/works/1" target="_top" title="The work">the work</a>,',
+  ' <a href="mailto:a@b.c">mail</a>, <a href="/works/2">here</a>, <a href="java\tscript:x()">there</a>.</p>',
+  '<img src="https://i.example/a.png" alt="A map" title="Map" width="900" onerror="x()">',
+  '<p><img src="http://i.example/b.png" alt="&lt;b&gt;plan&lt;/b&gt;"><img src="data:x"></p>',
+  '<table><tr><td align="right">1</td><td><abbr title="Sir">S.</abbr></td></tr></table>',
+  '<script>alert(1)</script><iframe src="https://e.x"></iframe><form><input value="v"></form>',
+  '<p>&lt;script&gt;words&lt;/script&gt;</p>',
+].join('');
+
+describe('storySheet: a chapter drawn as the story page has always drawn it', () => {
+  it('draws the same DOM and counts the same words', () => {
+    const sheet = storySheet(story({ chapters: [chapter(1, { body: RICH })] }), 'roman', () => {});
+    expect(sheet.element.querySelector('.story__chapter > .prose')?.innerHTML).toBe(GOLDEN);
+    expect(sheet.words).toBe(WORDS);
+  });
+});
+
 describe('placeIn', () => {
   it('names the chapters shown, of how many', () => {
     expect(placeIn(story(), 'roman')).toBe('iv of 12');
