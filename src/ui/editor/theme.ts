@@ -5,6 +5,9 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 
+/** Code beside the words, in a line or a block: a size short of theirs, as a mono face runs large. */
+const CODE_SIZE = '0.86em';
+
 export const editorTheme = EditorView.theme({
   '&': {
     color: 'var(--eien-ink)',
@@ -81,7 +84,7 @@ export const editorTheme = EditorView.theme({
   '.eien-sub': { verticalAlign: 'sub', fontSize: '0.75em' },
   '.eien-code': {
     fontFamily: 'var(--eien-face-mono)',
-    fontSize: '0.86em',
+    fontSize: CODE_SIZE,
     backgroundColor: 'var(--eien-well)',
     padding: '0.05em 0.25em',
   },
@@ -93,10 +96,13 @@ export const editorTheme = EditorView.theme({
   },
   '.eien-codeblock': {
     fontFamily: 'var(--eien-face-source)',
-    fontSize: 'var(--eien-size-source)',
+    fontSize: CODE_SIZE,
     backgroundColor: 'var(--eien-well)',
     padding: '0 var(--eien-space-3) !important',
   },
+  // A fence out of sight: its line the block's margin above or below the code, one line of the
+  // code's size without its leading (CodeMirror keeps an em either side of what it hides).
+  '.eien-fence': { lineHeight: '1' },
   '.eien-link': {
     color: 'var(--eien-ink)',
     textDecoration: 'underline',

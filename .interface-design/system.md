@@ -106,9 +106,14 @@ machine count it, or do you press it?* The mono.
   writer's choice too (changed 2026-10-20, #24): the **Interface font**
   setting sets `--eien-face-mono`, so everything in the machine voice
   follows it.
-- **Source**: the Source view's raw Markdown, and code, in
-  `--eien-face-source` at `--eien-size-source` (14px), set by the **Source
-  font** setting apart from the interface (2026-10-22). Both choose from the
+- **Source**: the Source view's raw Markdown in `--eien-face-source` at
+  `--eien-size-source` (14px), set by the **Source font** setting apart from
+  the interface (2026-10-22). Code on the page (Live and Reading) is at
+  0.86em of the words, so it reads at the text's scale and follows Text size
+  (2026-10-28): a fenced block in the Source face on the well ground, its
+  fences out of sight but on the caret's line, each fence's line a margin
+  of the ground one code line high, without its leading; `` `code` `` in a line in the interface mono. Both
+  choose from the
   eleven monos (Plex Mono, JetBrains Mono, Fira Code, Cascadia Code, Source
   Code Pro, Iosevka, Commit Mono, Space Mono, Victor Mono, Monaspace Radon,
   Comic Mono) and the eight text faces.
@@ -259,7 +264,8 @@ if a theme should change it, it joins `THEME_TOKENS`.
   pane.
 - **Sidebar foot:** a soft rule above; the vault's count in label type,
   then the sync status (when Syncthing syncs the vault) and three icons: day
-  or night (sun or moon), three panes or two, settings.
+  or night (sun or moon), three panes or two, settings, all on the row's
+  middle.
 - **Panel** (versions): raised paper beside the page, a rule hairline on its
   left, the float shadow, a band head of `--band` height with a label and
   CLOSE.

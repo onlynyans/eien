@@ -611,7 +611,10 @@ In Live a table is edited as a word processor's is (the table editor,
 Square brackets are a link only with an address or a defined reference, as
 CommonMark has it: `[sic]` and `[...]` keep their brackets on the page. HTML at
 the start of a line (pasted `<p>…</p>`) looks as it does mid-line. Front matter
-shows quietly, in the mono, never as a scene break.
+shows quietly, in the mono, never as a scene break. A fenced code block shows
+its code on the well ground at the words' scale (a size short of them, in the
+Source font); its fences (```` ``` ```` and a language) are marks, out of
+sight but on the caret's line, and always in Reading.
 
 Links: ⌘-click (Ctrl-click on Windows and Linux) follows one. A web address
 opens in the browser; a `[[wiki link]]` opens the note with that title. In

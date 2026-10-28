@@ -275,6 +275,11 @@
   text-transform: uppercase;
   letter-spacing: var(--eien-track-label);
 }
+/* A flex box, not a line of text: the icon on the row's middle, as the buttons beside it are,
+   not on a line's baseline above it. */
+.sidebar__sync {
+  display: flex;
+}
 .sidebar__sync:empty {
   display: none;
 }
