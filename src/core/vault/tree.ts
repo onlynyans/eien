@@ -11,6 +11,8 @@ export interface FolderNode {
   readonly folders: FolderNode[];
   /** Paths of the notes directly inside, by name. */
   readonly notes: string[];
+  /** Paths of the EPUBs directly inside, by name: the shelf's (#40), never a note list's. */
+  readonly epubs: string[];
   /** Notes inside, at any depth. */
   noteCount: number;
 }
@@ -32,13 +34,27 @@ export const byName: (a: string, b: string) => number = new Intl.Collator(undefi
  * nor anything in it.
  */
 export function buildTree(entries: readonly VaultEntry[], vaultName: string): FolderNode {
-  const root: FolderNode = { name: vaultName, path: '', folders: [], notes: [], noteCount: 0 };
+  const root: FolderNode = {
+    name: vaultName,
+    path: '',
+    folders: [],
+    notes: [],
+    epubs: [],
+    noteCount: 0,
+  };
   const folders = new Map<string, FolderNode>([['', root]]);
 
   const folderAt = (path: string): FolderNode => {
     const known = folders.get(path);
     if (known) return known;
-    const node: FolderNode = { name: baseName(path), path, folders: [], notes: [], noteCount: 0 };
+    const node: FolderNode = {
+      name: baseName(path),
+      path,
+      folders: [],
+      notes: [],
+      epubs: [],
+      noteCount: 0,
+    };
     folders.set(path, node);
     folderAt(parentOf(path)).folders.push(node);
     return node;
@@ -54,11 +70,13 @@ export function buildTree(entries: readonly VaultEntry[], vaultName: string): Fo
     if (hidden.length > 0 && inHidden(entry.path)) continue;
     if (entry.kind === 'folder') folderAt(entry.path);
     else if (entry.kind === 'note') folderAt(parentOf(entry.path)).notes.push(entry.path);
+    else if (entry.kind === 'epub') folderAt(parentOf(entry.path)).epubs.push(entry.path);
   }
 
   const finish = (node: FolderNode): number => {
     node.folders.sort((a, b) => byName(a.name, b.name));
     node.notes.sort((a, b) => byName(baseName(a), baseName(b)));
+    node.epubs.sort((a, b) => byName(baseName(a), baseName(b)));
     node.noteCount =
       node.notes.length + node.folders.reduce((sum, child) => sum + finish(child), 0);
     return node.noteCount;

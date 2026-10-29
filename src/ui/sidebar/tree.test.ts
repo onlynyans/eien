@@ -28,6 +28,7 @@ const folderNode = (
   path,
   folders,
   notes,
+  epubs: [],
   noteCount: notes.length + folders.reduce((sum, each) => sum + each.noteCount, 0),
 });
 

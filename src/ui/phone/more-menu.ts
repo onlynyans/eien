@@ -7,6 +7,7 @@ import type { SettingValues } from '../../core/config';
 import { SPRINT_MINUTES } from '../../core/counters';
 import type { MenuCommand } from '../../platform/bridge';
 import type { MenuItem } from '../menu/menu';
+import type { PageKind } from '../page/page-leaf';
 
 export interface MoreState {
   readonly values: SettingValues;
@@ -14,13 +15,19 @@ export interface MoreState {
   readonly sprinting: boolean;
   /** Export…: the note's own export choices (EPUB, Word, HTML), as its menu offers them. */
   exportTo(): void;
+  /** What the page holds: a note's own choices are disabled on another kind's (an EPUB's, #40). */
+  readonly kind?: PageKind;
 }
 
 export function moreItems(state: MoreState, run: (command: MenuCommand) => void): MenuItem[] {
+  const other = (state.kind ?? 'note') !== 'note';
   const item = (label: string, command: MenuCommand): MenuItem => ({
     label,
     run: () => run(command),
   });
+  /** A note's own choice: there, but disabled, with another kind of page in front. */
+  const notes = (choice: MenuItem): MenuItem =>
+    other && choice !== 'separator' ? { ...choice, disabled: true } : choice;
   const toggle = (
     label: string,
     key: 'editor.focus' | 'editor.typewriter' | 'editor.marks',
@@ -31,24 +38,29 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     toggle: true,
   });
   return [
+    // A page's command, whatever it holds (docs/page-kinds.md): a book's Find comes with Phase 5.
     item('Find', 'find'),
     'separator',
-    item('Seal', 'seal'),
-    item('Compare', 'compare'),
-    item('Versions', 'versions'),
-    item('Outline cards', 'outline'),
+    ...[
+      item('Seal', 'seal'),
+      item('Compare', 'compare'),
+      item('Versions', 'versions'),
+      item('Outline cards', 'outline'),
+    ].map(notes),
     'separator',
-    item('Copy as HTML', 'copy-html'),
-    { label: 'Export…', run: state.exportTo },
+    notes(item('Copy as HTML', 'copy-html')),
+    notes({ label: 'Export…', run: state.exportTo }),
     'separator',
-    toggle('Focus mode', 'editor.focus'),
-    toggle('Typewriter scrolling', 'editor.typewriter'),
-    toggle('Show Markdown marks', 'editor.marks'),
+    ...[
+      toggle('Focus mode', 'editor.focus'),
+      toggle('Typewriter scrolling', 'editor.typewriter'),
+      toggle('Show Markdown marks', 'editor.marks'),
+    ].map(notes),
     ...(state.sprinting
       ? [item('Stop sprint', 'sprint:stop')]
       : SPRINT_MINUTES.map((minutes) => item(`Sprint, ${minutes} minutes`, `sprint:${minutes}`))),
     'separator',
-    item('Look', 'look'),
+    notes(item('Look', 'look')), // a book's own look comes with #40 Phase 1c
     item('Settings', 'settings'),
   ];
 }

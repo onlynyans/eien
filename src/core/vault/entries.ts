@@ -2,7 +2,8 @@
 
 import { isHiddenName } from '../paths';
 
-export type EntryKind = 'note' | 'folder' | 'file';
+/** A note, a folder, an EPUB (#40: shown only under SHELF), or any other file. */
+export type EntryKind = 'note' | 'folder' | 'epub' | 'file';
 
 export interface VaultEntry {
   /** Vault-relative, "/" separated. */
@@ -17,6 +18,16 @@ export interface VaultEntry {
 /** A note is a visible ".md" file (spec §2). */
 export const isNoteName = (name: string): boolean =>
   !isHiddenName(name) && name.toLowerCase().endsWith('.md');
+
+const EPUB_EXTENSION = '.epub';
+
+/** An EPUB is a visible ".epub" file (#40): a book on the shelf, never a note. */
+export const isEpubName = (name: string): boolean =>
+  !isHiddenName(name) && name.toLowerCase().endsWith(EPUB_EXTENSION);
+
+/** What the shelf calls an EPUB, as a note is called by its file's name: the name without ".epub". */
+export const epubTitleOf = (name: string): string =>
+  isEpubName(name) ? name.slice(0, -EPUB_EXTENSION.length) : name;
 
 /** Images a note shows (spec §4), by extension, with their media types. */
 const IMAGE_TYPES: Readonly<Record<string, string>> = {
@@ -47,7 +58,7 @@ export function imageTypeOf(name: string): string | null {
 
 /** The kind a listed file or folder is. */
 export const kindOf = (name: string, isFolder: boolean): EntryKind =>
-  isFolder ? 'folder' : isNoteName(name) ? 'note' : 'file';
+  isFolder ? 'folder' : isNoteName(name) ? 'note' : isEpubName(name) ? 'epub' : 'file';
 
 /**
  * Syncthing's copy of a file both devices changed:

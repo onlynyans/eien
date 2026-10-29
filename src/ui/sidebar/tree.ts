@@ -46,6 +46,8 @@ export interface TreeModel {
   readonly books: ReadonlySet<string>;
   /** The tag filter over the list showing (#32): each tag row says whether it's wanted or kept out. */
   readonly filter?: TagFilter;
+  /** The list shows what no row here chose (a book's contents, #40): none is marked. */
+  readonly elsewhere?: boolean;
 }
 
 export interface TreeActions extends RowActions {
@@ -102,7 +104,7 @@ export const twisty = (): HTMLElement =>
  * hairline guide down its children runs down the group (spec §4; the
  * mockup's `.tree [role='group']`). Nothing under it, no group.
  */
-const group = (depth: number, rows: HTMLElement[]): HTMLElement[] =>
+export const group = (depth: number, rows: HTMLElement[]): HTMLElement[] =>
   rows.length > 0
     ? [atDepth(h('li', { class: 'tree-group' }, h('ul', { class: 'tree' }, ...rows)), depth)]
     : [];
@@ -250,7 +252,8 @@ export class TreeRows {
     const folder = selection.kind === 'folder' ? selection.path : undefined;
     const tag = selection.kind === 'tag' ? selection.key : undefined;
     // With two panes nothing is listed beside the tree: the open note is the one marked.
-    const current = !this.#model.two && same(this.#model.selection, selection);
+    const current =
+      !this.#model.two && !this.#model.elsewhere && same(this.#model.selection, selection);
     return atDepth(
       h(
         'li',

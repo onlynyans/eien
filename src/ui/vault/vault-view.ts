@@ -13,6 +13,7 @@ import { PaneLayout, paneKeys } from '../shell/panes';
 import { vaultFrame } from '../shell/vault-frame';
 import { SyncStatus } from '../sidebar/sync-status';
 import { vaultChrome } from './chrome-wiring';
+import { epubWiring } from './epub-wiring';
 import { follow } from './follow';
 import { listLens } from './list-lens';
 import { trashNameOn } from './menu-items';
@@ -71,8 +72,20 @@ export async function showVault(
   const openInNewWindow = bridge.window
     ? (path: string) => void bridge.window?.open(path)
     : undefined;
+  // An EPUB's kind of page, and what SHELF and the list show of it (#40).
+  const epubs = epubWiring({
+    vault: bridge.vault,
+    state,
+    nav,
+    tell,
+    redraw: () => void redraw(),
+    pages: () => pages,
+    openHere: (path) => actions.openNote(path),
+    showPage: () => phone.stack.show('page'),
+  });
   // The notes open on the pages are held still and kept in step as they move.
   const organizer = new Organizer({
+    moved: epubs.kind.moved,
     vault: bridge.vault,
     state,
     trashName,
@@ -122,6 +135,7 @@ export async function showVault(
     keys: keys.sidebar,
     search,
     rows,
+    shelf: epubs.actions,
     nav,
     organizer,
     order,
@@ -140,6 +154,7 @@ export async function showVault(
   const { shell, list, listSearch, listBody, pageArea } = vaultFrame(sidebar.element);
   root.replaceChildren(shell);
   const pages = new Pages({
+    kinds: [epubs.kind],
     area: pageArea,
     vault: bridge.vault,
     out: bridge.out,
@@ -222,13 +237,14 @@ export async function showVault(
     pageNews: (text) => pages.pane.news(text),
     listActions: { ...rows, ...lens.actions, newNote: () => void actions.newNote() },
     arrange: lens.arrange,
+    epubs,
   });
   const redraw = () => {
     panes.stepAside(pages.split && pages.mode.listAside); // Tools that follow: the list makes room
     pages.sync();
     sync.draw();
     chrome.refresh();
-    nameWindow(pages.active.path, name);
+    nameWindow(pages.active.page.name, name);
     return draw.all().then(() => phone.drawn());
   };
 

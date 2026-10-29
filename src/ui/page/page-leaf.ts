@@ -7,7 +7,7 @@
 
 import { h } from '../dom';
 
-/** What a page holds: a note, or an EPUB (not built yet: ../../../docs/page-kinds.md). */
+/** What a page holds: a note, or an EPUB (../epub/, ../../../docs/page-kinds.md). */
 export type PageKind = 'note' | 'epub';
 
 export interface PageLeaf {

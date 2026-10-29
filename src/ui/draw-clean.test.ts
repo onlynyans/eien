@@ -121,6 +121,24 @@ describe('drawClean: what it’s handed is checked again', () => {
     }
   });
 
+  it('draws an image from the caller’s own copy, which is checked as any src is', () => {
+    const fragment = (src: string, image: (src: string) => string | null) => {
+      const host = document.createElement('div');
+      host.append(drawClean([made('img', { src, alt: 'Plate' })], { image }));
+      return host;
+    };
+    expect(
+      fragment('OEBPS/a.jpg', () => 'blob:eien/7')
+        .querySelector('img')
+        ?.getAttribute('src'),
+    ).toBe('blob:eien/7');
+    expect(fragment('OEBPS/a.jpg', () => null).innerHTML).toBe('[Plate]');
+    // A caller's copy that isn't the window's own is refused all the same.
+    expect(fragment('OEBPS/a.jpg', () => 'javascript:x()').innerHTML).toBe('[Plate]');
+    // With no copy asked for, a path in a zip is words.
+    expect(box([made('img', { src: 'OEBPS/a.jpg', alt: 'Plate' })]).innerHTML).toBe('[Plate]');
+  });
+
   it('names no part it doesn’t know', () => {
     const p = box([made('p', {}, { part: 'onclick' })]).querySelector('p');
     expect(p?.hasAttribute('data-part')).toBe(false);

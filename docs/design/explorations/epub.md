@@ -188,7 +188,12 @@ Each phase is its own session and pull request, from main.
   requests: **1a, built** (2026-10-28): `core/epub` (the zip reader, its caps
   and paths, the package and contents, DRM refused, a chapter cleaned with
   its parts named, the reading state's file), `platform/inflate.ts`, and the
-  fixture books; 1b, SHELF, the index and the page; 1c, the book's look.
+  fixture books; **1b, built**: books in the index (an `epub` entry kind),
+  SHELF, the EPUB's page kind with a chapter and its pictures, the contents
+  in the list (under the book's row with two panes), the book's stylesheet
+  and its tokens, the reading state kept; 1c, the book's look. The iOS
+  simulator starts with a fixture book in its vault; opening it there needs a
+  UI driver the smoke test lacks (backlog).
   - the zip reader (the browser's decompression, in the window, on desktop
     and phone alike);
   - the container, its spine and contents;

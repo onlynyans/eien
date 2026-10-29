@@ -296,7 +296,8 @@
 }
 /* A row: the title and its date on one line, a line of preview under them
    (compact density hides it). A book's rows lead with the chapter number. */
-.note-row {
+.note-row,
+.contents-row {
   appearance: none;
   position: relative;
   display: grid;
@@ -316,18 +317,22 @@
   transition: background var(--eien-quick) var(--eien-ease);
 }
 @media (hover: hover) {
-  .note-row:hover {
+  .note-row:hover,
+  .contents-row:hover {
     background: var(--eien-hover);
   }
 }
-.note-row:active {
+.note-row:active,
+.contents-row:active {
   background: var(--eien-press);
 }
-.note-row:focus-visible {
+.note-row:focus-visible,
+.contents-row:focus-visible {
   outline: var(--eien-mark-w) solid var(--eien-focus);
   outline-offset: calc(var(--eien-mark-w) * -1);
 }
-.note-row[aria-current="true"] {
+.note-row[aria-current="true"],
+.contents-row[aria-current="true"] {
   background: var(--eien-selected);
   color: var(--eien-ink);
 }
@@ -338,7 +343,8 @@
   width: var(--eien-mark-w);
   background: var(--eien-faded);
 }
-.note-row[aria-current="true"]::before {
+.note-row[aria-current="true"]::before,
+.contents-row[aria-current="true"]::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
@@ -351,7 +357,8 @@
 .note-row__ord {
   text-align: right;
 }
-.note-row__title {
+.note-row__title,
+.contents-row__title {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -361,7 +368,8 @@
   font-weight: var(--eien-weight-list); /* a setting (#25) */
   line-height: var(--eien-leading-row);
 }
-.note-row[aria-current="true"] .note-row__title {
+.note-row[aria-current="true"] .note-row__title,
+.contents-row[aria-current="true"] .contents-row__title {
   font-weight: var(--eien-weight-list-chosen); /* a step heavier, at most 700 */
 }
 .note-row__meta {
@@ -525,4 +533,11 @@
 .list__tools .icon-button[aria-pressed="true"] {
   color: var(--eien-ink);
   background: var(--eien-selected);
+}
+
+/* A book's contents (#40, ./contents-list.ts): a chapter's row, a note's look
+   without its preview or date, a part's chapters stepped in. */
+.contents-row {
+  grid-template-columns: minmax(0, 1fr);
+  padding-left: calc(var(--eien-space-4) + var(--depth, 0) * var(--eien-space-4));
 }

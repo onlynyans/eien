@@ -344,6 +344,23 @@
   --eien-row-h: calc(26px * var(--eien-text-scale));
 }
 
+/* A book's parts (#40, ui/epub/epub.css), named by the cleaner: its chapter
+   title, scene breaks, epigraph, plates, captions and first line. Tokens of
+   their own, each from the note's, so a book's are tuned here and a note's
+   never move with them. */
+:root {
+  --eien-epub-title-size: var(
+    --eien-size-heading
+  ); /* a chapter's title, under the book's own name */
+  --eien-epub-title-gap: var(--eien-title-gap); /* above and below it */
+  --eien-epub-paragraph-gap: var(--eien-paragraph-gap); /* between paragraphs, as a note's */
+  --eien-epub-break-gap: var(--eien-scene-gap); /* above and below a scene break */
+  --eien-epub-epigraph-indent: var(--eien-space-6); /* an epigraph's margins */
+  --eien-epub-plate-gap: var(--eien-space-5); /* above and below a picture */
+  --eien-epub-caption-ink: var(--eien-pencil); /* a picture's caption */
+  --eien-epub-first-line-track: calc(var(--eien-track-label) / 2); /* the first line's capitals */
+}
+
 /* ── Frame: the page as a sheet on the blotter, or the whole pane ───────
    A setting of its own, with either density. Sheet is the default: paper
    laid on the blotter with a hairline edge and the sheet's shadow. With

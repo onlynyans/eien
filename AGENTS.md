@@ -181,6 +181,8 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `vault/note-actions.ts`: what the writer does to notes from any pane
 - `vault/row-actions.ts`: what a row and its menus do
 - `vault/vault-sidebar.ts`: the sidebar's actions
+- `vault/epub-wiring.ts`: an EPUB's kind, and what SHELF and the list show of the books on the pages (#40)
+- `list/contents-list.ts`: a book's contents in the list, in place of notes (#40)
 - `vault/list-lens.ts`: the list's lens and Arrange mode (Include subfolders too, kept per folder by `list/sorts.ts`)
 - The split (spec §4, two pages side by side) is a mode as a layout is
   - `chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, what the layout's tools act on, and where each note's figures go
@@ -196,7 +198,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `page/page-title.ts`: a page's title
 - `vault/menus.ts`: a note's, folder's and tag's menus open from here
 - `vault/menu-items.ts`: their choices
-- `draw-clean.ts` draws cleaned nodes (`core/html/clean.ts`) element by element, checking each element, address and part again, for the extension's story page and, later, an EPUB's
+- `draw-clean.ts` draws cleaned nodes (`core/html/clean.ts`) element by element, checking each element, address and part again, for the extension's story page and an EPUB's chapter (#40)
 - `quiet-button.ts`: the quiet icon button (the +, a sheet's ×, the divider's ⇄)
 - `shell/vault-frame.ts`: the shell the sidebar, list and page pane lie in
 - `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`)
@@ -212,6 +214,9 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `sidebar/tree-windows.ts`: the tree's long lists
   - `sidebar/lens-slot.ts`: with two panes, the chosen row's lens
   - `sidebar/sections.ts`: its sections fold, folded per device in `sidebar/folds.ts`
+  - `sidebar/tree-sections.ts`: the sections in order, LIBRARY, FOLDERS, SHELF, TAGS
+  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: folders as labels, books as controls, an open book's contents with two panes
+  - `sidebar/sidebar-focus.ts`: where the keyboard is in the tree, kept across its redraws
 - The lens over each list, drawn in the list's head and, with two panes, for the chosen row in the sidebar
   - `list/lens-bar.ts`: the sort and the tag filter, their chips
   - `list/tag-filter-panel.ts`: the filter's three states, its rules in `core/tags/filter.ts`
@@ -300,6 +305,13 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `shell/shell.css`: the panes' top bands drag the window; it also holds the corner's lengths: `--seal-x`, `--corner`, a shut sidebar's `--strip`
 - `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
 - styles in `theme/` and beside each view
+- `epub/`: an EPUB's page (#40)
+  - `epub-page.ts`: the page (`PaneLeaf`): the note's sheet with a chapter on it, its ×, the colophon's "3 of 61", a refusal in words
+  - `epub-side.ts`: one page holding a book (`Side`): the book read and opened, a chapter at a time, the chapter kept
+  - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
+  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`), let go with it
+  - `reading-store.ts`: the reading state's file, through the vault's small files
+  - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
 - `extension/`: the extension's pages (spec §14)
   - `extension/content.ts`: the content script, built alone as one plain script, reads the page with `sites/` and lays over it the seal and the story frame (`extension/page-overlay.ts`)
   - `extension/sites/ao3.ts`, `extension/sites/ffn.ts`: one module per site's markup

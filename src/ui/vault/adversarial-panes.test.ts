@@ -172,6 +172,13 @@ describe('openId and selectionOf, on names that look like each other', () => {
   });
 });
 
+/** No book on any page. */
+const NO_EPUBS = {
+  shelf: () => ({ current: null, contents: null }),
+  contents: () => null,
+  actions: { openEpub: () => {}, chapter: () => {} },
+};
+
 /** A PaneDrawer whose sidebar records each model drawn; the list stays out of sight. */
 function drawer(state: VaultState, nav: Navigation, two: boolean) {
   const drawn: SidebarModel[] = [];
@@ -187,6 +194,7 @@ function drawer(state: VaultState, nav: Navigation, two: boolean) {
     shown: () => ({ active: null, other: null }),
     pageNews: () => {},
     placeSearch: () => {},
+    epubs: NO_EPUBS,
   } as unknown as DrawnParts;
   return { draw: new PaneDrawer(parts), drawn };
 }
@@ -239,6 +247,7 @@ describe('the sidebar’s draws, when a slow search is overtaken', () => {
       shown: () => ({ active: null, other: null }),
       pageNews: () => {},
       placeSearch: () => {},
+      epubs: NO_EPUBS,
     } as unknown as DrawnParts);
     const first = draw.sidebar();
     parts.two = false;

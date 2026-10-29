@@ -151,3 +151,45 @@ describe('folder settings', () => {
     ).toEqual(['b.md', 'a.md', 'c.md', 'Chapter 2.md', 'Chapter 10.md']);
   });
 });
+
+describe('EPUBs in the vault (#40)', () => {
+  it('are their own kind, named by their file as a note is', async () => {
+    const { epubTitleOf, isEpubName, kindOf } = await import('./index');
+    expect(kindOf('Persuasion.epub', false)).toBe('epub');
+    expect(kindOf('Persuasion.EPUB', false)).toBe('epub');
+    expect(kindOf('.Persuasion.epub', false)).toBe('file');
+    expect(kindOf('epub', false)).toBe('file');
+    expect(isEpubName('notes.epub.md')).toBe(false);
+    expect(epubTitleOf('North and South.epub')).toBe('North and South');
+  });
+
+  it('sit in the tree beside a folder’s notes, never among them, and not in a note’s own images', async () => {
+    const { buildTree } = await import('./index');
+    const entry = (path: string, kind: 'note' | 'folder' | 'epub') => ({
+      path,
+      kind,
+      modified: 0,
+      size: 0,
+    });
+    const tree = buildTree(
+      [
+        entry('Cooking', 'folder'),
+        entry('Cooking/Soup.md', 'note'),
+        entry('Cooking/Boston Cooking-School.epub', 'epub'),
+        entry('Cooking/Soup.assets', 'folder'),
+        entry('Cooking/Soup.assets/hidden.epub', 'epub'),
+        entry('Novels/Persuasion.epub', 'epub'),
+        entry('Novels/Emma.epub', 'epub'),
+      ],
+      'Vault',
+    );
+    const cooking = tree.folders.find((folder) => folder.name === 'Cooking');
+    expect(cooking?.notes).toEqual(['Cooking/Soup.md']);
+    expect(cooking?.epubs).toEqual(['Cooking/Boston Cooking-School.epub']);
+    expect(cooking?.noteCount).toBe(1);
+    expect(tree.folders.find((folder) => folder.name === 'Novels')?.epubs).toEqual([
+      'Novels/Emma.epub',
+      'Novels/Persuasion.epub',
+    ]);
+  });
+});

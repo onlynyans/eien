@@ -10,7 +10,9 @@ export {
 } from './assets';
 export {
   type EntryKind,
+  epubTitleOf,
   imageTypeOf,
+  isEpubName,
   isNoteName,
   isSyncConflictName,
   kindOf,

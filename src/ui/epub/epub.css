@@ -1,0 +1,101 @@
+/* A book's chapter on its sheet (#40): the book's stylesheet. What the
+   cleaner keeps is drawn in the writer's own faces and the theme's colours,
+   never the publisher's; the parts it names (data-part) are drawn from the
+   book's tokens (tokens.css, "A book's parts"). Paragraphs as a note's in
+   Reading, for now: the scroll style (Phase 2) adds the book's way. */
+
+.epub-chapter {
+  font-family: var(--eien-face-text);
+  line-height: calc(var(--eien-leading-prose) * var(--look-lead, 1));
+  color: var(--eien-ink);
+  overflow-wrap: break-word;
+}
+
+.epub-chapter p,
+.epub-chapter ul,
+.epub-chapter ol,
+.epub-chapter dl,
+.epub-chapter pre,
+.epub-chapter table {
+  margin: 0 0 var(--eien-epub-paragraph-gap);
+}
+
+.epub-chapter h1,
+.epub-chapter h2,
+.epub-chapter h3,
+.epub-chapter h4,
+.epub-chapter h5,
+.epub-chapter h6 {
+  font-size: 1em;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: var(--eien-epub-paragraph-gap) 0;
+}
+
+.epub-chapter [data-part="chapter-title"] {
+  font-size: var(--eien-epub-title-size);
+  font-weight: 500;
+  text-align: center;
+  margin: var(--eien-epub-title-gap) 0;
+}
+
+.epub-chapter [data-part="first-line"]::first-line {
+  text-transform: uppercase;
+  font-size: 80%;
+  letter-spacing: var(--eien-epub-first-line-track);
+}
+
+.epub-chapter [data-part="scene-break"] {
+  margin: var(--eien-epub-break-gap) 0;
+  text-align: center;
+  color: var(--eien-pencil);
+}
+
+.epub-chapter [data-part="epigraph"],
+.epub-chapter blockquote {
+  margin: var(--eien-epub-paragraph-gap) var(--eien-epub-epigraph-indent);
+  font-style: italic;
+}
+
+.epub-chapter [data-part="plate"],
+.epub-chapter figure {
+  margin: var(--eien-epub-plate-gap) 0;
+  text-align: center;
+  break-inside: avoid;
+}
+
+.epub-chapter img {
+  max-width: 100%;
+  height: auto;
+}
+
+.epub-chapter [data-part="caption"],
+.epub-chapter figcaption {
+  margin-top: var(--eien-space-2);
+  font-size: 0.85em;
+  color: var(--eien-epub-caption-ink);
+  text-align: center;
+}
+
+.epub-chapter [data-align="center"] {
+  text-align: center;
+}
+.epub-chapter [data-align="right"] {
+  text-align: right;
+}
+
+.epub-chapter table {
+  border-collapse: collapse;
+}
+.epub-chapter td,
+.epub-chapter th {
+  border: 1px solid var(--eien-rule);
+  padding: var(--eien-space-1) var(--eien-space-2);
+}
+
+.epub-chapter pre,
+.epub-chapter code {
+  font-family: var(--eien-face-source);
+  font-size: 0.85em;
+  white-space: pre-wrap;
+}

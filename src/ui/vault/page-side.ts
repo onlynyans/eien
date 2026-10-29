@@ -1,6 +1,6 @@
 // One page of the pane, as the pages controller (./pages.ts) holds it,
-// whatever it holds: a note (./note-side.ts), or an EPUB (backlog #40, not
-// built yet; ../../../docs/page-kinds.md). The split, its pager, swap, the
+// whatever it holds: a note (./note-side.ts), or an EPUB (backlog #40,
+// ../epub/; ../../../docs/page-kinds.md). The split, its pager, swap, the
 // phone's other note and Wide screen's rooms carry a Side and never ask what
 // it holds; what is a note's alone is reached through `isNote`.
 
