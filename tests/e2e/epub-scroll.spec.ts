@@ -101,7 +101,16 @@ test.describe('a chapter a sheet', () => {
     expect((await set(2)).indent).toBeGreaterThan(0);
     // The chapter's first line stands flush.
     expect((await set(0)).indent).toBe(0);
+    // A named part keeps its own gap: Chapter III's picture.
+    await page.locator('.contents-row').nth(2).click();
+    const plate = chapter(page).locator('[data-part="plate"]');
+    await expect(plate).toBeVisible();
+    expect(
+      await plate.evaluate((element) => Number.parseFloat(getComputedStyle(element).marginTop)),
+    ).toBeGreaterThan(0);
+    await look(page).click(); // choosing a chapter closed it
     await dialog.locator('[data-setting="epub.scroll"] [data-value="note"]').click();
+    await page.locator('.contents-row').first().click();
     expect((await set(2)).indent).toBe(0);
   });
 
@@ -127,7 +136,7 @@ test.describe('a chapter a sheet', () => {
     await closeApp(again);
   });
 
-  test('keeps its line through ⇄, a narrower window and page zoom', async ({
+  test('keeps its line through ⇄ before it comes to rest, a narrower window, page zoom and a new look', async ({
     app,
     page,
     vault,
@@ -141,16 +150,28 @@ test.describe('a chapter a sheet', () => {
     await scrollTo(page, 1200);
     const words = async () => (await inSight(page)).words;
     const kept = await words();
-    // At rest, so the place is kept as measured.
-    await expect.poll(() => readingIn(vault).place?.offset ?? 0).toBeGreaterThan(0);
+    // Swapped within the second, before the scroll comes to rest.
     await clickMenu(app, 'View', 'Swap Pages');
     await expect(page.locator('.page__pages > .page__leaf').nth(0)).toHaveClass(
       /page__leaf--epub/u,
     );
     await expect.poll(words).toBe(kept);
+    // Then at rest, the line it was left at kept, never the top the swap began it at.
+    await expect.poll(() => readingIn(vault).place?.offset ?? 0).toBeGreaterThan(0);
     await page.setViewportSize({ width: 1200, height: 900 });
     await expect.poll(words).toBe(kept);
-    await page.evaluate(() => window.eien.settings.set('page.zoom', 150));
+    // The keyboard in the page: its zoom, not the window's.
+    await scroller(page).focus();
+    for (let i = 0; i < 5; i++) await clickMenu(app, 'View', 'Zoom In');
+    await expect(page.locator('.colophon__zoom')).toHaveText('150%');
+    await expect.poll(words).toBe(kept);
+    // A new look in the quick look: the lines move, the line in sight doesn't.
+    await look(page).click();
+    await page
+      .getByRole('dialog', { name: 'Look: Shelf' })
+      .locator('[data-setting="epub.scroll"] [data-value="book"]')
+      .click();
+    await expect(leaf(page)).toHaveAttribute('data-scroll', 'book');
     await expect.poll(words).toBe(kept);
   });
 });

@@ -1,12 +1,9 @@
-// A place in a drawn chapter (#40, Phase 2), on a layout the test lays out
-// (happy-dom lays out nothing): every word on lines of ten characters, each
-// line 20px, under a scroller whose top is the window's top.
+// A place in a drawn chapter (#40, Phase 2), on the tests' own layout
+// (./test-lines.ts).
 
 import { afterEach, describe, expect, it } from 'vitest';
-import { firstInSight, piecesOf, type RectOf, showOffset } from './chapter-place';
-
-const LINE = 20;
-const PER_LINE = 10;
+import { firstInSight, piecesOf, showOffset } from './chapter-place';
+import { linesOf } from './test-lines';
 
 /** A chapter of paragraphs, with Eien's own scene break and a picture's words between. */
 function chapterOf(...paragraphs: string[]): HTMLElement {
@@ -19,21 +16,6 @@ function chapterOf(...paragraphs: string[]): HTMLElement {
   return chapter;
 }
 
-/** Each character's line, by its place among the chapter's words, under a scroller scrolled `scroller.scrollTop`. */
-const lines =
-  (chapter: HTMLElement, scroller: { scrollTop: number }): RectOf =>
-  (range) => {
-    const pieces = piecesOf(chapter);
-    let at = 0;
-    for (const piece of pieces) {
-      if (piece === range.startContainer) break;
-      at += piece.length;
-    }
-    const start = Math.floor((at + range.startOffset) / PER_LINE) * LINE - scroller.scrollTop;
-    const end = Math.floor((at + Math.max(range.startOffset, range.endOffset - 1)) / PER_LINE);
-    return { top: start, bottom: end * LINE - scroller.scrollTop + LINE };
-  };
-
 afterEach(() => document.body.replaceChildren());
 
 describe('a place in a drawn chapter', () => {
@@ -45,7 +27,7 @@ describe('a place in a drawn chapter', () => {
   it('is the first line in sight, by its first word', () => {
     const chapter = chapterOf('a'.repeat(25), 'b'.repeat(30));
     const scroller = { scrollTop: 0 };
-    const rectOf = lines(chapter, scroller);
+    const rectOf = linesOf(chapter, scroller);
     expect(firstInSight(chapter, 0, rectOf)).toBe(0);
     scroller.scrollTop = 20; // the second line at the top
     expect(firstInSight(chapter, 0, rectOf)).toBe(10);
@@ -62,7 +44,7 @@ describe('a place in a drawn chapter', () => {
     const chapter = chapterOf('a'.repeat(25), 'b'.repeat(30));
     const scroller = document.createElement('div');
     document.body.append(scroller);
-    const rectOf = lines(chapter, scroller);
+    const rectOf = linesOf(chapter, scroller);
     showOffset(chapter, scroller, 34, rectOf);
     expect(scroller.scrollTop).toBe(60);
     expect(firstInSight(chapter, 0, rectOf)).toBe(30);

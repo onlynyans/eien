@@ -363,9 +363,9 @@
   --eien-epub-first-line-track: calc(var(--eien-track-label) / 2); /* the first line's capitals */
   --eien-epub-indent: var(--eien-space-6); /* a paragraph's indent, scrolled as a book (Phase 2) */
 }
-/* A step less on a narrow page (a phone's). */
-@container page (width < 520px) {
-  [data-face] {
+/* A step less on a narrow page (a phone's, one of a split's): the page's own scroll is its measure. */
+@container (width < 520px) {
+  .epub-chapter {
     --eien-epub-indent: var(--eien-space-5);
   }
 }

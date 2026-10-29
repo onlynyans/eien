@@ -4,8 +4,10 @@
 // place is kept here as last measured, never measured while the page is out
 // of sight (a phone's page gone back to the list has no layout, and would
 // read the chapter's top): closing, quitting and ⇄ read what's kept. And
-// when the chapter is laid out again (a new width, size or face; the page
-// put back in the window), it's shown at the same line.
+// whenever the chapter is laid out anew (a new width, look or face, its
+// fonts arriving, the page put back in the window or in sight again), it's
+// shown at the same line. Eien's own scrolls (showing the place) are never
+// taken for the reader's.
 
 import { chapterFraction } from '../../core/epub';
 import { firstInSight, type RectOf, showOffset } from './chapter-place';
@@ -28,8 +30,14 @@ export class PlaceKeeper {
   #offset = 0;
   #rest: ReturnType<typeof setTimeout> | undefined;
   #frame = 0;
-  /** The chapter's width when last laid out: another means its lines moved. */
-  #width = 0;
+  /** No chapter to keep a place in (none drawn, or refused): scrolls tell nothing. */
+  #idle = true;
+  /** The scroll Eien just set, this frame: its scroll event isn't the reader's. */
+  #own: number | null = null;
+  /** The chapter's box as drawn (zoom included) when last shown; none once out of sight, so coming back shows it again. */
+  #box = '';
+  /** Where the scroll stood when the place was last shown or measured: elsewhere, the reader moved it. */
+  #top = 0;
   readonly #resized: ResizeObserver | null;
 
   constructor(of: PlaceKeeperOf) {
@@ -38,6 +46,7 @@ export class PlaceKeeper {
     this.#resized =
       typeof ResizeObserver === 'function' ? new ResizeObserver(() => this.#laidOut()) : null;
     this.#resized?.observe(of.chapter);
+    document.fonts?.addEventListener?.('loadingdone', this.#again);
   }
 
   /** The place kept: an offset in the chapter's words. */
@@ -50,54 +59,84 @@ export class PlaceKeeper {
     return this.#of.scroller.isConnected && this.#of.scroller.clientHeight > 0;
   }
 
-  /** A chapter just drawn, or the page put back: show `offset`, and keep it. */
+  /** A chapter drawn, or the page back where it was: `offset` kept, and shown once it can be. */
   show(offset: number): void {
-    clearTimeout(this.#rest);
+    this.#stopRest();
+    this.#idle = false;
     this.#offset = Math.max(0, offset);
     this.#reshow();
   }
 
-  /** A rest on its way, taken now: measured if the page is in sight, and told if it moved. */
+  /** No chapter on the page: nothing to keep, and nothing said of a scroll. */
+  clear(): void {
+    this.#stopRest();
+    cancelAnimationFrame(this.#frame);
+    this.#idle = true;
+    this.#offset = 0;
+  }
+
+  /**
+   * A rest on its way, taken now: measured if the page is in sight, and told
+   * if it moved. Also a scroll whose event hasn't come yet: the scroll stands
+   * elsewhere than it was left.
+   */
   keep(): void {
-    if (this.#rest === undefined) return;
-    clearTimeout(this.#rest);
-    this.#rest = undefined;
-    if (!this.#shown) return;
     const { scroller, chapter, rectOf } = this.#of;
+    if (this.#rest === undefined && scroller.scrollTop === this.#top) return;
+    this.#stopRest();
+    if (!this.#shown || this.#idle) return;
+    this.#top = scroller.scrollTop;
     const offset = firstInSight(chapter, scroller.getBoundingClientRect().top, rectOf);
     if (offset === this.#offset) return;
     this.#offset = offset;
     this.#of.rested(offset);
   }
 
-  /** The page put back in the window, the same size: its scroll began again at the top. */
-  placed(): void {
-    if (this.#rest === undefined) this.#reshow();
+  /**
+   * Put back in the window (its scroll begun again at the top), or laid out
+   * anew: the place shown again. A rest on its way is the caller's to keep
+   * first, while the old layout stands (`keep`).
+   */
+  reshow(): void {
+    this.#stopRest();
+    this.#reshow();
   }
 
   dispose(): void {
     this.keep();
     this.#of.scroller.removeEventListener('scroll', this.#scrolled);
     this.#resized?.disconnect();
+    document.fonts?.removeEventListener?.('loadingdone', this.#again);
     cancelAnimationFrame(this.#frame);
   }
 
+  #stopRest(): void {
+    clearTimeout(this.#rest);
+    this.#rest = undefined;
+  }
+
   #reshow(): void {
-    if (!this.#shown) return;
-    const { scroller, chapter, rectOf } = this.#of;
-    this.#width = chapter.clientWidth;
-    showOffset(chapter, scroller, this.#offset, rectOf);
-    // Kept as it's measured (the line's first word), so the rest after this scroll finds it unmoved.
-    if (this.#offset > 0) {
-      this.#offset = firstInSight(chapter, scroller.getBoundingClientRect().top, rectOf);
+    if (this.#idle) return;
+    if (!this.#shown) {
+      this.#box = '';
+      return;
     }
+    const { scroller, chapter, rectOf } = this.#of;
+    this.#box = this.#boxNow();
+    showOffset(chapter, scroller, this.#offset, rectOf);
+    this.#own = this.#top = scroller.scrollTop;
+    requestAnimationFrame(() => {
+      this.#own = null;
+    });
     this.#tell();
   }
 
   readonly #scrolled = () => {
+    if (this.#idle) return;
     cancelAnimationFrame(this.#frame);
     this.#frame = requestAnimationFrame(() => this.#tell());
-    clearTimeout(this.#rest);
+    if (this.#own !== null && this.#of.scroller.scrollTop === this.#own) return;
+    this.#stopRest();
     this.#rest = setTimeout(() => this.keep(), REST_MS);
   };
 
@@ -106,10 +145,21 @@ export class PlaceKeeper {
     this.#of.moved(chapterFraction(scrollTop, scrollHeight, clientHeight));
   }
 
-  /** The chapter laid out anew: at another width its lines moved, so the place is shown again. */
+  /** Laid out anew while the reader isn't scrolling: shown again at the line. */
+  readonly #again = () => {
+    if (this.#rest === undefined) this.#reshow();
+  };
+
+  /** The chapter's box as drawn: its lines move when it changes (a width, a look, the page's zoom). */
+  #boxNow(): string {
+    const { width, height } = this.#of.chapter.getBoundingClientRect();
+    return width === 0 ? '' : `${width}×${height}`;
+  }
+
+  /** The chapter's box changed: out of sight, it's shown again on coming back; laid out anew, now. */
   #laidOut(): void {
-    const width = this.#of.chapter.clientWidth;
-    if (width === 0 || width === this.#width || this.#rest !== undefined) return;
-    this.#reshow();
+    const box = this.#boxNow();
+    if (box === '') this.#box = '';
+    else if (box !== this.#box) this.#again();
   }
 }

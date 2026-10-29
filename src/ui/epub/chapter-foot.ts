@@ -23,7 +23,7 @@ export function chapterFoot(epub: Epub, index: number, go: (index: number) => vo
         attrs: {
           type: 'button',
           'data-turn': step === 1 ? 'next' : 'previous',
-          'aria-label': title.startsWith(word) ? title : `${word} chapter: ${title}`,
+          'aria-label': title === `${word} chapter` ? title : `${word} chapter: ${title}`,
         },
         on: { click: () => go(to) },
       },

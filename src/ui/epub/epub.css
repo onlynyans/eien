@@ -107,12 +107,15 @@
 
 /* The scroll style As a book (Phase 2), worn on the book's leaf alone:
    paragraphs with no gap between, a paragraph indented only after another, as
-   a book sets them (the first after a heading, a break or a picture stands
-   flush), never a centred one or a picture's. As a note, they keep the gap a
-   note's have in Reading. */
-[data-scroll="book"] .epub-chapter p {
+   a book sets them (the first after a heading, a break, a picture or a
+   centred line stands flush). A named part (a title, a plate, an epigraph)
+   keeps its own gap. As a note, they keep the gap a note's have in Reading. */
+[data-scroll="book"] .epub-chapter p:not([data-part]) {
   margin: 0;
 }
-[data-scroll="book"] .epub-chapter p + p:not([data-part]):not([data-align]) {
+[data-scroll="book"]
+  .epub-chapter
+  p:not([data-part]):not([data-align])
+  + p:not([data-part]):not([data-align]) {
   text-indent: var(--eien-epub-indent);
 }

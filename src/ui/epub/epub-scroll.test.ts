@@ -1,16 +1,15 @@
 // A book scrolls a chapter a sheet (#40, Phase 2): the chapters either side
 // at its foot, how far through in the colophon, its paragraphs as the scroll
 // style sets them, and its place kept in the reading state, shown again when
-// it opens. Lines laid out by the test (happy-dom lays out nothing): ten
-// characters each, 20px, the scroller's top the window's.
+// it opens. Lines laid out by ./test-lines.ts.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { DEFAULT_SETTINGS } from '../../core/config';
-import { piecesOf } from './chapter-place';
 import { epubKind } from './epub-kind';
 import { EpubPage } from './epub-page';
 import { REST_MS } from './place-keeper';
+import { linesOf } from './test-lines';
 import { sideWith } from './test-side';
 
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
@@ -23,15 +22,9 @@ function laidOut(page: EpubPage): HTMLElement {
   const scroller = scrollerOf(page);
   Object.defineProperty(scroller, 'clientHeight', { configurable: true, get: () => 200 });
   Object.defineProperty(scroller, 'scrollHeight', { configurable: true, get: () => 2200 });
+  const lines = linesOf(page.chapter, scroller);
   vi.spyOn(Range.prototype, 'getBoundingClientRect').mockImplementation(function (this: Range) {
-    let at = 0;
-    for (const piece of piecesOf(page.chapter)) {
-      if (piece === this.startContainer) break;
-      at += piece.length;
-    }
-    const line = (offset: number) => Math.floor(offset / 10) * 20 - scroller.scrollTop;
-    const end = at + Math.max(this.startOffset, this.endOffset - 1);
-    return { top: line(at + this.startOffset), bottom: line(end) + 20 } as DOMRect;
+    return lines(this) as DOMRect;
   });
   return scroller;
 }

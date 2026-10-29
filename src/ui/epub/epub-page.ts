@@ -53,6 +53,8 @@ export class EpubPage implements PaneLeaf {
   readonly #inBook = h('span', { class: 'colophon__through count' });
   readonly #keeper: PlaceKeeper;
   #name = '';
+  /** The page's zoom last worn; null before the first. */
+  #zoom: number | null = null;
 
   constructor(of: EpubPageOf) {
     const closer = quietButton({
@@ -121,15 +123,15 @@ export class EpubPage implements PaneLeaf {
 
   /**
    * A chapter in place of the last, with its foot, `at` (its place among the
-   * book's, as the colophon says it), shown at its top: the place in it, if
-   * any, is shown by `showPlace` once its pictures are laid out.
+   * book's, as the colophon says it), its place `offset` kept and shown (again
+   * by `showPlace` once its pictures are laid out).
    */
-  drawn(chapter: DocumentFragment, foot: HTMLElement, at: string): void {
+  drawn(chapter: DocumentFragment, foot: HTMLElement, at: string, offset: number): void {
     this.notice(null);
     this.chapter.replaceChildren(chapter);
     this.#turns.replaceChildren(foot);
     this.#figure.textContent = at;
-    this.#keeper.show(0);
+    this.#keeper.show(offset);
   }
 
   /** The place kept in the chapter: an offset in its words, as last measured at rest. */
@@ -153,9 +155,14 @@ export class EpubPage implements PaneLeaf {
     this.#inBook.textContent = `${percent(book)} of the book`;
   }
 
-  /** Put back in the window (the pages swapped): its scroll began again at the top. */
+  /** About to be taken out and put back (../page/page-leaf.ts): a rest on its way kept while it's laid out. */
+  taking(): void {
+    this.#keeper.keep();
+  }
+
+  /** Put back: its scroll began again at the top, so its place is shown again. */
   placed(): void {
-    this.#keeper.placed();
+    this.#keeper.reshow();
   }
 
   /** Words on the sheet in the chapter's place (a book or a chapter that won't open), or none. */
@@ -167,6 +174,7 @@ export class EpubPage implements PaneLeaf {
 
   /** No chapter on the sheet, and nothing said of one. */
   #clearChapter(): void {
+    this.#keeper.clear();
     this.chapter.replaceChildren();
     this.#turns.replaceChildren();
     for (const figure of [this.#figure, this.#inChapter, this.#inBook]) figure.textContent = '';
@@ -188,20 +196,38 @@ export class EpubPage implements PaneLeaf {
 
   /** The shelf's look (#40, Phase 1c), worn on this page alone: a note's look never changes it. */
   wear(values: SettingValues): void {
+    this.#zoomed(values['page.zoom']);
     const { face, frame, properties } = leafLook(values);
     const leaf = this.element;
-    // Only what changed: setting an attribute again restyles the page (as ../settings/look.ts says).
-    if (leaf.dataset.face !== face) leaf.dataset.face = face;
-    if (leaf.dataset.frame !== frame) leaf.dataset.frame = frame;
     // The scroll style (Phase 2): a note's paragraphs, or a book's (./epub.css).
-    const scroll = values['epub.scroll'];
-    if (leaf.dataset.scroll !== scroll) leaf.dataset.scroll = scroll;
-    for (const [name, value] of Object.entries(properties)) {
-      if (leaf.style.getPropertyValue(name) !== value) leaf.style.setProperty(name, value);
-    }
+    const wanted = { face, frame, scroll: values['epub.scroll'] };
+    // Only what changed: setting an attribute again restyles the page (as ../settings/look.ts says).
+    const changed =
+      Object.entries(wanted).filter(([name, value]) => leaf.dataset[name] !== value).length +
+      Object.entries(properties).filter(
+        ([name, value]) => leaf.style.getPropertyValue(name) !== value,
+      ).length;
+    if (changed === 0) return;
+    // The lines move: the place is kept as it stood, and shown again in the new look.
+    this.#keeper.keep();
+    for (const [name, value] of Object.entries(wanted)) leaf.dataset[name] = value;
+    for (const [name, value] of Object.entries(properties)) leaf.style.setProperty(name, value);
+    this.#keeper.reshow();
   }
 
   key(): void {}
+
+  /**
+   * The page's zoom, which the window sets on the sheet: the lines move, but
+   * not the chapter's own box, so no resize tells. The line is shown again
+   * once the new zoom is drawn.
+   */
+  #zoomed(zoom: number): void {
+    const was = this.#zoom;
+    this.#zoom = zoom;
+    if (was === null || was === zoom) return;
+    requestAnimationFrame(() => this.#keeper.reshow());
+  }
 
   dispose(): void {
     this.#keeper.dispose();

@@ -57,11 +57,17 @@ export interface EpubSide extends Side {
   keep(): void;
 }
 
-/** The window's fonts loaded, so a line measured now is where it will stay. */
-const fontsLoaded = (): Promise<unknown> =>
-  typeof document.fonts === 'object' && document.fonts.status !== 'loaded'
+/**
+ * The fonts `chapter` is set in loaded, so a line shown now stays there: laid
+ * out first, as a face starts loading only when something asks for it (one
+ * arriving later shows the place again, ./place-keeper.ts).
+ */
+const fontsLoaded = (chapter: HTMLElement): Promise<unknown> => {
+  void chapter.offsetHeight;
+  return typeof document.fonts === 'object' && document.fonts.status !== 'loaded'
     ? document.fonts.ready
     : Promise.resolve();
+};
 
 /** Whether `side` holds an EPUB: a page of this kind, not a test's stand-in of the same name. */
 export const isEpub = (side: Side | null | undefined): side is EpubSide =>
@@ -115,12 +121,13 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       next.element,
       chapterFoot(opened, index, turnTo),
       `${index + 1} of ${opened.spine.length}`,
+      offset,
     );
     of.changed();
-    if (moved) keep(0);
+    if (moved) keep(offset);
     if (offset <= 0) return;
     // The pictures at their size and the type loaded, then the line: shown where it will stay.
-    await Promise.all([next.settled(), fontsLoaded()]);
+    await Promise.all([next.settled(), fontsLoaded(page.chapter)]);
     if (asked === turn && !disposed) page.showPlace(offset);
   }
 
