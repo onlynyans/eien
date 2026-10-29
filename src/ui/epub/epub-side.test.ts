@@ -226,3 +226,22 @@ describe('the review’s cases (#40, Phase 1b)', () => {
     expect(side.path).toBe('Books/a.epub');
   });
 });
+
+describe('a book’s own look (#40, Phase 1c)', () => {
+  it('is worn on its page’s leaf, from the shelf’s settings, never the notes’', async () => {
+    const { withDefaults } = await import('../../core/config');
+    const { side } = sideWith({});
+    side.follow(
+      withDefaults({
+        'appearance.face': 'hanken',
+        'epub.appearance.face': 'literata',
+        'epub.appearance.textSize': 110,
+      }),
+    );
+    const leaf = side.page.element;
+    expect(leaf.dataset.face).toBe('literata');
+    expect(leaf.dataset.frame).toBe('sheet');
+    expect(leaf.style.getPropertyValue('--eien-text-scale')).toBe('1.1');
+    expect(document.documentElement.dataset.face).toBeUndefined();
+  });
+});

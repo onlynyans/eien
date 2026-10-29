@@ -136,14 +136,14 @@ describe('the Look control (#49)', () => {
     expect(TOOL_FOLDS[at + 1]).toBe('view.live');
   });
 
-  it('runs the quick look’s menu command, with its key, for a note’s page for now', () => {
+  it('runs the quick look’s menu command, with its key, for a page of any kind (#40)', () => {
     expect(commandOf('look')).toMatchObject({
       icon: 'look',
       label: 'Look',
       key: 'Mod-Shift-l',
       sends: 'look',
-      on: 'note',
     });
+    expect(commandOf('look')).not.toHaveProperty('on');
     const keys = COMMANDS.map((command) => ('key' in command ? command.key : undefined));
     expect(keys.filter((key) => key?.toLowerCase() === 'mod-shift-l')).toHaveLength(1);
   });

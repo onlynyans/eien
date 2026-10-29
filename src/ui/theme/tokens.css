@@ -323,7 +323,7 @@
 :root {
   --eien-sheet-pad-x: var(--eien-space-8); /* the sheet's side margins */
   --eien-sheet-pad-top: var(--eien-space-7); /* the sheet's top margin */
-  --eien-page-gutter: var(--eien-space-5); /* the blotter showing round the sheet */
+  --eien-sheet-gutter: var(--eien-space-5); /* the blotter showing round the sheet */
   --eien-title-gap: var(--eien-space-6); /* above and below a note's title */
   --eien-paragraph-gap: var(--eien-space-4); /* between paragraphs */
   --eien-scene-gap: 1.4em; /* above and below a scene break */
@@ -334,7 +334,7 @@
 :root[data-density="compact"] {
   --eien-sheet-pad-x: var(--eien-space-6);
   --eien-sheet-pad-top: var(--eien-space-5);
-  --eien-page-gutter: var(--eien-space-2);
+  --eien-sheet-gutter: var(--eien-space-2);
   --eien-title-gap: var(--eien-space-4);
   --eien-paragraph-gap: var(--eien-space-2);
   --eien-scene-gap: 0.8em;
@@ -347,8 +347,10 @@
 /* A book's parts (#40, ui/epub/epub.css), named by the cleaner: its chapter
    title, scene breaks, epigraph, plates, captions and first line. Tokens of
    their own, each from the note's, so a book's are tuned here and a note's
-   never move with them. */
-:root {
+   never move with them. Declared wherever a face is, so a book's page
+   wearing its own face (and text size) resolves them in its own. */
+:root,
+[data-face] {
   --eien-epub-title-size: var(
     --eien-size-heading
   ); /* a chapter's title, under the book's own name */
@@ -367,12 +369,16 @@
    <html data-frame="full"> the frame goes: the page pane is paper from edge
    to edge, the sheet has no edge, shadow or gap round it, and the text keeps
    its line length, centred. */
-:root {
+:root,
+[data-frame="sheet"] {
   --eien-page-ground: var(--eien-blotter); /* the page pane behind the sheet */
+  --eien-page-gutter: var(--eien-sheet-gutter);
   --eien-sheet-edge: var(--eien-hairline) solid var(--eien-rule);
   --eien-sheet-lift: var(--eien-shadow-sheet);
 }
-:root[data-frame="full"] {
+/* A book's page wears its own frame (#40), on its leaf: the window's may differ. */
+:root[data-frame="full"],
+[data-frame="full"] {
   --eien-page-ground: var(--eien-paper);
   --eien-page-gutter: 0px;
   --eien-sheet-edge: none;

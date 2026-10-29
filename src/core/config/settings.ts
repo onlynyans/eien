@@ -3,6 +3,7 @@
 // doesn't know, so an older Eien on another device never drops a newer
 // one's settings.
 
+import { EPUB_LOOK } from './epub-look';
 import {
   type NumberSetting,
   SETTINGS,
@@ -12,14 +13,17 @@ import {
   type SettingValues,
 } from './schema';
 
-const BY_KEY = new Map<string, Setting>(SETTINGS.map((setting) => [setting.key, setting]));
+/** Every setting by its key: the schema's, and the shelf's look under `epub.` (./epub-look.ts). */
+const BY_KEY = new Map<string, Setting>(
+  [...SETTINGS, ...EPUB_LOOK].map((setting) => [setting.key, setting]),
+);
 
 /** The setting called `key`, if there is one. */
 export const settingOf = (key: string): Setting | undefined => BY_KEY.get(key);
 
 /** Every setting at its default. */
 export const DEFAULT_SETTINGS = Object.fromEntries(
-  SETTINGS.map((setting) => [setting.key, setting.default]),
+  [...BY_KEY.values()].map((setting) => [setting.key, setting.default]),
 ) as SettingValues;
 
 /** Why `value` can't be `setting`'s, or null when it can. */

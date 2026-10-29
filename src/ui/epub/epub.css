@@ -1,3 +1,8 @@
+/* A book's page wears its own frame (tokens.css): its ground behind the sheet. */
+.page__leaf--epub {
+  background: var(--eien-page-ground);
+}
+
 /* A book's chapter on its sheet (#40): the book's stylesheet. What the
    cleaner keeps is drawn in the writer's own faces and the theme's colours,
    never the publisher's; the parts it names (data-part) are drawn from the

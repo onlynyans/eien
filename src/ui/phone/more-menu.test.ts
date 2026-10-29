@@ -24,7 +24,7 @@ describe('the phone’s ⋯', () => {
 });
 
 describe('the ⋯ with a book in front (#40)', () => {
-  it('keeps a note’s own choices there, disabled; Find and Settings stay', () => {
+  it('keeps a note’s own choices there, disabled; Find, Look and Settings stay', () => {
     const items = moreItems(
       { values: DEFAULT_SETTINGS, sprinting: false, exportTo: () => {}, kind: 'epub' },
       () => {},
@@ -39,11 +39,11 @@ describe('the ⋯ with a book in front (#40)', () => {
       'Copy as HTML',
       'Export…',
       'Focus mode',
-      'Look',
     ]) {
       expect(disabled(label), label).toBe(true);
     }
     expect(disabled('Find')).toBe(false);
+    expect(disabled('Look')).toBe(false);
     expect(disabled('Settings')).toBe(false);
   });
 });

@@ -36,7 +36,8 @@ Each feature has one word, in code, files, CSS and docs:
 - **Data formats.** A new file Eien keeps (in `.eien/` or beside a note)
   starts with `"version": 1`; a change an older Eien would misread is a
   breaking one. Spec §2 → Formats.
-- **Settings** are added only in `src/core/config/schema.ts`. **Theme tokens**
+- **Settings** are added only in `src/core/config/schema.ts` (a book's look
+  derives its own from them, never copied: `config/epub-look.ts`). **Theme tokens**
   only in `src/ui/theme/tokens.css`, documented in `docs/design/README.md`.
 - **Verify, don't assume.** Every behavior change comes with a test that would
   fail without it. Check library APIs and versions against the installed
@@ -70,6 +71,7 @@ Rules, pure TypeScript.
   - `cell-input.ts`: what's typed into a cell
 - `config`: every setting, and its files
   - `faces.ts`: FACES, the one list the three face settings (Typeface, Interface font, Source font) choose from, each face with its machine sizes
+  - `epub-look.ts`: a book's own look (#40), each setting a page wears again under `epub.<key>`
 - `markdown`: Eien's Markdown and a note's plain text, shared with the editor
 - `note`
   - `note-tags.ts`: its tags in two kinds, front matter's and the text's
@@ -229,6 +231,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `quick-look/`: the quick look (#49, [docs/quick-look.md](docs/quick-look.md))
   - `quick-look/quick-look.ts`: the popover under the Look control (a sheet on the phone), drawn from the settings the schema marks `quick` with Settings' own rows, floated by `menu/menu.ts`
   - `quick-look/quick-keys.ts`: its keyboard
+  - `quick-look/epub-store.ts`: the shelf's look as its store, with a book in front (#40)
   - opened for the active page by `vault/chrome-wiring.ts`
 - `welcome/`: before a vault is open
 - `editor/`: CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows)

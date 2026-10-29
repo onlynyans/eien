@@ -78,6 +78,13 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         expect(await violationsUnder(page, ['.sidebar', '.list', '.page']), 'three panes').toEqual(
           [],
         );
+        // The shelf's look (#40, Phase 1c): LOOK / SHELF, with a book in front.
+        await page
+          .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')
+          .click();
+        await expect(page.getByRole('dialog', { name: 'Look: Shelf' })).toBeVisible();
+        expect(await seriousViolations(page), 'the shelf’s look').toEqual([]);
+        await page.keyboard.press('Escape');
         await page.locator('[data-command="panes"]').click();
         await expect(page.locator('.tree-row--chapter')).toHaveCount(3);
         expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);

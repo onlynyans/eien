@@ -5,9 +5,11 @@
 // book that won't open says why on the sheet. Find comes with Phase 5: until
 // then it does nothing here, as a note's does where its text isn't shown.
 
+import type { SettingValues } from '../../core/config';
 import { h } from '../dom';
 import { type LeafFoot, type PageFind, type PaneLeaf, pageLeaf } from '../page/page-leaf';
 import { quietButton } from '../quiet-button';
+import { leafLook } from '../settings/look-properties';
 
 export class EpubPage implements PaneLeaf {
   readonly element: HTMLElement;
@@ -123,6 +125,18 @@ export class EpubPage implements PaneLeaf {
 
   focus(): void {
     (this.#sheet.hidden ? this.#empty : this.#scroll).focus();
+  }
+
+  /** The shelf's look (#40, Phase 1c), worn on this page alone: a note's look never changes it. */
+  wear(values: SettingValues): void {
+    const { face, frame, properties } = leafLook(values);
+    const leaf = this.element;
+    // Only what changed: setting an attribute again restyles the page (as ../settings/look.ts says).
+    if (leaf.dataset.face !== face) leaf.dataset.face = face;
+    if (leaf.dataset.frame !== frame) leaf.dataset.frame = frame;
+    for (const [name, value] of Object.entries(properties)) {
+      if (leaf.style.getPropertyValue(name) !== value) leaf.style.setProperty(name, value);
+    }
   }
 
   key(): void {}

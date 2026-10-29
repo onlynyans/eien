@@ -458,7 +458,11 @@ export const SETTINGS = [
 ] as const satisfies readonly Setting[];
 
 type Defined = (typeof SETTINGS)[number];
-export type SettingKey = Defined['key'];
+/** The settings a page wears of its own (`quick: 'page'`, #49): the notes' look. */
+export type PageLookKey = Extract<Defined, { readonly quick: 'page' }>['key'];
+/** The shelf's look (#40): each page setting again, under `epub.<key>` (./epub-look.ts). */
+export type EpubLookKey = `epub.${PageLookKey}`;
+export type SettingKey = Defined['key'] | EpubLookKey;
 type ValueOf<D> = D extends { readonly more: object }
   ? string
   : D extends { readonly choices: infer C }
@@ -466,7 +470,11 @@ type ValueOf<D> = D extends { readonly more: object }
     : number;
 
 /** A value for every setting, typed by its key. */
-export type SettingValues = { readonly [K in SettingKey]: ValueOf<Extract<Defined, { key: K }>> };
+export type SettingValues = {
+  readonly [K in Defined['key']]: ValueOf<Extract<Defined, { key: K }>>;
+} & {
+  readonly [K in PageLookKey as `epub.${K}`]: ValueOf<Extract<Defined, { key: K }>>;
+};
 
 /** Settings the menu turns on and off (View → Focus Mode…): each a choice of "off" and "on". */
 export const TOGGLES = [
