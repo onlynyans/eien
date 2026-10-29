@@ -596,7 +596,7 @@ is always Panes.
   under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
 
-## A quick look (decided 2026-10-28, #49; built: notes' half #105, shelf's half #114; docs/quick-look.md)
+## A quick look (decided 2026-10-28, #49; built: notes' half #105, shelf's half #114, after #40 Phase 1 #120; docs/quick-look.md)
 
 From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
 
@@ -619,15 +619,23 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
 - **Two pages:** while it's open with a note and a book side by side, the
   page it doesn't change sits back, in the tone the split already gives the
   page you aren't in (decided 2026-10-29; two notes wear the one look, so
-  only a book beside a note needs it).
+  only a book beside a note needs it). Built (#120): `data-back` on its
+  leaf (`vault/look-wiring.ts`), its paper `--eien-band`, the companion's
+  page-you-aren't-in tone (`page/split.css`): the sheet, or the leaf in
+  Facing pages and Page: Full, with `--eien-calm`'s transition. With a
+  companion, Look makes the page it sets the one you're in, so the
+  companion's own rule paints the other.
 - **With a book in front,** one line at the popover's foot, in pencil:
   "Settings sets notes; this is every book's look." All settings opens
-  Settings at Look, the notes' (decided 2026-10-29).
+  Settings at Look, the notes' (decided 2026-10-29). Built (#120):
+  `.quick-look__line`, the foot's first line, in the voice of
+  `.quick-look__every` (the text face, `--eien-size-preview`, italic,
+  `--eien-pencil`); the dialog is described by it.
 - **Words and the sun:** an EPUB's look is the shelf's (SHELF, never
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114)
+## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114; after Phase 1, #120)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add scrolling, paging and the turn, marks, highlights and Find
@@ -638,6 +646,14 @@ in the book, each recorded here as it's built.
   on the way to it, in pencil and always open; only a book's row is a
   control, in ink-soft, and opens on the page. Books are never in a folder's
   note list.
+- **A book's row menu** (#120): the Row menu (Built patterns), the book's
+  title its head: Rename (F2), Move to…, and the trash last in
+  `--eien-danger` after a rule. Right-click, the menu key or Shift+F10 open
+  it; F2 or a second click on the name renames in place with the Name
+  field, the book's `.epub` faded after it as a note's `.md`.
+- **A note's commands greyed with a book in front** (#120): the layout's
+  tools look disabled (never hidden), the phone's ⋯ and the menu bar grey
+  the same commands. A menu of the bar is never greyed, only its items.
 - **A book's contents** (`list/contents-list.ts`): in the list pane while a
   book is open, a chapter's row a note's row without its preview or date
   (`.contents-row`), a part's chapters stepped in by `--eien-space-4` a
