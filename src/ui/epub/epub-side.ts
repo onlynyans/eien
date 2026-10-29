@@ -48,6 +48,9 @@ export interface EpubSide extends Side {
 export const isEpub = (side: Side | null | undefined): side is EpubSide =>
   side?.kind === 'epub' && 'go' in side;
 
+/** What a book's page is called: its own title, or with none its file's name. */
+const nameOf = (epub: Epub, path: string): string => epub.title || epubTitleOf(baseName(path));
+
 export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | null): EpubSide {
   const page = new EpubPage(hooks.close);
   let path: string | null = null;
@@ -142,7 +145,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
         return of.changed();
       }
       epub = opened;
-      page.show(opened.title || epubTitleOf(baseName(next)), crumbsOf(next), opened.language);
+      page.show(nameOf(opened, next), crumbsOf(next), opened.language);
       const kept = at === null ? (await of.reading.read(opened.key)).chapter : null;
       if (opening !== turn || disposed) return;
       const fromState = kept ? opened.spine.findIndex((item) => item.path === kept) : -1;
@@ -158,7 +161,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     },
     moved(to) {
       path = to;
-      page.show(page.name, crumbsOf(to), epub?.language ?? '');
+      // A book with no title of its own is called by its file: renamed, its new name.
+      page.show(epub ? nameOf(epub, to) : page.name, crumbsOf(to), epub?.language ?? '');
     },
     clear() {
       turn++;

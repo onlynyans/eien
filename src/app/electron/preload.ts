@@ -57,6 +57,7 @@ const bridge: Bridge = {
     open: (note) => ipcRenderer.invoke(CHANNEL.windowOpen, note),
     close: () => ipcRenderer.invoke(CHANNEL.windowClose),
     start: () => ipcRenderer.invoke(CHANNEL.windowStart),
+    greyMenu: (commands) => ipcRenderer.invoke(CHANNEL.greyMenu, commands),
   },
 };
 

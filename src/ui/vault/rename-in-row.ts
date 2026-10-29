@@ -1,10 +1,12 @@
 // A note renamed in its row (backlog #29): from the row's menu, F2 on the
-// row, or a double-click on its name, in the note list or the sidebar's tree.
+// row, or a double-click on its name, in the note list or the sidebar's tree;
+// and a book in its row on SHELF (#40), its ".epub" kept as a note's ".md".
 // The row the writer is at is the one that becomes the field (../list/
 // name-field.ts); with none of the note's rows in sight (a phone's page, the
 // menu bar's command), the title on the page takes the rename, as before.
 
-import { baseName, parentOf, renamedPath, titleOf } from '../../core/paths';
+import { baseName, parentOf, renamedPath } from '../../core/paths';
+import { fileTitleOf } from '../../core/vault';
 import { editName } from '../list/name-field';
 
 export interface RenameInRow {
@@ -23,19 +25,23 @@ const PROBLEMS = {
   taken: 'There is one of that name here already.',
 };
 
-/** The row's name elements for the note at `path`, as drawn: the list's and the tree's. */
+/** The row's name elements for the note or book at `path`, as drawn: the list's, the tree's and SHELF's. */
 function labelsOf(path: string): HTMLElement[] {
   const at = CSS.escape(path);
   return [
     ...document.querySelectorAll<HTMLElement>(
-      `.note-row[data-path="${at}"] .note-row__title, .tree-row__name[data-path="${at}"] .tree-row__label`,
+      [
+        `.note-row[data-path="${at}"] .note-row__title`,
+        `.tree-row__name[data-path="${at}"] .tree-row__label`,
+        `.tree-row__name[data-epub="${at}"] .tree-row__label`,
+      ].join(', '),
     ),
   ].filter((label) => label.getClientRects().length > 0);
 }
 
 /** How to find the same row again after a redraw: the list's, or the tree's by its key. */
 function finderOf(label: HTMLElement, path: string): () => HTMLElement | null {
-  const row = label.closest<HTMLElement>('[data-path]');
+  const row = label.closest<HTMLElement>('[data-path], [data-epub]');
   const key = row?.dataset.key;
   const at = CSS.escape(path);
   const selector = key
@@ -53,7 +59,7 @@ function rowOf(path: string, like: () => HTMLElement | null): HTMLElement | null
   );
 }
 
-/** Rename the note at `path` in the row the writer is at, or on the page if none is in sight. */
+/** Rename the note or book at `path` in the row the writer is at, or on the page if none is in sight. */
 export function renameInRow(path: string, deps: RenameInRow): void {
   const labels = labelsOf(path);
   const active = document.activeElement;
@@ -66,7 +72,7 @@ export function renameInRow(path: string, deps: RenameInRow): void {
   }
   const find = finderOf(label, path);
   const name = baseName(path);
-  const title = titleOf(name);
+  const title = fileTitleOf(name);
   editName({
     name: title,
     suffix: name.slice(title.length),

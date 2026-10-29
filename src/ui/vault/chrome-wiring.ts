@@ -1,11 +1,13 @@
 // The layout's controls (../chrome) for a shown vault: the slots they're
 // drawn in, how each command looks now (./command-looks.ts), the commands
 // the window runs itself, the layout drawn again when the setting changes,
-// and the quick look (../quick-look) its Look control opens.
+// the quick look its Look control opens (./look-wiring.ts), and the menu
+// bar's commands greyed by the kind of page in front.
 
 import { nextHeading } from '../../core/format';
+import type { MenuCommand } from '../../platform/bridge';
 import { Chrome } from '../chrome/chrome';
-import { actsOn, type CommandId, type LocalCommandId } from '../chrome/commands';
+import { type CommandId, type LocalCommandId, menuOff } from '../chrome/commands';
 import type { CommandLook } from '../chrome/host';
 import { PHONE_TAGS } from '../chrome/layout-spec';
 import { LAYOUT_SPECS } from '../chrome/layouts';
@@ -14,12 +16,12 @@ import { tooltips } from '../chrome/tooltip';
 import { h } from '../dom';
 import type { MenuBus } from '../menu/menu-bus';
 import type { PageKind } from '../page/page-leaf';
-import { epubStore } from '../quick-look/epub-store';
-import { type LookSubject, QuickLook } from '../quick-look/quick-look';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
 import { commandLooks, isNight } from './command-looks';
+import { lookWiring } from './look-wiring';
+
 import { pageHosts } from './page-hosts';
 import { pageMore } from './page-more';
 import { isNote, type Pages, type Side } from './pages';
@@ -39,6 +41,8 @@ export interface VaultChromeOf {
   readonly platform: string;
   /** A note in a window of its own: the desktop's only (a companion's ⋯ offers it). */
   readonly openInNewWindow?: (path: string) => void;
+  /** The menu bar's commands that do nothing now, greyed: the desktop's only (#40). */
+  readonly greyMenu?: (commands: readonly MenuCommand[]) => void;
 }
 
 export interface VaultChrome {
@@ -155,33 +159,17 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   });
   tips.watch(pane.divider);
 
-  /** Whose look each kind of page wears: the notes', and the shelf's, apart (#40). */
-  const subjects: Record<PageKind, LookSubject> = {
-    note: { crumb: 'Notes', every: 'every note', store: settings },
-    epub: { crumb: 'Shelf', every: 'every book on the shelf', store: epubStore(settings) },
-  };
-  /** The side whose look is open: choosing the other page closes it. */
-  let lookSide: Side | null = null;
-  const quick = new QuickLook({
+  const quick = lookWiring({
+    pages,
+    settings,
+    menu: of.menu,
     platform: of.platform,
     mac: of.mac,
-    window: settings,
     phone: () => of.phone.stack.phone,
-    allSettings: () => of.menu.run('settings:look'),
-    changed: () => chrome.refresh(),
-  });
-  /** Look: ⇧⌘L, View → Look…, the control, a ⋯'s: the active page's look, under its control. */
-  const toggleLook = () => {
-    const side = target('look');
-    const subject = subjects[side.kind];
-    if (!actsOn('look', side.kind)) return;
-    lookSide = side;
-    // On the phone's way too: a press on its control is then a toggle, not a close and open again.
+    target: () => target('look'),
     // With the band or slip put away, under the strip's control, the way back to them.
-    quick.toggle(subject, chrome.inSight('look') ?? chrome.inSight('strip') ?? null);
-  };
-  const stopLook = of.menu.on((command) => {
-    if (command === 'look') toggleLook();
+    opener: () => chrome.inSight('look') ?? chrome.inSight('strip') ?? null,
+    changed: () => chrome.refresh(),
   });
   const own = pageHosts({
     pages,
@@ -215,9 +203,18 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       side.page.tags.place(side.page.tagSlots, own && tags === 'colophon' ? 'runningHead' : tags);
     });
   };
+  /** The kind of page the menu bar's commands last greyed for. */
+  let greyedFor: PageKind | null = null;
+  const greyMenu = () => {
+    const { kind } = pages.active;
+    if (kind === greyedFor) return;
+    greyedFor = kind;
+    of.greyMenu?.(menuOff(kind));
+  };
   const refresh = () => {
     if (!mounted) return;
-    if (quick.isOpen && lookSide !== target('look')) quick.close();
+    greyMenu();
+    quick.refresh();
     chrome.mount(settings.values['appearance.layout'], split()); // nothing when it's the same
     own.sync();
     watchPages();
@@ -251,8 +248,8 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       stopCaret();
       cancelAnimationFrame(frame);
       stopMenu();
-      stopLook();
-      quick.close();
+      quick.stop();
+      of.greyMenu?.([]); // a vault no longer shown greys nothing (Open Vault…, the welcome)
       night.removeEventListener('change', refresh);
       chrome.unmount();
     },

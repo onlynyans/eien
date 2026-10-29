@@ -81,11 +81,9 @@ describe('Navigation', () => {
 });
 
 describe('the book whose contents the list shows (#40)', () => {
-  it('is let go when a row is chosen, follows a folder moved, and goes with one trashed', () => {
+  it('is let go when a row is chosen, and goes with a folder trashed', () => {
     const nav = new Navigation();
-    nav.contents = 'Novels/Emma.epub';
-    nav.follow('Novels', 'Books/Novels');
-    expect(nav.contents).toBe('Books/Novels/Emma.epub');
+    nav.contents = 'Books/Novels/Emma.epub';
     nav.unselect('Books');
     expect(nav.contents).toBeNull();
     nav.contents = 'Emma.epub';

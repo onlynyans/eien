@@ -1,6 +1,6 @@
 // What a vault holds, as the storage lists it.
 
-import { isHiddenName } from '../paths';
+import { isHiddenName, titleOf } from '../paths';
 
 /** A note, a folder, an EPUB (#40: shown only under SHELF), or any other file. */
 export type EntryKind = 'note' | 'folder' | 'epub' | 'file';
@@ -28,6 +28,10 @@ export const isEpubName = (name: string): boolean =>
 /** What the shelf calls an EPUB, as a note is called by its file's name: the name without ".epub". */
 export const epubTitleOf = (name: string): string =>
   isEpubName(name) ? name.slice(0, -EPUB_EXTENSION.length) : name;
+
+/** What Eien calls a file where it names one: a note's title, a book's, else its name. */
+export const fileTitleOf = (name: string): string =>
+  isEpubName(name) ? epubTitleOf(name) : titleOf(name);
 
 /** Images a note shows (spec §4), by extension, with their media types. */
 const IMAGE_TYPES: Readonly<Record<string, string>> = {

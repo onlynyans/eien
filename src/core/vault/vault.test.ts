@@ -163,6 +163,14 @@ describe('EPUBs in the vault (#40)', () => {
     expect(epubTitleOf('North and South.epub')).toBe('North and South');
   });
 
+  it('are called by their title where Eien names a file, as a note is', async () => {
+    const { fileTitleOf } = await import('./index');
+    expect(fileTitleOf('North and South.epub')).toBe('North and South');
+    expect(fileTitleOf('Chapter 3.md')).toBe('Chapter 3');
+    expect(fileTitleOf('cover.png')).toBe('cover.png');
+    expect(fileTitleOf('Dune.epub.md')).toBe('Dune.epub'); // a note, whatever its title says
+  });
+
   it('sit in the tree beside a folder’s notes, never among them, and not in a note’s own images', async () => {
     const { buildTree } = await import('./index');
     const entry = (path: string, kind: 'note' | 'folder' | 'epub') => ({

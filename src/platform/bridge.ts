@@ -188,6 +188,8 @@ export interface WindowBridge {
   close(): Promise<void>;
   /** What this window was opened on, asked once it shows its vault. */
   start(): Promise<WindowStart>;
+  /** The menu bar's commands that do nothing in this window now, greyed while it's focused (#40). */
+  greyMenu(commands: readonly MenuCommand[]): Promise<void>;
 }
 
 /** The IPC channel names, shared by the preload and the main process. */
@@ -219,6 +221,7 @@ export const CHANNEL = {
   windowOpen: 'window:open',
   windowClose: 'window:close',
   windowStart: 'window:start',
+  greyMenu: 'window:grey-menu',
 } as const;
 
 declare global {

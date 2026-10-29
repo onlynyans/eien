@@ -11,6 +11,7 @@ export {
 export {
   type EntryKind,
   epubTitleOf,
+  fileTitleOf,
   imageTypeOf,
   isEpubName,
   isNoteName,

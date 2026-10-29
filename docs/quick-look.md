@@ -132,9 +132,13 @@ Each face keeps its own tuning; the writer's step goes over it.
   `--eien-radius-l` top corners, no scrim, at `--eien-touch`, the faces one
   row that scrolls sideways.
 
-## The wiring: `vault/chrome-wiring.ts`
+## The wiring: `vault/look-wiring.ts`
 
-- The menu bus's `look` toggles the popover for `pages.active.kind`.
+Made by `vault/chrome-wiring.ts`, in a module of its own since #40's "After
+Phase 1".
+
+- The menu bus's `look` toggles the popover for the kind of the page the
+  layout's tools act on (a companion's page itself, made the active one).
 - The anchor: the look control in sight (`chrome.inSight('look')`), else the
   ⋯ of its bar it folded behind, else (the band or slip put away) the
   strip's control; passed on the phone's way too (`phone.stack.phone`), so
@@ -145,9 +149,8 @@ Each face keeps its own tuning; the writer's step goes over it.
   page changed).
 - `command-looks.ts` gives `look` its `expanded` (`LooksOf.lookOpen()`); the
   popover's close refreshes the chrome.
-- Not in this half: the page it doesn't change sitting back. With two
-  notes both wear the one look, so it means something only once an EPUB
-  can show beside a note (Phase 1).
+- The page it doesn't change sitting back came with #40's shelf half: see
+  "After Phase 1" below.
 
 ## Tests
 
@@ -196,5 +199,25 @@ Each face keeps its own tuning; the writer's step goes over it.
   own face, size, line spacing and width there (`ui/page/split.css`).
 - All settings, from the shelf's look, opens Settings at Look, which sets the
   notes': the shelf's look is set in the quick look alone.
-- Still not built: the page the look doesn't change sitting back while the
-  popover is open with a note and a book side by side (backlog).
+
+## After Phase 1 (#40, built 2026-10-29)
+
+From epub.md, "After Phase 1"; the design reviewed against the code before
+building, its fixes taken.
+
+- **The line at the foot.** `LookSubject.line`: the shelf's says "Settings
+  sets notes; this is every book's look." It's the foot's first line, over
+  All settings (and Done), in the popover's own words voice, as *every
+  book on the shelf* (`.quick-look__every, .quick-look__line`: the text
+  face, preview size, italic, pencil); the dialog is described by it. The
+  notes' look has none.
+- **The page it doesn't change sits back.** `look-wiring.ts`'s `sitBack`
+  sets `data-back` on each page's leaf while the look is open, two pages
+  show and the page's kind isn't the look's; the popover's `changed` and
+  the chrome's `refresh` call it. Its paper takes `--eien-band`, as the
+  companion's page you aren't in does (`page/split.css`): the sheet, or the
+  leaf where the leaf is the paper (Facing pages, Page: Full), with the calm
+  transition. Two notes, or two books, never sit back. With a companion,
+  the menu's Look (which acts on the page itself) makes that page the
+  active one first, so the page sitting back is the one you aren't in, which
+  the companion's own rule already paints.

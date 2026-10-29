@@ -4,8 +4,9 @@
 // (./layouts.ts); how it looks right now, the vault's (../vault/chrome-wiring.ts).
 
 import type { SettingValues } from '../../core/config';
+import { EXPORT_LABELS } from '../../core/export';
 import { FORMAT_COMMANDS, type FormatCommandId } from '../../core/format';
-import type { MenuCommand } from '../../platform/bridge';
+import type { ExportFormat, MenuCommand } from '../../platform/bridge';
 import type { IconName } from '../icons';
 import type { PageKind } from '../page/page-leaf';
 
@@ -199,6 +200,33 @@ export const actsOn = (id: CommandId, kind: PageKind): boolean => {
   const { on } = commandOf(id);
   return on === undefined || on === kind;
 };
+
+/**
+ * The menu's commands with no control of their own that act on a note's page alone: every format
+ * (the headings' three are one control), the note's exports, the outline cards of its book, and
+ * the writing tools a note's editor wears.
+ */
+const NOTE_MENU: readonly MenuCommand[] = [
+  ...FORMAT_COMMANDS.map(({ id }) => `format:${id}` as const),
+  'export-html',
+  ...(Object.keys(EXPORT_LABELS) as (ExportFormat | 'html')[])
+    .filter((format) => format !== 'html')
+    .map((format) => `export-note:${format}` as const),
+  'outline',
+  'toggle:editor.typewriter',
+  'toggle:editor.marks',
+];
+
+/**
+ * The menu's commands that do nothing with a page of `kind` in front (#40), greyed in the menu bar
+ * (../../app/electron/menu-grey.ts) and the phone's ⋯: each control's `on`, carried over.
+ */
+export function menuOff(kind: PageKind): MenuCommand[] {
+  const others: readonly MenuCommand[] = COMMANDS.flatMap((command) =>
+    'sends' in command && 'on' in command && command.on !== kind ? [command.sends] : [],
+  );
+  return [...new Set([...others, ...(kind === 'note' ? [] : NOTE_MENU)])];
+}
 
 /** Whether `command` is drawn on the desktop in `layout`, with one page (a split's own are its mode's). */
 export const onDesktopIn = (command: CommandDef, layout: Layout): boolean =>

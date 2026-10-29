@@ -6,6 +6,7 @@
 import type { SettingValues } from '../../core/config';
 import { SPRINT_MINUTES } from '../../core/counters';
 import type { MenuCommand } from '../../platform/bridge';
+import { menuOff } from '../chrome/commands';
 import type { MenuItem } from '../menu/menu';
 import type { PageKind } from '../page/page-leaf';
 
@@ -20,20 +21,18 @@ export interface MoreState {
 }
 
 export function moreItems(state: MoreState, run: (command: MenuCommand) => void): MenuItem[] {
-  const other = (state.kind ?? 'note') !== 'note';
-  const item = (label: string, command: MenuCommand): MenuItem => ({
+  /** A note's own choices: there, but disabled, with another kind of page in front, as the menu bar's. */
+  const off = new Set<MenuCommand>(menuOff(state.kind ?? 'note'));
+  const item = (label: string, command: MenuCommand): Exclude<MenuItem, 'separator'> => ({
     label,
     run: () => run(command),
+    disabled: off.has(command) || undefined,
   });
-  /** A note's own choice: there, but disabled, with another kind of page in front. */
-  const notes = (choice: MenuItem): MenuItem =>
-    other && choice !== 'separator' ? { ...choice, disabled: true } : choice;
   const toggle = (
     label: string,
     key: 'editor.focus' | 'editor.typewriter' | 'editor.marks',
   ): MenuItem => ({
-    label,
-    run: () => run(`toggle:${key}`),
+    ...item(label, `toggle:${key}`),
     checked: state.values[key] === 'on',
     toggle: true,
   });
@@ -41,21 +40,18 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     // A page's command, whatever it holds (docs/page-kinds.md): a book's Find comes with Phase 5.
     item('Find', 'find'),
     'separator',
-    ...[
-      item('Seal', 'seal'),
-      item('Compare', 'compare'),
-      item('Versions', 'versions'),
-      item('Outline cards', 'outline'),
-    ].map(notes),
+    item('Seal', 'seal'),
+    item('Compare', 'compare'),
+    item('Versions', 'versions'),
+    item('Outline cards', 'outline'),
     'separator',
-    notes(item('Copy as HTML', 'copy-html')),
-    notes({ label: 'Export…', run: state.exportTo }),
+    item('Copy as HTML', 'copy-html'),
+    // The note's own export choices, as the menu bar's Export Note.
+    { label: 'Export…', run: state.exportTo, disabled: off.has('export-note:epub') || undefined },
     'separator',
-    ...[
-      toggle('Focus mode', 'editor.focus'),
-      toggle('Typewriter scrolling', 'editor.typewriter'),
-      toggle('Show Markdown marks', 'editor.marks'),
-    ].map(notes),
+    toggle('Focus mode', 'editor.focus'),
+    toggle('Typewriter scrolling', 'editor.typewriter'),
+    toggle('Show Markdown marks', 'editor.marks'),
     ...(state.sprinting
       ? [item('Stop sprint', 'sprint:stop')]
       : SPRINT_MINUTES.map((minutes) => item(`Sprint, ${minutes} minutes`, `sprint:${minutes}`))),

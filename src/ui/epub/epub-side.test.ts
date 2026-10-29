@@ -161,6 +161,20 @@ describe('the EPUB’s kind', () => {
     expect(side.path).toBeNull();
   });
 
+  it('keeps its own title, renamed; a book with none takes its file’s new name', async () => {
+    const { side, of } = sideWith({ 'Novels/a.epub': EPUBS['plain.epub'] as Uint8Array });
+    const kind = epubKind(of);
+    await side.open('Novels/a.epub');
+    kind.moved('Novels/a.epub', 'Novels/b.epub');
+    kind.followMoves([side]);
+    expect(side.page.name).toBe('Pride and Prejudice');
+    // As a book whose package names no title is: called by its file, as SHELF calls it.
+    Object.assign(side.epub as object, { title: '' });
+    kind.moved('Novels/b.epub', 'Novels/First Impressions.epub');
+    kind.followMoves([side]);
+    expect(side.page.name).toBe('First Impressions');
+  });
+
   it('reads a book again when its file changes, and waits for its place to be kept', async () => {
     const files = { 'a.epub': EPUBS['plain.epub'] as Uint8Array };
     const { side, of, reads } = sideWith(files);
