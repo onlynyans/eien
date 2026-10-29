@@ -75,6 +75,10 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
           .click();
         await page.locator('.contents-row').nth(2).click();
         await expect(page.locator('.epub-chapter img')).toBeVisible();
+        // A chapter a sheet (Phase 2): its foot in sight, the chapter before and "The end".
+        const turns = page.getByRole('navigation', { name: 'Chapters' });
+        await turns.scrollIntoViewIfNeeded();
+        await expect(turns).toContainText('The end');
         expect(await violationsUnder(page, ['.sidebar', '.list', '.page']), 'three panes').toEqual(
           [],
         );
@@ -83,6 +87,7 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
           .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')
           .click();
         await expect(page.getByRole('dialog', { name: 'Look: Shelf' })).toBeVisible();
+        await expect(page.locator('[data-setting="epub.scroll"]')).toBeVisible();
         // With its line at the foot: Settings sets notes.
         await expect(page.locator('.quick-look__line')).toBeVisible();
         expect(await seriousViolations(page), 'the shelf’s look').toEqual([]);

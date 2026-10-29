@@ -25,7 +25,7 @@ beforeEach(async () => {
     },
   };
   settings = await SettingsState.load(bridge);
-  subject = { crumb: 'Notes', every: 'every note', store: settings };
+  subject = { kind: 'note', crumb: 'Notes', every: 'every note', store: settings };
   phone = false;
   opener = document.createElement('button');
   opener.dataset.key = 'command:look';
@@ -82,6 +82,18 @@ describe('the quick look', () => {
     // Settings has drawn the same rows already: the popover's ids are its own.
     expect(panel()?.querySelector('#quick-appearance-face')).not.toBeNull();
     expect(panel()?.querySelector('#setting-appearance-face')).toBeNull();
+  });
+
+  it('offers a book’s own scroll style with a book in front alone, kept as the shelf’s (#40)', async () => {
+    new QuickLook(of).open(subject, opener);
+    expect(rowKeys()).not.toContain('epub.scroll');
+    closeMenu();
+    new QuickLook(of).open({ ...subject, kind: 'epub', crumb: 'Shelf' }, opener);
+    expect(rowKeys().at(-1)).toBe('epub.scroll');
+    button('epub.scroll', 'book')?.click();
+    await settled();
+    expect(settings.values['epub.scroll']).toBe('book');
+    expect(button('epub.scroll', 'book')?.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('leaves page width out on the phone’s one pane, as Settings does', () => {

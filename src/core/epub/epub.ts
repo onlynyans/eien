@@ -3,6 +3,7 @@
 // read one at a time as they're shown. A file from anywhere ends in a book or
 // a refusal (./refusal.ts), never a throw. The book's file is only read.
 
+import { imageInfo } from '../export/images';
 import { baseName } from '../paths';
 import { imageTypeOf } from '../vault';
 import { EPUB_CAPS, type EpubCaps } from './caps';
@@ -17,6 +18,14 @@ export interface EpubImage {
   readonly bytes: Uint8Array;
   /** Its media type, as a note's image of its kind has. */
   readonly type: string;
+  /** Its pixels, from its own header, where Eien reads one (PNG, JPEG, GIF): the room it takes before it's shown. */
+  readonly size: { readonly width: number; readonly height: number } | null;
+}
+
+/** A spine item, with its size: how much of the book it is (./progress.ts). */
+export interface EpubSpineItem extends SpineItem {
+  /** Its size in bytes, inflated, as the zip's directory declares it. */
+  readonly size: number;
 }
 
 export interface Epub {
@@ -25,7 +34,7 @@ export interface Epub {
   readonly language: string;
   /** Who the book is, from what it holds: the same renamed, moved or zipped again (./reading.ts keeps state by it). */
   readonly key: string;
-  readonly spine: readonly SpineItem[];
+  readonly spine: readonly EpubSpineItem[];
   readonly contents: readonly ContentsEntry[];
   /** The printed edition's pages, where the book has a page-list. */
   readonly printPages: readonly PrintPage[];
@@ -85,12 +94,13 @@ export function openEpub(
     const sources = { nav: await xmlAt(zip, pkg.nav, caps), ncx: await xmlAt(zip, pkg.ncx, caps) };
     const contents = contentsOf(pkg, sources);
     if (contents.length === 0) return refuse('empty', 'no chapter to show');
+    const sizes = new Map(zip.entries.map((entry) => [entry.name, entry.size]));
     return {
       title: pkg.title,
       author: pkg.author,
       language: pkg.language,
       key: epubKey(zip.entries),
-      spine: pkg.spine,
+      spine: pkg.spine.map((item) => ({ ...item, size: sizes.get(item.path) ?? 0 })),
       contents,
       printPages: printPagesOf(pkg, sources),
       chapter: (index) =>
@@ -105,7 +115,9 @@ export function openEpub(
           const type = imageTypeOf(baseName(path));
           if (!type) return refuse('unsupported', `${path} isn’t a picture Eien shows`);
           const read = await zip.read(path, caps.image);
-          return isRefusal(read) ? read : { bytes: read, type };
+          if (isRefusal(read)) return read;
+          const info = imageInfo(read);
+          return { bytes: read, type, size: info && { width: info.width, height: info.height } };
         }),
     };
   });

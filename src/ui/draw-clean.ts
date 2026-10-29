@@ -47,8 +47,9 @@ function drawn(node: CleanNode, options: DrawOptions): Node[] {
   }
   if (element instanceof HTMLImageElement) {
     // An image from anywhere else is its words, as the cleaner makes one it won't show.
+    // Marked as Eien's, not the page's words: a place in a book counts only its own (#40).
     if (!src || !SHOWN.test(src)) {
-      return imageWords(alt).map((words) => document.createTextNode(words.text));
+      return imageWords(alt).map((words) => h('span', { class: 'image-words', text: words.text }));
     }
     element.setAttribute('alt', alt ?? '');
     element.setAttribute('loading', 'lazy');

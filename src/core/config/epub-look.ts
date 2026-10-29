@@ -2,7 +2,9 @@
 // page width and frame, apart from the notes'. Not new settings: each is a
 // setting #49 marks `quick: 'page'`, kept again under `epub.<key>` on this
 // device, with the same label, choices and checks. Settings never draws them
-// (it draws SETTINGS); the quick look sets them with a book in front.
+// (it draws SETTINGS); the quick look sets them with a book in front. Beside
+// them a book has settings of its own, with no note's to copy (the scroll
+// style, Phase 2): those are in the schema, marked `quick: 'shelf'`.
 
 import {
   type EpubLookKey,

@@ -13,6 +13,7 @@ import { commandOf } from '../chrome/commands';
 import { keysOf } from '../chrome/keys';
 import { h } from '../dom';
 import { float, touch } from '../menu/menu';
+import type { PageKind } from '../page/page-leaf';
 import { settingRow } from '../settings/controls';
 import { quickIn } from '../settings/places';
 import { quickKey, setStops, stopsIn } from './quick-keys';
@@ -29,6 +30,8 @@ export interface LookStore {
  * where its values are kept: the notes' are the settings; the shelf's (#40) are under `epub.<key>`.
  */
 export interface LookSubject {
+  /** The kind of page it's the look of: a book's has settings of its own (the scroll style). */
+  readonly kind: PageKind;
   readonly crumb: string;
   readonly every: string;
   readonly store: LookStore;
@@ -78,7 +81,7 @@ export class QuickLook {
     const of = this.#of;
     const phone = of.phone();
     const storeOf = (setting: Setting) => (setting.quick === 'window' ? of.window : subject.store);
-    const rows = quickIn(of.platform, phone).map((setting) => {
+    const rows = quickIn(of.platform, phone, subject.kind).map((setting) => {
       const set = (key: SettingKey, value: string | number) =>
         void storeOf(setting)
           .set(key, value as never)

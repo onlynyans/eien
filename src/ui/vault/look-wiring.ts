@@ -39,8 +39,9 @@ export function lookWiring(of: LookWiringOf): LookWiring {
   const { pages, settings } = of;
   /** Whose look each kind of page wears: the notes', and the shelf's, apart (#40). */
   const subjects: Record<PageKind, LookSubject> = {
-    note: { crumb: 'Notes', every: 'every note', store: settings },
+    note: { kind: 'note', crumb: 'Notes', every: 'every note', store: settings },
     epub: {
+      kind: 'epub',
       crumb: 'Shelf',
       every: 'every book on the shelf',
       store: epubStore(settings),

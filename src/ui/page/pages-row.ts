@@ -101,10 +101,16 @@ export class PagesRow {
     const [only] = differ;
     // One page put in another's place (another kind opened there): only it changes, so the
     // page beside keeps its scroll and the keyboard.
-    if (want.length === have.length && differ.length === 1 && only !== undefined)
+    if (want.length === have.length && differ.length === 1 && only !== undefined) {
+      // The page going keeps what it must while it's still laid out.
+      this.#shown.find((page) => page.element === have[only])?.taking?.();
       have[only]?.replaceWith(want[only] as Element);
-    else if (differ.length > 0 || want.length !== have.length)
+    } else if (differ.length > 0 || want.length !== have.length) {
+      // Taken out and put back, each page's scroll is at its top again: each keeps its own first.
+      for (const page of this.#shown) page.taking?.();
       this.element.replaceChildren(...want);
+      for (const page of pages) page.placed?.();
+    }
     this.#shown = pages;
     this.#active = active;
     this.#spec = right ? spec : null;

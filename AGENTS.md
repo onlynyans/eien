@@ -138,7 +138,10 @@ Rules, pure TypeScript.
   - `epub-rules.ts`: those rules: pictures from the zip, links' words only, the parts named
   - `svg-plate.ts`: Calibre's SVG frame round a picture made a plain image
   - `first-line.ts`: a chapter's first line, by where it stands
-  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`
+  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it
+  - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
+  - `progress.ts`: how far through a chapter and the book, as the colophon says it
+  - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
 
 ### `src/platform/`
 
@@ -322,10 +325,14 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
 - styles in `theme/` and beside each view
 - `epub/`: an EPUB's page (#40)
-  - `epub-page.ts`: the page (`PaneLeaf`): the note's sheet with a chapter on it, its ×, the colophon's "3 of 61", a refusal in words
-  - `epub-side.ts`: one page holding a book (`Side`): the book read and opened, a chapter at a time, the chapter kept
+  - `epub-page.ts`: the page (`PaneLeaf`): the note's sheet with a chapter on it, its ×, the colophon's "3 of 61" and how far through, the scroll style worn, a refusal in words
+  - `epub-side.ts`: one page holding a book (`Side`): the book read and opened, a chapter at a time, its place kept and shown again
+  - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
+  - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again
+  - `place-keeper.ts`: the place kept as the page scrolls, measured at rest and never out of sight, shown again when laid out anew
+  - `test-side.ts`: a book's page over a vault the DOM tests hold
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
-  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`), let go with it
+  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, let go with it
   - `reading-store.ts`: the reading state's file, through the vault's small files
   - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
 - `extension/`: the extension's pages (spec §14)

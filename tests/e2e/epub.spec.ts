@@ -157,6 +157,7 @@ test.describe('the chapter kept', () => {
     expect(JSON.parse(readFileSync(join(reading, file as string), 'utf8'))).toEqual({
       version: 1,
       chapter: 'OEBPS/chapter-2.xhtml',
+      place: { chapter: 'OEBPS/chapter-2.xhtml', offset: 0 },
     });
     await closeApp(app);
     const again = await launchApp(userData, vault);

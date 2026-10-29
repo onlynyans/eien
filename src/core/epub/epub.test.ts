@@ -62,7 +62,15 @@ describe('openEpub: the plain book, Eien’s own export', () => {
     ]);
     expect(three.images).toEqual(['OEBPS/images/image-2.jpg']);
     const picture = await book.image('OEBPS/images/image-2.jpg');
-    expect(picture).toMatchObject({ type: 'image/jpeg' });
+    expect(picture).toMatchObject({ type: 'image/jpeg', size: { width: 1, height: 1 } });
+  });
+
+  it('sizes each spine item by its entry, inflated: how much of the book it is', async () => {
+    const book = await opened('plain.epub');
+    expect(book.spine.every((item) => Number.isSafeInteger(item.size) && item.size > 0)).toBe(true);
+    const three = await chapter(book, 3);
+    // A chapter's file is at least its words.
+    expect(book.spine[3]?.size).toBeGreaterThan(plainOf(three.nodes).trim().length);
   });
 
   it('keys the book by what it holds: the same whatever the file is called', async () => {
