@@ -24,6 +24,8 @@ export interface StandInSide extends Side {
   readonly followed: SettingValues[];
   /** The kind's upkeep this page was given to, in order: 'flush', 'diskChanged', 'followMoves', 'sync', 'stop'. */
   readonly told: string[];
+  /** What its find was asked, in order: 'open', 'replace', 'next', 'previous'. */
+  readonly finds: string[];
   readonly disposed: boolean;
 }
 
@@ -58,6 +60,7 @@ function standIn(close: () => void, left: Place | null): StandInSide {
   let disposed = false;
   let before = left;
   const followed: SettingValues[] = [];
+  const finds: string[] = [];
   const page: PaneLeaf = {
     ...leaf,
     get name() {
@@ -71,6 +74,11 @@ function standIn(close: () => void, left: Place | null): StandInSide {
       figures: [figure],
       trail: h('span'),
       said: h('span', { class: 'colophon__said' }),
+    },
+    find: {
+      open: (replace) => void finds.push(replace ? 'replace' : 'open'),
+      next: () => void finds.push('next'),
+      previous: () => void finds.push('previous'),
     },
     tipped: [closer],
     focus: () => scroll.focus(),
@@ -86,6 +94,7 @@ function standIn(close: () => void, left: Place | null): StandInSide {
     leaf: 0,
     followed,
     told: [],
+    finds,
     get disposed() {
       return disposed;
     },

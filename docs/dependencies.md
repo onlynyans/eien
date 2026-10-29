@@ -42,7 +42,7 @@ runtime.
 | `@codemirror/state`, `@codemirror/view` | The editor: its document, selection and transactions, and the view that draws them. Live and Reading are decorations on it (MIT) |
 | `@codemirror/commands` | Undo history and the standard editing keys (MIT) |
 | `@codemirror/language`, `@codemirror/lang-markdown` | Markdown parsing in the editor, with GitHub's extensions; the syntax tree Live and Reading are drawn from (MIT) |
-| `@codemirror/search` | Find and replace in the open note (⌘F): the search state, its matches highlighted, find next and previous, replace one and replace all as one change each. Its panel is Eien's own (`ui/editor/find-bar.ts`), drawn outside the editor's shadow root (MIT; the same maintainers as the CodeMirror packages above) |
+| `@codemirror/search` | Find and replace in the open note (⌘F): the search state, its matches highlighted, find next and previous, replace one and replace all as one change each. Its panel is Eien's own find bar (`ui/find/find-bar.ts`, driven by `ui/editor/find.ts`), drawn outside the editor's shadow root (MIT; the same maintainers as the CodeMirror packages above) |
 | `@lezer/markdown`, `@lezer/highlight`, `@lezer/common` | The parser under lang-markdown, used directly for `==highlight==` and `[[wiki links]]` and the styles of their parts (MIT) |
 | `@fontsource/ibm-plex-mono` | The interface font and the Source font by default, whatever the text face (SIL OFL): 400 and 600, and 400 italic |
 | `@fontsource-variable/jetbrains-mono` | A monospaced face the interface and Source fonts can choose (SIL OFL): variable weight, roman. Only its Latin and Latin Extended files are declared (`ui/theme/monos.css`), as for every mono below |

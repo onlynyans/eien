@@ -47,7 +47,7 @@ export const editorTheme = EditorView.theme({
   '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, ::selection':
     { backgroundColor: 'var(--eien-seal-wash)' },
   '&.cm-focused .cm-selectionBackground': { backgroundColor: 'var(--eien-seal-wash)' },
-  // Find's matches (./find-bar.ts): each a neutral fill over a hairline, never the highlight's
+  // Find's matches (./find.ts): each a neutral fill over a hairline, never the highlight's
   // ochre; the current one is the selection, so the selection's wash, over the focus ink's mark.
   '.cm-searchMatch': {
     backgroundColor: 'var(--eien-selected)',

@@ -67,6 +67,25 @@ describe('layers', () => {
   });
 });
 
+describe('the find bar', () => {
+  // It searches nothing itself (ui/find/find-bar.ts): an EPUB's chapters drive it with no editor.
+  it('leans on neither CodeMirror nor the editor', () => {
+    const find = join(SRC, 'ui', 'find');
+    const editor = join(SRC, 'ui', 'editor');
+    const problems = sourceFiles(find).flatMap((file) =>
+      importsOf(readFileSync(file, 'utf8'))
+        .filter((specifier) =>
+          specifier.startsWith('.')
+            ? resolve(dirname(file), specifier).startsWith(editor + sep)
+            : specifier.startsWith('@codemirror/'),
+        )
+        .map((specifier) => `${relative(SRC, file)} imports '${specifier}'`),
+    );
+    expect(sourceFiles(find)).not.toEqual([]);
+    expect(problems).toEqual([]);
+  });
+});
+
 describe('importsOf', () => {
   it('finds every form of import', () => {
     const source = [

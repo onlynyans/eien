@@ -290,7 +290,7 @@ if a theme should change it, it joins `THEME_TOKENS`.
 - **Dragged row:** raised paper, a rule-strong outline, the float shadow; the
   rest at 72% opacity; a hairline drop marker with a dot.
 - **Empty:** centred, the text face in italic, ink-soft.
-- **Find slip** (`.find`, `editor/find.css`, 2026-10-27): find and replace
+- **Find slip** (`.find`, `find/find.css`, 2026-10-27): find and replace
   on a slip laid at the page's top right (`--eien-space-2` down,
   `--eien-space-4` in), as wide as the list plus 48px each side and no wider
   than the page allows. Raised paper in a rule-strong hairline,
@@ -679,7 +679,7 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   is a host on the band (its rules `host__rule`, its buttons at
   `--eien-touch`) docked under the sheet. A column's alignment shows: right
   in tabular figures.
-- **Find** (`ui/editor/find-bar.ts`, `editor/find.css`, #41): a slip laid
+- **Find** (`ui/find/find-bar.ts`, `find/find.css`, #41): a slip laid
   at the page's top right (under a companion's head), `--eien-space-2` from
   its top, `--eien-space-4` from its edge: raised paper in a `--eien-rule-strong`
   hairline, `--eien-radius-m`, and no shadow (borders only: it lies on the

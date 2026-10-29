@@ -12,6 +12,7 @@ import { EditorView } from '@codemirror/view';
 import type { FormatCommand, FormatCommandId } from '../../core/format';
 import type { QuoteStyle } from '../../core/typography';
 import { h } from '../dom';
+import type { FindBar } from '../find/find-bar';
 import { activeFormats } from './active-formats';
 import { editorKeys, historyInput } from './editor-keys';
 import {
@@ -21,8 +22,7 @@ import {
   tagsAndIdsExtensions,
 } from './editor-modes';
 import { writtenBy } from './eien-change';
-import { findInNote } from './find';
-import { FindBar } from './find-bar';
+import { findInNote, NoteFind } from './find';
 import { frontMatterHidden, writingStart } from './front-matter-hidden';
 import { imageDrop } from './image-drop';
 import { linkFollowing } from './links';
@@ -93,8 +93,10 @@ export class NoteEditor {
    */
   readonly tableTools = h('div', { class: 'table-tools quiet-own' });
 
-  /** Find and replace in the note (./find-bar.ts): the window's own slip, which the page lays over it. */
-  readonly find: FindBar = new FindBar(() => this.#view);
+  /** Find and replace in the note (./find.ts): what the find bar searches here. */
+  readonly #find = new NoteFind(() => this.#view);
+  /** The find bar (../find/find-bar.ts): the window's own slip, which the page lays over it. */
+  readonly find: FindBar = this.#find.bar;
 
   constructor(host: HTMLElement, events: EditorEvents) {
     this.#events = events;
@@ -287,7 +289,7 @@ export class NoteEditor {
         return true;
       }),
       htmlPaste,
-      findInNote(this.find),
+      findInNote(this.#find),
       editorKeys(
         (command) => this.format(command),
         (command) => this.#doc?.run(this.#view, command) ?? false,

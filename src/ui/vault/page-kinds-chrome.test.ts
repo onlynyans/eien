@@ -12,9 +12,9 @@ import type { Sidebar } from '../sidebar/sidebar';
 import { vaultChrome } from './chrome-wiring';
 import { type CommandContext, runCommand } from './commands';
 import type { Side } from './pages';
-import { pagesWith } from './pages-harness';
+import { noted, pagesWith } from './pages-harness';
 import type { PhoneView } from './phone-view';
-import { standInKind } from './stand-in-kind';
+import { type StandInSide, standInKind } from './stand-in-kind';
 
 const stops: (() => void)[] = [];
 afterEach(() => {
@@ -133,10 +133,6 @@ describe('the commands for a note', () => {
       splits: () => true,
     } as unknown as CommandContext;
     const commands: MenuCommand[] = [
-      'find',
-      'find:replace',
-      'find:next',
-      'find:previous',
       'view:next',
       'view:live',
       'view:reading',
@@ -149,5 +145,31 @@ describe('the commands for a note', () => {
     expect(pages.active.kind).toBe('epub');
     runCommand('split:swap', ctx); // the window's: any page
     expect(pages.sides.map((side) => side.kind)).toEqual(['epub', 'note']);
+  });
+
+  it('find from the menu on the active page, whatever it holds', async () => {
+    const { pages } = await drawn();
+    const ctx = { pages } as unknown as CommandContext;
+    for (const command of ['find', 'find:replace', 'find:next', 'find:previous'] as const)
+      runCommand(command, ctx);
+    expect((pages.active as StandInSide).finds).toEqual(['open', 'replace', 'next', 'previous']);
+    // The note beside is never searched for it.
+    expect(document.querySelector<HTMLElement>('.find')?.hidden).toBe(true);
+  });
+
+  it('find on a note’s page only where its text is on the page', async () => {
+    const { pages } = await drawn();
+    const note = noted(pages.sides[0]);
+    pages.activate(note);
+    const bar = note.page.element.querySelector<HTMLElement>('.find');
+    const ctx = { pages } as unknown as CommandContext;
+    note.page.compare(document.createElement('div')); // a seal in the editor's place
+    // Next and Previous with nothing typed would open the bar, where they may.
+    for (const command of ['find', 'find:replace', 'find:next', 'find:previous'] as const)
+      runCommand(command, ctx);
+    expect(bar?.hidden).toBe(true);
+    note.page.compare(null);
+    runCommand('find', ctx);
+    expect(bar?.hidden).toBe(false);
   });
 });

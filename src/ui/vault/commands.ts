@@ -36,7 +36,7 @@ export interface CommandContext {
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   const { panes, sidebar } = ctx;
   const { page } = ctx.pages.active;
-  // A note's own commands (find, views, seals, formats) do nothing on a page of another kind.
+  // A note's own commands (views, seals, formats) do nothing on a page of another kind; find is any page's.
   const note = ctx.pages.activeNote;
   if (command === 'new-note') ctx.newNote();
   else if (command === 'search') {
@@ -44,9 +44,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     if (ctx.search.isIn(sidebar.searchSlot)) panes.open('sidebar');
     ctx.search.focus();
   } else if (command === 'find' || command === 'find:replace')
-    note?.page.find(command === 'find:replace');
-  else if (command === 'find:next' && note?.page.writable) note.page.editor.find.next();
-  else if (command === 'find:previous' && note?.page.writable) note.page.editor.find.previous();
+    page.find.open(command === 'find:replace');
+  else if (command === 'find:next') page.find.next();
+  else if (command === 'find:previous') page.find.previous();
   else if (command === 'view:next') note?.page.nextMode();
   else if (command === 'view:live' || command === 'view:source' || command === 'view:reading') {
     note?.page.setMode(command.slice('view:'.length) as 'live' | 'source' | 'reading');
