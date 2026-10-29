@@ -1,20 +1,23 @@
 # Eien — design
 
-The look and feel of Eien, and the rules the interface code follows. The
-mockups here are how to see it; `tokens.css` is the source of every value.
+The look and feel of Eien, and the rules the interface code follows. Every
+value is a token: the app's `src/ui/theme/tokens.css` is their source, and
+this file documents them.
+
+> **A snapshot:** the mockups below (specimen, desktop and phone, with their CSS, JS and `tokens.css`) are the design as approved on 2026-10-20, kept for their reasoning and never copied from. Eien's look now is [.interface-design/system.md](../../.interface-design/system.md) (AGENTS.md → Rules → How something looks).
 
 | File | What it shows |
 |---|---|
 | [specimen.html](specimen.html) | Every colour and surface, the depth stack, every ink's contrast on every surface, the four text faces side by side and the mono, the seal, rows and their states, the diff style, the spacing scale — day and night side by side |
 | [desktop.html](desktop.html) | The app window: three panes, two-pane mode, collapsing and resizing, the page's views, Compare, Seal, Versions |
 | [phone.html](phone.html) | The phone: contents → index → page, one at a time, controls behind ⋯ |
-| [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night. Its colours are the Washi palette. It mirrors the app's `src/ui/theme/tokens.css` (the source), with the corner scale, icon, control and weight tokens stage 3 added, and the mockups' own font names |
+| [tokens.css](tokens.css) | The mockups' tokens, day and night, in the Washi palette: a snapshot of the design pass at stage 3 (#54), frozen. The source is the app's `src/ui/theme/tokens.css`, which has the tokens added since; the snapshot keeps the mockups' own font names and the old `--eien-radius` |
 | [themes/otaku.css](themes/otaku.css) | The Otaku palette: Otaku's colours on Eien's colour tokens, day and night |
 | [choices.js](choices.js) | The mockups' settings — FACE, PALETTE (Washi · Otaku), DENSITY (Comfortable · Compact), PAGE (Sheet · Full) and CHAPTERS (i ii iii · 1 2 3): sets `data-face`, `data-palette`, `data-density`, `data-frame` and `data-numerals` before the page draws and keeps each choice |
 | [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Source Sans 3, Atkinson Hyperlegible Next, Schibsted Grotesk, Hanken Grotesk, Instrument Sans and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
 | [references.md](references.md) | The reference screenshots, what reads well in each, and the surface values that came of it |
-| [explorations/](explorations/README.md) | The design passes after these mockups (stages 2 and 3): the three layouts, Settings, tags, themes, your order; the components as built at the end of [explorations/specimen.html](explorations/specimen.html). Then editing a table in Live ([tables.md](explorations/tables.md)) and the window's corner in Band and Slip ([corner.md](explorations/corner.md)), chosen and built; and the split window, to choose ([split.md](explorations/split.md)) |
+| [explorations/](explorations/README.md) | The design passes after these mockups (stages 2 and 3): the three layouts, Settings, tags, themes, your order; the components as built at the end of [explorations/specimen.html](explorations/specimen.html). Then editing a table in Live ([tables.md](explorations/tables.md)) and the window's corner in Band and Slip ([corner.md](explorations/corner.md)), chosen and built; and the split window's four modes ([split.md](explorations/split.md), [split-alt.md](explorations/split-alt.md)), chosen and built |
 
 To view them, serve this folder (fonts don't load from `file://`):
 
@@ -125,7 +128,8 @@ count it, or do you press it?* The mono.
 
 ## Rules for the interface code
 
-1. Every colour, face, size, space and duration is a token from `tokens.css`.
+1. Every colour, face, size, space and duration is a token from
+   `src/ui/theme/tokens.css`.
    A theme or palette overrides tokens and nothing else.
 2. Depth is surface tone plus hairlines, and exactly two shadows: the sheet
    casts `--eien-shadow-sheet`, because it is the object you work on and must
