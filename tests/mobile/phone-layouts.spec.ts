@@ -35,15 +35,15 @@ async function chooseLayout(page: Page, layout: string): Promise<void> {
 const BOTTOMS = {
   band: {
     host: '.phone-bar__controls .host--phone-band',
-    commands: ['view.next', 'focus', 'more'],
+    commands: ['view.next', 'focus', 'look', 'more'],
   },
   slip: {
     host: '.page__phone .host--phone-slip',
-    commands: ['view.live', 'view.source', 'view.reading', 'focus', 'more'],
+    commands: ['view.live', 'view.source', 'view.reading', 'focus', 'look', 'more'],
   },
   runhead: {
     host: '.page__phone .host--phone-rail',
-    commands: ['view.live', 'view.source', 'view.reading', 'focus', 'seal', 'more'],
+    commands: ['view.live', 'view.source', 'view.reading', 'focus', 'seal', 'look', 'more'],
   },
 } as const;
 

@@ -3,6 +3,7 @@
 
 import type { ToggleKey } from '../core/config';
 import type { Bridge } from '../platform/bridge';
+import { closeMenu } from './menu/menu';
 import { MenuBus } from './menu/menu-bus';
 import { applyLook } from './settings/look';
 import { SettingsScreen } from './settings/settings-screen';
@@ -72,8 +73,10 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
     // ⌘W: while split, the active page; else the window.
     else if (command === 'close-window') {
       if (!shown?.closePage()) void bridge.window?.close();
-    } else if (command === 'settings') screen.open();
-    else if (isZoomCommand(command)) {
+    } else if (command === 'settings' || command === 'settings:look') {
+      closeMenu(); // what floats (the quick look) goes, not left under the sheet
+      screen.open(command === 'settings:look' ? 'Look' : undefined);
+    } else if (isZoomCommand(command)) {
       const key = zoomKeyFor(keyboardInPage());
       const now = settings.values[key];
       const next = zoomedBy(command, key, now);

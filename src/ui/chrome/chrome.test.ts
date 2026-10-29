@@ -227,11 +227,13 @@ describe('Chrome', () => {
     arrow('ArrowRight');
     expect(ids()).toBe('focus');
     arrow('ArrowRight');
+    expect(ids()).toBe('look');
+    arrow('ArrowRight');
     expect(ids()).toBe('view.live');
     arrow('ArrowLeft');
-    expect(ids()).toBe('focus');
+    expect(ids()).toBe('look');
     arrow('ArrowLeft', { shiftKey: true });
-    expect(ids()).toBe('focus');
+    expect(ids()).toBe('look');
     expect(tools.contains(document.activeElement)).toBe(true);
   });
 });

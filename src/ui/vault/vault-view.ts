@@ -196,6 +196,7 @@ export async function showVault(
     settings,
     menu,
     mac: keys.sidebar.startsWith('⌘'),
+    platform: bridge.platform,
     openInNewWindow,
   });
   chrome.mount();

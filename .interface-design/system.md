@@ -591,7 +591,7 @@ is always Panes.
   under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
 
-## A quick look (decided 2026-10-28, #49; not built yet)
+## A quick look (decided 2026-10-28, #49; the notes' half built, docs/quick-look.md)
 
 From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
 
@@ -612,7 +612,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   - A change shows at once. Esc, the key again or a click outside closes
     it. Each setting is one stop for Tab; arrows choose within it.
 - **Two pages:** while it's open, the page it doesn't change sits back: its
-  paper takes `--eien-band`.
+  paper takes `--eien-band` (with #40 Phase 1: two notes wear the one look).
 - **Words and the sun:** an EPUB's look is the shelf's (SHELF, never
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.

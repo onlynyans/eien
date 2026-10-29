@@ -42,6 +42,7 @@ function toolsOver(made: Awaited<ReturnType<typeof pagesWith>>) {
     settings: made.settings,
     menu: { on: () => () => {}, run: () => {} } as unknown as MenuBus,
     mac: false,
+    platform: 'linux',
   });
   chrome.mount();
   stops.push(() => {

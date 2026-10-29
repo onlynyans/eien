@@ -20,6 +20,8 @@ export interface LooksOf {
   layout(): Layout | null;
   /** Whether the page's controls are put away to a strip. */
   strip(): boolean;
+  /** Whether the quick look (#49) is open. */
+  lookOpen(): boolean;
 }
 
 const NAMES = { live: 'Live', source: 'Source', reading: 'Reading' } as const;
@@ -122,6 +124,8 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
           tip: dark ? 'Night · switch to day' : 'Day · switch to night',
         };
       }
+      case 'look':
+        return { expanded: of.lookOpen() };
       case 'panes':
         return {
           icon: two() ? 'panes2' : 'panes3',

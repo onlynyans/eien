@@ -71,7 +71,7 @@
 /* Compare's text: the prose, read only, in the writer's face. */
 .compare {
   font-family: var(--eien-face-text);
-  line-height: var(--eien-leading-prose);
+  line-height: calc(var(--eien-leading-prose) * var(--look-lead, 1));
   color: var(--eien-ink);
   overflow-wrap: break-word;
 }
@@ -80,7 +80,7 @@
   outline-offset: var(--eien-space-2);
 }
 .compare p {
-  margin: 0 0 calc(var(--eien-leading-prose) * 0.6em);
+  margin: 0 0 calc(var(--eien-leading-prose) * var(--look-lead, 1) * 0.6em);
 }
 
 /* Removed words struck and tinted; added words underlined and tinted. */

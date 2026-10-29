@@ -24,6 +24,7 @@
 @import "../settings/controls.css";
 @import "../settings/themes.css";
 @import "../menu/menu.css";
+@import "../quick-look/quick-look.css";
 @import "../chrome/chrome.css";
 @import "../chrome/band.css";
 @import "../chrome/slip.css";

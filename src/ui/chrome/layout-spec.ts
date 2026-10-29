@@ -47,7 +47,7 @@ export interface HostSpec {
 }
 
 /**
- * The page's tools, as they fold: the least asked for first; the views (as one) only on a page
+ * The page's tools, as they fold: the least asked for first, the look last of the tools; the views (as one) only on a page
  * too narrow for them and a ⋯, and the seal last. Never the strip: the shut band's way back.
  */
 export const TOOL_FOLDS: readonly CommandId[] = [
@@ -55,6 +55,7 @@ export const TOOL_FOLDS: readonly CommandId[] = [
   'compare',
   'format-bar',
   'focus',
+  'look',
   'view.live',
   'view.source',
   'view.reading',

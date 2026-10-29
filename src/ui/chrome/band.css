@@ -38,8 +38,9 @@
 [data-layout="band"] .page:hover .host--band-views,
 [data-layout="band"] .page:hover .host--band-tools,
 [data-layout="band"] .host--band-views:focus-within,
-[data-layout="band"] .host--band-tools:focus-within {
-  opacity: 1;
+[data-layout="band"] .host--band-tools:focus-within,
+[data-layout="band"] .page__bar:has([aria-expanded="true"]) .host {
+  opacity: 1; /* and while the quick look it opened is open */
 }
 
 /* Hidden (#16): the band goes, the sheet reaches the top, and a lip stays to bring it back. */

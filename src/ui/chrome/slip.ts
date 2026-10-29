@@ -10,7 +10,7 @@ export const SLIP: LayoutSpec = {
       name: 'slip',
       slot: 'pageBar',
       label: 'Page',
-      items: [VIEWS, 'compare', 'seal', 'versions', 'format-bar', 'focus', 'strip'],
+      items: [VIEWS, 'compare', 'seal', 'versions', 'format-bar', 'focus', '|', 'look', 'strip'],
       folds: TOOL_FOLDS,
     },
     formatBar('slip-format'),
@@ -19,5 +19,10 @@ export const SLIP: LayoutSpec = {
   ],
   tags: 'underTitle',
   tools: 'slip',
-  phone: { name: 'phone-slip', slot: 'phoneFoot', label: 'Page', items: [VIEWS, 'focus', 'more'] },
+  phone: {
+    name: 'phone-slip',
+    slot: 'phoneFoot',
+    label: 'Page',
+    items: [VIEWS, 'focus', 'look', 'more'],
+  },
 };
