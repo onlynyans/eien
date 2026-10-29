@@ -351,7 +351,9 @@ test.describe('a long chapter', () => {
           timeout: 10_000,
         })
         .toBe(1);
-      await expect(page.locator('.colophon')).not.toContainText(' 0% of the chapter');
+      await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
+        '0% of the chapter',
+      );
       expect(await time.longest(), 'scrolled and kept').toBeLessThan(STALL);
     },
   );
