@@ -134,7 +134,7 @@ Rules, pure TypeScript.
   - `contents.ts`: the contents (nav, NCX, or the spine) and the printed edition's pages (page-list)
   - `epub.ts`: a book opened (`openEpub`), its chapters and pictures read as they're shown, and its key
   - `chapter.ts`: a chapter cleaned by `html`'s cleaner under the book's rules
-  - `epub-rules.ts`: those rules: pictures from the zip, links' words only, the parts named
+  - `epub-rules.ts`: those rules: pictures from the zip, links only to the book's own chapters, the places they name kept, the parts named (a note and its reference too)
   - `svg-plate.ts`: Calibre's SVG frame round a picture made a plain image
   - `first-line.ts`: a chapter's first line, by where it stands
   - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it

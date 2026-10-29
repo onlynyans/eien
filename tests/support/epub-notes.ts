@@ -6,17 +6,7 @@
 
 import { epub } from '../../src/core/export/epub';
 import type { EpubSources } from './epub-fixtures';
-import {
-  escaped,
-  handEpub,
-  nav,
-  oneChapter,
-  opf,
-  page,
-  paragraphs,
-  TITLE,
-  XHTML,
-} from './epub-parts';
+import { escaped, handEpub, nav, opf, page, paragraphs, TITLE, XHTML } from './epub-parts';
 
 /** Chapter I with two footnotes, as Eien's own export writes them. */
 function notes(sources: EpubSources): Uint8Array {

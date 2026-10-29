@@ -6,7 +6,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { closeMenu } from '../menu/menu';
-import { markupOf, plainText, wordsIn } from './book-words';
+import { noteIn } from './book-links';
+import { copyWords, markupOf, plainText, wordsIn } from './book-words';
 import { EpubPage } from './epub-page';
 import { sideWith } from './test-side';
 
@@ -110,6 +111,86 @@ describe('a note’s reference', () => {
   });
 });
 
+describe('a note over the page, again', () => {
+  it('opens again on the same reference after it closed by Esc', async () => {
+    const { side } = sideWith(book('links.epub'));
+    await side.open('a.epub');
+    const mark = side.page.chapter.querySelector<HTMLAnchorElement>('sup a[href]');
+    press(mark);
+    await vi.waitFor(() => expect(note()).not.toBeNull());
+    note()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(note()).toBeNull();
+    press(mark);
+    await vi.waitFor(() => expect(note()).not.toBeNull());
+  });
+
+  it('catches its own links: the window never follows one, the book does', async () => {
+    const { side } = sideWith(book('links.epub'));
+    await side.open('a.epub');
+    press(side.page.chapter.querySelector('sup a[href]'));
+    await vi.waitFor(() => expect(note()).not.toBeNull());
+    // The note's own way back to its reference, "1.".
+    const back = note()?.querySelector('a[href]');
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    back?.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(note()).toBeNull();
+    expect(location.hash).toBe('');
+  });
+
+  it('is one note: the block of words a marker heads or stands before, never the chapter', () => {
+    const chapter = document.createElement('div');
+    chapter.innerHTML =
+      '<a data-anchor="fn1"></a><p>The first note.</p><div><a data-anchor="fn2"></a><p>The second.</p><p>Not it.</p></div><p><a data-anchor="fn3"></a>The third.</p><div data-part="note"><a data-anchor="fn4"></a><p>Four,</p><p>in two.</p></div>';
+    expect(noteIn(chapter, 'fn1')?.textContent).toBe('The first note.');
+    expect(noteIn(chapter, 'fn2')?.textContent).toBe('The second.');
+    expect(noteIn(chapter, 'fn3')?.textContent).toBe('The third.');
+    expect(noteIn(chapter, 'fn4')?.textContent).toBe('Four,in two.');
+    expect(noteIn(chapter, 'missing')).toBeNull();
+  });
+
+  it('isn’t a numeral link out of a sup: an index’s page goes there', async () => {
+    const { side } = sideWith(book('links.epub'));
+    await side.open('a.epub');
+    const index = document.createElement('a');
+    index.setAttribute('href', '#book/OEBPS%2Ftext%2Fchapter-3.xhtml:sir-william');
+    index.textContent = '45';
+    side.page.chapter.append(index);
+    press(index);
+    await vi.waitFor(() => expect(side.spine).toBe(2));
+    expect(note()).toBeNull();
+  });
+});
+
+describe('Back', () => {
+  it('isn’t brought back by a link still drawing when the reader chooses a chapter', async () => {
+    const { side } = sideWith(book('links.epub'));
+    await side.open('a.epub');
+    press(
+      [...side.page.chapter.querySelectorAll('a')].find((a) => a.textContent === 'see Chapter III'),
+    );
+    await side.go(1);
+    await new Promise((done) => setTimeout(done, 20));
+    expect(side.spine).toBe(1);
+    expect(backButton(side.page).hidden).toBe(true);
+  });
+
+  it('isn’t taken from a field: Alt+← is a word left there', async () => {
+    const { side } = sideWith(book('links.epub'));
+    await side.open('a.epub');
+    press(
+      [...side.page.chapter.querySelectorAll('a')].find((a) => a.textContent === 'see Chapter III'),
+    );
+    await vi.waitFor(() => expect(backButton(side.page).hidden).toBe(false));
+    const field = document.body.appendChild(document.createElement('textarea'));
+    const key = new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, cancelable: true });
+    field.addEventListener('keydown', (event) => side.page.key(event));
+    field.dispatchEvent(key);
+    expect(key.defaultPrevented).toBe(false);
+    expect(side.spine).toBe(2);
+  });
+});
+
 describe('a hostile book’s links', () => {
   it('keep their words alone, name none of the window’s elements, and a mark to nowhere goes nowhere', async () => {
     const shown = vi.spyOn(EpubPage.prototype, 'showPlace');
@@ -131,6 +212,41 @@ describe('a hostile book’s links', () => {
     press(chapter.querySelector('a[href$=":n-bad"]'));
     await vi.waitFor(() => expect(note()?.textContent).toContain('A note that runs nothing.'));
     expect(note()?.querySelectorAll('[onclick], script')).toHaveLength(0);
+  });
+});
+
+describe('the words copied, as EPUB 2 books mark notes', () => {
+  it('leave a mark in a sup behind, and keep a line break', async () => {
+    const { side } = sideWith(book('links.epub'));
+    await side.open('a.epub');
+    const first = side.page.chapter.querySelector('p');
+    first?.append(document.createElement('br'), 'A second line.');
+    const range = document.createRange();
+    range.selectNodeContents(first as Node);
+    const plain = plainText(wordsIn(range));
+    expect(plain).toMatch(/wife\.\nA second line\.$/u);
+    expect(plain).not.toMatch(/wife\.1/u);
+  });
+
+  it('are the chapter’s alone, however far the selection reaches past it', async () => {
+    const { side } = sideWith(book('notes.epub'));
+    await side.open('a.epub');
+    const stop = copyWords(side.page.chapter);
+    const range = document.createRange();
+    range.setStartBefore(side.page.element);
+    range.setEndAfter(side.page.element);
+    document.getSelection()?.removeAllRanges();
+    document.getSelection()?.addRange(range);
+    const data = new Map<string, string>();
+    const event = new Event('copy', { cancelable: true }) as ClipboardEvent;
+    Object.defineProperty(event, 'clipboardData', {
+      value: { setData: (type: string, value: string) => data.set(type, value) },
+    });
+    document.dispatchEvent(event);
+    stop();
+    expect(event.defaultPrevented).toBe(true);
+    expect(data.get('text/plain')).toMatch(/^Chapter I\.?\n\nIt is a truth/u);
+    expect(data.get('text/html')).not.toMatch(/href|data-|blob:/u);
   });
 });
 

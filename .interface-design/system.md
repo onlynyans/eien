@@ -675,6 +675,10 @@ in the book, each recorded here as it's built.
   elsewhere or the page scrolling closes it.
 - **Back** after a link: a word button first in the colophon's figures
   ("Back to Chapter I"), there only while there's a step back.
+- **A note's reference and a note** are named (`note-ref`, `note`) to open
+  the note over the page, and drawn as the book sets them: the reference
+  in the publisher's own superscript, the note as its paragraphs. No style
+  of their own (Phase 2b); one comes if they're missed.
 - **The book's look is the shelf's:** its typeface, text size, line spacing,
   width and frame, set in the quick look with a book in front, worn on its
   leaf (`data-face`, `data-frame`, `--eien-text-scale`, `--look-lead`,

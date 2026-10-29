@@ -22,6 +22,9 @@ import { copyWords } from './book-words';
 import { offsetAfter } from './chapter-place';
 import { PlaceKeeper } from './place-keeper';
 
+/** Where a key is the writer's own: a note's editor, a field. */
+const FIELD = '.editor-host, input, textarea, [contenteditable]';
+
 export interface EpubPageOf {
   /** Close this page (its ×, ⌘W). */
   close(): void;
@@ -67,12 +70,17 @@ export class EpubPage implements PaneLeaf {
   #zoom: number | null = null;
 
   readonly #of: EpubPageOf;
+  readonly #stopCopy: () => void;
 
   constructor(of: EpubPageOf) {
     this.#of = of;
     this.#back = h('button', {
       class: 'word-button',
-      attrs: { type: 'button', hidden: true, 'aria-keyshortcuts': 'Meta+[ Alt+ArrowLeft' },
+      attrs: {
+        type: 'button',
+        hidden: true,
+        'aria-keyshortcuts': 'Meta+[ Control+[ Alt+ArrowLeft',
+      },
       on: { click: () => of.back() },
     });
     const closer = quietButton({
@@ -102,7 +110,7 @@ export class EpubPage implements PaneLeaf {
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(this.#scroll));
     this.element.classList.add('page__leaf--epub');
     catchLinks(this.chapter, (anchor, link) => of.follow(anchor, link));
-    copyWords(this.chapter);
+    this.#stopCopy = copyWords(this.chapter);
     this.#keeper = new PlaceKeeper({
       scroller: this.#scroll,
       chapter: this.chapter,
@@ -256,6 +264,8 @@ export class EpubPage implements PaneLeaf {
 
   /** ⌘[ or Alt+←, as a browser goes back: back where the last link was followed from. */
   key(event: KeyboardEvent): void {
+    // Not from a field (the page beside's words, its tags): Alt+← is a word left there.
+    if (event.target instanceof Element && event.target.closest(FIELD)) return;
     const back =
       (event.key === '[' && (event.metaKey || event.ctrlKey) && !event.altKey) ||
       (event.key === 'ArrowLeft' && event.altKey && !event.metaKey && !event.ctrlKey);
@@ -278,6 +288,7 @@ export class EpubPage implements PaneLeaf {
 
   dispose(): void {
     this.#keeper.dispose();
+    this.#stopCopy();
     for (const part of [this.element, this.aside, this.under, this.runningCrumbs]) part.remove();
   }
 }

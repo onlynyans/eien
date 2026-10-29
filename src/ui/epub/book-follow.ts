@@ -18,8 +18,12 @@ export interface BookFollowOf {
   epub(): Epub | null;
   spine(): number;
   place(): EpubPlace | null;
-  /** The spine item `index` drawn at its top, kept as the place. */
-  draw(index: number): Promise<void>;
+  /**
+   * The spine item `index` drawn, at the place `at` gives once it's drawn
+   * (shown again when its pictures and fonts are in), kept as the place;
+   * false when something else was asked for meanwhile.
+   */
+  draw(index: number, at: () => number): Promise<boolean>;
   /** Back at `place`, its chapter and line. */
   open(place: EpubPlace): Promise<void>;
   /** Keep the place now shown. */
@@ -45,8 +49,15 @@ export function bookFollow(of: BookFollowOf): BookFollow {
     readonly words: DocumentFragment;
   } | null = null;
 
+  /** Counts what the reader asked for: a note or a place on its way is dropped once they've moved on. */
+  let asked = 0;
+
   const shut = () => {
     closeNote?.();
+    closed();
+  };
+  /** The note gone, however it closed (Esc, a click elsewhere, a scroll, Go to the note). */
+  const closed = () => {
     closeNote = null;
     noteOpenFor = null;
   };
@@ -63,11 +74,17 @@ export function bookFollow(of: BookFollowOf): BookFollow {
     return noteIn(read.words, name)?.cloneNode(true) ?? null;
   }
 
+  /** The place `name` in the spine item `index`, gone to, the place it was left at one step back. */
   async function goTo(index: number, name: string): Promise<void> {
+    const mine = ++asked;
     const from = of.place();
-    if (index !== of.spine()) await of.draw(index);
-    page.showPlace(name ? (page.offsetOf(name) ?? 0) : 0);
-    of.keep(page.place);
+    const at = () => (name ? (page.offsetOf(name) ?? 0) : 0);
+    if (index !== of.spine()) {
+      if (!(await of.draw(index, at)) || mine !== asked) return;
+    } else {
+      page.showPlace(at());
+      of.keep(page.place);
+    }
     const epub = of.epub();
     back = from;
     page.backTo(
@@ -75,42 +92,51 @@ export function bookFollow(of: BookFollowOf): BookFollow {
     );
   }
 
-  return {
-    async follow(anchor, link) {
-      const epub = of.epub();
-      const index = epub?.spine.findIndex((item) => item.path === link.path) ?? -1;
-      if (!epub || index < 0) return;
-      // The reference pressed again: its note closes.
-      if (noteOpenFor === anchor) return shut();
-      if (isNoteRef(anchor, link)) {
-        const words = await noteWords(epub, index, link.fragment);
-        if (words) {
-          shut();
-          noteOpenFor = anchor;
-          closeNote = noteOver({
-            reference: anchor,
-            words,
-            face: page.element.dataset.face,
-            scroller: page.scroller,
-            go: () => void goTo(index, link.fragment),
-          });
-          return;
-        }
+  /** A link pressed, on the page or in a note over it. */
+  async function follow(anchor: HTMLAnchorElement, link: ZipAddress): Promise<void> {
+    const epub = of.epub();
+    const index = epub?.spine.findIndex((item) => item.path === link.path) ?? -1;
+    if (!epub || index < 0) return;
+    // The reference pressed again: its note closes.
+    if (noteOpenFor === anchor) return shut();
+    const mine = ++asked;
+    if (isNoteRef(anchor, link)) {
+      const words = await noteWords(epub, index, link.fragment);
+      if (mine !== asked || !anchor.isConnected) return;
+      if (words) {
+        shut();
+        noteOpenFor = anchor;
+        closeNote = noteOver({
+          reference: anchor,
+          words,
+          face: page.element.dataset.face,
+          scroller: page.scroller,
+          go: () => void goTo(index, link.fragment),
+          follow: (inNote, to) => void follow(inNote, to),
+          closed,
+        });
+        return;
       }
-      shut();
-      // A place this chapter doesn't have: nowhere to go.
-      if (index === of.spine() && link.fragment && page.offsetOf(link.fragment) === null) return;
-      await goTo(index, link.fragment);
-    },
+    }
+    shut();
+    // A place this chapter doesn't have: nowhere to go.
+    if (index === of.spine() && link.fragment && page.offsetOf(link.fragment) === null) return;
+    await goTo(index, link.fragment);
+  }
+
+  return {
+    follow,
     async back() {
       const to = back;
       if (!to) return;
+      ++asked;
       back = null;
       page.backTo(null);
       await of.open(to);
       of.keep(page.place);
     },
     forget() {
+      ++asked;
       shut();
       back = null;
       read = null;

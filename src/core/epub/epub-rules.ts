@@ -24,6 +24,8 @@ const CAPTION = /\bcaption\b/iu;
 /** A note's reference (EPUB 3's epub:type, DPUB-ARIA's role), and a note: foot, end or rear. */
 const NOTE_REF = /\bnoteref\b/iu;
 const NOTE = /\b(?:foot|end|rear)?note\b/iu;
+/** What a note may be: a block of words (an aside or a section is kept as a div), never its reference or a heading. */
+const NOTE_BLOCKS: ReadonlySet<string> = new Set(['p', 'div', 'li', 'dd', 'blockquote']);
 /** The longest place kept: an id is a name, not words. */
 const MAX_ANCHOR = 256;
 
@@ -45,7 +47,9 @@ function partOf(source: HtmlElement, name: string): string | null {
   if (name === 'a' && (has(source, NOTE_REF) || roleIs(source, /\bdoc-noteref\b/u))) {
     return 'note-ref';
   }
-  if (has(source, NOTE) || roleIs(source, /\bdoc-(?:foot|end)note\b/u)) return 'note';
+  if (NOTE_BLOCKS.has(name) && (has(source, NOTE) || roleIs(source, /\bdoc-(?:foot|end)note\b/u))) {
+    return 'note';
+  }
   if (name === 'hr' || has(source, BREAK)) return 'scene-break';
   if (name === 'h1' || name === 'h2' || (name !== 'img' && has(source, TITLE))) {
     return 'chapter-title';
@@ -60,7 +64,11 @@ function partOf(source: HtmlElement, name: string): string | null {
 
 /** A place's name a link may give, kept: a name, not words or control characters. */
 const placeName = (id: string): string | null =>
-  id.length > 0 && id.length <= MAX_ANCHOR && !/[\u0000-\u001f\u007f]/u.test(id) ? id : null;
+  id.length > 0 &&
+  id.length <= MAX_ANCHOR &&
+  ![...id].some((char) => char < ' ' || char === '\u007f')
+    ? id
+    : null;
 
 /**
  * The rules for the chapter at `path` in a zip that holds `holds`, whose

@@ -7,9 +7,18 @@ import { bookHref, bookLinkOf } from './book-link';
 
 describe('a link inside a book', () => {
   it('comes back as it went, for any clean path and any place in it', () => {
+    // A part of a clean path: no "/" or "\\", no control character, not "." or "..", no drive letter.
     const part = fc
-      .stringMatching(/^[^/\\\u0000-\u001f\u007f]{1,12}$/u)
-      .filter((each) => each !== '.' && each !== '..');
+      .string({ minLength: 1, maxLength: 12 })
+      .filter(
+        (each) =>
+          each !== '.' &&
+          each !== '..' &&
+          !/^[a-z]:/iu.test(each) &&
+          ![...each].some(
+            (char) => char === '/' || char === '\\' || char < ' ' || char === '\u007f',
+          ),
+      );
     fc.assert(
       fc.property(
         fc.array(part, { minLength: 1, maxLength: 4 }),

@@ -6,8 +6,11 @@
 // the page scrolls, the keyboard back on the reference. "Go to the note"
 // follows the link, for a note too long to read here.
 
+import type { ZipAddress } from '../../core/epub';
 import { h } from '../dom';
 import { float } from '../menu/menu';
+import { catchLinks } from './book-links';
+import { copyWords } from './book-words';
 
 export interface NoteOverOf {
   /** The reference pressed: the note floats under it, and the keyboard comes back to it. */
@@ -20,6 +23,10 @@ export interface NoteOverOf {
   readonly scroller: HTMLElement;
   /** Go to the note itself. */
   go(): void;
+  /** A link in the note pressed: it closes, and the link is followed as the page's are. */
+  follow(anchor: HTMLAnchorElement, link: ZipAddress): void;
+  /** The note gone, however it closed. */
+  closed(): void;
 }
 
 /** The note shown; the close returned. */
@@ -53,10 +60,18 @@ export function noteOver(of: NoteOverOf): () => void {
     event.stopPropagation();
     close();
   });
+  // Its own links are the book's: never the window's (./book-links.ts).
+  catchLinks(panel, (anchor, link) => {
+    close();
+    of.follow(anchor, link);
+  });
+  const stopCopy = copyWords(panel);
   const scrolled = () => close();
   const close = float(panel, { opener: of.reference }, () => {
     of.scroller.removeEventListener('scroll', scrolled);
+    stopCopy();
     if (!document.activeElement || document.activeElement === document.body) of.reference.focus();
+    of.closed();
   });
   of.scroller.addEventListener('scroll', scrolled, { passive: true });
   panel.focus();

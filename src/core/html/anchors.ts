@@ -43,6 +43,10 @@ export function anchored(
       const { id: _id, [ANCHOR]: _own, ...attrs } = node.attrs;
       const children = walk(node.children);
       if (place === null) return [{ ...node, attrs, children }];
+      // An old link that only names a place (Calibre's): the marker in its stead.
+      if (node.name === 'a' && attrs.href === undefined && children.length === 0) {
+        return [marker(place)];
+      }
       if (BLOCK.has(node.name)) return [{ ...node, attrs, children: [marker(place), ...children] }];
       return [marker(place), { ...node, attrs, children }];
     });

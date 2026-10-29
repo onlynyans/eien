@@ -90,6 +90,14 @@ describe('the places a link may name', () => {
     });
   });
 
+  it('stand in the place of an old link that only names one, not beside it', () => {
+    const nodes = read('<a id="filepos12"></a><p>Words.</p><a name="old2"/>');
+    expect([...elements(nodes)].filter((element) => element.name === 'a')).toEqual([
+      { kind: 'element', name: 'a', attrs: { anchor: 'filepos12' }, children: [] },
+      { kind: 'element', name: 'a', attrs: { anchor: 'old2' }, children: [] },
+    ]);
+  });
+
   it('keep the first of two the same, and none too long, empty or with control characters', () => {
     const long = 'x'.repeat(257);
     const nodes = read(
@@ -120,6 +128,14 @@ describe('a note and its reference', () => {
         '<p><a epub:type="noteref" href="#fn1">1</a> <a role="doc-noteref" href="#fn2">2</a></p><aside epub:type="footnote" id="fn1"><p>One.</p></aside><div role="doc-endnote" id="fn2">Two.</div><li epub:type="rearnote">Three.</li>',
       ),
     ).toEqual(['a:note-ref', 'a:note-ref', 'div:note', 'div:note', 'li:note']);
+  });
+
+  it('a note only on a block: never its reference, the sup round it, or a heading', () => {
+    expect(
+      parts(
+        '<p>a<a class="footnote" href="#n1">1</a> b<sup class="footnote"><a href="#n2">2</a></sup></p><h2 class="note">Chapter I.</h2><aside class="footnote" id="n1"><p>x</p></aside>',
+      ),
+    ).toEqual(['h2:chapter-title', 'div:note']);
   });
 
   it('by a class, as EPUB 2 books write them, and never a section of notes', () => {

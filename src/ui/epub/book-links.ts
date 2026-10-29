@@ -28,13 +28,15 @@ export function catchLinks(
   );
 }
 
-/** A note's mark as EPUB 2 books write one: a number or a sign, perhaps in brackets. */
+/** A note's mark as EPUB 2 books write one: a number or a sign, perhaps in brackets, set as a superscript. */
 const MARK = /^[[(]?[\d*†‡§]{1,3}[\])]?$/u;
 
-/** Whether `anchor` refers to a note: named so, or its words a mark; never a link inside a note. */
+/** Whether `anchor` refers to a note: named so, or a mark in a sup; never a link inside a note. */
 export function isNoteRef(anchor: HTMLAnchorElement, link: ZipAddress): boolean {
   if (link.fragment === '' || anchor.closest('[data-part="note"]')) return false;
-  return anchor.dataset.part === 'note-ref' || MARK.test(anchor.textContent?.trim() ?? '');
+  if (anchor.dataset.part === 'note-ref') return true;
+  const superscript = anchor.closest('sup') !== null || anchor.querySelector('sup') !== null;
+  return superscript && MARK.test(anchor.textContent?.trim() ?? '');
 }
 
 /** The marker of the place `name` in `root`, the first of that name. */
@@ -48,7 +50,29 @@ export function markerIn(root: ParentNode, name: string): HTMLElement | null {
 /** The blocks a note may be. */
 const BLOCKS = 'p, div, li, dd, dt, blockquote, td, th, figure, h1, h2, h3, h4, h5, h6';
 
-/** The note the place `name` heads in `root`: the block its marker is in. */
-export function noteIn(root: ParentNode, name: string): HTMLElement | null {
-  return markerIn(root, name)?.parentElement?.closest<HTMLElement>(BLOCKS) ?? null;
+/** A block of words: one holding no other block. */
+const isLeafBlock = (element: Element): element is HTMLElement =>
+  element.matches(BLOCKS) && !element.querySelector(BLOCKS);
+
+/**
+ * The note the place `name` heads in `root`: a note the book names, else the
+ * block of words its marker is in, else (a marker standing before its note,
+ * as conversions leave them) the next block of words after it. Never `root`
+ * itself, nor a block that holds others (a chapter's wrapper): one note.
+ */
+export function noteIn(root: Node, name: string): HTMLElement | null {
+  const marker = markerIn(root as ParentNode, name);
+  if (!marker) return null;
+  const inRoot = (element: Element | null): element is HTMLElement =>
+    element !== null && element !== root && root.contains(element);
+  const named = marker.closest('[data-part="note"]');
+  if (inRoot(named)) return named;
+  const block = marker.parentElement?.closest(BLOCKS) ?? null;
+  if (inRoot(block) && isLeafBlock(block)) return block;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  walker.currentNode = marker;
+  for (let next = walker.nextNode(); next; next = walker.nextNode()) {
+    if (next instanceof Element && isLeafBlock(next)) return next as HTMLElement;
+  }
+  return null;
 }
