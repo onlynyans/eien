@@ -50,3 +50,19 @@ describe('the File menu (New Window)', () => {
     expect(fileMenu('darwin').file.at(-1)?.label).toBe('Close Window');
   });
 });
+
+describe('the View menu (#49)', () => {
+  it('offers Look… with ⇧⌘L, sending the quick look’s command', () => {
+    const sent: string[] = [];
+    const menu = buildMenu((command) => sent.push(command)) as unknown as Item[];
+    const view = named(menu, 'View')?.submenu ?? [];
+    const look = named(view, 'Look…');
+    expect(look?.accelerator).toBe('CmdOrCtrl+Shift+L');
+    look?.click?.(undefined, undefined);
+    expect(sent).toEqual(['look']);
+    // Its key is the Look control's, and no other item's.
+    const keys = (items: Item[]): string[] =>
+      items.flatMap((item) => [item.accelerator ?? '', ...keys(item.submenu ?? [])]);
+    expect(keys(menu).filter((key) => key === 'CmdOrCtrl+Shift+L')).toHaveLength(1);
+  });
+});

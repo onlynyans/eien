@@ -101,6 +101,10 @@ export type MenuCommand =
   | 'new-window'
   | 'close-window'
   | 'settings'
+  /** Settings, open at Look: the quick look's All settings. */
+  | 'settings:look'
+  /** The quick look (#49): the active page's look, in a popover. */
+  | 'look'
   | 'search'
   | 'find'
   | 'find:replace'

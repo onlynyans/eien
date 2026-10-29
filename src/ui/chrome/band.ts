@@ -19,7 +19,7 @@ export const BAND: LayoutSpec = {
       name: 'band-tools',
       slot: 'pageBar',
       label: 'Page',
-      items: ['compare', 'seal', 'versions', '|', 'format-bar', 'focus', 'strip'],
+      items: ['compare', 'seal', 'versions', '|', 'format-bar', 'focus', '|', 'look', 'strip'],
       folds: TOOL_FOLDS,
     },
     { ...formatBar('band-format'), folds: FORMAT_FOLDS }, // a row across the page: it folds
@@ -32,6 +32,6 @@ export const BAND: LayoutSpec = {
     name: 'phone-band',
     slot: 'phoneBar',
     label: 'Page',
-    items: ['view.next', 'focus', 'more'],
+    items: ['view.next', 'focus', 'look', 'more'],
   },
 };

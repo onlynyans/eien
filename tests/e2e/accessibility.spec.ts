@@ -63,6 +63,18 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         expect(await violationsUnder(page, ['dialog[open]']), 'Settings').toEqual([]);
       });
 
+      test('the quick look open has no serious violation (#49)', async ({ page }) => {
+        await ready(page);
+        await page
+          .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')
+          .click();
+        const look = page.getByRole('dialog', { name: 'Look: Notes' });
+        await expect(look).toBeVisible();
+        // The popover, and its control kept in sight in its bar while it's open.
+        expect(await violationsUnder(page, ['.quick-look']), 'the quick look').toEqual([]);
+        expect(await seriousViolations(page), 'the window behind it').toEqual([]);
+      });
+
       test('split, and folded, has no serious violation', async ({ page }) => {
         await page.setViewportSize({ width: 1600, height: 900 });
         await ready(page);

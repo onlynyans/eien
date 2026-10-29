@@ -48,6 +48,7 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
       ? [item('Stop sprint', 'sprint:stop')]
       : SPRINT_MINUTES.map((minutes) => item(`Sprint, ${minutes} minutes`, `sprint:${minutes}`))),
     'separator',
+    item('Look', 'look'),
     item('Settings', 'settings'),
   ];
 }

@@ -199,6 +199,18 @@ is paper from edge to edge, with no gap, edge or shadow, and the text keeps its
 line length, centred. Tokens: `--eien-page-ground`, `--eien-page-gutter`,
 `--eien-sheet-edge`, `--eien-sheet-lift`.
 
+## Line spacing and page width
+
+Two settings (#49, the quick look), each a step either side of the face's own
+tuning, so all eight faces still read alike: **Line spacing** (Tight, As set,
+Loose: × 0.9, 1, 1.12 of `--eien-leading-prose`) and **Page width** (Narrow,
+As set, Wide: × 0.84, 1, 1.18 of `--eien-measure`). No design token: two local
+multipliers on `<html>`, `--look-lead` and `--look-width`, set by
+`ui/settings/look-properties.ts` and taken off at As set, as `--runhead-ground`
+is. The editor's lines (every view), Compare's and Settings' Type sample take
+the first; the sheet's width (Narrow also narrows a sheet that fills its pane)
+and the empty page's the second.
+
 ## Chapter numbers
 
 A book numbers its chapters in the note list and the breadcrumb: roman
