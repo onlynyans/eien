@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
-import { open, putBytesOutside, putOutside, titles } from './outside';
+import { listOutside, open, putBytesOutside, putOutside, titles } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'reduce' });
 
@@ -50,3 +50,46 @@ for (const colorScheme of ['light', 'dark'] as const) {
     });
   });
 }
+
+test('a book’s place is kept as the phone goes to the background, and back after a restart', async ({
+  page,
+}) => {
+  await page.clock.install();
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click(); // the list's back: the sidebar
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  // The chapters either side at its foot, at a finger's size.
+  const next = page.getByRole('button', { name: 'Next chapter: Chapter II' });
+  expect((await next.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+  const scroller = page.locator('.page__leaf--epub .page__scroll');
+  const inSight = () =>
+    scroller.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const at = document.caretRangeFromPoint(box.left + box.width / 2, box.top + 4);
+      return at?.startContainer.parentElement?.closest('p')?.textContent?.slice(0, 60) ?? '';
+    });
+  // The clock stops: the place is never kept at a rest, only on the way out.
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 100);
+  await scroller.evaluate((element) => {
+    element.scrollTop = 1500;
+  });
+  const kept = await inSight();
+  expect(kept).not.toBe('');
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+    Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect.poll(() => listOutside(page, 'Eien/Vault/.eien/reading')).toHaveLength(1);
+  await page.clock.resume();
+  await open(page);
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect.poll(inSight).toBe(kept);
+});

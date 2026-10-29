@@ -361,6 +361,13 @@
   --eien-epub-plate-gap: var(--eien-space-5); /* above and below a picture */
   --eien-epub-caption-ink: var(--eien-pencil); /* a picture's caption */
   --eien-epub-first-line-track: calc(var(--eien-track-label) / 2); /* the first line's capitals */
+  --eien-epub-indent: var(--eien-space-6); /* a paragraph's indent, scrolled as a book (Phase 2) */
+}
+/* A step less on a narrow page (a phone's). */
+@container page (width < 520px) {
+  [data-face] {
+    --eien-epub-indent: var(--eien-space-5);
+  }
 }
 
 /* ── Frame: the page as a sheet on the blotter, or the whole pane ───────

@@ -38,9 +38,10 @@ interface Common {
   /**
    * In the quick look (#49, ui/quick-look): one value for every page (`window`), or a page's own
    * (`page`): the notes' under this key, and from #40 Phase 1 the shelf's under `epub.<key>`,
-   * from this same entry.
+   * from this same entry. A book's alone (`shelf`, #40 Phase 2) shows only in the shelf's quick
+   * look, never in Settings, which sets notes.
    */
-  readonly quick?: 'window' | 'page';
+  readonly quick?: 'window' | 'page' | 'shelf';
 }
 
 export interface ChoiceSetting extends Common {
@@ -298,6 +299,18 @@ export const SETTINGS = [
     choices: { sheet: 'Sheet', full: 'Full' },
     default: 'sheet',
     quick: 'page',
+  },
+  {
+    key: 'epub.scroll',
+    label: 'Scroll style',
+    description:
+      'A scrolling book’s paragraphs: spaced as a note’s are, or indented with no space between, as a book sets them.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { note: 'As a note', book: 'As a book' },
+    default: 'note',
+    quick: 'shelf',
   },
   {
     key: 'editor.focus',

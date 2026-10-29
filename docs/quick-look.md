@@ -198,3 +198,13 @@ Each face keeps its own tuning; the writer's step goes over it.
   notes': the shelf's look is set in the quick look alone.
 - Still not built: the page the look doesn't change sitting back while the
   popover is open with a note and a book side by side (backlog).
+
+## A book's own settings (#40, Phase 2, built)
+
+A book has a setting with no note's to copy: the **scroll style** (*As a
+note*, *As a book*), `epub.scroll` in the schema, marked `quick: 'shelf'`.
+`quickIn(platform, phone, kind)` offers it only for the shelf's subject
+(`LookSubject.kind`, `'epub'`), after the page settings in the schema's
+order; `settingsIn` leaves it out of Settings, which sets notes. The
+shelf's store keeps it under its own name (it isn't a page look's key), and
+the book's leaf wears it as `data-scroll`.

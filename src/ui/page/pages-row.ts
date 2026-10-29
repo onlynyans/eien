@@ -103,8 +103,11 @@ export class PagesRow {
     // page beside keeps its scroll and the keyboard.
     if (want.length === have.length && differ.length === 1 && only !== undefined)
       have[only]?.replaceWith(want[only] as Element);
-    else if (differ.length > 0 || want.length !== have.length)
+    else if (differ.length > 0 || want.length !== have.length) {
       this.element.replaceChildren(...want);
+      // Taken out and put back, each page's scroll is at its top again: each puts back its own.
+      for (const page of pages) page.placed?.();
+    }
     this.#shown = pages;
     this.#active = active;
     this.#spec = right ? spec : null;

@@ -62,6 +62,12 @@ export interface PaneLeaf extends PageLeaf {
   focus(typing?: boolean): void;
   /** A key on the pane outside the words and any field (a note's #, its tags). */
   key(event: KeyboardEvent): void;
+  /**
+   * Put back in the pane after it was taken out (the pages swapped, a mode
+   * laid out afresh): its scroll began again at the top. An EPUB's shows its
+   * place again; a note's editor keeps its own.
+   */
+  placed?(): void;
   /** The page closed: all it holds let go, its parts out of the window. */
   dispose(): void;
 }

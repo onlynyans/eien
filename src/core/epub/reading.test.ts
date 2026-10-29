@@ -9,35 +9,56 @@ describe('the reading state’s file', () => {
   it('reads the chapter last open; nothing from no file, or one that isn’t an object', () => {
     expect(parseReading('{ "version": 1, "chapter": "OEBPS/chapter-2.xhtml" }')).toEqual({
       chapter: 'OEBPS/chapter-2.xhtml',
+      offset: 0,
     });
     for (const text of [null, '', 'not json', '[1]', '{"chapter": 3}', '{"chapter": ""}']) {
-      expect(parseReading(text), String(text)).toEqual({ chapter: null });
+      expect(parseReading(text), String(text)).toEqual({ chapter: null, offset: 0 });
     }
-    expect(parseReading('﻿{"chapter": "a"}')).toEqual({ chapter: 'a' });
+    expect(parseReading('﻿{"chapter": "a"}')).toEqual({ chapter: 'a', offset: 0 });
+  });
+
+  it('reads the place in the chapter only beside the chapter it names', () => {
+    const file = (place: unknown) => JSON.stringify({ version: 1, chapter: 'b', place });
+    expect(parseReading(file({ chapter: 'b', offset: 1234 }))).toEqual({
+      chapter: 'b',
+      offset: 1234,
+    });
+    // An Eien from before places changed the chapter and kept the old place.
+    expect(parseReading(file({ chapter: 'a', offset: 1234 })).offset).toBe(0);
+    for (const offset of [-3, 1.5, '12', null, Number.MAX_SAFE_INTEGER + 2]) {
+      expect(parseReading(file({ chapter: 'b', offset })).offset, String(offset)).toBe(0);
+    }
+    for (const place of [null, 7, 'b', [1], {}]) {
+      expect(parseReading(file(place)).offset, JSON.stringify(place)).toBe(0);
+    }
   });
 
   it('writes version 1 and keeps every field it doesn’t know', () => {
     const text = withReading(
-      '{ "version": 1, "chapter": "a", "bookmarks": [1, 2], "place": { "at": 3 } }',
-      { chapter: 'b' },
+      '{ "version": 1, "chapter": "a", "bookmarks": [1, 2], "place": { "chapter": "a", "offset": 3 } }',
+      { chapter: 'b', offset: 40 },
     ) as string;
     expect(JSON.parse(text)).toEqual({
       version: 1,
       chapter: 'b',
       bookmarks: [1, 2],
-      place: { at: 3 },
+      place: { chapter: 'b', offset: 40 },
     });
     expect(text.endsWith('}\n')).toBe(true);
-    expect(JSON.parse(withReading('not json', { chapter: 'c' }) as string)).toEqual({
+    expect(JSON.parse(withReading('not json', { chapter: 'c', offset: 0 }) as string)).toEqual({
       version: 1,
       chapter: 'c',
+      place: { chapter: 'c', offset: 0 },
     });
-    expect(parseReading(withReading(null, { chapter: 'd' }))).toEqual({ chapter: 'd' });
+    expect(parseReading(withReading(null, { chapter: 'd', offset: 9 }))).toEqual({
+      chapter: 'd',
+      offset: 9,
+    });
   });
 
   it('never writes over a file a newer Eien wrote, and still reads what it can', () => {
     const newer = '{ "version": 2, "chapter": "a", "place": "somewhere new" }';
-    expect(withReading(newer, { chapter: 'b' })).toBeNull();
-    expect(parseReading(newer)).toEqual({ chapter: 'a' });
+    expect(withReading(newer, { chapter: 'b', offset: 0 })).toBeNull();
+    expect(parseReading(newer)).toEqual({ chapter: 'a', offset: 0 });
   });
 });

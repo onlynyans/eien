@@ -35,6 +35,10 @@ window's counters, `trail` (its last seal), the zoom and news, `said`. Where
 the split gives each page its own foot, `figures` and `trail` go there. This
 is the seam for **an EPUB's own colophon items**.
 
+A page taken out of the pane and put back (the pages swapped, a mode laid
+out afresh) begins its scroll again at the top; the row tells it so,
+`placed()` (optional), and an EPUB's shows its place again (#40, Phase 2).
+
 `PageView` implements it, its colophon items `page/note-foot.ts`'s
 `NoteFoot`; `PagePane` and `PagesRow` take `PaneLeaf`.
 

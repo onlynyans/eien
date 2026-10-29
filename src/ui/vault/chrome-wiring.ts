@@ -157,8 +157,13 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
 
   /** Whose look each kind of page wears: the notes', and the shelf's, apart (#40). */
   const subjects: Record<PageKind, LookSubject> = {
-    note: { crumb: 'Notes', every: 'every note', store: settings },
-    epub: { crumb: 'Shelf', every: 'every book on the shelf', store: epubStore(settings) },
+    note: { kind: 'note', crumb: 'Notes', every: 'every note', store: settings },
+    epub: {
+      kind: 'epub',
+      crumb: 'Shelf',
+      every: 'every book on the shelf',
+      store: epubStore(settings),
+    },
   };
   /** The side whose look is open: choosing the other page closes it. */
   let lookSide: Side | null = null;

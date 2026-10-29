@@ -6,8 +6,8 @@
 /* A book's chapter on its sheet (#40): the book's stylesheet. What the
    cleaner keeps is drawn in the writer's own faces and the theme's colours,
    never the publisher's; the parts it names (data-part) are drawn from the
-   book's tokens (tokens.css, "A book's parts"). Paragraphs as a note's in
-   Reading, for now: the scroll style (Phase 2) adds the book's way. */
+   book's tokens (tokens.css, "A book's parts"). Paragraphs as the scroll
+   style sets them (Phase 2): as a note's in Reading, or as a book's. */
 
 .epub-chapter {
   font-family: var(--eien-face-text);
@@ -103,4 +103,16 @@
   font-family: var(--eien-face-source);
   font-size: 0.85em;
   white-space: pre-wrap;
+}
+
+/* The scroll style As a book (Phase 2), worn on the book's leaf alone:
+   paragraphs with no gap between, a paragraph indented only after another, as
+   a book sets them (the first after a heading, a break or a picture stands
+   flush), never a centred one or a picture's. As a note, they keep the gap a
+   note's have in Reading. */
+[data-scroll="book"] .epub-chapter p {
+  margin: 0;
+}
+[data-scroll="book"] .epub-chapter p + p:not([data-part]):not([data-align]) {
+  text-indent: var(--eien-epub-indent);
 }
