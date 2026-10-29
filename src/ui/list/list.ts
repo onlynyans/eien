@@ -67,18 +67,21 @@ const groupHead = (group: Subfolder) =>
     h('h3', { class: 'label note-group__name', text: group.name, attrs: { title: group.name } }),
   );
 
-/** ↑ ↓ Home End between a short list's rows, over the groups' heads (a long one's are its own). */
-function moveBetweenRows(event: KeyboardEvent): void {
+/**
+ * ↑ ↓ Home End between a short list's rows (`selector`), over the groups' heads
+ * (a long one's are its own); a book's contents (./contents-list.ts) too.
+ */
+export const moveBetween = (selector: string) => (event: KeyboardEvent) => {
   const step = { ArrowUp: -1, ArrowDown: 1, Home: -Infinity, End: Infinity }[event.key];
   if (step === undefined || event.altKey || event.metaKey || event.ctrlKey || event.shiftKey)
     return;
   const list = event.currentTarget as HTMLElement;
-  const rows = [...list.querySelectorAll<HTMLElement>('.note-row')];
+  const rows = [...list.querySelectorAll<HTMLElement>(selector)];
   const from = rows.indexOf(document.activeElement as HTMLElement);
   if (from < 0) return;
   event.preventDefault();
   rows[Math.min(Math.max(from + step, 0), rows.length - 1)]?.focus();
-}
+};
 
 /** Each list pane's long list (../shell/windowed-rows.ts), kept from draw to draw. */
 const windows = new WeakMap<HTMLElement, WindowedRows>();
@@ -108,7 +111,7 @@ export function focusList(container: HTMLElement): void {
   left.delete(container);
   const windowed = windows.get(container);
   if (path !== undefined && windowed?.element.isConnected && windowed.focusKey(path)) return;
-  const rows = [...container.querySelectorAll<HTMLElement>('.note-row')];
+  const rows = [...container.querySelectorAll<HTMLElement>('.note-row, .contents-row')];
   const target =
     rows.find((row) => row.dataset.path === path) ??
     rows.find((row) => row.getAttribute('aria-current') === 'true') ??
@@ -265,7 +268,7 @@ export function renderList(
       : list.notes.length > 0
         ? h(
             'ul',
-            { class: rowsClass, on: { keydown: moveBetweenRows } },
+            { class: rowsClass, on: { keydown: moveBetween('.note-row') } },
             ...items.map((item) => ('head' in item ? groupHead(item.head) : row(item.note))),
           )
         : empty,

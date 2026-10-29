@@ -7,6 +7,7 @@ import type { RowActions } from '../list/row-events';
 import type { SearchField } from '../list/search-field';
 import { filterFor, listKey, rememberFilter } from '../list/sorts';
 import type { PaneLayout } from '../shell/panes';
+import type { ShelfActions } from '../sidebar/shelf-rows';
 import { Sidebar } from '../sidebar/sidebar';
 import { type MenuContext, showFolderMenu, showTagMenu } from './menus';
 import type { Navigation } from './navigation';
@@ -23,6 +24,8 @@ export interface VaultSidebarOf {
   readonly search: SearchField;
   /** What a note's row does, in the tree as in the list. */
   readonly rows: RowActions;
+  /** What a book's row on SHELF does, and a contents row under it (#40). */
+  readonly shelf: ShelfActions;
   readonly nav: Navigation;
   readonly organizer: Organizer;
   readonly order: ReturnType<typeof orderActions>;
@@ -45,6 +48,7 @@ export function vaultSidebar(of: VaultSidebarOf): Sidebar {
     of.name,
     {
       ...of.rows,
+      ...of.shelf,
       select: (next) => {
         of.phone().stack.show('list'); // on a phone, the notes chosen
         if (!of.panes().two) return of.choose(next);

@@ -211,6 +211,21 @@ is. The editor's lines (every view), Compare's and Settings' Type sample take
 the first; the sheet's width (Narrow also narrows a sheet that fills its pane)
 and the empty page's the second.
 
+## An EPUB's parts
+
+An EPUB's chapter (#40) is drawn from cleaned nodes, its parts named by the
+cleaner (`data-part`): chapter title, scene break, epigraph, plate, caption,
+first line. One stylesheet, `ui/epub/epub.css`, draws them from tokens of
+their own, each made from a note's, so a book's look is tuned without
+touching notes: `--eien-epub-title-size` (the list's heading size),
+`--eien-epub-title-gap` (a note's title gap), `--eien-epub-paragraph-gap`,
+`--eien-epub-break-gap` (a scene break's), `--eien-epub-epigraph-indent`
+(space-6), `--eien-epub-plate-gap` (space-5), `--eien-epub-caption-ink`
+(pencil) and `--eien-epub-first-line-track` (half the label's tracking: the
+first line in capitals at 80%, as the bundled faces have no small capitals).
+The book is set in the writer's own faces, never the publisher's; its
+colours are the theme's, so it reads by Night.
+
 ## Chapter numbers
 
 A book numbers its chapters in the note list and the breadcrumb: roman

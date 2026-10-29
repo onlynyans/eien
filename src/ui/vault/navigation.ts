@@ -13,6 +13,11 @@ export class Navigation {
   query = '';
   /** Rows shown open, by openId (../sidebar/tree.ts). */
   readonly open = new Set<string>();
+  /**
+   * The EPUB whose contents the list shows in place of notes (#40): the book
+   * last opened from SHELF, until a row under LIBRARY, FOLDERS or TAGS is chosen.
+   */
+  contents: string | null = null;
 
   get selection(): Selection {
     return this.#selection;
@@ -21,6 +26,7 @@ export class Navigation {
   /** Choose a row: the folders down to a chosen folder open, and any search ends. */
   choose(next: Selection): void {
     this.#selection = next;
+    this.contents = null;
     this.query = '';
     if (next.kind === 'folder') this.openTo(next.path);
   }
@@ -60,6 +66,7 @@ export class Navigation {
     if (this.#selection.kind === 'folder') {
       this.#selection = { kind: 'folder', path: moved(this.#selection.path) };
     }
+    if (this.contents) this.contents = moved(this.contents);
     followSorts(from, to);
   }
 
@@ -75,5 +82,6 @@ export class Navigation {
     if (chosen.kind === 'folder' && isInside(chosen.path, path)) {
       this.#selection = { kind: 'all' };
     }
+    if (this.contents && isInside(this.contents, path)) this.contents = null;
   }
 }

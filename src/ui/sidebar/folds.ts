@@ -3,9 +3,9 @@
 // storage, as the panes' widths are.
 
 /** The sections that fold: a search's results don't. */
-export type SectionId = 'library' | 'folders' | 'tags';
+export type SectionId = 'library' | 'folders' | 'shelf' | 'tags';
 
-const SECTIONS: readonly SectionId[] = ['library', 'folders', 'tags'];
+const SECTIONS: readonly SectionId[] = ['library', 'folders', 'shelf', 'tags'];
 const KEY = 'eien.folds';
 
 /** The folded sections as stored; anything it doesn't know folds nothing. */

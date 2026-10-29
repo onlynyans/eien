@@ -1,5 +1,5 @@
 // For the window's tests only (nothing the app ships imports it): a second kind of page (./page-side.ts), standing
-// in for the EPUB's until it's built (backlog #40), so the tests show the
+// in for the EPUB's (backlog #40) with no zip to read, so the tests show the
 // split, its pager, swap, ⇄ and the rooms carrying a page whatever it holds.
 // It holds `*.stand` files: its name is the file's, its colophon figure says
 // which leaf it's at, and its place is that leaf. Its kind's upkeep is told

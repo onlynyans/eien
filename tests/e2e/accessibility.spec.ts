@@ -3,9 +3,11 @@
 // panes, and Settings open, the pointer over each pane in turn. No serious or
 // critical violation, colour contrast included.
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { seriousViolations, violationsUnder } from './axe';
-import { chooseSetting, expect, test } from './launch';
+import { chooseSetting, expect, ROOT, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -14,6 +16,8 @@ test.use({
     'Other.md': 'More words.\n',
     'Drafts/Chapter.md': 'A chapter.\n',
     'Table.md': 'Before.\n\n| Who | When |\n|---|--:|\n| Mara | 30 |\n| Levi | 41 |\n\nAfter.\n',
+    // A book on the shelf (#40): SHELF is in every check of the sidebar.
+    'Novels/Pride and Prejudice.epub': readFileSync(join(ROOT, 'tests/fixtures/epub/plain.epub')),
   },
 });
 
@@ -61,6 +65,22 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         const settings = page.getByRole('dialog', { name: 'Settings' });
         await expect(settings).toBeVisible();
         expect(await violationsUnder(page, ['dialog[open]']), 'Settings').toEqual([]);
+      });
+
+      test('a book open, its contents in the list, has no serious violation (#40)', async ({
+        page,
+      }) => {
+        await page
+          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+          .click();
+        await page.locator('.contents-row').nth(2).click();
+        await expect(page.locator('.epub-chapter img')).toBeVisible();
+        expect(await violationsUnder(page, ['.sidebar', '.list', '.page']), 'three panes').toEqual(
+          [],
+        );
+        await page.locator('[data-command="panes"]').click();
+        await expect(page.locator('.tree-row--chapter')).toHaveCount(3);
+        expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);
       });
 
       test('the quick look open has no serious violation (#49)', async ({ page }) => {

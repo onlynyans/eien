@@ -54,6 +54,8 @@ export interface OrganizeContext {
    * that worked, or null when the note isn't open.
    */
   amendOpen?(path: string, change: (text: string) => string): Promise<boolean | null>;
+  /** `from` was moved to `to`: the pages showing what was there (an EPUB's, #40) follow it. */
+  moved?(from: string, to: string): void;
 }
 
 const PROBLEMS: Record<Exclude<Renamed, { ok: true }>['problem'], string> = {
@@ -245,6 +247,7 @@ export class Organizer {
       return this.#refuse(`“${nameOf(from)}” couldn’t be moved: ${why[result.reason]}`);
     }
     for (const session of open) session.movedTo(to + session.path.slice(from.length));
+    this.#ctx.moved?.(from, to);
     await this.#files.followPaths((paths) => movedPins(paths, from, to));
     const [left, came] = [baseName(from), baseName(to)];
     if (parentOf(from) === parentOf(to)) {

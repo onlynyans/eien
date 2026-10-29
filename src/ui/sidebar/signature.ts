@@ -12,11 +12,12 @@ import type { NoteList } from '../vault/vault-state';
 const listShown = (list: NoteList | null) =>
   list && [list.kind, list.sort ?? '', list.folder ?? '', list.total];
 
-/** The folder tree as drawn: names, counts and, with two panes, whether each has notes. */
+/** The folder tree as drawn: names, counts, with two panes whether each has notes, and its books (SHELF's). */
 const treeShown = (node: FolderNode): unknown => [
   node.path,
   node.noteCount,
   node.notes.length,
+  node.epubs,
   node.folders.map(treeShown),
 ];
 
@@ -33,6 +34,9 @@ export function sidebarSignature(model: {
   readonly books: ReadonlySet<string>;
   readonly notice: string | null;
   readonly filter?: unknown;
+  /** SHELF's marks: the book on the page, and the contents under it (#40). */
+  readonly shelf?: unknown;
+  readonly elsewhere?: boolean;
 }): string {
   return JSON.stringify([
     treeShown(model.tree),
@@ -48,5 +52,7 @@ export function sidebarSignature(model: {
     [...model.books].sort(),
     model.notice,
     model.filter ?? null,
+    model.shelf ?? null,
+    model.elsewhere ?? false,
   ]);
 }

@@ -22,3 +22,28 @@ describe('the phone’s ⋯', () => {
     expect(run).toHaveBeenCalledWith('look');
   });
 });
+
+describe('the ⋯ with a book in front (#40)', () => {
+  it('keeps a note’s own choices there, disabled; Find and Settings stay', () => {
+    const items = moreItems(
+      { values: DEFAULT_SETTINGS, sprinting: false, exportTo: () => {}, kind: 'epub' },
+      () => {},
+    ).filter((item) => item !== 'separator');
+    const disabled = (label: string) =>
+      items.find((item) => item.label === label)?.disabled ?? false;
+    for (const label of [
+      'Seal',
+      'Compare',
+      'Versions',
+      'Outline cards',
+      'Copy as HTML',
+      'Export…',
+      'Focus mode',
+      'Look',
+    ]) {
+      expect(disabled(label), label).toBe(true);
+    }
+    expect(disabled('Find')).toBe(false);
+    expect(disabled('Settings')).toBe(false);
+  });
+});

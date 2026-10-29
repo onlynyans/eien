@@ -336,9 +336,16 @@ Three panes, each collapsible, with a two-pane option in settings:
    - **Folders**, nested; a book marked BOOK beside its count; a quiet + at
      the label's right (on hover or keyboard focus; always on a phone) makes
      a folder, named in place
+   - **Shelf** (#40), between Folders and Tags, once the vault holds a book
+     (an `.epub` file, in any folder): a lens over the one folder tree. Every
+     book, named by its file as a note is, under the folders on the way to
+     it at their depth; a folder there is a label, and only a book is a
+     control. A book is never in a folder's note list, count or search. A
+     click opens it on the page; with two panes, its contents are listed
+     under its row
    - **Tags**, nested by `/`; the + beside its label makes a tag, named in
      place (see §2, Tags)
-   - Library, Folders and Tags fold and open from their labels (a click, Enter
+   - Library, Folders, Shelf and Tags fold and open from their labels (a click, Enter
      or Space), each remembered on this device (§2). An open folder or tag has
      a hairline guide down its children.
    - At the foot: the vault's count, then three icons: day or night (a sun
@@ -360,8 +367,19 @@ Three panes, each collapsible, with a two-pane option in settings:
    list holds. Its head holds the quiet + (New note, ⌘N) and the lens's filter
    and sort: like every quiet control, they show while the head is hovered or
    one has the keyboard, the same rule as the + beside FOLDERS and TAGS.
-   Hidden in two-pane mode, where the tree lists the notes itself.
-3. **Page** — the editor, on a paper sheet. A small header shows the note's
+   Hidden in two-pane mode, where the tree lists the notes itself. A book
+   opened from the shelf (#40) puts its contents here in place of notes: its
+   title and author, then its chapters in the book's order, the one on the
+   page marked as an open note's row is (↑ ↓ Home End between them, Enter or
+   a click to open one), until a row under Library, Folders or Tags is
+   chosen. The search field then searches the vault.
+3. **Page** — the editor, on a paper sheet; or a book (#40): one chapter of
+   it on the note's own sheet, drawn from cleaned nodes in the writer's
+   faces and the theme's colours, its pictures from the book's own zip, the
+   book's folders above it and "3 of 61" in the colophon. A book that won't
+   open says why on the sheet (locked with DRM, too large, damaged). The
+   chapter last open is kept in `.eien/reading/<key>.json` and opens again
+   next time; the book's file is only read. A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
    and zoom, at a fixed height (`--status-h`, 40px). Each part of the page
    has its own row (bar, formatting bar, scroll, status), so a part hidden
@@ -968,6 +986,7 @@ src/ui/
   settings/     ✓ Settings over the window: categories and tabs, drawn from the schema; the Themes tabs; the look they set on <html>
   phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
   extension/    ✓ the extension's pages: the story page, the popup, the content script and each site's markup (§14)
+  epub/         ✓ an EPUB's page (#40): a chapter drawn with its pictures, its kind of page, the reading state's store, the book's stylesheet
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture

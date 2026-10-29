@@ -66,7 +66,12 @@ export function phoneView(of: PhoneViewOf): PhoneView {
         'Export',
       );
     const { values } = of.settings;
-    const state = { values, sprinting: of.parts().counters.sprinting, exportTo };
+    const state = {
+      values,
+      sprinting: of.parts().counters.sprinting,
+      exportTo,
+      kind: of.pages.active.kind,
+    };
     openMenu(moreItems(state, run), { opener }, 'More');
   };
   const stack = new PhoneStack({

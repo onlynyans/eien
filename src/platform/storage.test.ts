@@ -145,6 +145,18 @@ for (const [name, make] of Object.entries(implementations)) {
       await expect(subject.storage.readBytes('../outside.png')).rejects.toThrow(VaultPathError);
     });
 
+    it('lists an EPUB as one, a hidden one not at all, and reads its bytes (#40)', async () => {
+      await subject.putOutside('Novels/Persuasion.EPUB', 'PK-bytes');
+      await subject.putOutside('Novels/.hidden.epub', 'PK-bytes');
+      const listed = await subject.storage.list();
+      expect(listed.find((entry) => entry.path === 'Novels/Persuasion.EPUB')).toMatchObject({
+        kind: 'epub',
+      });
+      expect(listed.some((entry) => entry.path === 'Novels/.hidden.epub')).toBe(false);
+      const bytes = await subject.storage.readBytes('Novels/Persuasion.EPUB');
+      expect(bytes && new TextDecoder().decode(bytes)).toBe('PK-bytes');
+    });
+
     it('writes a new file’s bytes exactly, making its folders, only where nothing is', async () => {
       const { storage } = subject;
       const bytes = Uint8Array.from({ length: 256 }, (_, i) => i);

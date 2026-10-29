@@ -1,0 +1,52 @@
+// A book on the phone (#40): SHELF in the sidebar, the book a page of the
+// phone's stack, its contents the list behind its back bar.
+
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { devices, expect, type Page, test } from '@playwright/test';
+import { seriousViolations } from '../e2e/axe';
+import { open, putBytesOutside, putOutside, titles } from './outside';
+
+test.use({ ...devices['Pixel 7'], reducedMotion: 'reduce' });
+
+const FIXTURE = join(import.meta.dirname, '../fixtures/epub/plain.epub');
+const back = (page: Page) => page.locator('.phone-bar__back');
+const chapter = (page: Page) => page.locator('.epub-chapter');
+
+for (const colorScheme of ['light', 'dark'] as const) {
+  test.describe(colorScheme, () => {
+    test.use({ colorScheme });
+
+    test('a book opens from the shelf, its contents behind its back bar, with no serious violation', async ({
+      page,
+    }) => {
+      await open(page);
+      await putOutside(page, 'Eien/Vault/Notes.md', 'Notes on the book.\n');
+      await putBytesOutside(
+        page,
+        'Eien/Vault/Novels/Pride and Prejudice.epub',
+        readFileSync(FIXTURE).toString('base64'),
+      );
+      await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
+      await back(page).click(); // the list's back: the sidebar
+      const book = page.locator('.tree-row--epub .tree-row__name', {
+        hasText: 'Pride and Prejudice',
+      });
+      await expect(book).toBeVisible({ timeout: 10_000 });
+      expect(await seriousViolations(page), 'the shelf').toEqual([]);
+      await book.click();
+      await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+      await expect(chapter(page)).toBeInViewport();
+      expect(await seriousViolations(page), 'the book').toEqual([]);
+      await back(page).click();
+      const rows = page.locator('.contents-row');
+      await expect(rows).toHaveText(['Chapter I', 'Chapter II', 'Chapter III']);
+      expect(await seriousViolations(page), 'its contents').toEqual([]);
+      await rows.nth(2).click();
+      await expect(chapter(page)).toContainText('Not all that Mrs. Bennet');
+      // The chapter chosen brings the page back into sight.
+      await expect(chapter(page)).toBeInViewport();
+      await expect(chapter(page).locator('img')).toHaveAttribute('src', /^blob:/u);
+    });
+  });
+}

@@ -276,6 +276,11 @@ export class VaultState {
     return this.#entries.some((entry) => entry.path === path);
   }
 
+  /** The size listed for the file at `path`, or null for none (an EPUB too large to read, #40). */
+  sizeOf(path: string): number | null {
+    return this.#entries.find((entry) => entry.path === path)?.size ?? null;
+  }
+
   /**
    * The notes `selection` lists, sorted by `sort` (else its own), through
    * `filter` if one is laid over it; a book's numbered in `numerals`, by the

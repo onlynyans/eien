@@ -145,17 +145,35 @@ Copy as HTML, Focus mode, the companion's ⋯ and every `format.*`.
 Quote into the note (Phase 2) is an EPUB command whose target is the other
 page when it holds a note: `pages.other` and `isNote`.
 
-## For Phase 1 and after
+## Phase 1: the EPUB's kind (built, 1b)
 
-- The Electron menu's items greyed by kind, from `on`; the phone's ⋯
-  (`phone/more-menu.ts`) is a note's commands alone.
+`ui/epub/epub-kind.ts` is the second kind, passed to `Pages` as
+`kinds: [epubs.kind]` by `vault/epub-wiring.ts`; nothing in `pages.ts`
+changed. Its upkeep:
+
+- `flush` waits for the place last kept (the reading state's file);
+- `diskChanged` reads a book again when its file changed and is still there;
+- `followMoves` follows a book this window moved, a folder above it
+  included: the organizer tells the kind `moved(from, to)` (a new, optional
+  `OrganizeContext.moved`), and the next `followMoves` applies it. Nothing
+  holds a book still while it moves: a page with nothing to type into needs
+  no `freeze`;
+- `sync` lets a page go whose book is no longer in the vault;
+- `stop` forgets the moves told.
+
+`isEpub(side)` tells an EPUB's page from the tests' stand-in, which shares the
+name 'epub'. The phone's ⋯ disables a note's own choices with a book in
+front (`MoreState.kind`).
+
+## Still to come
+
+- The Electron menu's items greyed by kind, from `on`: `on` lives in
+  `ui/chrome/commands.ts`, which `app/` can't import, so it needs a table in
+  core and a validated channel (backlog). The window ignores a note's
+  commands with a book in front meanwhile.
 - The companion's ⋯ for an EPUB (Phase 2), and the words 'This note', 'More
-  for this note' and 'No note' for a page that holds one.
-- An EPUB's page moved or renamed, and its file changed on disk: the EPUB's
-  kind implements `followMoves` and `diskChanged` (and `flush`, its
-  reading place; `stop`), and nothing in `pages.ts` changes. Whether a book
-  is held still while it moves (a note's `freeze`, its editor locked) is
-  Phase 1's to decide; a page with nothing to type into may need none.
+  for this note', 'No note' and the phone's "other note" for a page that
+  holds a book.
 - Outline cards, Copy as HTML, the exports and the book's count act on a
   note's page; with an EPUB in front they do nothing.
 

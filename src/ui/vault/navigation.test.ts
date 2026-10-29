@@ -79,3 +79,17 @@ describe('Navigation', () => {
     expect(nav.open.has('/all')).toBe(false);
   });
 });
+
+describe('the book whose contents the list shows (#40)', () => {
+  it('is let go when a row is chosen, follows a folder moved, and goes with one trashed', () => {
+    const nav = new Navigation();
+    nav.contents = 'Novels/Emma.epub';
+    nav.follow('Novels', 'Books/Novels');
+    expect(nav.contents).toBe('Books/Novels/Emma.epub');
+    nav.unselect('Books');
+    expect(nav.contents).toBeNull();
+    nav.contents = 'Emma.epub';
+    nav.choose({ kind: 'all' });
+    expect(nav.contents).toBeNull();
+  });
+});
