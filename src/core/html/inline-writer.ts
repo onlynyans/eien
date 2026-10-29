@@ -30,6 +30,12 @@ function shownLines(html: string): string {
   return lines.join('<br />\n');
 }
 
+/** Whether `node` is in a table's cell. */
+function inCell(node: SyntaxNode): boolean {
+  for (let up = node.parent; up; up = up.parent) if (up.name === 'TableCell') return true;
+  return false;
+}
+
 /** How a book's writer differs from the copy's (spec §8). */
 export interface BookFlavor {
   /** The address a book gives the image the note names `address`; null when it carries none. */
@@ -158,7 +164,9 @@ export class InlineWriter {
         return this.entity(this.slice(node.from, node.to));
       case 'InlineCode': {
         const marks = node.getChildren('CodeMark');
-        const inner = this.slice(marks[0]?.to ?? node.from, marks[1]?.from ?? node.to);
+        const written = this.slice(marks[0]?.to ?? node.from, marks[1]?.from ?? node.to);
+        // GFM takes the backslash off a table cell's "\|" before it reads the cell, code and all.
+        const inner = inCell(node) ? written.replace(/\\\|/gu, '|') : written;
         if (!inner.trim()) return inner ? ' ' : ''; // code of nothing but space is a space
         this.#before = inner.slice(-1);
         return `<code>${escapeHtml(inner)}</code>`;
