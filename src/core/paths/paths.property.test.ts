@@ -6,6 +6,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   baseName,
+  extensionOf,
   freeName,
   freeNoteName,
   joinPath,
@@ -17,7 +18,6 @@ import {
   parentOf,
   renamedPath,
   safeName,
-  titleOf,
   utf8Length,
 } from './index';
 
@@ -91,6 +91,9 @@ const existing = (extension: string) => typed.map((t) => safeName(t) + extension
 
 const keysOf = (names: readonly string[]) => names.map(nameKey);
 
+/** A note, a book (#40), or a folder, by the extension its name ends in. */
+const FILE_KINDS = fc.constantFrom('.md', '.epub', '');
+
 describe('freeName and freeNoteName', () => {
   const suffix = fc.constantFrom(
     '',
@@ -129,20 +132,20 @@ describe('freeName and freeNoteName', () => {
 
 describe('renamedPath', () => {
   const folder = fc.constantFrom('', 'Fic', 'Fic/A Mended Scarf');
-  const renaming = fc.boolean().chain((isNote) =>
+  /** What's renamed: a note, a book (#40), or a folder (no extension). */
+  const renaming = FILE_KINDS.chain((extension) =>
     fc
-      .tuple(
-        folder,
-        existing(isNote ? '.md' : ''),
-        typed,
-        fc.array(existing(isNote ? '.md' : ''), { maxLength: 6 }),
-      )
+      .tuple(folder, existing(extension), typed, fc.array(existing(extension), { maxLength: 6 }))
       .chain(([at, name, title, others]) =>
         // Some siblings have the very name typed, in another case.
         fc
-          .subarray([`${safeName(title)}.md`, safeName(title), safeName(title).toUpperCase()])
+          .subarray([
+            `${safeName(title)}${extension || '.md'}`,
+            safeName(title),
+            safeName(title).toUpperCase(),
+          ])
           .map((typedNames) => ({
-            isNote,
+            extension,
             path: joinPath(at, name),
             title,
             siblings: [name, ...others, ...typedNames],
@@ -152,8 +155,8 @@ describe('renamedPath', () => {
 
   it('never gives a path whose name another sibling has; a valid name, in the same folder', () => {
     fc.assert(
-      fc.property(renaming, ({ isNote, path, title, siblings }) => {
-        const result = renamedPath(path, title, siblings, isNote);
+      fc.property(renaming, ({ extension, path, title, siblings }) => {
+        const result = renamedPath(path, title, siblings, extension !== '');
         const own = nameKey(baseName(path));
         const others = keysOf(siblings).filter((key) => key !== own);
         if (!result.ok) {
@@ -164,38 +167,36 @@ describe('renamedPath', () => {
         expect(others).not.toContain(nameKey(name));
         expect(nameProblems(name)).toEqual([]);
         expect(parentOf(result.path)).toBe(parentOf(path));
-        if (isNote)
-          expect(name.slice(titleOf(name).length)).toBe(
-            baseName(path).slice(titleOf(baseName(path)).length),
-          );
+        // A file keeps its extension as it was: a note's .md, a book's .epub.
+        if (extension) expect(extensionOf(name)).toBe(extensionOf(baseName(path)));
       }),
     );
   });
 });
 
 describe('movedPath', () => {
-  it('lands in the folder under a name nothing there has; a note keeps its extension', () => {
+  it('lands in the folder under a name nothing there has; a file keeps its extension', () => {
     fc.assert(
       fc.property(
-        fc.boolean().chain((isNote) =>
+        FILE_KINDS.chain((extension) =>
           fc
-            .tuple(existing(isNote ? '.md' : ''), fc.constantFrom('', 'Fic', 'Fic/Drafts'))
+            .tuple(existing(extension), fc.constantFrom('', 'Fic', 'Fic/Drafts'))
             .chain(([name, into]) =>
-              takenBy(isNote ? titleOf(name) : name, isNote ? '.md' : '').map((taken) => ({
-                isNote,
+              takenBy(name.slice(0, name.length - extension.length), extension).map((taken) => ({
+                extension,
                 path: joinPath('Old', name),
                 into,
                 taken,
               })),
             ),
         ),
-        ({ isNote, path, into, taken }) => {
-          const moved = movedPath(path, into, taken, isNote);
+        ({ extension, path, into, taken }) => {
+          const moved = movedPath(path, into, taken, extension !== '');
           const name = baseName(moved);
           expect(parentOf(moved)).toBe(into);
           expect(keysOf(taken)).not.toContain(nameKey(name));
           expect(nameProblems(name)).toEqual([]);
-          if (isNote) expect(name.toLowerCase().endsWith('.md')).toBe(true);
+          if (extension) expect(name.toLowerCase().endsWith(extension)).toBe(true);
         },
       ),
     );

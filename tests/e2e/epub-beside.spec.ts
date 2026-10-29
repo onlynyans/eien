@@ -1,6 +1,7 @@
-// A book beside a note (#40, Phase 2c): the split takes a book on one page
-// as it takes a note, in each of its modes, with nothing made for books: its
-// head, ⇄, the pager folded and the facing edge. And Quote: words chosen in
+// A book beside a note (#40, Phase 2c): opened beside from its row on SHELF
+// (⌘-click, its menu's Open to the Side), the split takes a book on one page
+// as it takes a note, in each of its modes, with nothing made for books: ⇄
+// and the pager folded. And Quote: words chosen in
 // the book go into the note beside as a Markdown quote with the book's title
 // and chapter under them, one ⌘Z in the note taking them out.
 
@@ -17,12 +18,14 @@ const book = (page: Page) => page.locator('.page__leaf--epub');
 const chapter = (page: Page) => book(page).locator('.epub-chapter');
 const note = (page: Page) => page.locator('.page__leaf:not(.page__leaf--epub) .cm-content');
 
-/** A note on one page and the book on the other: the second note's page taken by the book. */
+const shelfBook = (page: Page) =>
+  page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
+
+/** A note on one page, and the book opened beside it from its row on SHELF (⌘-click, as a note's). */
 async function beside(page: Page): Promise<void> {
   await page.locator('.note-row', { hasText: 'At the Assembly' }).click();
-  await page.locator('.note-row', { hasText: 'Scratch' }).click({ modifiers: ['ControlOrMeta'] });
+  await shelfBook(page).click({ modifiers: ['ControlOrMeta'] });
   await expect(leaves(page)).toHaveCount(2);
-  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
   await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
   await expect(note(page)).toContainText('She hears it from two chairs away.');
 }
@@ -44,7 +47,6 @@ test.use({
   vaultFiles: {
     'Novels/Pride and Prejudice.epub': BOOK,
     [NOTE]: 'She hears it from two chairs away.\n',
-    'Scratch.md': 'Scratch.\n',
   },
 });
 test.beforeEach(({ page }) => page.setViewportSize({ width: 1600, height: 900 }));
@@ -77,6 +79,15 @@ for (const mode of ['sheets', 'facing', 'companion', 'follow'] as const) {
     });
   });
 }
+
+test('a book’s row menu opens it to the side of the note', async ({ page }) => {
+  await page.locator('.note-row', { hasText: 'At the Assembly' }).click();
+  await shelfBook(page).click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Open to the Side' }).click();
+  await expect(leaves(page)).toHaveCount(2);
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await expect(note(page)).toContainText('She hears it from two chairs away.');
+});
 
 test('folded, the pager names the book and the note, and turns to either', async ({ page }) => {
   await beside(page);

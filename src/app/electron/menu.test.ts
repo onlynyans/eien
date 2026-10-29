@@ -8,6 +8,9 @@ vi.mock('electron', () => ({
 const { buildMenu } = await import('./menu');
 
 type Item = {
+  id?: string;
+  visible?: boolean;
+  type?: string;
   label?: string;
   accelerator?: string;
   role?: string;
@@ -64,5 +67,24 @@ describe('the View menu (#49)', () => {
     const keys = (items: Item[]): string[] =>
       items.flatMap((item) => [item.accelerator ?? '', ...keys(item.submenu ?? [])]);
     expect(keys(menu).filter((key) => key === 'CmdOrCtrl+Shift+L')).toHaveLength(1);
+  });
+});
+
+describe('each command’s item (#40: greyed by it)', () => {
+  it('is named by the command it sends, a toggle by its setting’s', () => {
+    const sent: string[] = [];
+    const all = (items: Item[]): Item[] =>
+      items.flatMap((item) => [item, ...all(item.submenu ?? [])]);
+    const items = all(buildMenu((command) => sent.push(command)) as unknown as Item[]);
+    const commands = items.filter((item) => item.click && item.visible !== false);
+    expect(commands.length).toBeGreaterThan(40);
+    for (const item of commands) {
+      item.click?.({ checked: false }, undefined);
+      expect(item.id).toBe(sent.at(-1));
+    }
+    // Each id once: ⌘+'s hidden Zoom In has none of its own.
+    const ids = items.flatMap((item) => (item.id ? [item.id] : []));
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(items.find((item) => item.label === 'Focus Mode')?.id).toBe('toggle:editor.focus');
   });
 });

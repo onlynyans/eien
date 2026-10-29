@@ -13,6 +13,8 @@ export {
   type NumberSetting,
   offeredOn,
   type PageLookKey,
+  PHONE_DEFAULTS,
+  PHONE_PLATFORMS,
   SETTING_GROUPS,
   SETTINGS,
   type Setting,

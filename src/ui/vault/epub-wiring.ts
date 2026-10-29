@@ -6,7 +6,7 @@
 // its kind; the pages come in later.
 
 import { withQuote } from '../../core/epub';
-import { baseName } from '../../core/paths';
+import { baseName, isInside } from '../../core/paths';
 import { isNoteName } from '../../core/vault';
 import type { VaultBridge } from '../../platform/bridge';
 import { type EpubKind, epubKind } from '../epub/epub-kind';
@@ -40,7 +40,8 @@ export interface EpubWiringOf {
 
 export interface EpubWiring {
   readonly kind: EpubKind;
-  readonly actions: ShelfActions;
+  /** Choosing a book or a chapter; a book's menu and keys are a row's (./row-actions.ts). */
+  readonly actions: Pick<ShelfActions, 'openEpub' | 'chapter'>;
   /** Quote the words chosen on the active page, if it holds a book (the phone's ⋯). */
   quote(): void;
   /** What SHELF marks: the book on the active page, and with `two` panes the open book's contents. */
@@ -67,7 +68,7 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
     const now = pages.active;
     return isNote(now) && now.path === left.path ? now : null;
   };
-  const kind = epubKind({
+  const pagesKind = epubKind({
     vault: of.vault,
     reading: readingStore(of.vault, of.tell),
     sizeOf: (path) => of.state.sizeOf(path),
@@ -81,6 +82,15 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
         : { not: `${name} is being kept as it moves: quote it again in a moment.` };
     },
   });
+  const kind: EpubKind = {
+    ...pagesKind,
+    // A book moved or renamed (or a folder above it): its pages follow, and so do its contents in the list.
+    moved(from, to) {
+      pagesKind.moved(from, to);
+      const shown = of.nav.contents;
+      if (shown && isInside(shown, from)) of.nav.contents = to + shown.slice(from.length);
+    },
+  };
   /** The page showing the book at `path`, the active one first. */
   const sideOf = (path: string | null): EpubSide | null => {
     if (!path) return null;

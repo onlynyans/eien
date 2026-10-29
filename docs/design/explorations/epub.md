@@ -171,7 +171,8 @@ half left open.
   gives the page you aren't in. Nothing new is designed.
 
 The row menu, the menu bar, the line under the popover and the page sitting
-back are one small build after Phase 2. Page width stays off the phone (its
+back are built (2026-10-29; spec §4, Panes and Page, and §6, A quick look;
+docs/quick-look.md, "After Phase 1"; docs/page-kinds.md, Tools). Page width stays off the phone (its
 page is narrower than any face's measure), and the iOS simulator opening a
 book waits for a way to tap.
 
@@ -255,9 +256,9 @@ Each phase is its own session and pull request, from main.
   a book beside a note, proven in each of the split's modes, its pager, ⇄,
   the phone's slip and Wide screen's Two pages with nothing made for books,
   and Quote (the selection bar, Q, a phone's ⋯) into the note beside, or
-  the note a phone's one page came from, cited `— Title, Chapter`, one ⌘Z.
-  Opening a book beside from its SHELF row (⌘-click, ⌘Enter, Open to the
-  Side) comes with the row's menu (#120).
+  the note a phone's one page came from, cited `— Title, Chapter`, one ⌘Z;
+  a book opened beside from its SHELF row (⌘-click, ⌘Enter, its menu's Open
+  to the Side), as a note's row does.
 - **Phase 3, turning pages:**
   - paging on one line grid;
   - the leaf and its edges, and the spread when there's room;

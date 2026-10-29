@@ -66,7 +66,6 @@
    the sheet (above the keyboard when it's up), there while the caret is in a
    table; one row that scrolls sideways. */
 .table-bar {
-  grid-row: 4;
   display: none;
   overflow-x: auto;
   padding: 0 var(--eien-space-2);

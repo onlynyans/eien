@@ -6,6 +6,7 @@ import { CHANNEL } from '../../platform/bridge';
 import { serveContextMenu } from './context-menu';
 import { frameOptions, serveFrame } from './frame';
 import { serveImport } from './import-session';
+import { serveMenuGrey } from './menu-grey';
 import { isAppUrl, isExternalLink } from './navigation';
 import { serveOut } from './out-session';
 import { deviceSettings, serveSettings, zoomFactorOf } from './settings-session';
@@ -84,6 +85,7 @@ export async function createMainWindow(
   serveOut(window);
   serveContextMenu(window);
   serveFrame(window);
+  serveMenuGrey(window);
   window.once('ready-to-show', () => window.show());
   void window.loadURL(url);
   return window;
