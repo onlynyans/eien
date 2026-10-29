@@ -18,3 +18,12 @@ export const previewMode = Facet.define<PreviewMode, PreviewMode | null>({
 export const showMarks = Facet.define<boolean, boolean>({
   combine: (values) => values[0] ?? true,
 });
+
+/**
+ * Whether Live opens the caret's link where it stands, its marks shown
+ * whatever "Show Markdown marks" says (backlog #38: the In place way of
+ * showing a link, ./link-inline.ts).
+ */
+export const linkInPlace = Facet.define<boolean, boolean>({
+  combine: (values) => values.some(Boolean),
+});

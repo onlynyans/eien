@@ -661,6 +661,38 @@ in the book, each recorded here as it's built.
   look (decided 2026-10-29).
 - **The curl's light** is the one exception under Depth, for Phase 3.
 
+## A link in Live (decided 2026-10-29, #38; built)
+
+From `docs/design/explorations/links.md`: all three, as one setting of the
+editor's, **Link editing** (`editor.links`): the Card by default on the
+desktop, the Bar on a phone (`phoneDefault`). A plain click places the caret;
+⌘-click follows; the tools' Open is the plain way. A link stays as Live draws
+it: ink, a `--eien-rule-strong` underline, no colour of its own.
+
+- **Card** (`.link-card`): what floats, as a menu: raised paper, a
+  `--eien-rule-strong` hairline, `--eien-radius-m`, the float shadow; the
+  list's width (`--eien-list-w`), a phone's sheet less `--eien-space-4` each
+  side. Its body is the note row's anatomy, `--eien-space-3` round: the
+  folders in label type, the title (text face, 500), the first line in pencil
+  at preview size, the words as a count; a web link's site in the mono in ink
+  and the rest in pencil; a note not made yet, NO NOTE YET and its name in
+  italic. Its tools after a `--eien-rule-soft` rule: Open, Edit, Take off, and
+  "⌘-click opens" in label type. Edit turns it into two `.field`s, Words in
+  the text face and Goes to in the mono, ↩ keeps, Esc puts back, leaving
+  keeps. On `hover: none` the tools are 44px with their words.
+- **In place**: no surface. The caret's link opens its own marks
+  (`linkInPlace`), the address in `--eien-face-source`, Rename's 2px focus
+  mark under the part with the caret, ↗ a step short of a control after it
+  (its reach a finger's on a phone). A hover is said in the colophon.
+- **Bar** (`.link-bar`): the selection bar's surface exactly; the kind's icon
+  in pencil, where it goes (a note's title in the text face, an address in
+  the mono, cut at 26ch), a rule, Open, Edit, Take off. A hover gets a
+  tooltip in the window's own look. On `hover: none` it docks over the
+  colophon on the band, a rule above, no shadow, 44px, as the table's bar.
+- **Every way:** ⌥↩ opens, ⌘K edits, ⌥F10 to the tools (one tab stop, the
+  arrows along them), Esc back; they step aside while you type; a screen
+  reader hears where a link goes as the caret reaches it.
+
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 
 As shipped; see `docs/design/explorations/specimen.html`, As built.

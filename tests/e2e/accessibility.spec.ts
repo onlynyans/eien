@@ -220,6 +220,34 @@ for (const scheme of ['day', 'night'] as const) {
   });
 }
 
+// A link's tools (#38), each way Link editing shows them: the card and its fields, the bar and
+// its field, and In place's ↗.
+for (const scheme of ['day', 'night'] as const) {
+  for (const style of ['card', 'inline', 'bar'] as const) {
+    test.describe(`a link's tools, ${style}, by ${scheme}`, () => {
+      test.use({
+        deviceFile: { settings: { 'appearance.scheme': scheme, 'editor.links': style } },
+      });
+
+      test('shown and edited, have no serious violation', async ({ page }) => {
+        await ready(page);
+        await page.locator('.eien-link', { hasText: 'Other' }).click();
+        const tools = {
+          card: page.getByRole('group', { name: 'Link to Other' }),
+          inline: page.getByRole('button', { name: 'Open Other' }),
+          bar: page.getByRole('toolbar', { name: 'Link to Other' }),
+        }[style];
+        await expect(tools).toBeVisible();
+        expect(await seriousViolations(page), 'shown').toEqual([]);
+        if (style === 'inline') return;
+        await page.keyboard.press('ControlOrMeta+k');
+        await expect(page.getByRole('textbox', { name: /^Goes to/ })).toBeVisible();
+        expect(await seriousViolations(page), 'edited').toEqual([]);
+      });
+    });
+  }
+}
+
 // Shut sidebar's other choice, Band's and Slip's: a strip of desk, with its shoulder on macOS.
 for (const layout of ['band', 'slip'] as const) {
   for (const scheme of ['day', 'night'] as const) {

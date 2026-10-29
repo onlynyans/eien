@@ -4,7 +4,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { Compartment, EditorSelection, EditorState } from '@codemirror/state';
 import { describe, expect, it } from 'vitest';
-import { livePreview, type PreviewMode, previewMode, showMarks } from './live-preview';
+import { linkInPlace, livePreview, type PreviewMode, previewMode, showMarks } from './live-preview';
 import { eienMarkdown } from './syntax';
 
 interface Shown {
@@ -182,6 +182,40 @@ describe('Live with its marks hidden', () => {
     expect(count(state)).toBeGreaterThan(0);
     const back = state.update({ effects: marks.reconfigure([]) }).state;
     expect(count(back)).toBe(0);
+  });
+});
+
+describe('a link opened in place (#38)', () => {
+  /** What's hidden with "Show Markdown marks" off and In place on, the caret at `caret`. */
+  const hiddenWith = (doc: string, caret: number, mode: PreviewMode = 'live') => {
+    const state = EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(caret),
+      extensions: [
+        eienMarkdown(),
+        previewMode.of(mode),
+        showMarks.of(false),
+        linkInPlace.of(true),
+        livePreview,
+      ],
+    });
+    const found: string[] = [];
+    state.field(livePreview).between(0, doc.length, (from, to, deco) => {
+      if (!(deco.spec as { class?: string }).class) found.push(doc.slice(from, to));
+    });
+    return found;
+  };
+  const doc = 'A **bold** [the **gate**](x.md) and [[Note|iii]] word';
+
+  it('shows the caret’s link’s marks, and no others on the line', () => {
+    expect(hiddenWith(doc, doc.indexOf('the'))).toEqual(['**', '**', '[[', ']]']);
+    expect(hiddenWith(doc, doc.indexOf('iii'))).toEqual(['**', '**', '[', '](x.md)']);
+  });
+
+  it('opens nothing with the caret outside a link, or in Reading', () => {
+    const all = ['**', '**', '[', '](x.md)', '[[', ']]'];
+    expect(hiddenWith(doc, doc.indexOf('word'))).toEqual(all);
+    expect(hiddenWith(doc, doc.indexOf('the'), 'reading')).toEqual(all);
   });
 });
 

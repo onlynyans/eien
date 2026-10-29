@@ -9,5 +9,14 @@ export {
   literalRanges,
   splitFootnotes,
 } from './footnotes';
+export {
+  asAddress,
+  isAddress,
+  linkAddress,
+  linkWords,
+  webLink,
+  wikiLink,
+  wikiParts,
+} from './link-source';
 export { isLink, referenceLabels } from './links';
 export { eienParser, inRuns, type ReadMarkdown, readMarkdown } from './read';

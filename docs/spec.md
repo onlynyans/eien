@@ -655,7 +655,35 @@ sight but on the caret's line, and always in Reading.
 
 Links: ⌘-click (Ctrl-click on Windows and Linux) follows one. A web address
 opens in the browser; a `[[wiki link]]` opens the note with that title. In
-Reading a plain click follows.
+Reading a plain click follows; in Live and Source a plain click places the
+caret.
+
+A link's tools in Live (backlog #38): resting the pointer on a link, or the
+caret in one, shows where it goes and lets you edit it and open it. The
+**Link editing** setting (Writing → Editor) chooses how; any of the three on
+any device, the Card by default on the desktop and the Bar on a phone:
+
+- **Card:** a card under the link. A note link's reads as that note's row in
+  the list (its folders, title, first line and words); a web link's is its
+  address; a note not made yet says so. Its tools: Open, Edit (two fields,
+  the words and where it goes) and Take off.
+- **In place:** the link's Markdown opens where it stands, its marks shown
+  whatever Show Markdown marks says, the address in the Source font, ↗ after
+  it to open it. You edit it as text; where it goes is said in the colophon.
+- **Bar:** a small bar over the link's line, the selection bar's sibling:
+  where it goes (pressed, it's a field), Open, Edit, Take off. A hover shows
+  only a tooltip. On a phone it's docked above the keyboard.
+
+What's typed in "goes to" says the kind: an address (`https://…`, `www.…`,
+`example.org/…`) makes `[words](address)`, anything else a note's name,
+`[[note|words]]` (or `[[note]]` when the words are its name); a name the vault
+has as a note stays a note's. Each edit is one step ⌘Z takes back; an empty
+"goes to" keeps the old one; Take off keeps the words. The keys, the same in
+all three: ⌥↩ opens the caret's link, ⌘K edits it (with words selected
+outside a link it still makes one), ⌥F10 takes the keyboard to its tools,
+Esc puts them away and brings the keyboard back. They step aside while you
+type in a link and come back when the caret moves. A screen reader hears
+where a link goes as the caret reaches it.
 
 ### Markdown supported
 
@@ -1091,7 +1119,10 @@ does nothing.
   font, the weight of the sidebar's names and the list's titles, the Running head's
   ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar,
   whether Live shows the Markdown marks, whether the front matter's tags and id are
-  hidden, spellcheck (macOS), and on the phone how a wide screen is used (§10). A
+  hidden, how a link shows its tools (Link editing, §4), spellcheck (macOS), and on
+  the phone how a wide screen is used (§10). A
+  setting's default may be a phone's own (`phoneDefault` in the schema: Link editing's
+  Bar); there, any choice is written, as the desktop's default isn't the phone's. A
   setting may be one system's alone (`platforms` in the schema): the screen shows it
   only there. A setting that needs panes side by side (`wide` in the schema: Panes,
   Shut sidebar, Arranging, the formatting bar, Page width) shows only while the window has them,
