@@ -15,6 +15,7 @@ export {
   isSyncConflictName,
   kindOf,
   MAX_IMAGE_BYTES,
+  MAX_NOTE_BYTES,
   syncConflictOf,
   type VaultEntry,
 } from './entries';

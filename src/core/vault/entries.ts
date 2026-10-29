@@ -29,6 +29,9 @@ const IMAGE_TYPES: Readonly<Record<string, string>> = {
   svg: 'image/svg+xml',
 };
 
+/** Notes larger than this are listed but not read: a stray 100 MB file mustn't stall the app. An EPUB's chapter is held to it too. */
+export const MAX_NOTE_BYTES = 8 * 1024 * 1024;
+
 /** The most bytes an image may be: one a note shows, an export carries or an import brings. */
 export const MAX_IMAGE_BYTES = 32 * 1024 * 1024;
 

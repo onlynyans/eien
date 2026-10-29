@@ -70,8 +70,18 @@ export const AS: Readonly<Record<string, string>> = {
   acronym: 'abbr',
 };
 
-/** Dropped with all they hold: controls and embedded things, which words never are. */
+/**
+ * Dropped with all they hold: controls and embedded things, which words never
+ * are. The parser drops script and style as it reads; they're here too for a
+ * page whose names it saw with a prefix (an EPUB's `<html:script>`).
+ */
 export const DROPPED: ReadonlySet<string> = new Set([
+  'script',
+  'style',
+  'noscript',
+  'template',
+  'head',
+  'title',
   'button',
   'input',
   'select',
@@ -116,10 +126,17 @@ export const ALIGNED: ReadonlySet<string> = new Set([
 
 /**
  * The parts of a chapter an EPUB's stylesheet styles by name (#40), read off
- * the page by the caller's rules. A chapter's first line isn't one: it's a
- * matter of where a paragraph stands, not of what an element is.
+ * the page by the caller's rules; a first line by where a paragraph stands
+ * (core/epub/first-line.ts), after it's cleaned.
  */
-export const PARTS = ['chapter-title', 'scene-break', 'epigraph', 'plate', 'caption'] as const;
+export const PARTS = [
+  'chapter-title',
+  'scene-break',
+  'epigraph',
+  'plate',
+  'caption',
+  'first-line',
+] as const;
 export type Part = (typeof PARTS)[number];
 
 const PART_NAMES: ReadonlySet<string> = new Set(PARTS);

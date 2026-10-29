@@ -6,11 +6,10 @@
 import { type IndexedNote, readNote } from '../../core/note';
 import { baseName, titleOf } from '../../core/paths';
 import { matchesAll, queryTerms, type SearchResult, searchText, snippet } from '../../core/search';
-import type { VaultEntry } from '../../core/vault';
+import { MAX_NOTE_BYTES, type VaultEntry } from '../../core/vault';
 import type { Storage } from '../storage';
 
-/** Notes larger than this are listed but not read: a stray 100 MB file mustn't stall the app. */
-export const MAX_NOTE_BYTES = 8 * 1024 * 1024;
+export { MAX_NOTE_BYTES } from '../../core/vault';
 
 /** How many notes are read at once. */
 const READS_AT_ONCE = 16;

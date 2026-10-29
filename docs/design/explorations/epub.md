@@ -184,7 +184,11 @@ Each phase is its own session and pull request, from main.
   (`appearance.leading`), Page width (`page.width`), the Look command
   (⇧⌘L) and its popover, for notes, with `on: 'note'` until a shelf store
   exists. Its shelf half switches on in Phase 1.
-- **Phase 1, the shelf and opening a book safely** (next):
+- **Phase 1, the shelf and opening a book safely,** in three pull
+  requests: **1a, built** (2026-10-28): `core/epub` (the zip reader, its caps
+  and paths, the package and contents, DRM refused, a chapter cleaned with
+  its parts named, the reading state's file), `platform/inflate.ts`, and the
+  fixture books; 1b, SHELF, the index and the page; 1c, the book's look.
   - the zip reader (the browser's decompression, in the window, on desktop
     and phone alike);
   - the container, its spine and contents;

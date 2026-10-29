@@ -935,9 +935,11 @@ src/core/            (✓ = built)
   export/       ✓ a note as a chapter (headings, footnotes); EPUB, Word and the PDF's page; a store-only zip
   import/       ✓ which files of a folder from elsewhere come in, under what names, and why the rest don't
   extension/    ✓ the browser extension (Eien Reader): its story, its sites, its messages, where you stopped, its rules for cleaning a site's HTML (§14)
+  epub/         ✓ an EPUB read safely: its zip (capped, no path out), its package and contents, a chapter cleaned with its parts named, the reading state's file (#40)
 src/platform/
   bridge.ts     ✓ what the window may ask of the system (window.eien)
   storage.ts    ✓ the Storage interface: read, write, list, watch
+  inflate.ts    ✓ raw deflate inflated by the system's DecompressionStream (an EPUB's zip)
   electron/     ✓ Storage over Node fs: durable writes, the watcher, crash recovery
   memory/       ✓ Storage in memory, for tests
   index/        ✓ the vault's index over any Storage: previews, words, tags, search
@@ -999,6 +1001,18 @@ src/app/
   writes is text, through the version check.
 - Pasted HTML (phase 8) goes through a sanitizer; scripts, event handlers and
   remote content never run.
+- An EPUB (#40) is read, never written, and read as hostile: its zip by Eien's
+  own reader (`core/epub`), its directory checked whole before anything is
+  inflated (no name that isn't a clean path inside it, none twice, every size
+  within the caps: the file 32 MB, a text entry 8 MB, a picture 32 MB, 256 MB
+  in all, 100 times its stored size past 64 KB), and each entry stopped at its
+  declared size as it inflates (its stored bytes fed to the system's
+  inflater 4 KB at a time, so a lying header can't make more than a step
+  past it), its CRC checked. A book locked with DRM is
+  refused, and Eien says so. Its chapters are cleaned by the extension's
+  cleaner under the book's rules (pictures only from its own zip, links keep
+  their words) and drawn element by element; nothing in a book runs or
+  reaches the network.
 
 ### Stack
 
@@ -1697,6 +1711,14 @@ Every rule, with the cases most likely to break it:
   its prefixes declared, and every word of the note is in each; the zip read
   back by a strict reader and by `unzip`.
 - **Import:** names kept, numbered or refused; sizes, kinds and limits.
+- **EPUB (#40):** the zip reader (stored and deflated entries, data
+  descriptors, the CRC, every cap, a header that lies), names and addresses
+  that would leave the zip, the package, nav, NCX and page-list, DRM refused,
+  the cleaning rules (pictures, links, Calibre's SVG plates, the named parts),
+  the reading state's file; over any bytes, a book or a reason and never past
+  a cap; and the fixture books (`tests/fixtures/epub/`, made by
+  `scripts/epub-fixtures.mjs` from Pride and Prejudice and Hugh Thomson's
+  1894 illustrations), held to the bytes their script makes.
 - **Versions:** naming, sorting, retention at day and month boundaries, time
   zones, names with forbidden characters.
 - **Settings and themes:** every invalid value falls back; unknown tokens and
