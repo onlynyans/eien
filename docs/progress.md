@@ -134,5 +134,4 @@ the owner's. Signing isn't set up (see the handbook).
 - Visual QA by eye of everything stage 3 built, across the three layouts and
   both phones. The tests check structure, keyboard, files, accessibility and
   speed, not taste.
-- Smaller debt: `vault-view.ts` could lose its sidebar actions to a module;
-  the design's `tokens.css` mirrors the app's by hand.
+- Smaller debt: `vault-view.ts` could lose its sidebar actions to a module.

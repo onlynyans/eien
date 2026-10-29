@@ -10,7 +10,11 @@ raw value.
 **Changed on 2026-10-20, by the owner:** controls are icons, not words; not
 everything is square; the machine voice's face is a setting; row names'
 weight is a setting. Each is marked below, and in `docs/backlog.md` (#24–#27).
-Where this file and the mockup disagree, this file wins.
+Where this file and the mockup disagree, this file wins: the mockups in
+`docs/design/` are a 2026-10-20 snapshot, kept for their reasoning and never
+copied from. How something looks is this file first, then each exploration's
+Decided section (`docs/design/explorations/*.md`), then the code (AGENTS.md →
+Rules).
 
 **Brought up to date on 2026-10-21, after stage 3:** the Tokens section below
 lists every token family as `src/ui/theme/tokens.css` and the layouts define
@@ -150,7 +154,7 @@ moves the writer didn't ask to move. None with reduced motion.
 ## Tokens
 
 Every value comes from a token. The source is `src/ui/theme/tokens.css`
-(`docs/design/tokens.css` mirrors it for the mockups). A **theme** overrides
+(`docs/design/tokens.css` is the mockups' snapshot, frozen at stage 3). A **theme** overrides
 the colour tokens alone, each `light-dark(day, night)`
 (`THEME_TOKENS` and `safeTokens` in `src/core/themes/tokens.ts`): a theme
 can't touch sizes, faces, corners or space. A **setting** overrides a few
@@ -181,7 +185,7 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | C's strip | `--runhead-ground` | one of the theme's surfaces, the desk by default | setting: Running head ground |
 | Motion | `--eien-quick` 120ms, `--eien-calm` 220ms, `--eien-ease` | cubic-bezier(0.2, 0.7, 0.2, 1) | – |
 
-A new token goes in `tokens.css` (and its mirror), named for its role in the
+A new token goes in `src/ui/theme/tokens.css` alone, named for its role in the
 desk-and-paper world, never for a value (`--eien-pencil`, not `--grey-500`);
 if a theme should change it, it joins `THEME_TOKENS`.
 

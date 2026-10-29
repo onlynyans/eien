@@ -39,6 +39,11 @@ Each feature has one word, in code, files, CSS and docs:
 - **Settings** are added only in `src/core/config/schema.ts` (a book's look
   derives its own from them, never copied: `config/epub-look.ts`). **Theme tokens**
   only in `src/ui/theme/tokens.css`, documented in `docs/design/README.md`.
+- **How something looks** is decided by `.interface-design/system.md` first,
+  then each exploration's Decided section (`docs/design/explorations/*.md`),
+  then the code (`src/ui/theme/tokens.css` for tokens). The mockups at the top
+  of `docs/design/`, with their `tokens.css`, are a 2026-10-20 snapshot, kept
+  for their reasoning and never copied from.
 - **Verify, don't assume.** Every behavior change comes with a test that would
   fail without it. Check library APIs and versions against the installed
   package, not memory.
@@ -379,7 +384,7 @@ The phone.
 ### Elsewhere
 
 - `tsconfig.{core,web,node,mobile,e2e}.json`: one per environment: core can use neither DOM nor Node, the window can't use Node, the phone's code has the DOM and no Node
-- `docs/design/`: the approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on. `.interface-design/system.md` sums it up for the interface-design skill
+- `docs/design/`: the design's reasons and every token documented (`README.md`), and the explorations with their Decided sections; its top-level mockups and their `tokens.css` are the 2026-10-20 snapshot (Rules → How something looks). `.interface-design/system.md` is the design as it stands, for the interface-design skill too
 - `docs/backlog.md`: what comes after the phases: fixes, tweaks and features, each marked for the design pass or not, and the owner's open questions
 
 ## Tests
