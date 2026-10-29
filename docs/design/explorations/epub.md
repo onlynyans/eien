@@ -83,6 +83,30 @@ section where it and the directions below disagree.
 - **Books are only under SHELF,** never in a folder's note list.
 - **Reading state** (place, bookmarks, highlights) in `.eien/reading/`,
   keyed by the book's contents.
+- **Each section shows what its folders hold** (decided 2026-10-29). SHELF
+  already lists only the folders with a book somewhere in them; FOLDERS
+  lists every folder but those whose contents, at any depth, are books and
+  nothing else. FOLDERS is for writing, SHELF for reading.
+  - **Judged on the whole subtree:** a folder stays in FOLDERS while any
+    folder under it holds a note, so notes are never cut off. A folder
+    holding notes and books is in both, as before.
+  - **An empty folder is in FOLDERS:** that's where folders are made, and
+    a new one never vanishes.
+  - **What a book is, said once:** the index's book kinds (`.epub` today),
+    so a format added later joins both sections with no other change.
+  - **SHELF's folders become folder rows:** they fold and open with the
+    tree's twisty and keys, kept per device as FOLDERS' are (open at
+    first), and carry the folder's own menu (rename, move, trash), the same
+    one FOLDERS opens. Move to… still lists every folder.
+  - **When a folder changes sides** (its last note leaves, or its first
+    arrives), the keyboard stays near where it was, a chosen folder stays
+    chosen in the list until another is chosen, and a drop still lands:
+    the tree's path for a row that goes, tested for each.
+  - **Speed:** the tree already counts each folder's notes at every depth;
+    it counts its books the same way, in the same pass.
+  - **Not chosen:** a per-folder "shelf" switch (more state to keep in
+    step, and a folder can hold both), and dimming books-only folders in
+    FOLDERS (the clutter stays).
 
 ### Paged
 
