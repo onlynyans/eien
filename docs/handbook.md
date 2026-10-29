@@ -212,13 +212,15 @@ off (AGENTS → Tests).
 
 ## 7. The interface system
 
-- **Design source:** `docs/design/` (tokens, mockups, the specimen), and
-  `.interface-design/system.md`, which sums it up. Decisions after the
-  mockups are in `docs/design/explorations/*.md` and the backlog's Decided
-  section.
-- **Tokens:** `src/ui/theme/tokens.css` is the source in the app;
-  `docs/design/tokens.css` mirrors it for the mockups (with the mockups' own
-  font names).
+- **Design source:** `.interface-design/system.md` first, then each
+  exploration's Decided section (`docs/design/explorations/*.md`) and the
+  backlog's, then the code. `docs/design/README.md` documents the tokens and
+  the design's reasons; its mockups (the specimen, desktop, phone) are the
+  2026-10-20 snapshot, kept for their reasoning and never copied from
+  (AGENTS → Rules).
+- **Tokens:** `src/ui/theme/tokens.css` is the source;
+  `docs/design/tokens.css` is the snapshot's, frozen (last changed at stage 3,
+  #54) and never brought up to date.
 - **Icons:** Eien's own, inline SVG on a 16-unit grid (`src/ui/icons.ts`),
   stroked in `currentColor`; no icon font, nothing fetched.
 - **Corners:** set by the layout (A 2/4/8, B 4/8/14, C 3/6/10); paper stays
@@ -327,8 +329,7 @@ See [backlog.md](backlog.md) for the full list. At this handover:
   #22 smaller downloads (left by choice); renaming a tag that notes carry
   (#29's last part, not designed: it would rewrite notes); dragging tags
   (they move by ⌥↑ ⌥↓).
-- **Debt:** `sidebar.ts` is 330 lines, `menus.ts` 339. The design's
-  `tokens.css` mirrors the app's by hand.
+- **Debt:** `sidebar.ts` is 330 lines, `menus.ts` 339.
 - **Phones:** Android tests on a device are run by hand; the phone has no PDF
   export and no import.
 

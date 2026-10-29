@@ -10,7 +10,11 @@ raw value.
 **Changed on 2026-10-20, by the owner:** controls are icons, not words; not
 everything is square; the machine voice's face is a setting; row names'
 weight is a setting. Each is marked below, and in `docs/backlog.md` (#24–#27).
-Where this file and the mockup disagree, this file wins.
+Where this file and the mockup disagree, this file wins: the mockups in
+`docs/design/` are a 2026-10-20 snapshot, kept for their reasoning and never
+copied from. How something looks is this file first, then each exploration's
+Decided section (`docs/design/explorations/*.md`), then the code (AGENTS.md →
+Rules).
 
 **Brought up to date on 2026-10-21, after stage 3:** the Tokens section below
 lists every token family as `src/ui/theme/tokens.css` and the layouts define
@@ -150,7 +154,7 @@ moves the writer didn't ask to move. None with reduced motion.
 ## Tokens
 
 Every value comes from a token. The source is `src/ui/theme/tokens.css`
-(`docs/design/tokens.css` mirrors it for the mockups). A **theme** overrides
+(`docs/design/tokens.css` is the mockups' snapshot, frozen at stage 3). A **theme** overrides
 the colour tokens alone, each `light-dark(day, night)`
 (`THEME_TOKENS` and `safeTokens` in `src/core/themes/tokens.ts`): a theme
 can't touch sizes, faces, corners or space. A **setting** overrides a few
@@ -172,15 +176,16 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Weights | `--eien-weight-tree`, `--eien-weight-list`, `--eien-weight-list-chosen`; `--eien-track-label` 0.12em | 400, 400, 500 | settings: Row weights (chosen = list + 100, at most 700) |
 | Space | `--eien-space-1` … `-8` | 4, 8, 12, 16, 24, 32, 48, 72 | – |
 | Lengths | `--eien-row-h` 30px × text scale (26 compact), `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |
-| Page rhythm | `--eien-measure` and `--eien-leading-prose` (each face's own: 29–34em, 1.5–1.76, less `--eien-leading-tighten`), `--eien-leading-row` 1.35; `--eien-title-gap`, `-paragraph-gap`, `-scene-gap`; `--eien-sheet-pad-x`, `-sheet-pad-top`, `--eien-page-gutter`; `--eien-list-preview` | comfortable: 32, 16, 1.4em; 72, 48, 24; tighten 0; preview shown. Compact: 16, 8, 0.8em; 48, 24, 8; tighten 0.14; no preview | the faces; density |
-| Frame | `--eien-page-ground`, `--eien-sheet-lift` | Sheet: the blotter, the sheet's shadow. Full: paper, none, gutter 0 | setting: Page |
+| Page rhythm | `--eien-measure` and `--eien-leading-prose` (each face's own: 29–34em, 1.5–1.76, less `--eien-leading-tighten`), `--eien-leading-row` 1.35; `--eien-title-gap`, `-paragraph-gap`, `-scene-gap`; `--eien-sheet-pad-x`, `-sheet-pad-top`, `--eien-sheet-gutter` (the density's blotter round a sheet, which `--eien-page-gutter` takes with a sheet frame); `--eien-list-preview` | comfortable: 32, 16, 1.4em; 72, 48, 24; tighten 0; preview shown. Compact: 16, 8, 0.8em; 48, 24, 8; tighten 0.14; no preview | the faces; density |
+| Frame | `--eien-page-ground`, `--eien-page-gutter`, `--eien-sheet-lift` | Sheet: the blotter, the sheet's shadow, the density's gutter. Full: paper, none, gutter 0 | setting: Page; a book's leaf its own (`[data-frame]`) |
+| A book's parts | `--eien-epub-title-size`, `-title-gap`, `-paragraph-gap`, `-break-gap`, `-epigraph-indent`, `-plate-gap`, `-caption-ink`, `-first-line-track` | each from a note's: the heading size, the title, paragraph and scene gaps, space-6, space-5, pencil, half the label's tracking | – (declared on `:root, [data-face]`, so a book in its own face resolves them in it) |
 | Layout controls | `--controls-h`, `--controls-ground`; `--controls-w`, `--controls-left`, `--controls-right`; `--corner`, `--seal-x`, `--strip` | A: `--band` on the band; B: `--band` on the page ground; C: `--runhead-h` on `--runhead-ground`. `--controls-w` is how wide the window's own controls stand: from the overlay's width, not where its free area starts (a Mac's resize moves that), and measured once still, never mid-resize (#44); `data-controls-left` puts them at the left. Left is macOS's traffic lights, right Windows' and Linux's buttons, from the window controls overlay (0 where there are none: full screen, a phone). The corner's three: "A shut sidebar" below | layout; the window |
 | Page | `--eien-zoom` (0.5–2), `--eien-dimmed` 0.32 (focus mode's faded paragraphs), `--eien-sheet-edge` | | settings: Page zoom |
 | Split | `--split-gap`, `--leaf-x`, `--pager-gap` | the divider's track a hairline (Facing pages: the book's gutter, `--eien-space-6`); a facing leaf's side margin, clamp(space-4, 7%, space-7); half of space-1 between a folded split's pager names | the split's mode |
 | C's strip | `--runhead-ground` | one of the theme's surfaces, the desk by default | setting: Running head ground |
 | Motion | `--eien-quick` 120ms, `--eien-calm` 220ms, `--eien-ease` | cubic-bezier(0.2, 0.7, 0.2, 1) | – |
 
-A new token goes in `tokens.css` (and its mirror), named for its role in the
+A new token goes in `src/ui/theme/tokens.css` alone, named for its role in the
 desk-and-paper world, never for a value (`--eien-pencil`, not `--grey-500`);
 if a theme should change it, it joins `THEME_TOKENS`.
 
@@ -591,7 +596,7 @@ is always Panes.
   under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
 
-## A quick look (decided 2026-10-28, #49; the notes' half built, docs/quick-look.md)
+## A quick look (decided 2026-10-28, #49; built: notes' half #105, shelf's half #114; docs/quick-look.md)
 
 From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
 
@@ -611,11 +616,50 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
     foot.
   - A change shows at once. Esc, the key again or a click outside closes
     it. Each setting is one stop for Tab; arrows choose within it.
-- **Two pages:** while it's open, the page it doesn't change sits back: its
-  paper takes `--eien-band` (with #40 Phase 1: two notes wear the one look).
+- **Two pages:** while it's open with a note and a book side by side, the
+  page it doesn't change sits back, in the tone the split already gives the
+  page you aren't in (decided 2026-10-29; two notes wear the one look, so
+  only a book beside a note needs it).
+- **With a book in front,** one line at the popover's foot, in pencil:
+  "Settings sets notes; this is every book's look." All settings opens
+  Settings at Look, the notes' (decided 2026-10-29).
 - **Words and the sun:** an EPUB's look is the shelf's (SHELF, never
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
+
+## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114)
+
+From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
+Later phases add scrolling, paging and the turn, marks, highlights and Find
+in the book, each recorded here as it's built.
+
+- **SHELF** (`sidebar/shelf-rows.ts`): a sidebar section between FOLDERS and
+  TAGS, a lens over the one folder tree. A folder holding a book is a label
+  on the way to it, in pencil and always open; only a book's row is a
+  control, in ink-soft, and opens on the page. Books are never in a folder's
+  note list.
+- **A book's contents** (`list/contents-list.ts`): in the list pane while a
+  book is open, a chapter's row a note's row without its preview or date
+  (`.contents-row`), a part's chapters stepped in by `--eien-space-4` a
+  level, the chapter you're in marked as a chosen note is. With two panes,
+  under the book's row in SHELF, as an open folder's notes are; choosing
+  another row folds them away.
+- **The book's page** (`ui/epub/epub.css`): a chapter on the sheet, in the
+  writer's own faces and the theme's colours, never the publisher's. The
+  cleaner's named parts (`data-part`) are drawn from "A book's parts"
+  tokens: the chapter title centred at the heading size, weight 500; the
+  first line in capitals at 80%, tracked (the faces have no small
+  capitals); a scene break centred in pencil; an epigraph indented and
+  italic; a plate centred, never split, its caption smaller in pencil.
+  Paragraphs as a note's in Reading until the scroll style (Phase 2).
+- **The book's look is the shelf's:** its typeface, text size, line spacing,
+  width and frame, set in the quick look with a book in front, worn on its
+  leaf (`data-face`, `data-frame`, `--eien-text-scale`, `--look-lead`,
+  `--look-width`), never on `<html>`. Day or night stays the window's.
+- **In a split,** both pages lie in the window's frame (the notes' Page), so
+  the modes' marks read as one arrangement; the book keeps the rest of its
+  look (decided 2026-10-29).
+- **The curl's light** is the one exception under Depth, for Phase 3.
 
 ## A link in Live (decided 2026-10-29, #38; built)
 
