@@ -43,6 +43,8 @@ export class PageView implements PaneLeaf {
   readonly board: BoardHost;
   /** A phone's table tools, above the keyboard while the caret's in a table (../editor/table-bar.ts). */
   readonly tableBar: TableBar;
+  /** Over the colophon: the table's bar and a link's, docked above a phone's keyboard. */
+  readonly under: HTMLElement;
   /** The page's own part of the pane: the blotter round the sheet, scrolled, its head and foot round it. */
   readonly element: HTMLElement;
   /** The blotter round the sheet, which scrolls: where a note's place is kept. */
@@ -97,6 +99,7 @@ export class PageView implements PaneLeaf {
         this.tags.edited();
       },
       follow: events.follow,
+      ...(events.about ? { about: events.about } : {}),
       ...(events.images ? { images: events.images } : {}),
       moved: () => {
         this.tableBar.sync();
@@ -114,6 +117,8 @@ export class PageView implements PaneLeaf {
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(scroll));
     this.element.append(this.editor.find.element);
     this.#selection = new SelectionBar(layer, this.editor);
+    layer.append(this.editor.links.layer);
+    this.under = h('div', { class: 'page__under' }, this.tableBar.element, this.editor.links.dock);
     this.showNothing();
   }
 
@@ -124,12 +129,7 @@ export class PageView implements PaneLeaf {
     this.#selection.remove();
     this.foot.stop();
     this.editor.destroy();
-    for (const part of [this.element, this.aside, this.tableBar.element, this.runningCrumbs])
-      part.remove();
-  }
-
-  get under(): HTMLElement {
-    return this.tableBar.element;
+    for (const part of [this.element, this.aside, this.under, this.runningCrumbs]) part.remove();
   }
 
   get tipped(): readonly HTMLElement[] {
@@ -139,6 +139,9 @@ export class PageView implements PaneLeaf {
       this.tags.set.element,
       editor.tableTools,
       this.under,
+      // A link's card or bar floats in its own layer; In place's ↗ is in the editor's shadow root.
+      editor.links.layer,
+      editor.view.dom,
       this.#sheet.closer,
       editor.find.element,
     ];

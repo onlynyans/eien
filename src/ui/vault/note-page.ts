@@ -40,6 +40,10 @@ export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
         if (path) void parts.openNote(path);
       }
     },
+    about: (name) => {
+      const path = parts.state.findByTitle(name);
+      return path ? { ...parts.state.listed(path), crumbs: crumbsOf(path) } : null;
+    },
     images: (files, at) => {
       const session = parts.note().session;
       if (!session) return;

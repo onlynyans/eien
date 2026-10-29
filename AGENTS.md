@@ -72,7 +72,9 @@ Rules, pure TypeScript.
 - `config`: every setting, and its files
   - `faces.ts`: FACES, the one list the three face settings (Typeface, Interface font, Source font) choose from, each face with its machine sizes
   - `epub-look.ts`: a book's own look (#40), each setting a page wears again under `epub.<key>`
+  - a setting's default may be a phone's own (`phoneDefault`, `PHONE_DEFAULTS`: Link editing's Bar)
 - `markdown`: Eien's Markdown and a note's plain text, shared with the editor
+  - `link-source.ts`: a link written: an address or a note's name, `[words](address)` or `[[note|words]]` (#38)
 - `note`
   - `note-tags.ts`: its tags in two kinds, front matter's and the text's
   - `tag-id-lines.ts`: front matter's `tags:` and `id:` lines, which Hide tags and IDs keeps out of sight
@@ -239,6 +241,12 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `editor/editor-keys.ts`: the keys
   - `editor/editor-modes.ts`: the views' extensions by mode
   - `editor/links.ts`: a link followed
+  - A link's tools in Live (#38)
+    - `editor/link-core.ts`: the link at a place (its words, where it goes, its kind), an edit as one step of the history, taken off, followed; no window of its own
+    - `editor/link-tooltips.ts`: when they show (a hover, the caret; never while typing), the keys (⌥↩, ⌘K, ⌥F10, Esc), and the presenter Link editing chooses, swapped live: the one place a style's name is read
+    - `editor/link-presenter.ts`: what a presenter is, and what the three share; each only draws and forwards to the core
+    - `editor/link-card.ts`, `editor/link-inline.ts` (with `linkInPlace` in `editor/preview-mode.ts`, which Live's marks follow), `editor/link-bar.ts`: Card, In place, Bar
+    - `editor/link.css`: the card's and bar's look; In place's is beside it, in the editor's shadow root
   - `editor/typing.ts` decides typed quotes and pastes on the editor's state alone
   - `editor/live-tables.ts` draws a table in place, row by row, its cells as outer decorations, and the table editor edits it in Live
     - `editor/table-editor.ts` wires the table editor

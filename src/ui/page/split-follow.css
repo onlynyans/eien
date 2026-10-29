@@ -13,7 +13,7 @@
     minmax(0, 1fr);
 }
 .page__main[data-follow-side] > .page__pages,
-.page__main[data-follow-side] > .table-bar,
+.page__main[data-follow-side] > .page__under,
 .page__main[data-follow-side] > .page__phone {
   grid-column: 1 / -1;
 }

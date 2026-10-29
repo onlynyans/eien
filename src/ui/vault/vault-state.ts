@@ -423,6 +423,11 @@ export class VaultState {
     };
   }
 
+  /** The note at `path` as the list shows it (a [[link]]'s card). */
+  listed(path: string): ListedNote {
+    return this.#listed(path);
+  }
+
   #listed(path: string, ordinal?: string): ListedNote {
     const note = this.#notes.get(path);
     return {
