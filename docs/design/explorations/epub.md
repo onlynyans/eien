@@ -138,6 +138,31 @@ section where it and the directions below disagree.
 - **A book's own tools** (contents, Pages or Scroll, bookmark) are marked
   `on: 'epub'` and follow the same rule.
 
+### Links in a book (decided 2026-10-29)
+
+- **They look like links:** the words' own colour with a quiet underline in
+  `--eien-rule-strong` that darkens on hover, as the extension's story
+  page draws a link, the reading surface Eien already has. One rule, shared
+  by the story page and the book's page (both draw cleaned nodes), never a
+  second copy. A note's links in the editor keep their own look.
+- **No link card or bar in a book.** #121's card and bar are for writing
+  (where a link goes, Edit, Copy, Open), and its Link tooltip setting
+  doesn't apply here. On hover or focus, the window's own tooltip names
+  where a link goes:
+
+  | A link in a book | Hover or focus | Click or tap |
+  |---|---|---|
+  | To a chapter or a place in it | "Chapter III" (or "Chapter III · Notes") | goes there, with Back (Phase 2b) |
+  | A footnote's mark | "Note 4" | the note over the page (Phase 2b) |
+  | To the web or mail | the address, "gutenberg.org/ebooks/1342" | opens in the system's browser |
+
+- **Web and mail links open in the browser,** as a note's do in Reading:
+  only `http:`, `https:` and `mailto:`, through the same checked path a
+  note's links take; nothing loads inside Eien. Anything else (`javascript:`,
+  `data:`, files, out of the zip) stays words only, unstyled.
+- **A reading preview** (a chapter's first lines on hover) would be a
+  choice of its own, later.
+
 ### Paged
 
 - **One leaf with its stacked edges** (Pages 2); **two pages** (Pages 1's
