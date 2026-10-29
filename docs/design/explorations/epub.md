@@ -142,6 +142,39 @@ section where it and the directions below disagree.
   - **No real cost:** the page-list is read once with the book, and a
     chapter's page anchors are measured once as it's drawn.
 
+### After Phase 1 (2026-10-29)
+
+The owner's answers to what Phase 1 (#112, #113, #114) and #49's shelf
+half left open.
+
+- **A book over 32 MB is refused,** as built: the storage reads a file
+  whole, and 32 MB is its cap. Most novels are under 5 MB. Revisited if a
+  real book passes it, which means changing the Storage contract.
+- **With two panes, the book's contents live under its row,** and choosing
+  another row folds them away; a click on the book brings them back. The
+  tree shows one list under one row at a time, as it does for folders.
+- **In a split, both pages wear the notes' frame** (Page: a sheet on the
+  desk, or the whole pane), so Two sheets, Facing pages and Companion draw
+  one arrangement with their marks intact. The book keeps everything else
+  of its own look: typeface, size, line spacing and width. Alone, a book
+  wears its own frame.
+- **"All settings" stays in the shelf's quick look,** opening Settings at
+  Look, which sets the notes' look. One line under the popover says so:
+  "Settings sets notes; this is every book's look." A Shelf section in
+  Settings comes only if it's missed.
+- **A book's row on SHELF gets a menu:** rename, move and trash (the system
+  trash, as a note's).
+- **The menu bar greys a note's commands** while a book is in front (they
+  already do nothing there).
+- **The page the look doesn't change sits back** while the quick look is
+  open with a note and a book side by side, in the tone the split already
+  gives the page you aren't in. Nothing new is designed.
+
+The row menu, the menu bar, the line under the popover and the page sitting
+back are one small build after Phase 2. Page width stays off the phone (its
+page is narrower than any face's measure), and the iOS simulator opening a
+book waits for a way to tap.
+
 ### Tests
 
 - **Fixture books made by a script**, from public-domain text and pictures
