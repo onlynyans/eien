@@ -1,6 +1,8 @@
 // Generated HTML for the cleaner's property tests: a page's words and shapes,
 // with hostile pieces among them (scripts, handlers, frames, forms, odd
-// addresses) and the classes and epub:type a caller's rules may read.
+// addresses), the classes and epub:type a caller's rules may read, and the
+// places a link may name (ids, an old link's name, one that would name the
+// window's own elements).
 
 import fc from 'fast-check';
 
@@ -32,6 +34,14 @@ const piece = fc.constantFrom(
   '<a href="data:text/html;base64,AA">',
   '<a onclick="x()" href="#n1">',
   '<a href="chapter2.xhtml#n2" title="Two">',
+  '<a epub:type="noteref" href="#fn1" id="ref1">',
+  '<aside epub:type="footnote" id="fn1">',
+  '</aside>',
+  '<span id="page12"/>',
+  '<span id="settings">',
+  '<a name="old">',
+  '<p id="__proto__">',
+  '<div id="fn1" role="doc-endnote">',
   '</a>',
   '<img src="https://i.example/x.png" alt="art" onerror="x()">',
   '<img src="//i.example/x.png">',

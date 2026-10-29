@@ -96,6 +96,7 @@ Rules, pure TypeScript.
   - `entities.ts`: HTML 4's named references
   - `clean.ts`: a page's HTML kept to what words need, where links go and images come from by the caller's rules, for the extension now and an EPUB later
   - `clean-elements.ts`: the elements `clean.ts` keeps and the parts it names
+  - `anchors.ts`: the places a link may name, kept as empty markers before the page is tidied
 - `export`
   - `chapter.ts`: a note as a chapter, with its footnotes, which `markdown/footnotes.ts` finds (`markdown/fences.ts`: what's fenced code, line by line)
   - `epub.ts`
@@ -140,6 +141,7 @@ Rules, pure TypeScript.
   - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
   - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
+  - `book-link.ts`: a link to one of the book's chapters, as an address of the page's own and back
 
 ### `src/platform/`
 
@@ -322,7 +324,12 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
   - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again
   - `place-keeper.ts`: the place kept as the page scrolls, measured at rest and never out of sight, shown again when laid out anew
+  - `book-links.ts`: a book's own links caught on its page, a note's reference told apart, a place found by its marker
+  - `book-follow.ts`: where they take the reader: the note over the page, or the chapter and place, one step back
+  - `note-over.ts`: a book's note over its page, floated as a menu
+  - `book-words.ts`: a selection's words without the page's own (a copy, a quote)
   - `test-side.ts`: a book's page over a vault the DOM tests hold
+  - `test-lines.ts`: a chapter's lines as the DOM tests lay them out
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
   - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, let go with it
   - `reading-store.ts`: the reading state's file, through the vault's small files

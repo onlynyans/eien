@@ -248,8 +248,11 @@ Each phase is its own session and pull request, from main.
   style (*As a note*, the default, or *As a book*) in the shelf's quick
   look, and the place kept to the line (an offset in the chapter's words,
   in `.eien/reading/`, shown again after a restart, ⇄, a new width and page
-  zoom); 2b: the book's own links and footnotes (a note over the page, and
-  Back); 2c: a book beside a note, and Quote.
+  zoom); **2b, built**: the book's own links (to its chapters only, the place
+  they name kept as a marker, never an id) with one step Back in the
+  colophon, and its footnotes shown over the page (EPUB 3's noterefs, and
+  EPUB 2's numbers in a sup), a copy holding its words alone; 2c: a book
+  beside a note, and Quote.
 - **Phase 3, turning pages:**
   - paging on one line grid;
   - the leaf and its edges, and the spread when there's room;

@@ -24,7 +24,7 @@ describe('a book’s page', () => {
     expect(chapterText(side)).toContain('It is a truth universally acknowledged');
     expect(side.page.chapter.lang).toBe('en');
     expect(side.spine).toBe(1); // the title page before it isn't in the contents
-    expect(side.page.foot.figures[0]?.textContent).toBe('2 of 4');
+    expect(side.page.foot.figures[1]?.textContent).toBe('2 of 4');
     expect(side.place).toEqual({
       path: 'Novels/P and P.epub',
       name: 'Pride and Prejudice',
@@ -171,7 +171,7 @@ describe('the review’s cases (#40, Phase 1b)', () => {
     await side.open('a.epub');
     const opening = side.open('b.epub');
     expect(chapterText(side)).toBe('');
-    expect(side.page.foot.figures[0]?.textContent).toBe('');
+    expect(side.page.foot.figures[1]?.textContent).toBe('');
     await opening;
   });
 

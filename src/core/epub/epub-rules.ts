@@ -1,14 +1,16 @@
 // What a book's chapter may show (#40), as the shared cleaner's rules
 // (core/html/clean.ts). Its pictures come only from its own zip, in the
-// formats a note's do; its links keep their words (the book's own links come
-// with its place, later), so nothing on the page reaches outside the book.
-// And its parts get names, read off the publisher's markup, for the book's
+// formats a note's do; a link keeps its address only when it lands on one of
+// the book's own chapters (./book-link.ts, Phase 2b), and the places a link
+// may name are kept, so nothing on the page reaches outside the book. And
+// its parts get names, read off the publisher's markup, for the book's
 // stylesheet: a chapter's title, a scene break, an epigraph, a plate, a
-// caption.
+// caption, a note and its reference.
 
 import type { CleanRules, HtmlElement, HtmlNode } from '../html';
 import { baseName } from '../paths';
 import { imageTypeOf } from '../vault';
+import { bookHref } from './book-link';
 import { attr } from './xml-nodes';
 import { inZip } from './zip-path';
 
@@ -19,6 +21,11 @@ const TITLE = /\bchapter[-_]?(?:title|head(?:ing)?)\b|(?:^|\s)title(?:\s|$)/iu;
 const BREAK = /\b(?:scene|section|space)[-_]?break\b|\basterism\b|\btransition\b/iu;
 const EPIGRAPH = /\bepigraph\b/iu;
 const CAPTION = /\bcaption\b/iu;
+/** A note's reference (EPUB 3's epub:type, DPUB-ARIA's role), and a note: foot, end or rear. */
+const NOTE_REF = /\bnoteref\b/iu;
+const NOTE = /\b(?:foot|end|rear)?note\b/iu;
+/** The longest place kept: an id is a name, not words. */
+const MAX_ANCHOR = 256;
 
 /** Whether an element holds a picture and nothing else: no words, one image, perhaps in a link or span. */
 function onlyAPicture(node: HtmlElement): boolean {
@@ -32,7 +39,13 @@ function onlyAPicture(node: HtmlElement): boolean {
   return walk(node.children) && images === 1;
 }
 
+const roleIs = (node: HtmlElement, pattern: RegExp) => pattern.test(attr(node, 'role'));
+
 function partOf(source: HtmlElement, name: string): string | null {
+  if (name === 'a' && (has(source, NOTE_REF) || roleIs(source, /\bdoc-noteref\b/u))) {
+    return 'note-ref';
+  }
+  if (has(source, NOTE) || roleIs(source, /\bdoc-(?:foot|end)note\b/u)) return 'note';
   if (name === 'hr' || has(source, BREAK)) return 'scene-break';
   if (name === 'h1' || name === 'h2' || (name !== 'img' && has(source, TITLE))) {
     return 'chapter-title';
@@ -45,10 +58,25 @@ function partOf(source: HtmlElement, name: string): string | null {
   return null;
 }
 
-/** The rules for the chapter at `path` in a zip that holds `holds`. */
-export function epubRules(path: string, holds: (name: string) => boolean): CleanRules {
+/** A place's name a link may give, kept: a name, not words or control characters. */
+const placeName = (id: string): string | null =>
+  id.length > 0 && id.length <= MAX_ANCHOR && !/[\u0000-\u001f\u007f]/u.test(id) ? id : null;
+
+/**
+ * The rules for the chapter at `path` in a zip that holds `holds`, whose
+ * spine `isChapter` names: a link keeps its address only to one of those.
+ */
+export function epubRules(
+  path: string,
+  holds: (name: string) => boolean,
+  isChapter: (name: string) => boolean,
+): CleanRules {
   return {
-    link: () => null,
+    link: (href) => {
+      const at = inZip(path, href);
+      return at && isChapter(at.path) ? bookHref(at) : null;
+    },
+    anchor: placeName,
     image: (src) => {
       const at = inZip(path, src);
       return at && holds(at.path) && imageTypeOf(baseName(at.path)) ? at.path : null;

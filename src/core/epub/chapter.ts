@@ -27,13 +27,17 @@ function imagesIn(nodes: readonly CleanNode[], into: Set<string>): Set<string> {
   return into;
 }
 
-/** The chapter at `path`, from its bytes; `holds`, whether the zip has an entry. */
+/**
+ * The chapter at `path`, from its bytes; `holds`, whether the zip has an
+ * entry, and `isChapter`, whether it's in the spine (a link may go there).
+ */
 export function chapterOf(
   bytes: Uint8Array,
   path: string,
   holds: (name: string) => boolean,
+  isChapter: (name: string) => boolean = () => false,
 ): Chapter {
   const parsed = unwrapSvgPlates(localNames(parseHtml(xmlText(bytes))));
-  const nodes = markFirstLine(cleanParsed(parsed, epubRules(path, holds)));
+  const nodes = markFirstLine(cleanParsed(parsed, epubRules(path, holds, isChapter)));
   return { nodes, images: [...imagesIn(nodes, new Set())] };
 }

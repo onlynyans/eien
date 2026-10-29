@@ -666,6 +666,15 @@ in the book, each recorded here as it's built.
   the book", the two dropped first under a 560px page pane.
 - **The place is kept to the line**, never drawn: a page put back, laid out
   anew or zoomed shows the same line at its top.
+- **A note over the page** (Phase 2b, `ui/epub/note-over.ts`): a note's
+  reference pressed floats the note under it as a menu floats (`.menu`:
+  raised paper, a `--eien-rule-strong` hairline, `--eien-radius-m`, the
+  float shadow), as wide as the list at most, `--eien-space-2` round the
+  note's words in the book's own face (`data-face`); **Go to the note**, a
+  word button, under them. A dialog that takes the keyboard; Esc, a click
+  elsewhere or the page scrolling closes it.
+- **Back** after a link: a word button first in the colophon's figures
+  ("Back to Chapter I"), there only while there's a step back.
 - **The book's look is the shelf's:** its typeface, text size, line spacing,
   width and frame, set in the quick look with a book in front, worn on its
   leaf (`data-face`, `data-frame`, `--eien-text-scale`, `--look-lead`,

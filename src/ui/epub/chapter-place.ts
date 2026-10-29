@@ -89,3 +89,13 @@ export function showOffset(
   const line = rectOf(rangeOver(piece, within, within + 1)).top;
   scroller.scrollTop += line - scroller.getBoundingClientRect().top;
 }
+
+/** The offset of the first of the chapter's words after `node`: where a place named there starts. */
+export function offsetAfter(chapter: HTMLElement, node: Node): number {
+  let offset = 0;
+  for (const piece of piecesOf(chapter)) {
+    if (node.compareDocumentPosition(piece) & Node.DOCUMENT_POSITION_FOLLOWING) return offset;
+    offset += piece.length;
+  }
+  return offset;
+}

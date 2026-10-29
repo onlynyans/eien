@@ -93,3 +93,25 @@ test('a book’s place is kept as the phone goes to the background, and back aft
   await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
   await expect.poll(inSight).toBe(kept);
 });
+
+test('a note’s reference shows the note over the page, a tap away from the words, with no serious violation', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Links.epub',
+    readFileSync(join(import.meta.dirname, '../fixtures/epub/links.epub')).toString('base64'),
+  );
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Links' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await chapter(page).locator('sup a[href]').tap();
+  const note = page.getByRole('dialog', { name: 'Note 1' });
+  await expect(note).toContainText('The novel’s first sentence, and its most quoted.');
+  await expect(note).toBeInViewport();
+  expect(await seriousViolations(page), 'a note over the page').toEqual([]);
+  await note.getByRole('button', { name: 'Go to the note' }).tap();
+  await expect(chapter(page)).toContainText('The novel’s first sentence, and its most quoted.');
+  await expect(page.getByRole('button', { name: 'Back to Chapter I' })).toBeVisible();
+});

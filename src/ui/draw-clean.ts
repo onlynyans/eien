@@ -37,7 +37,9 @@ function drawn(node: CleanNode, options: DrawOptions): Node[] {
   const element = node.name === 'hr' ? sceneBreak() : document.createElement(node.name);
   if (node.part && isPart(node.part)) element.dataset.part = node.part;
   if (node.name === 'hr') return [element];
-  const { align, href, alt, title } = node.attrs;
+  const { align, href, alt, title, anchor } = node.attrs;
+  // A place a link may name (#40): data, never an id, so a page can't name the window's elements.
+  if (anchor !== undefined && element instanceof HTMLAnchorElement) element.dataset.anchor = anchor;
   const src = node.attrs.src && options.image ? options.image(node.attrs.src) : node.attrs.src;
   if (align) element.dataset.align = align;
   if (title) element.title = title;
