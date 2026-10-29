@@ -42,7 +42,7 @@ places the caret, as today.
 | [link-inline.html](link-inline.html) · [md](links.md) | **2 · In place**: the caret opens that link's own Markdown where it stands, as Rename opens a name; the colophon says where it goes | Nothing floats; you edit what the file holds | The line reflows under the pointer; hover only in the colophon |
 | [link-bar.html](link-bar.html) · [md](links.md) | **3 · A bar with the caret** (on the phone): the selection bar's sibling over the link's line; a hover gets the window's tooltip | Nothing new to learn; docks above a phone's keyboard | Covers the line above; a hover shows only the address |
 
-## Reading EPUBs (2026-10-27): for the owner to choose
+## Reading EPUBs (2026-10-27): chosen, building in phases
 
 Backlog #40, nine pages in three sets: turning pages, scrolling, and the
 features. Each works by Day and Night, in all three layouts, from the
@@ -52,7 +52,9 @@ direction's trade-offs and recommends **Pages 2** (opening to 1's spread
 when there's room), **Scroll 1** (then 3), and **Features 2** with 1's marks
 on the page. Turning (2026-10-28), three motions for the page, recommends
 **3**'s words stepping for a key or a click and **2**'s sheet, carried, for a
-hand.
+hand. **Chosen** (2026-10-28): [epub.md](epub.md#decided-2026-10-28) has
+what was decided and [the build](epub.md#the-build)'s phases; Phase 0 is
+built.
 
 | Set | 1 | 2 | 3 |
 |---|---|---|---|

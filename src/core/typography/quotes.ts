@@ -25,15 +25,19 @@ const OPENS_AFTER = /[\s([{<“‘"']$/u;
 const DASH_BEFORE = /[—–\-/]$/u;
 const WORDS_AFTER = /^[\p{L}\p{N}“‘"'([]/u;
 
-/** HTML that starts a line or a paragraph (<br>, <p>, </p>…), marks aside: a quote after it opens. */
+/**
+ * HTML that starts a line or a paragraph (<br>, <p>, </p>…), marks aside: a quote after it opens.
+ * One mark at a time: a run of them repeated (`(?:[*_~=]+)*`) could be split so many ways that
+ * failing took time exponential in the marks (Copy as HTML keeps 64 characters before a quote).
+ */
 const BREAK_BEFORE =
-  /<\/?(?:br|hr|p|div|blockquote|h[1-6]|li|ul|ol)\b[^<>]*>(?:[*_~=]+|<[A-Za-z][A-Za-z0-9]*\b[^<>]*>)*$/iu;
+  /<\/?(?:br|hr|p|div|blockquote|h[1-6]|li|ul|ol)\b[^<>]*>(?:[*_~=]|<[A-Za-z][A-Za-z0-9]*\b[^<>]*>)*$/iu;
 
 /** How much of the text before a quote decides it. */
 export const CONTEXT = 16;
 
-/** Marks before a quote that don't decide it: emphasis marks, an opening tag (*"Hi,"*, <u>"Hi"</u>). */
-const MARKS_BEFORE = /(?:[*_~=]+|<[A-Za-z][A-Za-z0-9]*\b[^<>]*>)+$/u;
+/** Marks before a quote that don't decide it: emphasis marks, an opening tag (*"Hi,"*, <u>"Hi"</u>); one mark at a time, as above. */
+const MARKS_BEFORE = /(?:[*_~=]|<[A-Za-z][A-Za-z0-9]*\b[^<>]*>)+$/u;
 
 /** Words that start with an elided letter: 'tis, 'twas, 'em… (an apostrophe, never an open quote). */
 const ELISION = /^(?:tis|twas|til|twere|twill|em|cause|bout|round|n|nother|kay|sup|cept|s)\b/iu;

@@ -11,9 +11,10 @@ Releases).
 nothing was built or published for them, and each ends at the commit named
 under its heading.
 
-## Unreleased
+## 0.4.0 — 2026-10-28
 
-Proposed as 0.4.0, the first version built since 0.1.0; the owner decides when.
+The first version built since 0.1.0. The EPUB reader's groundwork is in it;
+the reader itself starts in 0.5.0.
 
 ### Features
 
@@ -26,6 +27,7 @@ Proposed as 0.4.0, the first version built since 0.1.0; the owner decides when.
 - **editor:** code blocks: fences out of sight, code at the words' scale (#96)
 - **editor:** paste keeps the page's own marks as written (#81)
 - toolbars that fit any width: tools that don't fit fold behind a ⋯ (#89)
+- **settings:** a quick look for notes: the look's everyday settings in a popover (⇧⌘L), with line spacing and page width (#105)
 
 ### Fixes
 
@@ -35,6 +37,8 @@ Proposed as 0.4.0, the first version built since 0.1.0; the owner decides when.
 - **editor:** the find bar in sight, even, and drawn in the set's own hand (#90)
 - **sidebar:** a folder opened or closed leaves the tree where it was (#92)
 - **sidebar:** the sync icon level (#96)
+- **editor:** curly quotes and pasted tables in linear time, a cell's escaped pipe kept (#110)
+- a table cell's code shows its pipes in Copy as HTML and exports, and a pasted link keeps its backslashes (#111)
 
 ### Other
 
@@ -46,6 +50,9 @@ Proposed as 0.4.0, the first version built since 0.1.0; the owner decides when.
 - **epub:** one cleaner for a page's HTML, shared by the extension and, later, the EPUB reader (#100)
 - **epub:** a page holds a note or an EPUB: the page-kind seam (#101)
 - one version from `package.json` for every build, Conventional Commits on pull requests' titles, and this changelog (#102)
+- **epub:** the split's files back under 300 lines, and the find bar apart from CodeMirror, so a book can have Find (#103, #104)
+- one `isInside` for a path in a folder (#106); the layout in AGENTS.md, one line per module (#107); the docs say Phase 0 is built (#109)
+- the word diff's speed test timed against reading the words, not a clock (#108); CodeQL leaves the design explorations alone (#110)
 
 ## 0.3.0 — 2026-10-26
 

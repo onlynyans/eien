@@ -566,18 +566,14 @@ To cut a release, on a branch from `main`:
    installers with no release, keeping them as the run's artifacts.
 
 0.2.0 and 0.3.0 were written into CHANGELOG.md afterwards, each ending at
-the commit named under its heading; nothing was built for them. Their tags are
-the owner's to add, if wanted:
-`git tag v0.2.0 ab9a78c && git tag v0.3.0 2491dbd && git push origin v0.2.0 v0.3.0`.
-Each starts `release.yml`, which stops within a minute, red, at its first
-check (`package.json` at those commits still says 0.1.0, and CHANGELOG.md
-wasn't there yet), and makes no release.
+the commit named under its heading; nothing was built for them. Their tags
+(`v0.2.0` at `ab9a78c`, `v0.3.0` at `2491dbd`) mark those commits only: each
+started `release.yml`, which stopped red at its first check (`package.json`
+there still says 0.1.0), and made no release.
 
-**Next: 0.4.0, proposed.** CHANGELOG.md's Unreleased section, stage 4 (the
-extension, Wide screen, find and replace, subfolders) and the EPUB reader's
-groundwork (#40 Phases 0a and 0b), is the first build since 0.1.0. Cutting it
-before #40's next phases gives a checkpoint to go back to, and tries the
-release path once from start to end. The owner decides.
+0.4.0 (2026-10-28) is the first build since 0.1.0: stage 4, the quick look,
+and the EPUB reader's groundwork (#40 Phase 0). The reader's phases begin
+0.5.0.
 
 - **Identity.** The product name `Eien` and app id `io.github.onlynyans.eien`
   never change. Electron names the device's data folder (userData:

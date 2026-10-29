@@ -1,6 +1,7 @@
 # Reading EPUBs: nine explorations
 
-**For the owner to choose (2026-10-27).** Backlog #40. Nothing is built. Three
+**Chosen (2026-10-28), and building in phases.** Backlog #40. Phase 0, the
+groundwork, is built; Phase 1 is next ([The build](#the-build)). Three
 sets of three, in one family so they share one look: turning pages, scrolling,
 and the features (page count, bookmarks, highlights, search in the book).
 
@@ -42,9 +43,10 @@ section where it and the directions below disagree.
 - **Cleaned nodes, not a sandboxed frame.** A chapter's XHTML is read by
   Eien's own parser and kept to a whitelist of elements, then drawn
   element by element, never from HTML. This is the browser extension's
-  pipeline (#47, `core/extension/clean.ts`, `ui/extension/draw-clean.ts`),
-  shared rather than copied (Phase 0; now `core/html/clean.ts` and
-  `ui/draw-clean.ts`). Nothing in a book can run, and the
+  pipeline (#47), shared rather than copied (Phase 0): `core/html/clean.ts`
+  and `ui/draw-clean.ts`, each caller giving its own rules (where a link may
+  go, where an image comes from, which parts have names), as
+  `core/extension/clean.ts` does for the extension. Nothing in a book can run, and the
   page turns, highlights and Find work on one DOM.
 - **Fixed-layout EPUBs aren't supported** (comics, picture books), and the
   publisher's layout is reduced to its structure. Accepted.
@@ -156,21 +158,32 @@ section where it and the directions below disagree.
 
 Each phase is its own session and pull request, from main.
 
-- **Phase 0, groundwork,** with nothing new to see. Three refactors:
+- **Phase 0, groundwork,** with nothing new to see. **Built** (2026-10-28).
+  Three refactors:
   1. The cleaner and its drawing, out of the extension into shared
-     modules, used by both.
-  2. A page holds a note or a book (`vault/pages.ts`, `page/page.ts`), so
+     modules, used by both: `core/html/clean.ts` and `ui/draw-clean.ts`
+     ([#100](https://github.com/onlynyans/eien/pull/100)).
+  2. A page holds a note or a book (`PageKind`, `PaneLeaf` in
+     `page/page-leaf.ts`; `vault/page-side.ts`, `vault/note-side.ts`), so
      the split, the pager, ⇄ and Wide screen's rooms take a book with no
-     special case. Built: [page-kinds.md](../../page-kinds.md).
-  3. The find bar apart from CodeMirror, so a book's Find reuses the slip,
-     its keys and its count.
+     special case ([#101](https://github.com/onlynyans/eien/pull/101);
+     [page-kinds.md](../../page-kinds.md)).
+  3. The split's files back under 300 lines
+     ([#103](https://github.com/onlynyans/eien/pull/103)), then the find
+     bar apart from CodeMirror (`find/find-bar.ts` over a `FindTarget`,
+     `find/find-target.ts`; a page offers its `PageFind`), so a book's Find
+     reuses the slip, its keys and its count
+     ([#104](https://github.com/onlynyans/eien/pull/104)).
 
-  1 can run beside 2; 3 follows 2.
-- **#49's notes half,** once 2 has merged: the `quick` mark, Line spacing
+  With them, one `isInside` for a path in a folder
+  ([#106](https://github.com/onlynyans/eien/pull/106)), which the zip's
+  paths will use.
+- **#49's notes half.** **Built**
+  ([#105](https://github.com/onlynyans/eien/pull/105);
+  [quick-look.md](../../quick-look.md)): the `quick` mark, Line spacing
   (`appearance.leading`), Page width (`page.width`), the Look command
-  (⇧⌘L) and its popover, for notes. It's built beside 3 and Phase 1, its
-  own session and pull request, and holds to the same testing bar. Its
-  shelf half switches on in Phase 1.
+  (⇧⌘L) and its popover, for notes, with `on: 'note'` until a shelf store
+  exists. Its shelf half switches on in Phase 1.
 - **Phase 1, the shelf and opening a book safely,** in three pull
   requests: **1a, built** (2026-10-28): `core/epub` (the zip reader, its caps
   and paths, the package and contents, DRM refused, a chapter cleaned with
