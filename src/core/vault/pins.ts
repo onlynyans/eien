@@ -2,6 +2,7 @@
 // kept with the vault so every device pins the same notes. All Notes in your
 // order (".eien/order.json") is a list of paths too, kept the same way.
 
+import { isInside } from '../paths';
 import { withoutBom } from '../text';
 
 /** The pinned paths in the file's text; none for no file or one that can't be read. */
@@ -23,13 +24,11 @@ export const withPin = (pins: readonly string[], path: string, pinned: boolean):
 
 /** `pins` after `from` (a note, or a folder and all in it) moved to `to`. */
 export const movedPins = (pins: readonly string[], from: string, to: string): string[] =>
-  pins.map((pin) =>
-    pin === from ? to : pin.startsWith(`${from}/`) ? to + pin.slice(from.length) : pin,
-  );
+  pins.map((pin) => (isInside(pin, from) ? to + pin.slice(from.length) : pin));
 
 /** `pins` without `path`, or anything in it. */
 export const withoutPins = (pins: readonly string[], path: string): string[] =>
-  pins.filter((pin) => pin !== path && !pin.startsWith(`${path}/`));
+  pins.filter((pin) => !isInside(pin, path));
 
 /**
  * All Notes in your order: the notes not placed yet first, newest first (a

@@ -4,6 +4,7 @@
 import type { IndexedNote } from '../../core/note';
 import {
   baseName,
+  isInside,
   joinPath,
   nameKey,
   parentOf,
@@ -446,7 +447,7 @@ export class VaultState {
 export function findFolder(tree: FolderNode, path: string): FolderNode | undefined {
   if (tree.path === path) return tree;
   for (const child of tree.folders) {
-    if (path === child.path || path.startsWith(`${child.path}/`)) return findFolder(child, path);
+    if (isInside(path, child.path)) return findFolder(child, path);
   }
   return undefined;
 }

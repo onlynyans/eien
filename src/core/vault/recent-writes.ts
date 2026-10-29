@@ -4,6 +4,8 @@
 // (ui/vault/own-writes.ts) and for the main process, which tells each window
 // what another window on this device wrote (app/electron/vaults.ts).
 
+import { isInside } from '../paths';
+
 /** How long after a write its echo from the watcher may come. */
 export const OWN_ECHO_MS = 5000;
 
@@ -32,7 +34,7 @@ export class RecentWrites<Who = true> {
     let found = false;
     for (const [own, write] of this.#written) {
       if (now - write.at > OWN_ECHO_MS) this.#written.delete(own);
-      else if (!found && write.by !== unless && (at === own || at.startsWith(`${own}/`))) {
+      else if (!found && write.by !== unless && isInside(at, own)) {
         found = true;
       }
     }
