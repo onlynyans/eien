@@ -94,6 +94,15 @@
   bottom: calc(var(--status-h) + var(--eien-space-4));
   z-index: 5;
 }
+/* A bar docked over the colophon (a table's, a link's; ../page/page.css, .page__under): the slip
+   rises over it, so it never lies over the bar's tools. */
+@media (hover: none) {
+  [data-layout="slip"]
+    .page__main:has(> .page__under :is(.table-bar, .link-bar):not([hidden]))
+    > .page__phone {
+    bottom: calc(var(--status-h) + var(--eien-touch) + var(--eien-hairline) + var(--eien-space-4));
+  }
+}
 [data-layout="slip"] .host--phone-slip {
   padding: var(--eien-space-1);
   background: var(--eien-paper-raised);

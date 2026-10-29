@@ -89,7 +89,16 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
           .click();
         await expect(page.getByRole('dialog', { name: 'Look: Shelf' })).toBeVisible();
         await expect(page.locator('[data-setting="epub.scroll"]')).toBeVisible();
+        // With its line at the foot: Settings sets notes.
+        await expect(page.locator('.quick-look__line')).toBeVisible();
         expect(await seriousViolations(page), 'the shelf’s look').toEqual([]);
+        await page.keyboard.press('Escape');
+        // The book's row menu (rename, move, the trash in carmine).
+        await page
+          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+          .click({ button: 'right' });
+        await expect(page.getByRole('menu', { name: 'Pride and Prejudice' })).toBeVisible();
+        expect(await violationsUnder(page, ['.menu']), 'the book’s row menu').toEqual([]);
         await page.keyboard.press('Escape');
         // A note over the page (Phase 2b), and Back in the colophon after a link.
         await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Links' }).click();
@@ -106,6 +115,24 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.locator('[data-command="panes"]').click();
         await expect(page.locator('.tree-row--chapter')).toHaveCount(3);
         expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);
+      });
+
+      test('the shelf’s look open beside a note, the note sitting back, has no serious violation', async ({
+        page,
+      }) => {
+        await ready(page);
+        await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
+        await expect(page.locator('.page__leaf')).toHaveCount(2);
+        await page
+          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+          .click();
+        await expect(page.locator('.epub-chapter')).toContainText('It is a truth');
+        await page
+          .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')
+          .click();
+        await expect(page.locator('.page__leaf[data-back]')).toHaveCount(1);
+        // The note's words on the band's tone, the popover over them.
+        expect(await seriousViolations(page), 'a note sitting back').toEqual([]);
       });
 
       test('the quick look open has no serious violation (#49)', async ({ page }) => {
@@ -236,6 +263,34 @@ for (const scheme of ['day', 'night'] as const) {
       expect(await seriousViolations(page), 'a pattern that can’t be read').toEqual([]);
     });
   });
+}
+
+// A link's tools (#38), each way Link editing shows them: the card and its fields, the bar and
+// its field, and In place's ↗.
+for (const scheme of ['day', 'night'] as const) {
+  for (const style of ['card', 'inline', 'bar'] as const) {
+    test.describe(`a link's tools, ${style}, by ${scheme}`, () => {
+      test.use({
+        deviceFile: { settings: { 'appearance.scheme': scheme, 'editor.links': style } },
+      });
+
+      test('shown and edited, have no serious violation', async ({ page }) => {
+        await ready(page);
+        await page.locator('.eien-link', { hasText: 'Other' }).click();
+        const tools = {
+          card: page.getByRole('group', { name: 'Link to Other' }),
+          inline: page.getByRole('button', { name: 'Open Other' }),
+          bar: page.getByRole('toolbar', { name: 'Link to Other' }),
+        }[style];
+        await expect(tools).toBeVisible();
+        expect(await seriousViolations(page), 'shown').toEqual([]);
+        if (style === 'inline') return;
+        await page.keyboard.press('ControlOrMeta+k');
+        await expect(page.getByRole('textbox', { name: /^Goes to/ })).toBeVisible();
+        expect(await seriousViolations(page), 'edited').toEqual([]);
+      });
+    });
+  }
 }
 
 // Shut sidebar's other choice, Band's and Slip's: a strip of desk, with its shoulder on macOS.

@@ -123,7 +123,7 @@ export function noteActions(of: NoteActionsOf): NoteActions {
         ? void renameOnPage(path)
         : renameInRow(path, {
             namesIn: (folder) => state.namesIn(folder),
-            rename: (from, typed) => of.organizer.renameNote(from, typed),
+            rename: (from, typed) => of.organizer.renameFile(from, typed),
             act: of.act,
             onPage: (at) => void renameOnPage(at),
           }),

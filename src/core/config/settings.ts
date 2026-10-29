@@ -113,7 +113,9 @@ export function withDefaults(...chosen: readonly Partial<SettingValues>[]): Sett
  */
 export function withSetting(raw: unknown, { key, value }: SettingChange): Record<string, unknown> {
   const kept = Object.entries(isObject(raw) ? raw : {}).filter(([name]) => name !== key);
-  if (value !== settingOf(key)?.default) kept.push([key, value]);
+  const setting = settingOf(key);
+  // A setting whose default differs by system keeps every choice: what's the default here isn't there.
+  if (value !== setting?.default || setting.phoneDefault !== undefined) kept.push([key, value]);
   // fromEntries defines each key as data, so a "__proto__" in the file stays a plain key.
   return Object.fromEntries(kept);
 }

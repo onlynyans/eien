@@ -90,7 +90,7 @@ export function makeNoteSide(
   };
 }
 
-/** A page as the settings say: the quotes typed on it, its writing tools, Live's marks, the tags and ids hidden. */
+/** A page as the settings say: the quotes typed on it, its writing tools, Live's marks, the tags and ids hidden, a link's tools. */
 function followSettings(page: PageView, values: SettingValues): void {
   page.editor.setQuotes(values['typography.quotes']);
   page.editor.setTools({
@@ -100,4 +100,5 @@ function followSettings(page: PageView, values: SettingValues): void {
   });
   page.editor.setMarks(values['editor.marks'] === 'on');
   page.editor.setTagsAndIdsHidden(values['editor.hideTagsAndIds'] === 'on');
+  page.editor.setLinkStyle(values['editor.links']);
 }

@@ -3,13 +3,13 @@
 // and to the trash with it. Where the folder can't go, it stays where it is,
 // and the writer is told where the images are; nothing is lost.
 
-import { baseName, titleOf } from '../../core/paths';
-import { assetsFolderOf, relinkAssets } from '../../core/vault';
+import { baseName } from '../../core/paths';
+import { assetsFolderOf, fileTitleOf, relinkAssets } from '../../core/vault';
 import type { MoveResult } from '../../platform/storage';
 import { reasonOf } from '../reason';
 import type { OrganizeContext } from './organize';
 
-const nameOf = (path: string) => titleOf(baseName(path)) || path;
+const nameOf = (path: string) => fileTitleOf(baseName(path)) || path;
 
 /**
  * The note moved from `from` to `to`: its folder of images goes beside it

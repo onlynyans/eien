@@ -342,7 +342,16 @@ Three panes, each collapsible, with a two-pane option in settings:
      it at their depth; a folder there is a label, and only a book is a
      control. A book is never in a folder's note list, count or search. A
      click opens it on the page; with two panes, its contents are listed
-     under its row
+     under its row. Its row answers as a note's: right-click, the menu key
+     or Shift+F10 give its menu (Rename, Move to…, and the trash last), F2
+     or a second click on its name renames it in its row (its `.epub` kept
+     and shown faded after the field, on a phone too), ⌘⌫ (Ctrl+Delete)
+     sends it to the trash: the system's, or a phone's `.eien/trash`, and
+     the list says where; a trash that fails deletes nothing and says so.
+     A book moved or renamed is followed by its page and its contents in
+     the list, takes no place in a folder's own order, and keeps its place
+     in `.eien/reading/`, which is kept by what the book holds, not where
+     it is
    - **Tags**, nested by `/`; the + beside its label makes a tag, named in
      place (see §2, Tags)
    - Library, Folders, Shelf and Tags fold and open from their labels (a click, Enter
@@ -377,7 +386,14 @@ Three panes, each collapsible, with a two-pane option in settings:
    it on the note's own sheet, drawn from cleaned nodes in the writer's
    faces and the theme's colours, its pictures from the book's own zip, the
    book's folders above it. A book that won't open says why on the sheet
-   (locked with DRM, too large, damaged); its file is only read.
+   (locked with DRM, too large, damaged); its file is only read. With a book in front, a note's
+   commands are greyed wherever they're offered: the layout's tools, the
+   phone's ⋯, and the menu bar (the views, Seal, Compare, Versions, Copy as
+   HTML, every format, Export HTML… and Export Note, Outline Cards, Focus
+   Mode, Typewriter Scrolling, Show Markdown Marks), from the one rule each
+   control's `on` gives (`ui/chrome/commands.ts`, `menuOff`). The menu bar
+   is the app's: it wears the focused window's, and a menu of the bar is
+   never greyed, only its items.
    - **A chapter a sheet** (Phase 2): the chapter scrolls as a note does in
      Reading, the usual keys once the page has the keyboard. At its foot,
      after a soft rule, the chapters before and after it in the reading
@@ -687,7 +703,35 @@ sight but on the caret's line, and always in Reading.
 
 Links: ⌘-click (Ctrl-click on Windows and Linux) follows one. A web address
 opens in the browser; a `[[wiki link]]` opens the note with that title. In
-Reading a plain click follows.
+Reading a plain click follows; in Live and Source a plain click places the
+caret.
+
+A link's tools in Live (backlog #38): resting the pointer on a link, or the
+caret in one, shows where it goes and lets you edit it and open it. The
+**Link editing** setting (Writing → Editor) chooses how; any of the three on
+any device, the Card by default on the desktop and the Bar on a phone:
+
+- **Card:** a card under the link. A note link's reads as that note's row in
+  the list (its folders, title, first line and words); a web link's is its
+  address; a note not made yet says so. Its tools: Open, Edit (two fields,
+  the words and where it goes) and Take off.
+- **In place:** the link's Markdown opens where it stands, its marks shown
+  whatever Show Markdown marks says, the address in the Source font, ↗ after
+  it to open it. You edit it as text; where it goes is said in the colophon.
+- **Bar:** a small bar over the link's line, the selection bar's sibling:
+  where it goes (pressed, it's a field), Open, Edit, Take off. A hover shows
+  only a tooltip. On a phone it's docked above the keyboard.
+
+What's typed in "goes to" says the kind: an address (`https://…`, `www.…`,
+`example.org/…`) makes `[words](address)`, anything else a note's name,
+`[[note|words]]` (or `[[note]]` when the words are its name); a name the vault
+has as a note stays a note's. Each edit is one step ⌘Z takes back; an empty
+"goes to" keeps the old one; Take off keeps the words. The keys, the same in
+all three: ⌥↩ opens the caret's link, ⌘K edits it (with words selected
+outside a link it still makes one), ⌥F10 takes the keyboard to its tools,
+Esc puts them away and brings the keyboard back. They step aside while you
+type in a link and come back when the caret moves. A screen reader hears
+where a link goes as the caret reaches it.
 
 ### Markdown supported
 
@@ -1123,7 +1167,10 @@ does nothing.
   font, the weight of the sidebar's names and the list's titles, the Running head's
   ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar,
   whether Live shows the Markdown marks, whether the front matter's tags and id are
-  hidden, spellcheck (macOS), and on the phone how a wide screen is used (§10). A
+  hidden, how a link shows its tools (Link editing, §4), spellcheck (macOS), and on
+  the phone how a wide screen is used (§10). A
+  setting's default may be a phone's own (`phoneDefault` in the schema: Link editing's
+  Bar); there, any choice is written, as the desktop's default isn't the phone's. A
   setting may be one system's alone (`platforms` in the schema): the screen shows it
   only there. A setting that needs panes side by side (`wide` in the schema: Panes,
   Shut sidebar, Arranging, the formatting bar, Page width) shows only while the window has them,
@@ -1234,8 +1281,14 @@ without Settings.
   note's look never changes a book's, nor a book's a note's. Day or night is
   the window's, whichever; so is the frame while two pages share the pane.
   All settings opens Settings at Look, the notes': the shelf's look is set
-  here alone. The sidebar's sun stays: one press for Day or
-  Night.
+  here alone, and with a book in front one line at the popover's foot, in
+  pencil, says so: "Settings sets notes; this is every book's look." The
+  sidebar's sun stays: one press for Day or Night.
+- **A note and a book side by side:** while the look is open, the page it
+  doesn't change sits back, in the tone the split gives the page you aren't
+  in: its paper takes the band's (`data-back` on its leaf). Two notes, or
+  two books, wear the one look, so neither sits back. With a companion, the
+  look opens for the page itself, which becomes the one you're in.
 
 ### Type and the Running head
 

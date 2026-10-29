@@ -15,7 +15,8 @@ export class Navigation {
   readonly open = new Set<string>();
   /**
    * The EPUB whose contents the list shows in place of notes (#40): the book
-   * last opened from SHELF, until a row under LIBRARY, FOLDERS or TAGS is chosen.
+   * last opened from SHELF, until a row under LIBRARY, FOLDERS or TAGS is chosen;
+   * moved with the book (./epub-wiring.ts).
    */
   contents: string | null = null;
 
@@ -66,8 +67,7 @@ export class Navigation {
     if (this.#selection.kind === 'folder') {
       this.#selection = { kind: 'folder', path: moved(this.#selection.path) };
     }
-    if (this.contents) this.contents = moved(this.contents);
-    followSorts(from, to);
+    followSorts(from, to); // the list's contents follow any move by the EPUB's wiring (./epub-wiring.ts)
   }
 
   /**

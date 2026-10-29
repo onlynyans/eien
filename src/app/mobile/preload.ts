@@ -6,6 +6,7 @@
 
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { PHONE_DEFAULTS } from '../../core/config';
 import type { Bridge } from '../../platform/bridge';
 import { preferencesStore } from '../../platform/capacitor/preferences-store';
 import { SettingsStore } from '../../platform/settings-store';
@@ -17,7 +18,11 @@ function mobileBridge(): Bridge {
   const platform = Capacitor.getPlatform(); // 'android', 'ios' or 'web'
   const home = vaultHome(platform);
   const vault = new MobileVault(home, () => document.visibilityState === 'visible');
-  const settings = new SettingsStore(preferencesStore, () => vault.open?.storage ?? null);
+  const settings = new SettingsStore(
+    preferencesStore,
+    () => vault.open?.storage ?? null,
+    PHONE_DEFAULTS,
+  );
   void App.addListener('resume', () => vault.lookNow());
   const backs: (() => boolean)[] = [];
   void App.addListener('backButton', () => {

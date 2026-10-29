@@ -6,7 +6,7 @@
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 import { closeApp, expect, launchApp, ROOT, test } from './launch';
 
 const FIXTURES = join(ROOT, 'tests/fixtures/epub');
@@ -188,5 +188,52 @@ test.describe('a book’s folder renamed', () => {
     await expect(page.locator('.page__leaf--epub .crumbs')).toHaveText('Austen');
     await expect(chapter(page)).toContainText('Mr. Bennet was among the earliest');
     await expect(page.locator('.contents-row').nth(1)).toHaveAttribute('aria-current', 'true');
+  });
+});
+
+test.describe('the menu bar', () => {
+  test.use({
+    vaultFiles: {
+      'Novels/Pride and Prejudice.epub': epub('plain.epub'),
+      'Notes.md': 'A note of my own.\n',
+    },
+  });
+
+  /** Whether the menu bar's item for `command` is on (each item's id is its command). */
+  const enabled = (app: ElectronApplication, ...commands: string[]) =>
+    app.evaluate(
+      ({ Menu }, ids) => ids.map((id) => Menu.getApplicationMenu()?.getMenuItemById(id)?.enabled),
+      commands,
+    );
+  const NOTES = ['seal', 'view:live', 'compare', 'copy-html', 'format:bold', 'export-note:pdf'];
+  const ANY = ['find', 'look', 'new-note', 'split', 'export-book:epub'];
+
+  test('greys a note’s commands while a book is in front, and gives them back with a note', async ({
+    app,
+    page,
+  }) => {
+    await page.locator('.note-row', { hasText: 'Notes' }).click();
+    await expect
+      .poll(() => enabled(app, ...NOTES, ...ANY))
+      .toEqual([...NOTES, ...ANY].map(() => true));
+    await shelfEpub(page, 'Pride and Prejudice').click();
+    await expect(chapter(page)).toContainText('It is a truth');
+    await expect.poll(() => enabled(app, ...NOTES)).toEqual(NOTES.map(() => false));
+    expect(await enabled(app, ...ANY)).toEqual(ANY.map(() => true));
+    // A menu of the bar still opens, its items greyed; Export Note's submenu greys with them.
+    const menus = await app.evaluate(({ Menu }) =>
+      (Menu.getApplicationMenu()?.items ?? []).map((menu) => [menu.label, menu.enabled] as const),
+    );
+    expect(menus.every(([, on]) => on)).toBe(true);
+    const exportNote = await app.evaluate(
+      ({ Menu }) =>
+        Menu.getApplicationMenu()
+          ?.items.find((menu) => menu.label === 'File')
+          ?.submenu?.items.find((item) => item.label === 'Export Note')?.enabled,
+    );
+    expect(exportNote).toBe(false);
+    await page.locator('.tree-row__name', { hasText: /^All Notes/u }).click();
+    await page.locator('.note-row', { hasText: 'Notes' }).click();
+    await expect.poll(() => enabled(app, ...NOTES)).toEqual(NOTES.map(() => true));
   });
 });

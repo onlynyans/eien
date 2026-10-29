@@ -34,6 +34,7 @@ export function buildMenu(send: SendCommand): Menu {
     command: MenuCommand,
     accelerator?: string,
   ): MenuItemConstructorOptions => ({
+    id: command, // greyed by it (./menu-grey.ts)
     label,
     accelerator,
     click: (_item, window) => send(command, window),
@@ -44,7 +45,7 @@ export function buildMenu(send: SendCommand): Menu {
     key: ToggleKey,
     accelerator?: string,
   ): MenuItemConstructorOptions => ({
-    id: key,
+    id: `toggle:${key}`,
     type: 'checkbox',
     label,
     accelerator,
@@ -204,7 +205,8 @@ export function buildMenu(send: SendCommand): Menu {
         { type: 'separator' },
         // With the keyboard in the page, the page's zoom; elsewhere the whole window's (spec §4).
         item('Zoom In', 'zoom:in', 'CmdOrCtrl+='),
-        { ...item('Zoom In', 'zoom:in', 'CmdOrCtrl+Plus'), visible: false }, // ⌘+ with Shift, as well as ⌘=
+        // ⌘+ with Shift, as well as ⌘=: no id of its own, as ids are one per item.
+        { ...item('Zoom In', 'zoom:in', 'CmdOrCtrl+Plus'), id: undefined, visible: false },
         item('Zoom Out', 'zoom:out', 'CmdOrCtrl+-'),
         item('Actual Size', 'zoom:reset', 'CmdOrCtrl+0'),
       ],
@@ -220,7 +222,7 @@ export function buildMenu(send: SendCommand): Menu {
 export function checkToggles(values: SettingValues): void {
   const menu = Menu.getApplicationMenu();
   for (const key of TOGGLES) {
-    const item = menu?.getMenuItemById(key);
+    const item = menu?.getMenuItemById(`toggle:${key}`);
     if (item) item.checked = values[key] === 'on';
   }
 }

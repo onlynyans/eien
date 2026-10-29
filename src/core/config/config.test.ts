@@ -8,6 +8,7 @@ import {
   isPageLook,
   offeredOn,
   PAGE_LOOK,
+  PHONE_DEFAULTS,
   readSettings,
   SETTING_GROUPS,
   SETTINGS,
@@ -371,6 +372,16 @@ describe('a book’s own look (#40)', () => {
   });
 });
 
+describe('a phone’s defaults', () => {
+  it('are choices of their settings, and a link’s is the Bar', () => {
+    expect(PHONE_DEFAULTS).toEqual({ 'editor.links': 'bar' });
+    for (const [key, value] of Object.entries(PHONE_DEFAULTS)) {
+      const setting = SETTINGS.find((each) => each.key === key);
+      expect(setting && valueProblem(setting, value)).toBeNull();
+    }
+  });
+});
+
 describe('withSetting', () => {
   it('sets one key and keeps the others, even ones it doesn’t know', () => {
     const raw = { 'books.numerals': 'arabic', 'later.future': { nested: true } };
@@ -388,6 +399,12 @@ describe('withSetting', () => {
       withSetting({ 'books.numerals': 'arabic', x: 1 }, { key: 'books.numerals', value: 'roman' }),
     ).toEqual({ x: 1 });
     expect(withSetting({}, { key: 'page.zoom', value: 100 })).toEqual({});
+  });
+
+  it('keeps every choice of a setting whose default differs by system', () => {
+    expect(withSetting({}, { key: 'editor.links', value: 'card' })).toEqual({
+      'editor.links': 'card',
+    });
   });
 
   it('starts afresh from a file that isn’t an object', () => {

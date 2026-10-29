@@ -38,6 +38,11 @@
 .page__format {
   grid-row: 2;
 }
+/* Over the colophon, the active page's bars above a phone's keyboard: a table's, a link's. */
+.page__under {
+  grid-row: 4;
+  min-width: 0;
+}
 /* The formatting bar's setting off (#14): outweighs each layout's look for the row. */
 .page__main > .page__format[hidden] {
   display: none;

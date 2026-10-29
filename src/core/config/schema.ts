@@ -42,6 +42,12 @@ interface Common {
    * look, never in Settings, which sets notes.
    */
   readonly quick?: 'window' | 'page' | 'shelf';
+  /**
+   * On a phone's build (android, ios; web is its page in tests), the default instead of
+   * `default` (#38: a link's Bar there, its Card on the desktop). A value chosen is always kept,
+   * so choosing the desktop's default on a phone stays chosen.
+   */
+  readonly phoneDefault?: string;
 }
 
 export interface ChoiceSetting extends Common {
@@ -63,6 +69,9 @@ export interface NumberSetting extends Common {
 }
 
 export type Setting = ChoiceSetting | NumberSetting;
+
+/** The systems a phone's build runs on (Capacitor's names; web is its page in tests). */
+export const PHONE_PLATFORMS: readonly string[] = ['android', 'ios', 'web'];
 
 export const SETTINGS = [
   {
@@ -106,7 +115,7 @@ export const SETTINGS = [
     description:
       'How a screen wider than a phone’s (a foldable opened, a tablet, a phone turned sideways) is used. Panes: the desktop’s panes, at a finger’s size. One at a time: as on a phone. Side by side: the pane you came from beside the one you’re in. Two pages: the notes slide over the page, and the second note chosen opens beside the first, laid out as Split says.',
     // The phone's build (web: its page in tests/mobile): the desktop's window is always panes.
-    platforms: ['android', 'ios', 'web'],
+    platforms: PHONE_PLATFORMS,
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
@@ -146,7 +155,7 @@ export const SETTINGS = [
     description:
       'Two notes stay side by side however narrow the screen (a foldable opened upright), each half of it. Off, short of room they do as Split says: fold into one page, close the book, put the companion under the page, or wait.',
     // The phone's build, where a screen can be too narrow for two and still show them.
-    platforms: ['android', 'ios', 'web'],
+    platforms: PHONE_PLATFORMS,
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
@@ -358,6 +367,20 @@ export const SETTINGS = [
     default: 'on',
   },
   {
+    key: 'editor.links',
+    label: 'Link editing',
+    description:
+      'What shows when you point at a link in Live mode, or put the cursor in it, to see where it goes, edit it or open it. Card: a card under the link. In place: the link’s Markdown opens where it is. Bar: a small bar above its line.',
+    scope: 'device',
+    group: 'Editor',
+    type: 'choice',
+    choices: { card: 'Card', inline: 'In place', bar: 'Bar' },
+    // A card answers "which chapter is that?" on a hover; a phone has no hover, and its bar sits
+    // above the keyboard, as the table's does (docs/design/explorations/links.md).
+    default: 'card',
+    phoneDefault: 'bar',
+  },
+  {
     key: 'editor.hideTagsAndIds',
     label: 'Hide tags and IDs',
     description:
@@ -498,6 +521,13 @@ export const TOGGLES = [
   'editor.spellcheck',
 ] as const satisfies readonly SettingKey[];
 export type ToggleKey = (typeof TOGGLES)[number];
+
+/** The defaults a phone's build has of its own (`phoneDefault`). */
+export const PHONE_DEFAULTS: Partial<SettingValues> = Object.fromEntries(
+  (SETTINGS as readonly Setting[]).flatMap((setting) =>
+    setting.phoneDefault === undefined ? [] : [[setting.key, setting.phoneDefault]],
+  ),
+);
 
 /** Whether `setting` is offered on the system named `platform` (process.platform), on a phone or not. */
 export const offeredOn = (setting: Setting, platform: string, phone = false): boolean =>

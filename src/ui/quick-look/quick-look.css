@@ -37,12 +37,21 @@
   padding-bottom: var(--eien-space-2);
   border-bottom: var(--eien-hairline) solid var(--eien-rule-soft);
 }
-.quick-look__every {
+/* The popover's own words, in pencil: whose look (*every note*), and with a book in
+   front the line at its foot that says All settings sets the notes'. */
+.quick-look__every,
+.quick-look__line {
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-preview);
   font-style: italic;
   color: var(--eien-pencil);
+}
+.quick-look__every {
   white-space: nowrap;
+}
+.quick-look__line {
+  flex: 1 0 100%;
+  margin: 0 0 var(--eien-space-2);
 }
 
 /* Names only: what each does stays in Settings. */
@@ -70,6 +79,7 @@
 
 .quick-look__foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   padding-top: var(--eien-space-2);
