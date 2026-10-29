@@ -212,13 +212,15 @@ off (AGENTS → Tests).
 
 ## 7. The interface system
 
-- **Design source:** `docs/design/` (tokens, mockups, the specimen), and
-  `.interface-design/system.md`, which sums it up. Decisions after the
-  mockups are in `docs/design/explorations/*.md` and the backlog's Decided
-  section.
+- **Design source:** `.interface-design/system.md` first, then each
+  exploration's Decided section (`docs/design/explorations/*.md`) and the
+  backlog's, then the code. `docs/design/README.md` documents the tokens and
+  the design's reasons; its mockups (the specimen, desktop, phone) are the
+  2026-10-20 snapshot, kept for their reasoning and never copied from
+  (AGENTS → Rules).
 - **Tokens:** `src/ui/theme/tokens.css` is the source;
-  `docs/design/tokens.css` is a snapshot the mockups were drawn with, frozen
-  at stage 3 (#54) and never brought up to date.
+  `docs/design/tokens.css` is the snapshot's, frozen (last changed at stage 3,
+  #54) and never brought up to date.
 - **Icons:** Eien's own, inline SVG on a 16-unit grid (`src/ui/icons.ts`),
   stroked in `currentColor`; no icon font, nothing fetched.
 - **Corners:** set by the layout (A 2/4/8, B 4/8/14, C 3/6/10); paper stays

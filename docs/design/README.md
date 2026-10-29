@@ -1,9 +1,10 @@
 # Eien — design
 
-The look and feel of Eien, and the rules the interface code follows. The
-mockups here are how to see it. Every value is a token, and the app's
-`src/ui/theme/tokens.css` is their source; this folder's `tokens.css` is the
-snapshot the mockups were drawn with.
+The look and feel of Eien, and the rules the interface code follows. Every
+value is a token: the app's `src/ui/theme/tokens.css` is their source, and
+this file documents them.
+
+> **A snapshot:** the mockups below (specimen, desktop and phone, with their CSS, JS and `tokens.css`) are the design as approved on 2026-10-20, kept for their reasoning and never copied from. Eien's look now is [.interface-design/system.md](../../.interface-design/system.md) (AGENTS.md → Rules → How something looks).
 
 | File | What it shows |
 |---|---|
@@ -16,7 +17,7 @@ snapshot the mockups were drawn with.
 | [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Source Sans 3, Atkinson Hyperlegible Next, Schibsted Grotesk, Hanken Grotesk, Instrument Sans and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
 | [references.md](references.md) | The reference screenshots, what reads well in each, and the surface values that came of it |
-| [explorations/](explorations/README.md) | The design passes after these mockups (stages 2 and 3): the three layouts, Settings, tags, themes, your order; the components as built at the end of [explorations/specimen.html](explorations/specimen.html). Then editing a table in Live ([tables.md](explorations/tables.md)) and the window's corner in Band and Slip ([corner.md](explorations/corner.md)), chosen and built; and the split window, to choose ([split.md](explorations/split.md)) |
+| [explorations/](explorations/README.md) | The design passes after these mockups (stages 2 and 3): the three layouts, Settings, tags, themes, your order; the components as built at the end of [explorations/specimen.html](explorations/specimen.html). Then editing a table in Live ([tables.md](explorations/tables.md)) and the window's corner in Band and Slip ([corner.md](explorations/corner.md)), chosen and built; and the split window's four modes ([split.md](explorations/split.md), [split-alt.md](explorations/split-alt.md)), chosen and built |
 
 To view them, serve this folder (fonts don't load from `file://`):
 

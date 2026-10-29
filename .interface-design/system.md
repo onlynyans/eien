@@ -10,7 +10,11 @@ raw value.
 **Changed on 2026-10-20, by the owner:** controls are icons, not words; not
 everything is square; the machine voice's face is a setting; row names'
 weight is a setting. Each is marked below, and in `docs/backlog.md` (#24–#27).
-Where this file and the mockup disagree, this file wins.
+Where this file and the mockup disagree, this file wins: the mockups in
+`docs/design/` are a 2026-10-20 snapshot, kept for their reasoning and never
+copied from. How something looks is this file first, then each exploration's
+Decided section (`docs/design/explorations/*.md`), then the code (AGENTS.md →
+Rules).
 
 **Brought up to date on 2026-10-21, after stage 3:** the Tokens section below
 lists every token family as `src/ui/theme/tokens.css` and the layouts define
