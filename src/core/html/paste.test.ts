@@ -7,8 +7,11 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { declarations } from './css';
 import { fromHtml, pastedMarkdown } from './from-html';
-import { type HtmlElement, type HtmlNode, parseHtml } from './html';
+import { escapeAttr, type HtmlElement, type HtmlNode, parseHtml } from './html';
 import { BLOCK, tidy } from './tidy';
+import { type HtmlOptions, toHtml } from './to-html';
+
+const STRAIGHT: HtmlOptions = { quotes: 'straight', sceneBreak: 'spacer' };
 
 const GDOCS_SPAN =
   'font-size:11pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-variant:normal;vertical-align:baseline;white-space:pre;white-space:pre-wrap;';
@@ -156,6 +159,24 @@ describe('styles as tags', () => {
         ['color', 'red'],
       ]),
     );
+  });
+});
+
+describe('a link’s address', () => {
+  // An address's backslashes were written as they were, and Markdown reads a backslash before
+  // punctuation as an escape: "…?q=a\" became "(…?q=a\)", its ")" escaped, so the link was
+  // lost and its brackets and address showed as words.
+  it('keeps its backslashes, so the link is still a link', () => {
+    const hrefs = [
+      'https://x.org/?q=C:\\dir\\',
+      'https://x.org/?q=\\*a\\*',
+      'https://x.org/a b\\', // between "<" and ">", as it has a space
+      'https://x.org/a(b)\\\\',
+    ];
+    for (const href of hrefs) {
+      const md = fromHtml(`<p><a href="${href}">l</a></p>`);
+      expect(toHtml(md, STRAIGHT), href).toBe(`<p><a href="${escapeAttr(href)}">l</a></p>`);
+    }
   });
 });
 

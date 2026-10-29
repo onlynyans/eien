@@ -95,9 +95,17 @@ function bothOf(marks: string, words: string): [string, string] | null {
     : null;
 }
 
-/** A link's address as Markdown can hold it. */
-const destination = (url: string) =>
-  /[\s()<>]/u.test(url) ? `<${url.replace(/[<>]/gu, '')}>` : url;
+/**
+ * A link's address as Markdown can hold it: its backslashes escaped, as Markdown reads one before
+ * punctuation as an escape ("(a\)" ends no link). Between "<" and ">" the editor's parser
+ * (Lezer 1.8) takes any backslash to escape what follows, so "\\>" doesn't close the address:
+ * a backslash at its end is written as its reference, which every reader decodes there.
+ */
+function destination(url: string): string {
+  const kept = url.replace(/\\/gu, '\\\\');
+  if (!/[\s()<>]/u.test(url)) return kept;
+  return `<${kept.replace(/[<>]/gu, '').replace(/\\\\$/u, '&#92;')}>`;
+}
 
 function part(node: HtmlNode, within: ReadonlySet<string>): string | Marked {
   if (node.kind === 'text') return escapeInline(collapse(node.text), within.has('a'));

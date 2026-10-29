@@ -6,6 +6,7 @@
 // that (./marks-in-words.ts), so the note says what the HTML said, and Copy
 // as HTML gives the HTML back.
 
+import { pipesIn } from '../table';
 import { declarations } from './css';
 import { type HtmlElement, type HtmlNode, parseHtml, trimSpaces } from './html';
 import { inline, textOf } from './html-inline';
@@ -13,6 +14,14 @@ import { NONCHARACTERS, settle } from './marks-in-words';
 import { BLOCK, tidy } from './tidy';
 
 const isBlock = (node: HtmlNode) => node.kind === 'element' && BLOCK.has(node.name);
+
+/**
+ * A table's delimiter row ("|---|:-:|", "-|"), with a pipe somewhere. Each cell's spaces, dashes
+ * and colons can be read only one way: when a cell's spaces could go before or after nothing,
+ * a line of empty cells that failed at its end ("-| | | … x") was tried twice over for each.
+ */
+const DELIMITER_ROW =
+  /^(?=[ \t]*(?:\|[ \t]*)?:?-+:?[ \t]*(?:\|[ \t]*(?:(?::-*:?|-+:?)[ \t]*)?)*$)(?=.*\|)/u;
 
 /** A line's start that would read as a block's mark: a heading, a quote, a list, a rule. */
 function escapeLineStart(line: string): string {
@@ -24,7 +33,7 @@ function escapeLineStart(line: string): string {
       .replace(/^(\d{1,9})([.)])(?=\s|$)/u, '$1\\$2')
       .replace(/^([=-]+)\s*$/u, (rule) => `\\${rule}`)
       // A line like "-|" or "|---|" under another would make a table of the two.
-      .replace(/^(?=[ \t]*\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-*:?[ \t]*)*$)(?=.*\|)/u, '\\')
+      .replace(DELIMITER_ROW, '\\')
   );
 }
 
@@ -104,6 +113,20 @@ function list(element: HtmlElement, other = false): string {
 const cellText = (cell: HtmlElement): string =>
   cell.children.some(isBlock) ? blocks(cell.children).join('<br>') : inline(cell.children);
 
+/**
+ * A cell's Markdown with each pipe that would end it escaped, as a table reads its pipes: a pipe
+ * already escaped stays as it is, so code holding "\|" doesn't become "\\|", which ends the cell.
+ */
+function pipesEscaped(cell: string): string {
+  let out = '';
+  let at = 0;
+  for (const bar of pipesIn(cell)) {
+    out += `${cell.slice(at, bar)}\\`;
+    at = bar;
+  }
+  return out + cell.slice(at);
+}
+
 function table(element: HtmlElement): string {
   const rows: string[][] = [];
   const collect = (nodes: readonly HtmlNode[]) => {
@@ -116,7 +139,7 @@ function table(element: HtmlElement): string {
               (cell): cell is HtmlElement =>
                 cell.kind === 'element' && (cell.name === 'td' || cell.name === 'th'),
             )
-            .map((cell) => cellText(cell).replace(/\n/gu, ' ').replace(/\|/gu, '\\|').trim()),
+            .map((cell) => pipesEscaped(cellText(cell).replace(/\n/gu, ' ').trim())),
         );
       } else collect(node.children);
     }

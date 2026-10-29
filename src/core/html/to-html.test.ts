@@ -103,6 +103,18 @@ describe('Copy as HTML: the rest of a note', () => {
     );
   });
 
+  it('a cell’s escaped pipe as a pipe, in its code too, as GFM reads a cell', () => {
+    // GFM takes the backslash off a cell's "\|" before it reads the cell's words, so code
+    // holding one shows a pipe; Eien's parse leaves code as written, and showed "\|".
+    expect(html('| `a\\|b` | c\\|d |\n|---|---|')).toBe(
+      '<table><tr><th><code>a|b</code></th><th>c|d</th></tr></table>',
+    );
+    expect(html('| *`\\\\\\|`* |\n|---|')).toBe(
+      '<table><tr><th><em><code>\\\\|</code></em></th></tr></table>',
+    );
+    expect(html('`a\\|b`')).toBe('<p><code>a\\|b</code></p>'); // outside a table, code is as written
+  });
+
   it('nothing for an empty note, or one that is only front matter', () => {
     expect(html('')).toBe('');
     expect(html('---\nid: ABC\n---\n')).toBe('');
@@ -229,6 +241,11 @@ describe('the round trip, Markdown → HTML → Markdown', () => {
   it('gives back the curly quotes of a note set to curly', () => {
     const note = '“Look,” he said. She didn’t.';
     expect(fromHtml(toHtml(note, CURLY))).toBe(note);
+  });
+
+  it('gives back a table’s pipes, in its words and its code', () => {
+    const table = '| `a\\|b` | c\\|d |\n| --- | --- |';
+    expect(fromHtml(toHtml(table, STRAIGHT))).toBe(table);
   });
 });
 
