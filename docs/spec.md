@@ -1292,7 +1292,8 @@ converts at the edges.
 
 Quotes are converted to the quote setting on the way out. Lists, links (to
 web, mail and relative addresses only), images, code and tables go as story
-sites take them; a highlight and a wiki link go as their words. The front matter is
+sites take them; a highlight and a wiki link go as their words. A table cell's
+`\|` goes as a pipe, in its code too, as GFM reads a cell. The front matter is
 never posted.
 
 Edit → Copy as HTML (⇧⌘C, Ctrl+Shift+C) copies what's chosen, or the whole
@@ -1323,6 +1324,8 @@ the note's name. An empty note copies nothing and says so.
   are escaped. A page's brackets round its links (Google's citations,
   `[[1](…), [2](…)]`) stay as written. Should that ever show other than
   escaping all of them, all are escaped.
+- A link's or an image's address keeps its backslashes: each is escaped, so
+  none is read as an escape and the link stays a link.
 - List items a page wraps in `<div>`s or `<span>`s inside its list (Google's
   answers) are the list's items.
 - A code editor's copy (all of it in one `<pre>`, or one block set in a
