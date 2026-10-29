@@ -457,8 +457,8 @@ Three layouts, a device setting (`appearance.layout`, Settings → Look → Appe
 in what they are or do ([overall.md](design/explorations/overall.md)):
 
 - **Band** (the default): the page's controls in a band above it (views,
-  Compare, Seal, Versions, the formatting bar, Focus, and the strip's own control, which hides
-  the band to a lip and brings it back). Corners 2/4/8px.
+  Compare, Seal, Versions, the formatting bar, Focus, Look after a hairline, and the strip's own
+  control, which hides the band to a lip and brings it back). Corners 2/4/8px.
 - **Slip**: no band; the page's tools float on a raised slip at the
   blotter's top right, which folds away to its fold. The panes' chevrons are
   tabs at their edges. Corners 4/8/14px; the sheet takes a 3px corner.
@@ -481,7 +481,7 @@ the new layout, or on the page. Whether the strip is hidden is per device.
 band and its formatting row, Slip's slip, Running head's strip) never runs
 past the page, the screen, or the system's window controls. The tools that
 don't fit fold behind one ⋯ at the bar's end, as few as it takes, in one
-order: Versions, Compare, the formatting bar's toggle, Focus, the views (as
+order: Versions, Compare, the formatting bar's toggle, Focus, Look, the views (as
 one), then the Seal (the formatting row: from Table back, bold and italic
 staying). The strip's own control never folds: it's the shut band's way back.
 The ⋯ lists what folded in the bar's order, each with its icon, key and state,
@@ -505,9 +505,9 @@ the words shows on the page once the typing pauses, so nothing on the page
 moves mid-word.
 
 On a phone each layout has its own bottom for the page: Band the top bar
-(the view, Focus, ⋯), Slip a floating slip (the three views, Focus, ⋯),
-Running head a rail at the page's foot (the views, Focus, Seal, ⋯). The ⋯
-holds the rest, as the menu bar does on the desktop.
+(the view, Focus, Look, ⋯), Slip a floating slip (the three views, Focus,
+Look, ⋯), Running head a rail at the page's foot (the views, Focus, Seal,
+Look, ⋯). The ⋯ holds the rest, as the menu bar does on the desktop.
 
 The visual design (type, color, spacing) is set in the design pass. This spec
 fixes only the token names it uses (§7).
@@ -1049,7 +1049,8 @@ does nothing.
   `Documents/Eien` for an installed copy, in a portable copy's "Eien Data" beside
   it (`src/app/electron/data-folders.ts`). They hold the scheme
   (day, night or the system's), palette, the layout (band, slip or running
-  head), text face, text size (90–130%),
+  head), text face, text size (90–130%), line spacing and page width (each a
+  step either side of the face's own, §6, A quick look),
   density (comfortable or compact), page frame (sheet or full), the page's
   zoom and the interface's (each 50–200%), the interface font, the Source
   font, the weight of the sidebar's names and the list's titles, the Running head's
@@ -1058,7 +1059,7 @@ does nothing.
   hidden, spellcheck (macOS), and on the phone how a wide screen is used (§10). A
   setting may be one system's alone (`platforms` in the schema): the screen shows it
   only there. A setting that needs panes side by side (`wide` in the schema: Panes,
-  Shut sidebar, Arranging, the formatting bar) shows only while the window has them,
+  Shut sidebar, Arranging, the formatting bar, Page width) shows only while the window has them,
   and comes and goes as that changes (a phone turned, a foldable opened, Wide screen
   set).
 - An unknown or invalid value in a file is ignored with a warning in the log,
@@ -1121,6 +1122,46 @@ larger inset (64px above and below, 112px at the sides).
   click on the dimmed window, and gives the keyboard back to what opened it.
 - **On a phone** it's a full sheet: the tabs in one strip under the head,
   nothing to move or resize; the phone's back closes it first.
+
+### A quick look
+
+Backlog #49 ([look.md](design/explorations/look.md), 1 · On the bar;
+[docs/quick-look.md](quick-look.md)): the look's everyday settings, in reach
+without Settings.
+
+- **The control** is **Look** (the Aa icon, ⇧⌘L, View → Look…), the page's
+  last tool after a hairline in each layout (before Band's and Slip's strip),
+  on a phone in the layout's bottom before the ⋯, and in the ⋯. Short of room
+  it folds after Focus; folded, the ⋯'s Look opens it under the ⋯.
+- **The popover** hangs under the control, its end lined up with it, as wide
+  as the list; on a phone (one pane at a time) it's a sheet from the screen's
+  foot, no scrim, at a finger's size, with Done. Its head says whose look it
+  sets: LOOK / NOTES, *every note*.
+- **What's in it** is what the schema marks `quick`, in its order, drawn by
+  Settings' own controls with their names alone: Day or night (marked
+  `window`: *every page*), Typeface, Text size, **Line spacing** (Tight, As
+  set, Loose: × 0.9, 1, 1.12 of the face's leading) and **Page width**
+  (Narrow, As set, Wide: × 0.84, 1, 1.18 of its measure), and Page (sheet or
+  full), each marked `page`. A setting marked later shows there with nothing
+  else to build. Page width needs room round a page (`wide`): a phone's page
+  already fills its screen, so it isn't offered there. Narrow also narrows a
+  sheet that fills its pane; Two sheets and Facing pages lay each page to
+  its half, which it doesn't change.
+- **A change shows at once**, nothing to confirm; the popover stays open,
+  Day or night turning the window with it. All settings (⌘,) at its foot
+  opens Settings at Look.
+- **The keyboard:** opened, it's on the first setting's chosen value. Each
+  setting is one stop: Tab and ⇧Tab go round them and All settings; arrows
+  choose at once (↑ ↓ a row of the faces); in the stepper they move between
+  − and +, which Enter and Space press. Esc, the key again, a click
+  elsewhere or the phone's back closes it, the keyboard back where it was
+  (the control, if it was pressed). Choosing the other page, or the keyboard
+  going on into it, closes it. With the band or slip put away, it hangs under
+  the strip's control.
+- **Whose look:** the active page's. Today that's the notes'; on a page of
+  another kind the control is disabled. #40 Phase 1 gives an EPUB the shelf's
+  own look, LOOK / SHELF, the same marked settings kept under `epub.<key>`.
+  The sidebar's sun stays: one press for Day or Night.
 
 ### Type and the Running head
 

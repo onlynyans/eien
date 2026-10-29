@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { SETTING_GROUPS, SETTINGS } from '../../core/config';
-import { CATEGORIES, placesHere, settingsIn } from './places';
+import { CATEGORIES, placesHere, quickIn, settingsIn } from './places';
 
 const tabs = CATEGORIES.flatMap((category) => category.tabs.map((tab) => ({ category, tab })));
 
@@ -41,5 +41,23 @@ describe('the categories', () => {
       'Writing',
       'This vault',
     ]);
+  });
+});
+
+describe('the quick look’s settings (#49)', () => {
+  it('are the marked ones, in the schema’s order', () => {
+    expect(quickIn('darwin', false).map((setting) => setting.key)).toEqual([
+      'appearance.scheme',
+      'appearance.face',
+      'appearance.textSize',
+      'appearance.leading',
+      'page.width',
+      'appearance.frame',
+    ]);
+  });
+
+  it('leave out what the room doesn’t offer: a phone’s one pane has no page width', () => {
+    expect(quickIn('android', true).map((setting) => setting.key)).not.toContain('page.width');
+    expect(quickIn('android', false).map((setting) => setting.key)).toContain('page.width');
   });
 });

@@ -145,10 +145,13 @@ export class SettingsScreen {
     return this.#dialog.open;
   }
 
-  open(): void {
+  /** Open Settings where it was left, or at `category`'s first tab shown here (the quick look's Look). */
+  open(category?: string): void {
     if (this.#dialog.open) return;
     this.#problem.hidden = true;
     this.#fit(this.#settings.values); // the window may have turned, or unfolded, since
+    const at = this.#tabs.find((tab) => tab.category.name === category && !tab.button.hidden);
+    if (at) this.#choose(at);
     const opener = document.activeElement;
     this.#openerKey = opener instanceof HTMLElement ? (opener.dataset.key ?? null) : null;
     this.#place();

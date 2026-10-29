@@ -99,14 +99,7 @@ export class Chrome {
     this.fit();
     if (active instanceof HTMLElement && !active.isConnected) {
       // The same command in the new layout, or the ⋯ it's folded behind there.
-      const twin = held
-        ? this.#hosts
-            .map((host) => {
-              const button = host.button(held);
-              return button?.hidden ? this.#moreOf(host) : button;
-            })
-            .find((button) => button?.checkVisibility())
-        : undefined;
+      const twin = held ? this.inSight(held) : undefined;
       if (twin) twin.focus();
       else this.#of.lost();
     }
@@ -157,6 +150,16 @@ export class Chrome {
   /** The commands folded behind the ⋯ in `bar` now. */
   folded(bar: HTMLElement): readonly CommandId[] {
     return this.#folded.get(bar) ?? [];
+  }
+
+  /** The button for `id` in sight now, or the ⋯ it's folded behind: what opens under it. */
+  inSight(id: CommandId): HTMLButtonElement | undefined {
+    return this.#hosts
+      .map((host) => {
+        const button = host.button(id);
+        return button?.hidden ? this.#moreOf(host) : button;
+      })
+      .find((button) => button?.checkVisibility()) as HTMLButtonElement | undefined;
   }
 
   /** The ⋯ the tools of `host`'s bar fold behind: its last folding host's. */

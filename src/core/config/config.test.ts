@@ -99,6 +99,57 @@ describe('the schema', () => {
   });
 });
 
+describe('the quick look’s mark (#49)', () => {
+  it('marks Day or night for every page, and five of the page’s own, in the decided order', () => {
+    const marked = SETTINGS.filter((setting) => 'quick' in setting).map((setting) => [
+      setting.key,
+      'quick' in setting && setting.quick,
+    ]);
+    expect(marked).toEqual([
+      ['appearance.scheme', 'window'],
+      ['appearance.face', 'page'],
+      ['appearance.textSize', 'page'],
+      ['appearance.leading', 'page'],
+      ['page.width', 'page'],
+      ['appearance.frame', 'page'],
+    ]);
+  });
+
+  it('keeps each marked setting on this device, as a look is', () => {
+    for (const setting of SETTINGS)
+      if ('quick' in setting) expect(setting.scope, setting.key).toBe('device');
+  });
+
+  it('adds line spacing and page width, a step either side of the face’s own, As set by default', () => {
+    const leading = settingOf('appearance.leading');
+    const width = settingOf('page.width');
+    expect(leading?.type === 'choice' && Object.keys(leading.choices)).toEqual([
+      'tight',
+      'set',
+      'loose',
+    ]);
+    expect(width?.type === 'choice' && Object.keys(width.choices)).toEqual([
+      'narrow',
+      'set',
+      'wide',
+    ]);
+    expect([DEFAULT_SETTINGS['appearance.leading'], DEFAULT_SETTINGS['page.width']]).toEqual([
+      'set',
+      'set',
+    ]);
+    expect([leading?.group, width?.group]).toEqual(['Type', 'Page']);
+    expect(valueProblem(width as never, 'huge')).not.toBeNull();
+  });
+
+  it('offers page width only where a page has room round it: never in a phone’s one pane', () => {
+    const width = settingOf('page.width');
+    if (!width) throw new Error('missing page.width');
+    expect(offeredOn(width, 'android', true)).toBe(false);
+    expect(offeredOn(width, 'android', false)).toBe(true);
+    expect(offeredOn(width, 'darwin')).toBe(true);
+  });
+});
+
 describe('valueProblem', () => {
   const palette = settingOf('appearance.palette');
   const zoom = settingOf('page.zoom');
