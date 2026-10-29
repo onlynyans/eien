@@ -4,6 +4,7 @@
 // and why a writer would care.
 
 import { describe, expect, it } from 'vitest';
+import { readLine } from '../table';
 import { curlyQuotes } from '../typography';
 import { fromHtml, pastedMarkdown } from './from-html';
 import { type HtmlOptions, toHtml } from './to-html';
@@ -51,6 +52,28 @@ describe('Paste: words are never lost', () => {
   });
 
   // A table's <caption> is dropped with its words.
+  // A cell's pipes were escaped each with a backslash, a pipe already escaped too: code holding
+  // "\|" (which inline leaves as it is) became "\\|", an escaped backslash and a pipe that ends the
+  // cell, so the row had one cell too many and the table was read as a paragraph of pipes.
+  it('keeps a table whole when a cell’s code holds an escaped pipe', () => {
+    const md = fromHtml('<table><tr><td><code>a\\|b</code></td><td>c</td></tr></table>');
+    const [head = ''] = md.split('\n');
+    expect(head).toBe('| `a\\|b` | c |');
+    expect(readLine(head).cells).toHaveLength(2);
+    expect(toHtml(md, CURLY)).toContain('<table>');
+  });
+
+  it('escapes every pipe in a cell’s words once, and a backslash before one', () => {
+    const md = (cell: string) =>
+      fromHtml(`<table><tr><td>${cell}</td><td>z</td></tr></table>`).split('\n')[0];
+    expect(md('a|b')).toBe('| a\\|b | z |');
+    expect(md('a\\|b')).toBe('| a\\\\\\|b | z |');
+    expect(md('a\\')).toBe('| a\\\\ | z |');
+    for (const cell of ['a|b', 'a\\|b', 'a\\', '<code>a|b</code>', '<code>\\</code>|', '\\\\|']) {
+      expect(readLine(md(cell) ?? '').cells, cell).toHaveLength(2);
+    }
+  });
+
   it('keeps a table’s caption', () => {
     expect(fromHtml('<table><caption>The cast</caption><tr><td>a</td></tr></table>')).toContain(
       'The cast',
@@ -134,6 +157,27 @@ describe('Performance: nothing freezes the editor', () => {
     const html = para.repeat(1500);
     expect(html.length).toBeLessThan(200_000);
     expect(timed(() => fromHtml(html))).toBeLessThan(200);
+  });
+
+  // A line that would read as a table's delimiter row ("-|", "|---|") is escaped; the pattern
+  // that found it could split each cell's spaces two ways, so a line of empty cells with words at
+  // its end ("-| | | … x") took twice as long for each cell: 20 cells 30 ms, 30 cells 30 s.
+  // Timed against the same line with stops for the pipes, on the same machine, not a clock: it ran
+  // 7,000 times as long; now about as long, under coverage too.
+  it('reads a line of empty cells in linear time', () => {
+    const least = (html: string) =>
+      Math.min(
+        ...[0, 1, 2].map(() => timed(() => Array.from({ length: 10 }, () => fromHtml(html)))),
+      );
+    const piped = least(`<p>-${'| '.repeat(20)}x</p>`);
+    const stopped = least(`<p>-${'. '.repeat(20)}x</p>`);
+    expect(piped / stopped).toBeLessThan(20);
+  });
+
+  it('still escapes a delimiter row, and only that', () => {
+    expect(fromHtml('<p>a<br>-| |</p>')).toBe('a\n\\-| |');
+    expect(fromHtml('<p>a<br>| --- | :-: |</p>')).toBe('a\n\\| --- | :-: |');
+    expect(fromHtml('<p>a<br>-| | x</p>')).toBe('a\n-| | x');
   });
 
   // curlyQuotes slices the end of the string it is building for every character, which flattens it

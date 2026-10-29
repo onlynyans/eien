@@ -38,4 +38,8 @@ jobs:
         with:
           languages: javascript-typescript
           build-mode: none
+          # The design's mockups are pages to look at, never built or shipped (Biome skips them too).
+          config: |
+            paths-ignore:
+              - docs/design
       - uses: github/codeql-action/analyze@v4
