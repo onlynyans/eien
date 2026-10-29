@@ -1,18 +1,22 @@
-/* The selection bar: raised paper over the page, the float shadow, the
-   inline commands as words. */
-.selection-bar {
+/* The selection bar, and a link's bar, its sibling (./link.css): raised paper over the page,
+   the float shadow. The selection bar's inline commands are words. */
+.selection-bar,
+.link-bar {
   position: fixed;
-  top: var(--bar-top, 0);
-  left: var(--bar-left, 0);
   z-index: 20;
   display: flex;
-  gap: var(--eien-space-1);
   padding: var(--eien-space-1);
   background: var(--eien-paper-raised);
   border: var(--eien-hairline) solid var(--eien-rule);
   border-radius: var(--eien-radius-m);
   box-shadow: var(--eien-shadow-float);
 }
-.selection-bar[hidden] {
+.selection-bar {
+  top: var(--bar-top, 0);
+  left: var(--bar-left, 0);
+  gap: var(--eien-space-1);
+}
+.selection-bar[hidden],
+.link-bar[hidden] {
   display: none;
 }
