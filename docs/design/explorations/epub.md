@@ -108,6 +108,31 @@ section where it and the directions below disagree.
     step, and a folder can hold both), and dimming books-only folders in
     FOLDERS (the clutter stays).
 
+### The tools, by what's in sight (decided 2026-10-29)
+
+- **A tool shows only while a page in sight can use it.** A command marked
+  for one kind of page (`on` in `chrome/commands.ts`) is set aside when no
+  page in sight is that kind, rather than greyed: a book never takes Bold,
+  so a greyed Bold says something false.
+- **Disabled, not hidden, when a page in sight can use it:** with a note
+  beside the book, the note's tools keep their place, disabled while the
+  book is the active page, so the bars don't come and go as the keyboard
+  moves between the two.
+
+  | In front | A note's tools | The formatting bar |
+  |---|---|---|
+  | A book alone | set aside | gone, its row too |
+  | A note beside a book, the book active | shown, disabled | shown, disabled |
+  | A note | as before | as before |
+
+- **The menu bar greys, never hides** (#120): menus list all the app does,
+  as each system's own do; the bars show what applies. A hidden tool's key
+  does nothing on a book.
+- **The tools every page shares keep their place** (Look, Split, the
+  panes, later Find); only a kind's own group goes or comes. A book's own
+  tools (contents, Pages or Scroll, bookmark) are marked `on: 'epub'` and
+  come by the same rule.
+
 ### Paged
 
 - **One leaf with its stacked edges** (Pages 2); **two pages** (Pages 1's
