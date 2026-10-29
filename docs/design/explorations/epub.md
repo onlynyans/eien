@@ -110,28 +110,33 @@ section where it and the directions below disagree.
 
 ### The tools, by what's in sight (decided 2026-10-29)
 
-- **A tool shows only while a page in sight can use it.** A command marked
-  for one kind of page (`on` in `chrome/commands.ts`) is set aside when no
-  page in sight is that kind, rather than greyed: a book never takes Bold,
-  so a greyed Bold says something false.
-- **Disabled, not hidden, when a page in sight can use it:** with a note
-  beside the book, the note's tools keep their place, disabled while the
-  book is the active page, so the bars don't come and go as the keyboard
-  moves between the two.
+- **A tool shows only while the active page can use it.** A command marked
+  for one kind of page (`on` in `chrome/commands.ts`) is set aside, not
+  greyed, while the active page is another kind: a book never takes Bold,
+  so a greyed Bold says something false. In a split, the bar shows the
+  tools of the page you're in: choose the book and the note's go, choose
+  the note and they come back (and a book's own, later, the other way).
+- **The rows stay; only buttons come and go.** The formatting bar's row
+  stays while a note is anywhere in sight, so neither page moves up or
+  down; with a book alone, the row goes too.
 
-  | In front | A note's tools | The formatting bar |
+  | In front | A note's tools | The formatting bar's row |
   |---|---|---|
-  | A book alone | set aside | gone, its row too |
-  | A note beside a book, the book active | shown, disabled | shown, disabled |
+  | A book alone | set aside | gone |
+  | A note beside a book, the book active | set aside | kept, its note-only buttons set aside |
+  | A note beside a book, the note active | shown | as before |
   | A note | as before | as before |
 
+- **The tools every page shares keep their place** (Look, Split, the
+  panes, later Find), anchored, so only a kind's own group changes; the
+  change is instant, never animated. Where a split mode already gives each
+  page its own host (Facing pages, Tools that follow), each page's tools
+  stay on it.
 - **The menu bar greys, never hides** (#120): menus list all the app does,
   as each system's own do; the bars show what applies. A hidden tool's key
   does nothing on a book.
-- **The tools every page shares keep their place** (Look, Split, the
-  panes, later Find); only a kind's own group goes or comes. A book's own
-  tools (contents, Pages or Scroll, bookmark) are marked `on: 'epub'` and
-  come by the same rule.
+- **A book's own tools** (contents, Pages or Scroll, bookmark) are marked
+  `on: 'epub'` and follow the same rule.
 
 ### Paged
 
