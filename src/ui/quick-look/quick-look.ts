@@ -32,6 +32,8 @@ export interface LookSubject {
   readonly crumb: string;
   readonly every: string;
   readonly store: LookStore;
+  /** A line at the foot, where All settings sets another's look: the shelf's says Settings sets notes. */
+  readonly line?: string;
 }
 
 export interface QuickLookOf {
@@ -116,11 +118,18 @@ export class QuickLook {
           on: { click: () => this.close() },
         })
       : null;
+    const line = subject.line
+      ? h('p', { class: 'quick-look__line', attrs: { id: 'quick-look-line' }, text: subject.line })
+      : null;
     const panel = h(
       'div',
       {
         class: phone ? 'quick-look quick-look--sheet' : 'quick-look',
-        attrs: { role: 'dialog', 'aria-label': `Look: ${subject.crumb}` },
+        attrs: {
+          role: 'dialog',
+          'aria-label': `Look: ${subject.crumb}`,
+          'aria-describedby': line ? 'quick-look-line' : undefined,
+        },
       },
       h(
         'div',
@@ -136,7 +145,7 @@ export class QuickLook {
         h('span', { class: 'quick-look__every', text: subject.every }),
       ),
       h('div', { class: 'quick-look__body' }, ...rows.map((row) => row.element)),
-      h('div', { class: 'quick-look__foot' }, allSettings, done),
+      h('div', { class: 'quick-look__foot' }, line, allSettings, done),
     );
     const show = () => {
       const had = document.activeElement;

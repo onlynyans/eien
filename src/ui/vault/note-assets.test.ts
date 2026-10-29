@@ -70,7 +70,7 @@ async function vaultWith(files: Record<string, string>, images: readonly string[
     });
     return session as NoteSession;
   };
-  return { storage, state, organizer, told, text, open };
+  return { storage, vault, state, organizer, told, text, open };
 }
 
 const NOTE = 'A scarf.\n\n![](Chapter%203.assets/scarf.png)\n\n![](cover.png)\n';
@@ -78,7 +78,7 @@ const NOTE = 'A scarf.\n\n![](Chapter%203.assets/scarf.png)\n\n![](cover.png)\n'
 describe('a note’s images', () => {
   it('are renamed with it, and its links follow', async () => {
     const v = await vaultWith({ 'Fic/Chapter 3.md': NOTE }, ['Fic/Chapter 3.assets/scarf.png']);
-    expect(await v.organizer.renameNote('Fic/Chapter 3.md', 'The Fire')).toBe('Fic/The Fire.md');
+    expect(await v.organizer.renameFile('Fic/Chapter 3.md', 'The Fire')).toBe('Fic/The Fire.md');
     expect(await v.storage.readBytes('Fic/The Fire.assets/scarf.png')).toEqual(PNG);
     expect(await v.storage.readBytes('Fic/Chapter 3.assets/scarf.png')).toBeNull();
     expect(await v.text('Fic/The Fire.md')).toBe(
@@ -90,7 +90,7 @@ describe('a note’s images', () => {
   it('follow the open note, its links changed on the page and saved', async () => {
     const v = await vaultWith({ 'Chapter 3.md': NOTE }, ['Chapter 3.assets/scarf.png']);
     const session = await v.open('Chapter 3.md');
-    expect(await v.organizer.renameNote('Chapter 3.md', 'Four')).toBe('Four.md');
+    expect(await v.organizer.renameFile('Chapter 3.md', 'Four')).toBe('Four.md');
     expect(session.path).toBe('Four.md');
     expect(session.text).toContain('![](Four.assets/scarf.png)');
     expect(await v.text('Four.md')).toContain('![](Four.assets/scarf.png)');
@@ -117,7 +117,7 @@ describe('a note’s images', () => {
       'Chapter 3.assets/scarf.png',
       'Four.assets/someone else.png',
     ]);
-    expect(await v.organizer.renameNote('Chapter 3.md', 'Four')).toBe('Four.md');
+    expect(await v.organizer.renameFile('Chapter 3.md', 'Four')).toBe('Four.md');
     expect(await v.storage.readBytes('Chapter 3.assets/scarf.png')).toEqual(PNG);
     expect(await v.text('Four.md')).toBe(NOTE); // still finds nothing new: nothing to point at
     expect(v.told).toEqual(['“Four” moved, but its images stayed in “Chapter 3.assets”.']);
@@ -125,7 +125,7 @@ describe('a note’s images', () => {
 
   it('are nothing to say for a note that has none', async () => {
     const v = await vaultWith({ 'Plain.md': 'Words.' });
-    expect(await v.organizer.renameNote('Plain.md', 'Other')).toBe('Other.md');
+    expect(await v.organizer.renameFile('Plain.md', 'Other')).toBe('Other.md');
     await v.organizer.trash('Other.md');
     expect(v.told).toEqual(['“Other” is in the trash.']);
   });
@@ -133,5 +133,54 @@ describe('a note’s images', () => {
   it('are hidden from the tree while the note is beside them', async () => {
     const v = await vaultWith({ 'Chapter 3.md': NOTE }, ['Chapter 3.assets/scarf.png']);
     expect(v.state.tree.folders).toEqual([]);
+  });
+});
+
+describe('a book on SHELF is no note (#40)', () => {
+  const BOOK = 'Novels/Dune.epub';
+
+  it('keeps its .epub, renamed or moved, and never takes a folder named like it along', async () => {
+    const v = await vaultWith({ [BOOK]: 'PK', 'Novels/Dune.md': 'Notes on it.\n' }, [
+      'Novels/Dune.epub.assets/map.png',
+      'Novels/Dune.assets/map.png',
+    ]);
+    expect(await v.organizer.renameFile(BOOK, 'Arrakis')).toBe('Novels/Arrakis.epub');
+    expect(await v.organizer.moveInto('Novels/Arrakis.epub', '', true)).toBe('Arrakis.epub');
+    await v.state.refresh();
+    expect(v.state.has('Novels/Dune.epub.assets/map.png')).toBe(true);
+    expect(v.state.has('Novels/Dune.assets/map.png')).toBe(true);
+    expect(await v.text('Novels/Dune.md')).toBe('Notes on it.\n');
+    expect(v.told).toEqual([]);
+  });
+
+  it('takes no place in a folder’s own order, moved into it: the order’s file isn’t written', async () => {
+    const order = '{"order":["Two.md","One.md"]}';
+    const v = await vaultWith({
+      [BOOK]: 'PK',
+      'Fic/One.md': 'One.\n',
+      'Fic/Two.md': 'Two.\n',
+      'Fic/.eien-folder.json': order,
+    });
+    expect(await v.organizer.moveInto(BOOK, 'Fic', true)).toBe('Fic/Dune.epub');
+    expect(await v.text('Fic/.eien-folder.json')).toBe(order);
+  });
+
+  it('goes to the trash, the writer told where by its title; nothing else goes with it', async () => {
+    const v = await vaultWith({ [BOOK]: 'PK' }, ['Novels/Dune.epub.assets/map.png']);
+    expect(await v.organizer.trash(BOOK)).toBe(true);
+    expect(v.storage.trashed).toEqual([BOOK]);
+    expect(v.told).toEqual(['“Dune” is in the trash.']);
+  });
+
+  it('stays where it is when the trash fails: nothing deleted, and the writer told', async () => {
+    const v = await vaultWith({ [BOOK]: 'PK' });
+    v.vault.trash = async () => {
+      throw new Error('The trash is full.');
+    };
+    expect(await v.organizer.trash(BOOK)).toBe(false);
+    expect(await v.text(BOOK)).toBe('PK');
+    expect(v.told).toEqual([
+      '“Dune” couldn’t go to the trash, so nothing was deleted: The trash is full.',
+    ]);
   });
 });

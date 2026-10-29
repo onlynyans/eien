@@ -115,7 +115,7 @@ export async function showVault(
     redrawTree: () => void draw.sidebar(),
   });
 
-  const { rows, menus } = rowActions({
+  const { rows, books, menus } = rowActions({
     state,
     organizer,
     nav,
@@ -135,7 +135,7 @@ export async function showVault(
     keys: keys.sidebar,
     search,
     rows,
-    shelf: epubs.actions,
+    shelf: { ...epubs.actions, ...books },
     nav,
     organizer,
     order,
@@ -213,6 +213,8 @@ export async function showVault(
     mac: keys.sidebar.startsWith('⌘'),
     platform: bridge.platform,
     openInNewWindow,
+    greyMenu:
+      bridge.window && ((commands) => void bridge.window?.greyMenu(commands).catch(console.error)),
   });
   chrome.mount();
 

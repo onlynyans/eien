@@ -154,7 +154,7 @@ describe('Organizer, adversarial', () => {
       'Book/.eien-folder.json': '{"order":["chapter two.md","Chapter One.md"],"book":{}}',
     });
     expect(await v.state.folderOrder('Book')).toEqual(['Chapter Two.md', 'Chapter One.md']);
-    expect(await v.organizer.renameNote('Book/Chapter Two.md', 'Prologue')).toBe(
+    expect(await v.organizer.renameFile('Book/Chapter Two.md', 'Prologue')).toBe(
       'Book/Prologue.md',
     );
     await v.refresh();
@@ -202,7 +202,7 @@ describe('Organizer, adversarial', () => {
         'Book/Seventeen.md': '3',
         'Book/.eien-folder.json': book(['The Tear.md', 'Needle.md', 'Seventeen.md']),
       });
-      expect(await v.organizer.renameNote('Book/Needle.md', 'Needle and Thread')).toBe(
+      expect(await v.organizer.renameFile('Book/Needle.md', 'Needle and Thread')).toBe(
         'Book/Needle and Thread.md',
       );
       expect(await orderIn(v, 'Book')).toEqual([
@@ -219,7 +219,7 @@ describe('Organizer, adversarial', () => {
         'Book/Three.md': '3',
         'Book/.eien-folder.json': book(['One.md', 'needle.md', 'Three.md']),
       });
-      expect(await v.organizer.renameNote('Book/needle.md', 'Needle')).toBe('Book/Needle.md');
+      expect(await v.organizer.renameFile('Book/needle.md', 'Needle')).toBe('Book/Needle.md');
       expect(await orderIn(v, 'Book')).toEqual(['One.md', 'Needle.md', 'Three.md']);
     });
 
