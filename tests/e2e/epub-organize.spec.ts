@@ -25,13 +25,19 @@ test.use({
   },
 });
 
-test('a book’s row menu: its name at the head, Rename, Move to… and the trash last', async ({
+test('a book’s row menu: its name at the head, Open to the Side, Rename, Move to… and the trash last', async ({
   page,
 }) => {
   await book(page, 'Pride and Prejudice').click({ button: 'right' });
   const menu = page.getByRole('menu', { name: 'Pride and Prejudice' });
   await expect(menu.locator('.menu__head')).toHaveText('Pride and Prejudice');
-  await expect(menu.getByRole('menuitem')).toHaveText(['Rename', 'Move to…', TRASH]);
+  // Open to the Side first, as a note's row has it (#40, Phase 2c): the desktop's, with room for two.
+  await expect(menu.getByRole('menuitem')).toHaveText([
+    'Open to the Side',
+    'Rename',
+    'Move to…',
+    TRASH,
+  ]);
   await expect(menu.getByRole('menuitem', { name: 'Rename' })).toHaveAttribute(
     'aria-keyshortcuts',
     'F2',
