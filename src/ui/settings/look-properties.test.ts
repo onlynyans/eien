@@ -76,3 +76,17 @@ describe('the Running head’s ground', () => {
     expect(lookProperties(DEFAULT_SETTINGS)['--runhead-ground']).toBeNull();
   });
 });
+
+describe('line spacing and page width (#49)', () => {
+  it('step the face’s own leading and measure, and set nothing As set', () => {
+    const at = (leading: string, width: string) =>
+      lookProperties({
+        ...DEFAULT_SETTINGS,
+        'appearance.leading': leading as never,
+        'page.width': width as never,
+      });
+    expect(at('tight', 'narrow')).toMatchObject({ '--look-lead': '0.9', '--look-width': '0.84' });
+    expect(at('loose', 'wide')).toMatchObject({ '--look-lead': '1.12', '--look-width': '1.18' });
+    expect(at('set', 'set')).toMatchObject({ '--look-lead': null, '--look-width': null });
+  });
+});

@@ -180,7 +180,7 @@
 .settings__sample p {
   margin: 0;
   font-size: var(--eien-size-prose);
-  line-height: var(--eien-leading-prose);
+  line-height: calc(var(--eien-leading-prose) * var(--look-lead, 1));
 }
 .settings__sample .count {
   display: block;

@@ -66,6 +66,14 @@ export function settingsIn(tab: Tab, platform: string): Setting[] {
   return SETTINGS.filter((setting) => setting.group === tab.group && offeredOn(setting, platform));
 }
 
+/**
+ * The settings the quick look (#49) offers on the system named `platform`, `phone` or not: those
+ * marked `quick` in the schema, in its order. A setting marked later shows there with nothing to build.
+ */
+export function quickIn(platform: string, phone: boolean): Setting[] {
+  return SETTINGS.filter((setting) => 'quick' in setting && offeredOn(setting, platform, phone));
+}
+
 /** Every category, with only the tabs that show something here. */
 export function placesHere(platform: string): Category[] {
   return CATEGORIES.map((category) => ({

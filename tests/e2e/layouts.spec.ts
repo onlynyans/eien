@@ -24,6 +24,7 @@ const COMMANDS = [
   'versions',
   'format-bar',
   'focus',
+  'look',
   'scheme',
   'panes',
   'settings',

@@ -40,9 +40,12 @@ const WEIGHT_SAMPLES: Partial<Record<SettingKey, string>> = {
 const chosenIn = (values: SettingValues, key: SettingKey): unknown =>
   (values as Record<string, unknown>)[key];
 
-/** A setting's row: its name, what it does, its control. */
-export function settingRow(setting: Setting, set: Set): Row {
-  const labelId = `setting-${setting.key.replace('.', '-')}`;
+/**
+ * A setting's row: its name, what it does, its control. `prefix` keeps its ids apart from another
+ * row for the same setting (Settings draws every row; the quick look draws some again).
+ */
+export function settingRow(setting: Setting, set: Set, prefix = 'setting'): Row {
+  const labelId = `${prefix}-${setting.key.replace('.', '-')}`;
   const control = controlFor(setting, labelId, set);
   const element = h(
     'div',

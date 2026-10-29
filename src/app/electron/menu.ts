@@ -175,6 +175,8 @@ export function buildMenu(send: SendCommand): Menu {
         toggle('Typewriter Scrolling', 'editor.typewriter'),
         toggle('Show Markdown Marks', 'editor.marks'),
         toggle('Formatting Bar', 'editor.formatBar', 'CmdOrCtrl+Shift+B'),
+        // The page's look, in a popover (#49): its key is the Look control's (ui/chrome/commands.ts).
+        item('Look…', 'look', 'CmdOrCtrl+Shift+L'),
         { type: 'separator' },
         // A sprint against the clock, counted in the colophon (spec §4).
         {

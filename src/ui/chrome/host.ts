@@ -18,6 +18,8 @@ export interface CommandLook {
   readonly icon?: IconName;
   /** The tooltip's words now (Compare · Changes). */
   readonly tip?: string;
+  /** Its popover open or not, for a command that opens one (Look). */
+  readonly expanded?: boolean;
 }
 
 export interface HostOf {
@@ -138,6 +140,11 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
         if (pressed === null) button.removeAttribute('aria-pressed');
         else button.setAttribute('aria-pressed', pressed);
       }
+      const expanded = look.expanded === undefined ? null : String(look.expanded);
+      if (button.getAttribute('aria-expanded') !== expanded) {
+        if (expanded === null) button.removeAttribute('aria-expanded');
+        else button.setAttribute('aria-expanded', expanded);
+      }
       const disabled = look.disabled ?? false;
       if (button.disabled !== disabled) button.disabled = disabled;
       const tip = look.tip ?? def.tip ?? def.label;
@@ -163,7 +170,8 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
           'data-shortcut': keys?.text,
           // Its identity across redraws and layouts: the keyboard comes back to it by this.
           'data-key': `command:${id}`,
-          'aria-haspopup': id === 'settings' ? 'dialog' : id === 'more' ? 'menu' : undefined,
+          'aria-haspopup':
+            id === 'settings' || id === 'look' ? 'dialog' : id === 'more' ? 'menu' : undefined,
         },
         on: { click: () => this.#of.press(id, button) },
       },

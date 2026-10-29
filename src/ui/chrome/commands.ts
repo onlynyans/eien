@@ -154,6 +154,8 @@ export const COMMANDS = [
     sends: 'toggle:editor.focus',
     on: 'note',
   },
+  // The quick look (#49): a note's look for now; #40 Phase 1 drops `on` once the shelf has its own.
+  { id: 'look', icon: 'look', label: 'Look', key: 'Mod-Shift-l', sends: 'look', on: 'note' },
   { id: 'strip', icon: 'up', label: 'Page controls', layouts: ['band', 'slip'] },
   { id: 'scheme', icon: 'sun', label: 'Night' },
   { id: 'panes', icon: 'panes3', label: 'Two panes' },
