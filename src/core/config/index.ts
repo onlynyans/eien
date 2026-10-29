@@ -1,3 +1,4 @@
+export { EPUB_LOOK, epubKey, epubLook, isPageLook, PAGE_LOOK } from './epub-look';
 export {
   FACES,
   type Face,
@@ -8,8 +9,10 @@ export {
 } from './faces';
 export {
   type ChoiceSetting,
+  type EpubLookKey,
   type NumberSetting,
   offeredOn,
+  type PageLookKey,
   SETTING_GROUPS,
   SETTINGS,
   type Setting,

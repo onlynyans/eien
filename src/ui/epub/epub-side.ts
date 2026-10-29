@@ -168,7 +168,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       letGo();
       page.nothing();
     },
-    follow: () => {},
+    follow: (values) => page.wear(values),
     dispose() {
       disposed = true;
       letGo();

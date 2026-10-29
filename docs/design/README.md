@@ -185,7 +185,7 @@ A setting with two values: **Comfortable** (the default) and **Compact**,
 takes away space: narrower sheet margins, a thinner blotter round the sheet,
 tighter paragraphs and lines (each face's leading less 0.14), shorter rows,
 and the note list without its line of preview. It's expressed only in tokens
-(`--eien-sheet-pad-x`, `--eien-sheet-pad-top`, `--eien-page-gutter`,
+(`--eien-sheet-pad-x`, `--eien-sheet-pad-top`, `--eien-sheet-gutter`,
 `--eien-title-gap`, `--eien-paragraph-gap`, `--eien-leading-tighten`,
 `--eien-row-h`, `--eien-row-pad-y`, `--eien-list-preview`), so no component
 asks which density it's in.
@@ -196,8 +196,16 @@ A setting separate from density, so it works with either: **Sheet** (the
 default) lays the page on the blotter with a hairline edge and the sheet's
 shadow; **Full** (`data-frame="full"`) takes the frame away, so the third pane
 is paper from edge to edge, with no gap, edge or shadow, and the text keeps its
-line length, centred. Tokens: `--eien-page-ground`, `--eien-page-gutter`,
-`--eien-sheet-edge`, `--eien-sheet-lift`.
+line length, centred. Tokens: `--eien-page-ground`, `--eien-page-gutter` (the
+density's `--eien-sheet-gutter` with a sheet, none full), `--eien-sheet-edge`,
+`--eien-sheet-lift`. A book's page (#40) wears its own frame: the tokens are set
+on `[data-frame]` as on `<html>`, and its leaf (always marked) paints its own
+ground.
+
+A book's page wears the rest of its own look the same way, on its leaf: its
+`data-face` (always set, so it never takes the notes'), and
+`--eien-text-scale`, `--look-lead` and `--look-width`, from the shelf's
+settings (`epub.<key>`, set in the quick look with a book in front).
 
 ## Line spacing and page width
 

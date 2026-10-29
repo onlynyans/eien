@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   checkSetting,
   DEFAULT_SETTINGS,
+  EPUB_LOOK,
+  epubKey,
+  epubLook,
+  isPageLook,
   offeredOn,
+  PAGE_LOOK,
   readSettings,
   SETTING_GROUPS,
   SETTINGS,
@@ -309,7 +314,59 @@ describe('withDefaults', () => {
       'books.numerals': 'arabic',
     });
     expect(withDefaults({ 'page.zoom': 120 }, { 'page.zoom': 80 })['page.zoom']).toBe(120);
-    expect(Object.keys(withDefaults())).toEqual(SETTINGS.map((setting) => setting.key));
+    // Every setting, and the shelf's look after them (#40), each page setting again under `epub.`.
+    expect(Object.keys(withDefaults())).toEqual([
+      ...SETTINGS.map((setting) => setting.key),
+      ...EPUB_LOOK.map((setting) => setting.key),
+    ]);
+  });
+});
+
+describe('a book’s own look (#40)', () => {
+  it('is each setting a page wears, again under epub., kept on this device', () => {
+    expect(PAGE_LOOK.map((setting) => setting.key)).toEqual([
+      'appearance.face',
+      'appearance.textSize',
+      'appearance.leading',
+      'page.width',
+      'appearance.frame',
+    ]);
+    expect(EPUB_LOOK.map((setting) => [setting.key, setting.scope])).toEqual(
+      PAGE_LOOK.map((setting) => [`epub.${setting.key}`, 'device']),
+    );
+    expect(DEFAULT_SETTINGS['epub.appearance.textSize']).toBe(
+      DEFAULT_SETTINGS['appearance.textSize'],
+    );
+  });
+
+  it('is checked, read and written as any setting is, and never as another', () => {
+    expect(checkSetting('epub.appearance.face', 'literata')).toEqual({
+      key: 'epub.appearance.face',
+      value: 'literata',
+    });
+    expect(() => checkSetting('epub.appearance.textSize', 500)).toThrow(TypeError);
+    expect(() => checkSetting('epub.appearance.scheme', 'night')).toThrow(TypeError);
+    expect(() => checkSetting('epub.editor.focus', 'on')).toThrow(TypeError);
+    const read = readSettings(
+      { 'epub.appearance.leading': 'loose', 'epub.page.width': 'huge' },
+      'device',
+    );
+    expect(read.values).toEqual({ 'epub.appearance.leading': 'loose' });
+    expect(read.problems).toEqual([expect.stringMatching(/^epub\.page\.width must be one of/u)]);
+    expect(readSettings({ 'epub.appearance.face': 'literata' }, 'vault').values).toEqual({});
+  });
+
+  it('is worn by a book as the page settings, the notes’ untouched', () => {
+    const values = withDefaults({
+      'appearance.face': 'hanken',
+      'epub.appearance.face': 'literata',
+    });
+    expect(epubLook(values)['appearance.face']).toBe('literata');
+    expect(values['appearance.face']).toBe('hanken');
+    expect(epubLook(values)['appearance.scheme']).toBe(values['appearance.scheme']);
+    expect(epubKey('page.width')).toBe('epub.page.width');
+    expect(isPageLook('appearance.leading')).toBe(true);
+    expect(isPageLook('appearance.scheme')).toBe(false);
   });
 });
 

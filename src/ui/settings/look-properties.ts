@@ -5,7 +5,7 @@
 // rules are tested; ./look.ts sets them. A property at its default is taken
 // off, so tokens.css's own value stands.
 
-import { FACES, faceOf, type SettingValues } from '../../core/config';
+import { epubLook, FACES, faceOf, type SettingValues } from '../../core/config';
 
 /** The heaviest weight the faces are drawn at. */
 export const HEAVIEST = 700;
@@ -64,5 +64,28 @@ export function lookProperties(values: SettingValues): LookProperties {
     '--runhead-ground': ground === 'desk' ? null : `var(--eien-${ground})`,
     '--look-lead': times(LEADING[values['appearance.leading']]),
     '--look-width': times(WIDTH[values['page.width']]),
+  };
+}
+
+/**
+ * A book's page's own look (#40), worn on its leaf rather than <html>: its
+ * face and frame as data attributes, always set (a leaf without one would
+ * take the notes'), and its text size, line spacing and width as the
+ * properties the notes' are, from the shelf's settings.
+ */
+export function leafLook(values: SettingValues): {
+  readonly face: string;
+  readonly frame: string;
+  readonly properties: Readonly<Record<string, string>>;
+} {
+  const worn = epubLook(values);
+  return {
+    face: worn['appearance.face'],
+    frame: worn['appearance.frame'],
+    properties: {
+      '--eien-text-scale': String(worn['appearance.textSize'] / 100),
+      '--look-lead': String(LEADING[worn['appearance.leading']]),
+      '--look-width': String(WIDTH[worn['page.width']]),
+    },
   };
 }

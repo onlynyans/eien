@@ -58,10 +58,8 @@ Each face keeps its own tuning; the writer's step goes over it.
 
 - `look` is a new `MenuCommand`; the menu bar's View → Look… sends it with
   CmdOrCtrl+Shift+L (`app/electron/menu.ts`). ⇧⌘L is free (look.md).
-- `on: 'note'` for now: with no shelf store, a page of another kind has it
-  disabled, as every note-only command is, and the menu's View → Look… and
-  ⇧⌘L do nothing there (the wiring asks `actsOn`). Phase 1 drops `on` once
-  the shelf's store exists.
+- No `on` (#40 Phase 1c dropped the `on: 'note'` this half had): a book's
+  page has its own look, the shelf's.
 - The icon, `look` in `ui/icons.ts`: the exploration's Aa (a capital and a
   small letter), on the 16-unit grid.
 - Where it's drawn, the page's last tool after a hairline:
@@ -86,8 +84,8 @@ Each face keeps its own tuning; the writer's step goes over it.
 - `quick-look.ts`, `QuickLook`: `open(subject, opener)`, `close()`,
   `toggle(subject, opener)`, `isOpen`. A `LookSubject` is whose look:
   `{ crumb, every, store }` (NOTES, *every note*, the settings). The wiring
-  keeps one per page kind, the note's alone now; Phase 1 adds the epub's
-  (SHELF, *every book on the shelf*, the `epub.<key>` store). A
+  keeps one per page kind: the note's, and the epub's (SHELF, *every book on
+  the shelf*, the `epub.<key>` store, #40 Phase 1c). A
   `role="dialog"` named "Look: Notes". It draws:
   - the head: Settings' breadcrumb, LOOK / NOTES, *every note* in pencil;
   - a row per `quickIn` setting, each `settingRow` from
@@ -171,3 +169,32 @@ Each face keeps its own tuning; the writer's step goes over it.
   Panes as a column, One at a time as a sheet.
 - Accessibility: the popover open, by Day and Night, in every layout (and the
   phone's sheet).
+
+## The shelf's half (#40, Phase 1c, built)
+
+- `core/config/epub-look.ts`: `PAGE_LOOK`, the settings marked `page`, and
+  `EPUB_LOOK`, each again under `epub.<key>` on this device, the same entry
+  with its key and scope rewritten: `settingOf`, `checkSetting`,
+  `readSettings`, `withDefaults` and the settings store take them as any
+  setting; Settings never draws them (it draws `SETTINGS`). `SettingKey` and
+  `SettingValues` carry them by type (`EpubLookKey`). `epubLook(values)` is
+  the values a book wears.
+- `ui/quick-look/epub-store.ts`: the shelf's `LookStore` over the window's
+  settings: a page setting read from and kept under its `epub.` key, any
+  other the window's. The wiring's subjects are now `{ note, epub }`, the
+  shelf's LOOK / SHELF, *every book on the shelf*; Look lost its `on:
+  'note'`, so the control, ⇧⌘L, View → Look… and the phone's ⋯ work with a
+  book in front.
+- The book's page wears it (`EpubPage.wear`, from `Side.follow`): its leaf
+  always carries `data-face` and `data-frame`, and `--eien-text-scale`,
+  `--look-lead` and `--look-width` (`leafLook`, beside `lookProperties`,
+  with the same steps). The frame's tokens are set on `[data-frame]` as on
+  `<html>` (the density's gutter is `--eien-sheet-gutter` now), and the
+  book's leaf paints its own ground.
+- In a split, both pages lie in the window's frame (one arrangement of the
+  pane, which Two sheets' and Facing pages' marks read): the book keeps its
+  own face, size, line spacing and width there (`ui/page/split.css`).
+- All settings, from the shelf's look, opens Settings at Look, which sets the
+  notes': the shelf's look is set in the quick look alone.
+- Still not built: the page the look doesn't change sitting back while the
+  popover is open with a note and a book side by side (backlog).

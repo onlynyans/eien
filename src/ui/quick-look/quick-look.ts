@@ -1,6 +1,7 @@
 // The quick look (backlog #49, docs/quick-look.md): a popover of the look's
 // everyday settings, under the Look control, or on the phone a sheet from
-// the screen's foot. Its head says whose look it sets (LOOK / NOTES); its
+// the screen's foot. Its head says whose look it sets (LOOK / NOTES, or with
+// a book in front LOOK / SHELF, #40); its
 // rows are the settings the schema marks `quick`, drawn as Settings draws
 // them (../settings/controls.ts), names only. A change shows at once: there's
 // nothing to confirm. It floats as a menu does (../menu/menu.ts): the one
@@ -25,7 +26,7 @@ export interface LookStore {
 
 /**
  * Whose look the popover sets: its name in the head (NOTES), what that covers (every note), and
- * where its values are kept. #40 Phase 1 adds the shelf's, its values under `epub.<key>`.
+ * where its values are kept: the notes' are the settings; the shelf's (#40) are under `epub.<key>`.
  */
 export interface LookSubject {
   readonly crumb: string;

@@ -14,6 +14,7 @@ import { tooltips } from '../chrome/tooltip';
 import { h } from '../dom';
 import type { MenuBus } from '../menu/menu-bus';
 import type { PageKind } from '../page/page-leaf';
+import { epubStore } from '../quick-look/epub-store';
 import { type LookSubject, QuickLook } from '../quick-look/quick-look';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
@@ -154,9 +155,10 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   });
   tips.watch(pane.divider);
 
-  /** Whose look each kind of page wears: the notes' now; #40 Phase 1 adds the shelf's. */
-  const subjects: Partial<Record<PageKind, LookSubject>> = {
+  /** Whose look each kind of page wears: the notes', and the shelf's, apart (#40). */
+  const subjects: Record<PageKind, LookSubject> = {
     note: { crumb: 'Notes', every: 'every note', store: settings },
+    epub: { crumb: 'Shelf', every: 'every book on the shelf', store: epubStore(settings) },
   };
   /** The side whose look is open: choosing the other page closes it. */
   let lookSide: Side | null = null;
@@ -172,7 +174,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
   const toggleLook = () => {
     const side = target('look');
     const subject = subjects[side.kind];
-    if (!subject || !actsOn('look', side.kind)) return;
+    if (!actsOn('look', side.kind)) return;
     lookSide = side;
     // On the phone's way too: a press on its control is then a toggle, not a close and open again.
     // With the band or slip put away, under the strip's control, the way back to them.

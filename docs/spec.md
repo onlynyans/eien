@@ -1084,7 +1084,8 @@ does nothing.
   it (`src/app/electron/data-folders.ts`). They hold the scheme
   (day, night or the system's), palette, the layout (band, slip or running
   head), text face, text size (90–130%), line spacing and page width (each a
-  step either side of the face's own, §6, A quick look),
+  step either side of the face's own, §6, A quick look), the shelf's own
+  look (#40: each of those page settings again under `epub.<key>`),
   density (comfortable or compact), page frame (sheet or full), the page's
   zoom and the interface's (each 50–200%), the interface font, the Source
   font, the weight of the sidebar's names and the list's titles, the Running head's
@@ -1192,10 +1193,16 @@ without Settings.
   (the control, if it was pressed). Choosing the other page, or the keyboard
   going on into it, closes it. With the band or slip put away, it hangs under
   the strip's control.
-- **Whose look:** the active page's. Today that's the notes'; on a page of
-  another kind the control is disabled. #40 Phase 1 gives an EPUB the shelf's
-  own look, LOOK / SHELF, the same marked settings kept under `epub.<key>`.
-  The sidebar's sun stays: one press for Day or Night.
+- **Whose look:** the active page's. With a note in front, the notes'
+  (LOOK / NOTES, *every note*); with a book (#40), the shelf's (LOOK / SHELF,
+  *every book on the shelf*): the same `page` settings, kept again on this
+  device under `epub.<key>` (`core/config/epub-look.ts`: no copied entries;
+  Settings doesn't draw them), and worn on the book's page alone, so a
+  note's look never changes a book's, nor a book's a note's. Day or night is
+  the window's, whichever; so is the frame while two pages share the pane.
+  All settings opens Settings at Look, the notes': the shelf's look is set
+  here alone. The sidebar's sun stays: one press for Day or
+  Night.
 
 ### Type and the Running head
 

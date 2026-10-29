@@ -60,7 +60,7 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
       ? [item('Stop sprint', 'sprint:stop')]
       : SPRINT_MINUTES.map((minutes) => item(`Sprint, ${minutes} minutes`, `sprint:${minutes}`))),
     'separator',
-    notes(item('Look', 'look')), // a book's own look comes with #40 Phase 1c
+    item('Look', 'look'),
     item('Settings', 'settings'),
   ];
 }

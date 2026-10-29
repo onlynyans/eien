@@ -191,7 +191,9 @@ Each phase is its own session and pull request, from main.
   fixture books; **1b, built**: books in the index (an `epub` entry kind),
   SHELF, the EPUB's page kind with a chapter and its pictures, the contents
   in the list (under the book's row with two panes), the book's stylesheet
-  and its tokens, the reading state kept; 1c, the book's look. The iOS
+  and its tokens, the reading state kept; **1c, built**: the book's look,
+  made from #49's `quick` mark (`epub.<key>`), the quick look's shelf half
+  (LOOK / SHELF), worn on the book's page alone. The iOS
   simulator starts with a fixture book in its vault; opening it there needs a
   UI driver the smoke test lacks (backlog).
   - the zip reader (the browser's decompression, in the window, on desktop

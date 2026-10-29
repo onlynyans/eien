@@ -173,3 +173,15 @@
   border: var(--eien-hairline) solid var(--eien-rule-strong);
   border-radius: var(--eien-radius-s);
 }
+
+/* A book's page wears its own frame alone on the pane (../epub/epub.css). Two
+   pages lie in the window's frame, one arrangement of the pane (Two sheets'
+   and Facing pages' marks read it): the book keeps its own face, size, line
+   spacing and width. */
+.page__pages[data-two] > .page__leaf[data-frame] {
+  --eien-page-ground: inherit;
+  --eien-page-gutter: inherit;
+  --eien-sheet-edge: inherit;
+  --eien-sheet-lift: inherit;
+  background: none;
+}

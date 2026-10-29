@@ -103,11 +103,12 @@ describe('the Look control', () => {
     float.mockRestore();
   });
 
-  it('is off, and the menu’s Look does nothing, while the active page holds another kind', async () => {
+  it('sets the shelf’s look with a book in front: LOOK / SHELF, every book on the shelf (#40)', async () => {
     const { menu, control, popover } = await shown(true);
-    expect(control()?.disabled).toBe(true);
+    expect(control()?.disabled).toBe(false);
     menu.run('look');
-    expect(popover()).toBeNull();
+    expect(popover()?.getAttribute('aria-label')).toBe('Look: Shelf');
+    expect(popover()?.textContent).toContain('every book on the shelf');
   });
 
   it('closes when the other page becomes the one you’re in', async () => {
