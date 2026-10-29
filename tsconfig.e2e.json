@@ -19,6 +19,7 @@
     "tests/packaged",
     "playwright.packaged.config.ts",
     "src/platform/storage.ts",
+    "src/platform/inflate.ts",
     "src/core"
   ]
 }

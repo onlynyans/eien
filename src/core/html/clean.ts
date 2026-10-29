@@ -98,9 +98,14 @@ function cleaned(nodes: readonly HtmlNode[], rules: CleanRules): CleanNode[] {
   });
 }
 
+/** A page already parsed, kept to what may be shown under `rules`: for a caller that reshapes it first (an EPUB's SVG-wrapped pictures). */
+export function cleanParsed(nodes: readonly HtmlNode[], rules: CleanRules): CleanNode[] {
+  return cleaned(tidy(nodes), rules);
+}
+
 /** The page's `html`, kept to what may be shown under `rules`. */
 export function cleanHtml(html: string, rules: CleanRules): CleanNode[] {
-  return cleaned(tidy(parseHtml(html)), rules);
+  return cleanParsed(parseHtml(html), rules);
 }
 
 /** The words of cleaned nodes, a line between blocks: what's counted. */

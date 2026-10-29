@@ -43,7 +43,8 @@ section where it and the directions below disagree.
   Eien's own parser and kept to a whitelist of elements, then drawn
   element by element, never from HTML. This is the browser extension's
   pipeline (#47, `core/extension/clean.ts`, `ui/extension/draw-clean.ts`),
-  shared rather than copied (Phase 0). Nothing in a book can run, and the
+  shared rather than copied (Phase 0; now `core/html/clean.ts` and
+  `ui/draw-clean.ts`). Nothing in a book can run, and the
   page turns, highlights and Find work on one DOM.
 - **Fixed-layout EPUBs aren't supported** (comics, picture books), and the
   publisher's layout is reduced to its structure. Accepted.
@@ -170,7 +171,11 @@ Each phase is its own session and pull request, from main.
   (⇧⌘L) and its popover, for notes. It's built beside 3 and Phase 1, its
   own session and pull request, and holds to the same testing bar. Its
   shelf half switches on in Phase 1.
-- **Phase 1, the shelf and opening a book safely:**
+- **Phase 1, the shelf and opening a book safely,** in three pull
+  requests: **1a, built** (2026-10-28): `core/epub` (the zip reader, its caps
+  and paths, the package and contents, DRM refused, a chapter cleaned with
+  its parts named, the reading state's file), `platform/inflate.ts`, and the
+  fixture books; 1b, SHELF, the index and the page; 1c, the book's look.
   - the zip reader (the browser's decompression, in the window, on desktop
     and phone alike);
   - the container, its spine and contents;

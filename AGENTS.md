@@ -13,7 +13,8 @@ Each feature has one word, in code, files, CSS and docs:
   `src/core/extension/`, `src/platform/extension/`, `src/ui/extension/`,
   `src/app/extension/` and `tests/extension/`. "Eien Reader" is only the name
   users see (the manifest, the popup's title, the frame's title).
-- **epub**: the EPUB reader in the app (backlog #40), not built yet; its
+- **epub**: the EPUB reader in the app (backlog #40), in `src/core/epub/`
+  and `src/platform/inflate.ts` (Phase 1a: reading a book safely); its
   designs are `docs/design/explorations/epub-*` and `epub.md`.
 - **reader**: only a person reading. No folder, file or CSS class is named
   for it (`tests/words.test.ts`).
@@ -113,11 +114,28 @@ Rules, pure TypeScript.
   - `clean.ts`: its rules for `html`'s cleaner: links to the web or mail, images over https
   - `messages.ts`: what its pages say to each other
   - `places.ts`: where each chapter was left
+- `epub`: an EPUB read safely (#40; the word in code, as "book" is a manuscript folder)
+  - `zip-read.ts`: Eien's own zip reader, its directory checked whole before anything is inflated, each entry counted as it inflates and its CRC checked
+  - `caps.ts`: how much of a book Eien reads: the file, entries, a text entry, a picture, the total and the ratio
+  - `zip-path.ts`: an entry's name a clean path in the zip, and every address a book gives resolved inside it
+  - `refusal.ts`: why a book won't open, and the words the window says
+  - `utf8.ts`: UTF-8 read back without TextDecoder
+  - `xml-text.ts`: a book's XML as text for `html`'s parser (Latin-1 where declared, CDATA kept)
+  - `xml-nodes.ts`: that XML's elements found by their local names
+  - `package.ts`: container.xml, the package (metadata, manifest, spine, nav or NCX), and a DRM lock refused
+  - `contents.ts`: the contents (nav, NCX, or the spine) and the printed edition's pages (page-list)
+  - `epub.ts`: a book opened (`openEpub`), its chapters and pictures read as they're shown, and its key
+  - `chapter.ts`: a chapter cleaned by `html`'s cleaner under the book's rules
+  - `epub-rules.ts`: those rules: pictures from the zip, links' words only, the parts named
+  - `svg-plate.ts`: Calibre's SVG frame round a picture made a plain image
+  - `first-line.ts`: a chapter's first line, by where it stands
+  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`
 
 ### `src/platform/`
 
 - `bridge.ts`: all the window may ask
 - `storage.ts`: the Storage contract, and its `electron/`, `capacitor/` and `memory/` implementations
+- `inflate.ts`: raw deflate inflated by the system's DecompressionStream, for an EPUB's zip, in the window on the desktop and the phone
 - `index/`: the vault's index over any Storage
 - `open-vault.ts`: a vault and its index kept in step, shared by the desktop and the phone
 - `settings-store.ts`: this device's settings and the vault's, shared by the desktop and the phone

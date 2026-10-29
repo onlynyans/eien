@@ -4,10 +4,11 @@ export {
   type CleanNode,
   type CleanRules,
   cleanHtml,
+  cleanParsed,
   imageWords,
   plainOf,
 } from './clean';
-export { isPart, KEPT } from './clean-elements';
+export { isPart, KEPT, type Part } from './clean-elements';
 export { declarations } from './css';
 export { NAMED_ENTITIES } from './entities';
 export { fromHtml, looksLikeHtml, pastedMarkdown } from './from-html';

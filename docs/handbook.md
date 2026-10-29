@@ -358,5 +358,5 @@ See [backlog.md](backlog.md) for the full list. At this handover:
 | Desk, blotter, paper | The surfaces: the sidebar, the page pane, the list and the sheet |
 | Made tag | A tag created from the sidebar before any note carries it (`.eien/tags.json`) |
 | Extension | The browser extension, Eien Reader (§14): `src/*/extension/`, `tests/extension/` |
-| EPUB | The EPUB reader in the app (backlog #40), not built yet: its designs are `docs/design/explorations/epub-*` |
+| EPUB | The EPUB reader in the app (backlog #40), being built in phases: `core/epub` reads a book safely (Phase 1a); its designs are `docs/design/explorations/epub-*` |
 | Reader | Only a person reading: no folder, file or class is named for it (`tests/words.test.ts`) |
