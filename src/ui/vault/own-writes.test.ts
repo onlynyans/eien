@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { VaultBridge } from '../../platform/bridge';
-import { OWN_ECHO_MS, ownWrites } from './own-writes';
+import type { Bridge, VaultBridge } from '../../platform/bridge';
+import { OWN_ECHO_MS, ownWrites, withOwnWrites } from './own-writes';
 
 /** A bridge as a class, its methods on the prototype (the phone's is one). */
 class FakeVault {
@@ -84,5 +84,53 @@ describe('ownWrites, with other windows on this device', () => {
   it('a note another window here wrote, as the main process says, isn’t from elsewhere', () => {
     const own = ownWrites(fake(), () => 0);
     expect(own.foreign(['Ideas.md', 'Thaw.md'], ['Ideas.md'])).toEqual(['Thaw.md']);
+  });
+});
+
+describe('withOwnWrites', () => {
+  /** A bridge as a class, as the phone's is: its methods on the prototype. */
+  class FakeBridge {
+    readonly platform = 'linux';
+    readonly vault: VaultBridge;
+    #heard: ((paths: string[], local?: string[]) => void) | null = null;
+    constructor() {
+      const vault = fake();
+      vault.onChange = (listener) => {
+        this.#heard = listener as never;
+        return () => {
+          this.#heard = null;
+        };
+      };
+      this.vault = vault;
+    }
+    onBack() {
+      return () => {};
+    }
+    changed(paths: string[]) {
+      this.#heard?.(paths);
+    }
+  }
+
+  it('keeps the bridge’s own methods, its vault the one that remembers', () => {
+    const given = new FakeBridge();
+    const { bridge } = withOwnWrites(given as unknown as Bridge);
+    expect(bridge.platform).toBe('linux');
+    expect(typeof bridge.onBack).toBe('function');
+    expect(bridge.vault).not.toBe(given.vault);
+  });
+
+  it('hears a change that came from elsewhere, not one of its own, till stopped', async () => {
+    const given = new FakeBridge();
+    const { bridge, onForeign } = withOwnWrites(given as unknown as Bridge);
+    const heard = vi.fn();
+    const stop = onForeign(heard);
+    await bridge.vault.write('Mine.md', 'x', null);
+    given.changed(['Mine.md']);
+    expect(heard).not.toHaveBeenCalled();
+    given.changed(['Thaw.md']);
+    expect(heard).toHaveBeenCalledTimes(1);
+    stop();
+    given.changed(['Thaw.md']);
+    expect(heard).toHaveBeenCalledTimes(1);
   });
 });

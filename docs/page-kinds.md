@@ -47,15 +47,28 @@ is the seam for **an EPUB's own colophon items**.
   before: the same object until it leaves another, as ⇄ tells a new one by
   it), `open(path, place?)` (nothing once disposed), `clear()` (what it shows
   went to the trash), `follow(values)` and `dispose()`.
-- `PageKindOf`: a kind's `holds(path)` and `make(hooks, left)`.
+- `PageKindOf`: a kind's `holds(path)` and `make(hooks, left)`, and its
+  upkeep over its pages: `flush`, `diskChanged`, `followMoves`, `sync` and
+  `stop`, each given `sides`, the pane's pages of that kind now (one kind
+  per `PageKind`). The upkeep is the kind's, not each page's, because what
+  its pages hold can outlive them: a note's page closed within the save's
+  pause holds its note till saved, and only the kind's `flush` (the window's
+  open notes, every one) reaches it, so a quit waits for those words even
+  with another kind's page in its slot. `sync` runs on every redraw; not
+  every kind needs it (a note's seals do), but as a hook the controller
+  never reaches into a kind's parts.
 
-`vault/note-side.ts` is the note's: `NoteSide` (adding `page: PageView`,
-`note`, `versions`), `isNote`, and `noteKind`, which holds every file no other
-kind does. A note's page, closed, **holds its note till its words are
-saved**, then lets it go (a save that fails tries again, and the note is let
-go once one works), and is told nothing more meanwhile: before this, a page
-closed (⌘W, its ×, a phone's room closing the page beside) within the pause
-before a save dropped the last words typed.
+`vault/note-side.ts` is one note's page: `NoteSide` (adding `page: PageView`,
+`note`, `versions`), `isNote`, and `makeNoteSide`. `vault/note-pages.ts` is
+the note's kind over all its pages: `noteKind`, which holds every file no
+other kind does, with its upkeep (count the words, then save every open
+note; the open notes and each page's seals told of the disk; the open notes
+follow moves; each page's seals synced and stopped), and `NotePages`, what
+the window asks of notes alone. A note's page, closed, **holds its note till
+its words are saved**, then lets it go (a save that fails tries again, and
+the note is let go once one works), and is told nothing more meanwhile:
+before this, a page closed (⌘W, its ×, a phone's room closing the page
+beside) within the pause before a save dropped the last words typed.
 
 ### The controller: `vault/pages.ts`
 
@@ -71,11 +84,18 @@ before a save dropped the last words typed.
   keyboard goes to the new one if the old one had it.
 - Every page, made, follows the settings and becomes active when the writer
   goes into it.
-- Generic: `active`, `other`, `sides`, `notes()`, `activate`, `toggle`,
-  `focusOther`, `close`, `swap`, `closed`. A note's alone, over `isNote`:
-  `sessions`, `freeze`, `amendOpen`, `flushWords`, the seals' `diskChanged`,
-  `sync` and `stop`; and `activeNote`, the active page when it holds a note,
-  which every reader of a note's parts goes through.
+- The arrangement, whatever the pages hold: `active`, `other`, `sides`,
+  `shown()` (the paths the list marks), `activate`, `toggle`, `focusOther`,
+  `close`, `swap`, `closed`; and `flush`, `diskChanged`, `followMoves`,
+  `sync` and `stop`, each the kinds' upkeep (`flush` all at once, so one
+  kind's save never waits for another's), then the pane's or the shared
+  parts' own. `activeNote` is the active page when it holds a note, which
+  every reader of a note's parts goes through.
+- `pages.notes` (`NotePages`), a note's alone: `sessions`, `session`,
+  `freeze`, `amendOpen` and `flushWords`, for the organizer, the counters
+  and Copy as HTML. They stay a note's: only a note has a session to wait
+  for before a move, words to hold still while it moves, or a text Eien
+  amends (a seal's id).
 
 ### Tools: `chrome/commands.ts`
 
@@ -105,8 +125,11 @@ page when it holds a note: `pages.other` and `isNote`.
   (`phone/more-menu.ts`) is a note's commands alone.
 - The companion's ⋯ for an EPUB (Phase 2), and the words 'This note', 'More
   for this note' and 'No note' for a page that holds one.
-- An EPUB's page moved or renamed (`followMoves`, `freeze`), and its file
-  changed on disk (`diskChanged`).
+- An EPUB's page moved or renamed, and its file changed on disk: the EPUB's
+  kind implements `followMoves` and `diskChanged` (and `flush`, its
+  reading place; `stop`), and nothing in `pages.ts` changes. Whether a book
+  is held still while it moves (a note's `freeze`, its editor locked) is
+  Phase 1's to decide; a page with nothing to type into may need none.
 - Outline cards, Copy as HTML, the exports and the book's count act on a
   note's page; with an EPUB in front they do nothing.
 
@@ -117,7 +140,9 @@ DOM unit tests through the real `Pages`, with the stand-in kind
 note beside it (the row, labels, colophon, running head); a page replaced in
 its slot (the page beside never moved, the old one's parts gone, its note
 its `left`, the keyboard carried, outline cards put away, racing opens);
-swap, close, its own ×, the settings, the trash; the pager folded and the
+swap, close, its own ×, the settings, the trash; each kind handed its own
+pages alone, and a closed note page still saving waited for by a flush with
+the stand-in in its slot (`page-kinds-upkeep.test.ts`); the pager folded and the
 closed book's edge; Facing pages' and a companion's own hosts by kind; ⇄
 across kinds, each where it was left; Two pages, One at a time and a room
 with one page; a drop on its page; the layout's tools and the menu's

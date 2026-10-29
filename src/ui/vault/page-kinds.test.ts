@@ -55,7 +55,7 @@ describe('a page of another kind in the split', () => {
     const { pages, area } = await noteAndStandIn();
     expect(kinds(pages.sides)).toEqual(['note', 'epub']);
     expect(row(area)).toEqual(['Chapter', 'divider', 'Map, the active page']);
-    expect(pages.notes()).toEqual({ active: 'Map.stand', other: 'Chapter.md' });
+    expect(pages.shown()).toEqual({ active: 'Map.stand', other: 'Chapter.md' });
     expect(pages.activeNote).toBeNull();
     expect(colophon(area)).toContain('colophon__leaf');
     expect(colophon(area)).not.toContain('colophon__words');
@@ -138,7 +138,9 @@ describe('a file of another kind opened on a page', () => {
     expect(row(area)).toEqual(['Map, the active page', 'divider', 'Notes']);
     // The note it showed is the page's other, and is let go once saved.
     expect(pages.active.left?.path).toBe('Chapter.md');
-    await vi.waitFor(() => expect(pages.sessions().map(({ path }) => path)).toEqual(['Notes.md']));
+    await vi.waitFor(() =>
+      expect(pages.notes.sessions().map(({ path }) => path)).toEqual(['Notes.md']),
+    );
   });
 
   it('leaves Tools that follow’s furniture where it stands: nothing arrives', async () => {
@@ -181,9 +183,11 @@ describe('a file of another kind opened on a page', () => {
     await pages.open('Chapter.md');
     await Promise.all([pages.open('Map.stand'), pages.open('Notes.md')]);
     expect(pages.active.kind).toBe('note');
-    expect(pages.notes().active).toBe('Notes.md');
+    expect(pages.shown().active).toBe('Notes.md');
     expect(noted(pages.active).page.editor.text).toBe('Snow on the walls.');
-    await vi.waitFor(() => expect(pages.sessions().map(({ path }) => path)).toEqual(['Notes.md']));
+    await vi.waitFor(() =>
+      expect(pages.notes.sessions().map(({ path }) => path)).toEqual(['Notes.md']),
+    );
   });
 });
 

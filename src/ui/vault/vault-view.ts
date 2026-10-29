@@ -5,12 +5,12 @@
 // ./phone-view.ts, the layout's controls in ./chrome-wiring.ts. This wires them together.
 
 import type { Bridge } from '../../platform/bridge';
-import { h } from '../dom';
 import { keepPlace } from '../list/list';
 import { SearchField } from '../list/search-field';
 import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
+import { vaultFrame } from '../shell/vault-frame';
 import { SyncStatus } from '../sidebar/sync-status';
 import { vaultChrome } from './chrome-wiring';
 import { follow } from './follow';
@@ -22,7 +22,7 @@ import { Notice } from './notice';
 import { oneAtATime } from './one-at-a-time';
 import { orderActions } from './order-actions';
 import { Organizer } from './organize';
-import { ownWrites } from './own-writes';
+import { withOwnWrites } from './own-writes';
 import { pageDrop } from './page-drop';
 import { Pages } from './pages';
 import { pagesHeld } from './pages-held';
@@ -58,9 +58,8 @@ export async function showVault(
   syncthing = false,
 ): Promise<ShownVault> {
   // The vault, its writes remembered (./own-writes.ts): a change the disk reports that this
-  // window didn't make came from elsewhere. The rest of the bridge as it is, methods and all.
-  const own = ownWrites(given.vault);
-  const bridge: Bridge = Object.create(given, { vault: { value: own.vault, enumerable: true } });
+  // window didn't make came from elsewhere.
+  const { bridge, onForeign } = withOwnWrites(given);
   const state = new VaultState(bridge.vault, name);
   const trashName = trashNameOn(bridge.platform);
   const keys = paneKeys(bridge.platform === 'darwin');
@@ -137,19 +136,8 @@ export async function showVault(
   });
   // The sync status at the sidebar's foot: a note changed that this window didn't change.
   const sync = new SyncStatus(sidebar.foot.sync, syncthing);
-  const stopSync = bridge.vault.onChange((paths, local) => {
-    if (own.foreign(paths, local).length > 0) sync.changedElsewhere();
-  });
-  const listSearch = h('div', { class: 'list__search' });
-  const listBody = h('div', { class: 'list__body' });
-  const list = h(
-    'section',
-    { class: 'list', attrs: { 'aria-label': 'Notes' } },
-    listSearch,
-    listBody,
-  );
-  const pageArea = h('main', { class: 'page' });
-  const shell = h('div', { class: 'shell' }, sidebar.element, list, pageArea);
+  const stopSync = onForeign(() => sync.changedElsewhere());
+  const { shell, list, listSearch, listBody, pageArea } = vaultFrame(sidebar.element);
   root.replaceChildren(shell);
   const pages = new Pages({
     area: pageArea,
@@ -230,7 +218,7 @@ export async function showVault(
     list: listBody,
     placeSearch: (inList, name) => search.place(inList ? listSearch : sidebar.searchSlot, name),
     notice,
-    shown: () => pages.notes(),
+    shown: () => pages.shown(),
     pageNews: (text) => pages.pane.news(text),
     listActions: { ...rows, ...lens.actions, newNote: () => void actions.newNote() },
     arrange: lens.arrange,

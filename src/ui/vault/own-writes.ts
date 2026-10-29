@@ -5,7 +5,7 @@
 
 import { isHiddenName } from '../../core/paths';
 import { OWN_ECHO_MS, RecentWrites } from '../../core/vault/recent-writes';
-import type { VaultBridge } from '../../platform/bridge';
+import type { Bridge, VaultBridge } from '../../platform/bridge';
 
 export { OWN_ECHO_MS };
 
@@ -75,5 +75,22 @@ export function ownWrites(vault: VaultBridge, now: () => number = Date.now): Own
               !written.has(path) &&
               !local.includes(path),
           ),
+  };
+}
+
+/** `given` with its vault's writes remembered; `onForeign` hears a change that came from elsewhere (returns a stop). */
+export function withOwnWrites(given: Bridge): {
+  readonly bridge: Bridge;
+  onForeign(listener: () => void): () => void;
+} {
+  const own = ownWrites(given.vault);
+  // The rest of the bridge as it is, methods and all: a spread would leave a class's behind.
+  const bridge: Bridge = Object.create(given, { vault: { value: own.vault, enumerable: true } });
+  return {
+    bridge,
+    onForeign: (listener) =>
+      own.vault.onChange((paths, local) => {
+        if (own.foreign(paths, local).length > 0) listener();
+      }),
   };
 }
