@@ -171,7 +171,8 @@ half left open.
   gives the page you aren't in. Nothing new is designed.
 
 The row menu, the menu bar, the line under the popover and the page sitting
-back are one small build after Phase 2. Page width stays off the phone (its
+back are built (2026-10-29; spec §4, Panes and Page, and §6, A quick look;
+docs/quick-look.md, "After Phase 1"; docs/page-kinds.md, Tools). Page width stays off the phone (its
 page is narrower than any face's measure), and the iOS simulator opening a
 book waits for a way to tap.
 

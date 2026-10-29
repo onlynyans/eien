@@ -12,7 +12,8 @@
   width: 100%;
   transition:
     box-shadow var(--eien-calm) var(--eien-ease),
-    border-color var(--eien-calm) var(--eien-ease);
+    border-color var(--eien-calm) var(--eien-ease),
+    background-color var(--eien-calm) var(--eien-ease);
 }
 /* The page you aren't in lies flat: no shadow, and its edge a step softer. */
 :root[data-split="sheets"]

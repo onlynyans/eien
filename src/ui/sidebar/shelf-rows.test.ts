@@ -24,7 +24,13 @@ function draw(
   current: string | null = null,
   contents: Parameters<typeof shelfRows>[0]['contents'] = null,
 ) {
-  const actions = { openEpub: vi.fn(), chapter: vi.fn() };
+  const actions = {
+    openEpub: vi.fn(),
+    chapter: vi.fn(),
+    bookMenu: vi.fn(),
+    renameBook: vi.fn(),
+    trashBook: vi.fn(),
+  };
   const list = document.createElement('ul');
   list.append(...shelfRows({ tree: TREE, current, contents }, actions));
   return { list, actions };
@@ -94,8 +100,48 @@ describe('SHELF’s rows', () => {
   });
 
   it('draws nothing for a vault with no book', () => {
-    const actions = { openEpub: vi.fn(), chapter: vi.fn() };
+    const { actions } = draw();
     const tree = buildTree([entry('a.md', 'note')], 'Vault');
     expect(shelfRows({ tree, current: null, contents: null }, actions)).toEqual([]);
+  });
+
+  it('gives a book’s row its menu by right-click, the menu key or Shift+F10, as a note’s', () => {
+    const { list, actions } = draw();
+    const book = list.querySelector<HTMLButtonElement>('[data-epub="Loose.epub"]') as HTMLElement;
+    book.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 40, clientY: 50 }));
+    expect(actions.bookMenu).toHaveBeenLastCalledWith('Loose.epub', { x: 40, y: 50 });
+    for (const init of [{ key: 'ContextMenu' }, { key: 'F10', shiftKey: true }]) {
+      book.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }));
+    }
+    expect(actions.bookMenu).toHaveBeenCalledTimes(3);
+    expect(actions.openEpub).not.toHaveBeenCalled();
+  });
+
+  it('renames a book on F2 or a second click on its name, and trashes it on the trash’s key', () => {
+    const { list, actions } = draw();
+    const book = list.querySelector<HTMLButtonElement>('[data-epub="Loose.epub"]') as HTMLElement;
+    expect(book.getAttribute('aria-keyshortcuts')).toBe('F2');
+    book.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'F2' }));
+    expect(actions.renameBook).toHaveBeenLastCalledWith('Loose.epub');
+    const name = book.querySelector('.tree-row__label') as HTMLElement;
+    name.click();
+    name.click();
+    expect(actions.openEpub).toHaveBeenCalledOnce();
+    expect(actions.renameBook).toHaveBeenCalledTimes(2);
+    // ⌘⌫ on a Mac, Ctrl+Delete elsewhere; the tests' platform isn't a Mac's.
+    book.dispatchEvent(
+      new KeyboardEvent('keydown', { bubbles: true, key: 'Delete', ctrlKey: true }),
+    );
+    expect(actions.trashBook).toHaveBeenCalledWith('Loose.epub');
+  });
+
+  it('gives a chapter under the book none of it: a chapter is chosen, never renamed or trashed', () => {
+    const contents = { path: 'Loose.epub', rows: [{ title: 'One', depth: 0, spine: 0 }], spine: 0 };
+    const { list, actions } = draw('Loose.epub', contents);
+    const chapter = list.querySelector('.tree-row--chapter .tree-row__name') as HTMLElement;
+    chapter.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
+    chapter.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'F2' }));
+    expect(actions.bookMenu).not.toHaveBeenCalled();
+    expect(actions.renameBook).not.toHaveBeenCalled();
   });
 });

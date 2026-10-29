@@ -35,10 +35,18 @@ export class SettingsStore {
   readonly #device: DeviceStore;
   readonly #vault: () => Storage | null;
 
+  /** Defaults of this build's own, where they differ from the schema's (a phone's, `PHONE_DEFAULTS`). */
+  readonly #defaults: Partial<SettingValues>;
+
   /** `vault` is the open vault's storage, or null with none open. */
-  constructor(device: DeviceStore, vault: () => Storage | null) {
+  constructor(
+    device: DeviceStore,
+    vault: () => Storage | null,
+    defaults: Partial<SettingValues> = {},
+  ) {
     this.#device = device;
     this.#vault = vault;
+    this.#defaults = defaults;
   }
 
   /** The settings this device has chosen. */
@@ -50,7 +58,7 @@ export class SettingsStore {
 
   /** Every setting's value: this device's, the open vault's, and defaults for the rest. */
   async all(): Promise<SettingValues> {
-    return withDefaults(await this.device(), await this.#vaultSettings());
+    return withDefaults(await this.device(), await this.#vaultSettings(), this.#defaults);
   }
 
   /** Keep one setting, checked, where it belongs; every value after it. */

@@ -77,7 +77,9 @@ Rules, pure TypeScript.
 - `config`: every setting, and its files
   - `faces.ts`: FACES, the one list the three face settings (Typeface, Interface font, Source font) choose from, each face with its machine sizes
   - `epub-look.ts`: a book's own look (#40), each setting a page wears again under `epub.<key>`
+  - a setting's default may be a phone's own (`phoneDefault`, `PHONE_DEFAULTS`: Link editing's Bar)
 - `markdown`: Eien's Markdown and a note's plain text, shared with the editor
+  - `link-source.ts`: a link written: an address or a note's name, `[words](address)` or `[[note|words]]` (#38)
 - `note`
   - `note-tags.ts`: its tags in two kinds, front matter's and the text's
   - `tag-id-lines.ts`: front matter's `tags:` and `id:` lines, which Hide tags and IDs keeps out of sight
@@ -184,7 +186,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `vault/page-side.ts`'s `Side`: what the pages hold of one
   - `vault/note-side.ts`: a note's (`isNote`, `activeNote`)
   - `vault/stand-in-kind.ts`: a second kind for the tests
-  - a command for one kind is marked `on` in `chrome/commands.ts`
+  - a command for one kind is marked `on` in `chrome/commands.ts`, and `menuOff` carries it to the menu bar and the phone's ⋯
   - `vault/command-looks.ts`: how each command looks now
 - `page/note-foot.ts`: a note's colophon items
 - `vault/open-notes.ts`: a note open on any page, held once (one session, one document, its images), however many pages show it
@@ -206,7 +208,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `vault/page-drop.ts`: a note dragged onto the pane
   - `list/shown-notes.ts`: a row's marks for the pages' notes, chosen and beside
 - `page/page-title.ts`: a page's title
-- `vault/menus.ts`: a note's, folder's and tag's menus open from here
+- `vault/menus.ts`: a note's, a book's (on SHELF), a folder's and a tag's menus open from here
 - `vault/menu-items.ts`: their choices
 - `draw-clean.ts` draws cleaned nodes (`core/html/clean.ts`) element by element, checking each element, address and part again, for the extension's story page and an EPUB's chapter (#40)
 - `quiet-button.ts`: the quiet icon button (the +, a sheet's ×, the divider's ⇄)
@@ -225,7 +227,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `sidebar/lens-slot.ts`: with two panes, the chosen row's lens
   - `sidebar/sections.ts`: its sections fold, folded per device in `sidebar/folds.ts`
   - `sidebar/tree-sections.ts`: the sections in order, LIBRARY, FOLDERS, SHELF, TAGS
-  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: folders as labels, books as controls, an open book's contents with two panes
+  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: folders as labels, books as controls (a note's row's keys and menu, `vault/row-actions.ts`), an open book's contents with two panes
   - `sidebar/sidebar-focus.ts`: where the keyboard is in the tree, kept across its redraws
 - The lens over each list, drawn in the list's head and, with two panes, for the chosen row in the sidebar
   - `list/lens-bar.ts`: the sort and the tag filter, their chips
@@ -237,16 +239,22 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `versions/` seals the open note (`note-versions.ts`, the rules in `core/versions`), compares it with a seal and lists its seals
 - `menu/`: the floating menu (a row's: its name at the head, an icon, a word and a key per choice, the trash in carmine)
 - `quick-look/`: the quick look (#49, [docs/quick-look.md](docs/quick-look.md))
-  - `quick-look/quick-look.ts`: the popover under the Look control (a sheet on the phone), drawn from the settings the schema marks `quick` with Settings' own rows, floated by `menu/menu.ts`
+  - `quick-look/quick-look.ts`: the popover under the Look control (a sheet on the phone), drawn from the settings the schema marks `quick` with Settings' own rows, floated by `menu/menu.ts`; a subject's line at its foot (the shelf's)
   - `quick-look/quick-keys.ts`: its keyboard
   - `quick-look/epub-store.ts`: the shelf's look as its store, with a book in front (#40)
-  - opened for the active page by `vault/chrome-wiring.ts`
+  - opened for the page the layout's tools act on by `vault/look-wiring.ts`, which sits a page of another kind back (`data-back`, `page/split.css`)
 - `welcome/`: before a vault is open
 - `editor/`: CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows)
   - `editor/note-doc.ts`: a note's text and undo history, one document every view of the note mirrors (a view's change goes through it to the others, ⌘Z and the Edit menu's Undo run on it, and a change is told and counted once, by the view it was made in)
   - `editor/editor-keys.ts`: the keys
   - `editor/editor-modes.ts`: the views' extensions by mode
   - `editor/links.ts`: a link followed
+  - A link's tools in Live (#38)
+    - `editor/link-core.ts`: the link at a place (its words, where it goes, its kind), an edit as one step of the history, taken off, followed; no window of its own
+    - `editor/link-tooltips.ts`: when they show (a hover, the caret; never while typing), the keys (⌥↩, ⌘K, ⌥F10, Esc), and the presenter Link editing chooses, swapped live: the one place a style's name is read
+    - `editor/link-presenter.ts`: what a presenter is, and what the three share; each only draws and forwards to the core
+    - `editor/link-card.ts`, `editor/link-inline.ts` (with `linkInPlace` in `editor/preview-mode.ts`, which Live's marks follow), `editor/link-bar.ts`: Card, In place, Bar
+    - `editor/link.css`: the card's and bar's look; In place's is beside it, in the editor's shadow root
   - `editor/typing.ts` decides typed quotes and pastes on the editor's state alone
   - `editor/live-tables.ts` draws a table in place, row by row, its cells as outer decorations, and the table editor edits it in Live
     - `editor/table-editor.ts` wires the table editor
@@ -310,7 +318,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chrome/band.ts`, `slip.ts`, `runhead.ts`: each layout a list of its hosts and the slot each goes in, each with its own stylesheet and corners
   - `chrome/layout-spec.ts`: the slots and the hosts all three share
   - `chrome/chrome.ts` mounts and switches them
-  - `vault/chrome-wiring.ts` wires them to a shown vault (how each command looks now, the ones the window runs itself)
+  - `vault/chrome-wiring.ts` wires them to a shown vault (how each command looks now, the ones the window runs itself, the menu bar greyed by the kind in front)
 - `theme/wear.ts` wears the theme chosen on `<html>`
 - `theme/writer-themes.ts` keeps the vault's own themes for the window (the API Settings' Themes tabs build on)
 - `shell/shell.css`: the panes' top bands drag the window; it also holds the corner's lengths: `--seal-x`, `--corner`, a shut sidebar's `--strip`
@@ -350,7 +358,8 @@ The main process: window, menu, the vault and settings sessions and their IPC.
 - `out-session.ts`: the clipboard, the save dialog
 - `print-pdf.ts` prints a PDF in a hidden window that runs nothing
 - `import-session.ts`: Import Markdown Folder…
-- `menu.ts` builds the menu bar, its on/off settings as checks that `checkToggles` keeps in step (`TOGGLES` in `core/config`)
+- `menu.ts` builds the menu bar, each item's id its command, its on/off settings as checks that `checkToggles` keeps in step (`TOGGLES` in `core/config`)
+- `menu-grey.ts`: the commands a window greys (a note's, with a book in front), checked against the bar's, worn while it's focused
 - `context-menu.ts`: the note's right-click menu (spelling suggestions on macOS, from `context-menu-of.ts`)
 - `frame.ts`: the window with no title bar (the system's controls over the bands, painted as the window's `shell/window-controls.ts` reports them) and the whole window's zoom
 - `preload.ts`: the sandboxed preload

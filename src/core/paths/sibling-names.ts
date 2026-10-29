@@ -41,19 +41,19 @@ export type Renamed =
   | { readonly ok: false; readonly problem: 'empty' | 'taken' };
 
 /**
- * Where `path` goes when the writer renames it `typed`: a note's title (its
- * extension kept as it was), or a folder's name. `siblings` are the names
- * beside it. A change of case alone is the same file; a name another file
- * has is refused, never numbered: the writer chose it.
+ * Where `path` goes when the writer renames it `typed`: a file's title (a
+ * note's, a book's: its extension kept as it was), or a folder's name.
+ * `siblings` are the names beside it. A change of case alone is the same
+ * file; a name another file has is refused, never numbered: the writer chose it.
  */
 export function renamedPath(
   path: string,
   typed: string,
   siblings: Iterable<string>,
-  isNote: boolean,
+  isFile: boolean,
 ): Renamed {
   const name = baseName(path);
-  const extension = isNote ? name.slice(titleOf(name).length) : '';
+  const extension = isFile ? extensionOf(name) : '';
   const base = safeName(typed, '', MAX_MADE_NAME_BYTES - utf8Length(extension));
   if (!base) return { ok: false, problem: 'empty' };
   const next = base + extension;
@@ -68,19 +68,22 @@ export function renamedPath(
 
 /**
  * Where `path` lands when moved into `folder`: under its own name, or, when
- * that's taken there, the first free one ("Name 2").
+ * that's taken there, the first free one ("Name 2", a file's extension after it).
  */
 export function movedPath(
   path: string,
   folder: string,
   taken: Iterable<string>,
-  isNote: boolean,
+  isFile: boolean,
 ): string {
   const name = baseName(path);
   const names = [...taken];
   if (!names.some((other) => nameKey(other) === nameKey(name))) return joinPath(folder, name);
-  const extension = isNote ? name.slice(titleOf(name).length) : '';
-  return joinPath(folder, freeName(isNote ? titleOf(name) : name, names, extension));
+  const extension = isFile ? extensionOf(name) : '';
+  return joinPath(
+    folder,
+    freeName(name.slice(0, name.length - extension.length), names, extension),
+  );
 }
 
 /** "2026-10-19 16-40": a local date and time that's a valid name everywhere. */

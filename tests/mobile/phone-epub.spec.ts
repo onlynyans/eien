@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
-import { listOutside, open, putBytesOutside, putOutside, titles } from './outside';
+import { bytesOutside, listOutside, open, putBytesOutside, putOutside, titles } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'reduce' });
 
@@ -92,4 +92,66 @@ test('a book’s place is kept as the phone goes to the background, and back aft
   await back(page).click();
   await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
   await expect.poll(inSight).toBe(kept);
+});
+
+test('a book’s row menu renames it in its row, and trashes it to .eien/trash, whole', async ({
+  page,
+}) => {
+  await open(page);
+  await putOutside(page, 'Eien/Vault/Notes.md', 'Notes on the book.\n');
+  const bytes = readFileSync(FIXTURE).toString('base64');
+  await putBytesOutside(page, 'Eien/Vault/Novels/Pride and Prejudice.epub', bytes);
+  await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
+  await back(page).click(); // the sidebar
+  const book = (title: string) =>
+    page.locator('.tree-row--epub .tree-row__name', { hasText: new RegExp(`^${title}$`, 'u') });
+  await expect(book('Pride and Prejudice')).toBeVisible({ timeout: 10_000 });
+
+  // Renamed in its row, as on the desktop: a book's page has no title to type in.
+  await book('Pride and Prejudice').click({ button: 'right' });
+  // A phone names it .eien/trash; this page in Chromium is Capacitor's 'web', which says the
+  // trash. Either way the book lands in .eien/trash, below.
+  const trashItem = /^Move to (\.eien\/trash|the trash)$/u;
+  await expect(page.getByRole('menuitem')).toHaveText(['Rename', 'Move to…', trashItem]);
+  await page.getByRole('menuitem', { name: 'Rename' }).click();
+  const field = page.locator('.name-field__input');
+  await expect(field).toHaveValue('Pride and Prejudice');
+  await expect(page.locator('.name-field__suffix')).toHaveText('.epub');
+  await field.fill('First Impressions');
+  await field.press('Enter');
+  await expect(book('First Impressions')).toBeVisible({ timeout: 10_000 });
+  expect(await listOutside(page, 'Eien/Vault/Novels')).toEqual(['First Impressions.epub']);
+
+  // The trash: the vault's own, where any device can take it back.
+  await book('First Impressions').click({ button: 'right' });
+  await page.getByRole('menuitem', { name: trashItem }).click();
+  await expect(book('First Impressions')).toHaveCount(0, { timeout: 10_000 });
+  const stamps = await listOutside(page, 'Eien/Vault/.eien/trash');
+  expect(stamps).toHaveLength(1);
+  expect(
+    await bytesOutside(page, `Eien/Vault/.eien/trash/${stamps[0]}/First Impressions.epub`),
+  ).toEqual([...readFileSync(FIXTURE)]);
+});
+
+test('the shelf’s look on the phone says at its foot that Settings sets notes', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name').click({ timeout: 10_000 });
+  await expect(chapter(page)).toContainText('It is a truth');
+  await page
+    .locator('.phone-bar__controls [data-command="look"], .page__phone [data-command="look"]')
+    .first()
+    .click();
+  const sheet = page.getByRole('dialog', { name: 'Look: Shelf' });
+  await expect(sheet.locator('.quick-look__foot .quick-look__line')).toHaveText(
+    'Settings sets notes; this is every book’s look.',
+  );
+  expect(await seriousViolations(page), 'the shelf’s sheet').toEqual([]);
 });

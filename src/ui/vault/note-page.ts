@@ -40,6 +40,10 @@ export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
         if (path) void parts.openNote(path);
       }
     },
+    about: (name) => {
+      const path = parts.state.findByTitle(name);
+      return path ? { ...parts.state.listed(path), crumbs: crumbsOf(path) } : null;
+    },
     images: (files, at) => {
       const session = parts.note().session;
       if (!session) return;
@@ -57,7 +61,7 @@ export function notePage(area: HTMLElement, parts: NotePageParts): PageView {
       const path = parts.note().path;
       if (!path) return;
       parts.act(async () => {
-        const to = await parts.organizer.renameNote(path, typed);
+        const to = await parts.organizer.renameFile(path, typed);
         page.retitle(titleOf(baseName(to ?? path)), crumbsOf(to ?? path));
         page.focus();
       });

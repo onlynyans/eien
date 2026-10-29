@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_SETTINGS } from '../core/config';
+import { DEFAULT_SETTINGS, PHONE_DEFAULTS } from '../core/config';
 import { VAULT_CONFIG } from '../core/paths';
 import { MemoryStorage } from './memory/memory-storage';
 import { type DeviceStore, SettingsStore } from './settings-store';
@@ -34,6 +34,18 @@ describe('SettingsStore', () => {
       'appearance.face': 'literata',
       'books.numerals': 'arabic',
     });
+  });
+
+  it('takes a phone’s defaults on a phone, and keeps the desktop’s default when it’s chosen there', async () => {
+    const mine = device();
+    const phone = new SettingsStore(mine.store, () => null, PHONE_DEFAULTS);
+    expect((await phone.all())['editor.links']).toBe('bar');
+    expect((await new SettingsStore(device().store, () => null).all())['editor.links']).toBe(
+      'card',
+    );
+    // Card is the schema's default, but not the phone's: chosen there, it's kept.
+    expect((await phone.set('editor.links', 'card'))['editor.links']).toBe('card');
+    expect(mine.data()).toEqual({ settings: { 'editor.links': 'card' } });
   });
 
   it('refuses a bad value, a vault setting with no vault, and a vault file it can’t read', async () => {

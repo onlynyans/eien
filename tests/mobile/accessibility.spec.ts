@@ -1,6 +1,7 @@
 // axe-core over the phone's page (../e2e/axe.ts): each layout, by day and by
-// night, on the notes, the page, its table bar, its ⋯ menu, the quick look and Settings. No
-// serious or critical violation, colour contrast included.
+// night, on the notes, the page, its table bar, a link's bar, its ⋯ menu, the
+// quick look and Settings. No serious or critical violation, colour contrast
+// included.
 
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
@@ -23,7 +24,7 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       await putOutside(
         page,
         'Eien/Vault/Ideas.md',
-        '# Ideas\n\nAn *idea*, #draft.\n\n| Who | When |\n|---|--:|\n| Mara | 30 |\n',
+        '# Ideas\n\nAn *idea*, #draft, [AO3](https://archiveofourown.org).\n\n| Who | When |\n|---|--:|\n| Mara | 30 |\n',
       );
       await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
       await titles(page).first().click();
@@ -46,6 +47,12 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       await page.locator('.eien-cell', { hasText: 'Mara' }).click();
       await expect(page.getByRole('toolbar', { name: 'Table' })).toBeVisible();
       expect(await seriousViolations(page), 'the table bar').toEqual([]);
+      // A link's bar (#38), docked where the table's was.
+      await page.locator('.eien-link', { hasText: 'AO3' }).click();
+      await expect(
+        page.getByRole('toolbar', { name: 'Link to archiveofourown.org' }),
+      ).toBeVisible();
+      expect(await seriousViolations(page), 'a link’s bar').toEqual([]);
       await page.getByRole('button', { name: 'More' }).click();
       await expect(page.locator('.menu')).toBeVisible();
       expect(await seriousViolations(page), 'the ⋯ menu').toEqual([]);

@@ -145,6 +145,18 @@ Copy as HTML, Focus mode, the companion's ⋯ and every `format.*`.
   pages has its × alone until Phase 3 adds its own to the mode's list.
 - **The menu's commands** (`vault/commands.ts`): a note's command with
   another kind active does nothing.
+- **The menu bar and the phone's ⋯** (after Phase 1): `menuOff(kind)`
+  beside `actsOn` is every control's `sends` whose `on` is another kind,
+  and the menu's own commands a note's page alone has (every format, Export
+  HTML… and Export Note, Outline Cards, Typewriter Scrolling, Show Markdown
+  Marks). The phone's ⋯ greys by it; the window sends it to the main process
+  (`WindowBridge.greyMenu`, `window:grey-menu`) when the kind in front
+  changes, and `[]` as it stops. The main process (`app/electron/
+  menu-grey.ts`) takes only the bar's own commands (each item's id is its
+  command), keeps each window's, wears the focused window's, greys a submenu
+  whose commands all are (Export Note) but never a menu of the bar, and
+  greys nothing once the last window closes. `tests/menu-off.test.ts` holds
+  every command `menuOff` names to an item of the bar on each system.
 
 Quote into the note (Phase 2) is an EPUB command whose target is the other
 page when it holds a note: `pages.other` and `isNote`.
@@ -171,10 +183,6 @@ front (`MoreState.kind`).
 
 ## Still to come
 
-- The Electron menu's items greyed by kind, from `on`: `on` lives in
-  `ui/chrome/commands.ts`, which `app/` can't import, so it needs a table in
-  core and a validated channel (backlog). The window ignores a note's
-  commands with a book in front meanwhile.
 - The companion's ⋯ for an EPUB (Phase 2), and the words 'This note', 'More
   for this note', 'No note' and the phone's "other note" for a page that
   holds a book.

@@ -10,11 +10,12 @@ import type { SyntaxNodeRef } from '@lezer/common';
 import { isLink, referenceLabels } from '../../core/markdown';
 import { frontMatterEnd } from '../../core/text';
 import { hide, hideLineMark, hideLines, hidePipe } from './hidden-ranges';
+import { caretLink } from './link-core';
 import { tableRows } from './live-tables';
-import { previewMode, showMarks } from './preview-mode';
+import { linkInPlace, previewMode, showMarks } from './preview-mode';
 import { CheckboxWidget, ImageWidget, SceneBreakWidget } from './widgets';
 
-export { type PreviewMode, previewMode, showMarks } from './preview-mode';
+export { linkInPlace, type PreviewMode, previewMode, showMarks } from './preview-mode';
 
 const mark = (cls: string) => Decoration.mark({ class: cls });
 const line = (cls: string) => Decoration.line({ class: cls });
@@ -45,7 +46,14 @@ function build(state: EditorState): DecorationSet {
         activeLines.add(n);
     }
   }
+  // In place (#38): the caret's link shows its own marks, whatever Show Markdown marks says.
+  const opened =
+    mode === 'live' && state.facet(linkInPlace)
+      ? caretLink(state, state.selection.main.head)
+      : null;
+  const isOpen = (pos: number) => opened !== null && pos >= opened.from && pos < opened.to;
   const isActive = (from: number, to = from) => {
+    if (isOpen(from)) return true;
     for (let n = doc.lineAt(from).number; n <= doc.lineAt(to).number; n++)
       if (activeLines.has(n)) return true;
     return false;
@@ -244,7 +252,8 @@ export const livePreview = StateField.define<DecorationSet>({
     const parsed = syntaxTree(tr.state) !== syntaxTree(tr.startState);
     const modeChanged =
       tr.state.facet(previewMode) !== tr.startState.facet(previewMode) ||
-      tr.state.facet(showMarks) !== tr.startState.facet(showMarks);
+      tr.state.facet(showMarks) !== tr.startState.facet(showMarks) ||
+      tr.state.facet(linkInPlace) !== tr.startState.facet(linkInPlace);
     if (tr.docChanged || tr.selection || parsed || modeChanged) return build(tr.state);
     return value;
   },

@@ -110,3 +110,42 @@ describe('renameInRow', () => {
     expect(document.activeElement).toBe(row);
   });
 });
+
+describe('a book renamed in its row on SHELF (#40)', () => {
+  /** A book's row as SHELF draws it: no data-path (nothing to drag), its path in data-epub. */
+  function shelfRow(path: string) {
+    const button = document.createElement('button');
+    button.className = 'tree-row__name';
+    button.dataset.epub = path;
+    button.dataset.key = `epub:${path}`;
+    const label = document.createElement('span');
+    label.className = 'tree-row__label';
+    label.textContent = path.replace(/\.epub$/, '');
+    button.append(label);
+    document.body.append(button);
+    return button;
+  }
+
+  it('becomes the field with its title, its .epub faded after it, and keeps the .epub', async () => {
+    const run = deps({
+      namesIn: vi.fn(() => ['Dune.epub', 'Arrakis.epub', 'Arrakis.md']),
+      rename: vi.fn(async (_path: string, typed: string) => `Novels/${typed}.epub`),
+    });
+    const row = shelfRow('Novels/Dune.epub');
+    row.focus();
+    renameInRow('Novels/Dune.epub', run);
+    expect(field()?.value).toBe('Dune');
+    expect(document.querySelector('.name-field__suffix')?.textContent).toBe('.epub');
+    expect(run.onPage).not.toHaveBeenCalled();
+    enter('arrakis'); // a book of that name is there
+    expect(document.querySelector('.name-field__problem')?.textContent).toBe(
+      'There is one of that name here already.',
+    );
+    enter('Caladan');
+    await vi.waitFor(() => expect(run.rename).toHaveBeenCalledWith('Novels/Dune.epub', 'Caladan'));
+    shelfRow('Novels/Caladan.epub'); // the redraw
+    await vi.waitFor(() =>
+      expect((document.activeElement as HTMLElement).dataset.epub).toBe('Novels/Caladan.epub'),
+    );
+  });
+});
