@@ -379,7 +379,7 @@ The phone.
 ### Elsewhere
 
 - `tsconfig.{core,web,node,mobile,e2e}.json`: one per environment: core can use neither DOM nor Node, the window can't use Node, the phone's code has the DOM and no Node
-- `docs/design/`: the approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on. `.interface-design/system.md` sums it up for the interface-design skill
+- `docs/design/`: the approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on, and `docs/design/tokens.css` the mockups' snapshot, frozen. `.interface-design/system.md` sums it up for the interface-design skill
 - `docs/backlog.md`: what comes after the phases: fixes, tweaks and features, each marked for the design pass or not, and the owner's open questions
 
 ## Tests

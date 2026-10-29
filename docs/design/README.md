@@ -1,14 +1,16 @@
 # Eien — design
 
 The look and feel of Eien, and the rules the interface code follows. The
-mockups here are how to see it; `tokens.css` is the source of every value.
+mockups here are how to see it. Every value is a token, and the app's
+`src/ui/theme/tokens.css` is their source; this folder's `tokens.css` is the
+snapshot the mockups were drawn with.
 
 | File | What it shows |
 |---|---|
 | [specimen.html](specimen.html) | Every colour and surface, the depth stack, every ink's contrast on every surface, the four text faces side by side and the mono, the seal, rows and their states, the diff style, the spacing scale — day and night side by side |
 | [desktop.html](desktop.html) | The app window: three panes, two-pane mode, collapsing and resizing, the page's views, Compare, Seal, Versions |
 | [phone.html](phone.html) | The phone: contents → index → page, one at a time, controls behind ⋯ |
-| [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night. Its colours are the Washi palette. It mirrors the app's `src/ui/theme/tokens.css` (the source), with the corner scale, icon, control and weight tokens stage 3 added, and the mockups' own font names |
+| [tokens.css](tokens.css) | The mockups' tokens, day and night, in the Washi palette: a snapshot of the design pass at stage 3 (#54), frozen. The source is the app's `src/ui/theme/tokens.css`, which has the tokens added since; the snapshot keeps the mockups' own font names and the old `--eien-radius` |
 | [themes/otaku.css](themes/otaku.css) | The Otaku palette: Otaku's colours on Eien's colour tokens, day and night |
 | [choices.js](choices.js) | The mockups' settings — FACE, PALETTE (Washi · Otaku), DENSITY (Comfortable · Compact), PAGE (Sheet · Full) and CHAPTERS (i ii iii · 1 2 3): sets `data-face`, `data-palette`, `data-density`, `data-frame` and `data-numerals` before the page draws and keeps each choice |
 | [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Source Sans 3, Atkinson Hyperlegible Next, Schibsted Grotesk, Hanken Grotesk, Instrument Sans and IBM Plex Mono, bundled (SIL Open Font License) |
@@ -125,7 +127,8 @@ count it, or do you press it?* The mono.
 
 ## Rules for the interface code
 
-1. Every colour, face, size, space and duration is a token from `tokens.css`.
+1. Every colour, face, size, space and duration is a token from
+   `src/ui/theme/tokens.css`.
    A theme or palette overrides tokens and nothing else.
 2. Depth is surface tone plus hairlines, and exactly two shadows: the sheet
    casts `--eien-shadow-sheet`, because it is the object you work on and must
