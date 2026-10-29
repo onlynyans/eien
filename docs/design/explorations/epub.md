@@ -251,8 +251,13 @@ Each phase is its own session and pull request, from main.
   zoom); **2b, built**: the book's own links (to its chapters only, the place
   they name kept as a marker, never an id) with one step Back in the
   colophon, and its footnotes shown over the page (EPUB 3's noterefs, and
-  EPUB 2's numbers in a sup), a copy holding its words alone; 2c: a book
-  beside a note, and Quote.
+  EPUB 2's numbers in a sup), a copy holding its words alone; **2c, built**:
+  a book beside a note, proven in each of the split's modes, its pager, ⇄,
+  the phone's slip and Wide screen's Two pages with nothing made for books,
+  and Quote (the selection bar, Q, a phone's ⋯) into the note beside, or
+  the note a phone's one page came from, cited `— Title, Chapter`, one ⌘Z.
+  Opening a book beside from its SHELF row (⌘-click, ⌘Enter, Open to the
+  Side) comes with the row's menu (#120).
 - **Phase 3, turning pages:**
   - paging on one line grid;
   - the leaf and its edges, and the spread when there's room;

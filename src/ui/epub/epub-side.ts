@@ -2,8 +2,9 @@
 // (../vault/page-side.ts): the book read from the vault and opened by
 // core/epub, one chapter drawn at a time, and the place in the book (its
 // chapter, and the line in it, Phase 2) kept in the reading state's file
-// whenever the writer moves to another chapter or the page comes to rest.
-// The book's file is only ever read.
+// whenever the writer moves to another chapter or the page comes to rest;
+// and words chosen in it quoted in a note (Phase 2c). The book's file is
+// only ever read.
 
 import {
   bookFraction,
@@ -20,6 +21,7 @@ import { inflateRaw } from '../../platform/inflate';
 import { crumbsOf } from '../vault/open-note';
 import type { Place, Side, SideHooks } from '../vault/page-side';
 import { bookFollow } from './book-follow';
+import { quoteOf } from './book-quote';
 import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
 import { EpubPage } from './epub-page';
@@ -39,6 +41,14 @@ export interface EpubSideOf {
   sizeOf(path: string): number | null;
   /** Another book or chapter is on the page: the list and the shelf mark it. */
   changed(): void;
+  /**
+   * `quote` (Markdown) put in the note beside this page (Phase 2c): the
+   * note's name; or why not, in words.
+   */
+  quote?(
+    quote: string,
+    from: EpubSide,
+  ): Promise<{ readonly into: string } | { readonly not: string }>;
 }
 
 export interface EpubSide extends Side {
@@ -57,6 +67,8 @@ export interface EpubSide extends Side {
   reload(): Promise<void>;
   /** Its place, if on its way to rest, kept now: the window is quitting. */
   keep(): void;
+  /** The words chosen in its chapter quoted in the note beside (Phase 2c), or why not, said. */
+  quote(): Promise<void>;
 }
 
 /**
@@ -79,10 +91,11 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
   const page = new EpubPage({
     close: hooks.close,
     moved: (fraction) =>
-      page.through(fraction, epub ? bookFraction(epub.spine, spine, fraction) : 0),
+      page.foot.through(fraction, epub ? bookFraction(epub.spine, spine, fraction) : 0),
     rested: (offset) => keep(offset),
     follow: (anchor, link) => void links.follow(anchor, link),
     back: () => void links.back(),
+    quote: () => void quote(),
   });
   let path: string | null = null;
   let epub: Epub | null = null;
@@ -158,6 +171,14 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       if (asked === turn && !disposed) page.showPlace(offset);
     }
     return asked === turn && !disposed;
+  }
+
+  /** The words chosen in the chapter, quoted in the note beside with where they came from. */
+  async function quote(): Promise<void> {
+    const text = quoteOf(page.selection, epub, spine, page.name);
+    if (!text) return page.foot.say('Choose some words in the book to quote.');
+    const done = of.quote ? await of.quote(text, side) : { not: 'There’s no note to quote into.' };
+    page.foot.say('into' in done ? `Quoted in ${done.into}.` : done.not);
   }
 
   /** A chapter chosen at the foot: drawn, the keyboard staying on the page (its button is gone). */
@@ -260,6 +281,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       page.nothing();
     },
     keep: () => page.keepPlace(),
+    quote,
     follow: (values) => page.wear(values),
     dispose() {
       disposed = true;

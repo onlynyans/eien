@@ -7,17 +7,21 @@
 // kept (./place-keeper.ts), its paragraphs as the scroll style sets them
 // (Phase 2). Its own links are followed, a note shown over it, Back in the
 // colophon (./book-links.ts, Phase 2b); a copy gives the words alone
-// (./book-words.ts). A book that won't open says why on the sheet. Find
+// (./book-words.ts), and Quote puts it in the note beside (Phase 2c, from
+// the selection bar, ./book-selection.ts, or Q). A book that won't open says
+// why on the sheet. Find
 // comes with Phase 5: until then it does nothing here, as a note's does
 // where its text isn't shown.
 
 import type { SettingValues } from '../../core/config';
-import { percent, type ZipAddress } from '../../core/epub';
+import type { ZipAddress } from '../../core/epub';
 import { h } from '../dom';
-import { type LeafFoot, type PageFind, type PaneLeaf, pageLeaf } from '../page/page-leaf';
+import { type PageFind, type PaneLeaf, pageLeaf } from '../page/page-leaf';
 import { quietButton } from '../quiet-button';
 import { leafLook } from '../settings/look-properties';
+import { BookFoot } from './book-foot';
 import { catchLinks, markerIn } from './book-links';
+import { BookSelection } from './book-selection';
 import { copyWords } from './book-words';
 import { offsetAfter } from './chapter-place';
 import { PlaceKeeper } from './place-keeper';
@@ -36,6 +40,8 @@ export interface EpubPageOf {
   follow(anchor: HTMLAnchorElement, link: ZipAddress): void;
   /** Back where the last link was followed from. */
   back(): void;
+  /** Quote the words chosen in the chapter in the note beside (Phase 2c). */
+  quote(): void;
 }
 
 export class EpubPage implements PaneLeaf {
@@ -45,7 +51,7 @@ export class EpubPage implements PaneLeaf {
   readonly runningCrumbs = h('p', { class: 'label running-crumbs' });
   readonly aside = h('div', { class: 'page__aside' });
   readonly under = h('div', { class: 'epub__under' });
-  readonly foot: LeafFoot;
+  readonly foot: BookFoot;
   readonly find: PageFind = { open: () => {}, next: () => {}, previous: () => {} };
   readonly tipped: readonly HTMLElement[];
   readonly #crumbs = h('p', { class: 'crumbs label' });
@@ -60,10 +66,6 @@ export class EpubPage implements PaneLeaf {
   });
   readonly #scroll: HTMLElement;
   readonly #turns = h('div', { class: 'epub__turns' });
-  readonly #back: HTMLButtonElement;
-  readonly #figure = h('span', { class: 'colophon__chapter count' });
-  readonly #inChapter = h('span', { class: 'colophon__through count' });
-  readonly #inBook = h('span', { class: 'colophon__through count' });
   readonly #keeper: PlaceKeeper;
   #name = '';
   /** The page's zoom last worn; null before the first. */
@@ -71,18 +73,10 @@ export class EpubPage implements PaneLeaf {
 
   readonly #of: EpubPageOf;
   readonly #stopCopy: () => void;
+  readonly #selection: BookSelection;
 
   constructor(of: EpubPageOf) {
     this.#of = of;
-    this.#back = h('button', {
-      class: 'word-button',
-      attrs: {
-        type: 'button',
-        hidden: true,
-        'aria-keyshortcuts': 'Meta+[ Control+[ Alt+ArrowLeft',
-      },
-      on: { click: () => of.back() },
-    });
     const closer = quietButton({
       label: 'Close this page',
       icon: 'close',
@@ -111,24 +105,24 @@ export class EpubPage implements PaneLeaf {
     this.element.classList.add('page__leaf--epub');
     catchLinks(this.chapter, (anchor, link) => of.follow(anchor, link));
     this.#stopCopy = copyWords(this.chapter);
+    this.#selection = new BookSelection({
+      chapter: this.chapter,
+      scroller: this.#scroll,
+      quote: () => of.quote(),
+    });
     this.#keeper = new PlaceKeeper({
       scroller: this.#scroll,
       chapter: this.chapter,
       moved: (fraction) => of.moved(fraction),
       rested: (offset) => of.rested(offset),
     });
-    this.foot = {
-      lead: h('span'),
-      // Back first: where the split gives each page its own foot, it goes there with the figures.
-      figures: [this.#back, this.#figure, this.#inChapter, this.#inBook],
-      trail: h('span'),
-      said: h('span', { class: 'colophon__said', attrs: { role: 'status' } }),
-    };
+    this.foot = new BookFoot(() => of.back());
     this.nothing();
   }
 
+  /** The book's title; with none open, says so (the pager's name, a folded split's edge). */
   get name(): string {
-    return this.#name;
+    return this.#name || 'No book';
   }
 
   /** A book on the page: its name (the pager's, the label's), the folders above it, its language. */
@@ -159,7 +153,7 @@ export class EpubPage implements PaneLeaf {
     this.notice(null);
     this.chapter.replaceChildren(chapter);
     this.#turns.replaceChildren(foot);
-    this.#figure.textContent = at;
+    this.foot.at(at);
     this.#keeper.show(offset);
   }
 
@@ -178,22 +172,10 @@ export class EpubPage implements PaneLeaf {
     this.#keeper.keep();
   }
 
-  /** How far through the chapter and the book, 0 to 1 each, as the colophon says it. */
-  through(chapter: number, book: number): void {
-    this.#inChapter.textContent = `${percent(chapter)} of the chapter`;
-    this.#inBook.textContent = `${percent(book)} of the book`;
-  }
-
   /** The offset of the place `name` in the chapter: where a link to it goes; null for none. */
   offsetOf(name: string): number | null {
     const marker = markerIn(this.chapter, name);
     return marker ? offsetAfter(this.chapter, marker) : null;
-  }
-
-  /** Back where a link was followed from, named (its chapter), or none: the colophon's word button. */
-  backTo(name: string | null): void {
-    this.#back.hidden = name === null;
-    this.#back.textContent = name === null ? '' : `Back to ${name}`;
   }
 
   /** The page's scroller: what a note over it closes with. */
@@ -223,8 +205,7 @@ export class EpubPage implements PaneLeaf {
     this.#keeper.clear();
     this.chapter.replaceChildren();
     this.#turns.replaceChildren();
-    for (const figure of [this.#figure, this.#inChapter, this.#inBook]) figure.textContent = '';
-    this.backTo(null);
+    this.foot.clear();
   }
 
   /** No book on the page. */
@@ -262,16 +243,28 @@ export class EpubPage implements PaneLeaf {
     this.#keeper.reshow();
   }
 
-  /** ⌘[ or Alt+←, as a browser goes back: back where the last link was followed from. */
+  /** Q quotes; ⌘[ or Alt+←, as a browser goes back: back where the last link was followed from. */
   key(event: KeyboardEvent): void {
     // Not from a field (the page beside's words, its tags): Alt+← is a word left there.
     if (event.target instanceof Element && event.target.closest(FIELD)) return;
+    const plain = !event.metaKey && !event.ctrlKey && !event.altKey;
+    // Q, with words chosen in the chapter: quoted in the note beside (Phase 2c).
+    if (plain && event.key.toLowerCase() === 'q' && this.selection) {
+      event.preventDefault();
+      this.#of.quote();
+      return;
+    }
     const back =
       (event.key === '[' && (event.metaKey || event.ctrlKey) && !event.altKey) ||
       (event.key === 'ArrowLeft' && event.altKey && !event.metaKey && !event.ctrlKey);
-    if (!back || this.#back.hidden) return;
+    if (!back || !this.foot.canGoBack) return;
     event.preventDefault();
     this.#of.back();
+  }
+
+  /** The words chosen in the chapter (or last chosen there, while it's drawn); null for none. */
+  get selection(): Range | null {
+    return this.#selection.range;
   }
 
   /**
@@ -289,6 +282,8 @@ export class EpubPage implements PaneLeaf {
   dispose(): void {
     this.#keeper.dispose();
     this.#stopCopy();
+    this.foot.stop();
+    this.#selection.remove();
     for (const part of [this.element, this.aside, this.under, this.runningCrumbs]) part.remove();
   }
 }

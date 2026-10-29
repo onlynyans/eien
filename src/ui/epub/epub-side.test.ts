@@ -109,7 +109,7 @@ describe('a book’s page', () => {
     await side.open('a.epub');
     side.clear();
     expect(side.path).toBeNull();
-    expect(side.page.name).toBe('');
+    expect(side.page.name).toBe('No book'); // the pager's name for it
     expect(side.page.element.querySelector<HTMLElement>('.page__empty')?.hidden).toBe(false);
     side.page.tipped[0]?.click();
     expect(close).toHaveBeenCalled();

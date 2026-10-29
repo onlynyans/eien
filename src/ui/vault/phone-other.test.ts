@@ -73,7 +73,7 @@ describe('the back bar’s other note', () => {
     await pages.open('Notes.md');
     other.sync();
     expect(other.element.hidden).toBe(false);
-    expect(other.element.getAttribute('aria-label')).toBe('Switch to the other note: Chapter');
+    expect(other.element.getAttribute('aria-label')).toBe('Switch to Chapter');
     other.element.click();
     expect(open).toHaveBeenCalledWith(expect.objectContaining({ path: 'Chapter.md' }));
     onPage = false;

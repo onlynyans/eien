@@ -1,5 +1,6 @@
 // The phone's other note (spec §10; one page, the phone's way): the back bar
-// keeps the note you came from a tap away, at its right, ⇄ and its name. A
+// keeps the note you came from a tap away, at its right, ⇄ and its name: or
+// the book (#40), whatever the page held, named as it is. A
 // tap goes back to it where you left it, and the note you were in becomes
 // the other one, so working between a chapter and its notes is one tap, not
 // back and forward again.
@@ -59,7 +60,7 @@ export function phoneOther(of: PhoneOtherOf): PhoneOther {
       if (!shown || !other) return;
       const title = other.name;
       name.textContent = title;
-      element.setAttribute('aria-label', `Switch to the other note: ${title}`);
+      element.setAttribute('aria-label', `Switch to ${title}`);
     },
   };
 }

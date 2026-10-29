@@ -87,7 +87,7 @@ export function bookFollow(of: BookFollowOf): BookFollow {
     }
     const epub = of.epub();
     back = from;
-    page.backTo(
+    page.foot.backTo(
       from && epub ? (chapterTitle(epub.contents, from.spine) ?? 'the last place') : null,
     );
   }
@@ -131,7 +131,7 @@ export function bookFollow(of: BookFollowOf): BookFollow {
       if (!to) return;
       ++asked;
       back = null;
-      page.backTo(null);
+      page.foot.backTo(null);
       await of.open(to);
       of.keep(page.place);
     },
@@ -140,7 +140,7 @@ export function bookFollow(of: BookFollowOf): BookFollow {
       shut();
       back = null;
       read = null;
-      page.backTo(null);
+      page.foot.backTo(null);
     },
   };
 }

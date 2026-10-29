@@ -80,8 +80,10 @@ export async function showVault(
     tell,
     redraw: () => void redraw(),
     pages: () => pages,
-    openHere: (path) => actions.openNote(path),
+    openChosen: (path) => actions.openNote(path, 'chosen'),
     showPage: () => phone.stack.show('page'),
+    // The phone's view, made after these: asked only once a quote is.
+    phone: () => phone.stack.phone,
   });
   // The notes open on the pages are held still and kept in step as they move.
   const organizer = new Organizer({
@@ -182,6 +184,7 @@ export async function showVault(
     pages,
     has: (path) => state.has(path),
     changed: () => panes.relayout(),
+    quote: () => epubs.quote(),
   });
   const panes = new PaneLayout(
     {

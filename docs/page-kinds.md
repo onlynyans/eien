@@ -169,15 +169,32 @@ changed. Its upkeep:
 name 'epub'. The phone's ⋯ disables a note's own choices with a book in
 front (`MoreState.kind`).
 
+## Phase 2: a book beside a note (built, 2c)
+
+Nothing in the split was made for books: the e2e tests lay a book beside a
+note in each of its four modes, ⇄ them, fold them to the pager, and Wide
+screen's Two pages faces them (a book chosen on SHELF opens as a note
+chosen from its row does, `'chosen'`). What a page that holds a book is
+called: "No book" with none open (the pager, a folded split's edge), "This
+book" for its own host, and the phone's slip "Switch to Pride and
+Prejudice", whatever the other page holds. The companion's ⋯ stays a
+note's (`on: 'note'`): a book has nothing of a note's to put in it, and its
+× is its own.
+
+**Quote** goes into a note: the page beside the book's when it holds one
+(`pages.sides`, `isNote`), else with one page on a phone, the note the book
+was opened from (its `left`), opened again where it was, the book a tap
+away. The note's editor takes it as Eien's change at its end
+(`NoteEditor.addAtEnd`, through the note's one document): one step ⌘Z
+takes back, in Reading too, never counted as the writer's words, the
+keyboard left in the book.
+
 ## Still to come
 
 - The Electron menu's items greyed by kind, from `on`: `on` lives in
   `ui/chrome/commands.ts`, which `app/` can't import, so it needs a table in
   core and a validated channel (backlog). The window ignores a note's
   commands with a book in front meanwhile.
-- The companion's ⋯ for an EPUB (Phase 2), and the words 'This note', 'More
-  for this note', 'No note' and the phone's "other note" for a page that
-  holds a book.
 - Outline cards, Copy as HTML, the exports and the book's count act on a
   note's page; with an EPUB in front they do nothing.
 

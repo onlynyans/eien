@@ -158,6 +158,21 @@ export class NoteEditor {
     return true;
   }
 
+  /**
+   * Eien's addition at the note's end (a quote from a book, #40): `add` given
+   * the text, returning it with the addition. One step ⌘Z takes back, the
+   * caret after it and in sight, and the keyboard left where it is (the
+   * book). False, changing nothing, while the text is held still.
+   */
+  addAtEnd(add: (text: string) => string): boolean {
+    if (!this.amend(add(this.#view.state.doc.toString()), true)) return false;
+    this.#view.dispatch({
+      selection: { anchor: this.#view.state.doc.length },
+      scrollIntoView: true,
+    });
+    return true;
+  }
+
   setMode(mode: EditorMode): void {
     this.#current = mode;
     this.#view.dispatch({ effects: this.#mode.reconfigure(modeExtensions(mode)) });

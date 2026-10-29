@@ -252,7 +252,7 @@ test.describe('two pages', () => {
     await page.setViewportSize(PHONE);
     await expect(titlesOnPage(page)).toHaveCount(1);
     await expect(titlesOnPage(page)).toHaveText('Mend');
-    await expect(other(page)).toHaveAccessibleName('Switch to the other note: Tear');
+    await expect(other(page)).toHaveAccessibleName('Switch to Tear');
     // Opened again, the note you came from comes back as the facing page at a tap.
     await page.setViewportSize(TABLET);
     await other(page).click();
@@ -312,7 +312,7 @@ test.describe('changed in Settings', () => {
     await sheet.getByRole('button', { name: 'Close settings' }).click();
     await expect(titlesOnPage(page)).toHaveCount(1);
     await expect(titlesOnPage(page)).toHaveText('Mend'); // the page you're in stays
-    await expect(other(page)).toHaveAccessibleName('Switch to the other note: Tear');
+    await expect(other(page)).toHaveAccessibleName('Switch to Tear');
   });
 });
 

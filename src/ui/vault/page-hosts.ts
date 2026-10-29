@@ -46,7 +46,7 @@ export function pageHosts(of: PageHostsOf): PageHosts {
         }
         if (!wanted || hosts.has(side)) return;
         const host = new Host<HostDraw>(
-          { name: 'page-own', label: 'This note', items },
+          { name: 'page-own', label: side.kind === 'note' ? 'This note' : 'This book', items },
           { mac: of.mac, look: (id) => of.look(id, side), press: of.press },
         );
         (at === 'head' ? side.page.head : side.page.folio).tools.replaceChildren(host.element);
