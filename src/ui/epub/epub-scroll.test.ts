@@ -128,6 +128,14 @@ describe('the place in a chapter', () => {
     expect(shown).toHaveBeenLastCalledWith(70);
   });
 
+  it('asked for before it rests (a quote, ⇄), is the line now, not the last rest', async () => {
+    const { side } = sideWith(book());
+    await side.open('a.epub');
+    const scroller = laidOut(side.page);
+    scrollTo(scroller, 400);
+    expect(side.place).toMatchObject({ spine: 1, offset: 200 });
+  });
+
   it('on its way to rest, is kept when the window quits', async () => {
     const { side, writes, of } = sideWith(book());
     await side.open('a.epub');

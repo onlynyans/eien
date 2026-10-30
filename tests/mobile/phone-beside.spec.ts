@@ -87,9 +87,22 @@ test('one page: the ⋯ quotes into the note you came from, the book a tap away'
   await back(page).click();
   await shelfBook(page).click();
   await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  // Read on a way before quoting: the book comes back at this line.
+  const scroller = page.locator('.page__leaf--epub .page__scroll');
+  await scroller.evaluate((element) => {
+    element.scrollTop = 900;
+  });
+  const inSight = () =>
+    scroller.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const at = document.caretRangeFromPoint(box.left + box.width / 2, box.top + 4);
+      return at?.startContainer.parentElement?.closest('p')?.textContent?.slice(0, 50) ?? '';
+    });
+  const left = await inSight();
   await choose(page, 'Mr. Bennet replied');
   await quoteFromMore(page);
-  // The note comes back with the quote at its end, the book a tap away.
+  // The note comes back with the quote at its end, said on its colophon; the book a tap away.
+  await expect(page.locator('.colophon')).toContainText('Quoted in Assembly.');
   await expect(page.locator('.page .cm-content')).toContainText(
     'Mr. Bennet replied that he had not.',
   );
@@ -99,4 +112,5 @@ test('one page: the ⋯ quotes into the note you came from, the book a tap away'
   await expect(other(page)).toHaveAccessibleName('Switch to Pride and Prejudice');
   await other(page).click();
   await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await expect.poll(inSight).toBe(left);
 });

@@ -158,6 +158,8 @@ export class PageView implements PaneLeaf {
     return () => this.#caret.delete(listener);
   }
 
+  readonly unnamed = 'No note';
+
   /** The note's name, as its title shows it; '' with no note on the page. */
   get name(): string {
     return this.#sheet.hasNote ? this.#sheet.title.text : '';

@@ -63,13 +63,16 @@ const BOOK = fixtureEpubs(SAMPLE_SOURCES)['plain.epub'] as Uint8Array;
 /** A note's page, as the pages hold one: its editor takes the quote. */
 function notePage(path: string) {
   const added: string[] = [];
+  const told: string[] = [];
   return {
     added,
+    told,
     side: {
       kind: 'note',
       path,
       page: {
         name: 'At the Assembly',
+        foot: { tell: (words: string) => told.push(words) },
         editor: {
           addAtEnd: (add: (text: string) => string) => {
             added.push(add('She hears it.\n'));
@@ -129,7 +132,10 @@ describe('a quote', () => {
     const pages = {
       active: {} as unknown,
       sides: [] as unknown[],
+      // As the pages do: the note takes the book's place in its slot, and the book's page goes.
       open: vi.fn(async () => {
+        (pages.active as EpubSide).dispose();
+        pages.sides.splice(0, 1, note.side);
         pages.active = note.side;
       }),
     };
@@ -140,6 +146,9 @@ describe('a quote', () => {
     await book.quote();
     expect(pages.open).toHaveBeenCalledWith('Assembly.md', false, left);
     expect(note.added).toHaveLength(1);
+    // Said where the writer is now, on the note's colophon: the book's page is gone.
+    expect(note.told).toEqual(['Quoted in At the Assembly.']);
+    expect(book.page.foot.said.textContent).toBe('');
     // A place it came from that isn't a note there now: nowhere to go.
     const elsewhere = await bookPage(kind, { path: 'Gone.md', name: 'Gone' });
     pages.active = elsewhere;

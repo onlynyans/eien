@@ -53,6 +53,7 @@ export class ChapterSheet {
 
   /** `chapter` in place of the last, with its `foot`, its place `offset` kept and shown. */
   drawn(chapter: DocumentFragment, foot: HTMLElement, offset: number): void {
+    this.#selection.forget();
     this.element.replaceChildren(chapter);
     this.turns.replaceChildren(foot);
     this.#keeper.show(offset);
@@ -60,6 +61,7 @@ export class ChapterSheet {
 
   /** No chapter: nothing kept of one. */
   clear(): void {
+    this.#selection.forget();
     this.#keeper.clear();
     this.element.replaceChildren();
     this.turns.replaceChildren();
@@ -91,9 +93,14 @@ export class ChapterSheet {
     return marker ? offsetAfter(this.element, marker) : null;
   }
 
-  /** The words chosen in the chapter (or last chosen there, while it's drawn); null for none. */
+  /** The words chosen in the chapter now; null for none. */
   get selection(): Range | null {
     return this.#selection.range;
+  }
+
+  /** The words chosen now, or else last chosen in this chapter: what a phone's ⋯ quotes, after its tap. */
+  get kept(): Range | null {
+    return this.#selection.kept;
   }
 
   dispose(): void {

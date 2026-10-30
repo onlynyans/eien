@@ -199,9 +199,11 @@ note's (`on: 'note'`): a book has nothing of a note's to put in it, and its
 (`pages.sides`, `isNote`), else with one page on a phone, the note the book
 was opened from (its `left`), opened again where it was, the book a tap
 away. The note's editor takes it as Eien's change at its end
-(`NoteEditor.addAtEnd`, through the note's one document): one step ⌘Z
-takes back, in Reading too, never counted as the writer's words, the
-keyboard left in the book.
+(`NoteEditor.addAtEnd`, through the note's one document): it lands in
+Reading too, one step ⌘Z takes back (in Live or Source: Reading takes no
+edits, an undo's included), never counted as the writer's words, the
+keyboard left in the book. When the book gave its page to the note (a
+phone's one page), the note's colophon says what happened.
 
 ## Still to come
 

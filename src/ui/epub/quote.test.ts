@@ -92,7 +92,40 @@ describe('Quote', () => {
     choose(side.page.chapter, 'Mr. Bennet replied');
     document.dispatchEvent(new Event('selectionchange'));
     document.getSelection()?.removeAllRanges();
-    await side.quote();
+    await side.quote(true);
     expect(quote.mock.calls[0]?.[0]).toMatch(/^> Mr\. Bennet replied that he had not\./u);
+  });
+
+  it('quotes only what’s chosen now with Q: nothing once the choice is gone, once while it’s held, and the choice let go after', async () => {
+    const { side, quote } = await opened('plain.epub');
+    choose(side.page.chapter, 'Mr. Bennet replied');
+    document.dispatchEvent(new Event('selectionchange'));
+    document.getSelection()?.removeAllRanges();
+    const q = (repeat = false) => {
+      const key = new KeyboardEvent('keydown', { key: 'q', repeat, cancelable: true });
+      side.page.key(key);
+      return key;
+    };
+    expect(q().defaultPrevented).toBe(false); // the words chosen before are gone: nothing
+    expect(quote).not.toHaveBeenCalled();
+    choose(side.page.chapter, 'Mr. Bennet replied');
+    q();
+    expect(q(true).defaultPrevented).toBe(true); // held: taken, but quoted once
+    await vi.waitFor(() => expect(quote).toHaveBeenCalledTimes(1));
+    // Quoted, the choice goes: a second press quotes nothing again.
+    expect(document.getSelection()?.isCollapsed ?? true).toBe(true);
+  });
+
+  it('counts the part of a choice that runs past the chapter', async () => {
+    const { side, quote } = await opened('plain.epub');
+    const paragraphs = [...side.page.chapter.querySelectorAll('p')];
+    const range = document.createRange();
+    range.setStartBefore(paragraphs.at(-1) as Node);
+    range.setEndAfter(side.page.element.querySelector('.sheet__turns') as Node);
+    document.getSelection()?.removeAllRanges();
+    document.getSelection()?.addRange(range);
+    await side.quote();
+    expect(quote.mock.calls[0]?.[0]).toMatch(/^> .+\n>\n> — Pride and Prejudice, Chapter I$/su);
+    expect(quote.mock.calls[0]?.[0]).not.toMatch(/Chapter II\n/u);
   });
 });

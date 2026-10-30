@@ -77,9 +77,14 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
       const note = await noteFor(from);
       if (!note) return { not: NO_NOTE };
       const name = note.page.name;
-      return note.page.editor.addAtEnd((words) => withQuote(words, text))
+      // Held still a moment (moving, or still opening): nothing changed, and it says so.
+      const done = note.page.editor.addAtEnd((words) => withQuote(words, text))
         ? { into: name }
-        : { not: `${name} is being kept as it moves: quote it again in a moment.` };
+        : { not: `${name} can’t take a quote just now: try again in a moment.` };
+      // The book gave its page to the note (a phone's one page): the note's colophon says it.
+      if (!of.pages().sides.includes(from))
+        note.page.foot.tell('into' in done ? `Quoted in ${done.into}.` : done.not);
+      return done;
     },
   });
   const kind: EpubKind = {
@@ -118,7 +123,8 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
     contents,
     quote: () => {
       const active = of.pages().active;
-      if (isEpub(active)) active.quote();
+      // The phone's ⋯: the words last chosen, which its tap may have dropped.
+      if (isEpub(active)) void active.quote(true);
     },
     shelf: (two) => {
       const active = of.pages().active;

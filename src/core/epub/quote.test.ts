@@ -8,6 +8,10 @@ describe('a quote from a book', () => {
     expect(citation(SOURCE)).toBe('— Pride and Prejudice, Chapter III');
     expect(citation({ title: ' Persuasion ', chapter: null })).toBe('— Persuasion');
     expect(citation({ title: 'Emma', chapter: '  ' })).toBe('— Emma');
+    // The book's words, never marks in the note: where the note would read a mark, it's escaped.
+    expect(citation({ title: '*Emma* [1816]', chapter: 'Chapter <I>' })).toBe(
+      '— \\*Emma\\* [1816], Chapter \\<I>',
+    );
   });
 
   it('sets every line in a Markdown quote, the citation under a quoted blank line', () => {

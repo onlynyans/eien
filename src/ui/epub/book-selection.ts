@@ -1,10 +1,11 @@
 // The selection bar over a book (#40, Phase 2c; spec §4's selection bar,
 // its look and its place): a selection in the chapter, left still, shows
-// Quote in the note and Copy just above it, as words. It never shows while
-// the pointer is down, and goes on Esc, a scroll, or the selection gone.
-// Not on a touch screen, where the system's own callout is over the words:
-// there the page's ⋯ offers Quote. The selection last made is kept, so a
-// tap elsewhere that drops it still quotes it.
+// Quote in the note and Copy just above its start, as words. It never shows
+// while the pointer is down, and goes on Esc, a scroll, the page losing the
+// keyboard, or the selection gone. Not on a touch screen, where the
+// system's own callout is over the words: there the page's ⋯ offers Quote,
+// and quotes the words last chosen, which a tap on the ⋯ may have dropped.
+// A selection reaching past the chapter counts for the part inside it.
 
 import { h } from '../dom';
 import { placeBar } from '../editor/selection-bar';
@@ -14,16 +15,30 @@ const SHOW_AFTER_MS = 250;
 
 export interface BookSelectionOf {
   readonly chapter: HTMLElement;
+  /** The page's scroller: a scroll, Esc or the keyboard leaving it takes the bar away. */
   readonly scroller: HTMLElement;
   /** Quote the selection in the note beside. */
   quote(): void;
+}
+
+/** The part of the window's selection inside `root`, or null for none. */
+function chosenIn(root: HTMLElement): Range | null {
+  const selection = document.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return null;
+  const range = selection.getRangeAt(0);
+  if (!range.intersectsNode(root)) return null;
+  const clipped = range.cloneRange();
+  if (!root.contains(range.startContainer)) clipped.setStart(root, 0);
+  if (!root.contains(range.endContainer)) clipped.setEnd(root, root.childNodes.length);
+  return clipped.collapsed || clipped.toString().trim() === '' ? null : clipped;
 }
 
 export class BookSelection {
   readonly element: HTMLElement;
   readonly #of: BookSelectionOf;
   #timer: ReturnType<typeof setTimeout> | undefined;
-  #range: Range | null = null;
+  /** The words last chosen in the chapter: what the phone's ⋯ quotes. */
+  #kept: Range | null = null;
 
   constructor(of: BookSelectionOf) {
     this.#of = of;
@@ -49,27 +64,48 @@ export class BookSelection {
       },
       button('Quote in the note', 'Q', () => of.quote()),
       // The page's own copy (./book-words.ts) gives the words alone.
-      button('Copy', 'Meta+C', () => document.execCommand('copy')),
+      button('Copy', 'Meta+C Control+C', () => document.execCommand('copy')),
     );
     document.body.append(this.element);
-    of.chapter.addEventListener('mouseup', () => this.#later());
-    of.chapter.addEventListener('keyup', (event) => {
+    // On the scroller, so a drag that runs past the chapter's last words still shows the bar.
+    of.scroller.addEventListener('mouseup', () => this.#later());
+    of.scroller.addEventListener('keyup', (event) => {
       if (event.shiftKey || event.key === 'Shift') this.#later();
     });
-    of.chapter.addEventListener('mousedown', () => this.hide());
+    of.chapter.addEventListener('mousedown', () => {
+      this.hide();
+      this.#kept = null;
+    });
     of.scroller.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') this.hide();
     });
     of.scroller.addEventListener('scroll', () => this.hide(), { passive: true });
+    of.scroller.addEventListener('focusout', (event) => {
+      if (!(event.relatedTarget instanceof Node && this.element.contains(event.relatedTarget)))
+        this.hide();
+    });
     document.addEventListener('selectionchange', this.#changed);
+    // The window laid out anew (a resize, the pages moving): the bar would stand where the words were.
+    window.addEventListener('resize', this.#hidden);
   }
 
-  /** The selection in the chapter, or the last one made there while it's still drawn; null for none. */
+  /** The words chosen in the chapter now; null for none. */
   get range(): Range | null {
-    const now = this.#inChapter();
-    if (now) return now;
-    const kept = this.#range;
-    return kept && this.#of.chapter.contains(kept.commonAncestorContainer) ? kept : null;
+    return chosenIn(this.#of.chapter);
+  }
+
+  /** The words chosen now, or else last chosen while this chapter is drawn: a phone's ⋯ quotes them. */
+  get kept(): Range | null {
+    const kept = this.#kept;
+    return (
+      this.range ?? (kept && this.#of.chapter.contains(kept.commonAncestorContainer) ? kept : null)
+    );
+  }
+
+  /** Another chapter drawn, or none: nothing chosen in it yet. */
+  forget(): void {
+    this.hide();
+    this.#kept = null;
   }
 
   hide(): void {
@@ -78,21 +114,17 @@ export class BookSelection {
   }
 
   remove(): void {
-    this.hide();
+    this.forget();
     document.removeEventListener('selectionchange', this.#changed);
+    window.removeEventListener('resize', this.#hidden);
     this.element.remove();
   }
 
-  #inChapter(): Range | null {
-    const selection = document.getSelection();
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return null;
-    const range = selection.getRangeAt(0);
-    return this.#of.chapter.contains(range.commonAncestorContainer) ? range : null;
-  }
+  readonly #hidden = () => this.hide();
 
   readonly #changed = () => {
-    const range = this.#inChapter();
-    if (range) this.#range = range.cloneRange();
+    const range = this.range;
+    if (range) this.#kept = range;
     else this.hide();
   };
 
@@ -100,8 +132,10 @@ export class BookSelection {
     if (touch()) return;
     clearTimeout(this.#timer);
     this.#timer = setTimeout(() => {
-      const range = this.#inChapter();
-      if (range) placeBar(this.element, range.getBoundingClientRect());
+      const range = this.range;
+      // Just above where the selection starts: its first line's box, not the whole block's.
+      const start = range?.getClientRects()[0] ?? range?.getBoundingClientRect();
+      if (start) placeBar(this.element, start);
     }, SHOW_AFTER_MS);
   }
 }

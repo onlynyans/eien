@@ -33,7 +33,7 @@ export interface EpubSideOf extends BookOpenOf {
    * `quote` (Markdown) put in the note beside this page (Phase 2c): the
    * note's name; or why not, in words.
    */
-  quote?(
+  quote(
     quote: string,
     from: EpubSide,
   ): Promise<{ readonly into: string } | { readonly not: string }>;
@@ -55,8 +55,8 @@ export interface EpubSide extends Side {
   reload(): Promise<void>;
   /** Its place, if on its way to rest, kept now: the window is quitting. */
   keep(): void;
-  /** The words chosen in its chapter quoted in the note beside (Phase 2c), or why not, said. */
-  quote(): Promise<void>;
+  /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */
+  quote(kept?: boolean): Promise<void>;
 }
 
 /** Whether `side` holds an EPUB: a page of this kind, not a test's stand-in of the same name. */
@@ -150,12 +150,18 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     return asked === turn && !disposed;
   }
 
-  /** The words chosen in the chapter, quoted in the note beside with where they came from. */
-  async function quote(): Promise<void> {
-    const text = quoteOf(page.sheet.selection, epub, spine, page.name);
+  /**
+   * The words chosen in the chapter now (or, from a phone's ⋯, `kept`: last
+   * chosen there) quoted in the note beside, with where they came from; once:
+   * the selection goes with it. What happened is said here, unless the page
+   * gave its place to the note (a phone's one page), which says it there.
+   */
+  async function quote(kept = false): Promise<void> {
+    const text = quoteOf(kept ? page.sheet.kept : page.sheet.selection, epub, spine, page.name);
     if (!text) return page.foot.say('Choose some words in the book to quote.');
-    const done = of.quote ? await of.quote(text, side) : { not: 'There’s no note to quote into.' };
-    page.foot.say('into' in done ? `Quoted in ${done.into}.` : done.not);
+    const done = await of.quote(text, side);
+    if ('into' in done) document.getSelection()?.removeAllRanges();
+    if (!disposed) page.foot.say('into' in done ? `Quoted in ${done.into}.` : done.not);
   }
 
   /** A chapter chosen at the foot: drawn, the keyboard staying on the page (its button is gone). */
@@ -176,8 +182,12 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     get spine() {
       return spine;
     },
+    // The place now: a scroll still on its way to rest (a quote, ⇄, a page taking this one's slot
+    // within the second) is kept first, while the page is laid out.
     get place(): EpubPlace | null {
-      return path ? { path, name: page.name, spine, offset: page.sheet.place } : null;
+      if (!path) return null;
+      page.sheet.keep();
+      return { path, name: page.name, spine, offset: page.sheet.place };
     },
     get left() {
       return before;

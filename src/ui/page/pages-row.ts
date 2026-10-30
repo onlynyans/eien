@@ -142,14 +142,14 @@ export class PagesRow {
       page.element.setAttribute('role', 'region');
       page.element.setAttribute(
         'aria-label',
-        `${page.name || 'No note'}${page === this.#active ? ', the active page' : ''}`,
+        `${page.name || page.unnamed}${page === this.#active ? ', the active page' : ''}`,
       );
     }
     // Drawn whether it's in sight or not: folding and unfolding only shows and hides it (#44).
     this.#drawPager();
     const other = this.#other();
     if (other) {
-      const name = other.name || 'No note';
+      const name = other.name || other.unnamed;
       this.#edgeName.textContent = name;
       this.#edge.setAttribute('aria-label', `Turn to ${name}, the facing page`);
       this.#edge.dataset.tip = `Turn to ${name}`;
@@ -212,7 +212,7 @@ export class PagesRow {
   #drawPager(): void {
     this.pager.replaceChildren(
       ...this.#shown.map((page) =>
-        wordButton(page.name || 'No note', () => this.#events.activate(page), {
+        wordButton(page.name || page.unnamed, () => this.#events.activate(page), {
           'aria-pressed': String(page === this.#active),
         }),
       ),

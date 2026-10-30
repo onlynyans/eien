@@ -442,7 +442,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      on the desktop, Q too). Quote adds them at the end of the note beside
      as a Markdown quote, `— Pride and Prejudice, Chapter III` under it (the
      book's title and the chapter's name, no author), and never touches the
-     note's own words; one ⌘Z in the note takes it out. On a phone with one
+     note's own words; one ⌘Z in the note takes it out (in Live or Source).
+     Q quotes only what's chosen now, once. On a phone with one
      page it goes into the note you came from, which opens with it, the
      book a tap away. With no note beside, the colophon says so.
    A small header shows the note's

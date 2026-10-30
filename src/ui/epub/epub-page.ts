@@ -90,9 +90,11 @@ export class EpubPage implements PaneLeaf {
     return this.sheet.element;
   }
 
-  /** The book's title; with none open, says so (the pager's name, a folded split's edge). */
+  readonly unnamed = 'No book';
+
+  /** The book's title; '' with none open (the window then takes its vault's name). */
   get name(): string {
-    return this.#name || 'No book';
+    return this.#name;
   }
 
   /** A book on the page: its name (the pager's, the label's), the folders above it, its language. */
@@ -193,10 +195,10 @@ export class EpubPage implements PaneLeaf {
     // Not from a field (the page beside's words, its tags): Alt+← is a word left there.
     if (event.target instanceof Element && event.target.closest(FIELD)) return;
     const plain = !event.metaKey && !event.ctrlKey && !event.altKey;
-    // Q, with words chosen in the chapter: quoted in the note beside (Phase 2c).
+    // Q, with words chosen in the chapter now: quoted in the note beside (Phase 2c); held, once.
     if (plain && event.key.toLowerCase() === 'q' && this.sheet.selection) {
       event.preventDefault();
-      this.#of.quote();
+      if (!event.repeat) this.#of.quote();
       return;
     }
     const back =

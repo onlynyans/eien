@@ -4,15 +4,22 @@
 // book's title and the chapter, with no author, as decided. It goes at the
 // note's end, after a blank line: the note's own words are never touched.
 
+import { escapeHtml, fromHtml } from '../html';
+
 /** Where a quote came from: the book's title, and its chapter's name where the contents give one. */
 export interface QuoteSource {
   readonly title: string;
   readonly chapter: string | null;
 }
 
-/** The citation under a quote: "— Pride and Prejudice, Chapter III". */
-export const citation = ({ title, chapter }: QuoteSource): string =>
-  `— ${[title.trim(), chapter?.trim()].filter(Boolean).join(', ')}`;
+/**
+ * The citation under a quote: "— Pride and Prejudice, Chapter III", its words
+ * the book's own: a mark in a title (*, _, [) is escaped, as the passage's are.
+ */
+export const citation = ({ title, chapter }: QuoteSource): string => {
+  const words = [title.trim(), chapter?.trim()].filter(Boolean).join(', ');
+  return `— ${fromHtml(`<p>${escapeHtml(words)}</p>`)}`;
+};
 
 /** `markdown` (the book's words) as a Markdown quote with its citation; '' for no words. */
 export function quoted(markdown: string, source: QuoteSource): string {
