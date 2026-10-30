@@ -186,10 +186,12 @@ export class Chrome {
     openMenu(items, { opener }, 'More tools');
   }
 
-  /** Show every command as it is now. */
+  /** Show every command as it is now; a bar whose tools came or went (#40) is fitted again. */
   refresh(): void {
     this.#placePager();
-    for (const host of this.#hosts) host.refresh();
+    let moved = false;
+    for (const host of this.#hosts) moved = host.refresh() || moved;
+    if (moved) this.fit();
   }
 
   /** The pager before the page's tools: the layout's, or the phone's while it goes the phone's way. */

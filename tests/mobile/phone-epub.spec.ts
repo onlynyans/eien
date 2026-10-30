@@ -37,6 +37,10 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await book.click();
       await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
       await expect(chapter(page)).toBeInViewport();
+      // The note's tools set aside on a book (#40): its views and Focus, never greyed; Look stays.
+      await expect(page.locator('[data-command="view.next"]:visible')).toHaveCount(0);
+      await expect(page.locator('[data-command="focus"]:visible')).toHaveCount(0);
+      await expect(page.locator('.phone-bar__controls [data-command="look"]')).toBeVisible();
       expect(await seriousViolations(page), 'the book').toEqual([]);
       await back(page).click();
       const rows = page.locator('.contents-row');

@@ -188,7 +188,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `vault/note-side.ts`: a note's (`isNote`, `activeNote`)
   - `vault/stand-in-kind.ts`: a second kind for the tests
   - a command for one kind is marked `on` in `chrome/commands.ts`, and `menuOff` carries it to the menu bar and the phone's ⋯
-  - `vault/command-looks.ts`: how each command looks now
+  - `vault/command-looks.ts`: how each command looks now, or set aside where the active page is another kind
 - `page/note-foot.ts`: a note's colophon items
 - `vault/open-notes.ts`: a note open on any page, held once (one session, one document, its images), however many pages show it
 - `vault/note-actions.ts`: what the writer does to notes from any pane
@@ -318,7 +318,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `chrome/`: the window's controls (spec §4, Layouts)
   - `chrome/commands.ts`: every control a command, once (its icon, name, key and the menu's command it runs)
   - `icons.ts`: Eien's own icons, inline SVG, which the commands are drawn as
-  - `chrome/host.ts` draws them as icon buttons, with tooltips from `chrome/tooltip.ts`
+  - `chrome/host.ts` draws them as icon buttons, with tooltips from `chrome/tooltip.ts`, a command set aside out of its row
   - `chrome/fold.ts`: short of room, a bar's tools fold behind one ⋯
   - `chrome/band.ts`, `slip.ts`, `runhead.ts`: each layout a list of its hosts and the slot each goes in, each with its own stylesheet and corners
   - `chrome/layout-spec.ts`: the slots and the hosts all three share

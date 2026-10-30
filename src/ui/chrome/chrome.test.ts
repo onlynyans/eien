@@ -236,4 +236,60 @@ describe('Chrome', () => {
     expect(ids()).toBe('look');
     expect(tools.contains(document.activeElement)).toBe(true);
   });
+
+  it('sets a command aside as its look says, and fits its bar again only when tools came or went (#40)', () => {
+    const fits = vi.fn(() => true);
+    const chrome = new Chrome(of({ fits }));
+    chrome.mount('band');
+    // A bar the window lays out: happy-dom lays out nothing, so it's given a box.
+    for (const slot of SLOTS) slots[slot].getClientRects = () => [{}] as unknown as DOMRectList;
+    const seal = chrome.buttons('seal')[0] as HTMLButtonElement;
+    fits.mockClear();
+    chrome.refresh();
+    expect(fits).not.toHaveBeenCalled();
+    for (const id of ['compare', 'seal', 'versions', 'focus'] as const)
+      looks.set(id, { aside: true });
+    chrome.refresh();
+    expect(seal.hasAttribute('data-aside')).toBe(true);
+    expect(fits).toHaveBeenCalled();
+    // The rule after the note's run, with nothing before it, is out of the row.
+    const rule = seal.parentElement?.querySelector('.host__rule') as HTMLElement;
+    expect(rule.hidden).toBe(true);
+    fits.mockClear();
+    chrome.refresh();
+    expect(fits).not.toHaveBeenCalled();
+    looks.clear();
+    chrome.refresh();
+    expect(seal.hasAttribute('data-aside')).toBe(false);
+    expect(rule.hidden).toBe(false);
+    expect(fits).toHaveBeenCalled();
+  });
+
+  it('leaves no rule alone in a bar that doesn’t fold when its run is set aside (the phone’s)', () => {
+    const chrome = new Chrome(of());
+    chrome.mount('runhead');
+    const rule = slots.phoneFoot.querySelector('.host__rule') as HTMLElement;
+    expect(rule.hidden).toBe(false);
+    for (const id of ['view.live', 'view.source', 'view.reading'] as const) {
+      looks.set(id, { aside: true });
+    }
+    chrome.refresh();
+    expect(rule.hidden).toBe(true);
+    expect((slots.phoneFoot.querySelector('.host__group') as HTMLElement).hidden).toBe(true);
+  });
+
+  it('marks a host empty with every tool set aside, so a floating formatting bar goes (#40)', () => {
+    const chrome = new Chrome(of());
+    chrome.mount('slip');
+    const format = slots.format.querySelector('.host') as HTMLElement;
+    expect(format.hasAttribute('data-empty')).toBe(false);
+    for (const button of format.querySelectorAll<HTMLElement>('[data-command]')) {
+      looks.set(button.dataset.command as CommandId, { aside: true });
+    }
+    chrome.refresh();
+    expect(format.hasAttribute('data-empty')).toBe(true);
+    looks.clear();
+    chrome.refresh();
+    expect(format.hasAttribute('data-empty')).toBe(false);
+  });
 });

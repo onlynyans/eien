@@ -133,6 +133,10 @@
     padding-top: calc(var(--eien-control) + var(--eien-space-3));
   }
 }
+/* Every button set aside beside a book (#40): no slip of nothing over the page. */
+[data-layout="slip"] .host--slip-format[data-empty] {
+  display: none;
+}
 [data-layout="slip"] .host--slip-format {
   /* Wider than the page has room for, a second row: it floats, with no bar to fold against. */
   flex-wrap: wrap;

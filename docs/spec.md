@@ -404,14 +404,24 @@ Three panes, each collapsible, with a two-pane option in settings:
    it on the note's own sheet, drawn from cleaned nodes in the writer's
    faces and the theme's colours, its pictures from the book's own zip, the
    book's folders above it. A book that won't open says why on the sheet
-   (locked with DRM, too large, damaged); its file is only read. With a book in front, a note's
-   commands are greyed wherever they're offered: the layout's tools, the
-   phone's ⋯, and the menu bar (the views, Seal, Compare, Versions, Copy as
-   HTML, every format, Export HTML… and Export Note, Outline Cards, Focus
-   Mode, Typewriter Scrolling, Show Markdown Marks), from the one rule each
-   control's `on` gives (`ui/chrome/commands.ts`, `menuOff`). The menu bar
-   is the app's: it wears the focused window's, and a menu of the bar is
-   never greyed, only its items.
+   (locked with DRM, too large, damaged); its file is only read. A tool
+   shows only while the active page can use it (decided 2026-10-29): with a
+   book active, a note's tools (the views, Seal, Compare, Versions, Copy as
+   HTML, Focus, every format) are set aside in the layout's bars and the
+   phone's, not greyed, and their keys do nothing there; choosing a note
+   brings them back. The formatting bar's row stays while a note is on
+   either page, so neither page moves (beside a book, only its buttons go);
+   with a book alone it goes too. The tools every page shares (Look, Split,
+   the panes) keep their places, and a page with its own host (Facing
+   pages, Tools that follow) keeps its own tools on it. A bar that folds
+   fits again as its tools come and go. The phone's ⋯ and the menu bar
+   grey the same commands rather than hide them (the views, Seal, Compare,
+   Versions, Copy as HTML, every format, Export HTML… and Export Note,
+   Outline Cards, Focus Mode, Typewriter Scrolling, Show Markdown Marks),
+   from the one rule each control's `on` gives (`ui/chrome/commands.ts`,
+   `menuOff`): a menu lists all the app does. The menu bar is the app's: it
+   wears the focused window's, and a menu of the bar is never greyed, only
+   its items.
    - **A chapter a sheet** (Phase 2): the chapter scrolls as a note does in
      Reading, the usual keys once the page has the keyboard. At its foot,
      after a soft rule, the chapters before and after it in the reading
@@ -546,7 +556,8 @@ each command in exactly one host; switching takes one layout's hosts out and
 puts the other's in, and nothing else changes. A host draws its commands as
 icon buttons (`ui/icons.ts`), each with an accessible name, a tooltip with
 its key (after a short hover, or at once from the keyboard) and its state
-(pressed, disabled); a host is a toolbar, its arrows moving along it, and Tab
+(pressed, disabled, or set aside where the active page can't use it, #40);
+a host is a toolbar, its arrows moving along it, and Tab
 reaches every control. A switch leaves the keyboard on the same command in
 the new layout, or on the page. Whether the strip is hidden is per device.
 
