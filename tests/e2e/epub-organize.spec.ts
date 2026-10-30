@@ -95,7 +95,7 @@ test('renamed in its row and moved, the book keeps its .epub, its page and its p
     .getByRole('menuitem', { name: 'Fic' })
     .click();
   await expect.poll(() => existsSync(at(vault, 'Fic/First Impressions.epub'))).toBe(true);
-  // Gone from where it was, as the rename's is above: the two are told apart on the disk, not at once.
+  // A move links the new name, then lets the old one go: wait for it, as the rename does.
   await expect.poll(() => existsSync(at(vault, 'Novels/First Impressions.epub'))).toBe(false);
   await expect(chapter(page)).toContainText('Not all that Mrs. Bennet');
   await expect(page.locator('.contents-row')).toHaveCount(3);
