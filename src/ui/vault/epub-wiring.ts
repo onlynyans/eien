@@ -11,7 +11,7 @@ import { isNoteName } from '../../core/vault';
 import type { VaultBridge } from '../../platform/bridge';
 import { BookCounts } from '../epub/book-count';
 import { type EpubKind, epubKind } from '../epub/epub-kind';
-import { type EpubPlace, type EpubSide, isEpub } from '../epub/epub-side-types';
+import { type EpubSide, isEpub } from '../epub/epub-side-types';
 import { readingStore } from '../epub/reading-store';
 import type { MarkRow } from '../list/book-lenses';
 import type { ContentsModel } from '../list/contents-list';
@@ -191,16 +191,7 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
         of.nav.bookLens = lens;
         of.redraw();
       },
-      goMark: (path, row) => {
-        const side = toBook(path);
-        if (side?.path)
-          void side.open(side.path, {
-            path: side.path,
-            name: side.page.name,
-            spine: row.spine,
-            offset: row.mark.offset,
-          } as EpubPlace);
-      },
+      goMark: (path, row) => void toBook(path)?.goTo(row.spine, row.mark.offset),
       unmark: (path, row) => void sideOf(path)?.unmark(row.mark),
     },
   };

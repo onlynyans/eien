@@ -724,15 +724,16 @@ in the book, each recorded here as it's built.
   with the ribbon over its top edge, filled while pressed: the page tells
   it from Pinned's banner.
 - **Marks in the list** (Phase 4c, `list/book-lenses.ts`, `.css`): under
-  the book's head in the list, Contents and Marks as word buttons in a
-  tab list, each with its count in a `.count`; the chosen one wears every
-  chosen word button's look (ink in a `--eien-rule-strong` hairline). A
-  bookmark's row is a contents row: its words in the text face at row
-  size, two lines at most; its page a count at the right; its chapter in
-  pencil at preview size under them. None kept: the list's empty line,
-  italic in pencil. With two panes the tabs are the first row under the
-  book's SHELF row, and its bookmarks tree rows with their page as the
-  count.
+  the book's head in the list, Contents and Marks as word buttons, each
+  with its count in a `.count`, the one shown pressed (every chosen word
+  button's look: ink in a `--eien-rule-strong` hairline), as the views are
+  a chosen one of a set. A bookmark's row is a contents row: its words in
+  the text face at row size, the list's weight and leading, two lines at
+  most; its page a count at the right; its chapter in pencil at preview
+  size under them. None kept: the list's empty line, italic in pencil.
+  With two panes the buttons are a line of their own (not a row) under the
+  book's SHELF row, its bookmarks tree rows with their page as the count,
+  and none kept the tree's own hint.
 - **Marks on the edge** (Phase 4d, `epub/edge-strip.ts`, `.css`): the
   whole book down the page pane's outer edge, `--eien-space-5` wide,
   `--eien-space-4` in from it (the system's scroll bar keeps its own),

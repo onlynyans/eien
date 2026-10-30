@@ -47,7 +47,9 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
   let drew: Epub | null = null;
   const labelAt = (spine: number, offset: number) => {
     const count = of.count();
-    const { label } = count ? pageOf(count, spine, offset) : { label: null };
+    // A printed page in a chapter not yet counted isn't known: the one before it would be wrong.
+    if (!count || (count.print.length > 0 && count.lengths[spine] === null)) return null;
+    const { label } = pageOf(count, spine, offset);
     return label === null ? null : String(label);
   };
   const strip = bookStrip({ ...of, labelAt });

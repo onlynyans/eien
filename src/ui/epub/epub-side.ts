@@ -239,8 +239,20 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       stopCount = counted.run(
         epub,
         (then) => pages.whenStill(then),
-        () => placing.counted(),
+        () => {
+          placing.counted();
+          // Whole: the list's Marks have their pages now.
+          if (counted.whole) of.changed();
+        },
       );
+    },
+    goTo: async (index, offset) => {
+      // A bookmark's place: no step back to where a link was followed from, any turn landed first.
+      links.forget();
+      pages.finish();
+      if (index !== spine) return void (await draw(index, true, offset));
+      page.sheet.showPlace(offset);
+      keep(offset);
     },
     go: async (index) => {
       // A chapter the reader chose: no step back to where a link was followed from.

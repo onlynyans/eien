@@ -1,7 +1,7 @@
 /* A book's lenses (#40, Phase 4c, ./book-lenses.ts): Contents and Marks, word
-   buttons as tabs under the list's head (the chosen one's look is every chosen
-   word button's, ../theme/base.css), each with its count; and a bookmark's row:
-   a contents row whose words take two lines, its page at the right, its
+   buttons under the list's head, the one shown pressed (every chosen word
+   button's look, ../theme/base.css), each with its count; and a bookmark's
+   row: a contents row whose words take two lines, its page at the right, its
    chapter in pencil under them. With two panes, under the book's SHELF row. */
 .book-lenses {
   display: flex;
@@ -21,12 +21,15 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  /* A contents row's title's voice: the list's weight and leading, ink-soft until chosen. */
   font-family: var(--eien-face-text);
   font-size: var(--eien-size-row);
-  color: var(--eien-ink);
+  font-weight: var(--eien-weight-list);
+  line-height: var(--eien-leading-row);
 }
 .mark-row__chapter {
   grid-column: 1 / -1;
+  line-height: var(--eien-leading-row);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -35,19 +38,14 @@
   font-size: var(--eien-size-preview);
   color: var(--eien-pencil);
 }
-/* Under a book's row on SHELF: the tabs as a row of their own, past the twisty's column. */
-.tree-row--lenses .book-lenses {
-  margin: var(--eien-space-1) 0;
-  padding-left: var(--eien-space-5);
+/* Under a book's row on SHELF: the lenses as a line of their own, past the twisty's column, at the
+   tree's indent. */
+.tree-lenses {
+  padding: var(--eien-space-1) var(--eien-space-4) var(--eien-space-1)
+    calc(var(--eien-space-2) + var(--depth, 0) * var(--indent) + var(--eien-space-5));
 }
-.tree-row--empty {
-  padding-block: var(--eien-space-1);
-  padding-right: var(--eien-space-4);
-  padding-left: calc(var(--eien-space-2) + var(--depth, 0) * var(--indent) + var(--eien-space-5));
-  font-family: var(--eien-face-text);
-  font-size: var(--eien-size-preview);
-  font-style: italic;
-  color: var(--eien-pencil);
+.tree-lenses .book-lenses {
+  margin: 0;
 }
 @media (pointer: coarse) {
   .book-lens {
