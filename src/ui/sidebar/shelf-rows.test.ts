@@ -48,6 +48,9 @@ function draw(
     bookMenu: vi.fn(),
     renameBook: vi.fn(),
     trashBook: vi.fn(),
+    lens: vi.fn(),
+    goMark: vi.fn(),
+    unmark: vi.fn(),
   };
   const list = document.createElement('ul');
   list.append(...shelfRows({ tree: TREE, current, contents, shut }, actions, folders));
@@ -133,6 +136,8 @@ describe('SHELF’s rows', () => {
   it('marks the book on the page, and lists its contents under it with two panes', () => {
     const { list, actions } = draw('Loose.epub', {
       path: 'Loose.epub',
+      lens: 'contents',
+      marks: null,
       rows: [
         { title: 'Part One', depth: 0, spine: 1 },
         { title: 'Chapter 1', depth: 1, spine: 2 },
@@ -148,9 +153,45 @@ describe('SHELF’s rows', () => {
     expect(actions.chapter).toHaveBeenCalledWith('Loose.epub', 1);
   });
 
+  it('lists the book’s lenses first under it, and under Marks its bookmarks (Phase 4c)', () => {
+    const mark = { chapter: 'c1.xhtml', offset: 5, words: 'It is a truth' };
+    const row = { mark, spine: 1, page: '3', chapter: 'Chapter I' };
+    const { list, actions } = draw('Loose.epub', {
+      path: 'Loose.epub',
+      lens: 'marks',
+      marks: [row],
+      rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
+      spine: 1,
+    });
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-row--lenses [role="tab"]')];
+    expect(tabs.map((tab) => tab.getAttribute('aria-selected'))).toEqual(['false', 'true']);
+    expect(texts(list, '.tree-row--chapter')).toEqual([]);
+    const name = list.querySelector<HTMLButtonElement>('.tree-row--mark .tree-row__name');
+    expect(name?.textContent).toBe('It is a truth3');
+    name?.click();
+    expect(actions.goMark).toHaveBeenCalledWith('Loose.epub', row);
+    name?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+    expect(actions.unmark).toHaveBeenCalledWith('Loose.epub', row);
+    tabs[0]?.click();
+    expect(actions.lens).toHaveBeenCalledWith('Loose.epub', 'contents');
+  });
+
+  it('says under Marks that none is kept', () => {
+    const { list } = draw('Loose.epub', {
+      path: 'Loose.epub',
+      lens: 'marks',
+      marks: [],
+      rows: [],
+      spine: 1,
+    });
+    expect(texts(list, '.tree-row--empty')).toEqual(['Nothing kept yet. B bookmarks a page.']);
+  });
+
   it('marks once a chapter whose file a part starts in too, each row its own key', () => {
     const { list } = draw('Loose.epub', {
       path: 'Loose.epub',
+      lens: 'contents',
+      marks: null,
       rows: [
         { title: 'Part One', depth: 0, spine: 1 },
         { title: 'Chapter 1', depth: 1, spine: 1 },
@@ -216,7 +257,13 @@ describe('SHELF’s rows', () => {
   });
 
   it('gives a chapter under the book none of it: a chapter is chosen, never renamed or trashed', () => {
-    const contents = { path: 'Loose.epub', rows: [{ title: 'One', depth: 0, spine: 0 }], spine: 0 };
+    const contents = {
+      path: 'Loose.epub',
+      rows: [{ title: 'One', depth: 0, spine: 0 }],
+      spine: 0,
+      lens: 'contents' as const,
+      marks: null,
+    };
     const { list, actions } = draw('Loose.epub', contents);
     const chapter = list.querySelector('.tree-row--chapter .tree-row__name') as HTMLElement;
     chapter.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));

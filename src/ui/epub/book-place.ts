@@ -26,6 +26,8 @@ export interface BookPlace {
   counted(): void;
   /** No words in sight measured yet (a chapter on its way, or refused): no page said until they are. */
   clear(): void;
+  /** The page `offset` into spine item `spine` is on, as its label says it; null for none known. */
+  labelAt(spine: number, offset: number): string | null;
 }
 
 export function bookPlace(of: BookPlaceOf): BookPlace {
@@ -57,6 +59,11 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
     clear() {
       from = null;
       say();
+    },
+    labelAt(spine, offset) {
+      const count = of.count();
+      const { label } = count ? pageOf(count, spine, offset) : { label: null };
+      return label === null ? null : String(label);
     },
   };
 }

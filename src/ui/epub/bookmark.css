@@ -39,3 +39,8 @@
 :root[data-split="facing"] .page__pages[data-two] .page__folio .colophon__bookmarked:not(:empty) {
   display: inline;
 }
+
+/* The bookmark tool, pressed on a bookmarked page: its ribbon filled, as the page's own is. */
+[data-command="bookmark"][aria-pressed="true"] svg path:last-child {
+  fill: currentColor;
+}

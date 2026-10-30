@@ -75,6 +75,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     still: (then) => pages.whenStill(then),
     land: () => pages.finish(),
     changed: () => of.looks(),
+    listed: () => of.changed(),
   });
   const bookmark = () => marks.toggle();
   const links = bookFollow({
@@ -276,6 +277,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       return marks.all;
     },
     bookmark,
+    unmark: (mark) => marks.remove(mark),
+    labelAt: (at, offset) => placing.labelAt(at, offset),
     quote,
     follow(next) {
       values = next;

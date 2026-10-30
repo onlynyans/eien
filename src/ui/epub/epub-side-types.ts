@@ -55,6 +55,10 @@ export interface EpubSide extends Side {
   readonly bookmarks: readonly Bookmark[];
   /** The page in sight bookmarked, or its bookmark taken off. */
   bookmark(): Promise<void>;
+  /** One bookmark taken off (a Marks row's Delete, Phase 4c). */
+  unmark(mark: Bookmark): Promise<void>;
+  /** The page `offset` into spine item `spine` is on, as its label says it (a Marks row's); null for none known. */
+  labelAt(spine: number, offset: number): string | null;
   /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */
   quote(kept?: boolean): Promise<void>;
 }

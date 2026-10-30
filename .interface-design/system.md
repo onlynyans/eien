@@ -644,7 +644,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131; Phase 4, page numbers, 4a; bookmarks, 4b)
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add paging and the turn (Phase 3), marks, highlights and Find
@@ -718,7 +718,19 @@ in the book, each recorded here as it's built.
   says "bookmarked" in its figures (`.colophon__bookmarked`, shown there
   alone). The tool, a ribbon icon pressed on a bookmarked page ("Take the
   bookmark off"), is a book's own (`on: 'epub'`), among the page's tools
-  before Look; in Facing pages, in each page's folio.
+  before Look; in Facing pages, in each page's folio. Its icon is a page
+  with the ribbon over its top edge, filled while pressed: the page tells
+  it from Pinned's banner.
+- **Marks in the list** (Phase 4c, `list/book-lenses.ts`, `.css`): under
+  the book's head in the list, Contents and Marks as word buttons in a
+  tab list, each with its count in a `.count`; the chosen one wears every
+  chosen word button's look (ink in a `--eien-rule-strong` hairline). A
+  bookmark's row is a contents row: its words in the text face at row
+  size, two lines at most; its page a count at the right; its chapter in
+  pencil at preview size under them. None kept: the list's empty line,
+  italic in pencil. With two panes the tabs are the first row under the
+  book's SHELF row, and its bookmarks tree rows with their page as the
+  count.
 - **The place is kept to the line**, never drawn: a page put back, laid out
   anew or zoomed shows the same line at its top.
 - **A note over the page** (Phase 2b, `ui/epub/note-over.ts`): a note's

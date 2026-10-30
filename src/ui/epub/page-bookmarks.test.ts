@@ -5,7 +5,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
-import { readingPath } from '../../core/epub';
+import { type Bookmark, readingPath } from '../../core/epub';
 import { makeEpubSide } from './epub-side';
 import type { EpubSide } from './epub-side-types';
 import { PageBookmarks } from './page-bookmarks';
@@ -90,6 +90,19 @@ describe('a book’s bookmark', () => {
     expect(after.later).toBe('kept');
   });
 
+  it('is taken off from its Marks row, the list told and the colophon saying so (Phase 4c)', async () => {
+    const { side, file, press, changed } = await opened();
+    press();
+    await vi.waitFor(() => expect(side.bookmarks).toHaveLength(1));
+    changed.mockClear();
+    await side.unmark(side.bookmarks[0] as Bookmark);
+    expect(JSON.parse((await file()) ?? '{}').bookmarks).toEqual([]);
+    expect(side.bookmarks).toEqual([]);
+    expect(side.bookmarked).toBe(false);
+    expect(changed).toHaveBeenCalled();
+    expect(said(side)).toBe('Bookmark taken off.');
+  });
+
   it('is never made from a field', async () => {
     const { side, press, file } = await opened();
     const field = document.createElement('input');
@@ -154,6 +167,7 @@ describe('what a page shows of its bookmarks', () => {
       },
       land: () => {},
       changed: () => {},
+      listed: () => {},
     });
     marks.opened('k', {
       reading: { chapter: null, offset: 0 },

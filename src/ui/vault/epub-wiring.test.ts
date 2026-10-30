@@ -5,7 +5,9 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
+import { readingPath } from '../../core/epub';
 import type { EpubSide } from '../epub/epub-side-types';
+import { sideWith } from '../epub/test-side';
 import { epubWiring } from './epub-wiring';
 import { Navigation } from './navigation';
 import type { Pages } from './pages';
@@ -33,7 +35,7 @@ function wired(
     showPage: () => {},
     phone: () => phone,
   });
-  return { nav, kind: epubs.kind };
+  return { nav, kind: epubs.kind, epubs };
 }
 
 describe('a book moved', () => {
@@ -100,6 +102,45 @@ async function bookPage(kind: ReturnType<typeof wired>['kind'], left: unknown = 
 afterEach(() => {
   document.getSelection()?.removeAllRanges();
   document.body.replaceChildren();
+});
+
+describe('a book’s Marks in the list (Phase 4c)', () => {
+  it('are its bookmarks in its order, each with its page and its chapter', async () => {
+    const { side, disk } = sideWith({ 'a.epub': BOOK });
+    await side.open('a.epub');
+    const key = side.epub?.key ?? '';
+    await disk.write(
+      readingPath(key),
+      JSON.stringify({
+        bookmarks: [
+          { chapter: 'OEBPS/chapter-3.xhtml', offset: 10, words: 'later' },
+          { chapter: 'OEBPS/chapter-1.xhtml', offset: 0, words: 'first' },
+          { chapter: 'OEBPS/gone.xhtml', offset: 0, words: 'not in the book' },
+        ],
+      }),
+      null,
+    );
+    await side.reload();
+    const { epubs } = wired('a.epub', { active: side, sides: [side] });
+    const contents = epubs.contents();
+    expect(contents?.marks?.map((row) => [row.mark.words, row.spine, row.chapter])).toEqual([
+      ['first', 1, 'Chapter I'],
+      ['later', 3, 'Chapter III'],
+    ]);
+    expect(contents?.lens).toBe('contents');
+  });
+
+  it('begin at Contents for another book, and keep their lens as the book moves', () => {
+    const { nav, kind, epubs } = wired('Novels/Dune.epub');
+    epubs.actions.lens('Novels/Dune.epub', 'marks');
+    expect(nav.bookLens).toBe('marks');
+    kind.moved('Novels/Dune.epub', 'Novels/Arrakis.epub');
+    expect(nav.bookLens).toBe('marks');
+    epubs.actions.openEpub('Novels/Arrakis.epub');
+    expect(nav.bookLens).toBe('marks');
+    epubs.actions.openEpub('Novels/Emma.epub');
+    expect(nav.bookLens).toBe('contents');
+  });
 });
 
 describe('a quote', () => {

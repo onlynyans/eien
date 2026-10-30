@@ -101,6 +101,59 @@ test.describe('a book’s bookmarks', () => {
   });
 });
 
+test.describe('Marks in the list (Phase 4c)', () => {
+  test.use({
+    vaultFiles: { 'Novels/Pride and Prejudice.epub': epub('plain.epub') },
+  });
+  test.beforeEach(({ page }) => page.setViewportSize({ width: 1600, height: 900 }));
+
+  test('lists the bookmarks under Marks, a row going to its page, Delete taking it off', async ({
+    page,
+  }) => {
+    await openBook(page);
+    // A bookmark in the third chapter, then back at the first.
+    await page.locator('.contents-row').nth(2).click();
+    await expect(leaf(page).locator('.epub-chapter')).toContainText('Not all that Mrs. Bennet');
+    await leaf(page).locator('.page__scroll').focus();
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    await page.getByRole('tab', { name: /Marks/u }).click();
+    await expect(page.getByRole('tab', { name: /Marks/u })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    const row = page.locator('.mark-row');
+    await expect(row).toHaveCount(1);
+    await expect(row.locator('.mark-row__words')).toContainText('Not all that Mrs. Bennet');
+    await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter III');
+    await expect(row.locator('.mark-row__page')).toHaveText(/^\d+$/u);
+    await page.getByRole('tab', { name: /Contents/u }).click();
+    await page.locator('.contents-row').nth(0).click();
+    await expect(leaf(page).locator('.epub-chapter')).toContainText('It is a truth');
+    await page.getByRole('tab', { name: /Marks/u }).click();
+    await row.click();
+    await expect(leaf(page).locator('.epub-chapter')).toContainText('Not all that Mrs. Bennet');
+    await expect(mark(page)).toBeVisible();
+    await row.focus();
+    await page.keyboard.press('Delete');
+    await expect(row).toHaveCount(0);
+    await expect(page.locator('.list__empty')).toHaveText('Nothing kept yet. B bookmarks a page.');
+    await expect(mark(page)).toBeHidden();
+  });
+
+  test('lists them under the book’s row with two panes', async ({ page }) => {
+    await page.locator('[data-command="panes"]').click();
+    await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
+    await openBook(page);
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    await page.locator('.tree-row--lenses').getByRole('tab', { name: /Marks/u }).click();
+    const row = page.locator('.tree-row--mark .tree-row__name');
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText('It is a truth');
+  });
+});
+
 test.describe('a bookmark in Facing pages', () => {
   test.use({
     vaultFiles: {

@@ -35,6 +35,8 @@ export interface PageBookmarksOf {
   land(): void;
   /** Whether the page in sight is bookmarked changed: the tool shows it. */
   changed(): void;
+  /** The book's bookmarks changed: the list's Marks show them (Phase 4c). */
+  listed(): void;
 }
 
 export class PageBookmarks {
@@ -71,6 +73,7 @@ export class PageBookmarks {
     this.#unlisten = this.#of.store.listen(key, (marks) => {
       this.#marks = marks;
       this.#show();
+      this.#of.listed();
     });
     const words = NOT_KEPT[read.kept];
     if (read.kept === 'unreadable' && words) this.#of.page.foot.say(words);
@@ -107,6 +110,19 @@ export class PageBookmarks {
     this.#marks = after;
     this.#show();
     page.foot.say(here.length > 0 ? 'Bookmark taken off.' : 'Bookmarked.');
+  }
+
+  /** `mark` taken off (a Marks row's Delete), said in the colophon. */
+  async remove(mark: Bookmark): Promise<void> {
+    const key = this.#key;
+    if (!key) return;
+    const after = await this.#of.store.mark(key, { remove: [mark] });
+    if (key !== this.#key) return;
+    this.#of.page.foot.say(
+      after
+        ? 'Bookmark taken off.'
+        : (NOT_KEPT[this.#kept] ?? 'The bookmark couldn’t be taken off: try again.'),
+    );
   }
 
   /** No book: nothing kept of its bookmarks. */

@@ -5,14 +5,15 @@
 // the note you came from, opened again. Made before the pages, which take
 // its kind; the pages come in later.
 
-import { withQuote } from '../../core/epub';
+import { chapterTitle, type Epub, inBookOrder, withQuote } from '../../core/epub';
 import { baseName, isInside } from '../../core/paths';
 import { isNoteName } from '../../core/vault';
 import type { VaultBridge } from '../../platform/bridge';
 import { BookCounts } from '../epub/book-count';
 import { type EpubKind, epubKind } from '../epub/epub-kind';
-import { type EpubSide, isEpub } from '../epub/epub-side-types';
+import { type EpubPlace, type EpubSide, isEpub } from '../epub/epub-side-types';
 import { readingStore } from '../epub/reading-store';
+import type { MarkRow } from '../list/book-lenses';
 import type { ContentsModel } from '../list/contents-list';
 import type { ShelfActions, ShelfModel } from '../sidebar/shelf-rows';
 import type { Navigation } from './navigation';
@@ -44,7 +45,7 @@ export interface EpubWiringOf {
 export interface EpubWiring {
   readonly kind: EpubKind;
   /** Choosing a book or a chapter; a book's menu and keys are a row's (./row-actions.ts). */
-  readonly actions: Pick<ShelfActions, 'openEpub' | 'chapter'>;
+  readonly actions: Pick<ShelfActions, 'openEpub' | 'chapter' | 'lens' | 'goMark' | 'unmark'>;
   /** Quote the words chosen on the active page, if it holds a book (the phone's ⋯). */
   quote(): void;
   /** What SHELF marks: the book on the active page, and with `two` panes the open book's contents. */
@@ -101,6 +102,18 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
       if (shown && isInside(shown, from)) of.nav.contents = to + shown.slice(from.length);
     },
   };
+  /**
+   * The page holding the book at `path` made the active one and in sight, for
+   * a row chosen under it: not whichever is active, so with a note beside it
+   * the note stays.
+   */
+  const toBook = (path: string): EpubSide | null => {
+    const side = sideOf(path);
+    if (!side) return null;
+    of.pages().activate(side);
+    of.showPage();
+    return side;
+  };
   /** The page showing the book at `path`, the active one first. */
   const sideOf = (path: string | null): EpubSide | null => {
     if (!path) return null;
@@ -110,6 +123,19 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
         (side): side is EpubSide => isEpub(side) && side.path === path,
       ) ?? null
     );
+  };
+  /** The book's bookmarks as their rows show them, in its order (Phase 4c). */
+  const marksOf = (side: EpubSide, epub: Epub): MarkRow[] => {
+    const spine = epub.spine.map((item) => item.path);
+    return inBookOrder(side.bookmarks, spine).map((mark) => {
+      const at = spine.indexOf(mark.chapter);
+      return {
+        mark,
+        spine: at,
+        page: side.labelAt(at, mark.offset),
+        chapter: chapterTitle(epub.contents, at) ?? side.page.name,
+      };
+    });
   };
   const contents = () => {
     const side = sideOf(of.nav.contents);
@@ -121,6 +147,8 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
       author: epub.author,
       rows: epub.contents.map(({ title, depth, spine }) => ({ title, depth, spine })),
       spine: side.spine,
+      lens: of.nav.bookLens,
+      marks: marksOf(side, epub),
     };
   };
   return {
@@ -140,22 +168,37 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
           path: shown.side.path as string,
           rows: shown.rows,
           spine: shown.spine,
+          lens: shown.lens,
+          marks: shown.marks,
         },
       };
     },
     actions: {
       openEpub: (path) => {
+        // Another book's rows begin at its contents.
+        if (of.nav.contents !== path) of.nav.bookLens = 'contents';
         of.nav.contents = path;
         void of.openChosen(path);
       },
       chapter: (path, spine) => {
-        const side = sideOf(path);
-        if (!side) return;
-        // The page that holds the book, not whichever is active: with a note beside it, the note stays.
-        of.pages().activate(side);
-        of.showPage();
-        void side.go(spine);
+        const side = toBook(path);
+        if (side) void side.go(spine);
       },
+      lens: (_path, lens) => {
+        of.nav.bookLens = lens;
+        of.redraw();
+      },
+      goMark: (path, row) => {
+        const side = toBook(path);
+        if (side?.path)
+          void side.open(side.path, {
+            path: side.path,
+            name: side.page.name,
+            spine: row.spine,
+            offset: row.mark.offset,
+          } as EpubPlace);
+      },
+      unmark: (path, row) => void sideOf(path)?.unmark(row.mark),
     },
   };
 }

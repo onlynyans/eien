@@ -113,7 +113,8 @@ body {
 /* The chosen one of a set (LIVE, DAY…): full ink inside a hairline. Never the
    seal's colour — the seal marks only what is kept. */
 .word-button[aria-pressed="true"],
-.word-button[aria-current="true"] {
+.word-button[aria-current="true"],
+.word-button[aria-selected="true"] {
   color: var(--eien-ink);
   border-color: var(--eien-rule-strong);
 }
