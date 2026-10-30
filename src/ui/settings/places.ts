@@ -11,6 +11,7 @@ import {
   type SettingScope,
 } from '../../core/config';
 import type { IconName } from '../icons';
+import type { PageKind } from '../page/page-leaf';
 
 /** A tab drawn by its own module, not from the schema's list. */
 export type ThemesTab = 'Gallery' | 'Custom';
@@ -63,15 +64,27 @@ export const CATEGORIES: readonly Category[] = [
  * panes too, which Settings shows only while the window has them (./settings-screen.ts).
  */
 export function settingsIn(tab: Tab, platform: string): Setting[] {
-  return SETTINGS.filter((setting) => setting.group === tab.group && offeredOn(setting, platform));
+  return SETTINGS.filter(
+    (setting) => setting.group === tab.group && !isShelfs(setting) && offeredOn(setting, platform),
+  );
 }
 
+/** A book's own setting (#40), which only the shelf's quick look shows: Settings sets notes. */
+export const isShelfs = (setting: Setting): boolean =>
+  'quick' in setting && setting.quick === 'shelf';
+
 /**
- * The settings the quick look (#49) offers on the system named `platform`, `phone` or not: those
- * marked `quick` in the schema, in its order. A setting marked later shows there with nothing to build.
+ * The settings the quick look (#49) offers on the system named `platform`, `phone` or not, for a
+ * page of `kind`: those marked `quick` in the schema, in its order, a book's own (`shelf`) with a
+ * book in front alone. A setting marked later shows there with nothing to build.
  */
-export function quickIn(platform: string, phone: boolean): Setting[] {
-  return SETTINGS.filter((setting) => 'quick' in setting && offeredOn(setting, platform, phone));
+export function quickIn(platform: string, phone: boolean, kind: PageKind): Setting[] {
+  return SETTINGS.filter(
+    (setting) =>
+      'quick' in setting &&
+      (kind === 'epub' || !isShelfs(setting)) &&
+      offeredOn(setting, platform, phone),
+  );
 }
 
 /** Every category, with only the tabs that show something here. */

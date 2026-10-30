@@ -233,8 +233,11 @@ touching notes: `--eien-epub-title-size` (the list's heading size),
 `--eien-epub-title-gap` (a note's title gap), `--eien-epub-paragraph-gap`,
 `--eien-epub-break-gap` (a scene break's), `--eien-epub-epigraph-indent`
 (space-6), `--eien-epub-plate-gap` (space-5), `--eien-epub-caption-ink`
-(pencil) and `--eien-epub-first-line-track` (half the label's tracking: the
-first line in capitals at 80%, as the bundled faces have no small capitals).
+(pencil), `--eien-epub-first-line-track` (half the label's tracking: the
+first line in capitals at 80%, as the bundled faces have no small capitals),
+and for the scroll style *As a book* (Phase 2) `--eien-epub-indent`
+(space-6), a paragraph's indent with no gap, a step less (space-5) on a page
+under 520px (a phone's).
 The book is set in the writer's own faces, never the publisher's; its
 colours are the theme's, so it reads by Night.
 

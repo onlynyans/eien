@@ -221,3 +221,13 @@ building, its fixes taken.
   the menu's Look (which acts on the page itself) makes that page the
   active one first, so the page sitting back is the one you aren't in, which
   the companion's own rule already paints.
+
+## A book's own settings (#40, Phase 2, built)
+
+A book has a setting with no note's to copy: the **scroll style** (*As a
+note*, *As a book*), `epub.scroll` in the schema, marked `quick: 'shelf'`.
+`quickIn(platform, phone, kind)` offers it only for the shelf's subject
+(`LookSubject.kind`, `'epub'`), after the page settings in the schema's
+order; `settingsIn` leaves it out of Settings, which sets notes. The
+shelf's store keeps it under its own name (it isn't a page look's key), and
+the book's leaf wears it as `data-scroll`.

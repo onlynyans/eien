@@ -33,8 +33,11 @@ describe('the shelf’s look', () => {
     const shelf = epubStore(store);
     await shelf.set('page.width', 'wide');
     await shelf.set('appearance.scheme', 'night');
+    await shelf.set('epub.scroll', 'book');
     expect(store.set).toHaveBeenNthCalledWith(1, 'epub.page.width', 'wide');
     expect(store.set).toHaveBeenNthCalledWith(2, 'appearance.scheme', 'night');
+    // A book's own setting (#40, Phase 2) is kept as it's named.
+    expect(store.set).toHaveBeenNthCalledWith(3, 'epub.scroll', 'book');
   });
 
   it('tells a change as the shelf wears it', () => {
