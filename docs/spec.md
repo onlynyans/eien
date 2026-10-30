@@ -74,7 +74,10 @@ one on two synced devices read each other's files.
   describes. A bare list (`pinned.json`) becomes an object to carry it.
 - A file whose version is newer than this Eien knows is read for what it can,
   and never written over: a newer device's settings are never lost to an
-  older one.
+  older one. A reading state's file that can't be read at all (one a sync
+  broke) is never written over either, so its bookmarks are never lost
+  (#40, Phase 4b); a new field in one (its `bookmarks`) is kept as found by
+  an older Eien, so it isn't breaking.
 - A change an older Eien would misread is a breaking change: its pull
   request's title carries `!` (AGENTS.md → Releases).
 

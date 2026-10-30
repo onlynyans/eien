@@ -83,14 +83,21 @@ export function withBookmarks(
   return `${JSON.stringify({ version: READING_VERSION, ...rest, bookmarks }, null, 2)}\n`;
 }
 
-/** The bookmarks on a page: in `chapter`, from its first word `from` up to (not at) `to`. */
+/**
+ * The bookmarks on a page: in `chapter`, from its first word `from` up to
+ * (not at) `to`; a page of no words (a picture's) holds the place it stands at.
+ */
 export const bookmarksOn = (
   marks: readonly Bookmark[],
   chapter: string,
   from: number,
   to: number,
-): Bookmark[] =>
-  marks.filter((mark) => mark.chapter === chapter && mark.offset >= from && mark.offset < to);
+): Bookmark[] => {
+  const end = Math.max(to, from + 1);
+  return marks.filter(
+    (mark) => mark.chapter === chapter && mark.offset >= from && mark.offset < end,
+  );
+};
 
 /**
  * The bookmarks in the book's order, by their chapters' places in `spine`

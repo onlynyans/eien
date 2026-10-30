@@ -60,7 +60,10 @@ describe('a book’s bookmark', () => {
     expect(mark.words.length).toBeLessThanOrEqual(91);
     // The page wears the mark and the folio's word, the tool is told, the colophon says so.
     expect(markOf(side)?.hidden).toBe(false);
-    expect(side.page.foot.figures[3]?.textContent).toBe('bookmarked');
+    expect(
+      side.page.foot.figures.find((each) => each.classList.contains('colophon__bookmarked'))
+        ?.textContent,
+    ).toBe('bookmarked');
     expect(of.looks).toHaveBeenCalled();
     expect(said(side)).toBe('Bookmarked.');
     press();
@@ -103,13 +106,41 @@ describe('a book’s bookmark', () => {
     expect(said(side)).toBe('Bookmark taken off.');
   });
 
-  it('is never made from a field', async () => {
+  it('is never made from a field, nor by ⌘B or Ctrl+B, only by B', async () => {
     const { side, press, file } = await opened();
     const field = document.createElement('input');
     side.page.element.append(field);
     press(field);
+    for (const mod of [{ metaKey: true }, { ctrlKey: true }])
+      side.page.key(new KeyboardEvent('keydown', { key: 'b', ...mod }));
     await new Promise((done) => setTimeout(done, 20));
     expect(await file()).toBeNull();
+    press();
+    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+  });
+
+  it('two quick presses undo each other: the second waits for the first', async () => {
+    const { side, press, file } = await opened();
+    press();
+    press();
+    await vi.waitFor(() => expect(said(side)).toBe('Bookmark taken off.'));
+    expect(side.bookmarked).toBe(false);
+    expect(JSON.parse((await file()) ?? '{}').bookmarks).toEqual([]);
+  });
+
+  it('shows on no chapter that won’t open, and is never made there', async () => {
+    const { side, press, file } = await opened();
+    press();
+    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    const epub = side.epub;
+    if (!epub) throw new Error('no book');
+    vi.spyOn(epub, 'chapter').mockResolvedValue({ refused: 'damaged', detail: 'test' });
+    await side.go(2);
+    expect(markOf(side)?.hidden).toBe(true);
+    expect(side.bookmarked).toBe(false);
+    press();
+    await new Promise((done) => setTimeout(done, 20));
+    expect(JSON.parse((await file()) ?? '{}').bookmarks).toHaveLength(1);
   });
 
   it('shows on another page of the same book at once', async () => {
@@ -145,11 +176,13 @@ describe('a book’s bookmark', () => {
     expect(await file()).toBe(newer);
   });
 
-  it('says once that a file it can’t read keeps nothing, and never writes over it', async () => {
+  it('says at open that a file it can’t read keeps nothing, and again on B, never writing over it', async () => {
     const { side, press, file } = await opened(() => '{ "bookmarks": [ broken');
     expect(said(side)).toMatch(/can’t be read/u);
+    side.page.foot.say('');
     press();
-    await new Promise((done) => setTimeout(done, 20));
+    await vi.waitFor(() => expect(said(side)).toMatch(/can’t be read/u));
+    expect(side.bookmarked).toBe(false);
     expect(await file()).toBe('{ "bookmarks": [ broken');
   });
 });

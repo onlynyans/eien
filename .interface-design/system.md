@@ -712,7 +712,9 @@ in the book, each recorded here as it's built.
   page you see. In pages the edge tab stands past the fore-edge's pages
   still to read (`--edges-after` × `--eien-mark-w`); with Page frame Full,
   inside the page's edge. It arrives with the mark's own `--eien-calm`
-  motion on each bookmarked page shown, none with reduced motion. **The
+  motion as it appears, none with reduced motion, and is hidden while a
+  page curls (the turning page is a copy, which leaves it out). The word
+  "bookmarked" is heard (visually hidden) where it isn't seen. **The
   clash** (decided 2026-10-30): with Facing pages and two pages, the mark
   says "the page you're in", so a bookmark wears none and the book's folio
   says "bookmarked" in its figures (`.colophon__bookmarked`, shown there

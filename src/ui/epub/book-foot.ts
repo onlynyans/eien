@@ -18,7 +18,10 @@ export class BookFoot implements LeafFoot {
   readonly #back: HTMLButtonElement;
   readonly #at = h('span', { class: 'colophon__chapter count' });
   readonly #page = h('span', { class: 'colophon__page count' });
-  /** "bookmarked": said only where the page can't wear its mark, a book in Facing pages' folio (./epub.css). */
+  /**
+   * "bookmarked": seen only where the page can't wear its mark, a book in
+   * Facing pages' folio; elsewhere heard alone (./bookmark.css).
+   */
   readonly #bookmarked = h('span', { class: 'colophon__bookmarked count' });
   readonly #inChapter = h('span', { class: 'colophon__through count' });
   readonly #inBook = h('span', { class: 'colophon__through count' });

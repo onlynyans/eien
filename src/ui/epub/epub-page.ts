@@ -177,9 +177,10 @@ export class EpubPage implements PaneLeaf {
 
   /** The page in sight bookmarked or not: its mark, arriving anew on each page that has one, and the folio's word. */
   bookmarked(on: boolean): void {
-    if (this.#mark.hidden === !on) return;
-    this.#mark.hidden = !on;
+    // The folio's word every time (the foot may have been cleared); the mark only when it changes,
+    // so it arrives as it appears.
     this.foot.bookmarked(on);
+    if (this.#mark.hidden !== !on) this.#mark.hidden = !on;
   }
 
   /** Words on the sheet in the chapter's place (a book or a chapter that won't open), or none. */
