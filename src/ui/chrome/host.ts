@@ -138,7 +138,7 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
     }
     if (rule) hide(rule, true); // a run before it, none after
     // Folded behind its ⋯ isn't empty: the ⋯ is in sight.
-    const empty = !any && (this.more?.hidden ?? true);
+    const empty = !any && this.more?.hidden !== false;
     if (this.element.hasAttribute('data-empty') !== empty) {
       this.element.toggleAttribute('data-empty', empty);
     }
