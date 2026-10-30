@@ -5,6 +5,7 @@ export { chapterBeside, chapterTitle } from './chapters';
 export type { ContentsEntry, PrintPage } from './contents';
 export { type Epub, type EpubImage, type EpubSpineItem, epubKey, openEpub } from './epub';
 export type { SpineItem } from './package';
+export { EDGES, edgesOf, pageAt, pagesIn, wholeLines } from './pages';
 export { offsetOf, type Spot, spotOf } from './place';
 export { bookFraction, chapterFraction, percent } from './progress';
 export { citation, type QuoteSource, quoted, withQuote } from './quote';

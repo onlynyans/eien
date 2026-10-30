@@ -118,6 +118,9 @@ describe('the quick look’s mark (#49)', () => {
       ['appearance.leading', 'page'],
       ['page.width', 'page'],
       ['appearance.frame', 'page'],
+      ['epub.view', 'shelf'],
+      ['epub.turn', 'shelf'],
+      ['epub.turnSpeed', 'shelf'],
       ['epub.scroll', 'shelf'],
     ]);
   });

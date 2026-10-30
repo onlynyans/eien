@@ -23,9 +23,15 @@ export function pageCopy(sheet: HTMLElement, words: string): HTMLElement {
   return copy;
 }
 
-/** `copy` laid exactly over `sheet`, beside it in its parent, above it. */
+/**
+ * `copy` laid exactly over `sheet`, beside it in its parent, above it: out of
+ * the flow whatever the sheet's own rules would make of it (a page's sheet
+ * in pages fills its pane, and its copy mustn't take half).
+ */
 export function layOver(copy: HTMLElement, sheet: HTMLElement): void {
   Object.assign(copy.style, {
+    position: 'absolute',
+    margin: '0',
     left: `${sheet.offsetLeft}px`,
     top: `${sheet.offsetTop}px`,
     width: `${sheet.offsetWidth}px`,

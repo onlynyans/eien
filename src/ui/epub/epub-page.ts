@@ -14,6 +14,21 @@ import { quietButton } from '../quiet-button';
 import { leafLook } from '../settings/look-properties';
 import { BookFoot } from './book-foot';
 import { ChapterSheet, type ChapterSheetOf } from './chapter-sheet';
+import { LeafEdges } from './leaf-edges';
+
+/** In pages, the keys that turn: on, back, and to the chapter's ends (Phase 3b). */
+const PAGE_KEYS: Readonly<Record<string, 1 | -1 | 'first' | 'last'>> = {
+  ArrowRight: 1,
+  ArrowDown: 1,
+  PageDown: 1,
+  ' ': 1,
+  ArrowLeft: -1,
+  ArrowUp: -1,
+  PageUp: -1,
+  'Shift+Space': -1,
+  Home: 'first',
+  End: 'last',
+};
 
 /** Where a key is the writer's own: a note's editor, a field. */
 const FIELD = '.editor-host, input, textarea, [contenteditable]';
@@ -21,6 +36,10 @@ const FIELD = '.editor-host, input, textarea, [contenteditable]';
 export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
   /** Close this page (its ×, ⌘W). */
   close(): void;
+  /** In pages (Phase 3b): a page turned `way`, by a key (`held`, repeating) or the edges. */
+  turn(way: 1 | -1, held: boolean): void;
+  /** In pages: the chapter's first page (Home) or its last (End). */
+  edge(last: boolean): void;
   /** Back where the last link was followed from. */
   back(): void;
 }
@@ -39,6 +58,8 @@ export class EpubPage implements PaneLeaf {
   readonly #notice = h('p', { class: 'notice', attrs: { role: 'status', hidden: true } });
   /** The chapter on the sheet: drawn, its place, its links and words. */
   readonly sheet: ChapterSheet;
+  /** In pages, the book's fore-edge either side of the sheet: how far through, and where to turn. */
+  readonly edges: LeafEdges;
   readonly #sheet: HTMLElement;
   readonly #empty = h('p', {
     class: 'page__empty',
@@ -67,16 +88,18 @@ export class EpubPage implements PaneLeaf {
       { class: 'page__scroll', attrs: { tabindex: '0', role: 'region' } },
     );
     this.sheet = new ChapterSheet({ ...of, scroller: this.#scroll });
+    this.edges = new LeafEdges((way) => of.turn(way, false));
     // The chapter's links too, each named for the tooltip (./book-links.ts nameLinks).
-    this.tipped = [closer, this.chapter];
+    this.tipped = [closer, this.chapter, ...this.edges.turns];
     this.#sheet = h(
       'article',
       { class: 'sheet epub-sheet quiet-row' },
       closer,
       h('div', { class: 'sheet__head' }, this.#crumbs),
       this.#notice,
-      this.chapter,
+      this.sheet.box,
       this.sheet.turns,
+      this.edges.element,
     );
     this.#scroll.append(this.#sheet, this.#empty);
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(this.#scroll));
@@ -127,6 +150,11 @@ export class EpubPage implements PaneLeaf {
     this.foot.at(at);
   }
 
+  /** The sheet, in sight: what a page turn turns (./turn/page-turn.ts). */
+  get leaf(): HTMLElement {
+    return this.#sheet;
+  }
+
   /** The page's scroller: what a note over it closes with. */
   get scroller(): HTMLElement {
     return this.#scroll;
@@ -174,8 +202,8 @@ export class EpubPage implements PaneLeaf {
     this.#zoomed(values['page.zoom']);
     const { face, frame, properties } = leafLook(values);
     const leaf = this.element;
-    // The scroll style (Phase 2): a note's paragraphs, or a book's (./epub.css).
-    const wanted = { face, frame, scroll: values['epub.scroll'] };
+    // The scroll style (Phase 2): a note's paragraphs, or a book's (./epub.css); in pages, a book's.
+    const wanted = { face, frame, scroll: values['epub.scroll'], view: values['epub.view'] };
     // Only what changed: setting an attribute again restyles the page (as ../settings/look.ts says).
     const changed =
       Object.entries(wanted).filter(([name, value]) => leaf.dataset[name] !== value).length +
@@ -187,6 +215,7 @@ export class EpubPage implements PaneLeaf {
     this.sheet.keep();
     for (const [name, value] of Object.entries(wanted)) leaf.dataset[name] = value;
     for (const [name, value] of Object.entries(properties)) leaf.style.setProperty(name, value);
+    this.sheet.paged = wanted.view === 'pages';
     this.sheet.reshow();
   }
 
@@ -204,9 +233,24 @@ export class EpubPage implements PaneLeaf {
     const back =
       (event.key === '[' && (event.metaKey || event.ctrlKey) && !event.altKey) ||
       (event.key === 'ArrowLeft' && event.altKey && !event.metaKey && !event.ctrlKey);
-    if (!back || !this.foot.canGoBack) return;
+    if (back) {
+      if (!this.foot.canGoBack) return;
+      event.preventDefault();
+      this.#of.back();
+      return;
+    }
+    if (plain && this.sheet.paged) this.#pageKey(event);
+  }
+
+  /** In pages, a page's keys (Phase 3b): on, back, the chapter's ends; never a button's own Space or Enter. */
+  #pageKey(event: KeyboardEvent): void {
+    if (event.target instanceof Element && event.target.closest('button, a[href]')) return;
+    if (event.shiftKey && event.key !== ' ') return;
+    const way = PAGE_KEYS[event.key === ' ' && event.shiftKey ? 'Shift+Space' : event.key];
+    if (way === undefined) return;
     event.preventDefault();
-    this.#of.back();
+    if (way === 'first' || way === 'last') this.#of.edge(way === 'last');
+    else this.#of.turn(way, event.repeat);
   }
 
   /**
