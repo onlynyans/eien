@@ -64,7 +64,8 @@ describe('a book counted for its page numbers', () => {
     await new Promise((done) => setTimeout(done, 20));
     expect(read).not.toHaveBeenCalled();
     turning = false;
-    landed?.();
+    // Set by the count's ask, which TypeScript can't see.
+    (landed as (() => void) | null)?.();
     await vi.waitFor(() => expect(read).toHaveBeenCalledOnce());
   });
 
@@ -312,7 +313,7 @@ describe('a book counted, at its edges', () => {
     await new Promise((done) => setTimeout(done, 20));
     expect(read).not.toHaveBeenCalled();
     turning = false;
-    first?.();
+    (first as (() => void) | null)?.();
     await vi.waitFor(() => expect(read).toHaveBeenCalledOnce());
   });
 });
