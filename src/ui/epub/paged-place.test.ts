@@ -1,0 +1,197 @@
+// A chapter in pages (#40, Phase 3b), on the tests' own layout: happy-dom
+// lays nothing out, so each page here holds a hundred of the chapter's
+// characters, a page 300px wide with a 40px gap, its box 610px tall on 20px
+// lines.
+
+import fc from 'fast-check';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { piecesOf } from './chapter-place';
+import { PagedPlace } from './paged-place';
+import { REST_MS } from './place-keeper';
+
+const WIDTH = 300;
+const GAP = 40;
+const STEP = WIDTH + GAP;
+const PER_PAGE = 100;
+
+function laidOut(paragraphs: readonly string[], picture = -1) {
+  const box = document.createElement('div');
+  const chapter = document.createElement('div');
+  // A picture (no words of its own) after paragraph `picture`, if asked for.
+  chapter.innerHTML = paragraphs
+    .map((words, i) => `<p>${words}</p>${i === picture ? '<figure><img alt=""></figure>' : ''}`)
+    .join('');
+  chapter.style.lineHeight = '20px';
+  box.style.columnGap = `${GAP}px`;
+  box.append(chapter);
+  document.body.append(box);
+  const total = paragraphs.join('').length;
+  Object.defineProperty(box, 'clientWidth', { value: WIDTH });
+  Object.defineProperty(box, 'clientHeight', { value: 610 });
+  box.getBoundingClientRect = () => ({ left: 0, width: WIDTH, top: 0, height: 610 }) as DOMRect;
+  Object.defineProperty(chapter, 'scrollWidth', {
+    get: () => Math.ceil(total / PER_PAGE) * STEP - GAP,
+  });
+  const shown = () => -Number.parseFloat(chapter.style.transform.replace('translateX(', '') || '0');
+  chapter.getBoundingClientRect = () => ({ left: -shown() }) as DOMRect;
+  /** Where a range's characters stand: each in its page's column, moved as the chapter is. */
+  const pieces = () => piecesOf(chapter);
+  const baseOf = (text: Node) => {
+    let at = 0;
+    for (const piece of pieces()) {
+      if (piece === text) return at;
+      at += piece.length;
+    }
+    return at;
+  };
+  const xOf = (at: number) => Math.floor(at / PER_PAGE) * STEP + (at % PER_PAGE) - shown();
+  const sideOf = (range: Range) => {
+    const inside = pieces().filter((piece) => range.intersectsNode(piece));
+    const first = inside[0];
+    const last = inside.at(-1);
+    if (!first || !last) return { left: 0, right: 0 };
+    const start = baseOf(first) + (range.startContainer === first ? range.startOffset : 0);
+    const end = baseOf(last) + (range.endContainer === last ? range.endOffset : last.length) - 1;
+    return { left: xOf(start), right: xOf(Math.max(start, end)) + 1 };
+  };
+  const moved = vi.fn();
+  const rested = vi.fn();
+  const place = new PagedPlace({ box, chapter, moved, rested, sideOf });
+  return { box, chapter, place, moved, rested, shown };
+}
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+});
+afterEach(() => {
+  vi.useRealTimers();
+  document.body.replaceChildren();
+});
+
+describe('a chapter in pages', () => {
+  it('lays its columns whole lines tall and counts its pages', () => {
+    const { chapter, place } = laidOut(['a'.repeat(250)]);
+    place.show(0);
+    expect(chapter.style.height).toBe('600px');
+    expect(chapter.style.columnWidth).toBe(`${WIDTH}px`);
+    expect(place.pages).toBe(3);
+    expect(place.page).toBe(0);
+  });
+
+  it('shows the page holding its place, and only that page', () => {
+    const { chapter, place, shown } = laidOut(['a'.repeat(250)]);
+    place.show(130);
+    expect(place.page).toBe(1);
+    expect(shown()).toBe(STEP);
+    expect(chapter.style.clipPath).toBe(
+      `inset(0px ${-(STEP + GAP / 2)}px 0px ${STEP - GAP / 2}px)`,
+    );
+  });
+
+  it('turns a page on, keeping its first word as the place, told once the turns rest', () => {
+    const { place, rested, moved } = laidOut(['a'.repeat(250)]);
+    place.show(0);
+    expect(place.turn(1)).toBe(true);
+    expect(place.offset).toBe(PER_PAGE);
+    expect(moved).toHaveBeenLastCalledWith(0.5);
+    expect(rested).not.toHaveBeenCalled();
+    expect(place.turn(1)).toBe(true);
+    vi.advanceTimersByTime(REST_MS);
+    expect(rested).toHaveBeenCalledOnce();
+    expect(rested).toHaveBeenCalledWith(2 * PER_PAGE);
+    // Past the chapter's end: the next chapter's to turn to.
+    expect(place.turn(1)).toBe(false);
+    expect(place.page).toBe(2);
+  });
+
+  it('goes to the chapter’s first page and its last', () => {
+    const { place } = laidOut(['a'.repeat(250)]);
+    place.show(0);
+    place.edge(true);
+    expect(place.page).toBe(2);
+    place.edge(false);
+    expect(place.page).toBe(0);
+    expect(place.turn(-1)).toBe(false);
+  });
+
+  it('laid out anew, shows the same words without measuring again', () => {
+    const { place, rested } = laidOut(['a'.repeat(250)]);
+    place.show(150);
+    place.reshow();
+    expect(place.offset).toBe(150);
+    expect(place.page).toBe(1);
+    place.keep();
+    expect(rested).not.toHaveBeenCalled();
+  });
+
+  it('turns to the page of what the keyboard comes to', () => {
+    const { chapter, place } = laidOut(['a'.repeat(120), 'b'.repeat(130)]);
+    place.show(0);
+    const second = chapter.querySelectorAll('p')[1] as HTMLElement;
+    second.tabIndex = 0;
+    second.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    expect(place.page).toBe(1);
+  });
+
+  it('cuts a turn’s copy to the page in sight, a paragraph begun before it unindented', () => {
+    const { chapter, place } = laidOut(['a'.repeat(150), 'b'.repeat(100)]);
+    place.show(0);
+    place.turn(1);
+    const copy = chapter.cloneNode(true) as HTMLElement;
+    place.trim(copy);
+    expect(copy.textContent).toBe(`${'a'.repeat(50)}${'b'.repeat(50)}`);
+    const [first] = copy.querySelectorAll('p');
+    expect(first?.style.textIndent).toBe('0px');
+    expect(copy.style.transform).toBe('');
+    // A page beginning with its paragraph keeps the paragraph's own indent.
+    const fresh = laidOut(['a'.repeat(100), 'b'.repeat(150)]);
+    fresh.place.show(0);
+    fresh.place.turn(1);
+    const whole = fresh.chapter.cloneNode(true) as HTMLElement;
+    fresh.place.trim(whole);
+    expect(whole.querySelector('p')?.style.textIndent).toBe('');
+    // A page inside one paragraph: its words still in the paragraph, which began before it.
+    const long = laidOut(['a'.repeat(250)]);
+    long.place.show(0);
+    long.place.turn(1);
+    const middle = long.chapter.cloneNode(true) as HTMLElement;
+    long.place.trim(middle);
+    expect(middle.querySelector('p')?.textContent).toBe('a'.repeat(100));
+    expect(middle.querySelector('p')?.style.textIndent).toBe('0px');
+  });
+
+  it('carries a picture that begins the page in the turn’s copy', () => {
+    const { chapter, place } = laidOut(['a'.repeat(100), 'b'.repeat(150)], 0);
+    place.show(0);
+    place.turn(1);
+    const copy = chapter.cloneNode(true) as HTMLElement;
+    place.trim(copy);
+    expect(copy.querySelector('img')).not.toBeNull();
+    expect(copy.textContent).toBe('b'.repeat(100));
+  });
+
+  it('shows any place on the page holding it, and turned on and back keeps its page’s first word', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 649 }), (offset) => {
+        const { place } = laidOut(['a'.repeat(250), 'b'.repeat(400)]);
+        place.show(offset);
+        const page = Math.floor(offset / PER_PAGE);
+        if (place.page !== page) return false;
+        const turned = place.turn(1);
+        if (turned) place.turn(-1);
+        document.body.replaceChildren();
+        return place.page === page && (!turned || place.offset === page * PER_PAGE);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('let go, leaves the chapter as it was drawn', () => {
+    const { chapter, place } = laidOut(['a'.repeat(250)]);
+    place.show(130);
+    place.clear();
+    expect(chapter.style.transform).toBe('');
+    expect(chapter.style.columnWidth).toBe('');
+    expect(chapter.style.getPropertyValue('--epub-page-height')).toBe('');
+  });
+});

@@ -146,6 +146,7 @@ Rules, pure TypeScript.
   - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
   - `book-link.ts`: a link to one of the book's chapters, as an address of the page's own and back
   - `quote.ts`: a passage quoted into a note, its citation, at the note's end
+  - `pages.ts`: a chapter in pages (Phase 3b): whole lines tall, the pages counted, the page a word falls on, the fore-edge's sixths
   - `turn/`: a page's turn (Phase 3), as numbers the window draws
     - `curl.ts`: the curl's geometry: the roll over a cylinder that follows the corner, the spine held down, a strip laid by its matrix and clipped
     - `light.ts`: the light on the roll, each strip shaded by how it faces you and ramped across, as a gradient's numbers (the inks are the window's tokens)
@@ -342,8 +343,8 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
 - styles in `theme/` and beside each view
 - `epub/`: an EPUB's page (#40)
-  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look and scroll style worn, its keys (Q, ⌘[ / Alt+←)
-  - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again, its links caught, its words copied and chosen
+  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys (Q, ⌘[ / Alt+←)
+  - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again (scrolling or in pages), its links caught, its words copied and chosen
   - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
   - `book-open.ts`: the book read and opened for its page (or the words it says instead), what it's called, and where it opens
   - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
@@ -362,6 +363,10 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
   - `reading-store.ts`: the reading state's file, through the vault's small files
   - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
+  - `paged-place.ts`: in pages (Phase 3b), the chapter laid in columns of whole lines, the page holding the place shown, a turn keeping its first word, a copy cut to the page in sight
+  - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back
+  - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons
+  - `page-keys.ts`: in pages, the keys that turn and a touch's tap in the outer thirds
   - `turn/`: a page turned (Phase 3)
     - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first
     - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page, clipped and laid, in the curl's light

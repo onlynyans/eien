@@ -310,10 +310,46 @@ export const SETTINGS = [
     quick: 'page',
   },
   {
+    key: 'epub.view',
+    label: 'Read in',
+    description:
+      'A book in pages, turned one at a time as a printed book’s are, or scrolled a chapter at a time.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { pages: 'Pages', scroll: 'Scroll' },
+    default: 'scroll',
+    quick: 'shelf',
+  },
+  {
+    key: 'epub.turn',
+    label: 'Page turn',
+    description:
+      'How a page turns in pages: it curls as paper does, the words slide on, or only the words change.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { curl: 'Curl', slide: 'Slide', words: 'Words' },
+    default: 'curl',
+    quick: 'shelf',
+  },
+  {
+    key: 'epub.turnSpeed',
+    label: 'Turn speed',
+    description:
+      'How long a turn takes, against its designed time: at once, as designed, or up to four times slower. A drag always follows your hand.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { '0': 'Instant', '1': '1×', '2': '2×', '3': '3×', '4': '4×' },
+    default: '2',
+    quick: 'shelf',
+  },
+  {
     key: 'epub.scroll',
     label: 'Scroll style',
     description:
-      'A scrolling book’s paragraphs: spaced as a note’s are, or indented with no space between, as a book sets them.',
+      'A scrolling book’s paragraphs: spaced as a note’s are, or indented with no space between, as a book sets them. In pages, a book is always set as a book.',
     scope: 'device',
     group: 'Page',
     type: 'choice',

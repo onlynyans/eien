@@ -301,6 +301,7 @@ export async function showVault(
       drawList: () => draw.list(),
       parts,
       splits: () => phone.stack.splits,
+      bookView: (view) => void settings.set('epub.view', view).catch(console.error),
     },
   });
   await refresh();

@@ -23,3 +23,16 @@ describe('the speed', () => {
     expect(isInstant(slideTime(220, 1))).toBe(false);
   });
 });
+
+describe('the Turn speed setting', () => {
+  it('offers instant to the slowest, twice as slow by default, each a scale', async () => {
+    const { SETTINGS } = await import('../../config/schema');
+    const setting = SETTINGS.find((each) => each.key === 'epub.turnSpeed');
+    if (setting?.type !== 'choice') throw new Error('a choice');
+    const scales = Object.keys(setting.choices).map(Number);
+    expect(Math.min(...scales)).toBe(0);
+    expect(Math.max(...scales)).toBe(SLOWEST);
+    expect(scales.every((scale) => turnScale(scale) === scale)).toBe(true);
+    expect(setting.default).toBe('2');
+  });
+});

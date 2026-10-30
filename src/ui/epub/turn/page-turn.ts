@@ -14,6 +14,7 @@
 // lies outside it.
 
 import {
+  type TurnAsked as Asked,
   beginCurl,
   type CurlTurn,
   curlTime,
@@ -21,10 +22,10 @@ import {
   isInstant,
   keyCurl,
   type Motion,
-  motionTime,
   nextStroke,
   type Point,
   type Stroke,
+  turnMoves,
   turnScale,
   type Way,
 } from '../../../core/epub';
@@ -44,6 +45,8 @@ export interface TurnSurface {
   sheet(): HTMLElement | null;
   /** Where its words are, within a sheet or a copy of one: what Slide and Words move. */
   readonly words: string;
+  /** A copy's words cut to what's in sight, so a turn moves a page and never a whole chapter. */
+  trim?(words: HTMLElement): void;
   /**
    * The book a page `way` on, its new page on the sheet; false at the book's
    * end. At once within a chapter; into another, once that's drawn (a
@@ -61,9 +64,6 @@ export interface PageTurnOf {
   readonly frames?: Frames;
   readonly tokens?: (sheet: HTMLElement) => TurnTokens;
 }
-
-/** How a turn is asked for: a key's, a key held down, or a hand's. */
-type Asked = 'key' | 'held' | 'hand';
 
 /** The book stepped on: the page left (copied, if anything will move), the one now on the sheet. */
 interface Begun {
@@ -87,6 +87,8 @@ export class PageTurn {
   /** Turns waiting for the page they turn from. */
   readonly #queue = new TurnQueue();
   #disposed = false;
+  /** A turn's copy made, its page being stepped to. */
+  #begun = false;
 
   constructor(surface: TurnSurface, of: PageTurnOf = {}) {
     this.#surface = surface;
@@ -97,9 +99,23 @@ export class PageTurn {
     document.addEventListener('visibilitychange', this.#hidden);
   }
 
-  /** Whether a page is moving (or held) now. */
+  /** Whether a page is moving (or held) now, or a turn's copy is made and waits for its page. */
   get turning(): boolean {
-    return this.#curl !== null || this.#steps !== null;
+    return this.#curl !== null || this.#steps !== null || this.#begun;
+  }
+
+  /** Whether a curl is in flight now: what a hand may catch. */
+  get catchable(): boolean {
+    return this.#curl?.phase === 'flying';
+  }
+
+  /** `run` once no turn shows a copy of a page: now, if none is turning (a chapter's pictures let go). */
+  whenStill(run: () => void): void {
+    this.#queue.whenStill(this.turning, run);
+  }
+
+  #settled(): void {
+    if (!this.turning) this.#queue.still();
   }
 
   /**
@@ -177,6 +193,8 @@ export class PageTurn {
     this.#hand = null;
     document.removeEventListener('visibilitychange', this.#hidden);
     this.#putDown();
+    this.#begun = false;
+    this.#settled();
   }
 
   /** Put down unasked: in flight, landed; held, fallen back. */
@@ -189,14 +207,6 @@ export class PageTurn {
     if (document.hidden) this.#putDown();
   };
 
-  /** Whether a turn asked `asked` will move anything, under the setting now: if not, nothing is copied. */
-  #moves(asked: Asked, style: TurnStyle, tokens: TurnTokens, scale: number): boolean {
-    if (asked === 'held') return false;
-    // A hand always moves the page it holds, at any Turn speed; under reduced motion it never holds.
-    if (asked === 'hand') return true;
-    return !isInstant(motionTime(style, tokens.calm, tokens.quick, scale));
-  }
-
   /** The page before the turn copied (if it will move) and the book stepped on, then `then`. */
   #begin(way: Way, asked: Asked, then: (begun: Begun) => void): void | Promise<void> {
     this.finish();
@@ -206,12 +216,19 @@ export class PageTurn {
     if (!before || this.#disposed) return;
     const { style, speed } = this.#surface.how();
     const scale = turnScale(speed);
-    const moves = this.#moves(asked, style, this.#tokens(before), scale);
-    const copy = moves ? pageCopy(before, this.#surface.words) : null;
+    const tokens = this.#tokens(before);
+    const moves = turnMoves(asked, style, tokens.calm, tokens.quick, scale);
+    const copy = moves
+      ? pageCopy(before, this.#surface.words, (words) => this.#surface.trim?.(words))
+      : null;
+    this.#begun = true;
     const stepped = (moved: boolean) => {
+      this.#begun = false;
       const sheet = this.#surface.sheet();
-      if (!moved || !sheet || this.#disposed) return;
-      then({ copy, sheet, tokens: this.#tokens(sheet), scale, style });
+      if (moved && sheet && !this.#disposed) {
+        then({ copy, sheet, tokens: this.#tokens(sheet), scale, style });
+      }
+      this.#settled();
     };
     const moved = this.#surface.step(way);
     if (typeof moved === 'boolean') return stepped(moved);
@@ -238,6 +255,7 @@ export class PageTurn {
       scale,
       ended: () => {
         if (this.#steps === steps) this.#steps = null;
+        this.#settled();
       },
     });
     this.#steps = steps;
@@ -264,10 +282,12 @@ export class PageTurn {
       copy,
       sheet,
       words: this.#surface.words,
+      trim: (words) => this.#surface.trim?.(words),
       tokens,
       frames: this.#frames,
       landed: (turnedOver) => {
         if (this.#curl === curl) this.#curl = null;
+        this.#settled();
         if (!turnedOver) this.#queue.fellBack(this.#surface.unstep());
       },
     });

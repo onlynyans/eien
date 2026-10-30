@@ -494,3 +494,29 @@ describe('the review’s cases', () => {
     expect(asked).toBe(2);
   });
 });
+
+describe('waiting for the page to be still', () => {
+  it('runs at once with nothing turning, and after the landing while a page turns', () => {
+    const b = book();
+    const now = vi.fn();
+    b.turn.whenStill(now);
+    expect(now).toHaveBeenCalledOnce();
+    b.turn.key(1);
+    const later = vi.fn();
+    b.turn.whenStill(later);
+    expect(later).not.toHaveBeenCalled();
+    b.run();
+    expect(later).toHaveBeenCalledOnce();
+  });
+
+  it('waits for a chapter being drawn too, its copy already made', async () => {
+    const b = book({ later: true });
+    b.turn.key(1);
+    const later = vi.fn();
+    b.turn.whenStill(later);
+    await drawn();
+    expect(later).not.toHaveBeenCalled();
+    b.run();
+    expect(later).toHaveBeenCalledOnce();
+  });
+});

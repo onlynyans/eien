@@ -89,6 +89,13 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
     }
   };
 
+  /** A book's commands: the shelf's view pressed. */
+  const bookLook = (id: CommandId): CommandLook => {
+    if (id === 'view.pages' || id === 'view.scroll')
+      return { pressed: settings.values['epub.view'] === id.slice('view.'.length) };
+    return {};
+  };
+
   /** The window's commands, the same whatever the page holds. */
   const windowLook = (id: CommandId): CommandLook | null => {
     switch (id) {
@@ -141,6 +148,6 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
   return (id, side) => {
     // A command for another kind of page than the one it would act on: there, it does nothing.
     if (!actsOn(id, side.kind)) return { aside: true };
-    return windowLook(id) ?? (isNote(side) ? noteLook(id, side) : {});
+    return windowLook(id) ?? (isNote(side) ? noteLook(id, side) : bookLook(id));
   };
 }

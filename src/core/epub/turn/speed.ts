@@ -42,3 +42,20 @@ export function motionTime(motion: Motion, calm: number, quick: number, scale: n
   if (motion === 'slide') return slideTime(calm, scale);
   return wordsTime(quick, calm, scale).in;
 }
+
+/** How a turn is asked for: a key's, a key held down (repeating), or a hand's. */
+export type TurnAsked = 'key' | 'held' | 'hand';
+
+/** Whether a turn asked so moves anything, under the setting now: if not, nothing is copied. */
+export function turnMoves(
+  asked: TurnAsked,
+  motion: Motion,
+  calm: number,
+  quick: number,
+  scale: number,
+): boolean {
+  if (asked === 'held') return false;
+  // A hand always moves the page it holds, at any Turn speed; under reduced motion it never holds.
+  if (asked === 'hand') return true;
+  return !isInstant(motionTime(motion, calm, quick, scale));
+}

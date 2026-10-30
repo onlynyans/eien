@@ -34,14 +34,10 @@
   inset: 0;
 }
 
-/* Each piece is the whole page, clipped to its part: its own paper, as the phone's page has none of its own. */
+/* Each piece is the whole page, clipped to its part (laid by ./curl-view.ts): its own paper, as
+   the phone's page has none of its own. */
 .turn-curl__page {
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
   max-width: none;
-  margin: 0;
   box-shadow: none;
   background: var(--eien-paper);
 }
@@ -79,4 +75,9 @@
 /* What comes back over casts the lifted paper's one soft shadow: the exception's third. */
 .turn-curl__flap {
   filter: drop-shadow(0 0 var(--eien-space-2) var(--eien-curl-shade));
+}
+
+/* What stays as the page turns (a book's fore-edge) stays in sight, the sheet beneath hidden or not. */
+[data-turn-stays] {
+  visibility: visible;
 }

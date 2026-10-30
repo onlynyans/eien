@@ -110,14 +110,116 @@
    a book sets them (the first after a heading, a break, a picture or a
    centred line stands flush). A named part (a title, a plate, an epigraph)
    keeps its own gap. As a note, they keep the gap a note's have in Reading. */
-[data-scroll="book"] .epub-chapter p:not([data-part]) {
+[data-scroll="book"] .epub-chapter p:not([data-part]),
+[data-view="pages"] .epub-chapter p:not([data-part]) {
   margin: 0;
 }
 [data-scroll="book"]
   .epub-chapter
   p:not([data-part]):not([data-align])
+  + p:not([data-part]):not([data-align]),
+[data-view="pages"]
+  .epub-chapter
+  p:not([data-part]):not([data-align])
   + p:not([data-part]):not([data-align]) {
   text-indent: var(--eien-epub-indent);
+}
+
+/* Pages (Phase 3b, ./paged-place.ts): the sheet fills the pane, and the
+   chapter is laid in columns as tall as the whole lines its box holds, each
+   a page, set as a book whatever the scroll style. The box clips (never
+   hides: a hidden box can still be scrolled by the browser, which would move
+   the page under the transform). The chapter's foot gives way to turning on. */
+/* The pane clips a turn too: positioned, so a turn's pieces laid over the sheet are its own. */
+.page__leaf--epub[data-view="pages"] .page__scroll {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: clip;
+  isolation: isolate;
+}
+[data-view="pages"] .epub-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+[data-view="pages"] .epub__pages {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: var(--eien-space-5);
+  overflow: clip;
+  column-gap: var(--eien-space-8);
+  /* Half the gap either side: a letter's overhang at the measure's edge is drawn, never cut. */
+  overflow-clip-margin: calc(var(--eien-space-8) / 2);
+}
+[data-view="pages"] .epub-chapter {
+  column-fill: auto;
+}
+/* A picture fits its page, whole: never taller than the page, never split. */
+[data-view="pages"] .epub-chapter img {
+  max-height: var(--epub-page-height);
+  object-fit: contain;
+}
+[data-view="pages"] .epub__turns {
+  display: none;
+}
+
+/* The fore-edge (./leaf-edges.ts): the pages to read stacked at the sheet's
+   right, those read at its left, each a paper edge in a hairline, a mark's
+   width apart, beneath the sheet. No sheet, no edges: Page frame Full keeps
+   only the buttons, and Scroll none of it. */
+.epub-edges {
+  display: none;
+}
+[data-view="pages"] .epub-edges {
+  display: contents;
+}
+.epub-edges__stack {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+[data-frame="full"] .epub-edges__stack {
+  display: none;
+}
+.epub-edges__edge {
+  position: absolute;
+  top: calc(var(--edge) * var(--eien-hairline));
+  bottom: calc(var(--edge) * var(--eien-hairline));
+  background: var(--eien-paper);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  z-index: calc(-1 * var(--edge));
+}
+.epub-edges__stack--after .epub-edges__edge {
+  left: 0;
+  right: calc(var(--edge) * -1 * var(--eien-mark-w));
+}
+.epub-edges__stack--before .epub-edges__edge {
+  right: 0;
+  left: calc(var(--edge) * -1 * var(--eien-mark-w));
+}
+/* Where a hand reaches to turn: each side's edge is its button, in the sheet's own margin, so it's in
+   sight with no blotter round the sheet (Page frame Full, a narrow pane, the phone). */
+.epub-edges__turn {
+  appearance: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--eien-space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: e-resize;
+}
+.epub-edges__turn--after {
+  right: 0;
+}
+.epub-edges__turn--before {
+  left: 0;
+  cursor: w-resize;
 }
 
 /* A book's note over its page (Phase 2b, ./note-over.ts): a menu's raised

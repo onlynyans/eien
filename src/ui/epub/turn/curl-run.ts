@@ -24,6 +24,8 @@ export interface CurlRunOf {
   readonly copy: HTMLElement;
   readonly sheet: HTMLElement;
   readonly words: string;
+  /** A copy's words cut to what's in sight. */
+  readonly trim?: (words: HTMLElement) => void;
   readonly tokens: TurnTokens;
   readonly frames: Frames;
   /** Landed: turned, or fallen back. */
@@ -41,7 +43,7 @@ export class CurlRun {
   constructor(turn: CurlTurn, of: CurlRunOf) {
     this.#turn = turn;
     this.#of = of;
-    this.#view = new CurlView(of.copy, of.sheet, turn.way, of.words);
+    this.#view = new CurlView(of.copy, of.sheet, turn.way, of.words, of.trim);
     this.#draw();
   }
 

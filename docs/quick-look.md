@@ -222,10 +222,14 @@ building, its fixes taken.
   active one first, so the page sitting back is the one you aren't in, which
   the companion's own rule already paints.
 
-## A book's own settings (#40, Phase 2, built)
+## A book's own settings (#40, Phase 2 and 3b, built)
 
-A book has a setting with no note's to copy: the **scroll style** (*As a
-note*, *As a book*), `epub.scroll` in the schema, marked `quick: 'shelf'`.
+A book has settings with no note's to copy, each in the schema marked
+`quick: 'shelf'`, in this order: **Read in** (`epub.view`: *Pages*,
+*Scroll*), **Page turn** (`epub.turn`: *Curl*, *Slide*, *Words*), **Turn
+speed** (`epub.turnSpeed`: *Instant*, *1×* to *4×*, short so they fit the
+popover's width, the meaning in the description) and the **scroll style**
+(`epub.scroll`: *As a note*, *As a book*).
 `quickIn(platform, phone, kind)` offers it only for the shelf's subject
 (`LookSubject.kind`, `'epub'`), after the page settings in the schema's
 order; `settingsIn` leaves it out of Settings, which sets notes. The

@@ -55,17 +55,26 @@ describe('the quick look’s settings (#49)', () => {
       'appearance.frame',
     ];
     expect(quickIn('darwin', false, 'note').map((setting) => setting.key)).toEqual(notes);
-    // A book's own, the scroll style (#40), with a book in front alone.
+    // A book's own (#40), Pages or Scroll and the scroll style, with a book in front alone.
     expect(quickIn('darwin', false, 'epub').map((setting) => setting.key)).toEqual([
       ...notes,
+      'epub.view',
+      'epub.turn',
+      'epub.turnSpeed',
       'epub.scroll',
     ]);
   });
 
   it('keep a book’s own out of Settings, which sets notes (#40)', () => {
     const shown = tabs.flatMap(({ tab }) => settingsIn(tab, 'darwin').map((each) => each.key));
+    expect(shown).not.toContain('epub.view');
     expect(shown).not.toContain('epub.scroll');
-    expect(SETTINGS.filter(isShelfs).map((setting) => setting.key)).toEqual(['epub.scroll']);
+    expect(SETTINGS.filter(isShelfs).map((setting) => setting.key)).toEqual([
+      'epub.view',
+      'epub.turn',
+      'epub.turnSpeed',
+      'epub.scroll',
+    ]);
   });
 
   it('leave out what the room doesn’t offer: a phone’s one pane has no page width', () => {

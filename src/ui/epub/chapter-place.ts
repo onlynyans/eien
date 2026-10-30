@@ -49,23 +49,56 @@ function firstBelow(count: number, bottomOf: (at: number) => number, top: number
 }
 
 /**
+ * The offset of the first word whose box ends past `edge`, by `end` (its
+ * bottom, or its right): 0 at the chapter's start, and for a chapter with no
+ * words; every word's length for a chapter read to its end.
+ */
+function firstPast(chapter: HTMLElement, edge: number, end: (range: Range) => number): number {
+  const pieces = piecesOf(chapter);
+  const lengths = pieces.map((text) => text.length);
+  const endOf = (i: number) => {
+    const piece = pieces[i] as Text;
+    return end(rangeOver(piece, 0, piece.length));
+  };
+  const at = firstBelow(pieces.length, endOf, edge);
+  const piece = pieces[at];
+  if (!piece) return lengths.reduce((sum, length) => sum + length, 0);
+  const within = firstBelow(piece.length, (i) => end(rangeOver(piece, i, i + 1)), edge);
+  return offsetOf(lengths, { index: at, within: Math.min(within, piece.length - 1) });
+}
+
+/**
  * The offset of the first line in sight under `top` (the scroller's top, in
  * the window's coordinates): the first word whose line ends below it.
  * 0 at the chapter's top, and for a chapter with no words.
  */
-export function firstInSight(chapter: HTMLElement, top: number, rectOf = measured): number {
+export const firstInSight = (chapter: HTMLElement, top: number, rectOf = measured): number =>
+  firstPast(chapter, top, (range) => rectOf(range).bottom);
+
+/** A piece of the page's box across, measured: the window's own, or a test's. */
+export type SideOf = (range: Range) => Pick<DOMRect, 'left' | 'right'>;
+
+const across: SideOf = (range) => range.getBoundingClientRect();
+
+/**
+ * In pages (Phase 3b), the offset of the first word on the page whose left
+ * edge is `left` (the window's coordinates): the first whose box ends right
+ * of it, as columns read left to right.
+ */
+export const firstOnPage = (chapter: HTMLElement, left: number, sideOf = across): number =>
+  firstPast(chapter, left, (range) => sideOf(range).right);
+
+/** The character at `offset` among the chapter's words, as a range; null for a chapter with none. */
+export function characterAt(chapter: HTMLElement, offset: number): Range | null {
   const pieces = piecesOf(chapter);
-  const lengths = pieces.map((text) => text.length);
-  const bottomOf = (i: number) => {
-    const piece = pieces[i] as Text;
-    return rectOf(rangeOver(piece, 0, piece.length)).bottom;
-  };
-  const at = firstBelow(pieces.length, bottomOf, top);
-  const piece = pieces[at];
-  // Every word above the top: the chapter read to its end.
-  if (!piece) return lengths.reduce((sum, length) => sum + length, 0);
-  const within = firstBelow(piece.length, (i) => rectOf(rangeOver(piece, i, i + 1)).bottom, top);
-  return offsetOf(lengths, { index: at, within: Math.min(within, piece.length - 1) });
+  const spot = spotOf(
+    pieces.map((text) => text.length),
+    offset,
+  );
+  const piece = spot && pieces[spot.index];
+  if (!spot || !piece) return null;
+  const within = Math.min(spot.within, piece.length - 1);
+  return rangeOver(piece, within, within + 1);
 }
 
 /** `scroller` moved so the line holding `offset` stands at its top; at the chapter's top for 0. */
@@ -75,19 +108,12 @@ export function showOffset(
   offset: number,
   rectOf = measured,
 ): void {
-  const pieces = offset > 0 ? piecesOf(chapter) : [];
-  const spot = spotOf(
-    pieces.map((text) => text.length),
-    offset,
-  );
-  const piece = spot && pieces[spot.index];
-  if (!spot || !piece) {
+  const character = offset > 0 ? characterAt(chapter, offset) : null;
+  if (!character) {
     scroller.scrollTop = 0;
     return;
   }
-  const within = Math.min(spot.within, piece.length - 1);
-  const line = rectOf(rangeOver(piece, within, within + 1)).top;
-  scroller.scrollTop += line - scroller.getBoundingClientRect().top;
+  scroller.scrollTop += rectOf(character).top - scroller.getBoundingClientRect().top;
 }
 
 /** The offset of the first of the chapter's words after `node`: where a place named there starts. */

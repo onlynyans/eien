@@ -642,7 +642,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126)
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add paging and the turn (Phase 3), marks, highlights and Find
@@ -732,7 +732,22 @@ in the book, each recorded here as it's built.
 - **In a split,** both pages lie in the window's frame (the notes' Page), so
   the modes' marks read as one arrangement; the book keeps the rest of its
   look (decided 2026-10-29).
-- **The curl's light** is the one exception under Depth, for Phase 3.
+- **Pages** (Phase 3b, Pages 2's leaf): the sheet fills the pane, the
+  chapter in pages as tall as the whole lines they hold, its paragraphs a
+  book's, its foot gone (turning goes on). The fore-edge lies under the
+  sheet's sides, up to six paper edges in `--eien-rule` hairlines on
+  `--eien-paper`, `--eien-mark-w` apart, in sixths of the book read and to
+  go; none in Page frame Full. Each side, `--eien-space-3` wide beside the
+  sheet, is a button (Previous page, Next page) with the `e-resize` and
+  `w-resize` cursors. The book's own tools, Pages and Scroll (a page with
+  its corner, a sheet that scrolls), stand in the views' place, a note's
+  set aside with a book, and theirs with a note.
+- **The turn** (Phase 3a, 3b): Curl (the default), Slide or Words, each
+  as the approved explorations move them, on `--eien-ease`, each time a
+  multiple of `--eien-calm` (or `--eien-quick`) times the Turn speed,
+  instant with reduced motion. The curl's light is the one exception
+  under Depth: its pieces are copies of the page in sight, clipped to the
+  pane.
 
 ## A link in Live (decided 2026-10-29, #38; built)
 

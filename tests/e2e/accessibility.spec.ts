@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { seriousViolations, violationsUnder } from './axe';
-import { chooseSetting, expect, ROOT, test } from './launch';
+import { chooseSetting, clickMenu, expect, ROOT, test } from './launch';
 
 test.use({
   vaultFiles: {
@@ -128,6 +128,27 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.locator('[data-command="panes"]').click();
         await expect(page.locator('.tree-row--chapter')).toHaveCount(3);
         expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);
+      });
+
+      test('a book in pages, its edges and the Pages and Scroll tools, has no serious violation (#40, Phase 3b)', async ({
+        page,
+        app,
+      }) => {
+        await page
+          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+          .click();
+        await expect(page.locator('.epub-chapter')).toContainText('It is a truth');
+        await clickMenu(app, 'View', 'Pages');
+        await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
+        await page.locator('.page__leaf--epub .page__scroll').focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('.epub-edges__stack--before .epub-edges__edge')).not.toHaveCount(
+          0,
+        );
+        expect(
+          await violationsUnder(page, ['.page', '.epub-edges__turn']),
+          'a book in pages, its edges',
+        ).toEqual([]);
       });
 
       test('a book beside a note, words chosen in it with the selection bar, has no serious violation (#40)', async ({

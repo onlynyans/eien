@@ -131,7 +131,10 @@ beside) within the pause before a save dropped the last words typed.
 
 `CommandDef.on?: PageKind`, the kind of page a command acts on; without it,
 any page or the window. `on: 'note'`: the views, Compare, Seal, Versions,
-Copy as HTML, Focus mode, the companion's ⋯ and every `format.*`.
+Copy as HTML, Focus mode, the companion's ⋯ and every `format.*`. `on:
+'epub'` (#40, Phase 3b): the book's own views, Pages and Scroll, in the
+views' group, so `menuOff('note')` greys them with a note in front, and a
+group's commands set aside are never folded into a bar's ⋯ (`host.ts`).
 `actsOn(id, kind)` is the one rule:
 
 - **The layout's hosts** (shared, for the page the tools act on,
@@ -142,7 +145,8 @@ Copy as HTML, Focus mode, the companion's ⋯ and every `format.*`.
   host lists, disabled on a note's page as a note's are on an EPUB's.
 - **A page's own host** (`page-hosts.ts`: Facing pages' folio, a companion's
   head): the mode's commands for its page's kind only, so an EPUB in Facing
-  pages has its × alone until Phase 3 adds its own to the mode's list.
+  pages has its × alone; the book's Pages and Scroll stay in the layout's
+  views, where its kind's tools are (Phase 3b).
 - **The menu's commands** (`vault/commands.ts`): a note's command with
   another kind active does nothing.
 - **The menu bar and the phone's ⋯** (after Phase 1): `menuOff(kind)`

@@ -431,6 +431,34 @@ Three panes, each collapsible, with a two-pane option in settings:
      top. The colophon says "3 of 61", then how far through the chapter and
      the book ("40% of the chapter", "12% of the book", the book by its
      chapters' sizes; the two dropped first on a narrow page).
+   - **Pages** (Phase 3b): **Read in**, a book setting in the shelf's
+     quick look, sets a book in *Pages* or *Scroll* (the default for now),
+     as do the book's own two tools in the views' place and View → Pages
+     and View → Scroll (greyed with a note in front, as a note's views are
+     with a book). In pages the sheet fills the pane and the chapter is
+     laid in pages as tall as the whole lines it holds, so no line is cut;
+     its paragraphs are set as a book's, whatever the scroll style. The
+     arrow keys, Space and Shift+Space, Page Up and Page Down turn a page;
+     Home and End go to the chapter's ends; past a chapter's last page
+     comes the next chapter's first, and back, the last page of the one
+     before. On the sheet's sides lie the book's fore-edge, the pages read
+     at its left and still to read at its right, up to six paper edges in
+     sixths of the book; each side is a button, Previous page or Next page,
+     its tooltip saying how many of the chapter's pages are left that way.
+     On a touch screen a tap in the page's outer thirds turns it (a tap on
+     a link, or ending a selection, never does). A link the keyboard comes
+     to on another page turns there. The place is the same as Scroll's,
+     the first word in sight, so it carries between Pages and Scroll, a
+     restart, a width, a face and page zoom.
+   - **Turning the page** (Phase 3b): **Page turn**, a book setting in the
+     shelf's quick look: *Curl* (the default; the paper rolls over as it's
+     turned, its back showing the words faintly, in light only while it
+     moves), *Slide* (the words carried a page) or *Words* (only the ink
+     changes). **Turn speed**: *Instant*, *1×* (as designed), *2×* (the
+     default), *3×*, *4×*. A key pressed mid-turn finishes it at once; a
+     key held down turns at once; with reduced motion every turn is
+     instant. A turn moves the page in sight alone, so turning is as quick
+     in a long chapter as a short one.
    - **The scroll style**, a book setting in the shelf's quick look (never
      in Settings, which sets notes): *As a note* (the default), its
      paragraphs spaced as a note's in Reading; or *As a book*, indented
@@ -1110,7 +1138,7 @@ src/ui/
   settings/     ✓ Settings over the window: categories and tabs, drawn from the schema; the Themes tabs; the look they set on <html>
   phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
   extension/    ✓ the extension's pages: the story page, the popup, the content script and each site's markup (§14)
-  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style
+  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style; in pages (3b), its fore-edge, keys and taps, and the page turn (epub/turn/)
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture

@@ -6,12 +6,14 @@
 // and words chosen in it quoted in a note (Phase 2c). The book's file is
 // only ever read.
 
+import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
 import { bookFraction, type Epub, isRefusal, refusalWords } from '../../core/epub';
 import { crumbsOf } from '../vault/open-note';
 import type { Place, Side, SideHooks } from '../vault/page-side';
 import { bookFollow } from './book-follow';
 import { nameLinks } from './book-links';
 import { type BookOpenOf, nameOf, openBook, startOf } from './book-open';
+import { bookPages } from './book-pages';
 import { quoteOf } from './book-quote';
 import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
@@ -66,8 +68,14 @@ export const isEpub = (side: Side | null | undefined): side is EpubSide =>
 export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | null): EpubSide {
   const page = new EpubPage({
     close: hooks.close,
-    moved: (fraction) =>
-      page.foot.through(fraction, epub ? bookFraction(epub.spine, spine, fraction) : 0),
+    moved: (fraction) => {
+      const book = epub ? bookFraction(epub.spine, spine, fraction) : 0;
+      page.foot.through(fraction, book);
+      const { at, of: count } = page.sheet.page;
+      page.edges.through(book, at, count);
+    },
+    turn: (way, held) => pages.turn(way, held),
+    edge: (last) => pages.edge(last),
     rested: (offset) => keep(offset),
     follow: (anchor, link) => void links.follow(anchor, link),
     back: () => void links.back(),
@@ -79,6 +87,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
   let drawn: DrawnChapter | null = null;
   let before = left;
   let disposed = false;
+  /** The shelf's settings, as last followed. */
+  let values: SettingValues = DEFAULT_SETTINGS;
   /** Counts what the page was asked to show, so a slow open never lands over a newer one. */
   let turn = 0;
 
@@ -94,6 +104,14 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     draw: (index, at) => draw(index, true, at),
     open: (place) => side.open(place.path, place),
     keep: (offset) => keep(offset),
+  });
+
+  const pages = bookPages({
+    page,
+    epub: () => epub,
+    spine: () => spine,
+    draw: (index, at) => draw(index, true, at),
+    values: () => values,
   });
 
   /** The place in the book kept in its reading state: each write reads the vault again, so only at a rest. */
@@ -114,6 +132,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
   ): Promise<boolean> {
     const opened = epub;
     if (!opened || !path) return false;
+    pages.finish();
     const asked = ++turn;
     const chapter = await opened.chapter(index);
     if (asked !== turn || disposed) return false;
@@ -126,7 +145,9 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       next.release();
       return false;
     }
-    letGo();
+    // The chapter left's pictures let go once no turn shows a copy of its page.
+    const left = drawn;
+    pages.whenStill(() => left?.release());
     drawn = next;
     const moved = kept && index !== spine;
     spine = index;
@@ -142,10 +163,12 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     if (offset !== given) page.sheet.showPlace(offset);
     of.changed();
     if (moved) keep(offset);
-    if (offset > 0) {
+    if (offset > 0 || typeof place === 'function') {
       // The pictures at their size and the type loaded, then the line: shown where it will stay.
+      // A place given once drawn (a chapter's last page) is asked for again, the pages now settled.
       await next.settled(page.chapter);
-      if (asked === turn && !disposed) page.sheet.showPlace(offset);
+      if (asked === turn && !disposed)
+        page.sheet.showPlace(typeof place === 'function' ? place() : offset);
     }
     return asked === turn && !disposed;
   }
@@ -250,9 +273,15 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     },
     keep: () => page.sheet.keep(),
     quote,
-    follow: (values) => page.wear(values),
+    follow(next) {
+      values = next;
+      // A new look or view lays the page out anew: the turn in flight lands first.
+      pages.finish();
+      page.wear(next);
+    },
     dispose() {
       disposed = true;
+      pages.dispose();
       links.forget();
       letGo();
       page.dispose();
