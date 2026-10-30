@@ -4,7 +4,7 @@
 // results take the tree's place while there's no note list to show them.
 
 import { stateOf, type TagFilter, type TagNode } from '../../core/tags';
-import type { FolderNode } from '../../core/vault';
+import { type FolderNode, inFolders } from '../../core/vault';
 import { h, type Props } from '../dom';
 import { icon } from '../icons';
 import type { RowActions } from '../list/row-events';
@@ -13,8 +13,11 @@ import { WINDOW_FROM } from '../shell/window-range';
 import type { WindowedRow } from '../shell/windowed-rows';
 import type { ListedNote, NoteList, Selection } from '../vault/vault-state';
 import { atDepth } from './depth';
+import type { FolderSection } from './folds';
 import { lookOf, noteRow, noteRowKey, noteRowShows } from './note-row';
 import type { RowCache } from './row-cache';
+import { FOLDER_SHORTCUTS } from './row-keys';
+import { group, twistButton } from './twist';
 
 /** A folder's or a tag's own keys and menu, given by the sidebar. */
 export interface RowEvents {
@@ -54,8 +57,12 @@ export interface TreeActions extends RowActions {
   select(selection: Selection): void;
   /** Open or close a row, by its openId. */
   toggle(id: string): void;
-  /** A folder's menu, at the pointer or under the row. */
-  folderMenu(path: string, at: { readonly x: number; readonly y: number }): void;
+  /** A folder's menu, at the pointer or under the row, in FOLDERS or on SHELF (#40): its moves are among the folders shown there. */
+  folderMenu(
+    path: string,
+    at: { readonly x: number; readonly y: number },
+    section: FolderSection,
+  ): void;
 }
 
 /**
@@ -94,20 +101,6 @@ export const EMPTY_TAG = 'No notes yet: add it to a note’s tags.';
 
 /** The list id a search's results are drawn under (a row's data-key says "results" too). */
 export const RESULTS = 'results';
-
-/** The disclosure triangle, drawn so it turns (to its button's aria-expanded) rather than swaps. */
-export const twisty = (): HTMLElement =>
-  h('span', { class: 'twisty', attrs: { 'aria-hidden': 'true' } });
-
-/**
- * An open row's rows, in a group of their own at the row's depth: the
- * hairline guide down its children runs down the group (spec §4; the
- * mockup's `.tree [role='group']`). Nothing under it, no group.
- */
-export const group = (depth: number, rows: HTMLElement[]): HTMLElement[] =>
-  rows.length > 0
-    ? [atDepth(h('li', { class: 'tree-group' }, h('ul', { class: 'tree' }, ...rows)), depth)]
-    : [];
 
 export class TreeRows {
   readonly #model: TreeModel;
@@ -149,11 +142,12 @@ export class TreeRows {
     depth: number,
     edit: (folder: FolderNode, depth: number) => HTMLElement | null,
   ): HTMLElement[] {
-    const own = node.folders.flatMap((folder) => {
+    // FOLDERS is for writing (#40): a folder of EPUBs alone is on SHELF only.
+    const own = node.folders.filter(inFolders).flatMap((folder) => {
       const field = edit(folder, depth);
       if (field) return [field];
       const selection: Selection = { kind: 'folder', path: folder.path };
-      const parent = folder.folders.length > 0 || (this.#model.two && folder.notes.length > 0);
+      const parent = folder.folders.some(inFolders) || (this.#model.two && folder.notes.length > 0);
       const row = this.#row(
         folder.name,
         folder.noteCount,
@@ -225,21 +219,7 @@ export class TreeRows {
   }
 
   #twist(id: string, name: string): HTMLElement {
-    const open = this.#model.open.has(id);
-    return h(
-      'button',
-      {
-        class: 'tree-row__twist',
-        attrs: {
-          type: 'button',
-          'aria-expanded': String(open),
-          'aria-label': `${open ? 'Close' : 'Open'} ${name}`,
-          'data-key': `twist:${id}`,
-        },
-        on: { click: () => this.#actions.toggle(id) },
-      },
-      twisty(),
-    );
+    return twistButton(id, this.#model.open.has(id), name, () => this.#actions.toggle(id));
   }
 
   #row(
@@ -274,7 +254,7 @@ export class TreeRows {
               'data-folder': folder,
               'aria-keyshortcuts':
                 folder !== undefined
-                  ? 'F2 Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight'
+                  ? FOLDER_SHORTCUTS
                   : tag !== undefined
                     ? 'Alt+ArrowUp Alt+ArrowDown Shift+Enter Alt+Enter'
                     : undefined,

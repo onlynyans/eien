@@ -64,7 +64,10 @@ test('renamed in its row and moved, the book keeps its .epub, its page and its p
   await page.locator('.contents-row').nth(2).click();
   await expect(chapter(page)).toContainText('Not all that Mrs. Bennet');
   const reading = at(vault, '.eien/reading');
-  await expect.poll(() => readdirSync(reading).filter((n) => n.endsWith('.json'))).toHaveLength(1);
+  // The folder is made with the first place kept: until then, nothing to read.
+  const kept = () =>
+    (existsSync(reading) ? readdirSync(reading) : []).filter((n) => n.endsWith('.json'));
+  await expect.poll(kept).toHaveLength(1);
 
   // Rename, from the menu: the name in its row, its .epub faded after it.
   await book(page, 'Pride and Prejudice').click({ button: 'right' });

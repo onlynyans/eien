@@ -1,9 +1,10 @@
 // Where the writer is in the vault: the row chosen in the sidebar, the rows
-// shown open, and the search's words. Kept apart from drawing, so a rename
+// shown open (and SHELF's folders shut, #40), and the search's words. Kept apart from drawing, so a rename
 // or a move can carry it along.
 
 import { isInside, parentOf } from '../../core/paths';
 import { followSorts } from '../list/sorts';
+import { ShelfFolds } from '../sidebar/shelf-folds';
 import { openId } from '../sidebar/tree';
 import type { Selection } from './vault-state';
 
@@ -13,6 +14,8 @@ export class Navigation {
   query = '';
   /** Rows shown open, by openId (../sidebar/tree.ts). */
   readonly open = new Set<string>();
+  /** SHELF's folders shut, kept on this device (#40). */
+  readonly shelf = new ShelfFolds();
   /**
    * The EPUB whose contents the list shows in place of notes (#40): the book
    * last opened from SHELF, until a row under LIBRARY, FOLDERS or TAGS is chosen;
@@ -55,7 +58,7 @@ export class Navigation {
     return this.#selection.kind === 'folder' && !this.query ? this.#selection.path : '';
   }
 
-  /** A folder renamed or moved: the open folders, the selection and the sorts follow it. */
+  /** A folder renamed or moved: the open folders, SHELF's shut ones, the selection and the sorts follow it. */
   follow(from: string, to: string): void {
     const moved = (path: string) => (isInside(path, from) ? to + path.slice(from.length) : path);
     for (const id of [...this.open]) {
@@ -67,17 +70,20 @@ export class Navigation {
     if (this.#selection.kind === 'folder') {
       this.#selection = { kind: 'folder', path: moved(this.#selection.path) };
     }
+    this.shelf.follow(from, to);
     followSorts(from, to); // the list's contents follow any move by the EPUB's wiring (./epub-wiring.ts)
   }
 
   /**
    * A folder went to the trash: if it, or a folder in it, was chosen, All
-   * Notes is; and it isn't open, so a new folder of its name starts shut.
+   * Notes is; and it isn't open, so a new folder of its name starts shut
+   * (and on SHELF open, as every folder there starts).
    */
   unselect(path: string): void {
     for (const id of [...this.open]) {
       if (isInside(id, path)) this.open.delete(id);
     }
+    this.shelf.forget(path);
     const chosen = this.#selection;
     if (chosen.kind === 'folder' && isInside(chosen.path, path)) {
       this.#selection = { kind: 'all' };

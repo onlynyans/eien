@@ -60,6 +60,14 @@ describe('sidebarSignature, the tree’s frame', () => {
     expect(sign({ ...base, books: new Set(['Fic']) })).not.toBe(sign(base));
   });
 
+  it('changes with a folder shut or opened on SHELF (#40), so a fold is drawn', () => {
+    const shelf = (shut: string[]) => ({ current: null, contents: null, shut });
+    const base = model([note()]);
+    expect(sign({ ...base, shelf: shelf(['Novels']) })).not.toBe(
+      sign({ ...base, shelf: shelf([]) }),
+    );
+  });
+
   it('doesn’t care in what order the rows were opened', () => {
     expect(sign(model([note()], ['/all', 'Fic']))).toBe(sign(model([note()], ['Fic', '/all'])));
   });

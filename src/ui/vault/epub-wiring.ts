@@ -45,7 +45,7 @@ export interface EpubWiring {
   /** Quote the words chosen on the active page, if it holds a book (the phone's ⋯). */
   quote(): void;
   /** What SHELF marks: the book on the active page, and with `two` panes the open book's contents. */
-  shelf(two: boolean): Omit<ShelfModel, 'tree'>;
+  shelf(two: boolean): Omit<ShelfModel, 'tree' | 'shut'>;
   /** The contents the list shows in place of notes, or null. */
   contents(): (ContentsModel & { readonly side: EpubSide }) | null;
 }

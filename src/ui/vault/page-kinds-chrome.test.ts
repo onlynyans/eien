@@ -1,11 +1,12 @@
 // A page of another kind and the window's tools (../chrome/commands.ts,
-// `on`): a note's commands look disabled where the page they'd act on holds
-// something else, and do nothing from the menu; the window's act on any page.
+// `on`): a note's commands are set aside where the page they'd act on holds
+// something else (#40, the tools by what's in sight), and do nothing from the
+// menu; the window's act on any page.
 // A stand-in second kind (./stand-in-kind.ts) stands for the EPUB's (backlog #40).
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
-import { actsOn, COMMANDS, type CommandId, menuOff } from '../chrome/commands';
+import { actsOn, COMMANDS, menuOff } from '../chrome/commands';
 import type { MenuBus } from '../menu/menu-bus';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
@@ -24,6 +25,9 @@ afterEach(() => {
 });
 
 const NOTE_COMMANDS = COMMANDS.filter((command) => 'on' in command).map(({ id }) => id);
+/** Whether a button's command is one of a note's. */
+const ofNote = (id: string | undefined) =>
+  (NOTE_COMMANDS as readonly (string | undefined)[]).includes(id);
 
 /** The window's tools drawn over `made`'s pages, as the vault view draws them. */
 function toolsOver(made: Awaited<ReturnType<typeof pagesWith>>) {
@@ -51,21 +55,24 @@ function toolsOver(made: Awaited<ReturnType<typeof pagesWith>>) {
     chrome.stop();
     pages.stop();
   });
-  /** Whether each of `ids` drawn in the page's bar is disabled. */
-  const disabled = (ids: readonly CommandId[]) =>
-    ids.flatMap((id) => {
-      const button = pages.pane.slots.bar.querySelector<HTMLButtonElement>(
-        `[data-command="${id}"]`,
-      );
-      return button ? [[id, button.disabled] as const] : [];
-    });
-  return { chrome, disabled, greyMenu };
+  /** The commands drawn in the window (or the formatting bar) and in sight there: none set aside. */
+  const inSight = (slot?: 'format') =>
+    [
+      ...(slot ? pages.pane.slots[slot] : document.body).querySelectorAll<HTMLButtonElement>(
+        '[data-command]',
+      ),
+    ]
+      .filter((button) => !button.hasAttribute('data-aside'))
+      .map((button) => button.dataset.command);
+  return { chrome, inSight, greyMenu };
 }
 
 /** A note on the left, the stand-in beside it (the active one), and the window's tools drawn. */
-async function drawn() {
+async function drawn(layout: 'band' | 'slip' | 'runhead' = 'band') {
   const files = { 'Chapter.md': 'The gate held.' };
-  const made = await pagesWith(files, { 'appearance.layout': 'band' }, [standInKind]);
+  const made = await pagesWith(files, { 'appearance.layout': layout, 'editor.formatBar': 'on' }, [
+    standInKind,
+  ]);
   await made.pages.open('Chapter.md');
   await made.pages.open('Map.stand', true);
   return { ...made, ...toolsOver(made) };
@@ -84,19 +91,53 @@ describe('the commands for a note', () => {
     expect(actsOn('scheme', 'epub')).toBe(true);
   });
 
-  it('look disabled in the layout’s bar while the page they act on holds another kind', async () => {
-    const { pages, chrome, disabled } = await drawn();
-    const views = ['view.live', 'view.source', 'view.reading', 'compare', 'seal'] as const;
-    const shown = disabled(views);
-    expect(shown.length).toBeGreaterThan(0);
-    expect(shown.every(([, off]) => off)).toBe(true);
+  for (const layout of ['band', 'slip', 'runhead'] as const) {
+    it(`are set aside in ${layout}’s bars while the active page holds another kind, and come back with the note`, async () => {
+      const { pages, chrome, inSight } = await drawn(layout);
+      const bar = inSight();
+      const format = inSight('format');
+      // The book active: none of the note's tools in sight, the shared ones where they were.
+      expect(bar.filter((id) => ofNote(id))).toEqual([]);
+      expect(bar).toContain('look');
+      expect(format).toEqual([]);
+      // The formatting bar's row stays while a note is in sight, so neither page moves.
+      expect(pages.pane.slots.format.hidden).toBe(false);
+      pages.activate(pages.sides[0] as Side);
+      chrome.refresh();
+      expect(inSight().filter((id) => ofNote(id)).length).toBeGreaterThan(0);
+      expect(inSight('format')).toContain('format.bold');
+      expect(inSight()).toEqual(expect.arrayContaining(bar));
+    });
+  }
+
+  it('take the formatting bar’s row with them when a book is the only page', async () => {
+    const files = { 'Chapter.md': 'The gate held.' };
+    const made = await pagesWith(files, { 'editor.formatBar': 'on' }, [standInKind]);
+    await made.pages.open('Chapter.md');
+    const { chrome } = toolsOver(made);
+    expect(made.pages.pane.slots.format.hidden).toBe(false);
+    await made.pages.open('Map.stand');
+    chrome.refresh();
+    expect(made.pages.active.kind).toBe('epub');
+    expect(made.pages.pane.slots.format.hidden).toBe(true);
+    expect(document.body.hasAttribute('data-format-bar')).toBe(false);
+  });
+
+  it('leave no rule standing alone in a bar where their run was set aside', async () => {
+    const { pages, chrome } = await drawn();
+    const rules = () =>
+      [...pages.pane.slots.bar.querySelectorAll<HTMLElement>('.host__rule')].map((rule) => {
+        let [before, after] = [rule.previousElementSibling, rule.nextElementSibling];
+        const seen = (el: Element | null) =>
+          el instanceof HTMLElement && !el.hidden && !el.hasAttribute('data-aside');
+        while (before && !seen(before)) before = before.previousElementSibling;
+        while (after && !seen(after)) after = after.nextElementSibling;
+        return rule.hidden || (before !== null && after !== null);
+      });
+    expect(rules().every(Boolean)).toBe(true);
     pages.activate(pages.sides[0] as Side);
     chrome.refresh();
-    expect(
-      disabled(views)
-        .filter(([id]) => id !== 'compare')
-        .every(([, off]) => !off),
-    ).toBe(true);
+    expect(rules().every(Boolean)).toBe(true);
   });
 
   it('leave the window’s alone: the sidebar’s and the list’s chevrons look the same', async () => {
@@ -123,7 +164,7 @@ describe('the commands for a note', () => {
     const { pages } = made;
     toolsOver(made);
     const seal = pages.pane.slots.bar.querySelector<HTMLButtonElement>('[data-command="seal"]');
-    expect(seal?.disabled).toBe(true);
+    expect(seal?.hasAttribute('data-aside')).toBe(true);
   });
 
   it('do nothing from the menu while the active page holds another kind', async () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { buildTree, type VaultEntry } from '../../core/vault';
-import { shelfRows } from './shelf-rows';
+import { folderRowEvents } from './row-keys';
+import { type ShelfFolders, shelfRows } from './shelf-rows';
 
 const entry = (path: string, kind: VaultEntry['kind']): VaultEntry => ({
   path,
@@ -23,7 +24,23 @@ const TREE = buildTree(
 function draw(
   current: string | null = null,
   contents: Parameters<typeof shelfRows>[0]['contents'] = null,
+  shut: string[] = [],
+  editing: string | null = null,
 ) {
+  const folder = { menu: vi.fn(), rename: vi.fn(), move: vi.fn() };
+  const folders = {
+    events: (path: string) =>
+      folderRowEvents({
+        menu: (at) => folder.menu(path, at),
+        rename: () => folder.rename(path),
+        move: (how) => folder.move(path, how),
+      }),
+    fold: vi.fn(),
+    edit: (node, depth) =>
+      node.path === editing
+        ? Object.assign(document.createElement('li'), { className: 'field', title: `${depth}` })
+        : null,
+  } satisfies ShelfFolders;
   const actions = {
     openEpub: vi.fn(),
     openBookBeside: vi.fn(),
@@ -33,8 +50,8 @@ function draw(
     trashBook: vi.fn(),
   };
   const list = document.createElement('ul');
-  list.append(...shelfRows({ tree: TREE, current, contents }, actions));
-  return { list, actions };
+  list.append(...shelfRows({ tree: TREE, current, contents, shut }, actions, folders));
+  return { list, actions, folder, folders };
 }
 
 const texts = (list: HTMLElement, selector: string) =>
@@ -57,13 +74,60 @@ describe('SHELF’s rows', () => {
     ]);
   });
 
-  it('makes a book a control and a folder a label: nothing to drag or drop onto', () => {
+  it('opens a book on a click; a book is never dragged, and nothing drops on it', () => {
     const { list, actions } = draw();
-    expect(list.querySelectorAll('.tree-row--shelf-folder button')).toHaveLength(0);
-    expect(list.querySelectorAll('[data-path], [data-folder]')).toHaveLength(0);
+    expect(
+      list.querySelectorAll('.tree-row--epub [data-path], .tree-row--epub [data-folder]'),
+    ).toHaveLength(0);
     const book = list.querySelector<HTMLButtonElement>('[data-key="epub:Fic/Research/Style.epub"]');
     book?.click();
     expect(actions.openEpub).toHaveBeenCalledWith('Fic/Research/Style.epub');
+  });
+
+  it('makes a folder FOLDERS’ own row: a twisty, a name to drop on, its keys told, open at first', () => {
+    const { list } = draw();
+    const name = list.querySelector('[data-key="shelf:Fic/Research"]') as HTMLElement;
+    expect(name.tagName).toBe('BUTTON');
+    expect(name.dataset.folder).toBe('Fic/Research');
+    expect(name.getAttribute('aria-expanded')).toBe('true');
+    expect(name.getAttribute('aria-keyshortcuts')).toBe(
+      'F2 Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight',
+    );
+    // Its twisty is the pointer's alone: the name is the one control the keyboard and assistive tech meet.
+    const twist = list.querySelector('[data-key="twist:/shelf/Fic/Research"]') as HTMLElement;
+    expect(twist.getAttribute('aria-hidden')).toBe('true');
+    expect(twist.getAttribute('tabindex')).toBe('-1');
+    expect(twist.hasAttribute('aria-expanded')).toBe(false);
+  });
+
+  it('shuts and opens a folder by its twisty or a click on its name, and draws a shut one’s rows not at all', () => {
+    const { list, folders } = draw(null, null, ['Fic']);
+    expect(texts(list, '.tree-row--shelf-folder')).toEqual(['Cooking', 'Fic']);
+    expect(texts(list, '.tree-row--epub')).toEqual(['Boston', 'Loose']);
+    const fic = list.querySelector('[data-key="shelf:Fic"]') as HTMLElement;
+    expect(fic.getAttribute('aria-expanded')).toBe('false');
+    fic.click();
+    (list.querySelector('[data-key="twist:/shelf/Cooking"]') as HTMLElement).click();
+    expect(folders.fold.mock.calls).toEqual([['Fic'], ['Cooking']]);
+  });
+
+  it('gives a folder its menu, F2 and ⌥ and an arrow, the sidebar’s own', () => {
+    const { list, folder } = draw();
+    const fic = list.querySelector('[data-key="shelf:Fic"]') as HTMLElement;
+    fic.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 4, clientY: 5 }));
+    expect(folder.menu).toHaveBeenLastCalledWith('Fic', { x: 4, y: 5 });
+    fic.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'F2' }));
+    expect(folder.rename).toHaveBeenLastCalledWith('Fic');
+    fic.dispatchEvent(
+      new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowDown', altKey: true }),
+    );
+    expect(folder.move).toHaveBeenLastCalledWith('Fic', 'down');
+  });
+
+  it('draws a folder being renamed here as its field, at its depth', () => {
+    const { list } = draw(null, null, [], 'Fic/Research');
+    expect(list.querySelector('[data-key="shelf:Fic/Research"]')).toBeNull();
+    expect((list.querySelector('.field') as HTMLElement).title).toBe('1');
   });
 
   it('marks the book on the page, and lists its contents under it with two panes', () => {
@@ -101,9 +165,11 @@ describe('SHELF’s rows', () => {
   });
 
   it('draws nothing for a vault with no book', () => {
-    const { actions } = draw();
+    const { actions, folders } = draw();
     const tree = buildTree([entry('a.md', 'note')], 'Vault');
-    expect(shelfRows({ tree, current: null, contents: null }, actions)).toEqual([]);
+    expect(shelfRows({ tree, current: null, contents: null, shut: [] }, actions, folders)).toEqual(
+      [],
+    );
   });
 
   it('gives a book’s row its menu by right-click, the menu key or Shift+F10, as a note’s', () => {

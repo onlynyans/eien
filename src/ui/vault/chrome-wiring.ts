@@ -187,9 +187,13 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
       for (const part of page.tipped) tips.watch(part);
     }
   };
-  /** The bar shown or not, as the setting says; the tags where the layout (or a phone) puts them. */
+  /**
+   * The bar shown or not, as the setting says, while a page holds a note (#40): beside a book
+   * it stays, its note-only buttons set aside, so neither page moves; with a book alone it goes.
+   * The tags where the layout (or a phone) puts them.
+   */
   const place = () => {
-    const shown = barShown();
+    const shown = barShown() && pages.sides.some(isNote);
     if (pane.slots.format.hidden === shown) pane.slots.format.hidden = !shown;
     shell.toggleAttribute('data-format-bar', shown);
     const layout = chrome.layout ?? settings.values['appearance.layout'];

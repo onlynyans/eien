@@ -5,7 +5,7 @@ import type { TagNode } from '../../core/tags';
 import type { FolderNode } from '../../core/vault';
 import type { Folds } from './folds';
 import { foldingSection } from './sections';
-import { type ShelfActions, type ShelfModel, shelfRows } from './shelf-rows';
+import { type ShelfActions, type ShelfFolders, type ShelfModel, shelfRows } from './shelf-rows';
 import type { TreeRows } from './tree';
 
 export interface TreeSectionsOf {
@@ -22,6 +22,8 @@ export interface TreeSectionsOf {
   readonly madeTag: readonly HTMLElement[];
   readonly shelf: ShelfModel;
   readonly actions: ShelfActions;
+  /** What SHELF's folder rows do: FOLDERS' own (#40). */
+  readonly folders: ShelfFolders;
 }
 
 export const treeSections = (of: TreeSectionsOf): HTMLElement[] => [
@@ -33,7 +35,7 @@ export const treeSections = (of: TreeSectionsOf): HTMLElement[] => [
     of.folds,
     of.addFolder,
   ),
-  ...foldingSection('shelf', 'Shelf', shelfRows(of.shelf, of.actions), of.folds),
+  ...foldingSection('shelf', 'Shelf', shelfRows(of.shelf, of.actions, of.folders), of.folds),
   ...foldingSection(
     'tags',
     'Tags',

@@ -60,9 +60,13 @@ export function vaultSidebar(of: VaultSidebarOf): Sidebar {
         nav.toggle(id);
         of.drawTree();
       },
-      folderMenu: (path, at) => void showFolderMenu(of.menus(), path, at),
+      foldShelf: (path) => {
+        nav.shelf.set(path, !nav.shelf.has(path));
+        of.drawTree();
+      },
+      folderMenu: (path, at, section) => void showFolderMenu(of.menus(), path, at, section),
       tagMenu: (key, at) => showTagMenu(of.menus(), key, at),
-      moveFolder: (path, how) => order.moveFolder(path, how),
+      moveFolder: (path, how, section) => order.moveFolder(path, how, section),
       moveTag: (key, by) => order.moveTag(key, by),
       filterTag: (key, out) => {
         const list = listKey(nav.selection);

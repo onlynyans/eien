@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   buildTree,
   type FolderNode,
+  inFolders,
   isNoteName,
   isSyncConflictName,
   kindOf,
+  onShelf,
   orderNames,
   parseFolderSettings,
   syncConflictOf,
@@ -199,5 +201,67 @@ describe('EPUBs in the vault (#40)', () => {
       'Novels/Emma.epub',
       'Novels/Persuasion.epub',
     ]);
+  });
+});
+
+describe('FOLDERS for writing, SHELF for reading (#40)', () => {
+  const folderOf = (tree: FolderNode, path: string): FolderNode => {
+    let node = tree;
+    for (const name of path.split('/')) {
+      const next = node.folders.find((folder) => folder.name === name);
+      if (!next) throw new Error(`no folder ${path}`);
+      node = next;
+    }
+    return node;
+  };
+  const tree = buildTree(
+    [
+      entry('Novels/Emma.epub', 'epub'),
+      entry('Novels/Russian/Anna.epub', 'epub'),
+      entry('Shelved/Dune.epub', 'epub'),
+      entry('Shelved/New', 'folder'),
+      entry('Deep/Books/Dune.epub', 'epub'),
+      entry('Deep/Books/Notes/On Dune.md'),
+      entry('Both/Draft.md'),
+      entry('Both/Persuasion.epub', 'epub'),
+      entry('Empty', 'folder'),
+      entry('Art', 'folder'),
+      entry('Art/cover.png', 'file'),
+      entry('Covered/Dune.epub', 'epub'),
+      entry('Covered/cover.jpg', 'file'),
+    ],
+    'Vault',
+  );
+
+  it('counts EPUBs at any depth, as notes are counted', () => {
+    expect(tree.epubCount).toBe(6);
+    expect(folderOf(tree, 'Novels').epubCount).toBe(2);
+    expect(folderOf(tree, 'Deep').epubCount).toBe(1);
+    expect(folderOf(tree, 'Deep').noteCount).toBe(1);
+  });
+
+  it('keeps out of FOLDERS a folder of EPUBs and nothing else, at any depth', () => {
+    expect(inFolders(folderOf(tree, 'Novels'))).toBe(false);
+    expect(inFolders(folderOf(tree, 'Novels/Russian'))).toBe(false);
+    expect(inFolders(folderOf(tree, 'Covered'))).toBe(false); // a picture isn't anything FOLDERS shows
+  });
+
+  it('keeps in FOLDERS a folder with a note anywhere under it, or an empty folder', () => {
+    expect(inFolders(folderOf(tree, 'Deep'))).toBe(true);
+    expect(inFolders(folderOf(tree, 'Deep/Books'))).toBe(true);
+    expect(inFolders(folderOf(tree, 'Empty'))).toBe(true);
+    expect(inFolders(folderOf(tree, 'Art'))).toBe(true);
+    // An empty folder among books keeps the folder it's in, so it's never cut off.
+    expect(inFolders(folderOf(tree, 'Shelved/New'))).toBe(true);
+    expect(inFolders(folderOf(tree, 'Shelved'))).toBe(true);
+  });
+
+  it('puts on SHELF the folders an EPUB is in, and a folder of both in both', () => {
+    expect(
+      ['Novels', 'Deep', 'Both', 'Shelved'].map((path) => onShelf(folderOf(tree, path))),
+    ).toEqual([true, true, true, true]);
+    expect(onShelf(folderOf(tree, 'Empty'))).toBe(false);
+    expect(onShelf(folderOf(tree, 'Shelved/New'))).toBe(false);
+    expect(inFolders(folderOf(tree, 'Both'))).toBe(true);
   });
 });

@@ -227,9 +227,8 @@
   text-decoration-thickness: 1px;
 }
 
-/* SHELF (#40, ./shelf-rows.ts): a folder is a label on the way to its books,
-   in pencil, where a book's row is a control in ink-soft. */
+/* SHELF (#40, ./shelf-rows.ts): a folder is FOLDERS' own row, its name in
+   pencil, on the way to its books, whose rows are in ink-soft. */
 .shelf__folder {
-  padding-right: var(--eien-space-4);
   color: var(--eien-pencil);
 }

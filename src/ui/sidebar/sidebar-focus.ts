@@ -1,14 +1,15 @@
 // Where the keyboard is in the sidebar's tree, kept across its redraws
 // (./sidebar.ts): the control that had it has it again; a row that's gone
-// (trashed, moved away) leaves it on the row now in its place; a row asked
-// for (a folder renamed or made) takes it; and the row it was on as the
-// sidebar shut is where it goes back to when it opens.
+// (trashed, moved away, or a folder gone to the other section, #40) leaves
+// it on the row now in its place; a row asked for (a folder renamed or
+// made) takes it, the first of those asked for that's there; and the row it
+// was on as the sidebar shut is where it goes back to when it opens.
 
 import type { TreeWindows } from './tree-windows';
 
 export class SidebarFocus {
-  /** The control to give the keyboard to after the next redraw, by its data-key. */
-  asked: string | null = null;
+  /** The controls to give the keyboard to after the next redraw, by their data-keys: the first there takes it. */
+  asked: readonly string[] | null = null;
   /** The row the keyboard was on as the sidebar shut, by its data-key: `focusTree` goes back to it. */
   #left: string | null = null;
   readonly #body: HTMLElement;
@@ -66,7 +67,8 @@ export class SidebarFocus {
     const active = document.activeElement;
     const inBody = active instanceof HTMLElement && this.#body.contains(active);
     const asked = this.asked;
-    const focused = asked ?? (inBody ? (active.dataset.key ?? null) : null);
+    const own = inBody ? active.dataset.key : undefined;
+    const focused = asked ?? (own === undefined ? null : [own]);
     const focusedAt =
       asked === null && inBody ? this.#shown('.tree-row__name').indexOf(active) : -1;
     this.asked = null;
@@ -76,7 +78,7 @@ export class SidebarFocus {
       if (asked === null && document.activeElement === active) return;
       // The control it was on, drawn anew where the scroll kept it: given back without a scroll,
       // as a half-hidden row clicked would otherwise jump into sight. One asked for may have moved.
-      if (this.focusKey(focused, asked !== null) || focusedAt < 0) return;
+      if (focused.some((key) => this.focusKey(key, asked !== null)) || focusedAt < 0) return;
       const rows = this.#shown('.tree-row__name');
       rows[Math.min(focusedAt, rows.length - 1)]?.focus();
     };
