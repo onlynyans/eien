@@ -105,6 +105,23 @@ export const COMMANDS = [
     sends: 'view:reading',
     on: 'note',
   },
+  // A book's two ways to read (#40, Phase 3b), in the views' place: the book's own.
+  {
+    id: 'view.pages',
+    icon: 'pages',
+    label: 'Pages',
+    tip: 'Pages: a page at a time, turned',
+    sends: 'view:pages',
+    on: 'epub',
+  },
+  {
+    id: 'view.scroll',
+    icon: 'scroll',
+    label: 'Scroll',
+    tip: 'Scroll: a chapter a sheet',
+    sends: 'view:scroll',
+    on: 'epub',
+  },
   {
     id: 'view.next',
     icon: 'live',

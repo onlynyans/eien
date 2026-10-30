@@ -117,6 +117,8 @@ export type MenuCommand =
   | 'view:live'
   | 'view:source'
   | 'view:reading'
+  | 'view:pages'
+  | 'view:scroll'
   | 'view:next'
   | 'panes:sidebar'
   | 'panes:list'

@@ -24,7 +24,13 @@ afterEach(() => {
   localStorage.clear();
 });
 
-const NOTE_COMMANDS = COMMANDS.filter((command) => 'on' in command).map(({ id }) => id);
+const NOTE_COMMANDS = COMMANDS.filter((command) => 'on' in command && command.on === 'note').map(
+  ({ id }) => id,
+);
+/** A book's own (#40, Phase 3b): Pages and Scroll. */
+const BOOK_COMMANDS = COMMANDS.filter((command) => 'on' in command && command.on === 'epub').map(
+  ({ id }) => id,
+);
 /** Whether a button's command is one of a note's. */
 const ofNote = (id: string | undefined) =>
   (NOTE_COMMANDS as readonly (string | undefined)[]).includes(id);
@@ -89,6 +95,9 @@ describe('the commands for a note', () => {
     }
     expect(actsOn('page.close', 'epub')).toBe(true);
     expect(actsOn('scheme', 'epub')).toBe(true);
+    // A book's own, the other way: set aside while a note is the active page.
+    expect(BOOK_COMMANDS).toEqual(['view.pages', 'view.scroll']);
+    for (const id of BOOK_COMMANDS) expect(actsOn(id, 'note')).toBe(false);
   });
 
   for (const layout of ['band', 'slip', 'runhead'] as const) {
@@ -106,7 +115,10 @@ describe('the commands for a note', () => {
       chrome.refresh();
       expect(inSight().filter((id) => ofNote(id)).length).toBeGreaterThan(0);
       expect(inSight('format')).toContain('format.bold');
-      expect(inSight()).toEqual(expect.arrayContaining(bar));
+      expect(inSight()).not.toContain('view.pages');
+      expect(inSight()).toEqual(
+        expect.arrayContaining(bar.filter((id) => !BOOK_COMMANDS.includes(id as never))),
+      );
     });
   }
 
@@ -196,7 +208,7 @@ describe('the commands for a note', () => {
     pages.activate(pages.sides[0] as Side);
     chrome.refresh();
     chrome.refresh(); // told once for each change of kind
-    expect(greyMenu.mock.calls).toEqual([[menuOff('epub')], [[]]]);
+    expect(greyMenu.mock.calls).toEqual([[menuOff('epub')], [menuOff('note')]]);
   });
 
   it('greys nothing in the menu bar once the vault is no longer shown (Open Vault…)', async () => {
@@ -206,10 +218,11 @@ describe('the commands for a note', () => {
   });
 
   it('greyed in the menu bar are every note’s control’s, and the menu’s own a note’s page alone has', () => {
-    expect(menuOff('note')).toEqual([]);
+    // With a note in front, a book's own are greyed (#40, Phase 3b).
+    expect(menuOff('note')).toEqual(['view:pages', 'view:scroll']);
     const off = menuOff('epub');
     const sends = COMMANDS.flatMap((command) =>
-      'on' in command && 'sends' in command ? [command.sends] : [],
+      'on' in command && command.on === 'note' && 'sends' in command ? [command.sends] : [],
     );
     expect(off).toEqual(expect.arrayContaining(sends));
     expect(off).toEqual(

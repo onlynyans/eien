@@ -59,6 +59,8 @@ export const TOOL_FOLDS: readonly CommandId[] = [
   'view.live',
   'view.source',
   'view.reading',
+  'view.pages',
+  'view.scroll',
   'seal',
 ];
 
@@ -83,10 +85,10 @@ export interface LayoutSpec {
   readonly tools: string;
 }
 
-/** The page's three views, one choice. */
+/** The page's views, one choice: a note's three, or a book's two (only a page's own kind shows). */
 export const VIEWS: HostItem = {
   group: 'View',
-  ids: ['view.live', 'view.source', 'view.reading'],
+  ids: ['view.live', 'view.source', 'view.reading', 'view.pages', 'view.scroll'],
 };
 
 /**

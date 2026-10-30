@@ -169,6 +169,10 @@ export function buildMenu(send: SendCommand): Menu {
         item('Source', 'view:source'),
         item('Reading', 'view:reading'),
         { type: 'separator' },
+        // A book's (#40, Phase 3b): greyed with a note in front, as a note's are with a book.
+        item('Pages', 'view:pages'),
+        item('Scroll', 'view:scroll'),
+        { type: 'separator' },
         item('Next View', 'view:next', 'CmdOrCtrl+E'),
         { type: 'separator' },
         // The writing tools (spec §4), this device's settings.

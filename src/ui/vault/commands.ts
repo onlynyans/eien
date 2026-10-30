@@ -31,6 +31,8 @@ export interface CommandContext {
   importFolder(): void;
   /** Whether a second page may open here (not one page, the phone's way: ../phone/room.ts). */
   splits(): boolean;
+  /** Every book read in pages, or scrolled (the shelf's setting, #40 Phase 3b). */
+  bookView(view: 'pages' | 'scroll'): void;
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
@@ -50,6 +52,8 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   else if (command === 'view:next') note?.page.nextMode();
   else if (command === 'view:live' || command === 'view:source' || command === 'view:reading') {
     note?.page.setMode(command.slice('view:'.length) as 'live' | 'source' | 'reading');
+  } else if (command === 'view:pages' || command === 'view:scroll') {
+    ctx.bookView(command === 'view:pages' ? 'pages' : 'scroll');
   } else if (command === 'panes:sidebar') panes.toggle('sidebar');
   else if (command === 'panes:list') panes.toggle('list');
   else if (command === 'focus:sidebar') {
