@@ -66,10 +66,15 @@ describe('a page a bookmark is on, as its row says it', () => {
   /** A book's place whose count is `count` (null: no book counted at all). */
   const placeOver = (count: unknown) =>
     bookPlace({
-      page: { foot: new BookFoot(() => {}) } as unknown as EpubPage,
-      epub: () => ({ spine: [] }) as unknown as Epub,
+      page: {
+        foot: new BookFoot(() => {}),
+        element: document.createElement('div'),
+      } as unknown as EpubPage,
+      epub: () => ({ spine: [], contents: [] }) as unknown as Epub,
       spine: () => 0,
       count: () => count as BookCount | null,
+      marks: () => [],
+      goTo: () => {},
     });
 
   it('is none known for a book with no page-list until every chapter is counted, in any chapter: never a guess', () => {

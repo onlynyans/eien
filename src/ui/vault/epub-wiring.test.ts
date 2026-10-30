@@ -175,6 +175,7 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
       tell: () => {},
       redraw,
       looks: () => {},
+      marksAt: () => 'list',
       pages: () => pages as Pages,
       openChosen: async () => {},
       showPage,
