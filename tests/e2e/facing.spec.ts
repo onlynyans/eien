@@ -53,11 +53,29 @@ test.describe('facing pages', () => {
 
   test('marks the page you’re in, and the mark follows you to the other', async ({ page }) => {
     await split(page);
-    await expect(active(page).locator('.page__mark')).toHaveCount(1);
-    await expect(page.locator('.page__mark')).toHaveCount(1);
+    await expect(active(page).locator('.page__mark--active')).toHaveCount(1);
+    await expect(page.locator('.page__mark--active')).toHaveCount(1);
     await leaves(page).nth(0).locator('.cm-content').click();
-    await expect(leaves(page).nth(0).locator('.page__mark')).toHaveCount(1);
-    await expect(page.locator('.page__mark')).toHaveCount(1);
+    await expect(leaves(page).nth(0).locator('.page__mark--active')).toHaveCount(1);
+    await expect(page.locator('.page__mark--active')).toHaveCount(1);
+  });
+
+  test('stands at the active page’s outer edge, each of the three marks', async ({ page }) => {
+    await split(page);
+    /** Which half of the active leaf the mark stands in. */
+    const half = async () => {
+      const leaf = await active(page).boundingBox();
+      const mark = await active(page).locator('.page__mark--active').boundingBox();
+      if (!leaf || !mark) throw new Error('no mark in sight');
+      return mark.x + mark.width / 2 > leaf.x + leaf.width / 2 ? 'right' : 'left';
+    };
+    for (const mark of ['ribbon', 'dogear', 'tab'] as const) {
+      await chooseSetting(page, 'appearance.facingMark', mark);
+      await leaves(page).nth(1).locator('.cm-content').click();
+      await expect.poll(half).toBe('right');
+      await leaves(page).nth(0).locator('.cm-content').click();
+      await expect.poll(half).toBe('left');
+    }
   });
 
   test('wears each of the three marks the setting offers', async ({ page }) => {
@@ -65,7 +83,7 @@ test.describe('facing pages', () => {
     for (const mark of ['ribbon', 'dogear', 'tab'] as const) {
       await chooseSetting(page, 'appearance.facingMark', mark);
       await expect(page.locator('html')).toHaveAttribute('data-facing-mark', mark);
-      await expect(active(page).locator('.page__mark')).toBeVisible();
+      await expect(active(page).locator('.page__mark--active')).toBeVisible();
     }
   });
 

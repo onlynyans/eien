@@ -208,11 +208,11 @@ section where it and the directions below disagree.
 - **A marks setting:** *In the list* (Features 2: Contents, Marks, Found;
   the default) or *On the edge* (Features 3's thumb strip).
 - **Bookmark:** the same setting as Facing pages' mark (ribbon, dog-ear or
-  edge tab).
+  edge tab), renamed **Page mark** for it (2026-10-30).
   - **The clash:** only in a split in Facing pages mode with a book on one
     page. There the one mark would mean both "the page you're in" and "a
     bookmarked page".
-  - **Proposed:** there, the facing mark keeps its meaning, and a
+  - **Decided (2026-10-30):** there, the facing mark keeps its meaning, and a
     bookmarked page says "bookmarked" in its folio, with the bookmark tool
     pressed. Everywhere else the bookmark wears the mark.
 - **Highlight:** a pencil underline with a tick in the margin (Features 1).
@@ -221,6 +221,18 @@ section where it and the directions below disagree.
   has one, else steady pages of 1,500 characters.
   - **No real cost:** the page-list is read once with the book, and a
     chapter's page anchors are measured once as it's drawn.
+- **Phase 4's design, the owner's answers (2026-10-30):**
+  - In Scroll, a bookmark's mark keeps to the top of the sheet in sight.
+  - On the edge, the strip shows your place as a mark-wide ink-soft bar
+    across it, not a tab, so it never looks like an edge-tab bookmark; the
+    page keeps its bookmark mark.
+  - Where the strip has no room (Facing pages' narrow margin, Page frame
+    Full), it lies over the page's outer margin; on the phone, one space in
+    from the screen's edge, clear of Android's Back gesture.
+  - A reading file that can't be read is never written over, and Eien says
+    so once: its place and bookmarks aren't kept until it's fixed or
+    deleted.
+  - `]` and `[` to walk the marks come with highlights (Phase 5).
 
 ### After Phase 1 (2026-10-29)
 

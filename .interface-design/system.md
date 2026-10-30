@@ -514,8 +514,10 @@ corners and colours the layout's own.
   book's tools where the layout puts them; each note's own (its number,
   words, last seal; Versions, Compare, Copy as HTML, ×, on hover) in a folio
   at its page's foot, a soft rule above, mirrored as page numbers are. The
-  active page's mark is a setting (`appearance.facingMark`, as
-  `data-facing-mark`), none of them the seal's colour, each with its own
+  active page's mark is a setting, **Page mark** (`appearance.facingMark`,
+  as `data-facing-mark`; one look in `page/page-mark.css`, which a book's
+  bookmark wears too, #40 Phase 4, at the page's outer edge, `data-edge`),
+  none of them the seal's colour, each with its own
   `--eien-calm` arrival (none with reduced motion):
   - **the ribbon** (the default): an ink-soft silk marker, `--eien-space-2`
     wide and `--eien-space-6` long, over the sheet's top edge in the outer

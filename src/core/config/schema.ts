@@ -140,9 +140,9 @@ export const SETTINGS = [
   },
   {
     key: 'appearance.facingMark',
-    label: 'Facing pages’ mark',
+    label: 'Page mark',
     description:
-      'What marks the page you’re writing in, with Facing pages: a ribbon over its top edge, its corner turned down, or a tab at its outer edge.',
+      'What marks a page: the one you’re writing in, with Facing pages, and a bookmarked page in a book. A ribbon over its top edge, its corner turned down, or a tab at its outer edge.',
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
