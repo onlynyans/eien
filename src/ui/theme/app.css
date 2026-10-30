@@ -20,6 +20,7 @@
 @import "../page/tag-set.css";
 @import "../epub/epub.css";
 @import "../epub/bookmark.css";
+@import "../epub/edge-strip.css";
 @import "../epub/turn/turn.css";
 @import "../versions/versions.css";
 @import "../outline/outline.css";

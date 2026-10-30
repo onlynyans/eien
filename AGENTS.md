@@ -364,7 +364,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `book-words.ts`: a selection's words without the page's own (a copy, a quote)
   - `book-foot.ts`: a book's colophon items: Back, which chapter, its page, "bookmarked", how far through, a line of news
   - `book-selection.ts`: the selection bar over a book: Quote in the note, Copy
-  - `book-quote.ts`: the words chosen in a book as a quote, cited
+  - `book-quote.ts`: the words chosen in a book as a quote, cited, and sent to the note beside
   - `test-side.ts`: a book's page over a vault the DOM tests hold
   - `test-lines.ts`: a chapter's lines as the DOM tests lay them out, and a book's page laid out so
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
@@ -376,6 +376,8 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `paged-place.ts`: in pages (Phase 3b), the chapter laid in columns of whole lines, the page holding the place shown, a turn keeping its first word, a copy cut to the page in sight
   - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back
   - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons
+  - `edge-strip.ts`, `.css`: Marks on the edge (Phase 4d): the whole book down the page's edge, a slider, apart from the fore-edge
+  - `book-strip.ts`: the book told to the strip as shares of it (chapters, bookmarks, the place), and where a point on it goes
   - `page-keys.ts`: in pages, the keys that turn and a touch's tap in the outer thirds
   - `turn/`: a page turned (Phase 3)
     - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first

@@ -287,3 +287,33 @@ test('a book in pages turns by a tap in its outer thirds and a finger drawn acro
   await expect.poll(() => firstWords(page)).toBe(first);
   expect(second).not.toBe(first);
 });
+
+test('a book’s marks on the edge: the strip down the screen, a finger scrubbing it (#40, Phase 4d)', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await page.locator('.phone-bar__controls [data-command="look"]').click();
+  await page.locator('[data-setting="epub.marks"] [data-value="edge"]').click();
+  await page.keyboard.press('Escape');
+  const strip = page.locator('.edge-strip');
+  await expect(strip).toBeVisible();
+  const box = await strip.boundingBox();
+  const screen = page.viewportSize();
+  if (!box || !screen) throw new Error('no strip');
+  // A finger wide, clear of the screen's edge (Android's Back).
+  expect(box.width).toBeGreaterThanOrEqual(44);
+  expect(screen.width - (box.x + box.width)).toBeGreaterThanOrEqual(16);
+  expect(await seriousViolations(page), 'the strip').toEqual([]);
+  // Drawn to the book's end and lifted: its last chapter.
+  const x = box.x + box.width / 2;
+  await page.touchscreen.tap(x, box.y + box.height - 2);
+  await expect(chapter(page)).toContainText('Not all that Mrs. Bennet');
+});

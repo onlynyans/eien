@@ -194,6 +194,43 @@ test.describe('Marks in the list (Phase 4c)', () => {
   });
 });
 
+test.describe('Marks on the edge (Phase 4d)', () => {
+  test.use({
+    vaultFiles: { 'Novels/Pride and Prejudice.epub': epub('plain.epub') },
+    deviceFile: { settings: { 'epub.marks': 'edge' } },
+  });
+  test.beforeEach(({ page }) => page.setViewportSize({ width: 1600, height: 900 }));
+
+  test('the list is the contents alone; the strip shows the book, its bookmarks, and goes', async ({
+    page,
+  }) => {
+    await openBook(page);
+    await expect(page.getByRole('tab', { name: /Marks/u })).toHaveCount(0);
+    await expect(page.locator('.contents-row')).toHaveCount(3);
+    const strip = page.getByRole('slider', { name: 'The whole book' });
+    await expect(strip).toBeVisible();
+    await expect(strip).toHaveAttribute('aria-valuetext', /^Chapter I/u);
+    await leaf(page).locator('.page__scroll').focus();
+    await page.keyboard.press('b');
+    await expect(strip.locator('.edge-strip__mark')).toHaveCount(1);
+    // Its keys: a chapter on, then the book's end.
+    await strip.focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(leaf(page).locator('.epub-chapter')).toContainText('Mr. Bennet was among');
+    await page.keyboard.press('Home');
+    await expect(leaf(page).locator('.epub-chapter')).toContainText('It is a truth');
+    // A click near its foot: the last chapter.
+    const box = await strip.boundingBox();
+    if (!box) throw new Error('no strip');
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height - 3);
+    await expect(strip.locator('.edge-strip__tip')).toHaveText(/^Chapter III/u);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(leaf(page).locator('.epub-chapter')).toContainText('Not all that Mrs. Bennet');
+    expect(await seriousViolations(page), 'the strip').toEqual([]);
+  });
+});
+
 test.describe('a bookmark in Facing pages', () => {
   test.use({
     vaultFiles: {

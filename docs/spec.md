@@ -475,6 +475,17 @@ Three panes, each collapsible, with a two-pane option in settings:
      lens is the window's, back to Contents for another book. With two
      panes the tabs and rows are under the book's row on SHELF; on the
      phone, on its contents page.
+   - **Marks** (Phase 4d), a book setting in the shelf's quick look: *In
+     the list* (the default, as above) or *On the edge*. On the edge, the
+     list is the book's contents alone, and down the page pane's outer edge
+     runs the whole book, top to foot: a hairline for each chapter (a
+     longer one each tenth), a pencil tab for each bookmark, the place a bar
+     across it. Pointing at it says the chapter and page there; a click
+     goes there; a finger drags along it to scrub and goes where it's
+     lifted. To the keyboard it's a slider: ↑ ↓ a chapter, Page Up and
+     Page Down ten, Home and End the book's ends. Where there's no room it
+     lies over the page's outer margin; on the phone it stands a space in
+     from the screen's edge, clear of Android's Back.
    - **Pages** (Phase 3b): **Read in**, a book setting in the shelf's
      quick look, sets a book in *Pages* or *Scroll* (the default for now),
      as do the book's own two tools in the views' place and View → Pages
@@ -1192,7 +1203,7 @@ src/ui/
   settings/     ✓ Settings over the window: categories and tabs, drawn from the schema; the Themes tabs; the look they set on <html>
   phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
   extension/    ✓ the extension's pages: the story page, the popup, the content script and each site's markup (§14)
-  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style; in pages (3b), its fore-edge, keys and taps, and the page turn (epub/turn/)
+  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style; in pages (3b), its fore-edge, keys and taps, and the page turn (epub/turn/); its page numbers, bookmarks and Marks, in the list or on the edge (Phase 4)
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture

@@ -131,7 +131,9 @@ describe('a book’s Marks in the list (Phase 4c)', () => {
     ]);
     expect(contents?.lens).toBe('contents');
     // Marks on the edge (Phase 4d): the list is the contents alone.
-    expect(wired('a.epub', { active: side, sides: [side] }, false, null, 'edge').epubs.contents()?.marks).toBeNull();
+    expect(
+      wired('a.epub', { active: side, sides: [side] }, false, null, 'edge').epubs.contents()?.marks,
+    ).toBeNull();
   });
 
   it('begin at Contents for another book, and keep their lens as the book moves', () => {

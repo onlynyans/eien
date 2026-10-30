@@ -644,7 +644,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c)
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add paging and the turn (Phase 3), marks, highlights and Find
@@ -733,6 +733,21 @@ in the book, each recorded here as it's built.
   italic in pencil. With two panes the tabs are the first row under the
   book's SHELF row, and its bookmarks tree rows with their page as the
   count.
+- **Marks on the edge** (Phase 4d, `epub/edge-strip.ts`, `.css`): the
+  whole book down the page pane's outer edge, `--eien-space-5` wide,
+  `--eien-space-4` in from it (the system's scroll bar keeps its own),
+  `--eien-space-5` from the pane's top and foot; in pages the pane keeps
+  room for it beside the fore-edge. A `--eien-rule-strong` hairline
+  `--eien-space-2` long for each chapter, `--eien-space-3` in pencil each
+  tenth; each bookmark a pencil tab (`--eien-paper` in a pencil hairline,
+  `--eien-space-1` × `--eien-space-3`, its outer corners
+  `--eien-radius-s`); the place an ink-soft bar `--eien-mark-w` high
+  across the strip, never a tab (decided 2026-10-30, so it's never taken
+  for an edge-tab bookmark), moving with `--eien-calm`. Pointing, the
+  tooltip's look beside the point (raised paper, a rule-strong hairline,
+  the float shadow, label type). Focused, the focus ink's ring. On a touch
+  screen, `--eien-touch` wide with a `--eien-rule` hairline down its
+  middle. The list shows the contents alone.
 - **The place is kept to the line**, never drawn: a page put back, laid out
   anew or zoomed shows the same line at its top.
 - **A note over the page** (Phase 2b, `ui/epub/note-over.ts`): a note's

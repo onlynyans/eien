@@ -51,4 +51,3 @@ describe('a share of the book’s place (Phase 4d)', () => {
     expect(placeAt([{ size: 0, linear: true }], 0.5)).toEqual({ index: 0, within: 1 });
   });
 });
-

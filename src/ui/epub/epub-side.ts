@@ -18,7 +18,7 @@ import { nameLinks } from './book-links';
 import { nameOf, openBook, startOf } from './book-open';
 import { bookPages } from './book-pages';
 import { bookPlace } from './book-place';
-import { quoteOf } from './book-quote';
+import { quoteChosen } from './book-quote';
 import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
 import { EpubPage } from './epub-page';
@@ -33,7 +33,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       placing.inSight(from, to);
       marks.inSight(from, to);
     },
-    bookmark: () => void bookmark(),
+    bookmark: () => void marks.toggle(),
     turn: (way, held) => pages.turn(way, held),
     edge: (last) => pages.edge(last),
     rested: (offset) => keep(offset),
@@ -67,7 +67,14 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     count = null;
     marks.clear();
   };
-  const placing = bookPlace({ page, epub: () => epub, spine: () => spine, count: () => count });
+  /** What the page's parts ask of it: the book, the chapter drawn, and another drawn (kept as the place). */
+  const book = {
+    page,
+    epub: () => epub,
+    spine: () => spine,
+    draw: (index: number, at: number | (() => number)) => draw(index, true, at),
+  };
+  const placing = bookPlace({ ...book, count: () => count, marks: () => marks.all });
   const marks = new PageBookmarks({
     page,
     store: of.reading,
@@ -75,31 +82,23 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     still: (then) => pages.whenStill(then),
     land: () => pages.finish(),
     changed: () => of.looks(),
-    listed: () => of.changed(),
+    listed: () => {
+      of.changed();
+      placing.listed();
+    },
   });
-  const bookmark = () => marks.toggle();
   /** No words in sight measured in the chapter drawn yet: no page said, no bookmark shown. */
   const unplaced = () => {
     placing.clear();
     marks.away();
   };
   const links = bookFollow({
-    page,
-    epub: () => epub,
-    spine: () => spine,
+    ...book,
     place: () => side.place,
-    draw: (index, at) => draw(index, true, at),
     open: (place) => side.open(place.path, place),
     keep: (offset) => keep(offset),
   });
-
-  const pages = bookPages({
-    page,
-    epub: () => epub,
-    spine: () => spine,
-    draw: (index, at) => draw(index, true, at),
-    values: () => values,
-  });
+  const pages = bookPages({ ...book, values: () => values });
 
   /** The place in the book kept in its reading state: each write reads the vault again, so only at a rest. */
   function keep(offset: number): void {
@@ -164,19 +163,12 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     return asked === turn && !disposed;
   }
 
-  /**
-   * The words chosen in the chapter now (or, from a phone's ⋯, `kept`: last
-   * chosen there) quoted in the note beside, with where they came from; once:
-   * the selection goes with it. What happened is said here, unless the page
-   * gave its place to the note (a phone's one page), which says it there.
-   */
-  async function quote(kept = false): Promise<void> {
-    const text = quoteOf(kept ? page.sheet.kept : page.sheet.selection, epub, spine, page.name);
-    if (!text) return page.foot.say('Choose some words in the book to quote.');
-    const done = await of.quote(text, side);
-    if ('into' in done) document.getSelection()?.removeAllRanges();
-    if (!disposed) page.foot.say('into' in done ? `Quoted in ${done.into}.` : done.not);
-  }
+  /** The words chosen (or, from a phone's ⋯, `kept`: last chosen) quoted in the note beside (./book-quote.ts). */
+  const quote = (kept = false) =>
+    quoteChosen(
+      { page, epub, spine, send: (text) => of.quote(text, side), gone: () => disposed },
+      kept,
+    );
 
   /** A chapter chosen at the foot: drawn, the keyboard staying on the page (its button is gone). */
   const turnTo = (index: number) =>
@@ -281,7 +273,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     get bookmarks() {
       return marks.all;
     },
-    bookmark,
+    bookmark: () => marks.toggle(),
     unmark: (mark) => marks.remove(mark),
     labelAt: (at, offset) => placing.labelAt(at, offset),
     quote,
