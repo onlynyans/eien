@@ -642,7 +642,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114; after Phase 1, #120; Phase 2a, scrolling; FOLDERS for writing, SHELF for reading)
+## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114; after Phase 1, #120; Phase 2a, scrolling; FOLDERS for writing, SHELF for reading; Phase 3, turning pages: the turn #129, pages #130, a hand #131)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add scrolling, paging and the turn, marks, highlights and Find
