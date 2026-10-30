@@ -349,11 +349,11 @@ Each phase is its own session and pull request, from main.
     `ui/epub/turn/`); the curl's three tokens in `tokens.css`, beside the
     shadows (Slate's own pair in `slate.css`; a palette's, as a shadow is,
     never a writer's theme's);
-  - **3b:** Pages and Scroll, with an instant turn and Slide: paging on one
-    line grid, the place in pages, the leaf and its edges, keys and clicks,
-    the Pages and Scroll tools and menu;
-  - **3c:** the turn wired: Curl and Words, a hand's drag and catch, the
-    phone's swipe and taps, the Page turn and Turn speed settings;
+  - **3b:** Pages and Scroll: paging on one line grid, the place in pages,
+    the leaf and its edges, keys and clicks turning as the Page turn and
+    Turn speed settings move them, the Pages and Scroll tools and menu;
+  - **3c:** a hand's turn: the drag and the catch, the phone's swipe and
+    taps, copies of the page in sight alone, the fifty-turn budget;
   - **3d:** the spread, and Set as a book.
 - **The reading room,** after the turn (it was Phase 3b).
 - **Phase 4, place, bookmarks and page count:** print pages or steady

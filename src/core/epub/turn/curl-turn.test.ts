@@ -3,12 +3,15 @@ import {
   beginCurl,
   catchCurl,
   dragCurl,
+  dropCurl,
   finishCurl,
   keyCurl,
   letGoCurl,
+  resumeCurl,
   THROW_MS,
   tickCurl,
   turned,
+  turns,
 } from './curl-turn';
 import { curlTime } from './speed';
 import { FIRST_STROKE } from './stroke';
@@ -94,5 +97,30 @@ describe('a curl’s states', () => {
     const held = beginCurl(page, 1, 500);
     expect(catchCurl(held)).toBe(held);
     expect(tickCurl(held, 16)).toBe(held);
+  });
+});
+
+describe('the throw', () => {
+  it('turns past a quarter of the page from the spine, and not short of it', () => {
+    const on = beginCurl(page, 1, 500);
+    expect(turns(on, [99, 500], [0, 0])).toBe(true);
+    expect(turns(on, [101, 500], [0, 0])).toBe(false);
+    const back = beginCurl(page, -1, 500);
+    expect(turns(back, [-99, 500], [0, 0])).toBe(true);
+    expect(turns(back, [-101, 500], [0, 0])).toBe(false);
+  });
+
+  it('caught and let go without a drag, flies on where it was going', () => {
+    const flying = tickCurl(keyCurl(page, 1, FIRST_STROKE, 330), 48);
+    const resumed = resumeCurl(catchCurl(flying));
+    expect(resumed.phase).toBe('flying');
+    expect(turned(fly(resumed))).toBe(true);
+  });
+
+  it('put down unasked: held, it falls back; in flight, it lands', () => {
+    const held = dragCurl(beginCurl(page, 1, 500), [-300, 0], 0);
+    expect(turned(dropCurl(held))).toBe(false);
+    expect(dropCurl(held).moving.at).toEqual(held.from);
+    expect(turned(dropCurl(keyCurl(page, 1, FIRST_STROKE, 330)))).toBe(true);
   });
 });

@@ -72,17 +72,15 @@ describe('the spring', () => {
         (start, target, speed, time, frames) => {
           const omega = omegaFor(time);
           let moving = { at: start as Point, speed };
-          // Along each axis the corner stays on its own side of the mark: it lands, never crosses.
-          const side = (p: Point) => [Math.sign(p[0] - target[0]), Math.sign(p[1] - target[1])];
-          const before = side(start);
+          // Each step stays on its side of the mark, as the guard holds it: it lands, never crosses.
           for (const frame of frames) {
+            const was = moving.at;
             const step = springStep(moving, target, omega, frame);
             moving = step.moving;
-            const now = side(moving.at);
-            const crossed =
-              (now[0] as number) * (before[0] as number) < 0 &&
-              (now[1] as number) * (before[1] as number) < 0;
-            if (crossed) return false;
+            const ahead =
+              (moving.at[0] - target[0]) * (was[0] - target[0]) +
+              (moving.at[1] - target[1]) * (was[1] - target[1]);
+            if (ahead < 0) return false;
             if (step.landed) return moving.at[0] === target[0] && moving.at[1] === target[1];
           }
           return true;

@@ -46,6 +46,9 @@ function lineOf(page: PageBox, toward: Point): { angle: number; length: number }
 const atOn = (page: PageBox, toward: Point, length: number, point: Point): number =>
   dot(minus(point, [page.width / 2, page.height / 2]), toward) + length / 2;
 
+/** A wash starts whole at the fold, from nothing this far (in pixels) before it: a hard edge, never a blur. */
+const HARD_EDGE = 0.5;
+
 /** A wash along the fold: the ink whole at `from`, gone `length` pixels on toward `toward`. */
 export function washFrom(page: PageBox, from: Point, toward: Point, length: number): Light {
   const line = lineOf(page, toward);
@@ -53,7 +56,7 @@ export function washFrom(page: PageBox, from: Point, toward: Point, length: numb
   return {
     angle: line.angle,
     stops: [
-      { at: at - 0.5, strength: 0 },
+      { at: at - HARD_EDGE, strength: 0 },
       { at, strength: 1 },
       { at: at + length, strength: 0 },
     ],

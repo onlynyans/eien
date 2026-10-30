@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Frames } from './next-frame';
 import { PageTurn, type TurnStyle } from './page-turn';
 import type { TurnTokens } from './turn-tokens';
@@ -13,7 +13,10 @@ function book({
   tokens = TOKENS,
   pages = 5,
   later = false,
+  laterBack = false,
 } = {}) {
+  /** Whether the next step is into another chapter, drawn first: a test may change it. */
+  const drawing = { later };
   const host = document.createElement('div');
   const sheet = document.createElement('article');
   sheet.className = 'sheet';
@@ -53,16 +56,24 @@ function book({
           return true;
         };
         // Into another chapter: once it's drawn.
-        return later ? new Promise<boolean>((done) => setTimeout(() => done(go()), 1)) : go();
+        return drawing.later
+          ? new Promise<boolean>((done) => setTimeout(() => done(go()), 1))
+          : go();
       },
       unstep: () => {
-        page = started;
-        show();
+        const back = () => {
+          page = started;
+          show();
+        };
+        // Back into the chapter before: once it's drawn again.
+        if (!laterBack) return back();
+        return new Promise<void>((done) => setTimeout(() => done(back()), 1));
       },
       how: () => ({ style, speed }),
     },
     { frames, tokens: () => tokens, random: () => 0.5 },
   );
+  made.push(turn);
   /** Runs frames 16 ms apart until none are asked for, or `limit`. */
   const run = (limit = 400) => {
     for (let i = 0; i < limit && queue.size > 0; i++) {
@@ -78,13 +89,17 @@ function book({
     sheet,
     run,
     steps,
+    drawing,
     page: () => page,
     curl: () => host.querySelector('.turn-curl'),
     copies: () => host.querySelectorAll('.turn-copy').length,
   };
 }
 
+const made: PageTurn[] = [];
 afterEach(() => {
+  for (const turn of made.splice(0)) turn.dispose();
+  vi.restoreAllMocks();
   document.body.replaceChildren();
 });
 
@@ -187,10 +202,13 @@ describe('a hand under Curl', () => {
     const b = book();
     b.turn.key(1);
     b.run(2);
+    const flying = b.curl();
     b.turn.grab([200, 400]);
     b.run(3);
-    expect(b.curl()).not.toBeNull();
+    // The same page, held: no second turn begun.
+    expect(b.curl()).toBe(flying);
     b.turn.drag([300, 0], 0);
+    expect(b.steps).toEqual([1]);
     b.turn.drag([300, 0], 80);
     b.turn.letGo();
     b.run();
@@ -348,5 +366,131 @@ describe('never in the way', () => {
     expect(b.curl()).toBeNull();
     b.turn.key(1);
     expect(b.page()).toBe(2);
+  });
+});
+
+describe('the review’s cases', () => {
+  it('copies nothing when nothing will move: a key held, speed 0, reduced motion', () => {
+    const clone = vi.spyOn(Node.prototype, 'cloneNode');
+    book().turn.key(1, true);
+    book({ speed: 0 }).turn.key(1);
+    book({ style: 'words', speed: 0 }).turn.key(1);
+    book({ tokens: STILL }).turn.key(1);
+    expect(clone).not.toHaveBeenCalled();
+  });
+
+  it('a second hand never takes a held page from the first', () => {
+    const b = book();
+    b.turn.grab([390, 500]);
+    b.turn.drag([-200, 0], 0);
+    const held = b.curl();
+    b.turn.grab([100, 100]);
+    b.turn.drag([-260, 0], 40);
+    b.turn.drag([-340, 0], 80);
+    expect(b.turn.letGo()).toBe(true);
+    b.run();
+    expect(held?.isConnected).toBe(false);
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(2);
+  });
+
+  it('a tap on a page in flight lets it fly on, and is a click, not a drag', () => {
+    const b = book();
+    b.turn.key(1);
+    b.run(2);
+    b.turn.grab([200, 400]);
+    expect(b.turn.letGo()).toBe(false);
+    b.run();
+    expect(b.page()).toBe(2);
+    expect(b.steps).toEqual([1]);
+  });
+
+  it('the window hidden or the page closed while a page is held: it falls back, never turned unasked', () => {
+    const b = book();
+    b.turn.grab([390, 500]);
+    b.turn.drag([-300, 0], 0);
+    Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(1);
+    const c = book();
+    c.turn.grab([390, 500]);
+    c.turn.drag([-300, 0], 0);
+    c.turn.dispose();
+    expect(c.page()).toBe(1);
+  });
+
+  it('a key while a page is held turns it on, as asked', () => {
+    const b = book();
+    b.turn.grab([390, 500]);
+    b.turn.drag([-100, 0], 0);
+    b.turn.key(1);
+    expect(b.page()).toBe(3);
+  });
+
+  it('a fall back into the chapter before is drawn first; the next turn waits for it', async () => {
+    const b = book({ laterBack: true });
+    b.turn.grab([390, 500]);
+    b.turn.drag([-60, 0], 0);
+    b.turn.drag([-60, 0], 80);
+    b.turn.letGo();
+    b.run();
+    b.turn.key(1);
+    expect(b.steps).toEqual([1]);
+    await drawn();
+    expect(b.steps).toEqual([1, 1]);
+    expect(b.page()).toBe(2);
+  });
+
+  it('once a chapter is drawn, the next key turns at once again', async () => {
+    const b = book({ later: true });
+    b.turn.key(1);
+    await drawn();
+    b.drawing.later = false;
+    b.turn.key(1, true);
+    expect(b.page()).toBe(3);
+  });
+
+  it('let go while a chapter is drawn: nothing is laid over the page once it comes', async () => {
+    const b = book({ later: true });
+    b.turn.key(1);
+    b.turn.dispose();
+    await drawn();
+    expect(b.curl()).toBeNull();
+  });
+
+  it('stops listening for the window hidden once let go', () => {
+    const remove = vi.spyOn(document, 'removeEventListener');
+    book().turn.dispose();
+    expect(remove).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+  });
+
+  it('says so when a chapter fails to draw, and turns on after it', async () => {
+    const said = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const b = book({ later: true });
+    const sheet = b.sheet;
+    let fail = true;
+    let asked = 0;
+    const turn = new PageTurn(
+      {
+        sheet: () => sheet,
+        words: '.words',
+        step: () => {
+          asked++;
+          return fail ? Promise.reject(new Error('refused')) : true;
+        },
+        unstep: () => {},
+        how: () => ({ style: 'curl', speed: 1 }),
+      },
+      { tokens: () => STILL },
+    );
+    made.push(turn);
+    turn.key(1);
+    await drawn();
+    expect(said).toHaveBeenCalled();
+    fail = false;
+    turn.key(1);
+    expect(asked).toBe(2);
   });
 });

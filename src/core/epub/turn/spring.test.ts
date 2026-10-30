@@ -41,3 +41,18 @@ describe('the spring', () => {
     expect(settled({ at: [0.2, 0], speed: [0.5, 0] }, [0, 0])).toBe(false);
   });
 });
+
+describe('a short finish', () => {
+  it('stays true however short, landing without running away', () => {
+    let moving = { at: [400, 0], speed: [0, 0] } as Parameters<typeof springStep>[0];
+    let landed = false;
+    for (let frame = 0; frame < 20 && !landed; frame++) {
+      const step = springStep(moving, [-400, 0], omegaFor(5), 16);
+      moving = step.moving;
+      landed = step.landed;
+      expect(Number.isFinite(moving.at[0])).toBe(true);
+      expect(moving.at[0]).toBeGreaterThanOrEqual(-400);
+    }
+    expect(landed).toBe(true);
+  });
+});

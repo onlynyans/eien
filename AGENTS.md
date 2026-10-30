@@ -150,7 +150,7 @@ Rules, pure TypeScript.
     - `curl.ts`: the curl's geometry: the roll over a cylinder that follows the corner, the spine held down, a strip laid by its matrix and clipped
     - `light.ts`: the light on the roll, each strip shaded by how it faces you and ramped across, as a gradient's numbers (the inks are the window's tokens)
     - `curl-frame.ts`: a curling page at one moment: what stays, the roll's strips, what lies back, the shadow beneath
-    - `curl-turn.ts`: a curl's states: begun, held, let go (the throw decides), flying, caught, finished
+    - `curl-turn.ts`: a curl's states: begun, held, let go (the throw decides), flying, caught (a tap lets it fly on), finished, put down
     - `spring.ts`: the finish, a critically damped spring that lands and never bounces
     - `stroke.ts`: a key's hand: where it takes the edge, how high and fast it goes, wandering within bounds turn to turn
     - `speed.ts`: each motion's time, from the calm and quick tokens and the Turn speed; 0 is instant
@@ -365,6 +365,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `turn/`: a page turned (Phase 3)
     - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first
     - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page, clipped and laid, in the curl's light
+    - `turn-hand.ts`: a hand on the page, and when its move is a drag across; `turn-queue.ts`: turns waiting for the page they turn from (a chapter drawn first)
     - `step-turn.ts`: Slide (`slide.ts`) or Words (`words.ts`) run between the words left and the words come
     - `page-copy.ts`: the page as it was, laid over it, never reached
     - `turn-tokens.ts`: the tokens a turn reads (times, ease, lengths), reduced motion's 0 among them

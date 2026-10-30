@@ -48,6 +48,8 @@ export interface CurlTurn {
   /** While held: where the corner was as the hand took it, and the hand's last places. */
   readonly grab: Point;
   readonly samples: readonly Sample[];
+  /** Caught in flight: where it was flying to, should the hand let go without moving it. */
+  readonly caught: Point | null;
 }
 
 /** A turn `way` begun, the corner taken `taken` down the page's outer edge, held. */
@@ -69,6 +71,7 @@ export function beginCurl(page: PageBox, way: Way, taken: number): CurlTurn {
     arc: null,
     grab: from,
     samples: [],
+    caught: null,
   };
 }
 
@@ -86,7 +89,12 @@ export function keyCurl(page: PageBox, way: Way, stroke: Stroke, time: number): 
   };
 }
 
-/** Held, the hand `offset` from where it took the corner at `time`: the corner there, as far as the spine lets it. */
+/**
+ * Held, the hand `offset` from where it took the corner at `time`: the corner
+ * there, as far as the spine lets it. The throw is read from where the corner
+ * is, not the hand: pulled past where the spine holds, the paper doesn't
+ * move, so it hasn't the hand's speed either.
+ */
 export function dragCurl(turn: CurlTurn, offset: Point, time: number): CurlTurn {
   if (turn.phase !== 'held') return turn;
   const reach = turn.way > 0 ? 1 : BACK_REACH;
@@ -122,7 +130,17 @@ export function letGoCurl(turn: CurlTurn, time: number): CurlTurn {
     time,
     moving: { at, speed },
     samples: [],
+    caught: null,
   };
+}
+
+/**
+ * Caught and let go without a drag (a tap on a page in flight): it flies on
+ * to where it was going, so a second tap never undoes the first turn.
+ */
+export function resumeCurl(turn: CurlTurn): CurlTurn {
+  if (turn.phase !== 'held' || !turn.caught) return turn;
+  return { ...turn, phase: 'flying', target: turn.caught, caught: null, samples: [] };
 }
 
 /** Caught in flight: it stops where it is, held, and follows the hand from there. */
@@ -137,6 +155,7 @@ export function catchCurl(turn: CurlTurn): CurlTurn {
     grab: at,
     samples: [],
     moving: { at, speed: [0, 0] },
+    caught: turn.target,
   };
 }
 
@@ -161,10 +180,23 @@ export function tickCurl(turn: CurlTurn, elapsed: number): CurlTurn {
   return { ...turn, moving: step.moving, phase: step.landed ? 'landed' : 'flying' };
 }
 
-/** Finished now, where it was going (a key pressed mid-turn): reading fast never waits on it. */
+/**
+ * Finished now, where it was going (a key pressed mid-turn): reading fast
+ * never waits on it. One still held turns, as a key asked for the next page.
+ */
 export function finishCurl(turn: CurlTurn): CurlTurn {
   const target = turn.target ?? turn.done;
   return { ...turn, phase: 'landed', target, moving: { at: target, speed: [0, 0] } };
+}
+
+/**
+ * Put down now, unasked (the window hidden, the page closed): one in flight
+ * lands where it was going; one still held falls back, as nothing turns that
+ * the hand didn't let go.
+ */
+export function dropCurl(turn: CurlTurn): CurlTurn {
+  if (turn.phase !== 'held') return finishCurl(turn);
+  return { ...turn, phase: 'landed', target: turn.from, moving: { at: turn.from, speed: [0, 0] } };
 }
 
 /** Whether it landed turned (rather than fallen back). */

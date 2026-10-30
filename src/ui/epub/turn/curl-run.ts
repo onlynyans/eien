@@ -8,9 +8,11 @@ import {
   catchCurl,
   curlFrame,
   dragCurl,
+  dropCurl,
   finishCurl,
   letGoCurl,
   type Point,
+  resumeCurl,
   tickCurl,
   turned,
 } from '../../../core/epub';
@@ -54,6 +56,7 @@ export class CurlRun {
 
   /** Held: the hand `offset` from where it took the corner, at `time`. */
   drag(offset: Point, time: number): void {
+    if (this.#over) return;
     this.#turn = dragCurl(this.#turn, offset, time);
     if (this.#drawing) return;
     this.#drawing = true;
@@ -66,6 +69,16 @@ export class CurlRun {
   /** Let go, the finish landing in `time`; or, a key's, flying from the first. */
   fly(time?: number): void {
     if (time !== undefined) this.#turn = letGoCurl(this.#turn, time);
+    this.#flyOn();
+  }
+
+  /** Caught, and let go without a drag: on to where it was going. */
+  resume(): void {
+    this.#turn = resumeCurl(this.#turn);
+    this.#flyOn();
+  }
+
+  #flyOn(): void {
     if (this.#turn.phase !== 'flying') return;
     this.#stop();
     this.#drawing = false;
@@ -89,9 +102,15 @@ export class CurlRun {
     this.#turn = catchCurl(this.#turn);
   }
 
-  /** Landed now, where it was going. */
+  /** Landed now, where it was going; held, turned (a key asked for the next page). */
   finish(): void {
     this.#turn = finishCurl(this.#turn);
+    this.#land();
+  }
+
+  /** Put down now, unasked: in flight it lands, held it falls back. */
+  drop(): void {
+    this.#turn = dropCurl(this.#turn);
     this.#land();
   }
 

@@ -5,7 +5,7 @@
 // there with nothing of its own to ask. The curl's inks are never read:
 // they're worn as var()s, so the theme's day and night carry them.
 
-/** The curl's three tokens, by name (tokens.css, Depth's exception). */
+/** The curl's two inks, by name (tokens.css, Depth's exception); the third, how much shows through, is turn.css's. */
 export const CURL_INK = {
   shade: 'var(--eien-curl-shade)',
   light: 'var(--eien-curl-light)',

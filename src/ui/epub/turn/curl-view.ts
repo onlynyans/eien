@@ -49,7 +49,7 @@ export class CurlView {
     this.#to = to;
     const moving = way > 0 ? leaving : pageCopy(to, words);
     if (way < 0) {
-      leaving.classList.add('turn-curl__page', 'turn-curl__beneath');
+      leaving.classList.add('turn-curl__page');
       this.element.append(leaving);
       to.style.visibility = 'hidden';
     }

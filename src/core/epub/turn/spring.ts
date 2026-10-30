@@ -40,8 +40,9 @@ export const settled = (moving: Moving, target: Point): boolean =>
 /**
  * `moving` carried `elapsed` milliseconds toward `target` by a spring of
  * `omega`. `heightAt`, if given, sets the height for each step's place
- * across (a key's turn riding its arc), the spring moving it across alone. Landed once settled, or once a step would have carried it
- * past the target: then it's on it, with no speed.
+ * across (a key's turn riding its arc), the spring moving it across alone.
+ * Landed once settled, or once a step would have carried it past the
+ * target: then it's on it, with no speed.
  */
 export function springStep(
   moving: Moving,

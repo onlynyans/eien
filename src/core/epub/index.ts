@@ -18,15 +18,26 @@ export {
   type CurlTurn,
   catchCurl,
   dragCurl,
+  dropCurl,
   finishCurl,
   keyCurl,
   letGoCurl,
+  resumeCurl,
   tickCurl,
   turned,
   type Way,
 } from './turn/curl-turn';
 export type { Light, Stop } from './turn/light';
-export { curlTime, isInstant, SLOWEST, slideTime, turnScale, wordsTime } from './turn/speed';
+export {
+  curlTime,
+  isInstant,
+  type Motion,
+  motionTime,
+  SLOWEST,
+  slideTime,
+  turnScale,
+  wordsTime,
+} from './turn/speed';
 export { FIRST_STROKE, nextStroke, type Stroke } from './turn/stroke';
 export type { ZipAddress } from './zip-path';
 export type { Inflate } from './zip-read';

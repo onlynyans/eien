@@ -54,6 +54,9 @@ export type CurlFrame =
       readonly back: Laid & { readonly light: Light };
     };
 
+/** What lies back on top runs from the roll's end this many page-rounds on: past anything the page holds. */
+const BEYOND = 4;
+
 /** Below this radius, in pixels, the roll is a crease: no strips are drawn. */
 const SLIGHT = 1;
 
@@ -85,8 +88,7 @@ export function curlFrame(
       });
     }
   }
-  // What lies back on top runs from the roll's end past anything the page could hold.
-  const beyond = half + 4 * (page.width + page.height);
+  const beyond = half + BEYOND * (page.width + page.height);
   return {
     resting: false,
     corner,
