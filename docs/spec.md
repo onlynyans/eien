@@ -444,6 +444,23 @@ Three panes, each collapsible, with a two-pane option in settings:
      quits (a phone, as it goes to the background), and opens there again
      next time. The page put back in the window (⇄) or laid out anew (a
      new width, page zoom) shows the same line.
+   - **The book's own links and notes** (Phase 2b): a link reads as one,
+     the words' own colour with a quiet underline that darkens under the
+     pointer (the extension's story page's, one rule for both), and the
+     window's tooltip names where it goes ("Chapter III", "Note 4", or an
+     address). A link to one of the book's chapters goes there, to the
+     place it names, and **Back to Chapter I** in the colophon (or ⌘[,
+     Alt+←) returns to the line it left, one step; choosing a chapter
+     yourself forgets it. A note's reference (EPUB 3's `noteref`, or a
+     number or a sign in a sup, as EPUB 2 books write them) shows the note
+     over the page, in the book's face, from this chapter or another: Esc,
+     a click elsewhere or scrolling closes it, the keyboard back on the
+     mark, and **Go to the note** goes there. A link to the web or mail
+     (`http:`, `https:`, `mailto:`) opens in the system's browser, as a
+     note's does in Reading; anything else (a script, data, a file, out of
+     the zip) keeps its words alone, with no look of a link. A copy from a
+     book holds its words and shapes alone: no address, no note's mark, no
+     picture.
    A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
    and zoom, at a fixed height (`--status-h`, 40px). Each part of the page
@@ -1846,7 +1863,10 @@ Every rule, with the cases most likely to break it:
   that would leave the zip, the package, nav, NCX and page-list, DRM refused,
   the cleaning rules (pictures, links, Calibre's SVG plates, the named parts),
   the reading state's file and its place (an offset paired with its
-  chapter), a chapter's neighbours and how far through; over any bytes, a
+  chapter), a chapter's neighbours and how far through, the book's own links
+  (only to a chapter, an address of the page's own, read back only as one)
+  and the places they name (empty markers, never an id; hostile ids and
+  links in `links-hostile.epub`), a note and its reference named; over any bytes, a
   book or a reason and never past a cap; a place's round trip and how far
   through never falling as you read on; and the fixture books (`tests/fixtures/epub/`, made by
   `scripts/epub-fixtures.mjs` from Pride and Prejudice and Hugh Thomson's

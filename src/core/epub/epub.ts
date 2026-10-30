@@ -95,6 +95,8 @@ export function openEpub(
     const contents = contentsOf(pkg, sources);
     if (contents.length === 0) return refuse('empty', 'no chapter to show');
     const sizes = new Map(zip.entries.map((entry) => [entry.name, entry.size]));
+    const chapters = new Set(pkg.spine.map((item) => item.path));
+    const isChapter = (name: string) => chapters.has(name);
     return {
       title: pkg.title,
       author: pkg.author,
@@ -108,7 +110,7 @@ export function openEpub(
           const item = pkg.spine[index];
           if (!item) return refuse('damaged', `no spine item ${index}`);
           const read = await zip.read(item.path, caps.text);
-          return isRefusal(read) ? read : chapterOf(read, item.path, zip.has);
+          return isRefusal(read) ? read : chapterOf(read, item.path, zip.has, isChapter);
         }),
       image: (path) =>
         guarded(async () => {

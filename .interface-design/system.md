@@ -696,6 +696,24 @@ in the book, each recorded here as it's built.
   the book", the two dropped first under a 560px page pane.
 - **The place is kept to the line**, never drawn: a page put back, laid out
   anew or zoomed shows the same line at its top.
+- **A note over the page** (Phase 2b, `ui/epub/note-over.ts`): a note's
+  reference pressed floats the note under it as a menu floats (`.menu`:
+  raised paper, a `--eien-rule-strong` hairline, `--eien-radius-m`, the
+  float shadow), as wide as the list at most, `--eien-space-2` round the
+  note's words in the book's own face (`data-face`); **Go to the note**, a
+  word button, under them. A dialog that takes the keyboard; Esc, a click
+  elsewhere or the page scrolling closes it.
+- **A link in a book** looks as a link on the extension's story page does,
+  one rule for both (`page/page.css`, `.prose a[href]`, `.epub-chapter
+  a[href]`): the words' own colour, a `--eien-rule-strong` underline 0.18em
+  below them, `currentColor` under the pointer. The window's tooltip names
+  where it goes. A link kept as words alone has no look of one.
+- **Back** after a link: a word button first in the colophon's figures
+  ("Back to Chapter I"), there only while there's a step back.
+- **A note's reference and a note** are named (`note-ref`, `note`) to open
+  the note over the page, and drawn as the book sets them: the reference
+  in the publisher's own superscript, the note as its paragraphs. No style
+  of their own (Phase 2b); one comes if they're missed.
 - **The book's look is the shelf's:** its typeface, text size, line spacing,
   width and frame, set in the quick look with a book in front, worn on its
   leaf (`data-face`, `data-frame`, `--eien-text-scale`, `--look-lead`,

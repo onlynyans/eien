@@ -18,6 +18,7 @@ test.use({
     'Table.md': 'Before.\n\n| Who | When |\n|---|--:|\n| Mara | 30 |\n| Levi | 41 |\n\nAfter.\n',
     // A book on the shelf (#40): SHELF is in every check of the sidebar.
     'Novels/Pride and Prejudice.epub': readFileSync(join(ROOT, 'tests/fixtures/epub/plain.epub')),
+    'Novels/Links.epub': readFileSync(join(ROOT, 'tests/fixtures/epub/links.epub')),
     // A folder in it on SHELF, which the book's test shuts (#40).
     'Novels/Russian/Anna Karenina.epub': readFileSync(join(ROOT, 'tests/fixtures/epub/plain.epub')),
   },
@@ -112,6 +113,18 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await expect(page.getByRole('menu', { name: 'Pride and Prejudice' })).toBeVisible();
         expect(await violationsUnder(page, ['.menu']), 'the book’s row menu').toEqual([]);
         await page.keyboard.press('Escape');
+        // A note over the page (Phase 2b), and Back in the colophon after a link.
+        await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Links' }).click();
+        await page.locator('.epub-chapter sup a[href]').click();
+        await expect(page.getByRole('dialog', { name: 'Note 1' })).toBeFocused();
+        expect(await seriousViolations(page), 'a note over the page').toEqual([]);
+        await page.keyboard.press('Escape');
+        await page.getByRole('link', { name: 'see Chapter III' }).click();
+        await expect(page.getByRole('button', { name: 'Back to Chapter I' })).toBeVisible();
+        expect(await violationsUnder(page, ['.page']), 'Back in the colophon').toEqual([]);
+        await page
+          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+          .click();
         await page.locator('[data-command="panes"]').click();
         await expect(page.locator('.tree-row--chapter')).toHaveCount(3);
         expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);

@@ -1,0 +1,113 @@
+// A book's links on its page (#40, Phase 2b): every click on an address of
+// the page's own ("#…") is caught before the window could follow it, and a
+// book's link (core/epub/book-link.ts) is handed on: to a note shown over the
+// page when it names one, else to its chapter and place. A link to the web
+// or mail opens in the system's browser by the path a note's takes
+// (`window.open`, checked by the main process). Each is named in the
+// window's tooltip: its chapter, its note, or its address. And the places a
+// link may name are found by their markers, never by a selector built from
+// the book's words.
+
+import { bookLinkOf, chapterTitle, type Epub, type ZipAddress } from '../../core/epub';
+
+/** Clicks on `root`'s links caught: a book's own link told to `follow`; any other "#" address only stopped. */
+export function catchLinks(
+  root: HTMLElement,
+  follow: (anchor: HTMLAnchorElement, link: ZipAddress) => void,
+): void {
+  root.addEventListener(
+    'click',
+    (event) => {
+      const anchor = (event.target as Element | null)?.closest?.('a[href]');
+      if (!(anchor instanceof HTMLAnchorElement) || !root.contains(anchor)) return;
+      const href = anchor.getAttribute('href') ?? '';
+      // Never the window's: a hash would scroll it to an element of its own of that name.
+      event.preventDefault();
+      if (OUTSIDE.test(href)) {
+        // The system's browser, as a note's link in Reading (the main process checks it again).
+        window.open(href);
+        return;
+      }
+      const link = bookLinkOf(href);
+      if (link) follow(anchor, link);
+    },
+    true,
+  );
+}
+
+/** An address the system's browser opens: the web, or mail. */
+const OUTSIDE = /^(?:https?:|mailto:)/iu;
+
+/** A note's mark as EPUB 2 books write one: a number or a sign, perhaps in brackets, set as a superscript. */
+const MARK = /^[[(]?[\d*†‡§]{1,3}[\])]?$/u;
+
+/** Whether `anchor` refers to a note: named so, or a mark in a sup; never a link inside a note. */
+export function isNoteRef(anchor: HTMLAnchorElement, link: ZipAddress): boolean {
+  if (link.fragment === '' || anchor.closest('[data-part="note"]')) return false;
+  if (anchor.dataset.part === 'note-ref') return true;
+  const superscript = anchor.closest('sup') !== null || anchor.querySelector('sup') !== null;
+  return superscript && MARK.test(anchor.textContent?.trim() ?? '');
+}
+
+/** The marker of the place `name` in `root`, the first of that name. */
+export function markerIn(root: ParentNode, name: string): HTMLElement | null {
+  for (const marker of root.querySelectorAll<HTMLElement>('a[data-anchor]')) {
+    if (marker.dataset.anchor === name) return marker;
+  }
+  return null;
+}
+
+/** The blocks a note may be. */
+const BLOCKS = 'p, div, li, dd, dt, blockquote, td, th, figure, h1, h2, h3, h4, h5, h6';
+
+/** A block of words: one holding no other block. */
+const isLeafBlock = (element: Element): element is HTMLElement =>
+  element.matches(BLOCKS) && !element.querySelector(BLOCKS);
+
+/**
+ * The note the place `name` heads in `root`: a note the book names, else the
+ * block of words its marker is in, else (a marker standing before its note,
+ * as conversions leave them) the next block of words after it. Never `root`
+ * itself, nor a block that holds others (a chapter's wrapper): one note.
+ */
+export function noteIn(root: Node, name: string): HTMLElement | null {
+  const marker = markerIn(root as ParentNode, name);
+  if (!marker) return null;
+  const inRoot = (element: Element | null): element is HTMLElement =>
+    element !== null && element !== root && root.contains(element);
+  const named = marker.closest('[data-part="note"]');
+  if (inRoot(named)) return named;
+  const block = marker.parentElement?.closest(BLOCKS) ?? null;
+  if (inRoot(block) && isLeafBlock(block)) return block;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+  walker.currentNode = marker;
+  for (let next = walker.nextNode(); next; next = walker.nextNode()) {
+    if (next instanceof Element && isLeafBlock(next)) return next as HTMLElement;
+  }
+  return null;
+}
+
+/**
+ * Each link in `root` named for the window's tooltip (`data-tip`): a note's
+ * reference "Note 4", a chapter's "Chapter III" (and the place in it, where
+ * the contents name it: "Chapter III · Notes"), the web's or mail's address
+ * as it reads, without its scheme.
+ */
+export function nameLinks(root: HTMLElement, epub: Epub): void {
+  for (const anchor of root.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+    const href = anchor.getAttribute('href') ?? '';
+    const link = bookLinkOf(href);
+    const tip = link ? nameOf(anchor, link, epub) : href.replace(/^(?:https?:\/\/|mailto:)/iu, '');
+    if (tip) anchor.dataset.tip = tip;
+  }
+}
+
+function nameOf(anchor: HTMLAnchorElement, link: ZipAddress, epub: Epub): string | null {
+  if (isNoteRef(anchor, link)) return `Note ${anchor.textContent?.trim() ?? ''}`.trim();
+  const index = epub.spine.findIndex((item) => item.path === link.path);
+  const chapter = chapterTitle(epub.contents, index);
+  const place = link.fragment
+    ? epub.contents.find((row) => row.path === link.path && row.fragment === link.fragment)?.title
+    : undefined;
+  return [chapter, place !== chapter ? place : undefined].filter(Boolean).join(' · ') || null;
+}

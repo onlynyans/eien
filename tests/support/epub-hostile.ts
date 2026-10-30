@@ -5,6 +5,28 @@ import type { EpubSources } from './epub-fixtures';
 import { escaped, oneChapter, paragraphs } from './epub-parts';
 import { zerosDeflate } from './epub-zip';
 
+/** Links that would leave the book or run, ids that would name the window's, a note that runs. */
+function hostileLinks(sources: EpubSources): Uint8Array {
+  const [one = []] = sources.chapters;
+  const hrefs = [
+    'javascript:window.eienRan = true',
+    'https://example.com/',
+    '//example.com/',
+    'data:text/html,<script>window.eienRan=true</script>',
+    '../../../etc/passwd',
+    'content.opf',
+    'chapter.xhtml#%',
+    'file:///etc/passwd',
+  ];
+  return oneChapter(
+    `<h1 id="settings">Chapter I.</h1>
+<p id="__proto__">${escaped(one[0] ?? '')}<a epub:type="noteref" href="#nowhere">1</a> <a epub:type="noteref" href="#n-bad">2</a></p>
+<p>${hrefs.map((href, n) => `<a href="${escaped(href)}">way ${n}</a>`).join(' ')}</p>
+<p id="${'x'.repeat(300)}"><a name="body" href="#settings">Back to the top.</a></p>
+<aside epub:type="footnote" id="n-bad"><p onclick="window.eienRan = true">A note <script>window.eienRan = true</script>that runs nothing.</p></aside>`,
+  );
+}
+
 /** The hostile books: each must be refused, or drawn with nothing that runs or reaches out. */
 export function hostileEpubs(sources: EpubSources): Record<string, Uint8Array> {
   const [one = []] = sources.chapters;
@@ -12,6 +34,7 @@ export function hostileEpubs(sources: EpubSources): Record<string, Uint8Array> {
   // Two MiB of zeros in 13 KiB: far past the ratio a book's text could reach.
   const zeros = 1 + 258 * 8128;
   return {
+    'links-hostile.epub': hostileLinks(sources),
     'bomb.epub': oneChapter(words, [
       { name: 'filler.xhtml', data: new Uint8Array(zeros), method: 8, packed: zerosDeflate(zeros) },
     ]),

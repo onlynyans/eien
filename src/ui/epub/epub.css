@@ -119,3 +119,10 @@
   + p:not([data-part]):not([data-align]) {
   text-indent: var(--eien-epub-indent);
 }
+
+/* A book's note over its page (Phase 2b, ./note-over.ts): a menu's raised
+   paper, as wide as the list, the note in the book's own face. */
+.epub-note {
+  max-width: var(--eien-list-w);
+  padding: var(--eien-space-2);
+}

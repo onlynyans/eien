@@ -2,18 +2,6 @@
    colophon's last seal, Compare in the editor's place, and the versions
    panel — raised paper beside the page, over it when the page is narrow. */
 
-.page__seals {
-  display: flex;
-  gap: var(--eien-space-1);
-  margin-right: calc(var(--eien-space-2) * -1);
-}
-.compare-state {
-  color: var(--eien-pencil);
-}
-.word-button[aria-pressed="true"] .compare-state {
-  color: inherit;
-}
-
 /* The colophon's last seal: the small seal, pressed in when the note is sealed. */
 .seal-line:empty {
   display: none;

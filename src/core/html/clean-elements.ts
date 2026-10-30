@@ -127,7 +127,8 @@ export const ALIGNED: ReadonlySet<string> = new Set([
 /**
  * The parts of a chapter an EPUB's stylesheet styles by name (#40), read off
  * the page by the caller's rules; a first line by where a paragraph stands
- * (core/epub/first-line.ts), after it's cleaned.
+ * (core/epub/first-line.ts), after it's cleaned. A note's reference and the
+ * note (Phase 2b) are also what opens a note over the page.
  */
 export const PARTS = [
   'chapter-title',
@@ -136,6 +137,8 @@ export const PARTS = [
   'plate',
   'caption',
   'first-line',
+  'note-ref',
+  'note',
 ] as const;
 export type Part = (typeof PARTS)[number];
 

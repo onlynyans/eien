@@ -193,8 +193,7 @@
   :root .host--band-tools,
   :root .host--slip,
   :root .chevron-slot,
-  .list__head .list__sort,
-  .sidebar__new {
+  .list__head .list__sort {
     opacity: 1;
   }
 }

@@ -40,8 +40,11 @@ describe('a chapter with script, handlers, frames and forms', () => {
     for (const gone of ['script', 'iframe', 'object', 'form', 'input', 'button', 'style', 'svg']) {
       expect(names).not.toContain(gone);
     }
-    // No link goes anywhere (the web's included), and the remote picture is its words.
-    expect(elements.filter((node) => node.attrs.href !== undefined)).toEqual([]);
+    // No link runs: the web's alone keeps its address, for the system's browser (#40, Phase 2b);
+    // the remote picture is its words.
+    expect(
+      elements.filter((node) => node.attrs.href !== undefined).map((node) => node.attrs.href),
+    ).toEqual(['https://example.com/']);
     expect(read.images).toEqual([]);
     const words = plainOf(read.nodes);
     expect(words).toContain('A link that runs');
@@ -74,11 +77,16 @@ describe('a chapter’s pictures and addresses', () => {
     }
   });
 
-  it('keeps a link’s words, wherever it goes', () => {
+  it('keeps a link’s words, wherever it goes; an address only to the web, mail or the book', () => {
     const read = chapter(
       '<p><a href="#note1">1</a> <a href="https://example.com">web</a> <a href="javascript:x()">run</a> <a href="mailto:a@b.c">mail</a></p>',
     );
-    expect(elementsOf(read.nodes).filter((node) => node.attrs.href !== undefined)).toEqual([]);
+    expect(
+      elementsOf(read.nodes)
+        .filter((node) => node.attrs.href !== undefined)
+        .map((node) => node.attrs.href),
+      // A place in the chapter only once the spine says it's a chapter (./links.test.ts).
+    ).toEqual(['https://example.com', 'mailto:a@b.c']);
     expect(plainOf(read.nodes).trim()).toBe('1 web run mail');
   });
 

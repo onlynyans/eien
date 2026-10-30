@@ -19,6 +19,8 @@ import type { VaultBridge } from '../../platform/bridge';
 import { inflateRaw } from '../../platform/inflate';
 import { crumbsOf } from '../vault/open-note';
 import type { Place, Side, SideHooks } from '../vault/page-side';
+import { bookFollow } from './book-follow';
+import { nameLinks } from './book-links';
 import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
 import { EpubPage } from './epub-page';
@@ -43,6 +45,7 @@ export interface EpubSideOf {
 export interface EpubSide extends Side {
   readonly kind: 'epub';
   readonly page: EpubPage;
+  readonly place: EpubPlace | null;
   /** The book open, or null with none (or one that wouldn't open). */
   readonly epub: Epub | null;
   /** The spine item drawn; -1 for none. */
@@ -82,6 +85,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     moved: (fraction) =>
       page.through(fraction, epub ? bookFraction(epub.spine, spine, fraction) : 0),
     rested: (offset) => keep(offset),
+    follow: (anchor, link) => void links.follow(anchor, link),
+    back: () => void links.back(),
   });
   let path: string | null = null;
   let epub: Epub | null = null;
@@ -96,6 +101,15 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     drawn?.release();
     drawn = null;
   };
+  const links = bookFollow({
+    page,
+    epub: () => epub,
+    spine: () => spine,
+    place: () => side.place,
+    draw: (index, at) => draw(index, true, at),
+    open: (place) => side.open(place.path, place),
+    keep: (offset) => keep(offset),
+  });
 
   /** The place in the book kept in its reading state: each write reads the vault again, so only at a rest. */
   function keep(offset: number): void {
@@ -103,40 +117,57 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     if (epub && item) void of.reading.write(epub.key, { chapter: item.path, offset });
   }
 
-  /** The spine item `index` drawn at `offset` in its words; kept as the place if `kept` and it's another chapter. */
-  async function draw(index: number, kept: boolean, offset = 0): Promise<void> {
+  /**
+   * The spine item `index` drawn at `place` in its words (or the place it
+   * gives once drawn: a link's), kept as the place if `kept` and it's another
+   * chapter; false when it was refused, or something else asked for meanwhile.
+   */
+  async function draw(
+    index: number,
+    kept: boolean,
+    place: number | (() => number) = 0,
+  ): Promise<boolean> {
     const opened = epub;
-    if (!opened || !path) return;
+    if (!opened || !path) return false;
     const asked = ++turn;
     const chapter = await opened.chapter(index);
-    if (asked !== turn || disposed) return;
+    if (asked !== turn || disposed) return false;
     if (isRefusal(chapter)) {
       page.notice(refusalWords(chapter));
-      return;
+      return false;
     }
     const next = await drawChapter(opened, chapter);
-    if (asked !== turn || disposed) return next.release();
+    if (asked !== turn || disposed) {
+      next.release();
+      return false;
+    }
     letGo();
     drawn = next;
     const moved = kept && index !== spine;
     spine = index;
+    const given = typeof place === 'number' ? place : 0;
     page.drawn(
       next.element,
       chapterFoot(opened, index, turnTo),
       `${index + 1} of ${opened.spine.length}`,
-      offset,
+      given,
     );
+    nameLinks(page.chapter, opened);
+    const offset = typeof place === 'number' ? place : place();
+    if (offset !== given) page.showPlace(offset);
     of.changed();
     if (moved) keep(offset);
-    if (offset <= 0) return;
-    // The pictures at their size and the type loaded, then the line: shown where it will stay.
-    await Promise.all([next.settled(), fontsLoaded(page.chapter)]);
-    if (asked === turn && !disposed) page.showPlace(offset);
+    if (offset > 0) {
+      // The pictures at their size and the type loaded, then the line: shown where it will stay.
+      await Promise.all([next.settled(), fontsLoaded(page.chapter)]);
+      if (asked === turn && !disposed) page.showPlace(offset);
+    }
+    return asked === turn && !disposed;
   }
 
   /** A chapter chosen at the foot: drawn, the keyboard staying on the page (its button is gone). */
   const turnTo = (index: number) =>
-    void draw(index, true).then(() => {
+    void side.go(index).then(() => {
       if (!disposed) page.focus();
     });
 
@@ -170,6 +201,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
         return;
       }
       if (path && path !== next) before = side.place;
+      links.forget();
       const opening = ++turn;
       path = next;
       epub = null;
@@ -209,7 +241,11 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       else if (fromState >= 0) await draw(fromState, false, kept?.offset ?? 0);
       else await draw(first, false);
     },
-    go: (index) => draw(index, true),
+    go: async (index) => {
+      // A chapter the reader chose: no step back to where a link was followed from.
+      links.forget();
+      await draw(index, true);
+    },
     reload() {
       const place = side.place;
       epub = null;
@@ -221,6 +257,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       page.show(epub ? nameOf(epub, to) : page.name, crumbsOf(to), epub?.language ?? '');
     },
     clear() {
+      links.forget();
       turn++;
       path = null;
       epub = null;
@@ -232,6 +269,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     follow: (values) => page.wear(values),
     dispose() {
       disposed = true;
+      links.forget();
       letGo();
       page.dispose();
     },

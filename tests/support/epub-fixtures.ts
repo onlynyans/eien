@@ -9,6 +9,7 @@
 import { epub } from '../../src/core/export/epub';
 import { imageInfo } from '../../src/core/export/images';
 import { hostileEpubs } from './epub-hostile';
+import { noteEpubs } from './epub-notes';
 import {
   escaped,
   handEpub,
@@ -231,6 +232,7 @@ export function fixtureEpubs(sources: EpubSources): Record<string, Uint8Array> {
     'epub2.epub': epub2(sources),
     'page-list.epub': pageList(sources),
     'plates.epub': plates(sources),
+    ...noteEpubs(sources),
     ...hostileEpubs(sources),
   };
 }

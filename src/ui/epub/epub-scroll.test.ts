@@ -99,9 +99,11 @@ describe('the place in a chapter', () => {
     });
     expect(side.place).toMatchObject({ spine: 1, offset: 200 });
     const figures = side.page.foot.figures.map((figure) => figure.textContent);
-    expect(figures[0]).toBe('2 of 4');
-    expect(figures[1]).toBe('20% of the chapter');
-    expect(figures[2]).toMatch(/^\d+% of the book$/u);
+    // No step back to offer (no link followed), then the chapter's place and how far through.
+    expect(figures[0]).toBe('');
+    expect(figures[1]).toBe('2 of 4');
+    expect(figures[2]).toBe('20% of the chapter');
+    expect(figures[3]).toMatch(/^\d+% of the book$/u);
   });
 
   it('is shown again when the book opens, from the reading state or the place a page left', async () => {
