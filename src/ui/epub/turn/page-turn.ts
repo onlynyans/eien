@@ -21,7 +21,6 @@ import {
   FIRST_STROKE,
   isInstant,
   keyCurl,
-  type Motion,
   nextStroke,
   type Point,
   type Stroke,
@@ -35,35 +34,8 @@ import { pageCopy } from './page-copy';
 import { type Stepping, stepTurn } from './step-turn';
 import { acrossOf, type Hand, handAt, moved } from './turn-hand';
 import { TurnQueue } from './turn-queue';
+import type { PageTurnOf, TurnStyle, TurnSurface } from './turn-surface';
 import { type TurnTokens, turnTokens } from './turn-tokens';
-
-/** The Page turn setting's motions. */
-export type TurnStyle = Motion;
-
-export interface TurnSurface {
-  /** The sheet in sight now: what turns. It clips what lies outside its box. */
-  sheet(): HTMLElement | null;
-  /** Where its words are, within a sheet or a copy of one: what Slide and Words move. */
-  readonly words: string;
-  /** A copy's words cut to what's in sight, so a turn moves a page and never a whole chapter. */
-  trim?(words: HTMLElement): void;
-  /**
-   * The book a page `way` on, its new page on the sheet; false at the book's
-   * end. At once within a chapter; into another, once that's drawn (a
-   * promise), the motion waiting for it.
-   */
-  step(way: Way): boolean | Promise<boolean>;
-  /** Back where the last step began (a hand's turn fallen back): at once, or once drawn. */
-  unstep(): void | Promise<void>;
-  /** The Page turn and Turn speed now. */
-  how(): { readonly style: TurnStyle; readonly speed: number };
-}
-
-export interface PageTurnOf {
-  readonly random?: () => number;
-  readonly frames?: Frames;
-  readonly tokens?: (sheet: HTMLElement) => TurnTokens;
-}
 
 /** The book stepped on: the page left (copied, if anything will move), the one now on the sheet. */
 interface Begun {
@@ -179,6 +151,19 @@ export class PageTurn {
       return false;
     }
     if (hand.holding) this.#throw(hand.holding);
+    return hand.asked;
+  }
+
+  /**
+   * The hand gone unasked (its gesture cancelled: a pinch began, the system
+   * took it): a page it held falls back, never thrown. Whether it was a drag.
+   */
+  cancel(): boolean {
+    const hand = this.#hand;
+    this.#hand = null;
+    if (!hand) return false;
+    hand.lifted = true;
+    if (hand.holding?.phase === 'held') hand.holding.drop();
     return hand.asked;
   }
 

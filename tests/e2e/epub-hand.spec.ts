@@ -67,6 +67,25 @@ test.describe('a hand’s turn under Curl', () => {
     },
   );
 
+  test(
+    'a drag that falls back over the edge it began on is never also its click',
+    ALONE,
+    async ({ page }) => {
+      await open(page);
+      const first = await firstWords(page);
+      const edge = await leaf(page).getByRole('button', { name: 'Next page' }).boundingBox();
+      if (!edge) throw new Error('no edge');
+      const [x, y] = [edge.x + edge.width / 2, edge.y + edge.height * 0.8];
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x - 200, y, { steps: 8 });
+      await page.mouse.move(x, y, { steps: 20 });
+      await page.mouse.up();
+      await expect(page.locator('.turn-curl')).toHaveCount(0);
+      expect(await firstWords(page)).toBe(first);
+    },
+  );
+
   test('held, the curl is under the hand', ALONE, async ({ page }) => {
     await open(page);
     const edge = await leaf(page).getByRole('button', { name: 'Next page' }).boundingBox();
@@ -78,6 +97,40 @@ test.describe('a hand’s turn under Curl', () => {
     await expect(page.locator('.turn-curl__strip').first()).toHaveCSS('transform', /matrix/u);
     await page.mouse.up();
     await expect(page.locator('.turn-curl')).toHaveCount(0);
+  });
+});
+
+test.describe('a page caught in flight', () => {
+  test.use({
+    vaultFiles: { 'Novels/Pride and Prejudice.epub': epub('plain.epub') },
+    deviceFile: { settings: { 'epub.view': 'pages', 'epub.turn': 'curl', 'epub.turnSpeed': '4' } },
+  });
+
+  test('tapped, flies on; caught and drawn back, falls back', ALONE, async ({ page }) => {
+    await open(page);
+    const first = await firstWords(page);
+    const sheet = await leaf(page).locator('.epub-sheet:not([aria-hidden])').boundingBox();
+    if (!sheet) throw new Error('no sheet');
+    const [x, y] = [sheet.x + sheet.width * 0.3, sheet.y + sheet.height * 0.5];
+    await leaf(page).locator('.page__scroll').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.turn-curl')).toHaveCount(1);
+    // A tap on it: it flies on, and lands.
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(page.locator('.turn-curl')).toHaveCount(0);
+    const second = await firstWords(page);
+    expect(second).not.toBe(first);
+    // Caught and drawn back past where it started: it falls back to the page it left.
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.turn-curl')).toHaveCount(1);
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + sheet.width * 0.6, y, { steps: 20 });
+    await page.mouse.up();
+    await expect(page.locator('.turn-curl')).toHaveCount(0);
+    expect(await firstWords(page)).toBe(second);
   });
 });
 
