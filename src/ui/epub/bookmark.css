@@ -15,13 +15,13 @@
 [data-view="pages"] .epub-sheet__mark {
   flex: none;
 }
-/* A companion's sheet has no padding of its own (../page/split-companion.css): nothing to step past. */
-:root[data-split="companion"] .page__leaf[data-side="1"] .epub-sheet__mark {
-  margin: 0;
-}
 /* While a page curls, the turning page is a copy, which leaves the mark out: none is drawn until it lands. */
 .page__leaf--epub:has(.turn-curl) .epub-sheet__mark {
   visibility: hidden;
+}
+/* A companion's sheet has no padding of its own (../page/split-companion.css): nothing to step past. */
+:root[data-split="companion"] .page__leaf[data-side="1"] .epub-sheet__mark {
+  margin: 0;
 }
 /* In pages, the edge tab stands past the fore-edge's pages to read, never under them (./leaf-edges.ts). */
 :root[data-facing-mark="tab"] [data-view="pages"] .page__mark--bookmark[data-edge="right"] {

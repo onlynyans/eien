@@ -103,11 +103,13 @@ export function readingStore(
         return written ? (after as readonly Bookmark[] | null) : null;
       }, null).then((marks) => {
         // Told once kept, outside the write: a page that fails to show it never unkeeps it.
-        for (const told of marks ? (listeners.get(key) ?? []) : []) {
-          try {
-            told(marks);
-          } catch (error) {
-            console.error(error);
+        if (marks) {
+          for (const told of listeners.get(key) ?? []) {
+            try {
+              told(marks);
+            } catch (error) {
+              console.error(error);
+            }
           }
         }
         return marks;
