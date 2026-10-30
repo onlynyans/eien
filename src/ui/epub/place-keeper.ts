@@ -26,7 +26,7 @@ export interface PlaceKeeperOf {
    * The words in sight, measured: from the place to the first line under the
    * page's foot (Phase 4), as the place is shown, laid out anew or rests.
    */
-  placed(from: number, to: number): void;
+  inSight(from: number, to: number): void;
   readonly rectOf?: RectOf;
 }
 
@@ -94,15 +94,15 @@ export class PlaceKeeper {
     const offset = firstInSight(chapter, scroller.getBoundingClientRect().top, rectOf);
     const moved = offset !== this.#offset;
     this.#offset = offset;
-    this.#placed();
+    this.#inSight();
     if (moved) this.#of.rested(offset);
   }
 
   /** The lines in sight told: from the place to the first one the page's foot cuts or hides. */
-  #placed(): void {
+  #inSight(): void {
     const { scroller, chapter, rectOf } = this.#of;
     const to = firstInSight(chapter, scroller.getBoundingClientRect().bottom, rectOf);
-    this.#of.placed(this.#offset, Math.max(this.#offset, to));
+    this.#of.inSight(this.#offset, Math.max(this.#offset, to));
   }
 
   /**
@@ -142,7 +142,7 @@ export class PlaceKeeper {
       this.#own = null;
     });
     this.#tell();
-    this.#placed();
+    this.#inSight();
   }
 
   readonly #scrolled = () => {

@@ -74,6 +74,44 @@ describe('a book counted for its page numbers', () => {
     expect(read).toHaveBeenCalledTimes(epub.spine.length - 1);
   });
 
+  it('reads from a page still asking, letting go of a book whose page stopped', async () => {
+    const one = await book();
+    const two = await book();
+    const count = new BookCount(one);
+    const fromOne = vi.spyOn(one, 'chapter');
+    const fromTwo = vi.spyOn(two, 'chapter');
+    count.run(one, always, () => {});
+    const stopTwo = count.run(two, always, () => {});
+    stopTwo();
+    await vi.waitFor(() => expect(count.whole).toBe(true));
+    expect(fromOne).toHaveBeenCalledTimes(one.spine.length);
+    expect(fromTwo).not.toHaveBeenCalled();
+  });
+
+  it('counts each item once, however often pages stop and ask again while one is read', async () => {
+    const epub = await book();
+    const original = epub.chapter.bind(epub);
+    let release = () => {};
+    // The first item held, being read, until the test lets it go.
+    const read = vi.spyOn(epub, 'chapter').mockImplementationOnce(
+      (index) =>
+        new Promise((done) => {
+          release = () => void original(index).then(done);
+        }),
+    );
+    const count = new BookCount(epub);
+    const stop = count.run(epub, always, () => {});
+    await vi.waitFor(() => expect(read).toHaveBeenCalledOnce());
+    // Stopped and asked again while the first item is still being read: no second count begins.
+    stop();
+    count.run(epub, always, () => {});
+    await new Promise((done) => setTimeout(done, 20));
+    expect(read).toHaveBeenCalledOnce();
+    release();
+    await vi.waitFor(() => expect(count.whole).toBe(true));
+    expect(read).toHaveBeenCalledTimes(epub.spine.length);
+  });
+
   it('knows where the printed pages begin in the items it has counted', async () => {
     const epub = await book('page-list.epub');
     const count = new BookCount(epub);

@@ -13,7 +13,7 @@ let height: number;
 let width: number;
 const moved = vi.fn();
 const rested = vi.fn();
-const placed = vi.fn();
+const inSight = vi.fn();
 
 beforeEach(() => {
   vi.useFakeTimers({
@@ -31,7 +31,7 @@ beforeEach(() => {
   chapter.getBoundingClientRect = () => ({ width, height: width === 0 ? 0 : 400 }) as DOMRect;
   moved.mockClear();
   rested.mockClear();
-  placed.mockClear();
+  inSight.mockClear();
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -45,7 +45,7 @@ function keeper(offset = 0): PlaceKeeper {
     chapter,
     moved,
     rested,
-    placed,
+    inSight,
     rectOf: linesOf(chapter, scroller),
   });
   kept.show(offset);
@@ -81,14 +81,14 @@ describe('a book’s place as its page scrolls', () => {
     // The page's foot 100px under its top: five lines of ten characters in sight.
     scroller.getBoundingClientRect = () => ({ top: 0, bottom: height }) as DOMRect;
     keeper(30);
-    expect(placed).toHaveBeenLastCalledWith(30, 80);
-    placed.mockClear();
+    expect(inSight).toHaveBeenLastCalledWith(30, 80);
+    inSight.mockClear();
     scrollTo(scroller.scrollTop);
     scrollTo(scroller.scrollTop + 1);
     vi.advanceTimersByTime(REST_MS);
     // Still the same first line: the place is the same, and the lines in sight told again.
     expect(rested).not.toHaveBeenCalled();
-    expect(placed).toHaveBeenCalledOnce();
+    expect(inSight).toHaveBeenCalledOnce();
   });
 
   it('never measures a page out of sight: what it kept stands', () => {

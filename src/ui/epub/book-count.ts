@@ -31,11 +31,14 @@ export class BookCount implements PageCount {
   readonly #pages: readonly { label: string; spine: number; fragment: string }[];
   /** The names each item's printed pages give, asked of its count. */
   readonly #names: ReadonlyMap<number, ReadonlySet<string>>;
-  readonly #told = new Set<() => void>();
-  readonly #still = new Set<Still>();
-  /** Which epub reads the rest, while any page asks for it; null between. */
-  #reading: Epub | null = null;
+  /** Each page asking for the count: how to tell it, and its book, read from while it asks. */
+  readonly #runs = new Map<
+    object,
+    { readonly still: Still; readonly told: () => void; readonly epub: Epub }
+  >();
   #timer: ReturnType<typeof setTimeout> | undefined;
+  /** An item read and counted now: one at a time, whatever starts or stops meanwhile. */
+  #busy = false;
   #print: readonly PrintAt[] = [];
 
   constructor(epub: Epub) {
@@ -77,7 +80,7 @@ export class BookCount implements PageCount {
     this.#lengths[spine] = length;
     this.#found[spine] = anchors;
     this.#printed();
-    for (const told of this.#told) told();
+    for (const run of this.#runs.values()) run.told();
   }
 
   /**
@@ -86,18 +89,22 @@ export class BookCount implements PageCount {
    * returns; the count stops once no page asks for it.
    */
   run(epub: Epub, still: Still, told: () => void): () => void {
-    this.#told.add(told);
-    this.#still.add(still);
-    this.#reading = epub;
+    const run = {};
+    this.#runs.set(run, { still, told, epub });
     this.#next();
     return () => {
-      this.#told.delete(told);
-      this.#still.delete(still);
-      if (this.#still.size > 0) return;
-      this.#reading = null;
+      // Its book let go with it: another page's is read from, if one still asks.
+      this.#runs.delete(run);
+      if (this.#runs.size > 0) return;
       clearTimeout(this.#timer);
       this.#timer = undefined;
     };
+  }
+
+  /** A book to read the rest from: any asking page's (one book, by its key). */
+  get #reading(): Epub | null {
+    for (const run of this.#runs.values()) return run.epub;
+    return null;
   }
 
   #printed(): void {
@@ -110,12 +117,14 @@ export class BookCount implements PageCount {
 
   /** The next item counted, in a task of its own, once every page is still. */
   #next(): void {
-    if (this.#timer !== undefined || !this.#reading) return;
+    if (this.#timer !== undefined || this.#busy || this.#runs.size === 0) return;
     const spine = this.#lengths.indexOf(null);
     if (spine < 0) return;
     this.#timer = setTimeout(() => {
+      this.#timer = undefined;
       // Each page still, one after another; then the item, if it's still wanted.
-      const waits = [...this.#still];
+      this.#busy = true;
+      const waits = [...this.#runs.values()].map((run) => run.still);
       const after = (i: number): void => {
         const wait = waits[i];
         if (wait) wait(() => after(i + 1));
@@ -127,16 +136,15 @@ export class BookCount implements PageCount {
 
   async #count(spine: number): Promise<void> {
     const epub = this.#reading;
-    if (!epub) {
-      this.#timer = undefined;
-      return;
+    try {
+      if (!epub) return;
+      const chapter = await epub.chapter(spine);
+      // A chapter that won't open has no words to count.
+      this.add(spine, isRefusal(chapter) ? { nodes: [], images: [] } : chapter);
+    } finally {
+      this.#busy = false;
+      this.#next();
     }
-    const chapter = await epub.chapter(spine);
-    this.#timer = undefined;
-    // A chapter that won't open has no words to count.
-    if (isRefusal(chapter)) this.add(spine, { nodes: [], images: [] });
-    else this.add(spine, chapter);
-    if (this.#reading) this.#next();
   }
 }
 

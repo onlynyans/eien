@@ -24,17 +24,19 @@ function names(nodes: readonly CleanNode[], into = new Set<string>()): Set<strin
   return into;
 }
 
-const rules = epubRules(
-  'OEBPS/text/one.xhtml',
-  () => true,
-  () => true,
-);
-
 describe('a chapter’s count, over generated chapters', () => {
   it('is the window’s count of what it draws: its length, and where each place begins', () => {
     fc.assert(
-      fc.property(hostileHtml, (source) => {
-        const nodes = cleanHtml(source, rules);
+      // Pictures in the zip or not: a picture it won't show is kept as its words.
+      fc.property(hostileHtml, fc.boolean(), (source, holds) => {
+        const nodes = cleanHtml(
+          source,
+          epubRules(
+            'OEBPS/text/one.xhtml',
+            () => holds,
+            () => true,
+          ),
+        );
         const asked = names(nodes);
         const { length, anchors } = countChapter(nodes, asked);
         const chapter = document.createElement('div');

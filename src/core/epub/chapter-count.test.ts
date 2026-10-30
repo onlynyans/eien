@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { CleanNode } from '../html';
+import { type CleanNode, cleanHtml } from '../html';
 import { countChapter } from './chapter-count';
+import { epubRules } from './epub-rules';
 
 const text = (words: string): CleanNode => ({ kind: 'text', text: words });
 const element = (name: string, children: CleanNode[] = [], attrs = {}): CleanNode => ({
@@ -35,8 +36,17 @@ describe('a chapter counted as a place counts it', () => {
     expect(Object.fromEntries(anchors)).toEqual({ 'page-2': 5, 'page-3': 5 });
   });
 
-  it('counts a picture’s words the cleaner kept as words', () => {
-    expect(countChapter([element('p', [text('He rode a black horse.')])]).length).toBe(22);
+  it('counts a picture’s words the cleaner kept as words, for a picture it won’t show', () => {
+    // Its file not in the zip: the cleaner keeps its alt as plain words, in brackets.
+    const nodes = cleanHtml(
+      '<p><img src="gone.jpg" alt="He rode a black horse."/></p>',
+      epubRules(
+        'a.xhtml',
+        () => false,
+        () => false,
+      ),
+    );
+    expect(countChapter(nodes).length).toBe('[He rode a black horse.]'.length);
   });
 
   it('counts nothing in a chapter with no words', () => {

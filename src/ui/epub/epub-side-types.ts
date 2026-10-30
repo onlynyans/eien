@@ -47,8 +47,6 @@ export interface EpubSide extends Side {
   reload(): Promise<void>;
   /** Its place, if on its way to rest, kept now: the window is quitting. */
   keep(): void;
-  /** The page `offset` into spine item `spine` is on, as its label says it (Phase 4); null for none known. */
-  labelAt(spine: number, offset: number): string | null;
   /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */
   quote(kept?: boolean): Promise<void>;
 }

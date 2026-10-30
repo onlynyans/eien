@@ -8,7 +8,6 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { handEpub, nav, opf, XHTML, page as xhtml } from '../support/epub-parts';
 import { longBook } from '../support/long-book';
 import { ALONE, expect, ROOT, test, type VaultFiles } from './launch';
 
