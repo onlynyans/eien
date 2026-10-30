@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Frames } from './next-frame';
-import { PageTurn, type TurnStyle } from './page-turn';
+import { PageTurn } from './page-turn';
+import type { TurnStyle } from './turn-surface';
 import type { TurnTokens } from './turn-tokens';
 
 const TOKENS: TurnTokens = { calm: 220, quick: 120, ease: 'linear', step: 8, cast: 32, crest: 24 };
@@ -518,5 +519,17 @@ describe('waiting for the page to be still', () => {
     expect(later).not.toHaveBeenCalled();
     b.run();
     expect(later).toHaveBeenCalledOnce();
+  });
+});
+
+describe('a hand cancelled', () => {
+  it('puts a held page down: it falls back, never thrown', () => {
+    const b = book();
+    b.turn.grab([390, 500]);
+    b.turn.drag([-300, 0], 0);
+    b.turn.drag([-380, 0], 40);
+    expect(b.turn.cancel()).toBe(true);
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(1);
   });
 });

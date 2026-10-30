@@ -137,6 +137,8 @@
   flex-direction: column;
   overflow: clip;
   isolation: isolate;
+  /* A finger across the page turns it (./turn/hand-events.ts): the window never pans, a pinch still zooms. */
+  touch-action: pinch-zoom;
 }
 [data-view="pages"] .epub-sheet {
   position: relative;

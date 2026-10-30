@@ -210,3 +210,63 @@ test('a note’s reference shows the note over the page, a tap away from the wor
   await expect(chapter(page)).toContainText('The novel’s first sentence, and its most quoted.');
   await expect(page.getByRole('button', { name: 'Back to Chapter I' })).toBeVisible();
 });
+
+/** The first words on the page in sight, in pages. */
+const firstWords = (page: Page) =>
+  page.locator('.epub-sheet:not([aria-hidden]) .epub__pages').evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const at = document.caretRangeFromPoint(rect.left + 2, rect.top + 4);
+    return at?.startContainer.textContent?.slice(at.startOffset, at.startOffset + 30) ?? '';
+  });
+
+test('a book in pages turns by a tap in its outer thirds and a finger drawn across (#40, Phase 3)', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  // Pages, from the shelf's look.
+  await page.locator('.phone-bar__controls [data-command="look"]').click();
+  await page.locator('[data-setting="epub.view"] [data-value="pages"]').click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
+  const box = page.locator('.epub-sheet:not([aria-hidden]) .epub__pages');
+  const first = await firstWords(page);
+  const rect = await box.boundingBox();
+  if (!rect) throw new Error('no page');
+  // A tap in the right third: on.
+  await page.touchscreen.tap(rect.x + rect.width * 0.9, rect.y + rect.height / 2);
+  await expect.poll(() => firstWords(page)).not.toBe(first);
+  const second = await firstWords(page);
+  // A finger drawn rightward across the page: back (reduced motion: at once, nothing held).
+  await box.dispatchEvent('pointerdown', {
+    pointerId: 7,
+    pointerType: 'touch',
+    button: 0,
+    clientX: rect.x + 40,
+    clientY: rect.y + 200,
+  });
+  await page.evaluate(
+    ([x, y]) => {
+      const at = (clientX: number) => ({
+        pointerId: 7,
+        pointerType: 'touch',
+        clientX,
+        clientY: y,
+        bubbles: true,
+      });
+      window.dispatchEvent(new PointerEvent('pointermove', at(x + 20)));
+      window.dispatchEvent(new PointerEvent('pointermove', at(x + 120)));
+      window.dispatchEvent(new PointerEvent('pointerup', at(x + 120)));
+    },
+    [rect.x + 40, rect.y + 200] as const,
+  );
+  await expect.poll(() => firstWords(page)).toBe(first);
+  expect(second).not.toBe(first);
+});
