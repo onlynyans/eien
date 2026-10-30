@@ -644,7 +644,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131)
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131; Phase 4, page numbers, 4a)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add paging and the turn (Phase 3), marks, highlights and Find
@@ -698,8 +698,11 @@ in the book, each recorded here as it's built.
   above it and `--eien-space-4` under, the chapters before and after as word
   buttons (label type, an arrow beside the name, `--eien-touch` high on a
   phone), the last one at the right; "The end" in label type at the last
-  chapter. The colophon's items: "3 of 61", "40% of the chapter", "12% of
-  the book", the two dropped first under a 560px page pane.
+  chapter. The colophon's items: "3 of 61", the page (Phase 4a: "page 212
+  of 2,450", "page xii"; `.colophon__page`, a count, gone while none is
+  known), "40% of the chapter", "12% of the book", the two percents
+  dropped first under a 560px page pane, the page kept. In Facing pages
+  they're the book's folio, as a note's figures are.
 - **The place is kept to the line**, never drawn: a page put back, laid out
   anew or zoomed shows the same line at its top.
 - **A note over the page** (Phase 2b, `ui/epub/note-over.ts`): a note's

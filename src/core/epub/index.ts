@@ -1,10 +1,24 @@
 export { bookHref, bookLinkOf } from './book-link';
 export { EPUB_CAPS, type EpubCaps } from './caps';
 export type { Chapter } from './chapter';
+export { type ChapterCount, countChapter } from './chapter-count';
 export { chapterBeside, chapterTitle } from './chapters';
 export type { ContentsEntry, PrintPage } from './contents';
 export { type Epub, type EpubImage, type EpubSpineItem, epubKey, openEpub } from './epub';
 export type { SpineItem } from './package';
+export {
+  type Lengths,
+  type PageCount,
+  type PrintAt,
+  pageOf,
+  pageWords,
+  printAt,
+  printPages,
+  STEADY_CHARS,
+  steadyAt,
+  steadyPages,
+  steadyStart,
+} from './page-numbers';
 export { EDGES, edgesOf, pageAt, pagesIn, wholeLines } from './pages';
 export { offsetOf, type Spot, spotOf } from './place';
 export { bookFraction, chapterFraction, percent } from './progress';

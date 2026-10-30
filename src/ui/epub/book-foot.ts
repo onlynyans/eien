@@ -1,8 +1,9 @@
 // A book's own items in the colophon (#40; ../page/page-leaf.ts, LeafFoot),
 // as a note's are (../page/note-foot.ts): Back, after a link was followed
 // (Phase 2b), first, so where the split gives each page its own foot it goes
-// there with them; which chapter of how many; how far through it and the
-// book (Phase 2); and a line of news for a while (Quote's, Phase 2c).
+// there with them; which chapter of how many; the page (Phase 4: the printed
+// edition's, else a steady one); how far through the chapter and the book
+// (Phase 2); and a line of news for a while (Quote's, Phase 2c).
 
 import { percent } from '../../core/epub';
 import { h } from '../dom';
@@ -16,6 +17,7 @@ export class BookFoot implements LeafFoot {
   readonly figures: readonly HTMLElement[];
   readonly #back: HTMLButtonElement;
   readonly #at = h('span', { class: 'colophon__chapter count' });
+  readonly #page = h('span', { class: 'colophon__page count' });
   readonly #inChapter = h('span', { class: 'colophon__through count' });
   readonly #inBook = h('span', { class: 'colophon__through count' });
   readonly #saying = new Notice(() => {
@@ -33,7 +35,7 @@ export class BookFoot implements LeafFoot {
       },
       on: { click: back },
     });
-    this.figures = [this.#back, this.#at, this.#inChapter, this.#inBook];
+    this.figures = [this.#back, this.#at, this.#page, this.#inChapter, this.#inBook];
   }
 
   /** Whether there's a step back to offer. */
@@ -44,6 +46,11 @@ export class BookFoot implements LeafFoot {
   /** Which chapter of how many, as the colophon says it ("3 of 61"). */
   at(words: string): void {
     this.#at.textContent = words;
+  }
+
+  /** The page the place is on, as said ("page 212 of 2,450"), or nothing: none known yet. */
+  page(words: string): void {
+    this.#page.textContent = words;
   }
 
   /** How far through the chapter and the book, 0 to 1 each. */
@@ -65,7 +72,8 @@ export class BookFoot implements LeafFoot {
 
   /** No chapter: nothing said of one. */
   clear(): void {
-    for (const figure of [this.#at, this.#inChapter, this.#inBook]) figure.textContent = '';
+    for (const figure of [this.#at, this.#page, this.#inChapter, this.#inBook])
+      figure.textContent = '';
     this.backTo(null);
   }
 

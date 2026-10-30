@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { epubKind } from './epub-kind';
-import { type EpubSide, isEpub, makeEpubSide } from './epub-side';
+import { makeEpubSide } from './epub-side';
+import { type EpubSide, isEpub } from './epub-side-types';
 import { sideWith } from './test-side';
 
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);

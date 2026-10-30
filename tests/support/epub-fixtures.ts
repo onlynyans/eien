@@ -59,10 +59,11 @@ export const SAMPLE_SOURCES: EpubSources = {
 const ROMAN = ['I', 'II', 'III'];
 const PLATE_WORDS = 'He rode a black horse.';
 
-const chapterPage = (n: number, paras: readonly string[], extra = '', after = '') =>
+/** A chapter, `lead` before its title (a printed page's marker) and `after` after its paragraphs. */
+const chapterPage = (n: number, paras: readonly string[], { lead = '', after = '' } = {}) =>
   page(
     `Chapter ${ROMAN[n]}`,
-    `<section epub:type="chapter"><h2 class="chapter-title">Chapter ${ROMAN[n]}.</h2>\n${extra}${paragraphs(paras)}${after}</section>`,
+    `<section epub:type="chapter">${lead}<h2 class="chapter-title">Chapter ${ROMAN[n]}.</h2>\n${paragraphs(paras)}${after}</section>`,
   );
 const chapterItems = (count: number): Item[] =>
   Array.from({ length: count }, (_, n) => ({
@@ -185,16 +186,14 @@ function pageList(sources: EpubSources): Uint8Array {
     { name: 'OEBPS/text/nav.xhtml', data: nav(chapterRows(count), pages) },
     ...sources.chapters.map((paras, n) => {
       const half = Math.ceil(paras.length / 2);
-      // Page 2n at the chapter's start (but the first's, page xii's), 2n + 1 in its middle; 4 lost.
+      // Page 2n before the chapter's title (but the first's, page xii's), 2n + 1 in its middle; 4 lost.
       const top = n > 0 && 2 * n !== 4 ? marker(2 * n) : '';
       return {
         name: `OEBPS/text/chapter-${n + 1}.xhtml`,
-        data: chapterPage(
-          n,
-          paras.slice(0, half),
-          top,
-          `${marker(2 * n + 1)}${paragraphs(paras.slice(half))}`,
-        ),
+        data: chapterPage(n, paras.slice(0, half), {
+          lead: top,
+          after: `${marker(2 * n + 1)}${paragraphs(paras.slice(half))}`,
+        }),
       };
     }),
   ]);

@@ -118,8 +118,8 @@ export class BookCount implements PageCount {
       const waits = [...this.#still];
       const after = (i: number): void => {
         const wait = waits[i];
-        if (wait) return wait(() => after(i + 1));
-        void this.#count(spine);
+        if (wait) wait(() => after(i + 1));
+        else void this.#count(spine);
       };
       after(0);
     }, 0);

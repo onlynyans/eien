@@ -37,6 +37,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await book.click();
       await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
       await expect(chapter(page)).toBeInViewport();
+      // Its page (#40, Phase 4): a steady one, once the book is counted.
+      await expect(page.locator('.colophon__page')).toHaveText(/^page 1 of \d+$/u);
       // The note's tools set aside on a book (#40): its views and Focus, never greyed; Look stays.
       await expect(page.locator('[data-command="view.next"]:visible')).toHaveCount(0);
       await expect(page.locator('[data-command="focus"]:visible')).toHaveCount(0);

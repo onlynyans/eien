@@ -100,11 +100,38 @@ describe('the place in a chapter', () => {
     });
     expect(side.place).toMatchObject({ spine: 1, offset: 200 });
     const figures = side.page.foot.figures.map((figure) => figure.textContent);
-    // No step back to offer (no link followed), then the chapter's place and how far through.
+    // No step back to offer (no link followed), then the chapter's place, its page and how far through.
     expect(figures[0]).toBe('');
     expect(figures[1]).toBe('2 of 4');
-    expect(figures[2]).toBe('20% of the chapter');
-    expect(figures[3]).toMatch(/^\d+% of the book$/u);
+    expect(figures[3]).toBe('20% of the chapter');
+    expect(figures[4]).toMatch(/^\d+% of the book$/u);
+  });
+
+  it('says the printed page it’s on, at once, the book’s pages by its last (Phase 4)', async () => {
+    const { side } = sideWith({ 'a.epub': EPUBS['page-list.epub'] as Uint8Array });
+    await side.open('a.epub');
+    const scroller = laidOut(side.page);
+    const page = () => side.page.foot.figures[2]?.textContent;
+    scrollTo(scroller, 0);
+    vi.advanceTimersByTime(REST_MS);
+    // Before the chapter's first marked page: the front matter's, named by the chapter alone.
+    expect(page()).toBe('page xii of 5');
+    scrollTo(scroller, 1000);
+    vi.advanceTimersByTime(REST_MS);
+    expect(page()).toBe('page 1 of 5');
+  });
+
+  it('says the steady page it’s on once the book is counted, nothing before (Phase 4)', async () => {
+    const { side } = sideWith(book());
+    await side.open('a.epub');
+    const scroller = laidOut(side.page);
+    const page = () => side.page.foot.figures[2]?.textContent;
+    scrollTo(scroller, 0);
+    vi.advanceTimersByTime(REST_MS);
+    expect(page()).toBe('');
+    // Each item counted in a task of its own, its chapter read meanwhile.
+    for (let i = 0; i < 40 && page() === ''; i++) await vi.advanceTimersByTimeAsync(1);
+    expect(page()).toBe('page 1 of 1');
   });
 
   it('is shown again when the book opens, from the reading state or the place a page left', async () => {

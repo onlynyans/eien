@@ -143,6 +143,8 @@ Rules, pure TypeScript.
   - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it
   - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
+  - `chapter-count.ts`: a chapter's words counted as a place counts them, from its cleaned nodes, and where the printed pages begin in it (Phase 4)
+  - `page-numbers.ts`: a place's page: the printed edition's (the page-list), else steady pages of 1,500 characters, and as the colophon says it
   - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
   - `book-link.ts`: a link to one of the book's chapters, as an address of the page's own and back
   - `quote.ts`: a passage quoted into a note, its citation, at the note's end
@@ -347,6 +349,9 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys (Q, ⌘[ / Alt+←)
   - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again (scrolling or in pages), its links caught, its words copied and chosen
   - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
+  - `epub-side-types.ts`: what a page holding a book is (`EpubSide`, `EpubSideOf`, `isEpub`)
+  - `book-place.ts`: what the page says of where it is as the place moves: the colophon's figures, the fore-edge, the page (Phase 4)
+  - `book-count.ts`: a book counted for its page numbers, in the background, never while a page turns; one per book for the window, the last few kept (Phase 4)
   - `book-open.ts`: the book read and opened for its page (or the words it says instead), what it's called, and where it opens
   - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
   - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again
@@ -435,7 +440,7 @@ The phone.
   - `selectors.test.ts`: no style rule ends in `*` after a `:hover` or `:focus`, which restyles the whole window
   - `words.test.ts`: no folder, file or CSS class named for "reader", as Words says
 - `zip-interop.test.ts` holds Eien's zips to zlib and `unzip`
-- `tests/support/` holds what the tests share, Node-free so core's tests can use it: a strict zip reader, a strict XML check, an export's parts
+- `tests/support/` holds what the tests share, Node-free so core's tests can use it: a strict zip reader, a strict XML check, an export's parts, a long book for the budgets (`long-book.ts`)
 - `tests/e2e/` drives the built app on real folders with Playwright
 - `tests/mobile/`: the phone's page in Chromium
 - `tests/extension/`: the extension in Chromium, over AO3's and FanFiction.Net's pages as `tests/support/story-pages/` writes them

@@ -9,6 +9,7 @@ import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { handEpub, nav, opf, XHTML, page as xhtml } from '../support/epub-parts';
+import { longBook } from '../support/long-book';
 import { ALONE, expect, ROOT, test, type VaultFiles } from './launch';
 
 /**
@@ -196,32 +197,7 @@ test.describe('a long session', () => {
 
 /** A long book (#40): sixty chapters of two hundred paragraphs each, every one its own file. */
 const CHAPTERS = 60;
-const LONG_EPUB = (() => {
-  const words = Array.from(
-    { length: 200 },
-    (_, n) =>
-      `<p>Paragraph ${n}: it is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.</p>`,
-  ).join('\n');
-  const ids = Array.from({ length: CHAPTERS }, (_, n) => `c${n}`);
-  return handEpub('content.opf', [
-    {
-      name: 'content.opf',
-      data: opf(
-        '3.0',
-        [
-          { id: 'nav', href: 'nav.xhtml', type: XHTML, properties: 'nav' },
-          ...ids.map((id) => ({ id, href: `${id}.xhtml`, type: XHTML })),
-        ],
-        ids,
-      ),
-    },
-    { name: 'nav.xhtml', data: nav(ids.map((id, n) => [`Chapter ${n + 1}`, `${id}.xhtml`])) },
-    ...ids.map((id, n) => ({
-      name: `${id}.xhtml`,
-      data: xhtml(`Chapter ${n + 1}`, `<h1>Chapter ${n + 1}</h1>\n${words}`),
-    })),
-  ]);
-})();
+const LONG_EPUB = longBook({ chapters: CHAPTERS, paragraphs: 200 });
 /**
  * Elements with a long book open: its contents' rows and one chapter, never the book
  * (measured: 1,218 at the first chapter and at the last; the whole book would be over 13,000).
@@ -269,6 +245,42 @@ test.describe('a long book open (#40)', () => {
     expect(report('heap growth over a long book read again, bytes', growth)).toBeLessThan(
       HEAP_GROWTH,
     );
+  });
+});
+
+/**
+ * A long book counted for its page numbers (#40, Phase 4), then put away: the
+ * window's count keeps numbers alone, so the heap stays within HEAP_GROWTH
+ * (measured: 1.2 MB with the window's other first-time costs).
+ */
+test.describe('a long book counted and put away (#40)', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': LONG_EPUB, 'Notes.md': 'The gate held.\n' },
+  });
+
+  test('gives its memory back but the count’s', ALONE, async ({ page }) => {
+    test.setTimeout(120_000);
+    const cdp = await page.context().newCDPSession(page);
+    const heap = async () => {
+      await cdp.send('HeapProfiler.collectGarbage');
+      await cdp.send('HeapProfiler.collectGarbage');
+      return (await cdp.send('Runtime.getHeapUsage')).usedSize;
+    };
+    const note = page.locator('.note-row').filter({ hasText: 'Notes' });
+    await note.click();
+    await expect(page.locator('.cm-content')).toContainText('The gate held.');
+    const before = await heap();
+    await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+    await expect(page.locator('.colophon__page')).toHaveText(/^page \d+ of 1,0\d\d$/u, {
+      timeout: 60_000,
+    });
+    await page.locator('.tree-row', { hasText: 'All Notes' }).first().click();
+    await note.click();
+    await expect(page.locator('.cm-content')).toContainText('The gate held.');
+    const growth = (await heap()) - before;
+    expect(
+      report('heap growth after a long book counted and put away, bytes', growth),
+    ).toBeLessThan(HEAP_GROWTH);
   });
 });
 

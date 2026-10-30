@@ -22,6 +22,8 @@ export interface ChapterSheetOf {
   moved(fraction: number): void;
   /** Its place came to rest somewhere new: an offset in the chapter's words. */
   rested(offset: number): void;
+  /** The words in sight, measured (Phase 4): the page in pages, the lines in sight scrolling. */
+  placed(from: number, to: number): void;
   /** One of the book's own links pressed. */
   follow(anchor: HTMLAnchorElement, link: ZipAddress): void;
   /** Quote the words chosen in it in the note beside (Phase 2c). */
@@ -54,6 +56,7 @@ export class ChapterSheet {
       chapter: this.element,
       moved: (fraction: number) => of.moved(fraction),
       rested: (offset: number) => of.rested(offset),
+      placed: (from: number, to: number) => of.placed(from, to),
     };
     this.#scrolled = new PlaceKeeper({ ...told, scroller: of.scroller });
     this.#paged = new PagedPlace({ ...told, box: this.box });

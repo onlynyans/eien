@@ -4,7 +4,9 @@
 
 import { type Mock, vi } from 'vitest';
 import type { Reading } from '../../core/epub';
-import { type EpubSide, type EpubSideOf, makeEpubSide } from './epub-side';
+import { BookCounts } from './book-count';
+import { makeEpubSide } from './epub-side';
+import type { EpubSide, EpubSideOf } from './epub-side-types';
 
 /** A vault of `files` (bytes), its reading states kept in memory, and what the page told. */
 export function sideWith(
@@ -35,6 +37,7 @@ export function sideWith(
       },
       idle: async () => {},
     },
+    counts: new BookCounts(),
     sizeOf: (path: string) =>
       listed.includes(path) ? (files[path]?.length ?? 64 * 1024 * 1024) : null,
     changed,

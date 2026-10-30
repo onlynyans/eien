@@ -8,6 +8,7 @@ import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { handEpub, nav, opf, XHTML, page as xhtml } from '../support/epub-parts';
+import { longBook } from '../support/long-book';
 import { ALONE, expect, readQuietly, test, type VaultFiles } from './launch';
 
 /** The budget for anything a writer does: no task holds the window longer than this. */
@@ -397,4 +398,38 @@ test.describe('fifty turns in a long chapter', () => {
       });
     });
   }
+});
+
+/** A book of about 3,000 steady pages (#40, Phase 4), and one chapter far longer than the rest, never drawn. */
+const COUNTED_BOOK = longBook({ chapters: 60, paragraphs: 600, large: 4000 });
+
+/**
+ * A long book counted for its page numbers (#40, Phase 4): every chapter read
+ * and counted in the background, one a task and only while no page turns, as
+ * the pages turn, fifty of them. No long task over the same 200 ms, the large
+ * chapter's included; then the steady pages said. Measured: no long task (none
+ * over 50 ms), the CPU four times slower too (SLOW=4).
+ */
+test.describe('a long book counted while its pages turn', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': COUNTED_BOOK },
+    deviceFile: { settings: { 'epub.view': 'pages', 'epub.turn': 'curl', 'epub.turnSpeed': '1' } },
+  });
+
+  test('counts it without a stall, then numbers its pages', ALONE, async ({ page }) => {
+    test.setTimeout(180_000);
+    const time = await stalls(page);
+    await time.mark();
+    await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+    await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter p')).toHaveCount(600);
+    await page.locator('.page__leaf--epub .page__scroll').focus();
+    for (let i = 0; i < 50; i++) {
+      await page.keyboard.press('ArrowRight');
+      await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
+    }
+    await expect(page.locator('.colophon__page')).toHaveText(/^page \d+ of 3,\d{3}$/u, {
+      timeout: 60_000,
+    });
+    expect(await time.longest(), 'a long book counted, fifty turns').toBeLessThan(STALL);
+  });
 });
