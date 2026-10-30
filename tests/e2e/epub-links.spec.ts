@@ -120,12 +120,9 @@ test('a web link opens in the system’s browser, named in the tooltip, the wind
   expect(
     await web.evaluate((a) => getComputedStyle(a).textDecorationLine.includes('underline')),
   ).toBe(true);
-  // The page settled first (its fonts in, a frame drawn), so the link holds still under the pointer.
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-  });
-  await web.hover();
+  // Reached from the keyboard, its tooltip names where it goes at once (a hover's comes after a pause).
+  await page.keyboard.press('Shift');
+  await web.focus();
   await expect(page.locator('.tooltip')).toHaveText('example.com/');
   await web.click();
   await expect
