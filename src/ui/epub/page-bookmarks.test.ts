@@ -267,10 +267,9 @@ describe('a Marks row’s bookmark, as QA tried it (Phase 4c)', () => {
 });
 
 describe('a book with a thousand bookmarks, as QA tried it (Phase 4c)', () => {
-  // BUG (QA, Phase 4c), skipped until fixed: the 1,001st is written to the file and the colophon
-  // says "Bookmarked.", but the store reads back only the first MAX_BOOKMARKS, so the page shows
-  // no mark, Marks never lists it, and B on that page can never take it off.
-  it.skip('shows a bookmark B makes past the thousand, or says it isn’t kept: never “Bookmarked.” over a page with no mark', async () => {
+  // QA (Phase 4c) found the 1,001st written and "Bookmarked." said, though the store reads back the
+  // first MAX_BOOKMARKS alone: never shown, never taken off. Now B says the book is full.
+  it('shows a bookmark B makes past the thousand, or says it isn’t kept: never “Bookmarked.” over a page with no mark', async () => {
     // A thousand further on in the chapter, none on the first page.
     const { side, press, file } = await opened(() =>
       JSON.stringify({
@@ -290,6 +289,7 @@ describe('a book with a thousand bookmarks, as QA tried it (Phase 4c)', () => {
       expect(side.bookmarked).toBe(true);
       expect(markOf(side)?.hidden).toBe(false);
     } else expect(written).toHaveLength(1000);
+    expect(said(side)).toBe('A book keeps 1,000 bookmarks at most: take one off first.');
   });
 });
 
