@@ -273,8 +273,9 @@ device setting says (`appearance.split`, Settings → Look → Appearance):
   save and last seal, mirrored on the right page as page numbers are, and
   showing while the pointer is over that page. The colophon keeps the
   book's figures and today's. In the Running head, the tags go to each
-  page's own head. The active page carries a mark, a setting of its own
-  (`appearance.facingMark`): a ribbon over its top edge, its outer corner
+  page's own head. The active page carries a mark, a setting of its own,
+  **Page mark** (`appearance.facingMark`), which a book's bookmarked page
+  wears too (#40, Phase 4): a ribbon over its top edge, its outer corner
   turned down, or a tab at its outer edge, each arriving with a short motion
   (none with reduced motion).
 - **Companion**: the page as it always is, every one of its tools acting on

@@ -53,11 +53,51 @@ test.describe('facing pages', () => {
 
   test('marks the page you’re in, and the mark follows you to the other', async ({ page }) => {
     await split(page);
-    await expect(active(page).locator('.page__mark')).toHaveCount(1);
-    await expect(page.locator('.page__mark')).toHaveCount(1);
+    await expect(active(page).locator('.page__mark--active')).toHaveCount(1);
+    await expect(page.locator('.page__mark--active')).toHaveCount(1);
     await leaves(page).nth(0).locator('.cm-content').click();
-    await expect(leaves(page).nth(0).locator('.page__mark')).toHaveCount(1);
-    await expect(page.locator('.page__mark')).toHaveCount(1);
+    await expect(leaves(page).nth(0).locator('.page__mark--active')).toHaveCount(1);
+    await expect(page.locator('.page__mark--active')).toHaveCount(1);
+  });
+
+  test('stands at the active page’s outer edge, each of the three marks', async ({ page }) => {
+    await split(page);
+    /** Which half of the active leaf the mark stands in. */
+    const half = async () => {
+      const leaf = await active(page).boundingBox();
+      const mark = await active(page).locator('.page__mark--active').boundingBox();
+      if (!leaf || !mark) throw new Error('no mark in sight');
+      return mark.x + mark.width / 2 > leaf.x + leaf.width / 2 ? 'right' : 'left';
+    };
+    for (const mark of ['ribbon', 'dogear', 'tab'] as const) {
+      await chooseSetting(page, 'appearance.facingMark', mark);
+      await leaves(page).nth(1).locator('.cm-content').click();
+      await expect.poll(half).toBe('right');
+      await leaves(page).nth(0).locator('.cm-content').click();
+      await expect.poll(half).toBe('left');
+    }
+  });
+
+  test('centres the ribbon in each page’s outer margin', async ({ page }) => {
+    await split(page);
+    /** How far the ribbon's middle stands from the active page's outer edge, and half its margin. */
+    const inset = async () =>
+      active(page).evaluate((leaf) => {
+        const mark = leaf.querySelector('.page__mark--active')?.getBoundingClientRect();
+        const folio = leaf.querySelector('.page__folio');
+        const box = leaf.getBoundingClientRect();
+        if (!mark || !folio) throw new Error('no mark or folio');
+        // The folio's side padding is the leaf's own margin, --leaf-x.
+        const margin = Number.parseFloat(getComputedStyle(folio).paddingLeft);
+        const middle = mark.left + mark.width / 2;
+        const right = leaf.getAttribute('data-side') === '1';
+        return { from: right ? box.right - middle : middle - box.left, half: margin / 2 };
+      });
+    for (const n of [1, 0]) {
+      await leaves(page).nth(n).locator('.cm-content').click();
+      const { from, half } = await inset();
+      expect(Math.abs(from - half)).toBeLessThan(1);
+    }
   });
 
   test('wears each of the three marks the setting offers', async ({ page }) => {
@@ -65,7 +105,7 @@ test.describe('facing pages', () => {
     for (const mark of ['ribbon', 'dogear', 'tab'] as const) {
       await chooseSetting(page, 'appearance.facingMark', mark);
       await expect(page.locator('html')).toHaveAttribute('data-facing-mark', mark);
-      await expect(active(page).locator('.page__mark')).toBeVisible();
+      await expect(active(page).locator('.page__mark--active')).toBeVisible();
     }
   });
 
