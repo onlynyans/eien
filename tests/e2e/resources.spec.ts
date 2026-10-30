@@ -32,7 +32,8 @@ const FIRST_LIST_MS = 1500;
  * (@codemirror/search and the find bar, backlog #41). CSS 137,624 with the link tooltip's
  * three styles (editor/link.css, backlog #38). JS 2,055,752 with the link tooltip (#38),
  * 2,063,245 with a book scrolling, a chapter a sheet (#40, Phase 2a), 2,081,698 with its
- * links and notes (Phase 2b): Phase 2's own modules,
+ * links and notes (Phase 2b), 2,092,421 beside a note, with Quote (Phase 2c): Phase 2's own
+ * modules,
  * no package (the renderer's JS ships unminified, its comments too).
  */
 const RENDERER = { js: 2_270_000, css: 151_000 };
