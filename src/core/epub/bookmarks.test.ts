@@ -129,3 +129,43 @@ describe('a page’s first words', () => {
     expect(firstWords('Unbroken'.repeat(20), 10)).toBe('UnbrokenUn…');
   });
 });
+
+// QA (#40, Phase 4b): the files a bookmark meets that the cases above don't name.
+describe('a bookmark in a reading file from another version', () => {
+  it('joins a Phase 2 file, which had no bookmarks, its place kept', () => {
+    const phase2 = `${JSON.stringify(
+      { version: 1, chapter: 'c1', place: { chapter: 'c1', offset: 42 } },
+      null,
+      2,
+    )}\n`;
+    expect(bookmarksOf(phase2)).toEqual([]);
+    const after = withBookmarks(phase2, { add: mark('c1', 42) }) as string;
+    expect(JSON.parse(after)).toEqual({
+      version: 1,
+      chapter: 'c1',
+      place: { chapter: 'c1', offset: 42 },
+      bookmarks: [{ chapter: 'c1', offset: 42, words: 'It is a truth' }],
+    });
+    expect(parseReading(after)).toEqual({ chapter: 'c1', offset: 42 });
+    // Taking one off a file that never had any leaves an empty list, and fails nothing.
+    const off = withBookmarks(phase2, { remove: [mark('c1', 42)] }) as string;
+    expect(JSON.parse(off).bookmarks).toEqual([]);
+  });
+
+  it('is read from a file saved with a byte-order mark, and kept as it’s written again', () => {
+    const text = `﻿${JSON.stringify({ version: 1, bookmarks: [mark('a', 4)] })}`;
+    expect(bookmarksOf(text)).toEqual([mark('a', 4)]);
+    expect(bookmarksOf(withBookmarks(text, { add: mark('b', 0) }))).toEqual([
+      mark('a', 4),
+      mark('b', 0),
+    ]);
+  });
+
+  it('never changes a newer Eien’s file, whatever the change, though its bookmarks are read', () => {
+    const newer = JSON.stringify({ version: 2, bookmarks: [mark('a', 4)], ribbons: ['red'] });
+    expect(withBookmarks(newer, { remove: [mark('a', 4)] })).toBeNull();
+    expect(withBookmarks(newer, {})).toBeNull();
+    expect(withReading(newer, { chapter: 'a', offset: 0 })).toBeNull();
+    expect(bookmarksOf(newer)).toEqual([mark('a', 4)]);
+  });
+});

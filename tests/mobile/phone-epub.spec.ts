@@ -5,7 +5,15 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
-import { bytesOutside, listOutside, open, putBytesOutside, putOutside, titles } from './outside';
+import {
+  bytesOutside,
+  listOutside,
+  open,
+  putBytesOutside,
+  putOutside,
+  readOutside,
+  titles,
+} from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'reduce' });
 
@@ -108,6 +116,53 @@ test('a book’s place is kept as the phone goes to the background, and back aft
   await back(page).click();
   await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
   await expect.poll(inSight).toBe(kept);
+});
+
+// QA (#40, Phase 4b): the ⋯ is the phone's only way to a bookmark, so it must take one off too,
+// and what it makes must reach the reading file the desktop reads.
+test('a bookmark made and taken off from the ⋯, kept in the reading file between', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click(); // the list's back: the sidebar
+  const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
+  await expect(book).toBeVisible({ timeout: 10_000 });
+  await book.click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  const choice = () => page.getByRole('menuitemcheckbox', { name: 'Bookmark this page' });
+  const mark = page.locator('.page__mark--bookmark');
+  // The phone's colophon is its own, at the foot of the screen, not inside the page's leaf.
+  const said = page.locator('.colophon__said');
+  /** The bookmarks in the book's one reading file. */
+  const bookmarks = async () => {
+    const [name] = await listOutside(page, 'Eien/Vault/.eien/reading');
+    if (!name) return [];
+    const text = await readOutside(page, `Eien/Vault/.eien/reading/${name}`);
+    return text ? (JSON.parse(text).bookmarks ?? []) : [];
+  };
+
+  await page.getByRole('button', { name: 'More' }).click();
+  await expect(choice()).toHaveAttribute('aria-checked', 'false');
+  await choice().click();
+  await expect(mark).toBeVisible();
+  await expect(said).toHaveText('Bookmarked.');
+  await expect.poll(async () => (await bookmarks()).length).toBe(1);
+  expect((await bookmarks())[0]?.words).toMatch(/It is a truth/u);
+
+  await page.getByRole('button', { name: 'More' }).click();
+  await expect(choice()).toHaveAttribute('aria-checked', 'true');
+  await choice().click();
+  await expect(mark).toBeHidden();
+  await expect(said).toHaveText('Bookmark taken off.');
+  await expect.poll(async () => (await bookmarks()).length).toBe(0);
+  await page.getByRole('button', { name: 'More' }).click();
+  await expect(choice()).toHaveAttribute('aria-checked', 'false');
+  await page.keyboard.press('Escape');
 });
 
 test('a book’s row menu renames it in its row, and trashes it to .eien/trash, whole', async ({

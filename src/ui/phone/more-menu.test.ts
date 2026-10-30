@@ -63,3 +63,28 @@ describe('the ⋯’s Quote (#40, Phase 2c)', () => {
     );
   });
 });
+
+// QA (#40, Phase 4b): the phone has no B and no tools row for a book's bookmark: the ⋯ is its way.
+describe('the ⋯’s bookmark (#40, Phase 4b)', () => {
+  const state = { values: DEFAULT_SETTINGS, sprinting: false, exportTo: () => {} };
+  const bookmark = (items: readonly MenuItem[]) =>
+    items.find((item) => item !== 'separator' && item.label === 'Bookmark this page');
+
+  it('is there with a book in front, a toggle checked while the page in sight has one', () => {
+    const run = vi.fn();
+    for (const bookmarked of [false, true]) {
+      const item = bookmark(moreItems({ ...state, kind: 'epub', bookmarked }, run));
+      if (!item || item === 'separator') throw new Error('no bookmark in the ⋯');
+      expect(item).toMatchObject({ checked: bookmarked, toggle: true });
+      expect(item.disabled ?? false).toBe(false);
+      item.run();
+    }
+    // Either way it sends the one command, which puts one there or takes the page's off.
+    expect(run.mock.calls).toEqual([['bookmark'], ['bookmark']]);
+  });
+
+  it('is never there with a note in front', () => {
+    expect(bookmark(moreItems({ ...state, kind: 'note' }, () => {}))).toBeUndefined();
+    expect(bookmark(moreItems(state, () => {}))).toBeUndefined();
+  });
+});

@@ -2,7 +2,7 @@
 // (./test-lines.ts).
 
 import { afterEach, describe, expect, it } from 'vitest';
-import { firstInSight, piecesOf, showOffset } from './chapter-place';
+import { firstInSight, piecesOf, showOffset, wordsFrom } from './chapter-place';
 import { linesOf } from './test-lines';
 
 /** A chapter of paragraphs, with Eien's own scene break and a picture's words between. */
@@ -50,5 +50,33 @@ describe('a place in a drawn chapter', () => {
     expect(firstInSight(chapter, 0, rectOf)).toBe(30);
     showOffset(chapter, scroller, 0, rectOf);
     expect(scroller.scrollTop).toBe(0);
+  });
+});
+
+// QA (#40, Phase 4b): a bookmark's words, as the list will show them.
+describe('the words from a place', () => {
+  it('read on from the place as a reader does: a space between two blocks, none inside one', () => {
+    const chapter = document.createElement('div');
+    chapter.innerHTML =
+      '<h2>Chapter I</h2><p>It is a <em>truth</em> universally</p><p>acknowledged.</p>';
+    expect(wordsFrom(chapter, 0, 200)).toBe('Chapter I It is a truth universally acknowledged.');
+    // From inside a word of the second block: the rest of it, then on.
+    expect(wordsFrom(chapter, 'Chapter IIt is a tr'.length, 200)).toBe(
+      'uth universally acknowledged.',
+    );
+  });
+
+  it('pass over Eien’s own marks (a scene break), and stop at the length asked', () => {
+    const chapter = chapterOf('One two.', 'Three four.');
+    expect(wordsFrom(chapter, 4, 200)).toBe('two. Three four.');
+    expect(wordsFrom(chapter, 0, 6)).toBe('One tw');
+  });
+
+  it('are none past the chapter’s end, or in a chapter of no words', () => {
+    expect(wordsFrom(chapterOf('One.'), 400, 200)).toBe('');
+    const picture = document.createElement('div');
+    // A picture and Eien's own scene break: nothing of the book's to read.
+    picture.innerHTML = '<img alt=""><div class="scene-break">***</div>';
+    expect(wordsFrom(picture, 0, 200)).toBe('');
   });
 });
