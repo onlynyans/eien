@@ -122,16 +122,35 @@ export class BookCount implements PageCount {
     if (spine < 0) return;
     this.#timer = setTimeout(() => {
       this.#timer = undefined;
-      // Each page still, one after another; then the item, if it's still wanted.
       this.#busy = true;
-      const waits = [...this.#runs.values()].map((run) => run.still);
-      const after = (i: number): void => {
-        const wait = waits[i];
-        if (wait) wait(() => after(i + 1));
-        else void this.#count(spine);
-      };
-      after(0);
+      this.#allStill(() => void this.#count(spine));
     }, 0);
+  }
+
+  /**
+   * `then` once every page asking for the count is still at once: each asked
+   * in turn, and if any had to be waited for, all asked again (one may have
+   * begun a turn meanwhile, or another page joined), until a pass finds every
+   * one still as it's asked.
+   */
+  #allStill(then: () => void): void {
+    const waits = [...this.#runs.values()].map((run) => run.still);
+    let waited = false;
+    const step = (i: number): void => {
+      const wait = waits[i];
+      if (!wait) {
+        if (waited) this.#allStill(then);
+        else then();
+        return;
+      }
+      let now = true;
+      wait(() => {
+        if (!now) waited = true;
+        step(i + 1);
+      });
+      now = false;
+    };
+    step(0);
   }
 
   async #count(spine: number): Promise<void> {
