@@ -92,7 +92,11 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
       const button = this.#buttons.get(id);
       return button?.dataset.aside === undefined && button?.checkVisibility();
     });
-    const steps = [...new Set(order.map((id) => this.#groupOf(id)?.ids ?? [id]))];
+    // A group's commands set aside (a book's views on a note's page) aren't tools here to fold.
+    const drawn = new Set(order);
+    const steps = [...new Set(order.map((id) => this.#groupOf(id)?.ids ?? [id]))].map((ids) =>
+      ids.filter((id) => drawn.has(id)),
+    );
     // A group's step comes when the first of its commands would.
     const rank = (ids: readonly CommandId[]) =>
       Math.min(...ids.map((id) => folds.indexOf(id)).filter((at) => at >= 0));

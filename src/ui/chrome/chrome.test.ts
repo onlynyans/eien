@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chrome, type ChromeOf } from './chrome';
 import { COMMANDS, type CommandId, LAYOUTS, onDesktopIn } from './commands';
 import type { CommandLook } from './host';
-import type { SlotName } from './layout-spec';
+import { type SlotName, VIEWS } from './layout-spec';
 
 const SLOTS: readonly SlotName[] = [
   'top',
@@ -270,9 +270,7 @@ describe('Chrome', () => {
     chrome.mount('runhead');
     const rule = slots.phoneFoot.querySelector('.host__rule') as HTMLElement;
     expect(rule.hidden).toBe(false);
-    for (const id of ['view.live', 'view.source', 'view.reading'] as const) {
-      looks.set(id, { aside: true });
-    }
+    for (const id of (VIEWS as { ids: readonly CommandId[] }).ids) looks.set(id, { aside: true });
     chrome.refresh();
     expect(rule.hidden).toBe(true);
     expect((slots.phoneFoot.querySelector('.host__group') as HTMLElement).hidden).toBe(true);

@@ -5,7 +5,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chrome, type ChromeOf } from './chrome';
-import type { CommandId } from './commands';
+import { actsOn, type CommandId } from './commands';
 import { contentBox, folded, within } from './fold';
 import type { SlotName } from './layout-spec';
 import { FORMAT_FOLDS } from './layout-spec';
@@ -26,12 +26,14 @@ let slots: Record<SlotName, HTMLElement>;
 let of: ChromeOf;
 let chrome: Chrome;
 
+/** Out of the row: folded, or set aside (a book's own tools, on a note's page). */
+const out = (button: HTMLElement) => button.hidden || button.hasAttribute('data-aside');
 const inSight = (bar: HTMLElement) =>
-  [...bar.querySelectorAll('button')].filter((button) => !button.hidden).length;
+  [...bar.querySelectorAll('button')].filter((button) => !out(button)).length;
 const bar = () => slots.pageBar;
 const shown = (within = bar()) =>
   [...within.querySelectorAll<HTMLElement>('[data-command]')]
-    .filter((button) => !button.hidden)
+    .filter((button) => !out(button))
     .map((button) => button.dataset.command);
 const mores = () => [...bar().querySelectorAll<HTMLButtonElement>('.host__more')];
 const more = () => mores().find((button) => !button.hidden);
@@ -51,12 +53,15 @@ beforeEach(() => {
   of = {
     mac: true,
     slots,
+    // A note's page: a book's own tools set aside, as the window sets them (../vault/command-looks.ts).
     look: (id) =>
-      id === 'focus'
-        ? { pressed: true }
-        : id.startsWith('view.')
-          ? { pressed: id === 'view.live' }
-          : {},
+      !actsOn(id, 'note')
+        ? { aside: true }
+        : id === 'focus'
+          ? { pressed: true }
+          : id.startsWith('view.')
+            ? { pressed: id === 'view.live' }
+            : {},
     send: vi.fn(),
     local: vi.fn(),
     lost: vi.fn(),

@@ -60,7 +60,8 @@ export function bookPages(of: BookPagesOf): BookPages {
       const was = from;
       if (!was) return;
       if (was.spine === of.spine()) page.sheet.showPlace(was.offset);
-      else void of.draw(was.spine, was.offset);
+      // Back into the chapter it came from: the next turn waits for it to be drawn.
+      else return of.draw(was.spine, was.offset).then(() => {});
     },
     how() {
       const values = of.values();
