@@ -100,11 +100,13 @@ describe('the place in a chapter', () => {
     });
     expect(side.place).toMatchObject({ spine: 1, offset: 200 });
     const figures = side.page.foot.figures.map((figure) => figure.textContent);
-    // No step back to offer (no link followed), then the chapter's place, its page and how far through.
+    // No step back to offer (no link followed), then the chapter's place, its page, no bookmark
+    // here, and how far through.
     expect(figures[0]).toBe('');
     expect(figures[1]).toBe('2 of 4');
-    expect(figures[3]).toBe('20% of the chapter');
-    expect(figures[4]).toMatch(/^\d+% of the book$/u);
+    expect(figures[3]).toBe('');
+    expect(figures[4]).toBe('20% of the chapter');
+    expect(figures[5]).toMatch(/^\d+% of the book$/u);
   });
 
   it('says the printed page it’s on, at once, the book’s pages by its last (Phase 4)', async () => {

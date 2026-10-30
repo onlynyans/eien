@@ -49,6 +49,7 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
       page.foot.through(fraction, book);
       const { at, of: count } = page.sheet.page;
       page.edges.through(book, at, count);
+      page.leaf.style.setProperty('--edges-after', String(page.edges.after));
     },
     placed(start) {
       from = start;

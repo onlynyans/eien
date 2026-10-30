@@ -132,7 +132,9 @@ describe('the Look control (#49)', () => {
 
   it('folds last of the tools, before the views', () => {
     const at = TOOL_FOLDS.indexOf('look');
-    expect(TOOL_FOLDS[at - 1]).toBe('focus');
+    // A book's bookmark (#40, Phase 4b) just before it.
+    expect(TOOL_FOLDS[at - 1]).toBe('bookmark');
+    expect(TOOL_FOLDS[at - 2]).toBe('focus');
     expect(TOOL_FOLDS[at + 1]).toBe('view.live');
   });
 

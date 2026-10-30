@@ -2,9 +2,10 @@
 // syncs: `.eien/reading/<key>.json`, the key from what the book holds
 // (./epub.ts epubKey), so a book renamed or moved keeps it. The chapter
 // you were in, and your place in it (Phase 2: an offset in its words,
-// ./place.ts); bookmarks and highlights join it later (Phases 4, 5). Every
-// field this Eien doesn't know is kept as it was, so an older Eien never
-// drops a newer one's.
+// ./place.ts); its bookmarks (Phase 4b, ./bookmarks.ts), and highlights
+// later (Phase 5). Every field this Eien doesn't know is kept as it was, so
+// an older Eien never drops a newer one's; and a file this Eien can't read
+// (one a sync broke, say) is never written over, so nothing in it is lost.
 
 import { withoutBom } from '../text';
 
@@ -20,7 +21,7 @@ export interface Reading {
   readonly offset: number;
 }
 
-interface ReadingFile {
+export interface ReadingFile {
   version?: unknown;
   chapter?: unknown;
   /**
@@ -33,7 +34,7 @@ interface ReadingFile {
 }
 
 /** The file's fields, or null for no file, or one that isn't a JSON object. */
-function fileOf(text: string | null): ReadingFile | null {
+export function readingFile(text: string | null): ReadingFile | null {
   if (!text) return null;
   try {
     const data: unknown = JSON.parse(withoutBom(text));
@@ -56,24 +57,41 @@ function offsetIn(place: unknown, chapter: string): number {
 
 /** What the file's text says; nothing kept for no file, or one that can't be read. */
 export function parseReading(text: string | null): Reading {
-  const file = fileOf(text);
+  const file = readingFile(text);
   const chapter = typeof file?.chapter === 'string' && file.chapter !== '' ? file.chapter : null;
   return { chapter, offset: chapter === null ? 0 : offsetIn(file?.place, chapter) };
 }
 
 /** The newest version of the file this Eien writes. */
-const VERSION = 1;
+export const READING_VERSION = 1;
+
+/** How the file stands: none yet, one this Eien keeps, a newer Eien's, or one it can't read. */
+export type ReadingKept = 'none' | 'kept' | 'newer' | 'unreadable';
+
+export function readingKept(text: string | null): ReadingKept {
+  if (!text) return 'none';
+  const file = readingFile(text);
+  if (!file) return 'unreadable';
+  return typeof file.version === 'number' && file.version > READING_VERSION ? 'newer' : 'kept';
+}
 
 /**
- * The file's text with `reading` in it, every other field as it was; a file
- * that can't be read, begun again. Null for a file a newer Eien wrote (spec
- * §2, Formats): it's read for what it can, and never written over.
+ * The file's fields to write again, or null for one that mustn't be: a newer
+ * Eien's (spec §2, Formats), read for what it can, or one this Eien can't
+ * read, left as it is until it's fixed or deleted. No file begins empty.
  */
+export function writable(text: string | null): ReadingFile | null {
+  const kept = readingKept(text);
+  if (kept === 'newer' || kept === 'unreadable') return null;
+  return readingFile(text) ?? {};
+}
+
+/** The file's text with `reading` in it, every other field as it was; null where it mustn't be written. */
 export function withReading(text: string | null, reading: Reading): string | null {
-  const file = fileOf(text) ?? {};
-  if (typeof file.version === 'number' && file.version > VERSION) return null;
+  const file = writable(text);
+  if (!file) return null;
   const { version: _version, chapter: _chapter, place: _place, ...rest } = file;
   const { chapter, offset } = reading;
   const place = chapter === null ? {} : { place: { chapter, offset: Math.max(0, offset) } };
-  return `${JSON.stringify({ version: VERSION, ...rest, chapter, ...place }, null, 2)}\n`;
+  return `${JSON.stringify({ version: READING_VERSION, ...rest, chapter, ...place }, null, 2)}\n`;
 }

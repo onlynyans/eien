@@ -7,6 +7,7 @@
 import { SPRINT_MINUTES } from '../../core/counters';
 import { formatCommand } from '../../core/format';
 import type { ExportFormat, MenuCommand } from '../../platform/bridge';
+import { isEpub } from '../epub/epub-side-types';
 import { focusList } from '../list/list';
 import type { SearchField } from '../list/search-field';
 import type { PaneLayout } from '../shell/panes';
@@ -54,6 +55,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     note?.page.setMode(command.slice('view:'.length) as 'live' | 'source' | 'reading');
   } else if (command === 'view:pages' || command === 'view:scroll') {
     ctx.bookView(command === 'view:pages' ? 'pages' : 'scroll');
+  } else if (command === 'bookmark') {
+    const { active } = ctx.pages;
+    if (isEpub(active)) void active.bookmark();
   } else if (command === 'panes:sidebar') panes.toggle('sidebar');
   else if (command === 'panes:list') panes.toggle('list');
   else if (command === 'focus:sidebar') {

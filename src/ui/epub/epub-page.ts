@@ -2,20 +2,23 @@
 // its frame, the note's own sheet with the book's folders above it and its ×
 // while the window is split, holding a chapter (./chapter-sheet.ts: drawn,
 // its place kept, its links and words); its colophon (./book-foot.ts); the
-// shelf's look worn on its leaf, the scroll style among it; and its keys, Q
-// to quote and ⌘[ or Alt+← back. A book that won't open says why on the
+// shelf's look worn on its leaf, the scroll style among it; its bookmark's
+// mark (Phase 4b, the Page mark's look); and its keys, Q to quote, B to
+// bookmark, and ⌘[ or Alt+← back. A book that won't open says why on the
 // sheet. Find comes with Phase 5: until then it does nothing here, as a
 // note's does where its text isn't shown.
 
 import type { SettingValues } from '../../core/config';
 import { h } from '../dom';
 import { type PageFind, type PaneLeaf, pageLeaf } from '../page/page-leaf';
+import { pageMark } from '../page/page-mark';
 import { quietButton } from '../quiet-button';
 import { leafLook } from '../settings/look-properties';
 import { BookFoot } from './book-foot';
 import { ChapterSheet, type ChapterSheetOf } from './chapter-sheet';
 import { LeafEdges } from './leaf-edges';
 import { pageKey, pageTap } from './page-keys';
+import { STAYS } from './turn/page-copy';
 
 /** Where a key is the writer's own: a note's editor, a field. */
 const FIELD = '.editor-host, input, textarea, [contenteditable]';
@@ -29,6 +32,8 @@ export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
   edge(last: boolean): void;
   /** Back where the last link was followed from. */
   back(): void;
+  /** B: the page in sight bookmarked, or its bookmark taken off (Phase 4b). */
+  bookmark(): void;
 }
 
 export class EpubPage implements PaneLeaf {
@@ -54,6 +59,8 @@ export class EpubPage implements PaneLeaf {
     attrs: { tabindex: '-1' },
   });
   readonly #scroll: HTMLElement;
+  /** A bookmarked page's mark, at the sheet's outer top; it stays as a page turns (a turn's copies leave it out). */
+  readonly #mark = pageMark('bookmark', 'right');
   #name = '';
   /** The page's zoom last worn; null before the first. */
   #zoom: number | null = null;
@@ -86,9 +93,12 @@ export class EpubPage implements PaneLeaf {
     });
     // The chapter's links too, each named for the tooltip (./book-links.ts nameLinks).
     this.tipped = [closer, this.chapter, ...this.edges.turns];
+    this.#mark.hidden = true;
     this.#sheet = h(
       'article',
       { class: 'sheet epub-sheet quiet-row' },
+      // The mark's holder keeps to the top of the sheet in sight as a chapter scrolls (./bookmark.css).
+      h('span', { class: 'epub-sheet__mark', attrs: { [STAYS]: '' } }, this.#mark),
       closer,
       h('div', { class: 'sheet__head' }, this.#crumbs),
       this.#notice,
@@ -165,6 +175,13 @@ export class EpubPage implements PaneLeaf {
     this.sheet.reshow();
   }
 
+  /** The page in sight bookmarked or not: its mark, arriving anew on each page that has one, and the folio's word. */
+  bookmarked(on: boolean): void {
+    if (this.#mark.hidden === !on) return;
+    this.#mark.hidden = !on;
+    this.foot.bookmarked(on);
+  }
+
   /** Words on the sheet in the chapter's place (a book or a chapter that won't open), or none. */
   notice(words: string | null): void {
     this.#notice.hidden = words === null;
@@ -223,6 +240,12 @@ export class EpubPage implements PaneLeaf {
     if (plain && event.key.toLowerCase() === 'q' && this.sheet.selection) {
       event.preventDefault();
       if (!event.repeat) this.#of.quote();
+      return;
+    }
+    // B bookmarks the page in sight, or takes its bookmark off (Phase 4b); held, once.
+    if (plain && event.key.toLowerCase() === 'b' && !this.#sheet.hidden) {
+      event.preventDefault();
+      if (!event.repeat) this.#of.bookmark();
       return;
     }
     const back =

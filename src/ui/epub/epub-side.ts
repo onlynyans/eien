@@ -3,8 +3,9 @@
 // core/epub, one chapter drawn at a time, and the place in the book (its
 // chapter, and the line in it, Phase 2) kept in the reading state's file
 // whenever the writer moves to another chapter or the page comes to rest;
-// words chosen in it quoted in a note (Phase 2c); and the book counted for
-// its page numbers (Phase 4, ./book-count.ts). The book's file is only ever
+// words chosen in it quoted in a note (Phase 2c); the book counted for its
+// page numbers (Phase 4, ./book-count.ts); and its bookmarks
+// (./page-bookmarks.ts). The book's file is only ever
 // read. What a side is: ./epub-side-types.ts.
 
 import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
@@ -22,12 +23,17 @@ import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
 import { EpubPage } from './epub-page';
 import type { EpubPlace, EpubSide, EpubSideOf } from './epub-side-types';
+import { PageBookmarks } from './page-bookmarks';
 
 export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | null): EpubSide {
   const page = new EpubPage({
     close: hooks.close,
     moved: (fraction) => placing.moved(fraction),
-    placed: (from, to) => placing.placed(from, to),
+    placed: (from, to) => {
+      placing.placed(from, to);
+      marks.placed(from, to);
+    },
+    bookmark: () => void bookmark(),
     turn: (way, held) => pages.turn(way, held),
     edge: (last) => pages.edge(last),
     rested: (offset) => keep(offset),
@@ -54,8 +60,23 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     drawn = null;
     stopCount();
     count = null;
+    marks.clear();
   };
   const placing = bookPlace({ page, epub: () => epub, spine: () => spine, count: () => count });
+  const marks = new PageBookmarks({
+    page,
+    store: of.reading,
+    chapter: () => (spine >= 0 ? (epub?.spine[spine]?.path ?? null) : null),
+    still: (then) => pages.whenStill(then),
+    changed: () => of.looks(),
+  });
+
+  /** The page in sight bookmarked, or its bookmark taken off: measured where it stands now, any turn landed. */
+  function bookmark(): Promise<void> {
+    pages.finish();
+    page.sheet.keep();
+    return marks.toggle();
+  }
   const links = bookFollow({
     page,
     epub: () => epub,
@@ -209,9 +230,11 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
         () => placing.counted(),
       );
       page.show(nameOf(epub, next), crumbsOf(next), epub.language);
-      const kept = at === null ? await of.reading.read(epub.key) : null;
+      // Its bookmarks whatever place it opens at (⇄, a second page); the place kept only if none was given.
+      const state = await of.reading.read(epub.key);
       if (opening !== turn || disposed) return;
-      const start = startOf(epub, at === null ? null : { spine: at, offset }, kept);
+      marks.opened(epub.key, state);
+      const start = startOf(epub, at === null ? null : { spine: at, offset }, state.reading);
       await draw(start.index, false, start.offset);
     },
     go: async (index) => {
@@ -240,6 +263,13 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     },
     keep: () => page.sheet.keep(),
     labelAt: (at, offset) => placing.labelAt(at, offset),
+    get bookmarked() {
+      return marks.on;
+    },
+    get bookmarks() {
+      return marks.all;
+    },
+    bookmark,
     quote,
     follow(next) {
       values = next;

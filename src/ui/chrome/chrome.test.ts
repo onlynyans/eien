@@ -226,6 +226,9 @@ describe('Chrome', () => {
     expect(ids()).toBe('format-bar');
     arrow('ArrowRight');
     expect(ids()).toBe('focus');
+    // A book's bookmark (#40, Phase 4b): drawn here, with no page to set it aside.
+    arrow('ArrowRight');
+    expect(ids()).toBe('bookmark');
     arrow('ArrowRight');
     expect(ids()).toBe('look');
     arrow('ArrowRight');

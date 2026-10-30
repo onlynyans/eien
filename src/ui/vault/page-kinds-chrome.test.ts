@@ -96,7 +96,7 @@ describe('the commands for a note', () => {
     expect(actsOn('page.close', 'epub')).toBe(true);
     expect(actsOn('scheme', 'epub')).toBe(true);
     // A book's own, the other way: set aside while a note is the active page.
-    expect(BOOK_COMMANDS).toEqual(['view.pages', 'view.scroll']);
+    expect(BOOK_COMMANDS).toEqual(['view.pages', 'view.scroll', 'bookmark']);
     for (const id of BOOK_COMMANDS) expect(actsOn(id, 'note')).toBe(false);
   });
 
@@ -219,7 +219,7 @@ describe('the commands for a note', () => {
 
   it('greyed in the menu bar are every note’s control’s, and the menu’s own a note’s page alone has', () => {
     // With a note in front, a book's own are greyed (#40, Phase 3b).
-    expect(menuOff('note')).toEqual(['view:pages', 'view:scroll']);
+    expect(menuOff('note')).toEqual(['view:pages', 'view:scroll', 'bookmark']);
     const off = menuOff('epub');
     const sends = COMMANDS.flatMap((command) =>
       'on' in command && command.on === 'note' && 'sends' in command ? [command.sends] : [],

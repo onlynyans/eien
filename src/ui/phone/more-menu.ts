@@ -20,6 +20,8 @@ export interface MoreState {
   readonly kind?: PageKind;
   /** A book's: the words chosen in it quoted in the note (#40, Phase 2c). */
   quote?(): void;
+  /** A book's: whether the page in sight is bookmarked (Phase 4b), its choice checked. */
+  readonly bookmarked?: boolean;
 }
 
 export function moreItems(state: MoreState, run: (command: MenuCommand) => void): MenuItem[] {
@@ -44,6 +46,15 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     // A book's own, where the selection bar would be on the desktop (the system's callout is over the words).
     ...(state.kind === 'epub' && state.quote
       ? [{ label: 'Quote in the note', run: state.quote } satisfies MenuItem]
+      : []),
+    ...(state.kind === 'epub'
+      ? [
+          {
+            ...item('Bookmark this page', 'bookmark'),
+            checked: state.bookmarked === true,
+            toggle: true,
+          } satisfies MenuItem,
+        ]
       : []),
     'separator',
     item('Seal', 'seal'),

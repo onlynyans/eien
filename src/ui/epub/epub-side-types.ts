@@ -1,7 +1,7 @@
 // What a page holding an EPUB is (#40; ./epub-side.ts makes one), apart
 // from how it's made: what the pages, the list and the shelf ask of it.
 
-import type { Epub } from '../../core/epub';
+import type { Bookmark, Epub } from '../../core/epub';
 import type { Place, Side } from '../vault/page-side';
 import type { BookCounts } from './book-count';
 import type { BookOpenOf } from './book-open';
@@ -19,6 +19,8 @@ export interface EpubSideOf extends BookOpenOf {
   readonly reading: ReadingStore;
   /** The window's counts of its books, for their page numbers (Phase 4). */
   readonly counts: BookCounts;
+  /** Whether the page in sight is bookmarked changed (Phase 4b): the tools show it. */
+  looks(): void;
   /** Another book or chapter is on the page: the list and the shelf mark it. */
   changed(): void;
   /**
@@ -49,6 +51,12 @@ export interface EpubSide extends Side {
   keep(): void;
   /** The page `offset` into spine item `spine` is on, as its label says it (Phase 4); null for none known. */
   labelAt(spine: number, offset: number): string | null;
+  /** Whether the page in sight holds a bookmark (Phase 4b). */
+  readonly bookmarked: boolean;
+  /** The book's bookmarks, in the file's order. */
+  readonly bookmarks: readonly Bookmark[];
+  /** The page in sight bookmarked, or its bookmark taken off. */
+  bookmark(): Promise<void>;
   /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */
   quote(kept?: boolean): Promise<void>;
 }

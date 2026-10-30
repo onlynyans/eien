@@ -226,7 +226,7 @@ describe('two pages too narrow for the room', () => {
 });
 
 describe('a page’s own tools', () => {
-  it('are its kind’s in Facing pages: a note’s its seals, the other kind’s its × alone', async () => {
+  it('are its kind’s in Facing pages: a note’s its seals, the other kind’s its bookmark and ×', async () => {
     const { pages } = await noteAndStandIn({ 'appearance.split': 'facing' });
     const own = pageHosts({
       pages,
@@ -244,12 +244,16 @@ describe('a page’s own tools', () => {
       'Copy as HTML',
       'Close this page',
     ]);
-    expect(labels(standIn?.page.folio.tools)).toEqual(['Close this page']);
+    // The other kind's own: its bookmark (#40, Phase 4b) and its ×.
+    expect(labels(standIn?.page.folio.tools)).toEqual(['Bookmark this page', 'Close this page']);
     // The note's page given to the other kind: its host is drawn anew, for that kind.
     pages.activate(note as Side);
     await pages.open('Atlas.stand');
     own.sync();
-    expect(labels(pages.sides[0]?.page.folio.tools)).toEqual(['Close this page']);
+    expect(labels(pages.sides[0]?.page.folio.tools)).toEqual([
+      'Bookmark this page',
+      'Close this page',
+    ]);
   });
 
   it('are its kind’s as a companion: no note’s ⋯ on the other kind', async () => {

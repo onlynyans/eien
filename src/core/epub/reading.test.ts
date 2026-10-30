@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseReading, readingPath, withReading } from './reading';
+import { parseReading, readingKept, readingPath, withReading } from './reading';
 
 describe('the reading state’s file', () => {
   it('lives in .eien/reading, named by the book’s key', () => {
@@ -45,7 +45,8 @@ describe('the reading state’s file', () => {
       place: { chapter: 'b', offset: 40 },
     });
     expect(text.endsWith('}\n')).toBe(true);
-    expect(JSON.parse(withReading('not json', { chapter: 'c', offset: 0 }) as string)).toEqual({
+    // No file, or an empty one, begins anew.
+    expect(JSON.parse(withReading('', { chapter: 'c', offset: 0 }) as string)).toEqual({
       version: 1,
       chapter: 'c',
       place: { chapter: 'c', offset: 0 },
@@ -54,6 +55,15 @@ describe('the reading state’s file', () => {
       chapter: 'd',
       offset: 9,
     });
+  });
+
+  it('never writes over a file it can’t read: its bookmarks stay until it’s fixed or deleted (Phase 4b)', () => {
+    for (const text of ['not json', '[1]', '{"bookmarks": [', '"a"'])
+      expect(withReading(text, { chapter: 'c', offset: 0 }), text).toBeNull();
+    expect(readingKept('not json')).toBe('unreadable');
+    expect(readingKept(null)).toBe('none');
+    expect(readingKept('{"version": 1}')).toBe('kept');
+    expect(readingKept('{"version": 2}')).toBe('newer');
   });
 
   it('never writes over a file a newer Eien wrote, and still reads what it can', () => {

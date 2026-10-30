@@ -1,0 +1,41 @@
+/* A book's bookmark on its page (#40, Phase 4b, ./page-bookmarks.ts): the Page
+   mark's own look (../page/page-mark.css) at the sheet's outer top. Its holder
+   is a line of no height, the sheet's whole width, sticking to the top of the
+   sheet in sight, so as a chapter scrolls the mark keeps to the page you see;
+   in pages the sheet is the page. */
+.epub-sheet__mark {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: block;
+  height: 0;
+  margin: calc(var(--eien-sheet-pad-top) * -1) calc(var(--pad-x) * -1) var(--eien-sheet-pad-top);
+  pointer-events: none;
+}
+[data-view="pages"] .epub-sheet__mark {
+  flex: none;
+}
+/* In pages, the edge tab stands past the fore-edge's pages to read, never under them (./leaf-edges.ts). */
+:root[data-facing-mark="tab"] [data-view="pages"] .page__mark--bookmark[data-edge="right"] {
+  right: calc(
+    (var(--eien-space-1) + 2 * var(--eien-hairline) + var(--edges-after, 0) * var(--eien-mark-w)) *
+    -1
+  );
+}
+/* With the page edge to edge (Page frame Full) there's nothing past its edge: the tab stands inside it. */
+:root[data-facing-mark="tab"] [data-frame="full"] .page__mark--bookmark[data-edge="right"] {
+  right: 0;
+  border-radius: var(--eien-radius-s) 0 0 var(--eien-radius-s);
+}
+
+/* Facing pages (decided 2026-10-30): there the mark says "the page you're in", so a
+   bookmarked page wears none, and its folio says "bookmarked" instead. */
+:root[data-split="facing"] .page__pages[data-two] .epub-sheet__mark {
+  display: none;
+}
+.colophon__bookmarked {
+  display: none;
+}
+:root[data-split="facing"] .page__pages[data-two] .page__folio .colophon__bookmarked:not(:empty) {
+  display: inline;
+}

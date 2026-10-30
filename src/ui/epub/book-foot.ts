@@ -18,6 +18,8 @@ export class BookFoot implements LeafFoot {
   readonly #back: HTMLButtonElement;
   readonly #at = h('span', { class: 'colophon__chapter count' });
   readonly #page = h('span', { class: 'colophon__page count' });
+  /** "bookmarked": said only where the page can't wear its mark, a book in Facing pages' folio (./epub.css). */
+  readonly #bookmarked = h('span', { class: 'colophon__bookmarked count' });
   readonly #inChapter = h('span', { class: 'colophon__through count' });
   readonly #inBook = h('span', { class: 'colophon__through count' });
   readonly #saying = new Notice(() => {
@@ -35,7 +37,14 @@ export class BookFoot implements LeafFoot {
       },
       on: { click: back },
     });
-    this.figures = [this.#back, this.#at, this.#page, this.#inChapter, this.#inBook];
+    this.figures = [
+      this.#back,
+      this.#at,
+      this.#page,
+      this.#bookmarked,
+      this.#inChapter,
+      this.#inBook,
+    ];
   }
 
   /** Whether there's a step back to offer. */
@@ -51,6 +60,11 @@ export class BookFoot implements LeafFoot {
   /** The page the place is on, as said ("page 212 of 2,450"), or nothing: none known yet. */
   page(words: string): void {
     this.#page.textContent = words;
+  }
+
+  /** Whether the page in sight is bookmarked (Phase 4b). */
+  bookmarked(on: boolean): void {
+    this.#bookmarked.textContent = on ? 'bookmarked' : '';
   }
 
   /** How far through the chapter and the book, 0 to 1 each. */
@@ -72,7 +86,7 @@ export class BookFoot implements LeafFoot {
 
   /** No chapter: nothing said of one. */
   clear(): void {
-    for (const figure of [this.#at, this.#page, this.#inChapter, this.#inBook])
+    for (const figure of [this.#at, this.#page, this.#bookmarked, this.#inChapter, this.#inBook])
       figure.textContent = '';
     this.backTo(null);
   }

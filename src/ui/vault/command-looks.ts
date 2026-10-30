@@ -9,6 +9,7 @@ import { type FormatCommandId, headingLevel } from '../../core/format';
 import type { Layout } from '../chrome/commands';
 import { actsOn, type CommandId, commandOf } from '../chrome/commands';
 import type { CommandLook } from '../chrome/host';
+import { isEpub } from '../epub/epub-side-types';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import { COMPARE_WORD } from '../versions/seal-line';
@@ -89,10 +90,14 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
     }
   };
 
-  /** A book's commands: the shelf's view pressed. */
-  const bookLook = (id: CommandId): CommandLook => {
+  /** A book's commands: the shelf's view pressed; the bookmark pressed on a bookmarked page. */
+  const bookLook = (id: CommandId, side: Side): CommandLook => {
     if (id === 'view.pages' || id === 'view.scroll')
       return { pressed: settings.values['epub.view'] === id.slice('view.'.length) };
+    if (id === 'bookmark') {
+      const on = isEpub(side) && side.bookmarked;
+      return { pressed: on, tip: on ? 'Take the bookmark off' : undefined };
+    }
     return {};
   };
 
@@ -148,6 +153,6 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
   return (id, side) => {
     // A command for another kind of page than the one it would act on: there, it does nothing.
     if (!actsOn(id, side.kind)) return { aside: true };
-    return windowLook(id) ?? (isNote(side) ? noteLook(id, side) : bookLook(id));
+    return windowLook(id) ?? (isNote(side) ? noteLook(id, side) : bookLook(id, side));
   };
 }
