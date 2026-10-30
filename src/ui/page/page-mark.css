@@ -1,5 +1,5 @@
 /* The page's mark (./page-mark.ts; the Page mark setting, as data-facing-mark):
-   Facing pages' active page, and a book's bookmarked page (#40). None of them the
+   Facing pages' active page, and for a book's bookmark too (#40, Phase 4b). None of them the
    seal's colour, each arriving with its own short motion (none with reduced motion,
    ../theme). It stands at the page's outer edge (data-edge), the ribbon centred in
    the outer margin, --mark-margin: the sheet's own, or a facing leaf's. */
@@ -80,7 +80,7 @@
   }
 }
 
-/* At the right edge (a facing book's right page, a book's lone page): each mirrored. */
+/* At the right edge (Facing pages' right page): each mirrored. */
 :root[data-facing-mark="ribbon"] .page__mark[data-edge="right"] {
   left: auto;
   right: calc((var(--mark-margin) - var(--eien-space-2)) / 2);

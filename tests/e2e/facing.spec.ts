@@ -78,6 +78,28 @@ test.describe('facing pages', () => {
     }
   });
 
+  test('centres the ribbon in each page’s outer margin', async ({ page }) => {
+    await split(page);
+    /** How far the ribbon's middle stands from the active page's outer edge, and half its margin. */
+    const inset = async () =>
+      active(page).evaluate((leaf) => {
+        const mark = leaf.querySelector('.page__mark--active')?.getBoundingClientRect();
+        const folio = leaf.querySelector('.page__folio');
+        const box = leaf.getBoundingClientRect();
+        if (!mark || !folio) throw new Error('no mark or folio');
+        // The folio's side padding is the leaf's own margin, --leaf-x.
+        const margin = Number.parseFloat(getComputedStyle(folio).paddingLeft);
+        const middle = mark.left + mark.width / 2;
+        const right = leaf.getAttribute('data-side') === '1';
+        return { from: right ? box.right - middle : middle - box.left, half: margin / 2 };
+      });
+    for (const n of [1, 0]) {
+      await leaves(page).nth(n).locator('.cm-content').click();
+      const { from, half } = await inset();
+      expect(Math.abs(from - half)).toBeLessThan(1);
+    }
+  });
+
   test('wears each of the three marks the setting offers', async ({ page }) => {
     await split(page);
     for (const mark of ['ribbon', 'dogear', 'tab'] as const) {

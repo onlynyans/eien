@@ -34,7 +34,7 @@ export class PagesRow {
   /** Where the split's share is worn, and the furniture told which page to stand over: the pane's main grid. */
   readonly #wear: HTMLElement;
   readonly #edge: HTMLButtonElement;
-  /** The active page's mark (Facing pages'): at its outer edge, the left page's left. */
+  /** The active page's mark (Facing pages'): its edge set as it's placed, the active page's outer one. */
   readonly #mark = pageMark('active', 'left');
   readonly #divider: Divider;
   readonly #events: RowEvents;
