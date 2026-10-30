@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { closeMenu } from '../menu/menu';
-import { noteIn } from './book-links';
+import { nameLinks, noteIn } from './book-links';
 import { copyWords, markupOf, plainText, wordsIn } from './book-words';
 import { EpubPage } from './epub-page';
 import { sideWith } from './test-side';
@@ -198,9 +198,13 @@ describe('a hostile book’s links', () => {
     await side.open('a.epub');
     const chapter = side.page.chapter;
     expect(chapter.textContent).toContain('way 0');
-    for (const a of chapter.querySelectorAll('a[href]')) {
-      expect(a.getAttribute('href')).toMatch(/^#book\//u);
-    }
+    // Only the book's own, and the web's for the browser; every other way stays words.
+    expect([...chapter.querySelectorAll('a[href]')].map((a) => a.getAttribute('href'))).toEqual([
+      expect.stringMatching(/^#book\//u),
+      expect.stringMatching(/^#book\//u),
+      'https://example.com/',
+      expect.stringMatching(/^#book\//u),
+    ]);
     expect(chapter.querySelectorAll('[id], [name], [onclick], script')).toHaveLength(0);
     expect(document.getElementById('settings')).toBeNull();
     shown.mockClear();
@@ -212,6 +216,54 @@ describe('a hostile book’s links', () => {
     press(chapter.querySelector('a[href$=":n-bad"]'));
     await vi.waitFor(() => expect(note()?.textContent).toContain('A note that runs nothing.'));
     expect(note()?.querySelectorAll('[onclick], script')).toHaveLength(0);
+  });
+});
+
+describe('a link’s name in the tooltip, and the web’s', () => {
+  it('names a chapter, a place the contents name, a note, and the web’s address', async () => {
+    const { side } = sideWith(book('links.epub'));
+    await side.open('a.epub');
+    const chapter = side.page.chapter;
+    const tip = (words: string) =>
+      [...chapter.querySelectorAll<HTMLElement>('a[href]')].find((a) => a.textContent === words)
+        ?.dataset.tip;
+    expect(tip('see Chapter III')).toBe('Chapter III');
+    expect(tip('1')).toBe('Note 1');
+    const web = document.createElement('a');
+    web.href = 'https://www.gutenberg.org/ebooks/1342';
+    web.textContent = 'Gutenberg';
+    const mail = document.createElement('a');
+    mail.href = 'mailto:jane@example.com';
+    mail.textContent = 'Jane';
+    chapter.append(web, mail);
+    nameLinks(chapter, side.epub as never);
+    expect(tip('Gutenberg')).toBe('www.gutenberg.org/ebooks/1342');
+    expect(tip('Jane')).toBe('jane@example.com');
+    // A place the contents name, beside its chapter's.
+    const epub = side.epub as NonNullable<typeof side.epub>;
+    const place = document.createElement('a');
+    place.setAttribute('href', '#book/OEBPS%2Ftext%2Fendnotes.xhtml:n1');
+    place.textContent = 'the note';
+    chapter.append(place);
+    nameLinks(chapter, {
+      ...epub,
+      contents: [
+        ...epub.contents,
+        { ...epub.contents[3], title: 'The first note', fragment: 'n1' } as never,
+      ],
+    });
+    expect(tip('the note')).toBe('Notes · The first note');
+  });
+
+  it('opens a web or mail link in the system’s browser, as a note’s does, the window never going there', async () => {
+    const opened = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const { side } = sideWith(book('links-hostile.epub'));
+    await side.open('a.epub');
+    const web = side.page.chapter.querySelector('a[href="https://example.com/"]');
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    web?.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(opened).toHaveBeenCalledExactlyOnceWith('https://example.com/');
   });
 });
 

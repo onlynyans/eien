@@ -1,8 +1,10 @@
 // What a book's chapter may show (#40), as the shared cleaner's rules
 // (core/html/clean.ts). Its pictures come only from its own zip, in the
-// formats a note's do; a link keeps its address only when it lands on one of
-// the book's own chapters (./book-link.ts, Phase 2b), and the places a link
-// may name are kept, so nothing on the page reaches outside the book. And
+// formats a note's do; a link keeps its address when it lands on one of the
+// book's own chapters (./book-link.ts, Phase 2b), or goes to the web or mail,
+// which the system's browser opens as it does a note's (decided 2026-10-29);
+// anything else keeps its words alone. The places a link may name are kept,
+// and nothing on the page loads from outside the book. And
 // its parts get names, read off the publisher's markup, for the book's
 // stylesheet: a chapter's title, a scene break, an epigraph, a plate, a
 // caption, a note and its reference.
@@ -24,6 +26,8 @@ const CAPTION = /\bcaption\b/iu;
 /** A note's reference (EPUB 3's epub:type, DPUB-ARIA's role), and a note: foot, end or rear. */
 const NOTE_REF = /\bnoteref\b/iu;
 const NOTE = /\b(?:foot|end|rear)?note\b/iu;
+/** A link the system's browser opens, as a note's: the web, or mail, and nothing else. */
+const OUTSIDE = /^(?:https?:\/\/|mailto:)[^\s]+$/iu;
 /** What a note may be: a block of words (an aside or a section is kept as a div), never its reference or a heading. */
 const NOTE_BLOCKS: ReadonlySet<string> = new Set(['p', 'div', 'li', 'dd', 'blockquote']);
 /** The longest place kept: an id is a name, not words. */
@@ -81,6 +85,7 @@ export function epubRules(
 ): CleanRules {
   return {
     link: (href) => {
+      if (OUTSIDE.test(href.trim())) return href.trim();
       const at = inZip(path, href);
       return at && isChapter(at.path) ? bookHref(at) : null;
     },

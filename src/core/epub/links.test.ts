@@ -41,14 +41,31 @@ describe('a book’s own links', () => {
     ]);
   });
 
-  it('keep only their words going anywhere else: the web, mail, a script, a file that isn’t a chapter, out of the zip', () => {
+  it('keep their address to the web or mail, for the system’s browser, as a note’s', () => {
+    const nodes = read(
+      '<p><a href=" https://www.gutenberg.org/ebooks/1342 ">G</a> <a href="http://a.example/">A</a> <a href="MAILTO:jane@example.com">M</a></p>',
+    );
+    expect(
+      [...elements(nodes)]
+        .filter((element) => element.attrs.href)
+        .map((element) => element.attrs.href),
+    ).toEqual([
+      'https://www.gutenberg.org/ebooks/1342',
+      'http://a.example/',
+      'MAILTO:jane@example.com',
+    ]);
+  });
+
+  it('keep only their words going anywhere else: a script, data, a file, out of the zip', () => {
     const nodes = read(
       `<p>${[
-        'https://example.com/',
-        'mailto:a@b.c',
         'javascript:alert(1)',
         ' jav&#x09;ascript:x()',
         'data:text/html,x',
+        'file:///etc/passwd',
+        'ftp://example.com/',
+        'https:example.com',
+        'https://a b',
         '//example.com/x',
         '../images/a.png',
         '../content.opf',
@@ -59,10 +76,9 @@ describe('a book’s own links', () => {
         .map((href, n) => `<a href="${href}">w${n}</a>`)
         .join(' ')}</p>`,
     );
-    expect(links(nodes)).toEqual([]);
     // Each link's words stay, with no address.
     expect([...elements(nodes)].filter((element) => element.attrs.href !== undefined)).toEqual([]);
-    expect(plainOf(nodes)).toContain('w0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10');
+    expect(plainOf(nodes)).toContain('w0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12');
   });
 });
 

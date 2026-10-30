@@ -90,7 +90,8 @@ export class EpubPage implements PaneLeaf {
       class: 'sheet__close',
       run: () => of.close(),
     });
-    this.tipped = [closer];
+    // The chapter's links too, each named for the tooltip (./book-links.ts nameLinks).
+    this.tipped = [closer, this.chapter];
     this.#sheet = h(
       'article',
       { class: 'sheet epub-sheet quiet-row' },

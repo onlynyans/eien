@@ -136,7 +136,7 @@ Rules, pure TypeScript.
   - `contents.ts`: the contents (nav, NCX, or the spine) and the printed edition's pages (page-list)
   - `epub.ts`: a book opened (`openEpub`), its chapters and pictures read as they're shown, and its key
   - `chapter.ts`: a chapter cleaned by `html`'s cleaner under the book's rules
-  - `epub-rules.ts`: those rules: pictures from the zip, links only to the book's own chapters, the places they name kept, the parts named (a note and its reference too)
+  - `epub-rules.ts`: those rules: pictures from the zip, links to the book's own chapters or the web and mail, the places they name kept, the parts named (a note and its reference too)
   - `svg-plate.ts`: Calibre's SVG frame round a picture made a plain image
   - `first-line.ts`: a chapter's first line, by where it stands
   - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it
@@ -332,7 +332,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
   - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again
   - `place-keeper.ts`: the place kept as the page scrolls, measured at rest and never out of sight, shown again when laid out anew
-  - `book-links.ts`: a book's own links caught on its page, a note's reference told apart, a place found by its marker
+  - `book-links.ts`: a book's links caught on its page (the web's to the system's browser), a note's reference told apart, each named for the tooltip, a place found by its marker
   - `book-follow.ts`: where they take the reader: the note over the page, or the chapter and place, one step back
   - `note-over.ts`: a book's note over its page, floated as a menu
   - `book-words.ts`: a selection's words without the page's own (a copy, a quote)

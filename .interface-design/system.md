@@ -689,6 +689,11 @@ in the book, each recorded here as it's built.
   note's words in the book's own face (`data-face`); **Go to the note**, a
   word button, under them. A dialog that takes the keyboard; Esc, a click
   elsewhere or the page scrolling closes it.
+- **A link in a book** looks as a link on the extension's story page does,
+  one rule for both (`page/page.css`, `.prose a[href]`, `.epub-chapter
+  a[href]`): the words' own colour, a `--eien-rule-strong` underline 0.18em
+  below them, `currentColor` under the pointer. The window's tooltip names
+  where it goes. A link kept as words alone has no look of one.
 - **Back** after a link: a word button first in the colophon's figures
   ("Back to Chapter I"), there only while there's a step back.
 - **A note's reference and a note** are named (`note-ref`, `note`) to open

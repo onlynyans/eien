@@ -164,6 +164,23 @@
   display: none;
 }
 
+/* A link in cleaned words (a story's in the extension, a book's, #40): the
+   words' own colour, a quiet underline that darkens under the pointer. One
+   rule for both; a note's links in the editor have their own. A link kept
+   as words alone has no address, and no look. */
+.prose a[href],
+.epub-chapter a[href] {
+  color: inherit;
+  text-decoration-color: var(--eien-rule-strong);
+  text-underline-offset: 0.18em;
+}
+@media (hover: hover) {
+  .prose a[href]:hover,
+  .epub-chapter a[href]:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
 /* A chapter's turns at a sheet's foot: the chapters before and after, after a
    soft rule (an EPUB's, ui/epub/chapter-foot.ts; the extension's story page),
    the last at the right. */

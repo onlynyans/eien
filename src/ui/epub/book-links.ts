@@ -1,11 +1,14 @@
-// A book's own links on its page (#40, Phase 2b): every click on an address
-// of the page's own ("#…") is caught before the window could follow it, and
-// a book's link (core/epub/book-link.ts) is handed on: to a note shown over
-// the page when it names one, else to its chapter and place. And the places
-// a link may name are found by their markers, never by a selector built from
+// A book's links on its page (#40, Phase 2b): every click on an address of
+// the page's own ("#…") is caught before the window could follow it, and a
+// book's link (core/epub/book-link.ts) is handed on: to a note shown over the
+// page when it names one, else to its chapter and place. A link to the web
+// or mail opens in the system's browser by the path a note's takes
+// (`window.open`, checked by the main process). Each is named in the
+// window's tooltip: its chapter, its note, or its address. And the places a
+// link may name are found by their markers, never by a selector built from
 // the book's words.
 
-import { bookLinkOf, type ZipAddress } from '../../core/epub';
+import { bookLinkOf, chapterTitle, type Epub, type ZipAddress } from '../../core/epub';
 
 /** Clicks on `root`'s links caught: a book's own link told to `follow`; any other "#" address only stopped. */
 export function catchLinks(
@@ -18,15 +21,22 @@ export function catchLinks(
       const anchor = (event.target as Element | null)?.closest?.('a[href]');
       if (!(anchor instanceof HTMLAnchorElement) || !root.contains(anchor)) return;
       const href = anchor.getAttribute('href') ?? '';
-      if (!href.startsWith('#')) return;
       // Never the window's: a hash would scroll it to an element of its own of that name.
       event.preventDefault();
+      if (OUTSIDE.test(href)) {
+        // The system's browser, as a note's link in Reading (the main process checks it again).
+        window.open(href);
+        return;
+      }
       const link = bookLinkOf(href);
       if (link) follow(anchor, link);
     },
     true,
   );
 }
+
+/** An address the system's browser opens: the web, or mail. */
+const OUTSIDE = /^(?:https?:|mailto:)/iu;
 
 /** A note's mark as EPUB 2 books write one: a number or a sign, perhaps in brackets, set as a superscript. */
 const MARK = /^[[(]?[\d*†‡§]{1,3}[\])]?$/u;
@@ -75,4 +85,29 @@ export function noteIn(root: Node, name: string): HTMLElement | null {
     if (next instanceof Element && isLeafBlock(next)) return next as HTMLElement;
   }
   return null;
+}
+
+/**
+ * Each link in `root` named for the window's tooltip (`data-tip`): a note's
+ * reference "Note 4", a chapter's "Chapter III" (and the place in it, where
+ * the contents name it: "Chapter III · Notes"), the web's or mail's address
+ * as it reads, without its scheme.
+ */
+export function nameLinks(root: HTMLElement, epub: Epub): void {
+  for (const anchor of root.querySelectorAll<HTMLAnchorElement>('a[href]')) {
+    const href = anchor.getAttribute('href') ?? '';
+    const link = bookLinkOf(href);
+    const tip = link ? nameOf(anchor, link, epub) : href.replace(/^(?:https?:\/\/|mailto:)/iu, '');
+    if (tip) anchor.dataset.tip = tip;
+  }
+}
+
+function nameOf(anchor: HTMLAnchorElement, link: ZipAddress, epub: Epub): string | null {
+  if (isNoteRef(anchor, link)) return `Note ${anchor.textContent?.trim() ?? ''}`.trim();
+  const index = epub.spine.findIndex((item) => item.path === link.path);
+  const chapter = chapterTitle(epub.contents, index);
+  const place = link.fragment
+    ? epub.contents.find((row) => row.path === link.path && row.fragment === link.fragment)?.title
+    : undefined;
+  return [chapter, place !== chapter ? place : undefined].filter(Boolean).join(' · ') || null;
 }
