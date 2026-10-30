@@ -349,9 +349,13 @@ Each phase is its own session and pull request, from main.
     `ui/epub/turn/`); the curl's three tokens in `tokens.css`, beside the
     shadows (Slate's own pair in `slate.css`; a palette's, as a shadow is,
     never a writer's theme's);
-  - **3b:** Pages and Scroll: paging on one line grid, the place in pages,
-    the leaf and its edges, keys and clicks turning as the Page turn and
-    Turn speed settings move them, the Pages and Scroll tools and menu;
+  - **3b, built:** Pages and Scroll (**Read in**, Scroll the default until
+    the hand's turn is in): paging in whole lines, the place in pages (the
+    same offset as Scroll's), the leaf and its fore-edge, keys, the edges'
+    clicks and a touch's taps turning as **Page turn** and **Turn speed**
+    move them, the Pages and Scroll tools and View menu; a turn copies the
+    page in sight alone (fifty turns of a 600-paragraph chapter, no long
+    task, the CPU four times slower too);
   - **3c:** a hand's turn: the drag and the catch, the phone's swipe and
     taps, copies of the page in sight alone, the fifty-turn budget;
   - **3d:** the spread, and Set as a book.
