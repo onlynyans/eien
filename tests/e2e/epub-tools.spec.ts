@@ -97,30 +97,32 @@ test('a set-aside tool’s key does nothing on a book beside a note', async ({ p
 });
 
 test.describe('with a companion', () => {
-  // The pages one under the other, so a narrower window folds the bar's tools, not the split.
+  // The pages one under the other, and the interface twice its size in a window kept clear of
+  // the phone's width: the bar's tools fold, never the split, on any machine's fonts.
   test.use({
-    deviceFile: { settings: { 'editor.formatBar': 'on', 'appearance.split': 'companion' } },
+    deviceFile: {
+      settings: { 'editor.formatBar': 'on', 'appearance.split': 'companion', 'window.zoom': 200 },
+    },
   });
 
   test('the bar’s ⋯ fits again as choosing the book sets tools aside, and as the note’s brings them back', async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 1400, height: 900 });
     await noteRow(page, 'Notes').click();
     await noteRow(page, 'Other').click({ modifiers: ['ControlOrMeta'] });
     await book(page).click();
     await expect(chapter(page)).toContainText('It is a truth');
     const note = page.locator('.page__pages > .page__leaf:not(.page__leaf--epub)');
     const books = page.locator('.page__leaf--epub');
+    await expect(note).toBeVisible();
+    await expect(books).toBeVisible();
     const more = page.locator('.page__format .host__more');
     await note.click();
     await expect(note).toHaveAttribute('data-active', '');
-    // Narrowed until the note's tools fold behind the formatting bar's ⋯.
-    let width = 1400;
-    while (!(await more.isVisible()) && width > 500) {
-      width -= 50;
-      await page.setViewportSize({ width, height: 900 });
-    }
+    // The note's tools folded behind the formatting bar's ⋯, both pages in sight.
     await expect(more).toBeVisible();
+    await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
     // The book chosen: the note's buttons set aside, nothing left to fold, the ⋯ goes.
     await books.click();
     await expect(books).toHaveAttribute('data-active', '');
