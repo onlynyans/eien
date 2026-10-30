@@ -69,12 +69,15 @@ hairline borders, 4 shadows (the sheet's once, the float three times).
 - `--eien-shadow-sheet`: the sheet alone, the object lying on the blotter.
 - `--eien-shadow-float`: whatever floats above the window.
 - Panes, bands and rows cast none. No gradients.
-- **One exception, the curl's light** (approved 2026-10-28, #40; built in
-  its Phase 3): while a book's page turns as a curl, and only then, the
+- **One exception, the curl's light** (approved 2026-10-28, #40; built,
+  Phase 3a, #129): while a book's page turns as a curl, and only then, the
   paper may carry light. At rest every page is flat, with two shadows and
   no gradients.
-  - The light comes from three tokens, each a light-dark pair a theme
-    carries, added to `tokens.css` and the design README when built:
+  - The light comes from three tokens in `tokens.css` (docs/design/README.md,
+    "A page turning"; Phase 3a), beside the shadows: the two inks a
+    light-dark pair each, which a palette's sheet carries with its shadows
+    (`slate.css`), not a writer's theme (a shadow isn't a theme's either);
+    the third a fraction:
     - `--eien-curl-shade`: the sheet shadow's own ink, where paper bends
       away;
     - `--eien-curl-light`: the crest of the roll;
@@ -169,6 +172,7 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Status | `--eien-added`, `-removed` (= `-danger`), `-caution`, each `-wash` | moss, carmine, ochre | theme |
 | Lines | `--eien-rule-soft`, `-rule`, `-rule-strong`; `--eien-hairline` 1px; `--eien-mark-w` 2px | ink at three strengths | theme (colours) |
 | Depth | `--eien-shadow-sheet`, `--eien-shadow-float` | two shadows, no more | – |
+| The curl's light | `--eien-curl-shade`, `--eien-curl-light`, `--eien-curl-through` | the sheet shadow's ink (0.18 by day, black 0.5 by night); white 0.6 by day, the night's ink 0.1; 0.12 | – (Depth's exception: only while a page turns as a curl) |
 | Corners | `--eien-radius-s`, `-m`, `-l` | A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10 | layout |
 | Icons | `--eien-icon` 16px, `--eien-icon-stroke` 1.25, `--eien-control` 28px (desktop), `--eien-touch` 44px | | – |
 | Faces | `--eien-family-*` (nineteen: eleven monos, plex-mono first, and the eight text faces); `--eien-face-text`, `--eien-face-mono`, `--eien-face-source`, `--eien-face-seal` | each voice points at a family | settings: Typeface, Interface font, Source font (all from one FACES list, `src/core/config/faces.ts`) |

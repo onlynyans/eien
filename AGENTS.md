@@ -146,6 +146,14 @@ Rules, pure TypeScript.
   - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
   - `book-link.ts`: a link to one of the book's chapters, as an address of the page's own and back
   - `quote.ts`: a passage quoted into a note, its citation, at the note's end
+  - `turn/`: a page's turn (Phase 3), as numbers the window draws
+    - `curl.ts`: the curl's geometry: the roll over a cylinder that follows the corner, the spine held down, a strip laid by its matrix and clipped
+    - `light.ts`: the light on the roll, each strip shaded by how it faces you and ramped across, as a gradient's numbers (the inks are the window's tokens)
+    - `curl-frame.ts`: a curling page at one moment: what stays, the roll's strips, what lies back, the shadow beneath
+    - `curl-turn.ts`: a curl's states: begun, held, let go (the throw decides), flying, caught (a tap lets it fly on), finished, put down
+    - `spring.ts`: the finish, a critically damped spring that lands and never bounces
+    - `stroke.ts`: a key's hand: where it takes the edge, how high and fast it goes, wandering within bounds turn to turn
+    - `speed.ts`: each motion's time, from the calm and quick tokens and the Turn speed; 0 is instant
 
 ### `src/platform/`
 
@@ -354,6 +362,15 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
   - `reading-store.ts`: the reading state's file, through the vault's small files
   - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
+  - `turn/`: a page turned (Phase 3)
+    - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first
+    - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page, clipped and laid, in the curl's light
+    - `turn-hand.ts`: a hand on the page, and when its move is a drag across; `turn-queue.ts`: turns waiting for the page they turn from (a chapter drawn first)
+    - `step-turn.ts`: Slide (`slide.ts`) or Words (`words.ts`) run between the words left and the words come
+    - `page-copy.ts`: the page as it was, laid over it, never reached
+    - `turn-tokens.ts`: the tokens a turn reads (times, ease, lengths), reduced motion's 0 among them
+    - `next-frame.ts`: the next frame, or a timer where frames stall
+    - `turn.css`: the copies and the curl's pieces
 - `extension/`: the extension's pages (spec §14)
   - `extension/content.ts`: the content script, built alone as one plain script, reads the page with `sites/` and lays over it the seal and the story frame (`extension/page-overlay.ts`)
   - `extension/sites/ao3.ts`, `extension/sites/ffn.ts`: one module per site's markup
