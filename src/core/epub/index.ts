@@ -36,6 +36,8 @@ export {
   motionTime,
   SLOWEST,
   slideTime,
+  type TurnAsked,
+  turnMoves,
   turnScale,
   wordsTime,
 } from './turn/speed';

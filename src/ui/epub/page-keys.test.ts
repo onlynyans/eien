@@ -32,14 +32,19 @@ describe('a page’s keys in pages', () => {
     expect(press('ArrowRight', { repeat: true }).turn).toHaveBeenCalledWith(1, true);
   });
 
-  it('leaves a button’s and a link’s own keys, Shift with an arrow, and other keys alone', () => {
+  it('leaves a button’s own Space, Shift with an arrow, and other keys alone', () => {
     const button = document.createElement('button');
     expect(press(' ', {}, button).turn).not.toHaveBeenCalled();
-    const link = document.createElement('a');
-    link.href = '#x';
-    expect(press('ArrowRight', {}, link).turn).not.toHaveBeenCalled();
     expect(press('ArrowRight', { shiftKey: true }).turn).not.toHaveBeenCalled();
     expect(press('a').prevented).toBe(false);
+  });
+
+  it('turns from a clicked edge or a link the keyboard is on, by the arrows and the page keys', () => {
+    const button = document.createElement('button');
+    expect(press('ArrowRight', {}, button).turn).toHaveBeenCalledWith(1, false);
+    const link = document.createElement('a');
+    link.href = '#x';
+    expect(press('PageUp', {}, link).turn).toHaveBeenCalledWith(-1, false);
   });
 });
 
@@ -54,9 +59,10 @@ describe('a tap in pages', () => {
   const tap = (x: number, pointerType = 'touch', target?: Element) => {
     const element = box();
     const of = { turn: vi.fn(), edge: vi.fn() };
-    const event = new PointerEvent('click', { clientX: x, pointerType });
+    // A plain click, as WebKit's is: the pointer's type is its pointerdown's.
+    const event = new MouseEvent('click', { clientX: x });
     Object.defineProperty(event, 'target', { value: target ?? element.querySelector('p') });
-    pageTap(event, element, of);
+    pageTap(event, pointerType, element, of);
     return of.turn;
   };
 

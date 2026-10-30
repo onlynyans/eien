@@ -12,6 +12,7 @@ function book(pages = 2) {
   let at = 0;
   let spine = 1;
   const sheet = {
+    paged: true,
     get place() {
       return at * 10;
     },
@@ -44,7 +45,10 @@ function book(pages = 2) {
     draw,
     values: () => ({ ...DEFAULT_SETTINGS, 'epub.turnSpeed': '0' }),
   });
-  return { turns, sheet, draw, at: () => at, spine: () => spine };
+  const setSpine = (index: number) => {
+    spine = index;
+  };
+  return { turns, sheet, draw, at: () => at, spine: () => spine, setSpine };
 }
 
 afterEach(() => {
@@ -68,6 +72,20 @@ describe('a book turned page by page', () => {
     await vi.waitFor(() => expect(b.draw).toHaveBeenCalledWith(0, expect.any(Function)));
     expect(b.sheet.edge).toHaveBeenCalledWith(true);
     expect(b.at()).toBe(1);
+  });
+
+  it('turns nothing while a book opens, nor in Scroll', async () => {
+    const opening = book();
+    opening.setSpine(-1);
+    opening.turns.turn(1, false);
+    opening.turns.edge(true);
+    await Promise.resolve();
+    expect(opening.draw).not.toHaveBeenCalled();
+    expect(opening.sheet.turn).not.toHaveBeenCalled();
+    const scrolling = book();
+    scrolling.sheet.paged = false;
+    scrolling.turns.turn(1, false);
+    expect(scrolling.sheet.turn).not.toHaveBeenCalled();
   });
 
   it('goes to the chapter’s ends, and stops at the book’s', async () => {

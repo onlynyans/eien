@@ -76,8 +76,13 @@ export class EpubPage implements PaneLeaf {
     );
     this.sheet = new ChapterSheet({ ...of, scroller: this.#scroll });
     this.edges = new LeafEdges((way) => of.turn(way, false));
+    // The pointer a click came from, by its pointerdown: WebKit's click may not say.
+    let pointer = '';
+    this.sheet.box.addEventListener('pointerdown', (event) => {
+      pointer = event.pointerType;
+    });
     this.sheet.box.addEventListener('click', (event) => {
-      if (this.sheet.paged) pageTap(event, this.sheet.box, of);
+      if (this.sheet.paged) pageTap(event, pointer, this.sheet.box, of);
     });
     // The chapter's links too, each named for the tooltip (./book-links.ts nameLinks).
     this.tipped = [closer, this.chapter, ...this.edges.turns];

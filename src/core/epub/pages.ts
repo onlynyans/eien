@@ -11,9 +11,15 @@ export const wholeLines = (room: number, line: number): number =>
 export const pagesIn = (width: number, page: number, gap: number): number =>
   page > 0 ? Math.max(1, Math.round((width + gap) / (page + gap))) : 1;
 
+/**
+ * A word measured this little short of its column (of a page's step) is in it: a rect rounded
+ * down a hair, at a zoom, never puts a page's first word on the page before.
+ */
+const ROUNDING = 0.02;
+
 /** The page a word `left` from the chapter's start falls on, among `pages` each `step` apart. */
 export const pageAt = (left: number, step: number, pages: number): number =>
-  step > 0 ? Math.min(pages - 1, Math.max(0, Math.floor(left / step + 0.02))) : 0;
+  step > 0 ? Math.min(pages - 1, Math.max(0, Math.floor(left / step + ROUNDING))) : 0;
 
 /** The most edges the fore-edge shows each side. */
 export const EDGES = 6;

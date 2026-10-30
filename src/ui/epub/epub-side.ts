@@ -145,7 +145,9 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       next.release();
       return false;
     }
-    letGo();
+    // The chapter left's pictures let go once no turn shows a copy of its page.
+    const left = drawn;
+    pages.whenStill(() => left?.release());
     drawn = next;
     const moved = kept && index !== spine;
     spine = index;
@@ -161,10 +163,12 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     if (offset !== given) page.sheet.showPlace(offset);
     of.changed();
     if (moved) keep(offset);
-    if (offset > 0) {
+    if (offset > 0 || typeof place === 'function') {
       // The pictures at their size and the type loaded, then the line: shown where it will stay.
+      // A place given once drawn (a chapter's last page) is asked for again, the pages now settled.
       await next.settled(page.chapter);
-      if (asked === turn && !disposed) page.sheet.showPlace(offset);
+      if (asked === turn && !disposed)
+        page.sheet.showPlace(typeof place === 'function' ? place() : offset);
     }
     return asked === turn && !disposed;
   }
@@ -271,6 +275,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     quote,
     follow(next) {
       values = next;
+      // A new look or view lays the page out anew: the turn in flight lands first.
+      pages.finish();
       page.wear(next);
     },
     dispose() {

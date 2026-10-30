@@ -76,3 +76,8 @@
 .turn-curl__flap {
   filter: drop-shadow(0 0 var(--eien-space-2) var(--eien-curl-shade));
 }
+
+/* What stays as the page turns (a book's fore-edge) stays in sight, the sheet beneath hidden or not. */
+[data-turn-stays] {
+  visibility: visible;
+}

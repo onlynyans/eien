@@ -37,6 +37,18 @@ const scrolledTo = (page: Page) =>
     return at?.startContainer.textContent ?? '';
   });
 
+/** Whether a paragraph holding `words` is on the page in sight. */
+const onPage = (page: Page, words: string) =>
+  chapter(page).evaluate((element, wanted) => {
+    const box = element.parentElement?.getBoundingClientRect();
+    const start = wanted.trim().slice(0, 20);
+    return [...element.querySelectorAll('p')].some((p) => {
+      const rect = p.getBoundingClientRect();
+      const inSight = box !== undefined && rect.right > box.left && rect.left < box.right;
+      return inSight && (p.textContent ?? '').includes(start);
+    });
+  }, words);
+
 /** The reading state's one file in `vault`. */
 function readingIn(vault: string): { place?: { offset: number } } {
   const folder = join(vault, '.eien/reading');
@@ -45,11 +57,11 @@ function readingIn(vault: string): { place?: { offset: number } } {
   return file ? JSON.parse(readFileSync(join(folder, file), 'utf8')) : {};
 }
 
-/** How the box and the chapter's lines stand: whole lines tall, nothing cut. */
+/** How the chapter's lines stand, in its own pixels (the page's zoom aside): whole lines tall. */
 const laidOut = (page: Page) =>
   chapter(page).evaluate((element) => {
     const line = Number.parseFloat(getComputedStyle(element).lineHeight);
-    return { height: element.getBoundingClientRect().height, line };
+    return { height: (element as HTMLElement).offsetHeight, line };
   });
 
 test.describe('a book in pages', () => {
@@ -65,7 +77,7 @@ test.describe('a book in pages', () => {
     await shelfEpub(page, 'Pride and Prejudice').click();
     await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
     const { height, line } = await laidOut(page);
-    expect(height / line).toBeCloseTo(Math.round(height / line), 5);
+    expect(Number.isInteger(height / line)).toBe(true);
     expect(await scroller(page).evaluate((element) => element.scrollTop)).toBe(0);
     const first = await firstWords(page);
     await scroller(page).focus();
@@ -92,6 +104,12 @@ test.describe('a book in pages', () => {
     const first = await firstWords(page);
     await next.click();
     await expect.poll(() => firstWords(page)).not.toBe(first);
+    const second = await firstWords(page);
+    // The clicked edge keeps the keyboard, and the arrows still turn from it.
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(() => firstWords(page)).not.toBe(second);
+    await page.keyboard.press('ArrowLeft');
+    await expect.poll(() => firstWords(page)).toBe(second);
     await leaf(page).getByRole('button', { name: 'Previous page' }).click();
     await expect.poll(() => firstWords(page)).toBe(first);
     // The pages to read lie stacked beneath the sheet.
@@ -116,10 +134,45 @@ test.describe('a book in pages', () => {
     await scrollTool.click();
     await expect(leaf(page)).toHaveAttribute('data-view', 'scroll');
     await expect(scrollTool).toHaveAttribute('aria-pressed', 'true');
-    await expect.poll(() => scrolledTo(page)).toContain(turnedTo.trim().slice(0, 12));
+    await expect.poll(() => scrolledTo(page)).toContain(turnedTo);
     await clickMenu(app, 'View', 'Pages');
     await expect(leaf(page)).toHaveAttribute('data-view', 'pages');
     await expect.poll(() => firstWords(page)).toBe(turnedTo);
+    // Scrolled on and switched before the scroll rests: Pages opens where the scroll was.
+    await scrollTool.click();
+    await page.mouse.move(1000, 400);
+    await page.mouse.wheel(0, 1500);
+    // The wheel's own glide done (the place still well short of its rest's second): then switched.
+    let last = -1;
+    await expect
+      .poll(async () => {
+        const top = await scroller(page).evaluate((element) => element.scrollTop);
+        const still = top > 0 && top === last;
+        last = top;
+        return still;
+      })
+      .toBe(true);
+    const scrolled = await scroller(page).evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const words = element.querySelector('.epub-chapter')?.getBoundingClientRect();
+      // The line at the very top, half in sight or not: the place is the first line in sight.
+      const at = document.caretRangeFromPoint((words?.left ?? box.left) + 4, box.top + 2);
+      return at?.startContainer.textContent ?? '';
+    });
+    await pagesTool.click();
+    // The page holding that line, which may begin a few lines before it.
+    await expect.poll(() => onPage(page, scrolled)).toBe(true);
+  });
+
+  test('a turn lets go of words chosen on the page left, and their bar', async ({ page }) => {
+    await shelfEpub(page, 'Pride and Prejudice').click();
+    await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+    await chapter(page).locator('p').nth(1).dblclick();
+    await expect(page.locator('.selection-bar')).toBeVisible();
+    await scroller(page).focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.selection-bar')).toBeHidden();
+    expect(await page.evaluate(() => document.getSelection()?.isCollapsed ?? true)).toBe(true);
   });
 
   test('keeps its page across a restart', async ({ page, vault, userData, app }) => {
@@ -139,12 +192,19 @@ test.describe('a book in pages', () => {
     await closeApp(again);
   });
 
-  test('turns at page zoom 150%, its page whole lines still', async ({ app, page }) => {
+  test('keeps its page through page zoom 150%, and turns there in whole lines', async ({
+    app,
+    page,
+  }) => {
     await shelfEpub(page, 'Pride and Prejudice').click();
     await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
     await scroller(page).focus();
+    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+    const kept = await firstWords(page);
     for (let i = 0; i < 5; i++) await clickMenu(app, 'View', 'Zoom In');
     await expect(page.locator('.colophon__zoom')).toHaveText('150%');
+    // The page holding the place, measured through the zoom: its words still on it.
+    await expect.poll(() => onPage(page, kept)).toBe(true);
     await page.keyboard.press('ArrowRight');
     const turnedTo = await firstWords(page);
     await page.keyboard.press('ArrowRight');
@@ -152,7 +212,7 @@ test.describe('a book in pages', () => {
     await page.keyboard.press('ArrowLeft');
     await expect.poll(() => firstWords(page)).toBe(turnedTo);
     const { height, line } = await laidOut(page);
-    expect(height / line).toBeCloseTo(Math.round(height / line), 1);
+    expect(Number.isInteger(height / line)).toBe(true);
   });
 
   test('offers Pages or Scroll, the Page turn and Turn speed in the shelf’s quick look', async ({

@@ -1,12 +1,25 @@
 // Turns waiting their turn (#40, Phase 3): a turn into another chapter
 // waits for it to be drawn, and one fallen back into the chapter before
-// waits for that to be drawn again. A key never waits on a motion, but it
+// waits for that to be drawn again; and what waits for every turn to land. A key never waits on a motion, but it
 // does wait for the page it turns from. One that fails is said, never lost
 // silently, and the next goes on.
 
 export class TurnQueue {
   #chain: Promise<void> | null = null;
   #back: Promise<void> | null = null;
+  /** What waits for no turn to be showing a copy of a page. */
+  readonly #still: (() => void)[] = [];
+
+  /** `run` once nothing turns: now, if `turning` is false (a chapter's pictures let go after the turn). */
+  whenStill(turning: boolean, run: () => void): void {
+    if (turning) this.#still.push(run);
+    else run();
+  }
+
+  /** Nothing turning now: what waited for it runs. */
+  still(): void {
+    for (const run of this.#still.splice(0)) run();
+  }
 
   /** `task` after those before it, or now if none waits. */
   run(task: () => void | Promise<void>): void {

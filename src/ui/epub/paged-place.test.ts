@@ -3,6 +3,7 @@
 // characters, a page 300px wide with a 40px gap, its box 610px tall on 20px
 // lines.
 
+import fc from 'fast-check';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { piecesOf } from './chapter-place';
 import { PagedPlace } from './paged-place';
@@ -13,10 +14,13 @@ const GAP = 40;
 const STEP = WIDTH + GAP;
 const PER_PAGE = 100;
 
-function laidOut(paragraphs: readonly string[]) {
+function laidOut(paragraphs: readonly string[], picture = -1) {
   const box = document.createElement('div');
   const chapter = document.createElement('div');
-  chapter.innerHTML = paragraphs.map((words) => `<p>${words}</p>`).join('');
+  // A picture (no words of its own) after paragraph `picture`, if asked for.
+  chapter.innerHTML = paragraphs
+    .map((words, i) => `<p>${words}</p>${i === picture ? '<figure><img alt=""></figure>' : ''}`)
+    .join('');
   chapter.style.lineHeight = '20px';
   box.style.columnGap = `${GAP}px`;
   box.append(chapter);
@@ -154,6 +158,32 @@ describe('a chapter in pages', () => {
     long.place.trim(middle);
     expect(middle.querySelector('p')?.textContent).toBe('a'.repeat(100));
     expect(middle.querySelector('p')?.style.textIndent).toBe('0px');
+  });
+
+  it('carries a picture that begins the page in the turn’s copy', () => {
+    const { chapter, place } = laidOut(['a'.repeat(100), 'b'.repeat(150)], 0);
+    place.show(0);
+    place.turn(1);
+    const copy = chapter.cloneNode(true) as HTMLElement;
+    place.trim(copy);
+    expect(copy.querySelector('img')).not.toBeNull();
+    expect(copy.textContent).toBe('b'.repeat(100));
+  });
+
+  it('shows any place on the page holding it, and turned on and back keeps its page’s first word', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 649 }), (offset) => {
+        const { place } = laidOut(['a'.repeat(250), 'b'.repeat(400)]);
+        place.show(offset);
+        const page = Math.floor(offset / PER_PAGE);
+        if (place.page !== page) return false;
+        const turned = place.turn(1);
+        if (turned) place.turn(-1);
+        document.body.replaceChildren();
+        return place.page === page && (!turned || place.offset === page * PER_PAGE);
+      }),
+      { numRuns: 200 },
+    );
   });
 
   it('let go, leaves the chapter as it was drawn', () => {

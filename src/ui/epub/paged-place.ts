@@ -9,6 +9,7 @@
 
 import { pageAt, pagesIn, wholeLines } from '../../core/epub';
 import { characterAt, firstOnPage, type SideOf } from './chapter-place';
+import { pageCut } from './page-cut';
 import { REST_MS } from './place-keeper';
 
 export interface PagedPlaceOf {
@@ -24,19 +25,6 @@ export interface PagedPlaceOf {
 }
 
 const measured: SideOf = (range) => range.getBoundingClientRect();
-
-/** The blocks a page may begin inside of. */
-const BLOCKS = 'p, li, blockquote, dd, figcaption';
-
-/** Whether `at`'s block has words before it: a page beginning there begins mid-paragraph. */
-function begunBefore(at: Range): boolean {
-  const block = at.startContainer.parentElement?.closest(BLOCKS);
-  if (!block) return false;
-  const before = document.createRange();
-  before.setStart(block, 0);
-  before.setEnd(at.startContainer, at.startOffset);
-  return before.toString().trim() !== '';
-}
 
 export class PagedPlace {
   readonly #of: PagedPlaceOf;
@@ -138,6 +126,12 @@ export class PagedPlace {
    */
   reveal(element: Element): void {
     if (this.#idle || !this.#shown) return;
+    // A link that wraps from the page before is on this page too: it's in sight already.
+    const box = this.#of.box.getBoundingClientRect();
+    const inSight = [...element.getClientRects()].some(
+      (rect) => rect.right > box.left && rect.left < box.left + box.width,
+    );
+    if (inSight) return;
     const range = document.createRange();
     range.selectNodeContents(element);
     const from = this.#sideOf(range).left - this.#of.chapter.getBoundingClientRect().left;
@@ -221,36 +215,17 @@ export class PagedPlace {
     const { chapter, box } = this.#of;
     if (this.#idle || !this.#shown) return;
     const left = box.getBoundingClientRect().left;
-    const from =
-      this.#page > 0 ? characterAt(chapter, firstOnPage(chapter, left, this.#sideOf)) : null;
+    // The page starts just after the page before's last word, so a picture that begins it (or is
+    // all of it) comes with it.
+    const start = this.#page > 0 ? firstOnPage(chapter, left, this.#sideOf) : 0;
+    const before = start > 0 ? characterAt(chapter, start - 1) : null;
+    const from = start > 0 ? characterAt(chapter, start) : null;
     const next =
       this.#page + 1 < this.#pages
         ? firstOnPage(chapter, left + this.#step * this.#scale(), this.#sideOf)
         : null;
     const to = next === null ? null : characterAt(chapter, next);
-    const range = document.createRange();
-    range.selectNodeContents(chapter);
-    if (from) range.setStart(from.startContainer, from.startOffset);
-    if (to) range.setEnd(to.startContainer, to.startOffset);
-    // Inside one paragraph, the cut holds its words alone: they're put back in its elements, shallow.
-    let cut: Node = range.cloneContents();
-    for (
-      let at: Node | null = range.commonAncestorContainer;
-      at && at !== chapter;
-      at = at.parentNode
-    ) {
-      if (at.nodeType !== Node.ELEMENT_NODE) continue;
-      const shell = at.cloneNode(false);
-      shell.appendChild(cut);
-      cut = shell;
-    }
-    const words = document.createDocumentFragment();
-    words.append(cut);
-    const first = words.querySelector<HTMLElement>(BLOCKS);
-    if (from && first && begunBefore(from)) {
-      first.style.textIndent = '0';
-      first.removeAttribute('data-part');
-    }
+    const words = pageCut(chapter, before, from, to);
     copy.replaceChildren(words);
     copy.style.transform = '';
     copy.style.clipPath = this.#clipAt(0);

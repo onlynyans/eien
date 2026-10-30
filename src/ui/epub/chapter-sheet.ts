@@ -81,7 +81,15 @@ export class ChapterSheet {
 
   /** In pages: the page `way` on in this chapter, kept as the place; false past either end. */
   turn(way: 1 | -1): boolean {
-    return this.paged && this.#paged.turn(way);
+    if (!this.paged || !this.#paged.turn(way)) return false;
+    this.#unchoose();
+    return true;
+  }
+
+  /** Words chosen on a page turned away from: out of sight, so not to be quoted, and their bar gone. */
+  #unchoose(): void {
+    if (this.#selection.range) document.getSelection()?.removeAllRanges();
+    this.#selection.forget();
   }
 
   /** In pages: a copy of the chapter cut to the page in sight (a turn's). */
@@ -91,7 +99,9 @@ export class ChapterSheet {
 
   /** In pages: the chapter's first page, or its last. */
   edge(last: boolean): void {
-    if (this.paged) this.#paged.edge(last);
+    if (!this.paged) return;
+    this.#paged.edge(last);
+    this.#unchoose();
   }
 
   /** In pages: the page in sight (0 first) and how many the chapter has. */

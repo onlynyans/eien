@@ -28,6 +28,8 @@ export interface BookPages {
   edge(last: boolean): void;
   /** The turn in flight landed now. */
   finish(): void;
+  /** `run` once no turn shows a copy of a page (now, if none is turning). */
+  whenStill(run: () => void): void;
   dispose(): void;
 }
 
@@ -41,6 +43,9 @@ export function bookPages(of: BookPagesOf): BookPages {
     words: '.epub-chapter',
     trim: (copy) => page.sheet.trim(copy),
     step(way) {
+      // Only in pages, with a chapter drawn: a turn asked while a book opens (or after a switch to
+      // Scroll) would draw a chapter over the one on its way, and keep it as the place.
+      if (!page.sheet.paged || of.spine() < 0) return false;
       from = { spine: of.spine(), offset: page.sheet.place };
       if (page.sheet.turn(way)) return true;
       const epub = of.epub();
@@ -77,9 +82,10 @@ export function bookPages(of: BookPagesOf): BookPages {
     turn: (way, held) => turn.key(way, held),
     edge: (last) => {
       turn.finish();
-      page.sheet.edge(last);
+      if (of.spine() >= 0) page.sheet.edge(last);
     },
     finish: () => turn.finish(),
+    whenStill: (run) => turn.whenStill(run),
     dispose: () => turn.dispose(),
   };
 }

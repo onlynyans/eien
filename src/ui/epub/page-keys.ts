@@ -1,7 +1,8 @@
 // A book's page in pages turned by the keyboard and a tap (#40, Phase 3b):
 // the arrow keys, Space and Page Up and Down a page on or back, Home and End
 // the chapter's ends, and on a touch screen a tap in the page's outer thirds.
-// Never a button's own Space or Enter (no turn twice), a link's, nor a tap
+// Never a button's own Space (no turn twice: a clicked edge keeps the
+// keyboard, and the arrows still turn from it), nor a tap on a link or one
 // ending a selection (Quote and Copy need one).
 
 export interface PageKeysOf {
@@ -27,7 +28,8 @@ const PAGE_KEYS: Readonly<Record<string, 1 | -1 | 'first' | 'last'>> = {
 
 /** In pages, a key on the page: a turn, if it's one of a page's. */
 export function pageKey(event: KeyboardEvent, of: PageKeysOf): void {
-  if (event.target instanceof Element && event.target.closest('button, a[href]')) return;
+  if (event.key === ' ' && event.target instanceof Element && event.target.closest('button'))
+    return;
   if (event.shiftKey && event.key !== ' ') return;
   const way = PAGE_KEYS[event.key === ' ' && event.shiftKey ? 'Shift+Space' : event.key];
   if (way === undefined) return;
@@ -36,10 +38,19 @@ export function pageKey(event: KeyboardEvent, of: PageKeysOf): void {
   else of.turn(way, event.repeat);
 }
 
-/** In pages, a click on the page `box`: a touch's tap in an outer third turns it. */
-export function pageTap(event: MouseEvent, box: HTMLElement, of: PageKeysOf): void {
-  // A pointer's click is for choosing words; a reader taps.
-  if (!(event instanceof PointerEvent) || event.pointerType !== 'touch') return;
+/**
+ * In pages, a click on the page `box`, from a pointer of `pointer` type (its
+ * pointerdown's: WebKit's click may not say): a touch's tap in an outer third
+ * turns it.
+ */
+export function pageTap(
+  event: MouseEvent,
+  pointer: string,
+  box: HTMLElement,
+  of: PageKeysOf,
+): void {
+  // A mouse's click is for choosing words; a reader taps.
+  if (pointer !== 'touch') return;
   if (event.target instanceof Element && event.target.closest('a[href], button')) return;
   if (document.getSelection()?.isCollapsed === false) return;
   const { left, width } = box.getBoundingClientRect();

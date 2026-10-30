@@ -151,6 +151,8 @@
   margin-top: var(--eien-space-5);
   overflow: clip;
   column-gap: var(--eien-space-8);
+  /* Half the gap either side: a letter's overhang at the measure's edge is drawn, never cut. */
+  overflow-clip-margin: calc(var(--eien-space-8) / 2);
 }
 [data-view="pages"] .epub-chapter {
   column-fill: auto;
@@ -199,7 +201,8 @@
   right: 0;
   left: calc(var(--edge) * -1 * var(--eien-mark-w));
 }
-/* Where a hand reaches to turn: each side's edges are its button. */
+/* Where a hand reaches to turn: each side's edge is its button, in the sheet's own margin, so it's in
+   sight with no blotter round the sheet (Page frame Full, a narrow pane, the phone). */
 .epub-edges__turn {
   appearance: none;
   position: absolute;
@@ -212,10 +215,10 @@
   cursor: e-resize;
 }
 .epub-edges__turn--after {
-  left: 100%;
+  right: 0;
 }
 .epub-edges__turn--before {
-  right: 100%;
+  left: 0;
   cursor: w-resize;
 }
 
