@@ -177,13 +177,16 @@ test.describe('a book’s folder renamed', () => {
     await shelfEpub(page, 'Pride and Prejudice').click();
     await page.locator('.contents-row').nth(1).click();
     await expect(chapter(page)).toContainText('Mr. Bennet was among the earliest');
-    const folder = page.locator('.tree-row__name[data-folder="Novels"]');
+    // A folder of books alone is on SHELF only, and renamed in its row there.
+    await expect(page.locator('[data-key="folder:Novels"]')).toHaveCount(0);
+    const folder = page.locator('[data-key="shelf:Novels"]');
     await folder.focus();
     await page.keyboard.press('F2');
+    await expect(page.locator('#sidebar-shelf .tree-row__field')).toBeFocused();
     await page.keyboard.press('ControlOrMeta+a');
     await page.keyboard.type('Austen');
     await page.keyboard.press('Enter');
-    await expect(page.locator('.tree-row__name[data-folder="Austen"]')).toBeVisible();
+    await expect(page.locator('[data-key="shelf:Austen"]')).toBeFocused();
     await expect(page.locator('.page__leaf--epub .crumbs')).toHaveText('Austen');
     await expect(chapter(page)).toContainText('Mr. Bennet was among the earliest');
     await expect(page.locator('.contents-row').nth(1)).toHaveAttribute('aria-current', 'true');

@@ -90,6 +90,35 @@ test('a book’s row menu renames it in its row, and trashes it to .eien/trash, 
   ).toEqual([...readFileSync(FIXTURE)]);
 });
 
+test('a folder of books alone is on SHELF only, where it folds and moves by its menu (#40)', async ({
+  page,
+}) => {
+  await open(page);
+  await putOutside(page, 'Eien/Vault/Notes.md', 'Notes on the books.\n');
+  const bytes = readFileSync(FIXTURE).toString('base64');
+  await putBytesOutside(page, 'Eien/Vault/Classics/Emma.epub', bytes);
+  await putBytesOutside(page, 'Eien/Vault/Novels/Persuasion.epub', bytes);
+  await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
+  await back(page).click(); // the sidebar
+  const shelf = page.locator('#sidebar-shelf .tree-row--shelf-folder');
+  await expect(shelf).toHaveText(['Classics', 'Novels'], { timeout: 10_000 });
+  await expect(page.locator('[data-key^="folder:"]')).toHaveCount(0);
+
+  // A tap on its name shuts it, and another opens it.
+  const classics = page.locator('[data-key="shelf:Classics"]');
+  await classics.click();
+  await expect(classics).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('.tree-row--epub', { hasText: 'Emma' })).toHaveCount(0);
+  await classics.click();
+  await expect(page.locator('.tree-row--epub', { hasText: 'Emma' })).toBeVisible();
+
+  // No drag on a phone: its menu moves it among SHELF's folders.
+  await classics.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Move down' }).click();
+  await expect(shelf).toHaveText(['Novels', 'Classics'], { timeout: 10_000 });
+  expect(await seriousViolations(page), 'SHELF’s folders').toEqual([]);
+});
+
 test('the shelf’s look on the phone says at its foot that Settings sets notes', async ({
   page,
 }) => {

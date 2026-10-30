@@ -5,6 +5,9 @@
 /** The sections that fold: a search's results don't. */
 export type SectionId = 'library' | 'folders' | 'shelf' | 'tags';
 
+/** The sections that list folders (#40): FOLDERS for writing, SHELF for reading. */
+export type FolderSection = Extract<SectionId, 'folders' | 'shelf'>;
+
 const SECTIONS: readonly SectionId[] = ['library', 'folders', 'shelf', 'tags'];
 const KEY = 'eien.folds';
 

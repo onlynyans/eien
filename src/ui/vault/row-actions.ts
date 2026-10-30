@@ -70,9 +70,9 @@ export function rowActions(of: RowActionsOf): {
     },
     newFolder: (parent) => void of.actions().newFolder(parent),
     editFolder: (path) => of.actions().editFolder(path),
-    followFolder: (from, to) => of.nav.follow(from, to),
+    followFolder: (from, to) => order.land(from, to),
     unselect: (path) => of.nav.unselect(path),
-    moveFolder: (path, how) => order.moveFolder(path, how),
+    moveFolder: (path, how, section) => order.moveFolder(path, how, section),
   };
   const rows: RowActions = {
     open: (path) => void of.actions().openNote(path, 'chosen'),

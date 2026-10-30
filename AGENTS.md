@@ -65,6 +65,7 @@ Rules, pure TypeScript.
 - `paths`
 - `text`
 - `vault`
+  - `tree.ts`: the folder tree, and which folders FOLDERS (`inFolders`: all but a folder of EPUBs alone, at any depth) and SHELF (`onShelf`) list (#40)
   - `assets.ts`: a note's own folder of images, `<note>.assets`, its links and the names images are kept under
   - `subfolders.ts`: a folder's list with its subfolders' notes, in groups
 - `saving`
@@ -224,7 +225,11 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `sidebar/lens-slot.ts`: with two panes, the chosen row's lens
   - `sidebar/sections.ts`: its sections fold, folded per device in `sidebar/folds.ts`
   - `sidebar/tree-sections.ts`: the sections in order, LIBRARY, FOLDERS, SHELF, TAGS
-  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: folders as labels, books as controls (a note's row's keys and menu, `vault/row-actions.ts`), an open book's contents with two panes
+  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: its folders FOLDERS' own folder rows, books as controls (a note's row's keys and menu, `vault/row-actions.ts`), an open book's contents with two panes
+    - `sidebar/shelf-folds.ts`: SHELF's shut folders, per device
+    - `sidebar/folder-sides.ts`: a folder in FOLDERS, on SHELF or both: where its rename is typed and the keyboard goes back to
+    - `sidebar/twist.ts`: a row's twisty and its group, in FOLDERS, TAGS and SHELF alike
+    - moves among the folders a section shows: `vault/folder-order.ts`' `shownBeside`
   - `sidebar/sidebar-focus.ts`: where the keyboard is in the tree, kept across its redraws
 - The lens over each list, drawn in the list's head and, with two panes, for the chosen row in the sidebar
   - `list/lens-bar.ts`: the sort and the tag filter, their chips

@@ -103,7 +103,7 @@ export class PaneDrawer {
       results,
       shown: this.#parts.shown(),
       books: state.books,
-      shelf: this.#parts.epubs.shelf(panes.two),
+      shelf: { ...this.#parts.epubs.shelf(panes.two), shut: nav.shelf.shut },
       elsewhere: !panes.two && !words && this.#parts.epubs.contents() !== null,
       notice: listShown ? null : notice.text,
       filter: filterFor(listKey(nav.selection)),

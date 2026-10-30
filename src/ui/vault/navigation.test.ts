@@ -32,6 +32,17 @@ describe('Navigation', () => {
     expect(nav.selection).toEqual({ kind: 'folder', path: 'Novel/Part 1' });
   });
 
+  it('carries SHELF’s shut folders with a rename or a move, and lets a trashed one’s go (#40)', () => {
+    localStorage.clear();
+    const nav = new Navigation();
+    nav.shelf.set('Novels/Russian', true);
+    nav.shelf.set('Zines', true);
+    nav.follow('Novels', 'Reading');
+    expect(nav.shelf.shut).toEqual(['Reading/Russian', 'Zines']);
+    nav.unselect('Reading');
+    expect(nav.shelf.shut).toEqual(['Zines']);
+  });
+
   it('never takes a tag, All Notes or Pinned for a folder of the same name', () => {
     const nav = new Navigation();
     for (const selection of [

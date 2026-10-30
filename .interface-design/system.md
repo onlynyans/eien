@@ -635,17 +635,22 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114; after Phase 1, #120)
+## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114; after Phase 1, #120; FOLDERS for writing, SHELF for reading)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add scrolling, paging and the turn, marks, highlights and Find
 in the book, each recorded here as it's built.
 
 - **SHELF** (`sidebar/shelf-rows.ts`): a sidebar section between FOLDERS and
-  TAGS, a lens over the one folder tree. A folder holding a book is a label
-  on the way to it, in pencil and always open; only a book's row is a
-  control, in ink-soft, and opens on the page. Books are never in a folder's
-  note list.
+  TAGS, a lens over the one folder tree. A folder holding a book is
+  FOLDERS' own folder row (the tree's twisty, focus ring, hover and drop
+  target), its name in pencil, no count; it shuts and opens (open at first,
+  kept per device) and has the folder's menu. A book's row is in ink-soft,
+  and opens on the page. Books are never in a folder's note list.
+- **FOLDERS for writing, SHELF for reading** (decided 2026-10-29): FOLDERS
+  leaves out a folder of books alone (at any depth), which is on SHELF
+  only; a folder of both is in both. Nothing dims: a section shows what its
+  folders hold.
 - **A book's row menu** (#120): the Row menu (Built patterns), the book's
   title its head: Rename (F2), Move to…, and the trash last in
   `--eien-danger` after a rule. Right-click, the menu key or Shift+F10 open
