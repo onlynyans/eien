@@ -15,6 +15,14 @@
 [data-view="pages"] .epub-sheet__mark {
   flex: none;
 }
+/* A companion's sheet has no padding of its own (../page/split-companion.css): nothing to step past. */
+:root[data-split="companion"] .page__leaf[data-side="1"] .epub-sheet__mark {
+  margin: 0;
+}
+/* While a page curls, the turning page is a copy, which leaves the mark out: none is drawn until it lands. */
+.page__leaf--epub:has(.turn-curl) .epub-sheet__mark {
+  visibility: hidden;
+}
 /* In pages, the edge tab stands past the fore-edge's pages to read, never under them (./leaf-edges.ts). */
 :root[data-facing-mark="tab"] [data-view="pages"] .page__mark--bookmark[data-edge="right"] {
   right: calc(
@@ -23,7 +31,9 @@
   );
 }
 /* With the page edge to edge (Page frame Full) there's nothing past its edge: the tab stands inside it. */
-:root[data-facing-mark="tab"] [data-frame="full"] .page__mark--bookmark[data-edge="right"] {
+:root[data-facing-mark="tab"]
+  .page__leaf--epub[data-frame="full"]
+  .page__mark--bookmark[data-edge="right"] {
   right: 0;
   border-radius: var(--eien-radius-s) 0 0 var(--eien-radius-s);
 }
@@ -33,9 +43,24 @@
 :root[data-split="facing"] .page__pages[data-two] .epub-sheet__mark {
   display: none;
 }
+/* Elsewhere the word is heard, never seen: the mark says it to the eye. */
 .colophon__bookmarked {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 :root[data-split="facing"] .page__pages[data-two] .page__folio .colophon__bookmarked:not(:empty) {
-  display: inline;
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+}
+
+/* The bookmark tool, pressed on a bookmarked page: its ribbon filled, as the page's own is. */
+[data-command="bookmark"][aria-pressed="true"] svg path:last-child {
+  fill: currentColor;
 }

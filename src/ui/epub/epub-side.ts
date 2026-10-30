@@ -77,6 +77,11 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     changed: () => of.looks(),
   });
   const bookmark = () => marks.toggle();
+  /** No words in sight measured in the chapter drawn yet: no page said, no bookmark shown. */
+  const unplaced = () => {
+    placing.clear();
+    marks.away();
+  };
   const links = bookFollow({
     page,
     epub: () => epub,
@@ -118,7 +123,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     const chapter = await opened.chapter(index);
     if (asked !== turn || disposed) return false;
     if (isRefusal(chapter)) {
-      placing.clear();
+      unplaced();
       page.notice(refusalWords(chapter));
       return false;
     }
@@ -136,7 +141,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     spine = index;
     const given = typeof place === 'number' ? place : 0;
     // The last chapter's words in sight aren't this one's: its page is said once they're measured.
-    placing.clear();
+    unplaced();
     page.drawn(
       next.element,
       chapterFoot(opened, index, turnTo),

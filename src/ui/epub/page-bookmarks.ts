@@ -45,8 +45,12 @@ export class PageBookmarks {
   /** The words in sight, as last measured. */
   #from = 0;
   #to = 0;
+  /** Whether they're measured in the chapter drawn: none are while it's on its way, or refused. */
+  #measured = false;
   #on = false;
   #unlisten = () => {};
+  /** The last B's change, until it's kept: a press waits for the one before, so two quick ones undo each other. */
+  #pending: Promise<void> = Promise.resolve();
 
   constructor(of: PageBookmarksOf) {
     this.#of = of;
@@ -80,33 +84,52 @@ export class PageBookmarks {
   inSight(from: number, to: number): void {
     this.#from = from;
     this.#to = to;
+    this.#measured = true;
     this.#of.still(() => this.#show());
   }
 
   /**
    * B, or the tool: a bookmark at the page's first word, or the page's taken
-   * off; measured where the page stands now, any turn landed first.
+   * off; measured where the page stands now, any turn landed first, after
+   * the press before it is kept.
    */
-  async toggle(): Promise<void> {
+  toggle(): Promise<void> {
+    // One that fails never stops the next.
+    this.#pending = this.#pending.then(() => this.#toggle()).catch((error) => console.error(error));
+    return this.#pending;
+  }
+
+  async #toggle(): Promise<void> {
     const key = this.#key;
     const chapter = this.#of.chapter();
     if (!key || !chapter) return;
     const { page } = this.#of;
     this.#of.land();
     page.sheet.keep();
+    if (!this.#measured) return;
     const here = bookmarksOn(this.#marks, chapter, this.#from, this.#to);
     const words = firstWords(wordsFrom(page.chapter, this.#from, BOOKMARK_WORDS * 2));
     const change =
       here.length > 0 ? { remove: here } : { add: { chapter, offset: this.#from, words } };
     const after = await this.#of.store.mark(key, change);
     if (key !== this.#key) return;
-    if (!after) {
-      page.foot.say(NOT_KEPT[this.#kept] ?? 'The bookmark couldn’t be kept: try again.');
-      return;
-    }
+    if (!after) return this.#notKept(key);
     this.#marks = after;
     this.#show();
     page.foot.say(here.length > 0 ? 'Bookmark taken off.' : 'Bookmarked.');
+  }
+
+  /** A change not kept: why, as the file stands now (it may have changed since the book opened). */
+  async #notKept(key: string): Promise<void> {
+    const { kept } = await this.#of.store.read(key);
+    this.#kept = kept;
+    this.#of.page.foot.say(NOT_KEPT[kept] ?? 'The bookmark couldn’t be kept: try again.');
+  }
+
+  /** No words in sight measured in the chapter drawn (on its way, or refused): no bookmark shown. */
+  away(): void {
+    this.#measured = false;
+    this.#show();
   }
 
   /** No book: nothing kept of its bookmarks. */
@@ -122,7 +145,9 @@ export class PageBookmarks {
   #show(): void {
     const chapter = this.#of.chapter();
     const on =
-      chapter !== null && bookmarksOn(this.#marks, chapter, this.#from, this.#to).length > 0;
+      chapter !== null &&
+      this.#measured &&
+      bookmarksOn(this.#marks, chapter, this.#from, this.#to).length > 0;
     this.#of.page.bookmarked(on);
     if (on === this.#on) return;
     this.#on = on;

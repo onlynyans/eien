@@ -108,6 +108,11 @@ describe('the bookmarks on a page, and in the book’s order', () => {
     expect(bookmarksOn(marks, 'c3', 0, 1000)).toEqual([]);
   });
 
+  it('on a page of no words (a picture’s), are those at the place it stands at', () => {
+    expect(bookmarksOn(marks, 'c1', 100, 100)).toEqual([mark('c1', 100)]);
+    expect(bookmarksOn(marks, 'c1', 101, 101)).toEqual([]);
+  });
+
   it('run by chapter, then place, leaving out a chapter the book doesn’t have', () => {
     expect(inBookOrder(marks, ['c1', 'c2'])).toEqual([
       mark('c1', 100),

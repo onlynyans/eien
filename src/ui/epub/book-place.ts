@@ -47,7 +47,10 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
       page.foot.through(fraction, book);
       const { at, of: count } = page.sheet.page;
       page.edges.through(book, at, count);
-      page.leaf.style.setProperty('--edges-after', String(page.edges.after));
+      // Only when it changes: setting it again restyles the page, and this is told every scroll frame.
+      const after = String(page.edges.after);
+      if (page.leaf.style.getPropertyValue('--edges-after') !== after)
+        page.leaf.style.setProperty('--edges-after', after);
     },
     inSight(start) {
       from = start;

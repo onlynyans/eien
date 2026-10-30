@@ -712,13 +712,17 @@ in the book, each recorded here as it's built.
   page you see. In pages the edge tab stands past the fore-edge's pages
   still to read (`--edges-after` × `--eien-mark-w`); with Page frame Full,
   inside the page's edge. It arrives with the mark's own `--eien-calm`
-  motion on each bookmarked page shown, none with reduced motion. **The
+  motion as it appears, none with reduced motion, and is hidden while a
+  page curls (the turning page is a copy, which leaves it out). The word
+  "bookmarked" is heard (visually hidden) where it isn't seen. **The
   clash** (decided 2026-10-30): with Facing pages and two pages, the mark
   says "the page you're in", so a bookmark wears none and the book's folio
   says "bookmarked" in its figures (`.colophon__bookmarked`, shown there
   alone). The tool, a ribbon icon pressed on a bookmarked page ("Take the
   bookmark off"), is a book's own (`on: 'epub'`), among the page's tools
-  before Look; in Facing pages, in each page's folio.
+  before Look; in Facing pages, in each page's folio. Its icon is a page
+  with the ribbon over its top edge, filled while pressed: the page tells
+  it from Pinned's banner.
 - **The place is kept to the line**, never drawn: a page put back, laid out
   anew or zoomed shows the same line at its top.
 - **A note over the page** (Phase 2b, `ui/epub/note-over.ts`): a note's

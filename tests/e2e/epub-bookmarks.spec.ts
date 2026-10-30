@@ -7,6 +7,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
+import { seriousViolations } from './axe';
 import { chooseSetting, clickMenu, closeApp, expect, launchApp, ROOT, test } from './launch';
 
 const epub = (name: string) =>
@@ -85,6 +86,45 @@ test.describe('a book’s bookmarks', () => {
     }
   });
 
+  test('keeps to the top of the sheet in sight as the chapter scrolls', async ({ page }) => {
+    await openBook(page);
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    // Scrolled a little, its lines still in sight: the mark stands at the scroller's top.
+    await leaf(page)
+      .locator('.page__scroll')
+      .evaluate((element) => {
+        element.scrollTop = 60;
+      });
+    const scroller = await leaf(page).locator('.page__scroll').boundingBox();
+    await expect
+      .poll(async () => {
+        const box = await mark(page).boundingBox();
+        return box && scroller ? Math.abs(box.y - scroller.y) : Number.POSITIVE_INFINITY;
+      })
+      .toBeLessThan(4);
+  });
+
+  test('in pages, keeps its page across a restart', async ({ page, app, vault, userData }) => {
+    if (!vault) throw new Error('no vault');
+    await openBook(page);
+    await page.locator('[data-command="view.pages"]:visible').first().click();
+    await leaf(page).locator('.page__scroll').focus();
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    await expect.poll(() => bookmarksIn(vault).length).toBe(1);
+    await closeApp(app);
+    const again = await launchApp(userData, vault);
+    const next = await again.firstWindow();
+    await next.setViewportSize({ width: 1600, height: 900 });
+    await openBook(next);
+    await expect(mark(next)).toBeVisible();
+    await next.keyboard.press('ArrowLeft');
+    await expect(mark(next)).toBeHidden();
+    await closeApp(again);
+  });
+
   test('in pages, only the bookmarked page wears it', async ({ page, app }) => {
     await openBook(page);
     await page.locator('[data-command="view.pages"]:visible').first().click();
@@ -128,6 +168,7 @@ test.describe('a bookmark in Facing pages', () => {
       'aria-pressed',
       'true',
     );
+    expect(await seriousViolations(page), 'a bookmarked book in Facing pages').toEqual([]);
     // Closed to one page by a narrower window, still no bookmark mark.
     await page.setViewportSize({ width: 1000, height: 800 });
     await expect(page.locator('.page__pages[data-narrow="close"]')).toHaveCount(1);

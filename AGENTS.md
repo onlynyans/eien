@@ -347,7 +347,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
 - styles in `theme/` and beside each view
 - `epub/`: an EPUB's page (#40)
-  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys (Q, ⌘[ / Alt+←)
+  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys (Q, B, ⌘[ / Alt+←), its bookmark's mark
   - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again (scrolling or in pages), its links caught, its words copied and chosen
   - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
   - `epub-side-types.ts`: what a page holding a book is (`EpubSide`, `EpubSideOf`, `isEpub`)
@@ -355,13 +355,13 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `book-count.ts`: a book counted for its page numbers, in the background, never while a page turns; one per book for the window, the last few kept (Phase 4)
   - `book-open.ts`: the book read and opened for its page (or the words it says instead), what it's called, and where it opens
   - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
-  - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again
+  - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again; the words from a place (a bookmark's)
   - `place-keeper.ts`: the place kept as the page scrolls, measured at rest and never out of sight, shown again when laid out anew
   - `book-links.ts`: a book's links caught on its page (the web's to the system's browser), a note's reference told apart, each named for the tooltip, a place found by its marker
   - `book-follow.ts`: where they take the reader: the note over the page, or the chapter and place, one step back
   - `note-over.ts`: a book's note over its page, floated as a menu
   - `book-words.ts`: a selection's words without the page's own (a copy, a quote)
-  - `book-foot.ts`: a book's colophon items: Back, which chapter, how far through, a line of news
+  - `book-foot.ts`: a book's colophon items: Back, which chapter, its page, "bookmarked", how far through, a line of news
   - `book-selection.ts`: the selection bar over a book: Quote in the note, Copy
   - `book-quote.ts`: the words chosen in a book as a quote, cited
   - `test-side.ts`: a book's page over a vault the DOM tests hold
