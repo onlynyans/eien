@@ -30,9 +30,12 @@ const FIRST_LIST_MS = 1500;
  * pages (ui/page/split.css, #66, #67); 122,671 with the split's four modes, one stylesheet
  * each (ui/page/split*.css, #66–#69). JS 1,842,280 before find and replace, 1,884,696 with it
  * (@codemirror/search and the find bar, backlog #41). CSS 137,624 with the link tooltip's
- * three styles (editor/link.css, backlog #38).
+ * three styles (editor/link.css, backlog #38). JS 2,055,752 with the link tooltip (#38),
+ * 2,063,245 with a book scrolling, a chapter a sheet (#40, Phase 2a), 2,081,698 with its
+ * links and notes (Phase 2b): Phase 2's own modules,
+ * no package (the renderer's JS ships unminified, its comments too).
  */
-const RENDERER = { js: 2_070_000, css: 151_000 };
+const RENDERER = { js: 2_270_000, css: 151_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);

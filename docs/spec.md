@@ -416,17 +416,23 @@ Three panes, each collapsible, with a two-pane option in settings:
      quits (a phone, as it goes to the background), and opens there again
      next time. The page put back in the window (⇄) or laid out anew (a
      new width, page zoom) shows the same line.
-   - **The book's own links and notes** (Phase 2b): a link to one of the
-     book's chapters goes there, to the place it names, and **Back to
-     Chapter I** in the colophon (or ⌘[, Alt+←) returns to the line it left,
-     one step; choosing a chapter yourself forgets it. A note's reference
-     (EPUB 3's `noteref`, or a number or a sign as EPUB 2 books write
-     them) shows the note over the page, in the book's face, from this
-     chapter or another: Esc, a click elsewhere or scrolling closes it, the
-     keyboard back on the mark, and **Go to the note** goes there. A link
-     anywhere else (the web, mail, a file that isn't a chapter) keeps only
-     its words: nothing leaves the book. A copy from a book holds its words
-     and shapes alone: no address, no note's mark, no picture.
+   - **The book's own links and notes** (Phase 2b): a link reads as one,
+     the words' own colour with a quiet underline that darkens under the
+     pointer (the extension's story page's, one rule for both), and the
+     window's tooltip names where it goes ("Chapter III", "Note 4", or an
+     address). A link to one of the book's chapters goes there, to the
+     place it names, and **Back to Chapter I** in the colophon (or ⌘[,
+     Alt+←) returns to the line it left, one step; choosing a chapter
+     yourself forgets it. A note's reference (EPUB 3's `noteref`, or a
+     number or a sign in a sup, as EPUB 2 books write them) shows the note
+     over the page, in the book's face, from this chapter or another: Esc,
+     a click elsewhere or scrolling closes it, the keyboard back on the
+     mark, and **Go to the note** goes there. A link to the web or mail
+     (`http:`, `https:`, `mailto:`) opens in the system's browser, as a
+     note's does in Reading; anything else (a script, data, a file, out of
+     the zip) keeps its words alone, with no look of a link. A copy from a
+     book holds its words and shapes alone: no address, no note's mark, no
+     picture.
    - **Beside a note** (Phase 2c): a book opens on one page of the split as a
      note does: ⌘-click or ⌘Enter on its SHELF row, or its menu's Open to the
      Side (on a phone's Two pages, a book chosen faces the note open),

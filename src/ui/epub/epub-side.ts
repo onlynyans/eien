@@ -21,6 +21,7 @@ import { inflateRaw } from '../../platform/inflate';
 import { crumbsOf } from '../vault/open-note';
 import type { Place, Side, SideHooks } from '../vault/page-side';
 import { bookFollow } from './book-follow';
+import { nameLinks } from './book-links';
 import { quoteOf } from './book-quote';
 import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
@@ -164,6 +165,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       `${index + 1} of ${opened.spine.length}`,
       given,
     );
+    nameLinks(page.chapter, opened);
     const offset = typeof place === 'number' ? place : place();
     if (offset !== given) page.showPlace(offset);
     of.changed();

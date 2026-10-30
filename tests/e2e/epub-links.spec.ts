@@ -79,18 +79,54 @@ test('a note’s reference shows the note over the page; Esc closes it, the keyb
 test('a hostile book’s links go nowhere and run nothing', async ({ page }) => {
   await shelfEpub(page, 'Hostile').click();
   await expect(chapter(page)).toContainText('way 0');
-  for (let n = 0; n < 8; n++) {
+  // Only the web's keeps its address (for the system's browser); the rest stay words, unstyled.
+  for (const n of [0, 2, 3, 4, 5, 6, 7]) {
     await expect(chapter(page).getByText(`way ${n}`, { exact: true })).not.toHaveAttribute(
       'href',
       /./u,
     );
   }
+  await expect(chapter(page).getByText('way 1', { exact: true })).toHaveAttribute(
+    'href',
+    'https://example.com/',
+  );
   await expect(chapter(page).locator('[id], [name], script, [onclick]')).toHaveCount(0);
   await chapter(page).getByText('Back to the top.').click();
   await chapter(page).locator('a[data-part="note-ref"]').first().click();
   await expect(note(page)).toHaveCount(0);
   expect(await page.evaluate(() => (window as { eienRan?: boolean }).eienRan)).toBeUndefined();
   expect(await page.evaluate(() => location.hash)).toBe('');
+});
+
+test('a web link opens in the system’s browser, named in the tooltip, the window staying put', async ({
+  app,
+  page,
+}) => {
+  await app.evaluate(({ shell }) => {
+    const opened: string[] = [];
+    Object.assign(globalThis, { opened });
+    shell.openExternal = async (url) => void opened.push(url);
+  });
+  await shelfEpub(page, 'Hostile').click();
+  const web = chapter(page).getByText('way 1', { exact: true });
+  await expect(web).toHaveAttribute('data-tip', 'example.com/');
+  // Its look: the words' own colour, a quiet underline.
+  expect(
+    await web.evaluate((a) => getComputedStyle(a).textDecorationLine.includes('underline')),
+  ).toBe(true);
+  await web.hover();
+  await expect(page.locator('.tooltip')).toHaveText('example.com/');
+  await web.click();
+  await expect
+    .poll(() => app.evaluate(() => (globalThis as unknown as { opened: string[] }).opened))
+    .toEqual(['https://example.com/']);
+  expect(await page.evaluate(() => location.href)).not.toContain('example.com');
+  // A chapter's link names its chapter, for the same tooltip.
+  await shelfEpub(page, 'Links').click();
+  await expect(chapter(page).getByRole('link', { name: 'see Chapter III' })).toHaveAttribute(
+    'data-tip',
+    'Chapter III',
+  );
 });
 
 test('a copy from a book holds its words, without its marks or addresses', async ({

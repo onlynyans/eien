@@ -127,10 +127,13 @@ test.describe('the shelf', () => {
       '[onclick]',
       '[onmouseover]',
       '[style]',
-      'a[href]',
+      'a[href^="javascript"]',
     ]) {
       await expect(chapter(page).locator(selector), selector).toHaveCount(0);
     }
+    // The web's link keeps its address, for the system's browser (#40, Phase 2b); the script's doesn't.
+    await expect(chapter(page).locator('a[href]')).toHaveCount(1);
+    await expect(chapter(page).locator('a[href]')).toHaveAttribute('href', 'https://example.com/');
     await expect(chapter(page)).toContainText('[A remote picture]');
     expect(await page.evaluate(() => (window as { eienRan?: boolean }).eienRan)).toBeUndefined();
   });
