@@ -39,25 +39,42 @@ describe('a folder’s section (#40)', () => {
     expect(sides.keys('A/B')).toEqual(['shelf:A/B', 'folder:A/B']);
   });
 
-  it('notes the section a folder’s menu, F2 or ⌥ and an arrow was used in, before it acts', () => {
+  it('notes the section of a folder row pressed, dragged from or given the keyboard', () => {
     const sides = new FolderSides();
-    const seen: string[] = [];
-    const acts = {
-      menu: vi.fn((_path, _at, section) => seen.push(`${sides.from}/${section}`)),
-      rename: vi.fn(() => seen.push(sides.from)),
-      move: vi.fn((_path, _how, section) => seen.push(`${sides.from}/${section}`)),
+    const tree = document.createElement('nav');
+    const row = (key: string, folder: string) => {
+      const button = document.createElement('button');
+      button.dataset.key = key;
+      button.dataset.folder = folder;
+      button.append(document.createElement('span'));
+      tree.append(button);
+      return button;
     };
+    const shelf = row('shelf:Novels', 'Novels');
+    const folders = row('folder:Novels', 'Novels');
+    sides.watch(tree);
+    document.body.replaceChildren(tree);
+    shelf.firstElementChild?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    expect(sides.from).toBe('shelf');
+    folders.focus();
+    expect(sides.from).toBe('folders');
+    shelf.focus();
+    expect(sides.from).toBe('shelf');
+  });
+
+  it('gives a folder’s menu and keys their section', () => {
+    const sides = new FolderSides();
+    const acts = { menu: vi.fn(), rename: vi.fn(), move: vi.fn() };
     const on = sides.events('Novels', 'shelf', acts);
     const row = document.createElement('button');
     for (const [type, listener] of Object.entries(on ?? {})) {
       row.addEventListener(type, listener as EventListener);
     }
     row.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2' }));
-    sides.from = 'folders';
     row.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true }));
-    sides.from = 'folders';
     row.dispatchEvent(new MouseEvent('contextmenu'));
-    expect(seen).toEqual(['shelf', 'shelf/shelf', 'shelf/shelf']);
+    expect(acts.rename).toHaveBeenCalledWith('Novels');
     expect(acts.move).toHaveBeenCalledWith('Novels', 'up', 'shelf');
+    expect(acts.menu.mock.calls[0]?.[2]).toBe('shelf');
   });
 });

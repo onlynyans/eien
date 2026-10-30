@@ -82,7 +82,6 @@ test('a folder on SHELF shuts and opens by its twisty or its name, and stays shu
 }) => {
   await expect(book(page, 'Anna')).toBeVisible();
   const twist = page.locator('[data-key="twist:/shelf/Novels"]');
-  await expect(twist).toHaveAttribute('aria-label', 'Close Novels');
   await twist.click();
   await expect(book(page, 'Anna')).toHaveCount(0);
   await expect(book(page, 'Emma')).toHaveCount(0);

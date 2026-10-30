@@ -68,10 +68,10 @@ function vault(folders: Record<string, string[]>, holds: Record<string, Holds> =
 describe('folders in your order', () => {
   it('⌥↑ ⌥↓ move a folder among those beside it, and not past either end', async () => {
     const { of, names } = vault({ '': ['A', 'B', 'C'] });
-    expect(await nudgeFolder(of, 'B', 1)).toBe(true);
+    expect(await nudgeFolder(of, 'B', 1, 'folders')).toBe(true);
     expect(names['']).toEqual(['A', 'C', 'B']);
-    expect(await nudgeFolder(of, 'B', 1)).toBe(false);
-    expect(await nudgeFolder(of, 'A', -1)).toBe(false);
+    expect(await nudgeFolder(of, 'B', 1, 'folders')).toBe(false);
+    expect(await nudgeFolder(of, 'A', -1, 'folders')).toBe(false);
   });
 
   it('a folder placed before another, or last; where it is, nothing written', async () => {
@@ -95,9 +95,9 @@ describe('folders in your order', () => {
 
   it('⌥→ puts a folder into the one above it; the first has none above', async () => {
     const { of, names } = vault({ '': ['A', 'B'] });
-    expect(await folderInto(of, 'B')).toBe('A/B');
+    expect(await folderInto(of, 'B', 'folders')).toBe('A/B');
     expect(names.A).toEqual(['B']);
-    expect(await folderInto(of, 'A')).toBeNull();
+    expect(await folderInto(of, 'A', 'folders')).toBeNull();
   });
 
   it('moves among the folders FOLDERS shows, stepping over one of EPUBs alone (#40)', async () => {
@@ -105,13 +105,13 @@ describe('folders in your order', () => {
       { '': ['A', 'Books', 'C'] },
       { A: 'notes', Books: 'epubs', C: 'notes' },
     );
-    expect(await nudgeFolder(of, 'A', 1)).toBe(true);
+    expect(await nudgeFolder(of, 'A', 1, 'folders')).toBe(true);
     expect(names['']).toEqual(['Books', 'C', 'A']);
-    expect(await nudgeFolder(of, 'A', 1)).toBe(false); // last in FOLDERS
-    expect(await nudgeFolder(of, 'A', -1)).toBe(true);
+    expect(await nudgeFolder(of, 'A', 1, 'folders')).toBe(false); // last in FOLDERS
+    expect(await nudgeFolder(of, 'A', -1, 'folders')).toBe(true);
     expect(names['']).toEqual(['Books', 'A', 'C']);
-    expect(await nudgeFolder(of, 'A', -1)).toBe(false); // first in FOLDERS
-    expect(await folderInto(of, 'C')).toBe('A/C'); // the folder shown above it, not Books
+    expect(await nudgeFolder(of, 'A', -1, 'folders')).toBe(false); // first in FOLDERS
+    expect(await folderInto(of, 'C', 'folders')).toBe('A/C'); // the folder shown above it, not Books
   });
 
   it('names the folders a section shows beside one, which its menu moves it among', () => {

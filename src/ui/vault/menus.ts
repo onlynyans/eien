@@ -120,7 +120,7 @@ export async function showFolderMenu(
   ctx: MenuContext,
   path: string,
   at: At,
-  section: FolderSection = 'folders',
+  section: FolderSection,
 ): Promise<void> {
   const settings = (await ctx.state.folderSettings(path)).book;
   const beside = shownBeside(ctx.state, path, section);

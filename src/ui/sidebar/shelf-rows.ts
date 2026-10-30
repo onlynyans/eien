@@ -79,7 +79,7 @@ const row = (depth: number, inner: HTMLElement, kind: string, twist?: HTMLElemen
 function folderRow(folder: FolderNode, depth: number, open: boolean, folders: ShelfFolders) {
   const fold = () => folders.fold(folder.path);
   // Its twisty's key starts "/", as no folder's path can, so a folder named "shelf:x" in FOLDERS never shares it.
-  const twist = twistButton(`/shelf/${folder.path}`, open, folder.name, fold);
+  const twist = twistButton(`/shelf/${folder.path}`, open, folder.name, fold, true);
   const name = h(
     'button',
     {

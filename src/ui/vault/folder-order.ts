@@ -30,7 +30,7 @@ export function nudgeFolder(
   of: FolderOrderOf,
   path: string,
   by: -1 | 1,
-  section: FolderSection = 'folders',
+  section: FolderSection,
 ): Promise<boolean> {
   const parent = parentOf(path);
   const shown = shownBeside(of.state, path, section);
@@ -79,7 +79,7 @@ export async function folderOut(of: FolderOrderOf, path: string): Promise<string
 export function folderInto(
   of: FolderOrderOf,
   path: string,
-  section: FolderSection = 'folders',
+  section: FolderSection,
 ): Promise<string | null> {
   const parent = parentOf(path);
   const shown = shownBeside(of.state, path, section);

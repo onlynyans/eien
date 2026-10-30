@@ -142,6 +142,7 @@ export class Sidebar {
 
   constructor(name: string, actions: SidebarActions, keys: string, search: SearchField) {
     this.#actions = actions;
+    this.#sides.watch(this.#body);
     this.#search = search;
     this.#addFolder = addButton({
       label: 'New folder',

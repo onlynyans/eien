@@ -234,6 +234,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
     - `sidebar/twist.ts`: a row's twisty and its group, in FOLDERS, TAGS and SHELF alike
     - moves among the folders a section shows: `vault/folder-order.ts`' `shownBeside`
   - `sidebar/sidebar-focus.ts`: where the keyboard is in the tree, kept across its redraws
+  - `sidebar/seals.ts`: the seal that shuts the sidebar and the one that opens it, the keyboard handed across
 - The lens over each list, drawn in the list's head and, with two panes, for the chosen row in the sidebar
   - `list/lens-bar.ts`: the sort and the tag filter, their chips
   - `list/tag-filter-panel.ts`: the filter's three states, its rules in `core/tags/filter.ts`

@@ -92,9 +92,11 @@ describe('SHELF’s rows', () => {
     expect(name.getAttribute('aria-keyshortcuts')).toBe(
       'F2 Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight',
     );
+    // Its twisty is the pointer's alone: the name is the one control the keyboard and assistive tech meet.
     const twist = list.querySelector('[data-key="twist:/shelf/Fic/Research"]') as HTMLElement;
-    expect(twist.getAttribute('aria-expanded')).toBe('true');
-    expect(twist.getAttribute('aria-label')).toBe('Close Research');
+    expect(twist.getAttribute('aria-hidden')).toBe('true');
+    expect(twist.getAttribute('tabindex')).toBe('-1');
+    expect(twist.hasAttribute('aria-expanded')).toBe(false);
   });
 
   it('shuts and opens a folder by its twisty or a click on its name, and draws a shut one’s rows not at all', () => {
@@ -103,9 +105,6 @@ describe('SHELF’s rows', () => {
     expect(texts(list, '.tree-row--epub')).toEqual(['Boston', 'Loose']);
     const fic = list.querySelector('[data-key="shelf:Fic"]') as HTMLElement;
     expect(fic.getAttribute('aria-expanded')).toBe('false');
-    expect(list.querySelector('[data-key="twist:/shelf/Fic"]')?.getAttribute('aria-label')).toBe(
-      'Open Fic',
-    );
     fic.click();
     (list.querySelector('[data-key="twist:/shelf/Cooking"]') as HTMLElement).click();
     expect(folders.fold.mock.calls).toEqual([['Fic'], ['Cooking']]);

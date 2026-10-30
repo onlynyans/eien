@@ -292,4 +292,18 @@ describe('Chrome', () => {
     chrome.refresh();
     expect(format.hasAttribute('data-empty')).toBe(false);
   });
+
+  it('gives the keyboard to the page when the tool it was on is set aside', () => {
+    const lost = vi.fn();
+    const chrome = new Chrome(of({ lost }));
+    chrome.mount('band');
+    const seal = chrome.buttons('seal')[0] as HTMLButtonElement;
+    seal.focus();
+    looks.set('compare', { aside: true });
+    chrome.refresh();
+    expect(lost).not.toHaveBeenCalled();
+    looks.set('seal', { aside: true });
+    chrome.refresh();
+    expect(lost).toHaveBeenCalledOnce();
+  });
 });

@@ -1,8 +1,8 @@
-// A folder is in FOLDERS, on SHELF, or in both (#40). The section its keys
-// or menu were last used in is where its new name is typed, and where the
-// keyboard goes back to after a rename or a move; when the folder isn't
-// there (a new, empty folder isn't on SHELF; one moved may change sides),
-// the other section.
+// A folder is in FOLDERS, on SHELF, or in both (#40). The section a folder
+// row was last pressed, dragged or given the keyboard in is where its new
+// name is typed, and where the keyboard goes back to after a rename or a
+// move; when the folder isn't there (a new, empty folder isn't on SHELF; one
+// moved may change sides), the other section.
 
 import { type FolderNode, inFolders, onShelf } from '../../core/vault';
 import type { Props } from '../dom';
@@ -32,8 +32,19 @@ export interface FolderActs {
 }
 
 export class FolderSides {
-  /** The section a folder's keys or menu were last used in. */
+  /** The section a folder's row was last used in. */
   from: FolderSection = 'folders';
+
+  /** Note the section of each folder row pressed (a drag's start too) or given the keyboard in `tree`. */
+  watch(tree: HTMLElement): void {
+    const note = (event: Event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const key = target?.closest<HTMLElement>('[data-folder][data-key]')?.dataset.key;
+      if (key) this.from = key.startsWith('shelf:') ? 'shelf' : 'folders';
+    };
+    tree.addEventListener('pointerdown', note, true);
+    tree.addEventListener('focusin', note);
+  }
 
   /** Where the folder at `path` is renamed: the section asked from if it's there, else the other; FOLDERS for one not drawn yet. */
   where(tree: FolderNode, path: string, from = this.from): FolderSection {
@@ -48,16 +59,12 @@ export class FolderSides {
     return [rowKey(first, path), rowKey(other(first), path)];
   }
 
-  /** A folder's own menu and keys in `section` (./row-keys.ts), each noting the section first. */
+  /** A folder's own menu and keys in `section` (./row-keys.ts). */
   events(path: string, section: FolderSection, acts: FolderActs): Props['on'] {
-    const from = <T>(run: () => T) => {
-      this.from = section;
-      return run();
-    };
     return folderRowEvents({
-      menu: (at) => from(() => acts.menu(path, at, section)),
-      rename: () => from(() => acts.rename(path)),
-      move: (how) => from(() => acts.move(path, how, section)),
+      menu: (at) => acts.menu(path, at, section),
+      rename: () => acts.rename(path),
+      move: (how) => acts.move(path, how, section),
     });
   }
 }

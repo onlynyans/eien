@@ -4,7 +4,7 @@
 // chapter drawn with its pictures; the chapter last open comes back after a
 // restart; a hostile book is refused, or drawn with nothing that runs.
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
 import { closeApp, expect, launchApp, ROOT, test } from './launch';
@@ -151,7 +151,9 @@ test.describe('the chapter kept', () => {
     await expect(chapter(page)).toContainText('Mr. Bennet was among the earliest');
     const reading = join(vault, '.eien/reading');
     await expect
-      .poll(() => readdirSync(reading).filter((name) => name.endsWith('.json')))
+      .poll(() =>
+        (existsSync(reading) ? readdirSync(reading) : []).filter((name) => name.endsWith('.json')),
+      )
       .toHaveLength(1);
     const [file] = readdirSync(reading);
     expect(JSON.parse(readFileSync(join(reading, file as string), 'utf8'))).toEqual({

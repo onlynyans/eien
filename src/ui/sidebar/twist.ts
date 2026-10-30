@@ -8,12 +8,18 @@ import { atDepth } from './depth';
 export const twisty = (): HTMLElement =>
   h('span', { class: 'twisty', attrs: { 'aria-hidden': 'true' } });
 
-/** The twisty as a row's own button: it opens the row, or closes it. */
+/**
+ * The twisty as a row's own button: it opens the row, or closes it. `pointer`
+ * when the row's name does the same (SHELF's folders): one control for the
+ * keyboard and assistive tech, the twisty a target for the pointer alone,
+ * which never takes the keyboard from where it is.
+ */
 export const twistButton = (
   key: string,
   open: boolean,
   name: string,
   toggle: () => void,
+  pointer = false,
 ): HTMLElement =>
   h(
     'button',
@@ -21,11 +27,16 @@ export const twistButton = (
       class: 'tree-row__twist',
       attrs: {
         type: 'button',
-        'aria-expanded': String(open),
-        'aria-label': `${open ? 'Close' : 'Open'} ${name}`,
+        'aria-expanded': pointer ? undefined : String(open),
+        'aria-label': pointer ? undefined : `${open ? 'Close' : 'Open'} ${name}`,
+        'aria-hidden': pointer ? 'true' : undefined,
+        tabindex: pointer ? '-1' : undefined,
         'data-key': `twist:${key}`,
       },
-      on: { click: toggle },
+      on: {
+        click: toggle,
+        ...(pointer ? { mousedown: (event: MouseEvent) => event.preventDefault() } : {}),
+      },
     },
     twisty(),
   );

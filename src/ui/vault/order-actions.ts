@@ -35,16 +35,17 @@ export function orderActions(of: OrderActionsOf) {
   const files = { state, organizer };
   /**
    * Where it is now: the keyboard goes there, and the open folders and selection follow it.
-   * The folder it's in opens on SHELF too, so it's in sight there as in FOLDERS.
+   * Moved into another folder, that one opens on SHELF too, so it's in sight there as in
+   * FOLDERS; moved among its own, a fold the writer made stays.
    */
   const land = (path: string, to: string | null) => {
     if (to && to !== path) nav.follow(path, to);
-    if (to) nav.shelf.openTo(parentOf(to));
+    if (to && parentOf(to) !== parentOf(path)) nav.shelf.openTo(parentOf(to));
     of.sidebar().refocusOn(to ?? path);
   };
   return {
     land,
-    moveFolder(path: string, how: FolderMove, section: FolderSection = 'folders'): void {
+    moveFolder(path: string, how: FolderMove, section: FolderSection): void {
       void act(async () => {
         if (how === 'up' || how === 'down') {
           await nudgeFolder(files, path, how === 'up' ? -1 : 1, section);

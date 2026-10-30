@@ -5,6 +5,7 @@
 // sorts are (../list/sorts.ts).
 
 import { isInside, parentOf } from '../../core/paths';
+import { storedFolds, storeFolds } from './folds';
 
 const KEY = 'eien.shelf';
 
@@ -24,17 +25,7 @@ export function readShelfFolds(text: string | null): Set<string> {
 }
 
 export class ShelfFolds {
-  #shut: Set<string>;
-
-  constructor() {
-    let text: string | null = null;
-    try {
-      text = localStorage.getItem(KEY);
-    } catch {
-      // Storage refused: every folder starts open.
-    }
-    this.#shut = readShelfFolds(text);
-  }
+  #shut = readShelfFolds(storedFolds(KEY));
 
   /** The shut folders, in order: what the sidebar draws, and its frame compares. */
   get shut(): string[] {
@@ -46,39 +37,34 @@ export class ShelfFolds {
   }
 
   set(path: string, shut: boolean): void {
-    if (shut) this.#shut.add(path);
-    else this.#shut.delete(path);
-    this.#store();
+    const next = new Set(this.#shut);
+    if (shut) next.add(path);
+    else next.delete(path);
+    this.#keep(next);
   }
 
   /** Open every folder down to `folder`, so a folder moved into it shows. */
   openTo(folder: string): void {
-    const before = this.#shut.size;
-    for (let at = folder; at; at = parentOf(at)) this.#shut.delete(at);
-    if (this.#shut.size !== before) this.#store();
+    const open = new Set<string>();
+    for (let at = folder; at; at = parentOf(at)) open.add(at);
+    this.#keep(new Set([...this.#shut].filter((path) => !open.has(path))));
   }
 
   /** A folder renamed or moved: its folds, and those of the folders in it, follow it. */
   follow(from: string, to: string): void {
-    const moved = [...this.#shut].map((path) =>
-      isInside(path, from) ? to + path.slice(from.length) : path,
-    );
-    this.#shut = new Set(moved);
-    this.#store();
+    const moved = (path: string) => (isInside(path, from) ? to + path.slice(from.length) : path);
+    this.#keep(new Set([...this.#shut].map(moved)));
   }
 
   /** A folder went to the trash: its folds, and those in it, go. */
   forget(path: string): void {
-    const before = this.#shut.size;
-    for (const shut of [...this.#shut]) if (isInside(shut, path)) this.#shut.delete(shut);
-    if (this.#shut.size !== before) this.#store();
+    this.#keep(new Set([...this.#shut].filter((shut) => !isInside(shut, path))));
   }
 
-  #store(): void {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(this.shut));
-    } catch {
-      // Storage refused: the fold holds until the window closes.
-    }
+  /** The shut folders now, stored only when they changed. */
+  #keep(shut: Set<string>): void {
+    const before = this.shut.join('\n');
+    this.#shut = shut;
+    if (this.shut.join('\n') !== before) storeFolds(KEY, JSON.stringify(this.shut));
   }
 }
