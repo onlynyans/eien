@@ -84,21 +84,28 @@ describe('the place in a chapter', () => {
       offset: 200,
     });
     expect(side.place).toMatchObject({ spine: 1, offset: 200 });
-    const figures = side.page.foot.figures.map((figure) => figure.textContent);
-    // No step back to offer (no link followed), then the chapter's place, its page, no bookmark
-    // here, and how far through.
-    expect(figures[0]).toBe('');
-    expect(figures[1]).toBe('2 of 4');
-    expect(figures[3]).toBe('');
-    expect(figures[4]).toBe('20% of the chapter');
-    expect(figures[5]).toMatch(/^\d+% of the book$/u);
+    // Read by their kinds, as the colophon's figures come and go by phase.
+    const figure = (kind: string) =>
+      side.page.foot.figures.find((each) => each.classList.contains(kind))?.textContent;
+    // No step back to offer (no link followed), then the chapter's place and how far through.
+    expect(side.page.foot.figures[0]?.textContent).toBe('');
+    expect(figure('colophon__chapter')).toBe('2 of 4');
+    expect(figure('colophon__bookmarked')).toBe('');
+    const through = side.page.foot.figures.filter((each) =>
+      each.classList.contains('colophon__through'),
+    );
+    expect(through.map((each) => each.textContent)).toEqual([
+      '20% of the chapter',
+      expect.stringMatching(/^\d+% of the book$/u),
+    ]);
   });
 
   it('says the printed page it’s on, at once, the book’s pages by its last (Phase 4)', async () => {
     const { side } = sideWith({ 'a.epub': EPUBS['page-list.epub'] as Uint8Array });
     await side.open('a.epub');
     const scroller = laidOut(side.page);
-    const page = () => side.page.foot.figures[2]?.textContent;
+    const page = () =>
+      side.page.foot.figures.find((each) => each.classList.contains('colophon__page'))?.textContent;
     scrollTo(scroller, 0);
     vi.advanceTimersByTime(REST_MS);
     // Before the chapter's first marked page: the front matter's, named by the chapter alone.
@@ -112,7 +119,8 @@ describe('the place in a chapter', () => {
     const { side } = sideWith(book());
     await side.open('a.epub');
     const scroller = laidOut(side.page);
-    const page = () => side.page.foot.figures[2]?.textContent;
+    const page = () =>
+      side.page.foot.figures.find((each) => each.classList.contains('colophon__page'))?.textContent;
     scrollTo(scroller, 0);
     vi.advanceTimersByTime(REST_MS);
     expect(page()).toBe('');

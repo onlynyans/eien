@@ -66,10 +66,19 @@ export function readingStore(
     return done;
   };
   return {
-    read: async (key) => {
-      const text = (await vault.read(readingPath(key)).catch(() => null))?.text ?? null;
-      return { reading: parseReading(text), bookmarks: bookmarksOf(text), kept: readingKept(text) };
-    },
+    // After any write asked for, so a page opening as a bookmark is kept reads it.
+    read: (key) =>
+      queued<ReadingRead>(
+        async () => {
+          const text = (await vault.read(readingPath(key)).catch(() => null))?.text ?? null;
+          return {
+            reading: parseReading(text),
+            bookmarks: bookmarksOf(text),
+            kept: readingKept(text),
+          };
+        },
+        { reading: parseReading(null), bookmarks: [], kept: 'none' },
+      ),
     // A file that mustn't be written (a newer Eien's, or one that can't be read): nothing to write.
     write: (key, reading) =>
       queued(
@@ -91,10 +100,18 @@ export function readingStore(
           },
           'reading',
         );
-        const marks = written ? (after as readonly Bookmark[] | null) : null;
-        if (marks) for (const told of listeners.get(key) ?? []) told(marks);
+        return written ? (after as readonly Bookmark[] | null) : null;
+      }, null).then((marks) => {
+        // Told once kept, outside the write: a page that fails to show it never unkeeps it.
+        for (const told of marks ? (listeners.get(key) ?? []) : []) {
+          try {
+            told(marks);
+          } catch (error) {
+            console.error(error);
+          }
+        }
         return marks;
-      }, null),
+      }),
     listen: (key, told) => {
       const set = listeners.get(key) ?? new Set();
       set.add(told);

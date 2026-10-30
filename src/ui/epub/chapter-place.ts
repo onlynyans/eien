@@ -127,7 +127,8 @@ export function offsetAfter(chapter: HTMLElement, node: Node): number {
 }
 
 /** What a word's block is: words in two of them read with a space between. */
-const BLOCK = 'p, div, li, dd, dt, blockquote, td, th, figure, figcaption, h1, h2, h3, h4, h5, h6';
+const BLOCK =
+  'p, div, section, aside, pre, li, dd, dt, blockquote, td, th, figure, figcaption, h1, h2, h3, h4, h5, h6';
 
 /**
  * About `length` of the chapter's words from `offset` on (a bookmark's page's
