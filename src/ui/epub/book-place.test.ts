@@ -58,4 +58,37 @@ describe('a page a bookmark is on, as its row says it', () => {
     expect(place.labelAt(0, 500)).toBe('1');
     expect(place.labelAt(1, 10)).toBeNull();
   });
+
+  /** A book's place whose count is `count` (null: no book counted at all). */
+  const placeOver = (count: unknown) =>
+    bookPlace({
+      page: { foot: new BookFoot(() => {}) } as unknown as EpubPage,
+      epub: () => ({ spine: [] }) as unknown as Epub,
+      spine: () => 0,
+      count: () => count as BookCount | null,
+    });
+
+  it('is none known for a book with no page-list until every chapter is counted, in any chapter: never a guess', () => {
+    // A steady page needs the book's whole length: the first chapter counted still isn't enough.
+    const partly = placeOver({ lengths: [4500, null, 3000], print: [] });
+    expect(partly.labelAt(0, 0)).toBeNull();
+    expect(partly.labelAt(0, 3000)).toBeNull();
+    expect(partly.labelAt(2, 0)).toBeNull();
+    const whole = placeOver({ lengths: [4500, 1500, 3000], print: [] });
+    expect(whole.labelAt(0, 3000)).toBe('3');
+    expect(whole.labelAt(2, 0)).toBe('5');
+    // A place past its chapter's end (the count and the book disagreeing) stands at its end.
+    expect(whole.labelAt(0, 1_000_000)).toBe('4');
+  });
+
+  it('is none known with no count yet, nor before a printed book’s first page', () => {
+    expect(placeOver(null).labelAt(0, 0)).toBeNull();
+    const print = placeOver({
+      lengths: [200, 1000],
+      print: [{ label: 'xii', spine: 1, offset: 0 }],
+    });
+    // The cover, before the printed edition begins.
+    expect(print.labelAt(0, 100)).toBeNull();
+    expect(print.labelAt(1, 0)).toBe('xii');
+  });
 });
