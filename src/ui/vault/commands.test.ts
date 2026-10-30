@@ -30,3 +30,18 @@ describe('Split Page', () => {
     expect(toggle).toHaveBeenCalledTimes(1);
   });
 });
+
+// QA (#40, Phase 4b): View → Bookmark This Page and the phone's ⋯ send 'bookmark'.
+describe('Bookmark This Page', () => {
+  it('bookmarks the page in sight when a book is the active page', () => {
+    const bookmark = vi.fn(async () => {});
+    const pages = { active: { kind: 'epub', go: () => {}, bookmark } };
+    runCommand('bookmark', { pages } as unknown as CommandContext);
+    expect(bookmark).toHaveBeenCalledOnce();
+  });
+
+  it('does nothing with a note in front (the menu greys it)', () => {
+    const pages = { active: { kind: 'note', page: {}, versions: {} } };
+    expect(() => runCommand('bookmark', { pages } as unknown as CommandContext)).not.toThrow();
+  });
+});

@@ -72,9 +72,10 @@ export class PageBookmarks {
     this.#key = key;
     this.#kept = read.kept;
     this.#marks = read.bookmarks;
+    // Shown, as every change is, once the page is still: never against a turn's page on its way.
     this.#unlisten = this.#of.store.listen(key, (marks) => {
       this.#marks = marks;
-      this.#show();
+      this.#of.still(() => this.#show());
     });
     const words = NOT_KEPT[read.kept];
     if (read.kept === 'unreadable' && words) this.#of.page.foot.say(words);
@@ -115,7 +116,7 @@ export class PageBookmarks {
     if (key !== this.#key) return;
     if (!after) return this.#notKept(key);
     this.#marks = after;
-    this.#show();
+    this.#of.still(() => this.#show());
     page.foot.say(here.length > 0 ? 'Bookmark taken off.' : 'Bookmarked.');
   }
 
