@@ -59,6 +59,7 @@ export class PagedPlace {
     this.#resized =
       typeof ResizeObserver === 'function' ? new ResizeObserver(() => this.#laidOut()) : null;
     this.#resized?.observe(of.box);
+    of.chapter.addEventListener('focusin', this.#focused);
     document.fonts?.addEventListener?.('loadingdone', this.#again);
   }
 
@@ -131,6 +132,19 @@ export class PagedPlace {
     if (!this.#idle) this.#turnTo(last ? this.#pages - 1 : 0);
   }
 
+  /**
+   * The page holding `element` (a link the keyboard came to on another page),
+   * turned to at once: what has the keyboard is always in sight.
+   */
+  reveal(element: Element): void {
+    if (this.#idle || !this.#shown) return;
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const from = this.#sideOf(range).left - this.#of.chapter.getBoundingClientRect().left;
+    const page = pageAt(from / this.#scale(), this.#step, this.#pages);
+    if (page !== this.#page) this.#turnTo(page);
+  }
+
   /** A turn's place on its way to rest, told now (the page closing, the window quitting, ⇄). */
   keep(): void {
     this.#flush(true);
@@ -139,6 +153,7 @@ export class PagedPlace {
   dispose(): void {
     this.keep();
     this.#resized?.disconnect();
+    this.#of.chapter.removeEventListener('focusin', this.#focused);
     document.fonts?.removeEventListener?.('loadingdone', this.#again);
   }
 
@@ -217,7 +232,20 @@ export class PagedPlace {
     range.selectNodeContents(chapter);
     if (from) range.setStart(from.startContainer, from.startOffset);
     if (to) range.setEnd(to.startContainer, to.startOffset);
-    const words = range.cloneContents();
+    // Inside one paragraph, the cut holds its words alone: they're put back in its elements, shallow.
+    let cut: Node = range.cloneContents();
+    for (
+      let at: Node | null = range.commonAncestorContainer;
+      at && at !== chapter;
+      at = at.parentNode
+    ) {
+      if (at.nodeType !== Node.ELEMENT_NODE) continue;
+      const shell = at.cloneNode(false);
+      shell.appendChild(cut);
+      cut = shell;
+    }
+    const words = document.createDocumentFragment();
+    words.append(cut);
     const first = words.querySelector<HTMLElement>(BLOCKS);
     if (from && first && begunBefore(from)) {
       first.style.textIndent = '0';
@@ -251,6 +279,10 @@ export class PagedPlace {
   }
 
   readonly #again = () => this.reshow();
+
+  readonly #focused = (event: FocusEvent) => {
+    if (event.target instanceof Element) this.reveal(event.target);
+  };
 
   #laidOut(): void {
     const { box } = this.#of;

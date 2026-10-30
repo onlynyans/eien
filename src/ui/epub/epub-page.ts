@@ -15,20 +15,7 @@ import { leafLook } from '../settings/look-properties';
 import { BookFoot } from './book-foot';
 import { ChapterSheet, type ChapterSheetOf } from './chapter-sheet';
 import { LeafEdges } from './leaf-edges';
-
-/** In pages, the keys that turn: on, back, and to the chapter's ends (Phase 3b). */
-const PAGE_KEYS: Readonly<Record<string, 1 | -1 | 'first' | 'last'>> = {
-  ArrowRight: 1,
-  ArrowDown: 1,
-  PageDown: 1,
-  ' ': 1,
-  ArrowLeft: -1,
-  ArrowUp: -1,
-  PageUp: -1,
-  'Shift+Space': -1,
-  Home: 'first',
-  End: 'last',
-};
+import { pageKey, pageTap } from './page-keys';
 
 /** Where a key is the writer's own: a note's editor, a field. */
 const FIELD = '.editor-host, input, textarea, [contenteditable]';
@@ -89,6 +76,9 @@ export class EpubPage implements PaneLeaf {
     );
     this.sheet = new ChapterSheet({ ...of, scroller: this.#scroll });
     this.edges = new LeafEdges((way) => of.turn(way, false));
+    this.sheet.box.addEventListener('click', (event) => {
+      if (this.sheet.paged) pageTap(event, this.sheet.box, of);
+    });
     // The chapter's links too, each named for the tooltip (./book-links.ts nameLinks).
     this.tipped = [closer, this.chapter, ...this.edges.turns];
     this.#sheet = h(
@@ -239,18 +229,7 @@ export class EpubPage implements PaneLeaf {
       this.#of.back();
       return;
     }
-    if (plain && this.sheet.paged) this.#pageKey(event);
-  }
-
-  /** In pages, a page's keys (Phase 3b): on, back, the chapter's ends; never a button's own Space or Enter. */
-  #pageKey(event: KeyboardEvent): void {
-    if (event.target instanceof Element && event.target.closest('button, a[href]')) return;
-    if (event.shiftKey && event.key !== ' ') return;
-    const way = PAGE_KEYS[event.key === ' ' && event.shiftKey ? 'Shift+Space' : event.key];
-    if (way === undefined) return;
-    event.preventDefault();
-    if (way === 'first' || way === 'last') this.#of.edge(way === 'last');
-    else this.#of.turn(way, event.repeat);
+    if (plain && this.sheet.paged) pageKey(event, this.#of);
   }
 
   /**
