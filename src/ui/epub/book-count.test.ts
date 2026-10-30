@@ -50,15 +50,21 @@ describe('a book counted for its page numbers', () => {
     const epub = await book();
     const read = vi.spyOn(epub, 'chapter');
     const count = new BookCount(epub);
-    let landed = () => {};
+    // Turning until landed, then still at once, as a page's own turn is.
+    let landed: (() => void) | null = null;
+    let turning = true;
     count.run(
       epub,
-      (then) => (landed = then),
+      (then) => {
+        if (turning) landed = then;
+        else then();
+      },
       () => {},
     );
     await new Promise((done) => setTimeout(done, 20));
     expect(read).not.toHaveBeenCalled();
-    landed();
+    turning = false;
+    landed?.();
     await vi.waitFor(() => expect(read).toHaveBeenCalledOnce());
   });
 
@@ -110,6 +116,44 @@ describe('a book counted for its page numbers', () => {
     release();
     await vi.waitFor(() => expect(count.whole).toBe(true));
     expect(read).toHaveBeenCalledTimes(epub.spine.length);
+  });
+
+  it('reads nothing while any page on the book turns, one joining or turning again meanwhile', async () => {
+    const epub = await book();
+    const read = vi.spyOn(epub, 'chapter');
+    const count = new BookCount(epub);
+    // A page whose turn the test lands by hand, and asks again whether it's still.
+    const turning = () => {
+      let turns = true;
+      let landed: (() => void)[] = [];
+      const still: Still = (then) => {
+        if (turns) landed.push(then);
+        else then();
+      };
+      const land = () => {
+        turns = false;
+        const waiting = landed;
+        landed = [];
+        for (const then of waiting) then();
+      };
+      return { still, land, turn: () => (turns = true) };
+    };
+    const a = turning();
+    count.run(epub, a.still, () => {});
+    await new Promise((done) => setTimeout(done, 10));
+    // The timer has fired, waiting on A; B joins, turning.
+    const b = turning();
+    count.run(epub, b.still, () => {});
+    a.land();
+    await new Promise((done) => setTimeout(done, 10));
+    expect(read).not.toHaveBeenCalled();
+    // A turns again before B lands: still nothing read.
+    a.turn();
+    b.land();
+    await new Promise((done) => setTimeout(done, 10));
+    expect(read).not.toHaveBeenCalled();
+    a.land();
+    await vi.waitFor(() => expect(read).toHaveBeenCalled());
   });
 
   it('knows where the printed pages begin in the items it has counted', async () => {
@@ -254,16 +298,21 @@ describe('a book counted, at its edges', () => {
     const epub = madeUp([{ words: 'abc' }, { words: 'de' }]);
     const read = vi.spyOn(epub, 'chapter');
     const count = new BookCount(epub);
-    let first = () => {};
+    let first: (() => void) | null = null;
+    let turning = true;
     count.run(epub, always, () => {});
     count.run(
       epub,
-      (then) => (first = then),
+      (then) => {
+        if (turning) first = then;
+        else then();
+      },
       () => {},
     );
     await new Promise((done) => setTimeout(done, 20));
     expect(read).not.toHaveBeenCalled();
-    first();
+    turning = false;
+    first?.();
     await vi.waitFor(() => expect(read).toHaveBeenCalledOnce());
   });
 });
