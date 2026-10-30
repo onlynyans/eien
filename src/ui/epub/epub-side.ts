@@ -29,9 +29,9 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
   const page = new EpubPage({
     close: hooks.close,
     moved: (fraction) => placing.moved(fraction),
-    placed: (from, to) => {
-      placing.placed(from, to);
-      marks.placed(from, to);
+    inSight: (from, to) => {
+      placing.inSight(from, to);
+      marks.inSight(from, to);
     },
     bookmark: () => void bookmark(),
     turn: (way, held) => pages.turn(way, held),
@@ -55,10 +55,15 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
   /** Counts what the page was asked to show, so a slow open never lands over a newer one. */
   let turn = 0;
 
+  /** No more of the book counted for this page. */
+  const stopCounting = () => {
+    stopCount();
+    stopCount = () => {};
+  };
   const letGo = () => {
     drawn?.release();
     drawn = null;
-    stopCount();
+    stopCounting();
     count = null;
     marks.clear();
   };
@@ -118,6 +123,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     const chapter = await opened.chapter(index);
     if (asked !== turn || disposed) return false;
     if (isRefusal(chapter)) {
+      placing.clear();
       page.notice(refusalWords(chapter));
       return false;
     }
@@ -134,6 +140,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     const moved = kept && index !== spine;
     spine = index;
     const given = typeof place === 'number' ? place : 0;
+    // The last chapter's words in sight aren't this one's: its page is said once they're measured.
+    placing.clear();
     page.drawn(
       next.element,
       chapterFoot(opened, index, turnTo),
@@ -223,12 +231,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
         return of.changed();
       }
       epub = read.epub;
-      count = of.counts.of(epub);
-      stopCount = count.run(
-        epub,
-        (then) => pages.whenStill(then),
-        () => placing.counted(),
-      );
+      const counted = of.counts.of(epub);
+      count = counted;
       page.show(nameOf(epub, next), crumbsOf(next), epub.language);
       // Its bookmarks whatever place it opens at (⇄, a second page); the place kept only if none was given.
       const state = await of.reading.read(epub.key);
@@ -236,6 +240,14 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       marks.opened(epub.key, state);
       const start = startOf(epub, at === null ? null : { spine: at, offset }, state.reading);
       await draw(start.index, false, start.offset);
+      // The rest counted once the chapter's in sight, counted as it was drawn, never parsed first;
+      // not if another book came meanwhile (a draw moves `turn` on, so the book is what's asked).
+      if (disposed || epub !== read.epub) return;
+      stopCount = counted.run(
+        epub,
+        (then) => pages.whenStill(then),
+        () => placing.counted(),
+      );
     },
     go: async (index) => {
       // A chapter the reader chose: no step back to where a link was followed from.
@@ -262,7 +274,6 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       page.nothing();
     },
     keep: () => page.sheet.keep(),
-    labelAt: (at, offset) => placing.labelAt(at, offset),
     get bookmarked() {
       return marks.on;
     },
@@ -279,6 +290,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     },
     dispose() {
       disposed = true;
+      // The count stopped first: the turn's dispose runs what waits for it to be still.
+      stopCounting();
       pages.dispose();
       links.forget();
       letGo();

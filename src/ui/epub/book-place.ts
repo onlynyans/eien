@@ -21,24 +21,22 @@ export interface BookPlace {
   /** The page scrolled or turned: how far through the chapter, 0 to 1. */
   moved(fraction: number): void;
   /** The words in sight measured: the page in pages, the lines in sight scrolling. */
-  placed(from: number, to: number): void;
+  inSight(from: number, to: number): void;
   /** More of the book counted: the page said again. */
   counted(): void;
-  /** The page `offset` into spine item `spine` is on, as its label says it; null for none known. */
-  labelAt(spine: number, offset: number): string | null;
+  /** No words in sight measured yet (a chapter on its way, or refused): no page said until they are. */
+  clear(): void;
 }
 
 export function bookPlace(of: BookPlaceOf): BookPlace {
   const { page } = of;
-  /** The first of the words in sight, as last measured. */
-  let from = 0;
+  /** The first of the words in sight, as last measured in the chapter drawn; null before they are. */
+  let from: number | null = null;
 
-  const pageAt = (spine: number, offset: number) => {
-    const count = of.count();
-    return count ? pageOf(count, spine, offset) : { label: null, of: null };
-  };
   const say = () => {
-    const { label, of: total } = pageAt(of.spine(), from);
+    const count = of.count();
+    const { label, of: total } =
+      count && from !== null ? pageOf(count, of.spine(), from) : { label: null, of: null };
     page.foot.page(pageWords(label, total));
   };
 
@@ -51,14 +49,14 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
       page.edges.through(book, at, count);
       page.leaf.style.setProperty('--edges-after', String(page.edges.after));
     },
-    placed(start) {
+    inSight(start) {
       from = start;
       say();
     },
     counted: say,
-    labelAt(spine, offset) {
-      const { label } = pageAt(spine, offset);
-      return label === null ? null : String(label);
+    clear() {
+      from = null;
+      say();
     },
   };
 }

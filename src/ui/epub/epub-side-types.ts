@@ -49,8 +49,6 @@ export interface EpubSide extends Side {
   reload(): Promise<void>;
   /** Its place, if on its way to rest, kept now: the window is quitting. */
   keep(): void;
-  /** The page `offset` into spine item `spine` is on, as its label says it (Phase 4); null for none known. */
-  labelAt(spine: number, offset: number): string | null;
   /** Whether the page in sight holds a bookmark (Phase 4b). */
   readonly bookmarked: boolean;
   /** The book's bookmarks, in the file's order. */

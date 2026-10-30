@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
+import { BookCount } from './book-count';
 import { epubKind } from './epub-kind';
 import { makeEpubSide } from './epub-side';
 import { type EpubSide, isEpub } from './epub-side-types';
@@ -12,6 +13,37 @@ const chapterText = (side: EpubSide) => side.page.chapter.textContent ?? '';
 afterEach(() => {
   document.body.replaceChildren();
   vi.restoreAllMocks();
+});
+
+describe('a book counted for its page numbers (Phase 4a)', () => {
+  /** Each count a page asked for, and the spy on how it stopped. */
+  function counting() {
+    const run = BookCount.prototype.run;
+    const stops: Mock[] = [];
+    vi.spyOn(BookCount.prototype, 'run').mockImplementation(function (this: BookCount, ...args) {
+      const stop = vi.fn(run.apply(this, args));
+      stops.push(stop);
+      return stop;
+    });
+    return stops;
+  }
+
+  it('counts once the chapter is drawn, and stops for another book, a cleared page or one gone', async () => {
+    const stops = counting();
+    const { side } = sideWith({
+      'a.epub': EPUBS['plain.epub'] as Uint8Array,
+      'b.epub': EPUBS['page-list.epub'] as Uint8Array,
+    });
+    await side.open('a.epub');
+    expect(stops).toHaveLength(1);
+    await side.open('b.epub');
+    expect(stops[0]).toHaveBeenCalledOnce();
+    side.clear();
+    expect(stops[1]).toHaveBeenCalledOnce();
+    await side.open('a.epub');
+    side.dispose();
+    expect(stops[2]).toHaveBeenCalledOnce();
+  });
 });
 
 describe('a book’s page', () => {

@@ -408,7 +408,7 @@ const COUNTED_BOOK = longBook({ chapters: 60, paragraphs: 600, large: 4000 });
  * and counted in the background, one a task and only while no page turns, as
  * the pages turn, fifty of them. No long task over the same 200 ms, the large
  * chapter's included; then the steady pages said. Measured: no long task (none
- * over 50 ms), the CPU four times slower too (SLOW=4).
+ * over 50 ms); the longest 91 ms with the CPU four times slower (SLOW=4).
  */
 test.describe('a long book counted while its pages turn', () => {
   test.use({

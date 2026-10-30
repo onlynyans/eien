@@ -75,7 +75,7 @@ export class PageBookmarks {
   }
 
   /** The words in sight measured: shown once the page is still. */
-  placed(from: number, to: number): void {
+  inSight(from: number, to: number): void {
     this.#from = from;
     this.#to = to;
     this.#of.still(() => this.#show());
