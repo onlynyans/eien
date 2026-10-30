@@ -9,7 +9,9 @@ import { epubTitleOf } from '../../core/vault';
 import type { ExportFormat } from '../../platform/bridge';
 import { askNumber } from '../menu/ask-number';
 import { openMenu } from '../menu/menu';
+import type { FolderSection } from '../sidebar/folds';
 import type { Exports } from './exports';
+import { shownBeside } from './folder-order';
 import { destinations, epubMenu, exportMenu, folderMenu, noteMenu } from './menu-items';
 import type { Organizer } from './organize';
 import type { VaultState } from './vault-state';
@@ -31,12 +33,12 @@ export interface MenuContext {
   newNote(folder: string): void;
   newFolder(parent: string): void;
   editFolder(path: string): void;
-  /** A folder moved: the open folders and the selection follow it. */
+  /** A folder moved: the open folders and the selection follow it, and the keyboard goes with it. */
   followFolder(from: string, to: string): void;
   /** A folder (or a book) went to the trash: if it, or a folder in it, was selected, select All Notes. */
   unselect(path: string): void;
-  /** Move a folder in your order, or out of its folder. */
-  moveFolder(path: string, how: 'up' | 'down' | 'out'): void;
+  /** Move a folder in your order among the folders `section` shows beside it, or out of its folder. */
+  moveFolder(path: string, how: 'up' | 'down' | 'out', section: FolderSection): void;
   /** A note in a window of its own: the desktop's only. */
   readonly openInNewWindow?: (path: string) => void;
   /** A note on a page beside the open one: the desktop's only, and not in a phone's layout. */
@@ -113,9 +115,15 @@ export const trashEpub = (ctx: MenuContext, path: string): void =>
     if (await ctx.organizer.trash(path)) ctx.unselect(path);
   });
 
-export async function showFolderMenu(ctx: MenuContext, path: string, at: At): Promise<void> {
+/** A folder's menu, from its row in FOLDERS or on SHELF (#40): it moves up and down among the folders shown there. */
+export async function showFolderMenu(
+  ctx: MenuContext,
+  path: string,
+  at: At,
+  section: FolderSection,
+): Promise<void> {
   const settings = (await ctx.state.folderSettings(path)).book;
-  const beside = ctx.state.folderNames(parentOf(path));
+  const beside = shownBeside(ctx.state, path, section);
   const place = beside.indexOf(baseName(path));
   openMenu(
     folderMenu({
@@ -123,7 +131,7 @@ export async function showFolderMenu(ctx: MenuContext, path: string, at: At): Pr
       parent: parentOf(path) === '' ? null : baseName(parentOf(path)),
       canUp: place > 0,
       canDown: place >= 0 && place < beside.length - 1,
-      move: (how) => ctx.moveFolder(path, how),
+      move: (how) => ctx.moveFolder(path, how, section),
       goal: () =>
         void askNumber({
           label: `Word goal for ${baseName(path)}`,

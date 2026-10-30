@@ -6,7 +6,7 @@
 
 import { h } from '../dom';
 import type { Folds, SectionId } from './folds';
-import { twisty } from './tree';
+import { twisty } from './twist';
 
 /** A section: its head (the label, and a control beside it), then its rows. */
 const part = (head: HTMLElement, control: HTMLElement | undefined, tree: HTMLElement) =>

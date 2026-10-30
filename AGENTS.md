@@ -65,6 +65,7 @@ Rules, pure TypeScript.
 - `paths`
 - `text`
 - `vault`
+  - `tree.ts`: the folder tree, and which folders FOLDERS (`inFolders`: all but a folder of EPUBs alone, at any depth) and SHELF (`onShelf`) list (#40)
   - `assets.ts`: a note's own folder of images, `<note>.assets`, its links and the names images are kept under
   - `subfolders.ts`: a folder's list with its subfolders' notes, in groups
 - `saving`
@@ -187,7 +188,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `vault/note-side.ts`: a note's (`isNote`, `activeNote`)
   - `vault/stand-in-kind.ts`: a second kind for the tests
   - a command for one kind is marked `on` in `chrome/commands.ts`, and `menuOff` carries it to the menu bar and the phone's ⋯
-  - `vault/command-looks.ts`: how each command looks now
+  - `vault/command-looks.ts`: how each command looks now, or set aside where the active page is another kind
 - `page/note-foot.ts`: a note's colophon items
 - `vault/open-notes.ts`: a note open on any page, held once (one session, one document, its images), however many pages show it
 - `vault/note-actions.ts`: what the writer does to notes from any pane
@@ -227,8 +228,13 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `sidebar/lens-slot.ts`: with two panes, the chosen row's lens
   - `sidebar/sections.ts`: its sections fold, folded per device in `sidebar/folds.ts`
   - `sidebar/tree-sections.ts`: the sections in order, LIBRARY, FOLDERS, SHELF, TAGS
-  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: folders as labels, books as controls (a note's row's keys and menu, `vault/row-actions.ts`), an open book's contents with two panes
+  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: its folders FOLDERS' own folder rows, books as controls (a note's row's keys and menu, `vault/row-actions.ts`), an open book's contents with two panes
+    - `sidebar/shelf-folds.ts`: SHELF's shut folders, per device
+    - `sidebar/folder-sides.ts`: a folder in FOLDERS, on SHELF or both: where its rename is typed and the keyboard goes back to
+    - `sidebar/twist.ts`: a row's twisty and its group, in FOLDERS, TAGS and SHELF alike
+    - moves among the folders a section shows: `vault/folder-order.ts`' `shownBeside`
   - `sidebar/sidebar-focus.ts`: where the keyboard is in the tree, kept across its redraws
+  - `sidebar/seals.ts`: the seal that shuts the sidebar and the one that opens it, the keyboard handed across
 - The lens over each list, drawn in the list's head and, with two panes, for the chosen row in the sidebar
   - `list/lens-bar.ts`: the sort and the tag filter, their chips
   - `list/tag-filter-panel.ts`: the filter's three states, its rules in `core/tags/filter.ts`
@@ -313,7 +319,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `chrome/`: the window's controls (spec §4, Layouts)
   - `chrome/commands.ts`: every control a command, once (its icon, name, key and the menu's command it runs)
   - `icons.ts`: Eien's own icons, inline SVG, which the commands are drawn as
-  - `chrome/host.ts` draws them as icon buttons, with tooltips from `chrome/tooltip.ts`
+  - `chrome/host.ts` draws them as icon buttons, with tooltips from `chrome/tooltip.ts`, a command set aside out of its row
   - `chrome/fold.ts`: short of room, a bar's tools fold behind one ⋯
   - `chrome/band.ts`, `slip.ts`, `runhead.ts`: each layout a list of its hosts and the slot each goes in, each with its own stylesheet and corners
   - `chrome/layout-spec.ts`: the slots and the hosts all three share

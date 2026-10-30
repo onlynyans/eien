@@ -33,7 +33,7 @@ export interface EpubWiring {
   /** Choosing a book or a chapter; a book's menu and keys are a row's (./row-actions.ts). */
   readonly actions: Pick<ShelfActions, 'openEpub' | 'chapter'>;
   /** What SHELF marks: the book on the active page, and with `two` panes the open book's contents. */
-  shelf(two: boolean): Omit<ShelfModel, 'tree'>;
+  shelf(two: boolean): Omit<ShelfModel, 'tree' | 'shut'>;
   /** The contents the list shows in place of notes, or null. */
   contents(): (ContentsModel & { readonly side: EpubSide }) | null;
 }

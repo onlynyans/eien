@@ -321,7 +321,10 @@ if a theme should change it, it joins `THEME_TOKENS`.
 
 ## States
 
-Every control has hover, pressed, keyboard focus and disabled. Focus is a 2px
+Every control has hover, pressed, keyboard focus and disabled. A tool the
+active page can't use isn't disabled but set aside, out of its bar (#40,
+"The tools, by what's in sight"); disabled is for one that applies but
+can't act now (Compare with no versions). Focus is a 2px
 ring in the focus ink (inset on rows). Hover styles apply only where a pointer
 hovers, so a tapped control doesn't stay lit on touch.
 
@@ -635,25 +638,36 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114; after Phase 1, #120; Phase 2a, scrolling)
+## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114; after Phase 1, #120; Phase 2a, scrolling; FOLDERS for writing, SHELF for reading)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add scrolling, paging and the turn, marks, highlights and Find
 in the book, each recorded here as it's built.
 
 - **SHELF** (`sidebar/shelf-rows.ts`): a sidebar section between FOLDERS and
-  TAGS, a lens over the one folder tree. A folder holding a book is a label
-  on the way to it, in pencil and always open; only a book's row is a
-  control, in ink-soft, and opens on the page. Books are never in a folder's
-  note list.
+  TAGS, a lens over the one folder tree. A folder holding a book is
+  FOLDERS' own folder row (the tree's twisty, focus ring, hover and drop
+  target), its name in pencil, no count; it shuts and opens (open at first,
+  kept per device) and has the folder's menu. A book's row is in ink-soft,
+  and opens on the page. Books are never in a folder's note list.
+- **FOLDERS for writing, SHELF for reading** (decided 2026-10-29): FOLDERS
+  leaves out a folder of books alone (at any depth), which is on SHELF
+  only; a folder of both is in both. Nothing dims: a section shows what its
+  folders hold.
 - **A book's row menu** (#120): the Row menu (Built patterns), the book's
   title its head: Rename (F2), Move to…, and the trash last in
   `--eien-danger` after a rule. Right-click, the menu key or Shift+F10 open
   it; F2 or a second click on the name renames in place with the Name
   field, the book's `.epub` faded after it as a note's `.md`.
-- **A note's commands greyed with a book in front** (#120): the layout's
-  tools look disabled (never hidden), the phone's ⋯ and the menu bar grey
-  the same commands. A menu of the bar is never greyed, only its items.
+- **The tools, by what's in sight** (decided 2026-10-29, replacing #120's
+  greying in the bars): a tool shows only while the active page can use
+  it. With a book active, a note's tools are set aside in the bars, never
+  greyed (a greyed Bold says something false); the shared tools (Look,
+  Split, the panes) keep their places, and the change is instant. The
+  formatting bar's row keeps its height while a note is in sight, so
+  neither page moves; with a book alone it goes. The phone's ⋯ and the
+  menu bar grey the same commands (#120): a menu lists all the app does. A
+  menu of the bar is never greyed, only its items.
 - **A book's contents** (`list/contents-list.ts`): in the list pane while a
   book is open, a chapter's row a note's row without its preview or date
   (`.contents-row`), a part's chapters stepped in by `--eien-space-4` a

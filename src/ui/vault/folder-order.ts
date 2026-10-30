@@ -1,30 +1,47 @@
 // Your order for folders (backlog #12, docs/design/explorations/order.md):
 // a folder moves up or down among its own (⌥↑ ⌥↓, its menu, a drag), out of
-// the folder it's in (⌥←), or into the folder above it (⌥→). The order is in
+// the folder it's in (⌥←), or into the folder above it (⌥→). Up, down and
+// into are among the folders the section it moves in shows (FOLDERS or
+// SHELF, #40), stepping over those only the other shows. The order is in
 // the parent's .eien-folder.json, the vault's own for the top folders, as a
 // folder's notes' order is: written to the vault, so it syncs.
 
 import { baseName, joinPath, parentOf } from '../../core/paths';
 import type { TagNode } from '../../core/tags';
 import { FOLDER_SETTINGS_NAME, placedBefore } from '../../core/vault';
+import { listsFolder } from '../sidebar/folder-sides';
+import type { FolderSection } from '../sidebar/folds';
 import type { Organizer } from './organize';
-import type { VaultState } from './vault-state';
+import { findFolder, type VaultState } from './vault-state';
 
 export interface FolderOrderOf {
   readonly state: VaultState;
   readonly organizer: Organizer;
 }
 
-/** One place up or down among the folders beside it; false when it's at that end already. */
-export function nudgeFolder(of: FolderOrderOf, path: string, by: -1 | 1): Promise<boolean> {
+/** The names of the folder at `path` and those beside it that `section` shows, in your order. */
+export function shownBeside(state: VaultState, path: string, section: FolderSection): string[] {
+  const folders = findFolder(state.tree, parentOf(path))?.folders ?? [];
+  return folders.filter((node) => listsFolder(section, node)).map((node) => node.name);
+}
+
+/** One place up or down among the folders `section` shows beside it; false when it's at that end already. */
+export function nudgeFolder(
+  of: FolderOrderOf,
+  path: string,
+  by: -1 | 1,
+  section: FolderSection,
+): Promise<boolean> {
   const parent = parentOf(path);
-  const shown = of.state.folderNames(parent);
+  const shown = shownBeside(of.state, path, section);
   const at = shown.indexOf(baseName(path));
-  const to = at + by;
-  if (at < 0 || to < 0 || to >= shown.length) return Promise.resolve(false);
-  const order = [...shown];
-  [order[at], order[to]] = [order[to] as string, order[at] as string];
-  return of.organizer.setOrder(parent, { folders: order });
+  const past = shown[at + by];
+  if (at < 0 || past === undefined) return Promise.resolve(false);
+  // Up: just before the one shown above it; down: just after the one shown below it. A
+  // folder the section doesn't show between them keeps its place among the rest.
+  const all = of.state.folderNames(parent);
+  const before = by < 0 ? past : all[all.indexOf(past) + 1];
+  return placeFolderBefore(of, path, before === undefined ? null : joinPath(parent, before));
 }
 
 /** Place the folder at `path` just before the folder `before` beside it (last, for null). */
@@ -58,10 +75,14 @@ export async function folderOut(of: FolderOrderOf, path: string): Promise<string
   return to;
 }
 
-/** Into the folder just above it, last there (⌥→); its new path, or null with none above. */
-export function folderInto(of: FolderOrderOf, path: string): Promise<string | null> {
+/** Into the folder `section` shows just above it, last there (⌥→); its new path, or null with none above. */
+export function folderInto(
+  of: FolderOrderOf,
+  path: string,
+  section: FolderSection,
+): Promise<string | null> {
   const parent = parentOf(path);
-  const shown = of.state.folderNames(parent);
+  const shown = shownBeside(of.state, path, section);
   const above = shown[shown.indexOf(baseName(path)) - 1];
   if (above === undefined) return Promise.resolve(null);
   return of.organizer.moveInto(path, joinPath(parent, above), false);
