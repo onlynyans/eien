@@ -62,6 +62,7 @@ describe('the quick look’s settings (#49)', () => {
       'epub.turn',
       'epub.turnSpeed',
       'epub.scroll',
+      'epub.marks',
     ]);
   });
 
@@ -74,6 +75,7 @@ describe('the quick look’s settings (#49)', () => {
       'epub.turn',
       'epub.turnSpeed',
       'epub.scroll',
+      'epub.marks',
     ]);
   });
 

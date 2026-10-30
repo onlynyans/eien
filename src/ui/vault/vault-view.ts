@@ -80,6 +80,7 @@ export async function showVault(
     tell,
     redraw: () => void redraw(),
     looks: () => chrome.refresh(),
+    marksAt: () => settings.values['epub.marks'],
     pages: () => pages,
     openChosen: (path) => actions.openNote(path, 'chosen'),
     showPage: () => phone.stack.show('page'),

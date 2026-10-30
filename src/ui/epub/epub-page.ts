@@ -215,7 +215,13 @@ export class EpubPage implements PaneLeaf {
     const { face, frame, properties } = leafLook(values);
     const leaf = this.element;
     // The scroll style (Phase 2): a note's paragraphs, or a book's (./epub.css); in pages, a book's.
-    const wanted = { face, frame, scroll: values['epub.scroll'], view: values['epub.view'] };
+    const wanted = {
+      face,
+      frame,
+      scroll: values['epub.scroll'],
+      view: values['epub.view'],
+      marks: values['epub.marks'],
+    };
     // Only what changed: setting an attribute again restyles the page (as ../settings/look.ts says).
     const changed =
       Object.entries(wanted).filter(([name, value]) => leaf.dataset[name] !== value).length +
