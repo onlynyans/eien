@@ -88,3 +88,24 @@ describe('each command’s item (#40: greyed by it)', () => {
     expect(items.find((item) => item.label === 'Focus Mode')?.id).toBe('toggle:editor.focus');
   });
 });
+
+// QA (#40, Phase 4b): B is the page's own key, so the menu's item must never take the letter.
+describe('the View menu’s Bookmark This Page (#40, Phase 4b)', () => {
+  it('follows Pages and Scroll, sends the bookmark’s command, and has no key of its own', () => {
+    const sent: string[] = [];
+    const menu = buildMenu((command) => sent.push(command)) as unknown as Item[];
+    const view = named(menu, 'View')?.submenu ?? [];
+    const labels = view.map((item) => item.label);
+    const at = labels.indexOf('Bookmark This Page');
+    expect(labels.slice(at - 2, at + 1)).toEqual(['Pages', 'Scroll', 'Bookmark This Page']);
+    const item = view[at];
+    expect(item?.id).toBe('bookmark');
+    expect(item?.accelerator).toBeUndefined();
+    item?.click?.(undefined, undefined);
+    expect(sent).toEqual(['bookmark']);
+    // No item anywhere takes a bare B, which a note's editor types.
+    const keys = (items: Item[]): string[] =>
+      items.flatMap((each) => [each.accelerator ?? '', ...keys(each.submenu ?? [])]);
+    expect(keys(menu).filter((key) => key.toUpperCase() === 'B')).toEqual([]);
+  });
+});

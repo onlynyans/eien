@@ -6,9 +6,9 @@
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
+import type { ElectronApplication, Locator, Page } from '@playwright/test';
 import { seriousViolations } from './axe';
-import { chooseSetting, clickMenu, closeApp, expect, launchApp, ROOT, test } from './launch';
+import { ALONE, chooseSetting, clickMenu, closeApp, expect, launchApp, ROOT, test } from './launch';
 
 const epub = (name: string) =>
   new Uint8Array(readFileSync(join(ROOT, 'tests/fixtures/epub', name)));
@@ -243,3 +243,197 @@ test.describe('a bookmark in Facing pages', () => {
     await expect(mark(page)).toBeHidden();
   });
 });
+
+// QA (#40, Phase 4b): the cases above leave out. Written, not run here (the owner's rule: no
+// Electron window on the owner's screen); CI runs them.
+
+/** Whether the menu bar's item for `command` is on (each item's id is its command). */
+const menuOn = (app: ElectronApplication, command: string) =>
+  app.evaluate(({ Menu }, id) => Menu.getApplicationMenu()?.getMenuItemById(id)?.enabled, command);
+
+/** Whether a word visually hidden (1px, clipped: heard, not seen) is out of sight. */
+const unseen = async (locator: Locator) => ((await locator.boundingBox())?.width ?? 0) <= 1;
+
+test.describe('a bookmark, QA', () => {
+  test.use({
+    vaultFiles: {
+      'Novels/Pride and Prejudice.epub': epub('plain.epub'),
+      'Notes.md': 'Snow on the walls.\n',
+    },
+  });
+  test.beforeEach(({ page }) => page.setViewportSize({ width: 1600, height: 900 }));
+
+  test('View → Bookmark This Page is greyed with a note in front, on with a book', async ({
+    app,
+    page,
+  }) => {
+    await page.locator('.note-row', { hasText: 'Notes' }).click();
+    await expect(page.locator('.title')).toHaveText('Notes');
+    await expect.poll(() => menuOn(app, 'bookmark')).toBe(false);
+    // B in the note is a letter typed, never a bookmark.
+    await page.locator('.cm-content').click();
+    await page.keyboard.press('End');
+    await page.keyboard.press('b');
+    await expect(page.locator('.cm-content')).toContainText('walls.b');
+    await openBook(page);
+    await expect.poll(() => menuOn(app, 'bookmark')).toBe(true);
+    await clickMenu(app, 'View', 'Bookmark This Page');
+    await expect(mark(page)).toBeVisible();
+  });
+
+  test('arrives with the mark’s own motion, and with none when motion is reduced', async ({
+    page,
+  }) => {
+    await chooseSetting(page, 'appearance.facingMark', 'ribbon');
+    await openBook(page);
+    const duration = () =>
+      mark(page).evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).animationDuration),
+      );
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    expect(await duration()).toBeGreaterThan(0);
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeHidden();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    expect(await duration()).toBe(0);
+  });
+
+  test('the edge tab stands inside the page’s edge with Page frame Full', async ({ page }) => {
+    await chooseSetting(page, 'appearance.facingMark', 'tab');
+    await chooseSetting(page, 'appearance.frame', 'full');
+    await openBook(page);
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    const box = await mark(page).boundingBox();
+    const sheet = await leaf(page).locator('.epub-sheet').boundingBox();
+    const scroller = await leaf(page).locator('.page__scroll').boundingBox();
+    if (!box || !sheet || !scroller) throw new Error('nothing in sight');
+    // In sight: within the sheet and the page's scroller both, at the outer (right) edge.
+    expect(box.x + box.width).toBeLessThanOrEqual(sheet.x + sheet.width + 1);
+    expect(box.x + box.width).toBeLessThanOrEqual(scroller.x + scroller.width + 1);
+    expect(box.x).toBeGreaterThan(sheet.x + sheet.width / 2);
+  });
+
+  test('in pages, the edge tab stands past the fore-edge’s pages still to read', async ({
+    page,
+  }) => {
+    await chooseSetting(page, 'appearance.facingMark', 'tab');
+    await openBook(page);
+    await page.locator('[data-command="view.pages"]:visible').first().click();
+    await leaf(page).locator('.page__scroll').focus();
+    const edges = leaf(page).locator('.epub-edges__stack--after .epub-edges__edge');
+    await expect(edges).not.toHaveCount(0);
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    const box = await mark(page).boundingBox();
+    if (!box) throw new Error('no mark');
+    const furthest = Math.max(
+      ...(await edges.evaluateAll((all) => all.map((edge) => edge.getBoundingClientRect().right))),
+    );
+    // Never under the stack: its inner side at or past the last paper edge.
+    expect(box.x).toBeGreaterThanOrEqual(furthest - 1);
+  });
+});
+
+test.describe('a bookmark as a page turns, QA', () => {
+  test.use({
+    vaultFiles: { 'Novels/Pride and Prejudice.epub': epub('plain.epub') },
+    // The slowest curl, so a key lands while it's in flight.
+    deviceFile: { settings: { 'epub.view': 'pages', 'epub.turn': 'curl', 'epub.turnSpeed': '4' } },
+  });
+  test.beforeEach(({ page }) => page.setViewportSize({ width: 1600, height: 900 }));
+
+  test('B mid-turn lands the turn and bookmarks the page it lands on', ALONE, async ({ page }) => {
+    await openBook(page);
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.turn-curl')).toHaveCount(1);
+    await page.keyboard.press('b');
+    await expect(page.locator('.turn-curl')).toHaveCount(0);
+    await expect(mark(page)).toBeVisible();
+    // The page it left has none: the bookmark is the second page's.
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.locator('.turn-curl')).toHaveCount(1);
+    // Never drawn while a page curls (the turning page is a copy, which leaves it out).
+    await expect(mark(page)).toBeHidden();
+    await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
+    await expect(mark(page)).toBeHidden();
+    await expect(tool(page)).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
+test.describe('a bookmark in a Companion, QA', () => {
+  test.use({
+    vaultFiles: {
+      'Novels/Pride and Prejudice.epub': epub('plain.epub'),
+      'Notes.md': 'Snow on the walls.\n',
+    },
+    deviceFile: { settings: { 'appearance.split': 'companion' } },
+  });
+
+  test('wears its mark there, as anywhere but Facing pages, the folio’s word unseen', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.locator('.note-row', { hasText: 'Notes' }).click();
+    await shelfEpub(page).click({ modifiers: ['ControlOrMeta'] });
+    await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
+    await expect(leaf(page).locator('.epub-chapter')).toContainText('It is a truth');
+    await leaf(page).locator('.page__scroll').focus();
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    const box = await mark(page).boundingBox();
+    const sheet = await leaf(page).locator('.epub-sheet').boundingBox();
+    if (!box || !sheet) throw new Error('nothing in sight');
+    // At the top of the companion's sheet, its outer side.
+    expect(box.y).toBeLessThan(sheet.y + sheet.height / 4);
+    expect(box.x + box.width / 2).toBeGreaterThan(sheet.x + sheet.width / 2);
+    expect(await unseen(leaf(page).locator('.colophon__bookmarked'))).toBe(true);
+    expect(await seriousViolations(page), 'a bookmarked book as a companion').toEqual([]);
+  });
+});
+
+for (const scheme of ['day', 'night'] as const) {
+  test.describe(`the clash in Facing pages by ${scheme}, QA`, () => {
+    test.use({
+      vaultFiles: {
+        'Novels/Pride and Prejudice.epub': epub('plain.epub'),
+        'Notes.md': 'Snow on the walls.\n',
+      },
+      deviceFile: { settings: { 'appearance.split': 'facing', 'appearance.scheme': scheme } },
+    });
+
+    test('the folio says “bookmarked” whichever page is active, and closed to one, with no serious violation', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1600, height: 900 });
+      await page.locator('.note-row', { hasText: 'Notes' }).click();
+      await shelfEpub(page).click({ modifiers: ['ControlOrMeta'] });
+      await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
+      await expect(leaf(page).locator('.epub-chapter')).toContainText('It is a truth');
+      await leaf(page).locator('.page__scroll').focus();
+      await page.keyboard.press('b');
+      const word = leaf(page).locator('.page__folio .colophon__bookmarked');
+      await expect(word).toHaveText('bookmarked');
+      expect(await unseen(word)).toBe(false);
+      // The note made the active page: the book still wears no mark, its folio still says so.
+      const noteLeaf = page.locator('.page__leaf:not(.page__leaf--epub)');
+      await noteLeaf.locator('.cm-content').click();
+      const noteSide = (await noteLeaf.getAttribute('data-side')) ?? '';
+      await expect(page.locator('.page__pages')).toHaveAttribute('data-active-side', noteSide);
+      await expect(mark(page)).toBeHidden();
+      expect(await unseen(word)).toBe(false);
+      expect(await seriousViolations(page), 'the clash, the note active').toEqual([]);
+      // Closed to one page: still the folio's word, never the mark.
+      await leaf(page).locator('.page__scroll').focus();
+      await page.setViewportSize({ width: 1000, height: 800 });
+      await expect(page.locator('.page__pages[data-narrow="close"]')).toHaveCount(1);
+      await expect(mark(page)).toBeHidden();
+      expect(await unseen(word)).toBe(false);
+      expect(await seriousViolations(page), 'the clash, closed to one').toEqual([]);
+    });
+  });
+}
