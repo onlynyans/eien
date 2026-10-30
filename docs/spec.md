@@ -458,7 +458,14 @@ Three panes, each collapsible, with a two-pane option in settings:
      default), *3×*, *4×*. A key pressed mid-turn finishes it at once; a
      key held down turns at once; with reduced motion every turn is
      instant. A turn moves the page in sight alone, so turning is as quick
-     in a long chapter as a short one.
+     in a long chapter as a short one. **A hand** (Phase 3c): a finger
+     takes the page anywhere on it, a mouse at the book's edges; under Curl
+     the corner stays under the hand, and let go, its speed decides: past a
+     quarter of the page from the spine (or flicked) it turns, short of it
+     it falls back to where it was. A page in flight can be caught and
+     carried on or back; a tap on it lets it fly on. Under Slide and Words
+     a drag across asks for the turn. Never while words are chosen, nor on
+     a link; a drag that turned is never also a click.
    - **The scroll style**, a book setting in the shelf's quick look (never
      in Settings, which sets notes): *As a note* (the default), its
      paragraphs spaced as a note's in Reading; or *As a book*, indented

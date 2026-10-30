@@ -39,7 +39,7 @@ function book(pages = 2) {
     spine: [{ linear: true }, { linear: true }, { linear: false }, { linear: true }],
   } as unknown as Epub;
   const turns = bookPages({
-    page: { leaf, sheet } as unknown as EpubPage,
+    page: { leaf, sheet, scroller: document.createElement('div') } as unknown as EpubPage,
     epub: () => epub,
     spine: () => spine,
     draw,

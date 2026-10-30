@@ -370,6 +370,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `turn/`: a page turned (Phase 3)
     - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first
     - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page, clipped and laid, in the curl's light
+    - `hand-events.ts`: the pointer and the finger carried to the turn (Phase 3c): a finger anywhere on the page, a mouse at the book's edges or on a page in flight, a drag that turned never also a click
     - `turn-hand.ts`: a hand on the page, and when its move is a drag across; `turn-queue.ts`: turns waiting for the page they turn from (a chapter drawn first)
     - `step-turn.ts`: Slide (`slide.ts`) or Words (`words.ts`) run between the words left and the words come
     - `page-copy.ts`: the page as it was, laid over it, never reached

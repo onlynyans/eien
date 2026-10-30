@@ -1,4 +1,4 @@
-// A book turned page by page (#40, Phase 3b): the page turn
+// A book turned page by page (#40, Phase 3b and 3c): the page turn
 // (./turn/page-turn.ts) over a book's page. A turn goes a page on in the
 // chapter, or past its end into the next chapter's first page (back, the
 // last page of the one before), as the Page turn and Turn speed settings
@@ -8,6 +8,7 @@
 import type { SettingValues } from '../../core/config';
 import { chapterBeside, type Epub, type Way } from '../../core/epub';
 import type { EpubPage } from './epub-page';
+import { handEvents } from './turn/hand-events';
 import { PageTurn } from './turn/page-turn';
 
 export interface BookPagesOf {
@@ -78,6 +79,14 @@ export function bookPages(of: BookPagesOf): BookPages {
     },
   });
 
+  // A hand on the page (Phase 3c): a finger anywhere on it, a mouse at the book's edges.
+  const stopHands = handEvents(turn, {
+    target: page.scroller,
+    sheet: () => page.leaf,
+    paged: () => page.sheet.paged,
+    edges: '.epub-edges__turn',
+  });
+
   return {
     turn: (way, held) => turn.key(way, held),
     edge: (last) => {
@@ -86,6 +95,9 @@ export function bookPages(of: BookPagesOf): BookPages {
     },
     finish: () => turn.finish(),
     whenStill: (run) => turn.whenStill(run),
-    dispose: () => turn.dispose(),
+    dispose: () => {
+      stopHands();
+      turn.dispose();
+    },
   };
 }

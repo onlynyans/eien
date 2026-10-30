@@ -356,9 +356,9 @@ Each phase is its own session and pull request, from main.
     move them, the Pages and Scroll tools and View menu; a turn copies the
     page in sight alone (fifty turns of a 600-paragraph chapter, no long
     task, the CPU four times slower too);
-  - **3c:** a hand's turn: the drag and the catch, a finger anywhere on
-    the page (the copies of the page in sight alone, the taps and the
-    fifty-turn budget came with 3b);
+  - **3c, built:** a hand's turn: a finger anywhere on the page, a mouse at
+    the book's edges, the curl under the hand, the throw, the catch, a tap
+    letting a page in flight fly on; under Slide and Words a drag asks;
   - **3d:** the spread, and Set as a book.
 - **The reading room,** after the turn (it was Phase 3b).
 - **Phase 4, place, bookmarks and page count:** print pages or steady
