@@ -70,6 +70,14 @@
   --eien-shadow-float:
     0 2px 6px light-dark(rgb(58 44 26 / 0.08), rgb(0 0 0 / 0.45)),
     0 14px 36px light-dark(rgb(58 44 26 / 0.16), rgb(0 0 0 / 0.6));
+  /* The curl's light (#40, Phase 3): Depth's one exception. Only while a
+     book's page turns as a curl does paper carry light: the shade where it
+     bends away (the sheet shadow's own ink, also the lifted paper's one soft
+     shadow), the crest of the roll catching the light, and how much of the
+     words shows through the paper's back. At rest nothing wears them. */
+  --eien-curl-shade: light-dark(rgb(58 44 26 / 0.18), rgb(0 0 0 / 0.5));
+  --eien-curl-light: light-dark(rgb(255 255 255 / 0.6), rgb(233 226 212 / 0.1));
+  --eien-curl-through: 0.12;
 
   /* ── Ink: four strengths of the same ink ────────────────────────────── */
   --eien-ink: light-dark(#23201c, #e9e2d4); /* the writing, titles */

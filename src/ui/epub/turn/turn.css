@@ -1,0 +1,82 @@
+/* A page turning (#40, Phase 3, ./page-turn.ts). The page you leave is a
+   copy laid over the one you're on; nothing in it is reached. Slide and
+   Words move its words alone. The curl lays copies of the page as its pieces,
+   with the curl's light (tokens.css, Depth's exception): there only while a
+   page moves. */
+
+.turn-copy {
+  position: absolute;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Slide and Words: the copy is the words alone; its paper, edge and shadow are the page's own, already there. */
+.turn-copy--words {
+  visibility: hidden;
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+.turn-copy--words [data-turn-words] {
+  visibility: visible;
+}
+
+.turn-curl {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+}
+.turn-curl > *,
+.turn-curl__flap > * {
+  position: absolute;
+  inset: 0;
+}
+
+/* Each piece is the whole page, clipped to its part: its own paper, as the phone's page has none of its own. */
+.turn-curl__page {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  box-shadow: none;
+  background: var(--eien-paper);
+}
+.turn-curl__strip,
+.turn-curl__back {
+  transform-origin: 0 0;
+}
+
+/* Inside a piece, over the page's own parts: the paper over its words, then the light. A piece's
+   own stacking context keeps the page's parts beneath them. */
+.turn-curl__strip,
+.turn-curl__back,
+.turn-curl__page {
+  isolation: isolate;
+}
+
+/* The back: its own paper over its mirrored words, so they show through faintly. */
+.turn-curl__paper {
+  position: absolute;
+  inset: 0;
+  background: var(--eien-paper);
+  opacity: calc(1 - var(--eien-curl-through));
+  z-index: 1;
+}
+
+/* A strip's shade, its glint, and the washes along the fold, over the page's words. */
+.turn-curl__tone,
+.turn-curl__glint,
+.turn-curl__page > .turn-curl__wash {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+/* What comes back over casts the lifted paper's one soft shadow: the exception's third. */
+.turn-curl__flap {
+  filter: drop-shadow(0 0 var(--eien-space-2) var(--eien-curl-shade));
+}
