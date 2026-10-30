@@ -43,8 +43,11 @@ export interface EpubSide extends Side {
   readonly spine: number;
   /** Draw the spine item `index`, and keep it as the place to come back to. */
   go(index: number): Promise<void>;
-  /** Show `offset` in spine item `index` (a bookmark's place, Phase 4c), kept as the place. */
-  goTo(index: number, offset: number): Promise<void>;
+  /**
+   * Show a place in spine item `index` (a bookmark's, the strip's: Phase 4),
+   * at an offset or the one it gives once drawn, kept as the place.
+   */
+  goTo(index: number, at: number | (() => number)): Promise<void>;
   /** The book's file moved (a folder above it renamed or moved by this window): the page follows it. */
   moved(to: string): void;
   /** Read the book again, where the page was in it: its file changed on disk. */

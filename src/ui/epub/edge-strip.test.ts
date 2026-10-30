@@ -17,8 +17,8 @@ function strip() {
   document.body.append(made.element);
   return { made, of, element: made.element };
 }
-const pointer = (type: string, clientY: number) =>
-  new PointerEvent(type, { clientY, button: 0, bubbles: true, cancelable: true });
+const pointer = (type: string, clientY: number, pointerType = 'mouse') =>
+  new PointerEvent(type, { clientY, button: 0, pointerType, bubbles: true, cancelable: true });
 
 afterEach(() => document.body.replaceChildren());
 
@@ -38,13 +38,16 @@ describe('the strip down a book’s edge', () => {
     expect(element.querySelectorAll('.edge-strip__chapter, .edge-strip__mark')).toHaveLength(1);
   });
 
-  it('is a slider saying the place, its bar where it is', () => {
+  it('is a slider saying the place in the words it’s given, its bar where it is', () => {
     const { made, element } = strip();
     expect(element.getAttribute('role')).toBe('slider');
     expect(element.getAttribute('aria-orientation')).toBe('vertical');
-    made.place(0.256);
+    made.place(0.256, 'Chapter III, page 12 of 2,450');
     expect(element.getAttribute('aria-valuenow')).toBe('26');
-    expect(element.getAttribute('aria-valuetext')).toBe('at 26');
+    expect(element.getAttribute('aria-valuetext')).toBe('Chapter III, page 12 of 2,450');
+    // The same share in another book: its own words, never the last one's.
+    made.place(0.256, 'Chapter I');
+    expect(element.getAttribute('aria-valuetext')).toBe('Chapter I');
     expect(
       element.querySelector<HTMLElement>('.edge-strip__here')?.style.getPropertyValue('--at'),
     ).toBe('0.256');
@@ -81,6 +84,35 @@ describe('the strip down a book’s edge', () => {
     element.dispatchEvent(pointer('pointerup', 260));
     expect(of.go).toHaveBeenCalledExactlyOnceWith(0.8);
     expect(tip?.hidden).toBe(true);
-    expect(document.activeElement).toBe(element);
+  });
+
+  it('goes nowhere for a finger’s tap, and where a finger’s scrub is lifted', () => {
+    const { of, element } = strip();
+    element.dispatchEvent(pointer('pointerdown', 150, 'touch'));
+    element.dispatchEvent(pointer('pointermove', 153, 'touch'));
+    element.dispatchEvent(pointer('pointerup', 153, 'touch'));
+    expect(of.go).not.toHaveBeenCalled();
+    element.dispatchEvent(pointer('pointerdown', 150, 'touch'));
+    element.dispatchEvent(pointer('pointermove', 200, 'touch'));
+    element.dispatchEvent(pointer('pointerup', 200, 'touch'));
+    expect(of.go).toHaveBeenCalledExactlyOnceWith(0.5);
+  });
+
+  it('lets a hold go when the window takes the pointer away', () => {
+    const { of, element } = strip();
+    const tip = element.querySelector<HTMLElement>('.edge-strip__tip');
+    element.dispatchEvent(pointer('pointerdown', 150));
+    element.dispatchEvent(new PointerEvent('lostpointercapture', { bubbles: true }));
+    expect(tip?.hidden).toBe(true);
+    element.dispatchEvent(pointer('pointerup', 150));
+    expect(of.go).not.toHaveBeenCalled();
+  });
+
+  it('keeps its pointer from the page beneath: a hand’s turn never starts there', () => {
+    const { element } = strip();
+    const page = vi.fn();
+    document.body.addEventListener('pointerdown', page);
+    element.dispatchEvent(pointer('pointerdown', 150, 'touch'));
+    expect(page).not.toHaveBeenCalled();
   });
 });

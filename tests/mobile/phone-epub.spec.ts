@@ -312,8 +312,30 @@ test('a book’s marks on the edge: the strip down the screen, a finger scrubbin
   expect(box.width).toBeGreaterThanOrEqual(44);
   expect(screen.width - (box.x + box.width)).toBeGreaterThanOrEqual(16);
   expect(await seriousViolations(page), 'the strip').toEqual([]);
-  // Drawn to the book's end and lifted: its last chapter.
+  // A tap alone goes nowhere: a finger scrolling may start there.
   const x = box.x + box.width / 2;
   await page.touchscreen.tap(x, box.y + box.height - 2);
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  // A finger drawn down it to the book's end and lifted: its last chapter.
+  await strip.evaluate(
+    (element, at) => {
+      const touch = (type: string, y: number) =>
+        element.dispatchEvent(
+          new PointerEvent(type, {
+            pointerType: 'touch',
+            pointerId: 7,
+            clientX: at.x,
+            clientY: y,
+            button: 0,
+            bubbles: true,
+          }),
+        );
+      touch('pointerdown', at.top + 4);
+      touch('pointermove', at.top + at.height / 2);
+      touch('pointermove', at.top + at.height - 2);
+      touch('pointerup', at.top + at.height - 2);
+    },
+    { x, top: box.y, height: box.height },
+  );
   await expect(chapter(page)).toContainText('Not all that Mrs. Bennet');
 });

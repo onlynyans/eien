@@ -11,11 +11,11 @@ function placed() {
   const count = { lengths: [4500], print: [] } as unknown as BookCount;
   const place = bookPlace({
     page: { foot, element: document.createElement('div') } as unknown as EpubPage,
-    epub: () => ({ spine: [] }) as unknown as Epub,
+    epub: () => ({ spine: [], contents: [] }) as unknown as Epub,
     spine: () => 0,
     count: () => count,
     marks: () => [],
-    draw: () => {},
+    goTo: () => {},
   });
   const said = () => foot.figures[2]?.textContent;
   return { place, said };
@@ -53,9 +53,11 @@ describe('a page a bookmark is on, as its row says it', () => {
     } as unknown as BookCount;
     const place = bookPlace({
       page: { foot, element: document.createElement('div') } as unknown as EpubPage,
-      epub: () => ({ spine: [] }) as unknown as Epub,
+      epub: () => ({ spine: [], contents: [] }) as unknown as Epub,
       spine: () => 0,
       count: () => count,
+      marks: () => [],
+      goTo: () => {},
     });
     expect(place.labelAt(0, 500)).toBe('1');
     expect(place.labelAt(1, 10)).toBeNull();

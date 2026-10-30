@@ -1,18 +1,12 @@
 // A book on its page's edge (#40, Phase 4d): the strip (./edge-strip.ts)
-// told the book's chapters, bookmarks and place as shares of it, by its
-// chapters' sizes as the colophon's percent and the fore-edge are
-// (core/epub/progress.ts), a bookmark within its chapter once that's counted;
-// and what a point on it is, and where it goes. Worn on the leaf only with
-// Marks on the edge (./epub.css's data-marks), drawn either way.
+// told the book's chapters (its contents' top rows), bookmarks and place as
+// shares of it, by its chapters' sizes as the colophon's percent and the
+// fore-edge are (core/epub/progress.ts), a bookmark within its chapter once
+// that's counted; and what a point on it is, and where it goes. Worn on the
+// leaf only with Marks on the edge (./edge-strip.css, data-marks), drawn
+// either way; hidden with no book.
 
-import {
-  type Bookmark,
-  bookFraction,
-  chapterBeside,
-  chapterTitle,
-  type Epub,
-  placeAt,
-} from '../../core/epub';
+import { type Bookmark, bookFraction, chapterTitle, type Epub, placeAt } from '../../core/epub';
 import type { BookCount } from './book-count';
 import { EdgeStrip } from './edge-strip';
 import type { EpubPage } from './epub-page';
@@ -25,71 +19,77 @@ export interface BookStripOf {
   count(): BookCount | null;
   /** The book's bookmarks. */
   marks(): readonly Bookmark[];
-  /** Spine item `index` drawn, at the place it gives once drawn (its words counted then). */
-  draw(index: number, at: () => number): void;
-  /** The page a place is on, as its label says it. */
-  labelAt(spine: number, offset: number): string | null;
+  /** A place shown: spine item `index` at an offset, or the one it gives once drawn (its words counted then). */
+  goTo(index: number, at: number | (() => number)): void;
+  /** The page a place is on, as the colophon says it ("page 12 of 2,450"), or ''. */
+  pageAt(spine: number, offset: number): string;
 }
 
 export interface BookStrip {
   /** The book's chapters and bookmarks drawn anew (another book, more of it counted, a bookmark). */
   drawn(): void;
-  /** The place now, as a share of the book. */
-  place(share: number): void;
+  /** The place now: a share of the book, and the first of the words in sight. */
+  place(share: number, from: number): void;
 }
 
 export function bookStrip(of: BookStripOf): BookStrip {
+  /** Spine item `index`'s words, as counted; 0 until they are. */
+  const lengthOf = (index: number) => of.count()?.lengths[index] ?? 0;
   /** How far into spine item `index` an offset is, by its count: none counted, its start. */
   const into = (index: number, offset: number) => {
-    const length = of.count()?.lengths[index] ?? null;
+    const length = lengthOf(index);
     return length ? Math.min(1, offset / length) : 0;
   };
-  const describe = (share: number) => {
-    const epub = of.epub();
-    const at = epub && placeAt(epub.spine, share);
-    if (!epub || !at) return '';
-    const title = chapterTitle(epub.contents, at.index) ?? `Section ${at.index + 1}`;
-    const length = of.count()?.lengths[at.index] ?? 0;
-    const page = of.labelAt(at.index, Math.floor(at.within * length));
-    return page === null ? title : `${title} · page ${page}`;
+  /** What a place is called: its chapter, and its page where one is known. */
+  const said = (epub: Epub, index: number, offset: number) => {
+    const title = chapterTitle(epub.contents, index) ?? `Section ${index + 1}`;
+    const page = of.pageAt(index, offset);
+    return page ? `${title}, ${page}` : title;
   };
-  /** The chapters in the reading order, first to last. */
-  const linear = (epub: Epub) => epub.spine.flatMap((item, i) => (item.linear ? [i] : []));
+  /** The strip's chapters: the contents' top rows, each its spine item's start, in order. */
+  const chapters = (epub: Epub) => [
+    ...new Set(epub.contents.filter((row) => row.depth === 0).map((row) => row.spine)),
+  ];
+  /** A place gone to from the strip: shown, the keyboard back on the page (PageDown turns it again). */
+  const go = (index: number, at: number | (() => number)) => {
+    of.goTo(index, at);
+    of.page.focus();
+  };
   const strip = new EdgeStrip({
     go(share) {
       const epub = of.epub();
       const at = epub && placeAt(epub.spine, share);
-      if (!at) return;
       // Its words, once drawn and counted, give the place.
-      of.draw(at.index, () => Math.floor(at.within * (of.count()?.lengths[at.index] ?? 0)));
+      if (at) go(at.index, () => Math.floor(at.within * lengthOf(at.index)));
     },
     step(by) {
       const epub = of.epub();
-      if (!epub) return;
-      const order = linear(epub);
-      let index: number | null =
-        by === 'first' ? (order[0] ?? null) : by === 'last' ? (order.at(-1) ?? null) : of.spine();
-      for (let n = 0; typeof by === 'number' && index !== null && n < Math.abs(by); n++) {
-        const next = chapterBeside(epub.spine, index, by > 0 ? 1 : -1);
-        if (next === null) break;
-        index = next;
-      }
-      if (index !== null && index !== of.spine()) of.draw(index, () => 0);
+      const starts = epub ? chapters(epub) : [];
+      const last = starts.at(-1);
+      if (last === undefined) return;
+      if (by === 'first') return of.goTo(starts[0] as number, 0);
+      if (by === 'last') return of.goTo(last, () => lengthOf(last));
+      // The chapter the place is in: the last to start at or before it.
+      const here = starts.reduce((at, start, i) => (start <= of.spine() ? i : at), 0);
+      const next = starts[Math.min(starts.length - 1, Math.max(0, here + by))] as number;
+      of.goTo(next, 0);
     },
-    describe,
+    describe(share) {
+      const epub = of.epub();
+      const at = epub && placeAt(epub.spine, share);
+      return epub && at ? said(epub, at.index, Math.floor(at.within * lengthOf(at.index))) : '';
+    },
   });
   of.page.element.append(strip.element);
 
   return {
     drawn() {
       const epub = of.epub();
+      strip.element.hidden = !epub;
       if (!epub) return strip.draw({ chapters: [], marks: [] });
       const index = new Map(epub.spine.map((item, i) => [item.path, i]));
-      const starts = [
-        ...new Set(epub.contents.filter((row) => row.depth === 0).map((row) => row.spine)),
-      ];
       strip.draw({
-        chapters: starts.map((spine) => bookFraction(epub.spine, spine, 0)),
+        chapters: chapters(epub).map((spine) => bookFraction(epub.spine, spine, 0)),
         marks: of.marks().flatMap((mark) => {
           const spine = index.get(mark.chapter);
           return spine === undefined
@@ -98,6 +98,11 @@ export function bookStrip(of: BookStripOf): BookStrip {
         }),
       });
     },
-    place: (share) => strip.place(share),
+    place(share, from) {
+      const epub = of.epub();
+      // Said from the chapter drawn and its words, never from the share: a chapter wholly in sight
+      // ends where the next begins.
+      if (epub) strip.place(share, said(epub, of.spine(), from));
+    },
   };
 }

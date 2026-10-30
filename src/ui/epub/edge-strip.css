@@ -9,9 +9,6 @@
 .edge-strip {
   display: none;
 }
-.edge-strip:focus-visible {
-  box-shadow: 0 0 0 var(--eien-mark-w) var(--eien-focus);
-}
 .page__leaf--epub[data-marks="edge"] .edge-strip {
   position: absolute;
   z-index: 2;
@@ -19,16 +16,29 @@
   right: var(--eien-space-4);
   bottom: var(--eien-space-5);
   display: block;
-  width: var(--eien-space-5);
+  width: var(--strip-w, var(--eien-space-5));
   border-radius: var(--eien-radius-s);
   cursor: pointer;
-  outline: none;
   /* A hand on it scrubs the book, never the page's turn or scroll. */
   touch-action: none;
 }
-/* In pages, the pane keeps room for it, so it never lies over the fore-edge's turns. */
-.page__leaf--epub[data-view="pages"][data-marks="edge"] .page__scroll {
-  padding-right: calc(var(--eien-space-5) + var(--eien-space-4));
+/* An outline, as a pane's edge's: forced colours keep it. */
+.page__leaf--epub[data-marks="edge"] .edge-strip:focus-visible {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+}
+/* No book on the page: nothing to show. */
+.page__leaf--epub[data-marks="edge"] .edge-strip[hidden] {
+  display: none;
+}
+/* Facing pages' left page: its outer edge is its left. */
+:root[data-split="facing"] .page__pages[data-two] .page__leaf[data-side="0"] .edge-strip {
+  right: auto;
+  left: var(--eien-space-4);
+}
+/* In pages, the pane keeps room for it, so it never lies over the fore-edge's turns: past every
+   split's own padding (../page/split-*.css) by specificity, and after them in the window's styles. */
+:root .page__pages .page__leaf--epub[data-view="pages"][data-marks="edge"] .page__scroll {
+  padding-right: calc(var(--strip-w, var(--eien-space-5)) + var(--eien-space-4));
 }
 .edge-strip__marks {
   position: absolute;
@@ -88,8 +98,8 @@
 }
 /* A finger: as wide as a touch, a hairline to see down its middle, the pieces on it. */
 @media (pointer: coarse) {
-  .page__leaf--epub[data-marks="edge"] .edge-strip {
-    width: var(--eien-touch);
+  .page__leaf--epub[data-marks="edge"] {
+    --strip-w: var(--eien-touch);
   }
   .edge-strip::before {
     content: "";

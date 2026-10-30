@@ -746,9 +746,11 @@ in the book, each recorded here as it's built.
   across the strip, never a tab (decided 2026-10-30, so it's never taken
   for an edge-tab bookmark), moving with `--eien-calm`. Pointing, the
   tooltip's look beside the point (raised paper, a rule-strong hairline,
-  the float shadow, label type). Focused, the focus ink's ring. On a touch
-  screen, `--eien-touch` wide with a `--eien-rule` hairline down its
-  middle. The list shows the contents alone.
+  the float shadow, label type). Focused, the focus ink's outline (as a
+  pane's edge's, kept by forced colours). On a touch screen,
+  `--eien-touch` wide with a `--eien-rule` hairline down its middle, and
+  in pages the pane keeps that much room. On Facing pages' left page it
+  stands at the left. The list shows the contents alone.
 - **The place is kept to the line**, never drawn: a page put back, laid out
   anew or zoomed shows the same line at its top.
 - **A note over the page** (Phase 2b, `ui/epub/note-over.ts`): a note's

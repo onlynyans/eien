@@ -47,9 +47,18 @@ describe('a book on its page’s edge', () => {
     at(999, 'pointerup');
     const last = side.epub?.spine.length ?? 0;
     await vi.waitFor(() => expect(side.spine).toBe(last - 1));
+    // The keyboard back on the page: Page Down turns it, never the strip's ten chapters.
+    expect(document.activeElement).not.toBe(strip);
     strip.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
     await vi.waitFor(() => expect(side.spine).toBe(side.epub?.contents[0]?.spine));
     strip.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
     await vi.waitFor(() => expect(side.spine).toBe((side.epub?.contents[0]?.spine ?? 0) + 1));
+  });
+
+  it('is hidden with no book on the page', async () => {
+    const { side, strip } = await opened();
+    expect(strip.hidden).toBe(false);
+    side.clear();
+    expect(strip.hidden).toBe(true);
   });
 });

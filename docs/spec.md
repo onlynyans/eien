@@ -482,11 +482,15 @@ Three panes, each collapsible, with a two-pane option in settings:
      runs the whole book, top to foot: a hairline for each chapter (a
      longer one each tenth), a pencil tab for each bookmark, the place a bar
      across it. Pointing at it says the chapter and page there; a click
-     goes there; a finger drags along it to scrub and goes where it's
-     lifted. To the keyboard it's a slider: ↑ ↓ a chapter, Page Up and
-     Page Down ten, Home and End the book's ends. Where there's no room it
-     lies over the page's outer margin; on the phone it stands a space in
-     from the screen's edge, clear of Android's Back.
+     goes there, the keyboard back on the page; a finger drags along it to
+     scrub and goes where it's lifted (a finger's tap alone goes nowhere).
+     To the keyboard it's a slider saying the chapter and page you're on:
+     ↑ ↓ a chapter, Page Up and Page Down ten, Home the book's start and
+     End its end. A place chosen on it is shown without drawing its chapter
+     again when it's the one drawn, and Back forgets the last link. Where
+     there's no room it lies over the page's outer margin (Facing pages'
+     left page, its left); on the phone it stands a space in from the
+     screen's edge, clear of Android's Back. With no book, it isn't shown.
    - **Pages** (Phase 3b): **Read in**, a book setting in the shelf's
      quick look, sets a book in *Pages* or *Scroll* (the default for now),
      as do the book's own two tools in the views' place and View → Pages

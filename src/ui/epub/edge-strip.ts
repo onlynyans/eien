@@ -2,10 +2,11 @@
 // the edge; Features 3's thumb strip): a hairline for each chapter (a longer
 // one each tenth), each bookmark a pencil tab, your place a bar across it.
 // Pointing shows where a point is; a click goes there; a finger drags to
-// scrub and goes where it's lifted. To the keyboard it's a slider: ↑ ↓ a
-// chapter, Page Up and Down ten, Home and End the book's ends. Shares of the
-// book in, shares out: what they are is the caller's (./book-place.ts). Apart
-// from the fore-edge (./leaf-edges.ts), which a spread lays out anew.
+// scrub and goes where it's lifted (a tap alone never jumps: a finger
+// scrolling or turning may start there). To the keyboard it's a slider: ↑ ↓
+// a chapter, Page Up and Down ten, Home and End the book's ends. Shares of
+// the book in, shares out: what they are is the caller's (./book-strip.ts).
+// Apart from the fore-edge (./leaf-edges.ts), which a spread lays out anew.
 
 import { h } from '../dom';
 
@@ -34,6 +35,9 @@ function at(className: string, share: number): HTMLElement {
   return piece;
 }
 
+/** How far a finger moves along the strip before it's a scrub, not a tap: a turn's own threshold. */
+const SCRUB_PX = 8;
+
 const KEYS: Readonly<Record<string, number | 'first' | 'last'>> = {
   ArrowUp: -1,
   ArrowDown: 1,
@@ -54,7 +58,8 @@ export class EdgeStrip {
   });
   /** A point held down on the strip, while a hand drags it. */
   #held: number | null = null;
-  #share = 0;
+  /** Where a finger came down, until it moves far enough to scrub; null for a pointer that clicks. */
+  #finger: number | null = null;
 
   constructor(of: EdgeStripOf) {
     this.#of = of;
@@ -77,6 +82,7 @@ export class EdgeStrip {
           pointermove: (event: PointerEvent) => this.#point(event),
           pointerup: (event: PointerEvent) => this.#up(event),
           pointercancel: () => this.#end(),
+          lostpointercapture: () => this.#end(),
           pointerleave: () => {
             if (this.#held === null) this.#tip.hidden = true;
           },
@@ -101,14 +107,20 @@ export class EdgeStrip {
     );
   }
 
-  /** The place in the book now: the bar, and what the slider says (told every scroll frame: only a change). */
-  place(share: number): void {
-    const now = within(share);
-    if (now === this.#share && this.element.hasAttribute('aria-valuetext')) return;
-    this.#share = now;
-    this.#here.style.setProperty('--at', String(this.#share));
-    this.element.setAttribute('aria-valuenow', String(Math.round(this.#share * 100)));
-    this.element.setAttribute('aria-valuetext', this.#of.describe(this.#share));
+  /**
+   * The place in the book now, as a share of it and in `words` (its chapter
+   * and page): the bar, and what the slider says. Told every scroll frame, so
+   * only what changed is set.
+   */
+  place(share: number, words: string): void {
+    const now = String(within(share));
+    const percent = String(Math.round(within(share) * 100));
+    if (this.#here.style.getPropertyValue('--at') !== now)
+      this.#here.style.setProperty('--at', now);
+    if (this.element.getAttribute('aria-valuenow') !== percent)
+      this.element.setAttribute('aria-valuenow', percent);
+    if (this.element.getAttribute('aria-valuetext') !== words)
+      this.element.setAttribute('aria-valuetext', words);
   }
 
   /** The share of the book at a point `y` down the window, by the strip's own box. */
@@ -142,12 +154,15 @@ export class EdgeStrip {
       this.element.setPointerCapture(event.pointerId);
     } catch {}
     this.#held = this.#shareAt(event.clientY);
+    this.#finger = event.pointerType === 'touch' ? event.clientY : null;
     this.#show(this.#held);
   }
 
   #point(event: PointerEvent): void {
     const share = this.#shareAt(event.clientY);
     if (this.#held !== null) this.#held = share;
+    if (this.#finger !== null && Math.abs(event.clientY - this.#finger) >= SCRUB_PX)
+      this.#finger = null;
     this.#show(share);
   }
 
@@ -155,13 +170,15 @@ export class EdgeStrip {
     if (this.#held === null) return;
     event.stopPropagation();
     const share = this.#shareAt(event.clientY);
+    // A finger that never moved far enough tapped: it goes nowhere.
+    const tapped = this.#finger !== null;
     this.#end();
-    this.element.focus();
-    this.#of.go(share);
+    if (!tapped) this.#of.go(share);
   }
 
   #end(): void {
     this.#held = null;
+    this.#finger = null;
     this.#tip.hidden = true;
   }
 }

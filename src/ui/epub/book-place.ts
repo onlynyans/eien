@@ -19,8 +19,8 @@ export interface BookPlaceOf {
   count(): BookCount | null;
   /** The book's bookmarks, for the strip. */
   marks(): readonly Bookmark[];
-  /** Spine item `index` drawn, at the place it gives once drawn: where the strip goes. */
-  draw(index: number, at: () => number): void;
+  /** A place shown: spine item `index` at an offset, or the one it gives once drawn (where the strip goes). */
+  goTo(index: number, at: number | (() => number)): void;
 }
 
 export interface BookPlace {
@@ -45,14 +45,25 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
 
   /** The book the strip last drew: another, and it's drawn anew. */
   let drew: Epub | null = null;
-  const labelAt = (spine: number, offset: number) => {
+  /** The place as a share of the book, as last told. */
+  let share = 0;
+  /** A place's page and the book's pages; none known for a printed book's chapter not yet counted. */
+  const pageIn = (spine: number, offset: number) => {
     const count = of.count();
-    // A printed page in a chapter not yet counted isn't known: the one before it would be wrong.
-    if (!count || (count.print.length > 0 && count.lengths[spine] === null)) return null;
-    const { label } = pageOf(count, spine, offset);
+    // A printed page there isn't known until its chapter is counted: the one before would be wrong.
+    if (!count || (count.print.length > 0 && count.lengths[spine] === null))
+      return { label: null, of: null };
+    return pageOf(count, spine, offset);
+  };
+  const labelAt = (spine: number, offset: number) => {
+    const { label } = pageIn(spine, offset);
     return label === null ? null : String(label);
   };
-  const strip = bookStrip({ ...of, labelAt });
+  const pageAt = (spine: number, offset: number) => {
+    const { label, of: total } = pageIn(spine, offset);
+    return pageWords(label, total);
+  };
+  const strip = bookStrip({ ...of, pageAt });
   const say = () => {
     const count = of.count();
     const { label, of: total } =
@@ -71,7 +82,8 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
         drew = epub;
         strip.drawn();
       }
-      strip.place(book);
+      share = book;
+      strip.place(share, from ?? 0);
       // Only when it changes: setting it again restyles the page, and this is told every scroll frame.
       const after = String(page.edges.after);
       if (page.leaf.style.getPropertyValue('--edges-after') !== after)
@@ -80,10 +92,13 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
     inSight(start) {
       from = start;
       say();
+      strip.place(share, start);
     },
     counted() {
       say();
       strip.drawn();
+      // Its page known now: the slider says it.
+      strip.place(share, from ?? 0);
     },
     clear() {
       from = null;

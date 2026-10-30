@@ -243,6 +243,12 @@ test.describe('Marks on the edge (Phase 4d)', () => {
     await page.mouse.up();
     await expect(leaf(page).locator('.epub-chapter')).toContainText('Not all that Mrs. Bennet');
     expect(await seriousViolations(page), 'the strip').toEqual([]);
+    // Marks back in the list, from the shelf's look: the list's buttons come back, the strip goes.
+    await page.locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)').click();
+    await page.locator('[data-setting="epub.marks"] [data-value="list"]').click();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: /^Marks \d+$/u })).toBeVisible();
+    await expect(strip).toBeHidden();
   });
 });
 
