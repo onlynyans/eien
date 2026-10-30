@@ -69,8 +69,8 @@ hairline borders, 4 shadows (the sheet's once, the float three times).
 - `--eien-shadow-sheet`: the sheet alone, the object lying on the blotter.
 - `--eien-shadow-float`: whatever floats above the window.
 - Panes, bands and rows cast none. No gradients.
-- **One exception, the curl's light** (approved 2026-10-28, #40; built in
-  its Phase 3): while a book's page turns as a curl, and only then, the
+- **One exception, the curl's light** (approved 2026-10-28, #40; built,
+  Phase 3a, #129): while a book's page turns as a curl, and only then, the
   paper may carry light. At rest every page is flat, with two shadows and
   no gradients.
   - The light comes from three tokens in `tokens.css` (docs/design/README.md,
