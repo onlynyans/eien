@@ -130,6 +130,28 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);
       });
 
+      test('a book beside a note, words chosen in it with the selection bar, has no serious violation (#40)', async ({
+        page,
+      }) => {
+        await ready(page);
+        await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
+        await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
+        await page
+          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+          .click();
+        const chapter = page.locator('.epub-chapter');
+        await expect(chapter).toContainText('It is a truth universally acknowledged');
+        await chapter.evaluate((element) => {
+          const range = document.createRange();
+          range.selectNodeContents(element.querySelector('p:nth-of-type(2)') as Node);
+          document.getSelection()?.removeAllRanges();
+          document.getSelection()?.addRange(range);
+        });
+        await chapter.dispatchEvent('mouseup');
+        await expect(page.getByRole('toolbar', { name: 'The selection' })).toBeVisible();
+        expect(await seriousViolations(page), 'a book beside a note').toEqual([]);
+      });
+
       test('the shelf’s look open beside a note, the note sitting back, has no serious violation', async ({
         page,
       }) => {

@@ -3,8 +3,8 @@
 // the book's zip and shown as the window's own copies (blob: URLs, as a
 // note's images are). Each picture takes its room before it's shown, from
 // its own header, so a place shown in the chapter doesn't drift as they
-// arrive (Phase 2); one whose header Eien doesn't read is decoded first
-// (`settled`). Only the chapter in sight is drawn; its copies are let go
+// arrive (Phase 2); one whose header Eien doesn't read is decoded, and the
+// fonts loaded, before a place is shown (`settled`). Only the chapter in sight is drawn; its copies are let go
 // when another takes its place, or the page closes.
 
 import { type Chapter, type Epub, isRefusal } from '../../core/epub';
@@ -12,11 +12,27 @@ import { drawClean } from '../draw-clean';
 
 export interface DrawnChapter {
   readonly element: DocumentFragment;
-  /** Its pictures laid out at their size: those Eien couldn't size from their headers decoded. */
-  settled(): Promise<void>;
+  /**
+   * Laid out where it will stay, in `chapter` (where it's drawn): its pictures
+   * at their size (those Eien couldn't size from their headers decoded), and
+   * the fonts it's set in loaded.
+   */
+  settled(chapter: HTMLElement): Promise<void>;
   /** Its pictures' copies let go. */
   release(): void;
 }
+
+/**
+ * The fonts `chapter` is set in loaded: laid out first, as a face starts
+ * loading only when something asks for it (one arriving later shows the place
+ * again, ./place-keeper.ts).
+ */
+const fontsLoaded = (chapter: HTMLElement): Promise<unknown> => {
+  void chapter.offsetHeight;
+  return typeof document.fonts === 'object' && document.fonts.status !== 'loaded'
+    ? document.fonts.ready
+    : Promise.resolve();
+};
 
 /** `chapter` of `epub`, drawn with its pictures; a picture that can't be read is its words. */
 export async function drawChapter(epub: Epub, chapter: Chapter): Promise<DrawnChapter> {
@@ -44,8 +60,11 @@ export async function drawChapter(epub: Epub, chapter: Chapter): Promise<DrawnCh
   }
   return {
     element,
-    settled: async () => {
-      await Promise.all(unsized.map((img) => img.decode().catch(() => {})));
+    settled: async (chapter) => {
+      await Promise.all([
+        ...unsized.map((img) => img.decode().catch(() => {})),
+        fontsLoaded(chapter),
+      ]);
     },
     release: () => {
       for (const url of urls.values()) URL.revokeObjectURL(url);

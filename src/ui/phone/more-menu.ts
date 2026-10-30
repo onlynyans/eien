@@ -18,6 +18,8 @@ export interface MoreState {
   exportTo(): void;
   /** What the page holds: a note's own choices are disabled on another kind's (an EPUB's, #40). */
   readonly kind?: PageKind;
+  /** A book's: the words chosen in it quoted in the note (#40, Phase 2c). */
+  quote?(): void;
 }
 
 export function moreItems(state: MoreState, run: (command: MenuCommand) => void): MenuItem[] {
@@ -39,6 +41,10 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
   return [
     // A page's command, whatever it holds (docs/page-kinds.md): a book's Find comes with Phase 5.
     item('Find', 'find'),
+    // A book's own, where the selection bar would be on the desktop (the system's callout is over the words).
+    ...(state.kind === 'epub' && state.quote
+      ? [{ label: 'Quote in the note', run: state.quote } satisfies MenuItem]
+      : []),
     'separator',
     item('Seal', 'seal'),
     item('Compare', 'compare'),

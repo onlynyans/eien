@@ -710,6 +710,13 @@ in the book, each recorded here as it's built.
   where it goes. A link kept as words alone has no look of one.
 - **Back** after a link: a word button first in the colophon's figures
   ("Back to Chapter I"), there only while there's a step back.
+- **Quote** (Phase 2c): words chosen in a book show the selection bar
+  (spec §4's, `.selection-bar`: raised paper above the selection, the
+  float shadow) with its commands as words, **Quote in the note** and
+  **Copy**; never on a touch screen, whose own callout is over the words
+  (the page's ⋯ has Quote). The quote arrives in the note as Markdown, `>`
+  and the citation in an em dash: `— Pride and Prejudice, Chapter III`.
+  What happened is said in the colophon ("Quoted in At the Assembly.").
 - **A note's reference and a note** are named (`note-ref`, `note`) to open
   the note over the page, and drawn as the book sets them: the reference
   in the publisher's own superscript, the note as its paragraphs. No style

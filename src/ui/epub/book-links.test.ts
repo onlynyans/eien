@@ -8,7 +8,8 @@ import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtur
 import { closeMenu } from '../menu/menu';
 import { nameLinks, noteIn } from './book-links';
 import { copyWords, markupOf, plainText, wordsIn } from './book-words';
-import { EpubPage } from './epub-page';
+import { ChapterSheet } from './chapter-sheet';
+import type { EpubPage } from './epub-page';
 import { sideWith } from './test-side';
 
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
@@ -26,7 +27,7 @@ afterEach(() => {
 
 describe('a book’s own link', () => {
   it('goes to its chapter and place, one step back in the colophon, ⌘[ and Alt+←', async () => {
-    const shown = vi.spyOn(EpubPage.prototype, 'showPlace');
+    const shown = vi.spyOn(ChapterSheet.prototype, 'showPlace');
     const { side, writes } = sideWith(book('links.epub'));
     await side.open('a.epub');
     expect(side.spine).toBe(0);
@@ -102,7 +103,7 @@ describe('a note’s reference', () => {
     await vi.waitFor(() => expect(note()).toBeNull());
     press(marks[0]);
     await vi.waitFor(() => expect(note()).not.toBeNull());
-    const shown = vi.spyOn(EpubPage.prototype, 'showPlace');
+    const shown = vi.spyOn(ChapterSheet.prototype, 'showPlace');
     press(note()?.querySelector('button'));
     expect(note()).toBeNull();
     await vi.waitFor(() => expect(shown).toHaveBeenCalled());
@@ -193,7 +194,7 @@ describe('Back', () => {
 
 describe('a hostile book’s links', () => {
   it('keep their words alone, name none of the window’s elements, and a mark to nowhere goes nowhere', async () => {
-    const shown = vi.spyOn(EpubPage.prototype, 'showPlace');
+    const shown = vi.spyOn(ChapterSheet.prototype, 'showPlace');
     const { side } = sideWith(book('links-hostile.epub'));
     await side.open('a.epub');
     const chapter = side.page.chapter;

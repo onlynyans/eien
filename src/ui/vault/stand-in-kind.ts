@@ -66,6 +66,7 @@ function standIn(close: () => void, left: Place | null): StandInSide {
     get name() {
       return path ? baseName(path).replace(/\.stand$/, '') : '';
     },
+    unnamed: 'No leaf',
     runningCrumbs: h('p', { class: 'label running-crumbs' }),
     aside: h('div', { class: 'page__aside' }),
     under: h('div', { class: 'stand-in__under' }),

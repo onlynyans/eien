@@ -92,6 +92,7 @@ export function showEpubMenu(ctx: MenuContext, path: string, at: At): void {
   openMenu(
     epubMenu({
       trashName: ctx.trashName,
+      openBeside: ctx.openBeside && (() => ctx.openBeside?.(path)),
       rename: () => ctx.renameEpub(path),
       moveTo: () =>
         openMenu(

@@ -6,8 +6,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { DEFAULT_SETTINGS } from '../../core/config';
+import { ChapterSheet } from './chapter-sheet';
 import { epubKind } from './epub-kind';
-import { EpubPage } from './epub-page';
+import type { EpubPage } from './epub-page';
 import { REST_MS } from './place-keeper';
 import { linesOf } from './test-lines';
 import { sideWith } from './test-side';
@@ -107,7 +108,7 @@ describe('the place in a chapter', () => {
   });
 
   it('is shown again when the book opens, from the reading state or the place a page left', async () => {
-    const shown = vi.spyOn(EpubPage.prototype, 'showPlace');
+    const shown = vi.spyOn(ChapterSheet.prototype, 'showPlace');
     const { side, kept, of } = sideWith(book());
     await side.open('a.epub');
     kept.set(side.epub?.key ?? '', { chapter: 'OEBPS/chapter-3.xhtml', offset: 120 });
@@ -125,6 +126,14 @@ describe('the place in a chapter', () => {
     expect(shown).toHaveBeenLastCalledWith(40);
     await again.open('a.epub', { path: 'a.epub', name: '', spine: 2, offset: 70 } as never);
     expect(shown).toHaveBeenLastCalledWith(70);
+  });
+
+  it('asked for before it rests (a quote, ⇄), is the line now, not the last rest', async () => {
+    const { side } = sideWith(book());
+    await side.open('a.epub');
+    const scroller = laidOut(side.page);
+    scrollTo(scroller, 400);
+    expect(side.place).toMatchObject({ spine: 1, offset: 200 });
   });
 
   it('on its way to rest, is kept when the window quits', async () => {

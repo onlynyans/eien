@@ -43,6 +43,7 @@ function draw(
   } satisfies ShelfFolders;
   const actions = {
     openEpub: vi.fn(),
+    openBookBeside: vi.fn(),
     chapter: vi.fn(),
     bookMenu: vi.fn(),
     renameBook: vi.fn(),
@@ -180,6 +181,19 @@ describe('SHELF’s rows', () => {
       book.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }));
     }
     expect(actions.bookMenu).toHaveBeenCalledTimes(3);
+    expect(actions.openEpub).not.toHaveBeenCalled();
+  });
+
+  it('opens a book beside the page on Ctrl-click or Ctrl+Enter, as a note’s row does (#40, Phase 2c)', () => {
+    const { list, actions } = draw();
+    const book = list.querySelector<HTMLButtonElement>('[data-epub="Loose.epub"]') as HTMLElement;
+    // The tests' platform isn't a Mac's: Ctrl, as ⌘ on a Mac.
+    book.dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true }));
+    book.dispatchEvent(
+      new KeyboardEvent('keydown', { bubbles: true, key: 'Enter', ctrlKey: true }),
+    );
+    expect(actions.openBookBeside).toHaveBeenCalledTimes(2);
+    expect(actions.openBookBeside).toHaveBeenLastCalledWith('Loose.epub');
     expect(actions.openEpub).not.toHaveBeenCalled();
   });
 

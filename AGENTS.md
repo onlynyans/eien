@@ -145,6 +145,7 @@ Rules, pure TypeScript.
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
   - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
   - `book-link.ts`: a link to one of the book's chapters, as an address of the page's own and back
+  - `quote.ts`: a passage quoted into a note, its citation, at the note's end
 
 ### `src/platform/`
 
@@ -196,7 +197,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `vault/note-actions.ts`: what the writer does to notes from any pane
 - `vault/row-actions.ts`: what a row and its menus do
 - `vault/vault-sidebar.ts`: the sidebar's actions
-- `vault/epub-wiring.ts`: an EPUB's kind, and what SHELF and the list show of the books on the pages (#40)
+- `vault/epub-wiring.ts`: an EPUB's kind, what SHELF and the list show of the books on the pages, and which note a quote goes into (#40)
 - `list/contents-list.ts`: a book's contents in the list, in place of notes (#40)
 - `vault/list-lens.ts`: the list's lens and Arrange mode (Include subfolders too, kept per folder by `list/sorts.ts`)
 - The split (spec §4, two pages side by side) is a mode as a layout is
@@ -333,8 +334,10 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
 - styles in `theme/` and beside each view
 - `epub/`: an EPUB's page (#40)
-  - `epub-page.ts`: the page (`PaneLeaf`): the note's sheet with a chapter on it, its ×, the colophon's "3 of 61" and how far through, the scroll style worn, a refusal in words
-  - `epub-side.ts`: one page holding a book (`Side`): the book read and opened, a chapter at a time, its place kept and shown again
+  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look and scroll style worn, its keys (Q, ⌘[ / Alt+←)
+  - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again, its links caught, its words copied and chosen
+  - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
+  - `book-open.ts`: the book read and opened for its page (or the words it says instead), what it's called, and where it opens
   - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
   - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again
   - `place-keeper.ts`: the place kept as the page scrolls, measured at rest and never out of sight, shown again when laid out anew
@@ -342,10 +345,13 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `book-follow.ts`: where they take the reader: the note over the page, or the chapter and place, one step back
   - `note-over.ts`: a book's note over its page, floated as a menu
   - `book-words.ts`: a selection's words without the page's own (a copy, a quote)
+  - `book-foot.ts`: a book's colophon items: Back, which chapter, how far through, a line of news
+  - `book-selection.ts`: the selection bar over a book: Quote in the note, Copy
+  - `book-quote.ts`: the words chosen in a book as a quote, cited
   - `test-side.ts`: a book's page over a vault the DOM tests hold
   - `test-lines.ts`: a chapter's lines as the DOM tests lay them out
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
-  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, let go with it
+  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
   - `reading-store.ts`: the reading state's file, through the vault's small files
   - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
 - `extension/`: the extension's pages (spec §14)

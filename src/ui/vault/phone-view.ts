@@ -33,6 +33,8 @@ export interface PhoneViewOf {
   parts(): PageParts;
   /** The pane shown changed, or the window became a phone's or stopped being one. */
   changed(): void;
+  /** The ⋯'s Quote, with a book in front (#40, Phase 2c). */
+  quote(): void;
 }
 
 export interface PhoneView {
@@ -71,6 +73,7 @@ export function phoneView(of: PhoneViewOf): PhoneView {
       sprinting: of.parts().counters.sprinting,
       exportTo,
       kind: of.pages.active.kind,
+      quote: of.quote,
     };
     openMenu(moreItems(state, run), { opener }, 'More');
   };

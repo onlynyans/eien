@@ -81,16 +81,16 @@ export function bookFollow(of: BookFollowOf): BookFollow {
   async function goTo(index: number, name: string): Promise<void> {
     const mine = ++asked;
     const from = of.place();
-    const at = () => (name ? (page.offsetOf(name) ?? 0) : 0);
+    const at = () => (name ? (page.sheet.offsetOf(name) ?? 0) : 0);
     if (index !== of.spine()) {
       if (!(await of.draw(index, at)) || mine !== asked) return;
     } else {
-      page.showPlace(at());
-      of.keep(page.place);
+      page.sheet.showPlace(at());
+      of.keep(page.sheet.place);
     }
     const epub = of.epub();
     back = from;
-    page.backTo(
+    page.foot.backTo(
       from && epub ? (chapterTitle(epub.contents, from.spine) ?? 'the last place') : null,
     );
   }
@@ -126,7 +126,8 @@ export function bookFollow(of: BookFollowOf): BookFollow {
     }
     shut();
     // A place this chapter doesn't have: nowhere to go.
-    if (index === of.spine() && link.fragment && page.offsetOf(link.fragment) === null) return;
+    if (index === of.spine() && link.fragment && page.sheet.offsetOf(link.fragment) === null)
+      return;
     await goTo(index, link.fragment);
   }
 
@@ -137,16 +138,16 @@ export function bookFollow(of: BookFollowOf): BookFollow {
       if (!to) return;
       ++asked;
       back = null;
-      page.backTo(null);
+      page.foot.backTo(null);
       await of.open(to);
-      of.keep(page.place);
+      of.keep(page.sheet.place);
     },
     forget() {
       ++asked;
       shut();
       back = null;
       read = null;
-      page.backTo(null);
+      page.foot.backTo(null);
     },
   };
 }

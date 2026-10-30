@@ -76,11 +76,19 @@ export class SelectionBar {
       this.hide();
       return;
     }
-    this.#bar.hidden = false;
-    const bar = this.#bar.getBoundingClientRect();
-    const top = start.top - bar.height - 8;
-    const left = Math.max(8, Math.min(start.left, window.innerWidth - bar.width - 8));
-    this.#bar.style.setProperty('--bar-top', `${Math.max(8, top)}px`);
-    this.#bar.style.setProperty('--bar-left', `${left}px`);
+    placeBar(this.#bar, start);
   }
+}
+
+/** `bar` shown just above the start of a selection at `start`, kept inside the window (a book's too, #40). */
+export function placeBar(
+  bar: HTMLElement,
+  start: { readonly top: number; readonly left: number },
+): void {
+  bar.hidden = false;
+  const box = bar.getBoundingClientRect();
+  const top = start.top - box.height - 8;
+  const left = Math.max(8, Math.min(start.left, window.innerWidth - box.width - 8));
+  bar.style.setProperty('--bar-top', `${Math.max(8, top)}px`);
+  bar.style.setProperty('--bar-left', `${left}px`);
 }

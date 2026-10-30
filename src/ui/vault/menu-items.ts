@@ -89,13 +89,26 @@ export const noteMenu = (note: NoteMenu): MenuItem[] => {
 
 export interface EpubMenu {
   readonly trashName: string;
+  /** Open to the Side: the desktop's only (a phone shows one page). */
+  openBeside?(): void;
   rename(): void;
   moveTo(): void;
   trash(): void;
 }
 
-/** A book's on SHELF (#40): renamed, moved and trashed as a note is, with the same keys. */
+/** A book's on SHELF (#40): opened beside, renamed, moved and trashed as a note is, with the same keys. */
 export const epubMenu = (book: EpubMenu): MenuItem[] => [
+  ...(book.openBeside
+    ? [
+        {
+          label: 'Open to the Side',
+          icon: 'split',
+          keys: 'Mod-Enter',
+          run: book.openBeside,
+        } as const,
+        'separator' as const,
+      ]
+    : []),
   { label: 'Rename', icon: 'rename', keys: 'F2', run: book.rename },
   { label: 'Move to…', icon: 'move', run: book.moveTo },
   'separator',

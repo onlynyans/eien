@@ -461,6 +461,19 @@ Three panes, each collapsible, with a two-pane option in settings:
      the zip) keeps its words alone, with no look of a link. A copy from a
      book holds its words and shapes alone: no address, no note's mark, no
      picture.
+   - **Beside a note** (Phase 2c): a book opens on one page of the split as a
+     note does: ⌘-click or ⌘Enter on its SHELF row, or its menu's Open to the
+     Side (on a phone's Two pages, a book chosen faces the note open),
+     in each of the split's modes, ⇄, the pager and the phone's slip.
+     **Quote:** words chosen in the book show the selection bar, **Quote in
+     the note** and **Copy** (on a phone, the page's ⋯ → Quote in the note;
+     on the desktop, Q too). Quote adds them at the end of the note beside
+     as a Markdown quote, `— Pride and Prejudice, Chapter III` under it (the
+     book's title and the chapter's name, no author), and never touches the
+     note's own words; one ⌘Z in the note takes it out (in Live or Source).
+     Q quotes only what's chosen now, once. On a phone with one
+     page it goes into the note you came from, which opens with it, the
+     book a tap away. With no note beside, the colophon says so.
    A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
    and zoom, at a fixed height (`--status-h`, 40px). Each part of the page

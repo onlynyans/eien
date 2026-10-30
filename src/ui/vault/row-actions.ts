@@ -35,7 +35,7 @@ export interface RowActionsOf {
 export function rowActions(of: RowActionsOf): {
   readonly rows: RowActions;
   /** A book's row on SHELF: its menu, rename and trash. */
-  readonly books: Pick<ShelfActions, 'bookMenu' | 'renameBook' | 'trashBook'>;
+  readonly books: Pick<ShelfActions, 'openBookBeside' | 'bookMenu' | 'renameBook' | 'trashBook'>;
   readonly menus: MenuContext;
 } {
   const { state, organizer, order } = of;
@@ -84,6 +84,8 @@ export function rowActions(of: RowActionsOf): {
     trash: (path) => act(() => organizer.trash(path)),
   };
   const books = {
+    // A book beside: the pages take it as a note (docs/page-kinds.md); the list keeps its notes.
+    openBookBeside: beside,
     bookMenu: (path: string, at: { x: number; y: number }) => showEpubMenu(menus, path, at),
     renameBook: (path: string) => menus.renameEpub(path),
     trashBook: (path: string) => trashEpub(menus, path),

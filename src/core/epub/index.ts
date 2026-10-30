@@ -7,6 +7,7 @@ export { type Epub, type EpubImage, type EpubSpineItem, epubKey, openEpub } from
 export type { SpineItem } from './package';
 export { offsetOf, type Spot, spotOf } from './place';
 export { bookFraction, chapterFraction, percent } from './progress';
+export { citation, type QuoteSource, quoted, withQuote } from './quote';
 export { parseReading, READING_FOLDER, type Reading, readingPath, withReading } from './reading';
 export { isRefusal, type Refusal, type RefusalKind, refusalWords } from './refusal';
 export type { ZipAddress } from './zip-path';

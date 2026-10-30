@@ -55,6 +55,8 @@ export const shelfKey = (path: string): string => `shelf:${path}`;
 
 export interface ShelfActions {
   openEpub(path: string): void;
+  /** ⌘-click or ⌘Enter: the book on a page beside the one open, as a note's row does (#40, Phase 2c). */
+  openBookBeside(path: string): void;
   /** A contents row chosen: that spine item of the book at `path`. */
   chapter(path: string, spine: number): void;
   /** A book's menu (rename, move, trash), at the pointer or the row. Apart from a note's, as the sidebar takes both. */
@@ -126,6 +128,7 @@ const bookEvents = (path: string, actions: ShelfActions): Props['on'] =>
     path,
     {
       open: actions.openEpub,
+      openBeside: actions.openBookBeside,
       menu: (book, at) => actions.bookMenu(book, at),
       rename: actions.renameBook,
       trash: actions.trashBook,

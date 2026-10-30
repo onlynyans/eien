@@ -47,3 +47,19 @@ describe('the ⋯ with a book in front (#40)', () => {
     expect(disabled('Settings')).toBe(false);
   });
 });
+
+describe('the ⋯’s Quote (#40, Phase 2c)', () => {
+  it('is there with a book in front, after Find, and quotes', () => {
+    const quote = vi.fn();
+    const state = { values: DEFAULT_SETTINGS, sprinting: false, exportTo: () => {}, quote };
+    const items = moreItems({ ...state, kind: 'epub' }, () => {});
+    expect(words(items).slice(0, 2)).toEqual(['Find', 'Quote in the note']);
+    const item = items[1];
+    if (item && item !== 'separator') item.run();
+    expect(quote).toHaveBeenCalledOnce();
+    // Never with a note in front: a note has nothing to quote from.
+    expect(words(moreItems({ ...state, kind: 'note' }, () => {}))).not.toContain(
+      'Quote in the note',
+    );
+  });
+});

@@ -155,3 +155,34 @@ describe('one note on both sides, under random edits', () => {
 function runOn(editor: NoteEditor, command: typeof undo): boolean {
   return documents.get(editor)?.run(editor.view, command) ?? false;
 }
+
+describe('Eien’s addition at a note’s end (a quote from a book, #40)', () => {
+  it('is one step ⌘Z takes back, on both sides, told as Eien’s, the keyboard left where it was', () => {
+    const { a, b, told, type } = twoViews('A scene.');
+    type(a, 8, ' Of my own.');
+    told.length = 0;
+    const focus = vi.spyOn(a.view, 'focus');
+    expect(a.addAtEnd((text) => `${text}\n\n> Quoted.\n`)).toBe(true);
+    expect(b.text).toBe('A scene. Of my own.\n\n> Quoted.\n');
+    expect(focus).not.toHaveBeenCalled();
+    // Told once, not written by the writer: today's words don't count it.
+    expect(told).toEqual([
+      { side: 'a', text: 'A scene. Of my own.\n\n> Quoted.\n', written: false },
+    ]);
+    // The caret after it, where the writer goes on.
+    expect(a.view.state.selection.main.head).toBe(a.text.length);
+    expect(runOn(b, undo)).toBe(true);
+    expect(a.text).toBe('A scene. Of my own.');
+    // The writer's own typing is a step of its own, still there until undone too.
+    expect(runOn(b, undo)).toBe(true);
+    expect(a.text).toBe('A scene.');
+  });
+
+  it('works in Reading, where the writer can’t type', () => {
+    const { a } = twoViews('A scene.');
+    a.setMode('reading');
+    expect(a.view.state.readOnly).toBe(true);
+    expect(a.addAtEnd((text) => `${text}\n\n> Quoted.\n`)).toBe(true);
+    expect(a.text).toBe('A scene.\n\n> Quoted.\n');
+  });
+});

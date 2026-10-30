@@ -47,6 +47,8 @@ export interface PageFind {
 export interface PaneLeaf extends PageLeaf {
   /** The name the pager, the closed book's edge and the page's label call it; '' with nothing open. */
   readonly name: string;
+  /** What those call it with nothing open: "No note", "No book". */
+  readonly unnamed: string;
   /** Its crumbs, for a running head across the window (C's): the pane shows the active page's. */
   readonly runningCrumbs: HTMLElement;
   /** Beside the pane, the active page's (a note's versions panel). */
