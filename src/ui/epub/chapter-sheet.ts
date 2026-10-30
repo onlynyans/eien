@@ -65,11 +65,14 @@ export class ChapterSheet {
     return this.#keeper === this.#paged;
   }
 
-  /** In pages, or scrolling: the place carried across, the other let go. */
+  /**
+   * In pages, or scrolling: the place carried across, the other let go. The
+   * place is the caller's to keep first (`keep`), while the old layout stands:
+   * measured once the new one is worn, it would read the wrong words.
+   */
   set paged(paged: boolean) {
     const next = paged ? this.#paged : this.#scrolled;
     if (next === this.#keeper) return;
-    this.#keeper.keep();
     const offset = this.#keeper.offset;
     this.#keeper.clear();
     this.#keeper = next;

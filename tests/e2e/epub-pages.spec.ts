@@ -3,10 +3,10 @@
 // place carried between Pages and Scroll, and kept across a restart and a
 // page zoom; the fore-edge's paper showing how far through.
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { expect, ROOT, test } from './launch';
+import { clickMenu, closeApp, expect, launchApp, ROOT, test } from './launch';
 
 const epub = (name: string) =>
   new Uint8Array(readFileSync(join(ROOT, 'tests/fixtures/epub', name)));
@@ -27,6 +27,23 @@ const firstWords = (page: Page) =>
     const node = at?.startContainer;
     return node?.textContent?.slice(at?.startOffset ?? 0, (at?.startOffset ?? 0) + 30) ?? '';
   });
+
+/** The words at the scroller's top, in Scroll: the place carried over from Pages. */
+const scrolledTo = (page: Page) =>
+  scroller(page).evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const words = element.querySelector('.epub-chapter')?.getBoundingClientRect();
+    const at = document.caretRangeFromPoint((words?.left ?? box.left) + 4, box.top + 30);
+    return at?.startContainer.textContent ?? '';
+  });
+
+/** The reading state's one file in `vault`. */
+function readingIn(vault: string): { place?: { offset: number } } {
+  const folder = join(vault, '.eien/reading');
+  if (!existsSync(folder)) return {};
+  const [file] = readdirSync(folder).filter((name) => name.endsWith('.json'));
+  return file ? JSON.parse(readFileSync(join(folder, file), 'utf8')) : {};
+}
 
 /** How the box and the chapter's lines stand: whole lines tall, nothing cut. */
 const laidOut = (page: Page) =>
@@ -81,5 +98,77 @@ test.describe('a book in pages', () => {
     expect(
       await leaf(page).locator('.epub-edges__stack--after .epub-edges__edge').count(),
     ).toBeGreaterThan(0);
+  });
+
+  test('carries its place between Pages and Scroll, the tools and the menu saying which', async ({
+    app,
+    page,
+  }) => {
+    await shelfEpub(page, 'Pride and Prejudice').click();
+    await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+    const pagesTool = page.locator('[data-command="view.pages"]:not(.page__phone *)').first();
+    const scrollTool = page.locator('[data-command="view.scroll"]:not(.page__phone *)').first();
+    await expect(pagesTool).toHaveAttribute('aria-pressed', 'true');
+    await scroller(page).focus();
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+    const turnedTo = await firstWords(page);
+    await scrollTool.click();
+    await expect(leaf(page)).toHaveAttribute('data-view', 'scroll');
+    await expect(scrollTool).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(() => scrolledTo(page)).toContain(turnedTo.trim().slice(0, 12));
+    await clickMenu(app, 'View', 'Pages');
+    await expect(leaf(page)).toHaveAttribute('data-view', 'pages');
+    await expect.poll(() => firstWords(page)).toBe(turnedTo);
+  });
+
+  test('keeps its page across a restart', async ({ page, vault, userData, app }) => {
+    if (!vault) throw new Error('no vault');
+    await shelfEpub(page, 'Pride and Prejudice').click();
+    await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+    await scroller(page).focus();
+    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+    const turnedTo = await firstWords(page);
+    await expect.poll(() => readingIn(vault).place?.offset ?? 0).toBeGreaterThan(0);
+    await closeApp(app);
+    const again = await launchApp(userData, vault);
+    const next = await again.firstWindow();
+    await next.setViewportSize({ width: 1400, height: 800 });
+    await shelfEpub(next, 'Pride and Prejudice').click();
+    await expect.poll(() => firstWords(next)).toBe(turnedTo);
+    await closeApp(again);
+  });
+
+  test('turns at page zoom 150%, its page whole lines still', async ({ app, page }) => {
+    await shelfEpub(page, 'Pride and Prejudice').click();
+    await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+    await scroller(page).focus();
+    for (let i = 0; i < 5; i++) await clickMenu(app, 'View', 'Zoom In');
+    await expect(page.locator('.colophon__zoom')).toHaveText('150%');
+    await page.keyboard.press('ArrowRight');
+    const turnedTo = await firstWords(page);
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(() => firstWords(page)).not.toBe(turnedTo);
+    await page.keyboard.press('ArrowLeft');
+    await expect.poll(() => firstWords(page)).toBe(turnedTo);
+    const { height, line } = await laidOut(page);
+    expect(height / line).toBeCloseTo(Math.round(height / line), 1);
+  });
+
+  test('offers Pages or Scroll, the Page turn and Turn speed in the shelf’s quick look', async ({
+    page,
+  }) => {
+    await shelfEpub(page, 'Pride and Prejudice').click();
+    await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+    await page.locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)').click();
+    const look = page.getByRole('dialog', { name: 'Look: Shelf' });
+    for (const key of ['epub.view', 'epub.turn', 'epub.turnSpeed', 'epub.scroll']) {
+      await expect(look.locator(`[data-setting="${key}"]`)).toBeVisible();
+    }
+    await look.locator('[data-setting="epub.turn"] [data-value="words"]').click();
+    await expect(look.locator('[data-setting="epub.turn"] [data-value="words"]')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 });
