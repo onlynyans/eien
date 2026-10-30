@@ -67,9 +67,15 @@ test('a note’s reference shows the note over the page; Esc closes it, the keyb
   await page.keyboard.press('Escape');
   await expect(note(page)).toHaveCount(0);
   await expect(mark).toBeFocused();
-  // Eien's own export's footnotes, in the same chapter; Go to the note goes there.
+  // Eien's own export's footnotes, in the same chapter; Go to the note goes there. The window
+  // short, so the reference is out of sight: pressing it scrolls it in, and the note stays.
+  await page.setViewportSize({ width: 1280, height: 420 });
   await shelfEpub(page, 'Notes').click();
-  await chapter(page).locator('a[data-part="note-ref"]').nth(1).click();
+  const below = chapter(page).locator('a[data-part="note-ref"]').nth(1);
+  expect(await below.evaluate((a) => a.getBoundingClientRect().top > window.innerHeight)).toBe(
+    true,
+  );
+  await below.click();
   await expect(note(page)).toContainText('Netherfield Park, let to Mr. Bingley.');
   await note(page).getByRole('button', { name: 'Go to the note' }).click();
   await expect(note(page)).toHaveCount(0);
@@ -114,6 +120,11 @@ test('a web link opens in the system’s browser, named in the tooltip, the wind
   expect(
     await web.evaluate((a) => getComputedStyle(a).textDecorationLine.includes('underline')),
   ).toBe(true);
+  // The page settled first (its fonts in, a frame drawn), so the link holds still under the pointer.
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+  });
   await web.hover();
   await expect(page.locator('.tooltip')).toHaveText('example.com/');
   await web.click();

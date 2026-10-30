@@ -12,6 +12,9 @@ import type { EpubPage } from './epub-page';
 import type { EpubPlace } from './epub-side';
 import { noteOver } from './note-over';
 
+/** The next frame drawn: a scroll the press began is done by then. */
+const nextFrame = (): Promise<void> => new Promise((done) => requestAnimationFrame(() => done()));
+
 export interface BookFollowOf {
   readonly page: EpubPage;
   /** The book open, and the spine item on the page. */
@@ -102,6 +105,9 @@ export function bookFollow(of: BookFollowOf): BookFollow {
     const mine = ++asked;
     if (isNoteRef(anchor, link)) {
       const words = await noteWords(epub, index, link.fragment);
+      // A frame on: pressing a mark out of sight scrolls it in, and that scroll would close the note
+      // the moment it opened. Opened after it, under the mark where it now stands.
+      await nextFrame();
       if (mine !== asked || !anchor.isConnected) return;
       if (words) {
         shut();
