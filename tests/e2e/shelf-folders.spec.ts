@@ -170,7 +170,7 @@ test(
     await page.mouse.move(to.x + 30, to.y + 10, { steps: 6 });
     await page.mouse.up();
     await expect.poll(() => existsSync(at(vault, 'Novels/On Anna.md'))).toBe(true);
-    expect(existsSync(at(vault, 'Reading/On Anna.md'))).toBe(false);
+    await expect.poll(() => existsSync(at(vault, 'Reading/On Anna.md'))).toBe(false);
     await expect(inFolders(page, 'Novels')).toBeVisible();
     await expect(inFolders(page, 'Reading')).toHaveCount(0); // books alone now
     await expect(onShelf(page, 'Reading')).toBeVisible();
