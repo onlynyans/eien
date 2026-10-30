@@ -402,8 +402,16 @@ test.describe('a bookmark, QA', () => {
 
   test('the edge tab stands inside the page’s edge with Page frame Full', async ({ page }) => {
     await chooseSetting(page, 'appearance.facingMark', 'tab');
-    await chooseSetting(page, 'appearance.frame', 'full');
     await openBook(page);
+    // A book wears its own frame, the shelf's look's (Settings sets notes').
+    await page.locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)').click();
+    await page
+      .getByRole('dialog', { name: 'Look: Shelf' })
+      .locator('[data-setting="appearance.frame"] [data-value="full"]')
+      .click();
+    await page.keyboard.press('Escape');
+    await expect(leaf(page)).toHaveAttribute('data-frame', 'full');
+    await leaf(page).locator('.page__scroll').focus();
     await page.keyboard.press('b');
     await expect(mark(page)).toBeVisible();
     const box = await mark(page).boundingBox();

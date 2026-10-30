@@ -5,7 +5,9 @@
    in pages the sheet is the page. */
 .epub-sheet__mark {
   position: sticky;
-  top: 0;
+  /* A sticky box keeps clear of its scroller's padding (the gutter round the sheet): stepped
+     back over it, the mark stands at the very top of what's in sight. */
+  top: calc(var(--eien-page-gutter) * -1);
   z-index: 2;
   display: block;
   height: 0;
