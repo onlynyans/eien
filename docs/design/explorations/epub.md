@@ -380,7 +380,13 @@ Each phase is its own session and pull request, from main.
   numbers, the printed edition's from the page-list, else steady pages of
   1,500 characters, the book counted once in the background, a chapter a
   task and never while a page turns (`core/epub/chapter-count.ts`,
-  `page-numbers.ts`; `ui/epub/book-count.ts`); 4b bookmarks on the page;
+  `page-numbers.ts`; `ui/epub/book-count.ts`); **4b, built:** bookmarks on
+  the page: B, the tool, View → Bookmark This Page and the phone's ⋯; the
+  Page mark worn, kept to the top of the sheet in sight as it scrolls,
+  following a turn once it lands; Facing pages' clash as decided; kept in
+  the reading state beside every field it doesn't know, never over a file
+  it can't read (`core/epub/bookmarks.ts`, `ui/epub/page-bookmarks.ts`,
+  `bookmark.css`);
   4c Marks in the list; 4d the strip on the edge, and the Marks setting.
 - **Phase 5, highlights and Find.**
 - **Phase 6, by lamplight,** on Scroll.

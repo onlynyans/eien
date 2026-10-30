@@ -73,15 +73,10 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     store: of.reading,
     chapter: () => (spine >= 0 ? (epub?.spine[spine]?.path ?? null) : null),
     still: (then) => pages.whenStill(then),
+    land: () => pages.finish(),
     changed: () => of.looks(),
   });
-
-  /** The page in sight bookmarked, or its bookmark taken off: measured where it stands now, any turn landed. */
-  function bookmark(): Promise<void> {
-    pages.finish();
-    page.sheet.keep();
-    return marks.toggle();
-  }
+  const bookmark = () => marks.toggle();
   const links = bookFollow({
     page,
     epub: () => epub,

@@ -85,6 +85,11 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         expect(await violationsUnder(page, ['.sidebar', '.list', '.page']), 'three panes').toEqual(
           [],
         );
+        // A bookmarked page (#40, Phase 4b): its mark, and the tool pressed.
+        await page.locator('.page__leaf--epub .page__scroll').focus();
+        await page.keyboard.press('b');
+        await expect(page.locator('.page__mark--bookmark')).toBeVisible();
+        expect(await violationsUnder(page, ['.page']), 'a bookmarked page').toEqual([]);
         // The shelf's look (#40, Phase 1c): LOOK / SHELF, with a book in front.
         await page
           .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')

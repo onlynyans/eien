@@ -8,27 +8,12 @@ import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtur
 import { DEFAULT_SETTINGS } from '../../core/config';
 import { ChapterSheet } from './chapter-sheet';
 import { epubKind } from './epub-kind';
-import type { EpubPage } from './epub-page';
 import { REST_MS } from './place-keeper';
-import { linesOf } from './test-lines';
+import { laidOut } from './test-lines';
 import { sideWith } from './test-side';
 
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
 const book = () => ({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
-
-const scrollerOf = (page: EpubPage) => page.element.querySelector('.page__scroll') as HTMLElement;
-
-/** The page given a height, and each word a line by where it stands among the chapter's. */
-function laidOut(page: EpubPage): HTMLElement {
-  const scroller = scrollerOf(page);
-  Object.defineProperty(scroller, 'clientHeight', { configurable: true, get: () => 200 });
-  Object.defineProperty(scroller, 'scrollHeight', { configurable: true, get: () => 2200 });
-  const lines = linesOf(page.chapter, scroller);
-  vi.spyOn(Range.prototype, 'getBoundingClientRect').mockImplementation(function (this: Range) {
-    return lines(this) as DOMRect;
-  });
-  return scroller;
-}
 
 const scrollTo = (scroller: HTMLElement, top: number) => {
   scroller.scrollTop = top;
@@ -82,7 +67,7 @@ describe('a chapter’s foot', () => {
       chapter: 'OEBPS/chapter-2.xhtml',
       offset: 0,
     });
-    await vi.waitFor(() => expect(document.activeElement).toBe(scrollerOf(side.page)));
+    await vi.waitFor(() => expect(document.activeElement).toBe(side.page.scroller));
   });
 });
 

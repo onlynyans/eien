@@ -140,7 +140,8 @@ Rules, pure TypeScript.
   - `epub-rules.ts`: those rules: pictures from the zip, links to the book's own chapters or the web and mail, the places they name kept, the parts named (a note and its reference too)
   - `svg-plate.ts`: Calibre's SVG frame round a picture made a plain image
   - `first-line.ts`: a chapter's first line, by where it stands
-  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it
+  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it; never written over when it can't be read
+  - `bookmarks.ts`: its bookmarks, changed in the file's own array, unknown items and fields kept (Phase 4b)
   - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
   - `chapter-count.ts`: a chapter's words counted as a place counts them, from its cleaned nodes, and where the printed pages begin in it (Phase 4)
@@ -215,7 +216,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, what the layout's tools act on, and where each note's figures go
   - `vault/page-hosts.ts`: a page's own host, which those commands move onto
   - `page/pages-row.ts`: the pane's row laying out two pages, folded with a pager, closed to one with the other's edge, or a companion under the page, the active page marked; each page's own head and foot is `page/page-leaf.ts`
-  - `page/page-mark.ts`, `page/page-mark.css`: the page's mark (the Page mark setting: ribbon, dog-ear or edge tab) at its outer edge: Facing pages' active page's, and a book's bookmark's from #40 Phase 4b
+  - `page/page-mark.ts`, `page/page-mark.css`: the page's mark (the Page mark setting: ribbon, dog-ear or edge tab) at its outer edge: Facing pages' active page's, and a book's bookmark's (#40 Phase 4b)
   - `page/split.css`, and one sheet per mode: `split-sheets.css`, `split-facing.css`, `split-companion.css`, `split-follow.css`
   - the list stepping aside for a split is `shell/panes.ts`'s
   - `page/divider.ts`: the divider between, each mode's measure in `shell/split-state.ts`
@@ -364,10 +365,12 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `book-selection.ts`: the selection bar over a book: Quote in the note, Copy
   - `book-quote.ts`: the words chosen in a book as a quote, cited
   - `test-side.ts`: a book's page over a vault the DOM tests hold
-  - `test-lines.ts`: a chapter's lines as the DOM tests lay them out
+  - `test-lines.ts`: a chapter's lines as the DOM tests lay them out, and a book's page laid out so
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
   - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
-  - `reading-store.ts`: the reading state's file, through the vault's small files
+  - `reading-store.ts`: the reading state's file, through the vault's small files, its bookmarks' changes told to every page of the book
+  - `page-bookmarks.ts`: a book's bookmarks on its page: whether the page in sight has one, B and the tool, following a turn once it lands (Phase 4b)
+  - `bookmark.css`: its mark (the Page mark's look), kept to the top of the sheet in sight, and Facing pages' clash
   - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
   - `paged-place.ts`: in pages (Phase 3b), the chapter laid in columns of whole lines, the page holding the place shown, a turn keeping its first word, a copy cut to the page in sight
   - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back

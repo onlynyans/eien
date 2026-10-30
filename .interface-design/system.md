@@ -644,7 +644,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131; Phase 4, page numbers, 4a)
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131; Phase 4, page numbers, 4a; bookmarks, 4b)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add paging and the turn (Phase 3), marks, highlights and Find
@@ -703,6 +703,22 @@ in the book, each recorded here as it's built.
   known), "40% of the chapter", "12% of the book", the two percents
   dropped first under a 560px page pane, the page kept. In Facing pages
   they're the book's folio, as a note's figures are.
+- **A bookmark** (Phase 4b, `epub/bookmark.css`): the Page mark's own look
+  (`page/page-mark.css`: the ink-soft ribbon, the dog-ear with no ink, or
+  the ink-soft edge tab), `.page__mark--bookmark`, at the sheet's outer top
+  (`data-edge="right"`), the ribbon centred in the sheet's own margin
+  (`--pad-x`). It hangs from a holder of no height that sticks to the top
+  of the sheet in sight (`.epub-sheet__mark`), so scrolling it keeps to the
+  page you see. In pages the edge tab stands past the fore-edge's pages
+  still to read (`--edges-after` × `--eien-mark-w`); with Page frame Full,
+  inside the page's edge. It arrives with the mark's own `--eien-calm`
+  motion on each bookmarked page shown, none with reduced motion. **The
+  clash** (decided 2026-10-30): with Facing pages and two pages, the mark
+  says "the page you're in", so a bookmark wears none and the book's folio
+  says "bookmarked" in its figures (`.colophon__bookmarked`, shown there
+  alone). The tool, a ribbon icon pressed on a bookmarked page ("Take the
+  bookmark off"), is a book's own (`on: 'epub'`), among the page's tools
+  before Look; in Facing pages, in each page's folio.
 - **The place is kept to the line**, never drawn: a page put back, laid out
   anew or zoomed shows the same line at its top.
 - **A note over the page** (Phase 2b, `ui/epub/note-over.ts`): a note's

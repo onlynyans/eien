@@ -39,6 +39,16 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await expect(chapter(page)).toBeInViewport();
       // Its page (#40, Phase 4): a steady one, once the book is counted.
       await expect(page.locator('.colophon__page')).toHaveText(/^page 1 of \d+$/u);
+      // Bookmarked from the page's ⋯ (Phase 4b): its mark, and the choice checked after.
+      await page.getByRole('button', { name: 'More' }).click();
+      await page.getByRole('menuitemcheckbox', { name: 'Bookmark this page' }).click();
+      await expect(page.locator('.page__mark--bookmark')).toBeVisible();
+      expect(await seriousViolations(page), 'a bookmarked page').toEqual([]);
+      await page.getByRole('button', { name: 'More' }).click();
+      await expect(
+        page.getByRole('menuitemcheckbox', { name: 'Bookmark this page' }),
+      ).toHaveAttribute('aria-checked', 'true');
+      await page.keyboard.press('Escape');
       // The note's tools set aside on a book (#40): its views and Focus, never greyed; Look stays.
       await expect(page.locator('[data-command="view.next"]:visible')).toHaveCount(0);
       await expect(page.locator('[data-command="focus"]:visible')).toHaveCount(0);

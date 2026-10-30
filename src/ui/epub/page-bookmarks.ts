@@ -31,6 +31,8 @@ export interface PageBookmarksOf {
   chapter(): string | null;
   /** `then` once no turn shows a copy of a page. */
   still: Still;
+  /** The turn in flight landed now. */
+  land(): void;
   /** Whether the page in sight is bookmarked changed: the tool shows it. */
   changed(): void;
 }
@@ -81,12 +83,17 @@ export class PageBookmarks {
     this.#of.still(() => this.#show());
   }
 
-  /** B, or the tool: a bookmark at the page's first word, or the page's taken off. */
+  /**
+   * B, or the tool: a bookmark at the page's first word, or the page's taken
+   * off; measured where the page stands now, any turn landed first.
+   */
   async toggle(): Promise<void> {
     const key = this.#key;
     const chapter = this.#of.chapter();
     if (!key || !chapter) return;
     const { page } = this.#of;
+    this.#of.land();
+    page.sheet.keep();
     const here = bookmarksOn(this.#marks, chapter, this.#from, this.#to);
     const words = firstWords(wordsFrom(page.chapter, this.#from, BOOKMARK_WORDS * 2));
     const change =
