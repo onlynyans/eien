@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
-import { countChapter, type Epub, isRefusal, openEpub } from '../../core/epub';
+import { countChapter, type Epub, isRefusal, openEpub, pageOf } from '../../core/epub';
 import { inflateRaw } from '../../platform/inflate';
 import { BookCount, BookCounts, type Still } from './book-count';
 
@@ -142,5 +142,128 @@ describe('the window’s counts', () => {
     counts.of({ ...epub, key: 'g' });
     counts.of({ ...epub, key: 'h' });
     expect(counts.of(epub)).not.toBe(first);
+  });
+
+  // QA (#40, Phase 4a): the last asked for is kept, not the first made.
+  it('keep a book asked for again over one asked for longer ago', async () => {
+    const epub = await book();
+    const counts = new BookCounts();
+    const first = counts.of(epub);
+    const older = counts.of({ ...epub, key: 'b' });
+    counts.of({ ...epub, key: 'c' });
+    counts.of({ ...epub, key: 'd' });
+    // Asked again: now the latest. A fifth book lets go of 'b', the oldest asked for.
+    counts.of(epub);
+    counts.of({ ...epub, key: 'e' });
+    expect(counts.of(epub)).toBe(first);
+    expect(counts.of({ ...epub, key: 'b' })).not.toBe(older);
+  });
+});
+
+// QA (#40, Phase 4a): books as a test makes them, each item's words given, `null` an item that won't open.
+function madeUp(
+  items: readonly ({ words: string; linear?: boolean } | null)[],
+  printPages: Epub['printPages'] = [],
+): Epub {
+  return {
+    title: 'Made up',
+    author: '',
+    language: 'en',
+    key: 'made-up',
+    spine: items.map((item, i) => ({ path: `c${i}.xhtml`, linear: item?.linear ?? true, size: 1 })),
+    contents: [],
+    printPages,
+    chapter: async (index) => {
+      const item = items[index];
+      if (!item) return { refused: 'damaged', detail: `no item ${index}` };
+      return { nodes: [{ kind: 'text', text: item.words }], images: [] };
+    },
+    image: async () => ({ refused: 'damaged', detail: 'no pictures' }),
+  } as Epub;
+}
+
+describe('a book counted, at its edges', () => {
+  it('counts a non-linear item (a note) where it stands in the spine, as a printed book prints it', async () => {
+    const epub = madeUp([
+      { words: 'a'.repeat(1000) },
+      { words: 'b'.repeat(700), linear: false },
+      { words: 'c' },
+    ]);
+    const count = new BookCount(epub);
+    count.run(epub, always, () => {});
+    await vi.waitFor(() => expect(count.whole).toBe(true));
+    expect(count.lengths).toEqual([1000, 700, 1]);
+    // The third item starts past 1,700 characters: the second page, the note's words among them.
+    expect(pageOf(count, 2, 0)).toEqual({ label: 2, of: 2 });
+  });
+
+  it('counts a chapter that won’t open as no words, and goes on to the rest', async () => {
+    const epub = madeUp([{ words: 'abc' }, null, { words: 'de' }]);
+    const count = new BookCount(epub);
+    const told = vi.fn();
+    count.run(epub, always, told);
+    await vi.waitFor(() => expect(count.whole).toBe(true));
+    expect(count.lengths).toEqual([3, 0, 2]);
+    expect(told).toHaveBeenCalledTimes(3);
+  });
+
+  it('leaves out a printed page in a file the spine doesn’t hold, keeping the rest in order', () => {
+    const epub = madeUp(
+      [{ words: 'abc' }, { words: 'def' }],
+      [
+        { label: '1', path: 'c0.xhtml', fragment: '' },
+        { label: '2', path: 'elsewhere.xhtml', fragment: 'p2' },
+        { label: '3', path: 'c1.xhtml', fragment: '' },
+      ],
+    );
+    expect(new BookCount(epub).print).toEqual([
+      { label: '1', spine: 0, offset: 0 },
+      { label: '3', spine: 1, offset: 0 },
+    ]);
+  });
+
+  it('counts an item drawn once: drawn again, nothing changes and no page is told', async () => {
+    const epub = madeUp([{ words: 'abc' }, { words: 'de' }]);
+    const count = new BookCount(epub);
+    const told = vi.fn();
+    count.run(epub, (then) => void then, told);
+    count.add(0, { nodes: [{ kind: 'text', text: 'abc' }], images: [] });
+    count.add(0, { nodes: [{ kind: 'text', text: 'a different length' }], images: [] });
+    // Out of the spine: nothing to count.
+    count.add(5, { nodes: [{ kind: 'text', text: 'x' }], images: [] });
+    count.add(-1, { nodes: [{ kind: 'text', text: 'x' }], images: [] });
+    expect(count.lengths).toEqual([3, null]);
+    expect(told).toHaveBeenCalledOnce();
+  });
+
+  it('tells both pages on one book of every item, reading each once', async () => {
+    const epub = madeUp([{ words: 'abc' }, { words: 'de' }, { words: 'f' }]);
+    const read = vi.spyOn(epub, 'chapter');
+    const count = new BookCount(epub);
+    const one = vi.fn();
+    const two = vi.fn();
+    count.run(epub, always, one);
+    count.run(epub, always, two);
+    await vi.waitFor(() => expect(count.whole).toBe(true));
+    expect(read).toHaveBeenCalledTimes(3);
+    expect(one).toHaveBeenCalledTimes(3);
+    expect(two).toHaveBeenCalledTimes(3);
+  });
+
+  it('reads nothing while either page on one book turns', async () => {
+    const epub = madeUp([{ words: 'abc' }, { words: 'de' }]);
+    const read = vi.spyOn(epub, 'chapter');
+    const count = new BookCount(epub);
+    let first = () => {};
+    count.run(epub, always, () => {});
+    count.run(
+      epub,
+      (then) => (first = then),
+      () => {},
+    );
+    await new Promise((done) => setTimeout(done, 20));
+    expect(read).not.toHaveBeenCalled();
+    first();
+    await vi.waitFor(() => expect(read).toHaveBeenCalledOnce());
   });
 });

@@ -61,3 +61,55 @@ test.describe('a book’s page numbers', () => {
     await closeApp(again);
   });
 });
+
+// QA (#40, Phase 4a): where the figure stands with a note beside (Facing
+// pages puts each page's figures in its own folio), and Pages with motion
+// reduced, where every turn is instant and the count is never held back.
+test.describe('a book’s page number beside a note, in Facing pages', () => {
+  test.use({
+    vaultFiles: {
+      'Novels/Printed.epub': epub('page-list.epub'),
+      'Notes.md': 'Snow on the walls.\n',
+    },
+    deviceFile: { settings: { 'appearance.split': 'facing' } },
+  });
+
+  test('is in the book’s own folio, never the note’s', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.locator('.note-row', { hasText: 'Notes' }).click();
+    await shelfEpub(page, 'Printed').click({ modifiers: ['ControlOrMeta'] });
+    await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
+    await expect(page.locator('.page__leaf--epub .page__folio .colophon__page')).toHaveText(
+      'page xii of 5',
+    );
+    await expect(
+      page.locator('.page__leaf:not(.page__leaf--epub) .page__folio .colophon__page'),
+    ).toHaveCount(0);
+  });
+});
+
+test.describe('a book’s steady page in Pages, motion reduced', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': longBook({ chapters: 3, paragraphs: 200 }) },
+    deviceFile: { settings: { 'epub.view': 'pages' } },
+  });
+
+  test('follows each turn, only rising', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await shelfEpub(page, 'Long').click();
+    await expect(pageFigure(page)).toHaveText(/^page 1 of \d+$/u, { timeout: 30_000 });
+    const said = async () => Number((await pageFigure(page).textContent())?.match(/\d+/u)?.[0]);
+    await page.locator('.page__leaf--epub .page__scroll').focus();
+    let last = 1;
+    for (let i = 0; i < 8; i++) {
+      await page.keyboard.press('ArrowRight');
+      await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
+      const now = await said();
+      expect(now).toBeGreaterThanOrEqual(last);
+      last = now;
+    }
+    // Eight pages turned hold more than one steady page's 1,500 characters.
+    expect(last).toBeGreaterThan(1);
+  });
+});

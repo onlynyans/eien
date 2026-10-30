@@ -100,6 +100,33 @@ test('a book’s place is kept as the phone goes to the background, and back aft
   await expect.poll(inSight).toBe(kept);
 });
 
+// QA (#40, Phase 4a): a phone's page is under 560px, where the colophon drops
+// how far through but keeps the page; and a printed edition's pages there too.
+test('a printed book’s page shows on the phone’s narrow colophon, how far through dropped', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Printed.epub',
+    readFileSync(join(import.meta.dirname, '../fixtures/epub/page-list.epub')).toString('base64'),
+  );
+  await back(page).click(); // the list's back: the sidebar
+  await page.locator('.tree-row--epub .tree-row__name').click({ timeout: 10_000 });
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  // The front matter's page, before the chapter's first numbered one.
+  const figure = page.locator('.colophon__page');
+  await expect(figure).toHaveText('page xii of 5');
+  await expect(figure).toBeVisible();
+  await expect(page.locator('.colophon__through')).toHaveCount(2);
+  for (const through of await page.locator('.colophon__through').all())
+    await expect(through).toBeHidden();
+  await back(page).click();
+  await page.locator('.contents-row').nth(1).click();
+  await expect(chapter(page)).toBeInViewport();
+  await expect(figure).toHaveText('page 2 of 5');
+});
+
 test('a book’s row menu renames it in its row, and trashes it to .eien/trash, whole', async ({
   page,
 }) => {
