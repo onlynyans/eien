@@ -213,7 +213,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, what the layout's tools act on, and where each note's figures go
   - `vault/page-hosts.ts`: a page's own host, which those commands move onto
   - `page/pages-row.ts`: the pane's row laying out two pages, folded with a pager, closed to one with the other's edge, or a companion under the page, the active page marked; each page's own head and foot is `page/page-leaf.ts`
-  - `page/page-mark.ts`, `page/page-mark.css`: the page's mark (the Page mark setting: ribbon, dog-ear or edge tab) at its outer edge, Facing pages' active page's and a book's bookmark's
+  - `page/page-mark.ts`, `page/page-mark.css`: the page's mark (the Page mark setting: ribbon, dog-ear or edge tab) at its outer edge: Facing pages' active page's, and a book's bookmark's from #40 Phase 4b
   - `page/split.css`, and one sheet per mode: `split-sheets.css`, `split-facing.css`, `split-companion.css`, `split-follow.css`
   - the list stepping aside for a split is `shell/panes.ts`'s
   - `page/divider.ts`: the divider between, each mode's measure in `shell/split-state.ts`
