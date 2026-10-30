@@ -9,12 +9,15 @@ import { isMenuKey, menuPoint, type Point } from '../list/row-events';
 /** Where ⌥ and an arrow move a folder. */
 export type FolderMove = 'up' | 'down' | 'out' | 'in';
 
-const FOLDER_KEYS: Record<string, FolderMove> = {
+const MOVES: Record<string, FolderMove> = {
   ArrowUp: 'up',
   ArrowDown: 'down',
   ArrowLeft: 'out',
   ArrowRight: 'in',
 };
+
+/** A folder's keys, as its row tells assistive tech: in FOLDERS and on SHELF alike. */
+export const FOLDER_SHORTCUTS = 'F2 Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight';
 
 /** ⌥ alone, as the moves ask for: not with ⌘ or Ctrl. */
 const plainAlt = (event: KeyboardEvent) => event.altKey && !event.metaKey && !event.ctrlKey;
@@ -35,7 +38,7 @@ export const folderRowEvents = (on: FolderKeys): Props['on'] => ({
     on.menu(menuPoint(event));
   },
   keydown: (event) => {
-    const move = plainAlt(event) ? FOLDER_KEYS[event.key] : undefined;
+    const move = plainAlt(event) ? MOVES[event.key] : undefined;
     if (isMenuKey(event)) on.menu(menuPoint(event));
     else if (event.key === 'F2') on.rename();
     else if (move) on.move(move);

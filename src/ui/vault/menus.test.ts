@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { epubMenu, type NoteMenu, noteMenu } from './menu-items';
+import { buildTree } from '../../core/vault';
+import { destinations, epubMenu, type NoteMenu, noteMenu } from './menu-items';
 
 const note = (more: Partial<NoteMenu> = {}): NoteMenu => ({
   pinned: false,
@@ -74,5 +75,25 @@ describe('a book’s menu on SHELF (#40)', () => {
     expect(items.at(-1)?.danger).toBe(true);
     for (const item of items) item.run();
     expect(ran).toEqual(['rename', 'move', 'trash']);
+  });
+});
+
+describe('Move to… (#40)', () => {
+  it('lists every folder, those FOLDERS leaves out and those SHELF does too', () => {
+    const tree = buildTree(
+      [
+        { path: 'Novels/Emma.epub', kind: 'epub', modified: 0, size: 0 },
+        { path: 'Drafts/One.md', kind: 'note', modified: 0, size: 0 },
+        { path: 'Drafts/Old', kind: 'folder', modified: 0, size: 0 },
+      ],
+      'Vault',
+    );
+    const items = destinations(tree, 'Vault', 'Drafts', null, () => {});
+    expect(items.map((item) => (item === 'separator' ? '—' : item.label))).toEqual([
+      'Vault',
+      'Drafts',
+      'Old',
+      'Novels',
+    ]);
   });
 });

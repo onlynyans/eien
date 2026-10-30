@@ -83,6 +83,85 @@ section where it and the directions below disagree.
 - **Books are only under SHELF,** never in a folder's note list.
 - **Reading state** (place, bookmarks, highlights) in `.eien/reading/`,
   keyed by the book's contents.
+- **Each section shows what its folders hold** (decided 2026-10-29). SHELF
+  already lists only the folders with a book somewhere in them; FOLDERS
+  lists every folder but those whose contents, at any depth, are books and
+  nothing else. FOLDERS is for writing, SHELF for reading.
+  - **Judged on the whole subtree:** a folder stays in FOLDERS while any
+    folder under it holds a note, so notes are never cut off. A folder
+    holding notes and books is in both, as before.
+  - **An empty folder is in FOLDERS:** that's where folders are made, and
+    a new one never vanishes.
+  - **What a book is, said once:** the index's book kinds (`.epub` today),
+    so a format added later joins both sections with no other change.
+  - **SHELF's folders become folder rows:** they fold and open with the
+    tree's twisty and keys, kept per device as FOLDERS' are (open at
+    first), and carry the folder's own menu (rename, move, trash), the same
+    one FOLDERS opens. Move to… still lists every folder.
+  - **When a folder changes sides** (its last note leaves, or its first
+    arrives), the keyboard stays near where it was, a chosen folder stays
+    chosen in the list until another is chosen, and a drop still lands:
+    the tree's path for a row that goes, tested for each.
+  - **Speed:** the tree already counts each folder's notes at every depth;
+    it counts its books the same way, in the same pass.
+  - **Not chosen:** a per-folder "shelf" switch (more state to keep in
+    step, and a folder can hold both), and dimming books-only folders in
+    FOLDERS (the clutter stays).
+
+### The tools, by what's in sight (decided 2026-10-29)
+
+- **A tool shows only while the active page can use it.** A command marked
+  for one kind of page (`on` in `chrome/commands.ts`) is set aside, not
+  greyed, while the active page is another kind: a book never takes Bold,
+  so a greyed Bold says something false. In a split, the bar shows the
+  tools of the page you're in: choose the book and the note's go, choose
+  the note and they come back (and a book's own, later, the other way).
+- **The rows stay; only buttons come and go.** The formatting bar's row
+  stays while a note is anywhere in sight, so neither page moves up or
+  down; with a book alone, the row goes too.
+
+  | In front | A note's tools | The formatting bar's row |
+  |---|---|---|
+  | A book alone | set aside | gone |
+  | A note beside a book, the book active | set aside | kept, its note-only buttons set aside |
+  | A note beside a book, the note active | shown | as before |
+  | A note | as before | as before |
+
+- **The tools every page shares keep their place** (Look, Split, the
+  panes, later Find), anchored, so only a kind's own group changes; the
+  change is instant, never animated. Where a split mode already gives each
+  page its own host (Facing pages, Tools that follow), each page's tools
+  stay on it.
+- **The menu bar greys, never hides** (#120): menus list all the app does,
+  as each system's own do; the bars show what applies. A hidden tool's key
+  does nothing on a book.
+- **A book's own tools** (contents, Pages or Scroll, bookmark) are marked
+  `on: 'epub'` and follow the same rule.
+
+### Links in a book (decided 2026-10-29)
+
+- **They look like links:** the words' own colour with a quiet underline in
+  `--eien-rule-strong` that darkens on hover, as the extension's story
+  page draws a link, the reading surface Eien already has. One rule, shared
+  by the story page and the book's page (both draw cleaned nodes), never a
+  second copy. A note's links in the editor keep their own look.
+- **No link card or bar in a book.** #121's card and bar are for writing
+  (where a link goes, Edit, Copy, Open), and its Link tooltip setting
+  doesn't apply here. On hover or focus, the window's own tooltip names
+  where a link goes:
+
+  | A link in a book | Hover or focus | Click or tap |
+  |---|---|---|
+  | To a chapter or a place in it | "Chapter III" (or "Chapter III · Notes") | goes there, with Back (Phase 2b) |
+  | A footnote's mark | "Note 4" | the note over the page (Phase 2b) |
+  | To the web or mail | the address, "gutenberg.org/ebooks/1342" | opens in the system's browser |
+
+- **Web and mail links open in the browser,** as a note's do in Reading:
+  only `http:`, `https:` and `mailto:`, through the same checked path a
+  note's links take; nothing loads inside Eien. Anything else (`javascript:`,
+  `data:`, files, out of the zip) stays words only, unstyled.
+- **A reading preview** (a chapter's first lines on hover) would be a
+  choice of its own, later.
 
 ### Paged
 

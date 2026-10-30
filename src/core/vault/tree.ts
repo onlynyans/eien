@@ -15,6 +15,8 @@ export interface FolderNode {
   readonly epubs: string[];
   /** Notes inside, at any depth. */
   noteCount: number;
+  /** EPUBs inside, at any depth (#40). */
+  epubCount: number;
 }
 
 /**
@@ -41,6 +43,7 @@ export function buildTree(entries: readonly VaultEntry[], vaultName: string): Fo
     notes: [],
     epubs: [],
     noteCount: 0,
+    epubCount: 0,
   };
   const folders = new Map<string, FolderNode>([['', root]]);
 
@@ -54,6 +57,7 @@ export function buildTree(entries: readonly VaultEntry[], vaultName: string): Fo
       notes: [],
       epubs: [],
       noteCount: 0,
+      epubCount: 0,
     };
     folders.set(path, node);
     folderAt(parentOf(path)).folders.push(node);
@@ -73,14 +77,31 @@ export function buildTree(entries: readonly VaultEntry[], vaultName: string): Fo
     else if (entry.kind === 'epub') folderAt(parentOf(entry.path)).epubs.push(entry.path);
   }
 
-  const finish = (node: FolderNode): number => {
+  const finish = (node: FolderNode): void => {
     node.folders.sort((a, b) => byName(a.name, b.name));
     node.notes.sort((a, b) => byName(baseName(a), baseName(b)));
     node.epubs.sort((a, b) => byName(baseName(a), baseName(b)));
-    node.noteCount =
-      node.notes.length + node.folders.reduce((sum, child) => sum + finish(child), 0);
-    return node.noteCount;
+    node.noteCount = node.notes.length;
+    node.epubCount = node.epubs.length;
+    for (const child of node.folders) {
+      finish(child);
+      node.noteCount += child.noteCount;
+      node.epubCount += child.epubCount;
+    }
   };
   finish(root);
   return root;
 }
+
+/**
+ * Whether FOLDERS lists the folder (#40): every folder but those whose
+ * contents, at any depth, are EPUBs and nothing else. Judged on the whole
+ * subtree, so a folder with a note anywhere under it stays, and so does one
+ * holding an empty folder, which always shows: nothing listed is cut off.
+ * Empty is what the tree holds: a folder of pictures alone shows.
+ */
+export const inFolders = (node: FolderNode): boolean =>
+  node.noteCount > 0 || node.epubCount === 0 || node.folders.some(inFolders);
+
+/** Whether SHELF lists the folder (#40): an EPUB in it, at any depth. */
+export const onShelf = (node: FolderNode): boolean => node.epubCount > 0;

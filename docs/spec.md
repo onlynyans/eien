@@ -157,8 +157,10 @@ one on two synced devices read each other's files.
 ### Per-device state
 
 Cursor positions, open notes, pane widths, which of the sidebar's sections are
-folded, zoom and today's word tally are kept in the app's own storage on each
-device. They are never written into the vault,
+folded and which of Shelf's folders are shut (by their paths in the vault,
+shared by the vaults this device opens, and followed through a rename, a
+move or the trash done in Eien), zoom and today's word tally are kept in the
+app's own storage on each device. They are never written into the vault,
 so two devices never overwrite each other's state through Syncthing.
 
 ---
@@ -335,12 +337,28 @@ Three panes, each collapsible, with a two-pane option in settings:
      to pin
    - **Folders**, nested; a book marked BOOK beside its count; a quiet + at
      the label's right (on hover or keyboard focus; always on a phone) makes
-     a folder, named in place
+     a folder, named in place. Folders is for writing (#40): it lists every
+     folder but those whose contents, at any depth, are EPUBs and nothing
+     else, which are on Shelf alone. A folder stays while a note is anywhere
+     under it, and an empty folder always shows (where it's named); "empty"
+     is what the sidebar would show, so a folder of a book and its cover
+     picture is books alone. A folder of notes and books is in both
    - **Shelf** (#40), between Folders and Tags, once the vault holds a book
      (an `.epub` file, in any folder): a lens over the one folder tree. Every
      book, named by its file as a note is, under the folders on the way to
-     it at their depth; a folder there is a label, and only a book is a
-     control. A book is never in a folder's note list, count or search. A
+     it at their depth. A folder there is Folders' own folder row: its
+     twisty, or a click on its name (nothing lists a folder's books), shuts
+     and opens it, open at first and remembered on this device (§2); a note
+     or folder dragged onto it lands there; and it has the folder's own
+     menu and keys (F2, ⌥ and an arrow). Its new name is typed in its row on
+     Shelf; Move up and down, ⌥↑ ⌥↓ and ⌥→ go among the folders Shelf shows
+     beside it (in Folders, among those Folders shows), stepping over those
+     only the other shows; Move to… lists every folder. A folder moved into
+     a shut one opens it. When a folder changes sections (its first note
+     arrives, or its last leaves), the keyboard stays on its row where the
+     row stays, or on the row in its place; the folder chosen stays the
+     list's until another is chosen. Opening a book from elsewhere leaves a
+     shut folder shut. A book is never in a folder's note list, count or search. A
      click opens it on the page; with two panes, its contents are listed
      under its row. Its row answers as a note's: right-click, the menu key
      or Shift+F10 give its menu (Rename, Move to…, and the trash last), F2
@@ -386,14 +404,24 @@ Three panes, each collapsible, with a two-pane option in settings:
    it on the note's own sheet, drawn from cleaned nodes in the writer's
    faces and the theme's colours, its pictures from the book's own zip, the
    book's folders above it. A book that won't open says why on the sheet
-   (locked with DRM, too large, damaged); its file is only read. With a book in front, a note's
-   commands are greyed wherever they're offered: the layout's tools, the
-   phone's ⋯, and the menu bar (the views, Seal, Compare, Versions, Copy as
-   HTML, every format, Export HTML… and Export Note, Outline Cards, Focus
-   Mode, Typewriter Scrolling, Show Markdown Marks), from the one rule each
-   control's `on` gives (`ui/chrome/commands.ts`, `menuOff`). The menu bar
-   is the app's: it wears the focused window's, and a menu of the bar is
-   never greyed, only its items.
+   (locked with DRM, too large, damaged); its file is only read. A tool
+   shows only while the active page can use it (decided 2026-10-29): with a
+   book active, a note's tools (the views, Seal, Compare, Versions, Copy as
+   HTML, Focus, every format) are set aside in the layout's bars and the
+   phone's, not greyed, and their keys do nothing there; choosing a note
+   brings them back. The formatting bar's row stays while a note is on
+   either page, so neither page moves (beside a book, only its buttons go);
+   with a book alone it goes too. The tools every page shares (Look, Split,
+   the panes) keep their places, and a page with its own host (Facing
+   pages, Tools that follow) keeps its own tools on it. A bar that folds
+   fits again as its tools come and go. The phone's ⋯ and the menu bar
+   grey the same commands rather than hide them (the views, Seal, Compare,
+   Versions, Copy as HTML, every format, Export HTML… and Export Note,
+   Outline Cards, Focus Mode, Typewriter Scrolling, Show Markdown Marks),
+   from the one rule each control's `on` gives (`ui/chrome/commands.ts`,
+   `menuOff`): a menu lists all the app does. The menu bar is the app's: it
+   wears the focused window's, and a menu of the bar is never greyed, only
+   its items.
    - **A chapter a sheet** (Phase 2): the chapter scrolls as a note does in
      Reading, the usual keys once the page has the keyboard. At its foot,
      after a soft rule, the chapters before and after it in the reading
@@ -545,7 +573,8 @@ each command in exactly one host; switching takes one layout's hosts out and
 puts the other's in, and nothing else changes. A host draws its commands as
 icon buttons (`ui/icons.ts`), each with an accessible name, a tooltip with
 its key (after a short hover, or at once from the keyboard) and its state
-(pressed, disabled); a host is a toolbar, its arrows moving along it, and Tab
+(pressed, disabled, or set aside where the active page can't use it, #40);
+a host is a toolbar, its arrows moving along it, and Tab
 reaches every control. A switch leaves the keyboard on the same command in
 the new layout, or on the page. Whether the strip is hidden is per device.
 

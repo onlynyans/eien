@@ -1,8 +1,9 @@
 // How each of the layout's commands looks now, for a shown vault
 // (./chrome-wiring.ts draws them): a view chosen, Focus on, the list shut,
 // Compare showing the changes. A command for one kind of page
-// (../chrome/commands.ts, `on`) looks disabled on a page of another; the
-// window's look the same whatever the page holds.
+// (../chrome/commands.ts, `on`) is set aside while the page it acts on is
+// another kind (#40): a book never takes Bold, so a greyed Bold would say
+// something false. The window's look the same whatever the page holds.
 
 import { type FormatCommandId, headingLevel } from '../../core/format';
 import type { Layout } from '../chrome/commands';
@@ -139,7 +140,7 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
 
   return (id, side) => {
     // A command for another kind of page than the one it would act on: there, it does nothing.
-    if (!actsOn(id, side.kind)) return { disabled: true, pressed: false };
+    if (!actsOn(id, side.kind)) return { aside: true };
     return windowLook(id) ?? (isNote(side) ? noteLook(id, side) : {});
   };
 }

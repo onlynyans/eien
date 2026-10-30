@@ -19,6 +19,8 @@ test.use({
     // A book on the shelf (#40): SHELF is in every check of the sidebar.
     'Novels/Pride and Prejudice.epub': readFileSync(join(ROOT, 'tests/fixtures/epub/plain.epub')),
     'Novels/Links.epub': readFileSync(join(ROOT, 'tests/fixtures/epub/links.epub')),
+    // A folder in it on SHELF, which the book's test shuts (#40).
+    'Novels/Russian/Anna Karenina.epub': readFileSync(join(ROOT, 'tests/fixtures/epub/plain.epub')),
   },
 });
 
@@ -92,6 +94,17 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         // With its line at the foot: Settings sets notes.
         await expect(page.locator('.quick-look__line')).toBeVisible();
         expect(await seriousViolations(page), 'the shelf’s look').toEqual([]);
+        await page.keyboard.press('Escape');
+        // A folder on SHELF shut, and the folder's menu from its row there (#40).
+        await page.locator('[data-key="twist:/shelf/Novels/Russian"]').click();
+        await expect(page.locator('[data-key="shelf:Novels/Russian"]')).toHaveAttribute(
+          'aria-expanded',
+          'false',
+        );
+        expect(await violationsUnder(page, ['.sidebar']), 'a folder shut on SHELF').toEqual([]);
+        await page.locator('[data-key="shelf:Novels"]').click({ button: 'right' });
+        await expect(page.getByRole('menu', { name: 'Novels' })).toBeVisible();
+        expect(await violationsUnder(page, ['.menu']), 'a folder’s menu on SHELF').toEqual([]);
         await page.keyboard.press('Escape');
         // The book's row menu (rename, move, the trash in carmine).
         await page
