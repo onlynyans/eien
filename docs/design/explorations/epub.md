@@ -374,7 +374,14 @@ Each phase is its own session and pull request, from main.
   - **3d:** the spread, and Set as a book.
 - **The reading room,** after the turn (it was Phase 3b).
 - **Phase 4, place, bookmarks and page count:** print pages or steady
-  pages; Marks in the list or on the edge.
+  pages; Marks in the list or on the edge. In five pull requests, stacked:
+  the page's mark shared, for a bookmark to wear
+  ([#132](https://github.com/onlynyans/eien/pull/132)); **4a, built:** page
+  numbers, the printed edition's from the page-list, else steady pages of
+  1,500 characters, the book counted once in the background, a chapter a
+  task and never while a page turns (`core/epub/chapter-count.ts`,
+  `page-numbers.ts`; `ui/epub/book-count.ts`); 4b bookmarks on the page;
+  4c Marks in the list; 4d the strip on the edge, and the Marks setting.
 - **Phase 5, highlights and Find.**
 - **Phase 6, by lamplight,** on Scroll.
 

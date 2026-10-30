@@ -21,6 +21,8 @@ export interface PagedPlaceOf {
   moved(fraction: number): void;
   /** The place came to rest somewhere new: an offset in the chapter's words. */
   rested(offset: number): void;
+  /** The page in sight, measured: from its first word to the next page's (Phase 4), as it's shown or turned. */
+  inSight(from: number, to: number): void;
   readonly sideOf?: SideOf;
 }
 
@@ -102,6 +104,7 @@ export class PagedPlace {
     }
     this.#layout();
     this.#go(this.#pageOf(this.#offset));
+    this.#inSight(this.#range());
   }
 
   /**
@@ -195,13 +198,33 @@ export class PagedPlace {
   /** Turned to `page`: its first word the place, told once the turns rest. */
   #turnTo(page: number): void {
     this.#go(page);
-    this.#offset = firstOnPage(
-      this.#of.chapter,
-      this.#of.box.getBoundingClientRect().left,
-      this.#sideOf,
-    );
+    const range = this.#range();
+    this.#offset = range.from;
     clearTimeout(this.#rest);
     this.#rest = setTimeout(() => this.#flush(true), REST_MS);
+    this.#inSight(range);
+  }
+
+  /**
+   * The page in sight's words: from its first (0 on the first page) to the
+   * next page's first, null on the last. A turn's copy is cut to them, and
+   * they're the page a bookmark marks.
+   */
+  #range(): { readonly from: number; readonly to: number | null } {
+    const { chapter, box } = this.#of;
+    const left = box.getBoundingClientRect().left;
+    // The page starts just after the page before's last word, so a picture that begins it (or is
+    // all of it) comes with it.
+    const from = this.#page > 0 ? firstOnPage(chapter, left, this.#sideOf) : 0;
+    const to =
+      this.#page + 1 < this.#pages
+        ? firstOnPage(chapter, left + this.#step * this.#scale(), this.#sideOf)
+        : null;
+    return { from, to };
+  }
+
+  #inSight({ from, to }: { readonly from: number; readonly to: number | null }): void {
+    this.#of.inSight(from, to ?? Number.POSITIVE_INFINITY);
   }
 
   /**
@@ -212,18 +235,11 @@ export class PagedPlace {
    * indent, and no capitals: it's the paragraph's middle.
    */
   trim(copy: HTMLElement): void {
-    const { chapter, box } = this.#of;
+    const { chapter } = this.#of;
     if (this.#idle || !this.#shown) return;
-    const left = box.getBoundingClientRect().left;
-    // The page starts just after the page before's last word, so a picture that begins it (or is
-    // all of it) comes with it.
-    const start = this.#page > 0 ? firstOnPage(chapter, left, this.#sideOf) : 0;
+    const { from: start, to: next } = this.#range();
     const before = start > 0 ? characterAt(chapter, start - 1) : null;
     const from = start > 0 ? characterAt(chapter, start) : null;
-    const next =
-      this.#page + 1 < this.#pages
-        ? firstOnPage(chapter, left + this.#step * this.#scale(), this.#sideOf)
-        : null;
     const to = next === null ? null : characterAt(chapter, next);
     const words = pageCut(chapter, before, from, to);
     copy.replaceChildren(words);

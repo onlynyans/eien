@@ -37,6 +37,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await book.click();
       await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
       await expect(chapter(page)).toBeInViewport();
+      // Its page (#40, Phase 4): a steady one, once the book is counted.
+      await expect(page.locator('.colophon__page')).toHaveText(/^page 1 of \d+$/u);
       // The note's tools set aside on a book (#40): its views and Focus, never greyed; Look stays.
       await expect(page.locator('[data-command="view.next"]:visible')).toHaveCount(0);
       await expect(page.locator('[data-command="focus"]:visible')).toHaveCount(0);
@@ -96,6 +98,33 @@ test('a book’s place is kept as the phone goes to the background, and back aft
   await back(page).click();
   await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
   await expect.poll(inSight).toBe(kept);
+});
+
+// QA (#40, Phase 4a): a phone's page is under 560px, where the colophon drops
+// how far through but keeps the page; and a printed edition's pages there too.
+test('a printed book’s page shows on the phone’s narrow colophon, how far through dropped', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Printed.epub',
+    readFileSync(join(import.meta.dirname, '../fixtures/epub/page-list.epub')).toString('base64'),
+  );
+  await back(page).click(); // the list's back: the sidebar
+  await page.locator('.tree-row--epub .tree-row__name').click({ timeout: 10_000 });
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  // The front matter's page, before the chapter's first numbered one.
+  const figure = page.locator('.colophon__page');
+  await expect(figure).toHaveText('page xii of 5');
+  await expect(figure).toBeVisible();
+  await expect(page.locator('.colophon__through')).toHaveCount(2);
+  for (const through of await page.locator('.colophon__through').all())
+    await expect(through).toBeHidden();
+  await back(page).click();
+  await page.locator('.contents-row').nth(1).click();
+  await expect(chapter(page)).toBeInViewport();
+  await expect(figure).toHaveText('page 2 of 5');
 });
 
 test('a book’s row menu renames it in its row, and trashes it to .eien/trash, whole', async ({

@@ -429,9 +429,22 @@ Three panes, each collapsible, with a two-pane option in settings:
      order are word buttons named for them ("Previous chapter" for one the
      contents don't name, such as a title page), "The end" at the last;
      nothing moves on until one is pressed, which opens that chapter at its
-     top. The colophon says "3 of 61", then how far through the chapter and
-     the book ("40% of the chapter", "12% of the book", the book by its
-     chapters' sizes; the two dropped first on a narrow page).
+     top. The colophon says "3 of 61", then the page (Phase 4), then how far
+     through the chapter and the book ("40% of the chapter", "12% of the
+     book", the book by its chapters' sizes; the two dropped first on a
+     narrow page, the page kept).
+   - **Page numbers** (Phase 4a): the page the place is on, "page 212 of
+     2,450", in Scroll and in Pages. A book with a page-list (the printed
+     edition's pages) has its printed numbers, "page xii" before the first
+     numbered one, the book's pages by its last label where that's a
+     number, shown as soon as the chapter is drawn; a page whose place the
+     book lost counts for nothing. Any other book has steady pages: 1,500
+     of its characters a page, over every chapter in the reading order, so
+     a number never moves with the window, the face or the device, and only
+     rises through the book. The book is counted once, in the background,
+     a chapter at a time and never while a page turns; until it's counted
+     the colophon gives no steady page. The count is kept for the last few
+     books this window opened, never written.
    - **Pages** (Phase 3b): **Read in**, a book setting in the shelf's
      quick look, sets a book in *Pages* or *Scroll* (the default for now),
      as do the book's own two tools in the views' place and View → Pages

@@ -9,8 +9,9 @@ import { withQuote } from '../../core/epub';
 import { baseName, isInside } from '../../core/paths';
 import { isNoteName } from '../../core/vault';
 import type { VaultBridge } from '../../platform/bridge';
+import { BookCounts } from '../epub/book-count';
 import { type EpubKind, epubKind } from '../epub/epub-kind';
-import { type EpubSide, isEpub } from '../epub/epub-side';
+import { type EpubSide, isEpub } from '../epub/epub-side-types';
 import { readingStore } from '../epub/reading-store';
 import type { ContentsModel } from '../list/contents-list';
 import type { ShelfActions, ShelfModel } from '../sidebar/shelf-rows';
@@ -71,6 +72,7 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
   const pagesKind = epubKind({
     vault: of.vault,
     reading: readingStore(of.vault, of.tell),
+    counts: new BookCounts(),
     sizeOf: (path) => of.state.sizeOf(path),
     changed: () => of.redraw(),
     async quote(text, from) {

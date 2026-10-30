@@ -5,10 +5,15 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
+import { handEpub, nav, opf, XHTML, page as xhtml } from '../../../tests/support/epub-parts';
+import { longBook } from '../../../tests/support/long-book';
 import { DEFAULT_SETTINGS } from '../../core/config';
+import { countChapter, type Epub, isRefusal, steadyPages } from '../../core/epub';
+import { BookCount } from './book-count';
 import { ChapterSheet } from './chapter-sheet';
 import { epubKind } from './epub-kind';
 import type { EpubPage } from './epub-page';
+import { makeEpubSide } from './epub-side';
 import { REST_MS } from './place-keeper';
 import { linesOf } from './test-lines';
 import { sideWith } from './test-side';
@@ -100,11 +105,38 @@ describe('the place in a chapter', () => {
     });
     expect(side.place).toMatchObject({ spine: 1, offset: 200 });
     const figures = side.page.foot.figures.map((figure) => figure.textContent);
-    // No step back to offer (no link followed), then the chapter's place and how far through.
+    // No step back to offer (no link followed), then the chapter's place, its page and how far through.
     expect(figures[0]).toBe('');
     expect(figures[1]).toBe('2 of 4');
-    expect(figures[2]).toBe('20% of the chapter');
-    expect(figures[3]).toMatch(/^\d+% of the book$/u);
+    expect(figures[3]).toBe('20% of the chapter');
+    expect(figures[4]).toMatch(/^\d+% of the book$/u);
+  });
+
+  it('says the printed page it’s on, at once, the book’s pages by its last (Phase 4)', async () => {
+    const { side } = sideWith({ 'a.epub': EPUBS['page-list.epub'] as Uint8Array });
+    await side.open('a.epub');
+    const scroller = laidOut(side.page);
+    const page = () => side.page.foot.figures[2]?.textContent;
+    scrollTo(scroller, 0);
+    vi.advanceTimersByTime(REST_MS);
+    // Before the chapter's first marked page: the front matter's, named by the chapter alone.
+    expect(page()).toBe('page xii of 5');
+    scrollTo(scroller, 1000);
+    vi.advanceTimersByTime(REST_MS);
+    expect(page()).toBe('page 1 of 5');
+  });
+
+  it('says the steady page it’s on once the book is counted, nothing before (Phase 4)', async () => {
+    const { side } = sideWith(book());
+    await side.open('a.epub');
+    const scroller = laidOut(side.page);
+    const page = () => side.page.foot.figures[2]?.textContent;
+    scrollTo(scroller, 0);
+    vi.advanceTimersByTime(REST_MS);
+    expect(page()).toBe('');
+    // Each item counted in a task of its own, its chapter read meanwhile.
+    for (let i = 0; i < 40 && page() === ''; i++) await vi.advanceTimersByTimeAsync(1);
+    expect(page()).toBe('page 1 of 1');
   });
 
   it('is shown again when the book opens, from the reading state or the place a page left', async () => {
@@ -149,6 +181,128 @@ describe('the place in a chapter', () => {
     });
   });
 });
+
+// QA (#40, Phase 4a): the page said over a book of several pages, two pages
+// on one book, a book opened again, and a chapter that won't open.
+describe('the page it’s on, over a whole book', () => {
+  const pageSaid = (page: EpubPage) => page.foot.figures[2]?.textContent;
+  /** The count's tasks run, each chapter read meanwhile, until `done`. */
+  const until = async (done: () => boolean) => {
+    for (let i = 0; i < 400 && !done(); i++) await vi.advanceTimersByTimeAsync(1);
+    expect(done()).toBe(true);
+  };
+  /** The page at rest at its top, its lines in sight measured. */
+  const atRest = (page: EpubPage) => {
+    const scroller = laidOut(page);
+    scrollTo(scroller, 0);
+    vi.advanceTimersByTime(REST_MS);
+  };
+  /** Each chapter's length as a place counts it, read again here. */
+  const lengthsOf = async (epub: Epub) =>
+    Promise.all(
+      epub.spine.map(async (_, i) => {
+        const chapter = await epub.chapter(i);
+        return isRefusal(chapter) ? 0 : countChapter(chapter.nodes).length;
+      }),
+    );
+
+  it('numbers a later chapter’s top by every chapter’s characters before it', async () => {
+    const { side } = sideWith({ 'a.epub': longBook({ chapters: 4, paragraphs: 30 }) });
+    await side.open('a.epub');
+    atRest(side.page);
+    await until(() => pageSaid(side.page) !== '');
+    expect(pageSaid(side.page)).toMatch(/^page 1 of \d+$/u);
+    await side.go(3);
+    atRest(side.page);
+    const lengths = await lengthsOf(side.epub as Epub);
+    const sum = (items: readonly number[]) => items.reduce((all, length) => all + length, 0);
+    const before = sum(lengths.slice(0, 3));
+    const total = sum(lengths);
+    expect(Math.floor(before / 1500) + 1).toBeGreaterThan(1);
+    expect(pageSaid(side.page)).toBe(
+      `page ${Math.floor(before / 1500) + 1} of ${Math.ceil(total / 1500)}`,
+    );
+  });
+
+  it('says the page at once on a second page of the same book: one count, not two', async () => {
+    const { side, of } = sideWith(book());
+    await side.open('a.epub');
+    atRest(side.page);
+    await until(() => pageSaid(side.page) !== '');
+    const again = makeEpubSide(of, { close: () => {}, caret: () => {} }, null);
+    document.body.append(again.page.element);
+    await again.open('a.epub');
+    atRest(again.page);
+    // No count's task has run for it (each reads a chapter, which takes more than a timer's tick):
+    // the window's count of the book was whole already, and is the one both pages read.
+    expect(pageSaid(again.page)).toBe('page 1 of 1');
+    expect(of.counts.of(again.epub as Epub)).toBe(of.counts.of(side.epub as Epub));
+  });
+
+  it('says the page at once when the book is opened again on its page', async () => {
+    const { side } = sideWith(book());
+    await side.open('a.epub');
+    atRest(side.page);
+    await until(() => pageSaid(side.page) !== '');
+    side.clear();
+    expect(pageSaid(side.page)).toBe('');
+    const runs = vi.spyOn(BookCount.prototype, 'run');
+    await side.open('a.epub');
+    atRest(side.page);
+    expect(pageSaid(side.page)).toBe('page 1 of 1');
+    // Asked to go on, it had nothing left to read.
+    expect(runs).toHaveBeenCalledOnce();
+    expect((runs.mock.contexts[0] as BookCount).whole).toBe(true);
+  });
+
+  it('says no page on a chapter that won’t open, which counts as no words', async () => {
+    const { side, of } = sideWith({ 'a.epub': brokenMiddle() });
+    await side.open('a.epub');
+    atRest(side.page);
+    const count = of.counts.of(side.epub as Epub);
+    await until(() => count.whole);
+    expect(count.lengths[1]).toBe(0);
+    expect(pageSaid(side.page)).toMatch(/^page 1 of \d+$/u);
+    await side.go(1);
+    expect(pageSaid(side.page)).toBe('');
+    await side.go(2);
+    atRest(side.page);
+    const before = count.lengths[0] as number;
+    expect(pageSaid(side.page)).toBe(
+      `page ${Math.floor(before / 1500) + 1} of ${steadyPages(count.lengths)}`,
+    );
+  });
+});
+
+/** A book of three chapters whose second won't inflate: its bytes in the zip aren't deflate's. */
+function brokenMiddle(): Uint8Array {
+  const chapter = (n: number) =>
+    xhtml(`Chapter ${n}`, `<h1>Chapter ${n}</h1>\n${'<p>Words enough to count.</p>'.repeat(80)}`);
+  return handEpub('content.opf', [
+    {
+      name: 'content.opf',
+      data: opf(
+        '3.0',
+        [
+          { id: 'nav', href: 'nav.xhtml', type: XHTML, properties: 'nav' },
+          ...['c0', 'c1', 'c2'].map((id) => ({ id, href: `${id}.xhtml`, type: XHTML })),
+        ],
+        ['c0', 'c1', 'c2'],
+      ),
+    },
+    {
+      name: 'nav.xhtml',
+      data: nav([
+        ['One', 'c0.xhtml'],
+        ['Two', 'c1.xhtml'],
+        ['Three', 'c2.xhtml'],
+      ]),
+    },
+    { name: 'c0.xhtml', data: chapter(1) },
+    { name: 'c1.xhtml', data: chapter(2), packed: new Uint8Array([0xff, 0xff, 0xff, 0xff]) },
+    { name: 'c2.xhtml', data: chapter(3) },
+  ]);
+}
 
 describe('the scroll style', () => {
   it('is worn on the book’s leaf, as a note’s or as a book’s', async () => {

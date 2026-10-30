@@ -3,77 +3,31 @@
 // core/epub, one chapter drawn at a time, and the place in the book (its
 // chapter, and the line in it, Phase 2) kept in the reading state's file
 // whenever the writer moves to another chapter or the page comes to rest;
-// and words chosen in it quoted in a note (Phase 2c). The book's file is
-// only ever read.
+// words chosen in it quoted in a note (Phase 2c); and the book counted for
+// its page numbers (Phase 4, ./book-count.ts). The book's file is only ever
+// read. What a side is: ./epub-side-types.ts.
 
 import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
-import { bookFraction, type Epub, isRefusal, refusalWords } from '../../core/epub';
+import { type Epub, isRefusal, refusalWords } from '../../core/epub';
 import { crumbsOf } from '../vault/open-note';
-import type { Place, Side, SideHooks } from '../vault/page-side';
+import type { Place, SideHooks } from '../vault/page-side';
+import type { BookCount } from './book-count';
 import { bookFollow } from './book-follow';
 import { nameLinks } from './book-links';
-import { type BookOpenOf, nameOf, openBook, startOf } from './book-open';
+import { nameOf, openBook, startOf } from './book-open';
 import { bookPages } from './book-pages';
+import { bookPlace } from './book-place';
 import { quoteOf } from './book-quote';
 import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
 import { EpubPage } from './epub-page';
-import type { ReadingStore } from './reading-store';
-
-/** Where an EPUB's page was: the chapter it showed, by its place in the spine, and the line in it. */
-export interface EpubPlace extends Place {
-  readonly spine: number;
-  /** An offset in the chapter's words (core/epub/place.ts): its first line in sight. */
-  readonly offset: number;
-}
-
-export interface EpubSideOf extends BookOpenOf {
-  readonly reading: ReadingStore;
-  /** Another book or chapter is on the page: the list and the shelf mark it. */
-  changed(): void;
-  /**
-   * `quote` (Markdown) put in the note beside this page (Phase 2c): the
-   * note's name; or why not, in words.
-   */
-  quote(
-    quote: string,
-    from: EpubSide,
-  ): Promise<{ readonly into: string } | { readonly not: string }>;
-}
-
-export interface EpubSide extends Side {
-  readonly kind: 'epub';
-  readonly page: EpubPage;
-  readonly place: EpubPlace | null;
-  /** The book open, or null with none (or one that wouldn't open). */
-  readonly epub: Epub | null;
-  /** The spine item drawn; -1 for none. */
-  readonly spine: number;
-  /** Draw the spine item `index`, and keep it as the place to come back to. */
-  go(index: number): Promise<void>;
-  /** The book's file moved (a folder above it renamed or moved by this window): the page follows it. */
-  moved(to: string): void;
-  /** Read the book again, where the page was in it: its file changed on disk. */
-  reload(): Promise<void>;
-  /** Its place, if on its way to rest, kept now: the window is quitting. */
-  keep(): void;
-  /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */
-  quote(kept?: boolean): Promise<void>;
-}
-
-/** Whether `side` holds an EPUB: a page of this kind, not a test's stand-in of the same name. */
-export const isEpub = (side: Side | null | undefined): side is EpubSide =>
-  side?.kind === 'epub' && 'go' in side;
+import type { EpubPlace, EpubSide, EpubSideOf } from './epub-side-types';
 
 export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | null): EpubSide {
   const page = new EpubPage({
     close: hooks.close,
-    moved: (fraction) => {
-      const book = epub ? bookFraction(epub.spine, spine, fraction) : 0;
-      page.foot.through(fraction, book);
-      const { at, of: count } = page.sheet.page;
-      page.edges.through(book, at, count);
-    },
+    moved: (fraction) => placing.moved(fraction),
+    inSight: (from, to) => placing.inSight(from, to),
     turn: (way, held) => pages.turn(way, held),
     edge: (last) => pages.edge(last),
     rested: (offset) => keep(offset),
@@ -85,6 +39,9 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
   let epub: Epub | null = null;
   let spine = -1;
   let drawn: DrawnChapter | null = null;
+  /** The book's count for its page numbers, and how to stop asking for the rest of it. */
+  let count: BookCount | null = null;
+  let stopCount = () => {};
   let before = left;
   let disposed = false;
   /** The shelf's settings, as last followed. */
@@ -92,10 +49,18 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
   /** Counts what the page was asked to show, so a slow open never lands over a newer one. */
   let turn = 0;
 
+  /** No more of the book counted for this page. */
+  const stopCounting = () => {
+    stopCount();
+    stopCount = () => {};
+  };
   const letGo = () => {
     drawn?.release();
     drawn = null;
+    stopCounting();
+    count = null;
   };
+  const placing = bookPlace({ page, epub: () => epub, spine: () => spine, count: () => count });
   const links = bookFollow({
     page,
     epub: () => epub,
@@ -137,9 +102,11 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     const chapter = await opened.chapter(index);
     if (asked !== turn || disposed) return false;
     if (isRefusal(chapter)) {
+      placing.clear();
       page.notice(refusalWords(chapter));
       return false;
     }
+    count?.add(index, chapter);
     const next = await drawChapter(opened, chapter);
     if (asked !== turn || disposed) {
       next.release();
@@ -152,6 +119,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     const moved = kept && index !== spine;
     spine = index;
     const given = typeof place === 'number' ? place : 0;
+    // The last chapter's words in sight aren't this one's: its page is said once they're measured.
+    placing.clear();
     page.drawn(
       next.element,
       chapterFoot(opened, index, turnTo),
@@ -241,11 +210,21 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
         return of.changed();
       }
       epub = read.epub;
+      const counted = of.counts.of(epub);
+      count = counted;
       page.show(nameOf(epub, next), crumbsOf(next), epub.language);
       const kept = at === null ? await of.reading.read(epub.key) : null;
       if (opening !== turn || disposed) return;
       const start = startOf(epub, at === null ? null : { spine: at, offset }, kept);
       await draw(start.index, false, start.offset);
+      // The rest counted once the chapter's in sight, counted as it was drawn, never parsed first;
+      // not if another book came meanwhile (a draw moves `turn` on, so the book is what's asked).
+      if (disposed || epub !== read.epub) return;
+      stopCount = counted.run(
+        epub,
+        (then) => pages.whenStill(then),
+        () => placing.counted(),
+      );
     },
     go: async (index) => {
       // A chapter the reader chose: no step back to where a link was followed from.
@@ -253,9 +232,9 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       await draw(index, true);
     },
     reload() {
-      const place = side.place;
+      const here = side.place;
       epub = null;
-      return place ? side.open(place.path, place) : Promise.resolve();
+      return here ? side.open(here.path, here) : Promise.resolve();
     },
     moved(to) {
       path = to;
@@ -281,6 +260,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     },
     dispose() {
       disposed = true;
+      // The count stopped first: the turn's dispose runs what waits for it to be still.
+      stopCounting();
       pages.dispose();
       links.forget();
       letGo();

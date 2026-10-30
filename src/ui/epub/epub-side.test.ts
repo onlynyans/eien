@@ -1,7 +1,10 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
+import { BookCount } from './book-count';
 import { epubKind } from './epub-kind';
-import { type EpubSide, isEpub, makeEpubSide } from './epub-side';
+import { EpubPage } from './epub-page';
+import { makeEpubSide } from './epub-side';
+import { type EpubSide, isEpub } from './epub-side-types';
 import { sideWith } from './test-side';
 
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
@@ -11,6 +14,65 @@ const chapterText = (side: EpubSide) => side.page.chapter.textContent ?? '';
 afterEach(() => {
   document.body.replaceChildren();
   vi.restoreAllMocks();
+});
+
+describe('a book counted for its page numbers (Phase 4a)', () => {
+  /** Each count a page asked for, and the spy on how it stopped. */
+  function counting() {
+    const run = BookCount.prototype.run;
+    const stops: Mock[] = [];
+    vi.spyOn(BookCount.prototype, 'run').mockImplementation(function (this: BookCount, ...args) {
+      const stop = vi.fn(run.apply(this, args));
+      stops.push(stop);
+      return stop;
+    });
+    return stops;
+  }
+
+  it('counts once the chapter is drawn, and stops for another book, a cleared page or one gone', async () => {
+    const stops = counting();
+    const { side } = sideWith({
+      'a.epub': EPUBS['plain.epub'] as Uint8Array,
+      'b.epub': EPUBS['page-list.epub'] as Uint8Array,
+    });
+    await side.open('a.epub');
+    expect(stops).toHaveLength(1);
+    await side.open('b.epub');
+    expect(stops[0]).toHaveBeenCalledOnce();
+    side.clear();
+    expect(stops[1]).toHaveBeenCalledOnce();
+    await side.open('a.epub');
+    side.dispose();
+    expect(stops[2]).toHaveBeenCalledOnce();
+  });
+
+  // QA (#40, Phase 4a): the count asked for only by the book that stays on the page.
+  it('never counts a book another replaced while it opened, and starts again when its file changes', async () => {
+    const stops = counting();
+    const run = vi.mocked(BookCount.prototype.run);
+    const { side } = sideWith({
+      'a.epub': EPUBS['plain.epub'] as Uint8Array,
+      'b.epub': EPUBS['page-list.epub'] as Uint8Array,
+    });
+    // Another book asked for as the first one's chapter is drawn: past the checks before the draw.
+    const drawn = EpubPage.prototype.drawn;
+    let second: Promise<void> = Promise.resolve();
+    vi.spyOn(EpubPage.prototype, 'drawn').mockImplementationOnce(function (
+      this: EpubPage,
+      ...args
+    ) {
+      drawn.apply(this, args);
+      second = side.open('b.epub');
+    });
+    await side.open('a.epub');
+    await second;
+    expect(stops).toHaveLength(1);
+    expect(run.mock.calls[0]?.[0]).toBe(side.epub);
+    // Read again (its file changed on disk): the last count stopped, a new one asked for.
+    await side.reload();
+    expect(stops[0]).toHaveBeenCalledOnce();
+    expect(stops).toHaveLength(2);
+  });
 });
 
 describe('a book’s page', () => {

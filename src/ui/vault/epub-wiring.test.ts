@@ -5,7 +5,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
-import type { EpubSide } from '../epub/epub-side';
+import type { EpubSide } from '../epub/epub-side-types';
 import { epubWiring } from './epub-wiring';
 import { Navigation } from './navigation';
 import type { Pages } from './pages';

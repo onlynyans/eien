@@ -56,8 +56,9 @@ function laidOut(paragraphs: readonly string[], picture = -1) {
   };
   const moved = vi.fn();
   const rested = vi.fn();
-  const place = new PagedPlace({ box, chapter, moved, rested, sideOf });
-  return { box, chapter, place, moved, rested, shown };
+  const inSight = vi.fn();
+  const place = new PagedPlace({ box, chapter, moved, rested, inSight, sideOf });
+  return { box, chapter, place, moved, rested, inSight, shown };
 }
 
 beforeEach(() => {
@@ -102,6 +103,19 @@ describe('a chapter in pages', () => {
     // Past the chapter's end: the next chapter's to turn to.
     expect(place.turn(1)).toBe(false);
     expect(place.page).toBe(2);
+  });
+
+  it('tells the page in sight’s words as it’s shown and turned, measured first (Phase 4)', () => {
+    const { place, inSight } = laidOut(['a'.repeat(250)]);
+    place.show(130);
+    // Shown on its second page: from that page's first word to the next page's.
+    expect(inSight).toHaveBeenLastCalledWith(PER_PAGE, 2 * PER_PAGE);
+    place.turn(1);
+    // The last page runs to the chapter's end.
+    expect(inSight).toHaveBeenLastCalledWith(2 * PER_PAGE, Number.POSITIVE_INFINITY);
+    place.turn(-1);
+    place.turn(-1);
+    expect(inSight).toHaveBeenLastCalledWith(0, PER_PAGE);
   });
 
   it('goes to the chapter’s first page and its last', () => {

@@ -9,7 +9,7 @@ import { chapterTitle, type Epub, isRefusal, type ZipAddress } from '../../core/
 import { drawClean } from '../draw-clean';
 import { isNoteRef, noteIn } from './book-links';
 import type { EpubPage } from './epub-page';
-import type { EpubPlace } from './epub-side';
+import type { EpubPlace } from './epub-side-types';
 import { noteOver } from './note-over';
 
 /** The next frame drawn: a scroll the press began is done by then. */

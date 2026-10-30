@@ -102,11 +102,16 @@ describe('openEpub: EPUB 2 and 3', () => {
       'OEBPS/text/chapter-2.xhtml',
       'OEBPS/text/chapter-3.xhtml',
     ]);
-    expect(book.printPages).toHaveLength(6);
+    expect(book.printPages.map((page) => page.label)).toEqual(['xii', '1', '2', '3', '4', '5']);
+    expect(book.printPages[0]).toEqual({
+      label: 'xii',
+      path: 'OEBPS/text/chapter-1.xhtml',
+      fragment: '',
+    });
     expect(book.printPages[3]).toEqual({
-      label: '4',
+      label: '3',
       path: 'OEBPS/text/chapter-2.xhtml',
-      fragment: 'page-4',
+      fragment: 'page-3',
     });
   });
 });

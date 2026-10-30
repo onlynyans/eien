@@ -8,7 +8,8 @@ import { baseName, isInside } from '../../core/paths';
 import { isEpubName } from '../../core/vault';
 import { touches } from '../vault/disk-changes';
 import type { PageKindOf, Side } from '../vault/page-side';
-import { type EpubSide, type EpubSideOf, isEpub, makeEpubSide } from './epub-side';
+import { makeEpubSide } from './epub-side';
+import { type EpubSide, type EpubSideOf, isEpub } from './epub-side-types';
 
 export interface EpubKind extends PageKindOf {
   /** This window moved `from` (a book, or a folder holding one) to `to`. */

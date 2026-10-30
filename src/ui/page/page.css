@@ -233,6 +233,7 @@
   letter-spacing: var(--eien-track-label);
 }
 .colophon__state:empty,
+.colophon__page:empty,
 .colophon__zoom:empty,
 .colophon__news:empty,
 .colophon__said:empty {
@@ -266,7 +267,7 @@
 .colophon__counters:empty {
   display: none;
 }
-/* How far through a book: dropped first when the page is narrow. */
+/* How far through a book: dropped first when the page is narrow (its page stays). */
 @container page (width < 560px) {
   .colophon__through {
     display: none;
