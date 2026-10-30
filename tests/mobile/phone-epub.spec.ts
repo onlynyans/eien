@@ -56,10 +56,10 @@ for (const colorScheme of ['light', 'dark'] as const) {
       expect(await seriousViolations(page), 'the book').toEqual([]);
       await back(page).click();
       // Marks in the contents page (Phase 4c): the bookmark made from the ⋯.
-      await page.getByRole('tab', { name: /Marks/u }).click();
+      await page.getByRole('button', { name: /^Marks \d+$/u }).click();
       await expect(page.locator('.mark-row')).toHaveCount(1);
       expect(await seriousViolations(page), 'its marks').toEqual([]);
-      await page.getByRole('tab', { name: /Contents/u }).click();
+      await page.getByRole('button', { name: /^Contents \d+$/u }).click();
       const rows = page.locator('.contents-row');
       await expect(rows).toHaveText(['Chapter I', 'Chapter II', 'Chapter III']);
       expect(await seriousViolations(page), 'its contents').toEqual([]);

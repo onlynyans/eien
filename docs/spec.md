@@ -467,11 +467,12 @@ Three panes, each collapsible, with a two-pane option in settings:
      that can't be read is never written over: the colophon says so once,
      and its place and bookmarks aren't kept until it's fixed or deleted.
    - **Marks in the list** (Phase 4c): with a book's contents in the list,
-     two tabs under its head, **Contents** and **Marks**, each with its
-     count (← → between them); Marks lists the book's bookmarks in its
+     two buttons under its head, **Contents** and **Marks**, each with its
+     count, the one shown pressed; Marks lists the book's bookmarks in its
      order, each row the words its page begins with, its page, and its
      chapter, or "Nothing kept yet. B bookmarks a page." Enter or a click
-     goes to the bookmark's page; Delete or Backspace takes it off. The
+     goes to the bookmark's page; Delete or Backspace takes it off (once,
+     however long it's held; the keyboard goes to the next row). The
      lens is the window's, back to Contents for another book. With two
      panes the tabs and rows are under the book's row on SHELF; on the
      phone, on its contents page.

@@ -157,9 +157,9 @@ test.describe('Marks in the list (Phase 4c)', () => {
     await leaf(page).locator('.page__scroll').focus();
     await page.keyboard.press('b');
     await expect(mark(page)).toBeVisible();
-    await page.getByRole('tab', { name: /Marks/u }).click();
-    await expect(page.getByRole('tab', { name: /Marks/u })).toHaveAttribute(
-      'aria-selected',
+    await page.getByRole('button', { name: /^Marks \d+$/u }).click();
+    await expect(page.getByRole('button', { name: /^Marks \d+$/u })).toHaveAttribute(
+      'aria-pressed',
       'true',
     );
     const row = page.locator('.mark-row');
@@ -167,10 +167,10 @@ test.describe('Marks in the list (Phase 4c)', () => {
     await expect(row.locator('.mark-row__words')).toContainText('Not all that Mrs. Bennet');
     await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter III');
     await expect(row.locator('.mark-row__page')).toHaveText(/^\d+$/u);
-    await page.getByRole('tab', { name: /Contents/u }).click();
+    await page.getByRole('button', { name: /^Contents \d+$/u }).click();
     await page.locator('.contents-row').nth(0).click();
     await expect(leaf(page).locator('.epub-chapter')).toContainText('It is a truth');
-    await page.getByRole('tab', { name: /Marks/u }).click();
+    await page.getByRole('button', { name: /^Marks \d+$/u }).click();
     await row.click();
     await expect(leaf(page).locator('.epub-chapter')).toContainText('Not all that Mrs. Bennet');
     await expect(mark(page)).toBeVisible();
@@ -187,10 +187,25 @@ test.describe('Marks in the list (Phase 4c)', () => {
     await openBook(page);
     await page.keyboard.press('b');
     await expect(mark(page)).toBeVisible();
-    await page.locator('.tree-row--lenses').getByRole('tab', { name: /Marks/u }).click();
+    await page
+      .locator('.tree-lenses')
+      .getByRole('button', { name: /^Marks \d+$/u })
+      .click();
     const row = page.locator('.tree-row--mark .tree-row__name');
     await expect(row).toHaveCount(1);
     await expect(row).toContainText('It is a truth');
+    expect(await seriousViolations(page), 'Marks under a book on SHELF').toEqual([]);
+    // Another chapter, then the row goes back to the bookmark's.
+    await leaf(page).locator('.page__scroll').focus();
+    await page.keyboard.press('End');
+    await row.click();
+    await expect(mark(page)).toBeVisible();
+    // Delete takes it off; the tree says none is kept.
+    await row.focus();
+    await page.keyboard.press('Delete');
+    await expect(row).toHaveCount(0);
+    await expect(page.locator('.tree-hint')).toHaveText('Nothing kept yet. B bookmarks a page.');
+    await expect(mark(page)).toBeHidden();
   });
 });
 

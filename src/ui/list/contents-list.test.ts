@@ -96,33 +96,30 @@ describe('a book’s lenses in the list (Phase 4c)', () => {
     lens,
     marks,
   });
-  const tabs = (container: HTMLElement) => [
-    ...container.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+  const lenses = (container: HTMLElement) => [
+    ...container.querySelectorAll<HTMLButtonElement>('.book-lens'),
   ];
 
-  it('are Contents and Marks under the head, each with its count, the one shown chosen', () => {
+  it('are Contents and Marks under the head, each with its count, the one shown pressed', () => {
     const { container } = drawn(withMarks('contents'));
-    expect(tabs(container).map((tab) => tab.textContent)).toEqual(['Contents3', 'Marks2']);
-    expect(tabs(container).map((tab) => tab.getAttribute('aria-selected'))).toEqual([
+    // A space between the name and its count: a screen reader says "Marks 2", as the eye reads it.
+    expect(lenses(container).map((lens) => lens.textContent)).toEqual(['Contents 3', 'Marks 2']);
+    expect(lenses(container).map((lens) => lens.getAttribute('aria-pressed'))).toEqual([
       'true',
       'false',
     ]);
-    expect(container.querySelector('[role="tablist"]')?.getAttribute('aria-label')).toBe(
+    expect(container.querySelector('[role="group"]')?.getAttribute('aria-label')).toBe(
       'The book’s index',
     );
   });
 
-  it('choose the other with a click or the arrows, the keyboard staying on the chosen one', () => {
+  it('choose the other with a click, the keyboard staying on it through the redraw', () => {
     const { container, actions } = drawn(withMarks('contents'));
-    tabs(container)[1]?.click();
-    expect(actions.lens).toHaveBeenLastCalledWith('marks');
-    tabs(container)[0]?.focus();
-    tabs(container)[0]?.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
-    );
+    lenses(container)[1]?.focus();
+    lenses(container)[1]?.click();
     expect(actions.lens).toHaveBeenLastCalledWith('marks');
     renderContents(container, withMarks('marks'), null, actions);
-    expect(document.activeElement).toBe(tabs(container)[1]);
+    expect(document.activeElement).toBe(lenses(container)[1]);
   });
 
   it('show each bookmark under Marks: its words, its page, its chapter; it goes there, or Delete takes it off', () => {
@@ -142,6 +139,28 @@ describe('a book’s lenses in the list (Phase 4c)', () => {
     expect(actions.chapter).not.toHaveBeenCalled();
   });
 
+  it('take one off once for a key held, and never for ⌘⌫ (a row’s trash elsewhere)', () => {
+    const { container, actions } = drawn(withMarks('marks'));
+    const [first] = rows(container);
+    const key = (init: KeyboardEventInit) =>
+      first?.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }));
+    key({ key: 'Backspace', repeat: true });
+    key({ key: 'Backspace', metaKey: true });
+    key({ key: 'Delete', ctrlKey: true });
+    expect(actions.remove).not.toHaveBeenCalled();
+    key({ key: 'Backspace' });
+    expect(actions.remove).toHaveBeenCalledOnce();
+  });
+
+  it('hand the keyboard to the next row when one is taken off, and to Marks when none is left', () => {
+    const { container, actions } = drawn(withMarks('marks'));
+    rows(container)[0]?.focus();
+    renderContents(container, withMarks('marks', ROWS.slice(1)), null, actions);
+    expect(document.activeElement).toBe(rows(container)[0]);
+    renderContents(container, withMarks('marks', []), null, actions);
+    expect(document.activeElement).toBe(lenses(container)[1]);
+  });
+
   it('say so when none is kept', () => {
     const { container } = drawn(withMarks('marks', []));
     expect(rows(container)).toHaveLength(0);
@@ -150,7 +169,7 @@ describe('a book’s lenses in the list (Phase 4c)', () => {
 
   it('aren’t there when the marks are on the page’s edge', () => {
     const off = drawn({ ...MODEL, lens: 'marks', marks: null });
-    expect(tabs(off.container)).toHaveLength(0);
+    expect(lenses(off.container)).toHaveLength(0);
     expect(rows(off.container)).toHaveLength(3);
   });
 });

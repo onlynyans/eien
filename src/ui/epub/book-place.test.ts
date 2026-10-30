@@ -38,3 +38,24 @@ describe('the page a book’s place says', () => {
     expect(said()).toBe('');
   });
 });
+
+describe('a page a bookmark is on, as its row says it', () => {
+  it('is none known for a printed book’s chapter not yet counted, never the page before it', () => {
+    const foot = new BookFoot(() => {});
+    const count = {
+      lengths: [1000, null],
+      print: [
+        { label: '1', spine: 0, offset: 0 },
+        { label: '2', spine: 1, offset: null },
+      ],
+    } as unknown as BookCount;
+    const place = bookPlace({
+      page: { foot } as unknown as EpubPage,
+      epub: () => ({ spine: [] }) as unknown as Epub,
+      spine: () => 0,
+      count: () => count,
+    });
+    expect(place.labelAt(0, 500)).toBe('1');
+    expect(place.labelAt(1, 10)).toBeNull();
+  });
+});

@@ -65,7 +65,9 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
     },
     labelAt(spine, offset) {
       const count = of.count();
-      const { label } = count ? pageOf(count, spine, offset) : { label: null };
+      // A printed page in a chapter not yet counted isn't known: the one before it would be wrong.
+      if (!count || (count.print.length > 0 && count.lengths[spine] === null)) return null;
+      const { label } = pageOf(count, spine, offset);
       return label === null ? null : String(label);
     },
   };

@@ -91,10 +91,10 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await expect(page.locator('.page__mark--bookmark')).toBeVisible();
         expect(await violationsUnder(page, ['.page']), 'a bookmarked page').toEqual([]);
         // Marks in the list (Phase 4c): the book's lenses, its bookmark a row.
-        await page.getByRole('tab', { name: /Marks/u }).click();
+        await page.getByRole('button', { name: /^Marks \d+$/u }).click();
         await expect(page.locator('.mark-row')).toHaveCount(1);
         expect(await violationsUnder(page, ['.list']), 'Marks in the list').toEqual([]);
-        await page.getByRole('tab', { name: /Contents/u }).click();
+        await page.getByRole('button', { name: /^Contents \d+$/u }).click();
         // The shelf's look (#40, Phase 1c): LOOK / SHELF, with a book in front.
         await page
           .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')

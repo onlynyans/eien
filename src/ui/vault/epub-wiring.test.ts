@@ -130,6 +130,18 @@ describe('a book’s Marks in the list (Phase 4c)', () => {
     expect(contents?.lens).toBe('contents');
   });
 
+  it('go to a bookmark on the book’s own page, made the active one, a note beside it staying', () => {
+    const goTo = vi.fn(async () => {});
+    const book = { kind: 'epub', go: () => {}, path: 'a.epub', goTo };
+    const note = { kind: 'note', path: 'Note.md' };
+    const activate = vi.fn();
+    const { epubs } = wired('a.epub', { active: note, sides: [note, book], activate });
+    const mark = { chapter: 'OEBPS/chapter-3.xhtml', offset: 40, words: 'later' };
+    epubs.actions.goMark('a.epub', { mark, spine: 3, page: '2', chapter: 'Chapter III' });
+    expect(activate).toHaveBeenCalledWith(book);
+    expect(goTo).toHaveBeenCalledWith(3, 40);
+  });
+
   it('begin at Contents for another book, and keep their lens as the book moves', () => {
     const { nav, kind, epubs } = wired('Novels/Dune.epub');
     epubs.actions.lens('Novels/Dune.epub', 'marks');

@@ -12,7 +12,15 @@
 import { baseName } from '../../core/paths';
 import { epubTitleOf, type FolderNode, onShelf } from '../../core/vault';
 import { h, type Props } from '../dom';
-import { type BookLens, lensTabs, type MarkRow, markKey } from '../list/book-lenses';
+import {
+  type BookLens,
+  lensButtons,
+  MARK_SHORTCUTS,
+  type MarkRow,
+  markKey,
+  markKeys,
+  markName,
+} from '../list/book-lenses';
 import { chapterKey, marked, NO_MARKS } from '../list/contents-list';
 import { type Point, rowEvents } from '../list/row-events';
 import { atDepth } from './depth';
@@ -150,32 +158,29 @@ function lensRow(path: string, contents: ShelfContents, actions: ShelfActions, d
   const { marks } = contents;
   if (!marks) return [];
   const counts = { contents: contents.rows.length, marks: marks.length };
-  const tabs = lensTabs(contents.lens, counts, (lens) => actions.lens(path, lens));
-  return [atDepth(h('li', { class: 'tree-row tree-row--lenses' }, tabs), depth + 1)];
+  const lenses = lensButtons(contents.lens, counts, (lens) => actions.lens(path, lens));
+  // Not a row: it neither lights nor presses as one; its buttons do.
+  return [atDepth(h('li', { class: 'tree-lenses' }, lenses), depth + 1)];
 }
 
 /** The rows the book's lens shows under it: its chapters, or its bookmarks. */
 function listed(path: string, contents: ShelfContents, actions: ShelfActions, depth: number) {
   if (contents.marks && contents.lens === 'marks') {
+    // None kept: the tree's own hint, as a tag with no notes says how to give it some.
     if (contents.marks.length === 0)
-      return [atDepth(h('li', { class: 'tree-row tree-row--empty', text: NO_MARKS }), depth + 1)];
+      return [atDepth(h('li', { class: 'tree-hint', text: NO_MARKS }), depth + 1)];
     return contents.marks.map((each) => {
       const name = button(
         `${path}:${markKey(each.mark)}`,
-        each.mark.words || each.chapter,
+        markName(each),
         false,
         {
           click: () => actions.goMark(path, each),
-          keydown: (event: KeyboardEvent) => {
-            if (event.key !== 'Delete' && event.key !== 'Backspace') return;
-            event.preventDefault();
-            event.stopPropagation();
-            actions.unmark(path, each);
-          },
+          keydown: markKeys(() => actions.unmark(path, each)),
         },
-        { 'aria-keyshortcuts': 'Delete Backspace', title: each.chapter },
+        { 'aria-keyshortcuts': MARK_SHORTCUTS, title: each.chapter },
       );
-      if (each.page) name.append(h('span', { class: 'count', text: each.page }));
+      if (each.page) name.append(' ', h('span', { class: 'count', text: each.page }));
       return row(depth + 1, name, 'mark');
     });
   }

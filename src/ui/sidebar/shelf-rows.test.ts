@@ -163,11 +163,11 @@ describe('SHELF’s rows', () => {
       rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
       spine: 1,
     });
-    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-row--lenses [role="tab"]')];
-    expect(tabs.map((tab) => tab.getAttribute('aria-selected'))).toEqual(['false', 'true']);
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
+    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
     expect(texts(list, '.tree-row--chapter')).toEqual([]);
     const name = list.querySelector<HTMLButtonElement>('.tree-row--mark .tree-row__name');
-    expect(name?.textContent).toBe('It is a truth3');
+    expect(name?.textContent).toBe('It is a truth 3');
     name?.click();
     expect(actions.goMark).toHaveBeenCalledWith('Loose.epub', row);
     name?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
@@ -184,7 +184,9 @@ describe('SHELF’s rows', () => {
       rows: [],
       spine: 1,
     });
-    expect(texts(list, '.tree-row--empty')).toEqual(['Nothing kept yet. B bookmarks a page.']);
+    expect(texts(list, '.tree-hint')).toEqual(['Nothing kept yet. B bookmarks a page.']);
+    // Not a row: it neither lights nor presses as one.
+    expect(list.querySelectorAll('.tree-row--empty')).toHaveLength(0);
   });
 
   it('marks once a chapter whose file a part starts in too, each row its own key', () => {

@@ -7,7 +7,7 @@
 // (./book-lenses.ts).
 
 import { h } from '../dom';
-import { type BookLens, lensTabs, type MarkRow, markKey, markRow } from './book-lenses';
+import { type BookLens, lensButtons, lensKey, type MarkRow, markKey, markRow } from './book-lenses';
 import { moveBetween } from './list';
 
 export interface ContentsModel {
@@ -20,8 +20,9 @@ export interface ContentsModel {
   }[];
   /** The spine item on the page: its row is marked. */
   readonly spine: number;
-  /** The lens shown, and the book's bookmarks in its order; null for no lenses (Marks on the edge, Phase 4d). */
+  /** The lens shown. */
   readonly lens: BookLens;
+  /** The book's bookmarks in its order; null for no lenses (Marks on the edge, Phase 4d). */
   readonly marks: readonly MarkRow[] | null;
 }
 
@@ -91,6 +92,9 @@ export function renderContents(
   const active = document.activeElement;
   const focused =
     active instanceof HTMLElement && container.contains(active) ? active.dataset.key : undefined;
+  // Where among the rows the keyboard was: a row gone (a bookmark taken off) hands it to the one after.
+  const rowsBefore = [...container.querySelectorAll<HTMLElement>('.contents-row')];
+  const at = active instanceof HTMLElement ? rowsBefore.indexOf(active) : -1;
   const current = marked(model);
   const { marks } = model;
   const lens = marks ? model.lens : 'contents';
@@ -102,7 +106,7 @@ export function renderContents(
       h('p', { class: 'label list__count', text: countOf(model) }),
       ...(marks
         ? [
-            lensTabs(lens, { contents: model.rows.length, marks: marks.length }, (chosen) =>
+            lensButtons(lens, { contents: model.rows.length, marks: marks.length }, (chosen) =>
               actions.lens(chosen),
             ),
           ]
@@ -146,7 +150,16 @@ export function renderContents(
         ),
   );
   if (focused === undefined) return;
-  [...container.querySelectorAll<HTMLElement>('[data-key]')]
-    .find((control) => control.dataset.key === focused)
-    ?.focus();
+  const same = [...container.querySelectorAll<HTMLElement>('[data-key]')].find(
+    (control) => control.dataset.key === focused,
+  );
+  if (same) {
+    same.focus();
+    return;
+  }
+  if (at < 0) return;
+  // Its row gone: the row now in its place, or the last, or with none left the lens it was under.
+  const rows = [...container.querySelectorAll<HTMLElement>('.contents-row')];
+  const next = rows[Math.min(at, rows.length - 1)];
+  (next ?? container.querySelector<HTMLElement>(`[data-key="${lensKey(lens)}"]`))?.focus();
 }
