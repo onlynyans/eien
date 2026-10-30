@@ -25,6 +25,19 @@ export interface PagedPlaceOf {
 
 const measured: SideOf = (range) => range.getBoundingClientRect();
 
+/** The blocks a page may begin inside of. */
+const BLOCKS = 'p, li, blockquote, dd, figcaption';
+
+/** Whether `at`'s block has words before it: a page beginning there begins mid-paragraph. */
+function begunBefore(at: Range): boolean {
+  const block = at.startContainer.parentElement?.closest(BLOCKS);
+  if (!block) return false;
+  const before = document.createRange();
+  before.setStart(block, 0);
+  before.setEnd(at.startContainer, at.startOffset);
+  return before.toString().trim() !== '';
+}
+
 export class PagedPlace {
   readonly #of: PagedPlaceOf;
   readonly #sideOf: SideOf;
@@ -182,15 +195,52 @@ export class PagedPlace {
     this.#rest = setTimeout(() => this.#flush(true), REST_MS);
   }
 
+  /**
+   * `copy`, a copy of the chapter as it stands (a turn's, ./turn/page-copy.ts),
+   * cut to the words of the page in sight and laid as its first page: a turn
+   * moves one page, never the whole chapter (fourteen copies of a long one
+   * would stall the window). A paragraph the page begins inside of keeps no
+   * indent, and no capitals: it's the paragraph's middle.
+   */
+  trim(copy: HTMLElement): void {
+    const { chapter, box } = this.#of;
+    if (this.#idle || !this.#shown) return;
+    const left = box.getBoundingClientRect().left;
+    const from =
+      this.#page > 0 ? characterAt(chapter, firstOnPage(chapter, left, this.#sideOf)) : null;
+    const next =
+      this.#page + 1 < this.#pages
+        ? firstOnPage(chapter, left + this.#step * this.#scale(), this.#sideOf)
+        : null;
+    const to = next === null ? null : characterAt(chapter, next);
+    const range = document.createRange();
+    range.selectNodeContents(chapter);
+    if (from) range.setStart(from.startContainer, from.startOffset);
+    if (to) range.setEnd(to.startContainer, to.startOffset);
+    const words = range.cloneContents();
+    const first = words.querySelector<HTMLElement>(BLOCKS);
+    if (from && first && begunBefore(from)) {
+      first.style.textIndent = '0';
+      first.removeAttribute('data-part');
+    }
+    copy.replaceChildren(words);
+    copy.style.transform = '';
+    copy.style.clipPath = this.#clipAt(0);
+  }
+
+  /** Only page `at` (its left, in the chapter's pixels) drawn, and half the gap either side for a letter's overhang. */
+  #clipAt(at: number): string {
+    const half = this.#gap / 2;
+    return `inset(0px ${-(at + half)}px 0px ${at - half}px)`;
+  }
+
   #go(page: number): void {
     this.#page = Math.min(Math.max(0, page), this.#pages - 1);
     const at = this.#page * this.#step;
     const { style } = this.#of.chapter;
     style.transform = `translateX(${-at}px)`;
-    // Only the page in sight is drawn, and half the gap either side for a letter's overhang: a copy
-    // of the chapter (a turn's, ./turn/page-copy.ts) carries this page alone, never its neighbours.
-    const half = this.#gap / 2;
-    style.clipPath = `inset(0px ${-(at + half)}px 0px ${at - half}px)`;
+    // Only the page in sight is drawn: a copy of the chapter carries this page alone.
+    style.clipPath = this.#clipAt(at);
     this.#of.moved(this.#pages > 1 ? this.#page / (this.#pages - 1) : 1);
   }
 

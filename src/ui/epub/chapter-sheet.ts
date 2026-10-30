@@ -81,6 +81,11 @@ export class ChapterSheet {
     return this.paged && this.#paged.turn(way);
   }
 
+  /** In pages: a copy of the chapter cut to the page in sight (a turn's). */
+  trim(copy: HTMLElement): void {
+    if (this.paged) this.#paged.trim(copy);
+  }
+
   /** In pages: the chapter's first page, or its last. */
   edge(last: boolean): void {
     if (this.paged) this.#paged.edge(last);

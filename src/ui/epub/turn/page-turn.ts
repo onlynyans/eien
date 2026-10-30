@@ -44,6 +44,8 @@ export interface TurnSurface {
   sheet(): HTMLElement | null;
   /** Where its words are, within a sheet or a copy of one: what Slide and Words move. */
   readonly words: string;
+  /** A copy's words cut to what's in sight, so a turn moves a page and never a whole chapter. */
+  trim?(words: HTMLElement): void;
   /**
    * The book a page `way` on, its new page on the sheet; false at the book's
    * end. At once within a chapter; into another, once that's drawn (a
@@ -207,7 +209,9 @@ export class PageTurn {
     const { style, speed } = this.#surface.how();
     const scale = turnScale(speed);
     const moves = this.#moves(asked, style, this.#tokens(before), scale);
-    const copy = moves ? pageCopy(before, this.#surface.words) : null;
+    const copy = moves
+      ? pageCopy(before, this.#surface.words, (words) => this.#surface.trim?.(words))
+      : null;
     const stepped = (moved: boolean) => {
       const sheet = this.#surface.sheet();
       if (!moved || !sheet || this.#disposed) return;
@@ -264,6 +268,7 @@ export class PageTurn {
       copy,
       sheet,
       words: this.#surface.words,
+      trim: (words) => this.#surface.trim?.(words),
       tokens,
       frames: this.#frames,
       landed: (turnedOver) => {

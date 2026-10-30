@@ -39,6 +39,7 @@ export function bookPages(of: BookPagesOf): BookPages {
   const turn = new PageTurn({
     sheet: () => page.leaf,
     words: '.epub-chapter',
+    trim: (copy) => page.sheet.trim(copy),
     step(way) {
       from = { spine: of.spine(), offset: page.sheet.place };
       if (page.sheet.turn(way)) return true;

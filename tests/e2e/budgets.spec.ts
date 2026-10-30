@@ -358,3 +358,43 @@ test.describe('a long chapter', () => {
     },
   );
 });
+
+/**
+ * Fifty turns (#40, Phase 3b): the long chapter in pages, turned on fifty
+ * times by key under each Page turn, each turn's motion run to its end.
+ * Measured: the curl's fourteen copies of the whole chapter were 215 ms, so
+ * a turn copies the page in sight alone; now no long task (none over 50 ms)
+ * under any of the three, the CPU four times slower too (SLOW=4). Held to
+ * the same 200 ms as the rest.
+ */
+test.describe('fifty turns in a long chapter', () => {
+  for (const turn of ['curl', 'slide', 'words'] as const) {
+    test.describe(turn, () => {
+      test.use({
+        vaultFiles: { 'Novels/Long.epub': LONG_CHAPTER },
+        deviceFile: {
+          settings: { 'epub.view': 'pages', 'epub.turn': turn, 'epub.turnSpeed': '1' },
+        },
+      });
+
+      test(`turns fifty pages without a stall (${turn})`, ALONE, async ({ page }) => {
+        test.setTimeout(120_000);
+        const time = await stalls(page);
+        await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+        await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter p')).toHaveCount(
+          600,
+        );
+        const scroller = page.locator('.page__leaf--epub .page__scroll');
+        await scroller.focus();
+        await time.mark();
+        for (let i = 0; i < 50; i++) {
+          await page.keyboard.press('ArrowRight');
+          // Each turn's motion to its end, as a reader reading at its pace would leave it.
+          await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
+        }
+        await expect(page.locator('.colophon')).not.toContainText('0% of the chapter');
+        expect(await time.longest(), `fifty turns (${turn})`).toBeLessThan(STALL);
+      });
+    });
+  }
+});

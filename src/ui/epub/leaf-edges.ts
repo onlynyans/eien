@@ -9,6 +9,7 @@
 import { EDGES, edgesOf } from '../../core/epub';
 import { keyText } from '../chrome/keys';
 import { h } from '../dom';
+import { STAYS } from './turn/page-copy';
 
 const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -17,7 +18,8 @@ type Side = 'before' | 'after';
 const pagesWord = (count: number) => `${count} ${count === 1 ? 'page' : 'pages'}`;
 
 export class LeafEdges {
-  readonly element = h('div', { class: 'epub-edges' });
+  // The book's edge stays where it is as a page turns: a turn's copies leave it out.
+  readonly element = h('div', { class: 'epub-edges', attrs: { [STAYS]: true } });
   readonly #stacks: Record<Side, HTMLElement>;
   readonly #buttons: Record<Side, HTMLButtonElement>;
 

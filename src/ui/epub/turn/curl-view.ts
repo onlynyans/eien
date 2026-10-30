@@ -28,6 +28,24 @@ export const gradientOf = (light: Light, ink: string): string =>
 
 const part = (name: string) => h('div', { class: `turn-curl__${name}` });
 
+/**
+ * A copy of the page made a piece of the curl: the whole page, laid exactly
+ * over the curl's box whatever the page's own rules would make of it (a
+ * sheet in pages is in the flow), clipped to its part as it's drawn.
+ */
+function pieceOf(copy: HTMLElement, ...names: string[]): HTMLElement {
+  copy.classList.add('turn-curl__page', ...names.map((name) => `turn-curl__${name}`));
+  Object.assign(copy.style, {
+    position: 'absolute',
+    left: '0',
+    top: '0',
+    width: '100%',
+    height: '100%',
+    margin: '0',
+  });
+  return copy;
+}
+
 interface Strip {
   readonly element: HTMLElement;
   readonly tone: HTMLElement;
@@ -45,21 +63,21 @@ export class CurlView {
   readonly #flap = part('flap');
 
   /** Over `to`, the sheet now; `leaving`, a copy of the one before the turn. */
-  constructor(leaving: HTMLElement, to: HTMLElement, way: 1 | -1, words: string) {
+  constructor(
+    leaving: HTMLElement,
+    to: HTMLElement,
+    way: 1 | -1,
+    words: string,
+    trim?: (words: HTMLElement) => void,
+  ) {
     this.#to = to;
-    const moving = way > 0 ? leaving : pageCopy(to, words);
+    const moving = way > 0 ? leaving : pageCopy(to, words, trim);
     if (way < 0) {
-      leaving.classList.add('turn-curl__page');
-      this.element.append(leaving);
+      this.element.append(pieceOf(leaving));
       to.style.visibility = 'hidden';
     }
-    const piece = (...names: string[]) => {
-      const copy = moving.cloneNode(true) as HTMLElement;
-      copy.classList.add('turn-curl__page', ...names.map((name) => `turn-curl__${name}`));
-      return copy;
-    };
-    this.#front = moving;
-    moving.classList.add('turn-curl__page');
+    const piece = (...names: string[]) => pieceOf(moving.cloneNode(true) as HTMLElement, ...names);
+    this.#front = pieceOf(moving);
     this.#strips = Array.from({ length: CURL_STRIPS }, (_, i) => {
       const element = piece('strip');
       const tone = part('tone');

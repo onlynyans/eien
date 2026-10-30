@@ -7,19 +7,34 @@
 /** Marks the copy's words: Slide and Words move them alone (./turn.css). */
 export const WORDS = 'data-turn-words';
 
+/** Marks what stays where it is as the page turns (a book's fore-edge): never copied. */
+export const STAYS = 'data-turn-stays';
+
 const NAMED = ['id', 'tabindex', 'data-anchor', 'aria-describedby', 'aria-labelledby'] as const;
 
-/** A copy of `sheet` as it is now, its words (the first `words` in it) marked. */
-export function pageCopy(sheet: HTMLElement, words: string): HTMLElement {
+/**
+ * A copy of `sheet` as it is now, its words (the first `words` in it) marked,
+ * and cut by `trim` (if given) to what's in sight.
+ */
+export function pageCopy(
+  sheet: HTMLElement,
+  words: string,
+  trim?: (words: HTMLElement) => void,
+): HTMLElement {
   const copy = sheet.cloneNode(true) as HTMLElement;
   copy.classList.add('turn-copy');
   copy.setAttribute('aria-hidden', 'true');
   copy.inert = true;
+  for (const staying of copy.querySelectorAll(`[${STAYS}]`)) staying.remove();
   const named = NAMED.map((name) => `[${name}]`).join(', ');
   for (const element of [copy, ...copy.querySelectorAll(named)]) {
     for (const name of NAMED) element.removeAttribute(name);
   }
-  copy.querySelector(words)?.setAttribute(WORDS, '');
+  const marked = copy.querySelector<HTMLElement>(words);
+  if (marked) {
+    marked.setAttribute(WORDS, '');
+    trim?.(marked);
+  }
   return copy;
 }
 
