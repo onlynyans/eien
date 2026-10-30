@@ -80,6 +80,46 @@ for (const colorScheme of ['light', 'dark'] as const) {
   });
 }
 
+test('a book’s Marks on its contents page: lenses a finger high, a row tapped going to its page (#40, Phase 4c)', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click(); // the list's back: the sidebar
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('menuitemcheckbox', { name: 'Bookmark this page' }).click();
+  await expect(page.locator('.page__mark--bookmark')).toBeVisible();
+  // Another chapter, so the bookmark's row has somewhere to go back to.
+  await back(page).click();
+  await page.locator('.contents-row').nth(2).click();
+  await expect(chapter(page)).toContainText('Not all that Mrs. Bennet');
+  await back(page).click();
+  const marks = page.getByRole('button', { name: /^Marks \d+$/u });
+  const contents = page.getByRole('button', { name: /^Contents \d+$/u });
+  // A finger's size, as the chapters' turns are: the phone's touch is --eien-touch, 44px.
+  for (const lens of [marks, contents])
+    expect((await lens.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+  await marks.click();
+  await expect(marks).toHaveAttribute('aria-pressed', 'true');
+  const row = page.locator('.mark-row');
+  await expect(row).toHaveCount(1);
+  await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter I');
+  await row.click();
+  // The page comes into sight at the bookmark, its mark on it.
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await expect(chapter(page)).toBeInViewport();
+  await expect(page.locator('.page__mark--bookmark')).toBeVisible();
+  // Back again, the lens is as it was left: the same book.
+  await back(page).click();
+  await expect(marks).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('a book’s place is kept as the phone goes to the background, and back after a restart', async ({
   page,
 }) => {

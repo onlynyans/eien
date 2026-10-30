@@ -173,3 +173,94 @@ describe('a book’s lenses in the list (Phase 4c)', () => {
     expect(rows(off.container)).toHaveLength(3);
   });
 });
+
+describe('a book’s Marks in the list, as QA tried them (Phase 4c)', () => {
+  /** `count` bookmarks in one chapter, a page each. */
+  const many = (count: number): MarkRow[] =>
+    Array.from({ length: count }, (_, i) => ({
+      mark: { chapter: 'c1.xhtml', offset: i * 100, words: `Bookmark ${i}` },
+      spine: 1,
+      page: String(i + 1),
+      chapter: 'Chapter I',
+    }));
+  const marksOf = (marks: readonly MarkRow[]): ContentsModel => ({
+    ...MODEL,
+    lens: 'marks',
+    marks,
+  });
+  const words = (container: HTMLElement) =>
+    rows(container).map((row) => row.querySelector('.mark-row__words')?.textContent);
+
+  it('are a list of their own, named for the book, that the arrow keys move through', () => {
+    const { container } = drawn(marksOf(many(3)));
+    expect(container.querySelector('ul')?.getAttribute('aria-label')).toBe(
+      'Bookmarks in Pride and Prejudice',
+    );
+    const [first, second, third] = rows(container);
+    first?.focus();
+    first?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(second);
+    second?.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    expect(document.activeElement).toBe(third);
+  });
+
+  it('hand the keyboard to the row after one taken off from the middle', () => {
+    const marks = many(3);
+    const { container, actions } = drawn(marksOf(marks));
+    rows(container)[1]?.focus();
+    renderContents(container, marksOf([marks[0], marks[2]] as MarkRow[]), null, actions);
+    expect(document.activeElement).toBe(rows(container)[1]);
+    expect(words(container)).toEqual(['Bookmark 0', 'Bookmark 2']);
+  });
+
+  it('hand it to the row now last when the last is taken off', () => {
+    const marks = many(3);
+    const { container, actions } = drawn(marksOf(marks));
+    rows(container)[2]?.focus();
+    renderContents(container, marksOf(marks.slice(0, 2)), null, actions);
+    expect(document.activeElement).toBe(rows(container)[1]);
+  });
+
+  it('leave the keyboard where it was when the list is drawn again with nothing taken off', () => {
+    const marks = many(3);
+    const { container, actions } = drawn(marksOf(marks));
+    rows(container)[1]?.focus();
+    // The book counted meanwhile: the pages change, the rows stay.
+    renderContents(
+      container,
+      marksOf(marks.map((row) => ({ ...row, page: `${row.page}0` }))),
+      null,
+      actions,
+    );
+    expect(document.activeElement).toBe(rows(container)[1]);
+    expect(rows(container)[1]?.querySelector('.mark-row__page')?.textContent).toBe('20');
+  });
+
+  it('never take the keyboard when it’s elsewhere', () => {
+    const marks = many(2);
+    const { container, actions } = drawn(marksOf(marks));
+    const outside = document.body.appendChild(document.createElement('button'));
+    // Named as a lens is (another pane's lenses, say): only one in the list may take the keyboard back.
+    outside.dataset.key = 'lens:marks';
+    outside.focus();
+    renderContents(container, marksOf(marks.slice(1)), null, actions);
+    expect(document.activeElement).toBe(outside);
+  });
+
+  it('draw every one of a thousand bookmarks (the most a book’s file shows), Delete on one taking off that one', () => {
+    const marks = many(1000);
+    const { container, actions } = drawn(marksOf(marks));
+    expect(rows(container)).toHaveLength(1000);
+    expect(new Set(rows(container).map((row) => row.dataset.key)).size).toBe(1000);
+    expect(container.querySelectorAll('.book-lens')[1]?.textContent).toBe('Marks 1000');
+    rows(container)[500]?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }),
+    );
+    expect(actions.remove).toHaveBeenCalledExactlyOnceWith(marks[500]);
+    rows(container)[500]?.focus();
+    renderContents(container, marksOf(marks.filter((_, i) => i !== 500)), null, actions);
+    expect(document.activeElement?.querySelector('.mark-row__words')?.textContent).toBe(
+      'Bookmark 501',
+    );
+  });
+});
