@@ -1,7 +1,7 @@
 # Reading EPUBs: nine explorations
 
-**Chosen (2026-10-28), and building in phases.** Backlog #40. Phases 0 to
-2 are built, and Phase 3 is being built ([The build](#the-build)). Three
+**Chosen (2026-10-28), and building in phases.** Backlog #40. Phases 0, 1
+and 2 are built; Phase 3, turning pages, is being built ([The build](#the-build)). Three
 sets of three, in one family so they share one look: turning pages, scrolling,
 and the features (page count, bookmarks, highlights, search in the book).
 
@@ -322,7 +322,7 @@ Each phase is its own session and pull request, from main.
     switches on the quick look's shelf half;
   - the reading state's file;
   - the fixture books.
-- **Phase 2, scrolling:** a chapter a sheet, the scroll style, the place
+- **Phase 2, scrolling** (built, 2026-10-29): a chapter a sheet, the scroll style, the place
   kept; Beside a note and Quote. In three pull requests: **2a, built**
   (2026-10-29): a chapter a sheet with the chapters either side at its foot,
   how far through the chapter and the book in the colophon, the scroll
