@@ -328,8 +328,10 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
 - styles in `theme/` and beside each view
 - `epub/`: an EPUB's page (#40)
-  - `epub-page.ts`: the page (`PaneLeaf`): the note's sheet with a chapter on it, its ×, the colophon's "3 of 61" and how far through, the scroll style worn, a refusal in words
-  - `epub-side.ts`: one page holding a book (`Side`): the book read and opened, a chapter at a time, its place kept and shown again
+  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look and scroll style worn, its keys (Q, ⌘[ / Alt+←)
+  - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again, its links caught, its words copied and chosen
+  - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
+  - `book-open.ts`: the book read and opened for its page (or the words it says instead), what it's called, and where it opens
   - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
   - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again
   - `place-keeper.ts`: the place kept as the page scrolls, measured at rest and never out of sight, shown again when laid out anew
@@ -343,7 +345,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `test-side.ts`: a book's page over a vault the DOM tests hold
   - `test-lines.ts`: a chapter's lines as the DOM tests lay them out
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
-  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, let go with it
+  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
   - `reading-store.ts`: the reading state's file, through the vault's small files
   - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
 - `extension/`: the extension's pages (spec §14)

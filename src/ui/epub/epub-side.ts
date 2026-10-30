@@ -6,22 +6,12 @@
 // and words chosen in it quoted in a note (Phase 2c). The book's file is
 // only ever read.
 
-import {
-  bookFraction,
-  EPUB_CAPS,
-  type Epub,
-  isRefusal,
-  openEpub,
-  refusalWords,
-} from '../../core/epub';
-import { baseName } from '../../core/paths';
-import { epubTitleOf } from '../../core/vault';
-import type { VaultBridge } from '../../platform/bridge';
-import { inflateRaw } from '../../platform/inflate';
+import { bookFraction, type Epub, isRefusal, refusalWords } from '../../core/epub';
 import { crumbsOf } from '../vault/open-note';
 import type { Place, Side, SideHooks } from '../vault/page-side';
 import { bookFollow } from './book-follow';
 import { nameLinks } from './book-links';
+import { type BookOpenOf, nameOf, openBook, startOf } from './book-open';
 import { quoteOf } from './book-quote';
 import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
@@ -35,11 +25,8 @@ export interface EpubPlace extends Place {
   readonly offset: number;
 }
 
-export interface EpubSideOf {
-  readonly vault: Pick<VaultBridge, 'readBytes'>;
+export interface EpubSideOf extends BookOpenOf {
   readonly reading: ReadingStore;
-  /** The size the vault lists for `path`, or null for none: a book listed past the read cap is too large. */
-  sizeOf(path: string): number | null;
   /** Another book or chapter is on the page: the list and the shelf mark it. */
   changed(): void;
   /**
@@ -72,24 +59,9 @@ export interface EpubSide extends Side {
   quote(): Promise<void>;
 }
 
-/**
- * The fonts `chapter` is set in loaded, so a line shown now stays there: laid
- * out first, as a face starts loading only when something asks for it (one
- * arriving later shows the place again, ./place-keeper.ts).
- */
-const fontsLoaded = (chapter: HTMLElement): Promise<unknown> => {
-  void chapter.offsetHeight;
-  return typeof document.fonts === 'object' && document.fonts.status !== 'loaded'
-    ? document.fonts.ready
-    : Promise.resolve();
-};
-
 /** Whether `side` holds an EPUB: a page of this kind, not a test's stand-in of the same name. */
 export const isEpub = (side: Side | null | undefined): side is EpubSide =>
   side?.kind === 'epub' && 'go' in side;
-
-/** What a book's page is called: its own title, or with none its file's name. */
-const nameOf = (epub: Epub, path: string): string => epub.title || epubTitleOf(baseName(path));
 
 export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | null): EpubSide {
   const page = new EpubPage({
@@ -167,20 +139,20 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     );
     nameLinks(page.chapter, opened);
     const offset = typeof place === 'number' ? place : place();
-    if (offset !== given) page.showPlace(offset);
+    if (offset !== given) page.sheet.showPlace(offset);
     of.changed();
     if (moved) keep(offset);
     if (offset > 0) {
       // The pictures at their size and the type loaded, then the line: shown where it will stay.
-      await Promise.all([next.settled(), fontsLoaded(page.chapter)]);
-      if (asked === turn && !disposed) page.showPlace(offset);
+      await next.settled(page.chapter);
+      if (asked === turn && !disposed) page.sheet.showPlace(offset);
     }
     return asked === turn && !disposed;
   }
 
   /** The words chosen in the chapter, quoted in the note beside with where they came from. */
   async function quote(): Promise<void> {
-    const text = quoteOf(page.selection, epub, spine, page.name);
+    const text = quoteOf(page.sheet.selection, epub, spine, page.name);
     if (!text) return page.foot.say('Choose some words in the book to quote.');
     const done = of.quote ? await of.quote(text, side) : { not: 'There’s no note to quote into.' };
     page.foot.say('into' in done ? `Quoted in ${done.into}.` : done.not);
@@ -205,7 +177,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       return spine;
     },
     get place(): EpubPlace | null {
-      return path ? { path, name: page.name, spine, offset: page.place } : null;
+      return path ? { path, name: page.name, spine, offset: page.sheet.place } : null;
     },
     get left() {
       return before;
@@ -218,7 +190,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       const offset = given?.offset ?? 0;
       if (next === path && epub) {
         if (at !== null && at !== spine) await draw(at, true, offset);
-        else if (at !== null && offset !== page.place) page.showPlace(offset);
+        else if (at !== null && offset !== page.sheet.place) page.sheet.showPlace(offset);
         return;
       }
       if (path && path !== next) before = side.place;
@@ -228,39 +200,19 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       epub = null;
       spine = -1;
       letGo();
-      page.loading(epubTitleOf(baseName(next)), crumbsOf(next));
-      const bytes = await of.vault.readBytes(next).catch(() => null);
+      page.loading(nameOf(null, next), crumbsOf(next));
+      const read = await openBook(of, next);
       if (opening !== turn || disposed) return;
-      if (!bytes) {
-        const size = of.sizeOf(next);
-        page.notice(
-          size === null
-            ? 'This book isn’t there any more.'
-            : size > EPUB_CAPS.file
-              ? refusalWords({ refused: 'too-large', detail: '' })
-              : 'This book couldn’t be read. Try again in a moment.',
-        );
+      if ('notice' in read) {
+        page.notice(read.notice);
         return of.changed();
       }
-      const opened = await openEpub(bytes, inflateRaw);
+      epub = read.epub;
+      page.show(nameOf(epub, next), crumbsOf(next), epub.language);
+      const kept = at === null ? await of.reading.read(epub.key) : null;
       if (opening !== turn || disposed) return;
-      if (isRefusal(opened)) {
-        console.warn(`Eien: ${next} wasn’t opened: ${opened.detail}`);
-        page.notice(refusalWords(opened));
-        return of.changed();
-      }
-      epub = opened;
-      page.show(nameOf(opened, next), crumbsOf(next), opened.language);
-      const kept = at === null ? await of.reading.read(opened.key) : null;
-      if (opening !== turn || disposed) return;
-      const fromState = kept?.chapter
-        ? opened.spine.findIndex((item) => item.path === kept.chapter)
-        : -1;
-      const first = opened.contents[0]?.spine ?? 0;
-      const valid = at !== null && at < opened.spine.length ? at : null;
-      if (valid !== null) await draw(valid, false, offset);
-      else if (fromState >= 0) await draw(fromState, false, kept?.offset ?? 0);
-      else await draw(first, false);
+      const start = startOf(epub, at === null ? null : { spine: at, offset }, kept);
+      await draw(start.index, false, start.offset);
     },
     go: async (index) => {
       // A chapter the reader chose: no step back to where a link was followed from.
@@ -275,7 +227,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     moved(to) {
       path = to;
       // A book with no title of its own is called by its file: renamed, its new name.
-      page.show(epub ? nameOf(epub, to) : page.name, crumbsOf(to), epub?.language ?? '');
+      page.show(nameOf(epub, to), crumbsOf(to), epub?.language ?? '');
     },
     clear() {
       links.forget();
@@ -286,7 +238,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       letGo();
       page.nothing();
     },
-    keep: () => page.keepPlace(),
+    keep: () => page.sheet.keep(),
     quote,
     follow: (values) => page.wear(values),
     dispose() {
