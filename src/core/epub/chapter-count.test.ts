@@ -49,6 +49,24 @@ describe('a chapter counted as a place counts it', () => {
     expect(countChapter(nodes).length).toBe('[He rode a black horse.]'.length);
   });
 
+  // QA (#40, Phase 4a): a page-list's markers where books put them, at a chapter's edges.
+  it('finds a place at the chapter’s very end, and in a chapter of no words, at 0', () => {
+    const ending = countChapter(
+      [element('p', [text('abc')]), marker('page-9')],
+      new Set(['page-9']),
+    );
+    expect(ending.anchors.get('page-9')).toBe(ending.length);
+    const empty = countChapter([element('div', [marker('page-1')])], new Set(['page-1']));
+    expect(empty).toEqual({ length: 0, anchors: new Map([['page-1', 0]]) });
+  });
+
+  it('counts a space-only piece, a no-break space’s too, as nothing, as the window does', () => {
+    const noBreak = String.fromCharCode(0xa0);
+    expect(
+      countChapter([element('p', [text(`${noBreak} \t`)]), element('p', [text('ab')])]).length,
+    ).toBe(2);
+  });
+
   it('counts nothing in a chapter with no words', () => {
     expect(countChapter([element('figure', [element('img', [], { src: 'a.jpg' })])])).toEqual({
       length: 0,
