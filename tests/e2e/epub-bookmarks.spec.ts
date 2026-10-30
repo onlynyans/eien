@@ -207,6 +207,61 @@ test.describe('Marks in the list (Phase 4c)', () => {
     await expect(page.locator('.tree-hint')).toHaveText('Nothing kept yet. B bookmarks a page.');
     await expect(mark(page)).toBeHidden();
   });
+
+  // QA's (Phase 4c): the keys as a real keyboard sends them, a held key's repeats among them.
+  test('Delete hands the keyboard to the next row and takes one off however long it’s held; ⌘⌫ takes none off and trashes nothing', async ({
+    page,
+    vault,
+  }) => {
+    if (!vault) throw new Error('no vault');
+    await openBook(page);
+    // A bookmark at the top of each chapter, Chapter I first.
+    await page.keyboard.press('b');
+    await expect(mark(page)).toBeVisible();
+    for (const [n, words] of [
+      [1, 'Mr. Bennet was among the earliest'],
+      [2, 'Not all that Mrs. Bennet'],
+    ] as const) {
+      await page.locator('.contents-row').nth(n).click();
+      await expect(leaf(page).locator('.epub-chapter')).toContainText(words);
+      await leaf(page).locator('.page__scroll').focus();
+      await page.keyboard.press('b');
+      await expect(mark(page)).toBeVisible();
+    }
+    await expect.poll(() => bookmarksIn(vault).length).toBe(3);
+    await page.getByRole('button', { name: /^Marks \d+$/u }).click();
+    const rows = page.locator('.mark-row');
+    await expect(rows.locator('.mark-row__chapter')).toHaveText([
+      'Chapter I',
+      'Chapter II',
+      'Chapter III',
+    ]);
+    // Delete on the first: the keyboard goes to the row now first, Chapter II's.
+    await rows.nth(0).focus();
+    await page.keyboard.press('Delete');
+    await expect(rows).toHaveCount(2);
+    await expect(rows.nth(0)).toBeFocused();
+    await expect(rows.nth(0).locator('.mark-row__chapter')).toHaveText('Chapter II');
+    // Held down: the first press takes Chapter II's off, the repeats nothing.
+    await page.keyboard.down('Delete');
+    await page.keyboard.down('Delete');
+    await page.keyboard.down('Delete');
+    await page.keyboard.up('Delete');
+    await expect.poll(() => bookmarksIn(vault).length).toBe(1);
+    await expect(rows).toHaveCount(1);
+    await expect(rows.nth(0)).toBeFocused();
+    // ⌘⌫ (Ctrl+Backspace) and Ctrl+Delete: a note's row's trash keys, never this row's.
+    await page.keyboard.press('ControlOrMeta+Backspace');
+    await page.keyboard.press('ControlOrMeta+Delete');
+    // B on the page (Chapter III, bookmarked) waits behind any change those made: it takes its
+    // bookmark off, leaving none, only if they took off nothing.
+    await leaf(page).locator('.page__scroll').focus();
+    await page.keyboard.press('b');
+    await expect.poll(() => bookmarksIn(vault).length).toBe(0);
+    await expect(page.locator('.list__empty')).toHaveText('Nothing kept yet. B bookmarks a page.');
+    await expect(shelfEpub(page)).toBeVisible();
+    expect(existsSync(join(vault, 'Novels/Pride and Prejudice.epub'))).toBe(true);
+  });
 });
 
 test.describe('Marks on the edge (Phase 4d)', () => {

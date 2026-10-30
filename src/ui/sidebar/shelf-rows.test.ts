@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { buildTree, type VaultEntry } from '../../core/vault';
+import type { BookLens, MarkRow } from '../list/book-lenses';
 import { folderRowEvents } from './row-keys';
 import { type ShelfFolders, shelfRows } from './shelf-rows';
+import { SidebarFocus } from './sidebar-focus';
+import type { TreeWindows } from './tree-windows';
 
 const entry = (path: string, kind: VaultEntry['kind']): VaultEntry => ({
   path,
@@ -272,5 +275,94 @@ describe('SHELF’s rows', () => {
     chapter.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'F2' }));
     expect(actions.bookMenu).not.toHaveBeenCalled();
     expect(actions.renameBook).not.toHaveBeenCalled();
+  });
+});
+
+describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
+  const BOOK = 'Cooking/Boston.epub';
+  const markRowOf = (offset: number, page: string | null): MarkRow => ({
+    mark: { chapter: 'c1.xhtml', offset, words: `At ${offset}` },
+    spine: 1,
+    page,
+    chapter: 'Chapter I',
+  });
+  const contentsOf = (marks: readonly MarkRow[] | null, lens: BookLens = 'marks') => ({
+    path: BOOK,
+    rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
+    spine: 1,
+    lens,
+    marks,
+  });
+  const markNames = (list: HTMLElement) => [
+    ...list.querySelectorAll<HTMLButtonElement>('.tree-row--mark .tree-row__name'),
+  ];
+
+  it('has no lenses with the marks on the page’s edge: its chapters alone, as before', () => {
+    const { list } = draw(BOOK, contentsOf(null));
+    expect(list.querySelectorAll('.tree-lenses, .book-lens')).toHaveLength(0);
+    expect(texts(list, '.tree-row--chapter')).toEqual(['Chapter I']);
+  });
+
+  it('lays the lenses one step in from the book, a line of their own that the tree’s keys pass over', () => {
+    const { list } = draw(BOOK, contentsOf([], 'contents'));
+    const line = list.querySelector<HTMLElement>('.tree-lenses');
+    // The book's row is at depth 1 (in Cooking): its rows at 2.
+    expect(line?.style.getPropertyValue('--depth')).toBe('2');
+    expect(line?.classList.contains('tree-row')).toBe(false);
+    expect(line?.querySelector('.tree-row__name')).toBeNull();
+    // It comes first, before the chapters.
+    expect(line?.nextElementSibling?.classList.contains('tree-row--chapter')).toBe(true);
+  });
+
+  it('shows a bookmark’s page only once it’s known, and its chapter as its tooltip', () => {
+    const { list } = draw(BOOK, contentsOf([markRowOf(0, '7'), markRowOf(50, null)]));
+    const [known, unknown] = markNames(list);
+    expect(known?.querySelector('.count')?.textContent).toBe('7');
+    expect(unknown?.querySelector('.count')).toBeNull();
+    expect(unknown?.textContent).toBe('At 50');
+    expect(unknown?.title).toBe('Chapter I');
+    expect(unknown?.getAttribute('aria-keyshortcuts')).toBe('Delete Backspace');
+  });
+
+  it('takes one off once for a key held, and never for ⌘⌫ or Ctrl+Delete, which never trash the book either', () => {
+    const row = markRowOf(0, '1');
+    const { list, actions } = draw(BOOK, contentsOf([row]));
+    const [name] = markNames(list);
+    const key = (init: KeyboardEventInit) =>
+      name?.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }));
+    key({ key: 'Backspace', metaKey: true });
+    key({ key: 'Delete', ctrlKey: true });
+    key({ key: 'F2' });
+    name?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
+    expect(actions.unmark).not.toHaveBeenCalled();
+    expect(actions.trashBook).not.toHaveBeenCalled();
+    expect(actions.renameBook).not.toHaveBeenCalled();
+    expect(actions.bookMenu).not.toHaveBeenCalled();
+    key({ key: 'Delete' });
+    key({ key: 'Delete', repeat: true });
+    key({ key: 'Delete', repeat: true });
+    expect(actions.unmark).toHaveBeenCalledExactlyOnceWith(BOOK, row);
+  });
+
+  it('hands the keyboard to the next bookmark when one is taken off, and with none left to the row after the book', () => {
+    // The tree's keyboard across a redraw is the sidebar's (./sidebar-focus.ts): here over SHELF's rows.
+    const body = document.body.appendChild(document.createElement('ul'));
+    const noWindows = { focusKey: () => false } as unknown as TreeWindows;
+    const focus = new SidebarFocus(body, noWindows, document.createElement('div'), () => false);
+    const marks = [markRowOf(0, '1'), markRowOf(50, '2')];
+    const drawWith = (shown: MarkRow[]) =>
+      body.replaceChildren(...draw(BOOK, contentsOf(shown)).list.children);
+    drawWith(marks);
+    markNames(body)[0]?.focus();
+    const giveBack = focus.hold();
+    drawWith(marks.slice(1));
+    giveBack();
+    expect(document.activeElement).toBe(markNames(body)[0]);
+    const again = focus.hold();
+    drawWith([]);
+    again();
+    // The row now in its place: the next folder's (Fic), never lost to the window.
+    expect((document.activeElement as HTMLElement).dataset.key).toBe('shelf:Fic');
+    body.remove();
   });
 });

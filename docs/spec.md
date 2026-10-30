@@ -463,7 +463,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      "bookmarked". Bookmarks are kept in the reading state's file with the
      place (each a chapter, its first word and the words it begins with),
      every other field and item kept as found; two pages on one book agree
-     at once. A reading file a newer Eien wrote is never written, and one
+     at once. A book shows 1,000 at most: past that, B says to take one off
+     first. A reading file a newer Eien wrote is never written, and one
      that can't be read is never written over: the colophon says so once,
      and its place and bookmarks aren't kept until it's fixed or deleted.
    - **Marks in the list** (Phase 4c): with a book's contents in the list,

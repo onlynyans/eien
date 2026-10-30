@@ -10,6 +10,7 @@ import {
   type Bookmark,
   bookmarksOn,
   firstWords,
+  MAX_BOOKMARKS,
   type ReadingKept,
 } from '../../core/epub';
 import type { Still } from './book-count';
@@ -112,6 +113,13 @@ export class PageBookmarks {
     page.sheet.keep();
     if (!this.#measured) return;
     const here = bookmarksOn(this.#marks, chapter, this.#from, this.#to);
+    // A book shows MAX_BOOKMARKS: one more would be kept but never shown, nor ever taken off.
+    if (here.length === 0 && this.#marks.length >= MAX_BOOKMARKS) {
+      page.foot.say(
+        `A book keeps ${MAX_BOOKMARKS.toLocaleString('en')} bookmarks at most: take one off first.`,
+      );
+      return;
+    }
     const words = firstWords(wordsFrom(page.chapter, this.#from, BOOKMARK_WORDS * 2));
     const change =
       here.length > 0 ? { remove: here } : { add: { chapter, offset: this.#from, words } };
