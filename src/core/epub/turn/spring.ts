@@ -4,7 +4,7 @@
 // settles; a throw hard enough to carry it past its mark stops there, so it
 // lands and never bounces back. Times in milliseconds, places in pixels.
 
-import { dot, minus, type Point } from './turn-curl';
+import { dot, minus, type Point } from './curl';
 
 /** The corner moving: where it is, and its speed in pixels a millisecond. */
 export interface Moving {

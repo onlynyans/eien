@@ -62,6 +62,10 @@
   --eien-shadow-float:
     0 2px 6px light-dark(rgb(33 25 16 / 0.08), rgb(0 0 0 / 0.4)),
     0 14px 36px light-dark(rgb(33 25 16 / 0.16), rgb(0 0 0 / 0.6));
+  /* The curl's light (#40, Phase 3) beside them: the shade in the sheet shadow's own ink, the
+     crest in Otaku's night ink. */
+  --eien-curl-shade: light-dark(rgb(24 37 32 / 0.18), rgb(0 0 0 / 0.5));
+  --eien-curl-light: light-dark(rgb(255 255 255 / 0.6), rgb(236 235 231 / 0.1));
 
   /* ── Ink ────────────────────────────────────────────────────────────── */
   --eien-ink: light-dark(#191a16, #ecebe7); /* Otaku's ink: titles */

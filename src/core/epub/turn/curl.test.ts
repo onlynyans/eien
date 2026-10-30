@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { curlFrame } from './curl-frame';
 import {
-  CURL_STRIPS,
   corners,
   cut,
   heldAt,
@@ -13,12 +11,10 @@ import {
   rollOf,
   spineDown,
   transform,
-} from './turn-curl';
-import { glintAt, shadeAt } from './turn-light';
+} from './curl';
 
 const page = { width: 400, height: 600 };
 const rest: Point = [400, 500];
-const lengths = { cast: 32, crest: 24 };
 
 describe('the roll', () => {
   it('is flat at rest and once turned, roundest half way, a fifth of the width', () => {
@@ -81,45 +77,5 @@ describe('a polygon cut by a line', () => {
       [100, 600],
     ]);
     expect(cut(corners(page), [1000, 0], [1, 0])).toEqual([]);
-  });
-});
-
-describe('the light', () => {
-  it('shades a strip by how it faces you: none flat, darkest edge-on', () => {
-    expect(shadeAt(0)).toBeCloseTo(0, 9);
-    expect(shadeAt(Math.PI / 2)).toBeCloseTo(1, 9);
-    expect(shadeAt(Math.PI)).toBeCloseTo(0, 9);
-  });
-
-  it('glints just past the crest, nowhere near its start', () => {
-    expect(glintAt(0.78 * Math.PI)).toBeCloseTo(1, 9);
-    expect(glintAt(0)).toBe(0);
-  });
-});
-
-describe('a frame', () => {
-  it('draws nothing at rest', () => {
-    expect(curlFrame(page, rest, rest, lengths)).toEqual({ resting: true, corner: rest });
-  });
-
-  it('half over: what stays, twelve strips (the back half glinting), what lies back, the shadow beneath', () => {
-    const frame = curlFrame(page, rest, [0, 500], lengths);
-    if (frame.resting) throw new Error('moving');
-    expect(frame.strips).toHaveLength(CURL_STRIPS);
-    expect(frame.strips.filter((strip) => strip.back)).toHaveLength(CURL_STRIPS / 2);
-    expect(frame.strips.every((strip) => (strip.glint !== null) === strip.back)).toBe(true);
-    expect(frame.front.length).toBeGreaterThan(2);
-    expect(frame.cast.clip.length).toBeGreaterThan(2);
-    // The shadow runs the cast's length from the fold, the crest's light its own.
-    const [, whole, gone] = frame.cast.light.stops;
-    expect((gone?.at ?? 0) - (whole?.at ?? 0)).toBeCloseTo(lengths.cast, 9);
-    const crest = frame.back.light.stops;
-    expect((crest[2]?.at ?? 0) - (crest[1]?.at ?? 0)).toBeCloseTo(lengths.crest, 9);
-  });
-
-  it('a crease too slight to round draws no strips', () => {
-    const frame = curlFrame(page, rest, [399, 500], lengths);
-    if (frame.resting) throw new Error('moving');
-    expect(frame.strips).toEqual([]);
   });
 });

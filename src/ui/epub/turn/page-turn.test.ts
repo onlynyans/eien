@@ -7,7 +7,13 @@ const TOKENS: TurnTokens = { calm: 220, quick: 120, ease: 'linear', step: 8, cas
 const STILL: TurnTokens = { ...TOKENS, calm: 0, quick: 0 };
 
 /** A book of `pages` pages on one sheet, the turn over it, and the frames run by hand. */
-function book({ style = 'curl' as TurnStyle, speed = 1, tokens = TOKENS, pages = 5 } = {}) {
+function book({
+  style = 'curl' as TurnStyle,
+  speed = 1,
+  tokens = TOKENS,
+  pages = 5,
+  later = false,
+} = {}) {
   const host = document.createElement('div');
   const sheet = document.createElement('article');
   sheet.className = 'sheet';
@@ -38,12 +44,16 @@ function book({ style = 'curl' as TurnStyle, speed = 1, tokens = TOKENS, pages =
       sheet: () => sheet,
       words: '.words',
       step: (way) => {
-        if (page + way < 1 || page + way > pages) return false;
-        started = page;
-        page += way;
-        steps.push(way);
-        show();
-        return true;
+        const go = () => {
+          if (page + way < 1 || page + way > pages) return false;
+          started = page;
+          page += way;
+          steps.push(way);
+          show();
+          return true;
+        };
+        // Into another chapter: once it's drawn.
+        return later ? new Promise<boolean>((done) => setTimeout(() => done(go()), 1)) : go();
       },
       unstep: () => {
         page = started;
@@ -272,5 +282,71 @@ describe('Slide and Words', () => {
     b.turn.key(1);
     expect(b.page()).toBe(2);
     expect(b.copies()).toBe(0);
+  });
+});
+
+const drawn = () => new Promise((done) => setTimeout(done, 5));
+
+describe('into another chapter, drawn first', () => {
+  it('the turn waits for the next page, then runs', async () => {
+    const b = book({ later: true });
+    b.turn.key(1);
+    expect(b.page()).toBe(1);
+    expect(b.curl()).toBeNull();
+    await drawn();
+    expect(b.page()).toBe(2);
+    expect(b.curl()).not.toBeNull();
+  });
+
+  it('keys pressed meanwhile wait their turn, none lost', async () => {
+    const b = book({ later: true });
+    b.turn.key(1);
+    b.turn.key(1);
+    await drawn();
+    await drawn();
+    expect(b.steps).toEqual([1, 1]);
+    expect(b.host.querySelectorAll('.turn-curl')).toHaveLength(1);
+  });
+
+  it('a hand lifted before the page came still throws its curl', async () => {
+    const b = book({ later: true });
+    b.turn.grab([390, 500]);
+    b.turn.drag([-300, 0], 0);
+    b.turn.drag([-340, 0], 80);
+    expect(b.turn.letGo()).toBe(true);
+    await drawn();
+    expect(b.curl()).not.toBeNull();
+    b.run();
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(2);
+  });
+});
+
+describe('never in the way', () => {
+  it('a key held down turns at once, with nothing laid over the page', () => {
+    const b = book();
+    b.turn.key(1, true);
+    expect(b.page()).toBe(2);
+    expect(b.curl()).toBeNull();
+    expect(b.copies()).toBe(0);
+  });
+
+  it('the window hidden: the turn lands now', () => {
+    const b = book();
+    b.turn.key(1);
+    Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(2);
+  });
+
+  it('let go, nothing is left on the page', () => {
+    const b = book();
+    b.turn.key(1);
+    b.turn.dispose();
+    expect(b.curl()).toBeNull();
+    b.turn.key(1);
+    expect(b.page()).toBe(2);
   });
 });

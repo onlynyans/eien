@@ -74,7 +74,10 @@ hairline borders, 4 shadows (the sheet's once, the float three times).
   paper may carry light. At rest every page is flat, with two shadows and
   no gradients.
   - The light comes from three tokens in `tokens.css` (docs/design/README.md,
-    "A page turning"; Phase 3a):
+    "A page turning"; Phase 3a), beside the shadows: the two inks a
+    light-dark pair each, which a palette's sheet carries with its shadows
+    (`slate.css`), not a writer's theme (a shadow isn't a theme's either);
+    the third a fraction:
     - `--eien-curl-shade`: the sheet shadow's own ink, where paper bends
       away;
     - `--eien-curl-light`: the crest of the roll;

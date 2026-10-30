@@ -5,10 +5,10 @@
 // finished at once, it lands. Each state a value and each step a function,
 // so the window only draws them.
 
-import type { PageBox, Point } from './turn-curl';
-import { heldAt } from './turn-curl';
-import { type Moving, omegaFor, springStep } from './turn-spring';
-import { arcHeight, type Stroke } from './turn-stroke';
+import type { PageBox, Point } from './curl';
+import { heldAt } from './curl';
+import { type Moving, omegaFor, springStep } from './spring';
+import { arcHeight, type Stroke } from './stroke';
 
 /** The hand's speed is read from its last this-many milliseconds. */
 export const THROW_MS = 80;

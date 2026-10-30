@@ -19,8 +19,8 @@ import {
   type Polygon,
   rollOf,
   SEAM,
-} from './turn-curl';
-import { glintAt, type Light, rampOver, shadeAt, washFrom } from './turn-light';
+} from './curl';
+import { glintAt, type Light, rampOver, shadeAt, washFrom } from './light';
 
 /** How far the washes along the fold run, in pixels: the window's tokens (--eien-space-6, -5). */
 export interface CurlLengths {

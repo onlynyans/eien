@@ -1,7 +1,7 @@
 # Reading EPUBs: nine explorations
 
-**Chosen (2026-10-28), and building in phases.** Backlog #40. Phases 0 and
-1 are built, and Phase 2 is being built ([The build](#the-build)). Three
+**Chosen (2026-10-28), and building in phases.** Backlog #40. Phases 0 to
+2 are built, and Phase 3 is being built ([The build](#the-build)). Three
 sets of three, in one family so they share one look: turning pages, scrolling,
 and the features (page count, bookmarks, highlights, search in the book).
 
@@ -340,13 +340,22 @@ Each phase is its own session and pull request, from main.
   the note a phone's one page came from, cited `— Title, Chapter`, one ⌘Z;
   a book opened beside from its SHELF row (⌘-click, ⌘Enter, its menu's Open
   to the Side), as a note's row does.
-- **Phase 3, turning pages:**
-  - paging on one line grid;
-  - the leaf and its edges, and the spread when there's room;
-  - Set as a book;
-  - Page turn (Curl, Slide, Words) and its speed;
-  - the curl's tokens into `tokens.css`.
-- **Phase 3b, the reading room.**
+- **Phase 3, turning pages,** in four pull requests (re-split 2026-10-30
+  after the design review, so paging and the place in pages land and are
+  measured before the curl):
+  - **3a, built:** the turn's engine, nothing a writer sees yet: the curl's
+    geometry and light, the spring, a key's bounded arc, Slide and Words,
+    the speed and reduced motion, a curl's states (`core/epub/turn/`,
+    `ui/epub/turn/`); the curl's three tokens in `tokens.css`, beside the
+    shadows (Slate's own pair in `slate.css`; a palette's, as a shadow is,
+    never a writer's theme's);
+  - **3b:** Pages and Scroll, with an instant turn and Slide: paging on one
+    line grid, the place in pages, the leaf and its edges, keys and clicks,
+    the Pages and Scroll tools and menu;
+  - **3c:** the turn wired: Curl and Words, a hand's drag and catch, the
+    phone's swipe and taps, the Page turn and Turn speed settings;
+  - **3d:** the spread, and Set as a book.
+- **The reading room,** after the turn (it was Phase 3b).
 - **Phase 4, place, bookmarks and page count:** print pages or steady
   pages; Marks in the list or on the edge.
 - **Phase 5, highlights and Find.**

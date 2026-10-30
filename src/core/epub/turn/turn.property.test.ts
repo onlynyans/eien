@@ -4,12 +4,12 @@
 
 import fc from 'fast-check';
 import { describe, it } from 'vitest';
+import { heldAt, type Point, spineDown } from './curl';
 import { curlFrame } from './curl-frame';
 import { keyCurl, tickCurl } from './curl-turn';
-import { heldAt, type Point, spineDown } from './turn-curl';
-import { curlTime, isInstant, slideTime, wordsTime } from './turn-speed';
-import { omegaFor, springStep } from './turn-spring';
-import { FIRST_STROKE, nextStroke, STROKE_BOUNDS, type Stroke, WANDER } from './turn-stroke';
+import { curlTime, isInstant, slideTime, wordsTime } from './speed';
+import { omegaFor, springStep } from './spring';
+import { FIRST_STROKE, nextStroke, STROKE_BOUNDS, type Stroke, WANDER } from './stroke';
 
 const box = fc.record({
   width: fc.double({ min: 120, max: 1600, noNaN: true }),

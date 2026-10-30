@@ -7,7 +7,7 @@
 // theme's tokens (--eien-curl-shade, --eien-curl-light); here a light is
 // only where along the page and how strong, as a linear gradient's numbers.
 
-import { dot, minus, onFold, type PageBox, type Point, type Roll } from './turn-curl';
+import { dot, minus, onFold, type PageBox, type Point, type Roll } from './curl';
 
 /** A stop of a light: `at` pixels along its gradient line, the ink at `strength` (0 to 1). */
 export interface Stop {

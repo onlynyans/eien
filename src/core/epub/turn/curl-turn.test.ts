@@ -10,9 +10,8 @@ import {
   tickCurl,
   turned,
 } from './curl-turn';
-import { curlTime, isInstant, SLOWEST, slideTime, turnScale, wordsTime } from './turn-speed';
-import { omegaFor, settled, springStep } from './turn-spring';
-import { arcHeight, FIRST_STROKE, nextStroke, STROKE_BOUNDS } from './turn-stroke';
+import { curlTime } from './speed';
+import { FIRST_STROKE } from './stroke';
 
 const page = { width: 400, height: 600 };
 const fly = (turn: ReturnType<typeof beginCurl>, limit = 2000) => {
@@ -20,88 +19,6 @@ const fly = (turn: ReturnType<typeof beginCurl>, limit = 2000) => {
   for (let t = 0; t < limit && at.phase === 'flying'; t += 16) at = tickCurl(at, 16);
   return at;
 };
-
-describe('the speed', () => {
-  it('scales the designed time from instant to four times slower, as designed when unreadable', () => {
-    expect(turnScale(0)).toBe(0);
-    expect(turnScale(2)).toBe(2);
-    expect(turnScale(9)).toBe(SLOWEST);
-    expect(turnScale(-1)).toBe(0);
-    expect(turnScale(Number.NaN)).toBe(1);
-  });
-
-  it('times each motion from the tokens’ calm and quick', () => {
-    expect(curlTime(220, 2)).toBe(660);
-    expect(curlTime(220, 1, 1.1)).toBeCloseTo(363, 9);
-    expect(slideTime(220, 2)).toBe(440);
-    expect(wordsTime(120, 220, 1)).toEqual({ out: 120, in: 220 });
-  });
-
-  it('is instant at speed 0 and under reduced motion (the tokens at 0)', () => {
-    expect(isInstant(curlTime(220, 0))).toBe(true);
-    expect(isInstant(curlTime(0, 2))).toBe(true);
-    expect(isInstant(slideTime(220, 1))).toBe(false);
-  });
-});
-
-describe('the spring', () => {
-  it('lands a two-page move within its time, never past', () => {
-    const time = curlTime(220, 1);
-    let moving = { at: [400, 0] as const, speed: [0, 0] as const } as const;
-    let landed = false;
-    let spent = 0;
-    while (!landed && spent < 5 * time) {
-      const step = springStep(moving, [-400, 0], omegaFor(time), 16);
-      moving = step.moving as typeof moving;
-      landed = step.landed;
-      spent += 16;
-      expect(moving.at[0]).toBeGreaterThanOrEqual(-400);
-    }
-    expect(landed).toBe(true);
-    expect(spent).toBeLessThanOrEqual(time + 16);
-  });
-
-  it('stops on its mark when thrown past it, rather than bouncing', () => {
-    const step = springStep({ at: [-390, 0], speed: [-5, 0] }, [-400, 0], omegaFor(330), 16);
-    expect(step).toEqual({ moving: { at: [-400, 0], speed: [0, 0] }, landed: true });
-  });
-
-  it('is there at once for an instant finish', () => {
-    expect(springStep({ at: [400, 0], speed: [0, 0] }, [-400, 0], omegaFor(0), 16).landed).toBe(
-      true,
-    );
-  });
-
-  it('counts a stalled frame as a short one, so the page never leaps', () => {
-    const long = springStep({ at: [400, 0], speed: [0, 0] }, [-400, 0], omegaFor(330), 5000);
-    const capped = springStep({ at: [400, 0], speed: [0, 0] }, [-400, 0], omegaFor(330), 48);
-    expect(long).toEqual(capped);
-  });
-
-  it('knows when it has settled', () => {
-    expect(settled({ at: [0.2, 0], speed: [0.01, 0] }, [0, 0])).toBe(true);
-    expect(settled({ at: [0.2, 0], speed: [0.5, 0] }, [0, 0])).toBe(false);
-  });
-});
-
-describe('a key’s stroke', () => {
-  it('starts at the middle of its bounds', () => {
-    expect(FIRST_STROKE.grip).toBeCloseTo(0.84, 9);
-    expect(FIRST_STROKE.pace).toBeCloseTo(1, 9);
-  });
-
-  it('turns back at a bound rather than holding there', () => {
-    const atTop = { ...FIRST_STROKE, grip: STROKE_BOUNDS.grip[1] };
-    const next = nextStroke(atTop, () => 1 - Number.EPSILON);
-    expect(next.grip).toBeLessThan(STROKE_BOUNDS.grip[1]);
-  });
-
-  it('rises on its arc and lands where it was taken', () => {
-    expect(arcHeight(FIRST_STROKE, 500, 600, 0)).toBe(500);
-    expect(arcHeight(FIRST_STROKE, 500, 600, 1)).toBeCloseTo(500, 9);
-    expect(arcHeight(FIRST_STROKE, 500, 600, 0.5)).toBeLessThan(500);
-  });
-});
 
 describe('a curl’s states', () => {
   it('a key’s turn flies at once on its arc and lands turned', () => {

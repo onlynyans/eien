@@ -257,8 +257,10 @@ a curl, and only then, it carries light, Depth's one exception
 - `--eien-curl-through` (0.12): how much of the words shows through the
   paper's back.
 
-The gradients are these inks ramped across the roll's strips
-(`core/epub/turn-light.ts`), each stop `color-mix` of the ink and
+Like the shadows, the two inks are a palette's (`slate.css` has its own
+pair), never a writer's theme's: a theme's night ink is pale, and a shade
+made from it would lighten the page. The gradients are these inks ramped across the roll's strips
+(`core/epub/turn/light.ts`), each stop `color-mix` of the ink and
 transparent, never a colour of their own; the washes along the fold run
 `--eien-space-6` (the shadow) and `--eien-space-5` (the crest). Every time is
 the calm or quick time: the curl lands in 1.5 × `--eien-calm`, Slide takes
