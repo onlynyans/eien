@@ -9,6 +9,9 @@
 .edge-strip {
   display: none;
 }
+.edge-strip:focus-visible {
+  box-shadow: 0 0 0 var(--eien-mark-w) var(--eien-focus);
+}
 .page__leaf--epub[data-marks="edge"] .edge-strip {
   position: absolute;
   z-index: 2;
@@ -26,9 +29,6 @@
 /* In pages, the pane keeps room for it, so it never lies over the fore-edge's turns. */
 .page__leaf--epub[data-view="pages"][data-marks="edge"] .page__scroll {
   padding-right: calc(var(--eien-space-5) + var(--eien-space-4));
-}
-.edge-strip:focus-visible {
-  box-shadow: 0 0 0 var(--eien-mark-w) var(--eien-focus);
 }
 .edge-strip__marks {
   position: absolute;
