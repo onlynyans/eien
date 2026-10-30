@@ -30,10 +30,14 @@
 .page__leaf--epub[data-marks="edge"] .edge-strip[hidden] {
   display: none;
 }
-/* Facing pages' left page: its outer edge is its left. */
+/* Facing pages' left page: its outer edge is its left, and the tip opens toward the page. */
 :root[data-split="facing"] .page__pages[data-two] .page__leaf[data-side="0"] .edge-strip {
   right: auto;
   left: var(--eien-space-4);
+}
+:root[data-split="facing"] .page__pages[data-two] .page__leaf[data-side="0"] .edge-strip__tip {
+  right: auto;
+  left: calc(100% + var(--eien-space-2));
 }
 /* In pages, the pane keeps room for it, so it never lies over the fore-edge's turns: past every
    split's own padding (../page/split-*.css) by specificity, and after them in the window's styles. */

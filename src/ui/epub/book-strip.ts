@@ -1,5 +1,5 @@
 // A book on its page's edge (#40, Phase 4d): the strip (./edge-strip.ts)
-// told the book's chapters (its contents' top rows), bookmarks and place as
+// told the book's chapters (its contents' rows), bookmarks and place as
 // shares of it, by its chapters' sizes as the colophon's percent and the
 // fore-edge are (core/epub/progress.ts), a bookmark within its chapter once
 // that's counted; and what a point on it is, and where it goes. Worn on the
@@ -46,10 +46,8 @@ export function bookStrip(of: BookStripOf): BookStrip {
     const page = of.pageAt(index, offset);
     return page ? `${title}, ${page}` : title;
   };
-  /** The strip's chapters: the contents' top rows, each its spine item's start, in order. */
-  const chapters = (epub: Epub) => [
-    ...new Set(epub.contents.filter((row) => row.depth === 0).map((row) => row.spine)),
-  ];
+  /** The strip's chapters: every row of the contents (a part's chapters too), each its spine item's start, in order. */
+  const chapters = (epub: Epub) => [...new Set(epub.contents.map((row) => row.spine))];
   /** A place gone to from the strip: shown, the keyboard back on the page (PageDown turns it again). */
   const go = (index: number, at: number | (() => number)) => {
     of.goTo(index, at);
@@ -69,10 +67,13 @@ export function bookStrip(of: BookStripOf): BookStrip {
       if (last === undefined) return;
       if (by === 'first') return of.goTo(starts[0] as number, 0);
       if (by === 'last') return of.goTo(last, () => lengthOf(last));
-      // The chapter the place is in: the last to start at or before it.
-      const here = starts.reduce((at, start, i) => (start <= of.spine() ? i : at), 0);
-      const next = starts[Math.min(starts.length - 1, Math.max(0, here + by))] as number;
-      of.goTo(next, 0);
+      // The chapter the place is in: the last to start at or before it; -1 before the first (a
+      // title page the contents don't name), so ↓ goes to the first.
+      const here = starts.reduce((at, start, i) => (start <= of.spine() ? i : at), -1);
+      const to = Math.min(starts.length - 1, Math.max(0, here + by));
+      // At either end, nowhere further: a slider at its end doesn't move.
+      if (to === here || (here === -1 && by < 0)) return;
+      of.goTo(starts[to] as number, 0);
     },
     describe(share) {
       const epub = of.epub();

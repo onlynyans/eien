@@ -82,12 +82,8 @@ test.describe('Facing pages, the book on the left page', () => {
     await standsAt(page, 'left');
   });
 
-  // A bug, marked (QA report): the tip stands to the strip's left whatever the
-  // side (edge-strip.css, `.edge-strip__tip { right: calc(100% + …) }`), so on
-  // the left page it opens outward, off the page, over the pane beside or past
-  // the window. Remove `fail` once it opens inward.
+  // QA (Phase 4d) found the tip opening outward on the left page, off the page: it opens inward.
   test('pointing at the strip shows its tip on the page, never off it', async ({ app, page }) => {
-    test.fail();
     await beside(page);
     await clickMenu(app, 'View', 'Swap Pages');
     await expect(book(page)).toHaveAttribute('data-side', '0');

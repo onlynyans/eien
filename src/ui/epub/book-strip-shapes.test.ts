@@ -38,11 +38,15 @@ function shaped(shape: Shape) {
   const count = { lengths: shape.lengths, print: [] } as unknown as BookCount;
   const element = document.createElement('div');
   const focus = vi.fn();
-  const goTo = vi.fn();
+  // The page goes where the strip sends it, as a real one does, so the next key steps from there.
+  let at = shape.at ?? 0;
+  const goTo = vi.fn((index: number, _place: number | (() => number)) => {
+    at = index;
+  });
   const strip = bookStrip({
     page: { element, focus } as unknown as EpubPage,
     epub: () => epub,
-    spine: () => shape.at ?? 0,
+    spine: () => at,
     count: () => count,
     marks: () => shape.marks ?? [],
     goTo,
@@ -154,8 +158,9 @@ describe('a book’s shape on its edge', () => {
     // Ten chapters on, held at the last.
     book.press('PageDown');
     expect(book.went()).toEqual([2, 0]);
+    // A chapter back from the last.
     book.press('ArrowUp');
-    expect(book.went()).toEqual([0, 0]);
+    expect(book.went()).toEqual([1, 0]);
     expect(book.focus).not.toHaveBeenCalled();
   });
 
@@ -188,11 +193,10 @@ describe('a book’s shape on its edge', () => {
 });
 
 // The keys as the spec says them ("↑ ↓ a chapter, Page Up and Page Down ten,
-// Home the book's start and End its end"). Each fails on the branch as built,
-// so each is marked `fails`: a bug in the QA report, not fixed here. Drop
-// `.fails` once it is, and the test holds the fix.
-describe('the strip’s keys where they go wrong (bugs, marked)', () => {
-  it.fails('↓ from a title page before the contents goes to the first chapter, never past it', () => {
+// Home the book's start and End its end"). QA (Phase 4d) found each wrong as
+// first built; each holds its fix.
+describe('the strip’s keys at a book’s edges and in its parts', () => {
+  it('↓ from a title page before the contents goes to the first chapter, never past it', () => {
     // Eien's own EPUBs (plain.epub) and most books: a title page first, not in the contents.
     const book = shaped({
       spine: [[100], [100], [100], [100]],
@@ -208,7 +212,7 @@ describe('the strip’s keys where they go wrong (bugs, marked)', () => {
     expect(book.went()).toEqual([1, 0]);
   });
 
-  it.fails('↓ in the last chapter (or a book of one) never takes the place back to its start', () => {
+  it('↓ in the last chapter (or a book of one) never takes the place back to its start', () => {
     const book = shaped({ spine: [[100]], rows: [['Chapter I', 0, 0]], lengths: [100] });
     book.strip.place(0.6, 60);
     book.press('ArrowDown');
@@ -217,7 +221,7 @@ describe('the strip’s keys where they go wrong (bugs, marked)', () => {
     expect(book.goTo.mock.calls.filter(([index, at]) => index === 0 && at === 0)).toEqual([]);
   });
 
-  it.fails('↓ steps a chapter in a book whose contents hold its chapters in a part', () => {
+  it('↓ steps a chapter in a book whose contents hold its chapters in a part', () => {
     // epub2.epub's shape: one top row, "Volume I", its three chapters under it.
     const book = shaped({
       spine: [[100], [100], [100]],
