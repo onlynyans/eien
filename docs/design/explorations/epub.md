@@ -1,7 +1,7 @@
 # Reading EPUBs: nine explorations
 
-**Chosen (2026-10-28), and building in phases.** Backlog #40. Phase 0, the
-groundwork, is built; Phase 1 is next ([The build](#the-build)). Three
+**Chosen (2026-10-28), and building in phases.** Backlog #40. Phases 0 and
+1 are built, and Phase 2 is being built ([The build](#the-build)). Three
 sets of three, in one family so they share one look: turning pages, scrolling,
 and the features (page count, bookmarks, highlights, search in the book).
 
@@ -83,7 +83,8 @@ section where it and the directions below disagree.
 - **Books are only under SHELF,** never in a folder's note list.
 - **Reading state** (place, bookmarks, highlights) in `.eien/reading/`,
   keyed by the book's contents.
-- **Each section shows what its folders hold** (decided 2026-10-29). SHELF
+- **Each section shows what its folders hold** (decided 2026-10-29;
+  **built**, [#126](https://github.com/onlynyans/eien/pull/126)). SHELF
   already lists only the folders with a book somewhere in them; FOLDERS
   lists every folder but those whose contents, at any depth, are books and
   nothing else. FOLDERS is for writing, SHELF for reading.
@@ -108,7 +109,7 @@ section where it and the directions below disagree.
     step, and a folder can hold both), and dimming books-only folders in
     FOLDERS (the clutter stays).
 
-### The tools, by what's in sight (decided 2026-10-29)
+### The tools, by what's in sight (decided 2026-10-29; built, [#126](https://github.com/onlynyans/eien/pull/126))
 
 - **A tool shows only while the active page can use it.** A command marked
   for one kind of page (`on` in `chrome/commands.ts`) is set aside, not
@@ -138,7 +139,7 @@ section where it and the directions below disagree.
 - **A book's own tools** (contents, Pages or Scroll, bookmark) are marked
   `on: 'epub'` and follow the same rule.
 
-### Links in a book (decided 2026-10-29)
+### Links in a book (decided 2026-10-29; built, [#123](https://github.com/onlynyans/eien/pull/123))
 
 - **They look like links:** the words' own colour with a quiet underline in
   `--eien-rule-strong` that darkens on hover, as the extension's story
