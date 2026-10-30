@@ -342,7 +342,16 @@ Three panes, each collapsible, with a two-pane option in settings:
      it at their depth; a folder there is a label, and only a book is a
      control. A book is never in a folder's note list, count or search. A
      click opens it on the page; with two panes, its contents are listed
-     under its row
+     under its row. Its row answers as a note's: right-click, the menu key
+     or Shift+F10 give its menu (Rename, Move to…, and the trash last), F2
+     or a second click on its name renames it in its row (its `.epub` kept
+     and shown faded after the field, on a phone too), ⌘⌫ (Ctrl+Delete)
+     sends it to the trash: the system's, or a phone's `.eien/trash`, and
+     the list says where; a trash that fails deletes nothing and says so.
+     A book moved or renamed is followed by its page and its contents in
+     the list, takes no place in a folder's own order, and keeps its place
+     in `.eien/reading/`, which is kept by what the book holds, not where
+     it is
    - **Tags**, nested by `/`; the + beside its label makes a tag, named in
      place (see §2, Tags)
    - Library, Folders, Shelf and Tags fold and open from their labels (a click, Enter
@@ -376,10 +385,38 @@ Three panes, each collapsible, with a two-pane option in settings:
 3. **Page** — the editor, on a paper sheet; or a book (#40): one chapter of
    it on the note's own sheet, drawn from cleaned nodes in the writer's
    faces and the theme's colours, its pictures from the book's own zip, the
-   book's folders above it and "3 of 61" in the colophon. A book that won't
-   open says why on the sheet (locked with DRM, too large, damaged). The
-   chapter last open is kept in `.eien/reading/<key>.json` and opens again
-   next time; the book's file is only read. A small header shows the note's
+   book's folders above it. A book that won't open says why on the sheet
+   (locked with DRM, too large, damaged); its file is only read. With a book in front, a note's
+   commands are greyed wherever they're offered: the layout's tools, the
+   phone's ⋯, and the menu bar (the views, Seal, Compare, Versions, Copy as
+   HTML, every format, Export HTML… and Export Note, Outline Cards, Focus
+   Mode, Typewriter Scrolling, Show Markdown Marks), from the one rule each
+   control's `on` gives (`ui/chrome/commands.ts`, `menuOff`). The menu bar
+   is the app's: it wears the focused window's, and a menu of the bar is
+   never greyed, only its items.
+   - **A chapter a sheet** (Phase 2): the chapter scrolls as a note does in
+     Reading, the usual keys once the page has the keyboard. At its foot,
+     after a soft rule, the chapters before and after it in the reading
+     order are word buttons named for them ("Previous chapter" for one the
+     contents don't name, such as a title page), "The end" at the last;
+     nothing moves on until one is pressed, which opens that chapter at its
+     top. The colophon says "3 of 61", then how far through the chapter and
+     the book ("40% of the chapter", "12% of the book", the book by its
+     chapters' sizes; the two dropped first on a narrow page).
+   - **The scroll style**, a book setting in the shelf's quick look (never
+     in Settings, which sets notes): *As a note* (the default), its
+     paragraphs spaced as a note's in Reading; or *As a book*, indented
+     with no space between, the first after a heading, a break or a
+     picture flush.
+   - **The place kept:** where you are, the chapter and its first line in
+     sight (an offset in the chapter's words, so it holds through a new
+     width, size, face or scroll style), is kept in
+     `.eien/reading/<key>.json` a second after the page comes to rest,
+     when the chapter changes, and when the page closes or the window
+     quits (a phone, as it goes to the background), and opens there again
+     next time. The page put back in the window (⇄) or laid out anew (a
+     new width, page zoom) shows the same line.
+   A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
    and zoom, at a fixed height (`--status-h`, 40px). Each part of the page
    has its own row (bar, formatting bar, scroll, status), so a part hidden
@@ -981,7 +1018,7 @@ src/core/            (✓ = built)
   export/       ✓ a note as a chapter (headings, footnotes); EPUB, Word and the PDF's page; a store-only zip
   import/       ✓ which files of a folder from elsewhere come in, under what names, and why the rest don't
   extension/    ✓ the browser extension (Eien Reader): its story, its sites, its messages, where you stopped, its rules for cleaning a site's HTML (§14)
-  epub/         ✓ an EPUB read safely: its zip (capped, no path out), its package and contents, a chapter cleaned with its parts named, the reading state's file (#40)
+  epub/         ✓ an EPUB read safely: its zip (capped, no path out), its package and contents, a chapter cleaned with its parts named, the reading state's file and its place, a chapter's neighbours and how far through (#40)
 src/platform/
   bridge.ts     ✓ what the window may ask of the system (window.eien)
   storage.ts    ✓ the Storage interface: read, write, list, watch
@@ -1014,7 +1051,7 @@ src/ui/
   settings/     ✓ Settings over the window: categories and tabs, drawn from the schema; the Themes tabs; the look they set on <html>
   phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
   extension/    ✓ the extension's pages: the story page, the popup, the content script and each site's markup (§14)
-  epub/         ✓ an EPUB's page (#40): a chapter drawn with its pictures, its kind of page, the reading state's store, the book's stylesheet
+  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture
@@ -1228,12 +1265,19 @@ without Settings.
   (LOOK / NOTES, *every note*); with a book (#40), the shelf's (LOOK / SHELF,
   *every book on the shelf*): the same `page` settings, kept again on this
   device under `epub.<key>` (`core/config/epub-look.ts`: no copied entries;
-  Settings doesn't draw them), and worn on the book's page alone, so a
+  Settings doesn't draw them), with a book's own beside them (the scroll
+  style, `quick: 'shelf'`), and worn on the book's page alone, so a
   note's look never changes a book's, nor a book's a note's. Day or night is
   the window's, whichever; so is the frame while two pages share the pane.
   All settings opens Settings at Look, the notes': the shelf's look is set
-  here alone. The sidebar's sun stays: one press for Day or
-  Night.
+  here alone, and with a book in front one line at the popover's foot, in
+  pencil, says so: "Settings sets notes; this is every book's look." The
+  sidebar's sun stays: one press for Day or Night.
+- **A note and a book side by side:** while the look is open, the page it
+  doesn't change sits back, in the tone the split gives the page you aren't
+  in: its paper takes the band's (`data-back` on its leaf). Two notes, or
+  two books, wear the one look, so neither sits back. With a companion, the
+  look opens for the page itself, which becomes the one you're in.
 
 ### Type and the Running head
 
@@ -1772,8 +1816,10 @@ Every rule, with the cases most likely to break it:
   descriptors, the CRC, every cap, a header that lies), names and addresses
   that would leave the zip, the package, nav, NCX and page-list, DRM refused,
   the cleaning rules (pictures, links, Calibre's SVG plates, the named parts),
-  the reading state's file; over any bytes, a book or a reason and never past
-  a cap; and the fixture books (`tests/fixtures/epub/`, made by
+  the reading state's file and its place (an offset paired with its
+  chapter), a chapter's neighbours and how far through; over any bytes, a
+  book or a reason and never past a cap; a place's round trip and how far
+  through never falling as you read on; and the fixture books (`tests/fixtures/epub/`, made by
   `scripts/epub-fixtures.mjs` from Pride and Prejudice and Hugh Thomson's
   1894 illustrations), held to the bytes their script makes.
 - **Versions:** naming, sorting, retention at day and month boundaries, time

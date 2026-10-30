@@ -38,7 +38,11 @@ export function epubKind(of: EpubSideOf): EpubKind {
     holds: (path) => isEpubName(baseName(path)),
     make: (hooks, left) => makeEpubSide(of, hooks, left),
     moved: (from, to) => void moves.push([from, to]),
-    flush: () => of.reading.idle(),
+    flush(sides) {
+      // Each page's place on its way to rest, kept first: then every write waited for.
+      for (const side of epubsOf(sides)) side.keep();
+      return of.reading.idle();
+    },
     diskChanged(changed, sides) {
       follow(sides);
       for (const side of epubsOf(sides)) {

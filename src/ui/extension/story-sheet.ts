@@ -125,7 +125,7 @@ export function storySheet(story: Story, numerals: NumeralStyle, turn: (to: Turn
     ...chapters.map((each) => each.element),
     aside('Notes', story.endNotes, 'story__aside--end'),
     turns.length > 0
-      ? h('nav', { class: 'story__turns', attrs: { 'aria-label': 'Chapters' } }, ...turns)
+      ? h('nav', { class: 'sheet__turns', attrs: { 'aria-label': 'Chapters' } }, ...turns)
       : null,
   );
   return { element, words: chapters.reduce((sum, each) => sum + each.words, 0) };

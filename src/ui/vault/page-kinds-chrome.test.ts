@@ -5,7 +5,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
-import { actsOn, COMMANDS, type CommandId } from '../chrome/commands';
+import { actsOn, COMMANDS, type CommandId, menuOff } from '../chrome/commands';
 import type { MenuBus } from '../menu/menu-bus';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
@@ -28,6 +28,7 @@ const NOTE_COMMANDS = COMMANDS.filter((command) => 'on' in command).map(({ id })
 /** The window's tools drawn over `made`'s pages, as the vault view draws them. */
 function toolsOver(made: Awaited<ReturnType<typeof pagesWith>>) {
   const { pages } = made;
+  const greyMenu = vi.fn<(commands: readonly MenuCommand[]) => void>();
   const div = () => document.createElement('div');
   const chrome = vaultChrome({
     shell: document.body.appendChild(div()),
@@ -43,6 +44,7 @@ function toolsOver(made: Awaited<ReturnType<typeof pagesWith>>) {
     menu: { on: () => () => {}, run: () => {} } as unknown as MenuBus,
     mac: false,
     platform: 'linux',
+    greyMenu,
   });
   chrome.mount();
   stops.push(() => {
@@ -57,7 +59,7 @@ function toolsOver(made: Awaited<ReturnType<typeof pagesWith>>) {
       );
       return button ? [[id, button.disabled] as const] : [];
     });
-  return { chrome, disabled };
+  return { chrome, disabled, greyMenu };
 }
 
 /** A note on the left, the stand-in beside it (the active one), and the window's tools drawn. */
@@ -145,6 +147,59 @@ describe('the commands for a note', () => {
     expect(pages.active.kind).toBe('epub');
     runCommand('split:swap', ctx); // the window's: any page
     expect(pages.sides.map((side) => side.kind)).toEqual(['epub', 'note']);
+  });
+
+  it('grey in the menu bar while a page of another kind is in front, and come back with a note', async () => {
+    const { pages, chrome, greyMenu } = await drawn();
+    expect(greyMenu.mock.calls).toEqual([[menuOff('epub')]]);
+    pages.activate(pages.sides[0] as Side);
+    chrome.refresh();
+    chrome.refresh(); // told once for each change of kind
+    expect(greyMenu.mock.calls).toEqual([[menuOff('epub')], [[]]]);
+  });
+
+  it('greys nothing in the menu bar once the vault is no longer shown (Open Vault…)', async () => {
+    const { chrome, greyMenu } = await drawn();
+    chrome.stop();
+    expect(greyMenu.mock.calls).toEqual([[menuOff('epub')], [[]]]);
+  });
+
+  it('greyed in the menu bar are every note’s control’s, and the menu’s own a note’s page alone has', () => {
+    expect(menuOff('note')).toEqual([]);
+    const off = menuOff('epub');
+    const sends = COMMANDS.flatMap((command) =>
+      'on' in command && 'sends' in command ? [command.sends] : [],
+    );
+    expect(off).toEqual(expect.arrayContaining(sends));
+    expect(off).toEqual(
+      expect.arrayContaining([
+        'view:next',
+        'toggle:editor.focus',
+        'copy-html',
+        'format:heading2',
+        'format:table',
+        'export-html',
+        'export-note:epub',
+        'export-note:docx',
+        'export-note:pdf',
+        'outline',
+        'toggle:editor.typewriter',
+        'toggle:editor.marks',
+      ]),
+    );
+    // A page's, the window's, and settings that are the window's stay on.
+    for (const on of [
+      'find',
+      'find:next',
+      'look',
+      'export-book:epub',
+      'split',
+      'new-note',
+      'toggle:editor.formatBar',
+      'toggle:editor.spellcheck',
+    ] as const)
+      expect(off).not.toContain(on);
+    expect(new Set(off).size).toBe(off.length);
   });
 
   it('find from the menu on the active page, whatever it holds', async () => {

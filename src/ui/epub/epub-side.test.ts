@@ -1,36 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
-import type { Reading } from '../../core/epub';
 import { epubKind } from './epub-kind';
-import { type EpubSide, type EpubSideOf, isEpub, makeEpubSide } from './epub-side';
+import { type EpubSide, isEpub, makeEpubSide } from './epub-side';
+import { sideWith } from './test-side';
 
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
-
-/** A vault of `files` (bytes), its reading states kept in memory, and what the page told. */
-function sideWith(files: Record<string, Uint8Array>, listed: string[] = Object.keys(files)) {
-  const kept = new Map<string, Reading>();
-  const reads = vi.fn(async (path: string) => files[path]?.slice() ?? null);
-  const changed = vi.fn();
-  const writes = vi.fn();
-  const of: EpubSideOf = {
-    vault: { readBytes: reads },
-    reading: {
-      read: async (key) => kept.get(key) ?? { chapter: null },
-      write: async (key, reading) => {
-        writes(key, reading);
-        kept.set(key, reading);
-      },
-      idle: async () => {},
-    },
-    sizeOf: (path: string) =>
-      listed.includes(path) ? (files[path]?.length ?? 64 * 1024 * 1024) : null,
-    changed,
-  };
-  const close = vi.fn();
-  const side = makeEpubSide(of, { close, caret: () => {} }, null);
-  document.body.append(side.page.element);
-  return { side, kept, reads, changed, close, of, writes, files, listed };
-}
 
 const chapterText = (side: EpubSide) => side.page.chapter.textContent ?? '';
 
@@ -55,6 +29,7 @@ describe('a book’s page', () => {
       path: 'Novels/P and P.epub',
       name: 'Pride and Prejudice',
       spine: 1,
+      offset: 0,
     });
     expect(changed).toHaveBeenCalled();
   });
@@ -81,7 +56,7 @@ describe('a book’s page', () => {
     const first = sideWith(files);
     await first.side.open('a.epub');
     await first.side.go(3);
-    expect([...first.kept.values()]).toEqual([{ chapter: 'OEBPS/chapter-3.xhtml' }]);
+    expect([...first.kept.values()]).toEqual([{ chapter: 'OEBPS/chapter-3.xhtml', offset: 0 }]);
     const again = makeEpubSide(first.of, { close: () => {}, caret: () => {} }, null);
     await again.open('a.epub');
     expect(again.spine).toBe(3);
@@ -159,6 +134,20 @@ describe('the EPUB’s kind', () => {
     expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Books / Novels');
     kind.sync([side]); // the vault lists the old path only: the book's gone
     expect(side.path).toBeNull();
+  });
+
+  it('keeps its own title, renamed; a book with none takes its file’s new name', async () => {
+    const { side, of } = sideWith({ 'Novels/a.epub': EPUBS['plain.epub'] as Uint8Array });
+    const kind = epubKind(of);
+    await side.open('Novels/a.epub');
+    kind.moved('Novels/a.epub', 'Novels/b.epub');
+    kind.followMoves([side]);
+    expect(side.page.name).toBe('Pride and Prejudice');
+    // As a book whose package names no title is: called by its file, as SHELF calls it.
+    Object.assign(side.epub as object, { title: '' });
+    kind.moved('Novels/b.epub', 'Novels/First Impressions.epub');
+    kind.followMoves([side]);
+    expect(side.page.name).toBe('First Impressions');
   });
 
   it('reads a book again when its file changes, and waits for its place to be kept', async () => {

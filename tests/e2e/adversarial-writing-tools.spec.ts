@@ -21,7 +21,10 @@ async function open(page: Page, title: string): Promise<void> {
 
 /** Whether the View menu's item is checked. */
 const checked = (app: ElectronApplication, id: string) =>
-  app.evaluate(({ Menu }, id) => Menu.getApplicationMenu()?.getMenuItemById(id)?.checked, id);
+  app.evaluate(
+    ({ Menu }, id) => Menu.getApplicationMenu()?.getMenuItemById(`toggle:${id}`)?.checked,
+    id,
+  );
 
 /** How faint `selector` (in the editor's shadow root) shows: its opacity times every ancestor's. */
 const shownOpacity = (page: Page, selector: string) =>
@@ -63,7 +66,9 @@ test.describe('the View menu’s check', () => {
     // doesn't, and nothing puts it back: the menu says Focus Mode is on when it's off.
     await open(page, 'Table');
     await app.evaluate(({ Menu }) => {
-      Menu.getApplicationMenu()?.getMenuItemById('editor.focus')?.click(undefined, undefined);
+      Menu.getApplicationMenu()
+        ?.getMenuItemById('toggle:editor.focus')
+        ?.click(undefined, undefined);
     });
     await page.waitForTimeout(500);
     await expect(page.locator('.cm-editor')).not.toHaveClass(/eien-focus/);

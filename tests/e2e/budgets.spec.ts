@@ -4,9 +4,10 @@
 // only the rows in sight (src/ui/shell/windowed-rows.ts), and the keyboard
 // still reaches every row. Each runs alone (ALONE), so it measures Eien.
 
-import { readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
+import { handEpub, nav, opf, XHTML, page as xhtml } from '../support/epub-parts';
 import { ALONE, expect, readQuietly, test, type VaultFiles } from './launch';
 
 /** The budget for anything a writer does: no task holds the window longer than this. */
@@ -284,6 +285,76 @@ test.describe('a long book in its own order', () => {
           return order.indexOf('Chapter 299.md') === order.indexOf('Chapter 296.md') - 1;
         })
         .toBe(true);
+    },
+  );
+});
+
+/**
+ * A long chapter (#40, Phase 2): one of the book's files holding as many
+ * paragraphs as a very long chapter has (600, some 27,000 words: five times
+ * Pride and Prejudice's longest), drawn
+ * whole, scrolled through and its place kept at each rest. Measured: no long
+ * task drawing it or scrolling (none over 50 ms), 143 ms drawing it with the
+ * CPU four times slower (SLOW=4).
+ */
+const LONG_CHAPTER = handEpub('content.opf', [
+  {
+    name: 'content.opf',
+    data: opf(
+      '3.0',
+      [
+        { id: 'nav', href: 'nav.xhtml', type: XHTML, properties: 'nav' },
+        { id: 'c1', href: 'c1.xhtml', type: XHTML },
+      ],
+      ['c1'],
+    ),
+  },
+  { name: 'nav.xhtml', data: nav([['The Long Chapter', 'c1.xhtml']]) },
+  {
+    name: 'c1.xhtml',
+    data: xhtml(
+      'The Long Chapter',
+      `<h1>The Long Chapter</h1>\n${Array.from(
+        { length: 600 },
+        (_, n) =>
+          `<p>Paragraph ${n}: it is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife. <em>However little known</em> the feelings or views of such a man may be on his first entering a neighbourhood.</p>`,
+      ).join('\n')}`,
+    ),
+  },
+]);
+
+test.describe('a long chapter', () => {
+  test.use({ vaultFiles: { 'Novels/Long.epub': LONG_CHAPTER } });
+
+  test(
+    'opens, scrolls through and keeps its place without a stall',
+    ALONE,
+    async ({ page, vault }) => {
+      test.setTimeout(90_000);
+      const time = await stalls(page);
+      const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' });
+      await expect(book).toBeVisible();
+      await time.mark();
+      await book.click();
+      await expect(page.locator('.epub-chapter p')).toHaveCount(600);
+      expect(await time.longest(), 'the chapter drawn').toBeLessThan(STALL);
+      const scroller = page.locator('.page__leaf--epub .page__scroll');
+      await scroller.focus();
+      await time.mark();
+      for (let i = 0; i < 40; i++) await page.keyboard.press('PageDown');
+      await page.mouse.move(800, 400);
+      for (let i = 0; i < 20; i++) await page.mouse.wheel(0, 900);
+      // At rest, its place measured and kept.
+      const reading = join(vault ?? '', '.eien/reading');
+      await expect
+        .poll(() => (existsSync(reading) ? readdirSync(reading).length : 0), {
+          timeout: 10_000,
+        })
+        .toBe(1);
+      await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
+        '0% of the chapter',
+      );
+      expect(await time.longest(), 'scrolled and kept').toBeLessThan(STALL);
     },
   );
 });

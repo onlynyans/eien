@@ -13,11 +13,12 @@ import {
   parentOf,
   type Renamed,
   renamedPath,
-  titleOf,
 } from '../../core/paths';
 import {
   FOLDER_SETTINGS_NAME,
   type FolderChange,
+  fileTitleOf,
+  isNoteName,
   movedPins,
   parseFolderSettings,
   placedBefore,
@@ -63,7 +64,7 @@ const PROBLEMS: Record<Exclude<Renamed, { ok: true }>['problem'], string> = {
   taken: 'Something here already has that name.',
 };
 
-const nameOf = (path: string) => titleOf(baseName(path)) || path;
+const nameOf = (path: string) => fileTitleOf(baseName(path)) || path;
 
 export class Organizer {
   readonly #ctx: OrganizeContext;
@@ -76,8 +77,8 @@ export class Organizer {
     this.#files = new SmallFiles(context);
   }
 
-  /** Rename the note at `path` from the title typed; its new path, or null (and the writer told why). */
-  renameNote(path: string, typed: string): Promise<string | null> {
+  /** Rename the note or book at `path` from the title typed; its new path, or null (and the writer told why). */
+  renameFile(path: string, typed: string): Promise<string | null> {
     const renamed = renamedPath(path, typed, this.#ctx.state.namesIn(parentOf(path)), true);
     if (!renamed.ok) return this.#refuse(PROBLEMS[renamed.problem]);
     return this.#move(path, renamed.path, true);
@@ -89,16 +90,16 @@ export class Organizer {
     return this.#move(path, renamed.path);
   }
 
-  /** Move a note or folder into `folder` ("" for the vault itself), under a free name there. */
-  moveInto(path: string, folder: string, isNote: boolean): Promise<string | null> {
+  /** Move a note, a book or a folder into `folder` ("" for the vault itself), under a free name there. */
+  moveInto(path: string, folder: string, isFile: boolean): Promise<string | null> {
     if (parentOf(path) === folder) return Promise.resolve(path);
-    if (!isNote && isInside(folder, path)) {
+    if (!isFile && isInside(folder, path)) {
       return this.#refuse('A folder can’t go inside itself.');
     }
     return this.#move(
       path,
-      movedPath(path, folder, this.#ctx.state.namesIn(folder), isNote),
-      isNote,
+      movedPath(path, folder, this.#ctx.state.namesIn(folder), isFile),
+      isFile,
     );
   }
 
@@ -225,7 +226,7 @@ export class Organizer {
   }
 
   /** Move or rename `from` to `to`, keeping order, pins and the open note (and a note's images) in step. */
-  async #move(from: string, to: string, isNote = false): Promise<string | null> {
+  async #move(from: string, to: string, isFile = false): Promise<string | null> {
     if (from === to) return to;
     const open = this.#openIn(from);
     const held = await this.#hold(from, 'move'); // nothing half-saved at the old name
@@ -250,6 +251,7 @@ export class Organizer {
     this.#ctx.moved?.(from, to);
     await this.#files.followPaths((paths) => movedPins(paths, from, to));
     const [left, came] = [baseName(from), baseName(to)];
+    if (isFile && !isNoteName(came)) return to; // a book (#40): no place in an order, no images
     if (parentOf(from) === parentOf(to)) {
       await this.#changeOrder(parentOf(from), (order) => renamedInOrder(order, left, came), {
         left,
@@ -260,7 +262,7 @@ export class Organizer {
       // A folder in its own order keeps it: the newcomer goes last.
       await this.#changeOrder(parentOf(to), (order) => [...order, came], { came });
     }
-    if (isNote) await moveAssets(this.#ctx, from, to);
+    if (isFile) await moveAssets(this.#ctx, from, to);
     return to;
   }
 

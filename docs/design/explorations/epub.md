@@ -250,7 +250,8 @@ half left open.
   gives the page you aren't in. Nothing new is designed.
 
 The row menu, the menu bar, the line under the popover and the page sitting
-back are one small build after Phase 2. Page width stays off the phone (its
+back are built (2026-10-29; spec §4, Panes and Page, and §6, A quick look;
+docs/quick-look.md, "After Phase 1"; docs/page-kinds.md, Tools). Page width stays off the phone (its
 page is narrower than any face's measure), and the iOS simulator opening a
 book waits for a way to tap.
 
@@ -321,7 +322,14 @@ Each phase is its own session and pull request, from main.
   - the reading state's file;
   - the fixture books.
 - **Phase 2, scrolling:** a chapter a sheet, the scroll style, the place
-  kept; Beside a note and Quote.
+  kept; Beside a note and Quote. In three pull requests: **2a, built**
+  (2026-10-29): a chapter a sheet with the chapters either side at its foot,
+  how far through the chapter and the book in the colophon, the scroll
+  style (*As a note*, the default, or *As a book*) in the shelf's quick
+  look, and the place kept to the line (an offset in the chapter's words,
+  in `.eien/reading/`, shown again after a restart, ⇄, a new width and page
+  zoom); 2b: the book's own links and footnotes (a note over the page, and
+  Back); 2c: a book beside a note, and Quote.
 - **Phase 3, turning pages:**
   - paging on one line grid;
   - the leaf and its edges, and the spread when there's room;

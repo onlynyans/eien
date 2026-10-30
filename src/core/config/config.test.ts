@@ -106,7 +106,7 @@ describe('the schema', () => {
 });
 
 describe('the quick look’s mark (#49)', () => {
-  it('marks Day or night for every page, and five of the page’s own, in the decided order', () => {
+  it('marks Day or night for every page, five of the page’s own, and a book’s scroll style, in the decided order', () => {
     const marked = SETTINGS.filter((setting) => 'quick' in setting).map((setting) => [
       setting.key,
       'quick' in setting && setting.quick,
@@ -118,6 +118,7 @@ describe('the quick look’s mark (#49)', () => {
       ['appearance.leading', 'page'],
       ['page.width', 'page'],
       ['appearance.frame', 'page'],
+      ['epub.scroll', 'shelf'],
     ]);
   });
 

@@ -24,12 +24,13 @@ afterEach(() => {
   localStorage.clear();
 });
 
-/** A note, and the stand-in kind beside it if `beside`, the window's tools drawn over them. */
-async function shown(beside = false) {
+/** A note, and beside it if asked the stand-in kind (or a second note), the window's tools drawn over them. */
+async function shown(beside: boolean | string = false, split: 'sheets' | 'companion' = 'sheets') {
   const files = { 'Chapter.md': 'The gate held.', 'Notes.md': 'And then.' };
-  const made = await pagesWith(files, { 'appearance.layout': 'band' }, [standInKind]);
+  const look = { 'appearance.layout': 'band', 'appearance.split': split } as const;
+  const made = await pagesWith(files, look, [standInKind]);
   await made.pages.open('Chapter.md');
-  if (beside) await made.pages.open('Map.stand', true);
+  if (beside) await made.pages.open(beside === true ? 'Map.stand' : beside, true);
   const listeners = new Set<(command: MenuCommand) => void>();
   const menu = {
     on: (listener: (command: MenuCommand) => void) => {
@@ -111,6 +112,22 @@ describe('the Look control', () => {
     expect(popover()?.textContent).toContain('every book on the shelf');
   });
 
+  it('says under the shelf’s look that Settings sets notes; the notes’ look says nothing of it', async () => {
+    const { menu, pages, chrome, popover } = await shown(true);
+    const line = () => popover()?.querySelector('.quick-look__line') ?? null;
+    menu.run('look');
+    expect(line()?.textContent).toBe('Settings sets notes; this is every book’s look.');
+    expect(popover()?.getAttribute('aria-describedby')).toBe(line()?.id);
+    expect(line()?.parentElement?.classList.contains('quick-look__foot')).toBe(true);
+    menu.run('look');
+    pages.activate(pages.sides[0] as Side);
+    chrome.refresh();
+    menu.run('look');
+    expect(popover()?.getAttribute('aria-label')).toBe('Look: Notes');
+    expect(line()).toBeNull();
+    expect(popover()?.hasAttribute('aria-describedby')).toBe(false);
+  });
+
   it('closes when the other page becomes the one you’re in', async () => {
     const { menu, pages, chrome, popover } = await shown(true);
     pages.activate(pages.sides[0] as Side);
@@ -120,5 +137,40 @@ describe('the Look control', () => {
     pages.activate(pages.sides[1] as Side);
     chrome.refresh();
     expect(popover()).toBeNull();
+  });
+});
+
+describe('the page the look doesn’t change (#49)', () => {
+  const back = (pages: { sides: readonly Side[] }) =>
+    pages.sides.map((side) => side.page.element.hasAttribute('data-back'));
+
+  it('sits back while the look is open with a note and a book side by side, and comes forward as it closes', async () => {
+    const { menu, pages, chrome } = await shown(true);
+    expect(back(pages)).toEqual([false, false]);
+    menu.run('look'); // the book's, the active page
+    expect(back(pages)).toEqual([true, false]);
+    menu.run('look');
+    expect(back(pages)).toEqual([false, false]);
+    pages.activate(pages.sides[0] as Side);
+    chrome.refresh();
+    menu.run('look'); // the notes'
+    expect(back(pages)).toEqual([false, true]);
+    closeMenu();
+    expect(back(pages)).toEqual([false, false]);
+  });
+
+  it('with a companion, opens for the page itself, which becomes the one you’re in; the companion sits back', async () => {
+    const { menu, pages } = await shown(true, 'companion');
+    const [page, companion] = pages.sides as [Side, Side];
+    expect(pages.active).toBe(companion); // the stand-in, beside
+    menu.run('look'); // the menu's Look acts on the page itself, a note
+    expect(pages.active).toBe(page);
+    expect(back(pages)).toEqual([false, true]);
+  });
+
+  it('never sits back beside a page of its own kind: two notes wear the one look', async () => {
+    const { menu, pages } = await shown('Notes.md');
+    menu.run('look');
+    expect(back(pages)).toEqual([false, false]);
   });
 });

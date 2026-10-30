@@ -75,6 +75,10 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
           .click();
         await page.locator('.contents-row').nth(2).click();
         await expect(page.locator('.epub-chapter img')).toBeVisible();
+        // A chapter a sheet (Phase 2): its foot in sight, the chapter before and "The end".
+        const turns = page.getByRole('navigation', { name: 'Chapters' });
+        await turns.scrollIntoViewIfNeeded();
+        await expect(turns).toContainText('The end');
         expect(await violationsUnder(page, ['.sidebar', '.list', '.page']), 'three panes').toEqual(
           [],
         );
@@ -83,11 +87,39 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
           .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')
           .click();
         await expect(page.getByRole('dialog', { name: 'Look: Shelf' })).toBeVisible();
+        await expect(page.locator('[data-setting="epub.scroll"]')).toBeVisible();
+        // With its line at the foot: Settings sets notes.
+        await expect(page.locator('.quick-look__line')).toBeVisible();
         expect(await seriousViolations(page), 'the shelf’s look').toEqual([]);
+        await page.keyboard.press('Escape');
+        // The book's row menu (rename, move, the trash in carmine).
+        await page
+          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+          .click({ button: 'right' });
+        await expect(page.getByRole('menu', { name: 'Pride and Prejudice' })).toBeVisible();
+        expect(await violationsUnder(page, ['.menu']), 'the book’s row menu').toEqual([]);
         await page.keyboard.press('Escape');
         await page.locator('[data-command="panes"]').click();
         await expect(page.locator('.tree-row--chapter')).toHaveCount(3);
         expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);
+      });
+
+      test('the shelf’s look open beside a note, the note sitting back, has no serious violation', async ({
+        page,
+      }) => {
+        await ready(page);
+        await otherRow(page).click({ modifiers: ['ControlOrMeta'] });
+        await expect(page.locator('.page__leaf')).toHaveCount(2);
+        await page
+          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+          .click();
+        await expect(page.locator('.epub-chapter')).toContainText('It is a truth');
+        await page
+          .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')
+          .click();
+        await expect(page.locator('.page__leaf[data-back]')).toHaveCount(1);
+        // The note's words on the band's tone, the popover over them.
+        expect(await seriousViolations(page), 'a note sitting back').toEqual([]);
       });
 
       test('the quick look open has no serious violation (#49)', async ({ page }) => {

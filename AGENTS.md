@@ -138,7 +138,10 @@ Rules, pure TypeScript.
   - `epub-rules.ts`: those rules: pictures from the zip, links' words only, the parts named
   - `svg-plate.ts`: Calibre's SVG frame round a picture made a plain image
   - `first-line.ts`: a chapter's first line, by where it stands
-  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`
+  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it
+  - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
+  - `progress.ts`: how far through a chapter and the book, as the colophon says it
+  - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
 
 ### `src/platform/`
 
@@ -183,7 +186,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `vault/page-side.ts`'s `Side`: what the pages hold of one
   - `vault/note-side.ts`: a note's (`isNote`, `activeNote`)
   - `vault/stand-in-kind.ts`: a second kind for the tests
-  - a command for one kind is marked `on` in `chrome/commands.ts`
+  - a command for one kind is marked `on` in `chrome/commands.ts`, and `menuOff` carries it to the menu bar and the phone's ⋯
   - `vault/command-looks.ts`: how each command looks now
 - `page/note-foot.ts`: a note's colophon items
 - `vault/open-notes.ts`: a note open on any page, held once (one session, one document, its images), however many pages show it
@@ -205,7 +208,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `vault/page-drop.ts`: a note dragged onto the pane
   - `list/shown-notes.ts`: a row's marks for the pages' notes, chosen and beside
 - `page/page-title.ts`: a page's title
-- `vault/menus.ts`: a note's, folder's and tag's menus open from here
+- `vault/menus.ts`: a note's, a book's (on SHELF), a folder's and a tag's menus open from here
 - `vault/menu-items.ts`: their choices
 - `draw-clean.ts` draws cleaned nodes (`core/html/clean.ts`) element by element, checking each element, address and part again, for the extension's story page and an EPUB's chapter (#40)
 - `quiet-button.ts`: the quiet icon button (the +, a sheet's ×, the divider's ⇄)
@@ -224,7 +227,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `sidebar/lens-slot.ts`: with two panes, the chosen row's lens
   - `sidebar/sections.ts`: its sections fold, folded per device in `sidebar/folds.ts`
   - `sidebar/tree-sections.ts`: the sections in order, LIBRARY, FOLDERS, SHELF, TAGS
-  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: folders as labels, books as controls, an open book's contents with two panes
+  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: folders as labels, books as controls (a note's row's keys and menu, `vault/row-actions.ts`), an open book's contents with two panes
   - `sidebar/sidebar-focus.ts`: where the keyboard is in the tree, kept across its redraws
 - The lens over each list, drawn in the list's head and, with two panes, for the chosen row in the sidebar
   - `list/lens-bar.ts`: the sort and the tag filter, their chips
@@ -236,10 +239,10 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `versions/` seals the open note (`note-versions.ts`, the rules in `core/versions`), compares it with a seal and lists its seals
 - `menu/`: the floating menu (a row's: its name at the head, an icon, a word and a key per choice, the trash in carmine)
 - `quick-look/`: the quick look (#49, [docs/quick-look.md](docs/quick-look.md))
-  - `quick-look/quick-look.ts`: the popover under the Look control (a sheet on the phone), drawn from the settings the schema marks `quick` with Settings' own rows, floated by `menu/menu.ts`
+  - `quick-look/quick-look.ts`: the popover under the Look control (a sheet on the phone), drawn from the settings the schema marks `quick` with Settings' own rows, floated by `menu/menu.ts`; a subject's line at its foot (the shelf's)
   - `quick-look/quick-keys.ts`: its keyboard
   - `quick-look/epub-store.ts`: the shelf's look as its store, with a book in front (#40)
-  - opened for the active page by `vault/chrome-wiring.ts`
+  - opened for the page the layout's tools act on by `vault/look-wiring.ts`, which sits a page of another kind back (`data-back`, `page/split.css`)
 - `welcome/`: before a vault is open
 - `editor/`: CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows)
   - `editor/note-doc.ts`: a note's text and undo history, one document every view of the note mirrors (a view's change goes through it to the others, ⌘Z and the Edit menu's Undo run on it, and a change is told and counted once, by the view it was made in)
@@ -315,17 +318,21 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chrome/band.ts`, `slip.ts`, `runhead.ts`: each layout a list of its hosts and the slot each goes in, each with its own stylesheet and corners
   - `chrome/layout-spec.ts`: the slots and the hosts all three share
   - `chrome/chrome.ts` mounts and switches them
-  - `vault/chrome-wiring.ts` wires them to a shown vault (how each command looks now, the ones the window runs itself)
+  - `vault/chrome-wiring.ts` wires them to a shown vault (how each command looks now, the ones the window runs itself, the menu bar greyed by the kind in front)
 - `theme/wear.ts` wears the theme chosen on `<html>`
 - `theme/writer-themes.ts` keeps the vault's own themes for the window (the API Settings' Themes tabs build on)
 - `shell/shell.css`: the panes' top bands drag the window; it also holds the corner's lengths: `--seal-x`, `--corner`, a shut sidebar's `--strip`
 - `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
 - styles in `theme/` and beside each view
 - `epub/`: an EPUB's page (#40)
-  - `epub-page.ts`: the page (`PaneLeaf`): the note's sheet with a chapter on it, its ×, the colophon's "3 of 61", a refusal in words
-  - `epub-side.ts`: one page holding a book (`Side`): the book read and opened, a chapter at a time, the chapter kept
+  - `epub-page.ts`: the page (`PaneLeaf`): the note's sheet with a chapter on it, its ×, the colophon's "3 of 61" and how far through, the scroll style worn, a refusal in words
+  - `epub-side.ts`: one page holding a book (`Side`): the book read and opened, a chapter at a time, its place kept and shown again
+  - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
+  - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again
+  - `place-keeper.ts`: the place kept as the page scrolls, measured at rest and never out of sight, shown again when laid out anew
+  - `test-side.ts`: a book's page over a vault the DOM tests hold
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
-  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`), let go with it
+  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, let go with it
   - `reading-store.ts`: the reading state's file, through the vault's small files
   - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
 - `extension/`: the extension's pages (spec §14)
@@ -351,7 +358,8 @@ The main process: window, menu, the vault and settings sessions and their IPC.
 - `out-session.ts`: the clipboard, the save dialog
 - `print-pdf.ts` prints a PDF in a hidden window that runs nothing
 - `import-session.ts`: Import Markdown Folder…
-- `menu.ts` builds the menu bar, its on/off settings as checks that `checkToggles` keeps in step (`TOGGLES` in `core/config`)
+- `menu.ts` builds the menu bar, each item's id its command, its on/off settings as checks that `checkToggles` keeps in step (`TOGGLES` in `core/config`)
+- `menu-grey.ts`: the commands a window greys (a note's, with a book in front), checked against the bar's, worn while it's focused
 - `context-menu.ts`: the note's right-click menu (spelling suggestions on macOS, from `context-menu-of.ts`)
 - `frame.ts`: the window with no title bar (the system's controls over the bands, painted as the window's `shell/window-controls.ts` reports them) and the whole window's zoom
 - `preload.ts`: the sandboxed preload

@@ -1,9 +1,10 @@
 // The reading state's file (#40, core/epub/reading.ts) read and written
 // through the vault, at the version read, as the vault's other small files
-// are (../vault/small-files.ts). Written only when the chapter changes: each
-// write reads the vault again, so never as a page scrolls. The writes are
-// the store's, one after another, so a page closed just after a chapter
-// changed is still waited for by a quit (the kind's flush).
+// are (../vault/small-files.ts). Written when the chapter changes, or the
+// page comes to rest somewhere new (./place-keeper.ts): each write reads the
+// vault again, so never as a page scrolls. The writes are the store's, one
+// after another, so a page closed just after a chapter changed is still
+// waited for by a quit (the kind's flush).
 
 import { parseReading, type Reading, readingPath, withReading } from '../../core/epub';
 import type { VaultBridge } from '../../platform/bridge';

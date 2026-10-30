@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { SETTING_GROUPS, SETTINGS } from '../../core/config';
-import { CATEGORIES, placesHere, quickIn, settingsIn } from './places';
+import { CATEGORIES, isShelfs, placesHere, quickIn, settingsIn } from './places';
 
 const tabs = CATEGORIES.flatMap((category) => category.tabs.map((tab) => ({ category, tab })));
 
@@ -14,7 +14,7 @@ describe('the categories', () => {
   });
 
   it('put every setting in one tab, the vault’s own only under This vault', () => {
-    for (const setting of SETTINGS) {
+    for (const setting of SETTINGS.filter((each) => !isShelfs(each))) {
       // Each where it's offered: a system's own on the first system it names.
       const platform = 'platforms' in setting ? setting.platforms[0] : 'darwin';
       const holding = tabs.filter(({ tab }) =>
@@ -46,18 +46,32 @@ describe('the categories', () => {
 
 describe('the quick look’s settings (#49)', () => {
   it('are the marked ones, in the schema’s order', () => {
-    expect(quickIn('darwin', false).map((setting) => setting.key)).toEqual([
+    const notes = [
       'appearance.scheme',
       'appearance.face',
       'appearance.textSize',
       'appearance.leading',
       'page.width',
       'appearance.frame',
+    ];
+    expect(quickIn('darwin', false, 'note').map((setting) => setting.key)).toEqual(notes);
+    // A book's own, the scroll style (#40), with a book in front alone.
+    expect(quickIn('darwin', false, 'epub').map((setting) => setting.key)).toEqual([
+      ...notes,
+      'epub.scroll',
     ]);
   });
 
+  it('keep a book’s own out of Settings, which sets notes (#40)', () => {
+    const shown = tabs.flatMap(({ tab }) => settingsIn(tab, 'darwin').map((each) => each.key));
+    expect(shown).not.toContain('epub.scroll');
+    expect(SETTINGS.filter(isShelfs).map((setting) => setting.key)).toEqual(['epub.scroll']);
+  });
+
   it('leave out what the room doesn’t offer: a phone’s one pane has no page width', () => {
-    expect(quickIn('android', true).map((setting) => setting.key)).not.toContain('page.width');
-    expect(quickIn('android', false).map((setting) => setting.key)).toContain('page.width');
+    expect(quickIn('android', true, 'note').map((setting) => setting.key)).not.toContain(
+      'page.width',
+    );
+    expect(quickIn('android', false, 'note').map((setting) => setting.key)).toContain('page.width');
   });
 });

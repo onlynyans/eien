@@ -178,7 +178,7 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Lengths | `--eien-row-h` 30px × text scale (26 compact), `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |
 | Page rhythm | `--eien-measure` and `--eien-leading-prose` (each face's own: 29–34em, 1.5–1.76, less `--eien-leading-tighten`), `--eien-leading-row` 1.35; `--eien-title-gap`, `-paragraph-gap`, `-scene-gap`; `--eien-sheet-pad-x`, `-sheet-pad-top`, `--eien-sheet-gutter` (the density's blotter round a sheet, which `--eien-page-gutter` takes with a sheet frame); `--eien-list-preview` | comfortable: 32, 16, 1.4em; 72, 48, 24; tighten 0; preview shown. Compact: 16, 8, 0.8em; 48, 24, 8; tighten 0.14; no preview | the faces; density |
 | Frame | `--eien-page-ground`, `--eien-page-gutter`, `--eien-sheet-lift` | Sheet: the blotter, the sheet's shadow, the density's gutter. Full: paper, none, gutter 0 | setting: Page; a book's leaf its own (`[data-frame]`) |
-| A book's parts | `--eien-epub-title-size`, `-title-gap`, `-paragraph-gap`, `-break-gap`, `-epigraph-indent`, `-plate-gap`, `-caption-ink`, `-first-line-track` | each from a note's: the heading size, the title, paragraph and scene gaps, space-6, space-5, pencil, half the label's tracking | – (declared on `:root, [data-face]`, so a book in its own face resolves them in it) |
+| A book's parts | `--eien-epub-title-size`, `-title-gap`, `-paragraph-gap`, `-break-gap`, `-epigraph-indent`, `-plate-gap`, `-caption-ink`, `-first-line-track`; `--eien-epub-indent` (Phase 2) | each from a note's: the heading size, the title, paragraph and scene gaps, space-6, space-5, pencil, half the label's tracking; As a book's indent space-6, space-5 under a 520px page | – (declared on `:root, [data-face]`, so a book in its own face resolves them in it) |
 | Layout controls | `--controls-h`, `--controls-ground`; `--controls-w`, `--controls-left`, `--controls-right`; `--corner`, `--seal-x`, `--strip` | A: `--band` on the band; B: `--band` on the page ground; C: `--runhead-h` on `--runhead-ground`. `--controls-w` is how wide the window's own controls stand: from the overlay's width, not where its free area starts (a Mac's resize moves that), and measured once still, never mid-resize (#44); `data-controls-left` puts them at the left. Left is macOS's traffic lights, right Windows' and Linux's buttons, from the window controls overlay (0 where there are none: full screen, a phone). The corner's three: "A shut sidebar" below | layout; the window |
 | Page | `--eien-zoom` (0.5–2), `--eien-dimmed` 0.32 (focus mode's faded paragraphs), `--eien-sheet-edge` | | settings: Page zoom |
 | Split | `--split-gap`, `--leaf-x`, `--pager-gap` | the divider's track a hairline (Facing pages: the book's gutter, `--eien-space-6`); a facing leaf's side margin, clamp(space-4, 7%, space-7); half of space-1 between a folded split's pager names | the split's mode |
@@ -596,7 +596,7 @@ is always Panes.
   under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
 
-## A quick look (decided 2026-10-28, #49; built: notes' half #105, shelf's half #114; docs/quick-look.md)
+## A quick look (decided 2026-10-28, #49; built: notes' half #105, shelf's half #114, after #40 Phase 1 #120; docs/quick-look.md)
 
 From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
 
@@ -619,15 +619,23 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
 - **Two pages:** while it's open with a note and a book side by side, the
   page it doesn't change sits back, in the tone the split already gives the
   page you aren't in (decided 2026-10-29; two notes wear the one look, so
-  only a book beside a note needs it).
+  only a book beside a note needs it). Built (#120): `data-back` on its
+  leaf (`vault/look-wiring.ts`), its paper `--eien-band`, the companion's
+  page-you-aren't-in tone (`page/split.css`): the sheet, or the leaf in
+  Facing pages and Page: Full, with `--eien-calm`'s transition. With a
+  companion, Look makes the page it sets the one you're in, so the
+  companion's own rule paints the other.
 - **With a book in front,** one line at the popover's foot, in pencil:
   "Settings sets notes; this is every book's look." All settings opens
-  Settings at Look, the notes' (decided 2026-10-29).
+  Settings at Look, the notes' (decided 2026-10-29). Built (#120):
+  `.quick-look__line`, the foot's first line, in the voice of
+  `.quick-look__every` (the text face, `--eien-size-preview`, italic,
+  `--eien-pencil`); the dialog is described by it.
 - **Words and the sun:** an EPUB's look is the shelf's (SHELF, never
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114)
+## Reading EPUBs (decided 2026-10-28, #40; Phase 1 built, #112–#114; after Phase 1, #120; Phase 2a, scrolling)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add scrolling, paging and the turn, marks, highlights and Find
@@ -638,6 +646,14 @@ in the book, each recorded here as it's built.
   on the way to it, in pencil and always open; only a book's row is a
   control, in ink-soft, and opens on the page. Books are never in a folder's
   note list.
+- **A book's row menu** (#120): the Row menu (Built patterns), the book's
+  title its head: Rename (F2), Move to…, and the trash last in
+  `--eien-danger` after a rule. Right-click, the menu key or Shift+F10 open
+  it; F2 or a second click on the name renames in place with the Name
+  field, the book's `.epub` faded after it as a note's `.md`.
+- **A note's commands greyed with a book in front** (#120): the layout's
+  tools look disabled (never hidden), the phone's ⋯ and the menu bar grey
+  the same commands. A menu of the bar is never greyed, only its items.
 - **A book's contents** (`list/contents-list.ts`): in the list pane while a
   book is open, a chapter's row a note's row without its preview or date
   (`.contents-row`), a part's chapters stepped in by `--eien-space-4` a
@@ -651,7 +667,21 @@ in the book, each recorded here as it's built.
   first line in capitals at 80%, tracked (the faces have no small
   capitals); a scene break centred in pencil; an epigraph indented and
   italic; a plate centred, never split, its caption smaller in pencil.
-  Paragraphs as a note's in Reading until the scroll style (Phase 2).
+  Its paragraphs as the scroll style sets them (Phase 2): *As a note*, a
+  note's in Reading, the gap between; *As a book*, no gap, a paragraph
+  indented `--eien-epub-indent` only after another plain one, the first
+  after a heading, a break, a picture or a centred line flush, and a named
+  part's own gap kept. A book setting, in the shelf's quick look alone.
+- **A chapter a sheet** (Phase 2): the chapter scrolls on the note's sheet.
+  At its foot, the sheet's turns (`.sheet__turns`, shared with the
+  extension's story page): a `--eien-rule-soft` hairline, `--eien-space-7`
+  above it and `--eien-space-4` under, the chapters before and after as word
+  buttons (label type, an arrow beside the name, `--eien-touch` high on a
+  phone), the last one at the right; "The end" in label type at the last
+  chapter. The colophon's items: "3 of 61", "40% of the chapter", "12% of
+  the book", the two dropped first under a 560px page pane.
+- **The place is kept to the line**, never drawn: a page put back, laid out
+  anew or zoomed shows the same line at its top.
 - **The book's look is the shelf's:** its typeface, text size, line spacing,
   width and frame, set in the quick look with a book in front, worn on its
   leaf (`data-face`, `data-frame`, `--eien-text-scale`, `--look-lead`,
