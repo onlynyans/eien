@@ -47,3 +47,72 @@ describe('a share of the book, and back (Phase 4d)', () => {
     );
   });
 });
+
+// QA (Phase 4d): the strip goes both ways. A place taken to a share and back
+// must be the same place, or a bookmark's tab and a click on it would part;
+// and a hand drawn down the strip must never move back through the book.
+describe('a place in the book, as a share and back (Phase 4d, QA)', () => {
+  const book = fc.array(fc.record({ size: fc.nat({ max: 10_000 }), linear: fc.boolean() }), {
+    minLength: 1,
+    maxLength: 30,
+  });
+
+  it('is the same chapter and the same way into it, for a chapter with words in the reading order', () => {
+    fc.assert(
+      fc.property(
+        book,
+        fc.nat(),
+        // Short of its end: a chapter's end is the next one's start, by design.
+        fc.double({ min: 0, max: 0.99, noNaN: true }),
+        (items, pick, within) => {
+          const index = pick % items.length;
+          const item = items[index];
+          if (!item?.linear || item.size === 0) return;
+          const place = placeAt(items, bookFraction(items, index, within));
+          expect(place?.index).toBe(index);
+          expect(place?.within).toBeCloseTo(within, 6);
+        },
+      ),
+    );
+  });
+
+  // The strip's ends and its chapters' starts are where a share falls between chapters.
+  const share = fc.oneof(
+    fc.constant(0),
+    fc.constant(1),
+    fc.double({ min: 0, max: 1, noNaN: true }),
+  );
+
+  it('never moves back through the book as the share grows, nor lands where there are no words', () => {
+    fc.assert(
+      fc.property(book, share, share, (items, a, b) => {
+        const [low, high] = a <= b ? [a, b] : [b, a];
+        const from = placeAt(items, low);
+        const to = placeAt(items, high);
+        if (!from || !to) return;
+        expect(to.index > from.index || (to.index === from.index && to.within >= from.within)).toBe(
+          true,
+        );
+        // A book with words lands on words; one with none, on its last chapter in the order.
+        if (items.some((item) => item.linear && item.size > 0)) {
+          expect(items[from.index]?.size).toBeGreaterThan(0);
+          expect(items[to.index]?.size).toBeGreaterThan(0);
+        }
+      }),
+    );
+  });
+
+  it('is nowhere for a book with nothing in its reading order, whatever the share', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.record({ size: fc.nat({ max: 10_000 }), linear: fc.constant(false) }), {
+          maxLength: 10,
+        }),
+        fc.double(),
+        (items, fraction) => {
+          expect(placeAt(items, fraction)).toBeNull();
+        },
+      ),
+    );
+  });
+});
