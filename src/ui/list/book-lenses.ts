@@ -5,13 +5,14 @@
 // its words (the words a bookmarked page begins with, or those highlighted),
 // its page, and its chapter and kind in pencil under them. Drawn in the
 // list's head and, with two panes, under the book's row on SHELF
-// (../sidebar/shelf-book-rows.ts). Found joins them with Find (Phase 5c).
+// (../sidebar/shelf-book-rows.ts). Found joins them with Find (Phase 5c,
+// ./found-rows.ts).
 
 import type { Mark } from '../../core/epub';
 import { h } from '../dom';
 
-/** Which of a book's lenses the list shows. */
-export type BookLens = 'contents' | 'marks';
+/** Which of a book's lenses the list shows: Found while the list's field searches it (Phase 5c). */
+export type BookLens = 'contents' | 'marks' | 'found';
 
 /** A mark as its row shows it: where it is (core/epub/marks.ts), its page, and its chapter. */
 export type MarkRow = Mark & {
@@ -24,22 +25,30 @@ export type MarkRow = Mark & {
 /** What the lenses answer: one chosen. */
 export type ChooseLens = (lens: BookLens) => void;
 
-const LENS_NAMES: Record<BookLens, string> = { contents: 'Contents', marks: 'Marks' };
+const LENS_NAMES: Record<BookLens, string> = {
+  contents: 'Contents',
+  marks: 'Marks',
+  found: 'Found',
+};
 
 /** A lens's lasting name: the keyboard stays on it through a redraw, chosen or not. */
 export const lensKey = (lens: BookLens): string => `lens:${lens}`;
 
-/** The two lenses, `lens` pressed, each with its count. */
+/**
+ * The lenses, `lens` pressed, each with its count: Found's null while
+ * nothing is searched, when it's there but can't be chosen (Features 2).
+ */
 export function lensButtons(
   lens: BookLens,
-  counts: Record<BookLens, number>,
+  counts: Readonly<Record<'contents' | 'marks', number> & { found: number | null }>,
   choose: ChooseLens,
 ): HTMLElement {
   return h(
     'div',
     { class: 'book-lenses', attrs: { role: 'group', 'aria-label': 'The book’s index' } },
-    ...(['contents', 'marks'] as const).map((each) =>
-      h(
+    ...(['contents', 'marks', 'found'] as const).map((each) => {
+      const count = counts[each];
+      return h(
         'button',
         {
           class: 'word-button book-lens',
@@ -47,15 +56,15 @@ export function lensButtons(
             type: 'button',
             'aria-pressed': String(each === lens),
             'data-key': lensKey(each),
+            disabled: count === null,
           },
           on: { click: () => choose(each) },
         },
         // A space between, so a screen reader says "Marks 2", as the eye reads it.
         LENS_NAMES[each],
-        ' ',
-        h('span', { class: 'count', text: String(counts[each]) }),
-      ),
-    ),
+        ...(count === null ? [] : [' ', h('span', { class: 'count', text: String(count) })]),
+      );
+    }),
   );
 }
 

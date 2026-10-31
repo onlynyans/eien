@@ -1,5 +1,5 @@
-// Ink over a book's words (#40, Phase 5): its highlights' pencil line,
-// painted by the CSS Custom Highlight API over the drawn
+// Ink over a book's words (#40, Phase 5): its highlights' pencil line and
+// Find's matches (Phase 5c), painted by the CSS Custom Highlight API over the drawn
 // chapter's own text, so no element is added among the words a place counts
 // (a span round them would split a piece, and could leave a blank one
 // uncounted, moving every offset after it). The window has one registry, so
@@ -13,8 +13,8 @@
 import type { Span } from '../../core/epub';
 import { type Bounds, boundsOf, type Walked } from './chapter-range';
 
-/** The inks, each a `::highlight()` in ./ink.css. */
-export type InkName = 'epub-highlight';
+/** The inks, each a `::highlight()` in ./ink.css: a highlight's, Find's matches (Phase 5c), and the match it's on. */
+export type InkName = 'epub-highlight' | 'epub-found' | 'epub-found-current';
 
 /** Marks a turn's copy's inked words with their ink's name (./ink.css). */
 export const INKED = 'data-ink';

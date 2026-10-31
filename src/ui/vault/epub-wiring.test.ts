@@ -31,6 +31,7 @@ function wired(
     nav,
     tell: () => {},
     redraw: () => {},
+    drawRows: () => {},
     looks: () => {},
     marksAt: () => marksAt,
     pages: () => pages as Pages,
@@ -182,6 +183,7 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
       nav,
       tell: () => {},
       redraw,
+      drawRows: () => {},
       looks: () => {},
       marksAt: () => 'list',
       pages: () => pages as Pages,
@@ -285,10 +287,10 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     await side.reload();
     const { epubs, nav } = watched('a.epub', { active: side, sides: [side] });
     nav.bookLens = 'marks';
-    const shelf = epubs.shelf(true);
+    const shelf = epubs.shelf(true, null);
     expect(shelf.contents?.lens).toBe('marks');
     expect(shelf.contents?.marks?.map((row) => row.mark.words)).toEqual(['first']);
-    expect(epubs.shelf(false).contents).toBeNull();
+    expect(epubs.shelf(false, null).contents).toBeNull();
   });
 
   it('call a bookmark in a spine item no contents row names by the book’s name', async () => {
@@ -458,6 +460,7 @@ describe('a book’s Marks of both kinds over its page (Phase 5b)', () => {
     renderContents(container, { ...contents, lens: 'marks' }, null, {
       chapter: () => {},
       lens: () => {},
+      goFound: () => {},
       go: (row) => epubs.actions.goMark('a.epub', row),
       remove: (row) => epubs.actions.unmark('a.epub', row),
     });

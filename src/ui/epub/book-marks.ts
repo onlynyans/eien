@@ -127,7 +127,7 @@ export class BookMarks {
       page.foot.say(NO_MARKS);
       return;
     }
-    const { mark, index, round } = walked;
+    const { to: mark, index, round } = walked;
     this.#walked = mark;
     this.#of.goTo(mark.spine, mark.offset);
     const count = `${marks.length} ${marks.length === 1 ? 'mark' : 'marks'}`;

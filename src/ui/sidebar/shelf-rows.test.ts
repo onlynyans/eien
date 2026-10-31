@@ -54,6 +54,7 @@ function draw(
     lens: vi.fn(),
     goMark: vi.fn(),
     unmark: vi.fn(),
+    goFound: vi.fn(),
   };
   const list = document.createElement('ul');
   list.append(...shelfRows({ tree: TREE, current, contents, shut }, actions, folders));
@@ -141,6 +142,7 @@ describe('SHELF’s rows', () => {
       path: 'Loose.epub',
       lens: 'contents',
       marks: null,
+      found: null,
       rows: [
         { title: 'Part One', depth: 0, spine: 1 },
         { title: 'Chapter 1', depth: 1, spine: 2 },
@@ -170,11 +172,12 @@ describe('SHELF’s rows', () => {
       path: 'Loose.epub',
       lens: 'marks',
       marks: [row],
+      found: null,
       rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
       spine: 1,
     });
     const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
-    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
+    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
     expect(texts(list, '.tree-row--chapter')).toEqual([]);
     const name = list.querySelector<HTMLButtonElement>('.tree-row--mark .tree-row__name');
     expect(name?.textContent).toBe('It is a truth 3');
@@ -191,6 +194,7 @@ describe('SHELF’s rows', () => {
       path: 'Loose.epub',
       lens: 'marks',
       marks: [],
+      found: null,
       rows: [],
       spine: 1,
     });
@@ -206,6 +210,7 @@ describe('SHELF’s rows', () => {
       path: 'Loose.epub',
       lens: 'contents',
       marks: null,
+      found: null,
       rows: [
         { title: 'Part One', depth: 0, spine: 1 },
         { title: 'Chapter 1', depth: 1, spine: 1 },
@@ -277,6 +282,7 @@ describe('SHELF’s rows', () => {
       spine: 0,
       lens: 'contents' as const,
       marks: null,
+      found: null,
     };
     const { list, actions } = draw('Loose.epub', contents);
     const chapter = list.querySelector('.tree-row--chapter .tree-row__name') as HTMLElement;
@@ -303,6 +309,7 @@ describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
     spine: 1,
     lens,
     marks,
+    found: null,
   });
   const markNames = (list: HTMLElement) => [
     ...list.querySelectorAll<HTMLButtonElement>('.tree-row--mark .tree-row__name'),
@@ -394,7 +401,7 @@ describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
     expect(second?.title).toBe('Chapter I · highlight');
     expect(first?.title).toBe('Chapter I · bookmark');
     expect(first?.dataset.key).not.toBe(second?.dataset.key);
-    expect(list.querySelector('.tree-lenses .book-lens:last-child')?.textContent).toBe('Marks 2');
+    expect(list.querySelectorAll('.tree-lenses .book-lens')[1]?.textContent).toBe('Marks 2');
     second?.click();
     expect(actions.goMark).toHaveBeenCalledExactlyOnceWith(BOOK, highlight);
     second?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));

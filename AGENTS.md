@@ -144,7 +144,9 @@ Rules, pure TypeScript.
   - `reading-list.ts`: a list in that file, changed in its own array, unknown items and fields kept, each field where it stood
   - `bookmarks.ts`: its bookmarks, a list there (Phase 4b)
   - `highlights.ts`: its highlights, a list there, and what H does to them (Phase 5a)
-  - `marks.ts`: both kinds in the book's order, and where `]` and `[` go (Phase 5b)
+  - `marks.ts`: both kinds in the book's order, and the walk (`]` and `[`, Find's next and previous)
+  - `book-text.ts`: a chapter's blocks as Find reads them, by the one walk, each where it begins in the words (Phase 5c)
+  - `find.ts`: what's typed made a matcher (as written, or the bar's options), and every match in a chapter's blocks with the words round it
   - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
   - `chapter-words.ts`: a chapter's words walked once from its cleaned nodes, as a place counts them, each in its block (`BLOCK_NAMES`, the one list)
@@ -215,7 +217,9 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `vault/row-actions.ts`: what a row and its menus do
 - `vault/vault-sidebar.ts`: the sidebar's actions
 - `vault/epub-wiring.ts`: an EPUB's kind, what SHELF and the list show of the books on the pages, and which note a quote goes into (#40)
+  - `vault/epub-found.ts`: the list's field searching the book its contents show (Phase 5c)
 - `list/contents-list.ts`: a book's contents in the list, in place of notes (#40)
+  - `list/found-rows.ts`: Found's rows, a match in its words, and what the search says (Phase 5c)
   - `list/book-lenses.ts`, `.css`: its lenses, Contents and Marks, and a bookmark's row, in the list and under a book's SHELF row (Phase 4c)
 - `vault/list-lens.ts`: the list's lens and Arrange mode (Include subfolders too, kept per folder by `list/sorts.ts`)
 - The split (spec §4, two pages side by side) is a mode as a layout is
@@ -384,6 +388,8 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chapter-range.ts`: words chosen as offsets in the chapter's words, and a span of them back to the text it covers
   - `ink.ts`, `ink.css`: ink over the words by the CSS Custom Highlight API, one Highlight per name for the window, each page's ranges its own; a turn's copy inked in elements
   - `test-ink.ts`: that API stood in for the DOM tests
+  - `book-search.ts`: a book searched in the background, a slice a task, never while a page turns; its chapters' blocks kept for the book searched (Phase 5c)
+  - `book-find.ts`: the book's `FindTarget` under the window's find bar: the whole book, its matches inked, the one it's on chosen as the bar closes
   - `bookmark.css`: its mark (the Page mark's look), kept to the top of the sheet in sight, and Facing pages' clash
   - `page-marks.ts`: the marks on the sheet, one page's at its right, a spread's verso's at its left (Phase 3d)
   - Set as a book (Phase 3d, `epub-set.css`; two pages, `epub-spread.css`)

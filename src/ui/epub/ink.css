@@ -1,6 +1,7 @@
 /* Ink over a book's words (#40, Phase 5, ./ink.ts): a highlight is a pencil
    line under its words and a pencil tick in the margin beside its lines
-   (Features 1), quieter than a wash, which is left for Find's. Painted over
+   (Features 1), quieter than a wash, which is Find's (Phase 5c): every match
+   in the chosen row's wash, the one it's on in the selection's. Painted over
    the drawn text by name (`::highlight()`), never an element among the
    words; a turn's copy carries the same ink in elements of its own, each in
    a rule of its own, as a selector list would drop both where
@@ -19,6 +20,16 @@
   text-underline-offset: var(--eien-epub-highlight-offset);
   text-decoration-skip-ink: none;
 }
+::highlight(epub-found) {
+  background-color: var(--eien-epub-found);
+}
+.turn-copy [data-ink="epub-found"] {
+  background-color: var(--eien-epub-found);
+}
+::highlight(epub-found-current) {
+  background-color: var(--eien-epub-found-current);
+}
+
 /* The tick: a border, so forced colours keep it, on the block itself, so a
    turn's copy (a copy of the chapter too) carries it, and a spread's page
    has its own in its own margin. */
@@ -36,5 +47,14 @@
 @media (forced-colors: active) {
   ::highlight(epub-highlight) {
     text-decoration-color: CanvasText;
+  }
+  /* The system's own: every match marked, the one Find is on its selection's. */
+  ::highlight(epub-found) {
+    background-color: Mark;
+    color: MarkText;
+  }
+  ::highlight(epub-found-current) {
+    background-color: Highlight;
+    color: HighlightText;
   }
 }

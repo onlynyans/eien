@@ -36,7 +36,15 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     highlight: () => void marks.highlights.toggle(),
     walk: (way) => marks.walk(way),
     inHighlight: (range) => marks.highlights.holds(range),
-    copied: (copy, from) => marks.highlights.inkCopy(copy, from),
+    copied: (copy, from) => {
+      marks.highlights.inkCopy(copy, from);
+      find.inkCopy(copy, from);
+    },
+    find: {
+      open: () => void find.bar.open(false),
+      next: () => void find.bar.next(),
+      previous: () => void find.bar.previous(),
+    },
     turn: (way, held) => pages.turn(way, held),
     edge: (last) => pages.edge(last),
     rested: (offset) => keep(offset),
@@ -69,10 +77,11 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     stopCounting();
     count = null;
     marks.clear();
+    find.forget();
     // No book: the strip has nothing to show.
     placing.listed();
   };
-  const { placing, marks, links, pages, unplaced } = bookParts({
+  const { placing, marks, find, links, pages, unplaced } = bookParts({
     page,
     of,
     epub: () => epub,
@@ -141,6 +150,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     );
     nameLinks(page.chapter, opened);
     marks.highlights.paint();
+    find.paint();
     const offset = typeof place === 'number' ? place : place();
     if (offset !== given) page.sheet.showPlace(offset);
     of.changed();
@@ -274,6 +284,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     },
     keep: () => page.sheet.keep(),
     marks,
+    find,
+    whenStill: (then) => pages.whenStill(then),
     labelAt: (at, offset) => placing.labelAt(at, offset),
     quote,
     follow(next) {
@@ -289,6 +301,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       pages.dispose();
       links.forget();
       letGo();
+      find.dispose();
       page.dispose();
     },
   };

@@ -68,6 +68,14 @@ bar's own, and
 reach the native menu, so Phase 5's end-to-end tests can't test that route
 by keyboard.
 
+**Built (Phase 5c):** `ui/epub/book-find.ts`'s `BookFind` is the book's
+`FindTarget`, a search of the page's own over the window's chapters read
+for Find (`ui/epub/book-search.ts`), with no `replace`; the page gives its
+`PageFind` over that bar (`EpubPage.find`), so ⌘F, ⌘G and ⇧⌘G (the menu)
+and a phone's ⋯ → Find reach it as a note's do. The end-to-end tests click
+Edit → Find. The list's field searching a book is another search over the
+same engine (`vault/epub-found.ts`).
+
 ### What the controller holds per page: `vault/page-side.ts`
 
 - `Place`: `{ path, name }`, where a page was in what it showed and what it

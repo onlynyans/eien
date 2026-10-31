@@ -1,4 +1,5 @@
 export { bookHref, bookLinkOf } from './book-link';
+export { type BookBlock, chapterBlocks, type Gap, offsetIn } from './book-text';
 export {
   BOOKMARK_WORDS,
   type Bookmark,
@@ -16,6 +17,14 @@ export { BLOCK_NAMES, type ChapterVisit, walkChapter } from './chapter-words';
 export { chapterBeside, chapterTitle } from './chapters';
 export type { ContentsEntry, PrintPage } from './contents';
 export { type Epub, type EpubImage, type EpubSpineItem, epubKey, openEpub } from './epub';
+export {
+  AS_WRITTEN,
+  CONTEXT,
+  type FindOptions,
+  type Found,
+  findIn,
+  matcherOf,
+} from './find';
 export {
   HIGHLIGHT_WORDS,
   type Highlight,
@@ -36,9 +45,11 @@ export {
   BEFORE_WORDS,
   type InSight,
   type Mark,
-  type MarkWalk,
   marksInOrder,
+  type Placed,
+  type Walk,
   walkMarks,
+  walkPlaces,
 } from './marks';
 export type { SpineItem } from './package';
 export {

@@ -3,9 +3,11 @@
 
 import type { Epub } from '../../core/epub';
 import type { Place, Side } from '../vault/page-side';
-import type { BookCounts } from './book-count';
+import type { BookCounts, Still } from './book-count';
+import type { BookFind } from './book-find';
 import type { BookMarks } from './book-marks';
 import type { BookOpenOf } from './book-open';
+import type { BookTexts } from './book-search';
 import type { EpubPage } from './epub-page';
 import type { ReadingStore } from './reading-store';
 
@@ -20,6 +22,8 @@ export interface EpubSideOf extends BookOpenOf {
   readonly reading: ReadingStore;
   /** The window's counts of its books, for their page numbers (Phase 4). */
   readonly counts: BookCounts;
+  /** The window's chapters read for Find (Phase 5c), the last book searched. */
+  readonly texts: BookTexts;
   /** Whether the page in sight is bookmarked changed (Phase 4b): the tools show it. */
   looks(): void;
   /** Another book or chapter is on the page: the list and the shelf mark it. */
@@ -57,6 +61,10 @@ export interface EpubSide extends Side {
   keep(): void;
   /** Its marks (Phase 4b, 5a): its bookmarks and its highlights, over the book's reading file. */
   readonly marks: BookMarks;
+  /** Find in it (Phase 5c): its find bar's target, and a Found row's match shown. */
+  readonly find: BookFind;
+  /** `then` once no page of it turns: when a search may take a task. */
+  readonly whenStill: Still;
   /** The page `offset` into spine item `spine` is on, as its label says it (a Marks row's); null for none known. */
   labelAt(spine: number, offset: number): string | null;
   /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */

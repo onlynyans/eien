@@ -79,6 +79,7 @@ export async function showVault(
     nav,
     tell,
     redraw: () => void redraw(),
+    drawRows: () => void draw.all(),
     looks: () => chrome.refresh(),
     marksAt: () => settings.values['epub.marks'],
     pages: () => pages,
@@ -104,10 +105,15 @@ export async function showVault(
     settings,
     redraw: () => void redraw(),
   });
-  const search = new SearchField((words) => {
-    nav.query = words;
-    void redraw();
-  });
+  const search = new SearchField(
+    (words) => {
+      nav.query = words;
+      epubs.typed(words);
+      void redraw();
+    },
+    // Beside a book's rows, Enter goes to its next match (#40, Phase 5c).
+    (back) => draw.searchesBook() && epubs.stepFound(back ? -1 : 1),
+  );
 
   // The sidebar's moves in your order (./order-actions.ts); `sidebar` and `draw` come after.
   const order = orderActions({
