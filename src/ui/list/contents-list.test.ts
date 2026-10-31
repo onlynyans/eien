@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { BookLens, MarkRow } from './book-lenses';
-import { type ContentsModel, NO_MARKS, renderContents } from './contents-list';
+import { NO_MARKS } from './book-lenses';
+import { type ContentsModel, renderContents } from './contents-list';
 
 const MODEL: ContentsModel = {
   title: 'Pride and Prejudice',

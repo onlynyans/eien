@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { readingPath } from '../../core/epub';
-import { NO_MARKS } from '../list/contents-list';
+import { NO_MARKS } from '../list/book-lenses';
 import type { EpubSide } from './epub-side-types';
 import { laidOut } from './test-lines';
 import { sideWith } from './test-side';
@@ -136,5 +136,51 @@ describe('] and [ within one chapter, as QA tried them', () => {
     press(side, '[');
     await vi.waitFor(() => expect(where(side)).toBe(chapter(2)));
     expect(said(side)).toBe('Highlight, 2 of 2 marks.');
+  });
+});
+
+// Phase 5b's review and QA: where a walk starts.
+describe('] and [ from where the page really is', () => {
+  it('walk from a scroll still on its way to rest, never from where it was', async () => {
+    const { side } = await opened({
+      highlights: [
+        { chapter: chapter(1), from: 50, to: 55, words: '' },
+        { chapter: chapter(1), from: 300, to: 305, words: '' },
+        { chapter: chapter(1), from: 1200, to: 1205, words: '' },
+      ],
+    });
+    // Scrolled down to the 500th character (ten a line, twenty pixels each), not yet at rest.
+    side.page.scroller.scrollTop = 1000;
+    press(side, ']');
+    expect(said(side)).toBe('Highlight, 3 of 3 marks.');
+  });
+
+  it('walk on from the mark just gone to, a quick second ] never landing on it again', async () => {
+    const { side } = await opened({
+      bookmarks: [{ chapter: chapter(3), offset: 0, words: 'third' }],
+      highlights: [{ chapter: chapter(2), from: 10, to: 20, words: 'second' }],
+    });
+    press(side, ']');
+    press(side, ']');
+    expect(said(side)).toBe('Bookmark, 2 of 2 marks.');
+    await vi.waitFor(() => expect(where(side)).toBe(chapter(3)));
+  });
+
+  it('walk past a chapter that won’t open, its words never measured', async () => {
+    const { side } = await opened({
+      bookmarks: [{ chapter: chapter(3), offset: 0, words: 'third' }],
+      highlights: [{ chapter: chapter(2), from: 10, to: 20, words: 'second' }],
+    });
+    const epub = side.epub;
+    if (!epub) throw new Error('no book');
+    const read = epub.chapter.bind(epub);
+    vi.spyOn(epub, 'chapter').mockImplementation(async (index) =>
+      epub.spine[index]?.path === chapter(2) ? { refused: 'damaged', detail: 'test' } : read(index),
+    );
+    press(side, ']');
+    await vi.waitFor(() => expect(said(side)).toBe('Highlight, 1 of 2 marks.'));
+    press(side, ']');
+    expect(said(side)).toBe('Bookmark, 2 of 2 marks.');
+    await vi.waitFor(() => expect(where(side)).toBe(chapter(3)));
   });
 });

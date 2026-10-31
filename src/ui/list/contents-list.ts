@@ -7,7 +7,15 @@
 // and highlights (Phase 5b) (./book-lenses.ts).
 
 import { h } from '../dom';
-import { type BookLens, lensButtons, lensKey, type MarkRow, markKey, markRow } from './book-lenses';
+import {
+  type BookLens,
+  lensButtons,
+  lensKey,
+  type MarkRow,
+  markKey,
+  markRow,
+  NO_MARKS,
+} from './book-lenses';
 import { moveBetween } from './list';
 
 export interface ContentsModel {
@@ -33,9 +41,6 @@ export interface ContentsActions {
   go(row: MarkRow): void;
   remove(row: MarkRow): void;
 }
-
-/** What Marks says with none kept yet. */
-export const NO_MARKS = 'Nothing kept yet. B bookmarks a page; H keeps the words you choose.';
 
 /** The words under the heading: "Jane Austen · 61 chapters". */
 const countOf = (model: ContentsModel) => {

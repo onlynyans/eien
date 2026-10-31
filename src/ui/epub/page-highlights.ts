@@ -19,6 +19,7 @@ import {
   pressHighlight,
   type Span,
   sameHighlight,
+  sightEnd,
   withHighlights,
   withRestored,
 } from '../../core/epub';
@@ -249,7 +250,7 @@ export class PageHighlights {
     this.#of.page.foot.highlighted(
       sight !== null &&
         this.#mine().some(
-          (each) => each.from < Math.max(sight.to, sight.from + 1) && sight.from < each.to,
+          (each) => each.from < sightEnd(sight.from, sight.to) && sight.from < each.to,
         ),
     );
   }

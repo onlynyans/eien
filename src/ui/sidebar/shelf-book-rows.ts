@@ -13,8 +13,9 @@ import {
   markKeys,
   markName,
   markWhere,
+  NO_MARKS,
 } from '../list/book-lenses';
-import { chapterKey, marked, NO_MARKS } from '../list/contents-list';
+import { chapterKey, marked } from '../list/contents-list';
 import { atDepth } from './depth';
 import { shelfButton as button, shelfRow as row } from './shelf-row';
 

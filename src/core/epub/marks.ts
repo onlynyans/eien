@@ -7,6 +7,7 @@
 
 import type { Bookmark } from './bookmarks';
 import type { Highlight } from './highlights';
+import { sightEnd } from './place';
 
 /** A mark of either kind, where it stands in the book. */
 export type Mark = (
@@ -46,12 +47,18 @@ export function marksInOrder(
   );
 }
 
-/** Where the reader is: the chapter drawn, and the words in sight, `from` up to (not at) `to`. */
+/**
+ * Where the reader is: the chapter drawn, and the words in sight, `from` up
+ * to (not at) `to`; before the chapter's first word, `BEFORE_WORDS`.
+ */
 export interface InSight {
   readonly spine: number;
   readonly from: number;
   readonly to: number;
 }
+
+/** The words in sight on a page before a chapter's first word (Eien's title page), or none measured. */
+export const BEFORE_WORDS = { from: -1, to: 0 } as const;
 
 /** The mark `]` or `[` goes to, its place among them all, and whether the walk went round the book. */
 export interface MarkWalk {
@@ -70,8 +77,8 @@ export function walkMarks(marks: readonly Mark[], sight: InSight, way: 1 | -1): 
   const before = (mark: Mark, spine: number, offset: number) =>
     mark.spine < spine || (mark.spine === spine && mark.offset < offset);
   if (way > 0) {
-    // At or past the words after those in sight; a page of no words (a picture's) is its own word.
-    const end = Math.max(sight.to, sight.from + 1);
+    // At or past the words after those in sight.
+    const end = sightEnd(sight.from, sight.to);
     const index = marks.findIndex((mark) => !before(mark, sight.spine, end));
     return index >= 0
       ? { mark: marks[index] as Mark, index, round: false }

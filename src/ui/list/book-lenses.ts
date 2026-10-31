@@ -80,8 +80,17 @@ export const markKeys =
 /** What a mark's row is called: its words, or with none kept its chapter's name. */
 export const markName = (row: MarkRow): string => row.mark.words || row.chapter;
 
+/** What each kind of mark is called, in words: a row's, and what `]` and `[` say. */
+export const MARK_KINDS: Readonly<Record<Mark['kind'], string>> = {
+  bookmark: 'bookmark',
+  highlight: 'highlight',
+};
+
+/** What Marks, and `]` or `[`, say with none kept. */
+export const NO_MARKS = 'Nothing kept yet. B bookmarks a page; H keeps the words you choose.';
+
 /** What a mark's row says under its words: its chapter, and which kind of mark it is. */
-export const markWhere = (row: MarkRow): string => `${row.chapter} · ${row.kind}`;
+export const markWhere = (row: MarkRow): string => `${row.chapter} · ${MARK_KINDS[row.kind]}`;
 
 /**
  * A mark's row: Enter or a click goes to it, Delete or Backspace takes it

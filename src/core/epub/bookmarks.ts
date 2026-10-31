@@ -4,6 +4,7 @@
 // begins with, for the list; kept as every list in the file is
 // (./reading-list.ts).
 
+import { sightEnd } from './place';
 import { type ListChange, type ListKind, listIn, withList } from './reading-list';
 
 export interface Bookmark {
@@ -69,7 +70,7 @@ export const bookmarksOn = (
   from: number,
   to: number,
 ): Bookmark[] => {
-  const end = Math.max(to, from + 1);
+  const end = sightEnd(from, to);
   return marks.filter(
     (mark) => mark.chapter === chapter && mark.offset >= from && mark.offset < end,
   );

@@ -399,7 +399,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back
   - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons
   - `edge-strip.ts`, `.css`: Marks on the edge (Phase 4d): the whole book down the page's edge, a slider, apart from the fore-edge
-  - `book-strip.ts`: the book told to the strip as shares of it (chapters, bookmarks, the place), and where a point on it goes
+  - `book-strip.ts`: the book told to the strip as shares of it (chapters, marks of both kinds, the place), and where a point on it goes
   - `page-keys.ts`: the page's keys, one table: its letters (Q, B, H), `]` and `[`, Back, and in pages the keys that turn and a touch's tap in the outer thirds
   - `turn/`: a page turned (Phase 3)
     - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first

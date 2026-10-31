@@ -126,7 +126,7 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
   };
   /** The book's marks, bookmarks and highlights, as their rows show them, in its order (Phase 4c, 5b). */
   const marksOf = (side: EpubSide, epub: Epub): MarkRow[] =>
-    side.marks.inOrder(epub).map((mark) => ({
+    side.marks.inOrder().map((mark) => ({
       ...mark,
       page: side.labelAt(mark.spine, mark.offset),
       chapter: chapterTitle(epub.contents, mark.spine) ?? side.page.name,

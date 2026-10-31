@@ -491,7 +491,9 @@ Three panes, each collapsible, with a two-pane option in settings:
      the colophon ("highlighted").
    - **`]` and `[`** (Phase 5b) walk the book's marks, bookmarks and
      highlights, in its order: `]` to the first past the words in sight, `[`
-     to the last before them, round the book past either end; the colophon
+     to the last before them (on Eien's title page, none of the chapter's
+     yet; a key pressed again before a page is measured walks on from the
+     mark it just went to), round the book past either end; the colophon
      says which ("Highlight, 3 of 7 marks.", "Round to the first: …"), or
      that none is kept. Typed however a keyboard's layout types a bracket;
      ⌘[ (Ctrl+[) stays Back. View → Next Mark and Previous Mark do the same,

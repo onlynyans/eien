@@ -6,13 +6,21 @@
 // kept said once, in the same words for either; and `]` and `[` walking
 // both kinds in the book's order (Phase 5b).
 
-import { type Epub, type Mark, marksInOrder, type ReadingKept, walkMarks } from '../../core/epub';
-import { NO_MARKS } from '../list/contents-list';
+import {
+  BEFORE_WORDS,
+  type Epub,
+  type Mark,
+  marksInOrder,
+  type ReadingKept,
+  walkMarks,
+} from '../../core/epub';
+import { MARK_KINDS, NO_MARKS } from '../list/book-lenses';
 import type { Still } from './book-count';
 import type { EpubPage } from './epub-page';
 import { PageBookmarks } from './page-bookmarks';
 import { PageHighlights } from './page-highlights';
 import type { MarksEdit, ReadingMarks, ReadingRead, ReadingStore } from './reading-store';
+import { allFront } from './sight';
 
 /** What the colophon says of a reading file this Eien won't write over. */
 export const NOT_KEPT: Partial<Record<ReadingKept, string>> = {
@@ -48,10 +56,10 @@ export interface BookMarksOf {
   goTo(index: number, offset: number): void;
 }
 
-/** What `]` and `[` say they came to: its kind, and its place among them all. */
-const KIND_WORDS: Readonly<Record<Mark['kind'], string>> = {
-  bookmark: 'Bookmark',
-  highlight: 'Highlight',
+/** A kind's name to begin what's said with. */
+const said = (kind: Mark['kind']) => {
+  const name = MARK_KINDS[kind];
+  return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
 export class BookMarks {
@@ -62,6 +70,12 @@ export class BookMarks {
   #unlisten = () => {};
   /** The words in sight, as last measured; null while none are. */
   #sight: { readonly from: number; readonly to: number } | null = null;
+  /**
+   * The mark `]` or `[` last went to, until the page measures what it shows
+   * there: a quick or held key walks on from it, never back to it, and a
+   * chapter that won't open (none measured) is walked past.
+   */
+  #walked: Mark | null = null;
 
   constructor(of: BookMarksOf) {
     this.#of = of;
@@ -84,7 +98,8 @@ export class BookMarks {
   }
 
   /** Every mark of the book's that's in it, in its order (Marks, the strip, `]` and `[`). */
-  inOrder(epub: Epub | null): Mark[] {
+  inOrder(): Mark[] {
+    const epub = this.#of.epub();
     if (!epub) return [];
     const spine = epub.spine.map((item) => item.path);
     return marksInOrder(this.bookmarks.all, this.highlights.all, spine);
@@ -96,25 +111,42 @@ export class BookMarks {
    */
   walk(way: 1 | -1): void {
     const { page } = this.#of;
-    const marks = this.inOrder(this.#of.epub());
-    const sight = this.#sight ?? { from: 0, to: 0 };
-    const walked = walkMarks(marks, { spine: this.#of.spine(), ...sight }, way);
+    // Where the page is now: a turn landed, a scroll on its way to rest measured.
+    this.#of.land();
+    page.sheet.keep();
+    const marks = this.inOrder();
+    const last = this.#walked;
+    const walked = walkMarks(
+      marks,
+      last
+        ? { spine: last.spine, from: last.offset, to: last.offset + 1 }
+        : { spine: this.#of.spine(), ...this.#words() },
+      way,
+    );
     if (!walked) {
       page.foot.say(NO_MARKS);
       return;
     }
     const { mark, index, round } = walked;
+    this.#walked = mark;
     this.#of.goTo(mark.spine, mark.offset);
     const count = `${marks.length} ${marks.length === 1 ? 'mark' : 'marks'}`;
-    const where = `${KIND_WORDS[mark.kind]}, ${index + 1} of ${count}.`;
+    const where = `${said(mark.kind)}, ${index + 1} of ${count}.`;
     page.foot.say(
       round ? `${way > 0 ? 'Round to the first' : 'Round to the last'}: ${where}` : where,
     );
   }
 
+  /** The words in sight, as `]` and `[` walk from them: before the chapter's on Eien's title page, or with none measured. */
+  #words(): { readonly from: number; readonly to: number } {
+    const sight = this.#sight;
+    return sight && !allFront(this.#of.page.sheet.sight) ? sight : BEFORE_WORDS;
+  }
+
   /** The words in sight measured. */
   inSight(from: number, to: number): void {
     this.#sight = { from, to };
+    this.#walked = null;
     this.bookmarks.inSight(from, to);
     this.highlights.inSight(from, to);
   }
@@ -128,6 +160,7 @@ export class BookMarks {
 
   /** No book: nothing kept of its marks. */
   clear(): void {
+    this.#walked = null;
     this.#unlisten();
     this.#unlisten = () => {};
     this.#key = null;

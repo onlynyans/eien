@@ -28,7 +28,7 @@ export interface BookPlaceOf {
   spine(): number;
   /** The book's count, while one is open. */
   count(): BookCount | null;
-  /** The book's bookmarks, for the strip. */
+  /** The book's marks, bookmarks and highlights in its order, for the strip. */
   marks(): readonly Mark[];
   /** A place shown: spine item `index` at an offset, or the one it gives once drawn (where the strip goes). */
   goTo(index: number, at: number | (() => number)): void;

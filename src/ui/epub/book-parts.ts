@@ -37,7 +37,7 @@ export function bookParts(parts: BookPartsOf) {
   const placing = bookPlace({
     ...book,
     count: parts.count,
-    marks: () => marks.inOrder(epub()),
+    marks: () => marks.inOrder(),
     goTo: (index, at) => void side().goTo(index, at),
   });
   const marks = new BookMarks({

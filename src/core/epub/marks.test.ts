@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Bookmark } from './bookmarks';
 import type { Highlight } from './highlights';
-import { type Mark, marksInOrder, walkMarks } from './marks';
+import { BEFORE_WORDS, type Mark, marksInOrder, walkMarks } from './marks';
 
 const SPINE = ['c0.xhtml', 'c1.xhtml', 'c2.xhtml'];
 const bookmark = (chapter: number, offset: number): Bookmark => ({
@@ -118,5 +118,17 @@ describe('] and [ from the sights a page gives, as QA tried them', () => {
     const on = { spine: 1, from: 30, to: 60 };
     expect(walkMarks(one, on, 1)).toMatchObject({ index: 0, round: true });
     expect(walkMarks(one, on, -1)).toMatchObject({ index: 0, round: true });
+  });
+});
+
+// Phase 5b's QA: on Eien's title page no word of the chapter is in sight yet.
+describe('] from before a chapter’s first word', () => {
+  it('lands on a mark at the chapter’s very first word, not past it', () => {
+    const marks = marksInOrder([bookmark(0, 0), bookmark(0, 500)], [], SPINE);
+    expect(walkMarks(marks, { spine: 0, ...BEFORE_WORDS }, 1)).toMatchObject({
+      index: 0,
+      round: false,
+    });
+    expect(walkMarks(marks, { spine: 0, ...BEFORE_WORDS }, -1)).toMatchObject({ round: true });
   });
 });

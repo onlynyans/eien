@@ -98,7 +98,7 @@ describe('a book’s bookmarks in its reading state', () => {
   });
 });
 
-describe('the bookmarks on a page, and in the book’s order', () => {
+describe('the bookmarks on a page', () => {
   const marks = [mark('c2', 50), mark('c1', 900), mark('c1', 100), mark('gone', 0)];
 
   it('are those from its first word up to the next page’s', () => {

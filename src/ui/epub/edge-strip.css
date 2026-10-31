@@ -77,7 +77,7 @@
 .edge-strip i.edge-strip__highlight {
   left: calc(var(--eien-space-3) + var(--eien-space-2));
   height: var(--eien-space-2);
-  border-inline-start: var(--eien-epub-highlight-w) solid var(--eien-epub-highlight-ink);
+  border-left: var(--eien-epub-highlight-w) solid var(--eien-epub-highlight-ink);
   translate: 0 -50%;
 }
 .edge-strip i.edge-strip__here {

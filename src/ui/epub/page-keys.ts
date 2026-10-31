@@ -89,7 +89,7 @@ export function bookKey(event: KeyboardEvent, of: BookKeysOf): void {
   // A bracket typed with whatever a layout needs for it (AltGr, a Mac's Option), but ⌘ or Ctrl
   // alone, which is Back.
   const way = Object.hasOwn(BRACKETS, event.key) ? BRACKETS[event.key] : undefined;
-  if (way && !isBack(event) && !((event.metaKey || event.ctrlKey) && !event.altKey) && of.shown()) {
+  if (way && !((event.metaKey || event.ctrlKey) && !event.altKey) && of.shown()) {
     event.preventDefault();
     of.walk(way);
     return;
