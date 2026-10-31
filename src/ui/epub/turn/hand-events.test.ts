@@ -173,6 +173,16 @@ describe('a hand on a page in pages', () => {
     expect(turn.letGo).not.toHaveBeenCalled();
   });
 
+  it('a finger’s own capture lost to the pane (the browser’s implicit one) is never a cancel; the pane’s is', () => {
+    const { turn, on, target } = page();
+    on('.words').dispatchEvent(pointer('pointerdown', { pointerType: 'touch', clientX: 380 }));
+    // The paragraph the finger landed on loses the touch to the pane, and its event bubbles up.
+    on('.words').dispatchEvent(pointer('lostpointercapture', { pointerType: 'touch' }));
+    expect(turn.cancel).not.toHaveBeenCalled();
+    target.dispatchEvent(pointer('lostpointercapture', { pointerType: 'touch' }));
+    expect(turn.cancel).toHaveBeenCalledOnce();
+  });
+
   it('takes no other button, nor a pen over the words', () => {
     const right = page();
     right.on('.words').dispatchEvent(pointer('pointerdown', { pointerType: 'touch', button: 2 }));

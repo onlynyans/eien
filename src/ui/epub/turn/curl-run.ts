@@ -9,6 +9,7 @@ import {
   curlFrame,
   dragCurl,
   dropCurl,
+  fallBackCurl,
   finishCurl,
   letGoCurl,
   type Point,
@@ -71,6 +72,12 @@ export class CurlRun {
   /** Let go, the finish landing in `time`; or, a key's, flying from the first. */
   fly(time?: number): void {
     if (time !== undefined) this.#turn = letGoCurl(this.#turn, time);
+    this.#flyOn();
+  }
+
+  /** Let go unasked (a cancelled gesture): home to where it began, landing in `time`. */
+  fallBack(time: number): void {
+    this.#turn = fallBackCurl(this.#turn, time);
     this.#flyOn();
   }
 

@@ -163,7 +163,11 @@ export class PageTurn {
     this.#hand = null;
     if (!hand) return false;
     hand.lifted = true;
-    if (hand.holding?.phase === 'held') hand.holding.drop();
+    // Home over the turn's time, as a hand let go short does: never snatched away.
+    const held = hand.holding;
+    if (held?.phase === 'held') {
+      held.fallBack(curlTime(held.tokens.calm, turnScale(this.#surface.how().speed)));
+    }
     return hand.asked;
   }
 
