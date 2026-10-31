@@ -644,7 +644,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d)
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131, two pages and set as a book, 3d; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add paging and the turn (Phase 3), marks, highlights and Find
@@ -801,6 +801,35 @@ in the book, each recorded here as it's built.
   instant with reduced motion. The curl's light is the one exception
   under Depth: its pieces are copies of the page in sight, clipped to the
   pane.
+
+- **Two pages** (Phase 3d, Pages 1's spread, `ui/epub/epub-spread.css`):
+  where the pane holds two pages of 20em of the text, with the sheet's
+  margins and the gutter, the sheet widens to two pages, each at most the
+  measure (Page width still narrows them), the text blocks
+  `--eien-space-8` apart and Facing pages' `--eien-rule-soft` hairline down
+  the gutter's middle. One sheet, its one shadow, no fold shading. Never on
+  a phone (one pane at a time) or in a split. A turn moves the spread, the
+  curl lifting it as one leaf; the fore-edge stands at its outer sides
+  (Previous pages, Next pages). A bookmark's mark sits on the page it
+  marks: the verso's at its left, its edge tab past the pages read
+  (`--edges-before`). The colophon says "pages 212–213 of 2,450".
+- **Set as a book** (Phase 3d, Showcase 2, `ui/epub/epub-set.css`), in
+  pages alone: justified and hyphenated (`hyphenate-limit-chars: 6 3 2`),
+  `text-wrap: pretty`, widows and orphans 2; ragged but hyphenated on a
+  phone and on a page under 520px; ragged where the window can't hyphenate
+  the book's language (`ui/epub/hyphens.ts`). A chapter opens four lines
+  low (two on a phone), on the text's own line (`--line`). The running
+  heads in label type, off an opening page: the chapter's over one page;
+  the book's title over the verso and the chapter's over the recto. The
+  folios in counts at the outer corners, the page numbers' own labels.
+  Each keeps its line when empty; in pages they take the folders' crumbs'
+  place. Before the first chapter, Eien's **title page** (the title at 1.5 ×
+  the title size, a `--eien-space-7` hairline in `--eien-rule` under it, the
+  author in tracked capitals at preview size in ink-soft, the folders at the
+  foot in label type) and, facing it, the **imprint** at its foot: "This
+  copy" in label type, then its lines in the mono at meta size in pencil,
+  the title in italic and the face's name in the text face. Neither is the
+  book's words: never chosen, counted or marked.
 
 ## A link in Live (decided 2026-10-29, #38; built)
 

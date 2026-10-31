@@ -89,10 +89,11 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
     );
     const epub = of.epub();
     if (epub && allFront(sight))
+      // Its chapters as the list's head counts them: the contents' rows.
       fillImprint(
         page.chapter,
         page.element,
-        epub.spine.length,
+        epub.contents.length,
         count ? pageOf(count, 0, 0).of : null,
       );
   };

@@ -47,6 +47,7 @@ export const openingSight = (front: number, per: number): number =>
 
 /** How far through its own pages sight `sight` of `sights` is, 0 to 1: the front matter is none of them. */
 export function throughSights(sight: number, sights: number, opening: number): number {
+  if (sight < opening) return 0;
   const last = sights - 1 - opening;
   return last > 0 ? Math.min(1, Math.max(0, (sight - opening) / last)) : 1;
 }

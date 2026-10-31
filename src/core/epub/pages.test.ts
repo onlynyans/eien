@@ -141,6 +141,9 @@ describe('a page’s part in its chapter (Phase 3d)', () => {
     expect(throughSights(1, 4, 1)).toBe(0);
     expect(throughSights(3, 4, 1)).toBe(1);
     expect(throughSights(0, 1, 0)).toBe(1);
+    // A chapter of one sight past its front matter: none of it read on the front, all of it at the opening.
+    expect(throughSights(0, 2, 1)).toBe(0);
+    expect(throughSights(1, 2, 1)).toBe(1);
   });
 
   it('has the opening in sight at the opening sight, and the front only before it', () => {
