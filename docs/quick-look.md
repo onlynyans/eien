@@ -228,8 +228,9 @@ A book has settings with no note's to copy, each in the schema marked
 `quick: 'shelf'`, in this order: **Read in** (`epub.view`: *Pages*,
 *Scroll*), **Page turn** (`epub.turn`: *Curl*, *Slide*, *Words*), **Turn
 speed** (`epub.turnSpeed`: *Instant*, *1×* to *4×*, short so they fit the
-popover's width, the meaning in the description) and the **scroll style**
-(`epub.scroll`: *As a note*, *As a book*).
+popover's width, the meaning in the description), the **scroll style**
+(`epub.scroll`: *As a note*, *As a book*) and **Marks** (`epub.marks`, Phase
+4d: *In the list*, *On the edge*).
 `quickIn(platform, phone, kind)` offers it only for the shelf's subject
 (`LookSubject.kind`, `'epub'`), after the page settings in the schema's
 order; `settingsIn` leaves it out of Settings, which sets notes. The

@@ -10,10 +10,12 @@ function placed() {
   const foot = new BookFoot(() => {});
   const count = { lengths: [4500], print: [] } as unknown as BookCount;
   const place = bookPlace({
-    page: { foot } as unknown as EpubPage,
-    epub: () => ({ spine: [] }) as unknown as Epub,
+    page: { foot, element: document.createElement('div') } as unknown as EpubPage,
+    epub: () => ({ spine: [], contents: [] }) as unknown as Epub,
     spine: () => 0,
     count: () => count,
+    marks: () => [],
+    goTo: () => {},
   });
   const said = () => foot.figures[2]?.textContent;
   return { place, said };
@@ -50,10 +52,12 @@ describe('a page a bookmark is on, as its row says it', () => {
       ],
     } as unknown as BookCount;
     const place = bookPlace({
-      page: { foot } as unknown as EpubPage,
-      epub: () => ({ spine: [] }) as unknown as Epub,
+      page: { foot, element: document.createElement('div') } as unknown as EpubPage,
+      epub: () => ({ spine: [], contents: [] }) as unknown as Epub,
       spine: () => 0,
       count: () => count,
+      marks: () => [],
+      goTo: () => {},
     });
     expect(place.labelAt(0, 500)).toBe('1');
     expect(place.labelAt(1, 10)).toBeNull();
@@ -62,10 +66,15 @@ describe('a page a bookmark is on, as its row says it', () => {
   /** A book's place whose count is `count` (null: no book counted at all). */
   const placeOver = (count: unknown) =>
     bookPlace({
-      page: { foot: new BookFoot(() => {}) } as unknown as EpubPage,
-      epub: () => ({ spine: [] }) as unknown as Epub,
+      page: {
+        foot: new BookFoot(() => {}),
+        element: document.createElement('div'),
+      } as unknown as EpubPage,
+      epub: () => ({ spine: [], contents: [] }) as unknown as Epub,
       spine: () => 0,
       count: () => count as BookCount | null,
+      marks: () => [],
+      goTo: () => {},
     });
 
   it('is none known for a book with no page-list until every chapter is counted, in any chapter: never a guess', () => {

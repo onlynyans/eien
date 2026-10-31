@@ -358,6 +358,18 @@ export const SETTINGS = [
     quick: 'shelf',
   },
   {
+    key: 'epub.marks',
+    label: 'Marks',
+    description:
+      'Where a book’s bookmarks are: in the list beside its contents, or down the page’s edge with the whole book.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { list: 'In the list', edge: 'On the edge' },
+    default: 'list',
+    quick: 'shelf',
+  },
+  {
     key: 'editor.focus',
     label: 'Focus',
     description: 'Dim every paragraph except the one you’re editing. Also in View → Focus Mode.',

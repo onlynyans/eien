@@ -122,6 +122,7 @@ describe('the quick look’s mark (#49)', () => {
       ['epub.turn', 'shelf'],
       ['epub.turnSpeed', 'shelf'],
       ['epub.scroll', 'shelf'],
+      ['epub.marks', 'shelf'],
     ]);
   });
 

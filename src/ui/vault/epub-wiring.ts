@@ -30,6 +30,8 @@ export interface EpubWiringOf {
   redraw(): void;
   /** How a book's commands look changed (its page bookmarked or not): the controls show it. */
   looks(): void;
+  /** Where a book's marks are (the Marks setting, Phase 4d): in the list, or on the page's edge. */
+  marksAt(): 'list' | 'edge';
   pages(): Pages;
   /**
    * Open `path` as a note chosen from a row is (./note-actions.ts, 'chosen'):
@@ -147,8 +149,9 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
       author: epub.author,
       rows: epub.contents.map(({ title, depth, spine }) => ({ title, depth, spine })),
       spine: side.spine,
+      // On the edge, the list is the contents alone: no lenses.
       lens: of.nav.bookLens,
-      marks: marksOf(side, epub),
+      marks: of.marksAt() === 'list' ? marksOf(side, epub) : null,
     };
   };
   return {

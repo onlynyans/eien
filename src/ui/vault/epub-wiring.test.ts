@@ -17,6 +17,7 @@ function wired(
   pages: unknown = { active: {}, sides: [] },
   phone = false,
   bytes: Uint8Array | null = null,
+  marksAt: 'list' | 'edge' = 'list',
 ) {
   const nav = new Navigation();
   nav.contents = contents;
@@ -30,6 +31,7 @@ function wired(
     tell: () => {},
     redraw: () => {},
     looks: () => {},
+    marksAt: () => marksAt,
     pages: () => pages as Pages,
     openChosen: async () => {},
     showPage: () => {},
@@ -128,6 +130,10 @@ describe('a book’s Marks in the list (Phase 4c)', () => {
       ['later', 3, 'Chapter III'],
     ]);
     expect(contents?.lens).toBe('contents');
+    // Marks on the edge (Phase 4d): the list is the contents alone.
+    expect(
+      wired('a.epub', { active: side, sides: [side] }, false, null, 'edge').epubs.contents()?.marks,
+    ).toBeNull();
   });
 
   it('go to a bookmark on the book’s own page, made the active one, a note beside it staying', () => {
@@ -169,6 +175,7 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
       tell: () => {},
       redraw,
       looks: () => {},
+      marksAt: () => 'list',
       pages: () => pages as Pages,
       openChosen: async () => {},
       showPage,

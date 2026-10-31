@@ -1,7 +1,9 @@
 # Reading EPUBs: nine explorations
 
 **Chosen (2026-10-28), and building in phases.** Backlog #40. Phases 0, 1
-and 2 are built; Phase 3, turning pages, is being built ([The build](#the-build)). Three
+and 2 are built; Phase 3, turning pages, is built but for 3d (the spread, Set
+as a book); Phase 4, place, bookmarks and page count, is built
+([The build](#the-build)). Three
 sets of three, in one family so they share one look: turning pages, scrolling,
 and the features (page count, bookmarks, highlights, search in the book).
 
@@ -389,8 +391,10 @@ Each phase is its own session and pull request, from main.
   `bookmark.css`); **4c, built:** Marks in the list: Contents and Marks
   under the book's head, the one shown pressed, its bookmarks as rows (their words, page and
   chapter; Delete takes one off), under the book's SHELF row with two panes
-  (`list/book-lenses.ts`);
-  4d the strip on the edge, and the Marks setting.
+  (`list/book-lenses.ts`); **4d, built:** the Marks setting (*In the list*
+  or *On the edge*, in the shelf's quick look) and the strip down the page
+  pane's edge: chapters, bookmarks, the place as a bar, a slider to the
+  keyboard, scrubbed by a finger (`ui/epub/edge-strip.ts`, `book-strip.ts`).
 - **Phase 5, highlights and Find.**
 - **Phase 6, by lamplight,** on Scroll.
 

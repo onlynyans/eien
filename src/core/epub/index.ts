@@ -32,7 +32,7 @@ export {
 } from './page-numbers';
 export { EDGES, edgesOf, pageAt, pagesIn, wholeLines } from './pages';
 export { offsetOf, type Spot, spotOf } from './place';
-export { bookFraction, chapterFraction, percent } from './progress';
+export { bookFraction, chapterFraction, percent, placeAt } from './progress';
 export { citation, type QuoteSource, quoted, withQuote } from './quote';
 export {
   parseReading,

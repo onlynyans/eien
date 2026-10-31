@@ -409,3 +409,169 @@ test('a printed book’s page shows on the phone’s narrow colophon, how far th
   await expect(chapter(page)).toBeInViewport();
   await expect(figure).toHaveText('page 2 of 5');
 });
+
+test('a book’s marks on the edge: the strip down the screen, a finger scrubbing it (#40, Phase 4d)', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await page.locator('.phone-bar__controls [data-command="look"]').click();
+  await page.locator('[data-setting="epub.marks"] [data-value="edge"]').click();
+  await page.keyboard.press('Escape');
+  const strip = page.locator('.edge-strip');
+  await expect(strip).toBeVisible();
+  const box = await strip.boundingBox();
+  const screen = page.viewportSize();
+  if (!box || !screen) throw new Error('no strip');
+  // A finger wide, clear of the screen's edge (Android's Back).
+  expect(box.width).toBeGreaterThanOrEqual(44);
+  expect(screen.width - (box.x + box.width)).toBeGreaterThanOrEqual(16);
+  expect(await seriousViolations(page), 'the strip').toEqual([]);
+  // A tap alone goes nowhere: a finger scrolling may start there.
+  const x = box.x + box.width / 2;
+  await page.touchscreen.tap(x, box.y + box.height - 2);
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  // A finger drawn down it to the book's end and lifted: its last chapter.
+  await strip.evaluate(
+    (element, at) => {
+      const touch = (type: string, y: number) =>
+        element.dispatchEvent(
+          new PointerEvent(type, {
+            pointerType: 'touch',
+            pointerId: 7,
+            clientX: at.x,
+            clientY: y,
+            button: 0,
+            bubbles: true,
+          }),
+        );
+      touch('pointerdown', at.top + 4);
+      touch('pointermove', at.top + at.height / 2);
+      touch('pointermove', at.top + at.height - 2);
+      touch('pointerup', at.top + at.height - 2);
+    },
+    { x, top: box.y, height: box.height },
+  );
+  await expect(chapter(page)).toContainText('Not all that Mrs. Bennet');
+});
+
+// QA (#40, Phase 4d): the tip a scrub shows beside the finger is words on
+// raised paper, shown only while a finger holds the strip, so no check at
+// rest ever reads its contrast: held here, by day and by night.
+for (const colorScheme of ['light', 'dark'] as const) {
+  test(`a scrub’s tip on the strip has no serious violation, ${colorScheme}`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme });
+    await open(page);
+    await putBytesOutside(
+      page,
+      'Eien/Vault/Novels/Pride and Prejudice.epub',
+      readFileSync(FIXTURE).toString('base64'),
+    );
+    await back(page).click();
+    await page
+      .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+      .click();
+    await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+    await page.locator('.phone-bar__controls [data-command="look"]').click();
+    await page.locator('[data-setting="epub.marks"] [data-value="edge"]').click();
+    await page.keyboard.press('Escape');
+    const strip = page.locator('.edge-strip');
+    const box = await strip.boundingBox();
+    if (!box) throw new Error('no strip');
+    const x = box.x + box.width / 2;
+    // A finger down on the strip and drawn along it, still held.
+    await strip.dispatchEvent('pointerdown', {
+      pointerId: 5,
+      pointerType: 'touch',
+      button: 0,
+      clientX: x,
+      clientY: box.y + box.height * 0.3,
+    });
+    await strip.dispatchEvent('pointermove', {
+      pointerId: 5,
+      pointerType: 'touch',
+      clientX: x,
+      clientY: box.y + box.height * 0.6,
+    });
+    const tip = strip.locator('.edge-strip__tip');
+    await expect(tip).toBeVisible();
+    await expect(tip).toHaveText(/^Chapter /u);
+    await expect(tip).toBeInViewport({ ratio: 1 });
+    expect(await seriousViolations(page), 'a scrub’s tip').toEqual([]);
+  });
+}
+
+// QA (#40, Phase 4d): the strip in pages, where the page turns by a tap in its
+// outer third and a finger drawn across it, and the strip stands at that very
+// edge. A finger on the strip is the strip's: never a turn, never a jump.
+test('a book in pages with its marks on the edge: a finger on the strip never turns the page', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await page.locator('.phone-bar__controls [data-command="look"]').click();
+  await page.locator('[data-setting="epub.view"] [data-value="pages"]').click();
+  await page.locator('[data-setting="epub.marks"] [data-value="edge"]').click();
+  await page.keyboard.press('Escape');
+  const leaf = page.locator('.page__leaf--epub');
+  await expect(leaf).toHaveAttribute('data-view', 'pages');
+  await expect(leaf).toHaveAttribute('data-marks', 'edge');
+  const strip = page.locator('.edge-strip');
+  const box = await strip.boundingBox();
+  const words = await page.locator('.epub-sheet:not([aria-hidden]) .epub__pages').boundingBox();
+  if (!box || !words) throw new Error('no strip');
+  const first = await firstWords(page);
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  // A tap on it: neither a turn (the page's outer third) nor a jump.
+  await page.touchscreen.tap(x, y);
+  // A finger drawn leftward from it, across the page: a turn's drag, had it begun on the page.
+  await strip.dispatchEvent('pointerdown', {
+    pointerId: 9,
+    pointerType: 'touch',
+    button: 0,
+    clientX: x,
+    clientY: y,
+  });
+  await page.evaluate(
+    ([from, at]) => {
+      const to = (clientX: number) => ({
+        pointerId: 9,
+        pointerType: 'touch',
+        clientX,
+        clientY: at,
+        bubbles: true,
+      });
+      window.dispatchEvent(new PointerEvent('pointermove', to(from - 100)));
+      window.dispatchEvent(new PointerEvent('pointermove', to(from - 200)));
+      window.dispatchEvent(new PointerEvent('pointerup', to(from - 200)));
+    },
+    [x, y] as const,
+  );
+  // Long enough for a turn or a chapter drawn to have landed (reduced motion: at once).
+  await page.waitForTimeout(500);
+  expect(await firstWords(page)).toBe(first);
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  // The pane keeps the strip its room: it never lies over the page's words.
+  expect(box.x).toBeGreaterThanOrEqual(words.x + words.width - 1);
+  // Reduced motion: the place's bar moves at once.
+  expect(
+    await strip
+      .locator('.edge-strip__here')
+      .evaluate((bar) => getComputedStyle(bar).transitionDuration),
+  ).toBe('0s');
+});

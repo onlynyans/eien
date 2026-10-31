@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bookFraction, chapterFraction, percent } from './progress';
+import { bookFraction, chapterFraction, percent, placeAt } from './progress';
 
 const spine = (sizes: readonly number[], out: readonly number[] = []) =>
   sizes.map((size, at) => ({ size, linear: !out.includes(at) }));
@@ -28,5 +28,26 @@ describe('how far through', () => {
     expect(percent(1)).toBe('100%');
     expect(percent(0.29)).toBe('29%');
     expect(percent(2)).toBe('100%');
+  });
+});
+
+describe('a share of the book’s place (Phase 4d)', () => {
+  const spine = [
+    { size: 100, linear: true },
+    { size: 900, linear: false },
+    { size: 300, linear: true },
+  ];
+
+  it('is the chapter it falls in and how far into it, passing what’s out of the reading order', () => {
+    expect(placeAt(spine, 0)).toEqual({ index: 0, within: 0 });
+    expect(placeAt(spine, 0.125)).toEqual({ index: 0, within: 0.5 });
+    expect(placeAt(spine, 0.25)).toEqual({ index: 2, within: 0 });
+    expect(placeAt(spine, 1)).toEqual({ index: 2, within: 1 });
+    expect(placeAt(spine, Number.NaN)).toEqual({ index: 0, within: 0 });
+  });
+
+  it('is nowhere in a book with nothing in its order, and the last chapter’s end in one of no size', () => {
+    expect(placeAt([{ size: 5, linear: false }], 0.5)).toBeNull();
+    expect(placeAt([{ size: 0, linear: true }], 0.5)).toEqual({ index: 0, within: 1 });
   });
 });

@@ -89,7 +89,8 @@ describe('the quick look', () => {
     expect(rowKeys()).not.toContain('epub.scroll');
     closeMenu();
     new QuickLook(of).open({ ...subject, kind: 'epub', crumb: 'Shelf' }, opener);
-    expect(rowKeys().at(-1)).toBe('epub.scroll');
+    // The book's own, Marks last (#40, Phase 4d).
+    expect(rowKeys().slice(-2)).toEqual(['epub.scroll', 'epub.marks']);
     button('epub.scroll', 'book')?.click();
     await settled();
     expect(settings.values['epub.scroll']).toBe('book');

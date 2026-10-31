@@ -248,6 +248,27 @@ test.describe('a long book open (#40)', () => {
 });
 
 /**
+ * A long book with its marks on the edge (#40, Phase 4d): the strip adds a
+ * hairline a chapter and a tab a bookmark, never the book, so the elements
+ * stay within EPUB_ELEMENTS (not yet measured with the strip: CI's first run
+ * says).
+ */
+test.describe('a long book with its marks on the edge (#40)', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': LONG_EPUB },
+    deviceFile: { settings: { 'epub.marks': 'edge' } },
+  });
+
+  test('draws the strip without the book', async ({ page }) => {
+    await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+    await expect(page.locator('.edge-strip__chapter')).toHaveCount(CHAPTERS);
+    expect(report('elements, a long book with its strip', await elements(page))).toBeLessThan(
+      EPUB_ELEMENTS,
+    );
+  });
+});
+
+/**
  * A long book counted for its page numbers (#40, Phase 4), then put away: the
  * window's count keeps numbers alone, so the heap stays within HEAP_GROWTH
  * (measured: 1.2 MB with the window's other first-time costs).

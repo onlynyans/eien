@@ -66,6 +66,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     stopCounting();
     count = null;
     marks.clear();
+    // No book: the strip has nothing to show.
+    placing.listed();
   };
   /** What the page's parts ask of it: the book, the chapter drawn, and another drawn (kept as the place). */
   const book = {
@@ -74,7 +76,12 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     spine: () => spine,
     draw: (index: number, at: number | (() => number)) => draw(index, true, at),
   };
-  const placing = bookPlace({ ...book, count: () => count });
+  const placing = bookPlace({
+    ...book,
+    count: () => count,
+    marks: () => marks.all,
+    goTo: (index, at) => void side.goTo(index, at),
+  });
   const marks = new PageBookmarks({
     page,
     store: of.reading,
@@ -82,7 +89,10 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     still: (then) => pages.whenStill(then),
     land: () => pages.finish(),
     changed: () => of.looks(),
-    listed: () => of.changed(),
+    listed: () => {
+      of.changed();
+      placing.listed();
+    },
   });
   /** No words in sight measured in the chapter drawn yet: no page said, no bookmark shown. */
   const unplaced = () => {
@@ -243,11 +253,13 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
         },
       );
     },
-    goTo: async (index, offset) => {
-      // A bookmark's place: no step back to where a link was followed from, any turn landed first.
+    goTo: async (index, at) => {
+      // A place chosen (a bookmark's, the strip's): no step back to where a link was followed from,
+      // any turn landed first; in the chapter drawn, only shown, never drawn again.
       links.forget();
       pages.finish();
-      if (index !== spine) return void (await draw(index, true, offset));
+      if (index !== spine) return void (await draw(index, true, at));
+      const offset = typeof at === 'number' ? at : at();
       page.sheet.showPlace(offset);
       keep(offset);
     },

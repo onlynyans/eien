@@ -95,6 +95,22 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await expect(page.locator('.mark-row')).toHaveCount(1);
         expect(await violationsUnder(page, ['.list']), 'Marks in the list').toEqual([]);
         await page.getByRole('button', { name: /^Contents \d+$/u }).click();
+        // Marks on the edge (Phase 4d), from the shelf's look: the strip beside the page.
+        const lookTool = page.locator(
+          '[data-command="look"]:not(.phone-bar__controls *, .page__phone *)',
+        );
+        await lookTool.click();
+        await page.locator('[data-setting="epub.marks"] [data-value="edge"]').click();
+        await page.keyboard.press('Escape');
+        await expect(page.getByRole('slider', { name: 'The whole book' })).toBeVisible();
+        expect(await violationsUnder(page, ['.page']), 'the strip').toEqual([]);
+        // Its tip shows only under the pointer (QA): its words checked too, by day and night.
+        await page.getByRole('slider', { name: 'The whole book' }).hover();
+        await expect(page.locator('.edge-strip__tip')).toBeVisible();
+        expect(await seriousViolations(page), 'the strip’s tip').toEqual([]);
+        await lookTool.click();
+        await page.locator('[data-setting="epub.marks"] [data-value="list"]').click();
+        await page.keyboard.press('Escape');
         // The shelf's look (#40, Phase 1c): LOOK / SHELF, with a book in front.
         await page
           .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')

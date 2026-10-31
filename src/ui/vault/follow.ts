@@ -57,7 +57,9 @@ export function follow(of: FollowOf): () => void {
     // A shut sidebar's strip is the layout's and Shut sidebar's (../shell/shell.css).
     const strip = ['appearance.layout', 'appearance.shutSidebar'] as const;
     if (strip.some((key) => values[key] !== before[key])) of.panes.refit();
-    if (values['books.numerals'] !== before['books.numerals']) void of.redraw();
+    // A book's Marks in the list or on the edge (#40, Phase 4d): the list's tabs come or go.
+    const lists = ['books.numerals', 'epub.marks'] as const;
+    if (lists.some((key) => values[key] !== before[key])) void of.redraw();
   });
   const onBlur = () => void pages.flush();
   window.addEventListener('blur', onBlur);
