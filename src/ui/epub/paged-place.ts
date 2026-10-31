@@ -44,7 +44,17 @@ export interface PagedPlaceOf {
   readonly sideOf?: SideOf;
 }
 
-const measured: SideOf = (range) => range.getBoundingClientRect();
+/**
+ * A range's box across, as the window lays it out. A character just after the point a word was
+ * hyphenated at stands at the next line's start, but its range holds the hyphen too, at the end
+ * of the line before (Chromium's): on the page before, which the place would open a page early
+ * at. A character's own box is its range's last.
+ */
+const measured: SideOf = (range) => {
+  const rects = range.getClientRects();
+  const own = range.toString().length === 1 ? rects[rects.length - 1] : undefined;
+  return own ?? range.getBoundingClientRect();
+};
 
 export class PagedPlace {
   readonly #of: PagedPlaceOf;

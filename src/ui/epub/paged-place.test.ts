@@ -209,3 +209,55 @@ describe('a chapter in pages', () => {
     expect(chapter.style.getPropertyValue('--epub-page-height')).toBe('');
   });
 });
+
+// QA (#40, phone spread): a word the window hyphenated across a page break. The window's own
+// measure (no sideOf given): the character after the break stands at the next page's first line,
+// but its range holds the hyphen too, at the end of the page before's last line, as Chromium
+// draws it. Laid out anew (a Fold turned, two pages closing to one and back), the place there
+// opened a page early, its words on the page after the one shown.
+describe('a word hyphenated across a page, as the window measures it', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('shows the page its place’s character stands on, never the one its hyphen ends', () => {
+    const { box, chapter } = laidOut(['a'.repeat(250)]);
+    const shown = () =>
+      -Number.parseFloat(chapter.style.transform.replace('translateX(', '') || '0');
+    const xOf = (at: number) => Math.floor(at / PER_PAGE) * STEP + (at % PER_PAGE) - shown();
+    const box1 = (left: number) => ({ left, right: left + 1, width: 1, top: 0, bottom: 20 });
+    /** Each character's box; the second page's first broken from the first page's last, its hyphen after it. */
+    const rectsOf = (range: Range) => {
+      const rects = [];
+      for (let at = range.startOffset; at < range.endOffset; at++) {
+        if (at === PER_PAGE) rects.push(box1(xOf(PER_PAGE - 1) + 1));
+        rects.push(box1(xOf(at)));
+      }
+      return rects as DOMRect[];
+    };
+    vi.spyOn(Range.prototype, 'getClientRects').mockImplementation(function (this: Range) {
+      return rectsOf(this) as unknown as DOMRectList;
+    });
+    vi.spyOn(Range.prototype, 'getBoundingClientRect').mockImplementation(function (this: Range) {
+      const rects = rectsOf(this);
+      const left = Math.min(...rects.map((rect) => rect.left));
+      const right = Math.max(...rects.map((rect) => rect.right));
+      return { left, right, width: right - left, top: 0, bottom: 20 } as DOMRect;
+    });
+    const place = new PagedPlace({
+      box,
+      chapter,
+      moved: vi.fn(),
+      rested: vi.fn(),
+      inSight: vi.fn(),
+    });
+    place.show(PER_PAGE);
+    expect(place.page).toBe(1);
+    // Turned back and on, the place is that character still, and its page shown.
+    place.turn(-1);
+    place.turn(1);
+    expect(place.offset).toBe(PER_PAGE);
+    expect(place.page).toBe(1);
+    place.dispose();
+  });
+});

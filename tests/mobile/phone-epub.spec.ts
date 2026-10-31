@@ -778,3 +778,215 @@ test('two pages on a Fold 5: a finger turns both, B marks the left one, the stri
   expect(edge.x).toBeGreaterThan(rect.x + rect.width / 2);
   expect(await seriousViolations(page), 'two pages on a phone').toEqual([]);
 });
+
+// QA (#40, phone spread): the words `words` stand in the pages in sight, wherever on them: a page
+// turned away is laid out beside them, only clipped. Their last box: words begun by a word's end
+// hold the hyphen it was broken at too, at the end of the line before, on the page before.
+const wordsInSight = (page: Page, words: string) =>
+  page.locator('.epub-sheet:not([aria-hidden]) .epub__pages').evaluate((element, wanted) => {
+    const sight = element.getBoundingClientRect();
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const at = (node.textContent ?? '').indexOf(wanted);
+      if (at < 0) continue;
+      const range = document.createRange();
+      range.setStart(node, at);
+      range.setEnd(node, at + wanted.length);
+      const rect = [...range.getClientRects()].at(-1);
+      return (
+        rect !== undefined &&
+        rect.width > 0 &&
+        rect.left >= sight.left - 1 &&
+        rect.right <= sight.right + 1 &&
+        rect.top >= sight.top - 1 &&
+        rect.bottom <= sight.bottom + 1
+      );
+    }
+    return false;
+  }, words);
+
+/**
+ * QA (#40, phone spread): how the paragraphs in sight are set, the left page's and the right's;
+ * `desk`, as they'd be set without the phone's rules, read at once, before anything is laid anew.
+ */
+const setInSight = (page: Page, desk = false) =>
+  page.locator('.epub-sheet:not([aria-hidden]) .epub__pages').evaluate((element, desk) => {
+    const sight = element.getBoundingClientRect();
+    const middle = sight.left + sight.width / 2;
+    const words = element.querySelector('.epub-chapter') as HTMLElement;
+    const shown: [HTMLElement, 'left' | 'right'][] = [];
+    for (const p of words.querySelectorAll<HTMLElement>('p:not([data-align]):not([data-part])'))
+      for (const rect of p.getClientRects()) {
+        if (rect.width === 0 || rect.left < sight.left - 1 || rect.right > sight.right + 1)
+          continue;
+        shown.push([p, rect.left < middle ? 'left' : 'right']);
+      }
+    const shell = element.closest('.shell') as HTMLElement;
+    if (desk) shell.removeAttribute('data-phone');
+    const sides = { left: new Set<string>(), right: new Set<string>() };
+    for (const [p, side] of shown) sides[side].add(getComputedStyle(p).textAlign);
+    const hyphens = getComputedStyle(words).hyphens;
+    if (desk) shell.setAttribute('data-phone', '');
+    return { hyphens, left: [...sides.left], right: [...sides.right] };
+  }, desk);
+
+/** QA (#40, phone spread): a finger's tap `across` the page `rect`, 0 its left and 1 its right. */
+const tapAcross = (
+  page: Page,
+  rect: { x: number; y: number; width: number; height: number },
+  across: number,
+) => page.touchscreen.tap(rect.x + rect.width * across, rect.y + rect.height / 2);
+
+// QA (#40, phone spread): the phone's ragged rule (epub-set.css) holds on both of its two pages,
+// which the Fold tests above can't show where the window never hyphenates (Chromium on Linux, as
+// CI's is): ragged then whatever the rule. The book's leaf is told it hyphenates, as a Mac's and
+// Android's do, and without the phone's rule the same two pages justify. The imprint says so.
+test('two pages on a phone are ragged, both of them, and hyphenated, wherever the window hyphenates', async ({
+  page,
+}) => {
+  const box = await bookOn(page, FOLD5_SIDEWAYS, 'one', 60);
+  await expect(box).toHaveAttribute('data-spread', '');
+  await page.locator('.page__leaf--epub').evaluate((leaf) => leaf.setAttribute('data-hyphens', ''));
+  const set = await setInSight(page);
+  expect(set.hyphens).toBe('auto');
+  expect(set.left).toEqual(['start']);
+  expect(set.right).toEqual(['start']);
+  // The control: a window that hyphenates justifies the same two pages without the phone's rule.
+  const desk = await setInSight(page, true);
+  expect(desk.left).toEqual(['justify']);
+  expect(desk.right).toEqual(['justify']);
+  // Tapped back past the book's own title page to Eien's title page and its imprint, facing: the
+  // imprint says how the two pages are set.
+  const rect = await box.boundingBox();
+  if (!rect) throw new Error('no page');
+  const imprintInSight = () =>
+    box.evaluate((element) => {
+      const found = element.querySelector('[aria-label="Imprint"]')?.getBoundingClientRect();
+      const sight = element.getBoundingClientRect();
+      return (
+        found !== undefined &&
+        found.width > 0 &&
+        found.left >= sight.left - 1 &&
+        found.right <= sight.right + 1
+      );
+    });
+  for (let i = 0; i < 6 && !(await imprintInSight()); i++) await tapAcross(page, rect, 0.1);
+  await expect.poll(imprintInSight).toBe(true);
+  await expect(page.locator('.epub-sheet:not([aria-hidden]) [data-imprint="set"]')).toHaveText(
+    / a page, ragged right and hyphenated$/u,
+  );
+});
+
+// QA (#40, phone spread): a foldable turned (the viewport resized) opens the spread and closes it,
+// the place's words in sight each way, and the running heads and folios follow: the book's title
+// and the chapter over a spread, the chapter alone over one page. Where the window hyphenates (a
+// Mac's Chromium), this place begins mid-word, "con-|sent" broken across the pages: laid out anew,
+// it opened a spread early, its words on the next (paged-place.ts, measured).
+test('a Fold 5 turned: two pages sideways, one upright, and two again, the place kept', async ({
+  page,
+}) => {
+  const box = await bookOn(page, FOLD5_SIDEWAYS, 'one', 60);
+  await expect(box).toHaveAttribute('data-spread', '');
+  const rect = await box.boundingBox();
+  if (!rect) throw new Error('no page');
+  const heads = page.locator('.epub-sheet:not([aria-hidden]) .epub-heads__item');
+  const folios = page.locator('.epub-sheet:not([aria-hidden]) .epub-folios__item');
+  // Two spreads on, past the opening: two pages of text, each with its head. Far enough that one
+  // page's sight of the same number holds other words: the place, not the sight's number, is kept.
+  for (let turns = 0; turns < 2; turns++) {
+    const before = await firstWords(page);
+    await tapAcross(page, rect, 0.9);
+    await expect.poll(() => firstWords(page)).not.toBe(before);
+  }
+  await expect(heads).toHaveText(['Pride and Prejudice', 'Chapter I']);
+  await expect(folios.first()).toHaveText(/^\d+$/u);
+  const top = (await firstWords(page)).trim().split(/\s+/u).slice(0, 4).join(' ');
+  expect(top).not.toBe('');
+  // Turned upright: one page, the place's words on it, its head the chapter's.
+  await page.setViewportSize(FOLD5_UPRIGHT);
+  await expect(box).not.toHaveAttribute('data-spread');
+  await expect
+    .poll(() => chapter(page).evaluate((element) => getComputedStyle(element).columnCount))
+    .toBe('1');
+  await expect.poll(() => wordsInSight(page, top)).toBe(true);
+  await expect(heads.first()).toHaveText('Chapter I');
+  // Sideways again: two pages, the place's words at the left page's top, as they were.
+  await page.setViewportSize(FOLD5_SIDEWAYS);
+  await expect(box).toHaveAttribute('data-spread', '');
+  await expect.poll(() => wordsInSight(page, top)).toBe(true);
+  await expect.poll(async () => (await firstWords(page)).trim().startsWith(top)).toBe(true);
+  await expect(heads).toHaveText(['Pride and Prejudice', 'Chapter I']);
+});
+
+// QA (#40, phone spread): Wide screen's Two pages on a tablet zoomed out: the book alone on the
+// page opens two pages where its width holds them, and beside a note it's a split, one page,
+// though each half is as wide as a spread needs.
+test('Two pages on a tablet: the book beside a note is one page; the note closed, two', async ({
+  page,
+}) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'pages');
+    await window.eien.settings.set('epub.view', 'pages');
+    await window.eien.settings.set('window.zoom', 50);
+  });
+  await putOutside(page, 'Eien/Vault/Assembly.md', 'She hears it from two chairs away.\n');
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.reload();
+  await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
+  await titles(page).filter({ hasText: 'Assembly' }).click();
+  await back(page).click();
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
+  const box = page.locator('.epub-sheet:not([aria-hidden]) .epub__pages');
+  await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
+  await expect(box).not.toHaveAttribute('data-spread');
+  expect(await chapter(page).evaluate((element) => getComputedStyle(element).columnCount)).toBe(
+    '1',
+  );
+  // The note's page closed: the book alone, wide enough for two.
+  await page
+    .locator('.page__pages > .page__leaf:not(.page__leaf--epub)')
+    .getByRole('button', { name: 'Close this page' })
+    .click();
+  await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(1);
+  await expect(box).toHaveAttribute('data-spread', '');
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  expect(await seriousViolations(page), 'two pages on a tablet').toEqual([]);
+});
+
+// QA (#40, phone spread): on one page too (an upright phone), the fore-edge's turn, 12px wide, keeps
+// WCAG 2.5.8's room from the strip beside it: a 24px circle round its middle clear of the strip.
+test('an upright phone in pages with marks on the edge: the fore-edge’s turn keeps a target’s room from the strip', async ({
+  page,
+}) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'one');
+    await window.eien.settings.set('epub.view', 'pages');
+    await window.eien.settings.set('epub.marks', 'edge');
+  });
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.reload();
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  const strip = page.getByRole('slider', { name: 'The whole book' });
+  const turn = page.locator('.page__leaf--epub .epub-edges__turn--after');
+  await expect(strip).toBeVisible();
+  const [edge, button] = await Promise.all([strip.boundingBox(), turn.boundingBox()]);
+  if (!edge || !button) throw new Error('no strip or turn');
+  expect(edge.x).toBeGreaterThanOrEqual(button.x + button.width / 2 + 12 - 0.5);
+  expect(await seriousViolations(page), 'a book in pages with its marks on the edge').toEqual([]);
+});
