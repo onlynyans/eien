@@ -34,8 +34,15 @@ const fontsLoaded = (chapter: HTMLElement): Promise<unknown> => {
     : Promise.resolve();
 };
 
-/** `chapter` of `epub`, drawn with its pictures; a picture that can't be read is its words. */
-export async function drawChapter(epub: Epub, chapter: Chapter): Promise<DrawnChapter> {
+/**
+ * `chapter` of `epub`, drawn with its pictures, after Eien's `front` matter if
+ * it's the first (./front-matter.ts); a picture that can't be read is its words.
+ */
+export async function drawChapter(
+  epub: Epub,
+  chapter: Chapter,
+  front: HTMLElement | null = null,
+): Promise<DrawnChapter> {
   const urls = new Map<string, string>();
   const sizes = new Map<string, { readonly width: number; readonly height: number }>();
   for (const path of chapter.images) {
@@ -46,6 +53,7 @@ export async function drawChapter(epub: Epub, chapter: Chapter): Promise<DrawnCh
     if (image.size) sizes.set(url, image.size);
   }
   const element = drawClean(chapter.nodes, { image: (src) => urls.get(src) ?? null });
+  if (front) element.prepend(front);
   const unsized: HTMLImageElement[] = [];
   for (const img of element.querySelectorAll('img')) {
     // The book's own copies, already in memory: nothing to wait for off the screen.

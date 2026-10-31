@@ -3,12 +3,23 @@
 // 2, 3b), the page the place is on (Phase 4: the printed edition's, else a
 // steady one, ./book-count.ts), told as the words in sight are measured and
 // again as the count comes in, and the whole book down the page's edge
-// (Phase 4d, ./book-strip.ts).
+// (Phase 4d, ./book-strip.ts). In pages (Phase 3d), a spread's two pages,
+// the running heads and folios, and the imprint's figures; nothing of the
+// book's on its front matter.
 
-import { type Bookmark, bookFraction, type Epub, pageOf, pageWords } from '../../core/epub';
+import {
+  type Bookmark,
+  bookFraction,
+  type Epub,
+  pageOf,
+  pageWords,
+  spreadWords,
+} from '../../core/epub';
 import type { BookCount } from './book-count';
 import { bookStrip } from './book-strip';
 import type { EpubPage } from './epub-page';
+import { fillImprint } from './front-matter';
+import { allFront } from './sight';
 
 export interface BookPlaceOf {
   readonly page: EpubPage;
@@ -64,11 +75,26 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
     return pageWords(label, total);
   };
   const strip = bookStrip({ ...of, pageAt });
+  /** The page in sight said, a spread's two; the heads and folios over and under it; the imprint's figures. */
   const say = () => {
     const count = of.count();
-    const { label, of: total } =
-      count && from !== null ? pageOf(count, of.spine(), from) : { label: null, of: null };
-    page.foot.page(pageWords(label, total));
+    const spine = of.spine();
+    const { sight } = page.sheet;
+    const at = (offset: number) => (count ? pageOf(count, spine, offset) : null);
+    const verso = from === null || allFront(sight) ? null : at(from);
+    const recto = sight[1]?.role === 'text' ? at(sight[1].from) : null;
+    page.foot.page(spreadWords(verso?.label ?? null, recto?.label ?? null, verso?.of ?? null));
+    page.heads.show(from === null ? [] : sight, of.epub(), spine, (offset) =>
+      labelAt(spine, offset),
+    );
+    const epub = of.epub();
+    if (epub && allFront(sight))
+      fillImprint(
+        page.chapter,
+        page.element,
+        epub.spine.length,
+        count ? pageOf(count, 0, 0).of : null,
+      );
   };
 
   return {
@@ -76,8 +102,8 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
       const epub = of.epub();
       const book = epub ? bookFraction(epub.spine, of.spine(), fraction) : 0;
       page.foot.through(fraction, book);
-      const { at, of: count } = page.sheet.page;
-      page.edges.through(book, at, count);
+      const { at, of: count, per } = page.sheet.page;
+      page.edges.through(book, at, count, per);
       if (epub !== drew) {
         drew = epub;
         strip.drawn();
@@ -85,9 +111,13 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
       share = book;
       strip.place(share, from ?? 0);
       // Only when it changes: setting it again restyles the page, and this is told every scroll frame.
-      const after = String(page.edges.after);
-      if (page.leaf.style.getPropertyValue('--edges-after') !== after)
-        page.leaf.style.setProperty('--edges-after', after);
+      for (const [name, count] of [
+        ['--edges-after', page.edges.after],
+        ['--edges-before', page.edges.before],
+      ] as const) {
+        if (page.leaf.style.getPropertyValue(name) !== String(count))
+          page.leaf.style.setProperty(name, String(count));
+      }
     },
     inSight(start) {
       from = start;

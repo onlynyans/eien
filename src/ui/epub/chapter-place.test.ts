@@ -60,9 +60,9 @@ describe('the words from a place', () => {
     chapter.innerHTML =
       '<h2>Chapter I</h2><p>It is a <em>truth</em> universally</p><p>acknowledged.</p>';
     expect(wordsFrom(chapter, 0, 200)).toBe('Chapter I It is a truth universally acknowledged.');
-    // From inside a word of the second block: the rest of it, then on.
+    // From inside a word (a page that begins inside a hyphenated one, Phase 3d): the whole word, then on.
     expect(wordsFrom(chapter, 'Chapter IIt is a tr'.length, 200)).toBe(
-      'uth universally acknowledged.',
+      'truth universally acknowledged.',
     );
   });
 

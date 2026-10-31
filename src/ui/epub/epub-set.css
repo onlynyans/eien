@@ -1,0 +1,162 @@
+/* Set as a book (#40, Phase 3d, Showcase 2): how Pages sets a book, in the
+   writer's own face. The text justified and hyphenated, its lines evened,
+   no line alone at a page's head or foot; ragged (still hyphenated) on a
+   phone, on a page with a phone's measure, and where the window can't
+   hyphenate (./hyphens.ts). A chapter opens four lines low, on the text's
+   own line (--line, ./page-columns.ts). Over the text the running heads,
+   under it the folios, in the machine's voice (./running-heads.ts); before
+   the first chapter, the title page and its imprint (./front-matter.ts).
+   Scroll is as it was. */
+
+[data-view="pages"] .epub-chapter {
+  --epub-align: start;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  hyphenate-limit-chars: 6 3 2;
+}
+[data-view="pages"][data-hyphens] .epub-chapter {
+  --epub-align: justify;
+}
+/* A phone's measure, or a page as narrow, opens rivers when it's justified. */
+.shell[data-phone] [data-view="pages"] .epub-chapter {
+  --epub-align: start;
+}
+@container (width < 520px) {
+  [data-view="pages"] .epub-chapter {
+    --epub-align: start;
+  }
+}
+[data-view="pages"] .epub-chapter p:not([data-align]):not([data-part="chapter-title"]) {
+  text-align: var(--epub-align);
+  text-wrap: pretty;
+  widows: 2;
+  orphans: 2;
+  /* WebKit's alone (the iPhone): an opening quote hangs in the margin. */
+  hanging-punctuation: first allow-end;
+}
+/* A turn's copy of a paragraph cut at the page's foot (./page-cut.ts): its lines set as the page's, its last too. */
+[data-view="pages"] .epub-chapter [data-cut-end] {
+  text-align-last: var(--epub-align);
+  text-wrap: wrap;
+}
+
+/* A chapter opens low on its page: a sink of four lines, the title and the gap under it whole
+   lines, so the text under it keeps to the grid and facing pages line up. Padding, not a margin:
+   a margin at a column's head is dropped. */
+[data-view="pages"] .epub-chapter [data-part="chapter-title"] {
+  margin: 0 0 var(--line);
+  padding-top: calc(4 * var(--line));
+  line-height: var(--line);
+}
+.shell[data-phone] [data-view="pages"] .epub-chapter [data-part="chapter-title"] {
+  padding-top: calc(2 * var(--line));
+}
+
+/* The running heads and folios: in pages alone, where the folders' crumbs were. Each keeps its line
+   when empty, so the text never moves; the recto's at the right, the outer corner. */
+.epub-heads,
+.epub-folios {
+  display: none;
+}
+[data-view="pages"] .epub-sheet > .sheet__head {
+  display: none;
+}
+[data-view="pages"] .epub-heads,
+[data-view="pages"] .epub-folios {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--eien-space-8);
+  min-height: 1lh;
+  white-space: nowrap;
+}
+[data-view="pages"] .epub-folios {
+  padding-top: var(--eien-space-3);
+}
+.epub-heads__item,
+.epub-folios__item {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.epub-heads__item:last-child,
+.epub-folios__item:last-child {
+  text-align: right;
+}
+
+/* The front matter: Eien's own pages, in pages alone, never chosen (none of the book's words). */
+.epub-front {
+  display: none;
+  user-select: none;
+}
+[data-view="pages"] .epub-front {
+  display: block;
+}
+.epub-front__page {
+  display: flex;
+  flex-direction: column;
+  height: var(--epub-page-height);
+  overflow: hidden;
+  break-after: column;
+  break-inside: avoid;
+}
+/* The title page: the title high at display size, a short hairline, the author in the face's capitals,
+   the folders it's shelved in at the foot. */
+.epub-front__title {
+  padding-top: calc(2 * var(--eien-space-8));
+}
+.epub-front__book {
+  margin: 0;
+  font-size: calc(var(--eien-size-title) * 1.5);
+  line-height: 1.1;
+  color: var(--eien-ink);
+}
+.epub-front__rule {
+  width: var(--eien-space-7);
+  height: var(--eien-hairline);
+  margin: var(--eien-space-5) 0;
+  background: var(--eien-rule);
+}
+.epub-front__author {
+  margin: 0;
+  font-size: var(--eien-size-preview);
+  line-height: var(--eien-leading-row);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+  color: var(--eien-ink-soft);
+}
+.epub-front__shelf {
+  margin: auto 0 0;
+}
+/* The imprint, at its page's foot: this copy's record, in the machine's voice; the face's name in it. */
+.epub-front__imprint {
+  justify-content: flex-end;
+}
+.epub-front__imprint > div {
+  margin: 0 0 var(--eien-space-2);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  line-height: var(--eien-leading-prose);
+  text-align: start;
+  text-indent: 0;
+  hyphens: manual;
+  color: var(--eien-pencil);
+}
+.epub-front__imprint .label {
+  margin-bottom: var(--eien-space-3);
+}
+.epub-front__imprint i,
+.epub-front__face {
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+  color: var(--eien-ink-soft);
+}
+.epub-front__face {
+  color: var(--eien-ink);
+}
+.shell[data-phone] .epub-front__title {
+  padding-top: var(--eien-space-8);
+}
+.shell[data-phone] .epub-front__book {
+  font-size: var(--eien-size-title);
+}

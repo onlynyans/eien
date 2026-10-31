@@ -6,6 +6,7 @@ import {
   printAt,
   printPages,
   STEADY_CHARS,
+  spreadWords,
   steadyAt,
   steadyPages,
   steadyStart,
@@ -132,6 +133,15 @@ describe('a place’s page', () => {
     expect(pageWords('xii', null)).toBe('page xii');
     expect(pageWords('34', 412)).toBe('page 34 of 412');
     expect(pageWords(null, 9)).toBe('');
+  });
+
+  it('says a spread’s two pages, or one where both begin on the same page (Phase 3d)', () => {
+    expect(spreadWords(212, 213, 2450)).toBe('pages 212–213 of 2,450');
+    expect(spreadWords(212, 212, 2450)).toBe('page 212 of 2,450');
+    expect(spreadWords('xi', 'xii', null)).toBe('pages xi–xii');
+    expect(spreadWords('7', 7, 9)).toBe('page 7 of 9');
+    expect(spreadWords(212, null, 2450)).toBe('page 212 of 2,450');
+    expect(spreadWords(null, 3, 9)).toBe('');
   });
 });
 

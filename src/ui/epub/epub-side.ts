@@ -9,7 +9,7 @@
 // read. What a side is: ./epub-side-types.ts.
 
 import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
-import { type Epub, isRefusal, refusalWords } from '../../core/epub';
+import { chapterBeside, type Epub, isRefusal, refusalWords } from '../../core/epub';
 import { crumbsOf } from '../vault/open-note';
 import type { Place, SideHooks } from '../vault/page-side';
 import type { BookCount } from './book-count';
@@ -23,6 +23,7 @@ import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
 import { EpubPage } from './epub-page';
 import type { EpubPlace, EpubSide, EpubSideOf } from './epub-side-types';
+import { frontMatter } from './front-matter';
 import { PageBookmarks } from './page-bookmarks';
 
 export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | null): EpubSide {
@@ -124,7 +125,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     place: number | (() => number) = 0,
   ): Promise<boolean> {
     const opened = epub;
-    if (!opened || !path) return false;
+    const where = path;
+    if (!opened || !where) return false;
     pages.finish();
     const asked = ++turn;
     const chapter = await opened.chapter(index);
@@ -135,7 +137,13 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       return false;
     }
     count?.add(index, chapter);
-    const next = await drawChapter(opened, chapter);
+    // The first chapter after Eien's title page and imprint, shown in pages alone (Phase 3d).
+    const first = index === chapterBeside(opened.spine, -1, 1);
+    const next = await drawChapter(
+      opened,
+      chapter,
+      first ? frontMatter(opened, where, crumbsOf(where)) : null,
+    );
     if (asked !== turn || disposed) {
       next.release();
       return false;

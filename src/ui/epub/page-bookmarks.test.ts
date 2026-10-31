@@ -45,8 +45,9 @@ async function opened(before?: (key: string) => string) {
   return { ...at, key, file, press };
 }
 
+/** One page's mark: at its outer edge, the right (a spread's verso wears the left, Phase 3d). */
 const markOf = (side: EpubSide) =>
-  side.page.element.querySelector<HTMLElement>('.page__mark--bookmark');
+  side.page.element.querySelector<HTMLElement>('.page__mark--bookmark[data-edge="right"]');
 const said = (side: EpubSide) => side.page.foot.said.textContent;
 
 describe('a book’s bookmark', () => {
@@ -295,7 +296,7 @@ describe('a book with a thousand bookmarks, as QA tried it (Phase 4c)', () => {
 
 describe('what a page shows of its bookmarks', () => {
   it('follows a turn once it lands, never mid-turn', () => {
-    const page = { bookmarked: vi.fn(), foot: { say: () => {} } };
+    const page = { bookmarked: vi.fn(), foot: { say: () => {} }, sheet: { sight: [] } };
     let landed = () => {};
     const marks = new PageBookmarks({
       page: page as never,
@@ -317,7 +318,8 @@ describe('what a page shows of its bookmarks', () => {
     marks.inSight(100, 200);
     expect(page.bookmarked).not.toHaveBeenCalled();
     landed();
-    expect(page.bookmarked).toHaveBeenLastCalledWith(true);
+    // One page: its mark at its outer edge, the right.
+    expect(page.bookmarked).toHaveBeenLastCalledWith(false, true);
     expect(marks.on).toBe(true);
   });
 });
@@ -480,7 +482,7 @@ describe('B in the middle of a turn', () => {
       bookmarked: vi.fn(),
       foot: { say: vi.fn() },
       chapter,
-      sheet: { keep: vi.fn() },
+      sheet: { keep: vi.fn(), sight: [] },
     };
     let flying = false;
     const waiting: (() => void)[] = [];
@@ -529,7 +531,8 @@ describe('B in the middle of a turn', () => {
     });
     expect(page.sheet.keep).toHaveBeenCalled();
     expect(marks.on).toBe(true);
-    expect(page.bookmarked).toHaveBeenLastCalledWith(true);
+    // One page: its mark at its outer edge, the right.
+    expect(page.bookmarked).toHaveBeenLastCalledWith(false, true);
   });
 
   // QA (Phase 4b) found it shown at once: a change the store tells (B on another page of the book)

@@ -53,16 +53,22 @@ export class LeafEdges {
     return this.#stacks.after.childElementCount;
   }
 
+  /** And the pages read, past which a spread's verso's tab stands. */
+  get before(): number {
+    return this.#stacks.before.childElementCount;
+  }
+
   /** The edges' tooltips' and buttons' controls, for the page's tooltips. */
   get turns(): readonly HTMLElement[] {
     return [this.#buttons.before, this.#buttons.after];
   }
 
   /**
-   * `through` (0 to 1) the book, on page `at` of the chapter's `of`: the edges
-   * either side, and each button's word of how many pages are left that way.
+   * `through` (0 to 1) the book, on page `at` of the chapter's `of`, `per`
+   * in sight (a spread's two, Phase 3d): the edges either side, and each
+   * button's word of how many pages are left that way.
    */
-  through(book: number, at: number, of: number): void {
+  through(book: number, at: number, of: number, per = 1): void {
     for (const name of ['before', 'after'] as const) {
       const stack = this.#stacks[name];
       const count = edgesOf(book, name === 'before');
@@ -76,8 +82,8 @@ export class LeafEdges {
           }),
         );
       }
-      const left = name === 'before' ? at : Math.max(0, of - at - 1);
-      const label = name === 'before' ? 'Previous page' : 'Next page';
+      const left = name === 'before' ? at : Math.max(0, of - at - per);
+      const label = `${name === 'before' ? 'Previous' : 'Next'} ${per === 2 ? 'pages' : 'page'}`;
       const tip = `${label} · ${pagesWord(left)} ${name === 'before' ? 'back' : 'on'} in the chapter`;
       this.#buttons[name].dataset.tip = tip;
     }

@@ -3,7 +3,10 @@
 // page in sight holds one (in pages, from its first word to the next page's;
 // scrolling, the lines in sight), and B or the tool putting one there or
 // taking it off. What the page shows follows a turn once it lands, never
-// mid-turn, as a mark on paper would.
+// mid-turn, as a mark on paper would. On a spread (Phase 3d) the mark sits on
+// the page it marks; B marks the spread's first word, or takes off every
+// bookmark on its two pages. Eien's front matter holds none of the book's
+// words: nothing there to mark.
 
 import {
   BOOKMARK_WORDS,
@@ -17,6 +20,7 @@ import type { Still } from './book-count';
 import { wordsFrom } from './chapter-place';
 import type { EpubPage } from './epub-page';
 import type { ReadingRead, ReadingStore } from './reading-store';
+import { allFront } from './sight';
 
 /** What the colophon says of a reading file this Eien won't write over. */
 const NOT_KEPT: Partial<Record<ReadingKept, string>> = {
@@ -111,7 +115,7 @@ export class PageBookmarks {
     const { page } = this.#of;
     this.#of.land();
     page.sheet.keep();
-    if (!this.#measured) return;
+    if (!this.#measured || allFront(page.sheet.sight)) return;
     const here = bookmarksOn(this.#marks, chapter, this.#from, this.#to);
     // A book shows MAX_BOOKMARKS: one more would be kept but never shown, nor ever taken off.
     if (here.length === 0 && this.#marks.length >= MAX_BOOKMARKS) {
@@ -166,11 +170,14 @@ export class PageBookmarks {
 
   #show(): void {
     const chapter = this.#of.chapter();
-    const on =
-      chapter !== null &&
-      this.#measured &&
-      bookmarksOn(this.#marks, chapter, this.#from, this.#to).length > 0;
-    this.#of.page.bookmarked(on);
+    const marked = (from: number, to: number) =>
+      chapter !== null && this.#measured && bookmarksOn(this.#marks, chapter, from, to).length > 0;
+    // A spread's recto begins where its own words do; one page (or a scroll) is all the right's.
+    const recto = this.#of.page.sheet.sight[1];
+    const left = recto ? marked(this.#from, recto.from) : false;
+    const right = recto ? marked(recto.from, this.#to) : marked(this.#from, this.#to);
+    const on = left || right;
+    this.#of.page.bookmarked(left, right);
     if (on === this.#on) return;
     this.#on = on;
     this.#of.changed();

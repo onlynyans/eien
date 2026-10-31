@@ -5,18 +5,28 @@
 // one holding it, and a turn keeps the new page's first word, so Pages and
 // Scroll, a new width, face or zoom, ⇄ and a restart all come back to the
 // same words. Laid out anew, the place isn't measured again (only a turn
-// moves it), so a run of resizes never drifts.
+// moves it), so a run of resizes never drifts. With room, two pages face each
+// other (Phase 3d, ./spread.ts): a turn moves a sight, the pages shown at
+// once; the first chapter begins with Eien's title page and imprint
+// (./front-matter.ts), turned back to, never opened at.
 
-import { pageAt, pagesIn, wholeLines } from '../../core/epub';
+import { openingSight, pageAt, pageRoles, throughSights } from '../../core/epub';
 import { characterAt, firstOnPage, type SideOf } from './chapter-place';
-import { pageCut } from './page-cut';
+import { FRONT } from './front-matter';
+import { type Columns, clipAt, keyOf, layColumns, UNLAID, unlayColumns } from './page-columns';
+import { sightCut } from './page-cut';
 import { REST_MS } from './place-keeper';
+import type { PageShown, Spot } from './sight';
 
 export interface PagedPlaceOf {
   /** The box a page shows in: its size is a page's. */
   readonly box: HTMLElement;
   /** The chapter, drawn: laid in columns. */
   readonly chapter: HTMLElement;
+  /** The pane the box lies in: wider or narrower, it may open a spread or close one. */
+  readonly room?: HTMLElement;
+  /** How many pages to show at once (./spread.ts), asked each time the page is laid out. */
+  per?(): 1 | 2;
   /** A page turned or shown: how far through the chapter, 0 to 1. */
   moved(fraction: number): void;
   /** The place came to rest somewhere new: an offset in the chapter's words. */
@@ -32,15 +42,16 @@ export class PagedPlace {
   readonly #of: PagedPlaceOf;
   readonly #sideOf: SideOf;
   #offset = 0;
+  /** The sight shown (the pages in sight at once), 0 first. */
   #page = 0;
-  #pages = 1;
-  /** A page's width and the gap after it, in the chapter's own pixels. */
-  #step = 0;
-  #gap = 0;
+  /** The columns as last laid; none before the first. */
+  #laid: Columns = UNLAID;
+  /** A front page turned to: kept through a new layout (the place, offset 0, is the opening's). */
+  #frontColumn: number | null = null;
+  /** The pages in sight, as last measured. */
+  #sight: readonly PageShown[] = [];
   #idle = true;
   #rest: ReturnType<typeof setTimeout> | undefined;
-  /** The box as last laid out: laid out anew when it changes. */
-  #box = '';
   readonly #resized: ResizeObserver | null;
 
   constructor(of: PagedPlaceOf) {
@@ -49,6 +60,7 @@ export class PagedPlace {
     this.#resized =
       typeof ResizeObserver === 'function' ? new ResizeObserver(() => this.#laidOut()) : null;
     this.#resized?.observe(of.box);
+    if (of.room) this.#resized?.observe(of.room);
     of.chapter.addEventListener('focusin', this.#focused);
     document.fonts?.addEventListener?.('loadingdone', this.#again);
   }
@@ -58,20 +70,47 @@ export class PagedPlace {
     return this.#offset;
   }
 
-  /** The page in sight, 0 first, and how many the chapter has. */
+  /** The sight shown, 0 first, and how many the chapter has. */
   get page(): number {
     return this.#page;
   }
 
   get pages(): number {
-    return this.#pages;
+    return this.#laid.sights;
+  }
+
+  /** The chapter's own pages (its front matter left out), the first in sight, and how many show at once. */
+  get columns(): { readonly at: number; readonly of: number; readonly per: 1 | 2 } {
+    const { per, front, columns } = this.#laid;
+    return { at: Math.max(0, this.#page * per - front), of: Math.max(1, columns - front), per };
+  }
+
+  /** The pages in sight: where each one's words begin, and what it is to the chapter. */
+  get sight(): readonly PageShown[] {
+    return this.#sight;
+  }
+
+  /** Where the page stands now, to `restore` (a turn that fell back). */
+  get spot(): Spot {
+    return { offset: this.#offset, page: this.#page, front: this.#frontColumn };
   }
 
   /** A chapter drawn, or the page back where it was: `offset` kept, and its page shown. */
   show(offset: number): void {
     this.#idle = false;
     this.#offset = Math.max(0, offset);
+    this.#frontColumn = null;
     this.reshow();
+  }
+
+  /** Put back at `spot`, as it stood (a turn that fell back): a front page stays a front page. */
+  restore(spot: Spot): void {
+    if (this.#idle) return;
+    this.#offset = spot.offset;
+    this.#frontColumn = spot.front;
+    if (!this.#shown) return;
+    this.#go(spot.page);
+    this.#inSight(this.#range());
   }
 
   /** No chapter: nothing kept. */
@@ -80,30 +119,25 @@ export class PagedPlace {
     this.#idle = true;
     this.#offset = 0;
     this.#page = 0;
-    this.#pages = 1;
-    const { style } = this.#of.chapter;
-    for (const name of [
-      'height',
-      'width',
-      'columnWidth',
-      'columnGap',
-      'transform',
-      'clipPath',
-    ] as const) {
-      style[name] = '';
-    }
-    style.removeProperty('--epub-page-height');
+    this.#laid = UNLAID;
+    this.#frontColumn = null;
+    this.#sight = [];
+    unlayColumns(this.#of.box, this.#of.chapter);
   }
 
   /** Laid out anew (a width, a look, put back in the window): the page holding the place shown. */
   reshow(): void {
     if (this.#idle) return;
     if (!this.#shown) {
-      this.#box = '';
+      this.#laid = { ...this.#laid, key: '' };
       return;
     }
-    this.#layout();
-    this.#go(this.#pageOf(this.#offset));
+    this.#laid = layColumns(this.#of.box, this.#of.chapter, this.#of.per?.() ?? 1);
+    const { per, front } = this.#laid;
+    if (this.#frontColumn !== null && this.#frontColumn >= front) this.#frontColumn = null;
+    this.#go(
+      this.#frontColumn !== null ? Math.floor(this.#frontColumn / per) : this.#pageOf(this.#offset),
+    );
     this.#inSight(this.#range());
   }
 
@@ -113,14 +147,16 @@ export class PagedPlace {
    */
   turn(way: 1 | -1): boolean {
     const page = this.#page + way;
-    if (this.#idle || page < 0 || page >= this.#pages) return false;
+    if (this.#idle || page < 0 || page >= this.#laid.sights) return false;
     this.#turnTo(page);
     return true;
   }
 
-  /** The chapter's first page, or its last (Home, End). */
+  /** The chapter's first page (its opening, past any front matter), or its last (Home, End). */
   edge(last: boolean): void {
-    if (!this.#idle) this.#turnTo(last ? this.#pages - 1 : 0);
+    if (this.#idle) return;
+    const { sights, front, per } = this.#laid;
+    this.#turnTo(last ? sights - 1 : openingSight(front, per));
   }
 
   /**
@@ -138,7 +174,7 @@ export class PagedPlace {
     const range = document.createRange();
     range.selectNodeContents(element);
     const from = this.#sideOf(range).left - this.#of.chapter.getBoundingClientRect().left;
-    const page = pageAt(from / this.#scale(), this.#step, this.#pages);
+    const page = pageAt(from / this.#scale(), this.#laid.step, this.#laid.sights);
     if (page !== this.#page) this.#turnTo(page);
   }
 
@@ -165,34 +201,12 @@ export class PagedPlace {
     if (tell) this.#of.rested(this.#offset);
   }
 
-  /** The columns laid to the box: whole lines tall, the gap between, the pages counted. */
-  #layout(): void {
-    const { box, chapter } = this.#of;
-    const width = box.clientWidth;
-    const line = Number.parseFloat(getComputedStyle(chapter).lineHeight) || 0;
-    // The gap a column leaves before the next: the box's own padding-free gutter (epub.css).
-    const gap = Number.parseFloat(getComputedStyle(box).columnGap) || 0;
-    const height = wholeLines(box.clientHeight, line);
-    // A picture's most, its page's height (./epub.css).
-    chapter.style.setProperty('--epub-page-height', `${height}px`);
-    Object.assign(chapter.style, {
-      height: `${height}px`,
-      width: `${width}px`,
-      columnWidth: `${width}px`,
-      columnGap: `${gap}px`,
-    });
-    this.#box = `${width}×${box.clientHeight}`;
-    this.#step = width + gap;
-    this.#gap = gap;
-    this.#pages = pagesIn(chapter.scrollWidth, width, gap);
-  }
-
-  /** The page holding `offset`, by where its character stands from the chapter's start. */
+  /** The sight holding `offset`, by where its character stands from the chapter's start; 0 is the opening. */
   #pageOf(offset: number): number {
     const character = offset > 0 ? characterAt(this.#of.chapter, offset) : null;
-    if (!character) return 0;
+    if (!character) return openingSight(this.#laid.front, this.#laid.per);
     const from = this.#sideOf(character).left - this.#of.chapter.getBoundingClientRect().left;
-    return pageAt(from / this.#scale(), this.#step, this.#pages);
+    return pageAt(from / this.#scale(), this.#laid.step, this.#laid.sights);
   }
 
   /** Turned to `page`: its first word the place, told once the turns rest. */
@@ -200,6 +214,8 @@ export class PagedPlace {
     this.#go(page);
     const range = this.#range();
     this.#offset = range.from;
+    const first = this.#page * this.#laid.per;
+    this.#frontColumn = first < this.#laid.front ? first : null;
     clearTimeout(this.#rest);
     this.#rest = setTimeout(() => this.#flush(true), REST_MS);
     this.#inSight(range);
@@ -212,55 +228,67 @@ export class PagedPlace {
    */
   #range(): { readonly from: number; readonly to: number | null } {
     const { chapter, box } = this.#of;
+    // The front matter holds none of the book's words: nothing in sight to keep, mark or say.
+    if (this.#onFront) return { from: 0, to: 0 };
     const left = box.getBoundingClientRect().left;
     // The page starts just after the page before's last word, so a picture that begins it (or is
     // all of it) comes with it.
     const from = this.#page > 0 ? firstOnPage(chapter, left, this.#sideOf) : 0;
     const to =
-      this.#page + 1 < this.#pages
-        ? firstOnPage(chapter, left + this.#step * this.#scale(), this.#sideOf)
+      this.#page + 1 < this.#laid.sights
+        ? firstOnPage(chapter, left + this.#laid.step * this.#scale(), this.#sideOf)
         : null;
     return { from, to };
   }
 
   #inSight({ from, to }: { readonly from: number; readonly to: number | null }): void {
-    this.#of.inSight(from, to ?? Number.POSITIVE_INFINITY);
+    const end = to ?? Number.POSITIVE_INFINITY;
+    const left = this.#of.box.getBoundingClientRect().left;
+    const { per, front, columns, column, gap } = this.#laid;
+    // A spread's recto begins where its own words do: one more measure a turn.
+    this.#sight = pageRoles(this.#page, per, front, columns).map((role, i) => {
+      if (i === 0 || role === 'front') return { role, from };
+      if (role === 'blank') return { role, from: end };
+      const at = left + i * (column + gap) * this.#scale();
+      return { role, from: firstOnPage(this.#of.chapter, at, this.#sideOf) };
+    });
+    this.#of.inSight(from, end);
   }
 
   /**
    * `copy`, a copy of the chapter as it stands (a turn's, ./turn/page-copy.ts),
-   * cut to the words of the page in sight and laid as its first page: a turn
-   * moves one page, never the whole chapter (fourteen copies of a long one
-   * would stall the window). A paragraph the page begins inside of keeps no
-   * indent, and no capitals: it's the paragraph's middle.
+   * cut to the words in sight and laid as its first sight: a turn moves one
+   * sight, never the whole chapter (fourteen copies of a long one would stall
+   * the window). A front page's copy is the front matter alone, where it stood.
    */
   trim(copy: HTMLElement): void {
-    const { chapter } = this.#of;
     if (this.#idle || !this.#shown) return;
-    const { from: start, to: next } = this.#range();
-    const before = start > 0 ? characterAt(chapter, start - 1) : null;
-    const from = start > 0 ? characterAt(chapter, start) : null;
-    const to = next === null ? null : characterAt(chapter, next);
-    const words = pageCut(chapter, before, from, to);
-    copy.replaceChildren(words);
-    copy.style.transform = '';
-    copy.style.clipPath = this.#clipAt(0);
+    const { chapter } = this.#of;
+    const at = this.#onFront ? this.#page * this.#laid.step : 0;
+    const { from, to } = this.#range();
+    copy.replaceChildren(
+      this.#onFront
+        ? (chapter.querySelector(FRONT)?.cloneNode(true) ?? '')
+        : sightCut(chapter, from, to),
+    );
+    copy.style.transform = at ? `translateX(${-at}px)` : '';
+    copy.style.clipPath = clipAt(at, this.#laid.gap);
   }
 
-  /** Only page `at` (its left, in the chapter's pixels) drawn, and half the gap either side for a letter's overhang. */
-  #clipAt(at: number): string {
-    const half = this.#gap / 2;
-    return `inset(0px ${-(at + half)}px 0px ${at - half}px)`;
+  /** Whether the sight shown is Eien's front matter: none of the book's words in it. */
+  get #onFront(): boolean {
+    return this.#page * this.#laid.per < this.#laid.front;
   }
 
   #go(page: number): void {
-    this.#page = Math.min(Math.max(0, page), this.#pages - 1);
-    const at = this.#page * this.#step;
+    const { sights, step, front, per } = this.#laid;
+    this.#page = Math.min(Math.max(0, page), sights - 1);
+    const at = this.#page * step;
     const { style } = this.#of.chapter;
     style.transform = `translateX(${-at}px)`;
     // Only the page in sight is drawn: a copy of the chapter carries this page alone.
-    style.clipPath = this.#clipAt(at);
-    this.#of.moved(this.#pages > 1 ? this.#page / (this.#pages - 1) : 1);
+    style.clipPath = clipAt(at, this.#laid.gap);
+    this.#of.moved(throughSights(this.#page, sights, openingSight(front, per)));
   }
 
   /** How much the sheet's zoom draws each of the box's pixels as: rects are zoomed, sizes aren't. */
@@ -277,8 +305,9 @@ export class PagedPlace {
 
   #laidOut(): void {
     const { box } = this.#of;
-    const now = box.clientWidth > 0 ? `${box.clientWidth}×${box.clientHeight}` : '';
-    if (now === '') this.#box = '';
-    else if (now !== this.#box) this.reshow();
+    // Asked first: a pane that opens a spread or closes one lays the page out anew, its box still as it was.
+    const now = keyOf(box, this.#of.per?.() ?? 1);
+    if (now === '') this.#laid = { ...this.#laid, key: '' };
+    else if (now !== this.#laid.key) this.reshow();
   }
 }

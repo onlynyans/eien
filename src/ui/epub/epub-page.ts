@@ -3,7 +3,8 @@
 // while the window is split, holding a chapter (./chapter-sheet.ts: drawn,
 // its place kept, its links and words); its colophon (./book-foot.ts); the
 // shelf's look worn on its leaf, the scroll style among it; its bookmark's
-// mark (Phase 4b, the Page mark's look); and its keys, Q to quote, B to
+// mark (Phase 4b, the Page mark's look), on each page of a spread (Phase
+// 3d); in pages, its running heads and folios; and its keys, Q to quote, B to
 // bookmark, and ⌘[ or Alt+← back. A book that won't open says why on the
 // sheet. Find comes with Phase 5: until then it does nothing here, as a
 // note's does where its text isn't shown.
@@ -11,14 +12,15 @@
 import type { SettingValues } from '../../core/config';
 import { h } from '../dom';
 import { type PageFind, type PaneLeaf, pageLeaf } from '../page/page-leaf';
-import { pageMark } from '../page/page-mark';
 import { quietButton } from '../quiet-button';
 import { leafLook } from '../settings/look-properties';
 import { BookFoot } from './book-foot';
 import { ChapterSheet, type ChapterSheetOf } from './chapter-sheet';
+import { hyphenates } from './hyphens';
 import { LeafEdges } from './leaf-edges';
 import { pageKey, pageTap } from './page-keys';
-import { STAYS } from './turn/page-copy';
+import { PageMarks } from './page-marks';
+import { RunningHeads } from './running-heads';
 
 /** Where a key is the writer's own: a note's editor, a field. */
 const FIELD = '.editor-host, input, textarea, [contenteditable]';
@@ -52,6 +54,8 @@ export class EpubPage implements PaneLeaf {
   readonly sheet: ChapterSheet;
   /** In pages, the book's fore-edge either side of the sheet: how far through, and where to turn. */
   readonly edges: LeafEdges;
+  /** In pages, what's over and under the text: the running heads and folios (Phase 3d). */
+  readonly heads = new RunningHeads();
   readonly #sheet: HTMLElement;
   readonly #empty = h('p', {
     class: 'page__empty',
@@ -59,8 +63,8 @@ export class EpubPage implements PaneLeaf {
     attrs: { tabindex: '-1' },
   });
   readonly #scroll: HTMLElement;
-  /** A bookmarked page's mark, at the sheet's outer top; it stays as a page turns (a turn's copies leave it out). */
-  readonly #mark = pageMark('bookmark', 'right');
+  /** A bookmarked page's mark, at its outer top. */
+  readonly #marks = new PageMarks();
   #name = '';
   /** The page's zoom last worn; null before the first. */
   #zoom: number | null = null;
@@ -93,16 +97,16 @@ export class EpubPage implements PaneLeaf {
     });
     // The chapter's links too, each named for the tooltip (./book-links.ts nameLinks).
     this.tipped = [closer, this.chapter, ...this.edges.turns];
-    this.#mark.hidden = true;
     this.#sheet = h(
       'article',
       { class: 'sheet epub-sheet quiet-row' },
-      // The mark's holder keeps to the top of the sheet in sight as a chapter scrolls (./bookmark.css).
-      h('span', { class: 'epub-sheet__mark', attrs: { [STAYS]: '' } }, this.#mark),
+      this.#marks.element,
       closer,
       h('div', { class: 'sheet__head' }, this.#crumbs),
+      this.heads.head,
       this.#notice,
       this.sheet.box,
+      this.heads.folio,
       this.sheet.turns,
       this.edges.element,
     );
@@ -135,6 +139,8 @@ export class EpubPage implements PaneLeaf {
     this.#crumbs.textContent = this.runningCrumbs.textContent = crumbs;
     if (language) this.chapter.lang = language;
     else this.chapter.removeAttribute('lang');
+    // Set as a book justifies only where its words can break at a hyphen (./hyphens.ts).
+    this.element.toggleAttribute('data-hyphens', hyphenates(language));
   }
 
   /** Another book on its way: its name and folders, and nothing of the last one's left meanwhile. */
@@ -175,12 +181,14 @@ export class EpubPage implements PaneLeaf {
     this.sheet.reshow();
   }
 
-  /** The page in sight bookmarked or not: its mark, arriving anew on each page that has one, and the folio's word. */
-  bookmarked(on: boolean): void {
-    // The folio's word every time (the foot may have been cleared); the mark only when it changes,
-    // so it arrives as it appears.
-    this.foot.bookmarked(on);
-    if (this.#mark.hidden !== !on) this.#mark.hidden = !on;
+  /**
+   * The pages in sight bookmarked or not, a spread's verso (`left`) and its recto or one page
+   * (`right`): each mark, arriving anew on each page that has one, and the folio's word.
+   */
+  bookmarked(left: boolean, right: boolean): void {
+    // The folio's word every time: the foot may have been cleared.
+    this.foot.bookmarked(left || right);
+    this.#marks.show(left, right);
   }
 
   /** Words on the sheet in the chapter's place (a book or a chapter that won't open), or none. */

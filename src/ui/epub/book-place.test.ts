@@ -4,13 +4,19 @@ import type { BookCount } from './book-count';
 import { BookFoot } from './book-foot';
 import { bookPlace } from './book-place';
 import type { EpubPage } from './epub-page';
+import { RunningHeads } from './running-heads';
 
 /** A book's place over a foot, its count steady pages of a book of 4,500 characters in one chapter. */
 function placed() {
   const foot = new BookFoot(() => {});
   const count = { lengths: [4500], print: [] } as unknown as BookCount;
   const place = bookPlace({
-    page: { foot, element: document.createElement('div') } as unknown as EpubPage,
+    page: {
+      foot,
+      element: document.createElement('div'),
+      sheet: { sight: [] },
+      heads: new RunningHeads(),
+    } as unknown as EpubPage,
     epub: () => ({ spine: [], contents: [] }) as unknown as Epub,
     spine: () => 0,
     count: () => count,
@@ -52,7 +58,12 @@ describe('a page a bookmark is on, as its row says it', () => {
       ],
     } as unknown as BookCount;
     const place = bookPlace({
-      page: { foot, element: document.createElement('div') } as unknown as EpubPage,
+      page: {
+        foot,
+        element: document.createElement('div'),
+        sheet: { sight: [] },
+        heads: new RunningHeads(),
+      } as unknown as EpubPage,
       epub: () => ({ spine: [], contents: [] }) as unknown as Epub,
       spine: () => 0,
       count: () => count,
@@ -69,6 +80,8 @@ describe('a page a bookmark is on, as its row says it', () => {
       page: {
         foot: new BookFoot(() => {}),
         element: document.createElement('div'),
+        sheet: { sight: [] },
+        heads: new RunningHeads(),
       } as unknown as EpubPage,
       epub: () => ({ spine: [], contents: [] }) as unknown as Epub,
       spine: () => 0,
