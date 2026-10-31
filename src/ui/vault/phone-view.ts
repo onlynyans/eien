@@ -34,8 +34,6 @@ export interface PhoneViewOf {
   parts(): PageParts;
   /** The pane shown changed, or the window became a phone's or stopped being one. */
   changed(): void;
-  /** The ⋯'s Quote, with a book in front (#40, Phase 2c). */
-  quote(): void;
 }
 
 export interface PhoneView {
@@ -69,13 +67,20 @@ export function phoneView(of: PhoneViewOf): PhoneView {
         'Export',
       );
     const { values } = of.settings;
+    const { active } = of.pages;
+    // A book's own choices act on the words last chosen, which the ⋯'s tap may have dropped.
+    const book = isEpub(active) ? active : null;
     const state = {
       values,
       sprinting: of.parts().counters.sprinting,
       exportTo,
-      kind: of.pages.active.kind,
-      quote: of.quote,
-      bookmarked: isEpub(of.pages.active) && of.pages.active.bookmarked,
+      kind: active.kind,
+      ...(book && {
+        quote: () => void book.quote(true),
+        highlight: () => void book.highlight(true),
+        highlighted: book.inHighlight(true),
+        bookmarked: book.bookmarked,
+      }),
     };
     openMenu(moreItems(state, run), { opener }, 'More');
   };

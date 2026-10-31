@@ -301,20 +301,15 @@ describe('what a page shows of its bookmarks', () => {
     let landed = () => {};
     const marks = new PageBookmarks({
       page: page as never,
-      store: { listen: () => () => {} } as never,
+      change: async () => null,
       chapter: () => CHAPTER,
       still: (then) => {
         landed = then;
       },
       land: () => {},
       changed: () => {},
-      listed: () => {},
     });
-    marks.opened('k', {
-      reading: { chapter: null, offset: 0 },
-      marks: { bookmarks: [{ chapter: CHAPTER, offset: 120, words: '' }] },
-      kept: 'kept',
-    });
+    marks.set([{ chapter: CHAPTER, offset: 120, words: '' }]);
     page.bookmarked.mockClear();
     marks.inSight(100, 200);
     expect(page.bookmarked).not.toHaveBeenCalled();
@@ -487,21 +482,15 @@ describe('B in the middle of a turn', () => {
     };
     let flying = false;
     const waiting: (() => void)[] = [];
-    const mark = vi.fn(async (_key: string, edit: MarksEdit) => {
+    const mark = vi.fn(async (edit: MarksEdit) => {
       // Asked only once the turn has landed.
       expect(flying).toBe(false);
       const next = edit(null);
-      return next === null ? null : { bookmarks: bookmarksOf(next) };
+      return next === null ? null : { bookmarks: bookmarksOf(next), highlights: [] };
     });
-    /** What the store tells this page of its book's bookmarks changed elsewhere. */
-    let told: (marks: { bookmarks: readonly Bookmark[] }) => void = () => {};
-    const listen = (_key: string, then: typeof told) => {
-      told = then;
-      return () => {};
-    };
     const marks: PageBookmarks = new PageBookmarks({
       page: page as never,
-      store: { listen, change: mark } as never,
+      change: mark,
       chapter: () => CHAPTER,
       still: (then) => {
         if (flying) waiting.push(then);
@@ -514,12 +503,6 @@ describe('B in the middle of a turn', () => {
         for (const then of waiting.splice(0)) then();
       },
       changed: () => {},
-      listed: () => {},
-    });
-    marks.opened('k', {
-      reading: { chapter: null, offset: 0 },
-      marks: { bookmarks: [] },
-      kept: 'kept',
     });
     marks.inSight(0, 100);
     const turn = () => {
@@ -530,7 +513,8 @@ describe('B in the middle of a turn', () => {
       page,
       mark,
       turn,
-      told: (bookmarks: readonly Bookmark[]) => told({ bookmarks }),
+      // What the book's marks tell this page of its bookmarks changed elsewhere.
+      told: (bookmarks: readonly Bookmark[]) => marks.set(bookmarks),
     };
   }
 
@@ -540,6 +524,7 @@ describe('B in the middle of a turn', () => {
     await marks.toggle();
     expect(await mark.mock.results[0]?.value).toEqual({
       bookmarks: [expect.objectContaining({ chapter: CHAPTER, offset: 100 })],
+      highlights: [],
     });
     expect(page.sheet.keep).toHaveBeenCalled();
     expect(marks.on).toBe(true);

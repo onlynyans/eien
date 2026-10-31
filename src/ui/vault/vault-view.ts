@@ -186,7 +186,6 @@ export async function showVault(
     pages,
     has: (path) => state.has(path),
     changed: () => panes.relayout(),
-    quote: () => epubs.quote(),
   });
   const panes = new PaneLayout(
     {

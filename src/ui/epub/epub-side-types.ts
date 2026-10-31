@@ -1,7 +1,7 @@
 // What a page holding an EPUB is (#40; ./epub-side.ts makes one), apart
 // from how it's made: what the pages, the list and the shelf ask of it.
 
-import type { Bookmark, Epub } from '../../core/epub';
+import type { Bookmark, Epub, Highlight } from '../../core/epub';
 import type { Place, Side } from '../vault/page-side';
 import type { BookCounts } from './book-count';
 import type { BookOpenOf } from './book-open';
@@ -62,6 +62,14 @@ export interface EpubSide extends Side {
   bookmark(): Promise<void>;
   /** One bookmark taken off (a Marks row's Delete, Phase 4c). */
   unmark(mark: Bookmark): Promise<void>;
+  /** The book's highlights, in the file's order (Phase 5a). */
+  readonly highlights: readonly Highlight[];
+  /** The words chosen (or, `kept`, last chosen: a phone's ⋯) highlighted, or the highlight they lie in taken off. */
+  highlight(kept?: boolean): Promise<void>;
+  /** Whether the words chosen (or, `kept`, last chosen) lie in one highlight: Highlight then takes it off. */
+  inHighlight(kept?: boolean): boolean;
+  /** One highlight taken off (a Marks row's Delete, Phase 5b), with Put back. */
+  unhighlight(gone: Highlight): Promise<void>;
   /** The page `offset` into spine item `spine` is on, as its label says it (a Marks row's); null for none known. */
   labelAt(spine: number, offset: number): string | null;
   /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */

@@ -1,5 +1,5 @@
-// A book's bookmarks on its page (#40, Phase 4b): the book's list, read with
-// its place and kept in step by the store (./reading-store.ts), whether the
+// A book's bookmarks on its page (#40, Phase 4b): the book's list, as its
+// marks hold it (./book-marks.ts), whether the
 // page in sight holds one (in pages, from its first word to the next page's;
 // scrolling, the lines in sight), and B or the tool putting one there or
 // taking it off. What the page shows follows a turn once it lands, never
@@ -14,25 +14,18 @@ import {
   bookmarksOn,
   firstWords,
   MAX_BOOKMARKS,
-  type ReadingKept,
   withBookmarks,
 } from '../../core/epub';
 import type { Still } from './book-count';
+import type { ChangeMarks } from './book-marks';
 import { wordsFrom } from './chapter-place';
 import type { EpubPage } from './epub-page';
-import type { ReadingRead, ReadingStore } from './reading-store';
 import { allFront } from './sight';
-
-/** What the colophon says of a reading file this Eien won't write over. */
-const NOT_KEPT: Partial<Record<ReadingKept, string>> = {
-  unreadable:
-    'This book’s reading file can’t be read: its place and bookmarks aren’t kept until it’s fixed or deleted.',
-  newer: 'A newer Eien keeps this book’s place and bookmarks: they aren’t changed here.',
-};
 
 export interface PageBookmarksOf {
   readonly page: EpubPage;
-  readonly store: ReadingStore;
+  /** A change to the book's marks, kept, or null (said why). */
+  readonly change: ChangeMarks;
   /** The chapter drawn: its file in the zip, or null for none. */
   chapter(): string | null;
   /** `then` once no turn shows a copy of a page. */
@@ -41,14 +34,10 @@ export interface PageBookmarksOf {
   land(): void;
   /** Whether the page in sight is bookmarked changed: the tool shows it. */
   changed(): void;
-  /** The book's bookmarks changed: the list's Marks show them (Phase 4c). */
-  listed(): void;
 }
 
 export class PageBookmarks {
   readonly #of: PageBookmarksOf;
-  #key: string | null = null;
-  #kept: ReadingKept = 'none';
   #marks: readonly Bookmark[] = [];
   /** The words in sight, as last measured. */
   #from = 0;
@@ -56,7 +45,6 @@ export class PageBookmarks {
   /** Whether they're measured in the chapter drawn: none are while it's on its way, or refused. */
   #measured = false;
   #on = false;
-  #unlisten = () => {};
   /** The last B's change, until it's kept: a press waits for the one before, so two quick ones undo each other. */
   #pending: Promise<void> = Promise.resolve();
 
@@ -74,20 +62,10 @@ export class PageBookmarks {
     return this.#on;
   }
 
-  /** The book `key` names opened: its bookmarks as read, followed as this window changes them; a file it won't write, said. */
-  opened(key: string, read: ReadingRead): void {
-    this.clear();
-    this.#key = key;
-    this.#kept = read.kept;
-    this.#marks = read.marks.bookmarks;
-    // Shown, as every change is, once the page is still: never against a turn's page on its way.
-    this.#unlisten = this.#of.store.listen(key, ({ bookmarks }) => {
-      this.#marks = bookmarks;
-      this.#of.still(() => this.#show());
-      this.#of.listed();
-    });
-    const words = NOT_KEPT[read.kept];
-    if (read.kept === 'unreadable' && words) this.#of.page.foot.say(words);
+  /** The book's bookmarks as its file now holds them: shown, as every change is, once the page is still. */
+  set(marks: readonly Bookmark[]): void {
+    this.#marks = marks;
+    this.#of.still(() => this.#show());
   }
 
   /** The words in sight measured: shown once the page is still. */
@@ -110,9 +88,8 @@ export class PageBookmarks {
   }
 
   async #toggle(): Promise<void> {
-    const key = this.#key;
     const chapter = this.#of.chapter();
-    if (!key || !chapter) return;
+    if (!chapter) return;
     const { page } = this.#of;
     this.#of.land();
     page.sheet.keep();
@@ -128,31 +105,16 @@ export class PageBookmarks {
     const words = firstWords(wordsFrom(page.chapter, this.#from, BOOKMARK_WORDS * 2));
     const change =
       here.length > 0 ? { remove: here } : { add: { chapter, offset: this.#from, words } };
-    const after = await this.#of.store.change(key, (text) => withBookmarks(text, change));
-    if (key !== this.#key) return;
-    if (!after) return this.#notKept(key);
-    this.#marks = after.bookmarks;
-    this.#of.still(() => this.#show());
+    const after = await this.#of.change((text) => withBookmarks(text, change));
+    if (!after) return;
+    this.set(after.bookmarks);
     page.foot.say(here.length > 0 ? 'Bookmark taken off.' : 'Bookmarked.');
   }
 
   /** `mark` taken off (a Marks row's Delete), said in the colophon. */
   async remove(mark: Bookmark): Promise<void> {
-    const key = this.#key;
-    if (!key) return;
-    const after = await this.#of.store.change(key, (text) =>
-      withBookmarks(text, { remove: [mark] }),
-    );
-    if (key !== this.#key) return;
-    if (!after) return this.#notKept(key);
-    this.#of.page.foot.say('Bookmark taken off.');
-  }
-
-  /** A change not kept: why, as the file stands now (it may have changed since the book opened). */
-  async #notKept(key: string): Promise<void> {
-    const { kept } = await this.#of.store.read(key);
-    this.#kept = kept;
-    this.#of.page.foot.say(NOT_KEPT[kept] ?? 'The bookmark couldn’t be kept: try again.');
+    const after = await this.#of.change((text) => withBookmarks(text, { remove: [mark] }));
+    if (after) this.#of.page.foot.say('Bookmark taken off.');
   }
 
   /** No words in sight measured in the chapter drawn (on its way, or refused): no bookmark shown. */
@@ -163,10 +125,6 @@ export class PageBookmarks {
 
   /** No book: nothing kept of its bookmarks. */
   clear(): void {
-    this.#unlisten();
-    this.#unlisten = () => {};
-    this.#key = null;
-    this.#kept = 'none';
     this.#marks = [];
     this.#show();
   }

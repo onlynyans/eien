@@ -48,8 +48,6 @@ export interface EpubWiring {
   readonly kind: EpubKind;
   /** Choosing a book or a chapter; a book's menu and keys are a row's (./row-actions.ts). */
   readonly actions: Pick<ShelfActions, 'openEpub' | 'chapter' | 'lens' | 'goMark' | 'unmark'>;
-  /** Quote the words chosen on the active page, if it holds a book (the phone's ⋯). */
-  quote(): void;
   /** What SHELF marks: the book on the active page, and with `two` panes the open book's contents. */
   shelf(two: boolean): Omit<ShelfModel, 'tree' | 'shut'>;
   /** The contents the list shows in place of notes, or null. */
@@ -157,11 +155,6 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
   return {
     kind,
     contents,
-    quote: () => {
-      const active = of.pages().active;
-      // The phone's ⋯: the words last chosen, which its tap may have dropped.
-      if (isEpub(active)) void active.quote(true);
-    },
     shelf: (two) => {
       const active = of.pages().active;
       const shown = two ? contents() : null;

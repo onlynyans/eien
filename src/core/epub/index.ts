@@ -17,6 +17,18 @@ export { BLOCK_NAMES, type ChapterVisit, walkChapter } from './chapter-words';
 export { chapterBeside, chapterTitle } from './chapters';
 export type { ContentsEntry, PrintPage } from './contents';
 export { type Epub, type EpubImage, type EpubSpineItem, epubKey, openEpub } from './epub';
+export {
+  HIGHLIGHT_WORDS,
+  type Highlight,
+  type HighlightChange,
+  highlightChange,
+  highlightsIn,
+  highlightsOf,
+  MAX_HIGHLIGHTS,
+  type Span,
+  sameHighlight,
+  withHighlights,
+} from './highlights';
 export { lengthWords, type SetAs, setAsWords } from './imprint';
 export type { SpineItem } from './package';
 export {

@@ -7,6 +7,7 @@
 import { SPRINT_MINUTES } from '../../core/counters';
 import { formatCommand } from '../../core/format';
 import type { ExportFormat, MenuCommand } from '../../platform/bridge';
+import { BOOK_FORMAT } from '../chrome/commands';
 import { isEpub } from '../epub/epub-side-types';
 import { focusList } from '../list/list';
 import type { SearchField } from '../list/search-field';
@@ -96,6 +97,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     const minutes = Number(command.slice('sprint:'.length));
     const known = SPRINT_MINUTES.find((each) => each === minutes);
     if (known) ctx.parts.counters.startSprint(known);
+  } else if (command === BOOK_FORMAT && isEpub(ctx.pages.active)) {
+    // Highlight with a book in front keeps its words chosen (#40, Phase 5a).
+    void ctx.pages.active.highlight();
   } else if (command.startsWith('format:') && !ctx.parts.outline.open) {
     // Formats act on the page: never on one the outline cards are hiding.
     const format = formatCommand(command.slice('format:'.length));

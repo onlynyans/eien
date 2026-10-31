@@ -37,16 +37,19 @@ function choose(): void {
 }
 
 const bar = () => document.querySelector<HTMLElement>('.selection-bar');
+const highlight = vi.fn();
+/** Whether the words chosen lie in a highlight, as the page says. */
+let held = false;
 
 describe('the selection bar over a book', () => {
   it('shows a moment after a choice, its Quote quoting and Copy copying', () => {
-    new BookSelection({ chapter, scroller, quote });
+    new BookSelection({ chapter, scroller, quote, highlight, inHighlight: () => held });
     choose();
     expect(bar()?.hidden).toBe(true);
     vi.advanceTimersByTime(250);
     expect(bar()?.hidden).toBe(false);
     expect(bar()?.getAttribute('role')).toBe('toolbar');
-    const [quoteButton, copy] = [...(bar()?.querySelectorAll('button') ?? [])];
+    const [, quoteButton, copy] = [...(bar()?.querySelectorAll('button') ?? [])];
     expect(copy?.getAttribute('aria-keyshortcuts')).toBe('Meta+C Control+C');
     quoteButton?.click();
     expect(quote).toHaveBeenCalledOnce();
@@ -54,7 +57,7 @@ describe('the selection bar over a book', () => {
   });
 
   it('goes on Esc, a scroll, the keyboard leaving the page, a resize, or the choice gone', () => {
-    new BookSelection({ chapter, scroller, quote });
+    new BookSelection({ chapter, scroller, quote, highlight, inHighlight: () => held });
     const away: (() => void)[] = [
       () => scroller.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })),
       () => scroller.dispatchEvent(new Event('scroll')),
@@ -79,14 +82,20 @@ describe('the selection bar over a book', () => {
       (query) =>
         ({ matches: query.includes('coarse') || query.includes('none') }) as MediaQueryList,
     );
-    new BookSelection({ chapter, scroller, quote });
+    new BookSelection({ chapter, scroller, quote, highlight, inHighlight: () => held });
     choose();
     vi.advanceTimersByTime(250);
     expect(bar()?.hidden).toBe(true);
   });
 
   it('keeps the words last chosen for a phone’s ⋯, until another chapter or a press in this one', () => {
-    const selection = new BookSelection({ chapter, scroller, quote });
+    const selection = new BookSelection({
+      chapter,
+      scroller,
+      quote,
+      highlight,
+      inHighlight: () => held,
+    });
     choose();
     document.getSelection()?.removeAllRanges();
     expect(selection.range).toBeNull();
@@ -101,12 +110,34 @@ describe('the selection bar over a book', () => {
 
   it('taken off, listens for nothing and leaves no bar', () => {
     const removed = vi.spyOn(document, 'removeEventListener');
-    const selection = new BookSelection({ chapter, scroller, quote });
+    const selection = new BookSelection({
+      chapter,
+      scroller,
+      quote,
+      highlight,
+      inHighlight: () => held,
+    });
     selection.remove();
     expect(removed).toHaveBeenCalledWith('selectionchange', expect.any(Function));
     expect(bar()).toBeNull();
     choose();
     vi.advanceTimersByTime(250);
     expect(bar()).toBeNull();
+  });
+
+  it('offers Highlight first, by H and Format → Highlight’s keys, and Take off the highlight on words in one', () => {
+    held = false;
+    new BookSelection({ chapter, scroller, quote, highlight, inHighlight: () => held });
+    choose();
+    vi.advanceTimersByTime(250);
+    const first = bar()?.querySelector('button');
+    expect(first?.textContent).toBe('Highlight');
+    expect(first?.getAttribute('aria-keyshortcuts')).toBe('H Control+Shift+H');
+    first?.click();
+    expect(highlight).toHaveBeenCalledOnce();
+    held = true;
+    choose();
+    vi.advanceTimersByTime(250);
+    expect(bar()?.querySelector('button')?.textContent).toBe('Take off the highlight');
   });
 });

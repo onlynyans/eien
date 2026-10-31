@@ -90,6 +90,26 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.keyboard.press('b');
         await expect(page.locator('.page__mark--bookmark[data-edge="right"]')).toBeVisible();
         expect(await violationsUnder(page, ['.page']), 'a bookmarked page').toEqual([]);
+        // A highlight (Phase 5a): words chosen and H, their tick in the margin; then taken off,
+        // the colophon's Put back offered.
+        await page.evaluate(() => {
+          const chapter = document.querySelector('.page__leaf--epub .epub-chapter p');
+          const words = chapter?.firstChild;
+          if (!words) throw new Error('no words');
+          const range = document.createRange();
+          range.setStart(words, 0);
+          range.setEnd(words, Math.min(12, words.textContent?.length ?? 0));
+          document.getSelection()?.removeAllRanges();
+          document.getSelection()?.addRange(range);
+        });
+        await page.keyboard.press('h');
+        await expect(page.locator('.epub-chapter [data-highlighted]')).toHaveCount(1);
+        expect(await violationsUnder(page, ['.page']), 'a highlighted page').toEqual([]);
+        await page.keyboard.press('h');
+        await expect(page.getByRole('button', { name: 'Put back' })).toBeVisible();
+        expect(await violationsUnder(page, ['.page']), 'Put back in the colophon').toEqual([]);
+        await page.getByRole('button', { name: 'Put back' }).click();
+        await expect(page.locator('.epub-chapter [data-highlighted]')).toHaveCount(1);
         // Marks in the list (Phase 4c): the book's lenses, its bookmark a row.
         await page.getByRole('button', { name: /^Marks \d+$/u }).click();
         await expect(page.locator('.mark-row')).toHaveCount(1);

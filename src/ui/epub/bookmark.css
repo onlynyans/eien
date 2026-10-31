@@ -45,8 +45,9 @@
 :root[data-split="facing"] .page__pages[data-two] .epub-sheet__mark {
   display: none;
 }
-/* Elsewhere the word is heard, never seen: the mark says it to the eye. */
-.colophon__bookmarked {
+/* Elsewhere the word is heard, never seen: the mark says it to the eye (and
+   "highlighted", the ink, ./ink.css). */
+.colophon__heard {
   position: absolute;
   width: 1px;
   height: 1px;

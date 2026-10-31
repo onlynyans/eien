@@ -241,6 +241,18 @@ under 520px (a phone's).
 The book is set in the writer's own faces, never the publisher's; its
 colours are the theme's, so it reads by Night.
 
+Ink over a book's words (Phase 5, `ui/epub/ink.css`), painted by the CSS
+Custom Highlight API over the page's own text: a highlight is
+`--eien-epub-highlight-ink` (pencil), `--eien-epub-highlight-w` thick (a
+mark's width), `--eien-epub-highlight-offset` (0.22em) under the words, and
+a tick in the margin in the same ink and width, `--eien-epub-tick-inset`
+(space-4) before the block's lines, its ends `--eien-epub-tick-trim` (0.35em)
+in from the block's top and foot, so it spans the lines' ink and not their
+leading. Find's matches are washes, never the pencil line, so the two never
+look alike: every match `--eien-epub-found` (the chosen row's
+`--eien-selected`), the one Find is on `--eien-epub-found-current` (the
+selection's `--eien-seal-wash`).
+
 ## A page turning
 
 A book's page turns (#40, Phase 3) by the Page turn setting: Curl, Slide or

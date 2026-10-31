@@ -143,6 +143,7 @@ Rules, pure TypeScript.
   - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it; never written over when it can't be read
   - `reading-list.ts`: a list in that file, changed in its own array, unknown items and fields kept, each field where it stood
   - `bookmarks.ts`: its bookmarks, a list there (Phase 4b)
+  - `highlights.ts`: its highlights, a list there, and what H does to them (Phase 5a)
   - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
   - `chapter-words.ts`: a chapter's words walked once from its cleaned nodes, as a place counts them, each in its block (`BLOCK_NAMES`, the one list)
@@ -376,7 +377,12 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
   - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
   - `reading-store.ts`: the reading state's file, through the vault's small files, its bookmarks' changes told to every page of the book
-  - `page-bookmarks.ts`: a book's bookmarks on its page: whether the page in sight has one, B and the tool, following a turn once it lands (Phase 4b)
+  - `book-marks.ts`: a book's marks on its page over its reading file (which book, how the file stands, one listener, why a change wasn't kept), its two kinds:
+    - `page-bookmarks.ts`: its bookmarks: whether the page in sight has one, B and the tool, following a turn once it lands (Phase 4b)
+    - `page-highlights.ts`: its highlights: inked and ticked, H, the bar's Highlight and Format → Highlight, Put back (Phase 5a)
+  - `chapter-range.ts`: words chosen as offsets in the chapter's words, and a span of them back to the text it covers
+  - `ink.ts`, `ink.css`: ink over the words by the CSS Custom Highlight API, one Highlight per name for the window, each page's ranges its own; a turn's copy inked in elements
+  - `test-ink.ts`: that API stood in for the DOM tests
   - `bookmark.css`: its mark (the Page mark's look), kept to the top of the sheet in sight, and Facing pages' clash
   - `page-marks.ts`: the marks on the sheet, one page's at its right, a spread's verso's at its left (Phase 3d)
   - Set as a book (Phase 3d, `epub-set.css`; two pages, `epub-spread.css`)

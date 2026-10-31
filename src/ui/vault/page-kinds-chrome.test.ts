@@ -224,7 +224,10 @@ describe('the commands for a note', () => {
     const sends = COMMANDS.flatMap((command) =>
       'on' in command && command.on === 'note' && 'sends' in command ? [command.sends] : [],
     );
-    expect(off).toEqual(expect.arrayContaining(sends));
+    // Every note's control greyed, but the format a book's words take too (#40, Phase 5a).
+    expect(off).toEqual(
+      expect.arrayContaining(sends.filter((command) => command !== 'format:highlight')),
+    );
     expect(off).toEqual(
       expect.arrayContaining([
         'view:next',
@@ -251,6 +254,8 @@ describe('the commands for a note', () => {
       'new-note',
       'toggle:editor.formatBar',
       'toggle:editor.spellcheck',
+      // Format → Highlight: a book's words take it too (#40, Phase 5a).
+      'format:highlight',
     ] as const)
       expect(off).not.toContain(on);
     expect(new Set(off).size).toBe(off.length);

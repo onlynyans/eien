@@ -1,5 +1,5 @@
 // A book's page and its keys (#40): its letters (Q quotes, Phase 2c; B
-// bookmarks, Phase 4b), each a plain key, held once; ⌘[ or Alt+← back, as a
+// bookmarks, Phase 4b; H highlights, Phase 5a), each a plain key, held once; ⌘[ or Alt+← back, as a
 // browser goes back; and in pages (Phase 3b) the arrow keys, Space and Page
 // Up and Down a page on or back, Home and End the chapter's ends, and on a
 // touch screen a tap in the page's outer thirds. Never from a field (the
@@ -44,6 +44,7 @@ export interface BookKeysOf extends PageKeysOf {
   canGoBack(): boolean;
   quote(): void;
   bookmark(): void;
+  highlight(): void;
   back(): void;
 }
 
@@ -58,6 +59,9 @@ const LETTERS: Readonly<Record<string, Letter>> = {
   q: { when: (of) => of.chosen(), run: (of) => of.quote() },
   // The page in sight bookmarked, or its bookmark taken off (Phase 4b).
   b: { when: (of) => of.shown(), run: (of) => of.bookmark() },
+  // The words chosen kept as a highlight, or the one they lie in taken off (Phase 5a); with none
+  // chosen it says so.
+  h: { when: (of) => of.shown(), run: (of) => of.highlight() },
 };
 
 /** Whether `event` is Back: ⌘[ (Ctrl+[), or Alt+←. */

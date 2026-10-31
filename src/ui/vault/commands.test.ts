@@ -45,3 +45,23 @@ describe('Bookmark This Page', () => {
     expect(() => runCommand('bookmark', { pages } as unknown as CommandContext)).not.toThrow();
   });
 });
+
+// #40, Phase 5a: Format → Highlight (⇧⌘H) with a book in front keeps its words chosen.
+describe('Format → Highlight', () => {
+  it('highlights the words chosen in the book when a book is the active page', () => {
+    const highlight = vi.fn(async () => {});
+    const pages = { active: { kind: 'epub', go: () => {}, highlight } };
+    const ctx = { pages, parts: { outline: { open: false } } } as unknown as CommandContext;
+    runCommand('format:highlight', ctx);
+    expect(highlight).toHaveBeenCalledOnce();
+  });
+
+  it('formats a note’s words with a note in front, as before', () => {
+    const format = vi.fn();
+    const active = { kind: 'note', page: { editor: { format } }, versions: {} };
+    const pages = { active, activeNote: active };
+    const ctx = { pages, parts: { outline: { open: false } } } as unknown as CommandContext;
+    runCommand('format:highlight', ctx);
+    expect(format).toHaveBeenCalledOnce();
+  });
+});

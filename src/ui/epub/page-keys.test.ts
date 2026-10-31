@@ -99,6 +99,7 @@ describe('a book’s page’s keys', () => {
       edge: vi.fn(),
       quote: vi.fn(),
       bookmark: vi.fn(),
+      highlight: vi.fn(),
       back: vi.fn(),
       chosen: () => state.chosen,
       shown: () => state.shown,

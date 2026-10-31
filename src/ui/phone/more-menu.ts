@@ -7,6 +7,7 @@ import type { SettingValues } from '../../core/config';
 import { SPRINT_MINUTES } from '../../core/counters';
 import type { MenuCommand } from '../../platform/bridge';
 import { menuOff } from '../chrome/commands';
+import { HIGHLIGHT_LABELS } from '../epub/book-selection';
 import type { MenuItem } from '../menu/menu';
 import type { PageKind } from '../page/page-leaf';
 
@@ -20,6 +21,10 @@ export interface MoreState {
   readonly kind?: PageKind;
   /** A book's: the words chosen in it quoted in the note (#40, Phase 2c). */
   quote?(): void;
+  /** A book's: the words chosen in it highlighted, or the highlight they lie in taken off (Phase 5a). */
+  highlight?(): void;
+  /** A book's: whether the words chosen lie in a highlight, its choice then taking it off. */
+  readonly highlighted?: boolean;
   /** A book's: whether the page in sight is bookmarked (Phase 4b), its choice checked. */
   readonly bookmarked?: boolean;
 }
@@ -41,9 +46,17 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     toggle: true,
   });
   return [
-    // A page's command, whatever it holds (docs/page-kinds.md): a book's Find comes with Phase 5.
+    // A page's command, whatever it holds (docs/page-kinds.md).
     item('Find', 'find'),
     // A book's own, where the selection bar would be on the desktop (the system's callout is over the words).
+    ...(state.kind === 'epub' && state.highlight
+      ? [
+          {
+            label: state.highlighted ? HIGHLIGHT_LABELS.off : HIGHLIGHT_LABELS.add,
+            run: state.highlight,
+          } satisfies MenuItem,
+        ]
+      : []),
     ...(state.kind === 'epub' && state.quote
       ? [{ label: 'Quote in the note', run: state.quote } satisfies MenuItem]
       : []),
