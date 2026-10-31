@@ -339,6 +339,19 @@ describe('into another chapter, drawn first', () => {
     expect(b.curl()).toBeNull();
     expect(b.page()).toBe(2);
   });
+
+  it('a gesture cancelled before the page came falls back, however far it was drawn', async () => {
+    const b = book({ later: true });
+    b.turn.grab([390, 500]);
+    b.turn.drag([-300, 0], 0);
+    b.turn.drag([-340, 0], 80);
+    expect(b.turn.cancel()).toBe(true);
+    await drawn();
+    expect(b.curl()).not.toBeNull();
+    b.run();
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(1);
+  });
 });
 
 describe('never in the way', () => {
@@ -538,12 +551,14 @@ describe('a hand cancelled', () => {
     expect(b.page()).toBe(1);
   });
 
-  it('with reduced motion (the tokens at 0) the hand holds nothing, so there is nothing to fall back', () => {
+  it('with reduced motion (the tokens at 0) the hand holds nothing: its drag asked for a turn, as a key does', () => {
     const b = book({ tokens: STILL });
     b.turn.grab([390, 500]);
     b.turn.drag([-300, 0], 0);
     b.turn.cancel();
     expect(b.curl()).toBeNull();
+    // Asked already, and turned at once: there was never a held page to put back.
+    expect(b.page()).toBe(2);
   });
 
   it('at speed 0, falls back at once, clean', () => {

@@ -20,8 +20,8 @@ export interface Hand {
   /** Where it is now, and when: a curl still waiting for its page takes it from here. */
   offset: Point;
   time: number;
-  /** Lifted while its curl was still waiting for its page. */
-  lifted: boolean;
+  /** Gone before its curl came: let go (it's thrown), or cancelled (it falls back home). */
+  lifted: 'up' | 'cancelled' | null;
 }
 
 export const handAt = (at: Point, holding: CurlRun | null): Hand => ({
@@ -32,7 +32,7 @@ export const handAt = (at: Point, holding: CurlRun | null): Hand => ({
   asked: holding !== null,
   offset: [0, 0],
   time: 0,
-  lifted: false,
+  lifted: null,
 });
 
 /** Whether the hand has moved past a tap. */
