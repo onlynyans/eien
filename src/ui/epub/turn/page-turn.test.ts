@@ -339,6 +339,19 @@ describe('into another chapter, drawn first', () => {
     expect(b.curl()).toBeNull();
     expect(b.page()).toBe(2);
   });
+
+  it('a gesture cancelled before the page came falls back, however far it was drawn', async () => {
+    const b = book({ later: true });
+    b.turn.grab([390, 500]);
+    b.turn.drag([-300, 0], 0);
+    b.turn.drag([-340, 0], 80);
+    expect(b.turn.cancel()).toBe(true);
+    await drawn();
+    expect(b.curl()).not.toBeNull();
+    b.run();
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(1);
+  });
 });
 
 describe('never in the way', () => {
@@ -523,12 +536,37 @@ describe('waiting for the page to be still', () => {
 });
 
 describe('a hand cancelled', () => {
-  it('puts a held page down: it falls back, never thrown', () => {
+  it('lets a held page fall back home, however fast the hand was going, the curl gone only once there', () => {
     const b = book();
     b.turn.grab([390, 500]);
     b.turn.drag([-300, 0], 0);
     b.turn.drag([-380, 0], 40);
     expect(b.turn.cancel()).toBe(true);
+    // Flying home, not snatched away: the curl is still over the page.
+    expect(b.curl()).not.toBeNull();
+    b.run(1);
+    expect(b.curl()).not.toBeNull();
+    b.run();
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(1);
+  });
+
+  it('with reduced motion (the tokens at 0) the hand holds nothing: its drag asked for a turn, as a key does', () => {
+    const b = book({ tokens: STILL });
+    b.turn.grab([390, 500]);
+    b.turn.drag([-300, 0], 0);
+    b.turn.cancel();
+    expect(b.curl()).toBeNull();
+    // Asked already, and turned at once: there was never a held page to put back.
+    expect(b.page()).toBe(2);
+  });
+
+  it('at speed 0, falls back at once, clean', () => {
+    const b = book({ speed: 0 });
+    b.turn.grab([390, 500]);
+    b.turn.drag([-300, 0], 0);
+    b.turn.cancel();
+    b.run(1);
     expect(b.curl()).toBeNull();
     expect(b.page()).toBe(1);
   });

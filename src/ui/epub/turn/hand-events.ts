@@ -106,6 +106,15 @@ export function handEvents(turn: PageTurn, of: HandEventsOf): () => void {
     if (held && event.pointerId === held.id) lost();
   };
 
+  /**
+   * The pane's own capture lost. Never another's: a finger's touch is held by
+   * the element it lands on (the browser's implicit capture), and taking it
+   * for the pane passes that element a lostpointercapture which bubbles here.
+   */
+  const uncaptured = (event: PointerEvent) => {
+    if (event.target === of.target) cancel(event);
+  };
+
   /** A drag that turned isn't also a click on the edge, link or page it began on. */
   const click = (event: MouseEvent) => {
     if (event.timeStamp > swallowUntil) return;
@@ -124,7 +133,7 @@ export function handEvents(turn: PageTurn, of: HandEventsOf): () => void {
     [window, 'pointermove', move as EventListener, true],
     [window, 'pointerup', up as EventListener, true],
     [window, 'pointercancel', cancel as EventListener, true],
-    [of.target, 'lostpointercapture', cancel as EventListener, false],
+    [of.target, 'lostpointercapture', uncaptured as EventListener, false],
     [of.target, 'click', click as EventListener, true],
     [of.target, 'selectstart', still, false],
     [of.target, 'dragstart', still, false],

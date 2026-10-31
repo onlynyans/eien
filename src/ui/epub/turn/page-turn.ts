@@ -145,7 +145,7 @@ export class PageTurn {
     const hand = this.#hand;
     this.#hand = null;
     if (!hand) return false;
-    hand.lifted = true;
+    hand.lifted = 'up';
     if (hand.caught && !hand.moved) {
       hand.holding?.resume();
       return false;
@@ -162,8 +162,8 @@ export class PageTurn {
     const hand = this.#hand;
     this.#hand = null;
     if (!hand) return false;
-    hand.lifted = true;
-    if (hand.holding?.phase === 'held') hand.holding.drop();
+    hand.lifted = 'cancelled';
+    if (hand.holding) this.#home(hand.holding);
     return hand.asked;
   }
 
@@ -253,7 +253,15 @@ export class PageTurn {
     const curl = this.#curlOn(beginCurl(page, way, hand.at[1]), copy, sheet, tokens);
     hand.holding = curl;
     curl.drag(hand.offset, hand.time);
-    if (hand.lifted) this.#throw(curl);
+    // Gone before its page came: thrown if let go, home if the gesture was cancelled.
+    if (hand.lifted === 'up') this.#throw(curl);
+    else if (hand.lifted === 'cancelled') this.#home(curl);
+  }
+
+  /** A cancelled gesture's page: home over the turn's time, as a hand let go short, never snatched away. */
+  #home(curl: CurlRun): void {
+    if (curl.phase !== 'held') return;
+    curl.fallBack(curlTime(curl.tokens.calm, turnScale(this.#surface.how().speed)));
   }
 
   /** Let go: the finish at the Turn speed, from the hand's own. */
