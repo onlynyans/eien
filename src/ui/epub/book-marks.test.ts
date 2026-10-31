@@ -86,3 +86,55 @@ describe('] and [ walking a book’s marks', () => {
     expect(said(side)).toBe('Highlight, 1 of 1 mark.');
   });
 });
+
+// QA (#40, Phase 5b): a walk within the chapter drawn, its words in sight
+// measured again as each mark is shown; and both kinds at one word.
+describe('] and [ within one chapter, as QA tried them', () => {
+  it('step from mark to mark in the chapter drawn, never back to the one just shown', async () => {
+    const { side } = await opened({
+      bookmarks: [{ chapter: chapter(1), offset: 400, words: '' }],
+      highlights: [{ chapter: chapter(1), from: 200, to: 220, words: '' }],
+    });
+    expect(side.page.sheet.place).toBe(0);
+    press(side, ']');
+    expect(side.page.sheet.place).toBe(200);
+    expect(said(side)).toBe('Highlight, 1 of 2 marks.');
+    press(side, ']');
+    expect(side.page.sheet.place).toBe(400);
+    expect(said(side)).toBe('Bookmark, 2 of 2 marks.');
+    press(side, '[');
+    expect(side.page.sheet.place).toBe(200);
+    press(side, '[');
+    expect(side.page.sheet.place).toBe(400);
+    expect(said(side)).toBe('Round to the last: Bookmark, 2 of 2 marks.');
+    expect(where(side)).toBe(chapter(1));
+  });
+
+  it('keep the place each lands on as the book’s, so the book opens there again', async () => {
+    const { side, writes } = await opened({
+      highlights: [{ chapter: chapter(3), from: 30, to: 40, words: '' }],
+    });
+    press(side, ']');
+    await vi.waitFor(() =>
+      expect(writes).toHaveBeenLastCalledWith(expect.any(String), {
+        chapter: chapter(3),
+        offset: 30,
+      }),
+    );
+  });
+
+  it('say a bookmark and a highlight at one word as two marks, the bookmark first', async () => {
+    const { side } = await opened({
+      bookmarks: [{ chapter: chapter(2), offset: 20, words: '' }],
+      highlights: [{ chapter: chapter(2), from: 20, to: 30, words: '' }],
+    });
+    press(side, ']');
+    await vi.waitFor(() => expect(where(side)).toBe(chapter(2)));
+    expect(said(side)).toBe('Bookmark, 1 of 2 marks.');
+    // Both in sight now: [ from the chapter after goes back to the highlight, the last of the two.
+    await side.go(side.spine + 1);
+    press(side, '[');
+    await vi.waitFor(() => expect(where(side)).toBe(chapter(2)));
+    expect(said(side)).toBe('Highlight, 2 of 2 marks.');
+  });
+});

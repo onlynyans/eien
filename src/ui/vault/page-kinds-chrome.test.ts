@@ -263,6 +263,10 @@ describe('the commands for a note', () => {
       'toggle:editor.spellcheck',
       // Format → Highlight: a book's words take it too (#40, Phase 5a).
       'format:highlight',
+      // A book's own walk, never greyed with the book in front (QA, Phase 5b).
+      'mark:next',
+      'mark:previous',
+      'bookmark',
     ] as const)
       expect(off).not.toContain(on);
     expect(new Set(off).size).toBe(off.length);

@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { oneChapter } from '../../../tests/support/epub-parts';
 import { DEFAULT_SETTINGS } from '../../core/config';
-import type { Epub } from '../../core/epub';
+import { type Epub, type Highlight, readingPath } from '../../core/epub';
 import { laidOut } from './test-lines';
 import { sideWith } from './test-side';
 
@@ -35,6 +35,28 @@ describe('a book on its page’s edge', () => {
     expect(strip.querySelectorAll('.edge-strip__mark')).toHaveLength(0);
     side.page.key(new KeyboardEvent('keydown', { key: 'b' }));
     await vi.waitFor(() => expect(strip.querySelectorAll('.edge-strip__mark')).toHaveLength(1));
+  });
+
+  // QA (#40, Phase 5b): the strip follows the book's highlights as its file changes.
+  it('ticks each highlight kept, and lets one go once it’s taken off', async () => {
+    const { side, strip, disk, of } = await opened();
+    const key = side.epub?.key ?? '';
+    const highlight = { chapter: 'OEBPS/chapter-2.xhtml', from: 10, to: 20, words: 'kept' };
+    await disk.write(
+      readingPath(key),
+      JSON.stringify({ version: 1, highlights: [highlight] }),
+      null,
+    );
+    await side.reload();
+    await vi.waitFor(() =>
+      expect(strip.querySelectorAll('.edge-strip__highlight')).toHaveLength(1),
+    );
+    expect(strip.querySelectorAll('.edge-strip__mark')).toHaveLength(0);
+    // The book counted whole first: no count's redraw stands in for the change's own.
+    const epub = side.epub as Epub;
+    await vi.waitFor(() => expect(of.counts.of(epub).whole).toBe(true));
+    await side.marks.highlights.remove(side.marks.highlights.all[0] as Highlight);
+    expect(strip.querySelectorAll('.edge-strip__highlight')).toHaveLength(0);
   });
 
   it('says where the page is, by its chapter', async () => {

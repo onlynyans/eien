@@ -116,6 +116,30 @@ describe('a book’s shape on its edge', () => {
     expect(book.shares('.edge-strip__highlight')).toEqual([0.75]);
   });
 
+  // QA (#40, Phase 5b).
+  it('draws a bookmark and a highlight at one word both, a highlight in an uncounted chapter at its start, one gone none', () => {
+    const book = shaped({
+      spine: [[100], [100]],
+      rows: [
+        ['Chapter I', 0, 0],
+        ['Chapter II', 0, 1],
+      ],
+      lengths: [100, null],
+      marks: [mark('c0.xhtml', 50)],
+      highlights: [
+        { chapter: 'c0.xhtml', from: 50, to: 60, words: '' },
+        { chapter: 'c1.xhtml', from: 50, to: 60, words: '' },
+        { chapter: 'gone.xhtml', from: 0, to: 5, words: '' },
+      ],
+    });
+    expect(book.shares('.edge-strip__mark')).toEqual([0.25]);
+    expect(book.shares('.edge-strip__highlight')).toEqual([0.25, 0.5]);
+    // Counted now: within its chapter, as a bookmark is.
+    book.count[1] = 100;
+    book.strip.drawn();
+    expect(book.shares('.edge-strip__highlight')).toEqual([0.25, 0.75]);
+  });
+
   it('shows no tab for a bookmark whose chapter isn’t in the book', () => {
     const book = shaped({
       spine: [[100]],

@@ -270,3 +270,61 @@ describe('a book’s Marks in the list, as QA tried them (Phase 4c)', () => {
     );
   });
 });
+
+// QA (#40, Phase 5b): a book's marks of both kinds in the list, a bookmark and
+// a highlight at one word among them.
+describe('a book’s Marks of both kinds, as QA tried them (Phase 5b)', () => {
+  const bookmarkAt = (offset: number, words: string): MarkRow => ({
+    kind: 'bookmark',
+    offset,
+    mark: { chapter: 'c1.xhtml', offset, words },
+    spine: 1,
+    page: '3',
+    chapter: 'Chapter I',
+  });
+  const highlightAt = (from: number, words: string): MarkRow => ({
+    kind: 'highlight',
+    offset: from,
+    mark: { chapter: 'c1.xhtml', from, to: from + 20, words },
+    spine: 1,
+    page: '3',
+    chapter: 'Chapter I',
+  });
+  const BOTH = [bookmarkAt(40, 'Its page'), highlightAt(40, 'Its words'), highlightAt(90, 'Later')];
+  const marksOf = (marks: readonly MarkRow[]): ContentsModel => ({
+    ...MODEL,
+    lens: 'marks',
+    marks,
+  });
+  const words = (container: HTMLElement) =>
+    rows(container).map((row) => row.querySelector('.mark-row__words')?.textContent);
+
+  it('are each a row in the order given, its kind said, counted together under Marks', () => {
+    const { container, actions } = drawn(marksOf(BOTH));
+    expect(words(container)).toEqual(['Its page', 'Its words', 'Later']);
+    expect(
+      rows(container).map((row) => row.querySelector('.mark-row__chapter')?.textContent),
+    ).toEqual(['Chapter I · bookmark', 'Chapter I · highlight', 'Chapter I · highlight']);
+    expect(new Set(rows(container).map((row) => row.dataset.key)).size).toBe(3);
+    expect(container.querySelectorAll('.book-lens')[1]?.textContent).toBe('Marks 3');
+    rows(container)[1]?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }),
+    );
+    expect(actions.remove).toHaveBeenCalledExactlyOnceWith(BOTH[1]);
+  });
+
+  it('keep the keyboard on a highlight’s row, never the bookmark’s at its word, as rows come and go', () => {
+    const { container, actions } = drawn(marksOf(BOTH));
+    rows(container)[1]?.focus();
+    // A bookmark made before it: the highlight's row moves down, the keyboard with it.
+    renderContents(container, marksOf([bookmarkAt(0, 'First'), ...BOTH]), null, actions);
+    expect(document.activeElement?.querySelector('.mark-row__words')?.textContent).toBe(
+      'Its words',
+    );
+    // The bookmark at its word taken off: the keyboard stays on the highlight.
+    renderContents(container, marksOf(BOTH.slice(1)), null, actions);
+    expect(document.activeElement?.querySelector('.mark-row__words')?.textContent).toBe(
+      'Its words',
+    );
+  });
+});

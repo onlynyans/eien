@@ -81,3 +81,42 @@ describe('] and [ walking the marks', () => {
     expect(walkMarks([], { spine: 0, from: 0, to: 10 }, 1)).toBeNull();
   });
 });
+
+// QA (#40, Phase 5b): the sights a page gives that the walk must read as the
+// page does: a chapter's last page (in pages, its words run to the chapter's
+// end), a spread's two pages as one sight, and two kinds at one word.
+describe('] and [ from the sights a page gives, as QA tried them', () => {
+  const marks = marksInOrder(
+    [bookmark(0, 1000), bookmark(1, 0)],
+    [highlight(0, 1600), highlight(0, 2500)],
+    SPINE,
+  );
+
+  it('passes over a mark on a spread’s recto: the two pages are one sight', () => {
+    // The verso from 1000, the recto from 1600, the next spread from 2200.
+    const spread = { spine: 0, from: 1000, to: 2200 };
+    expect(where(walkMarks(marks, spread, 1)?.mark)).toBe('highlight 0:2500');
+    expect(walkMarks(marks, spread, -1)).toMatchObject({ index: 3, round: true });
+  });
+
+  it('goes on to the next chapter from a chapter’s last page, whose words run to its end', () => {
+    const last = { spine: 0, from: 2400, to: Number.POSITIVE_INFINITY };
+    expect(where(walkMarks(marks, last, 1)?.mark)).toBe('bookmark 1:0');
+    expect(where(walkMarks(marks, last, -1)?.mark)).toBe('highlight 0:1600');
+  });
+
+  it('takes a bookmark and a highlight at one word as one stop each, the bookmark first', () => {
+    const both = marksInOrder([bookmark(1, 30)], [highlight(1, 30)], SPINE);
+    const before = { spine: 1, from: 0, to: 10 };
+    expect(walkMarks(both, before, 1)?.mark.kind).toBe('bookmark');
+    const after = { spine: 1, from: 200, to: 300 };
+    expect(walkMarks(both, after, -1)?.mark.kind).toBe('highlight');
+  });
+
+  it('says the one mark of a book round from itself, either way', () => {
+    const one = marksInOrder([bookmark(1, 30)], [], SPINE);
+    const on = { spine: 1, from: 30, to: 60 };
+    expect(walkMarks(one, on, 1)).toMatchObject({ index: 0, round: true });
+    expect(walkMarks(one, on, -1)).toMatchObject({ index: 0, round: true });
+  });
+});

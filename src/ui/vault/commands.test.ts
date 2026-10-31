@@ -69,3 +69,27 @@ describe('Format → Highlight', () => {
     expect(format).toHaveBeenCalledOnce();
   });
 });
+
+// QA (#40, Phase 5b): View → Next Mark and Previous Mark walk the book in front.
+describe('View → Next Mark and Previous Mark', () => {
+  it('walk the marks of the book in front, on and back', () => {
+    const walk = vi.fn();
+    const pages = { active: { kind: 'epub', go: () => {}, marks: { walk } } };
+    const ctx = { pages } as unknown as CommandContext;
+    runCommand('mark:next', ctx);
+    runCommand('mark:previous', ctx);
+    expect(walk.mock.calls).toEqual([[1], [-1]]);
+  });
+
+  it('do nothing with a note in front (the menu greys them)', () => {
+    const walk = vi.fn();
+    // A note's page, with whatever it may hold called marks, is never walked.
+    const active = { kind: 'note', page: {}, versions: {}, marks: { walk } };
+    const ctx = { pages: { active, activeNote: active } } as unknown as CommandContext;
+    expect(() => {
+      runCommand('mark:next', ctx);
+      runCommand('mark:previous', ctx);
+    }).not.toThrow();
+    expect(walk).not.toHaveBeenCalled();
+  });
+});

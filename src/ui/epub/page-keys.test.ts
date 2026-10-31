@@ -161,4 +161,46 @@ describe('a book’s page’s keys', () => {
     expect(bookPress(']', {}, { shown: false }).walk).not.toHaveBeenCalled();
     expect(bookPress(']', {}, {}, document.createElement('input')).walk).not.toHaveBeenCalled();
   });
+
+  // QA (#40, Phase 5b).
+  it('walks by a bracket a layout types with Shift, but never by ⌘] or Ctrl+], nor { or }', () => {
+    // A layout whose ] needs Shift (or Shift and Option): the key is the bracket all the same.
+    const shifted = bookPress(']', { shiftKey: true });
+    expect(shifted.walk).toHaveBeenCalledExactlyOnceWith(1);
+    expect(shifted.prevented).toBe(true);
+    expect(bookPress('[', { shiftKey: true, altKey: true }).walk).toHaveBeenCalledWith(-1);
+    for (const modifier of ['metaKey', 'ctrlKey']) {
+      const held = bookPress(']', { [modifier]: true });
+      expect(held.walk, modifier).not.toHaveBeenCalled();
+      expect(held.prevented, modifier).toBe(false);
+    }
+    // Shift and a bracket key on a US layout: braces, a note's to type, never a walk.
+    for (const key of ['{', '}'])
+      expect(bookPress(key, { shiftKey: true }).walk).not.toHaveBeenCalled();
+  });
+
+  it('walks in pages without turning, and leaves the key alone with no book shown', () => {
+    const paged = bookPress(']', {}, { paged: true });
+    expect(paged.walk).toHaveBeenCalledWith(1);
+    expect(paged.turn).not.toHaveBeenCalled();
+    expect(paged.edge).not.toHaveBeenCalled();
+    expect(paged.back).not.toHaveBeenCalled();
+    const none = bookPress('[', {}, { shown: false, back: true });
+    expect(none.walk).not.toHaveBeenCalled();
+    expect(none.back).not.toHaveBeenCalled();
+    expect(none.prevented).toBe(false);
+  });
+
+  it('never walks from the note beside’s editor or a field of the page’s', () => {
+    const editor = document.createElement('div');
+    editor.className = 'editor-host';
+    const inside = editor.appendChild(document.createElement('span'));
+    const editable = document.createElement('div');
+    editable.setAttribute('contenteditable', 'true');
+    for (const target of [inside, editable, document.createElement('textarea')]) {
+      const typed = bookPress(']', {}, {}, target);
+      expect(typed.walk).not.toHaveBeenCalled();
+      expect(typed.prevented).toBe(false);
+    }
+  });
 });
