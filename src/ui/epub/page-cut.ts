@@ -60,7 +60,11 @@ export function pageCut(
     // The capitals are a first line's alone; any other part (an epigraph, a caption) keeps its look.
     if (first.dataset.part === 'first-line') first.removeAttribute('data-part');
   }
-  const last = [...words.querySelectorAll<HTMLElement>(BLOCKS)].at(-1);
+  // The block the cut ends inside of: the one holding its last words, not the last one opened.
+  const texts = document.createTreeWalker(words, NodeFilter.SHOW_TEXT);
+  let end: Node | null = null;
+  for (let text = texts.nextNode(); text; text = texts.nextNode()) end = text;
+  const last = end?.parentElement?.closest<HTMLElement>(BLOCKS);
   if (to && last && begunBefore(to)) last.setAttribute(CUT_END, '');
   return words;
 }

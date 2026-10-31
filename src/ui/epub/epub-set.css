@@ -34,8 +34,9 @@
   /* WebKit's alone (the iPhone): an opening quote hangs in the margin. */
   hanging-punctuation: first allow-end;
 }
-/* A turn's copy of a paragraph cut at the page's foot (./page-cut.ts): its lines set as the page's, its last too. */
-[data-view="pages"] .epub-chapter [data-cut-end] {
+/* A turn's copy of a paragraph cut at the page's foot (./page-cut.ts): its lines set as the page's, its last too.
+   A paragraph alone: nothing else is justified. */
+[data-view="pages"] .epub-chapter p[data-cut-end] {
   text-align-last: var(--epub-align);
   text-wrap: wrap;
 }

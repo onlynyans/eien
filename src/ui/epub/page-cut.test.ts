@@ -63,4 +63,10 @@ describe('a sight’s words cut for a turn’s copy', () => {
     // The chapter's last page ends with the chapter: nothing cut.
     expect(cut(chapter, 0, null).querySelector(`[${CUT_END}]`)).toBeNull();
   });
+
+  it('marks the block holding the cut’s last words, not the last one opened before them', () => {
+    const chapter = chapterOf('<blockquote><p>One.</p>Two three.</blockquote>');
+    const marked = cut(chapter, 0, 'One.Two'.length).querySelector(`[${CUT_END}]`);
+    expect(marked?.localName).toBe('blockquote');
+  });
 });
