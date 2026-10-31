@@ -210,13 +210,25 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.keyboard.press('ArrowRight');
         await expect(page.locator('.epub-heads__item').first()).toHaveText('Pride and Prejudice');
         expect(await violationsUnder(page, ['.page', '.epub-edges__turn']), 'a spread').toEqual([]);
-        // Back to Eien's title page and imprint, before the book's first page.
-        const title = page.locator('.epub-sheet:not([aria-hidden]) [aria-label="Title page"]');
-        for (let i = 0; i < 8 && !(await title.isVisible()); i++) {
+        // Back to Eien's title page and imprint, before the book's first page. QA (#40, Phase 3d): in
+        // sight, not merely drawn, as the book's first item holds them on every page of it.
+        const titleInSight = () =>
+          pages.evaluate((element) => {
+            const title = element.querySelector('[aria-label="Title page"]');
+            const rect = title?.getBoundingClientRect();
+            const sight = element.getBoundingClientRect();
+            return (
+              rect !== undefined &&
+              rect.width > 0 &&
+              rect.left >= sight.left - 1 &&
+              rect.right <= sight.right + 1
+            );
+          });
+        for (let i = 0; i < 8 && !(await titleInSight()); i++) {
           await page.keyboard.press('ArrowLeft');
           await page.waitForTimeout(100);
         }
-        await expect(title).toBeVisible();
+        await expect.poll(titleInSight).toBe(true);
         expect(await violationsUnder(page, ['.page']), 'the title page and imprint').toEqual([]);
       });
 

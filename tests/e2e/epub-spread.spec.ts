@@ -69,6 +69,20 @@ const pageTops = (page: Page) =>
     });
   });
 
+/**
+ * Whether the part of the sheet `selector` names stands in the pages in sight.
+ * A page turned away is still laid out beside them (only clipped), so
+ * Playwright's own visibility would call it visible.
+ */
+const inSight = (page: Page, selector: string) =>
+  box(page).evaluate((element, part) => {
+    const found = element.querySelector(part);
+    if (!found) return false;
+    const rect = found.getBoundingClientRect();
+    const sight = element.getBoundingClientRect();
+    return rect.width > 0 && rect.left >= sight.left - 1 && rect.right <= sight.right + 1;
+  }, selector);
+
 async function opened(page: Page, app: ElectronApplication): Promise<void> {
   await page.setViewportSize({ width: 1400, height: 900 });
   await shelfBook(page).click();
@@ -223,16 +237,18 @@ test.describe('set as a book', () => {
   }) => {
     await opened(page, app);
     await pastSpread(page, 40);
-    // Back from Chapter I, through the book's own first page, to Eien's.
+    // Back from Chapter I, through the book's own first page, to Eien's. QA (#40, Phase 3d): in
+    // sight, not merely drawn: the book's first item holds the front matter on every page of it.
     const title = sheet(page).locator('[aria-label="Title page"]');
-    for (let i = 0; i < 6 && !(await title.isVisible()); i++) {
+    for (let i = 0; i < 6 && !(await inSight(page, '[aria-label="Title page"]')); i++) {
       await page.keyboard.press('ArrowLeft');
       await page.waitForTimeout(100);
     }
-    await expect(title).toBeVisible();
+    await expect.poll(() => inSight(page, '[aria-label="Title page"]')).toBe(true);
     await expect(title).toContainText('Pride and Prejudice');
     const imprint = sheet(page).locator('[aria-label="Imprint"]');
-    await expect(imprint).toBeVisible();
+    // Facing it on the spread's recto.
+    await expect.poll(() => inSight(page, '[aria-label="Imprint"]')).toBe(true);
     await expect(imprint).toContainText('Set in Newsreader at');
     await expect(imprint).toContainText('a page,');
     // No page of the book's, so no number and no heads.
@@ -240,7 +256,8 @@ test.describe('set as a book', () => {
     await expect(folios(page).nth(0)).toHaveText('');
     // Home goes to the chapter's opening, never the front matter.
     await page.keyboard.press('Home');
-    await expect(title).toBeHidden();
+    await expect.poll(() => inSight(page, '[aria-label="Title page"]')).toBe(false);
+    await expect.poll(() => inSight(page, '[aria-label="Imprint"]')).toBe(false);
     // Nothing of it is the book's words: chosen whole, a copy has none of it.
     expect(await title.evaluate((element) => getComputedStyle(element).userSelect)).toBe('none');
   });
@@ -251,7 +268,9 @@ test.describe('set as a book', () => {
   }) => {
     await opened(page, app);
     await pastSpread(page, 40);
-    await page.keyboard.press('ArrowRight');
+    // QA (#40, Phase 3d): into the book's first item, which Eien's front matter comes before.
+    await page.keyboard.press('ArrowLeft');
+    await expect(sheet(page).locator('.epub-front')).toHaveCount(1);
     await clickMenu(app, 'View', 'Scroll');
     await expect(leaf(page)).toHaveAttribute('data-view', 'scroll');
     await expect(box(page)).not.toHaveAttribute('data-spread');

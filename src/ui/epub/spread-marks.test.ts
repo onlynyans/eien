@@ -9,6 +9,7 @@ import type { BookCount } from './book-count';
 import { BookFoot } from './book-foot';
 import { bookPlace } from './book-place';
 import type { EpubPage } from './epub-page';
+import { frontMatter } from './front-matter';
 import { PageBookmarks } from './page-bookmarks';
 import { RunningHeads } from './running-heads';
 import type { PageShown } from './sight';
@@ -133,5 +134,90 @@ describe('a spread’s pages in the colophon', () => {
     front.place.inSight(0, 0);
     expect(front.said()).toBe('');
     expect(front.heads.folio.textContent).toBe('');
+  });
+});
+
+// QA (#40, Phase 3d): a spread whose verso holds no words (a plate) begins at
+// the recto's first word, so a bookmark there is the recto's; and a last
+// spread's empty recto marks nothing, its verso's mark at the left.
+describe('a bookmark on a spread’s plate or its empty recto', () => {
+  it('sits on the recto when the verso is a picture alone', () => {
+    const plate = marked(
+      [
+        { role: 'text', from: 1600 },
+        { role: 'text', from: 1600 },
+      ],
+      [at(1600)],
+    );
+    plate.marks.inSight(1600, 2200);
+    expect(plate.page.bookmarked).toHaveBeenLastCalledWith(false, true);
+  });
+
+  it('sits on the verso of the chapter’s last spread, its recto empty', () => {
+    const last = marked(
+      [
+        { role: 'text', from: 4000 },
+        { role: 'blank', from: Number.POSITIVE_INFINITY },
+      ],
+      [at(4100)],
+    );
+    last.marks.inSight(4000, Number.POSITIVE_INFINITY);
+    expect(last.page.bookmarked).toHaveBeenLastCalledWith(true, false);
+    expect(last.marks.on).toBe(true);
+  });
+});
+
+// QA (#40, Phase 3d): the imprint's figures are filled as its page comes into
+// sight, the contents' rows for the chapters, and its pages once counted.
+describe('the imprint’s figures', () => {
+  function imprinted(sight: readonly PageShown[]) {
+    const chapter = document.createElement('div');
+    const epub = {
+      title: 'Book',
+      author: '',
+      spine: [{ path: CHAPTER }, { path: 'two.xhtml' }],
+      contents: [
+        { title: 'One', spine: 0, depth: 0 },
+        { title: 'Part', spine: 1, depth: 0 },
+        { title: 'Two', spine: 1, depth: 1 },
+      ],
+    } as unknown as Epub;
+    chapter.append(frontMatter(epub, 'Book.epub', ''));
+    let count: BookCount | null = null;
+    const place = bookPlace({
+      page: {
+        foot: new BookFoot(() => {}),
+        heads: new RunningHeads(),
+        element: document.createElement('div'),
+        chapter,
+        sheet: { sight },
+      } as unknown as EpubPage,
+      epub: () => epub,
+      spine: () => 0,
+      count: () => count,
+      marks: () => [],
+      goTo: () => {},
+    });
+    const length = () => chapter.querySelector('[data-imprint="length"]')?.textContent;
+    const counted = () => {
+      count = { lengths: [6000, 3000], print: [] } as unknown as BookCount;
+      place.counted();
+    };
+    return { place, length, counted };
+  }
+
+  it('says the contents’ rows, then the pages once the book is counted', () => {
+    const front = imprinted(FRONT);
+    front.place.inSight(0, 0);
+    expect(front.length()).toBe('3 chapters.');
+    front.counted();
+    expect(front.length()).toBe('3 chapters, 6 pages.');
+  });
+
+  it('is left alone while the book’s own pages are in sight', () => {
+    const text = imprinted(SPREAD);
+    text.place.inSight(1000, 2200);
+    text.counted();
+    expect(text.length()).toBe('');
   });
 });

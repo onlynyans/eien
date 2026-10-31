@@ -623,4 +623,32 @@ test('a book in pages on the phone is one page, ragged and hyphenated, on a tabl
   await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-heads')).toBeVisible();
   await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-folios')).toBeVisible();
   expect(await seriousViolations(page), 'a book set as a book on the phone').toEqual([]);
+  // QA (#40, Phase 3d): tapped back past the book's first page, Eien's imprint, then its title
+  // page, one page at a time. In sight, not merely drawn: a page turned away is only clipped.
+  const inSight = (part: string) =>
+    box.evaluate((element, selector) => {
+      const found = element.querySelector(selector)?.getBoundingClientRect();
+      const sight = element.getBoundingClientRect();
+      return (
+        found !== undefined &&
+        found.width > 0 &&
+        found.left >= sight.left - 1 &&
+        found.right <= sight.right + 1
+      );
+    }, part);
+  const rect = await box.boundingBox();
+  if (!rect) throw new Error('no page');
+  const tapBack = () => page.touchscreen.tap(rect.x + rect.width * 0.1, rect.y + rect.height / 2);
+  for (let i = 0; i < 6 && !(await inSight('[aria-label="Imprint"]')); i++) {
+    await tapBack();
+    await page.waitForTimeout(100);
+  }
+  await expect.poll(() => inSight('[aria-label="Imprint"]')).toBe(true);
+  expect(await inSight('[aria-label="Title page"]')).toBe(false);
+  await tapBack();
+  await expect.poll(() => inSight('[aria-label="Title page"]')).toBe(true);
+  expect(await inSight('[aria-label="Imprint"]')).toBe(false);
+  // No page of the book's: none said, nothing to bookmark.
+  await expect(page.locator('.colophon__page').first()).toHaveText('');
+  expect(await seriousViolations(page), 'Eien’s title page on the phone').toEqual([]);
 });

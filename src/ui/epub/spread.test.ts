@@ -54,3 +54,39 @@ describe('two pages or one (Phase 3d)', () => {
     expect(split.per()).toBe(1);
   });
 });
+
+// QA (#40, Phase 3d): the pane's own padding is no page's, the edge strip's
+// room at its right included; the sheet's margins as they are worn (a
+// narrower pane's, Compact's); and no page laid yet decides nothing.
+describe('two pages or one, the pane as it’s worn', () => {
+  it('leaves the edge strip’s room out of the pane', () => {
+    // Marks on the edge keep 48px more at the pane's right (./edge-strip.css).
+    const strip = (width: number) => {
+      const at = pane(width);
+      at.room.style.paddingRight = `${24 + 48}px`;
+      return at.per();
+    };
+    expect(strip(THRESHOLD + 48)).toBe(2);
+    expect(strip(THRESHOLD + 47)).toBe(1);
+  });
+
+  it('counts the sheet’s margins as worn: narrower ones open two sooner', () => {
+    const compact = (width: number) => {
+      const at = pane(width);
+      const sheet = document.querySelector('.sheet') as HTMLElement;
+      sheet.style.paddingLeft = sheet.style.paddingRight = '32px';
+      return at.per();
+    };
+    expect(compact(THRESHOLD - 80)).toBe(2);
+    expect(compact(THRESHOLD - 81)).toBe(1);
+  });
+
+  it('is one page with no text measured, or no sheet round the box', () => {
+    const none = pane(THRESHOLD * 2);
+    none.chapter.style.fontSize = '0px';
+    expect(none.per()).toBe(1);
+    const bare = pane(THRESHOLD * 2);
+    document.querySelector('.sheet')?.classList.remove('sheet');
+    expect(bare.per()).toBe(1);
+  });
+});

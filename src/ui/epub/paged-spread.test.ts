@@ -235,3 +235,84 @@ describe('a turn’s copy of a paragraph cut at the page’s foot', () => {
     expect(copy.querySelector(`[${CUT_END}]`)).toBeNull();
   });
 });
+
+// QA (#40, Phase 3d): the front matter as one page opens to two and closes
+// again, turned back to on a spread; and nothing of the columns left on the
+// chapter once it's cleared (Scroll, another book).
+describe('the front matter as the pane widens and narrows', () => {
+  it('keeps the imprint in sight one page, two and one again, its place still the opening', () => {
+    const { place, pages, moved } = laidOut(['a'.repeat(250)], { per: 1, front: true });
+    place.show(0);
+    place.turn(-1);
+    expect(place.page).toBe(1);
+    pages(2);
+    expect(place.page).toBe(0);
+    expect(place.sight.map((page) => page.role)).toEqual(['front', 'front']);
+    pages(1);
+    // The imprint again, not the title page beside it.
+    expect(place.page).toBe(1);
+    expect(place.offset).toBe(0);
+    // None of the chapter read on its front matter.
+    expect(moved).toHaveBeenLastCalledWith(0);
+    place.turn(-1);
+    pages(2);
+    pages(1);
+    expect(place.page).toBe(0);
+  });
+
+  it('is turned back to from a spread’s opening, and on again to the opening', () => {
+    const { place, inSight } = laidOut(['a'.repeat(450)], { front: true });
+    place.show(0);
+    expect(place.page).toBe(1);
+    expect(place.columns).toEqual({ at: 0, of: 5, per: 2 });
+    expect(place.turn(-1)).toBe(true);
+    expect(place.page).toBe(0);
+    expect(place.sight.map((page) => page.role)).toEqual(['front', 'front']);
+    expect(inSight).toHaveBeenLastCalledWith(0, 0);
+    // The fore-edge counts the chapter's own pages: none read on its front matter.
+    expect(place.columns).toEqual({ at: 0, of: 5, per: 2 });
+    expect(place.turn(1)).toBe(true);
+    expect(place.page).toBe(1);
+    expect(place.sight).toEqual([
+      { role: 'opening', from: 0 },
+      { role: 'text', from: PER_PAGE },
+    ]);
+    // The last spread: its recto the chapter's last page (two front pages and five).
+    place.edge(true);
+    expect(place.page).toBe(3);
+    expect(place.columns).toEqual({ at: 4, of: 5, per: 2 });
+    expect(place.sight.map((page) => page.role)).toEqual(['text', 'blank']);
+  });
+
+  it('is put back on a spread where a turn from it fell back', () => {
+    const { place } = laidOut(['a'.repeat(450)], { front: true });
+    place.show(0);
+    place.turn(-1);
+    const spot = place.spot;
+    expect(spot).toEqual({ offset: 0, page: 0, front: 0 });
+    place.turn(1);
+    place.restore(spot);
+    expect(place.page).toBe(0);
+    expect(place.sight.map((page) => page.role)).toEqual(['front', 'front']);
+    // Laid out anew, still there.
+    place.reshow();
+    expect(place.page).toBe(0);
+  });
+});
+
+describe('a chapter cleared from its pages', () => {
+  it('keeps nothing of the columns: one page, no spread, no line or page height', () => {
+    const { box, chapter, place } = laidOut(['a'.repeat(450)]);
+    place.show(0);
+    expect(chapter.style.columnCount).toBe('2');
+    expect(chapter.style.getPropertyValue('--line')).toBe('20px');
+    place.clear();
+    expect(chapter.style.columnCount).toBe('');
+    expect(chapter.style.columnWidth).toBe('');
+    expect(chapter.style.getPropertyValue('--line')).toBe('');
+    expect(chapter.style.getPropertyValue('--epub-page-height')).toBe('');
+    expect(box.hasAttribute('data-spread')).toBe(false);
+    expect(place.sight).toEqual([]);
+    expect(place.columns).toEqual({ at: 0, of: 1, per: 1 });
+  });
+});

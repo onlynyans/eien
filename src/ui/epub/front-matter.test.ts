@@ -76,3 +76,52 @@ describe('a book’s title page and imprint (Phase 3d)', () => {
     expect(said('set')).not.toContain('hyphenated');
   });
 });
+
+// QA (#40, Phase 3d): the imprint is in the chapter's columns, so filling it
+// with the same words again must change nothing (its text would lay the
+// columns out anew); words chosen from the title page into the text copy the
+// text alone; and a chapter with no front matter is left as it is.
+describe('the imprint filled again, and words chosen across the front matter', () => {
+  /** The leaf and chapter set as `first()` makes them, laid as a spread. */
+  function set() {
+    const book = first();
+    book.chapter.style.fontSize = '22px';
+    book.chapter.style.lineHeight = '35px';
+    book.chapter.style.columnWidth = '660px';
+    return book;
+  }
+
+  it('changes nothing when what it says is the same', () => {
+    const { leaf, chapter } = set();
+    fillImprint(chapter, leaf, 61, 2450);
+    const watched = new MutationObserver(() => {});
+    watched.observe(chapter, { subtree: true, childList: true, characterData: true });
+    fillImprint(chapter, leaf, 61, 2450);
+    expect(watched.takeRecords()).toEqual([]);
+    // Counted further, it says the new length alone.
+    fillImprint(chapter, leaf, 61, 2451);
+    const changed = watched.takeRecords().map((record) => record.target);
+    watched.disconnect();
+    const length = chapter.querySelector('[data-imprint="length"]');
+    expect(changed.length).toBeGreaterThan(0);
+    expect(changed.every((node) => node === length || node.parentNode === length)).toBe(true);
+    expect(length?.textContent).toBe('61 chapters, 2,451 pages.');
+  });
+
+  it('leaves a chapter with no front matter as it is', () => {
+    const chapter = document.createElement('div');
+    chapter.innerHTML = '<p>Chapter II’s words.</p>';
+    fillImprint(chapter, document.createElement('div'), 61, 2450);
+    expect(chapter.innerHTML).toBe('<p>Chapter II’s words.</p>');
+  });
+
+  it('copies none of it in words chosen from the imprint into the chapter', () => {
+    const { chapter } = first();
+    const imprint = chapter.querySelector('[aria-label="Imprint"] div') as HTMLElement;
+    const words = chapter.querySelector('p')?.firstChild as Text;
+    const chosen = document.createRange();
+    chosen.setStart(imprint.firstChild as Text, 2);
+    chosen.setEnd(words, 'It is a'.length);
+    expect(wordsIn(chosen).textContent).toBe('It is a');
+  });
+});

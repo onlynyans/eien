@@ -2,9 +2,9 @@
 // pages still to read stack at its right edge and the pages read at its
 // left, up to six paper edges a mark's width apart, so how far you are shows
 // before any number. The edges are where a hand reaches to turn: each side
-// is a button, Previous page or Next page, its tooltip saying how many pages
-// of the chapter are left that way. In Scroll, and in Page frame Full, they
-// aren't drawn (./epub.css).
+// is a button, Previous page or Next page (pages, on a spread), its tooltip
+// saying how many pages of the chapter are left that way. In Scroll, and in
+// Page frame Full, they aren't drawn (./epub.css).
 
 import { EDGES, edgesOf } from '../../core/epub';
 import { keyText } from '../chrome/keys';
@@ -85,7 +85,10 @@ export class LeafEdges {
       const left = name === 'before' ? at : Math.max(0, of - at - per);
       const label = `${name === 'before' ? 'Previous' : 'Next'} ${per === 2 ? 'pages' : 'page'}`;
       const tip = `${label} · ${pagesWord(left)} ${name === 'before' ? 'back' : 'on'} in the chapter`;
-      this.#buttons[name].dataset.tip = tip;
+      const button = this.#buttons[name];
+      button.dataset.tip = tip;
+      // Its name too, as a screen reader hears it: a spread's turns two pages (Phase 3d).
+      if (button.getAttribute('aria-label') !== label) button.setAttribute('aria-label', label);
     }
   }
 }

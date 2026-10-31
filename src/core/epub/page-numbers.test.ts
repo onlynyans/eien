@@ -220,3 +220,19 @@ describe('a book’s printed pages at its edges', () => {
     expect(pageWords(placed.label, placed.of)).toBe('');
   });
 });
+
+// QA (#40, Phase 3d): a spread's two pages as a long book and a printed one say them.
+describe('a spread’s pages, the edges', () => {
+  it('groups both pages’ thousands, and joins a number and a printed label', () => {
+    expect(spreadWords(1999, 2000, 2450)).toBe('pages 1,999–2,000 of 2,450');
+    expect(spreadWords(1999, 2000, null)).toBe('pages 1,999–2,000');
+    expect(spreadWords('xii', 1, 300)).toBe('pages xii–1 of 300');
+  });
+
+  it('says one page where the recto’s is the verso’s, whatever its kind, or isn’t known', () => {
+    expect(spreadWords('xi', 'xi', null)).toBe('page xi');
+    expect(spreadWords(1200, '1200', 2450)).toBe('page 1,200 of 2,450');
+    expect(spreadWords('xi', null, null)).toBe('page xi');
+    expect(spreadWords(null, null, 9)).toBe('');
+  });
+});

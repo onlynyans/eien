@@ -167,3 +167,56 @@ describe('a page’s part in its chapter (Phase 3d)', () => {
     );
   });
 });
+
+// QA (#40, Phase 3d): a chapter's pages read in order whichever way they're
+// shown, and how far through only ever rises from its opening to its end.
+describe('a chapter’s sights, read in order', () => {
+  const shape = fc.record({
+    per: fc.constantFrom(1, 2),
+    front: fc.constantFrom(0, 2),
+    pages: fc.integer({ min: 1, max: 40 }),
+  });
+
+  it('are the front matter, the opening, its pages, then blanks only on the last sight’s recto', () => {
+    fc.assert(
+      fc.property(shape, ({ per, front, pages }) => {
+        const columns = front + pages;
+        const sights = sightsIn(columns, per);
+        const roles = Array.from({ length: sights }, (_, s) => pageRoles(s, per, front, columns));
+        const read = roles.flat();
+        const order = ['front', 'opening', 'text', 'blank'];
+        const blanks = roles.flatMap((sight, s) =>
+          sight.flatMap((role, i) => (role === 'blank' ? [[s, i]] : [])),
+        );
+        return (
+          read.every(
+            (role, i) => i === 0 || order.indexOf(read[i - 1] as string) <= order.indexOf(role),
+          ) &&
+          read.filter((role) => role === 'front').length === front &&
+          read.filter((role) => role === 'opening').length === 1 &&
+          read.filter((role) => role !== 'blank').length === columns &&
+          blanks.every(([s, i]) => s === sights - 1 && i !== 0)
+        );
+      }),
+    );
+  });
+
+  it('go from none of the chapter at its opening to all of it at its last, only rising', () => {
+    fc.assert(
+      fc.property(shape, ({ per, front, pages }) => {
+        const sights = sightsIn(front + pages, per);
+        const opening = openingSight(front, per);
+        const through = Array.from({ length: sights }, (_, s) => throughSights(s, sights, opening));
+        return (
+          through.every(
+            (share, s) =>
+              share >= 0 && share <= 1 && (s === 0 || share >= (through[s - 1] as number)),
+          ) &&
+          through.slice(0, opening).every((share) => share === 0) &&
+          (sights - 1 === opening || through[opening] === 0) &&
+          through[sights - 1] === 1
+        );
+      }),
+    );
+  });
+});

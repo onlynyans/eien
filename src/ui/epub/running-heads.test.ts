@@ -75,3 +75,43 @@ describe('running heads and folios (Phase 3d)', () => {
     expect(heads.head.textContent).toBe('');
   });
 });
+
+// QA (#40, Phase 3d): the heads and folios keep their slots whatever they say
+// (an empty one keeps its line), and a page shown again rewrites none of them.
+describe('running heads kept in place', () => {
+  it('keeps both slots of each, the same elements, through the front matter and back', () => {
+    const heads = new RunningHeads();
+    const label = (offset: number) => String(offset);
+    const slots = [...heads.head.children, ...heads.folio.children];
+    heads.show([{ role: 'text', from: 2500 }], EPUB, 4, label);
+    heads.show(
+      [
+        { role: 'front', from: 0 },
+        { role: 'front', from: 0 },
+      ],
+      EPUB,
+      4,
+      label,
+    );
+    heads.show([], null, -1, label);
+    expect([...heads.head.children, ...heads.folio.children]).toEqual(slots);
+    expect(slots.map((slot) => slot.textContent)).toEqual(['', '', '', '']);
+  });
+
+  it('rewrites nothing for the same pages shown again', () => {
+    const heads = new RunningHeads();
+    const sight = [
+      { role: 'text', from: 2500 },
+      { role: 'text', from: 3500 },
+    ] as const;
+    const label = (offset: number) => String(Math.floor(offset / 1000) + 1);
+    heads.show(sight, EPUB, 4, label);
+    const watched = new MutationObserver(() => {});
+    for (const row of [heads.head, heads.folio]) {
+      watched.observe(row, { subtree: true, childList: true, characterData: true });
+    }
+    heads.show(sight, EPUB, 4, label);
+    expect(watched.takeRecords()).toEqual([]);
+    watched.disconnect();
+  });
+});

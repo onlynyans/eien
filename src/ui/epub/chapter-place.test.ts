@@ -80,3 +80,28 @@ describe('the words from a place', () => {
     expect(wordsFrom(picture, 0, 200)).toBe('');
   });
 });
+
+// QA (#40, Phase 3d): a page that begins inside a word hyphenated at the page
+// before's foot names it whole; one that begins after a space, a hard
+// hyphen or a figure's comma begins where it does; and a word its markup
+// splits (an italic's start) is read from that piece alone.
+describe('the words from a place inside a word', () => {
+  it('back up to the word’s start over its letters and figures alone', () => {
+    const chapter = document.createElement('div');
+    chapter.innerHTML = '<p>A well-known 1,200 incomprehensibilities, rr2b.</p>';
+    const from = (words: string) =>
+      wordsFrom(chapter, (chapter.textContent ?? '').indexOf(words), 14);
+    expect(from('hensibilities')).toBe('incomprehensib');
+    expect(from('known')).toBe('known 1,200 in');
+    expect(from('200')).toBe('200 incomprehe');
+    expect(from('2b.')).toBe('rr2b.');
+    expect(from('well')).toBe('well-known 1,2');
+  });
+
+  it('never back into the piece of the word before it', () => {
+    const chapter = document.createElement('div');
+    chapter.innerHTML = '<p>incompre<em>hensible</em> words</p>';
+    expect(wordsFrom(chapter, 'incompre'.length, 200)).toBe('hensible words');
+    expect(wordsFrom(chapter, 'incomprehen'.length, 200)).toBe('hensible words');
+  });
+});
