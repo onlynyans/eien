@@ -94,3 +94,65 @@ describe('a book’s Found', () => {
     expect(found.step(side, 1)).toBe(false);
   });
 });
+
+describe('a book’s Found, as QA tried it (Phase 5c)', () => {
+  it('goes back on ⇧Enter from the place, round to the book’s last match', async () => {
+    const { side, found, epub } = await opened();
+    found.model(side, epub, 'Bennet');
+    await vi.waitFor(() => expect(found.model(side, epub, 'Bennet')?.done).toBe(true));
+    const total = found.model(side, epub, 'Bennet')?.rows.length ?? 0;
+    // The place is chapter I's top: none before it, so round to the last.
+    expect(found.step(side, -1)).toBe(true);
+    await vi.waitFor(() =>
+      expect(side.page.foot.said.textContent).toBe(`Match ${total} of ${total}.`),
+    );
+  });
+
+  it('searches the words as written, a pattern’s characters as themselves, the same words trimmed once', async () => {
+    const { side, found, epub } = await opened();
+    found.model(side, epub, 'Mr.');
+    await vi.waitFor(() => expect(found.model(side, epub, 'Mr.')?.done).toBe(true));
+    const rows = found.model(side, epub, 'Mr.')?.rows ?? [];
+    expect(rows.length).toBeGreaterThan(0);
+    // Never "Mrs": the full stop is a full stop.
+    expect(new Set(rows.map((row) => row.words))).toEqual(new Set(['Mr.']));
+    // The same words with spaces round them: no search started again.
+    expect(found.model(side, epub, '  Mr.  ')?.done).toBe(true);
+    expect(found.model(side, epub, '((')?.rows).toEqual([]);
+    await vi.waitFor(() => expect(found.model(side, epub, '((')?.done).toBe(true));
+    expect(found.model(side, epub, '((')?.rows).toEqual([]);
+  });
+
+  it('searches again for the same words in another book', async () => {
+    const { side, found, epub } = await opened();
+    found.model(side, epub, 'Bennet');
+    await vi.waitFor(() => expect(found.model(side, epub, 'Bennet')?.done).toBe(true));
+    const other = { ...epub, key: 'another' };
+    expect(found.model(side, other, 'Bennet')?.done).toBe(false);
+  });
+
+  it('turns no lens for blank words', async () => {
+    const { nav, found } = await opened();
+    found.typed('   ');
+    expect(nav.bookLens).toBe('contents');
+    found.typed(' B ');
+    expect(nav.bookLens).toBe('contents');
+  });
+
+  // BUG (QA, Phase 5c): Enter with fewer than two letters in the field (none searched, `asked`
+  // null) is kept as `waiting`, and `typed` clears it only when other words were asked for. So an
+  // Enter on an empty field, then words typed, goes to their first match unasked: the page moves
+  // as the reader types, before they press Enter.
+  it.fails('forgets an Enter pressed while nothing is searched, once words are typed', async () => {
+    const { side, found, epub } = await opened();
+    document.getSelection()?.removeAllRanges();
+    found.typed('');
+    expect(found.model(side, epub, '')).toBeNull();
+    found.step(side, 1);
+    found.typed('Netherfield');
+    await vi.waitFor(() => expect(found.model(side, epub, 'Netherfield')?.done).toBe(true));
+    await new Promise((done) => setTimeout(done, 50));
+    expect(side.page.foot.said.textContent).not.toMatch(/^Match/u);
+    expect(document.getSelection()?.toString()).toBe('');
+  });
+});

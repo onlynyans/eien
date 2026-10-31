@@ -312,6 +312,62 @@ test('Find from the ⋯ on a book: the page’s find bar searching the whole boo
   expect(await page.evaluate(() => document.getSelection()?.toString())).toBe('Netherfield');
 });
 
+/** A book and a note on the phone, the book opened from the shelf and its contents behind the page. */
+async function bookAndNote(page: Page) {
+  await open(page);
+  await putOutside(page, 'Eien/Vault/Truths.md', 'A truth about the vault.\n');
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
+  await back(page).click(); // the sidebar
+  const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
+  await expect(book).toBeVisible({ timeout: 10_000 });
+  await book.click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  return book;
+}
+
+test('Find on a phone: the field beside a book’s contents searches the vault, never the book (#40, Phase 5c, QA)', async ({
+  page,
+}) => {
+  await bookAndNote(page);
+  await back(page).click(); // the book's contents
+  await back(page).click(); // the sidebar, where the phone's field is
+  const field = page.locator('.sidebar').getByRole('searchbox');
+  // Named for the vault, as before: no book's rows are beside it here.
+  await expect(field).not.toHaveAttribute('placeholder', 'Search Pride and Prejudice');
+  await expect(field).toHaveAttribute('placeholder', /^Search /u);
+  await field.fill('truth');
+  await expect(page.locator('.sidebar').getByText('Truths')).toBeVisible();
+  await expect(page.locator('.found-row, .tree-row--found')).toHaveCount(0);
+});
+
+// BUG (QA, Phase 5c): vault-view hands every word typed to the book's Found (`epubs.typed`), even
+// where the field searches the vault (a phone, or one pane with the list shut). Typing turns the
+// book's lens to Found and clearing turns it to Contents, so the Marks the reader chose are lost.
+test('Find on a phone: a search of the vault leaves the book’s lens as it was chosen (#40, Phase 5c, QA)', async ({
+  page,
+}) => {
+  test.fail();
+  const book = await bookAndNote(page);
+  await back(page).click(); // the book's contents
+  const marks = page.getByRole('button', { name: /^Marks \d+$/u });
+  await marks.click();
+  await expect(marks).toHaveAttribute('aria-pressed', 'true');
+  await back(page).click(); // the sidebar
+  const field = page.locator('.sidebar').getByRole('searchbox');
+  await field.fill('truth');
+  await expect(page.locator('.sidebar').getByText('Truths')).toBeVisible();
+  await field.fill('');
+  await book.click();
+  await expect(chapter(page)).toBeInViewport();
+  await back(page).click(); // the book's contents again
+  await expect(marks).toHaveAttribute('aria-pressed', 'true', { timeout: 3000 });
+});
+
 test('a book’s row menu renames it in its row, and trashes it to .eien/trash, whole', async ({
   page,
 }) => {

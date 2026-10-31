@@ -123,4 +123,21 @@ describe('a book’s Found in the list', () => {
     });
     expect(document.activeElement?.classList.contains('found-row')).toBe(true);
   });
+
+  it('with Marks on the edge, draws Found’s rows in the contents’ place, with no lenses', () => {
+    const { container } = drawn(model({ marks: null, lens: 'contents' }));
+    expect(container.querySelector('.book-lenses')).toBeNull();
+    expect(container.querySelectorAll('.found-row')).toHaveLength(1);
+    expect(container.querySelector('.contents-row:not(.found-row)')).toBeNull();
+  });
+
+  it('says it’s searching in the rows’ place before any is found, and under them that there are more', () => {
+    const early = drawn(model({ found: found({ rows: [], done: false, searched: 0 }) })).container;
+    expect(early.querySelector('ul')).toBeNull();
+    expect(early.querySelector('.list__empty')?.textContent).toBe('Searching… chapter 1 of 3');
+    document.body.replaceChildren();
+    const many = drawn(model({ found: found({ more: true }) })).container;
+    expect(many.querySelectorAll('.found-row')).toHaveLength(1);
+    expect(many.querySelector('ul + .list__empty')?.textContent).toMatch(/^More than /u);
+  });
 });
