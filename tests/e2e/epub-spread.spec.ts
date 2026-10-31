@@ -74,6 +74,8 @@ async function pastSpread(page: Page, by: number): Promise<void> {
     const size = page.viewportSize() ?? { width: 1400, height: 900 };
     await page.setViewportSize({ width: Math.round(size.width + short + by), height: size.height });
   }
+  // Held still before anything is pressed: a page turned mid-move is laid out again where its place falls.
+  await settledShort(page);
 }
 
 /** Two pages open, past the threshold, laid out before anything is pressed on them. */
