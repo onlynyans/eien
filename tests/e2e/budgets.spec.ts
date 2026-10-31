@@ -393,7 +393,10 @@ test.describe('fifty turns in a long chapter', () => {
           // Each turn's motion to its end, as a reader reading at its pace would leave it.
           await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
         }
-        await expect(page.locator('.colophon')).not.toContainText('0% of the chapter');
+        // The chapter's own figure, matched whole: "10% of the chapter" holds "0% of the chapter".
+        await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
+          '0% of the chapter',
+        );
         expect(await time.longest(), `fifty turns (${turn})`).toBeLessThan(STALL);
       });
     });
@@ -430,7 +433,9 @@ test.describe('fifty turns on a spread', () => {
         await page.keyboard.press('ArrowRight');
         await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
       }
-      await expect(page.locator('.colophon')).not.toContainText('0% of the chapter');
+      await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
+        '0% of the chapter',
+      );
       expect(await time.longest(), 'fifty turns on a spread').toBeLessThan(STALL);
       await time.mark();
       for (const width of [1100, 1900, 1100, 1900]) {
