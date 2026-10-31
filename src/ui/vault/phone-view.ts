@@ -77,9 +77,9 @@ export function phoneView(of: PhoneViewOf): PhoneView {
       kind: active.kind,
       ...(book && {
         quote: () => void book.quote(true),
-        highlight: () => void book.highlight(true),
-        highlighted: book.inHighlight(true),
-        bookmarked: book.bookmarked,
+        highlight: () => void book.marks.highlights.toggle(true),
+        highlighted: book.marks.highlights.holdsChosen(true),
+        bookmarked: book.marks.bookmarks.on,
       }),
     };
     openMenu(moreItems(state, run), { opener }, 'More');

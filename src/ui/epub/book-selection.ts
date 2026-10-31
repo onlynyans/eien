@@ -9,14 +9,12 @@
 // A selection reaching past the chapter counts for the part inside it.
 
 import { FORMAT_COMMANDS } from '../../core/format';
-import { ariaKeys } from '../chrome/keys';
+import { ariaKeys, MAC } from '../chrome/keys';
 import { h } from '../dom';
 import { placeBar } from '../editor/selection-bar';
 import { touch } from '../menu/menu';
 
 const SHOW_AFTER_MS = 250;
-
-const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
 
 /** Highlight's keys: H, and a note's own Format → Highlight, which a book's words take too. */
 const HIGHLIGHT_KEYS = ['H', FORMAT_COMMANDS.find((command) => command.id === 'highlight')?.key]

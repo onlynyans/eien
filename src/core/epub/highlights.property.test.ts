@@ -6,12 +6,13 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   type Highlight,
-  highlightChange,
   highlightsIn,
   highlightsOf,
+  pressHighlight,
   type Span,
   sameHighlight,
   withHighlights,
+  withRestored,
 } from './highlights';
 
 const CHAPTERS = ['a', 'b'];
@@ -22,13 +23,9 @@ const span: fc.Arbitrary<Span> = fc
 
 const chosen = fc.record({ chapter: fc.constantFrom(...CHAPTERS), span });
 
-/** The file after H on `span` in `chapter`, as the window runs it: the union's words its own. */
-function pressH(text: string | null, chapter: string, words: Span): string | null {
-  const change = highlightChange(highlightsOf(text), chapter, words);
-  if ('off' in change) return withHighlights(text, { remove: [change.off] });
-  const added: Highlight = { chapter, ...change.span, words: '' };
-  return withHighlights(withHighlights(text, { remove: change.remove }), { add: added });
-}
+/** The file after H on `span` in `chapter`, as the window runs it (core's own `pressHighlight`). */
+const pressH = (text: string | null, chapter: string, words: Span): string | null =>
+  pressHighlight(text, chapter, words, () => '').text;
 
 const overlapping = (list: readonly Highlight[]) =>
   list.some((one, i) =>
@@ -64,7 +61,7 @@ describe('H over any highlights', () => {
     );
   });
 
-  it('a highlight taken off, put back, is as it was', () => {
+  it('a highlight taken off, put back, is as it was, and putting back what’s held changes nothing', () => {
     fc.assert(
       fc.property(fc.array(chosen, { minLength: 1, maxLength: 12 }), fc.nat(), (presses, pick) => {
         let text: string | null = null;
@@ -74,9 +71,10 @@ describe('H over any highlights', () => {
         if (!gone) return;
         const off = withHighlights(text, { remove: [gone] });
         expect(highlightsOf(off).some((each) => sameHighlight(each, gone))).toBe(false);
-        const back = highlightsOf(withHighlights(off, { add: gone }));
+        const back = highlightsOf(withRestored(off, gone));
         expect(back).toHaveLength(before.length);
         expect(back).toEqual(expect.arrayContaining(before));
+        expect(highlightsOf(withRestored(withRestored(off, gone), gone))).toEqual(back);
       }),
     );
   });

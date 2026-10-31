@@ -141,3 +141,18 @@ describe('the selection bar over a book', () => {
     expect(bar()?.querySelector('button')?.textContent).toBe('Take off the highlight');
   });
 });
+
+// QA (#40, Phase 5a): the bar's word follows each choice, never left saying the last one's.
+describe('the selection bar’s Highlight, choice after choice', () => {
+  it('reads Highlight again on words in none, after words that lay in one', () => {
+    held = true;
+    new BookSelection({ chapter, scroller, quote, highlight, inHighlight: () => held });
+    choose();
+    vi.advanceTimersByTime(250);
+    expect(bar()?.querySelector('button')?.textContent).toBe('Take off the highlight');
+    held = false;
+    choose();
+    vi.advanceTimersByTime(250);
+    expect(bar()?.querySelector('button')?.textContent).toBe('Highlight');
+  });
+});

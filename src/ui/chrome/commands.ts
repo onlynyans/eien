@@ -255,9 +255,9 @@ export function menuOff(kind: PageKind): MenuCommand[] {
   const others: readonly MenuCommand[] = COMMANDS.flatMap((command) =>
     'sends' in command && 'on' in command && command.on !== kind ? [command.sends] : [],
   );
-  // The format a book takes too is never greyed, though its button in the formatting bar is a note's.
+  // With a book in front, the format its words take too stays on, though its button is a note's.
   return [...new Set([...others, ...(kind === 'note' ? [] : NOTE_MENU)])].filter(
-    (command) => command !== BOOK_FORMAT,
+    (command) => !(kind === 'epub' && command === BOOK_FORMAT),
   );
 }
 

@@ -220,7 +220,7 @@ section where it and the directions below disagree.
 - **Highlight:** a pencil underline with a tick in the margin (Features 1).
 - **Find:** the list's own search field searches the book while it's open.
   ⌘F (Edit → Find) opens the page's own find bar over the book (decided
-  2026-10-31): two ways in to one search.
+  2026-10-31), as on a note: two ways in.
 - **Phase 5's design, the owner's answers (2026-10-31):**
   - A highlight taken off is put back by **Put back** in the colophon while
     its news shows, or by H on its words, left chosen; ⌘Z isn't wired (the
@@ -432,8 +432,8 @@ Each phase is its own session and pull request, from main.
   (`core/epub/highlights.ts`, `ui/epub/page-highlights.ts`, `ink.ts`);
   **5b:** highlights in Marks and on the strip, and `]` `[`; **5c:** Find,
   the page's own find bar over the book (the owner's answer, 2026-10-31:
-  ⌘F opens the bar, as on a note) and the list's field, both through one
-  search, its matches in washes.
+  ⌘F opens the bar, as on a note) and the list's field, each a search of
+  its own over one engine, its matches in washes.
 - **Phase 6, by lamplight,** on Scroll.
 
 Each module holds one concept, and none passes about 300 lines: the zip,

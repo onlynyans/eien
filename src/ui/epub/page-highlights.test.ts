@@ -7,12 +7,13 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
-import { type Highlight, highlightsOf, readingPath } from '../../core/epub';
+import { type Highlight, highlightsOf, MAX_HIGHLIGHTS, readingPath } from '../../core/epub';
+import { NOT_KEPT } from './book-marks';
 import { boundsOf, rangeOver, walked } from './chapter-range';
 import { makeEpubSide } from './epub-side';
 import type { EpubSide } from './epub-side-types';
 import { CHOOSE_WORDS, HIGHLIGHTED } from './page-highlights';
-import { inked, withInk } from './test-ink';
+import { inkCount, inked, withInk } from './test-ink';
 import { laidOut } from './test-lines';
 import { sideWith } from './test-side';
 
@@ -81,7 +82,7 @@ describe('H on a book’s page', () => {
     const { side, file } = await opened();
     choose(side, 'universally acknowledged');
     pressH(side);
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(1));
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(1));
     const [kept] = highlightsOf(await file());
     expect(kept).toMatchObject({ chapter: CHAPTER, words: 'universally acknowledged' });
     expect((kept?.to ?? 0) - (kept?.from ?? 0)).toBe('universally acknowledged'.length);
@@ -95,10 +96,10 @@ describe('H on a book’s page', () => {
     const { side, file } = await opened();
     choose(side, 'a single man in possession');
     pressH(side);
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(1));
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(1));
     choose(side, 'single man');
     pressH(side);
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(0));
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(0));
     expect(highlightsOf(await file())).toEqual([]);
     expect(inked('epub-highlight')).toEqual([]);
     expect(ticked(side)).toEqual([]);
@@ -108,8 +109,8 @@ describe('H on a book’s page', () => {
     const button = putBack(side);
     expect(button?.hidden).toBe(false);
     button?.click();
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(1));
-    expect(side.highlights[0]?.words).toBe('a single man in possession');
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(1));
+    expect(side.marks.highlights.all[0]?.words).toBe('a single man in possession');
     expect(said(side)).toBe('Highlight put back.');
     expect(putBack(side)).toBeUndefined();
   });
@@ -118,14 +119,16 @@ describe('H on a book’s page', () => {
     const { side } = await opened();
     choose(side, 'It is a truth');
     pressH(side);
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(1));
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(1));
     choose(side, 'acknowledged, that');
     pressH(side);
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(2));
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(2));
     choose(side, 'truth universally acknowledged');
     pressH(side);
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(1));
-    expect(side.highlights[0]?.words).toBe('It is a truth universally acknowledged, that');
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(1));
+    expect(side.marks.highlights.all[0]?.words).toBe(
+      'It is a truth universally acknowledged, that',
+    );
   });
 
   it('says so with nothing chosen, and writes nothing', async () => {
@@ -166,7 +169,7 @@ describe('H on a book’s page', () => {
     document.body.append(...side.page.foot.figures);
     choose(side, 'universally');
     pressH(side);
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(1));
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(1));
     choose(side, 'universally');
     pressH(side);
     await vi.waitFor(() => expect(putBack(side)?.hidden).toBe(false));
@@ -190,7 +193,7 @@ describe('a book’s highlights, read again', () => {
   it('are inked when the book opens again, from its reading file', async () => {
     const { side } = await opened(() => ({ highlights: [at(10, 15)] }));
     await vi.waitFor(() => expect(inked('epub-highlight')).toHaveLength(1));
-    expect(side.highlights).toEqual([at(10, 15)]);
+    expect(side.marks.highlights.all).toEqual([at(10, 15)]);
     expect(ticked(side)).toHaveLength(1);
   });
 
@@ -201,13 +204,13 @@ describe('a book’s highlights, read again', () => {
       at(900_000, 900_010),
     ];
     const { side, file } = await opened(() => ({ highlights: gone, theirs: [1] }));
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(3));
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(3));
     expect(inked('epub-highlight')).toEqual([]);
     expect(ticked(side)).toEqual([]);
     // A new one beside them leaves them in the file, and everything else.
     choose(side, 'universally');
     pressH(side);
-    await vi.waitFor(() => expect(side.highlights).toHaveLength(4));
+    await vi.waitFor(() => expect(side.marks.highlights.all).toHaveLength(4));
     const kept = JSON.parse((await file()) ?? '{}');
     expect(kept.highlights.slice(0, 3)).toEqual(gone);
     expect(kept.theirs).toEqual([1]);
@@ -221,9 +224,221 @@ describe('a book’s highlights, read again', () => {
     await second.side.open('a.epub');
     choose(side, 'universally');
     pressH(side);
-    await vi.waitFor(() => expect(second.side.highlights).toHaveLength(1));
+    await vi.waitFor(() => expect(second.side.marks.highlights.all).toHaveLength(1));
     await vi.waitFor(() => expect(inked('epub-highlight')).toHaveLength(2));
     second.side.dispose();
     expect(inked('epub-highlight')).toEqual(['universally']);
+  });
+});
+
+// QA (#40, Phase 5a): what the review's plan asked of H beyond the first tests, each tried on a
+// real page over a vault in memory.
+
+/** The offset of `words` in the first chapter, as a place counts it: from a page of its own, let go. */
+async function offsetOf(words: string): Promise<number> {
+  const peek = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
+  await peek.side.open('a.epub');
+  const at = walked(peek.side.page.chapter)
+    .pieces.map((piece) => piece.data)
+    .join('')
+    .indexOf(words);
+  peek.side.dispose();
+  document.body.replaceChildren();
+  expect(at, words).toBeGreaterThanOrEqual(0);
+  return at;
+}
+
+/** `text` written over the file at `path`, at the version it's at. */
+async function overwrite(
+  disk: ReturnType<typeof sideWith>['disk'],
+  path: string,
+  text: string,
+): Promise<void> {
+  const now = await disk.read(path);
+  expect((await disk.write(path, text, now?.version ?? null)).ok).toBe(true);
+}
+
+const mark = (from: number, to: number, chapter = CHAPTER): Highlight => ({
+  chapter,
+  from,
+  to,
+  words: '',
+});
+
+describe('a book with a thousand highlights', () => {
+  /** A full book: the last of them on “universally”, the rest in the second chapter. */
+  async function full() {
+    const from = await offsetOf('universally');
+    const elsewhere = Array.from({ length: MAX_HIGHLIGHTS - 1 }, (_, i) =>
+      mark(i * 2, i * 2 + 1, 'OEBPS/chapter-2.xhtml'),
+    );
+    const book = await opened(() => ({
+      highlights: [...elsewhere, mark(from, from + 'universally'.length)],
+    }));
+    expect(book.side.marks.highlights.all).toHaveLength(MAX_HIGHLIGHTS);
+    return book;
+  }
+
+  it('refuses a new one, saying why, and leaves the file as it was', async () => {
+    const { side, file } = await full();
+    const before = await file();
+    choose(side, 'It is a truth');
+    pressH(side);
+    await vi.waitFor(() =>
+      expect(said(side)).toBe('A book keeps 1,000 highlights at most: take one off first.'),
+    );
+    expect(await file()).toBe(before);
+    expect(side.marks.highlights.all).toHaveLength(MAX_HIGHLIGHTS);
+  });
+
+  it('joins words to the one they touch, as that makes none more', async () => {
+    const { side, file } = await full();
+    choose(side, 'universally acknowledged');
+    pressH(side);
+    await vi.waitFor(() => expect(said(side)).toBe('Highlighted.'));
+    const kept = highlightsOf(await file());
+    expect(kept).toHaveLength(MAX_HIGHLIGHTS);
+    expect(kept.at(-1)?.words).toBe('universally acknowledged');
+  });
+
+  it('takes one off, as that makes room', async () => {
+    const { side, file } = await full();
+    choose(side, 'universally');
+    pressH(side);
+    await vi.waitFor(() => expect(said(side)).toBe('Highlight taken off.'));
+    expect(highlightsOf(await file())).toHaveLength(MAX_HIGHLIGHTS - 1);
+  });
+});
+
+describe('a highlight in a reading file this Eien won’t write', () => {
+  /** H pressed on `words`, and the news it gave once it gave some. */
+  async function pressed(side: EpubSide, words: string): Promise<void> {
+    side.page.foot.say('');
+    choose(side, words);
+    pressH(side);
+    await vi.waitFor(() => expect(said(side)).not.toBe(''));
+  }
+
+  // QA (#40, Phase 5a) found a new highlight written by two changes in a row,
+  // `withHighlights(withHighlights(text, { remove }), { add })`: over a newer Eien's file or one
+  // that can't be read, the first gave null (not to be written) and the second read that null as
+  // no file at all, writing a new one over it and saying "Highlighted.". Now decided and made in
+  // one change (core's pressHighlight).
+  it('isn’t kept in a newer Eien’s file: the file is as it was, and the colophon says why', async () => {
+    const newer = JSON.stringify({ version: 2, highlights: [], theirs: 'kept' });
+    const { side, disk, key, file } = await opened();
+    // Another device's newer Eien wrote it since the book opened, and it synced.
+    await overwrite(disk, readingPath(key), newer);
+    await pressed(side, 'universally');
+    expect(await file()).toBe(newer);
+    expect(said(side)).toBe(NOT_KEPT.newer);
+    expect(side.marks.highlights.all).toEqual([]);
+    expect(inked('epub-highlight')).toEqual([]);
+  });
+
+  it('isn’t kept in a file that can’t be read: said when the book opens and again on H, never written over', async () => {
+    const broken = '{ "highlights": [ broken';
+    const { side, disk, key, file } = await opened();
+    await overwrite(disk, readingPath(key), broken);
+    await side.reload();
+    expect(said(side)).toBe(NOT_KEPT.unreadable);
+    await pressed(side, 'universally');
+    expect(await file()).toBe(broken);
+    expect(said(side)).toBe(NOT_KEPT.unreadable);
+    expect(side.marks.highlights.all).toEqual([]);
+  });
+
+  it('isn’t taken off in a newer Eien’s file: the file is as it was, the highlight still there', async () => {
+    const from = await offsetOf('universally');
+    const one = mark(from, from + 'universally'.length);
+    const { side, file } = await opened(() => ({ version: 2, highlights: [one], theirs: 'kept' }));
+    const before = await file();
+    expect(side.marks.highlights.all).toEqual([one]);
+    await pressed(side, 'universally');
+    expect(await file()).toBe(before);
+    expect(said(side)).toBe(NOT_KEPT.newer);
+    expect(side.marks.highlights.all).toEqual([one]);
+    expect(putBack(side)).toBeUndefined();
+  });
+});
+
+describe('H pressed twice at once', () => {
+  it('runs the second after the first is kept: the words then chosen no more, it says so', async () => {
+    const { side, file } = await opened();
+    choose(side, 'universally acknowledged');
+    pressH(side);
+    pressH(side);
+    await vi.waitFor(() => expect(said(side)).toBe(CHOOSE_WORDS));
+    // Never the second deciding on the same words beside the first, and taking its highlight off.
+    expect(highlightsOf(await file()).map((each) => each.words)).toEqual([
+      'universally acknowledged',
+    ]);
+  });
+});
+
+describe('the phone’s ⋯ Highlight', () => {
+  /** The words chosen as a hand leaves them, and then dropped, as the ⋯'s tap may. */
+  function chosenThenDropped(side: EpubSide, words: string): void {
+    choose(side, words);
+    document.dispatchEvent(new Event('selectionchange'));
+    document.getSelection()?.removeAllRanges();
+    document.dispatchEvent(new Event('selectionchange'));
+  }
+
+  it('keeps the words last chosen, though the tap dropped them; plain H finds none', async () => {
+    const { side } = await opened();
+    chosenThenDropped(side, 'universally acknowledged');
+    await side.marks.highlights.toggle();
+    expect(said(side)).toBe(CHOOSE_WORDS);
+    expect(side.marks.highlights.all).toEqual([]);
+    await side.marks.highlights.toggle(true);
+    expect(side.marks.highlights.all.map((each) => each.words)).toEqual([
+      'universally acknowledged',
+    ]);
+  });
+
+  it('knows the words last chosen lie in a highlight, so its choice reads as taking it off', async () => {
+    const { side } = await opened();
+    choose(side, 'a single man in possession');
+    await side.marks.highlights.toggle();
+    chosenThenDropped(side, 'single man');
+    expect(side.marks.highlights.holdsChosen(true)).toBe(true);
+    expect(side.marks.highlights.holdsChosen(false)).toBe(false);
+    await side.marks.highlights.toggle(true);
+    expect(side.marks.highlights.all).toEqual([]);
+  });
+});
+
+describe('a highlight across chapters', () => {
+  it('is inked again when its chapter is drawn again, its old ranges let go', async () => {
+    const { side } = await opened();
+    choose(side, 'universally');
+    pressH(side);
+    await vi.waitFor(() => expect(inkCount('epub-highlight')).toBe(1));
+    for (let i = 0; i < 3; i++) {
+      // The book's second chapter in the reading order (its title page first), and back.
+      await side.go(2);
+      expect(inkCount('epub-highlight')).toBe(0);
+      await side.go(1);
+      expect(inked('epub-highlight')).toEqual(['universally']);
+    }
+    // Inked over the chapter drawn now, never one let go.
+    const registry = (globalThis.CSS as unknown as { highlights: Map<string, Set<AbstractRange>> })
+      .highlights;
+    const [range] = [...(registry.get('epub-highlight') ?? [])];
+    expect(side.page.chapter.contains(range?.startContainer ?? null)).toBe(true);
+  });
+
+  it('taken off from another chapter (a Marks row), offers Put back and leaves the words chosen here be', async () => {
+    const elsewhere = mark(0, 9, 'OEBPS/chapter-2.xhtml');
+    const { side, file } = await opened(() => ({ highlights: [elsewhere] }));
+    choose(side, 'universally');
+    await side.marks.highlights.remove(side.marks.highlights.all[0] as Highlight);
+    expect(highlightsOf(await file())).toEqual([]);
+    expect(said(side)).toBe('Highlight taken off.');
+    expect(putBack(side)?.hidden).toBe(false);
+    expect(document.getSelection()?.toString()).toBe('universally');
+    putBack(side)?.click();
+    await vi.waitFor(async () => expect(highlightsOf(await file())).toEqual([elsewhere]));
   });
 });

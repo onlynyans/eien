@@ -12,6 +12,12 @@ import { h } from '../dom';
 import type { LeafFoot } from '../page/page-leaf';
 import { Notice } from '../vault/notice';
 
+/** What a line of news offers to undo while it shows: its word, and what it does. */
+export interface Undo {
+  readonly label: string;
+  run(): void;
+}
+
 export class BookFoot implements LeafFoot {
   readonly lead = h('span');
   readonly trail = h('span');
@@ -26,7 +32,7 @@ export class BookFoot implements LeafFoot {
    */
   readonly #bookmarked = h('span', { class: 'colophon__bookmarked colophon__heard count' });
   /** "highlighted": heard alone, the page's ink says it to the eye (Phase 5a, ./ink.css). */
-  readonly #highlighted = h('span', { class: 'colophon__highlighted colophon__heard count' });
+  readonly #highlighted = h('span', { class: 'colophon__heard count' });
   /** What the news offers to undo, while it shows. */
   readonly #undo: HTMLButtonElement;
   readonly #inChapter = h('span', { class: 'colophon__through count' });
@@ -40,7 +46,7 @@ export class BookFoot implements LeafFoot {
   #undoing: (() => void) | null = null;
 
   /** `back`: back where the last link was followed from; `home`, the keyboard to the page. */
-  constructor(back: () => void, home: () => void = () => {}) {
+  constructor(back: () => void, home: () => void) {
     this.#home = home;
     this.#undo = h('button', {
       class: 'word-button',
@@ -112,13 +118,13 @@ export class BookFoot implements LeafFoot {
     this.#back.textContent = name === null ? '' : `Back to ${name}`;
   }
 
-  /** A line of news, for a while, and what it offers to undo while it shows (`undo`: its word, and what it does). */
-  say(words: string, undo?: { readonly label: string; run(): void }): void {
+  /** A line of news, for a while, and what it offers to undo while it shows. */
+  say(words: string, undo?: Undo): void {
     this.#saying.tell(words);
     this.#offer(undo ?? null);
   }
 
-  #offer(undo: { readonly label: string; run(): void } | null): void {
+  #offer(undo: Undo | null): void {
     const had = document.activeElement === this.#undo;
     this.#undoing = undo?.run ?? null;
     this.#undo.textContent = undo?.label ?? '';

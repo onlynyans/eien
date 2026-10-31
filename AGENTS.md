@@ -376,7 +376,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `test-lines.ts`: a chapter's lines as the DOM tests lay them out, and a book's page laid out so
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
   - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
-  - `reading-store.ts`: the reading state's file, through the vault's small files, its bookmarks' changes told to every page of the book
+  - `reading-store.ts`: the reading state's file, through the vault's small files, a change to its marks decided against the file as it is then and told to every page of the book
   - `book-marks.ts`: a book's marks on its page over its reading file (which book, how the file stands, one listener, why a change wasn't kept), its two kinds:
     - `page-bookmarks.ts`: its bookmarks: whether the page in sight has one, B and the tool, following a turn once it lands (Phase 4b)
     - `page-highlights.ts`: its highlights: inked and ticked, H, the bar's Highlight and Format → Highlight, Put back (Phase 5a)

@@ -1,5 +1,5 @@
-// Ink over a book's words (#40, Phase 5): its highlights' pencil line, and
-// Find's matches, painted by the CSS Custom Highlight API over the drawn
+// Ink over a book's words (#40, Phase 5): its highlights' pencil line,
+// painted by the CSS Custom Highlight API over the drawn
 // chapter's own text, so no element is added among the words a place counts
 // (a span round them would split a piece, and could leave a blank one
 // uncounted, moving every offset after it). The window has one registry, so
@@ -11,10 +11,10 @@
 // never measured, and a curl clones it, which a painted range never follows.
 
 import type { Span } from '../../core/epub';
-import { boundsOf, walked } from './chapter-range';
+import { type Bounds, boundsOf, type Walked } from './chapter-range';
 
 /** The inks, each a `::highlight()` in ./ink.css. */
-export type InkName = 'epub-highlight' | 'epub-found' | 'epub-found-current';
+export type InkName = 'epub-highlight';
 
 /** Marks a turn's copy's inked words with their ink's name (./ink.css). */
 export const INKED = 'data-ink';
@@ -31,6 +31,14 @@ function shared(name: InkName): Highlight | null {
   return made;
 }
 
+/** A range's ends, as a StaticRange takes them. */
+const rangeInit = (bounds: Bounds): StaticRangeInit => ({
+  startContainer: bounds.startContainer,
+  startOffset: bounds.startOffset,
+  endContainer: bounds.endContainer,
+  endOffset: bounds.endOffset,
+});
+
 /** One page's ink of one name: its ranges among every page's. */
 export class Ink {
   readonly #name: InkName;
@@ -40,15 +48,14 @@ export class Ink {
     this.#name = name;
   }
 
-  /** `spans` of the drawn `chapter` inked, in place of what this ink painted before. */
-  paint(chapter: HTMLElement, spans: readonly Span[]): void {
+  /** `spans` of the drawn chapter `walk` holds inked, in place of what this ink painted before. */
+  paint(walk: Walked, spans: readonly Span[]): void {
     const highlight = this.#forget();
     // Without the API nothing is painted, nor any range made (StaticRange may be missing too).
     if (!highlight || spans.length === 0) return;
-    const walk = walked(chapter);
     this.#mine = spans.flatMap((span) => {
       const bounds = boundsOf(walk, span);
-      return bounds ? [new StaticRange(bounds)] : [];
+      return bounds ? [new StaticRange(rangeInit(bounds))] : [];
     });
     for (const range of this.#mine) highlight.add(range);
   }
@@ -68,19 +75,13 @@ export class Ink {
 }
 
 /**
- * A turn's `copy` of the page, its words from offset `from` in the chapter
- * on, with `spans` (offsets in the chapter) inked as `name` in its own
- * elements: each wrapped where it falls. The copy is inert and never
+ * A turn's copy of the page, its words (walked) from offset `from` in the
+ * chapter on, with `spans` (offsets in the chapter) inked as `name` in its
+ * own elements: each wrapped where it falls. The copy is inert and never
  * counted, so wrapping its text moves no place.
  */
-export function inkCopy(
-  copy: HTMLElement,
-  from: number,
-  name: InkName,
-  spans: readonly Span[],
-): void {
+export function inkCopy(walk: Walked, from: number, name: InkName, spans: readonly Span[]): void {
   if (spans.length === 0) return;
-  const walk = walked(copy);
   // Last first, so a wrap never moves the text an earlier span's bounds name; spans that overlap
   // (a file from elsewhere) joined first, so none wraps inside another.
   const shown = joinedSpans(spans)
@@ -88,11 +89,9 @@ export function inkCopy(
     .filter((bounds) => bounds !== null)
     .reverse();
   for (const bounds of shown) {
-    const pieces = walk.pieces;
-    const first = pieces.indexOf(bounds.startContainer);
-    const last = pieces.indexOf(bounds.endContainer);
+    const { first, last } = bounds;
     for (let i = last; i >= first; i--) {
-      const piece = pieces[i] as Text;
+      const piece = walk.pieces[i] as Text;
       const start = i === first ? bounds.startOffset : 0;
       const end = i === last ? bounds.endOffset : piece.length;
       const words = piece.splitText(start);

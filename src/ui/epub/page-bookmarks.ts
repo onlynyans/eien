@@ -24,7 +24,7 @@ import { allFront } from './sight';
 
 export interface PageBookmarksOf {
   readonly page: EpubPage;
-  /** A change to the book's marks, kept, or null (said why). */
+  /** A change to the book's marks, kept, or null (said why); what's kept reaches `set`. */
   readonly change: ChangeMarks;
   /** The chapter drawn: its file in the zip, or null for none. */
   chapter(): string | null;
@@ -105,9 +105,9 @@ export class PageBookmarks {
     const words = firstWords(wordsFrom(page.chapter, this.#from, BOOKMARK_WORDS * 2));
     const change =
       here.length > 0 ? { remove: here } : { add: { chapter, offset: this.#from, words } };
+    // What's kept reaches this page as every page of the book (`set`, from the book's marks).
     const after = await this.#of.change((text) => withBookmarks(text, change));
     if (!after) return;
-    this.set(after.bookmarks);
     page.foot.say(here.length > 0 ? 'Bookmark taken off.' : 'Bookmarked.');
   }
 

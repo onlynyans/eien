@@ -6,7 +6,9 @@ import {
   highlightChange,
   highlightsOf,
   MAX_HIGHLIGHTS,
+  pressHighlight,
   withHighlights,
+  withRestored,
 } from './highlights';
 import { parseReading, withReading } from './reading';
 
@@ -110,5 +112,93 @@ describe('what H does with the words chosen', () => {
       span: { from: 5, to: 15 },
       remove: [],
     });
+  });
+});
+
+// QA (#40, Phase 5a): the edges of what H decides, each a press a hand makes.
+describe('what H does at the edges', () => {
+  const list = [at(10, 20), at(30, 40)];
+
+  it('keeps the words as they are in a book with no highlights, or none in their chapter', () => {
+    expect(highlightChange([], 'c1.xhtml', { from: 3, to: 9 })).toEqual({
+      span: { from: 3, to: 9 },
+      remove: [],
+    });
+    expect(highlightChange(list, 'c2.xhtml', { from: 10, to: 20 })).toEqual({
+      span: { from: 10, to: 20 },
+      remove: [],
+    });
+  });
+
+  it('takes off a highlight chosen exactly, word for word, never joining it to itself', () => {
+    expect(highlightChange(list, 'c1.xhtml', { from: 30, to: 40 })).toEqual({ off: at(30, 40) });
+  });
+
+  it('joins a highlight the words touch at its start alone, or at its end alone', () => {
+    expect(highlightChange(list, 'c1.xhtml', { from: 4, to: 10 })).toEqual({
+      span: { from: 4, to: 20 },
+      remove: [at(10, 20)],
+    });
+    expect(highlightChange(list, 'c1.xhtml', { from: 40, to: 45 })).toEqual({
+      span: { from: 30, to: 45 },
+      remove: [at(30, 40)],
+    });
+  });
+
+  it('joins words that hold a highlight whole, and run past it either side, into one over them', () => {
+    expect(highlightChange(list, 'c1.xhtml', { from: 5, to: 25 })).toEqual({
+      span: { from: 5, to: 25 },
+      remove: [at(10, 20)],
+    });
+    // Starting inside one and running out past its end is no longer inside it: joined, not taken off.
+    expect(highlightChange(list, 'c1.xhtml', { from: 15, to: 25 })).toEqual({
+      span: { from: 10, to: 25 },
+      remove: [at(10, 20)],
+    });
+  });
+
+  it('leaves a highlight a character away be', () => {
+    expect(highlightChange(list, 'c1.xhtml', { from: 21, to: 29 })).toEqual({
+      span: { from: 21, to: 29 },
+      remove: [],
+    });
+  });
+
+  it('takes off the first of two that overlap in a file from elsewhere, both holding the words', () => {
+    const theirs = [at(0, 30), at(10, 40)];
+    expect(highlightChange(theirs, 'c1.xhtml', { from: 12, to: 20 })).toEqual({ off: at(0, 30) });
+  });
+});
+
+describe('H made in the file, and Put back', () => {
+  const words = (span: { from: number; to: number }) => `words ${span.from}`;
+
+  it('keeps the words chosen, joined with what they touch, in one change', () => {
+    const before = withHighlights(null, { add: at(10, 20) });
+    const pressed = pressHighlight(before, 'c1.xhtml', { from: 18, to: 30 }, words);
+    expect(pressed).toMatchObject({ off: false, done: at(10, 30) });
+    expect(highlightsOf(pressed.text)).toEqual([at(10, 30)]);
+  });
+
+  it('takes off the highlight the words lie in', () => {
+    const before = withHighlights(null, { add: at(10, 20) });
+    const pressed = pressHighlight(before, 'c1.xhtml', { from: 12, to: 14 }, words);
+    expect(pressed).toMatchObject({ off: true, done: at(10, 20) });
+    expect(highlightsOf(pressed.text)).toEqual([]);
+  });
+
+  it('writes nothing over a newer Eien’s file', () => {
+    expect(
+      pressHighlight(file({ version: 2 }), 'c1.xhtml', { from: 1, to: 2 }, words).text,
+    ).toBeNull();
+    expect(withRestored(file({ version: 2 }), at(1, 2))).toBeNull();
+  });
+
+  it('puts one back as it was, joined with one made meanwhile, and nothing where one holds it', () => {
+    expect(highlightsOf(withRestored(null, at(10, 20)))).toEqual([at(10, 20)]);
+    const meanwhile = withHighlights(null, { add: at(18, 30) });
+    expect(highlightsOf(withRestored(meanwhile, at(10, 20)))).toEqual([{ ...at(10, 20), to: 30 }]);
+    const holding = withHighlights(null, { add: at(0, 40) });
+    expect(highlightsOf(withRestored(holding, at(10, 20)))).toEqual([at(0, 40)]);
   });
 });

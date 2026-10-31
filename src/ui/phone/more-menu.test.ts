@@ -88,3 +88,33 @@ describe('the ⋯’s bookmark (#40, Phase 4b)', () => {
     expect(bookmark(moreItems(state, () => {}))).toBeUndefined();
   });
 });
+
+// QA (#40, Phase 5a): the phone has no H and no selection bar over a book: the ⋯ is its Highlight.
+describe('the ⋯’s Highlight (#40, Phase 5a)', () => {
+  const state = { values: DEFAULT_SETTINGS, sprinting: false, exportTo: () => {} };
+
+  it('is there with a book in front, after Find and before Quote, and highlights', () => {
+    const highlight = vi.fn();
+    const items = moreItems({ ...state, kind: 'epub', highlight, quote: () => {} }, () => {});
+    expect(words(items).slice(0, 3)).toEqual(['Find', 'Highlight', 'Quote in the note']);
+    const item = items[1];
+    if (item && item !== 'separator') item.run();
+    expect(highlight).toHaveBeenCalledOnce();
+  });
+
+  it('reads as taking the highlight off while the words chosen lie in one', () => {
+    const items = moreItems(
+      { ...state, kind: 'epub', highlight: () => {}, highlighted: true },
+      () => {},
+    );
+    expect(words(items)).toContain('Take off the highlight');
+    expect(words(items)).not.toContain('Highlight');
+  });
+
+  it('is never there with a note in front, nor with nothing to highlight with', () => {
+    expect(
+      words(moreItems({ ...state, kind: 'note', highlight: () => {} }, () => {})),
+    ).not.toContain('Highlight');
+    expect(words(moreItems({ ...state, kind: 'epub' }, () => {}))).not.toContain('Highlight');
+  });
+});

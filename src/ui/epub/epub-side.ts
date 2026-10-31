@@ -272,23 +272,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       page.nothing();
     },
     keep: () => page.sheet.keep(),
-    get bookmarked() {
-      return marks.bookmarks.on;
-    },
-    get bookmarks() {
-      return marks.bookmarks.all;
-    },
-    bookmark: () => marks.bookmarks.toggle(),
-    unmark: (mark) => marks.bookmarks.remove(mark),
-    get highlights() {
-      return marks.highlights.all;
-    },
-    highlight: (kept) => marks.highlights.toggle(kept),
-    inHighlight: (kept) => {
-      const range = kept ? page.sheet.kept : page.sheet.selection;
-      return range !== null && marks.highlights.holds(range);
-    },
-    unhighlight: (gone) => marks.highlights.remove(gone),
+    marks,
     labelAt: (at, offset) => placing.labelAt(at, offset),
     quote,
     follow(next) {

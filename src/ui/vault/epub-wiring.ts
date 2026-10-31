@@ -127,7 +127,7 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
   /** The book's bookmarks as their rows show them, in its order (Phase 4c). */
   const marksOf = (side: EpubSide, epub: Epub): MarkRow[] => {
     const spine = epub.spine.map((item) => item.path);
-    return inBookOrder(side.bookmarks, spine).map((mark) => {
+    return inBookOrder(side.marks.bookmarks.all, spine).map((mark) => {
       const at = spine.indexOf(mark.chapter);
       return {
         mark,
@@ -185,7 +185,7 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
         of.redraw();
       },
       goMark: (path, row) => void toBook(path)?.goTo(row.spine, row.mark.offset),
-      unmark: (path, row) => void sideOf(path)?.unmark(row.mark),
+      unmark: (path, row) => void sideOf(path)?.marks.bookmarks.remove(row.mark),
     },
   };
 }

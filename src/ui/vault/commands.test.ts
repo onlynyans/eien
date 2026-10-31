@@ -35,7 +35,9 @@ describe('Split Page', () => {
 describe('Bookmark This Page', () => {
   it('bookmarks the page in sight when a book is the active page', () => {
     const bookmark = vi.fn(async () => {});
-    const pages = { active: { kind: 'epub', go: () => {}, bookmark } };
+    const pages = {
+      active: { kind: 'epub', go: () => {}, marks: { bookmarks: { toggle: bookmark } } },
+    };
     runCommand('bookmark', { pages } as unknown as CommandContext);
     expect(bookmark).toHaveBeenCalledOnce();
   });
@@ -50,7 +52,9 @@ describe('Bookmark This Page', () => {
 describe('Format → Highlight', () => {
   it('highlights the words chosen in the book when a book is the active page', () => {
     const highlight = vi.fn(async () => {});
-    const pages = { active: { kind: 'epub', go: () => {}, highlight } };
+    const pages = {
+      active: { kind: 'epub', go: () => {}, marks: { highlights: { toggle: highlight } } },
+    };
     const ctx = { pages, parts: { outline: { open: false } } } as unknown as CommandContext;
     runCommand('format:highlight', ctx);
     expect(highlight).toHaveBeenCalledOnce();

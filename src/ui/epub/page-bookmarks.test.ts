@@ -54,10 +54,10 @@ const said = (side: EpubSide) => side.page.foot.said.textContent;
 describe('a book’s bookmark', () => {
   it('B puts one at the first word in sight, with its words; B again takes it off', async () => {
     const { side, file, press, of } = await opened();
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.on).toBe(false);
     expect(markOf(side)?.hidden).toBe(true);
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     const [mark] = JSON.parse((await file()) ?? '{}').bookmarks;
     expect(mark).toMatchObject({ chapter: CHAPTER, offset: 0 });
     expect(mark.words).toMatch(/^Chapter I It is a truth universally/u);
@@ -71,7 +71,7 @@ describe('a book’s bookmark', () => {
     expect(of.looks).toHaveBeenCalled();
     expect(said(side)).toBe('Bookmarked.');
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(false));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(false));
     expect(JSON.parse((await file()) ?? '{}').bookmarks).toEqual([]);
     expect(markOf(side)?.hidden).toBe(true);
     expect(said(side)).toBe('Bookmark taken off.');
@@ -89,9 +89,9 @@ describe('a book’s bookmark', () => {
         ],
       }),
     );
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(false));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(false));
     const after = JSON.parse((await file()) ?? '{}');
     expect(after.bookmarks.map((mark: { words: string }) => mark.words)).toEqual(['further on']);
     expect(after.later).toBe('kept');
@@ -100,12 +100,12 @@ describe('a book’s bookmark', () => {
   it('is taken off from its Marks row, the list told and the colophon saying so (Phase 4c)', async () => {
     const { side, file, press, changed } = await opened();
     press();
-    await vi.waitFor(() => expect(side.bookmarks).toHaveLength(1));
+    await vi.waitFor(() => expect(side.marks.bookmarks.all).toHaveLength(1));
     changed.mockClear();
-    await side.unmark(side.bookmarks[0] as Bookmark);
+    await side.marks.bookmarks.remove(side.marks.bookmarks.all[0] as Bookmark);
     expect(JSON.parse((await file()) ?? '{}').bookmarks).toEqual([]);
-    expect(side.bookmarks).toEqual([]);
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.all).toEqual([]);
+    expect(side.marks.bookmarks.on).toBe(false);
     expect(changed).toHaveBeenCalled();
     expect(said(side)).toBe('Bookmark taken off.');
   });
@@ -120,7 +120,7 @@ describe('a book’s bookmark', () => {
     await new Promise((done) => setTimeout(done, 20));
     expect(await file()).toBeNull();
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
   });
 
   it('two quick presses undo each other: the second waits for the first', async () => {
@@ -128,20 +128,20 @@ describe('a book’s bookmark', () => {
     press();
     press();
     await vi.waitFor(() => expect(said(side)).toBe('Bookmark taken off.'));
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.on).toBe(false);
     expect(JSON.parse((await file()) ?? '{}').bookmarks).toEqual([]);
   });
 
   it('shows on no chapter that won’t open, and is never made there', async () => {
     const { side, press, file } = await opened();
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     const epub = side.epub;
     if (!epub) throw new Error('no book');
     vi.spyOn(epub, 'chapter').mockResolvedValue({ refused: 'damaged', detail: 'test' });
     await side.go(2);
     expect(markOf(side)?.hidden).toBe(true);
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.on).toBe(false);
     press();
     await new Promise((done) => setTimeout(done, 20));
     expect(JSON.parse((await file()) ?? '{}').bookmarks).toHaveLength(1);
@@ -154,7 +154,7 @@ describe('a book’s bookmark', () => {
     laidOut(second.page);
     await second.open('a.epub');
     first.press();
-    await vi.waitFor(() => expect(second.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(second.marks.bookmarks.on).toBe(true));
     expect(markOf(second)?.hidden).toBe(false);
   });
 
@@ -163,12 +163,12 @@ describe('a book’s bookmark', () => {
     laidOut(at.side.page);
     await at.side.open('a.epub');
     at.side.page.key(new KeyboardEvent('keydown', { key: 'b' }));
-    await vi.waitFor(() => expect(at.side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(at.side.marks.bookmarks.on).toBe(true));
     const again = makeEpubSide(at.of, { close: () => {}, caret: () => {} }, null);
     document.body.append(again.page.element);
     laidOut(again.page);
     await again.open('a.epub', at.side.place ?? undefined);
-    await vi.waitFor(() => expect(again.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(again.marks.bookmarks.on).toBe(true));
   });
 
   it('isn’t kept in a newer Eien’s file, and says so', async () => {
@@ -176,7 +176,7 @@ describe('a book’s bookmark', () => {
     const { side, press, file } = await opened(() => newer);
     press();
     await vi.waitFor(() => expect(said(side)).toMatch(/newer Eien/u));
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.on).toBe(false);
     expect(await file()).toBe(newer);
   });
 
@@ -186,7 +186,7 @@ describe('a book’s bookmark', () => {
     side.page.foot.say('');
     press();
     await vi.waitFor(() => expect(said(side)).toMatch(/can’t be read/u));
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.on).toBe(false);
     expect(await file()).toBe('{ "bookmarks": [ broken');
   });
 });
@@ -204,7 +204,7 @@ describe('a Marks row’s bookmark, as QA tried it (Phase 4c)', () => {
     expect(side.spine).toBe(3);
     expect(shown.mock.lastCall?.[0]).toBe(40);
     expect(writes).toHaveBeenLastCalledWith(key, { chapter: 'OEBPS/chapter-3.xhtml', offset: 40 });
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     expect(markOf(side)?.hidden).toBe(false);
   });
 
@@ -239,12 +239,12 @@ describe('a Marks row’s bookmark, as QA tried it (Phase 4c)', () => {
       bookmarks: [{ chapter: CHAPTER, offset: 300, words: 'further on' }],
     });
     const { side, file } = await opened(() => newer);
-    const [mark] = side.bookmarks;
+    const [mark] = side.marks.bookmarks.all;
     if (!mark) throw new Error('the newer file’s bookmark wasn’t read');
-    await side.unmark(mark);
+    await side.marks.bookmarks.remove(mark);
     expect(said(side)).toMatch(/newer Eien/u);
     expect(await file()).toBe(newer);
-    expect(side.bookmarks).toHaveLength(1);
+    expect(side.marks.bookmarks.all).toHaveLength(1);
   });
 
   it('taken off on one page of a book is gone from the other’s too, whose list is told', async () => {
@@ -260,10 +260,10 @@ describe('a Marks row’s bookmark, as QA tried it (Phase 4c)', () => {
     document.body.append(second.page.element);
     laidOut(second.page);
     await second.open('a.epub');
-    expect(second.bookmarks).toHaveLength(1);
+    expect(second.marks.bookmarks.all).toHaveLength(1);
     listed.mockClear();
-    await first.side.unmark(first.side.bookmarks[0] as Bookmark);
-    expect(second.bookmarks).toEqual([]);
+    await first.side.marks.bookmarks.remove(first.side.marks.bookmarks.all[0] as Bookmark);
+    expect(second.marks.bookmarks.all).toEqual([]);
     expect(listed).toHaveBeenCalled();
   });
 });
@@ -282,13 +282,13 @@ describe('a book with a thousand bookmarks, as QA tried it (Phase 4c)', () => {
         })),
       }),
     );
-    expect(side.bookmarks).toHaveLength(1000);
+    expect(side.marks.bookmarks.all).toHaveLength(1000);
     press();
     await vi.waitFor(() => expect(said(side)).not.toBe(''));
     const written = JSON.parse((await file()) ?? '{}').bookmarks;
     if (said(side) === 'Bookmarked.') {
       expect(written).toHaveLength(1001);
-      expect(side.bookmarked).toBe(true);
+      expect(side.marks.bookmarks.on).toBe(true);
       expect(markOf(side)?.hidden).toBe(false);
     } else expect(written).toHaveLength(1000);
     expect(said(side)).toBe('A book keeps 1,000 bookmarks at most: take one off first.');
@@ -338,7 +338,7 @@ describe('a bookmark while scrolling', () => {
     // Three lines down, and B at once: the rest on its way is taken first.
     scrollTo(side, 60);
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     const [mark] = JSON.parse((await file()) ?? '{}').bookmarks;
     expect(mark.offset).toBeGreaterThan(0);
     expect(mark.offset).toBe(side.page.sheet.place);
@@ -347,17 +347,17 @@ describe('a bookmark while scrolling', () => {
   it('is shown only while its lines are in sight, the tool told each time', async () => {
     const { side, press, of } = await opened();
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     vi.mocked(of.looks).mockClear();
     // Scrolled well past it, at rest: the page in sight has none.
     scrollTo(side, 600);
     side.keep();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(false));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(false));
     expect(markOf(side)?.hidden).toBe(true);
     expect(of.looks).toHaveBeenCalledTimes(1);
     scrollTo(side, 0);
     side.keep();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     expect(markOf(side)?.hidden).toBe(false);
     expect(of.looks).toHaveBeenCalledTimes(2);
   });
@@ -366,9 +366,9 @@ describe('a bookmark while scrolling', () => {
     const { side, file } = await opened();
     for (const repeat of [false, true, true, true])
       side.page.key(new KeyboardEvent('keydown', { key: 'b', repeat }));
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     await settle();
-    expect(side.bookmarked).toBe(true);
+    expect(side.marks.bookmarks.on).toBe(true);
     expect(JSON.parse((await file()) ?? '{}').bookmarks).toHaveLength(1);
   });
 });
@@ -383,9 +383,9 @@ describe('a book’s reading file from before bookmarks, or naming a chapter it 
       }),
     );
     expect(side.epub?.spine[side.spine]?.path).toBe('OEBPS/chapter-2.xhtml');
-    expect(side.bookmarks).toEqual([]);
+    expect(side.marks.bookmarks.all).toEqual([]);
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     const after = JSON.parse((await file()) ?? '{}');
     expect(after.version).toBe(1);
     expect(after.chapter).toBe('OEBPS/chapter-2.xhtml');
@@ -400,11 +400,11 @@ describe('a book’s reading file from before bookmarks, or naming a chapter it 
       JSON.stringify({ version: 1, bookmarks: [gone] }),
     );
     await settle();
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.on).toBe(false);
     expect(markOf(side)?.hidden).toBe(true);
     // B on the page in sight makes its own, never taking the other for this page's.
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     const kept = JSON.parse((await file()) ?? '{}').bookmarks;
     expect(kept).toHaveLength(2);
     expect(kept[0]).toEqual(gone);
@@ -420,8 +420,10 @@ describe('a page of no words', () => {
     await at.side.go(1);
     expect(at.side.page.chapter.querySelector('img')).not.toBeNull();
     at.side.page.key(new KeyboardEvent('keydown', { key: 'b' }));
-    await vi.waitFor(() => expect(at.side.bookmarked).toBe(true));
-    expect(at.side.bookmarks).toEqual([{ chapter: 'framed.xhtml', offset: 0, words: '' }]);
+    await vi.waitFor(() => expect(at.side.marks.bookmarks.on).toBe(true));
+    expect(at.side.marks.bookmarks.all).toEqual([
+      { chapter: 'framed.xhtml', offset: 0, words: '' },
+    ]);
     expect(markOf(at.side)?.hidden).toBe(false);
   });
 });
@@ -434,9 +436,9 @@ describe('two pages, one book', () => {
     laidOut(second.page);
     await second.open('a.epub');
     first.press();
-    await vi.waitFor(() => expect(second.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(second.marks.bookmarks.on).toBe(true));
     second.page.key(new KeyboardEvent('keydown', { key: 'b' }));
-    await vi.waitFor(() => expect(first.side.bookmarked).toBe(false));
+    await vi.waitFor(() => expect(first.side.marks.bookmarks.on).toBe(false));
     expect(markOf(first.side)?.hidden).toBe(true);
   });
 
@@ -450,10 +452,10 @@ describe('two pages, one book', () => {
     second.dispose();
     shown.mockClear();
     first.press();
-    await vi.waitFor(() => expect(first.side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(first.side.marks.bookmarks.on).toBe(true));
     await settle();
     expect(shown).not.toHaveBeenCalled();
-    expect(second.bookmarked).toBe(false);
+    expect(second.marks.bookmarks.on).toBe(false);
   });
 });
 
@@ -464,7 +466,7 @@ describe('a bookmark the vault won’t keep', () => {
     vi.spyOn(disk, 'write').mockRejectedValue(new Error('the disk is full'));
     press();
     await vi.waitFor(() => expect(said(side)).toMatch(/couldn’t be kept/u));
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.on).toBe(false);
     expect(markOf(side)?.hidden).toBe(true);
   });
 });
@@ -486,7 +488,10 @@ describe('B in the middle of a turn', () => {
       // Asked only once the turn has landed.
       expect(flying).toBe(false);
       const next = edit(null);
-      return next === null ? null : { bookmarks: bookmarksOf(next), highlights: [] };
+      if (next === null) return null;
+      // What's kept reaches the page as the book's marks tell every page of it.
+      marks.set(bookmarksOf(next));
+      return { bookmarks: bookmarksOf(next), highlights: [] };
     });
     const marks: PageBookmarks = new PageBookmarks({
       page: page as never,
@@ -562,18 +567,18 @@ describe('the bookmark’s mark on the page', () => {
     const mark = vi.spyOn(of.reading, 'change');
     side.clear();
     side.page.key(new KeyboardEvent('keydown', { key: 'b' }));
-    await side.bookmark();
+    await side.marks.bookmarks.toggle();
     await settle();
     expect(mark).not.toHaveBeenCalled();
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.on).toBe(false);
   });
 
   it('is gone with the folio’s word when the book is closed', async () => {
     const { side, press } = await opened();
     press();
-    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    await vi.waitFor(() => expect(side.marks.bookmarks.on).toBe(true));
     side.clear();
-    expect(side.bookmarked).toBe(false);
+    expect(side.marks.bookmarks.on).toBe(false);
     expect(markOf(side)?.hidden).toBe(true);
     const word = side.page.foot.figures.find((each) =>
       each.classList.contains('colophon__bookmarked'),

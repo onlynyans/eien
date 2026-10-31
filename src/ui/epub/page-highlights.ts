@@ -8,14 +8,19 @@
 // them again, and the colophon offers Put back while it says so.
 
 import {
+  BLOCK_NAMES,
   firstWords,
+  HIGHLIGHT_WORDS,
   type Highlight,
   highlightChange,
   highlightsIn,
-  highlightsOf,
   MAX_HIGHLIGHTS,
+  type Pressed,
+  pressHighlight,
   type Span,
+  sameHighlight,
   withHighlights,
+  withRestored,
 } from '../../core/epub';
 import type { ChangeMarks } from './book-marks';
 import { wordsBetween } from './chapter-place';
@@ -23,8 +28,14 @@ import { boundsOf, rangeOver, spanOf, walked } from './chapter-range';
 import type { EpubPage } from './epub-page';
 import { Ink, inkCopy } from './ink';
 
-/** The blocks a highlight's tick stands beside: a paragraph's kind, never one that may hold a chapter. */
-const TICKED = 'p, li, dd, dt, h1, h2, h3, h4, h5, h6, pre, td, th, figcaption, blockquote';
+/** A word's block (core's one list). */
+const BLOCK = BLOCK_NAMES.join(', ');
+
+/**
+ * Where a block's tick stands instead of beside it: a list item's and a
+ * cell's on its list or table, so it never lies on a bullet or a cell's words.
+ */
+const TICKED_ON: Readonly<Record<string, string>> = { LI: 'ul, ol', TD: 'table', TH: 'table' };
 
 /** Marks a block a highlight touches: its tick (./ink.css). */
 export const HIGHLIGHTED = 'data-highlighted';
@@ -32,9 +43,22 @@ export const HIGHLIGHTED = 'data-highlighted';
 /** What's said with no words chosen to keep. */
 export const CHOOSE_WORDS = 'Choose some words in the book to highlight.';
 
+/** The block whose margin a piece of words' tick stands in: its innermost block, if it holds no other. */
+function tickedFor(piece: Text): Element | null {
+  const block = piece.parentElement?.closest(BLOCK);
+  // A block round others (a chapter's wrapper with a stray word in it) would tick them all.
+  if (!block || block.querySelector(BLOCK)) return null;
+  const on = TICKED_ON[block.tagName];
+  return on ? (block.parentElement?.closest(on) ?? block) : block;
+}
+
+/** Whether two lists hold the same highlights, in order. */
+const same = (a: readonly Highlight[], b: readonly Highlight[]) =>
+  a.length === b.length && a.every((each, i) => sameHighlight(each, b[i] as Highlight));
+
 export interface PageHighlightsOf {
   readonly page: EpubPage;
-  /** A change to the book's marks, kept, or null (said why). */
+  /** A change to the book's marks, kept, or null (said why); what's kept reaches `set`. */
   readonly change: ChangeMarks;
   /** The chapter drawn: its file in the zip, or null for none. */
   chapter(): string | null;
@@ -58,8 +82,9 @@ export class PageHighlights {
     return this.#marks;
   }
 
-  /** The book's highlights as its file now holds them, inked. */
+  /** The book's highlights as its file now holds them, inked anew if they changed. */
   set(marks: readonly Highlight[]): void {
+    if (same(marks, this.#marks)) return;
     this.#marks = marks;
     this.paint();
   }
@@ -83,30 +108,31 @@ export class PageHighlights {
     this.away();
   }
 
-  /** The chapter's highlights inked, and their blocks ticked: once it's drawn, and as they change. */
+  /** The chapter's highlights inked, and their blocks ticked, in one walk: once it's drawn, and as they change. */
   paint(): void {
     const { chapter: words } = this.#of.page;
-    const chapter = this.#of.chapter();
-    const spans = chapter ? highlightsIn(this.#marks, chapter) : [];
-    this.#ink.paint(words, spans);
     for (const block of words.querySelectorAll(`[${HIGHLIGHTED}]`))
       block.removeAttribute(HIGHLIGHTED);
-    if (spans.length > 0) {
-      const walk = walked(words);
-      for (const span of spans) {
-        const bounds = boundsOf(walk, span);
-        if (!bounds) continue;
-        const first = walk.pieces.indexOf(bounds.startContainer);
-        const last = walk.pieces.indexOf(bounds.endContainer);
-        for (const piece of walk.pieces.slice(first, last + 1))
-          piece.parentElement?.closest(TICKED)?.setAttribute(HIGHLIGHTED, '');
-      }
+    const spans = this.#mine();
+    const walk = walked(words);
+    this.#ink.paint(walk, spans);
+    for (const span of spans) {
+      const bounds = boundsOf(walk, span);
+      if (!bounds) continue;
+      for (let i = bounds.first; i <= bounds.last; i++)
+        tickedFor(walk.pieces[i] as Text)?.setAttribute(HIGHLIGHTED, '');
     }
     this.#heard();
   }
 
+  /** A turn's copy of the page, its words from `from` on, inked as the page is. */
+  inkCopy(copy: HTMLElement, from: number): void {
+    const spans = this.#mine();
+    if (spans.length > 0) inkCopy(walked(copy), from, 'epub-highlight', spans);
+  }
+
   /** Whether `range`'s words lie in one highlight: Highlight then takes it off. */
-  holds(range: Range): boolean {
+  holds(range: AbstractRange): boolean {
     const chapter = this.#of.chapter();
     const span = chapter ? spanOf(this.#of.page.chapter, range) : null;
     return (
@@ -114,10 +140,10 @@ export class PageHighlights {
     );
   }
 
-  /** A turn's copy of the page, its words from `from` on, inked as the page is. */
-  inkCopy(copy: HTMLElement, from: number): void {
-    const chapter = this.#of.chapter();
-    if (chapter) inkCopy(copy, from, 'epub-highlight', highlightsIn(this.#marks, chapter));
+  /** Whether the words chosen (or, `kept`, last chosen) lie in one highlight. */
+  holdsChosen(kept: boolean): boolean {
+    const range = this.#chosen(kept);
+    return range !== null && this.holds(range);
   }
 
   /**
@@ -132,26 +158,22 @@ export class PageHighlights {
     return this.#pending;
   }
 
-  /** `gone` put back as it was (Put back). */
-  async putBack(gone: Highlight): Promise<void> {
-    const after = await this.#of.change((text) => withHighlights(text, { add: gone }));
-    if (!after) return;
-    this.set(after.highlights);
-    this.#of.page.foot.say('Highlight put back.');
-  }
-
   /** `gone` taken off (a Marks row's Delete, Phase 5b), with Put back. */
   async remove(gone: Highlight): Promise<void> {
     const after = await this.#of.change((text) => withHighlights(text, { remove: [gone] }));
-    if (!after) return;
-    this.set(after.highlights);
-    this.#takenOff(gone);
+    if (after) this.#takenOff(gone);
+  }
+
+  /** `gone` put back as H would keep its words now (Put back). */
+  async #putBack(gone: Highlight): Promise<void> {
+    const after = await this.#of.change((text) => withRestored(text, gone));
+    if (after) this.#of.page.foot.say('Highlight put back.');
   }
 
   async #toggle(kept: boolean): Promise<void> {
     const { page } = this.#of;
     const chapter = this.#of.chapter();
-    const range = kept ? page.sheet.kept : page.sheet.selection;
+    const range = this.#chosen(kept);
     const span = chapter && range ? spanOf(page.chapter, range) : null;
     if (!chapter || !span) {
       page.foot.say(CHOOSE_WORDS);
@@ -165,24 +187,28 @@ export class PageHighlights {
       );
       return;
     }
-    // Decided again against the file as it is when written: another device's may have come meanwhile.
-    let done: Highlight | null = null;
-    let off = false;
+    // The words are the page's as they're pressed: by the time the file is written another chapter
+    // may be drawn. Joined with one another device's file holds that this page doesn't yet, the
+    // words chosen stand for it.
+    const wordsOf = (part: Span) =>
+      firstWords(
+        wordsBetween(page.chapter, part.from, part.to, HIGHLIGHT_WORDS * 2),
+        HIGHLIGHT_WORDS,
+      );
+    const chosen = wordsOf(span);
+    const union = 'off' in now ? null : now.span;
+    const unionWords = union ? wordsOf(union) : chosen;
+    let pressed: Pressed | null = null;
     const after = await this.#of.change((text) => {
-      const change = highlightChange(highlightsOf(text), chapter, span);
-      if ('off' in change) {
-        off = true;
-        done = change.off;
-        return withHighlights(text, { remove: [change.off] });
-      }
-      off = false;
-      const words = firstWords(wordsBetween(page.chapter, change.span.from, change.span.to));
-      done = { chapter, ...change.span, words };
-      return withHighlights(withHighlights(text, { remove: change.remove }), { add: done });
+      const made = pressHighlight(text, chapter, span, (part) =>
+        union && part.from === union.from && part.to === union.to ? unionWords : chosen,
+      );
+      pressed = made;
+      return made.text;
     });
-    if (!after || !done) return;
-    this.set(after.highlights);
-    if (off) this.#takenOff(done);
+    const done = pressed as Pressed | null;
+    if (!after || !done?.done) return;
+    if (done.off) this.#takenOff(done.done);
     else {
       document.getSelection()?.removeAllRanges();
       page.foot.say('Highlighted.');
@@ -201,18 +227,28 @@ export class PageHighlights {
     }
     page.foot.say('Highlight taken off.', {
       label: 'Put back',
-      run: () => void this.putBack(gone),
+      run: () => void this.#putBack(gone),
     });
+  }
+
+  /** The highlights in the chapter drawn. */
+  #mine(): Highlight[] {
+    const chapter = this.#of.chapter();
+    return chapter ? highlightsIn(this.#marks, chapter) : [];
+  }
+
+  /** The words chosen now, or (`kept`) last chosen in this chapter. */
+  #chosen(kept: boolean): Range | null {
+    const { sheet } = this.#of.page;
+    return kept ? sheet.kept : sheet.selection;
   }
 
   /** Whether the words in sight hold a highlight, said to the ear (the ink says it to the eye). */
   #heard(): void {
-    const chapter = this.#of.chapter();
     const sight = this.#sight;
     this.#of.page.foot.highlighted(
-      chapter !== null &&
-        sight !== null &&
-        highlightsIn(this.#marks, chapter).some(
+      sight !== null &&
+        this.#mine().some(
           (each) => each.from < Math.max(sight.to, sight.from + 1) && sight.from < each.to,
         ),
     );

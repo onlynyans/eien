@@ -35,6 +35,9 @@ export interface Bounds {
   readonly startOffset: number;
   readonly endContainer: Text;
   readonly endOffset: number;
+  /** The first and last of the walk's pieces it holds part of. */
+  readonly first: number;
+  readonly last: number;
 }
 
 /** A drawn chapter's words, walked once: its pieces, and where each begins among its words. */
@@ -86,6 +89,8 @@ export function boundsOf(walk: Walked, span: Span): Bounds | null {
     startOffset: from - (starts[first] as number),
     endContainer,
     endOffset: to - (starts[last] as number),
+    first,
+    last,
   };
 }
 

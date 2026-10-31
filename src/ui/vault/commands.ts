@@ -58,7 +58,7 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     ctx.bookView(command === 'view:pages' ? 'pages' : 'scroll');
   } else if (command === 'bookmark') {
     const { active } = ctx.pages;
-    if (isEpub(active)) void active.bookmark();
+    if (isEpub(active)) void active.marks.bookmarks.toggle();
   } else if (command === 'panes:sidebar') panes.toggle('sidebar');
   else if (command === 'panes:list') panes.toggle('list');
   else if (command === 'focus:sidebar') {
@@ -99,7 +99,7 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     if (known) ctx.parts.counters.startSprint(known);
   } else if (command === BOOK_FORMAT && isEpub(ctx.pages.active)) {
     // Highlight with a book in front keeps its words chosen (#40, Phase 5a).
-    void ctx.pages.active.highlight();
+    void ctx.pages.active.marks.highlights.toggle();
   } else if (command.startsWith('format:') && !ctx.parts.outline.open) {
     // Formats act on the page: never on one the outline cards are hiding.
     const format = formatCommand(command.slice('format:'.length));

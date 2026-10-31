@@ -101,7 +101,10 @@ describe('a bookmark on a spread', () => {
 describe('a spread’s pages in the colophon', () => {
   /** A book's place over a page whose sight is `sight`, its count steady pages of 6,000 characters. */
   function placed(sight: readonly PageShown[]) {
-    const foot = new BookFoot(() => {});
+    const foot = new BookFoot(
+      () => {},
+      () => {},
+    );
     const heads = new RunningHeads();
     const place = bookPlace({
       page: {
@@ -191,7 +194,10 @@ describe('the imprint’s figures', () => {
     let count: BookCount | null = null;
     const place = bookPlace({
       page: {
-        foot: new BookFoot(() => {}),
+        foot: new BookFoot(
+          () => {},
+          () => {},
+        ),
         heads: new RunningHeads(),
         element: document.createElement('div'),
         chapter,

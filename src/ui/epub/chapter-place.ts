@@ -178,15 +178,18 @@ export function wordsFrom(chapter: HTMLElement, offset: number, length: number):
   ).slice(0, length);
 }
 
-/** The chapter's words from `from` to `to` (a highlight's, Phase 5a), a space between those of two blocks. */
-export function wordsBetween(chapter: HTMLElement, from: number, to: number): string {
+/**
+ * The chapter's words from `from` to `to` (a highlight's, Phase 5a), a space
+ * between those of two blocks, at most `max` of them (a long one's start).
+ */
+export function wordsBetween(chapter: HTMLElement, from: number, to: number, max: number): string {
   const pieces = piecesOf(chapter);
   const spot = spotOf(
     pieces.map((text) => text.length),
     from,
   );
   if (!spot || to <= from) return '';
-  return joined(pieces, spot.index, spot.within, (piece, at) =>
-    at >= to ? null : piece.data.slice(0, to - at),
-  );
+  return joined(pieces, spot.index, spot.within, (piece, at, words) =>
+    at >= to || words.length >= max ? null : piece.data.slice(0, to - at),
+  ).slice(0, max);
 }

@@ -25,9 +25,12 @@ export {
   highlightsIn,
   highlightsOf,
   MAX_HIGHLIGHTS,
+  type Pressed,
+  pressHighlight,
   type Span,
   sameHighlight,
   withHighlights,
+  withRestored,
 } from './highlights';
 export { lengthWords, type SetAs, setAsWords } from './imprint';
 export type { SpineItem } from './package';

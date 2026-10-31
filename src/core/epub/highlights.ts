@@ -99,3 +99,41 @@ export function highlightChange(
     remove,
   };
 }
+
+/** What H did to the file: its text after (null where it mustn't be written), and the highlight made or taken off. */
+export interface Pressed {
+  readonly text: string | null;
+  readonly done: Highlight | null;
+  readonly off: boolean;
+}
+
+/**
+ * H on the words `span` in `chapter`, decided against the file's `text` and
+ * made in it in one change; `wordsOf` gives the words of the highlight it
+ * makes (the window's, from the page).
+ */
+export function pressHighlight(
+  text: string | null,
+  chapter: string,
+  span: Span,
+  wordsOf: (span: Span) => string,
+): Pressed {
+  const change = highlightChange(highlightsOf(text), chapter, span);
+  if ('off' in change)
+    return { text: withHighlights(text, { remove: [change.off] }), done: change.off, off: true };
+  const done: Highlight = { chapter, ...change.span, words: wordsOf(change.span) };
+  return { text: withHighlights(text, { remove: change.remove, add: done }), done, off: false };
+}
+
+/**
+ * `gone` put back (Put back) as H would keep its words now: joined with any
+ * highlight it overlaps or touches, nothing changed where one holds it.
+ */
+export function withRestored(text: string | null, gone: Highlight): string | null {
+  const change = highlightChange(highlightsOf(text), gone.chapter, gone);
+  if ('off' in change) return withHighlights(text, {});
+  const same = change.span.from === gone.from && change.span.to === gone.to;
+  // Joined with another, the words it keeps are its own: the row shows where it begins.
+  const add = same ? gone : { ...gone, ...change.span };
+  return withHighlights(text, { remove: change.remove, add });
+}

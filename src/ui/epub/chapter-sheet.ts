@@ -14,7 +14,7 @@ import { copyWords } from './book-words';
 import { offsetAfter } from './chapter-place';
 import { PagedPlace } from './paged-place';
 import { PlaceKeeper } from './place-keeper';
-import { allFront, type PageShown, type Spot } from './sight';
+import type { PageShown, Spot } from './sight';
 import { spreadOf } from './spread';
 
 export interface ChapterSheetOf {
@@ -115,9 +115,10 @@ export class ChapterSheet {
   /** In pages: a copy of the chapter cut to the page in sight (a turn's), inked as the page is. */
   trim(copy: HTMLElement): void {
     if (!this.paged) return;
-    this.#paged.trim(copy);
-    // Eien's front matter holds none of the book's words: nothing of theirs to ink.
-    if (!allFront(this.sight)) this.#copied(copy, this.place);
+    // Inked from where the cut begins, not the place kept, which may stand mid-page; a copy of
+    // Eien's front matter holds none of the book's words.
+    const from = this.#paged.trim(copy);
+    if (from !== null) this.#copied(copy, from);
   }
 
   /** In pages: the chapter's first page, or its last. */
