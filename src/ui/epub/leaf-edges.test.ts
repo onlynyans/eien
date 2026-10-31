@@ -35,3 +35,27 @@ describe('a book’s fore-edge in pages', () => {
     expect(new LeafEdges(() => {}).element.hasAttribute(STAYS)).toBe(true);
   });
 });
+
+// QA (#40, Phase 3d): a spread's edges turn two pages at once, and say so to
+// the eye and the ear alike; the pages left are the chapter's own, counted
+// past both pages in sight.
+describe('a spread’s fore-edge', () => {
+  it('names its buttons for two pages, its tooltips counting the pages left past both', () => {
+    const leaf = new LeafEdges(() => {});
+    const [back, on] = leaf.turns as HTMLButtonElement[];
+    // Pages 3 and 4 of 12 in sight (0 first: 2 and 3): two read before, eight after.
+    leaf.through(0.2, 2, 12, 2);
+    expect(back?.getAttribute('aria-label')).toBe('Previous pages');
+    expect(on?.getAttribute('aria-label')).toBe('Next pages');
+    expect(back?.dataset.tip).toBe('Previous pages · 2 pages back in the chapter');
+    expect(on?.dataset.tip).toBe('Next pages · 8 pages on in the chapter');
+    // The last spread, its recto past the chapter's end: none on, never fewer than none.
+    leaf.through(1, 10, 11, 2);
+    expect(on?.dataset.tip).toBe('Next pages · 0 pages on in the chapter');
+    // Closed to one page again: one page's words.
+    leaf.through(0.2, 3, 12, 1);
+    expect(back?.getAttribute('aria-label')).toBe('Previous page');
+    expect(on?.getAttribute('aria-label')).toBe('Next page');
+    expect(on?.dataset.tip).toBe('Next page · 8 pages on in the chapter');
+  });
+});

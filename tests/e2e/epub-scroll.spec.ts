@@ -63,17 +63,19 @@ test.describe('a chapter a sheet', () => {
     await shelfEpub(page, 'Pride and Prejudice').click();
     await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
     const colophon = page.locator('.colophon');
-    await expect(colophon).toContainText('0% of the chapter');
+    // The chapter's own figure, whole: "0%" is in "100%" too.
+    const chapterFigure = colophon.locator('.colophon__through').first();
+    await expect(chapterFigure).toHaveText('0% of the chapter');
     await expect(colophon).toContainText(/\d+% of the book/u);
     const turns = leaf(page).getByRole('navigation', { name: 'Chapters' });
     await scroller(page).focus();
     await page.keyboard.press('End');
-    await expect(colophon).toContainText('100% of the chapter');
+    await expect(chapterFigure).toHaveText('100% of the chapter');
     await turns.getByRole('button', { name: 'Next chapter: Chapter II' }).click();
     await expect(chapter(page)).toContainText('Mr. Bennet was among the earliest');
     await expect(scroller(page)).toBeFocused();
     expect(await scroller(page).evaluate((element) => element.scrollTop)).toBe(0);
-    await expect(colophon).toContainText('0% of the chapter');
+    await expect(chapterFigure).toHaveText('0% of the chapter');
     await expect(page.locator('.contents-row').nth(1)).toHaveAttribute('aria-current', 'true');
     await turns.getByRole('button', { name: 'Previous chapter: Chapter I' }).click();
     await expect(chapter(page)).toContainText('It is a truth universally acknowledged');

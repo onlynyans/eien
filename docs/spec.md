@@ -530,6 +530,26 @@ Three panes, each collapsible, with a two-pane option in settings:
      the next). Under Slide and Words a drag across asks for the turn.
      Never while words are chosen in the page, nor on a link (but to catch
      a page in flight); a drag that turned is never also a click.
+   - **Two pages, and set as a book** (Phase 3d): in pages, where the page
+     pane holds two pages of at least 20em of the book's text, with the
+     sheet's margins and the gutter between, the book opens to two facing
+     pages; a pixel short of it, one. Never on a phone (one pane at a
+     time) or in a split. A turn, a key, the edges and a hand move both;
+     the place is the same, so one page and two show the same words. A
+     bookmark's mark sits on the page it marks; B on two pages marks the
+     first one's first word, or takes off every bookmark on the two. The
+     colophon says both pages ("pages 212–213 of 2,450"). In pages the book
+     is set as a book: justified and hyphenated where the window can
+     hyphenate its language (a Mac can; elsewhere it may be ragged), ragged
+     on a phone and a page as narrow; each chapter opening four lines low;
+     running heads (the chapter over one page; the book over the left page
+     and the chapter over the right), none on an opening page; each page's
+     number at its foot's outer corner. Before the book's first chapter
+     stand Eien's title page (the title, the author, the folders it's in)
+     and its imprint (how long the book is, how it's set as laid out, the
+     file it came from, where its place and bookmarks are kept), turned
+     back to from the first page, never opened at: a chapter, a link, a
+     bookmark or Home goes to its opening. Neither is the book's words.
    - **The scroll style**, a book setting in the shelf's quick look (never
      in Settings, which sets notes): *As a note* (the default), its
      paragraphs spaced as a note's in Reading; or *As a book*, indented
@@ -1209,7 +1229,7 @@ src/ui/
   settings/     ✓ Settings over the window: categories and tabs, drawn from the schema; the Themes tabs; the look they set on <html>
   phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
   extension/    ✓ the extension's pages: the story page, the popup, the content script and each site's markup (§14)
-  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style; in pages (3b), its fore-edge, keys and taps, and the page turn (epub/turn/); its page numbers, bookmarks and Marks, in the list or on the edge (Phase 4)
+  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style; in pages (3b), its fore-edge, keys and taps, and the page turn (epub/turn/); two pages and set as a book (3d); its page numbers, bookmarks and Marks, in the list or on the edge (Phase 4)
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture

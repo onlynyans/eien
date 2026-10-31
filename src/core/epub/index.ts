@@ -16,6 +16,7 @@ export { type ChapterCount, countChapter } from './chapter-count';
 export { chapterBeside, chapterTitle } from './chapters';
 export type { ContentsEntry, PrintPage } from './contents';
 export { type Epub, type EpubImage, type EpubSpineItem, epubKey, openEpub } from './epub';
+export { lengthWords, type SetAs, setAsWords } from './imprint';
 export type { SpineItem } from './package';
 export {
   type Lengths,
@@ -26,11 +27,25 @@ export {
   printAt,
   printPages,
   STEADY_CHARS,
+  spreadWords,
   steadyAt,
   steadyPages,
   steadyStart,
 } from './page-numbers';
-export { EDGES, edgesOf, pageAt, pagesIn, wholeLines } from './pages';
+export {
+  EDGES,
+  edgesOf,
+  openingSight,
+  type PageRole,
+  pageAt,
+  pageRoles,
+  pagesIn,
+  SPREAD_PAGE_EM,
+  sightsIn,
+  spreadFits,
+  throughSights,
+  wholeLines,
+} from './pages';
 export { offsetOf, type Spot, spotOf } from './place';
 export { bookFraction, chapterFraction, percent, placeAt } from './progress';
 export { citation, type QuoteSource, quoted, withQuote } from './quote';

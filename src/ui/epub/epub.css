@@ -148,6 +148,8 @@
   min-height: 0;
 }
 [data-view="pages"] .epub__pages {
+  /* Its gutter's hairline lies over it (./epub-spread.css). */
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   margin-top: var(--eien-space-5);

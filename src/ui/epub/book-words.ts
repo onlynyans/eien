@@ -7,6 +7,7 @@
 
 import { bookLinkOf } from '../../core/epub';
 import { isNoteRef } from './book-links';
+import { FRONT } from './front-matter';
 
 /** The blocks between which a plain copy puts a blank line. */
 const BLOCK = /^(?:P|DIV|LI|DD|DT|BLOCKQUOTE|H[1-6]|FIGURE|FIGCAPTION|PRE|TR)$/u;
@@ -37,7 +38,12 @@ export function wordsIn(range: Range): DocumentFragment {
     if (original && marks.has(original)) copy.setAttribute('data-mark', '');
   });
   for (const element of [...words.querySelectorAll('*')]) {
-    if (element.matches('[data-mark], [data-part="note-ref"], a[data-anchor], img, .image-words')) {
+    // Eien's own front matter (./front-matter.ts) is none of the book's words.
+    if (
+      element.matches(
+        `[data-mark], [data-part="note-ref"], a[data-anchor], img, .image-words, ${FRONT}`,
+      )
+    ) {
       const holder = element.parentElement;
       element.remove();
       // A mark's sup, left with nothing in it.

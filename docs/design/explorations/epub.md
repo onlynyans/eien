@@ -373,7 +373,22 @@ Each phase is its own session and pull request, from main.
   - **3c, built:** a hand's turn: a finger anywhere on the page, a mouse at
     the book's edges, the curl under the hand, the throw, the catch, a tap
     letting a page in flight fly on; under Slide and Words a drag asks;
-  - **3d:** the spread, and Set as a book.
+  - **3d, built:** the spread, and Set as a book. Two pages where the
+    pane holds two of 20em of the text with the sheet's margins and the
+    gutter (never on a phone or in a split), turned a spread at a time
+    under every Page turn, the place kept through one page and two
+    (`ui/epub/spread.ts`, `page-columns.ts`); a bookmark's mark on the page
+    it marks, the colophon saying both pages. Set as a book in pages alone:
+    justified only where the window hyphenates the book's language
+    (`hyphens.ts`: a Mac does; Electron on Windows and Linux may not, and
+    there it's ragged), ragged on a phone and on a page as narrow; a
+    chapter opening four lines low on the text's own line; running heads
+    and folios (`running-heads.ts`, the folios the page numbers' labels);
+    and Eien's title page and imprint before the first chapter
+    (`front-matter.ts`, `core/epub/imprint.ts`), turned back to, never
+    opened at, none of the book's words. CHAPTER and its numeral apart, as
+    Showcase 2 sets them, are left: a heading's words would be split, and
+    the places kept in them moved.
 - **The reading room,** after the turn (it was Phase 3b).
 - **Phase 4, place, bookmarks and page count:** print pages or steady
   pages; Marks in the list or on the edge. In five pull requests, stacked:

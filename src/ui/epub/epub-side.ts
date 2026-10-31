@@ -4,26 +4,25 @@
 // chapter, and the line in it, Phase 2) kept in the reading state's file
 // whenever the writer moves to another chapter or the page comes to rest;
 // words chosen in it quoted in a note (Phase 2c); the book counted for its
-// page numbers (Phase 4, ./book-count.ts); and its bookmarks
-// (./page-bookmarks.ts). The book's file is only ever
-// read. What a side is: ./epub-side-types.ts.
+// page numbers (Phase 4, ./book-count.ts); its bookmarks, the turn and
+// links (./book-parts.ts); and before its first chapter, in pages, Eien's
+// title page and imprint (Phase 3d). The book's file is only ever read. What
+// a side is: ./epub-side-types.ts.
 
 import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
-import { type Epub, isRefusal, refusalWords } from '../../core/epub';
+import { chapterBeside, type Epub, isRefusal, refusalWords } from '../../core/epub';
 import { crumbsOf } from '../vault/open-note';
 import type { Place, SideHooks } from '../vault/page-side';
 import type { BookCount } from './book-count';
-import { bookFollow } from './book-follow';
 import { nameLinks } from './book-links';
 import { nameOf, openBook, startOf } from './book-open';
-import { bookPages } from './book-pages';
-import { bookPlace } from './book-place';
+import { bookParts } from './book-parts';
 import { quoteChosen } from './book-quote';
 import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
 import { EpubPage } from './epub-page';
 import type { EpubPlace, EpubSide, EpubSideOf } from './epub-side-types';
-import { PageBookmarks } from './page-bookmarks';
+import { frontMatter } from './front-matter';
 
 export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | null): EpubSide {
   const page = new EpubPage({
@@ -69,43 +68,17 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     // No book: the strip has nothing to show.
     placing.listed();
   };
-  /** What the page's parts ask of it: the book, the chapter drawn, and another drawn (kept as the place). */
-  const book = {
+  const { placing, marks, links, pages, unplaced } = bookParts({
     page,
+    of,
     epub: () => epub,
     spine: () => spine,
-    draw: (index: number, at: number | (() => number)) => draw(index, true, at),
-  };
-  const placing = bookPlace({
-    ...book,
     count: () => count,
-    marks: () => marks.all,
-    goTo: (index, at) => void side.goTo(index, at),
-  });
-  const marks = new PageBookmarks({
-    page,
-    store: of.reading,
-    chapter: () => (spine >= 0 ? (epub?.spine[spine]?.path ?? null) : null),
-    still: (then) => pages.whenStill(then),
-    land: () => pages.finish(),
-    changed: () => of.looks(),
-    listed: () => {
-      of.changed();
-      placing.listed();
-    },
-  });
-  /** No words in sight measured in the chapter drawn yet: no page said, no bookmark shown. */
-  const unplaced = () => {
-    placing.clear();
-    marks.away();
-  };
-  const links = bookFollow({
-    ...book,
-    place: () => side.place,
-    open: (place) => side.open(place.path, place),
+    values: () => values,
+    side: () => side,
+    draw: (index, at) => draw(index, true, at),
     keep: (offset) => keep(offset),
   });
-  const pages = bookPages({ ...book, values: () => values });
 
   /** The place in the book kept in its reading state: each write reads the vault again, so only at a rest. */
   function keep(offset: number): void {
@@ -124,7 +97,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     place: number | (() => number) = 0,
   ): Promise<boolean> {
     const opened = epub;
-    if (!opened || !path) return false;
+    const where = path;
+    if (!opened || !where) return false;
     pages.finish();
     const asked = ++turn;
     const chapter = await opened.chapter(index);
@@ -135,7 +109,13 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       return false;
     }
     count?.add(index, chapter);
-    const next = await drawChapter(opened, chapter);
+    // The first chapter after Eien's title page and imprint, shown in pages alone (Phase 3d).
+    const first = index === chapterBeside(opened.spine, -1, 1);
+    const next = await drawChapter(
+      opened,
+      chapter,
+      first ? frontMatter(opened, where, crumbsOf(where)) : null,
+    );
     if (asked !== turn || disposed) {
       next.release();
       return false;

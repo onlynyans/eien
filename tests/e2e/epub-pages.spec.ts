@@ -152,16 +152,24 @@ test.describe('a book in pages', () => {
         return still;
       })
       .toBe(true);
-    const scrolled = await scroller(page).evaluate((element) => {
+    const { scrolled, before } = await scroller(page).evaluate((element) => {
       const box = element.getBoundingClientRect();
       const words = element.querySelector('.epub-chapter')?.getBoundingClientRect();
       // The line at the very top, half in sight or not: the place is the first line in sight.
       const at = document.caretRangeFromPoint((words?.left ?? box.left) + 4, box.top + 2);
-      return at?.startContainer.textContent ?? '';
+      // The place is the first line whose foot is past the top: two pixels short, the line above,
+      // which may end the paragraph before (and the page, in pages).
+      const paragraph = at?.startContainer.parentElement?.closest('p');
+      return {
+        scrolled: at?.startContainer.textContent ?? '',
+        before: paragraph?.previousElementSibling?.textContent ?? '',
+      };
     });
     await pagesTool.click();
     // The page holding that line, which may begin a few lines before it.
-    await expect.poll(() => onPage(page, scrolled)).toBe(true);
+    await expect
+      .poll(async () => (await onPage(page, scrolled)) || (before !== '' && onPage(page, before)))
+      .toBe(true);
   });
 
   test('a turn lets go of words chosen on the page left, and their bar', async ({ page }) => {

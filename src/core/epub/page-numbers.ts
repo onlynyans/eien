@@ -95,6 +95,22 @@ export function pageWords(label: string | number | null, of: number | null): str
   return of === null ? `page ${page}` : `page ${page} of ${grouped(of)}`;
 }
 
+/**
+ * What the colophon says of a spread (Phase 3d): "pages 212–213 of 2,450";
+ * one page's words where the recto's page is the verso's, or none is known.
+ */
+export function spreadWords(
+  verso: string | number | null,
+  recto: string | number | null,
+  of: number | null,
+): string {
+  if (verso === null || recto === null || String(recto) === String(verso))
+    return pageWords(verso, of);
+  const page = (label: string | number) => (typeof label === 'number' ? grouped(label) : label);
+  const pages = `pages ${page(verso)}–${page(recto)}`;
+  return of === null ? pages : `${pages} of ${grouped(of)}`;
+}
+
 /** What a book's pages are counted from: its items' lengths, and its printed pages where it has them. */
 export interface PageCount {
   readonly lengths: Lengths;

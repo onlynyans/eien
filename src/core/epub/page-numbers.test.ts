@@ -6,6 +6,7 @@ import {
   printAt,
   printPages,
   STEADY_CHARS,
+  spreadWords,
   steadyAt,
   steadyPages,
   steadyStart,
@@ -133,6 +134,15 @@ describe('a place’s page', () => {
     expect(pageWords('34', 412)).toBe('page 34 of 412');
     expect(pageWords(null, 9)).toBe('');
   });
+
+  it('says a spread’s two pages, or one where both begin on the same page (Phase 3d)', () => {
+    expect(spreadWords(212, 213, 2450)).toBe('pages 212–213 of 2,450');
+    expect(spreadWords(212, 212, 2450)).toBe('page 212 of 2,450');
+    expect(spreadWords('xi', 'xii', null)).toBe('pages xi–xii');
+    expect(spreadWords('7', 7, 9)).toBe('page 7 of 9');
+    expect(spreadWords(212, null, 2450)).toBe('page 212 of 2,450');
+    expect(spreadWords(null, 3, 9)).toBe('');
+  });
 });
 
 // QA (#40, Phase 4a): the edges a book meets that the cases above pass by.
@@ -208,5 +218,21 @@ describe('a book’s printed pages at its edges', () => {
     const placed = pageOf({ lengths: [3000, 3000], print }, 0, 2000);
     expect(placed).toEqual({ label: null, of: 1 });
     expect(pageWords(placed.label, placed.of)).toBe('');
+  });
+});
+
+// QA (#40, Phase 3d): a spread's two pages as a long book and a printed one say them.
+describe('a spread’s pages, the edges', () => {
+  it('groups both pages’ thousands, and joins a number and a printed label', () => {
+    expect(spreadWords(1999, 2000, 2450)).toBe('pages 1,999–2,000 of 2,450');
+    expect(spreadWords(1999, 2000, null)).toBe('pages 1,999–2,000');
+    expect(spreadWords('xii', 1, 300)).toBe('pages xii–1 of 300');
+  });
+
+  it('says one page where the recto’s is the verso’s, whatever its kind, or isn’t known', () => {
+    expect(spreadWords('xi', 'xi', null)).toBe('page xi');
+    expect(spreadWords(1200, '1200', 2450)).toBe('page 1,200 of 2,450');
+    expect(spreadWords('xi', null, null)).toBe('page xi');
+    expect(spreadWords(null, null, 9)).toBe('');
   });
 });

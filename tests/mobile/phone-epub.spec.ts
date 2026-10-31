@@ -50,7 +50,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       // Bookmarked from the page's ⋯ (Phase 4b): its mark, and the choice checked after.
       await page.getByRole('button', { name: 'More' }).click();
       await page.getByRole('menuitemcheckbox', { name: 'Bookmark this page' }).click();
-      await expect(page.locator('.page__mark--bookmark')).toBeVisible();
+      await expect(page.locator('.page__mark--bookmark[data-edge="right"]')).toBeVisible();
       expect(await seriousViolations(page), 'a bookmarked page').toEqual([]);
       await page.getByRole('button', { name: 'More' }).click();
       await expect(
@@ -94,7 +94,7 @@ test('a book’s Marks on its contents page: lenses a finger high, a row tapped 
   await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
   await page.getByRole('button', { name: 'More' }).click();
   await page.getByRole('menuitemcheckbox', { name: 'Bookmark this page' }).click();
-  await expect(page.locator('.page__mark--bookmark')).toBeVisible();
+  await expect(page.locator('.page__mark--bookmark[data-edge="right"]')).toBeVisible();
   // Another chapter, so the bookmark's row has somewhere to go back to.
   await back(page).click();
   await page.locator('.contents-row').nth(2).click();
@@ -114,7 +114,7 @@ test('a book’s Marks on its contents page: lenses a finger high, a row tapped 
   // The page comes into sight at the bookmark, its mark on it.
   await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
   await expect(chapter(page)).toBeInViewport();
-  await expect(page.locator('.page__mark--bookmark')).toBeVisible();
+  await expect(page.locator('.page__mark--bookmark[data-edge="right"]')).toBeVisible();
   // Back again, the lens is as it was left: the same book.
   await back(page).click();
   await expect(marks).toHaveAttribute('aria-pressed', 'true');
@@ -180,7 +180,7 @@ test('a bookmark made and taken off from the ⋯, kept in the reading file betwe
   await book.click();
   await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
   const choice = () => page.getByRole('menuitemcheckbox', { name: 'Bookmark this page' });
-  const mark = page.locator('.page__mark--bookmark');
+  const mark = page.locator('.page__mark--bookmark[data-edge="right"]');
   // The phone's colophon is its own, at the foot of the screen, not inside the page's leaf.
   const said = page.locator('.colophon__said');
   /** The bookmarks in the book's one reading file. */
@@ -574,4 +574,81 @@ test('a book in pages with its marks on the edge: a finger on the strip never tu
       .locator('.edge-strip__here')
       .evaluate((bar) => getComputedStyle(bar).transitionDuration),
   ).toBe('0s');
+});
+
+// Set as a book on the phone (#40, Phase 3d): one page always, even a tablet's
+// screen one pane at a time with room for two; ragged, as a measure this short
+// opens rivers when it's justified, but hyphenated; a chapter opening two
+// lines low; Eien's title page before the first chapter all the same.
+test('a book in pages on the phone is one page, ragged and hyphenated, on a tablet’s screen too', async ({
+  page,
+}) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'one');
+    await window.eien.settings.set('epub.view', 'pages');
+  });
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.reload();
+  await expect(page.locator('.shell')).toHaveAttribute('data-phone', '');
+  await back(page).click();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  const leaf = page.locator('.page__leaf--epub');
+  await expect(leaf).toHaveAttribute('data-view', 'pages');
+  const box = page.locator('.epub-sheet:not([aria-hidden]) .epub__pages');
+  await expect(box).not.toHaveAttribute('data-spread');
+  const set = await box.evaluate((element) => {
+    const words = element.querySelector('.epub-chapter') as HTMLElement;
+    const paragraph = words.querySelector('p:not([data-part])') as HTMLElement;
+    const title = words.querySelector('[data-part="chapter-title"]') as HTMLElement;
+    return {
+      columns: getComputedStyle(words).columnCount,
+      align: getComputedStyle(paragraph).textAlign,
+      hyphens: getComputedStyle(words).hyphens,
+      sink: Number.parseFloat(getComputedStyle(title).paddingTop),
+      line: Number.parseFloat(getComputedStyle(words).lineHeight),
+    };
+  });
+  expect(set.columns).toBe('1');
+  expect(set.align).toBe('start');
+  expect(set.hyphens).toBe('auto');
+  expect(set.sink).toBeCloseTo(2 * set.line, 0);
+  // Its running head and folio over and under the page, in the machine's voice.
+  await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-heads')).toBeVisible();
+  await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-folios')).toBeVisible();
+  expect(await seriousViolations(page), 'a book set as a book on the phone').toEqual([]);
+  // QA (#40, Phase 3d): tapped back past the book's first page, Eien's imprint, then its title
+  // page, one page at a time. In sight, not merely drawn: a page turned away is only clipped.
+  const inSight = (part: string) =>
+    box.evaluate((element, selector) => {
+      const found = element.querySelector(selector)?.getBoundingClientRect();
+      const sight = element.getBoundingClientRect();
+      return (
+        found !== undefined &&
+        found.width > 0 &&
+        found.left >= sight.left - 1 &&
+        found.right <= sight.right + 1
+      );
+    }, part);
+  const rect = await box.boundingBox();
+  if (!rect) throw new Error('no page');
+  const tapBack = () => page.touchscreen.tap(rect.x + rect.width * 0.1, rect.y + rect.height / 2);
+  for (let i = 0; i < 6 && !(await inSight('[aria-label="Imprint"]')); i++) {
+    await tapBack();
+    await page.waitForTimeout(100);
+  }
+  await expect.poll(() => inSight('[aria-label="Imprint"]')).toBe(true);
+  expect(await inSight('[aria-label="Title page"]')).toBe(false);
+  await tapBack();
+  await expect.poll(() => inSight('[aria-label="Title page"]')).toBe(true);
+  expect(await inSight('[aria-label="Imprint"]')).toBe(false);
+  // No page of the book's: none said, nothing to bookmark.
+  await expect(page.locator('.colophon__page').first()).toHaveText('');
+  expect(await seriousViolations(page), 'Eien’s title page on the phone').toEqual([]);
 });

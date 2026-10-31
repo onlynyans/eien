@@ -14,6 +14,8 @@ import { copyWords } from './book-words';
 import { offsetAfter } from './chapter-place';
 import { PagedPlace } from './paged-place';
 import { PlaceKeeper } from './place-keeper';
+import type { PageShown, Spot } from './sight';
+import { spreadOf } from './spread';
 
 export interface ChapterSheetOf {
   /** The page's scroller, which the chapter scrolls in. */
@@ -59,7 +61,12 @@ export class ChapterSheet {
       inSight: (from: number, to: number) => of.inSight(from, to),
     };
     this.#scrolled = new PlaceKeeper({ ...told, scroller: of.scroller });
-    this.#paged = new PagedPlace({ ...told, box: this.box });
+    this.#paged = new PagedPlace({
+      ...told,
+      box: this.box,
+      room: of.scroller,
+      per: () => spreadOf(this.box, this.element, of.scroller),
+    });
     this.#keeper = this.#scrolled;
   }
 
@@ -107,9 +114,26 @@ export class ChapterSheet {
     this.#unchoose();
   }
 
-  /** In pages: the page in sight (0 first) and how many the chapter has. */
-  get page(): { readonly at: number; readonly of: number } {
-    return { at: this.#paged.page, of: this.#paged.pages };
+  /**
+   * In pages: the chapter's own pages (its front matter left out), the first
+   * in sight (0 first), how many it has, and how many show at once.
+   */
+  get page(): { readonly at: number; readonly of: number; readonly per: 1 | 2 } {
+    return this.#paged.columns;
+  }
+
+  /** In pages, the pages in sight (one, or a spread's two): where each one's words begin, and its part. */
+  get sight(): readonly PageShown[] {
+    return this.paged ? this.#paged.sight : [];
+  }
+
+  /** In pages, where the page stands now, to put back exactly (a turn that fell back). */
+  get spot(): Spot {
+    return this.#paged.spot;
+  }
+
+  restore(spot: Spot): void {
+    if (this.paged) this.#paged.restore(spot);
   }
 
   /** `chapter` in place of the last, with its `foot`, its place `offset` kept and shown. */
