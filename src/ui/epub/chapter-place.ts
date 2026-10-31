@@ -125,3 +125,30 @@ export function offsetAfter(chapter: HTMLElement, node: Node): number {
   }
   return offset;
 }
+
+/** What a word's block is: words in two of them read with a space between. */
+const BLOCK =
+  'p, div, section, aside, pre, li, dd, dt, blockquote, td, th, figure, figcaption, h1, h2, h3, h4, h5, h6';
+
+/**
+ * About `length` of the chapter's words from `offset` on (a bookmark's page's
+ * first words, Phase 4b), a space between those of two blocks, as they read.
+ */
+export function wordsFrom(chapter: HTMLElement, offset: number, length: number): string {
+  const pieces = piecesOf(chapter);
+  const spot = spotOf(
+    pieces.map((text) => text.length),
+    offset,
+  );
+  if (!spot) return '';
+  let words = '';
+  let block: Element | null = null;
+  for (let i = spot.index; i < pieces.length && words.length < length; i++) {
+    const piece = pieces[i] as Text;
+    const own = piece.parentElement?.closest(BLOCK) ?? null;
+    if (words !== '' && own !== block) words += ' ';
+    block = own;
+    words += piece.data.slice(i === spot.index ? spot.within : 0);
+  }
+  return words.slice(0, length);
+}

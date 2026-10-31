@@ -48,6 +48,11 @@ export class LeafEdges {
     this.#buttons = { before: before.button, after: after.button };
   }
 
+  /** How many paper edges the pages still to read show (a bookmark's edge tab stands past them, ./bookmark.css). */
+  get after(): number {
+    return this.#stacks.after.childElementCount;
+  }
+
   /** The edges' tooltips' and buttons' controls, for the page's tooltips. */
   get turns(): readonly HTMLElement[] {
     return [this.#buttons.before, this.#buttons.after];

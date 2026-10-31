@@ -27,6 +27,8 @@ export interface EpubWiringOf {
   tell(message: string): void;
   /** A book or a chapter on a page changed: the panes draw it. */
   redraw(): void;
+  /** How a book's commands look changed (its page bookmarked or not): the controls show it. */
+  looks(): void;
   pages(): Pages;
   /**
    * Open `path` as a note chosen from a row is (./note-actions.ts, 'chosen'):
@@ -73,6 +75,7 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
     vault: of.vault,
     reading: readingStore(of.vault, of.tell),
     counts: new BookCounts(),
+    looks: () => of.looks(),
     sizeOf: (path) => of.state.sizeOf(path),
     changed: () => of.redraw(),
     async quote(text, from) {

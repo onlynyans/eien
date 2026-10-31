@@ -140,7 +140,8 @@ Rules, pure TypeScript.
   - `epub-rules.ts`: those rules: pictures from the zip, links to the book's own chapters or the web and mail, the places they name kept, the parts named (a note and its reference too)
   - `svg-plate.ts`: Calibre's SVG frame round a picture made a plain image
   - `first-line.ts`: a chapter's first line, by where it stands
-  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it
+  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it; never written over when it can't be read
+  - `bookmarks.ts`: its bookmarks, changed in the file's own array, unknown items and fields kept (Phase 4b)
   - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
   - `chapter-count.ts`: a chapter's words counted as a place counts them, from its cleaned nodes, and where the printed pages begin in it (Phase 4)
@@ -215,7 +216,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, what the layout's tools act on, and where each note's figures go
   - `vault/page-hosts.ts`: a page's own host, which those commands move onto
   - `page/pages-row.ts`: the pane's row laying out two pages, folded with a pager, closed to one with the other's edge, or a companion under the page, the active page marked; each page's own head and foot is `page/page-leaf.ts`
-  - `page/page-mark.ts`, `page/page-mark.css`: the page's mark (the Page mark setting: ribbon, dog-ear or edge tab) at its outer edge: Facing pages' active page's, and a book's bookmark's from #40 Phase 4b
+  - `page/page-mark.ts`, `page/page-mark.css`: the page's mark (the Page mark setting: ribbon, dog-ear or edge tab) at its outer edge: Facing pages' active page's, and a book's bookmark's (#40 Phase 4b)
   - `page/split.css`, and one sheet per mode: `split-sheets.css`, `split-facing.css`, `split-companion.css`, `split-follow.css`
   - the list stepping aside for a split is `shell/panes.ts`'s
   - `page/divider.ts`: the divider between, each mode's measure in `shell/split-state.ts`
@@ -346,7 +347,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
 - styles in `theme/` and beside each view
 - `epub/`: an EPUB's page (#40)
-  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys (Q, ⌘[ / Alt+←)
+  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys (Q, B, ⌘[ / Alt+←), its bookmark's mark
   - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again (scrolling or in pages), its links caught, its words copied and chosen
   - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
   - `epub-side-types.ts`: what a page holding a book is (`EpubSide`, `EpubSideOf`, `isEpub`)
@@ -354,20 +355,22 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `book-count.ts`: a book counted for its page numbers, in the background, never while a page turns; one per book for the window, the last few kept (Phase 4)
   - `book-open.ts`: the book read and opened for its page (or the words it says instead), what it's called, and where it opens
   - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
-  - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again
+  - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again; the words from a place (a bookmark's)
   - `place-keeper.ts`: the place kept as the page scrolls, measured at rest and never out of sight, shown again when laid out anew
   - `book-links.ts`: a book's links caught on its page (the web's to the system's browser), a note's reference told apart, each named for the tooltip, a place found by its marker
   - `book-follow.ts`: where they take the reader: the note over the page, or the chapter and place, one step back
   - `note-over.ts`: a book's note over its page, floated as a menu
   - `book-words.ts`: a selection's words without the page's own (a copy, a quote)
-  - `book-foot.ts`: a book's colophon items: Back, which chapter, how far through, a line of news
+  - `book-foot.ts`: a book's colophon items: Back, which chapter, its page, "bookmarked", how far through, a line of news
   - `book-selection.ts`: the selection bar over a book: Quote in the note, Copy
   - `book-quote.ts`: the words chosen in a book as a quote, cited
   - `test-side.ts`: a book's page over a vault the DOM tests hold
-  - `test-lines.ts`: a chapter's lines as the DOM tests lay them out
+  - `test-lines.ts`: a chapter's lines as the DOM tests lay them out, and a book's page laid out so
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
   - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
-  - `reading-store.ts`: the reading state's file, through the vault's small files
+  - `reading-store.ts`: the reading state's file, through the vault's small files, its bookmarks' changes told to every page of the book
+  - `page-bookmarks.ts`: a book's bookmarks on its page: whether the page in sight has one, B and the tool, following a turn once it lands (Phase 4b)
+  - `bookmark.css`: its mark (the Page mark's look), kept to the top of the sheet in sight, and Facing pages' clash
   - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
   - `paged-place.ts`: in pages (Phase 3b), the chapter laid in columns of whole lines, the page holding the place shown, a turn keeping its first word, a copy cut to the page in sight
   - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back

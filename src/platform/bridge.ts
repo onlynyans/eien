@@ -119,6 +119,7 @@ export type MenuCommand =
   | 'view:reading'
   | 'view:pages'
   | 'view:scroll'
+  | 'bookmark'
   | 'view:next'
   | 'panes:sidebar'
   | 'panes:list'

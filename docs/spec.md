@@ -74,7 +74,10 @@ one on two synced devices read each other's files.
   describes. A bare list (`pinned.json`) becomes an object to carry it.
 - A file whose version is newer than this Eien knows is read for what it can,
   and never written over: a newer device's settings are never lost to an
-  older one.
+  older one. A reading state's file that can't be read at all (one a sync
+  broke) is never written over either, so its bookmarks are never lost
+  (#40, Phase 4b); a new field in one (its `bookmarks`) is kept as found by
+  an older Eien, so it isn't breaking.
 - A change an older Eien would misread is a breaking change: its pull
   request's title carries `!` (AGENTS.md → Releases).
 
@@ -445,6 +448,24 @@ Three panes, each collapsible, with a two-pane option in settings:
      a chapter at a time and never while a page turns; until it's counted
      the colophon gives no steady page. The count is kept for the last few
      books this window opened, never written.
+   - **Bookmarks** (Phase 4b): **B**, the bookmark tool (a ribbon, with the
+     book's own tools; on the phone, the ⋯) or View → Bookmark This Page
+     bookmarks the page in sight: in Pages the page, scrolling the lines in
+     sight. On a page that has one (or more, made at another width) they're
+     all taken off. The colophon says "Bookmarked." or "Bookmark taken off.",
+     and the tool is pressed while the page in sight has one. The page wears
+     the **Page mark** (Settings → Appearance: a ribbon over its top edge,
+     its outer corner turned down, or a tab at its outer edge), at its outer
+     top, arriving as it does on Facing pages' active page; scrolling, it
+     keeps to the top of the sheet in sight; in Pages it changes as a turn
+     lands, never mid-turn. In a split in Facing pages, where that mark says
+     which page you're in, a bookmarked page wears none, and its folio says
+     "bookmarked". Bookmarks are kept in the reading state's file with the
+     place (each a chapter, its first word and the words it begins with),
+     every other field and item kept as found; two pages on one book agree
+     at once. A reading file a newer Eien wrote is never written, and one
+     that can't be read is never written over: the colophon says so once,
+     and its place and bookmarks aren't kept until it's fixed or deleted.
    - **Pages** (Phase 3b): **Read in**, a book setting in the shelf's
      quick look, sets a book in *Pages* or *Scroll* (the default for now),
      as do the book's own two tools in the views' place and View → Pages

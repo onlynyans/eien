@@ -172,6 +172,8 @@ export function buildMenu(send: SendCommand): Menu {
         // A book's (#40, Phase 3b): greyed with a note in front, as a note's are with a book.
         item('Pages', 'view:pages'),
         item('Scroll', 'view:scroll'),
+        // B is the page's own key, never an accelerator: the letter is a note's to type.
+        item('Bookmark This Page', 'bookmark'),
         { type: 'separator' },
         item('Next View', 'view:next', 'CmdOrCtrl+E'),
         { type: 'separator' },

@@ -79,6 +79,7 @@ export async function showVault(
     nav,
     tell,
     redraw: () => void redraw(),
+    looks: () => chrome.refresh(),
     pages: () => pages,
     openChosen: (path) => actions.openNote(path, 'chosen'),
     showPage: () => phone.stack.show('page'),

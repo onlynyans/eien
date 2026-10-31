@@ -122,6 +122,16 @@ export const COMMANDS = [
     sends: 'view:scroll',
     on: 'epub',
   },
+  // A book's bookmark (#40, Phase 4b). Its key is the page's own (../epub/epub-page.ts), never the
+  // menu bar's, which would take the letter from a note.
+  {
+    id: 'bookmark',
+    icon: 'bookmark',
+    label: 'Bookmark this page',
+    key: 'b',
+    sends: 'bookmark',
+    on: 'epub',
+  },
   {
     id: 'view.next',
     icon: 'live',

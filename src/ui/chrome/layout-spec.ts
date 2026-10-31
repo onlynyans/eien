@@ -55,6 +55,7 @@ export const TOOL_FOLDS: readonly CommandId[] = [
   'compare',
   'format-bar',
   'focus',
+  'bookmark',
   'look',
   'view.live',
   'view.source',

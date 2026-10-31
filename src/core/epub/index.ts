@@ -1,4 +1,15 @@
 export { bookHref, bookLinkOf } from './book-link';
+export {
+  BOOKMARK_WORDS,
+  type Bookmark,
+  bookmarksOf,
+  bookmarksOn,
+  firstWords,
+  inBookOrder,
+  MAX_BOOKMARKS,
+  sameMark,
+  withBookmarks,
+} from './bookmarks';
 export { EPUB_CAPS, type EpubCaps } from './caps';
 export type { Chapter } from './chapter';
 export { type ChapterCount, countChapter } from './chapter-count';
@@ -23,7 +34,15 @@ export { EDGES, edgesOf, pageAt, pagesIn, wholeLines } from './pages';
 export { offsetOf, type Spot, spotOf } from './place';
 export { bookFraction, chapterFraction, percent } from './progress';
 export { citation, type QuoteSource, quoted, withQuote } from './quote';
-export { parseReading, READING_FOLDER, type Reading, readingPath, withReading } from './reading';
+export {
+  parseReading,
+  READING_FOLDER,
+  type Reading,
+  type ReadingKept,
+  readingKept,
+  readingPath,
+  withReading,
+} from './reading';
 export { isRefusal, type Refusal, type RefusalKind, refusalWords } from './refusal';
 export { CURL_STRIPS, type Matrix, type PageBox, type Point, type Polygon } from './turn/curl';
 export { type CurlFrame, type CurlLengths, type CurlStrip, curlFrame } from './turn/curl-frame';

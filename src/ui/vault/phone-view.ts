@@ -6,6 +6,7 @@
 // bring up the phone's keyboard.
 
 import type { MenuCommand } from '../../platform/bridge';
+import { isEpub } from '../epub/epub-side-types';
 import { focusList } from '../list/list';
 import { closeMenu, openMenu } from '../menu/menu';
 import type { MenuBus } from '../menu/menu-bus';
@@ -74,6 +75,7 @@ export function phoneView(of: PhoneViewOf): PhoneView {
       exportTo,
       kind: of.pages.active.kind,
       quote: of.quote,
+      bookmarked: isEpub(of.pages.active) && of.pages.active.bookmarked,
     };
     openMenu(moreItems(state, run), { opener }, 'More');
   };

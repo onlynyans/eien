@@ -1,8 +1,8 @@
 // The page's mark (the Page mark setting, appearance.facingMark, as
 // data-facing-mark): a ribbon over the page's top edge, its outer corner
 // turned down, or a tab at its outer edge. One look, worn by Facing pages'
-// active page (./pages-row.ts), and for a book's bookmark too (#40, Phase
-// 4b); its rules are ./page-mark.css.
+// active page (./pages-row.ts), and a book's bookmarked page (#40, Phase
+// 4b, ../epub/epub-page.ts); its rules are ./page-mark.css.
 
 import { h } from '../dom';
 
@@ -11,8 +11,8 @@ const SVG = 'http://www.w3.org/2000/svg';
 /** Which of the page's sides is its outer one, where the mark stands. */
 export type MarkEdge = 'left' | 'right';
 
-/** What a mark marks: the page you're in (Facing pages'). */
-export type MarkOf = 'active';
+/** What a mark marks: the page you're in (Facing pages'), or a book's bookmarked page (#40). */
+export type MarkOf = 'active' | 'bookmark';
 
 /**
  * A mark, `what` it marks as its modifier (`page__mark--active`), at the

@@ -27,6 +27,7 @@ function wired(
     nav,
     tell: () => {},
     redraw: () => {},
+    looks: () => {},
     pages: () => pages as Pages,
     openChosen: async () => {},
     showPage: () => {},
