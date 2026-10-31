@@ -1,9 +1,12 @@
-// A book's page in pages turned by the keyboard and a tap (#40, Phase 3b):
-// the arrow keys, Space and Page Up and Down a page on or back, Home and End
-// the chapter's ends, and on a touch screen a tap in the page's outer thirds.
-// Never a button's own Space (no turn twice: a clicked edge keeps the
-// keyboard, and the arrows still turn from it), nor a tap on a link or one
-// ending a selection (Quote and Copy need one).
+// A book's page and its keys (#40): its letters (Q quotes, Phase 2c; B
+// bookmarks, Phase 4b), each a plain key, held once; ⌘[ or Alt+← back, as a
+// browser goes back; and in pages (Phase 3b) the arrow keys, Space and Page
+// Up and Down a page on or back, Home and End the chapter's ends, and on a
+// touch screen a tap in the page's outer thirds. Never from a field (the
+// page beside's words, its tags: Alt+← is a word left there), never a
+// button's own Space (no turn twice: a clicked edge keeps the keyboard, and
+// the arrows still turn from it), nor a tap on a link or one ending a
+// selection (Quote and Copy need one).
 
 export interface PageKeysOf {
   /** A page turned `way`; `held`, the key repeating. */
@@ -25,6 +28,62 @@ const PAGE_KEYS: Readonly<Record<string, 1 | -1 | 'first' | 'last'>> = {
   Home: 'first',
   End: 'last',
 };
+
+/** Where a key is the writer's own: a note's editor, a field. */
+const FIELD = '.editor-host, input, textarea, [contenteditable]';
+
+/** What a book's page does for its keys. */
+export interface BookKeysOf extends PageKeysOf {
+  /** Words chosen in the chapter now. */
+  chosen(): boolean;
+  /** A book on the page. */
+  shown(): boolean;
+  /** Whether the chapter is in pages. */
+  paged(): boolean;
+  /** Whether there's a step back to take. */
+  canGoBack(): boolean;
+  quote(): void;
+  bookmark(): void;
+  back(): void;
+}
+
+/** A plain letter's command on a book's page, and when it applies. */
+interface Letter {
+  readonly when: (of: BookKeysOf) => boolean;
+  readonly run: (of: BookKeysOf) => void;
+}
+
+const LETTERS: Readonly<Record<string, Letter>> = {
+  // With words chosen in the chapter now: quoted in the note beside (Phase 2c).
+  q: { when: (of) => of.chosen(), run: (of) => of.quote() },
+  // The page in sight bookmarked, or its bookmark taken off (Phase 4b).
+  b: { when: (of) => of.shown(), run: (of) => of.bookmark() },
+};
+
+/** Whether `event` is Back: ⌘[ (Ctrl+[), or Alt+←. */
+const isBack = (event: KeyboardEvent) =>
+  (event.key === '[' && (event.metaKey || event.ctrlKey) && !event.altKey) ||
+  (event.key === 'ArrowLeft' && event.altKey && !event.metaKey && !event.ctrlKey);
+
+/** A key on a book's page: its letters, Back, and in pages a turn. */
+export function bookKey(event: KeyboardEvent, of: BookKeysOf): void {
+  if (event.target instanceof Element && event.target.closest(FIELD)) return;
+  const plain = !event.metaKey && !event.ctrlKey && !event.altKey;
+  const name = event.key.toLowerCase();
+  const letter = plain && Object.hasOwn(LETTERS, name) ? LETTERS[name] : undefined;
+  if (letter?.when(of)) {
+    event.preventDefault();
+    if (!event.repeat) letter.run(of);
+    return;
+  }
+  if (isBack(event)) {
+    if (!of.canGoBack()) return;
+    event.preventDefault();
+    of.back();
+    return;
+  }
+  if (plain && of.paged()) pageKey(event, of);
+}
 
 /** In pages, a key on the page: a turn, if it's one of a page's. */
 export function pageKey(event: KeyboardEvent, of: PageKeysOf): void {

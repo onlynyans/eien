@@ -1,12 +1,10 @@
 // A chapter's words counted as a place counts them (#40, Phase 4), from its
-// cleaned nodes: how long it is, for steady page numbers, and where the
-// printed edition's pages begin in it. The window counts the same words in
-// what it draws (ui/epub/chapter-place.ts piecesOf): every text node that
-// isn't blank, each cleaned one drawn as one; but a rule (`hr`), which the
-// window draws as Eien's own break and never counts. A cleaned picture's
-// words (its alt, when it won't be shown) are plain text, and count on both.
+// cleaned nodes by the one walk of them (./chapter-words.ts): how long it
+// is, for steady page numbers, and where the printed edition's pages begin
+// in it.
 
 import type { CleanNode } from '../html';
+import { walkChapter } from './chapter-words';
 
 export interface ChapterCount {
   /** Its words' length, as an offset in it counts them (./place.ts). */
@@ -22,19 +20,14 @@ export function countChapter(
 ): ChapterCount {
   let length = 0;
   const anchors = new Map<string, number>();
-  const walk = (list: readonly CleanNode[]) => {
-    for (const node of list) {
-      if (node.kind === 'text') {
-        if (node.text.trim() !== '') length += node.text.length;
-        continue;
-      }
-      if (node.name === 'hr') continue;
-      const name = node.name === 'a' ? node.attrs.anchor : undefined;
-      // The first marker of a name, as a link's place is found (ui/epub/book-links.ts markerIn).
-      if (name !== undefined && names.has(name) && !anchors.has(name)) anchors.set(name, length);
-      walk(node.children);
-    }
-  };
-  walk(nodes);
+  walkChapter(nodes, {
+    text: (text, counted) => {
+      if (counted) length += text.length;
+    },
+    // The first marker of a name, as a link's place is found (ui/epub/book-links.ts markerIn).
+    anchor: (name) => {
+      if (names.has(name) && !anchors.has(name)) anchors.set(name, length);
+    },
+  });
   return { length, anchors };
 }

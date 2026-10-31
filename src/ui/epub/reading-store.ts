@@ -4,10 +4,11 @@
 // page comes to rest somewhere new (./place-keeper.ts): each write reads the
 // vault again, so never as a page scrolls. The writes are the store's, one
 // after another, so a page closed just after a chapter changed is still
-// waited for by a quit (the kind's flush). A book's bookmarks (Phase 4b)
-// change in the same file, one change a write, and every page of that book
-// in the window is told, so two pages on one book, the list and the tool
-// agree. One store for the window.
+// waited for by a quit (the kind's flush). A book's marks (its bookmarks,
+// Phase 4b) change in the same file, one change a write, each decided
+// against the file as it is then (another device's change synced meanwhile
+// included); every page of that book in the window is told, so two pages on
+// one book, the list and the tools agree. One store for the window.
 
 import {
   type Bookmark,
@@ -17,37 +18,41 @@ import {
   type ReadingKept,
   readingKept,
   readingPath,
-  withBookmarks,
   withReading,
 } from '../../core/epub';
 import type { VaultBridge } from '../../platform/bridge';
 import { SmallFiles } from '../vault/small-files';
 
-/** What the file holds of a book: the place, its bookmarks, and how the file stands. */
+/** A book's marks, as its file holds them. */
+export interface ReadingMarks {
+  readonly bookmarks: readonly Bookmark[];
+}
+
+/** The marks the file's text holds, every kind. */
+const marksOf = (text: string | null): ReadingMarks => ({ bookmarks: bookmarksOf(text) });
+
+/** What the file holds of a book: the place, its marks, and how the file stands. */
 export interface ReadingRead {
   readonly reading: Reading;
-  readonly bookmarks: readonly Bookmark[];
+  readonly marks: ReadingMarks;
   readonly kept: ReadingKept;
 }
 
-/** A change to a book's bookmarks: one added, some taken off. */
-export interface MarkChange {
-  readonly add?: Bookmark;
-  readonly remove?: readonly Bookmark[];
-}
+/** A change to a book's marks: the file's text as it is now, made new; null where it mustn't be written. */
+export type MarksEdit = (text: string | null) => string | null;
 
 export interface ReadingStore {
   read(key: string): Promise<ReadingRead>;
   /** Keep `reading` for the book `key` names, after any write under way. */
   write(key: string, reading: Reading): Promise<void>;
   /**
-   * Change the book's bookmarks, after any write under way: the bookmarks as
-   * the file then holds them, or null when they couldn't be kept (a newer
-   * Eien's file, or one that can't be read).
+   * Change the book's marks by `edit`, run on the file as it is then, after
+   * any write under way: the marks as the file then holds them, or null when
+   * they couldn't be kept (a newer Eien's file, or one that can't be read).
    */
-  mark(key: string, change: MarkChange): Promise<readonly Bookmark[] | null>;
-  /** `told` whenever the book `key` names has its bookmarks changed here; undone by what it returns. */
-  listen(key: string, told: (bookmarks: readonly Bookmark[]) => void): () => void;
+  change(key: string, edit: MarksEdit): Promise<ReadingMarks | null>;
+  /** `told` whenever the book `key` names has its marks changed here; undone by what it returns. */
+  listen(key: string, told: (marks: ReadingMarks) => void): () => void;
   /** Every write asked for, done. */
   idle(): Promise<void>;
 }
@@ -57,7 +62,7 @@ export function readingStore(
   tell: (message: string) => void,
 ): ReadingStore {
   const files = new SmallFiles({ vault, tell });
-  const listeners = new Map<string, Set<(bookmarks: readonly Bookmark[]) => void>>();
+  const listeners = new Map<string, Set<(marks: ReadingMarks) => void>>();
   let writing: Promise<void> = Promise.resolve();
   /** `work` after every write asked for before it; never rejecting. */
   const queued = <T>(work: () => Promise<T>, failed: T): Promise<T> => {
@@ -73,11 +78,11 @@ export function readingStore(
           const text = (await vault.read(readingPath(key)).catch(() => null))?.text ?? null;
           return {
             reading: parseReading(text),
-            bookmarks: bookmarksOf(text),
+            marks: marksOf(text),
             kept: readingKept(text),
           };
         },
-        { reading: parseReading(null), bookmarks: [], kept: 'none' },
+        { reading: parseReading(null), marks: marksOf(null), kept: 'none' },
       ),
     // A file that mustn't be written (a newer Eien's, or one that can't be read): nothing to write.
     write: (key, reading) =>
@@ -88,19 +93,19 @@ export function readingStore(
             .then(() => {}),
         undefined,
       ),
-    mark: (key, change) =>
+    change: (key, edit) =>
       queued(async () => {
-        let after: readonly Bookmark[] | null = null;
+        let after: ReadingMarks | null = null;
         const written = await files.update(
           readingPath(key),
           (text) => {
-            const next = withBookmarks(text, change);
-            after = next === null ? null : bookmarksOf(next);
+            const next = edit(text);
+            after = next === null ? null : marksOf(next);
             return next ?? undefined;
           },
           'reading',
         );
-        return written ? (after as readonly Bookmark[] | null) : null;
+        return written ? (after as ReadingMarks | null) : null;
       }, null).then((marks) => {
         // Told once kept, outside the write: a page that fails to show it never unkeeps it.
         if (marks) {

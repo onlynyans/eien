@@ -7,7 +7,7 @@
 // bottom, so both look for the line by halves: a long chapter costs a few
 // dozen measures, never one per word.
 
-import { offsetOf, spotOf } from '../../core/epub';
+import { BLOCK_NAMES, offsetOf, spotOf } from '../../core/epub';
 import { FRONT } from './front-matter';
 
 /** A piece of the page's box, measured: the window's own, or a test's. */
@@ -127,9 +127,8 @@ export function offsetAfter(chapter: HTMLElement, node: Node): number {
   return offset;
 }
 
-/** What a word's block is: words in two of them read with a space between. */
-const BLOCK =
-  'p, div, section, aside, pre, li, dd, dt, blockquote, td, th, figure, figcaption, h1, h2, h3, h4, h5, h6';
+/** What a word's block is: words in two of them read with a space between (core's one list). */
+const BLOCK = BLOCK_NAMES.join(', ');
 
 /**
  * About `length` of the chapter's words from `offset` on (a bookmark's page's

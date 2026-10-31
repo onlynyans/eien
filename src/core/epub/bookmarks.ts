@@ -1,11 +1,10 @@
 // A book's bookmarks (#40, Phase 4b), in its reading state's file
 // (./reading.ts): `"bookmarks": [{ "chapter", "offset", "words" }]`, each a
 // page's first word (an offset in its chapter, ./place.ts) and the words it
-// begins with, for the list. Changed in place in the file's own array, so a
-// bookmark this Eien can't read, or a field it doesn't know, is kept as it
-// is; a file a newer Eien wrote, or one that can't be read, is never written.
+// begins with, for the list; kept as every list in the file is
+// (./reading-list.ts).
 
-import { READING_VERSION, readingFile, writable } from './reading';
+import { type ListChange, type ListKind, listIn, withList } from './reading-list';
 
 export interface Bookmark {
   /** The chapter's file in the zip. */
@@ -35,53 +34,30 @@ function bookmarkOf(item: unknown): Bookmark | null {
   };
 }
 
-/** The bookmarks the file's text holds that this Eien can read, the first MAX_BOOKMARKS of them. */
-export function bookmarksOf(text: string | null): Bookmark[] {
-  const list = readingFile(text)?.bookmarks;
-  if (!Array.isArray(list)) return [];
-  const marks: Bookmark[] = [];
-  for (const item of list) {
-    const mark = bookmarkOf(item);
-    if (mark) marks.push(mark);
-    if (marks.length === MAX_BOOKMARKS) break;
-  }
-  return marks;
-}
-
 /** Whether two bookmarks are one: the same chapter and word. */
 export const sameMark = (
   a: Pick<Bookmark, 'chapter' | 'offset'>,
   b: Pick<Bookmark, 'chapter' | 'offset'>,
 ) => a.chapter === b.chapter && a.offset === b.offset;
 
+/** How the file keeps bookmarks: the list's field, an item read, two told apart. */
+const BOOKMARKS: ListKind<Bookmark> = {
+  field: 'bookmarks',
+  read: bookmarkOf,
+  same: sameMark,
+};
+
+/** The bookmarks the file's text holds that this Eien can read, the first MAX_BOOKMARKS of them. */
+export const bookmarksOf = (text: string | null): Bookmark[] =>
+  listIn(text, BOOKMARKS, MAX_BOOKMARKS);
+
 /**
  * The file's text with `add` added (unless it's there) and each of `remove`
  * taken off, every other item and field as it was; null when the file can't
  * be written (./reading.ts writable).
  */
-export function withBookmarks(
-  text: string | null,
-  change: { readonly add?: Bookmark; readonly remove?: readonly Bookmark[] },
-): string | null {
-  const file = writable(text);
-  if (!file) return null;
-  const was: unknown[] = Array.isArray(file.bookmarks) ? file.bookmarks : [];
-  const gone = (item: unknown) => {
-    const mark = bookmarkOf(item);
-    return mark !== null && (change.remove ?? []).some((other) => sameMark(mark, other));
-  };
-  const kept = was.filter((item) => !gone(item));
-  const { add } = change;
-  const there =
-    add &&
-    kept.some((item) => {
-      const mark = bookmarkOf(item);
-      return mark !== null && sameMark(mark, add);
-    });
-  const bookmarks = add && !there ? [...kept, { ...add }] : kept;
-  const { version: _version, bookmarks: _bookmarks, ...rest } = file;
-  return `${JSON.stringify({ version: READING_VERSION, ...rest, bookmarks }, null, 2)}\n`;
-}
+export const withBookmarks = (text: string | null, change: ListChange<Bookmark>): string | null =>
+  withList(text, BOOKMARKS, change);
 
 /**
  * The bookmarks on a page: in `chapter`, from its first word `from` up to

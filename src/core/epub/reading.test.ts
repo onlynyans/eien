@@ -71,4 +71,18 @@ describe('the reading state’s file', () => {
     expect(withReading(newer, { chapter: 'b', offset: 0 })).toBeNull();
     expect(parseReading(newer)).toEqual({ chapter: 'a', offset: 0 });
   });
+
+  it('keeps each field where it stood, the place after them the first time', () => {
+    const keys = (text: string | null) => Object.keys(JSON.parse(text ?? '{}'));
+    const text = JSON.stringify({ version: 1, items: [], chapter: 'c.xhtml', theirs: 1 });
+    const read = withReading(text, { chapter: 'd.xhtml', offset: 4 });
+    expect(keys(read)).toEqual(['version', 'items', 'chapter', 'theirs', 'place']);
+    expect(keys(withReading(read, { chapter: 'e.xhtml', offset: 5 }))).toEqual(keys(read));
+    expect(keys(withReading(read, { chapter: null, offset: 0 }))).toEqual([
+      'version',
+      'items',
+      'chapter',
+      'theirs',
+    ]);
+  });
 });
