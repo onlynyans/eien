@@ -23,6 +23,7 @@ export {
   type FindOptions,
   type Found,
   findIn,
+  foundPlace,
   matcherOf,
 } from './find';
 export {

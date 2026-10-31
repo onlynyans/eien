@@ -220,7 +220,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `vault/epub-found.ts`: the list's field searching the book its contents show (Phase 5c)
 - `list/contents-list.ts`: a book's contents in the list, in place of notes (#40)
   - `list/found-rows.ts`: Found's rows, a match in its words, and what the search says (Phase 5c)
-  - `list/book-lenses.ts`, `.css`: its lenses, Contents and Marks, and a bookmark's row, in the list and under a book's SHELF row (Phase 4c)
+  - `list/book-lenses.ts`, `.css`: its lenses, Contents, Marks and Found, and a mark's row of either kind, in the list and under a book's SHELF row (Phase 4c, 5b, 5c), and a Found row's match
 - `vault/list-lens.ts`: the list's lens and Arrange mode (Include subfolders too, kept per folder by `list/sorts.ts`)
 - The split (spec §4, two pages side by side) is a mode as a layout is
   - `chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, what the layout's tools act on, and where each note's figures go

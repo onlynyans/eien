@@ -13,8 +13,10 @@ import { BookMarks } from './book-marks';
 import { bookPages } from './book-pages';
 import { bookPlace } from './book-place';
 import { BookSearch } from './book-search';
+import { walked } from './chapter-range';
 import type { EpubPage } from './epub-page';
 import type { EpubSide, EpubSideOf } from './epub-side-types';
+import { inkCopy } from './ink';
 
 export interface BookPartsOf {
   readonly page: EpubPage;
@@ -69,13 +71,16 @@ export function bookParts(parts: BookPartsOf) {
     search: (changed) => new BookSearch({ texts: of.texts, changed }),
     epub,
     spine,
-    still: (then) => pages.whenStill(then),
+    still: of.still,
     goTo: (index, offset) => side().goTo(index, offset),
   });
   return {
     placing,
     marks,
     find,
+    /** A turn's copy of the page, its words from `from` on, inked as the page is: highlights and Find's at once. */
+    inkCopy: (copy: HTMLElement, from: number) =>
+      inkCopy(walked(copy), from, [...marks.highlights.copySpans(), ...find.copySpans()]),
     links,
     pages,
     /** No words in sight measured in the chapter drawn yet: no page said, no bookmark shown. */

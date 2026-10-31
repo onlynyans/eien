@@ -176,6 +176,8 @@ describe('openId and selectionOf, on names that look like each other', () => {
 const NO_EPUBS = {
   shelf: () => ({ current: null, contents: null }),
   contents: () => null,
+  showsBook: () => false,
+  syncFound: () => {},
   actions: { openEpub: () => {}, chapter: () => {} },
 };
 
@@ -271,5 +273,80 @@ describe('many notes with two panes', () => {
     expect(lists.get('/all')?.notes).toHaveLength(3000);
     expect(lists.get('/#many')?.notes).toHaveLength(3000);
     expect(took).toBeLessThan(500);
+  });
+});
+
+// #40, Phase 5c (the review): where the search field searches a book whose contents are shown.
+describe('the search field beside a book’s rows', () => {
+  /** A drawer over panes `shape`, a book's contents shown, recording what's asked of the book. */
+  function beside(
+    state: VaultState,
+    nav: Navigation,
+    shape: { two: boolean; listShut: boolean; phone?: boolean },
+  ) {
+    const drawn: SidebarModel[] = [];
+    const synced: (string | null)[] = [];
+    const shelves: boolean[] = [];
+    const draw = new PaneDrawer({
+      state,
+      nav,
+      panes: {
+        two: shape.two,
+        phone: shape.phone ?? false,
+        isShut: (pane: string) => pane === 'list' && shape.listShut,
+        listKept: false,
+      },
+      settings: { values: { 'books.numerals': 'roman', 'appearance.scheme': 'system' } },
+      sidebar: { draw: (model: SidebarModel) => drawn.push(model), drawLens: () => {} },
+      list: null,
+      notice: { text: null },
+      listActions: null,
+      shown: () => ({ active: null, other: null }),
+      pageNews: () => {},
+      placeSearch: () => {},
+      epubs: {
+        ...NO_EPUBS,
+        showsBook: () => true,
+        syncFound: (words: string | null) => synced.push(words),
+        shelf: (_two: boolean, found: boolean) => {
+          shelves.push(found);
+          return { current: null, contents: null };
+        },
+      },
+    } as unknown as DrawnParts);
+    return { draw, drawn, synced, shelves };
+  }
+
+  it('searches the book where its rows are beside it: the list’s band, or with two panes its SHELF row', async () => {
+    const v = await vaultWith(FILES);
+    const nav = new Navigation();
+    expect(beside(v.state, nav, { two: false, listShut: false }).draw.searchesBook()).toBe(true);
+    expect(beside(v.state, nav, { two: true, listShut: true }).draw.searchesBook()).toBe(true);
+    // No book's rows beside the field: it searches the vault.
+    expect(beside(v.state, nav, { two: false, listShut: true }).draw.searchesBook()).toBe(false);
+    expect(
+      beside(v.state, nav, { two: false, listShut: false, phone: true }).draw.searchesBook(),
+    ).toBe(false);
+  });
+
+  it('with two panes, keeps the vault’s results out of the tree, and syncs the book’s search with the words', async () => {
+    const v = await vaultWith(FILES);
+    const nav = new Navigation();
+    nav.query = 'wool';
+    const { draw, drawn, synced, shelves } = beside(v.state, nav, { two: true, listShut: true });
+    await draw.sidebar();
+    expect(drawn.at(-1)?.results).toBeNull();
+    expect(synced).toEqual(['wool']);
+    expect(shelves).toEqual([true]);
+  });
+
+  it('with one pane and the list shut, searches the vault, the book’s search stopped', async () => {
+    const v = await vaultWith(FILES);
+    const nav = new Navigation();
+    nav.query = 'wool';
+    const { draw, drawn, synced } = beside(v.state, nav, { two: false, listShut: true });
+    await draw.sidebar();
+    expect(drawn.at(-1)?.results?.notes.length).toBeGreaterThan(0);
+    expect(synced).toEqual([null]);
   });
 });

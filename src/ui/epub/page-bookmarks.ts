@@ -16,11 +16,11 @@ import {
   MAX_BOOKMARKS,
   withBookmarks,
 } from '../../core/epub';
-import type { Still } from './book-count';
 import type { ChangeMarks } from './book-marks';
 import { wordsFrom } from './chapter-place';
 import type { EpubPage } from './epub-page';
 import { allFront } from './sight';
+import type { Still } from './still';
 
 export interface PageBookmarksOf {
   readonly page: EpubPage;

@@ -14,6 +14,7 @@ import { BookTexts } from '../epub/book-search';
 import { type EpubKind, epubKind } from '../epub/epub-kind';
 import { type EpubSide, isEpub } from '../epub/epub-side-types';
 import { readingStore } from '../epub/reading-store';
+import { allStill, type Still } from '../epub/still';
 import type { MarkRow } from '../list/book-lenses';
 import type { ContentsModel } from '../list/contents-list';
 import type { ShelfActions, ShelfModel } from '../sidebar/shelf-rows';
@@ -57,12 +58,16 @@ export interface EpubWiring {
   >;
   /**
    * What SHELF marks: the book on the active page, and with `two` panes the
-   * open book's contents, and what the field's `words` find in it.
+   * open book's contents (`found`: and what the field finds in it).
    */
-  shelf(two: boolean, words: string | null): Omit<ShelfModel, 'tree' | 'shut'>;
-  /** The contents the list shows in place of notes, or null; with what `words` find (null: the field searches the vault). */
-  contents(words?: string | null): (ContentsModel & { readonly side: EpubSide }) | null;
-  /** The search field's words now: a book's lens follows them (Phase 5c). */
+  shelf(two: boolean, found: boolean): Omit<ShelfModel, 'tree' | 'shut'>;
+  /** The contents the list shows in place of notes, or null (`found`: with what the field finds in the book). */
+  contents(found?: boolean): (ContentsModel & { readonly side: EpubSide }) | null;
+  /** Whether the list shows a book's contents (cheaply: nothing of them made). */
+  showsBook(): boolean;
+  /** Before the panes draw: the list's search of the book (Phase 5c) for the field's `words`, or stopped (null). */
+  syncFound(words: string | null): void;
+  /** The search field's words now, searching a book: its lens follows them. */
   typed(words: string): void;
   /** Enter in the search field while it searches a book: on to the next match (⇧Enter, back); false for none. */
   stepFound(way: 1 | -1): boolean;
@@ -87,12 +92,19 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
     return isNote(now) && now.path === left.path ? now : null;
   };
   const texts = new BookTexts();
-  const found = epubFound({ texts, nav: of.nav, redraw: () => of.drawRows() });
+  /** The window's book pages still at once: background work never takes a frame from any page's turn. */
+  const still: Still = (then) =>
+    allStill(
+      () => of.pages().sides.flatMap((side) => (isEpub(side) ? [side.whenStill] : [])),
+      then,
+    );
+  const found = epubFound({ texts, nav: of.nav, still, redraw: () => of.drawRows() });
   const pagesKind = epubKind({
     vault: of.vault,
     reading: readingStore(of.vault, of.tell),
     counts: new BookCounts(),
     texts,
+    still,
     looks: () => of.looks(),
     sizeOf: (path) => of.state.sizeOf(path),
     changed: () => of.redraw(),
@@ -148,12 +160,12 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
       page: side.labelAt(mark.spine, mark.offset),
       chapter: chapterTitle(epub.contents, mark.spine) ?? side.page.name,
     }));
-  const contents = (words: string | null = null) => {
+  const contents = (withFound = false) => {
     const side = sideOf(of.nav.contents);
     const epub = side?.epub;
     if (!side || !epub) return null;
     return {
-      found: words === null ? null : found.model(side, epub, words),
+      found: withFound ? found.model(side, epub) : null,
       side,
       title: side.page.name,
       author: epub.author,
@@ -167,14 +179,19 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
   return {
     kind,
     contents,
+    showsBook: () => Boolean(sideOf(of.nav.contents)?.epub),
+    syncFound: (words) => found.sync(sideOf(of.nav.contents), words),
     typed: (words) => found.typed(words),
     stepFound: (way) => {
       const side = sideOf(of.nav.contents);
-      return side ? found.step(side, way) : false;
+      if (!side) return false;
+      // The words just typed searched first: Enter may come before the panes draw.
+      found.sync(side, of.nav.query);
+      return found.step(side, way);
     },
-    shelf: (two, words) => {
+    shelf: (two, withFound) => {
       const active = of.pages().active;
-      const shown = two ? contents(words) : null;
+      const shown = two ? contents(withFound) : null;
       return {
         current: isEpub(active) ? active.path : null,
         contents: shown && {
@@ -203,7 +220,7 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
         of.redraw();
       },
       goMark: (path, row) => void toBook(path)?.goTo(row.spine, row.offset),
-      goFound: (path, row) => void toBook(path)?.find.goToMatch(row),
+      goFound: (path, row) => void toBook(path)?.find.goToMatch(row, true),
       unmark: (path, row) => {
         const marks = sideOf(path)?.marks;
         if (row.kind === 'bookmark') void marks?.bookmarks.remove(row.mark);

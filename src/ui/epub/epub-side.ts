@@ -36,10 +36,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     highlight: () => void marks.highlights.toggle(),
     walk: (way) => marks.walk(way),
     inHighlight: (range) => marks.highlights.holds(range),
-    copied: (copy, from) => {
-      marks.highlights.inkCopy(copy, from);
-      find.inkCopy(copy, from);
-    },
+    copied: (copy, from) => parts.inkCopy(copy, from),
     find: {
       open: () => void find.bar.open(false),
       next: () => void find.bar.next(),
@@ -66,6 +63,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
   /** Counts what the page was asked to show, so a slow open never lands over a newer one. */
   let turn = 0;
 
+  /** The book's chapters read for Find let go, if this page was the last to hold them. */
+  let letTexts = () => {};
   /** No more of the book counted for this page. */
   const stopCounting = () => {
     stopCount();
@@ -78,10 +77,12 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     count = null;
     marks.clear();
     find.forget();
+    letTexts();
+    letTexts = () => {};
     // No book: the strip has nothing to show.
     placing.listed();
   };
-  const { placing, marks, find, links, pages, unplaced } = bookParts({
+  const parts = bookParts({
     page,
     of,
     epub: () => epub,
@@ -92,6 +93,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     draw: (index, at) => draw(index, true, at),
     keep: (offset) => keep(offset),
   });
+  const { placing, marks, find, links, pages, unplaced } = parts;
 
   /** The place in the book kept in its reading state: each write reads the vault again, so only at a rest. */
   function keep(offset: number): void {
@@ -226,6 +228,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
         return of.changed();
       }
       epub = read.epub;
+      letTexts = of.texts.hold(epub.key);
       const counted = of.counts.of(epub);
       count = counted;
       page.show(nameOf(epub, next), crumbsOf(next), epub.language);

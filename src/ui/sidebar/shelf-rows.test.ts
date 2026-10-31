@@ -432,3 +432,45 @@ describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
     body.remove();
   });
 });
+
+// #40, Phase 5c: with two panes, what the field finds stands under the book's row.
+describe('a book’s Found on SHELF', () => {
+  it('lists each match from its words, the match marked, its page its count; a click goes there', () => {
+    const match = {
+      spine: 1,
+      from: 40,
+      to: 46,
+      before: 'a long run of words before it, said his lady to Mr. ',
+      words: 'Bennet',
+      after: ' one day',
+      page: '3',
+      chapter: 'Chapter I',
+    };
+    const { list, actions } = draw('Loose.epub', {
+      path: 'Loose.epub',
+      lens: 'found',
+      marks: [],
+      found: {
+        rows: [match],
+        words: 'Bennet',
+        title: 'Loose',
+        searched: 1,
+        chapters: 1,
+        done: true,
+        more: false,
+      },
+      rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
+      spine: 1,
+    });
+    const row = list.querySelector<HTMLButtonElement>('.tree-row--found .tree-row__name');
+    // One line, so it begins at the match: never cut off before it.
+    expect(row?.querySelector('.tree-row__label')?.textContent).toBe('Bennet one day');
+    expect(row?.querySelector('.found-row__match')?.textContent).toBe('Bennet');
+    expect(row?.querySelector('.count')?.textContent).toBe('3');
+    expect(row?.title).toBe(`Chapter I: ${match.before}Bennet one day`);
+    row?.click();
+    expect(actions.goFound).toHaveBeenCalledWith('Loose.epub', match);
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Contents 1', 'Marks 0', 'Found 1']);
+  });
+});

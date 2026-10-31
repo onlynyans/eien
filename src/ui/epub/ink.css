@@ -57,4 +57,16 @@
     background-color: Highlight;
     color: HighlightText;
   }
+  /* A turn's copy, the same: its inks never gone mid-turn. */
+  .turn-copy [data-ink="epub-highlight"] {
+    text-decoration-color: CanvasText;
+  }
+  .turn-copy [data-ink="epub-found"] {
+    background-color: Mark;
+    color: MarkText;
+  }
+  .turn-copy [data-ink="epub-found-current"] {
+    background-color: Highlight;
+    color: HighlightText;
+  }
 }

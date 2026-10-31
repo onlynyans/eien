@@ -166,4 +166,17 @@ describe('Find in a book', () => {
     // Most matches stand deep in their chapters: under the bar, not merely at a chapter's top.
     expect(under).toBeGreaterThan(total / 2);
   });
+
+  it('goes first to the match at or past the place, from a later chapter, and Previous waits for the search to look back', async () => {
+    const { side } = await opened();
+    await side.go(3);
+    const third = where(side);
+    side.page.find.open(false);
+    type(side, 'Bennet');
+    const total = timesIn('Bennet');
+    await vi.waitFor(() => expect(count(side)).toMatch(new RegExp(`^\\d+ of ${total}$`, 'u')));
+    // Not the book's first match: the first in the chapter it's on.
+    expect(Number(count(side).split(' of ')[0])).toBeGreaterThan(1);
+    expect(where(side)).toBe(third);
+  });
 });

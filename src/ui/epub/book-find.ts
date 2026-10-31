@@ -3,20 +3,21 @@
 // (../find/find-bar.ts) searches over a book's page, the whole book in the
 // background (./book-search.ts), never Replace. Every match in the chapter
 // drawn is inked in the chosen row's wash, the one Find is on in the
-// selection's (./ink.ts): painted, not chosen, while the bar has the
+// selection's (./ink.ts): painted, not chosen, while a field has the
 // keyboard, as a choice in the page would take its typing; chosen as the
 // bar closes, so the words are the page's selection to quote or highlight,
-// as a note's Find leaves its match chosen.
+// as a note's Find leaves its match chosen. A match the list's Found points
+// to from its field (Enter) is painted the same way.
 
-import { type Epub, type FindOptions, type Found, matcherOf, walkPlaces } from '../../core/epub';
+import { type Epub, type Found, matcherOf } from '../../core/epub';
 import type { FindCount } from '../../core/find';
 import { FindBar } from '../find/find-bar';
 import type { FindQuery, FindTarget } from '../find/find-target';
-import type { Still } from './book-count';
 import type { BookSearch } from './book-search';
 import { boundsOf, rangeOver, walked } from './chapter-range';
 import type { EpubPage } from './epub-page';
-import { Ink, inkCopy } from './ink';
+import { type CopyInk, Ink } from './ink';
+import type { Still } from './still';
 
 export interface BookFindOf {
   readonly page: EpubPage;
@@ -25,21 +26,11 @@ export interface BookFindOf {
   epub(): Epub | null;
   /** The spine item drawn; -1 for none. */
   spine(): number;
-  /** `then` once no page turns. */
+  /** `then` once no page of the window's turns. */
   still: Still;
   /** Show spine item `index` at an offset in its words, once drawn. */
   goTo(index: number, offset: number): Promise<void>;
 }
-
-/** Where a match is, for the walk between them: its chapter, and its first word. */
-const placeOf = (match: Found) => ({ spine: match.spine, offset: match.from });
-
-/** The find bar's options as a book's matcher takes them. */
-const optionsOf = (query: FindQuery): FindOptions => ({
-  caseSensitive: query.caseSensitive,
-  wholeWord: query.wholeWord,
-  regexp: query.regexp,
-});
 
 export class BookFind implements FindTarget {
   readonly bar: FindBar;
@@ -53,6 +44,10 @@ export class BookFind implements FindTarget {
   #at = -1;
   /** A letter typed: once a match at or past the place is found, Find goes to it. */
   #narrowing = false;
+  /** A step asked for before the search had looked where it goes: taken once it has. */
+  #waiting: 1 | -1 | null = null;
+  /** A match the list's Found pointed to from its field, painted as the one it's on. */
+  #pointed: Found | null = null;
 
   constructor(of: BookFindOf) {
     this.#of = of;
@@ -63,6 +58,7 @@ export class BookFind implements FindTarget {
 
   open(): void {
     this.#open = true;
+    this.#pointed = null;
     this.bar.shown(true);
     this.paint();
   }
@@ -70,10 +66,10 @@ export class BookFind implements FindTarget {
   close(): boolean {
     if (!this.#open) return false;
     this.#open = false;
+    this.#waiting = null;
     this.#search.stop();
     this.bar.shown(false);
-    this.#found.clear();
-    this.#current.clear();
+    this.paint();
     // The match it was on chosen in the page, the keyboard back on it.
     const match = this.#search.found[this.#at];
     if (match) this.#choose(match);
@@ -86,16 +82,20 @@ export class BookFind implements FindTarget {
   }
 
   valid(query: FindQuery): boolean {
-    const matcher = matcherOf(query.search, optionsOf(query));
+    const matcher = matcherOf(query.search, query);
     return matcher !== null && matcher !== 'invalid';
   }
 
   query(query: FindQuery, narrow: boolean): void {
-    const matcher = matcherOf(query.search, optionsOf(query));
+    const matcher = matcherOf(query.search, query);
     this.#invalid = matcher === 'invalid';
     this.#at = -1;
+    this.#waiting = null;
     this.#narrowing = narrow;
     this.#search.search(this.#of.epub(), matcher === 'invalid' ? null : matcher, this.#of.still);
+    // The last words' count and marks gone at once, not when the new ones' first arrive.
+    this.bar.changed();
+    this.paint();
   }
 
   next(): boolean {
@@ -108,39 +108,56 @@ export class BookFind implements FindTarget {
 
   count(): FindCount | 'invalid' {
     if (this.#invalid) return 'invalid';
-    const { found, more } = this.#search;
-    return { current: this.#at + 1, total: found.length, more };
+    const { found, more, done } = this.#search;
+    return { current: this.#at + 1, total: found.length, more, searching: !done };
   }
 
-  /** The chapter drawn anew (or another): its matches inked again. */
+  /** The chapter drawn anew (or another), or what's found changed: its matches inked again. */
   paint(): void {
+    const current = this.#currentMatch();
+    if (!this.#open && !current) {
+      this.#found.clear();
+      this.#current.clear();
+      return;
+    }
     const spine = this.#of.spine();
-    const { chapter } = this.#of.page;
-    const mine = this.#open ? this.#search.found.filter((match) => match.spine === spine) : [];
-    const walk = walked(chapter);
-    this.#found.paint(walk, mine);
-    const current = this.#search.found[this.#at];
-    this.#current.paint(walk, this.#open && current?.spine === spine ? [current] : []);
+    const walk = walked(this.#of.page.chapter);
+    this.#found.paint(walk, this.#open ? this.#mine() : []);
+    this.#current.paint(walk, current?.spine === spine ? [current] : []);
   }
 
-  /** A turn's copy of the page, its words from `from` on, inked as the page is. */
-  inkCopy(copy: HTMLElement, from: number): void {
-    const spine = this.#of.spine();
-    const mine = this.#open ? this.#search.found.filter((match) => match.spine === spine) : [];
-    if (mine.length > 0) inkCopy(walked(copy), from, 'epub-found', mine);
+  /** What a turn's copy of the page carries of Find: each ink, and its spans in the chapter drawn. */
+  copySpans(): readonly CopyInk[] {
+    const current = this.#currentMatch();
+    return [
+      { name: 'epub-found', spans: this.#open ? this.#mine() : [] },
+      {
+        name: 'epub-found-current',
+        spans: current?.spine === this.#of.spine() ? [current] : [],
+      },
+    ];
   }
 
-  /** Spine item and words of `match` shown and chosen on the page (a Found row's, Phase 5c). */
-  async goToMatch(match: Found): Promise<void> {
+  /**
+   * Spine item and words of `match` shown: chosen on the page (a Found row
+   * clicked), or, from a field that keeps the keyboard (Enter in the list's
+   * field), painted as the one it's on.
+   */
+  async goToMatch(match: Found, choose: boolean): Promise<void> {
+    this.#pointed = choose ? null : match;
     await this.#of.goTo(match.spine, match.from);
-    if (this.#of.spine() === match.spine) this.#choose(match);
+    if (this.#of.spine() !== match.spine) return;
+    if (choose) this.#choose(match);
+    this.paint();
   }
 
   /** Another book on the page, or none: nothing of the last one's found kept, the bar shut. */
   forget(): void {
     this.#open = false;
     this.#at = -1;
-    this.#search.search(null, null, this.#of.still);
+    this.#waiting = null;
+    this.#pointed = null;
+    this.#search.clear();
     this.bar.shown(false);
     this.#found.clear();
     this.#current.clear();
@@ -151,37 +168,48 @@ export class BookFind implements FindTarget {
     this.bar.element.remove();
   }
 
-  /** On to the next match past the words in sight, or the one before, round the book. */
+  /** The match Find is on, while the bar is open; else one the list pointed to. */
+  #currentMatch(): Found | null {
+    return (this.#open ? this.#search.found[this.#at] : this.#pointed) ?? null;
+  }
+
+  /** The matches in the chapter drawn. */
+  #mine(): Found[] {
+    const spine = this.#of.spine();
+    return this.#search.found.filter((match) => match.spine === spine);
+  }
+
+  /**
+   * On to the next match (or back), from the one it's on or else the place,
+   * round the book; once the search has looked there, if it hasn't yet.
+   */
   #step(way: 1 | -1): boolean {
-    const { found } = this.#search;
-    if (found.length === 0) return false;
-    const at = this.#at;
-    const index =
-      at >= 0
-        ? (at + way + found.length) % found.length
-        : (walkPlaces(found, placeOf, this.#sight(), way)?.index ?? 0);
-    void this.#show(index);
+    const on = this.#search.found[this.#at];
+    const walk = this.#search.walk(
+      on?.spine ?? this.#of.spine(),
+      on?.from ?? this.#of.page.sheet.place - 1,
+      way,
+    );
+    if (walk === null) return false;
+    if (walk === 'wait') {
+      this.#waiting = way;
+      return true;
+    }
+    void this.#show(walk.index);
     return true;
   }
 
-  /** The words in sight now: from the place to itself (the place's own word). */
-  #sight() {
-    const from = this.#of.page.sheet.place;
-    return { spine: this.#of.spine(), from, to: from };
-  }
-
-  /** Matches arrived: as a letter typed narrows, the first at or past the place shown. */
+  /** Matches arrived: a waiting step taken, or as a letter typed narrows, the first at or past the place shown. */
   #changed(): void {
-    if (this.#narrowing && this.#at < 0) {
-      const { found, done } = this.#search;
-      const sight = this.#sight();
-      const ahead = found.findIndex(
-        (match) =>
-          match.spine > sight.spine || (match.spine === sight.spine && match.from >= sight.from),
-      );
-      if (ahead >= 0 || (done && found.length > 0)) {
+    const waiting = this.#waiting;
+    if (waiting) {
+      this.#waiting = null;
+      this.#step(waiting);
+    } else if (this.#narrowing && this.#at < 0) {
+      const walk = this.#search.walk(this.#of.spine(), this.#of.page.sheet.place - 1, 1);
+      if (walk && walk !== 'wait') {
         this.#narrowing = false;
-        void this.#show(Math.max(0, ahead));
+        void this.#show(walk.index);
       }
     }
     this.bar.changed();

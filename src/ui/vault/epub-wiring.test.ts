@@ -287,10 +287,10 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     await side.reload();
     const { epubs, nav } = watched('a.epub', { active: side, sides: [side] });
     nav.bookLens = 'marks';
-    const shelf = epubs.shelf(true, null);
+    const shelf = epubs.shelf(true, false);
     expect(shelf.contents?.lens).toBe('marks');
     expect(shelf.contents?.marks?.map((row) => row.mark.words)).toEqual(['first']);
-    expect(epubs.shelf(false, null).contents).toBeNull();
+    expect(epubs.shelf(false, false).contents).toBeNull();
   });
 
   it('call a bookmark in a spine item no contents row names by the book’s name', async () => {

@@ -41,7 +41,7 @@ export interface DrawnParts {
   /** How the list's rows move now (Arrange mode, and whether it's arranging). */
   arrange(): Arrange;
   /** What SHELF and the list show of the books on the pages (#40). */
-  readonly epubs: Pick<EpubWiring, 'shelf' | 'contents' | 'actions'>;
+  readonly epubs: Pick<EpubWiring, 'shelf' | 'contents' | 'actions' | 'showsBook' | 'syncFound'>;
 }
 
 export class PaneDrawer {
@@ -72,9 +72,14 @@ export class PaneDrawer {
    */
   searchesBook(): boolean {
     const { panes } = this.#parts;
-    return (
-      !panes.phone && (panes.two || !panes.isShut('list')) && this.#parts.epubs.contents() !== null
-    );
+    return !panes.phone && (panes.two || !panes.isShut('list')) && this.#parts.epubs.showsBook();
+  }
+
+  /** The list's search of the book, as the panes about to draw show it: for the field's words, or stopped. */
+  #syncFound(): boolean {
+    const book = this.searchesBook();
+    this.#parts.epubs.syncFound(book ? this.#parts.nav.query : null);
+    return book;
   }
 
   /** Whether the search field is in the list's band, and so searches only that list's notes (or its book). */
@@ -96,7 +101,7 @@ export class PaneDrawer {
     this.#searchInList();
     const words = nav.query.trim();
     const listShown = !panes.isShut('list');
-    const book = this.searchesBook();
+    const book = this.#syncFound();
     const [notes, results] = await Promise.all([
       panes.two ? treeNotes(state, nav.open, settings.values['books.numerals']) : new Map(),
       // A book searched: its Found under its row, the tree left as it is.
@@ -124,10 +129,10 @@ export class PaneDrawer {
       shown: this.#parts.shown(),
       books: state.books,
       shelf: {
-        ...this.#parts.epubs.shelf(panes.two, book ? nav.query : null),
+        ...this.#parts.epubs.shelf(panes.two, book),
         shut: nav.shelf.shut,
       },
-      elsewhere: !panes.two && (!words || book) && this.#parts.epubs.contents() !== null,
+      elsewhere: !panes.two && (!words || book) && this.#parts.epubs.showsBook(),
       notice: listShown ? null : notice.text,
       filter: filterFor(listKey(nav.selection)),
     });
@@ -140,8 +145,8 @@ export class PaneDrawer {
     if (!panes.listKept) return; // out of sight: nothing to read for it
     const words = nav.query.trim();
     // A book's contents stay while its own words are searched (its Found); else words search notes.
-    const book = this.searchesBook();
-    const contents = words && !book ? null : this.#parts.epubs.contents(book ? nav.query : null);
+    const book = this.#syncFound();
+    const contents = words && !book ? null : this.#parts.epubs.contents(book);
     if (contents) {
       this.#listOrdered = false;
       const { path } = contents.side;

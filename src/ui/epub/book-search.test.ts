@@ -56,9 +56,10 @@ describe('a book searched', () => {
     expect(search.searched).toBe(3);
   });
 
-  it('reads each chapter once for the book, the next words searching what’s kept', async () => {
+  it('reads each chapter once while a page holds the book, the next words searching what’s kept', async () => {
     const { epub, reads } = book([['a bell'], ['a ball']]);
-    const { search } = searching();
+    const { search, texts } = searching();
+    texts.hold(epub.key);
     search.search(epub, words('bell'), now);
     await vi.waitFor(() => expect(search.done).toBe(true));
     search.search(epub, words('ball'), now);
@@ -67,18 +68,55 @@ describe('a book searched', () => {
     expect(reads).toEqual([1, 1]);
   });
 
-  it('lets the last book’s chapters go when another is searched', async () => {
+  it('keeps each book’s chapters while any page holds it, two books at once, and lets them go with the last', async () => {
     const texts = new BookTexts();
     const one = book([['a bell']], 'one');
     const two = book([['a bell']], 'two');
-    const { search } = searching(texts);
-    search.search(one.epub, words('bell'), now);
-    await vi.waitFor(() => expect(search.done).toBe(true));
-    search.search(two.epub, words('bell'), now);
-    await vi.waitFor(() => expect(search.done).toBe(true));
-    search.search(one.epub, words('bell'), now);
-    await vi.waitFor(() => expect(search.done).toBe(true));
+    const left = searching(texts);
+    const right = searching(texts);
+    const letOne = texts.hold('one');
+    const letOneAgain = texts.hold('one');
+    texts.hold('two');
+    const both = async () => {
+      left.search.search(one.epub, words('bell'), now);
+      right.search.search(two.epub, words('bell'), now);
+      await vi.waitFor(() => expect(left.search.done && right.search.done).toBe(true));
+    };
+    await both();
+    await both();
+    // Two searches on two books never read each other's chapters away.
+    expect([one.reads, two.reads]).toEqual([[1], [1]]);
+    letOne();
+    await both();
+    expect(one.reads).toEqual([1]);
+    letOneAgain();
+    letOneAgain();
+    await both();
     expect(one.reads).toEqual([2]);
+  });
+
+  it('walks from a place only where it has looked: past the place once one is found there, back once its chapter is searched', async () => {
+    const { epub } = book([['a bell'], ['no'], ['a bell'], ['a bell']]);
+    const { search } = searching();
+    const waiting: (() => void)[] = [];
+    search.search(epub, words('bell'), (then) => waiting.push(then));
+    // Nothing searched: from chapter 2 there's no knowing what's next or before.
+    expect(search.walk(2, 0, 1)).toBe('wait');
+    expect(search.walk(2, 0, -1)).toBe('wait');
+    const slice = async () => {
+      await vi.waitFor(() => expect(waiting.length).toBeGreaterThan(0));
+      waiting.shift()?.();
+      await new Promise((done) => setTimeout(done, 0));
+    };
+    await slice();
+    // Chapter 0 searched: from chapter 2 it would go round to chapter 0, but more may come first.
+    expect(search.walk(2, 0, 1)).toBe('wait');
+    // But from chapter 0's start, its own match is found, and it's the next.
+    expect(search.walk(0, 0, 1)).toMatchObject({ index: 0, round: false });
+    while (!search.done) await slice();
+    expect(search.walk(2, 0, 1)).toMatchObject({ index: 1, round: false });
+    expect(search.walk(2, 5, -1)).toMatchObject({ index: 1, round: false });
+    expect(search.walk(3, 5, 1)).toMatchObject({ index: 0, round: true });
   });
 
   it('passes over a chapter that won’t open', async () => {

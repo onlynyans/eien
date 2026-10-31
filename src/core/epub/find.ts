@@ -6,7 +6,7 @@
 // run of white space is a space, as a book's are. A match never runs across
 // two blocks, and the count stops at the find bar's (core/find).
 
-import { COUNT_LIMIT } from '../find';
+import { COUNT_LIMIT, escapePattern } from '../find';
 import { type BookBlock, offsetIn } from './book-text';
 
 /** How the words are matched: the find bar's three options. */
@@ -32,12 +32,11 @@ export interface Found {
   readonly after: string;
 }
 
-/**
- * A character a pattern reads as more than itself: escaped, as words. A
- * hyphen is a word's own outside a class, and escaping it is an error under
- * the `u` flag.
- */
-const SPECIAL = /[\\^$.*+?()[\]{}|/]/gu;
+/** Where a match stands in the book, for a walk between them: its chapter, and its first word. */
+export const foundPlace = (match: Found): { readonly spine: number; readonly offset: number } => ({
+  spine: match.spine,
+  offset: match.from,
+});
 
 /** Quotes alike, written either way. */
 const QUOTES: readonly (readonly [RegExp, string])[] = [
@@ -45,8 +44,8 @@ const QUOTES: readonly (readonly [RegExp, string])[] = [
   [/["“”]/gu, '["“”]'],
 ];
 
-/** A letter or a figure: what a whole word is made of, in any script. */
-const WORD = '[\\p{L}\\p{N}_]';
+/** A letter, its marks or a figure: what a whole word is made of, in any script (as a tag's, ../tags). */
+const WORD = '[\\p{L}\\p{M}\\p{N}_]';
 
 /**
  * `query` as a matcher, by `options`; null for nothing to find, 'invalid'
@@ -56,7 +55,7 @@ export function matcherOf(query: string, options: FindOptions): RegExp | 'invali
   if (query.trim() === '') return null;
   let source = query;
   if (!options.regexp) {
-    source = query.trim().replace(SPECIAL, '\\$&');
+    source = escapePattern(query.trim());
     for (const [quote, alike] of QUOTES) source = source.replace(quote, alike);
     source = source.replace(/\s+/gu, '\\s+');
   }

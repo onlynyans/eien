@@ -51,6 +51,7 @@ export function sideWith(
     },
     counts: new BookCounts(),
     texts: new BookTexts(),
+    still: (then) => then(),
     looks: vi.fn(),
     sizeOf: (path: string) =>
       listed.includes(path) ? (files[path]?.length ?? 64 * 1024 * 1024) : null,

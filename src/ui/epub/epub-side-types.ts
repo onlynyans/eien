@@ -3,13 +3,14 @@
 
 import type { Epub } from '../../core/epub';
 import type { Place, Side } from '../vault/page-side';
-import type { BookCounts, Still } from './book-count';
+import type { BookCounts } from './book-count';
 import type { BookFind } from './book-find';
 import type { BookMarks } from './book-marks';
 import type { BookOpenOf } from './book-open';
 import type { BookTexts } from './book-search';
 import type { EpubPage } from './epub-page';
 import type { ReadingStore } from './reading-store';
+import type { Still } from './still';
 
 /** Where an EPUB's page was: the chapter it showed, by its place in the spine, and the line in it. */
 export interface EpubPlace extends Place {
@@ -22,8 +23,10 @@ export interface EpubSideOf extends BookOpenOf {
   readonly reading: ReadingStore;
   /** The window's counts of its books, for their page numbers (Phase 4). */
   readonly counts: BookCounts;
-  /** The window's chapters read for Find (Phase 5c), the last book searched. */
+  /** The window's chapters read for Find (Phase 5c), each book's while a page holds it. */
   readonly texts: BookTexts;
+  /** `then` once no book page of the window's turns: when a search may take a task. */
+  readonly still: Still;
   /** Whether the page in sight is bookmarked changed (Phase 4b): the tools show it. */
   looks(): void;
   /** Another book or chapter is on the page: the list and the shelf mark it. */

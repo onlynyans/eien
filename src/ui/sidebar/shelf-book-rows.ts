@@ -21,7 +21,6 @@ import { type FoundModel, type FoundRow, foundKey, foundLine } from '../list/fou
 import { atDepth } from './depth';
 import { shelfButton as button, shelfRow as row } from './shelf-row';
 
-/** A book's contents, as a row under it lists them (two panes). */
 /** A book's contents, as the rows under it list them (two panes): the list's own model, and its path. */
 export type ShelfContents = Pick<ContentsModel, 'rows' | 'spine' | 'lens' | 'marks' | 'found'> & {
   readonly path: string;
@@ -61,11 +60,15 @@ function foundRows(path: string, found: FoundModel, actions: ShelfBookActions, d
     ...found.rows.map((each) => {
       const name = button(
         `${path}:${foundKey(each)}`,
-        `${each.before}${each.words}${each.after}`,
+        '',
         false,
         { click: () => actions.goFound(path, each) },
-        { title: each.chapter },
+        { title: `${each.chapter}: ${each.before}${each.words}${each.after}` },
       );
+      // A tree row is one line: it begins at the match, marked as the list marks it, so it's never cut off.
+      name
+        .querySelector('.tree-row__label')
+        ?.replaceChildren(h('mark', { class: 'found-row__match', text: each.words }), each.after);
       if (each.page) name.append(' ', h('span', { class: 'count', text: each.page }));
       return row(depth + 1, name, 'found');
     }),
