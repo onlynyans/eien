@@ -170,11 +170,17 @@ export class PageBookmarks {
 
   #show(): void {
     const chapter = this.#of.chapter();
+    const { sight } = this.#of.page.sheet;
+    // The front matter holds none of the book's words, whatever an empty page's range would hold.
     const marked = (from: number, to: number) =>
-      chapter !== null && this.#measured && bookmarksOn(this.#marks, chapter, from, to).length > 0;
-    // A spread's recto begins where its own words do; one page (or a scroll) is all the right's.
-    const recto = this.#of.page.sheet.sight[1];
-    const left = recto ? marked(this.#from, recto.from) : false;
+      chapter !== null &&
+      this.#measured &&
+      !allFront(sight) &&
+      bookmarksOn(this.#marks, chapter, from, to).length > 0;
+    // A spread's recto begins where its own words do; one page (or a scroll) is all the right's. A
+    // verso of no words (a picture's) marks nothing: its place is the recto's first word.
+    const recto = sight[1];
+    const left = recto ? recto.from > this.#from && marked(this.#from, recto.from) : false;
     const right = recto ? marked(recto.from, this.#to) : marked(this.#from, this.#to);
     const on = left || right;
     this.#of.page.bookmarked(left, right);
