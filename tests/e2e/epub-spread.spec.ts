@@ -96,13 +96,16 @@ const wordsInSight = (page: Page, words: string) =>
       range.setStart(node, at);
       range.setEnd(node, at + wanted.length);
       // A page turned away is laid out beside the one in sight, only clipped: its words are outside.
-      return [...range.getClientRects()].some(
-        (rect) =>
-          rect.width > 0 &&
-          rect.left >= sight.left - 1 &&
-          rect.right <= sight.right + 1 &&
-          rect.top >= sight.top - 1 &&
-          rect.bottom <= sight.bottom + 1,
+      // The words' last box: a word hyphenated across a page break has its hyphen's box on the page
+      // before, which would say the words were there.
+      const rect = [...range.getClientRects()].at(-1);
+      return (
+        rect !== undefined &&
+        rect.width > 0 &&
+        rect.left >= sight.left - 1 &&
+        rect.right <= sight.right + 1 &&
+        rect.top >= sight.top - 1 &&
+        rect.bottom <= sight.bottom + 1
       );
     }
     return false;
