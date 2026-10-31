@@ -6,7 +6,17 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
+import {
+  AS_WRITTEN,
+  chapterBlocks,
+  type Found,
+  findIn,
+  isRefusal,
+  matcherOf,
+} from '../../core/epub';
+import { walked } from './chapter-range';
 import type { EpubSide } from './epub-side-types';
+import { INKED, inkCopy } from './ink';
 import { inked, inkRanges, withInk } from './test-ink';
 import { laidOut } from './test-lines';
 import { sideWith } from './test-side';
@@ -178,5 +188,152 @@ describe('Find in a book', () => {
     // Not the book's first match: the first in the chapter it's on.
     expect(Number(count(side).split(' of ')[0])).toBeGreaterThan(1);
     expect(where(side)).toBe(third);
+  });
+});
+
+describe('Find in a book, as QA tried it (Phase 5c)', () => {
+  /** The spine item of chapter `n`'s file. */
+  const spineOf = (side: EpubSide, n: number) =>
+    side.epub?.spine.findIndex((item) => item.path === chapter(n)) ?? -1;
+
+  /** Every match of `words` (as written) in chapter `n`, as the book's search finds them. */
+  async function matchesIn(side: EpubSide, n: number, words: string): Promise<Found[]> {
+    const spine = spineOf(side, n);
+    const read = await side.epub?.chapter(spine);
+    if (!read || isRefusal(read)) throw new Error('no chapter');
+    return findIn(chapterBlocks(read.nodes), matcherOf(words, AS_WRITTEN) as RegExp, spine);
+  }
+
+  it('says there are none, and goes nowhere on the next or the one before', async () => {
+    const { side } = await opened();
+    side.page.find.open(false);
+    type(side, 'zebra crossing');
+    await vi.waitFor(() => expect(count(side)).toBe('No matches'));
+    expect(side.find.next()).toBe(false);
+    expect(side.find.previous()).toBe(false);
+    expect(where(side)).toBe(chapter(1));
+    expect(inked('epub-found-current')).toEqual([]);
+  });
+
+  it('opens the bar on the next match with nothing typed, the keyboard in its field', async () => {
+    const { side } = await opened();
+    expect(bar(side)?.hidden).toBe(true);
+    side.page.find.next();
+    expect(bar(side)?.hidden).toBe(false);
+    expect(document.activeElement).toBe(field(side));
+  });
+
+  // QA (Phase 5c) found matches found within 100 ms of the last tell unheard until a later slice, the
+  // bar saying "No matches" meanwhile. Fixed: a trailing tell once the pause is up.
+  it('counts the matches found so far while the book is still searched', async () => {
+    const { side } = await opened();
+    const epub = side.epub;
+    if (!epub) throw new Error('no book');
+    const last = spineOf(side, 3);
+    const read = epub.chapter.bind(epub);
+    let release: () => void = () => {};
+    const held = new Promise<void>((done) => {
+      release = done;
+    });
+    vi.spyOn(epub, 'chapter').mockImplementation(async (index) => {
+      if (index === last) await held;
+      return read(index);
+    });
+    side.page.find.open(false);
+    type(side, 'Bennet');
+    const total = timesIn('Bennet');
+    const inLast = SAMPLE_SOURCES.chapters[2]?.join('\n').split('Bennet').length ?? 1;
+    // The last chapter's matches still to come: the count is the rest's, and grows once it's read.
+    await vi.waitFor(() => expect(count(side)).toBe(`1 of ${total - (inLast - 1)}`));
+    release();
+    await vi.waitFor(() => expect(count(side)).toBe(`1 of ${total}`));
+  });
+
+  it('goes on typing to the first match at or past the place, not merely in its chapter', async () => {
+    const { side } = await opened();
+    side.page.find.open(false);
+    type(side, 'Bennet');
+    // On to chapter II's one "Bennet", past chapter I's.
+    const total = timesIn('Bennet');
+    await vi.waitFor(() => expect(count(side)).toBe(`1 of ${total}`));
+    while (where(side) !== chapter(2)) {
+      const before = count(side);
+      side.find.next();
+      await vi.waitFor(() => expect(count(side)).not.toBe(before));
+    }
+    // "Mr. B": chapter II's "Mr. Bennet" begins before the place, its "Mr. Bingley" after.
+    type(side, 'Mr. B');
+    const mrB = timesIn('Mr. B');
+    const inFirst = (SAMPLE_SOURCES.chapters[0]?.join('\n').split('Mr. B').length ?? 1) - 1;
+    await vi.waitFor(() => expect(count(side)).toBe(`${inFirst + 2} of ${mrB}`));
+    expect(where(side)).toBe(chapter(2));
+    expect(inked('epub-found-current')).toEqual(['Mr. B']);
+  });
+
+  it('goes back from the place with none chosen yet, round to the book’s last match', async () => {
+    const { side } = await opened();
+    const words = [...side.page.chapter.querySelectorAll('p')]
+      .map((p) => p.firstChild)
+      .find((node): node is Text => node instanceof Text && node.data.includes('Bennet'));
+    if (!words) throw new Error('no Bennet');
+    const range = document.createRange();
+    const at = words.data.indexOf('Bennet');
+    range.setStart(words, at);
+    range.setEnd(words, at + 'Bennet'.length);
+    document.getSelection()?.addRange(range);
+    // Seeded from the words chosen: opened, not typed, so Find stands on none of them yet.
+    side.page.find.open(false);
+    const total = timesIn('Bennet');
+    await vi.waitFor(() => expect(count(side)).toBe(`${total} matches`));
+    side.find.previous();
+    await vi.waitFor(() => expect(count(side)).toBe(`${total} of ${total}`));
+    expect(where(side)).toBe(chapter(3));
+  });
+
+  it('chooses nothing as the bar closes when its match is in a chapter no longer drawn', async () => {
+    const { side } = await opened();
+    side.page.find.open(false);
+    // Near the chapter's top: its offsets stand among chapter III's words too.
+    type(side, 'truth universally');
+    await vi.waitFor(() => expect(count(side)).toBe('1 of 1'));
+    expect(where(side)).toBe(chapter(1));
+    await side.go(spineOf(side, 3));
+    field(side).dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(bar(side)?.hidden).toBe(true);
+    expect(document.getSelection()?.toString()).toBe('');
+    expect(side.page.element.contains(document.activeElement)).toBe(true);
+  });
+
+  it('inks a turn’s copy of the page with the chapter’s matches while the bar is open, and not after', async () => {
+    const { side } = await opened();
+    side.page.find.open(false);
+    type(side, 'Bennet');
+    await vi.waitFor(() => expect(count(side)).toMatch(/^1 of /u));
+    const copyOf = () => side.page.chapter.cloneNode(true) as HTMLElement;
+    const copy = copyOf();
+    inkCopy(walked(copy), 0, side.find.copySpans());
+    const words = [...copy.querySelectorAll(`[${INKED}="epub-found"]`)].map(
+      (each) => each.textContent,
+    );
+    expect(words).toEqual(inked('epub-found'));
+    expect(words.length).toBe(
+      (SAMPLE_SOURCES.chapters[0]?.join('\n').split('Bennet').length ?? 1) - 1,
+    );
+    side.find.close();
+    const shut = copyOf();
+    inkCopy(walked(shut), 0, side.find.copySpans());
+    expect(shut.querySelector(`[${INKED}]`)).toBeNull();
+  });
+
+  it('goes to a Found row’s match in another chapter, drawing it and choosing its words', async () => {
+    const { side } = await opened();
+    const [match] = await matchesIn(side, 3, 'Sir William');
+    if (!match) throw new Error('no match');
+    await side.find.goToMatch(match, true);
+    expect(where(side)).toBe(chapter(3));
+    expect(document.getSelection()?.toString()).toBe('Sir William');
+    // The bar never opened: nothing inked, the words chosen alone.
+    expect(bar(side)?.hidden).toBe(true);
+    expect(inked('epub-found')).toEqual([]);
   });
 });

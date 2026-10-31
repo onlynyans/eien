@@ -474,3 +474,76 @@ describe('a book’s Found on SHELF', () => {
     expect(tabs.map((tab) => tab.textContent)).toEqual(['Contents 1', 'Marks 0', 'Found 1']);
   });
 });
+
+describe('a book’s Found on SHELF, with two panes (#40, Phase 5c, as QA tried it)', () => {
+  const BOOK = 'Loose.epub';
+  const match = (from: number, page: string | null) => ({
+    spine: 1,
+    from,
+    to: from + 6,
+    before: '…said to Mr. ',
+    words: 'Bennet',
+    after: ' one day',
+    page,
+    chapter: 'Chapter I',
+  });
+  const found = (over = {}) => ({
+    rows: [match(10, '3'), match(90, null)],
+    words: 'Bennet',
+    title: 'Pride and Prejudice',
+    searched: 3,
+    chapters: 3,
+    done: true,
+    more: false,
+    ...over,
+  });
+  const contentsOf = (over: Partial<NonNullable<Parameters<typeof draw>[1]>> = {}) => ({
+    path: BOOK,
+    lens: 'found' as BookLens,
+    marks: [] as MarkRow[],
+    found: found(),
+    rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
+    spine: 1,
+    ...over,
+  });
+
+  it('lists each match under the book in its words with its page, its chapter its tooltip; a click goes there', () => {
+    const { list, actions } = draw(BOOK, contentsOf());
+    const names = [...list.querySelectorAll<HTMLButtonElement>('.tree-row--found .tree-row__name')];
+    // One line, so each begins at its match (the review, Phase 5c); the words before in its tooltip.
+    expect(names.map((name) => name.textContent)).toEqual(['Bennet one day 3', 'Bennet one day']);
+    expect(names[0]?.title).toBe('Chapter I: …said to Mr. Bennet one day');
+    expect(new Set(names.map((name) => name.dataset.key)).size).toBe(2);
+    expect(texts(list, '.tree-row--chapter')).toEqual([]);
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Contents 1', 'Marks 0', 'Found 2']);
+    expect(tabs[2]?.getAttribute('aria-pressed')).toBe('true');
+    names[1]?.click();
+    expect(actions.goFound).toHaveBeenCalledExactlyOnceWith(BOOK, match(90, null));
+  });
+
+  it('says under its rows that it’s still searching, or that there are none, as the tree’s hint', () => {
+    const searching = draw(BOOK, contentsOf({ found: found({ done: false, searched: 1 }) })).list;
+    expect(texts(searching, '.tree-hint')).toEqual(['Searching… chapter 2 of 3']);
+    const none = draw(BOOK, contentsOf({ found: found({ rows: [] }) })).list;
+    expect(texts(none, '.tree-row--found')).toEqual([]);
+    expect(texts(none, '.tree-hint')).toEqual(['No “Bennet” in Pride and Prejudice.']);
+  });
+
+  it('shows the chapters again once nothing is searched, Found there but not to choose', () => {
+    const { list } = draw(BOOK, contentsOf({ found: null }));
+    expect(texts(list, '.tree-row--chapter')).toEqual(['Chapter I']);
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
+    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
+    expect(tabs[2]?.disabled).toBe(true);
+  });
+
+  it('with Marks on the edge, puts Found’s rows in the chapters’ place while there are words', () => {
+    const searched = draw(BOOK, contentsOf({ marks: null, lens: 'contents' })).list;
+    expect(searched.querySelector('.tree-lenses')).toBeNull();
+    expect(texts(searched, '.tree-row--found')).toHaveLength(2);
+    expect(texts(searched, '.tree-row--chapter')).toEqual([]);
+    const cleared = draw(BOOK, contentsOf({ marks: null, lens: 'contents', found: null })).list;
+    expect(texts(cleared, '.tree-row--chapter')).toEqual(['Chapter I']);
+  });
+});

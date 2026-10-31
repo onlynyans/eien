@@ -2,10 +2,12 @@
 // after a folder is renamed, moved or trashed; rows whose names look alike;
 // and the drawer's turns when a slow search is overtaken.
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { VaultBridge } from '../../platform/bridge';
 import { VaultIndex } from '../../platform/index';
 import { MemoryStorage } from '../../platform/memory/memory-storage';
+import type { ContentsModel } from '../list/contents-list';
+import type { FoundModel } from '../list/found-rows';
 import type { SidebarModel } from '../sidebar/sidebar';
 import { openId, selectionOf } from '../sidebar/tree';
 import { Navigation } from './navigation';
@@ -348,5 +350,159 @@ describe('the search field beside a book’s rows', () => {
     await draw.sidebar();
     expect(drawn.at(-1)?.results?.notes.length).toBeGreaterThan(0);
     expect(synced).toEqual([null]);
+  });
+});
+
+describe('where the search field searches beside a book (#40, Phase 5c, as QA tried it)', () => {
+  const TITLE = 'Pride and Prejudice';
+  const FOUND: FoundModel = {
+    rows: [
+      {
+        spine: 1,
+        from: 4,
+        to: 10,
+        before: 'Mr. ',
+        words: 'Bennet',
+        after: ' replied',
+        page: '2',
+        chapter: 'Chapter I',
+      },
+    ],
+    words: 'Bennet',
+    title: TITLE,
+    searched: 3,
+    chapters: 3,
+    done: true,
+    more: false,
+  };
+
+  /** A drawer over `files` with a book's contents chosen (or none), each call to the book's parts kept. */
+  async function drawerWith(
+    layout: { two?: boolean; phone?: boolean; shut?: readonly string[] },
+    book = true,
+  ) {
+    const v = await vaultWith({ 'Bennet.md': 'Mr. Bennet, a note about him.' });
+    const nav = new Navigation();
+    nav.query = 'Bennet';
+    const search = vi.spyOn(v.state, 'search');
+    /** What the book's search was synced to before each draw: the field's words, or null (stopped). */
+    const asked: (string | null)[] = [];
+    const shelves: [boolean, boolean][] = [];
+    const placed: [boolean, string][] = [];
+    const drawn: SidebarModel[] = [];
+    const goFound = vi.fn();
+    const contents = (withFound = false) => {
+      if (!book) return null;
+      const words = withFound ? asked.at(-1) : null;
+      const model: ContentsModel = {
+        title: TITLE,
+        author: '',
+        rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
+        spine: 1,
+        lens: 'contents',
+        // Marks on the edge: Found's rows take the contents' place while there are words.
+        marks: null,
+        found: words?.trim() ? FOUND : null,
+      };
+      return { ...model, side: { path: 'Novels/P.epub' } };
+    };
+    const list = document.createElement('section');
+    const shut = layout.shut ?? [];
+    const draw = new PaneDrawer({
+      state: v.state,
+      nav,
+      panes: {
+        two: layout.two ?? false,
+        phone: layout.phone ?? false,
+        listKept: !shut.includes('list'),
+        isShut: (pane: string) => shut.includes(pane),
+      },
+      settings: { values: { 'books.numerals': 'roman', 'appearance.scheme': 'system' } },
+      sidebar: { draw: (model: SidebarModel) => drawn.push(model), drawLens: () => {} },
+      list,
+      notice: { text: null },
+      listActions: {},
+      shown: () => ({ active: null, other: null }),
+      pageNews: () => {},
+      arrange: () => ({ mode: false, on: false }),
+      placeSearch: (inList: boolean, name: string) => placed.push([inList, name]),
+      epubs: {
+        contents,
+        showsBook: () => book,
+        syncFound: (words: string | null) => asked.push(words),
+        shelf: (two: boolean, found: boolean) => {
+          shelves.push([two, found]);
+          return { current: null, contents: null };
+        },
+        actions: { openEpub: () => {}, chapter: () => {}, goFound },
+      },
+    } as unknown as DrawnParts);
+    return { draw, nav, search, asked, shelves, placed, drawn, list, goFound };
+  }
+
+  it('with two panes, searches the book: its Found under its SHELF row, the vault never searched', async () => {
+    const at = await drawerWith({ two: true, shut: ['list'] });
+    expect(at.draw.searchesBook()).toBe(true);
+    await at.draw.all();
+    expect(at.search).not.toHaveBeenCalled();
+    expect(at.drawn.at(-1)?.results).toBeNull();
+    expect(at.shelves.at(-1)).toEqual([true, true]);
+    expect(at.asked.at(-1)).toBe('Bennet');
+    // The field named for the book it searches, in the sidebar.
+    expect(at.placed.at(-1)).toEqual([false, TITLE]);
+  });
+
+  it('with the list in sight, searches the book: Found in the list, a row going to its match', async () => {
+    const at = await drawerWith({ two: false });
+    expect(at.draw.searchesBook()).toBe(true);
+    await at.draw.all();
+    expect(at.search).not.toHaveBeenCalled();
+    expect(at.asked).toContain('Bennet');
+    expect(at.placed.at(-1)).toEqual([true, TITLE]);
+    const row = at.list.querySelector<HTMLButtonElement>('.found-row');
+    expect(row?.textContent).toContain('Mr. Bennet replied');
+    row?.click();
+    expect(at.goFound).toHaveBeenCalledWith('Novels/P.epub', FOUND.rows[0]);
+    // The sidebar's book row says the contents are elsewhere (in the list), its words the book's.
+    expect(at.drawn.at(-1)?.elsewhere).toBe(true);
+    expect(at.shelves.at(-1)).toEqual([false, true]);
+  });
+
+  it('with one pane and the list shut, searches the vault: no book’s rows are beside the field', async () => {
+    const at = await drawerWith({ two: false, shut: ['list'] });
+    expect(at.draw.searchesBook()).toBe(false);
+    await at.draw.sidebar();
+    expect(at.search).toHaveBeenCalledWith('Bennet');
+    expect(at.drawn.at(-1)?.results?.notes.map((note) => note.title)).toEqual(['Bennet']);
+    expect(at.shelves.at(-1)).toEqual([false, false]);
+    expect(at.asked.at(-1)).toBeNull();
+    expect(at.placed.at(-1)).toEqual([false, 'V']);
+    expect(at.drawn.at(-1)?.elsewhere).toBe(false);
+  });
+
+  it('on a phone, with the book’s contents in sight, searches the vault, the book’s words never asked', async () => {
+    const at = await drawerWith({ phone: true });
+    expect(at.draw.searchesBook()).toBe(false);
+    await at.draw.list();
+    expect(at.search).toHaveBeenCalledWith('Bennet', null, false);
+    expect(at.asked.filter((words) => typeof words === 'string')).toEqual([]);
+    expect(at.list.querySelector('.found-row')).toBeNull();
+    expect(at.list.querySelector('.note-row')?.textContent).toContain('Bennet');
+    expect(at.placed.at(-1)).toEqual([false, 'V']);
+  });
+
+  it('with no book’s contents chosen, searches notes as before, however the panes stand', async () => {
+    for (const layout of [{ two: true, shut: ['list'] }, { two: false }]) {
+      const at = await drawerWith(layout, false);
+      expect(at.draw.searchesBook()).toBe(false);
+    }
+  });
+
+  it('names the book in the field with nothing typed, its contents shown', async () => {
+    const at = await drawerWith({ two: false });
+    at.nav.query = '';
+    await at.draw.list();
+    expect(at.placed.at(-1)).toEqual([true, TITLE]);
+    expect(at.list.querySelector('.contents-row')?.textContent).toBe('Chapter I');
   });
 });

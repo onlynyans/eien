@@ -7,11 +7,12 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
+import type { Epub } from '../../core/epub';
 import { BookTexts } from '../epub/book-search';
 import type { EpubSide } from '../epub/epub-side-types';
 import { laidOut } from '../epub/test-lines';
 import { sideWith } from '../epub/test-side';
-import { epubFound } from './epub-found';
+import { type EpubFound, epubFound } from './epub-found';
 import { Navigation } from './navigation';
 
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
@@ -37,6 +38,12 @@ async function opened() {
 }
 
 const said = (side: EpubSide) => side.page.foot.said.textContent;
+
+/** The search synced for `words` on `side`'s book, as the panes do before they draw, then what it found read. */
+function look(found: EpubFound, side: EpubSide, epub: Epub, words: string) {
+  found.sync(side, words);
+  return found.model(side, epub);
+}
 
 describe('a book’s Found', () => {
   it('turns the list to Found with two letters, and back to Contents once they’re gone', async () => {
@@ -128,5 +135,65 @@ describe('a book’s Found', () => {
     found.typed('Bennet');
     expect(found.model(side, epub)).toBeNull();
     expect(found.step(side, 1)).toBe(false);
+  });
+});
+
+describe('a book’s Found, as QA tried it (Phase 5c)', () => {
+  it('goes back on ⇧Enter from the place, round to the book’s last match', async () => {
+    const { side, found, epub } = await opened();
+    found.sync(side, 'Bennet');
+    await vi.waitFor(() => expect(look(found, side, epub, 'Bennet')?.done).toBe(true));
+    const total = look(found, side, epub, 'Bennet')?.rows.length ?? 0;
+    // The place is chapter I's top: none before it, so round to the last.
+    expect(found.step(side, -1)).toBe(true);
+    await vi.waitFor(() =>
+      expect(side.page.foot.said.textContent).toBe(`Match ${total} of ${total}.`),
+    );
+  });
+
+  it('searches the words as written, a pattern’s characters as themselves, the same words trimmed once', async () => {
+    const { side, found, epub } = await opened();
+    found.sync(side, 'Mr.');
+    await vi.waitFor(() => expect(look(found, side, epub, 'Mr.')?.done).toBe(true));
+    const rows = look(found, side, epub, 'Mr.')?.rows ?? [];
+    expect(rows.length).toBeGreaterThan(0);
+    // Never "Mrs": the full stop is a full stop.
+    expect(new Set(rows.map((row) => row.words))).toEqual(new Set(['Mr.']));
+    // The same words with spaces round them: no search started again.
+    expect(look(found, side, epub, '  Mr.  ')?.done).toBe(true);
+    expect(look(found, side, epub, '((')?.rows).toEqual([]);
+    await vi.waitFor(() => expect(look(found, side, epub, '((')?.done).toBe(true));
+    expect(look(found, side, epub, '((')?.rows).toEqual([]);
+  });
+
+  it('searches again for the same words in another book', async () => {
+    const { side, found, epub } = await opened();
+    found.sync(side, 'Bennet');
+    await vi.waitFor(() => expect(look(found, side, epub, 'Bennet')?.done).toBe(true));
+    const other = { ...epub, key: 'another' };
+    expect(look(found, { ...side, epub: other } as EpubSide, other, 'Bennet')?.done).toBe(false);
+  });
+
+  it('turns no lens for blank words', async () => {
+    const { nav, found } = await opened();
+    found.typed('   ');
+    expect(nav.bookLens).toBe('contents');
+    found.typed(' B ');
+    expect(nav.bookLens).toBe('contents');
+  });
+
+  // QA (Phase 5c) found an Enter with fewer than two letters in the field kept as waiting, and
+  // taken once words were typed: the page moved as the reader typed. Fixed: none is taken then.
+  it('forgets an Enter pressed while nothing is searched, once words are typed (fixed)', async () => {
+    const { side, found, epub } = await opened();
+    document.getSelection()?.removeAllRanges();
+    found.typed('');
+    expect(look(found, side, epub, '')).toBeNull();
+    found.step(side, 1);
+    found.typed('Netherfield');
+    await vi.waitFor(() => expect(look(found, side, epub, 'Netherfield')?.done).toBe(true));
+    await new Promise((done) => setTimeout(done, 50));
+    expect(side.page.foot.said.textContent).not.toMatch(/^Match/u);
+    expect(document.getSelection()?.toString()).toBe('');
   });
 });

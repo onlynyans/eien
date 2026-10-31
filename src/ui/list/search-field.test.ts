@@ -48,4 +48,25 @@ describe('the search field', () => {
     input.dispatchEvent(press);
     expect(press.defaultPrevented).toBe(false);
   });
+
+  it('leaves Enter to an input method composing a word, and searches nothing again with no words pending', () => {
+    vi.useFakeTimers();
+    const searched = vi.fn();
+    const enter = vi.fn(() => true);
+    const search = new SearchField(searched, enter);
+    const input = search.element.querySelector('input') as HTMLInputElement;
+    input.value = 'ベネット';
+    input.dispatchEvent(new Event('input'));
+    // Enter choosing the input method's word: the field's, not a step to a match.
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true }));
+    expect(enter).not.toHaveBeenCalled();
+    expect(searched).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1000);
+    expect(searched).toHaveBeenCalledOnce();
+    // The words searched already: Enter only steps.
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(searched).toHaveBeenCalledOnce();
+    expect(enter).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
 });
