@@ -44,12 +44,67 @@ const shortOfSpread = (page: Page) =>
     return need * zoom - width;
   });
 
-/** The window sized `by` pixels past the spread's threshold (less than 0: short of it). */
-async function pastSpread(page: Page, by: number): Promise<void> {
-  const size = page.viewportSize() ?? { width: 1400, height: 900 };
-  const short = await shortOfSpread(page);
-  await page.setViewportSize({ width: Math.round(size.width + short + by), height: size.height });
+/**
+ * How far short of a spread the pane is once it holds still: the panes' widths move over the calm
+ * time as one shuts or the window is resized (../../src/ui/shell/shell.css), and a pane measured
+ * mid-move is narrower than it will be.
+ */
+async function settledShort(page: Page): Promise<number> {
+  let last = Number.NaN;
+  await expect
+    .poll(async () => {
+      const now = await shortOfSpread(page);
+      const still = Math.abs(now - last) < 0.5;
+      last = now;
+      return still;
+    })
+    .toBe(true);
+  return last;
 }
+
+/**
+ * The window sized `by` pixels past the spread's threshold (less than 0: short of it), measured
+ * again once it holds still, and sized again if the pane didn't move by as much as the window
+ * (a pane's width kept in proportion, a system's rounding).
+ */
+async function pastSpread(page: Page, by: number): Promise<void> {
+  for (let tries = 0; tries < 3; tries++) {
+    const short = await settledShort(page);
+    if (Math.abs(short + by) < 1) return;
+    const size = page.viewportSize() ?? { width: 1400, height: 900 };
+    await page.setViewportSize({ width: Math.round(size.width + short + by), height: size.height });
+  }
+}
+
+/** Two pages open, past the threshold, laid out before anything is pressed on them. */
+async function openSpread(page: Page): Promise<void> {
+  await pastSpread(page, 40);
+  await expect(box(page)).toHaveAttribute('data-spread', '');
+}
+
+/** Whether `words` (as `pageTops` reads them) stand in the pages in sight, wherever on them. */
+const wordsInSight = (page: Page, words: string) =>
+  box(page).evaluate((element, wanted) => {
+    const sight = element.getBoundingClientRect();
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const at = (node.textContent ?? '').indexOf(wanted);
+      if (at < 0) continue;
+      const range = document.createRange();
+      range.setStart(node, at);
+      range.setEnd(node, at + wanted.length);
+      // A page turned away is laid out beside the one in sight, only clipped: its words are outside.
+      return [...range.getClientRects()].some(
+        (rect) =>
+          rect.width > 0 &&
+          rect.left >= sight.left - 1 &&
+          rect.right <= sight.right + 1 &&
+          rect.top >= sight.top - 1 &&
+          rect.bottom <= sight.bottom + 1,
+      );
+    }
+    return false;
+  }, words);
 
 /** The words at the top left of each page in sight. */
 const pageTops = (page: Page) =>
@@ -107,16 +162,19 @@ test.describe('two pages', () => {
     await opened(page, app);
     await pastSpread(page, -8);
     await expect(box(page)).not.toHaveAttribute('data-spread');
+    const opening = await pageTops(page);
     await page.keyboard.press('ArrowRight');
-    const [top] = await pageTops(page);
-    expect(top).toBeTruthy();
+    await expect.poll(() => pageTops(page)).not.toEqual(opening);
+    // The place: the turned-to page's first words.
+    const [top = ''] = await pageTops(page);
+    expect(top.trim()).not.toBe('');
     await pastSpread(page, 8);
     await expect(box(page)).toHaveAttribute('data-spread', '');
     expect(await chapter(page).evaluate((element) => getComputedStyle(element).columnCount)).toBe(
       '2',
     );
-    // The page in sight before is one of the two in sight now.
-    await expect.poll(() => pageTops(page)).toContain(top);
+    // Two pages of another width lay the words out anew: the place's words are in sight, wherever.
+    await expect.poll(() => wordsInSight(page, top)).toBe(true);
     // The gutter: a soft hairline down the middle of the gap.
     const gutter = await box(page).evaluate((element) => {
       const after = getComputedStyle(element, '::after');
@@ -124,9 +182,10 @@ test.describe('two pages', () => {
     });
     expect(gutter.content).toBe('""');
     expect(gutter.width).toBe('1px');
-    // Short of it again: one page, the same words.
+    // Short of it again: one page, the place's words still in sight, at its top as they were.
     await pastSpread(page, -8);
     await expect(box(page)).not.toHaveAttribute('data-spread');
+    await expect.poll(() => wordsInSight(page, top)).toBe(true);
     await expect.poll(async () => (await pageTops(page))[0]).toBe(top);
   });
 
@@ -135,8 +194,7 @@ test.describe('two pages', () => {
     app,
   }) => {
     await opened(page, app);
-    await pastSpread(page, 40);
-    await expect(box(page)).toHaveAttribute('data-spread', '');
+    await openSpread(page);
     const next = leaf(page).getByRole('button', { name: 'Next pages' });
     await expect(next).toHaveAttribute('data-tip', /Next pages · \d+ pages? on in the chapter/u);
     const first = await pageTops(page);
@@ -163,8 +221,7 @@ test.describe('two pages', () => {
 
       test(`turns a spread under ${turn}, the copy gone once it lands`, async ({ page, app }) => {
         await opened(page, app);
-        await pastSpread(page, 40);
-        await expect(box(page)).toHaveAttribute('data-spread', '');
+        await openSpread(page);
         const first = await pageTops(page);
         await page.keyboard.press('ArrowRight');
         await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
@@ -179,8 +236,11 @@ test.describe('two pages', () => {
   test('wear a bookmark on the page it marks, and keep it there', async ({ page, app, vault }) => {
     if (!vault) throw new Error('no vault');
     await opened(page, app);
-    await pastSpread(page, 40);
+    await openSpread(page);
+    const opening = await pageTops(page);
     await page.keyboard.press('ArrowRight');
+    // Turned before the bookmark: B marks the spread in sight.
+    await expect.poll(() => pageTops(page)).not.toEqual(opening);
     await page.keyboard.press('b');
     // The spread's first word is the verso's: its mark at the left, the recto's none.
     const left = leaf(page).locator('.page__mark--bookmark[data-edge="left"]');
@@ -206,7 +266,7 @@ test.describe('set as a book', () => {
     app,
   }) => {
     await opened(page, app);
-    await pastSpread(page, 40);
+    await openSpread(page);
     const set = await chapter(page).evaluate((element) => {
       const paragraph = element.querySelector('p:not([data-part])') as HTMLElement;
       const title = element.querySelector('[data-part="chapter-title"]') as HTMLElement;
@@ -237,7 +297,7 @@ test.describe('set as a book', () => {
     app,
   }) => {
     await opened(page, app);
-    await pastSpread(page, 40);
+    await openSpread(page);
     // Back from Chapter I, through the book's own first page, to Eien's. QA (#40, Phase 3d): in
     // sight, not merely drawn: the book's first item holds the front matter on every page of it.
     const title = sheet(page).locator('[aria-label="Title page"]');
@@ -268,7 +328,7 @@ test.describe('set as a book', () => {
     app,
   }) => {
     await opened(page, app);
-    await pastSpread(page, 40);
+    await openSpread(page);
     // QA (#40, Phase 3d): into the book's first item, which Eien's front matter comes before.
     await page.keyboard.press('ArrowLeft');
     await expect(sheet(page).locator('.epub-front')).toHaveCount(1);
@@ -288,8 +348,7 @@ test.describe('marks on the edge beside a spread', () => {
 
   test('stand past the sheet, never over the spread’s words', async ({ page, app }) => {
     await opened(page, app);
-    await pastSpread(page, 40);
-    await expect(box(page)).toHaveAttribute('data-spread', '');
+    await openSpread(page);
     const strip = leaf(page).getByRole('slider', { name: 'The whole book' });
     await expect(strip).toBeVisible();
     const [edge, paper] = await Promise.all([strip.boundingBox(), sheet(page).boundingBox()]);
