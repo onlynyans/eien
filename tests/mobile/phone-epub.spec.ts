@@ -576,13 +576,11 @@ test('a book in pages with its marks on the edge: a finger on the strip never tu
   ).toBe('0s');
 });
 
-// Set as a book on the phone (#40, Phase 3d): one page always, even a tablet's
-// screen one pane at a time with room for two; ragged, as a measure this short
-// opens rivers when it's justified, but hyphenated; a chapter opening two
-// lines low; Eien's title page before the first chapter all the same.
-test('a book in pages on the phone is one page, ragged and hyphenated, on a tablet’s screen too', async ({
-  page,
-}) => {
+// Set as a book on the phone (#40, Phase 3d): an upright phone holds one page;
+// ragged, as a measure this short opens rivers when it's justified, but
+// hyphenated; a chapter opening two lines low; Eien's title page before the
+// first chapter all the same.
+test('a book in pages on an upright phone is one page, ragged and hyphenated', async ({ page }) => {
   await open(page);
   await page.evaluate(async () => {
     await window.eien.settings.set('appearance.room', 'one');
@@ -593,7 +591,6 @@ test('a book in pages on the phone is one page, ragged and hyphenated, on a tabl
     'Eien/Vault/Novels/Pride and Prejudice.epub',
     readFileSync(FIXTURE).toString('base64'),
   );
-  await page.setViewportSize({ width: 1180, height: 820 });
   await page.reload();
   await expect(page.locator('.shell')).toHaveAttribute('data-phone', '');
   await back(page).click();
@@ -651,4 +648,133 @@ test('a book in pages on the phone is one page, ragged and hyphenated, on a tabl
   // No page of the book's: none said, nothing to bookmark.
   await expect(page.locator('.colophon__page').first()).toHaveText('');
   expect(await seriousViolations(page), 'Eien’s title page on the phone').toEqual([]);
+});
+
+/**
+ * A book in pages on `screen` in Wide screen's `room`, at Interface zoom
+ * `zoom` (the page laid out at the screen's width over it), its first chapter
+ * on the page. Returns the page's box.
+ */
+async function bookOn(
+  page: Page,
+  screen: { width: number; height: number },
+  room: 'one' | 'panes',
+  zoom = 100,
+  more: Record<string, string> = {},
+) {
+  await open(page);
+  await page.evaluate(
+    async ([room, zoom, more]) => {
+      await window.eien.settings.set('appearance.room', room);
+      await window.eien.settings.set('epub.view', 'pages');
+      await window.eien.settings.set('window.zoom', zoom);
+      for (const [key, value] of Object.entries(more))
+        await window.eien.settings.set(key as never, value as never);
+    },
+    [room, zoom, more] as const,
+  );
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.setViewportSize(screen);
+  await page.reload();
+  const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
+  // One at a time opens on the list, its shelf a step back; the panes show the shelf beside it.
+  await expect
+    .poll(async () => (await book.isVisible()) || (await back(page).isVisible()), {
+      timeout: 10_000,
+    })
+    .toBe(true);
+  if (!(await book.isVisible())) await back(page).click();
+  await book.click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
+  return page.locator('.epub-sheet:not([aria-hidden]) .epub__pages');
+}
+
+/** A Galaxy Z Fold 5 opened: its inner screen upright and sideways, in CSS pixels. */
+const FOLD5_UPRIGHT = { width: 590, height: 706 };
+const FOLD5_SIDEWAYS = { width: 706, height: 590 };
+
+// Two pages on a phone (#40, decided 2026-10-31): the width decides, as on the
+// desktop. Two pages of 20em of 22px text with the sheet's margins and the
+// gutter need a page some 1,144px wide: a Fold 5 opened holds them sideways
+// zoomed out to 60%, upright at 50%; never at its own size, and never with the
+// panes beside the page.
+for (const [name, screen, room, zoom, two] of [
+  ['upright, its own size', FOLD5_UPRIGHT, 'one', 100, false],
+  ['sideways, its own size', FOLD5_SIDEWAYS, 'one', 100, false],
+  ['sideways at 80%', FOLD5_SIDEWAYS, 'one', 80, false],
+  ['sideways at 60%', FOLD5_SIDEWAYS, 'one', 60, true],
+  ['upright at 50%', FOLD5_UPRIGHT, 'one', 50, true],
+  ['sideways at 60%, the panes beside the page', FOLD5_SIDEWAYS, 'panes', 60, false],
+] as const) {
+  test(`a Fold 5 opened ${name}: ${two ? 'two pages' : 'one page'}`, async ({ page }) => {
+    const box = await bookOn(page, screen, room, zoom);
+    if (two) await expect(box).toHaveAttribute('data-spread', '');
+    else await expect(box).not.toHaveAttribute('data-spread');
+    const set = await box.evaluate((element) => {
+      const words = element.querySelector('.epub-chapter') as HTMLElement;
+      return {
+        columns: getComputedStyle(words).columnCount,
+        align: getComputedStyle(words.querySelector('p:not([data-part])') as HTMLElement).textAlign,
+      };
+    });
+    expect(set.columns).toBe(two ? '2' : '1');
+    // Ragged on a phone (one pane at a time), two pages or one: justified lines are a desktop's.
+    // The panes beside the page are the desktop's layout, and set its page as the desktop does.
+    if (room === 'one') expect(set.align).toBe('start');
+  });
+}
+
+test('two pages on a Fold 5: a finger turns both, B marks the left one, the strip stands clear', async ({
+  page,
+}) => {
+  // At 50%: the strip keeps a finger's width of the page for itself, which 60% hasn't to spare.
+  const box = await bookOn(page, FOLD5_SIDEWAYS, 'one', 50, { 'epub.marks': 'edge' });
+  await expect(box).toHaveAttribute('data-spread', '');
+  const first = await firstWords(page);
+  const rect = await box.boundingBox();
+  if (!rect) throw new Error('no page');
+  // A finger drawn leftward across the page: on, two pages at once (reduced motion: at once).
+  await box.dispatchEvent('pointerdown', {
+    pointerId: 9,
+    pointerType: 'touch',
+    button: 0,
+    clientX: rect.x + rect.width - 60,
+    clientY: rect.y + 200,
+  });
+  await page.evaluate(
+    ([x, y]) => {
+      const at = (clientX: number) => ({
+        pointerId: 9,
+        pointerType: 'touch',
+        clientX,
+        clientY: y,
+        bubbles: true,
+      });
+      window.dispatchEvent(new PointerEvent('pointermove', at(x - 20)));
+      window.dispatchEvent(new PointerEvent('pointermove', at(x - 160)));
+      window.dispatchEvent(new PointerEvent('pointerup', at(x - 160)));
+    },
+    [rect.x + rect.width - 60, rect.y + 200] as const,
+  );
+  await expect.poll(() => firstWords(page)).not.toBe(first);
+  await expect(page.locator('.colophon__page').first()).toHaveText(/^pages? \d+/u);
+  // B marks the spread's first word: its mark on the left page.
+  await page.locator('.page__leaf--epub .page__scroll').focus();
+  await page.keyboard.press('b');
+  await expect(page.locator('.page__mark--bookmark[data-edge="left"]')).toBeVisible();
+  await expect(page.locator('.page__mark--bookmark[data-edge="right"]')).toBeHidden();
+  // The strip down the screen's edge, on the screen and clear of the left page.
+  const strip = page.getByRole('slider', { name: 'The whole book' });
+  await expect(strip).toBeVisible();
+  const edge = await strip.boundingBox();
+  if (!edge) throw new Error('no strip');
+  // Laid out at the screen's width over the zoom: the page's own width, not the screen's.
+  expect(edge.x + edge.width).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
+  expect(edge.x).toBeGreaterThan(rect.x + rect.width / 2);
+  expect(await seriousViolations(page), 'two pages on a phone').toEqual([]);
 });

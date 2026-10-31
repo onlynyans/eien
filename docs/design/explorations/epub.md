@@ -173,6 +173,11 @@ section where it and the directions below disagree.
 - **Set as a book** (Showcase 2): justified and hyphenated, a title page
   and its imprint, chapters opening low, a capitals first line, running
   heads and folios. The phone stays ragged.
+- **Two pages on a phone** (decided 2026-10-31): the width decides there
+  as on the desktop. An upright phone never holds two; a Galaxy Z Fold 5
+  opened does sideways at 60% Interface zoom and upright at 50% (two pages
+  of 20em of 22px text, with the margins and the gutter, need a page some
+  1,144px wide). Ragged, two pages or one. A split stays one page.
 - **The reading room** (Showcase 1) is built after Pages, as a one-key
   mode.
 
@@ -375,7 +380,7 @@ Each phase is its own session and pull request, from main.
     letting a page in flight fly on; under Slide and Words a drag asks;
   - **3d, built:** the spread, and Set as a book. Two pages where the
     pane holds two of 20em of the text with the sheet's margins and the
-    gutter (never on a phone or in a split), turned a spread at a time
+    gutter (never in a split; on a phone too, decided 2026-10-31), turned a spread at a time
     under every Page turn, the place kept through one page and two
     (`ui/epub/spread.ts`, `page-columns.ts`); a bookmark's mark on the page
     it marks, the colophon saying both pages. Set as a book in pages alone:

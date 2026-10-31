@@ -49,14 +49,26 @@ describe('two pages or one (Phase 3d)', () => {
     expect(pane(THRESHOLD - 1, 1, 1.2).per()).toBe(1);
   });
 
-  it('is one page scrolling, on a phone, and in a split', () => {
+  it('is one page scrolling, and in a split', () => {
     const scroll = pane(THRESHOLD * 2);
     scroll.room.parentElement?.setAttribute('data-view', 'scroll');
     expect(scroll.per()).toBe(1);
-    const phone = pane(THRESHOLD * 2);
-    document.querySelector('.shell')?.setAttribute('data-phone', '');
-    expect(phone.per()).toBe(1);
     const split = pane(THRESHOLD * 2);
+    document.querySelector('.page__pages')?.setAttribute('data-two', '');
+    expect(split.per()).toBe(1);
+  });
+
+  it('on a phone, opens where its width holds two pages, as the desktop’s does (decided 2026-10-31)', () => {
+    const phone = () => document.querySelector('.shell')?.setAttribute('data-phone', '');
+    const wide = pane(THRESHOLD);
+    phone();
+    expect(wide.per()).toBe(2);
+    const narrow = pane(THRESHOLD - 1);
+    phone();
+    expect(narrow.per()).toBe(1);
+    // A phone's two pages side by side (Wide screen's Two pages) are a split: never a spread more.
+    const split = pane(THRESHOLD * 2);
+    phone();
     document.querySelector('.page__pages')?.setAttribute('data-two', '');
     expect(split.per()).toBe(1);
   });

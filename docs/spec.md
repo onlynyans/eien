@@ -533,8 +533,12 @@ Three panes, each collapsible, with a two-pane option in settings:
    - **Two pages, and set as a book** (Phase 3d): in pages, where the page
      pane holds two pages of at least 20em of the book's text, with the
      sheet's margins and the gutter between, the book opens to two facing
-     pages; a pixel short of it, one. Never on a phone (one pane at a
-     time) or in a split. A turn, a key, the edges and a hand move both;
+     pages; a pixel short of it, one. A phone's width decides as the
+     desktop's does (decided 2026-10-31): an upright phone holds one page, a
+     Galaxy Z Fold 5 opened holds two sideways with Interface zoom at 60%
+     (upright at 50%), and a tablet one pane at a time may. Never in a
+     split (Facing pages is two pages of its own; Wide screen's Two pages
+     with a note beside is a split). A turn, a key, the edges and a hand move both;
      the place is the same, so one page and two show the same words. A
      bookmark's mark sits on the page it marks; B on two pages marks the
      first one's first word, or takes off every bookmark on the two. The

@@ -387,7 +387,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `paged-place.ts`: in pages (Phase 3b), the page holding the place shown, a turn keeping its first word, a copy cut to the page in sight; a sight of two pages, and the front matter turned back to, never opened at (Phase 3d)
     - `page-columns.ts`: the chapter laid in columns of whole lines, one page or two to a sight, its pages and the front matter's counted
     - `sight.ts`: the pages in sight, each where its words begin and its part; where the page stands, to put back
-    - `spread.ts`: two pages or one, by the pane's room for two of 20em (never a phone's, nor a split's)
+    - `spread.ts`: two pages or one, by the pane's room for two of 20em, a phone's too (never a split's)
     - `page-cut.ts`: a sight's words cut for a turn's copy, past the front matter, a paragraph cut at its foot set as on the page
   - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back
   - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons
