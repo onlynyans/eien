@@ -34,22 +34,22 @@ function bookmarkOf(item: unknown): Bookmark | null {
   };
 }
 
-/** How the file keeps bookmarks: the list's field, an item read, two told apart. */
-const BOOKMARKS: ListKind<Bookmark> = {
-  field: 'bookmarks',
-  read: bookmarkOf,
-  same: (a, b) => sameMark(a, b),
-};
-
-/** The bookmarks the file's text holds that this Eien can read, the first MAX_BOOKMARKS of them. */
-export const bookmarksOf = (text: string | null): Bookmark[] =>
-  listIn(text, BOOKMARKS, MAX_BOOKMARKS);
-
 /** Whether two bookmarks are one: the same chapter and word. */
 export const sameMark = (
   a: Pick<Bookmark, 'chapter' | 'offset'>,
   b: Pick<Bookmark, 'chapter' | 'offset'>,
 ) => a.chapter === b.chapter && a.offset === b.offset;
+
+/** How the file keeps bookmarks: the list's field, an item read, two told apart. */
+const BOOKMARKS: ListKind<Bookmark> = {
+  field: 'bookmarks',
+  read: bookmarkOf,
+  same: sameMark,
+};
+
+/** The bookmarks the file's text holds that this Eien can read, the first MAX_BOOKMARKS of them. */
+export const bookmarksOf = (text: string | null): Bookmark[] =>
+  listIn(text, BOOKMARKS, MAX_BOOKMARKS);
 
 /**
  * The file's text with `add` added (unless it's there) and each of `remove`

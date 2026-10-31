@@ -86,10 +86,12 @@ describe('a bookmark on a spread', () => {
     await none.marks.toggle();
     expect(none.kept()).toEqual([expect.objectContaining({ chapter: CHAPTER, offset: 1000 })]);
     const two = [at(1100), at(1900)];
-    const some = marked(SPREAD, two);
+    // One beyond the spread, kept: B takes off its two pages' alone.
+    const beyond = at(2500);
+    const some = marked(SPREAD, [...two, beyond]);
     some.marks.inSight(1000, 2200);
     await some.marks.toggle();
-    expect(some.kept()).toEqual([]);
+    expect(some.kept()).toEqual([beyond]);
   });
 
   it('is never made on the front matter, which holds none of the book’s words', async () => {

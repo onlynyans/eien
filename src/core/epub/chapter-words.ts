@@ -11,14 +11,13 @@ import type { CleanElement, CleanNode } from '../html';
 
 /**
  * What a word's block is: words in two of them read with a space between,
- * and Find never matches across two. One list, for the window's words too
- * (ui/epub/chapter-place.ts).
+ * and Find never matches across two. Each an element the cleaner keeps
+ * (its `section` and `aside` become a `div`). One list, for the window's
+ * words too (ui/epub/chapter-place.ts).
  */
 export const BLOCK_NAMES: readonly string[] = [
   'p',
   'div',
-  'section',
-  'aside',
   'pre',
   'li',
   'dd',

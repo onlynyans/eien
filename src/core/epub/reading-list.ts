@@ -6,7 +6,7 @@
 // the file's others (no change but the one asked for in a synced file). A
 // file a newer Eien wrote, or one that can't be read, is never written.
 
-import { READING_VERSION, readingFile, writable } from './reading';
+import { readingFile, writable, writtenText } from './reading';
 
 /** How one kind of item is read from the file, and told apart. */
 export interface ListKind<T> {
@@ -57,9 +57,5 @@ export function withList<T>(
   const kept = was.filter((item) => !(change.remove ?? []).some((gone) => matches(item, gone)));
   const { add } = change;
   const list = add && !kept.some((item) => matches(item, add)) ? [...kept, { ...add }] : kept;
-  // The file spread first, so each field keeps its place (the version first in a new file), then
-  // the version this Eien writes, where the file had it.
-  const next: Record<string, unknown> = { version: READING_VERSION, ...file, [kind.field]: list };
-  next.version = READING_VERSION;
-  return `${JSON.stringify(next, null, 2)}\n`;
+  return writtenText(file, { [kind.field]: list });
 }

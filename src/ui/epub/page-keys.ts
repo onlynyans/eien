@@ -69,7 +69,8 @@ const isBack = (event: KeyboardEvent) =>
 export function bookKey(event: KeyboardEvent, of: BookKeysOf): void {
   if (event.target instanceof Element && event.target.closest(FIELD)) return;
   const plain = !event.metaKey && !event.ctrlKey && !event.altKey;
-  const letter = plain ? LETTERS[event.key.toLowerCase()] : undefined;
+  const name = event.key.toLowerCase();
+  const letter = plain && Object.hasOwn(LETTERS, name) ? LETTERS[name] : undefined;
   if (letter?.when(of)) {
     event.preventDefault();
     if (!event.repeat) letter.run(of);

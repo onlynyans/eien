@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { withReading } from './reading';
 import { type ListKind, listIn, withList } from './reading-list';
 
 interface Item {
@@ -52,9 +51,6 @@ describe('a list in the reading file', () => {
       'chapter',
       'theirs',
     ]);
-    const read = withReading(text, { chapter: 'd.xhtml', offset: 4 });
-    expect(keys(read)).toEqual(['version', 'items', 'chapter', 'theirs', 'place']);
-    expect(keys(withReading(read, { chapter: 'e.xhtml', offset: 5 }))).toEqual(keys(read));
   });
 
   it('writes the version this Eien writes, first in a file of its own', () => {

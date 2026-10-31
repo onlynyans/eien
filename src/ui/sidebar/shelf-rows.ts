@@ -114,7 +114,7 @@ export function shelfRows(
     );
     const contents = model.contents?.path === path ? model.contents : null;
     if (!contents) return [own];
-    return [own, ...group(depth, [...bookRows(path, contents, actions, depth)])];
+    return [own, ...group(depth, bookRows(path, contents, actions, depth))];
   });
   const shelved = node.folders.filter(onShelf).flatMap((folder) => {
     const field = folders.edit(folder, depth);

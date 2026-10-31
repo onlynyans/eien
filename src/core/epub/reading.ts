@@ -86,15 +86,24 @@ export function writable(text: string | null): ReadingFile | null {
   return readingFile(text) ?? {};
 }
 
+/**
+ * The text of `file` with `fields` set, written by this Eien: each field
+ * where it stood (a synced file changes only where it was changed), a new
+ * one after them, and the version this Eien writes, first in a new file. A
+ * field set to undefined is left out.
+ */
+export function writtenText(file: ReadingFile, fields: Readonly<ReadingFile>): string {
+  const next: ReadingFile = { version: READING_VERSION, ...file, ...fields };
+  next.version = READING_VERSION;
+  return `${JSON.stringify(next, null, 2)}\n`;
+}
+
 /** The file's text with `reading` in it, every other field as it was and where it was; null where it mustn't be written. */
 export function withReading(text: string | null, reading: Reading): string | null {
   const file = writable(text);
   if (!file) return null;
   const { chapter, offset } = reading;
-  // The file spread first, so each field keeps its place (./reading-list.ts does the same).
-  const next: ReadingFile = { version: READING_VERSION, ...file, chapter };
-  next.version = READING_VERSION;
-  if (chapter === null) delete next.place;
-  else next.place = { chapter, offset: Math.max(0, offset) };
-  return `${JSON.stringify(next, null, 2)}\n`;
+  // No chapter, no place: JSON leaves out a field that's undefined.
+  const place = chapter === null ? undefined : { chapter, offset: Math.max(0, offset) };
+  return writtenText(file, { chapter, place });
 }

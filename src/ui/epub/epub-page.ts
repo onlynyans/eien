@@ -71,7 +71,11 @@ export class EpubPage implements PaneLeaf {
 
   constructor(of: EpubPageOf) {
     this.#keys = {
-      ...of,
+      turn: (way, held) => of.turn(way, held),
+      edge: (last) => of.edge(last),
+      quote: () => of.quote(),
+      bookmark: () => of.bookmark(),
+      back: () => of.back(),
       chosen: () => this.sheet.selection !== null,
       shown: () => !this.#sheet.hidden,
       paged: () => this.sheet.paged,
