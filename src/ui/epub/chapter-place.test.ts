@@ -60,9 +60,9 @@ describe('the words from a place', () => {
     chapter.innerHTML =
       '<h2>Chapter I</h2><p>It is a <em>truth</em> universally</p><p>acknowledged.</p>';
     expect(wordsFrom(chapter, 0, 200)).toBe('Chapter I It is a truth universally acknowledged.');
-    // From inside a word of the second block: the rest of it, then on.
+    // From inside a word (a page that begins inside a hyphenated one, Phase 3d): the whole word, then on.
     expect(wordsFrom(chapter, 'Chapter IIt is a tr'.length, 200)).toBe(
-      'uth universally acknowledged.',
+      'truth universally acknowledged.',
     );
   });
 
@@ -78,5 +78,30 @@ describe('the words from a place', () => {
     // A picture and Eien's own scene break: nothing of the book's to read.
     picture.innerHTML = '<img alt=""><div class="scene-break">***</div>';
     expect(wordsFrom(picture, 0, 200)).toBe('');
+  });
+});
+
+// QA (#40, Phase 3d): a page that begins inside a word hyphenated at the page
+// before's foot names it whole; one that begins after a space, a hard
+// hyphen or a figure's comma begins where it does; and a word its markup
+// splits (an italic's start) is read from that piece alone.
+describe('the words from a place inside a word', () => {
+  it('back up to the word’s start over its letters and figures alone', () => {
+    const chapter = document.createElement('div');
+    chapter.innerHTML = '<p>A well-known 1,200 incomprehensibilities, rr2b.</p>';
+    const from = (words: string) =>
+      wordsFrom(chapter, (chapter.textContent ?? '').indexOf(words), 14);
+    expect(from('hensibilities')).toBe('incomprehensib');
+    expect(from('known')).toBe('known 1,200 in');
+    expect(from('200')).toBe('200 incomprehe');
+    expect(from('2b.')).toBe('rr2b.');
+    expect(from('well')).toBe('well-known 1,2');
+  });
+
+  it('never back into the piece of the word before it', () => {
+    const chapter = document.createElement('div');
+    chapter.innerHTML = '<p>incompre<em>hensible</em> words</p>';
+    expect(wordsFrom(chapter, 'incompre'.length, 200)).toBe('hensible words');
+    expect(wordsFrom(chapter, 'incomprehen'.length, 200)).toBe('hensible words');
   });
 });

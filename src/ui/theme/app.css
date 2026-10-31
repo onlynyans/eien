@@ -19,6 +19,8 @@
 @import "../page/split-follow.css";
 @import "../page/tag-set.css";
 @import "../epub/epub.css";
+@import "../epub/epub-spread.css";
+@import "../epub/epub-set.css";
 @import "../epub/bookmark.css";
 @import "../epub/edge-strip.css";
 @import "../epub/turn/turn.css";

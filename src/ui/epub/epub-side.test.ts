@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
+import { handEpub, nav, opf, XHTML, page as xhtml } from '../../../tests/support/epub-parts';
 import { BookCount } from './book-count';
 import { epubKind } from './epub-kind';
 import { EpubPage } from './epub-page';
@@ -303,5 +304,64 @@ describe('a book’s own look (#40, Phase 1c)', () => {
     expect(leaf.dataset.frame).toBe('sheet');
     expect(leaf.style.getPropertyValue('--eien-text-scale')).toBe('1.1');
     expect(document.documentElement.dataset.face).toBeUndefined();
+  });
+});
+
+// QA (#40, Phase 3d): Eien's title page and imprint come before the book's
+// first chapter in reading order (its first linear item) and no other; a
+// cover the spine leaves out of the reading order has none before it.
+describe('the front matter drawn with a book’s first chapter', () => {
+  const front = (side: EpubSide) => side.page.chapter.querySelector('.epub-front');
+
+  it('comes before the first item in reading order alone, shelved where the book is', async () => {
+    const { side } = sideWith({ 'Novels/P and P.epub': EPUBS['plain.epub'] as Uint8Array });
+    await side.open('Novels/P and P.epub');
+    // Opened at Chapter I, the book's own title page before it.
+    expect(side.spine).toBe(1);
+    expect(front(side)).toBeNull();
+    await side.go(0);
+    expect(front(side)?.querySelector('.epub-front__shelf')?.textContent).toBe('Novels');
+    expect(front(side)?.textContent).toContain('From P and P.epub.');
+    // First in the chapter's words, before the book's own.
+    expect(side.page.chapter.firstElementChild).toBe(front(side));
+    await side.go(3);
+    expect(front(side)).toBeNull();
+  });
+
+  it('passes over a cover outside the reading order, to the first chapter in it', async () => {
+    const items = [
+      { id: 'nav', href: 'nav.xhtml', type: XHTML, properties: 'nav' },
+      { id: 'cover', href: 'cover.xhtml', type: XHTML },
+      { id: 'c1', href: 'one.xhtml', type: XHTML },
+      { id: 'c2', href: 'two.xhtml', type: XHTML },
+    ];
+    const book = handEpub('content.opf', [
+      {
+        name: 'content.opf',
+        data: opf('3.0', items, ['cover', 'c1', 'c2']).replace(
+          '<itemref idref="cover"/>',
+          '<itemref idref="cover" linear="no"/>',
+        ),
+      },
+      {
+        name: 'nav.xhtml',
+        data: nav([
+          ['One', 'one.xhtml'],
+          ['Two', 'two.xhtml'],
+        ]),
+      },
+      { name: 'cover.xhtml', data: xhtml('Cover', '<p>The cover.</p>') },
+      { name: 'one.xhtml', data: xhtml('One', '<h1>One</h1><p>The first chapter.</p>') },
+      { name: 'two.xhtml', data: xhtml('Two', '<h1>Two</h1><p>The second.</p>') },
+    ]);
+    const { side } = sideWith({ 'b.epub': book });
+    await side.open('b.epub');
+    expect(side.spine).toBe(1);
+    expect(front(side)).not.toBeNull();
+    await side.go(0);
+    expect(chapterText(side)).toContain('The cover.');
+    expect(front(side)).toBeNull();
+    await side.go(2);
+    expect(front(side)).toBeNull();
   });
 });

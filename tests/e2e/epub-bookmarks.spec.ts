@@ -16,7 +16,7 @@ const epub = (name: string) =>
 const shelfEpub = (page: Page) =>
   page.locator('.tree-row--epub .tree-row__name').filter({ hasText: 'Pride and Prejudice' });
 const leaf = (page: Page) => page.locator('.page__leaf--epub');
-const mark = (page: Page) => leaf(page).locator('.page__mark--bookmark');
+const mark = (page: Page) => leaf(page).locator('.page__mark--bookmark[data-edge="right"]');
 const tool = (page: Page) => page.locator('[data-command="bookmark"]:visible').first();
 
 /** The bookmarks in the reading state's one file in `vault`. */

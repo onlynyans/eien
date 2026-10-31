@@ -149,7 +149,8 @@ Rules, pure TypeScript.
   - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
   - `book-link.ts`: a link to one of the book's chapters, as an address of the page's own and back
   - `quote.ts`: a passage quoted into a note, its citation, at the note's end
-  - `pages.ts`: a chapter in pages (Phase 3b): whole lines tall, the pages counted, the page a word falls on, the fore-edge's sixths
+  - `pages.ts`: a chapter in pages (Phase 3b): whole lines tall, the pages counted, the page a word falls on, the fore-edge's sixths; two pages to a sight where they fit, and each page's part (front matter, opening, text) (Phase 3d)
+  - `imprint.ts`: the imprint's words, how long the book is and how it's set (Phase 3d)
   - `turn/`: a page's turn (Phase 3), as numbers the window draws
     - `curl.ts`: the curl's geometry: the roll over a cylinder that follows the corner, the spine held down, a strip laid by its matrix and clipped
     - `light.ts`: the light on the roll, each strip shaded by how it faces you and ramped across, as a gradient's numbers (the inks are the window's tokens)
@@ -351,6 +352,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys (Q, B, ⌘[ / Alt+←), its bookmark's mark
   - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again (scrolling or in pages), its links caught, its words copied and chosen
   - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
+  - `book-parts.ts`: its parts made together: the place said, the bookmarks, the links, the turns
   - `epub-side-types.ts`: what a page holding a book is (`EpubSide`, `EpubSideOf`, `isEpub`)
   - `book-place.ts`: what the page says of where it is as the place moves: the colophon's figures, the fore-edge, the page (Phase 4)
   - `book-count.ts`: a book counted for its page numbers, in the background, never while a page turns; one per book for the window, the last few kept (Phase 4)
@@ -372,8 +374,17 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `reading-store.ts`: the reading state's file, through the vault's small files, its bookmarks' changes told to every page of the book
   - `page-bookmarks.ts`: a book's bookmarks on its page: whether the page in sight has one, B and the tool, following a turn once it lands (Phase 4b)
   - `bookmark.css`: its mark (the Page mark's look), kept to the top of the sheet in sight, and Facing pages' clash
+  - `page-marks.ts`: the marks on the sheet, one page's at its right, a spread's verso's at its left (Phase 3d)
+  - Set as a book (Phase 3d, `epub-set.css`; two pages, `epub-spread.css`)
+    - `front-matter.ts`: Eien's title page and imprint before the first chapter, none of the book's words
+    - `running-heads.ts`: the running heads and folios
+    - `hyphens.ts`: whether the window hyphenates a language, which justifies the text
   - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
-  - `paged-place.ts`: in pages (Phase 3b), the chapter laid in columns of whole lines, the page holding the place shown, a turn keeping its first word, a copy cut to the page in sight
+  - `paged-place.ts`: in pages (Phase 3b), the page holding the place shown, a turn keeping its first word, a copy cut to the page in sight; a sight of two pages, and the front matter turned back to, never opened at (Phase 3d)
+    - `page-columns.ts`: the chapter laid in columns of whole lines, one page or two to a sight, its pages and the front matter's counted
+    - `sight.ts`: the pages in sight, each where its words begin and its part; where the page stands, to put back
+    - `spread.ts`: two pages or one, by the pane's room for two of 20em (never a phone's, nor a split's)
+    - `page-cut.ts`: a sight's words cut for a turn's copy, past the front matter, a paragraph cut at its foot set as on the page
   - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back
   - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons
   - `edge-strip.ts`, `.css`: Marks on the edge (Phase 4d): the whole book down the page's edge, a slider, apart from the fore-edge

@@ -8,6 +8,7 @@
 import type { SettingValues } from '../../core/config';
 import { chapterBeside, type Epub, type Way } from '../../core/epub';
 import type { EpubPage } from './epub-page';
+import type { Spot } from './sight';
 import { handEvents } from './turn/hand-events';
 import { PageTurn } from './turn/page-turn';
 
@@ -36,8 +37,8 @@ export interface BookPages {
 
 export function bookPages(of: BookPagesOf): BookPages {
   const { page } = of;
-  /** Where the last step began, to go back to if its turn falls back. */
-  let from: { readonly spine: number; readonly offset: number } | null = null;
+  /** Where the last step began, to go back to if its turn falls back (a front page's too, Phase 3d). */
+  let from: { readonly spine: number; readonly spot: Spot } | null = null;
 
   const turn = new PageTurn({
     sheet: () => page.leaf,
@@ -47,7 +48,7 @@ export function bookPages(of: BookPagesOf): BookPages {
       // Only in pages, with a chapter drawn: a turn asked while a book opens (or after a switch to
       // Scroll) would draw a chapter over the one on its way, and keep it as the place.
       if (!page.sheet.paged || of.spine() < 0) return false;
-      from = { spine: of.spine(), offset: page.sheet.place };
+      from = { spine: of.spine(), spot: page.sheet.spot };
       if (page.sheet.turn(way)) return true;
       const epub = of.epub();
       const next = epub ? chapterBeside(epub.spine, of.spine(), way) : null;
@@ -66,9 +67,9 @@ export function bookPages(of: BookPagesOf): BookPages {
     unstep() {
       const was = from;
       if (!was) return;
-      if (was.spine === of.spine()) page.sheet.showPlace(was.offset);
+      if (was.spine === of.spine()) page.sheet.restore(was.spot);
       // Back into the chapter it came from: the next turn waits for it to be drawn.
-      else return of.draw(was.spine, was.offset).then(() => {});
+      else return of.draw(was.spine, was.spot.offset).then(() => {});
     },
     how() {
       const values = of.values();

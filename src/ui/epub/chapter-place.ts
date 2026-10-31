@@ -8,14 +8,15 @@
 // dozen measures, never one per word.
 
 import { offsetOf, spotOf } from '../../core/epub';
+import { FRONT } from './front-matter';
 
 /** A piece of the page's box, measured: the window's own, or a test's. */
 export type RectOf = (range: Range) => Pick<DOMRect, 'top' | 'bottom'>;
 
 const measured: RectOf = (range) => range.getBoundingClientRect();
 
-/** What Eien draws in the book's place, not the book's words. */
-const OWN = '.scene-break, .image-words';
+/** What Eien draws in the book's place, not the book's words: a break's marks, a picture's words, its front matter (./front-matter.ts). */
+const OWN = `.scene-break, .image-words, ${FRONT}`;
 
 /** The chapter's words, piece by piece, in the order they read. */
 export function piecesOf(chapter: HTMLElement): Text[] {
@@ -141,6 +142,10 @@ export function wordsFrom(chapter: HTMLElement, offset: number, length: number):
     offset,
   );
   if (!spot) return '';
+  // A page that begins inside a hyphenated word (Set as a book) begins with its start.
+  const first = pieces[spot.index] as Text;
+  let within = spot.within;
+  while (within > 0 && /[\p{L}\p{N}]/u.test(first.data[within - 1] ?? '')) within--;
   let words = '';
   let block: Element | null = null;
   for (let i = spot.index; i < pieces.length && words.length < length; i++) {
@@ -148,7 +153,7 @@ export function wordsFrom(chapter: HTMLElement, offset: number, length: number):
     const own = piece.parentElement?.closest(BLOCK) ?? null;
     if (words !== '' && own !== block) words += ' ';
     block = own;
-    words += piece.data.slice(i === spot.index ? spot.within : 0);
+    words += piece.data.slice(i === spot.index ? within : 0);
   }
   return words.slice(0, length);
 }

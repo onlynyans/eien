@@ -21,6 +21,9 @@ import { sideWith } from './test-side';
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
 const book = () => ({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
 
+/** The real setTimeout, taken before the tests fake it: a book's chapters inflate in real time. */
+const realTimeout = globalThis.setTimeout.bind(globalThis);
+
 const scrollTo = (scroller: HTMLElement, top: number) => {
   scroller.scrollTop = top;
   scroller.dispatchEvent(new Event('scroll'));
@@ -182,9 +185,17 @@ describe('the place in a chapter', () => {
 // on one book, a book opened again, and a chapter that won't open.
 describe('the page it’s on, over a whole book', () => {
   const pageSaid = (page: EpubPage) => page.foot.figures[2]?.textContent;
-  /** The count's tasks run, each chapter read meanwhile, until `done`. */
+  /**
+   * The count's tasks run, each chapter read meanwhile, until `done`. Reading a chapter inflates
+   * it in real time, so each step also gives the real clock a turn, and the wait is bounded by
+   * real time, not a number of steps (a loaded CI machine took more than 400).
+   */
   const until = async (done: () => boolean) => {
-    for (let i = 0; i < 400 && !done(); i++) await vi.advanceTimersByTimeAsync(1);
+    const deadline = Date.now() + 10_000;
+    while (!done() && Date.now() < deadline) {
+      await vi.advanceTimersByTimeAsync(1);
+      await new Promise((resolve) => realTimeout(resolve, 0));
+    }
     expect(done()).toBe(true);
   };
   /** The page at rest at its top, its lines in sight measured. */
