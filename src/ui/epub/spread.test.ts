@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { spreadOf } from './spread';
 
 /** A book's page in pages, its pane `width` wide (24px of blotter each side), Newsreader's 22px text. */
-function pane(width: number, zoom = 1) {
+function pane(width: number, zoom = 1, look = 1) {
   document.body.innerHTML = `
     <div class="shell"><div class="page__pages">
       <div class="page__leaf" data-view="pages">
         <div class="page__scroll" style="padding-left: 24px; padding-right: 24px">
-          <article class="sheet" style="padding-left: 72px; padding-right: 72px">
+          <article class="sheet" style="padding-left: 72px; padding-right: 72px; --look-width: ${look}">
             <div class="epub__pages" style="column-gap: 72px">
               <div class="epub-chapter" style="font-size: 22px"></div>
             </div>
@@ -40,6 +40,13 @@ describe('two pages or one (Phase 3d)', () => {
   it('counts the pane in the sheet’s own pixels: zoomed in, the same pane holds one', () => {
     expect(pane(THRESHOLD, 1.5).per()).toBe(1);
     expect(pane(THRESHOLD * 1.5, 1.5).per()).toBe(2);
+  });
+
+  it('counts Page width Narrow’s share of the pane: never two pages under 20em', () => {
+    expect(pane(THRESHOLD, 1, 0.84).per()).toBe(1);
+    expect(pane((THRESHOLD - 48) / 0.84 + 48 + 1, 1, 0.84).per()).toBe(2);
+    // Wide never widens the sheet past its pane.
+    expect(pane(THRESHOLD - 1, 1, 1.2).per()).toBe(1);
   });
 
   it('is one page scrolling, on a phone, and in a split', () => {

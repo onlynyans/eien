@@ -10,11 +10,16 @@ export interface PageShown {
   readonly role: PageRole;
 }
 
-/** Where a book in pages stands: its place, the sight shown, and a front page turned to (else null). */
+/**
+ * Where a book in pages stands: its place, the sight shown, a front page
+ * turned to (else null), and the layout they were measured in (another, and
+ * the sight is found again).
+ */
 export interface Spot {
   readonly offset: number;
   readonly page: number;
   readonly front: number | null;
+  readonly key: string;
 }
 
 /** Whether `sight` is Eien's front matter alone: none of the book's words to count, mark or name. */

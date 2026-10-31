@@ -14,7 +14,8 @@
   -webkit-hyphens: auto;
   hyphenate-limit-chars: 6 3 2;
 }
-[data-view="pages"][data-hyphens] .epub-chapter {
+/* Low specificity, so a narrow page's and a phone's ragged rules below win wherever the window hyphenates. */
+[data-view="pages"]:where([data-hyphens]) .epub-chapter {
   --epub-align: justify;
 }
 /* A phone's measure, or a page as narrow, opens rivers when it's justified. */
@@ -36,7 +37,7 @@
 }
 /* A turn's copy of a paragraph cut at the page's foot (./page-cut.ts): its lines set as the page's, its last too.
    A paragraph alone: nothing else is justified. */
-[data-view="pages"] .epub-chapter p[data-cut-end] {
+[data-view="pages"] .epub-chapter p[data-cut-end]:not([data-align]) {
   text-align-last: var(--epub-align);
   text-wrap: wrap;
 }
@@ -45,6 +46,9 @@
    lines, so the text under it keeps to the grid and facing pages line up. Padding, not a margin:
    a margin at a column's head is dropped. */
 [data-view="pages"] .epub-chapter [data-part="chapter-title"] {
+  /* A title's words are set whole, never broken at display size. */
+  hyphens: manual;
+  -webkit-hyphens: manual;
   margin: 0 0 var(--line);
   padding-top: calc(4 * var(--line));
   line-height: var(--line);
@@ -73,6 +77,10 @@
 }
 [data-view="pages"] .epub-folios {
   padding-top: var(--eien-space-3);
+}
+/* One page: its head has the page's width, its folio the outer corner. */
+.epub-sheet:not(:has(> .epub__pages[data-spread])) :is(.epub-heads, .epub-folios) {
+  grid-template-columns: 1fr auto;
 }
 .epub-heads__item,
 .epub-folios__item {

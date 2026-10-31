@@ -34,7 +34,8 @@ const shortOfSpread = (page: Page) =>
     const words = pages.querySelector('.epub-chapter') as HTMLElement;
     const paper = pages.closest('.sheet') as HTMLElement;
     const pane = getComputedStyle(room);
-    const width = room.clientWidth - px(pane.paddingLeft) - px(pane.paddingRight);
+    const share = Math.min(1, px(getComputedStyle(paper).getPropertyValue('--look-width')) || 1);
+    const width = (room.clientWidth - px(pane.paddingLeft) - px(pane.paddingRight)) * share;
     const zoom = pages.getBoundingClientRect().width / pages.clientWidth || 1;
     const need =
       2 * 20 * px(getComputedStyle(words).fontSize) +
@@ -294,5 +295,36 @@ test.describe('marks on the edge beside a spread', () => {
     const [edge, paper] = await Promise.all([strip.boundingBox(), sheet(page).boundingBox()]);
     if (!edge || !paper) throw new Error('no strip or sheet');
     expect(edge.x).toBeGreaterThanOrEqual(paper.x + paper.width - 1);
+  });
+});
+
+test.describe('a narrow page', () => {
+  test.use({
+    vaultFiles: {
+      'Novels/Pride and Prejudice.epub': BOOK,
+      'At the Assembly.md': 'She hears it from two chairs away.\n',
+    },
+    deviceFile: {
+      settings: { 'epub.view': 'pages', 'epub.turnSpeed': '0', 'appearance.split': 'sheets' },
+    },
+  });
+
+  test('is ragged beside a note, wherever the window hyphenates (a Mac’s too)', async ({
+    page,
+  }) => {
+    // Two sheets need 720px of pane; each page then under 520px.
+    await page.setViewportSize({ width: 1500, height: 900 });
+    await page.locator('.note-row', { hasText: 'At the Assembly' }).click();
+    await shelfBook(page).click({ modifiers: ['ControlOrMeta'] });
+    await expect(page.locator('.page__pages > .page__leaf')).toHaveCount(2);
+    await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+    const set = await chapter(page).evaluate((element) => ({
+      width: (element.closest('.page__scroll') as HTMLElement).clientWidth,
+      align: getComputedStyle(element.querySelector('p:not([data-part])') as HTMLElement).textAlign,
+      spread: element.closest('.epub__pages')?.hasAttribute('data-spread'),
+    }));
+    expect(set.width).toBeLessThan(520);
+    expect(set.align).toBe('start');
+    expect(set.spread).toBe(false);
   });
 });

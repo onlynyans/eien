@@ -13,7 +13,15 @@
 import { openingSight, pageAt, pageRoles, throughSights } from '../../core/epub';
 import { characterAt, firstOnPage, type SideOf } from './chapter-place';
 import { FRONT } from './front-matter';
-import { type Columns, clipAt, keyOf, layColumns, UNLAID, unlayColumns } from './page-columns';
+import {
+  type Columns,
+  clipAt,
+  keyOf,
+  layColumns,
+  UNLAID,
+  unlayColumns,
+  zoomOf,
+} from './page-columns';
 import { sightCut } from './page-cut';
 import { REST_MS } from './place-keeper';
 import type { PageShown, Spot } from './sight';
@@ -92,7 +100,12 @@ export class PagedPlace {
 
   /** Where the page stands now, to `restore` (a turn that fell back). */
   get spot(): Spot {
-    return { offset: this.#offset, page: this.#page, front: this.#frontColumn };
+    return {
+      offset: this.#offset,
+      page: this.#page,
+      front: this.#frontColumn,
+      key: this.#laid.key,
+    };
   }
 
   /** A chapter drawn, or the page back where it was: `offset` kept, and its page shown. */
@@ -109,7 +122,10 @@ export class PagedPlace {
     this.#offset = spot.offset;
     this.#frontColumn = spot.front;
     if (!this.#shown) return;
-    this.#go(spot.page);
+    // Laid out anew meanwhile (a pane past a spread, a zoom): the sight holding the place, found again.
+    const { key, per } = this.#laid;
+    if (spot.key === key) this.#go(spot.page);
+    else this.#go(spot.front !== null ? Math.floor(spot.front / per) : this.#pageOf(spot.offset));
     this.#inSight(this.#range());
   }
 
@@ -293,8 +309,7 @@ export class PagedPlace {
 
   /** How much the sheet's zoom draws each of the box's pixels as: rects are zoomed, sizes aren't. */
   #scale(): number {
-    const { box } = this.#of;
-    return box.clientWidth > 0 ? box.getBoundingClientRect().width / box.clientWidth || 1 : 1;
+    return zoomOf(this.#of.box);
   }
 
   readonly #again = () => this.reshow();

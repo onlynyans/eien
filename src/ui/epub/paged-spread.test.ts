@@ -289,13 +289,39 @@ describe('the front matter as the pane widens and narrows', () => {
     place.show(0);
     place.turn(-1);
     const spot = place.spot;
-    expect(spot).toEqual({ offset: 0, page: 0, front: 0 });
+    expect(spot).toEqual({ offset: 0, page: 0, front: 0, key: '640×610×2' });
     place.turn(1);
     place.restore(spot);
     expect(place.page).toBe(0);
     expect(place.sight.map((page) => page.role)).toEqual(['front', 'front']);
     // Laid out anew, still there.
     place.reshow();
+    expect(place.page).toBe(0);
+  });
+});
+
+describe('a turn that fell back after the page was laid out anew', () => {
+  it('shows the sight holding its place in the new layout, not the old sight’s number', () => {
+    const { place, pages } = laidOut(['a'.repeat(900)], { per: 1 });
+    place.show(0);
+    for (let i = 0; i < 5; i++) place.turn(1);
+    const spot = place.spot;
+    expect(spot.page).toBe(5);
+    // The pane opens to a spread mid-gesture: sight 5 there is pages 10 and 11, past the place.
+    pages(2);
+    place.restore(spot);
+    expect(place.page).toBe(2);
+    expect(place.offset).toBe(5 * 100);
+  });
+
+  it('a front page’s comes back to the front, whatever the layout', () => {
+    const { place, pages } = laidOut(['a'.repeat(450)], { per: 1, front: true });
+    place.show(0);
+    place.turn(-1);
+    const spot = place.spot;
+    pages(2);
+    place.turn(1);
+    place.restore(spot);
     expect(place.page).toBe(0);
   });
 });

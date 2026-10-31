@@ -43,7 +43,7 @@ function firstChapter() {
       return offsetOf(page);
     },
     get spot(): Spot {
-      return { offset: offsetOf(page), page, front: page < 2 ? page : null };
+      return { offset: offsetOf(page), page, front: page < 2 ? page : null, key: '' };
     },
     get page() {
       return page;
@@ -96,7 +96,7 @@ describe('a turn from Eien’s front matter that falls back', () => {
     expect(book.at()).toBe(2);
     await book.surface.unstep();
     expect(book.at()).toBe(1);
-    expect(book.sheet.restore).toHaveBeenLastCalledWith({ offset: 0, page: 1, front: 1 });
+    expect(book.sheet.restore).toHaveBeenLastCalledWith({ offset: 0, page: 1, front: 1, key: '' });
     expect(book.sheet.showPlace).not.toHaveBeenCalled();
     expect(book.draw).not.toHaveBeenCalled();
   });

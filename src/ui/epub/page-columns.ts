@@ -91,6 +91,10 @@ export function unlayColumns(box: HTMLElement, chapter: HTMLElement): void {
   box.removeAttribute('data-spread');
 }
 
+/** How much the sheet's zoom draws each of `box`'s pixels as: rects are zoomed, sizes aren't. */
+export const zoomOf = (box: HTMLElement): number =>
+  box.clientWidth > 0 ? box.getBoundingClientRect().width / box.clientWidth || 1 : 1;
+
 /** Only the sight at `at` (its left, in the chapter's pixels) drawn, and half the gap either side for a letter's overhang. */
 export function clipAt(at: number, gap: number): string {
   const half = gap / 2;

@@ -6,6 +6,7 @@
 // pages): neither opens one.
 
 import { spreadFits } from '../../core/epub';
+import { zoomOf } from './page-columns';
 
 const px = (value: string) => Number.parseFloat(value) || 0;
 
@@ -17,9 +18,11 @@ export function spreadOf(box: HTMLElement, chapter: HTMLElement, room: HTMLEleme
   if (!sheet) return 1;
   const pane = getComputedStyle(room);
   // The pane's own content: its padding (the blotter round the sheet, the edge strip's room) is no page's.
-  const width = room.clientWidth - px(pane.paddingLeft) - px(pane.paddingRight);
+  // Page width Narrow narrows the sheet below the pane's width (../page/page.css): the pages its share.
+  const share = Math.min(1, px(getComputedStyle(sheet).getPropertyValue('--look-width')) || 1);
+  const width = (room.clientWidth - px(pane.paddingLeft) - px(pane.paddingRight)) * share;
   // The sheet's zoom draws each of its pixels larger: its room counted in its own.
-  const zoom = box.clientWidth > 0 ? box.getBoundingClientRect().width / box.clientWidth || 1 : 1;
+  const zoom = zoomOf(box);
   const em = px(getComputedStyle(chapter).fontSize);
   const padX = px(getComputedStyle(sheet).paddingLeft);
   const gap = px(getComputedStyle(box).columnGap);

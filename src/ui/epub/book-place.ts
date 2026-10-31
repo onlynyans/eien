@@ -80,9 +80,9 @@ export function bookPlace(of: BookPlaceOf): BookPlace {
     const count = of.count();
     const spine = of.spine();
     const { sight } = page.sheet;
-    const at = (offset: number) => (count ? pageOf(count, spine, offset) : null);
-    const verso = from === null || allFront(sight) ? null : at(from);
-    const recto = sight[1]?.role === 'text' ? at(sight[1].from) : null;
+    // As the folios read them: a printed book's chapter not yet counted has none.
+    const verso = from === null || allFront(sight) ? null : pageIn(spine, from);
+    const recto = sight[1]?.role === 'text' ? pageIn(spine, sight[1].from) : null;
     page.foot.page(spreadWords(verso?.label ?? null, recto?.label ?? null, verso?.of ?? null));
     page.heads.show(from === null ? [] : sight, of.epub(), spine, (offset) =>
       labelAt(spine, offset),
