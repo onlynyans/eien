@@ -34,6 +34,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     },
     bookmark: () => void marks.bookmarks.toggle(),
     highlight: () => void marks.highlights.toggle(),
+    walk: (way) => marks.walk(way),
     inHighlight: (range) => marks.highlights.holds(range),
     copied: (copy, from) => marks.highlights.inkCopy(copy, from),
     turn: (way, held) => pages.turn(way, held),

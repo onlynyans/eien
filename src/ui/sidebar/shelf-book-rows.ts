@@ -1,6 +1,6 @@
 // The rows under a book on SHELF with two panes (#40): its lenses (Phase
 // 4c), then what the lens shows, its chapters in the book's order (the one on
-// the page marked as an open note's row is) or its bookmarks, as the list
+// the page marked as an open note's row is) or its marks, as the list
 // shows them with the list in sight (../list/contents-list.ts).
 
 import { h } from '../dom';
@@ -12,6 +12,7 @@ import {
   markKey,
   markKeys,
   markName,
+  markWhere,
 } from '../list/book-lenses';
 import { chapterKey, marked, NO_MARKS } from '../list/contents-list';
 import { atDepth } from './depth';
@@ -38,7 +39,7 @@ export interface ShelfBookActions {
   chapter(path: string, spine: number): void;
   /** The book's lens chosen, Contents or Marks (Phase 4c). */
   lens(path: string, lens: BookLens): void;
-  /** A bookmark's row chosen: its page; or Delete on it: taken off. */
+  /** A mark's row chosen: where it is; or Delete on it: taken off. */
   goMark(path: string, row: MarkRow): void;
   unmark(path: string, row: MarkRow): void;
 }
@@ -61,14 +62,14 @@ function listed(path: string, contents: ShelfContents, actions: ShelfBookActions
       return [atDepth(h('li', { class: 'tree-hint', text: NO_MARKS }), depth + 1)];
     return contents.marks.map((each) => {
       const name = button(
-        `${path}:${markKey(each.mark)}`,
+        `${path}:${markKey(each)}`,
         markName(each),
         false,
         {
           click: () => actions.goMark(path, each),
           keydown: markKeys(() => actions.unmark(path, each)),
         },
-        { 'aria-keyshortcuts': MARK_SHORTCUTS, title: each.chapter },
+        { 'aria-keyshortcuts': MARK_SHORTCUTS, title: markWhere(each) },
       );
       if (each.page) name.append(' ', h('span', { class: 'count', text: each.page }));
       return row(depth + 1, name, 'mark');

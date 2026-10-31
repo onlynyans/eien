@@ -1,6 +1,7 @@
 // The whole book down the page's edge (#40, Phase 4d, epub.md → Marks: On
 // the edge; Features 3's thumb strip): a hairline for each chapter (a longer
-// one each tenth), each bookmark a pencil tab, your place a bar across it.
+// one each tenth), each bookmark a pencil tab and each highlight a pencil
+// tick (Phase 5b), your place a bar across it.
 // Pointing shows where a point is; a click goes there; a finger drags to
 // scrub and goes where it's lifted (a tap alone never jumps: a finger
 // scrolling or turning may start there). To the keyboard it's a slider: ↑ ↓
@@ -8,6 +9,7 @@
 // the book in, shares out: what they are is the caller's (./book-strip.ts).
 // Apart from the fore-edge (./leaf-edges.ts), which a spread lays out anew.
 
+import type { Mark } from '../../core/epub';
 import { h } from '../dom';
 
 export interface EdgeStripOf {
@@ -22,7 +24,8 @@ export interface EdgeStripOf {
 /** What the strip shows, each a share of the book (0 its start, 1 its end). */
 export interface StripModel {
   readonly chapters: readonly number[];
-  readonly marks: readonly number[];
+  /** Each mark, of its kind: a bookmark a tab, a highlight a pencil tick. */
+  readonly marks: readonly { readonly kind: Mark['kind']; readonly share: number }[];
 }
 
 /** A share of the book held within it. */
@@ -34,6 +37,12 @@ function at(className: string, share: number): HTMLElement {
   piece.style.setProperty('--at', String(within(share)));
   return piece;
 }
+
+/** Each kind of mark's look on the strip (./edge-strip.css). */
+const MARK_CLASS: Readonly<Record<Mark['kind'], string>> = {
+  bookmark: 'edge-strip__mark',
+  highlight: 'edge-strip__highlight',
+};
 
 /** How far a finger moves along the strip before it's a scrub, not a tap: a turn's own threshold. */
 const SCRUB_PX = 8;
@@ -94,7 +103,7 @@ export class EdgeStrip {
     );
   }
 
-  /** The book's chapters and bookmarks, drawn anew. */
+  /** The book's chapters and marks, drawn anew. */
   draw(model: StripModel): void {
     this.#marks.replaceChildren(
       ...model.chapters.map((share, i) =>
@@ -103,7 +112,7 @@ export class EdgeStrip {
           share,
         ),
       ),
-      ...model.marks.map((share) => at('edge-strip__mark', share)),
+      ...model.marks.map(({ kind, share }) => at(MARK_CLASS[kind], share)),
     );
   }
 

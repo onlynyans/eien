@@ -158,7 +158,14 @@ describe('SHELF’s rows', () => {
 
   it('lists the book’s lenses first under it, and under Marks its bookmarks (Phase 4c)', () => {
     const mark = { chapter: 'c1.xhtml', offset: 5, words: 'It is a truth' };
-    const row = { mark, spine: 1, page: '3', chapter: 'Chapter I' };
+    const row = {
+      kind: 'bookmark' as const,
+      offset: 5,
+      mark,
+      spine: 1,
+      page: '3',
+      chapter: 'Chapter I',
+    };
     const { list, actions } = draw('Loose.epub', {
       path: 'Loose.epub',
       lens: 'marks',
@@ -187,7 +194,9 @@ describe('SHELF’s rows', () => {
       rows: [],
       spine: 1,
     });
-    expect(texts(list, '.tree-hint')).toEqual(['Nothing kept yet. B bookmarks a page.']);
+    expect(texts(list, '.tree-hint')).toEqual([
+      'Nothing kept yet. B bookmarks a page; H keeps the words you choose.',
+    ]);
     // Not a row: it neither lights nor presses as one.
     expect(list.querySelectorAll('.tree-row--empty')).toHaveLength(0);
   });
@@ -281,6 +290,8 @@ describe('SHELF’s rows', () => {
 describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
   const BOOK = 'Cooking/Boston.epub';
   const markRowOf = (offset: number, page: string | null): MarkRow => ({
+    kind: 'bookmark',
+    offset,
     mark: { chapter: 'c1.xhtml', offset, words: `At ${offset}` },
     spine: 1,
     page,
@@ -320,7 +331,7 @@ describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
     expect(known?.querySelector('.count')?.textContent).toBe('7');
     expect(unknown?.querySelector('.count')).toBeNull();
     expect(unknown?.textContent).toBe('At 50');
-    expect(unknown?.title).toBe('Chapter I');
+    expect(unknown?.title).toBe('Chapter I · bookmark');
     expect(unknown?.getAttribute('aria-keyshortcuts')).toBe('Delete Backspace');
   });
 

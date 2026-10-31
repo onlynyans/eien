@@ -178,3 +178,53 @@ test.describe('a book’s highlights in pages', () => {
     },
   );
 });
+
+test.describe('a book’s highlights among its marks (Phase 5b)', () => {
+  test.use({ vaultFiles: { 'Novels/Pride and Prejudice.epub': epub('plain.epub') } });
+  test.beforeEach(({ page }) => page.setViewportSize({ width: 1600, height: 900 }));
+
+  test('] and [ walk a highlight and a bookmark across chapters, round the book', async ({
+    page,
+  }) => {
+    await openBook(page);
+    await choose(page, 'It is a truth');
+    await page.keyboard.press('h');
+    await expect.poll(() => inked(page)).toEqual(['It is a truth']);
+    // A bookmark at the third chapter's top.
+    await page.locator('.contents-row').nth(2).click();
+    await leaf(page).locator('.page__scroll').focus();
+    await page.keyboard.press('b');
+    await page.locator('.contents-row').nth(0).click();
+    await leaf(page).locator('.page__scroll').focus();
+    const said = page.locator('.colophon__said');
+    // The highlight's in sight: ] goes past it, to the bookmark.
+    await page.keyboard.press(']');
+    await expect(said).toHaveText('Bookmark, 2 of 2 marks.');
+    await expect(leaf(page).locator('.epub-chapter h2').first()).toHaveText(/Chapter III/u);
+    await page.keyboard.press('[');
+    await expect(said).toHaveText('Highlight, 1 of 2 marks.');
+    await expect(leaf(page).locator('.epub-chapter h2').first()).toHaveText(/Chapter I\b/u);
+    await page.keyboard.press('[');
+    await expect(said).toHaveText('Round to the last: Bookmark, 2 of 2 marks.');
+  });
+
+  test('lists a highlight under Marks in its words, Delete taking it off with Put back', async ({
+    page,
+    vault,
+  }) => {
+    if (!vault) throw new Error('no vault');
+    await openBook(page);
+    await choose(page, 'universally acknowledged');
+    await page.keyboard.press('h');
+    await expect.poll(() => highlightsIn(vault).length).toBe(1);
+    await page.getByRole('button', { name: /^Marks \d+$/u }).click();
+    const row = page.locator('.mark-row');
+    await expect(row.locator('.mark-row__words')).toHaveText('universally acknowledged');
+    await expect(row.locator('.mark-row__chapter')).toHaveText(/ · highlight$/u);
+    await row.focus();
+    await page.keyboard.press('Delete');
+    await expect.poll(() => highlightsIn(vault).length).toBe(0);
+    await page.getByRole('button', { name: 'Put back' }).click();
+    await expect.poll(() => highlightsIn(vault).length).toBe(1);
+  });
+});

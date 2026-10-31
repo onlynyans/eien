@@ -63,7 +63,9 @@ describe('a bookmark’s row’s keys', () => {
 });
 
 describe('a bookmark’s row', () => {
-  const row = (over: Partial<MarkRow> = {}): MarkRow => ({
+  const row = (over: { page?: string | null } = {}): MarkRow => ({
+    kind: 'bookmark' as const,
+    offset: 40,
     mark: { chapter: 'c3.xhtml', offset: 40, words: 'Not all that Mrs. Bennet' },
     spine: 3,
     page: null,
@@ -93,15 +95,42 @@ describe('a bookmark’s row', () => {
 
   it('has a name of its own per place, so the keyboard comes back to the right one', () => {
     const keys = [
-      markKey({ chapter: 'c1.xhtml', offset: 0, words: '' }),
-      markKey({ chapter: 'c1.xhtml', offset: 40, words: '' }),
-      markKey({ chapter: 'c2.xhtml', offset: 0, words: '' }),
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 0,
+        mark: { chapter: 'c1.xhtml', offset: 0, words: '' },
+      }),
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 40,
+        mark: { chapter: 'c1.xhtml', offset: 40, words: '' },
+      }),
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 0,
+        mark: { chapter: 'c2.xhtml', offset: 0, words: '' },
+      }),
       // A chapter whose name ends as another's offset begins.
-      markKey({ chapter: 'c1.xhtml:4', offset: 0, words: '' }),
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 0,
+        mark: { chapter: 'c1.xhtml:4', offset: 0, words: '' },
+      }),
     ];
     expect(new Set(keys).size).toBe(keys.length);
     // Its words aren't its name: they may be read again differently, and it's the same bookmark.
-    expect(markKey({ chapter: 'c1.xhtml', offset: 0, words: 'a' })).toBe(keys[0]);
+    expect(
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 0,
+        mark: { chapter: 'c1.xhtml', offset: 0, words: 'a' },
+      }),
+    ).toBe(keys[0]);
   });
 });
 

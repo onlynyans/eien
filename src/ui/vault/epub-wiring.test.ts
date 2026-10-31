@@ -143,7 +143,14 @@ describe('a book’s Marks in the list (Phase 4c)', () => {
     const activate = vi.fn();
     const { epubs } = wired('a.epub', { active: note, sides: [note, book], activate });
     const mark = { chapter: 'OEBPS/chapter-3.xhtml', offset: 40, words: 'later' };
-    epubs.actions.goMark('a.epub', { mark, spine: 3, page: '2', chapter: 'Chapter III' });
+    epubs.actions.goMark('a.epub', {
+      kind: 'bookmark',
+      offset: 40,
+      mark,
+      spine: 3,
+      page: '2',
+      chapter: 'Chapter III',
+    });
     expect(activate).toHaveBeenCalledWith(book);
     expect(goTo).toHaveBeenCalledWith(3, 40);
   });
@@ -184,6 +191,8 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     return { nav, epubs, redraw, showPage };
   }
   const ROW = {
+    kind: 'bookmark' as const,
+    offset: 40,
     mark: { chapter: 'OEBPS/chapter-3.xhtml', offset: 40, words: 'later' },
     spine: 3,
     page: '2',
@@ -208,6 +217,19 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     // Taken off from the list: the keyboard and the page stay where they are.
     expect(activate).not.toHaveBeenCalled();
     expect(showPage).not.toHaveBeenCalled();
+  });
+
+  it('take a highlight off from its row, through the page’s highlights (Phase 5b)', () => {
+    const book = {
+      ...bookSide('a.epub'),
+      marks: { bookmarks: { remove: vi.fn() }, highlights: { remove: vi.fn(async () => {}) } },
+    };
+    const { epubs } = watched('a.epub', { active: book, sides: [book], activate: vi.fn() });
+    const highlight = { chapter: 'OEBPS/chapter-3.xhtml', from: 40, to: 50, words: 'later' };
+    const row = { ...ROW, kind: 'highlight' as const, mark: highlight };
+    epubs.actions.unmark('a.epub', row);
+    expect(book.marks.highlights.remove).toHaveBeenCalledExactlyOnceWith(highlight);
+    expect(book.marks.bookmarks.remove).not.toHaveBeenCalled();
   });
 
   it('go to a bookmark on the active page when two pages hold the book', () => {

@@ -4,7 +4,6 @@ import {
   bookmarksOf,
   bookmarksOn,
   firstWords,
-  inBookOrder,
   MAX_BOOKMARKS,
   withBookmarks,
 } from './bookmarks';
@@ -111,14 +110,6 @@ describe('the bookmarks on a page, and in the book’s order', () => {
   it('on a page of no words (a picture’s), are those at the place it stands at', () => {
     expect(bookmarksOn(marks, 'c1', 100, 100)).toEqual([mark('c1', 100)]);
     expect(bookmarksOn(marks, 'c1', 101, 101)).toEqual([]);
-  });
-
-  it('run by chapter, then place, leaving out a chapter the book doesn’t have', () => {
-    expect(inBookOrder(marks, ['c1', 'c2'])).toEqual([
-      mark('c1', 100),
-      mark('c1', 900),
-      mark('c2', 50),
-    ]);
   });
 });
 

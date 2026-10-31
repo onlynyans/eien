@@ -3,9 +3,11 @@
 // with the book's place and kept in step by the store (./reading-store.ts).
 // One part for the side, over the book's reading file: which book, how its
 // file stands, one listener for both kinds, and a change that couldn't be
-// kept said once, in the same words for either.
+// kept said once, in the same words for either; and `]` and `[` walking
+// both kinds in the book's order (Phase 5b).
 
-import type { ReadingKept } from '../../core/epub';
+import { type Epub, type Mark, marksInOrder, type ReadingKept, walkMarks } from '../../core/epub';
+import { NO_MARKS } from '../list/contents-list';
 import type { Still } from './book-count';
 import type { EpubPage } from './epub-page';
 import { PageBookmarks } from './page-bookmarks';
@@ -38,7 +40,19 @@ export interface BookMarksOf {
   changed(): void;
   /** The book's marks changed: the list's Marks and the strip show them. */
   listed(): void;
+  /** The book open. */
+  epub(): Epub | null;
+  /** The spine item drawn; -1 for none. */
+  spine(): number;
+  /** Show a place: spine item `index`, at an offset in its words (`]` and `[`). */
+  goTo(index: number, offset: number): void;
 }
+
+/** What `]` and `[` say they came to: its kind, and its place among them all. */
+const KIND_WORDS: Readonly<Record<Mark['kind'], string>> = {
+  bookmark: 'Bookmark',
+  highlight: 'Highlight',
+};
 
 export class BookMarks {
   readonly bookmarks: PageBookmarks;
@@ -46,6 +60,8 @@ export class BookMarks {
   readonly #of: BookMarksOf;
   #key: string | null = null;
   #unlisten = () => {};
+  /** The words in sight, as last measured; null while none are. */
+  #sight: { readonly from: number; readonly to: number } | null = null;
 
   constructor(of: BookMarksOf) {
     this.#of = of;
@@ -67,14 +83,45 @@ export class BookMarks {
     if (read.kept === 'unreadable' && words) this.#of.page.foot.say(words);
   }
 
+  /** Every mark of the book's that's in it, in its order (Marks, the strip, `]` and `[`). */
+  inOrder(epub: Epub | null): Mark[] {
+    if (!epub) return [];
+    const spine = epub.spine.map((item) => item.path);
+    return marksInOrder(this.bookmarks.all, this.highlights.all, spine);
+  }
+
+  /**
+   * `]` (`way` 1) or `[` (-1): to the next mark past the words in sight, or
+   * the one before them, round the book past either end; said in the colophon.
+   */
+  walk(way: 1 | -1): void {
+    const { page } = this.#of;
+    const marks = this.inOrder(this.#of.epub());
+    const sight = this.#sight ?? { from: 0, to: 0 };
+    const walked = walkMarks(marks, { spine: this.#of.spine(), ...sight }, way);
+    if (!walked) {
+      page.foot.say(NO_MARKS);
+      return;
+    }
+    const { mark, index, round } = walked;
+    this.#of.goTo(mark.spine, mark.offset);
+    const count = `${marks.length} ${marks.length === 1 ? 'mark' : 'marks'}`;
+    const where = `${KIND_WORDS[mark.kind]}, ${index + 1} of ${count}.`;
+    page.foot.say(
+      round ? `${way > 0 ? 'Round to the first' : 'Round to the last'}: ${where}` : where,
+    );
+  }
+
   /** The words in sight measured. */
   inSight(from: number, to: number): void {
+    this.#sight = { from, to };
     this.bookmarks.inSight(from, to);
     this.highlights.inSight(from, to);
   }
 
   /** No words in sight measured in the chapter drawn (on its way, or refused). */
   away(): void {
+    this.#sight = null;
     this.bookmarks.away();
     this.highlights.away();
   }

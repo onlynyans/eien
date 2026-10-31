@@ -5,7 +5,7 @@
 // apart from the fixtures' three chapters, which are none of these.
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Bookmark, Epub } from '../../core/epub';
+import { type Bookmark, type Epub, type Highlight, marksInOrder } from '../../core/epub';
 import type { BookCount } from './book-count';
 import { bookStrip } from './book-strip';
 import type { EpubPage } from './epub-page';
@@ -20,6 +20,7 @@ interface Shape {
   /** Each item's words as counted (null: not yet); the test counts more as it goes. */
   readonly lengths: (number | null)[];
   readonly marks?: readonly Bookmark[];
+  readonly highlights?: readonly Highlight[];
   /** The spine item drawn. */
   readonly at?: number;
 }
@@ -48,7 +49,13 @@ function shaped(shape: Shape) {
     epub: () => epub,
     spine: () => at,
     count: () => count,
-    marks: () => shape.marks ?? [],
+    // In the book's order, as the page's marks give them (./book-marks.ts inOrder).
+    marks: () =>
+      marksInOrder(
+        shape.marks ?? [],
+        shape.highlights ?? [],
+        epub.spine.map((item) => item.path),
+      ),
     goTo,
     pageAt: (_, offset) => `page ${offset + 1}`,
   });
@@ -92,6 +99,21 @@ describe('a book’s shape on its edge', () => {
     book.count[1] = 100;
     book.strip.drawn();
     expect(book.shares('.edge-strip__mark')).toEqual([0.75]);
+  });
+
+  it('ticks each highlight where its words begin, apart from a bookmark’s tab (Phase 5b)', () => {
+    const book = shaped({
+      spine: [[100], [100]],
+      rows: [
+        ['Chapter I', 0, 0],
+        ['Chapter II', 0, 1],
+      ],
+      lengths: [100, 100],
+      marks: [mark('c0.xhtml', 50)],
+      highlights: [{ chapter: 'c1.xhtml', from: 50, to: 60, words: '' }],
+    });
+    expect(book.shares('.edge-strip__mark')).toEqual([0.25]);
+    expect(book.shares('.edge-strip__highlight')).toEqual([0.75]);
   });
 
   it('shows no tab for a bookmark whose chapter isn’t in the book', () => {

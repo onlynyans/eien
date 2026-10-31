@@ -228,6 +228,9 @@ export const actsOn = (id: CommandId, kind: PageKind): boolean => {
   return on === undefined || on === kind;
 };
 
+/** The menu's commands with no control of their own that act on a book's page alone: walking its marks (#40, Phase 5b). */
+const BOOK_MENU: readonly MenuCommand[] = ['mark:next', 'mark:previous'];
+
 /** The format a book's words take too: Highlight, its chosen words kept (#40, Phase 5a). */
 export const BOOK_FORMAT: MenuCommand = 'format:highlight';
 
@@ -256,7 +259,8 @@ export function menuOff(kind: PageKind): MenuCommand[] {
     'sends' in command && 'on' in command && command.on !== kind ? [command.sends] : [],
   );
   // With a book in front, the format its words take too stays on, though its button is a note's.
-  return [...new Set([...others, ...(kind === 'note' ? [] : NOTE_MENU)])].filter(
+  const menu = [...(kind === 'note' ? [] : NOTE_MENU), ...(kind === 'epub' ? [] : BOOK_MENU)];
+  return [...new Set([...others, ...menu])].filter(
     (command) => !(kind === 'epub' && command === BOOK_FORMAT),
   );
 }

@@ -101,6 +101,7 @@ describe('a book’s page’s keys', () => {
       bookmark: vi.fn(),
       highlight: vi.fn(),
       back: vi.fn(),
+      walk: vi.fn(),
       chosen: () => state.chosen,
       shown: () => state.shown,
       paged: () => state.paged,
@@ -145,5 +146,19 @@ describe('a book’s page’s keys', () => {
     const typed = bookPress('b', {}, { paged: true }, field);
     expect(typed.bookmark).not.toHaveBeenCalled();
     expect(typed.prevented).toBe(false);
+  });
+
+  it('walks the marks by ] and [, however a layout types them, never ⌘[ or Ctrl+[ (Back)', () => {
+    expect(bookPress(']').walk).toHaveBeenCalledWith(1);
+    expect(bookPress('[').walk).toHaveBeenCalledWith(-1);
+    // AltGr (Ctrl+Alt on Windows) and a Mac's Option, which type a bracket on some layouts.
+    expect(bookPress('[', { ctrlKey: true, altKey: true }).walk).toHaveBeenCalledWith(-1);
+    expect(bookPress(']', { altKey: true }).walk).toHaveBeenCalledWith(1);
+    const back = bookPress('[', { metaKey: true }, { back: true });
+    expect(back.walk).not.toHaveBeenCalled();
+    expect(back.back).toHaveBeenCalledOnce();
+    expect(bookPress('[', { ctrlKey: true }).walk).not.toHaveBeenCalled();
+    expect(bookPress(']', {}, { shown: false }).walk).not.toHaveBeenCalled();
+    expect(bookPress(']', {}, {}, document.createElement('input')).walk).not.toHaveBeenCalled();
   });
 });

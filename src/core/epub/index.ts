@@ -5,7 +5,6 @@ export {
   bookmarksOf,
   bookmarksOn,
   firstWords,
-  inBookOrder,
   MAX_BOOKMARKS,
   sameMark,
   withBookmarks,
@@ -33,6 +32,7 @@ export {
   withRestored,
 } from './highlights';
 export { lengthWords, type SetAs, setAsWords } from './imprint';
+export { type InSight, type Mark, type MarkWalk, marksInOrder, walkMarks } from './marks';
 export type { SpineItem } from './package';
 export {
   type Lengths,

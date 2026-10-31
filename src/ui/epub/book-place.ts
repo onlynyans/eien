@@ -8,9 +8,9 @@
 // book's on its front matter.
 
 import {
-  type Bookmark,
   bookFraction,
   type Epub,
+  type Mark,
   pageOf,
   pageWords,
   spreadWords,
@@ -29,7 +29,7 @@ export interface BookPlaceOf {
   /** The book's count, while one is open. */
   count(): BookCount | null;
   /** The book's bookmarks, for the strip. */
-  marks(): readonly Bookmark[];
+  marks(): readonly Mark[];
   /** A place shown: spine item `index` at an offset, or the one it gives once drawn (where the strip goes). */
   goTo(index: number, at: number | (() => number)): void;
 }

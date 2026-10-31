@@ -2,7 +2,7 @@
    Marks on the edge, a strip at the page pane's outer edge, where a scroll
    bar's marks would be, inside it far enough to leave the system's scroll bar
    its own. Hairlines for the chapters (a longer pencil one each tenth), a
-   pencil tab for each bookmark, your place a mark-wide ink-soft bar across it,
+   pencil tab for each bookmark, a pencil tick for each highlight, your place a mark-wide ink-soft bar across it,
    never a tab, so it's never taken for an edge-tab bookmark. Where there's no
    room it lies over the page's outer margin. Each piece stands at its share
    of the book, --at. */
@@ -70,6 +70,14 @@
   background: var(--eien-paper);
   border: var(--eien-hairline) solid var(--eien-pencil);
   border-radius: 0 var(--eien-radius-s) var(--eien-radius-s) 0;
+  translate: 0 -50%;
+}
+/* A highlight: the margin tick's echo, pencil and a mark wide, past a bookmark's tab; a border,
+   so forced colours keep it (Phase 5b). */
+.edge-strip i.edge-strip__highlight {
+  left: calc(var(--eien-space-3) + var(--eien-space-2));
+  height: var(--eien-space-2);
+  border-inline-start: var(--eien-epub-highlight-w) solid var(--eien-epub-highlight-ink);
   translate: 0 -50%;
 }
 .edge-strip i.edge-strip__here {

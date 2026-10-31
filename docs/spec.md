@@ -489,13 +489,24 @@ Three panes, each collapsible, with a two-pane option in settings:
      hold through a new width, face, size or view, as the place does. A book
      shows 1,000 at most. The page in sight holding one is said, not seen, in
      the colophon ("highlighted").
+   - **`]` and `[`** (Phase 5b) walk the book's marks, bookmarks and
+     highlights, in its order: `]` to the first past the words in sight, `[`
+     to the last before them, round the book past either end; the colophon
+     says which ("Highlight, 3 of 7 marks.", "Round to the first: …"), or
+     that none is kept. Typed however a keyboard's layout types a bracket;
+     ⌘[ (Ctrl+[) stays Back. View → Next Mark and Previous Mark do the same,
+     greyed with a note in front.
    - **Marks in the list** (Phase 4c): with a book's contents in the list,
      two buttons under its head, **Contents** and **Marks**, each with its
-     count, the one shown pressed; Marks lists the book's bookmarks in its
-     order, each row the words its page begins with, its page, and its
-     chapter, or "Nothing kept yet. B bookmarks a page." Enter or a click
-     goes to the bookmark's page; Delete or Backspace takes it off (once,
-     however long it's held; the keyboard goes to the next row). The
+     count, the one shown pressed; Marks lists the book's bookmarks and
+     highlights (Phase 5b) in its order (a bookmark first where both begin
+     at one word), each row its words (those its page begins with, or those
+     highlighted), its page, and its chapter and kind ("Chapter III ·
+     highlight"), or "Nothing kept yet. B bookmarks a page; H keeps the
+     words you choose." Enter or a click goes to the mark; Delete or
+     Backspace takes it off (once, however long it's held; the keyboard
+     goes to the next row), a highlight with Put back in the book's
+     colophon. The
      lens is the window's, back to Contents for another book. With two
      panes the tabs and rows are under the book's row on SHELF; on the
      phone, on its contents page.
@@ -503,8 +514,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      the list* (the default, as above) or *On the edge*. On the edge, the
      list is the book's contents alone, and down the page pane's outer edge
      runs the whole book, top to foot: a hairline for each chapter (a
-     longer one each tenth), a pencil tab for each bookmark, the place a bar
-     across it. Pointing at it says the chapter and page there; a click
+     longer one each tenth), a pencil tab for each bookmark, a pencil tick
+     for each highlight (Phase 5b), the place a bar across it. Pointing at it says the chapter and page there; a click
      goes there, the keyboard back on the page; a finger drags along it to
      scrub and goes where it's lifted (a finger's tap alone goes nowhere).
      To the keyboard it's a slider saying the chapter and page you're on:

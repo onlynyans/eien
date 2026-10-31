@@ -79,12 +79,16 @@ describe('a book’s contents in the list', () => {
 describe('a book’s lenses in the list (Phase 4c)', () => {
   const ROWS: MarkRow[] = [
     {
+      kind: 'bookmark' as const,
+      offset: 40,
       mark: { chapter: 'c1.xhtml', offset: 40, words: 'It is a truth universally acknowledged' },
       spine: 1,
       page: '3',
       chapter: 'Chapter I',
     },
     {
+      kind: 'bookmark' as const,
+      offset: 0,
       mark: { chapter: 'c2.xhtml', offset: 0, words: '' },
       spine: 2,
       page: null,
@@ -129,7 +133,7 @@ describe('a book’s lenses in the list (Phase 4c)', () => {
       'It is a truth universally acknowledged',
     );
     expect(first?.querySelector('.mark-row__page')?.textContent).toBe('3');
-    expect(first?.querySelector('.mark-row__chapter')?.textContent).toBe('Chapter I');
+    expect(first?.querySelector('.mark-row__chapter')?.textContent).toBe('Chapter I · bookmark');
     // No words kept: called by its chapter.
     expect(second?.querySelector('.mark-row__words')?.textContent).toBe('Chapter II');
     first?.click();
@@ -178,6 +182,8 @@ describe('a book’s Marks in the list, as QA tried them (Phase 4c)', () => {
   /** `count` bookmarks in one chapter, a page each. */
   const many = (count: number): MarkRow[] =>
     Array.from({ length: count }, (_, i) => ({
+      kind: 'bookmark' as const,
+      offset: i * 100,
       mark: { chapter: 'c1.xhtml', offset: i * 100, words: `Bookmark ${i}` },
       spine: 1,
       page: String(i + 1),
@@ -194,7 +200,7 @@ describe('a book’s Marks in the list, as QA tried them (Phase 4c)', () => {
   it('are a list of their own, named for the book, that the arrow keys move through', () => {
     const { container } = drawn(marksOf(many(3)));
     expect(container.querySelector('ul')?.getAttribute('aria-label')).toBe(
-      'Bookmarks in Pride and Prejudice',
+      'Marks in Pride and Prejudice',
     );
     const [first, second, third] = rows(container);
     first?.focus();

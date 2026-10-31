@@ -75,21 +75,6 @@ export const bookmarksOn = (
   );
 };
 
-/**
- * The bookmarks in the book's order, by their chapters' places in `spine`
- * (its files' paths) and then their words; one whose chapter isn't in it is
- * left out (kept in the file, never shown).
- */
-export function inBookOrder(marks: readonly Bookmark[], spine: readonly string[]): Bookmark[] {
-  const at = new Map(spine.map((path, i) => [path, i]));
-  return marks
-    .filter((mark) => at.has(mark.chapter))
-    .sort(
-      (a, b) =>
-        (at.get(a.chapter) as number) - (at.get(b.chapter) as number) || a.offset - b.offset,
-    );
-}
-
 /** A page's first words as a bookmark keeps them: whole words, its space run together, an ellipsis where it goes on. */
 export function firstWords(text: string, max = BOOKMARK_WORDS): string {
   const words = text.replace(/\s+/gu, ' ').trim();

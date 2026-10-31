@@ -644,7 +644,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131, two pages and set as a book, 3d; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d; Phase 5, highlights, 5a)
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131, two pages and set as a book, 3d; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d; Phase 5, highlights, 5a; among the marks, 5b)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add paging and the turn (Phase 3), marks, highlights and Find
@@ -742,7 +742,9 @@ in the book, each recorded here as it's built.
   a chosen one of a set. A bookmark's row is a contents row: its words in
   the text face at row size, the list's weight and leading, two lines at
   most; its page a count at the right; its chapter in pencil at preview
-  size under them. None kept: the list's empty line, italic in pencil.
+  size under them, and its kind after a middle dot ("Chapter III ·
+  highlight", Phase 5b): a highlight's row is a bookmark's, its words
+  those highlighted. None kept: the list's empty line, italic in pencil.
   With two panes the buttons are a line of their own (not a row) under the
   book's SHELF row, its bookmarks tree rows with their page as the count,
   and none kept the tree's own hint.
@@ -754,7 +756,8 @@ in the book, each recorded here as it's built.
   `--eien-space-2` long for each chapter, `--eien-space-3` in pencil each
   tenth; each bookmark a pencil tab (`--eien-paper` in a pencil hairline,
   `--eien-space-1` × `--eien-space-3`, its outer corners
-  `--eien-radius-s`); the place an ink-soft bar `--eien-mark-w` high
+  `--eien-radius-s`); each highlight a pencil tick past the tabs (Phase 5b:
+  the margin tick's ink and width, `--eien-space-2` high, a border); the place an ink-soft bar `--eien-mark-w` high
   across the strip, never a tab (decided 2026-10-30, so it's never taken
   for an edge-tab bookmark), moving with `--eien-calm`. Pointing, the
   tooltip's look beside the point (raised paper, a rule-strong hairline,

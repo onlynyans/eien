@@ -219,7 +219,14 @@ describe('the commands for a note', () => {
 
   it('greyed in the menu bar are every note’s control’s, and the menu’s own a note’s page alone has', () => {
     // With a note in front, a book's own are greyed (#40, Phase 3b).
-    expect(menuOff('note')).toEqual(['view:pages', 'view:scroll', 'bookmark']);
+    expect(menuOff('note')).toEqual([
+      'view:pages',
+      'view:scroll',
+      'bookmark',
+      // Walking a book's marks (Phase 5b): the menu's own, no control of their own.
+      'mark:next',
+      'mark:previous',
+    ]);
     const off = menuOff('epub');
     const sends = COMMANDS.flatMap((command) =>
       'on' in command && command.on === 'note' && 'sends' in command ? [command.sends] : [],

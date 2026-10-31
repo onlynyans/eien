@@ -109,7 +109,7 @@ test('a book’s Marks on its contents page: lenses a finger high, a row tapped 
   await expect(marks).toHaveAttribute('aria-pressed', 'true');
   const row = page.locator('.mark-row');
   await expect(row).toHaveCount(1);
-  await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter I');
+  await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter I · bookmark');
   await row.click();
   // The page comes into sight at the bookmark, its mark on it.
   await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
@@ -210,7 +210,7 @@ test('a bookmark made and taken off from the ⋯, kept in the reading file betwe
   await page.keyboard.press('Escape');
 });
 
-test('a highlight made and taken off from the ⋯, the words last chosen, Put back restoring it (#40, Phase 5a)', async ({
+test('a highlight made and taken off from the ⋯, the words last chosen, Put back restoring it, then among the Marks (#40, Phase 5a, 5b)', async ({
   page,
 }) => {
   await open(page);
@@ -270,6 +270,12 @@ test('a highlight made and taken off from the ⋯, the words last chosen, Put ba
   await page.getByRole('button', { name: 'Put back' }).click();
   await expect.poll(async () => (await highlights()).length).toBe(1);
   await expect(said).toHaveText('Highlight put back.');
+  // Among the book's Marks on its contents page (Phase 5b), in its words.
+  await back(page).click();
+  await page.getByRole('button', { name: /^Marks \d+$/u }).click();
+  const row = page.locator('.mark-row');
+  await expect(row.locator('.mark-row__words')).toHaveText('universally acknowledged');
+  await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter I · highlight');
 });
 
 test('a book’s row menu renames it in its row, and trashes it to .eien/trash, whole', async ({
