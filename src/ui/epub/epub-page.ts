@@ -18,12 +18,9 @@ import { BookFoot } from './book-foot';
 import { ChapterSheet, type ChapterSheetOf } from './chapter-sheet';
 import { hyphenates } from './hyphens';
 import { LeafEdges } from './leaf-edges';
-import { pageKey, pageTap } from './page-keys';
+import { type BookKeysOf, bookKey, pageTap } from './page-keys';
 import { PageMarks } from './page-marks';
 import { RunningHeads } from './running-heads';
-
-/** Where a key is the writer's own: a note's editor, a field. */
-const FIELD = '.editor-host, input, textarea, [contenteditable]';
 
 export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
   /** Close this page (its ×, ⌘W). */
@@ -69,10 +66,17 @@ export class EpubPage implements PaneLeaf {
   /** The page's zoom last worn; null before the first. */
   #zoom: number | null = null;
 
-  readonly #of: EpubPageOf;
+  /** What its keys do (./page-keys.ts). */
+  readonly #keys: BookKeysOf;
 
   constructor(of: EpubPageOf) {
-    this.#of = of;
+    this.#keys = {
+      ...of,
+      chosen: () => this.sheet.selection !== null,
+      shown: () => !this.#sheet.hidden,
+      paged: () => this.sheet.paged,
+      canGoBack: () => this.foot.canGoBack,
+    };
     const closer = quietButton({
       label: 'Close this page',
       icon: 'close',
@@ -246,33 +250,9 @@ export class EpubPage implements PaneLeaf {
     this.sheet.reshow();
   }
 
-  /** Q quotes; ⌘[ or Alt+←, as a browser goes back: back where the last link was followed from. */
+  /** A key on the page (./page-keys.ts): Q, B, Back, and in pages its turns. */
   key(event: KeyboardEvent): void {
-    // Not from a field (the page beside's words, its tags): Alt+← is a word left there.
-    if (event.target instanceof Element && event.target.closest(FIELD)) return;
-    const plain = !event.metaKey && !event.ctrlKey && !event.altKey;
-    // Q, with words chosen in the chapter now: quoted in the note beside (Phase 2c); held, once.
-    if (plain && event.key.toLowerCase() === 'q' && this.sheet.selection) {
-      event.preventDefault();
-      if (!event.repeat) this.#of.quote();
-      return;
-    }
-    // B bookmarks the page in sight, or takes its bookmark off (Phase 4b); held, once.
-    if (plain && event.key.toLowerCase() === 'b' && !this.#sheet.hidden) {
-      event.preventDefault();
-      if (!event.repeat) this.#of.bookmark();
-      return;
-    }
-    const back =
-      (event.key === '[' && (event.metaKey || event.ctrlKey) && !event.altKey) ||
-      (event.key === 'ArrowLeft' && event.altKey && !event.metaKey && !event.ctrlKey);
-    if (back) {
-      if (!this.foot.canGoBack) return;
-      event.preventDefault();
-      this.#of.back();
-      return;
-    }
-    if (plain && this.sheet.paged) pageKey(event, this.#of);
+    bookKey(event, this.#keys);
   }
 
   /**

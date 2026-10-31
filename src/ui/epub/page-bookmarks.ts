@@ -15,6 +15,7 @@ import {
   firstWords,
   MAX_BOOKMARKS,
   type ReadingKept,
+  withBookmarks,
 } from '../../core/epub';
 import type { Still } from './book-count';
 import { wordsFrom } from './chapter-place';
@@ -78,10 +79,10 @@ export class PageBookmarks {
     this.clear();
     this.#key = key;
     this.#kept = read.kept;
-    this.#marks = read.bookmarks;
+    this.#marks = read.marks.bookmarks;
     // Shown, as every change is, once the page is still: never against a turn's page on its way.
-    this.#unlisten = this.#of.store.listen(key, (marks) => {
-      this.#marks = marks;
+    this.#unlisten = this.#of.store.listen(key, ({ bookmarks }) => {
+      this.#marks = bookmarks;
       this.#of.still(() => this.#show());
       this.#of.listed();
     });
@@ -127,10 +128,10 @@ export class PageBookmarks {
     const words = firstWords(wordsFrom(page.chapter, this.#from, BOOKMARK_WORDS * 2));
     const change =
       here.length > 0 ? { remove: here } : { add: { chapter, offset: this.#from, words } };
-    const after = await this.#of.store.mark(key, change);
+    const after = await this.#of.store.change(key, (text) => withBookmarks(text, change));
     if (key !== this.#key) return;
     if (!after) return this.#notKept(key);
-    this.#marks = after;
+    this.#marks = after.bookmarks;
     this.#of.still(() => this.#show());
     page.foot.say(here.length > 0 ? 'Bookmark taken off.' : 'Bookmarked.');
   }
@@ -139,7 +140,9 @@ export class PageBookmarks {
   async remove(mark: Bookmark): Promise<void> {
     const key = this.#key;
     if (!key) return;
-    const after = await this.#of.store.mark(key, { remove: [mark] });
+    const after = await this.#of.store.change(key, (text) =>
+      withBookmarks(text, { remove: [mark] }),
+    );
     if (key !== this.#key) return;
     if (!after) return this.#notKept(key);
     this.#of.page.foot.say('Bookmark taken off.');

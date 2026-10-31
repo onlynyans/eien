@@ -141,10 +141,12 @@ Rules, pure TypeScript.
   - `svg-plate.ts`: Calibre's SVG frame round a picture made a plain image
   - `first-line.ts`: a chapter's first line, by where it stands
   - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it; never written over when it can't be read
-  - `bookmarks.ts`: its bookmarks, changed in the file's own array, unknown items and fields kept (Phase 4b)
+  - `reading-list.ts`: a list in that file, changed in its own array, unknown items and fields kept, each field where it stood
+  - `bookmarks.ts`: its bookmarks, a list there (Phase 4b)
   - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
-  - `chapter-count.ts`: a chapter's words counted as a place counts them, from its cleaned nodes, and where the printed pages begin in it (Phase 4)
+  - `chapter-words.ts`: a chapter's words walked once from its cleaned nodes, as a place counts them, each in its block (`BLOCK_NAMES`, the one list)
+  - `chapter-count.ts`: a chapter's words counted by that walk, and where the printed pages begin in it (Phase 4)
   - `page-numbers.ts`: a place's page: the printed edition's (the page-list), else steady pages of 1,500 characters, and as the colophon says it
   - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
   - `book-link.ts`: a link to one of the book's chapters, as an address of the page's own and back
@@ -247,6 +249,8 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `sidebar/sections.ts`: its sections fold, folded per device in `sidebar/folds.ts`
   - `sidebar/tree-sections.ts`: the sections in order, LIBRARY, FOLDERS, SHELF, TAGS
   - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: its folders FOLDERS' own folder rows, books as controls (a note's row's keys and menu, `vault/row-actions.ts`), an open book's contents with two panes
+    - `sidebar/shelf-book-rows.ts`: the rows under a book with two panes: its lenses, its chapters or its marks
+    - `sidebar/shelf-row.ts`: a SHELF row and its name, shared by both
     - `sidebar/shelf-folds.ts`: SHELF's shut folders, per device
     - `sidebar/folder-sides.ts`: a folder in FOLDERS, on SHELF or both: where its rename is typed and the keyboard goes back to
     - `sidebar/twist.ts`: a row's twisty and its group, in FOLDERS, TAGS and SHELF alike
@@ -349,7 +353,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
 - styles in `theme/` and beside each view
 - `epub/`: an EPUB's page (#40)
-  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys (Q, B, ⌘[ / Alt+←), its bookmark's mark
+  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys handed to `page-keys.ts`, its bookmark's mark
   - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again (scrolling or in pages), its links caught, its words copied and chosen
   - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
   - `book-parts.ts`: its parts made together: the place said, the bookmarks, the links, the turns
@@ -389,7 +393,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons
   - `edge-strip.ts`, `.css`: Marks on the edge (Phase 4d): the whole book down the page's edge, a slider, apart from the fore-edge
   - `book-strip.ts`: the book told to the strip as shares of it (chapters, bookmarks, the place), and where a point on it goes
-  - `page-keys.ts`: in pages, the keys that turn and a touch's tap in the outer thirds
+  - `page-keys.ts`: the page's keys, one table: its letters (Q, B), Back, and in pages the keys that turn and a touch's tap in the outer thirds
   - `turn/`: a page turned (Phase 3)
     - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first
     - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page, clipped and laid, in the curl's light

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { pageKey, pageTap } from './page-keys';
+import { bookKey, pageKey, pageTap } from './page-keys';
 
 const press = (key: string, init: KeyboardEventInit = {}, target?: Element) => {
   const of = { turn: vi.fn(), edge: vi.fn() };
@@ -82,5 +82,67 @@ describe('a tap in pages', () => {
     document.body.append(words);
     document.getSelection()?.selectAllChildren(words);
     expect(tap(250)).not.toHaveBeenCalled();
+  });
+});
+
+describe('a book’s page’s keys', () => {
+  /** The page's keys over a page in the state `now` gives, `key` pressed on `target`. */
+  function bookPress(
+    key: string,
+    init: KeyboardEventInit = {},
+    now: Partial<{ chosen: boolean; shown: boolean; paged: boolean; back: boolean }> = {},
+    target?: Element,
+  ) {
+    const state = { chosen: false, shown: true, paged: false, back: false, ...now };
+    const of = {
+      turn: vi.fn(),
+      edge: vi.fn(),
+      quote: vi.fn(),
+      bookmark: vi.fn(),
+      back: vi.fn(),
+      chosen: () => state.chosen,
+      shown: () => state.shown,
+      paged: () => state.paged,
+      canGoBack: () => state.back,
+    };
+    const event = new KeyboardEvent('keydown', { key, cancelable: true, ...init });
+    if (target) Object.defineProperty(event, 'target', { value: target });
+    bookKey(event, of);
+    return { ...of, prevented: event.defaultPrevented };
+  }
+
+  it('quotes by Q only with words chosen, and bookmarks by B only with a book shown', () => {
+    expect(bookPress('q', {}, { chosen: true }).quote).toHaveBeenCalledOnce();
+    const none = bookPress('q');
+    expect(none.quote).not.toHaveBeenCalled();
+    expect(none.prevented).toBe(false);
+    expect(bookPress('B').bookmark).toHaveBeenCalledOnce();
+    expect(bookPress('b', {}, { shown: false }).bookmark).not.toHaveBeenCalled();
+  });
+
+  it('runs a letter once while it’s held, and never with ⌘, Ctrl or Alt', () => {
+    const held = bookPress('b', { repeat: true });
+    expect(held.bookmark).not.toHaveBeenCalled();
+    expect(held.prevented).toBe(true);
+    for (const modifier of ['metaKey', 'ctrlKey', 'altKey'])
+      expect(bookPress('b', { [modifier]: true }).bookmark).not.toHaveBeenCalled();
+  });
+
+  it('goes back by ⌘[, Ctrl+[ or Alt+←, only with a step to take', () => {
+    expect(bookPress('[', { metaKey: true }, { back: true }).back).toHaveBeenCalledOnce();
+    expect(bookPress('[', { ctrlKey: true }, { back: true }).back).toHaveBeenCalledOnce();
+    expect(bookPress('ArrowLeft', { altKey: true }, { back: true }).back).toHaveBeenCalledOnce();
+    const none = bookPress('[', { metaKey: true });
+    expect(none.back).not.toHaveBeenCalled();
+    expect(none.prevented).toBe(false);
+  });
+
+  it('turns in pages alone, and does nothing from a field', () => {
+    expect(bookPress('ArrowRight', {}, { paged: true }).turn).toHaveBeenCalledWith(1, false);
+    expect(bookPress('ArrowRight').turn).not.toHaveBeenCalled();
+    const field = document.createElement('input');
+    const typed = bookPress('b', {}, { paged: true }, field);
+    expect(typed.bookmark).not.toHaveBeenCalled();
+    expect(typed.prevented).toBe(false);
   });
 });

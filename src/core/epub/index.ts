@@ -13,6 +13,7 @@ export {
 export { EPUB_CAPS, type EpubCaps } from './caps';
 export type { Chapter } from './chapter';
 export { type ChapterCount, countChapter } from './chapter-count';
+export { BLOCK_NAMES, type ChapterVisit, walkChapter } from './chapter-words';
 export { chapterBeside, chapterTitle } from './chapters';
 export type { ContentsEntry, PrintPage } from './contents';
 export { type Epub, type EpubImage, type EpubSpineItem, epubKey, openEpub } from './epub';

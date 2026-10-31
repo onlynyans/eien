@@ -86,12 +86,15 @@ export function writable(text: string | null): ReadingFile | null {
   return readingFile(text) ?? {};
 }
 
-/** The file's text with `reading` in it, every other field as it was; null where it mustn't be written. */
+/** The file's text with `reading` in it, every other field as it was and where it was; null where it mustn't be written. */
 export function withReading(text: string | null, reading: Reading): string | null {
   const file = writable(text);
   if (!file) return null;
-  const { version: _version, chapter: _chapter, place: _place, ...rest } = file;
   const { chapter, offset } = reading;
-  const place = chapter === null ? {} : { place: { chapter, offset: Math.max(0, offset) } };
-  return `${JSON.stringify({ version: READING_VERSION, ...rest, chapter, ...place }, null, 2)}\n`;
+  // The file spread first, so each field keeps its place (./reading-list.ts does the same).
+  const next: ReadingFile = { version: READING_VERSION, ...file, chapter };
+  next.version = READING_VERSION;
+  if (chapter === null) delete next.place;
+  else next.place = { chapter, offset: Math.max(0, offset) };
+  return `${JSON.stringify(next, null, 2)}\n`;
 }

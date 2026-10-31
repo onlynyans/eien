@@ -4,13 +4,14 @@
 // Eien's front matter has nothing to mark or number.
 
 import { describe, expect, it, vi } from 'vitest';
-import type { Bookmark, Epub } from '../../core/epub';
+import { type Bookmark, bookmarksOf, type Epub } from '../../core/epub';
 import type { BookCount } from './book-count';
 import { BookFoot } from './book-foot';
 import { bookPlace } from './book-place';
 import type { EpubPage } from './epub-page';
 import { frontMatter } from './front-matter';
 import { PageBookmarks } from './page-bookmarks';
+import type { MarksEdit } from './reading-store';
 import { RunningHeads } from './running-heads';
 import type { PageShown } from './sight';
 
@@ -34,20 +35,29 @@ function marked(sight: readonly PageShown[], kept: readonly Bookmark[]) {
     chapter,
     sheet: { keep: vi.fn(), sight },
   };
-  const mark = vi.fn(async (_key: string, change: { add?: Bookmark; remove?: Bookmark[] }) =>
-    change.add ? [...kept, change.add] : kept.filter((one) => !change.remove?.includes(one)),
-  );
+  // The book's reading file, as the store would change it.
+  let file: string | null = JSON.stringify({ version: 1, bookmarks: kept });
+  const change = vi.fn(async (_key: string, edit: MarksEdit) => {
+    const next = edit(file);
+    if (next === null) return null;
+    file = next;
+    return { bookmarks: bookmarksOf(file) };
+  });
   const marks = new PageBookmarks({
     page: page as never,
-    store: { listen: () => () => {}, mark } as never,
+    store: { listen: () => () => {}, change } as never,
     chapter: () => CHAPTER,
     still: (then) => then(),
     land: () => {},
     changed: () => {},
     listed: () => {},
   });
-  marks.opened('k', { reading: { chapter: null, offset: 0 }, bookmarks: kept, kept: 'kept' });
-  return { marks, page, mark };
+  marks.opened('k', {
+    reading: { chapter: null, offset: 0 },
+    marks: { bookmarks: kept },
+    kept: 'kept',
+  });
+  return { marks, page, change, kept: () => bookmarksOf(file) };
 }
 
 const at = (offset: number): Bookmark => ({ chapter: CHAPTER, offset, words: '' });
@@ -74,14 +84,12 @@ describe('a bookmark on a spread', () => {
     const none = marked(SPREAD, []);
     none.marks.inSight(1000, 2200);
     await none.marks.toggle();
-    expect(none.mark).toHaveBeenLastCalledWith('k', {
-      add: expect.objectContaining({ chapter: CHAPTER, offset: 1000 }),
-    });
+    expect(none.kept()).toEqual([expect.objectContaining({ chapter: CHAPTER, offset: 1000 })]);
     const two = [at(1100), at(1900)];
     const some = marked(SPREAD, two);
     some.marks.inSight(1000, 2200);
     await some.marks.toggle();
-    expect(some.mark).toHaveBeenLastCalledWith('k', { remove: two });
+    expect(some.kept()).toEqual([]);
   });
 
   it('is never made on the front matter, which holds none of the book’s words', async () => {
@@ -89,7 +97,7 @@ describe('a bookmark on a spread', () => {
     front.marks.inSight(0, 0);
     expect(front.page.bookmarked).toHaveBeenLastCalledWith(false, false);
     await front.marks.toggle();
-    expect(front.mark).not.toHaveBeenCalled();
+    expect(front.change).not.toHaveBeenCalled();
   });
 });
 

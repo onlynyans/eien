@@ -5,11 +5,12 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
-import { type Bookmark, readingPath } from '../../core/epub';
+import { type Bookmark, bookmarksOf, readingPath } from '../../core/epub';
 import { ChapterSheet } from './chapter-sheet';
 import { makeEpubSide } from './epub-side';
 import type { EpubSide } from './epub-side-types';
 import { PageBookmarks } from './page-bookmarks';
+import type { MarksEdit } from './reading-store';
 import { laidOut } from './test-lines';
 import { sideWith } from './test-side';
 import { pageCopy } from './turn/page-copy';
@@ -311,7 +312,7 @@ describe('what a page shows of its bookmarks', () => {
     });
     marks.opened('k', {
       reading: { chapter: null, offset: 0 },
-      bookmarks: [{ chapter: CHAPTER, offset: 120, words: '' }],
+      marks: { bookmarks: [{ chapter: CHAPTER, offset: 120, words: '' }] },
       kept: 'kept',
     });
     page.bookmarked.mockClear();
@@ -486,20 +487,21 @@ describe('B in the middle of a turn', () => {
     };
     let flying = false;
     const waiting: (() => void)[] = [];
-    const mark = vi.fn(async (_key: string, change: { add?: Bookmark }) => {
+    const mark = vi.fn(async (_key: string, edit: MarksEdit) => {
       // Asked only once the turn has landed.
       expect(flying).toBe(false);
-      return change.add ? [change.add] : [];
+      const next = edit(null);
+      return next === null ? null : { bookmarks: bookmarksOf(next) };
     });
     /** What the store tells this page of its book's bookmarks changed elsewhere. */
-    let told: (bookmarks: readonly Bookmark[]) => void = () => {};
+    let told: (marks: { bookmarks: readonly Bookmark[] }) => void = () => {};
     const listen = (_key: string, then: typeof told) => {
       told = then;
       return () => {};
     };
     const marks: PageBookmarks = new PageBookmarks({
       page: page as never,
-      store: { listen, mark } as never,
+      store: { listen, change: mark } as never,
       chapter: () => CHAPTER,
       still: (then) => {
         if (flying) waiting.push(then);
@@ -514,20 +516,30 @@ describe('B in the middle of a turn', () => {
       changed: () => {},
       listed: () => {},
     });
-    marks.opened('k', { reading: { chapter: null, offset: 0 }, bookmarks: [], kept: 'kept' });
+    marks.opened('k', {
+      reading: { chapter: null, offset: 0 },
+      marks: { bookmarks: [] },
+      kept: 'kept',
+    });
     marks.inSight(0, 100);
     const turn = () => {
       flying = true;
     };
-    return { marks, page, mark, turn, told: (bookmarks: readonly Bookmark[]) => told(bookmarks) };
+    return {
+      marks,
+      page,
+      mark,
+      turn,
+      told: (bookmarks: readonly Bookmark[]) => told({ bookmarks }),
+    };
   }
 
   it('lands the turn first, and bookmarks the page it lands on', async () => {
     const { marks, page, mark, turn } = turning();
     turn();
     await marks.toggle();
-    expect(mark).toHaveBeenCalledWith('k', {
-      add: expect.objectContaining({ chapter: CHAPTER, offset: 100 }),
+    expect(await mark.mock.results[0]?.value).toEqual({
+      bookmarks: [expect.objectContaining({ chapter: CHAPTER, offset: 100 })],
     });
     expect(page.sheet.keep).toHaveBeenCalled();
     expect(marks.on).toBe(true);
@@ -562,7 +574,7 @@ describe('the bookmark’s mark on the page', () => {
   it('isn’t made by B with no book on the page', async () => {
     const { side, of } = await opened();
     // Asked of the store at all would be a bookmark made somewhere, whatever file it named.
-    const mark = vi.spyOn(of.reading, 'mark');
+    const mark = vi.spyOn(of.reading, 'change');
     side.clear();
     side.page.key(new KeyboardEvent('keydown', { key: 'b' }));
     await side.bookmark();
