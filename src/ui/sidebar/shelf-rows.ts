@@ -12,7 +12,16 @@
 import { baseName } from '../../core/paths';
 import { epubTitleOf, type FolderNode, onShelf } from '../../core/vault';
 import { h, type Props } from '../dom';
-import { chapterKey, marked } from '../list/contents-list';
+import {
+  type BookLens,
+  lensButtons,
+  MARK_SHORTCUTS,
+  type MarkRow,
+  markKey,
+  markKeys,
+  markName,
+} from '../list/book-lenses';
+import { chapterKey, marked, NO_MARKS } from '../list/contents-list';
 import { type Point, rowEvents } from '../list/row-events';
 import { atDepth } from './depth';
 import { FOLDER_SHORTCUTS } from './row-keys';
@@ -28,6 +37,9 @@ export interface ShelfContents {
   }[];
   /** The spine item on the page: its row is marked. */
   readonly spine: number;
+  /** Its lens, and its bookmarks; null for no lenses (Marks on the edge, Phase 4d). */
+  readonly lens: BookLens;
+  readonly marks: readonly MarkRow[] | null;
 }
 
 export interface ShelfModel {
@@ -59,6 +71,11 @@ export interface ShelfActions {
   openBookBeside(path: string): void;
   /** A contents row chosen: that spine item of the book at `path`. */
   chapter(path: string, spine: number): void;
+  /** The book's lens chosen, Contents or Marks (Phase 4c). */
+  lens(path: string, lens: BookLens): void;
+  /** A bookmark's row chosen: its page; or Delete on it: taken off. */
+  goMark(path: string, row: MarkRow): void;
+  unmark(path: string, row: MarkRow): void;
   /** A book's menu (rename, move, trash), at the pointer or the row. Apart from a note's, as the sidebar takes both. */
   bookMenu(path: string, at: Point): void;
   /** Rename the book in its row, ".epub" kept. */
@@ -136,6 +153,49 @@ const bookEvents = (path: string, actions: ShelfActions): Props['on'] =>
     false,
   );
 
+/** With Marks in the list, the book's lenses as the first row under it (Phase 4c). */
+function lensRow(path: string, contents: ShelfContents, actions: ShelfActions, depth: number) {
+  const { marks } = contents;
+  if (!marks) return [];
+  const counts = { contents: contents.rows.length, marks: marks.length };
+  const lenses = lensButtons(contents.lens, counts, (lens) => actions.lens(path, lens));
+  // Not a row: it neither lights nor presses as one; its buttons do.
+  return [atDepth(h('li', { class: 'tree-lenses' }, lenses), depth + 1)];
+}
+
+/** The rows the book's lens shows under it: its chapters, or its bookmarks. */
+function listed(path: string, contents: ShelfContents, actions: ShelfActions, depth: number) {
+  if (contents.marks && contents.lens === 'marks') {
+    // None kept: the tree's own hint, as a tag with no notes says how to give it some.
+    if (contents.marks.length === 0)
+      return [atDepth(h('li', { class: 'tree-hint', text: NO_MARKS }), depth + 1)];
+    return contents.marks.map((each) => {
+      const name = button(
+        `${path}:${markKey(each.mark)}`,
+        markName(each),
+        false,
+        {
+          click: () => actions.goMark(path, each),
+          keydown: markKeys(() => actions.unmark(path, each)),
+        },
+        { 'aria-keyshortcuts': MARK_SHORTCUTS, title: each.chapter },
+      );
+      if (each.page) name.append(' ', h('span', { class: 'count', text: each.page }));
+      return row(depth + 1, name, 'mark');
+    });
+  }
+  const current = marked(contents);
+  return contents.rows.map((entry, i) =>
+    row(
+      depth + 1 + entry.depth,
+      button(`${path}:${chapterKey(entry)}`, entry.title, current[i] === true, {
+        click: () => actions.chapter(path, entry.spine),
+      }),
+      'chapter',
+    ),
+  );
+}
+
 /** The rows of every book in and under `node`, under its folders' rows. */
 export function shelfRows(
   model: ShelfModel,
@@ -161,17 +221,13 @@ export function shelfRows(
     );
     const contents = model.contents?.path === path ? model.contents : null;
     if (!contents) return [own];
-    const current = marked(contents);
-    const chapters = contents.rows.map((entry, i) =>
-      row(
-        depth + 1 + entry.depth,
-        button(`${path}:${chapterKey(entry)}`, entry.title, current[i] === true, {
-          click: () => actions.chapter(path, entry.spine),
-        }),
-        'chapter',
-      ),
-    );
-    return [own, ...group(depth, chapters)];
+    return [
+      own,
+      ...group(depth, [
+        ...lensRow(path, contents, actions, depth),
+        ...listed(path, contents, actions, depth),
+      ]),
+    ];
   });
   const shelved = node.folders.filter(onShelf).flatMap((folder) => {
     const field = folders.edit(folder, depth);

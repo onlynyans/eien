@@ -120,9 +120,14 @@ export class PaneDrawer {
     if (contents) {
       this.#listOrdered = false;
       const { path } = contents.side;
-      renderContents(this.#parts.list, contents, this.#parts.notice.text, (spine) => {
-        if (path) this.#parts.epubs.actions.chapter(path, spine);
-      });
+      const { actions } = this.#parts.epubs;
+      if (path)
+        renderContents(this.#parts.list, contents, this.#parts.notice.text, {
+          chapter: (spine) => actions.chapter(path, spine),
+          lens: (lens) => actions.lens(path, lens),
+          go: (row) => actions.goMark(path, row),
+          remove: (row) => actions.unmark(path, row),
+        });
       return;
     }
     const arrange = this.#parts.arrange();

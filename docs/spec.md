@@ -463,9 +463,20 @@ Three panes, each collapsible, with a two-pane option in settings:
      "bookmarked". Bookmarks are kept in the reading state's file with the
      place (each a chapter, its first word and the words it begins with),
      every other field and item kept as found; two pages on one book agree
-     at once. A reading file a newer Eien wrote is never written, and one
+     at once. A book shows 1,000 at most: past that, B says to take one off
+     first. A reading file a newer Eien wrote is never written, and one
      that can't be read is never written over: the colophon says so once,
      and its place and bookmarks aren't kept until it's fixed or deleted.
+   - **Marks in the list** (Phase 4c): with a book's contents in the list,
+     two buttons under its head, **Contents** and **Marks**, each with its
+     count, the one shown pressed; Marks lists the book's bookmarks in its
+     order, each row the words its page begins with, its page, and its
+     chapter, or "Nothing kept yet. B bookmarks a page." Enter or a click
+     goes to the bookmark's page; Delete or Backspace takes it off (once,
+     however long it's held; the keyboard goes to the next row). The
+     lens is the window's, back to Contents for another book. With two
+     panes the tabs and rows are under the book's row on SHELF; on the
+     phone, on its contents page.
    - **Pages** (Phase 3b): **Read in**, a book setting in the shelf's
      quick look, sets a book in *Pages* or *Scroll* (the default for now),
      as do the book's own two tools in the views' place and View → Pages

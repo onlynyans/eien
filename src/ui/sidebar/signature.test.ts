@@ -68,6 +68,32 @@ describe('sidebarSignature, the tree’s frame', () => {
     );
   });
 
+  it('changes with a book’s lens, a bookmark taken off and a bookmark’s page known (#40, Phase 4c), so Marks under it are drawn', () => {
+    // Else, with two panes, the tree's rows would be put right in place and the bookmarks' rows left as they were.
+    const mark = { chapter: 'c1.xhtml', offset: 0, words: 'It is a truth' };
+    const shelf = (lens: 'contents' | 'marks', page: string | null, marks = 1) => ({
+      current: 'Novels/Emma.epub',
+      shut: [],
+      contents: {
+        path: 'Novels/Emma.epub',
+        rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
+        spine: 1,
+        lens,
+        marks: Array.from({ length: marks }, () => ({
+          mark,
+          spine: 1,
+          page,
+          chapter: 'Chapter I',
+        })),
+      },
+    });
+    const base = model([note()]);
+    const shown = sign({ ...base, shelf: shelf('marks', null) });
+    expect(sign({ ...base, shelf: shelf('contents', null) })).not.toBe(shown);
+    expect(sign({ ...base, shelf: shelf('marks', null, 0) })).not.toBe(shown);
+    expect(sign({ ...base, shelf: shelf('marks', '3') })).not.toBe(shown);
+  });
+
   it('doesn’t care in what order the rows were opened', () => {
     expect(sign(model([note()], ['/all', 'Fic']))).toBe(sign(model([note()], ['Fic', '/all'])));
   });

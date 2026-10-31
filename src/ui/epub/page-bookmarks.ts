@@ -10,6 +10,7 @@ import {
   type Bookmark,
   bookmarksOn,
   firstWords,
+  MAX_BOOKMARKS,
   type ReadingKept,
 } from '../../core/epub';
 import type { Still } from './book-count';
@@ -35,6 +36,8 @@ export interface PageBookmarksOf {
   land(): void;
   /** Whether the page in sight is bookmarked changed: the tool shows it. */
   changed(): void;
+  /** The book's bookmarks changed: the list's Marks show them (Phase 4c). */
+  listed(): void;
 }
 
 export class PageBookmarks {
@@ -76,6 +79,7 @@ export class PageBookmarks {
     this.#unlisten = this.#of.store.listen(key, (marks) => {
       this.#marks = marks;
       this.#of.still(() => this.#show());
+      this.#of.listed();
     });
     const words = NOT_KEPT[read.kept];
     if (read.kept === 'unreadable' && words) this.#of.page.foot.say(words);
@@ -109,6 +113,13 @@ export class PageBookmarks {
     page.sheet.keep();
     if (!this.#measured) return;
     const here = bookmarksOn(this.#marks, chapter, this.#from, this.#to);
+    // A book shows MAX_BOOKMARKS: one more would be kept but never shown, nor ever taken off.
+    if (here.length === 0 && this.#marks.length >= MAX_BOOKMARKS) {
+      page.foot.say(
+        `A book keeps ${MAX_BOOKMARKS.toLocaleString('en')} bookmarks at most: take one off first.`,
+      );
+      return;
+    }
     const words = firstWords(wordsFrom(page.chapter, this.#from, BOOKMARK_WORDS * 2));
     const change =
       here.length > 0 ? { remove: here } : { add: { chapter, offset: this.#from, words } };
@@ -118,6 +129,16 @@ export class PageBookmarks {
     this.#marks = after;
     this.#of.still(() => this.#show());
     page.foot.say(here.length > 0 ? 'Bookmark taken off.' : 'Bookmarked.');
+  }
+
+  /** `mark` taken off (a Marks row's Delete), said in the colophon. */
+  async remove(mark: Bookmark): Promise<void> {
+    const key = this.#key;
+    if (!key) return;
+    const after = await this.#of.store.mark(key, { remove: [mark] });
+    if (key !== this.#key) return;
+    if (!after) return this.#notKept(key);
+    this.#of.page.foot.say('Bookmark taken off.');
   }
 
   /** A change not kept: why, as the file stands now (it may have changed since the book opened). */

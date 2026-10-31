@@ -43,6 +43,8 @@ export interface EpubSide extends Side {
   readonly spine: number;
   /** Draw the spine item `index`, and keep it as the place to come back to. */
   go(index: number): Promise<void>;
+  /** Show `offset` in spine item `index` (a bookmark's place, Phase 4c), kept as the place. */
+  goTo(index: number, offset: number): Promise<void>;
   /** The book's file moved (a folder above it renamed or moved by this window): the page follows it. */
   moved(to: string): void;
   /** Read the book again, where the page was in it: its file changed on disk. */
@@ -55,6 +57,10 @@ export interface EpubSide extends Side {
   readonly bookmarks: readonly Bookmark[];
   /** The page in sight bookmarked, or its bookmark taken off. */
   bookmark(): Promise<void>;
+  /** One bookmark taken off (a Marks row's Delete, Phase 4c). */
+  unmark(mark: Bookmark): Promise<void>;
+  /** The page `offset` into spine item `spine` is on, as its label says it (a Marks row's); null for none known. */
+  labelAt(spine: number, offset: number): string | null;
   /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */
   quote(kept?: boolean): Promise<void>;
 }

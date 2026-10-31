@@ -386,8 +386,11 @@ Each phase is its own session and pull request, from main.
   following a turn once it lands; Facing pages' clash as decided; kept in
   the reading state beside every field it doesn't know, never over a file
   it can't read (`core/epub/bookmarks.ts`, `ui/epub/page-bookmarks.ts`,
-  `bookmark.css`);
-  4c Marks in the list; 4d the strip on the edge, and the Marks setting.
+  `bookmark.css`); **4c, built:** Marks in the list: Contents and Marks
+  under the book's head, the one shown pressed, its bookmarks as rows (their words, page and
+  chapter; Delete takes one off), under the book's SHELF row with two panes
+  (`list/book-lenses.ts`);
+  4d the strip on the edge, and the Marks setting.
 - **Phase 5, highlights and Find.**
 - **Phase 6, by lamplight,** on Scroll.
 

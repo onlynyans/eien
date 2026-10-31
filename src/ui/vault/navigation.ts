@@ -3,6 +3,7 @@
 // or a move can carry it along.
 
 import { isInside, parentOf } from '../../core/paths';
+import type { BookLens } from '../list/book-lenses';
 import { followSorts } from '../list/sorts';
 import { ShelfFolds } from '../sidebar/shelf-folds';
 import { openId } from '../sidebar/tree';
@@ -22,6 +23,8 @@ export class Navigation {
    * moved with the book (./epub-wiring.ts).
    */
   contents: string | null = null;
+  /** The lens over that book's rows (Phase 4c): back to Contents for another book, kept as it moves. */
+  bookLens: BookLens = 'contents';
 
   get selection(): Selection {
     return this.#selection;

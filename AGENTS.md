@@ -211,6 +211,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `vault/vault-sidebar.ts`: the sidebar's actions
 - `vault/epub-wiring.ts`: an EPUB's kind, what SHELF and the list show of the books on the pages, and which note a quote goes into (#40)
 - `list/contents-list.ts`: a book's contents in the list, in place of notes (#40)
+  - `list/book-lenses.ts`, `.css`: its lenses, Contents and Marks, and a bookmark's row, in the list and under a book's SHELF row (Phase 4c)
 - `vault/list-lens.ts`: the list's lens and Arrange mode (Include subfolders too, kept per folder by `list/sorts.ts`)
 - The split (spec §4, two pages side by side) is a mode as a layout is
   - `chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, what the layout's tools act on, and where each note's figures go

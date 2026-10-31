@@ -29,6 +29,14 @@ describe('a book counted for its page numbers (Phase 4a)', () => {
     return stops;
   }
 
+  it('redraws the panes once the book is wholly counted: Marks rows have their pages then (Phase 4c)', async () => {
+    const { side, changed } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
+    await side.open('a.epub');
+    changed.mockClear();
+    await vi.waitFor(() => expect(side.labelAt(1, 0)).not.toBeNull());
+    expect(changed).toHaveBeenCalled();
+  });
+
   it('counts once the chapter is drawn, and stops for another book, a cleared page or one gone', async () => {
     const stops = counting();
     const { side } = sideWith({

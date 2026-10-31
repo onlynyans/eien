@@ -6,6 +6,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { type Bookmark, readingPath } from '../../core/epub';
+import { ChapterSheet } from './chapter-sheet';
 import { makeEpubSide } from './epub-side';
 import type { EpubSide } from './epub-side-types';
 import { PageBookmarks } from './page-bookmarks';
@@ -94,6 +95,19 @@ describe('a book’s bookmark', () => {
     expect(after.later).toBe('kept');
   });
 
+  it('is taken off from its Marks row, the list told and the colophon saying so (Phase 4c)', async () => {
+    const { side, file, press, changed } = await opened();
+    press();
+    await vi.waitFor(() => expect(side.bookmarks).toHaveLength(1));
+    changed.mockClear();
+    await side.unmark(side.bookmarks[0] as Bookmark);
+    expect(JSON.parse((await file()) ?? '{}').bookmarks).toEqual([]);
+    expect(side.bookmarks).toEqual([]);
+    expect(side.bookmarked).toBe(false);
+    expect(changed).toHaveBeenCalled();
+    expect(said(side)).toBe('Bookmark taken off.');
+  });
+
   it('is never made from a field, nor by ⌘B or Ctrl+B, only by B', async () => {
     const { side, press, file } = await opened();
     const field = document.createElement('input');
@@ -175,6 +189,110 @@ describe('a book’s bookmark', () => {
   });
 });
 
+describe('a Marks row’s bookmark, as QA tried it (Phase 4c)', () => {
+  it('is gone to in another chapter: that chapter drawn at its place, kept as the place, its mark shown', async () => {
+    const shown = vi.spyOn(ChapterSheet.prototype, 'showPlace');
+    const { side, writes, key } = await opened(() =>
+      JSON.stringify({
+        bookmarks: [{ chapter: 'OEBPS/chapter-3.xhtml', offset: 40, words: 'later' }],
+      }),
+    );
+    expect(side.spine).toBe(1);
+    await side.goTo(3, 40);
+    expect(side.spine).toBe(3);
+    expect(shown.mock.lastCall?.[0]).toBe(40);
+    expect(writes).toHaveBeenLastCalledWith(key, { chapter: 'OEBPS/chapter-3.xhtml', offset: 40 });
+    await vi.waitFor(() => expect(side.bookmarked).toBe(true));
+    expect(markOf(side)?.hidden).toBe(false);
+  });
+
+  it('is gone to in the chapter on the page: shown there, kept, nothing drawn again', async () => {
+    const shown = vi.spyOn(ChapterSheet.prototype, 'showPlace');
+    const { side, writes, key, reads } = await opened();
+    const before = side.page.chapter.innerHTML;
+    reads.mockClear();
+    await side.goTo(1, 60);
+    expect(side.spine).toBe(1);
+    expect(shown).toHaveBeenLastCalledWith(60);
+    expect(writes).toHaveBeenLastCalledWith(key, { chapter: CHAPTER, offset: 60 });
+    expect(side.page.chapter.innerHTML).toBe(before);
+  });
+
+  it('forgets the step back a link left: a bookmark is a place chosen', async () => {
+    const at = sideWith({ 'a.epub': EPUBS['links.epub'] as Uint8Array });
+    await at.side.open('a.epub');
+    [...at.side.page.chapter.querySelectorAll('a')]
+      .find((a) => a.textContent === 'see Chapter III')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await vi.waitFor(() => expect(at.side.spine).toBe(2));
+    const back = at.side.page.foot.figures[0] as HTMLButtonElement;
+    expect(back.hidden).toBe(false);
+    await at.side.goTo(1, 0);
+    expect(back.hidden).toBe(true);
+  });
+
+  it('isn’t taken off in a newer Eien’s file: it says why, never “Bookmark taken off.”, and leaves the file be', async () => {
+    const newer = JSON.stringify({
+      version: 2,
+      bookmarks: [{ chapter: CHAPTER, offset: 300, words: 'further on' }],
+    });
+    const { side, file } = await opened(() => newer);
+    const [mark] = side.bookmarks;
+    if (!mark) throw new Error('the newer file’s bookmark wasn’t read');
+    await side.unmark(mark);
+    expect(said(side)).toMatch(/newer Eien/u);
+    expect(await file()).toBe(newer);
+    expect(side.bookmarks).toHaveLength(1);
+  });
+
+  it('taken off on one page of a book is gone from the other’s too, whose list is told', async () => {
+    const first = await opened(() =>
+      JSON.stringify({ bookmarks: [{ chapter: CHAPTER, offset: 300, words: 'further on' }] }),
+    );
+    const listed = vi.fn();
+    const second = makeEpubSide(
+      { ...first.of, changed: listed },
+      { close: () => {}, caret: () => {} },
+      null,
+    );
+    document.body.append(second.page.element);
+    laidOut(second.page);
+    await second.open('a.epub');
+    expect(second.bookmarks).toHaveLength(1);
+    listed.mockClear();
+    await first.side.unmark(first.side.bookmarks[0] as Bookmark);
+    expect(second.bookmarks).toEqual([]);
+    expect(listed).toHaveBeenCalled();
+  });
+});
+
+describe('a book with a thousand bookmarks, as QA tried it (Phase 4c)', () => {
+  // QA (Phase 4c) found the 1,001st written and "Bookmarked." said, though the store reads back the
+  // first MAX_BOOKMARKS alone: never shown, never taken off. Now B says the book is full.
+  it('shows a bookmark B makes past the thousand, or says it isn’t kept: never “Bookmarked.” over a page with no mark', async () => {
+    // A thousand further on in the chapter, none on the first page.
+    const { side, press, file } = await opened(() =>
+      JSON.stringify({
+        bookmarks: Array.from({ length: 1000 }, (_, i) => ({
+          chapter: CHAPTER,
+          offset: 1000 + i,
+          words: `${i}`,
+        })),
+      }),
+    );
+    expect(side.bookmarks).toHaveLength(1000);
+    press();
+    await vi.waitFor(() => expect(said(side)).not.toBe(''));
+    const written = JSON.parse((await file()) ?? '{}').bookmarks;
+    if (said(side) === 'Bookmarked.') {
+      expect(written).toHaveLength(1001);
+      expect(side.bookmarked).toBe(true);
+      expect(markOf(side)?.hidden).toBe(false);
+    } else expect(written).toHaveLength(1000);
+    expect(said(side)).toBe('A book keeps 1,000 bookmarks at most: take one off first.');
+  });
+});
+
 describe('what a page shows of its bookmarks', () => {
   it('follows a turn once it lands, never mid-turn', () => {
     const page = { bookmarked: vi.fn(), foot: { say: () => {} } };
@@ -188,6 +306,7 @@ describe('what a page shows of its bookmarks', () => {
       },
       land: () => {},
       changed: () => {},
+      listed: () => {},
     });
     marks.opened('k', {
       reading: { chapter: null, offset: 0 },
@@ -391,6 +510,7 @@ describe('B in the middle of a turn', () => {
         for (const then of waiting.splice(0)) then();
       },
       changed: () => {},
+      listed: () => {},
     });
     marks.opened('k', { reading: { chapter: null, offset: 0 }, bookmarks: [], kept: 'kept' });
     marks.inSight(0, 100);
