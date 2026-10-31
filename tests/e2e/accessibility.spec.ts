@@ -88,7 +88,7 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         // A bookmarked page (#40, Phase 4b): its mark, and the tool pressed.
         await page.locator('.page__leaf--epub .page__scroll').focus();
         await page.keyboard.press('b');
-        await expect(page.locator('.page__mark--bookmark')).toBeVisible();
+        await expect(page.locator('.page__mark--bookmark[data-edge="right"]')).toBeVisible();
         expect(await violationsUnder(page, ['.page']), 'a bookmarked page').toEqual([]);
         // Marks in the list (Phase 4c): the book's lenses, its bookmark a row.
         await page.getByRole('button', { name: /^Marks \d+$/u }).click();
@@ -190,6 +190,34 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
           await violationsUnder(page, ['.page', '.epub-edges__turn']),
           'a book in pages, its edges',
         ).toEqual([]);
+      });
+
+      test('a book open to two pages set as a book, and its title page and imprint, have no serious violation (#40, Phase 3d)', async ({
+        page,
+        app,
+      }) => {
+        await page
+          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+          .click();
+        await expect(page.locator('.epub-chapter')).toContainText('It is a truth');
+        await clickMenu(app, 'View', 'Pages');
+        // The list shut and the window wide: room for two pages of 20em.
+        await clickMenu(app, 'View', 'Toggle Note List');
+        await page.setViewportSize({ width: 1900, height: 900 });
+        const pages = page.locator('.page__leaf--epub .epub-sheet:not([aria-hidden]) .epub__pages');
+        await expect(pages).toHaveAttribute('data-spread', '');
+        await page.locator('.page__leaf--epub .page__scroll').focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('.epub-heads__item').first()).toHaveText('Pride and Prejudice');
+        expect(await violationsUnder(page, ['.page', '.epub-edges__turn']), 'a spread').toEqual([]);
+        // Back to Eien's title page and imprint, before the book's first page.
+        const title = page.locator('.epub-sheet:not([aria-hidden]) [aria-label="Title page"]');
+        for (let i = 0; i < 8 && !(await title.isVisible()); i++) {
+          await page.keyboard.press('ArrowLeft');
+          await page.waitForTimeout(100);
+        }
+        await expect(title).toBeVisible();
+        expect(await violationsUnder(page, ['.page']), 'the title page and imprint').toEqual([]);
       });
 
       test('a book beside a note, words chosen in it with the selection bar, has no serious violation (#40)', async ({

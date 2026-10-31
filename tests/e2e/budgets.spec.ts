@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { handEpub, nav, opf, XHTML, page as xhtml } from '../support/epub-parts';
 import { longBook } from '../support/long-book';
-import { ALONE, expect, readQuietly, test, type VaultFiles } from './launch';
+import { ALONE, clickMenu, expect, readQuietly, test, type VaultFiles } from './launch';
 
 /** The budget for anything a writer does: no task holds the window longer than this. */
 const STALL = 200;
@@ -398,6 +398,50 @@ test.describe('fifty turns in a long chapter', () => {
       });
     });
   }
+});
+
+/**
+ * Fifty turns on a spread (#40, Phase 3d): the long chapter two pages at a
+ * time, justified and hyphenated where the window can, curled fifty times;
+ * then the pane widened past a spread and narrowed short of it, each laying
+ * the chapter out anew. Held to the same 200 ms as the rest.
+ */
+test.describe('fifty turns on a spread', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': LONG_CHAPTER },
+    deviceFile: { settings: { 'epub.view': 'pages', 'epub.turn': 'curl', 'epub.turnSpeed': '1' } },
+  });
+
+  test(
+    'turns fifty spreads and opens and closes one without a stall',
+    ALONE,
+    async ({ page, app }) => {
+      test.setTimeout(120_000);
+      await page.setViewportSize({ width: 1900, height: 900 });
+      const time = await stalls(page);
+      await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+      const sheet = page.locator('.page__leaf--epub .epub-sheet:not([aria-hidden])');
+      await expect(sheet.locator('.epub-chapter p')).toHaveCount(600);
+      await clickMenu(app, 'View', 'Toggle Note List');
+      await expect(sheet.locator('.epub__pages')).toHaveAttribute('data-spread', '');
+      await page.locator('.page__leaf--epub .page__scroll').focus();
+      await time.mark();
+      for (let i = 0; i < 50; i++) {
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
+      }
+      await expect(page.locator('.colophon')).not.toContainText('0% of the chapter');
+      expect(await time.longest(), 'fifty turns on a spread').toBeLessThan(STALL);
+      await time.mark();
+      for (const width of [1100, 1900, 1100, 1900]) {
+        await page.setViewportSize({ width, height: 900 });
+        const pages = sheet.locator('.epub__pages');
+        if (width > 1500) await expect(pages).toHaveAttribute('data-spread', '');
+        else await expect(pages).not.toHaveAttribute('data-spread');
+      }
+      expect(await time.longest(), 'a spread opened and closed').toBeLessThan(STALL);
+    },
+  );
 });
 
 /** A book of about 3,000 steady pages (#40, Phase 4), and one chapter far longer than the rest, never drawn. */
