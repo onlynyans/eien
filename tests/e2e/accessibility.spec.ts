@@ -206,6 +206,17 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.setViewportSize({ width: 1900, height: 900 });
         const pages = page.locator('.page__leaf--epub .epub-sheet:not([aria-hidden]) .epub__pages');
         await expect(pages).toHaveAttribute('data-spread', '');
+        // The panes' widths move over the calm time as the list shuts: a page turned mid-move is
+        // laid out again where its place falls once they hold still.
+        let width = -1;
+        await expect
+          .poll(async () => {
+            const now = (await pages.boundingBox())?.width ?? 0;
+            const still = now > 0 && now === width;
+            width = now;
+            return still;
+          })
+          .toBe(true);
         await page.locator('.page__leaf--epub .page__scroll').focus();
         await page.keyboard.press('ArrowRight');
         await expect(page.locator('.epub-heads__item').first()).toHaveText('Pride and Prejudice');
