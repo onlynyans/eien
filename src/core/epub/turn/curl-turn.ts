@@ -190,6 +190,24 @@ export function finishCurl(turn: CurlTurn): CurlTurn {
 }
 
 /**
+ * Let go unasked (the gesture cancelled: a pinch began, the system took it):
+ * held, it flies home to where it began, whatever the hand's speed, landing
+ * in `time`; the page is put back, never thrown.
+ */
+export function fallBackCurl(turn: CurlTurn, time: number): CurlTurn {
+  if (turn.phase !== 'held') return turn;
+  return {
+    ...turn,
+    phase: 'flying',
+    target: turn.from,
+    time,
+    moving: { at: turn.moving.at, speed: [0, 0] },
+    samples: [],
+    caught: null,
+  };
+}
+
+/**
  * Put down now, unasked (the window hidden, the page closed): one in flight
  * lands where it was going; one still held falls back, as nothing turns that
  * the hand didn't let go.

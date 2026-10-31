@@ -4,6 +4,7 @@ import {
   catchCurl,
   dragCurl,
   dropCurl,
+  fallBackCurl,
   finishCurl,
   keyCurl,
   letGoCurl,
@@ -122,5 +123,25 @@ describe('the throw', () => {
     expect(turned(dropCurl(held))).toBe(false);
     expect(dropCurl(held).moving.at).toEqual(held.from);
     expect(turned(dropCurl(keyCurl(page, 1, FIRST_STROKE, 330)))).toBe(true);
+  });
+});
+
+describe('a gesture cancelled', () => {
+  it('flies a held page home whatever the hand’s speed, and lands fallen back', () => {
+    let held = beginCurl(page, 1, 500);
+    held = dragCurl(held, [-200, 0], 0);
+    held = dragCurl(held, [-380, 0], 40);
+    const home = fallBackCurl(held, 330);
+    expect(home.phase).toBe('flying');
+    expect(home.target).toBe(held.from);
+    expect(home.moving).toEqual({ at: held.moving.at, speed: [0, 0] });
+    const landed = fly(home);
+    expect(turned(landed)).toBe(false);
+    expect(landed.moving.at).toEqual(held.from);
+  });
+
+  it('leaves a page not held as it is', () => {
+    const flying = keyCurl(page, 1, FIRST_STROKE, 330);
+    expect(fallBackCurl(flying, 330)).toBe(flying);
   });
 });

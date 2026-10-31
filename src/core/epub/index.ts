@@ -53,6 +53,7 @@ export {
   catchCurl,
   dragCurl,
   dropCurl,
+  fallBackCurl,
   finishCurl,
   keyCurl,
   letGoCurl,
