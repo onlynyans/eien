@@ -536,7 +536,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      pages; a pixel short of it, one. A phone's width decides as the
      desktop's does (decided 2026-10-31): an upright phone holds one page, a
      Galaxy Z Fold 5 opened holds two sideways with Interface zoom at 60%
-     (upright at 50%), and a tablet one pane at a time may. Never in a
+     (upright at 50%; with Marks on the edge, whose strip keeps a finger's
+     width, at 50% either way), and a tablet one pane at a time may. Never in a
      split (Facing pages is two pages of its own; Wide screen's Two pages
      with a note beside is a split). A turn, a key, the edges and a hand move both;
      the place is the same, so one page and two show the same words. A

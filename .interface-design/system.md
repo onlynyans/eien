@@ -739,7 +739,9 @@ in the book, each recorded here as it's built.
   `--eien-space-4` in from it (the system's scroll bar keeps its own),
   `--eien-space-5` from the pane's top and foot; in pages the pane keeps
   room for it beside the fore-edge, and `--eien-space-3` more, so the
-  fore-edge's turn keeps a target's room (WCAG 2.5.8's 24px) from it. A `--eien-rule-strong` hairline
+  fore-edge's Next turn keeps a target's room (WCAG 2.5.8's 24px) from
+  it. Facing pages' left page, whose strip is at its left, doesn't yet
+  (backlog). A `--eien-rule-strong` hairline
   `--eien-space-2` long for each chapter, `--eien-space-3` in pencil each
   tenth; each bookmark a pencil tab (`--eien-paper` in a pencil hairline,
   `--eien-space-1` × `--eien-space-3`, its outer corners

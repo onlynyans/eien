@@ -177,7 +177,8 @@ section where it and the directions below disagree.
   as on the desktop. An upright phone never holds two; a Galaxy Z Fold 5
   opened does sideways at 60% Interface zoom and upright at 50% (two pages
   of 20em of 22px text, with the margins and the gutter, need a page some
-  1,144px wide). Ragged, two pages or one. A split stays one page.
+  1,144px wide; with Marks on the edge, 50% either way). Ragged, two pages
+  or one. A split stays one page.
 - **The reading room** (Showcase 1) is built after Pages, as a one-key
   mode.
 
@@ -806,7 +807,7 @@ gradient or accent. The seal stays in its five places.
   printed book does. Each keeps its line, so the text never moves. Pages are
   counted from the title page, so Chapter I starts on page 3. Two pages show
   when each can have 20em (Facing pages' rule), else one.
-- **Phone:** one page, set the same, but ragged right (hyphenated): a phone's
+- **Phone** (superseded 2026-10-31: two pages where the width holds them, as Decided says): one page, set the same, but ragged right (hyphenated): a phone's
   measure is too short to justify without rivers.
 - **Intent:** a writer who cares how a page is set, reading in their own
   face. *Palette:* paper and ink; pencil for heads, folios and imprint;

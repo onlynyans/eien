@@ -776,6 +776,10 @@ test('two pages on a Fold 5: a finger turns both, B marks the left one, the stri
   // Laid out at the screen's width over the zoom: the page's own width, not the screen's.
   expect(edge.x + edge.width).toBeLessThanOrEqual(await page.evaluate(() => innerWidth));
   expect(edge.x).toBeGreaterThan(rect.x + rect.width / 2);
+  // Clear of the right page: past the sheet's edge, never over its words or its Next turn.
+  const sheet = await page.locator('.epub-sheet:not([aria-hidden])').boundingBox();
+  if (!sheet) throw new Error('no sheet');
+  expect(edge.x).toBeGreaterThanOrEqual(sheet.x + sheet.width - 1);
   expect(await seriousViolations(page), 'two pages on a phone').toEqual([]);
 });
 
@@ -951,6 +955,23 @@ test('Two pages on a tablet: the book beside a note is one page; the note closed
   expect(await chapter(page).evaluate((element) => getComputedStyle(element).columnCount)).toBe(
     '1',
   );
+  // The premise: this half holds two pages of 20em, so the split alone keeps it to one.
+  const room = await page.locator('.page__leaf--epub').evaluate((element) => {
+    const px = (value: string) => Number.parseFloat(value) || 0;
+    const scroll = element.querySelector('.page__scroll') as HTMLElement;
+    const pages = element.querySelector(
+      '.epub-sheet:not([aria-hidden]) .epub__pages',
+    ) as HTMLElement;
+    const words = pages.querySelector('.epub-chapter') as HTMLElement;
+    const pane = getComputedStyle(scroll);
+    const width = scroll.clientWidth - px(pane.paddingLeft) - px(pane.paddingRight);
+    const need =
+      40 * px(getComputedStyle(words).fontSize) +
+      2 * px(getComputedStyle(pages.closest('.sheet') as HTMLElement).paddingLeft) +
+      px(getComputedStyle(pages).columnGap);
+    return width - need;
+  });
+  expect(room).toBeGreaterThanOrEqual(0);
   // The note's page closed: the book alone, wide enough for two.
   await page
     .locator('.page__pages > .page__leaf:not(.page__leaf--epub)')

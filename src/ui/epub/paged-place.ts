@@ -11,7 +11,7 @@
 // (./front-matter.ts), turned back to, never opened at.
 
 import { openingSight, pageAt, pageRoles, throughSights } from '../../core/epub';
-import { characterAt, firstOnPage, type SideOf } from './chapter-place';
+import { across, characterAt, firstOnPage, type SideOf } from './chapter-place';
 import { FRONT } from './front-matter';
 import {
   type Columns,
@@ -44,18 +44,6 @@ export interface PagedPlaceOf {
   readonly sideOf?: SideOf;
 }
 
-/**
- * A range's box across, as the window lays it out. A character just after the point a word was
- * hyphenated at stands at the next line's start, but its range holds the hyphen too, at the end
- * of the line before (Chromium's): on the page before, which the place would open a page early
- * at. A character's own box is its range's last.
- */
-const measured: SideOf = (range) => {
-  const rects = range.getClientRects();
-  const own = range.toString().length === 1 ? rects[rects.length - 1] : undefined;
-  return own ?? range.getBoundingClientRect();
-};
-
 export class PagedPlace {
   readonly #of: PagedPlaceOf;
   readonly #sideOf: SideOf;
@@ -74,7 +62,7 @@ export class PagedPlace {
 
   constructor(of: PagedPlaceOf) {
     this.#of = of;
-    this.#sideOf = of.sideOf ?? measured;
+    this.#sideOf = of.sideOf ?? across;
     this.#resized =
       typeof ResizeObserver === 'function' ? new ResizeObserver(() => this.#laidOut()) : null;
     this.#resized?.observe(of.box);
