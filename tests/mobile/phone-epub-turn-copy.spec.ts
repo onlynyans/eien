@@ -1,13 +1,14 @@
 // A turn's copy of the page laid exactly as the page in sight (#60): every
 // line where it stood, so none steps up or down as the page turns, whatever
 // begins the page (a paragraph's middle or start, a scene break, an
-// epigraph). The copy is the same under every Page turn (./page-copy.ts);
+// epigraph, a picture). The copy is the same under every Page turn (./page-copy.ts);
 // Words shows it still.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
 import { page as chapterPage, handEpub, nav, opf, XHTML } from '../support/epub-parts';
+import { png } from '../support/images';
 import { open, putBytesOutside } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
@@ -152,3 +153,79 @@ for (const screen of [FOLD, { width: 1180, height: 820 }]) {
     await turnsMatch(page, 14);
   });
 }
+
+/** Each picture's top and foot in `within`, from the book's box's top, of the pictures in the box's sight. */
+const pictures = (page: Page, within: string) =>
+  page.evaluate((selector) => {
+    const box = document.querySelector('.epub-sheet:not([aria-hidden]) .epub__pages');
+    const holder = document.querySelector(selector);
+    if (!box || !holder) return null;
+    const at = box.getBoundingClientRect();
+    return [...holder.querySelectorAll('img')]
+      .map((img) => img.getBoundingClientRect())
+      .filter((rect) => rect.width > 1 && rect.right > at.left + 2 && rect.left < at.right - 2)
+      .map((rect) => [Math.round(rect.top - at.top), Math.round(rect.bottom - at.top)]);
+  }, within);
+
+/** A chapter with a picture every few paragraphs, as an illustrated novel's: some page begins on one. */
+const PLATES = Array.from(
+  { length: 12 },
+  (_, n) =>
+    `<p>${LINE.repeat(1 + (n % 3))}</p>\n<p>${LINE}</p>\n<div class="illus"><img src="images/plate.png" alt=""/></div>`,
+).join('\n');
+const platesBook = () =>
+  handEpub('content.opf', [
+    {
+      name: 'content.opf',
+      data: opf(
+        '3.0',
+        [
+          { id: 'nav', href: 'nav.xhtml', type: XHTML, properties: 'nav' },
+          { id: 'c0', href: 'c0.xhtml', type: XHTML },
+          { id: 'c1', href: 'c1.xhtml', type: XHTML },
+          { id: 'plate', href: 'images/plate.png', type: 'image/png' },
+        ],
+        ['c0', 'c1'],
+      ),
+    },
+    {
+      name: 'nav.xhtml',
+      data: nav([
+        ['Opening', 'c0.xhtml'],
+        ['The harbour', 'c1.xhtml'],
+      ]),
+    },
+    { name: 'c0.xhtml', data: chapterPage('Opening', '<h1>Opening</h1><p>Before.</p>') },
+    { name: 'c1.xhtml', data: chapterPage('The harbour', `<h1>The harbour</h1>${PLATES}`) },
+    { name: 'images/plate.png', data: png(800, 560) },
+  ]);
+
+test('a page that begins on a picture: the copy lays the picture, and the lines under it, where the page has them', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await openBook(page, platesBook(), FOLD, 100);
+  await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
+    'Before.',
+  );
+  await page.locator('.phone-bar__back').click();
+  await page.locator('.contents-row', { hasText: 'The harbour' }).click();
+  const chapter = '.epub-sheet:not([aria-hidden]) .epub-chapter';
+  const copied = '.turn-copy [data-turn-words]';
+  await expect(page.locator(chapter)).toContainText('The rain kept on');
+  const copy = page.locator(copied).first();
+  await page.locator('.page__leaf--epub .page__scroll').first().focus();
+  let headed = 0;
+  for (let turn = 1; turn <= 6; turn++) {
+    const inSight = { lines: await lines(page, chapter), pictures: await pictures(page, chapter) };
+    await page.keyboard.press('ArrowRight');
+    await expect(copy).toBeAttached();
+    const inCopy = { lines: await lines(page, copied), pictures: await pictures(page, copied) };
+    expect(inCopy, `turn ${turn}`).toEqual(inSight);
+    // A picture at the page's head: above any line on it.
+    const [top] = inSight.pictures?.[0] ?? [];
+    if (top !== undefined && (inSight.lines ?? []).every((foot) => foot > top)) headed++;
+    await expect(copy).not.toBeAttached({ timeout: 10_000 });
+  }
+  expect(headed, 'pages begun on a picture').toBeGreaterThan(0);
+});

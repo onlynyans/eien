@@ -232,6 +232,20 @@ describe('the EPUB’s kind', () => {
     expect(side.page.name).toBe('First Impressions');
   });
 
+  it('names a renamed book with no title of its own by its new file in its head, its author kept (#57)', async () => {
+    const { side, of } = sideWith({ 'Novels/a.epub': EPUBS['epub2.epub'] as Uint8Array });
+    const kind = epubKind(of);
+    await side.open('Novels/a.epub');
+    Object.assign(side.epub as object, { title: '' });
+    kind.moved('Novels/a.epub', 'Novels/First Impressions.epub');
+    kind.followMoves([side]);
+    // Its head and the running head alike, never the folder it's in.
+    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe(
+      'First Impressions · Jane Austen',
+    );
+    expect(side.page.runningCrumbs.textContent).toBe('First Impressions · Jane Austen');
+  });
+
   it('reads a book again when its file changes, and waits for its place to be kept', async () => {
     const files = { 'a.epub': EPUBS['plain.epub'] as Uint8Array };
     const { side, of, reads } = sideWith(files);
