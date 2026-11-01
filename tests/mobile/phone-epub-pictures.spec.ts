@@ -71,9 +71,17 @@ const sight = (page: Page) =>
   });
 
 /** The book in pages on `screen`, open at its first chapter, in the room the screen has (#68). */
-async function openNovel(page: Page, bytes: Uint8Array, screen: { width: number; height: number }) {
+async function openNovel(
+  page: Page,
+  bytes: Uint8Array,
+  screen: { width: number; height: number },
+  room?: 'one',
+) {
   await open(page);
-  await page.evaluate(() => window.eien.settings.set('epub.view', 'pages'));
+  await page.evaluate(async (room) => {
+    await window.eien.settings.set('epub.view', 'pages');
+    if (room) await window.eien.settings.set('appearance.room', room);
+  }, room);
   await putBytesOutside(
     page,
     'Eien/Vault/Novels/Novel.epub',
@@ -150,16 +158,18 @@ test('a chapter of two pictures is two pages, a picture on each, no blank page b
 test('a chapter of SVG pictures turns one picture a page, forwards and back', async ({ page }) => {
   // An SVG's size isn't read from its header, as a PNG's is: the picture takes it only once
   // decoded, after the chapter is first laid in pages.
-  const back = await openNovel(
+  await openNovel(
     page,
     book({
       Prologue: CHAPTERS.Prologue ?? '',
       Plates: '<div><img src="images/tall.svg" alt=""/></div>'.repeat(3),
     }),
+    // A Fold upright, one pane at a time: its whole width a page. Beside the tree, in Panes
+    // (#68), the page is about 278px, where three SVG plates lay as four pages: backlog #75.
     { width: 590, height: 706 },
+    'one',
   );
-  await back.click();
-  await page.locator('.contents-row', { hasText: 'Plates' }).click();
+  await openChapter(page, 'Plates');
   await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter img')).toHaveCount(3);
   await expect.poll(() => pictures(page)).toEqual({ pages: 3, inSight: [true, false, false] });
   await page.locator('.page__leaf--epub .page__scroll').first().focus();

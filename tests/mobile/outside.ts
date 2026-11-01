@@ -95,12 +95,16 @@ export async function threePanes(page: Page): Promise<void> {
  */
 export async function openChapter(page: Page, name: string): Promise<void> {
   const back = page.locator('.phone-bar__back');
-  if (await back.isVisible()) await back.click();
-  await page
+  const row = page
     .locator('.contents-row:visible, .tree-row--chapter:visible')
     .filter({ hasText: name })
-    .first()
-    .click();
+    .first();
+  // The book's page and its bar are drawn a moment after the book opens: wait for one or the other.
+  await expect
+    .poll(async () => (await row.isVisible()) || (await back.isVisible()), { timeout: 10_000 })
+    .toBe(true);
+  if (!(await row.isVisible())) await back.click();
+  await row.click();
 }
 
 export async function open(page: Page): Promise<void> {
