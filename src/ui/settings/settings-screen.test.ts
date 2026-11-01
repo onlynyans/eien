@@ -2,7 +2,7 @@
 // with one pane, the phone's way, no panes to choose; with the desktop's panes
 // on a wider phone, the same settings as the desktop's.
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
 import type { SettingsBridge, VaultBridge } from '../../platform/bridge';
 import { pageOf } from '../page/test-page-room';
@@ -76,13 +76,27 @@ describe('Wide screen, on a phone wider than 600px', () => {
 });
 
 describe('Page width (#62)', () => {
-  it('shows only while the notes’ page has room round its sheet, as it opens', async () => {
+  it('shows only while the notes’ page has room round its sheet, measured as it opens', async () => {
     pageOf(600, 830); // a foldable in Panes: the line at Wide fills it
     const screen = await screenOn('darwin');
+    screen.open('Look');
     expect(row('page.width')?.hidden).toBe(true);
     expect(row('appearance.frame')?.hidden).toBe(false);
+    screen.close();
     document.querySelector('.page__leaf')?.remove();
-    pageOf(1000, 830);
+    const page = pageOf(1000, 830);
+    screen.open('Look');
+    expect(row('page.width')?.hidden).toBe(false);
+    // A change while it's open measures nothing: no sheet laid on the page each time.
+    const append = vi.spyOn(page, 'append');
+    await settings.set('appearance.frame', 'full');
+    expect(append).not.toHaveBeenCalled();
+  });
+
+  it('shows it with no room while it’s chosen otherwise than As set, to put it back', async () => {
+    pageOf(600, 830);
+    const screen = await screenOn('darwin');
+    await settings.set('page.width', 'narrow');
     screen.open('Look');
     expect(row('page.width')?.hidden).toBe(false);
   });

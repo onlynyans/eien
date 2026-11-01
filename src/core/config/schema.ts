@@ -37,7 +37,8 @@ interface Common {
   readonly wide?: true;
   /**
    * Only while the page has room round its sheet for the line at its widest (ui/page/page-room.ts),
-   * where each choice sets a line of its own: never a page that fills its pane (#62).
+   * where each choice sets a line of its own: never a page that fills its pane (#62). Chosen
+   * otherwise than its default, it's offered anywhere, so a choice can always be put back.
    */
   readonly roomy?: true;
   /**
@@ -609,14 +610,15 @@ export const PHONE_DEFAULTS: Partial<SettingValues> = Object.fromEntries(
 
 /**
  * Whether `setting` is offered on the system named `platform` (process.platform), on a phone or
- * not, with the page `roomy` (room round its sheet) or not.
+ * not, with the page `roomy` (room round its sheet) or not, its value `value`.
  */
 export const offeredOn = (
   setting: Setting,
   platform: string,
   phone = false,
   roomy = true,
+  value: unknown = setting.default,
 ): boolean =>
   (setting.platforms === undefined || setting.platforms.includes(platform)) &&
   !(phone && setting.wide) &&
-  !(!roomy && setting.roomy);
+  !(setting.roomy && !roomy && value === setting.default);

@@ -1427,7 +1427,8 @@ does nothing.
   Shut sidebar, Arranging, the formatting bar, Page width) shows only while the window has them,
   and comes and goes as that changes (a phone turned, a foldable opened, Wide screen
   set). One that needs room round the page (`roomy`: Page width) shows only while the
-  notes' page in sight has it, measured as Settings opens (#62).
+  notes' page in sight has it, measured as Settings opens, or while it's chosen otherwise
+  than its default, so a choice can always be put back (#62).
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.
 - Writing a file changes one key and keeps every other key as it is, even ones

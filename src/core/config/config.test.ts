@@ -169,6 +169,9 @@ describe('the quick look’s mark (#49)', () => {
     expect(offeredOn(width, 'android', false, false)).toBe(false);
     expect(offeredOn(width, 'darwin', false, false)).toBe(false);
     expect(offeredOn(width, 'darwin', false, true)).toBe(true);
+    // Chosen otherwise, it's offered anywhere, so Narrow is never left on with no way back.
+    expect(offeredOn(width, 'android', false, false, 'narrow')).toBe(true);
+    expect(offeredOn(width, 'android', false, false, 'set')).toBe(false);
     // Room round the page asks nothing of the rest.
     const others = SETTINGS.filter((setting) => setting.key !== 'page.width');
     expect(others.filter((setting) => offeredOn(setting, 'darwin', false, false))).toEqual(
