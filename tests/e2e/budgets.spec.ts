@@ -6,7 +6,7 @@
 
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { handEpub, nav, opf, XHTML, page as xhtml } from '../support/epub-parts';
 import { longBook } from '../support/long-book';
 import { markedAtEnd } from '../support/marked-book';
@@ -494,11 +494,15 @@ test.describe('a long book counted while its pages turn', () => {
 /**
  * A long book searched (#40, Phase 5c), the same one: the list's field finds a
  * word in every paragraph (the count's limit reached in the second chapter, a
- * thousand rows drawn), then one in each chapter's last paragraph, so every
- * chapter is read, the 4,000-paragraph one too, a chapter a task and never
- * while a page turns, as fifty pages turn. No long task over the same
- * 200 ms. Measured on CI with BUDGETS=1 (and SLOW=4) before it was set; the
- * numbers are in the pull request.
+ * thousand rows drawn, those out of sight never laid out, and End reaching the
+ * last), then one in each chapter's last paragraph, so every chapter is read,
+ * the 4,000-paragraph one too, a chapter a task and never while a page turns,
+ * as fifty pages turn. No long task over the same 200 ms. The field and the
+ * lens are found by CSS: a role query walks every element, the thousand rows'
+ * too, and was itself a long task of up to 250 ms. Measured on CI: no long task
+ * (none over 50 ms) on macOS or Linux; the longest 130 ms with the CPU four
+ * times slower (SLOW=4). Before the rows out of sight were skipped, 180 to
+ * 264 ms on macOS, 167 on Linux; 311 and 923 four times slower.
  */
 test.describe('a long book searched while its pages turn', () => {
   test.use({
@@ -513,11 +517,24 @@ test.describe('a long book searched while its pages turn', () => {
     await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
     await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter p')).toHaveCount(600);
     await time.mark();
-    const search = page.getByRole('searchbox', { name: 'Search Pride and Prejudice' });
+    const search = page.locator(
+      '.list input[type="search"][aria-label="Search Pride and Prejudice"]',
+    );
     // In every paragraph: stops at the count's limit, its thousand rows drawn as they come.
     await search.fill('universally');
     await expect(page.locator('.list__empty')).toHaveText(/^More than 1,000/u, { timeout: 60_000 });
-    await expect(page.locator('.found-row')).toHaveCount(1000);
+    const rows = page.locator('.found-row');
+    await expect(rows).toHaveCount(1000);
+    // The rows out of sight skipped (book-lenses.css), and still the keyboard's.
+    const skipped = (row: Locator) =>
+      row.evaluate((button) => !button.checkVisibility({ contentVisibilityAuto: true }));
+    // A row drawn anew is in sight only once the next frame has looked: the first is asked again.
+    await expect.poll(() => skipped(rows.first())).toBe(false);
+    expect(await skipped(rows.last())).toBe(true);
+    await rows.first().focus();
+    await page.keyboard.press('End');
+    await expect(rows.last()).toBeFocused();
+    await expect(rows.last()).toBeInViewport();
     // Once a chapter, the last paragraph's: every chapter read, the large one's too.
     await search.fill('Paragraph 599:');
     await page.locator('.page__leaf--epub .page__scroll').focus();
@@ -525,7 +542,9 @@ test.describe('a long book searched while its pages turn', () => {
       await page.keyboard.press('ArrowRight');
       await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
     }
-    await expect(page.getByRole('button', { name: 'Found 61' })).toBeVisible({ timeout: 120_000 });
+    await expect(page.locator('.list__head [data-key="lens:found"] .count')).toHaveText('61', {
+      timeout: 120_000,
+    });
     expect(await time.longest(), 'a long book searched, fifty turns').toBeLessThan(STALL);
   });
 });
