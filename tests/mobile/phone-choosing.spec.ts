@@ -4,7 +4,7 @@
 // then dock at the page's foot, over the colophon.
 
 import { type CDPSession, devices, expect, type Locator, type Page, test } from '@playwright/test';
-import { bookInPages, box, firstWords } from './book';
+import { bookInPages, box, firstWords } from './book-hand';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 

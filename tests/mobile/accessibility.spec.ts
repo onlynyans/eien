@@ -5,7 +5,7 @@
 
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
-import { bookInPages } from './book';
+import { bookInPages } from './book-hand';
 import { open, putOutside, titles } from './outside';
 
 // Motion reduced from the start, so no fade is under way when axe looks (../e2e/axe.ts).

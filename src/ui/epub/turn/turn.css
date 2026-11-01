@@ -65,10 +65,13 @@
 .turn-curl__back {
   transform-origin: 0 0;
 }
-/* Moved every frame, or (a spread's still page) lying under what is: each its own layer, its words
-   drawn once and only moved and clipped after. */
-.turn-curl__strip,
-.turn-curl__back,
+/* The curl is a layer of its own, so a move repaints it alone and never the window beneath; on a
+   spread its turning page is one and its still page another, painted once. Nothing inside the
+   turning page is one: its pieces are clipped anew every frame, and a clip is painted in its layer,
+   so a layer each was made anew and repainted every frame, which flickered a phone's whole screen
+   (backlog #55). Tested in tests/mobile/curl-layers.spec.ts. */
+.turn-curl,
+.turn-curl__leaf,
 .turn-curl__still {
   will-change: transform;
 }

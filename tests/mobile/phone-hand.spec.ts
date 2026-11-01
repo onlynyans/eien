@@ -4,7 +4,7 @@
 // which synthetic PointerEvents skip. Motion on, so the hand holds a curl.
 
 import { type CDPSession, devices, expect, type Page, test } from '@playwright/test';
-import { bookInPages, box, firstWords, touchAt } from './book';
+import { bookInPages, box, firstWords, touchAt } from './book-hand';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 
