@@ -3,9 +3,11 @@
 // host, so switching layouts loses none.
 
 import { describe, expect, it } from 'vitest';
+import { findKey, findLabel } from '../../core/find';
 import { FORMAT_COMMANDS } from '../../core/format';
 import { ICONS } from '../icons';
 import { COMMANDS, type CommandId, commandOf, LAYOUTS, onDesktopIn } from './commands';
+import { keysOf, keyText } from './keys';
 import { idsIn, TOOL_FOLDS } from './layout-spec';
 import { LAYOUT_SPECS } from './layouts';
 import { SPLIT_SPECS, type SplitMode, splitHosts } from './splits';
@@ -30,6 +32,7 @@ describe('the commands', () => {
     const local = COMMANDS.filter((command) => !('sends' in command)).map((command) => command.id);
     expect(sorted(local)).toEqual([
       'format.heading',
+      'marks',
       'more',
       'page.close',
       'page.more',
@@ -48,6 +51,14 @@ describe('the commands', () => {
       ...Object.values(SPLIT_SPECS).flatMap((split) => [...split.own.items, ...split.tools]),
     ]);
     expect(sorted([...drawn])).toEqual(sorted(COMMANDS.map((command) => command.id)));
+  });
+
+  it('give Find the find bar’s own name and key, so its tooltip says what Edit → Find answers to (#64)', () => {
+    const find = commandOf('find');
+    expect(find.label).toBe(findLabel('find'));
+    for (const mac of [true, false])
+      expect(keysOf(find, mac)?.text, String(mac)).toBe(keyText(findKey('find', mac), mac));
+    expect(keysOf(find, true)).toEqual({ text: '⌘F', aria: 'Meta+F' });
   });
 });
 
@@ -141,9 +152,8 @@ describe('the Look control (#49)', () => {
 
   it('folds last of the tools, before the views', () => {
     const at = TOOL_FOLDS.indexOf('look');
-    // A book's bookmark (#40, Phase 4b) just before it.
-    expect(TOOL_FOLDS[at - 1]).toBe('bookmark');
-    expect(TOOL_FOLDS[at - 2]).toBe('focus');
+    // Find (#64) just before it, a book's bookmark (#40, Phase 4b) and its Marks before that.
+    expect(TOOL_FOLDS.slice(at - 4, at)).toEqual(['focus', 'marks', 'bookmark', 'find']);
     expect(TOOL_FOLDS[at + 1]).toBe('view.live');
   });
 

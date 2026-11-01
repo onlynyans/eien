@@ -30,6 +30,11 @@ export interface LeafFoot {
   readonly trail: HTMLElement;
   /** What it just did, for a while, last in the colophon. */
   readonly said: HTMLElement;
+  /**
+   * False where no words are written (a book, #66): today's tally is set
+   * aside while it's in front, as a note's tools are. Left out, it's kept.
+   */
+  readonly tally?: boolean;
 }
 
 /**

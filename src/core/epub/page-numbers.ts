@@ -1,56 +1,16 @@
-// A place's page number (#40, Phase 4): the printed edition's, where the
-// book has a page-list (./contents.ts printPagesOf), for citing; else a
-// steady page, 1,500 characters of the book, which never moves with the
-// window, the face or the device. Steady pages run over every spine item in
-// order (a printed book prints its notes too), counted as a place counts
-// words (./chapter-count.ts), so they only ever rise through the book.
+// A place's page number (#40, Phase 4; #67): the printed edition's, where
+// the book has a page-list (./contents.ts printPagesOf): real, citable, the
+// same on every screen. A book without one is numbered by its chapter's
+// pages as laid out now (the window's, ui/epub/book-place.ts), which no
+// place elsewhere in the book has: a list's row or the edge's strip names
+// such a place by how far through the book it is, by its chapter's words
+// as counted (./chapter-count.ts), never moving with the window, the face
+// or the device.
 
-/** A steady page's length, in the characters a place counts. */
-export const STEADY_CHARS = 1500;
+import { bookFraction, percent, type Sized } from './progress';
 
-/** Each spine item's length, null until it's counted. */
+/** Each spine item's length, in the characters a place counts; null until it's counted. */
 export type Lengths = readonly (number | null)[];
-
-/** The book's steady pages, at least one; null until every item is counted. */
-export function steadyPages(lengths: Lengths): number | null {
-  let total = 0;
-  for (const length of lengths) {
-    if (length === null) return null;
-    total += Math.max(0, length);
-  }
-  return Math.max(1, Math.ceil(total / STEADY_CHARS));
-}
-
-/**
- * The steady page `offset` into spine item `spine` falls on, 1 first and
- * never past the last; null until the book is counted. A place past its
- * item's end (the window and the count disagreeing) stands at its end.
- */
-export function steadyAt(lengths: Lengths, spine: number, offset: number): number | null {
-  const pages = steadyPages(lengths);
-  if (pages === null || spine < 0 || spine >= lengths.length) return null;
-  let before = 0;
-  for (let i = 0; i < spine; i++) before += Math.max(0, lengths[i] ?? 0);
-  const within = Math.min(Math.max(0, Math.floor(offset) || 0), Math.max(0, lengths[spine] ?? 0));
-  return Math.min(pages, Math.floor((before + within) / STEADY_CHARS) + 1);
-}
-
-/** Where steady page `page` begins: its spine item and the offset in it; null until counted, or past the book. */
-export function steadyStart(
-  lengths: Lengths,
-  page: number,
-): { readonly spine: number; readonly offset: number } | null {
-  const pages = steadyPages(lengths);
-  if (pages === null || !Number.isInteger(page) || page < 1 || page > pages) return null;
-  let rest = (page - 1) * STEADY_CHARS;
-  for (let spine = 0; spine < lengths.length; spine++) {
-    const length = Math.max(0, lengths[spine] ?? 0);
-    if (rest < length) return { spine, offset: rest };
-    rest -= length;
-  }
-  // The book's one page, of no words at all.
-  return { spine: 0, offset: 0 };
-}
 
 /** A printed page: its label, the spine item it's in, and where in it (null: not found there, or not yet counted). */
 export interface PrintAt {
@@ -117,13 +77,57 @@ export interface PageCount {
   readonly print: readonly PrintAt[];
 }
 
-/** A place's page and the book's pages: the printed edition's where there's a page-list, else steady ones. */
-export function pageOf(
-  count: PageCount,
-  spine: number,
+/**
+ * How far through the book (0 to 1) `offset` into spine item `index` is, by
+ * that item's words as counted and the chapters' sizes, as the colophon's
+ * percent is (./progress.ts); null until the item is counted.
+ */
+export function shareAt(
+  spine: readonly Sized[],
+  lengths: Lengths,
+  index: number,
   offset: number,
-): { readonly label: string | number | null; readonly of: number | null } {
-  if (count.print.length > 0)
-    return { label: printAt(count.print, spine, offset), of: printPages(count.print) };
-  return { label: steadyAt(count.lengths, spine, offset), of: steadyPages(count.lengths) };
+): number | null {
+  const length = lengths[index];
+  if (length === null || length === undefined) return null;
+  return bookFraction(spine, index, length > 0 ? offset / length : 0);
 }
+
+/**
+ * A place as a row names it (a mark's, a match's): its printed page's label
+ * ("212", "xii"), else how far through the book ("21%"); null for none
+ * known yet (its chapter not counted, or before a printed book's first page).
+ */
+export function placeLabel(
+  count: PageCount,
+  spine: readonly Sized[],
+  index: number,
+  offset: number,
+): string | null {
+  // A printed page there isn't known until its chapter is counted: the one before would be wrong.
+  if (count.print.length > 0)
+    return count.lengths[index] === null ? null : printAt(count.print, index, offset);
+  const share = shareAt(spine, count.lengths, index, offset);
+  return share === null ? null : percent(share);
+}
+
+/** A place as the edge's strip says it: "page 212 of 2,450", else "21% of the book"; '' for none known yet. */
+export function placeWords(
+  count: PageCount,
+  spine: readonly Sized[],
+  index: number,
+  offset: number,
+): string {
+  if (count.print.length > 0) {
+    const label = placeLabel(count, spine, index, offset);
+    return label === null ? '' : pageWords(label, printPages(count.print));
+  }
+  const share = shareAt(spine, count.lengths, index, offset);
+  return share === null ? '' : bookWords(share);
+}
+
+/** How far through the book, as the colophon and the strip say it: "21% of the book". */
+export const bookWords = (share: number): string => `${percent(share)} of the book`;
+
+/** How far through the chapter, as the colophon says it scrolling, where there are no pages: "40% of the chapter". */
+export const chapterWords = (fraction: number): string => `${percent(fraction)} of the chapter`;

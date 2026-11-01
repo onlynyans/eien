@@ -20,17 +20,25 @@
   border-bottom: var(--eien-hairline) solid var(--eien-rule);
 }
 .phone-bar__back {
-  /* A finger's reach however narrow the phone: the ⇄ slip beside it gives way first (#63). */
+  /* A finger's reach however narrow the phone: the ⇄ slip beside it gives way first (#63). Both
+     give way before the page's tools, which past that fold into the ⋯ (#64, ../chrome/fold.ts):
+     weighted so the tools' slot takes under half a pixel of any overflow till they're at their
+     least, and the fold measures it so. */
+  flex-shrink: 10000;
   min-width: var(--eien-touch);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 /* The layout's tools for the page (../chrome), at a finger's size: in the bar
-   (A), or at the page's foot (B's slip, C's rail); only while the page shows. */
+   (A), or at the page's foot (B's slip, C's rail); only while the page shows.
+   In the bar, at its right, they take the room back and ⇄ leave, growing into
+   it, so a change in that room (⇄ come or gone) fits them again (#64). */
 .phone-bar__controls {
   display: none;
-  margin-left: auto;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
 }
 .shell[data-phone][data-shown="page"] .phone-bar__controls:not(:empty),
 .shell[data-phone][data-shown="page"] .page__phone:not(:empty) {
@@ -42,7 +50,7 @@
   appearance: none;
   position: relative;
   display: flex;
-  flex: 0 1 auto;
+  flex: 0 10000 auto;
   min-width: calc(var(--eien-space-3) + 2 * var(--eien-space-2));
   align-items: center;
   gap: var(--eien-space-1);

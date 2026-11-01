@@ -27,7 +27,7 @@ export function setAsWords(set: SetAs): string {
   return `at ${Math.round(set.size)} on ${Math.round(set.leading)} px, ${lines}, ${edge}${hyphens}`;
 }
 
-/** "61 chapters, 2,450 pages.", the pages once they're known (steady or printed). */
+/** "61 chapters, 2,450 pages.", the pages a printed edition has (a book without a page-list has none). */
 export function lengthWords(chapters: number, pages: number | null): string {
   const parts = [count(chapters, 'chapter')];
   if (pages !== null) parts.push(count(pages, 'page'));

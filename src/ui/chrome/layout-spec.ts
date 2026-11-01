@@ -55,7 +55,9 @@ export const TOOL_FOLDS: readonly CommandId[] = [
   'compare',
   'format-bar',
   'focus',
+  'marks',
   'bookmark',
+  'find',
   'look',
   'view.live',
   'view.source',
@@ -63,6 +65,20 @@ export const TOOL_FOLDS: readonly CommandId[] = [
   'view.pages',
   'view.scroll',
   'seal',
+];
+
+/**
+ * A phone's tools, as they fold short of room (#64): only what its ⋯ offers too, so folding
+ * takes a button out of the bar and adds no second ⋯; the least asked for first, the bookmark
+ * (one tap, on the page) and Look last. The views and the ⋯ never fold.
+ */
+export const PHONE_FOLDS: readonly CommandId[] = [
+  'focus',
+  'seal',
+  'marks',
+  'find',
+  'bookmark',
+  'look',
 ];
 
 /** Where a layout shows the note's tags (backlog #13), each a slot the page keeps (../page/page.ts). */

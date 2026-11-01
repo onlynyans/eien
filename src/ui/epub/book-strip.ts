@@ -6,7 +6,14 @@
 // leaf only with Marks on the edge (./edge-strip.css, data-marks), drawn
 // either way; hidden with no book.
 
-import { bookFraction, chapterTitle, type Epub, type Mark, placeAt } from '../../core/epub';
+import {
+  bookFraction,
+  chapterTitle,
+  type Epub,
+  type Mark,
+  placeAt,
+  shareAt,
+} from '../../core/epub';
 import type { BookCount } from './book-count';
 import { EdgeStrip } from './edge-strip';
 import type { EpubPage } from './epub-page';
@@ -21,8 +28,11 @@ export interface BookStripOf {
   marks(): readonly Mark[];
   /** A place shown: spine item `index` at an offset, or the one it gives once drawn (its words counted then). */
   goTo(index: number, at: number | (() => number)): void;
-  /** The page a place is on, as the colophon says it ("page 12 of 2,450"), or ''. */
-  pageAt(spine: number, offset: number): string;
+  /**
+   * Where a place is, `share` of the book: its printed page as the colophon
+   * says it ("page 12 of 2,450"), else "21% of the book"; '' for none known.
+   */
+  wordsAt(spine: number, offset: number, share: number): string;
 }
 
 export interface BookStrip {
@@ -35,16 +45,11 @@ export interface BookStrip {
 export function bookStrip(of: BookStripOf): BookStrip {
   /** Spine item `index`'s words, as counted; 0 until they are. */
   const lengthOf = (index: number) => of.count()?.lengths[index] ?? 0;
-  /** How far into spine item `index` an offset is, by its count: none counted, its start. */
-  const into = (index: number, offset: number) => {
-    const length = lengthOf(index);
-    return length ? Math.min(1, offset / length) : 0;
-  };
-  /** What a place is called: its chapter, and its page where one is known. */
-  const said = (epub: Epub, index: number, offset: number) => {
+  /** What a place `share` of the book is called: its chapter, and where in the book. */
+  const said = (epub: Epub, index: number, offset: number, share: number) => {
     const title = chapterTitle(epub.contents, index) ?? `Section ${index + 1}`;
-    const page = of.pageAt(index, offset);
-    return page ? `${title}, ${page}` : title;
+    const where = of.wordsAt(index, offset, share);
+    return where ? `${title}, ${where}` : title;
   };
   /** The strip's chapters: every row of the contents (a part's chapters too), each its spine item's start, in order. */
   const chapters = (epub: Epub) => [...new Set(epub.contents.map((row) => row.spine))];
@@ -78,7 +83,9 @@ export function bookStrip(of: BookStripOf): BookStrip {
     describe(share) {
       const epub = of.epub();
       const at = epub && placeAt(epub.spine, share);
-      return epub && at ? said(epub, at.index, Math.floor(at.within * lengthOf(at.index))) : '';
+      return epub && at
+        ? said(epub, at.index, Math.floor(at.within * lengthOf(at.index)), share)
+        : '';
     },
   });
   of.page.element.append(strip.element);
@@ -88,11 +95,15 @@ export function bookStrip(of: BookStripOf): BookStrip {
       const epub = of.epub();
       strip.element.hidden = !epub;
       if (!epub) return strip.draw({ chapters: [], marks: [] });
+      const count = of.count();
       strip.draw({
         chapters: chapters(epub).map((spine) => bookFraction(epub.spine, spine, 0)),
         marks: of.marks().map((mark) => ({
           kind: mark.kind,
-          share: bookFraction(epub.spine, mark.spine, into(mark.spine, mark.offset)),
+          // Within its chapter once that's counted (as its row says it), else at its start.
+          share:
+            shareAt(epub.spine, count?.lengths ?? [], mark.spine, mark.offset) ??
+            bookFraction(epub.spine, mark.spine, 0),
         })),
       });
     },
@@ -100,7 +111,7 @@ export function bookStrip(of: BookStripOf): BookStrip {
       const epub = of.epub();
       // Said from the chapter drawn and its words, never from the share: a chapter wholly in sight
       // ends where the next begins.
-      if (epub) strip.place(share, said(epub, of.spine(), from));
+      if (epub) strip.place(share, said(epub, of.spine(), from, share));
     },
   };
 }

@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
-import { actsOn, COMMANDS, menuOff } from '../chrome/commands';
+import { actsOn, COMMANDS, type CommandId, commandOf, menuOff } from '../chrome/commands';
 import { LAYOUT_SPECS } from '../chrome/layouts';
 import { type CommandContext, runCommand } from './commands';
 import type { Side } from './pages';
@@ -61,7 +61,7 @@ describe('the commands for a note', () => {
     expect(actsOn('page.close', 'epub')).toBe(true);
     expect(actsOn('scheme', 'epub')).toBe(true);
     // A book's own, the other way: set aside while a note is the active page.
-    expect(BOOK_COMMANDS).toEqual(['view.pages', 'view.scroll', 'bookmark']);
+    expect(BOOK_COMMANDS).toEqual(['view.pages', 'view.scroll', 'bookmark', 'marks']);
     for (const id of BOOK_COMMANDS) expect(actsOn(id, 'note')).toBe(false);
   });
 
@@ -105,6 +105,66 @@ describe('the commands for a note', () => {
       chrome.refresh();
       expect(phone()).toContain('focus');
       expect(phone().filter((id) => BOOK_COMMANDS.includes(id as never))).toEqual([]);
+    });
+  }
+
+  it('give a book Marks, which shows its marks, set aside with marks on the edge; Find every page (#64)', async () => {
+    const made = await drawn('band');
+    const { pages, chrome, inSight, marks, change } = made;
+    const marksTool = () =>
+      [...document.querySelectorAll<HTMLButtonElement>('[data-command="marks"]')].filter(
+        (button) => !button.hasAttribute('data-aside'),
+      );
+    expect(inSight()).toEqual(expect.arrayContaining(['marks', 'find']));
+    marksTool()[0]?.click();
+    expect(marks).toHaveBeenCalledOnce();
+    change({ 'epub.marks': 'edge' });
+    chrome.refresh();
+    expect(marksTool()).toEqual([]);
+    expect(inSight()).toContain('find');
+    // A note in front: Find still, a book's Marks aside.
+    change({ 'epub.marks': 'list' });
+    pages.activate(pages.sides[0] as Side);
+    chrome.refresh();
+    expect(inSight()).toContain('find');
+    expect(marksTool()).toEqual([]);
+  });
+
+  for (const layout of ['band', 'slip', 'runhead'] as const) {
+    it(`leave ${layout}’s page tools a note’s with Find, and a book’s with Find and Marks (#64)`, async () => {
+      const { pages, chrome } = await drawn(layout);
+      const spec = LAYOUT_SPECS[layout];
+      /** The layout's page tools in sight, by command, less what a split adds for its pages. */
+      const tools = () =>
+        [...document.querySelectorAll<HTMLButtonElement>(`.host--${spec.tools} [data-command]`)]
+          .filter((button) => !button.hasAttribute('data-aside') && !button.hidden)
+          .map((button) => button.dataset.command as CommandId)
+          .filter((id) => !('split' in commandOf(id)));
+      const strip = layout === 'runhead' ? [] : ['strip'];
+      // The book in front: its views, its bookmark, Marks, Find, Look; never the formatting bar's
+      // switch, a note's as its bar is (the orchestrator's call).
+      expect(tools()).toEqual([
+        ...(layout === 'band' ? [] : ['view.pages', 'view.scroll']),
+        'bookmark',
+        'marks',
+        'find',
+        'look',
+        ...strip,
+      ]);
+      pages.activate(pages.sides[0] as Side);
+      chrome.refresh();
+      // The note in front: its own tools, with Find; no Marks.
+      expect(tools()).toEqual([
+        ...(layout === 'band' ? [] : ['view.live', 'view.source', 'view.reading']),
+        'compare',
+        'seal',
+        'versions',
+        'format-bar',
+        'focus',
+        'find',
+        'look',
+        ...strip,
+      ]);
     });
   }
 
@@ -183,6 +243,26 @@ describe('the commands for a note', () => {
     expect(seal?.hasAttribute('data-aside')).toBe(true);
   });
 
+  it('show the first page’s book’s marks from Marks with a companion, the note beside active (#64)', async () => {
+    const files = { 'Chapter.md': 'The gate held.' };
+    const made = await pagesWith(files, { 'appearance.split': 'companion' }, [standInKind]);
+    await made.pages.open('Map.stand');
+    await made.pages.open('Chapter.md', true);
+    const { pages } = made;
+    const { marks } = toolsOver(made);
+    // Marks shows the active page's book's (epub-wiring's showMarks): the book its tool stands
+    // for is made the active page first, as a menu command's page is, or the note shows nothing.
+    let shownFor: string | undefined;
+    marks.mockImplementation(() => {
+      shownFor = pages.active.kind;
+    });
+    const tool = pages.pane.slots.bar.querySelector<HTMLButtonElement>('[data-command="marks"]');
+    expect(tool?.hasAttribute('data-aside')).toBe(false);
+    tool?.click();
+    expect(marks).toHaveBeenCalledOnce();
+    expect(shownFor).toBe('epub');
+  });
+
   it('do nothing from the menu while the active page holds another kind', async () => {
     const { pages } = await drawn();
     const outline = { open: false, toggle: vi.fn() };
@@ -253,6 +333,8 @@ describe('the commands for a note', () => {
         'outline',
         'toggle:editor.typewriter',
         'toggle:editor.marks',
+        // The formatting bar's switch, a note's as its bar is (#64).
+        'toggle:editor.formatBar',
       ]),
     );
     // A page's, the window's, and settings that are the window's stay on.
@@ -263,7 +345,6 @@ describe('the commands for a note', () => {
       'export-book:epub',
       'split',
       'new-note',
-      'toggle:editor.formatBar',
       'toggle:editor.spellcheck',
       // Format → Highlight: a book's words take it too (#40, Phase 5a).
       'format:highlight',

@@ -16,6 +16,8 @@ export const ICONS = {
   // A book's bookmark (#40, Phase 4b): a page with the silk ribbon over its top edge, its end
   // forked, as the Page mark's; the page tells it from Pinned's banner.
   bookmark: '<path d="M3.5 2.5h9v11h-9z"/><path d="M8.5 2.5v5.5l1.5-1.5 1.5 1.5V2.5"/>',
+  // A book's marks (#64): the list's lines, the bookmark's ribbon beside them: what you kept.
+  marks: '<path d="M2.5 4.5h6M2.5 8h6M2.5 11.5h4"/><path d="M10.5 2.5h3v10l-1.5-1.5-1.5 1.5z"/>',
   compare:
     '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
   versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',

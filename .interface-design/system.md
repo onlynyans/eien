@@ -323,6 +323,12 @@ if a theme should change it, it joins `THEME_TOKENS`.
   its hosts, in the order the layout's `folds` lists give (the views as one
   step); what no list names never folds (the strip's toggle, the way back
   from a shut band). In C, the breadcrumb gives way first, then the tools.
+  A phone's bar folds too (#64, `PHONE_FOLDS`), behind the ⋯ it already
+  holds, which offers every tool it folds, so no second ⋯: Focus, Seal,
+  Marks, Find, the bookmark, Look last; never the views or the ⋯. Back and
+  ⇄ give way first, to a finger's reach. A bar's room is read with every
+  tool in sight, so a bar its tools size (a phone's) fits the same whatever
+  folded before.
 
 ## States
 
@@ -722,11 +728,18 @@ in the book, each recorded here as it's built.
   chapter. A finger swiped across the page turns the chapter too (#71):
   nothing moves under it; the chapter's words step in from the side they
   come from (Words' step in, `--eien-space-2`, calm × Turn speed, none with
-  reduced motion), as they do from the foot's turns. The colophon's items: "3 of 61", the page (Phase 4a: "page 212
-  of 2,450", "page xii"; `.colophon__page`, a count, gone while none is
-  known), "40% of the chapter", "12% of the book", the two percents
-  dropped first under a 560px page pane, the page kept. In Facing pages
-  they're the book's folio, as a note's figures are.
+  reduced motion), as they do from the foot's turns. The colophon's items
+  (#66): "3 of 61", where in the chapter
+  (`.colophon__page`, a count, gone while none is known: the printed page,
+  "page 212 of 2,450", "page xii"; else in Pages the chapter's own, "page
+  3 of 12", a spread's "pages 3–4 of 12"; else scrolling "40% of the
+  chapter", #67), "12% of the book" (`.colophon__through`, worded, as the
+  zoom's percent may stand beside it), dropped first under a 560px page
+  pane, where in the chapter kept. No Today while a book is in front
+  (`.colophon__counters[data-untallied]`, `page/page-pane.ts`; a sprint
+  stays). In Facing pages they're the book's folio, as a note's figures
+  are. A Marks or Found row's figure and the strip's words: the printed
+  page, else how far through the book ("21%").
 - **A bookmark** (Phase 4b, `epub/bookmark.css`): the Page mark's own look
   (`page/page-mark.css`: the ink-soft ribbon, the dog-ear with no ink, or
   the ink-soft edge tab), `.page__mark--bookmark`, at the sheet's outer top
@@ -781,6 +794,20 @@ in the book, each recorded here as it's built.
   selection's `--eien-seal-wash`): washes, never the highlight's pencil
   line; forced colours the system's Mark and Highlight. Scrolling, the
   match stands clear of the bar.
+- **Find and Marks as tools** (#64, decided 2026-11-01): **Find** is every
+  page's tool (a note's too), the list's search icon, last of the page's
+  run before the hairline to Look, so Look stays the last tool; it opens
+  the page's find bar (⌘F). **Marks** is a book's own (`on: 'epub'`, set
+  aside with a note), beside the bookmark: the list's three lines with the
+  bookmark's ribbon at their right. It shows the book's marks where they're
+  listed: the list on its Marks lens, a shut list opened, or with two panes
+  the sidebar's SHELF row on it; on a phone that pane, a Back from the page,
+  as Contents is. Not a toggle. With marks On the edge it's set aside: the
+  strip is the marks, in sight. The phone's ⋯ offers Marks after Bookmark.
+  The formatting bar's switch is a note's (`on: 'note'`, the orchestrator's
+  call, 2026-11-01): a book can't use the bar, so a book's tools are its
+  views, the bookmark, Marks, Find and Look, and the menu bar greys
+  Formatting Bar with a book in front.
 - **Found in the list** (Phase 5c, `list/found-rows.ts`): a third lens,
   Found, after Contents and Marks, only while a search is on, its count
   0 while it looks or finds none (#61): never one with nothing to choose. A match's row is a Marks row: its words with the match marked
@@ -897,7 +924,8 @@ in the book, each recorded here as it's built.
   other lies still until it lands. The fore-edge stands at its outer sides
   (Previous pages, Next pages). A bookmark's mark sits on the page it
   marks: the verso's at its left, its edge tab past the pages read
-  (`--edges-before`). The colophon says "pages 212–213 of 2,450".
+  (`--edges-before`). The colophon says "pages 3–4 of 12" (a printed
+  book's "pages 212–213 of 2,450").
 - **Set as a book** (Phase 3d, Showcase 2, `ui/epub/epub-set.css`), in
   pages alone: justified and hyphenated (`hyphenate-limit-chars: 6 3 2`),
   `text-wrap: pretty`, widows and orphans 2; ragged but hyphenated on a
@@ -906,7 +934,8 @@ in the book, each recorded here as it's built.
   low (two on a phone), on the text's own line (`--line`). The running
   heads in label type, off an opening page: the chapter's over one page;
   the book's title over the verso and the chapter's over the recto. The
-  folios in counts at the outer corners, the page numbers' own labels.
+  folios in counts at the outer corners, the colophon's numbers: the
+  printed page's label, else the chapter's own page (#67).
   Each keeps its line when empty; in pages they take the folders' crumbs'
   place. Before the first chapter, Eien's **title page** (the title at 1.5 ×
   the title size, a `--eien-space-7` hairline in `--eien-rule` under it, the

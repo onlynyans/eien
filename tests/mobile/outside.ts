@@ -9,6 +9,7 @@ interface FilesystemCalls {
   writeFile(options: object): Promise<unknown>;
   readFile(options: object): Promise<{ data: string }>;
   readdir(options: object): Promise<{ files: { name: string }[] }>;
+  deleteFile(options: object): Promise<unknown>;
 }
 
 declare global {
@@ -31,6 +32,13 @@ export const putOutside = (page: Page, path: string, text: string) =>
         recursive: true,
       }),
     [path, text, DOCUMENTS] as const,
+  );
+
+/** Delete a file in Documents as another app would (Syncthing bringing a deletion from another device). */
+export const removeOutside = (page: Page, path: string) =>
+  page.evaluate(
+    ([path, directory]) => window.Capacitor.Plugins.Filesystem.deleteFile({ path, directory }),
+    [path, DOCUMENTS] as const,
   );
 
 /** Write a file's bytes (given as base64) in Documents as another app would: an image. */

@@ -32,7 +32,7 @@ export class BookCount implements PageCount {
   /** Each page asking for the count: how to tell it, and its book, read from while it asks. */
   readonly #runs = new Map<
     object,
-    { readonly still: Still; readonly told: () => void; readonly epub: Epub }
+    { readonly still: Still; readonly told: (spine: number) => void; readonly epub: Epub }
   >();
   #timer: ReturnType<typeof setTimeout> | undefined;
   /** An item read and counted now: one at a time, whatever starts or stops meanwhile. */
@@ -78,15 +78,15 @@ export class BookCount implements PageCount {
     this.#lengths[spine] = length;
     this.#found[spine] = anchors;
     this.#printed();
-    for (const run of this.#runs.values()) run.told();
+    for (const run of this.#runs.values()) run.told(spine);
   }
 
   /**
    * Count the rest of `epub` in the background, `still` saying when no page
-   * of its turns, and `told` after each item. Undone by the function it
+   * of its turns, and `told` after each item, which one. Undone by the function it
    * returns; the count stops once no page asks for it.
    */
-  run(epub: Epub, still: Still, told: () => void): () => void {
+  run(epub: Epub, still: Still, told: (spine: number) => void): () => void {
     const run = {};
     this.#runs.set(run, { still, told, epub });
     this.#next();

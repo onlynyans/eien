@@ -11,7 +11,7 @@ const EPUB = {
 /** The heads' and folios' words, verso then recto, after showing `sight`, each page numbered by its offset / 1,000. */
 function shown(sight: readonly PageShown[]) {
   const heads = new RunningHeads();
-  heads.show(sight, EPUB, 4, (offset) => String(Math.floor(offset / 1000) + 1));
+  heads.show(sight, EPUB, 4, ({ from }) => String(Math.floor(from / 1000) + 1));
   const words = (row: HTMLElement) => [...row.children].map((slot) => slot.textContent);
   return { heads: words(heads.head), folios: words(heads.folio) };
 }
@@ -81,7 +81,7 @@ describe('running heads and folios (Phase 3d)', () => {
 describe('running heads kept in place', () => {
   it('keeps both slots of each, the same elements, through the front matter and back', () => {
     const heads = new RunningHeads();
-    const label = (offset: number) => String(offset);
+    const label = ({ from }: PageShown) => String(from);
     const slots = [...heads.head.children, ...heads.folio.children];
     heads.show([{ role: 'text', from: 2500 }], EPUB, 4, label);
     heads.show(
@@ -104,7 +104,7 @@ describe('running heads kept in place', () => {
       { role: 'text', from: 2500 },
       { role: 'text', from: 3500 },
     ] as const;
-    const label = (offset: number) => String(Math.floor(offset / 1000) + 1);
+    const label = ({ from }: PageShown) => String(Math.floor(from / 1000) + 1);
     heads.show(sight, EPUB, 4, label);
     const watched = new MutationObserver(() => {});
     for (const row of [heads.head, heads.folio]) {
