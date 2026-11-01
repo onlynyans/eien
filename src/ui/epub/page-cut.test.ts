@@ -69,4 +69,131 @@ describe('a sight’s words cut for a turn’s copy', () => {
     const marked = cut(chapter, 0, 'One.Two'.length).querySelector(`[${CUT_END}]`);
     expect(marked?.localName).toBe('blockquote');
   });
+
+  it('hides each block the page before ended: its gap was that page’s, dropped at the break (#60)', () => {
+    const chapter = chapterOf(
+      '<p data-part="first-line">It is a truth.</p><blockquote><p>Quoted.</p></blockquote><p>Next.</p>',
+    );
+    const after = cut(chapter, 'It is a truth.'.length, null);
+    // Still there, so the paragraph after it is set as one after another (indented).
+    const ended = after.querySelector<HTMLElement>('[data-part="first-line"]');
+    expect(ended?.textContent).toBe('');
+    expect(ended?.style.display).toBe('none');
+    expect(after.querySelector('blockquote')?.style.display).toBe('');
+    const past = cut(chapter, 'It is a truth.Quoted.'.length, null);
+    expect(
+      [...past.querySelectorAll<HTMLElement>('blockquote, p')].map((block) => block.style.display),
+    ).toEqual(['none', 'none', '']);
+  });
+
+  it('drops the gap above what stands at the page’s head, as a break does in sight', () => {
+    const chapter = chapterOf('<p>One.</p><blockquote><p>Quoted.</p></blockquote><p>Two.</p>');
+    const page = cut(chapter, 'One.'.length, null);
+    expect(page.querySelector('blockquote')?.style.marginTop).toBe('0px');
+    expect(page.querySelector<HTMLElement>('blockquote p')?.style.marginTop).toBe('0px');
+    expect([...page.querySelectorAll<HTMLElement>('p')].at(-1)?.style.marginTop).toBe('');
+    // The chapter's own first page follows no break: its gaps stand.
+    const opening = cut(chapterOf('<blockquote><p>Epigraph.</p></blockquote>'), 0, null);
+    expect(opening.querySelector('blockquote')?.style.marginTop).toBe('');
+  });
+
+  it('still brings a picture that begins the page, with no gap above it', () => {
+    const chapter = chapterOf('<p>One.</p><div data-part="plate"><img alt=""></div><p>Two.</p>');
+    const plate = cut(chapter, 'One.'.length, null).querySelector<HTMLElement>(
+      '[data-part="plate"]',
+    );
+    expect(plate?.querySelector('img')).not.toBeNull();
+    expect(plate?.style.marginTop).toBe('0px');
+  });
+
+  it('takes a scene break at the page’s head as what stands there: its gap dropped, the words after keep theirs', () => {
+    const chapter = chapterOf(
+      '<p>One.</p><hr data-part="scene-break"><p data-part="epigraph">Two.</p>',
+    );
+    const page = cut(chapter, 'One.'.length, null);
+    expect(page.querySelector('hr')?.style.marginTop).toBe('0px');
+    expect(page.querySelector('p')?.style.marginTop).toBe('');
+  });
+
+  it('never hides a block whose scene break is still to come', () => {
+    const chapter = chapterOf('<blockquote><p>One.</p><hr></blockquote><p>Two.</p>');
+    const page = cut(chapter, 'One.'.length, null);
+    expect(page.querySelector('blockquote')?.style.display).toBe('');
+    expect(page.querySelector('hr')).not.toBeNull();
+  });
+
+  it('leaves a break or a picture on the page it’s drawn on, never the head of the next or the foot of this', () => {
+    // The page in sight from 100 to 300; the break before its words drawn on the page before, the
+    // picture after them on the page after.
+    const box = document.createElement('div');
+    const chapter = chapterOf(
+      '<p>One.</p><div class="scene-break">***</div><p>Two.</p><figure><img alt=""></figure><p>Three.</p>',
+    );
+    box.append(chapter);
+    document.body.append(box);
+    const at = (element: Element | null, left: number, width: number) => {
+      if (element)
+        element.getBoundingClientRect = () => ({ left, width, right: left + width }) as DOMRect;
+    };
+    at(box, 100, 200);
+    at(chapter.querySelector('.scene-break'), 0, 80);
+    at(chapter.querySelector('img'), 320, 80);
+    const page = cut(chapter, 'One.'.length, 'One.Two.'.length);
+    expect(page.querySelector('.scene-break')).toBeNull();
+    expect(page.querySelector('img')).toBeNull();
+    expect(page.textContent).toBe('Two.');
+    // Drawn on this page, they come with it.
+    at(chapter.querySelector('.scene-break'), 100, 200);
+    at(chapter.querySelector('img'), 150, 80);
+    const own = cut(chapter, 'One.'.length, 'One.Two.'.length);
+    expect(own.querySelector('.scene-break')).not.toBeNull();
+    expect(own.querySelector('img')).not.toBeNull();
+  });
+
+  describe('by where each mark is drawn (#60, as review found)', () => {
+    /** `body` in a box whose page in sight runs from 100 to 300, each `img` drawn at its left. */
+    function laid(body: string, lefts: readonly number[]) {
+      const box = document.createElement('div');
+      const chapter = chapterOf(body);
+      box.append(chapter);
+      document.body.append(box);
+      const at = (element: Element, left: number, width: number) => {
+        element.getBoundingClientRect = () => ({ left, width, right: left + width }) as DOMRect;
+      };
+      at(box, 100, 200);
+      for (const [i, img] of [...chapter.querySelectorAll('img')].entries())
+        at(img, lefts[i] ?? 0, 80);
+      return chapter;
+    }
+    const plates = (count: number) =>
+      Array.from(
+        { length: count },
+        (_, n) => `<div data-part="plate"><img alt="" title="${n}"></div>`,
+      ).join('');
+
+    it('keeps a chapter of pictures alone to the one in sight, no gap above it', () => {
+      const chapter = laid(plates(3), [-120, 150, 360]);
+      const page = cut(chapter, 0, null);
+      expect([...page.querySelectorAll('img')].map((img) => img.title)).toEqual(['1']);
+      // The plate the page before ended comes hidden; the one in sight stands at the head.
+      const [ended, own] = [...page.querySelectorAll<HTMLElement>('[data-part="plate"]')];
+      expect(ended?.style.display).toBe('none');
+      expect(own?.style.marginTop).toBe('0px');
+    });
+
+    it('keeps the pictures before a chapter’s words to their own pages', () => {
+      const chapter = laid(`${plates(2)}<p>Words.</p>`, [150, 360]);
+      const page = cut(chapter, 0, 0);
+      expect([...page.querySelectorAll('img')].map((img) => img.title)).toEqual(['0']);
+    });
+
+    it('hides the block a picture on the page before ended, not what’s inside it', () => {
+      const chapter = laid('<p data-part="plate"><img alt=""><br></p><p>Words.</p>', [-120]);
+      const page = cut(chapter, 0, null);
+      const [ended, words] = [...page.querySelectorAll<HTMLElement>('p')];
+      expect(ended?.style.display).toBe('none');
+      expect(words?.textContent).toBe('Words.');
+      expect(words?.style.marginTop).toBe('0px');
+    });
+  });
 });
