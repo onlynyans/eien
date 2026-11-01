@@ -83,6 +83,23 @@ describe('a book’s Found in the list', () => {
     expect(line?.getAttribute('role')).toBeNull();
   });
 
+  it('keeps Found, pressed, at 0 while it looks or finds none: the lens names the line under it (#61)', () => {
+    for (const none of [found({ rows: [], done: false, searched: 0 }), found({ rows: [] })]) {
+      const { container } = drawn(model({ found: none }));
+      const pressed = container.querySelector('.book-lens[aria-pressed="true"]');
+      expect(pressed?.textContent).toBe('Found 0');
+      container.remove();
+    }
+  });
+
+  it('keeps the keyboard on the lenses when the search is cleared under Found (#61)', () => {
+    const { container, actions } = drawn(model());
+    container.querySelector<HTMLButtonElement>('[data-key="lens:found"]')?.focus();
+    renderContents(container, model({ found: null, lens: 'contents' }), null, actions);
+    expect(container.querySelector('[data-key="lens:found"]')).toBeNull();
+    expect(document.activeElement?.getAttribute('data-key')).toBe('lens:contents');
+  });
+
   it('says none was found, heard once it’s through', () => {
     const { container } = drawn(model({ found: found({ rows: [] }) }));
     const line = container.querySelector('.list__empty');

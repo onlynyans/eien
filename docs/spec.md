@@ -1178,8 +1178,8 @@ Another book on the page shuts it.
 **The list's field, beside a book** (Phase 5c, Features 2): while the list
 shows a book's contents, its search field searches that book ("Search Pride
 and Prejudice"), as written and in any case, from two letters: the list
-turns to **Found**, a third lens beside Contents and Marks (there with
-nothing searched, but not to choose), each match a row in its words (the
+turns to **Found**, a third lens beside Contents and Marks (there only
+while a search is on, 0 while it looks or finds none), each match a row in its words (the
 match among the words round it, cut on whole words, an ellipsis where they
 go on), its page and its chapter. While it searches, "Searching… chapter 12
 of 61" (never announced each time); with none, "No “xyz” in Pride and
