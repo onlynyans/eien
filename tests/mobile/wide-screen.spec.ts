@@ -214,6 +214,12 @@ test.describe('side by side', () => {
     await withRoom(page, 'side', OPEN_FOLD);
     await openInFic(page, 'Tear');
     await expect.poll(() => besideWidth(page, 'list')).toBe('316px'); // the list's own width
+    // The list slides in beside the page: its edge taken hold of once it rests at the list's width.
+    const edgeAt = async () => {
+      const box = await page.locator('.pane-edge--list').boundingBox();
+      return box && Math.round(box.x + box.width / 2);
+    };
+    await expect.poll(edgeAt).toBe(316);
     const edge = await page.locator('.pane-edge--list').boundingBox();
     if (!edge) throw new Error('no edge beside the page');
     expect(edge.width).toBeGreaterThanOrEqual(44); // a finger's to take hold of

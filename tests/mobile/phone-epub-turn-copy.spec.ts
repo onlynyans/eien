@@ -69,30 +69,22 @@ const partsBook = () =>
     { name: 'c1.xhtml', data: chapterPage('The quay', `<h1>The quay</h1>${PARTS}`) },
   ]);
 
-/**
- * A book in pages, turned by Words slowly enough to read its copy, at `textSize`, on `screen`, in
- * `room` (Panes unless said).
- */
+/** A book in pages, turned by Words slowly enough to read its copy, at `textSize`, on `screen`. */
 async function openBook(
   page: Page,
   bytes: Uint8Array,
   screen: { width: number; height: number },
   textSize: number,
-  room: 'panes' | 'one' = 'panes',
 ) {
   await open(page);
-  await page.evaluate(
-    async ([size, room]) => {
-      await window.eien.settings.set('appearance.room', room);
-      await window.eien.settings.set('epub.view', 'pages');
-      // The contents beside the page in Panes (a phone starts with two panes, #69), read as it reloads.
-      await window.eien.settings.set('layout.panes', 'three');
-      await window.eien.settings.set('epub.turn', 'words');
-      await window.eien.settings.set('epub.turnSpeed', '4');
-      await window.eien.settings.set('epub.appearance.textSize', size);
-    },
-    [textSize, room] as const,
-  );
+  await page.evaluate(async (size) => {
+    await window.eien.settings.set('epub.view', 'pages');
+    // The contents beside the page in Panes (a phone starts with two panes, #69), read as it reloads.
+    await window.eien.settings.set('layout.panes', 'three');
+    await window.eien.settings.set('epub.turn', 'words');
+    await window.eien.settings.set('epub.turnSpeed', '4');
+    await window.eien.settings.set('epub.appearance.textSize', size);
+  }, textSize);
   await putBytesOutside(page, 'Eien/Vault/Novels/Book.epub', Buffer.from(bytes).toString('base64'));
   await page.setViewportSize(screen);
   await page.reload();
@@ -149,9 +141,8 @@ for (const screen of [FOLD, { width: 1180, height: 820 }]) {
     page,
   }) => {
     test.setTimeout(90_000);
-    // A Fold's page whole, one at a time: the copy at the width these were found at (#60). On a page
-    // under 300px (the Fold's beside the tree, #68) a copy still gains a line: a fix of its own.
-    await openBook(page, partsBook(), screen, 100, screen === FOLD ? 'one' : 'panes');
+    // Each screen in the room it opens in: a Fold upright, two panes, its page under 300px (#68).
+    await openBook(page, partsBook(), screen, 100);
     await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
       'Before.',
     );
@@ -214,7 +205,7 @@ test('a page that begins on a picture: the copy lays the picture, and the lines 
   page,
 }) => {
   test.setTimeout(60_000);
-  await openBook(page, platesBook(), FOLD, 100, 'one'); // a Fold's page whole, as above
+  await openBook(page, platesBook(), FOLD, 100); // two panes, the page beside the tree (#68)
   await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
     'Before.',
   );
@@ -241,7 +232,7 @@ test('a page that begins on a picture: the copy lays the picture, and the lines 
 
 // #60 again: on a narrow page (a small phone; a Fold's page beside the tree, about 278px) more of
 // a page's lines end in a space, and its first word was found a line late now and then, the copy
-// stepping every line up. One at a time here, under either room rule.
+// stepping every line up. One at a time here: narrower than a phone upright.
 for (const width of [300, 278]) {
   test(`a narrow page, ${width}px: each turn’s copy lays every line where the page has it`, async ({
     page,
