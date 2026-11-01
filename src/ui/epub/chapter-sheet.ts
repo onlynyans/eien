@@ -38,7 +38,7 @@ export interface ChapterSheetOf {
   copy(text: string, html: string): void;
   /** Whether `range`'s words lie in one highlight: the bar's Highlight then takes it off. */
   inHighlight(range: Range): boolean;
-  /** A turn's copy of the chapter, cut to the page in sight whose first word is `from`: inked as the page is. */
+  /** A turn's copy of the chapter, the words round the page in sight from `from` on: inked as the page is. */
   copied(copy: HTMLElement, from: number): void;
   /** In pages, one page, two, or as the width allows (./spread.ts). */
   pages?(): PagesChoice;
@@ -123,13 +123,14 @@ export class ChapterSheet {
     this.#selection.forget();
   }
 
-  /** In pages: a copy of the chapter cut to the page in sight (a turn's), inked as the page is. */
-  trim(copy: HTMLElement): void {
-    if (!this.paged) return;
-    // Inked from where the cut begins, not the place kept, which may stand mid-page; a copy of
-    // Eien's front matter holds none of the book's words.
+  /** In pages: a copy of the chapter kept to the words round the page in sight (a turn's), inked as the page is; false for none. */
+  trim(copy: HTMLElement): boolean {
+    if (!this.paged) return false;
+    // Inked from where the copy's words begin, not the place kept, which may stand mid-page.
     const from = this.#paged.trim(copy);
-    if (from !== null) this.#copied(copy, from);
+    if (from === null) return false;
+    this.#copied(copy, from);
+    return true;
   }
 
   /**

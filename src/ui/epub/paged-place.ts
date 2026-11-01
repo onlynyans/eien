@@ -13,11 +13,10 @@
 import { openingSight, pageAt, pageRoles, throughSights } from '../../core/epub';
 import { zoomOf } from '../css-zoom';
 import { across, characterAt, firstOnPage, type SideOf } from './chapter-place';
-import { FRONT } from './front-matter';
 import { type Columns, clipAt, keyOf, layColumns, UNLAID, unlayColumns } from './page-columns';
-import { sightCut } from './page-cut';
 import { REST_MS } from './place-keeper';
 import type { PageShown, Spot } from './sight';
+import { type BoxOf, sightCopy } from './sight-copy';
 
 export interface PagedPlaceOf {
   /** The box a page shows in: its size is a page's. */
@@ -35,6 +34,8 @@ export interface PagedPlaceOf {
   /** The page in sight, measured: from its first word to the next page's (Phase 4), as it's shown or turned. */
   inSight(from: number, to: number): void;
   readonly sideOf?: SideOf;
+  /** A node's first box, for a turn's copy (./sight-copy.ts): the window's, or a test's. */
+  readonly boxOf?: BoxOf;
 }
 
 export class PagedPlace {
@@ -233,8 +234,7 @@ export class PagedPlace {
 
   /**
    * The page in sight's words: from its first (0 on the first page) to the
-   * next page's first, null on the last. A turn's copy is cut to them, and
-   * they're the page a bookmark marks.
+   * next page's first, null on the last: the page a bookmark marks.
    */
   #range(): { readonly from: number; readonly to: number | null } {
     const { chapter, box } = this.#of;
@@ -266,26 +266,34 @@ export class PagedPlace {
   }
 
   /**
-   * `copy`, a copy of the chapter as it stands (a turn's, ./turn/page-copy.ts),
-   * cut to the words in sight and laid as its first sight: a turn moves one
+   * `copy`, a copy of the chapter as it stands (a turn's, ./turn/page-copy.ts,
+   * its transform and clip the page's), holding the words round the sight
+   * alone, laid as the page lays them (./sight-copy.ts): a turn moves one
    * sight, never the whole chapter (fourteen copies of a long one would stall
-   * the window). A front page's copy is the front matter alone, where it stood.
-   * The offset of the copy's first word in the chapter, or null for a copy
-   * of none of the book's words (the front matter's, or none cut).
+   * the window). The offset of the copy's first word in the chapter, where
+   * its ink begins; null for no copy (none laid, or a run too long to copy).
    */
   trim(copy: HTMLElement): number | null {
     if (this.#idle || !this.#shown) return null;
-    const { chapter } = this.#of;
-    const at = this.#onFront ? this.#page * this.#laid.step : 0;
-    const { from, to } = this.#range();
-    copy.replaceChildren(
-      this.#onFront
-        ? (chapter.querySelector(FRONT)?.cloneNode(true) ?? '')
-        : sightCut(chapter, from, to),
-    );
-    copy.style.transform = at ? `translateX(${-at}px)` : '';
-    copy.style.clipPath = clipAt(at, this.#laid.gap);
-    return this.#onFront ? null : from;
+    const scale = this.#scale();
+    const { step, column, gap } = this.#laid;
+    const { box, chapter } = this.#of;
+    // The gap's middle: a line's hanging quote never reads as the page before's, nor the page after's.
+    const from = box.getBoundingClientRect().left - (gap / 2) * scale;
+    const sight = sightCopy(chapter, {
+      box,
+      from,
+      past: from + step * scale,
+      at: this.#page * step,
+      pitch: column + gap,
+      scale,
+      boxOf: this.#of.boxOf,
+    });
+    if (!sight) return null;
+    copy.replaceChildren(sight.words);
+    copy.style.transform = `translateX(${-sight.shift}px)`;
+    copy.style.clipPath = clipAt(sight.shift, gap);
+    return sight.from;
   }
 
   /** Whether the sight shown is Eien's front matter: none of the book's words in it. */

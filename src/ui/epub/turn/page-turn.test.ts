@@ -15,6 +15,7 @@ function book({
   pages = 5,
   later = false,
   laterBack = false,
+  trim = undefined as ((words: HTMLElement) => boolean) | undefined,
 } = {}) {
   /** Whether the next step is into another chapter, drawn first: a test may change it. */
   const drawing = { later };
@@ -47,6 +48,7 @@ function book({
     {
       sheet: () => sheet,
       words: '.words',
+      trim,
       step: (way) => {
         const go = () => {
           if (page + way < 1 || page + way > pages) return false;
@@ -569,5 +571,77 @@ describe('a hand cancelled', () => {
     b.run(1);
     expect(b.curl()).toBeNull();
     expect(b.page()).toBe(1);
+  });
+});
+
+describe('a page with no copy to be had (a run too long to copy)', () => {
+  /** No copy of the first page: a turn from it, or back to it, has nothing to move. */
+  const trim = (words: HTMLElement) => words.textContent !== 'Page 1';
+
+  for (const style of ['curl', 'slide', 'words'] as const) {
+    it(`a key under ${style} turns at once, nothing left over the page, and the next turn moves again`, () => {
+      const b = book({ style, trim });
+      b.turn.key(1);
+      expect(b.page()).toBe(2);
+      expect(b.copies()).toBe(0);
+      expect(b.curl()).toBeNull();
+      expect(b.turn.turning).toBe(false);
+      // Nothing turning: what waits for a still page runs now.
+      const now = vi.fn();
+      b.turn.whenStill(now);
+      expect(now).toHaveBeenCalledOnce();
+      // The page after has its copy: it moves.
+      b.turn.key(1);
+      expect(b.page()).toBe(3);
+      expect(b.copies()).toBeGreaterThan(0);
+    });
+  }
+
+  it('a hand under Curl turns it at once and holds nothing', () => {
+    const b = book({ trim });
+    b.turn.grab([390, 500]);
+    b.turn.drag([-60, 0], 0);
+    expect(b.page()).toBe(2);
+    expect(b.curl()).toBeNull();
+    b.turn.drag([-300, 0], 20);
+    expect(b.steps).toEqual([1]);
+    expect(b.turn.letGo()).toBe(true);
+    b.run();
+    expect(b.page()).toBe(2);
+    expect(b.copies()).toBe(0);
+    expect(b.turn.turning).toBe(false);
+  });
+
+  it('back by a key under Curl, with no copy of the page come to: turned at once, the sheet never hidden', () => {
+    const b = book({ trim });
+    b.turn.key(1);
+    b.turn.key(1);
+    b.turn.finish();
+    b.turn.key(-1);
+    // The page left (the third) had its copy; the page come to (the second) has one too.
+    expect(b.curl()).not.toBeNull();
+    b.run();
+    b.turn.key(-1);
+    expect(b.page()).toBe(1);
+    expect(b.curl()).toBeNull();
+    expect(b.copies()).toBe(0);
+    expect(b.sheet.style.visibility).toBe('');
+    expect(b.turn.turning).toBe(false);
+  });
+
+  it('back by a hand under Curl, with no copy of the page come to: turned at once, never put back', () => {
+    const b = book({ trim });
+    b.turn.key(1);
+    b.turn.grab([10, 500]);
+    b.turn.drag([60, 0], 0);
+    expect(b.page()).toBe(1);
+    expect(b.curl()).toBeNull();
+    expect(b.sheet.style.visibility).toBe('');
+    expect(b.turn.letGo()).toBe(true);
+    b.run();
+    // Nothing held, so nothing fell back: the page is where the hand asked.
+    expect(b.page()).toBe(1);
+    expect(b.copies()).toBe(0);
+    expect(b.turn.turning).toBe(false);
   });
 });

@@ -26,8 +26,12 @@ export interface TurnSurface {
   sheet(): HTMLElement | null;
   /** Where its words are, within a sheet or a copy of one: what Slide and Words move. */
   readonly words: string;
-  /** A copy's words cut to what's in sight, so a turn moves a page and never a whole chapter. */
-  trim?(words: HTMLElement): void;
+  /**
+   * A copy's words kept to those round the sight, laid as the page has them:
+   * a turn moves a page, never a whole chapter. False for none to be had: the
+   * page turns without a motion.
+   */
+  trim?(words: HTMLElement): boolean;
   /**
    * The book a page `way` on, its new page on the sheet; false at the book's
    * end. At once within a chapter; into another, once that's drawn (a
