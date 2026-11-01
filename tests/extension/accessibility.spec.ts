@@ -69,3 +69,26 @@ for (const scheme of ['Day', 'Night'] as const) {
     expect(await seriousViolations(story)).toEqual([]);
   });
 }
+
+// Text size at its smallest (#72): the popup's stepper goes down to 50%, and the story page's
+// words with it, every control and target the size it was.
+test('at 50%: the popup and the story page', async ({ page, context }) => {
+  await page.goto(AO3_2);
+  await page.getByRole('button', { name: 'Read in Eien' }).click();
+  const origin = extensionOrigin(await storyFrame(page));
+  const popup = await context.newPage();
+  await popup.goto(`${origin}/popup.html`);
+  const size = popup.getByRole('group', { name: 'Text size' });
+  const smaller = size.getByRole('button', { name: 'Smaller' });
+  for (const shown of ['90%', '80%', '70%', '60%', '50%']) {
+    await smaller.click();
+    await expect(size.locator('output')).toHaveText(shown);
+  }
+  await expect(smaller).toBeDisabled();
+  expect(await seriousViolations(popup)).toEqual([]);
+
+  const story = await context.newPage();
+  await storyAlone(story, origin);
+  await expect(story.locator('html')).toHaveCSS('--eien-text-scale', '0.5');
+  expect(await seriousViolations(story)).toEqual([]);
+});
