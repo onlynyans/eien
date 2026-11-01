@@ -5,7 +5,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { devices, expect, test } from '@playwright/test';
+import { devices, expect, type Page, test } from '@playwright/test';
 import { open, putBytesOutside } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'reduce' });
@@ -57,3 +57,56 @@ for (const view of ['pages', 'scroll'] as const) {
     });
   }
 }
+
+/** The book open in Pages on a Fold's upright screen, and its sheet's head and foot margins, in px. */
+async function sheetMargins(page: Page) {
+  await open(page);
+  await page.evaluate(() => window.eien.settings.set('epub.view', 'pages'));
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.setViewportSize({ width: 590, height: 706 });
+  await page.reload();
+  const back = page.locator('.phone-bar__back');
+  const row = page.locator('.tree-row--epub .tree-row__name');
+  await expect
+    .poll(async () => (await row.isVisible()) || (await back.isVisible()), { timeout: 10_000 })
+    .toBe(true);
+  if (!(await row.isVisible())) await back.click();
+  await row.click();
+  await expect(page.locator('.epub-chapter')).toContainText('It is a truth');
+  return page.locator('.epub-sheet:not([aria-hidden])').evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      coarse: matchMedia('(pointer: coarse)').matches,
+      head: Number.parseFloat(style.paddingTop),
+      foot: Number.parseFloat(style.paddingBottom),
+    };
+  });
+}
+
+test('the foot is the head’s where a finger reads; with a mouse it keeps the desk’s room', async ({
+  page,
+  browser,
+}) => {
+  const finger = await sheetMargins(page);
+  expect(finger.coarse).toBe(true);
+  expect(finger.foot).toBe(finger.head);
+  // The same screen with a mouse and no touch: a desktop's window as narrow, its sheet as a note's.
+  const desk = await browser.newContext({
+    ...devices['Desktop Chrome'],
+    hasTouch: false,
+    isMobile: false,
+    reducedMotion: 'reduce',
+  });
+  try {
+    const mouse = await sheetMargins(await desk.newPage());
+    expect(mouse.coarse).toBe(false);
+    expect(mouse.foot).toBe(72);
+    expect(mouse.foot).toBeGreaterThan(mouse.head);
+  } finally {
+    await desk.close();
+  }
+});
