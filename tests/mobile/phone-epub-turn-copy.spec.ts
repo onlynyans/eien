@@ -79,6 +79,8 @@ async function openBook(
   await open(page);
   await page.evaluate(async (size) => {
     await window.eien.settings.set('epub.view', 'pages');
+    // The contents beside the page in Panes (a phone starts with two panes, #69), read as it reloads.
+    await window.eien.settings.set('layout.panes', 'three');
     await window.eien.settings.set('epub.turn', 'words');
     await window.eien.settings.set('epub.turnSpeed', '4');
     await window.eien.settings.set('epub.appearance.textSize', size);
