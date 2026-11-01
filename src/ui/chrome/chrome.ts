@@ -93,7 +93,15 @@ export class Chrome {
     this.#split = split;
     for (const host of this.#hosts) {
       const bar = host.element.parentElement;
-      if (host.spec.folds && bar) this.#bars?.observe(bar);
+      if (!host.spec.folds || !bar) continue;
+      this.#bars?.observe(bar);
+      // A's phone bar is as wide as its tools, and back and ⇄ beside it give way first and take
+      // room back first (../phone/phone.css): watched too, so room come back unfolds the tools.
+      if (host.spec.slot === 'phoneBar') {
+        for (const beside of bar.parentElement?.children ?? []) {
+          if (beside !== bar) this.#bars?.observe(beside);
+        }
+      }
     }
     // The split's pager stands in the tools' bar: drawn or not, it changes their room, not the bar's.
     if (this.#of.pager) this.#bars?.observe(this.#of.pager);

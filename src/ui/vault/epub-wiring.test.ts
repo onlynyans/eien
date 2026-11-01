@@ -275,6 +275,12 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     expect(notes.epubs.showMarks()).toBe(false);
     expect([notes.nav.contents, notes.nav.bookLens]).toEqual(['Novels/Dune.epub', 'contents']);
     expect(notes.redraw).not.toHaveBeenCalled();
+    // A book's page with no book on it (one trashed under it, its page cleared): the same.
+    const empty = { kind: 'epub', go: () => {}, path: null };
+    const none = watched('Novels/Dune.epub', { active: empty, sides: [empty] });
+    expect(none.epubs.showMarks()).toBe(false);
+    expect([none.nav.contents, none.nav.bookLens]).toEqual(['Novels/Dune.epub', 'contents']);
+    expect(none.redraw).not.toHaveBeenCalled();
   });
 
   it('begin at Contents for another book even from Marks, and stay on Marks for the same one opened again', () => {

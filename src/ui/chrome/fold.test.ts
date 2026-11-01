@@ -177,6 +177,36 @@ describe('A · Band’s bar', () => {
     fitTo(20);
     expect(chrome.folded(bar())).toEqual(before);
   });
+
+  it('folds a book’s tools Marks first, then its bookmark and Find, Look last (#64)', () => {
+    // A book in front (../vault/command-looks.ts): a note's own set aside, a book's in sight.
+    of.look = (id) => (actsOn(id, 'epub') ? {} : { aside: true });
+    chrome.refresh();
+    expect(shown()).toEqual([
+      'view.pages',
+      'view.scroll',
+      'format-bar',
+      'bookmark',
+      'marks',
+      'find',
+      'look',
+      'strip',
+    ]);
+    const steps: (readonly string[])[] = [];
+    for (let controls = 7; controls >= 4; controls--) {
+      fitTo(controls); // the ⋯ takes one
+      steps.push(chrome.folded(bar()));
+    }
+    // In the bar's order: the formatting bar's switch went first, then Marks (the list's lenses
+    // reach the marks too), the bookmark, Find, and Look; the book's views and the strip stay.
+    expect(steps).toEqual([
+      ['format-bar', 'marks'],
+      ['format-bar', 'bookmark', 'marks'],
+      ['format-bar', 'bookmark', 'marks', 'find'],
+      ['format-bar', 'bookmark', 'marks', 'find', 'look'],
+    ]);
+    expect(shown()).toEqual(['view.pages', 'view.scroll', 'strip']);
+  });
 });
 
 describe('the ⋯', () => {
@@ -265,6 +295,30 @@ describe('a phone’s bar (#64)', () => {
     room = 3;
     chrome.fit();
     expect((document.activeElement as HTMLElement | null)?.dataset.command).toBe('more');
+  });
+
+  it('is fitted again as back or ⇄ beside it changes, which take room come back before it does', () => {
+    // A's bar in the phone's top bar, after back and before ⇄ (../phone/phone-stack.ts).
+    const top = document.createElement('nav');
+    const [back, other] = [document.createElement('button'), document.createElement('button')];
+    top.append(back, slots.phoneBar, other);
+    document.body.append(top);
+    const watched: Element[] = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = (element: Element) => watched.push(element);
+        disconnect = () => {};
+      },
+    );
+    try {
+      const watching = new Chrome(of);
+      watching.mount('band');
+      expect(watched).toEqual(expect.arrayContaining([slots.phoneBar, back, other]));
+      watching.unmount();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

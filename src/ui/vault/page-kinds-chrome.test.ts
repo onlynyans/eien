@@ -205,6 +205,26 @@ describe('the commands for a note', () => {
     expect(seal?.hasAttribute('data-aside')).toBe(true);
   });
 
+  it('show the first page’s book’s marks from Marks with a companion, the note beside active (#64)', async () => {
+    const files = { 'Chapter.md': 'The gate held.' };
+    const made = await pagesWith(files, { 'appearance.split': 'companion' }, [standInKind]);
+    await made.pages.open('Map.stand');
+    await made.pages.open('Chapter.md', true);
+    const { pages } = made;
+    const { marks } = toolsOver(made);
+    // Marks shows the active page's book's (epub-wiring's showMarks): the book its tool stands
+    // for is made the active page first, as a menu command's page is, or the note shows nothing.
+    let shownFor: string | undefined;
+    marks.mockImplementation(() => {
+      shownFor = pages.active.kind;
+    });
+    const tool = pages.pane.slots.bar.querySelector<HTMLButtonElement>('[data-command="marks"]');
+    expect(tool?.hasAttribute('data-aside')).toBe(false);
+    tool?.click();
+    expect(marks).toHaveBeenCalledOnce();
+    expect(shownFor).toBe('epub');
+  });
+
   it('do nothing from the menu while the active page holds another kind', async () => {
     const { pages } = await drawn();
     const outline = { open: false, toggle: vi.fn() };

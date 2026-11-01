@@ -119,7 +119,11 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
         .catch(console.error),
     panes: () => void settings.set('layout.panes', two() ? 'three' : 'two').catch(console.error),
     more: (opener) => of.phone.more(opener),
-    marks: () => of.marks(),
+    // A book's Marks reads the active page's book: the page it acts on made that, as `send` does.
+    marks: () => {
+      pages.activate(target('marks'));
+      of.marks();
+    },
     // The bar's one heading control: the caret's line a level down each press.
     'format.heading': () => {
       const on = notePage();
