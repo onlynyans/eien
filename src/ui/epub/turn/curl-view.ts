@@ -14,7 +14,7 @@ import { CURL_STRIPS, type CurlFrame, isBack, reachOf, stripLight } from '../../
 import { zoomOf } from '../../css-zoom';
 import { h } from '../../dom';
 import { BandBox, part, rampOf } from './band-box';
-import { layOver, pageCopy } from './page-copy';
+import { layOver } from './page-copy';
 import type { TurnLeaf } from './turn-surface';
 import { CURL_INK } from './turn-tokens';
 
@@ -55,28 +55,32 @@ export class CurlView {
 
   /**
    * Over `to`, the sheet now; `leaving`, a copy of the one before the turn;
-   * `leaf`, one page of a spread that turns (on, always: a back turn's mirrored),
-   * or null for the whole sheet.
+   * `coming`, a copy of `to`, for a whole sheet turned back (the page come to
+   * curls back over the one left); `leaf`, one page of a spread that turns
+   * (on, always: a back turn's mirrored), or null for the whole sheet.
    */
   constructor(
     leaving: HTMLElement,
     to: HTMLElement,
     way: 1 | -1,
-    words: string,
-    trim?: (words: HTMLElement) => void,
+    coming: HTMLElement | null,
     leaf: TurnLeaf | null = null,
   ) {
     this.#to = to;
-    const sheetWidth = to.offsetWidth;
+    // Over the sheet first, its size the sheet's own box as laid (a part of a pixel under Page
+    // zoom), which every copy and band is measured by.
+    layOver(this.element, to);
+    const sheetWidth = Number.parseFloat(this.element.style.width);
+    const sheetHeight = Number.parseFloat(this.element.style.height);
     const box = leaf ?? { ...WHOLE, width: sheetWidth };
-    const page = { width: box.width, height: to.offsetHeight };
+    const page = { width: box.width, height: sheetHeight };
     const reach = reachOf(page);
-    this.element.style.setProperty('--curl-page-height', `${to.offsetHeight}px`);
+    this.element.style.setProperty('--curl-page-height', `${sheetHeight}px`);
     // A spread: the page that doesn't turn lies still, as it was, until the turning one lands on it.
     const lying = leaf ? (leaving.cloneNode(true) as HTMLElement) : null;
-    const moving = way > 0 || leaf ? leaving : pageCopy(to, words, trim);
+    const moving = way > 0 || leaf || !coming ? leaving : coming;
     // Back on one page, the page left lies beneath them all, and the sheet is hidden until it lands.
-    const under = way < 0 && !leaf ? part('under', pageIn(leaving, box, sheetWidth)) : null;
+    const under = moving !== leaving ? part('under', pageIn(leaving, box, sheetWidth)) : null;
     if (under) {
       under.style.zIndex = '0';
       to.style.visibility = 'hidden';
@@ -127,7 +131,6 @@ export class CurlView {
     } else {
       this.element.append(...layers);
     }
-    layOver(this.element, to);
     this.#cutAtPane();
   }
 

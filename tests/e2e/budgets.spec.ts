@@ -366,9 +366,10 @@ test.describe('a long chapter', () => {
  * Fifty turns (#40, Phase 3b): the long chapter in pages, turned on fifty
  * times by key under each Page turn, each turn's motion run to its end.
  * Measured: the curl's fourteen copies of the whole chapter were 215 ms, so
- * a turn copies the page in sight alone; now no long task (none over 50 ms)
- * under any of the three, the CPU four times slower too (SLOW=4). Held to
- * the same 200 ms as the rest.
+ * a turn copies the page in sight alone (the blocks round it, laid as the
+ * page, #60); now no long task (none over 50 ms) under any of the three,
+ * and with the CPU four times slower (SLOW=4) the longest 58 ms under Curl,
+ * none over 50 ms under Slide and Words. Held to the same 200 ms as the rest.
  */
 test.describe('fifty turns in a long chapter', () => {
   for (const turn of ['curl', 'slide', 'words'] as const) {
@@ -412,7 +413,9 @@ test.describe('fifty turns in a long chapter', () => {
  * Fifty turns on a spread (#40, Phase 3d): the long chapter two pages at a
  * time, justified and hyphenated where the window can, curled fifty times;
  * then the pane widened past a spread and narrowed short of it, each laying
- * the chapter out anew. Held to the same 200 ms as the rest.
+ * the chapter out anew. Held to the same 200 ms as the rest: measured, none
+ * over 50 ms turning, and with SLOW=4 81 ms turning, 124 ms opening and
+ * closing (121 ms before a turn's copy was the page as laid).
  */
 test.describe('fifty turns on a spread', () => {
   test.use({

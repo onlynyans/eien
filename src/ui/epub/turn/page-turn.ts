@@ -214,9 +214,7 @@ export class PageTurn {
     const scale = turnScale(speed);
     const tokens = this.#tokens(before);
     const moves = turnMoves(asked, style, tokens.calm, tokens.quick, scale);
-    const copy = moves
-      ? pageCopy(before, this.#surface.words, (words) => this.#surface.trim?.(words))
-      : null;
+    const copy = moves ? this.#copy(before) : null;
     const leaf = moves && style === 'curl' ? (this.#surface.leaf?.(way) ?? null) : null;
     this.#begun = true;
     const stepped = (moved: boolean) => {
@@ -239,7 +237,7 @@ export class PageTurn {
       this.#stroke = nextStroke(this.#stroke, this.#random);
       const time = curlTime(tokens.calm, scale, this.#stroke.pace);
       const turn = keyCurl(pageOf(sheet, leaf), leaf ? 1 : way, this.#stroke, time);
-      this.#curlOn(turn, copy, sheet, leaf, tokens).fly();
+      this.#curlOn(turn, copy, sheet, leaf, tokens)?.fly();
       return;
     }
     const steps = stepTurn({
@@ -263,6 +261,8 @@ export class PageTurn {
     if (!copy) return;
     const turn = beginCurl(pageOf(sheet, leaf), leaf ? 1 : way, hand.at[1]);
     const curl = this.#curlOn(turn, copy, sheet, leaf, tokens);
+    // No copy of the page come to: it's there already, turned at once.
+    if (!curl) return;
     hand.holding = curl;
     curl.drag(hand.offset, hand.time);
     // Gone before its page came: thrown if let go, home if the gesture was cancelled.
@@ -282,19 +282,29 @@ export class PageTurn {
     curl.fly(curlTime(curl.tokens.calm, turnScale(this.#surface.how().speed)));
   }
 
+  /** A copy of `sheet` as it is now, kept to the words round the sight; null for none to be had. */
+  #copy(sheet: HTMLElement): HTMLElement | null {
+    return pageCopy(sheet, this.#surface.words, (words) => this.#surface.trim?.(words) ?? true);
+  }
+
+  /**
+   * The curl over `sheet`, from `copy` of the page left; null where a whole
+   * sheet turned back has no copy of the page come to, which curls back over it.
+   */
   #curlOn(
     turn: CurlTurn,
     copy: HTMLElement,
     sheet: HTMLElement,
     leaf: TurnLeaf | null,
     tokens: TurnTokens,
-  ): CurlRun {
+  ): CurlRun | null {
+    const coming = turn.way < 0 && !leaf ? this.#copy(sheet) : null;
+    if (turn.way < 0 && !leaf && !coming) return null;
     const curl = new CurlRun(turn, {
       copy,
       sheet,
       leaf,
-      words: this.#surface.words,
-      trim: (words) => this.#surface.trim?.(words),
+      coming,
       tokens,
       frames: this.#frames,
       landed: (turnedOver) => {

@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
 import { page as chapterPage, handEpub, nav, opf, XHTML } from '../support/epub-parts';
 import { png } from '../support/images';
-import { open, openChapter, putBytesOutside } from './outside';
+import { openBookOn, openChapter } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 
@@ -70,33 +70,12 @@ const partsBook = () =>
   ]);
 
 /** A book in pages, turned by Words slowly enough to read its copy, at `textSize`, on `screen`. */
-async function openBook(
+const openBook = (
   page: Page,
   bytes: Uint8Array,
   screen: { width: number; height: number },
   textSize: number,
-) {
-  await open(page);
-  await page.evaluate(async (size) => {
-    await window.eien.settings.set('epub.view', 'pages');
-    // The contents beside the page in Panes (a phone starts with two panes, #69), read as it reloads.
-    await window.eien.settings.set('layout.panes', 'three');
-    await window.eien.settings.set('epub.turn', 'words');
-    await window.eien.settings.set('epub.turnSpeed', '4');
-    await window.eien.settings.set('epub.appearance.textSize', size);
-  }, textSize);
-  await putBytesOutside(page, 'Eien/Vault/Novels/Book.epub', Buffer.from(bytes).toString('base64'));
-  await page.setViewportSize(screen);
-  await page.reload();
-  const back = page.locator('.phone-bar__back');
-  const row = page.locator('.tree-row--epub .tree-row__name');
-  await expect
-    .poll(async () => (await row.isVisible()) || (await back.isVisible()), { timeout: 10_000 })
-    .toBe(true);
-  if (!(await row.isVisible())) await back.click();
-  await row.click();
-  await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
-}
+) => openBookOn(page, bytes, screen, { 'epub.appearance.textSize': textSize });
 
 /** `turns` turns on, each copy's lines held to the page's as it was. */
 async function turnsMatch(page: Page, turns: number) {

@@ -183,3 +183,43 @@ export async function swipe(
   }
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 }
+
+/** Settings as `window.eien.settings.set` takes them, set in order. */
+type Settings = Readonly<Record<string, unknown>>;
+
+/**
+ * `bytes`, a book, put in the vault and opened in Pages on a `screen`, its
+ * turns Words' and slow enough to read a copy by (`settings` over them), the
+ * settings read as the page reloads.
+ */
+export async function openBookOn(
+  page: Page,
+  bytes: Uint8Array,
+  screen: { readonly width: number; readonly height: number },
+  settings: Settings = {},
+): Promise<void> {
+  await open(page);
+  const all: Settings = {
+    'epub.view': 'pages',
+    // The contents beside the page in Panes where there's room (a phone starts with two, #69).
+    'layout.panes': 'three',
+    'epub.turn': 'words',
+    'epub.turnSpeed': '4',
+    ...settings,
+  };
+  await page.evaluate(async (each) => {
+    const set = window.eien.settings.set as (key: string, value: unknown) => Promise<unknown>;
+    for (const [key, value] of Object.entries(each)) await set(key, value);
+  }, all);
+  await putBytesOutside(page, 'Eien/Vault/Novels/Book.epub', Buffer.from(bytes).toString('base64'));
+  await page.setViewportSize(screen);
+  await page.reload();
+  const back = page.locator('.phone-bar__back');
+  const row = page.locator('.tree-row--epub .tree-row__name');
+  await expect
+    .poll(async () => (await row.isVisible()) || (await back.isVisible()), { timeout: 10_000 })
+    .toBe(true);
+  if (!(await row.isVisible())) await back.click();
+  await row.click();
+  await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
+}

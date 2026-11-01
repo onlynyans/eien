@@ -23,7 +23,7 @@ afterEach(() => {
 describe('the curl drawn', () => {
   it('lays the page as its bands: what stays, twelve strips, what lies back, each moved, none clipped', () => {
     const to = sheet();
-    const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
     view.draw(curlFrame(page, [400, 500], [0, 500], lengths));
     const strips = view.element.querySelectorAll<HTMLElement>('.turn-curl__strip');
     expect(strips).toHaveLength(CURL_STRIPS);
@@ -41,7 +41,7 @@ describe('the curl drawn', () => {
   // a gradient or a size changed each frame was drawn again each frame, and the curl stuttered.
   it('changes only transforms from one frame to the next as the hand moves', () => {
     const to = sheet();
-    const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
     view.draw(curlFrame(page, [400, 500], [380, 490], lengths));
     // Each element's style but its transform: a frame may move things, and do nothing else.
     const unmoved = (style: string | null | undefined) =>
@@ -69,7 +69,7 @@ describe('the curl drawn', () => {
 
   it('at rest, shows the page flat and nothing else', () => {
     const to = sheet();
-    const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
     view.draw(curlFrame(page, [400, 500], [400, 500], lengths));
     const flap = view.element.querySelector<HTMLElement>('.turn-curl__flap');
     expect(flap?.style.visibility).toBe('hidden');
@@ -84,7 +84,7 @@ describe('the curl drawn', () => {
   // flat, and come back with the next pull.
   it('hides the roll again when the page comes to rest, and shows it as it lifts again', () => {
     const to = sheet();
-    const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
     const flap = () =>
       view.element.querySelector<HTMLElement>('.turn-curl__flap')?.style.visibility;
     const hidden = () =>
@@ -133,7 +133,7 @@ describe('the curl drawn', () => {
       },
     });
     try {
-      const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+      const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
       expect(view.element.parentElement).toBe(pane);
       // 300 px to the pane's left and right, the most it reaches: 200 of the curl's own.
       expect(view.element.style.overflowClipMargin).toBe('200px');
@@ -144,7 +144,7 @@ describe('the curl drawn', () => {
 
   it('stacks its pieces in order, whatever the page’s own rules would', () => {
     const to = sheet();
-    const view = new CurlView(pageCopy(to, '.words'), to, -1, '.words');
+    const view = new CurlView(pageCopy(to, '.words'), to, -1, pageCopy(to, '.words'));
     const order = [...view.element.children].map((child) => (child as HTMLElement).style.zIndex);
     expect(order[0]).toBe('0');
     expect(order.slice(1)).toEqual(order.slice(1).map((_, i) => String(i + 1)));
