@@ -520,7 +520,8 @@ test.describe('a long book searched while its pages turn', () => {
     // The rows out of sight skipped (book-lenses.css), and still the keyboard's.
     const skipped = (row: Locator) =>
       row.evaluate((button) => !button.checkVisibility({ contentVisibilityAuto: true }));
-    expect(await skipped(rows.first())).toBe(false);
+    // A row drawn anew is in sight only once the next frame has looked: the first is asked again.
+    await expect.poll(() => skipped(rows.first())).toBe(false);
     expect(await skipped(rows.last())).toBe(true);
     await rows.first().focus();
     await page.keyboard.press('End');

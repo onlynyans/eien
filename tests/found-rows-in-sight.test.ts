@@ -13,7 +13,10 @@ const LENSES = readFileSync(
   'utf8',
 ).replace(/\/\*[\s\S]*?\*\//g, '');
 
-/** The stylesheet's rules, each selector of a list on its own, in order. */
+/**
+ * The stylesheet's rules, each selector of a list on its own, in order. A rule
+ * inside @media counts as if outside it: none there touches these properties.
+ */
 const RULES = [...LENSES.matchAll(/([^{}]+)\{([^{}]*)\}/gu)].flatMap(([, selectors, body]) =>
   (selectors ?? '').split(',').map((selector) => ({
     selector: selector.trim().replace(/\s+/gu, ' '),
