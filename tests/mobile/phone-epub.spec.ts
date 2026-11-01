@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
+import { placeWords, wordsInSight } from '../e2e/book-sight';
 import {
   bytesOutside,
   listOutside,
@@ -713,4 +714,44 @@ test('a book in pages on the phone is one page, ragged and hyphenated, on a tabl
   // No page of the book's: none said, nothing to bookmark.
   await expect(page.locator('.colophon__page').first()).toHaveText('');
   expect(await seriousViolations(page), 'Eien’s title page on the phone').toEqual([]);
+});
+
+// The place carried from Scroll to Pages before the scroll rests (#40, Phase 3b): Pages opens on the
+// page holding the first line in sight, read by the app's own rule, wherever the scroll stands. The
+// end-to-end test's twin, headless, laid out by Chromium as the desktop lays a book out (two
+// panes, a page wide enough to justify where the system hyphenates).
+test('a book switched from Scroll to Pages before the scroll rests opens on the page it was at', async ({
+  page,
+}) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'panes');
+    await window.eien.settings.set('epub.view', 'scroll');
+  });
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.setViewportSize({ width: 1400, height: 800 });
+  await page.reload();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page).first()).toContainText('It is a truth universally acknowledged');
+  const leaf = page.locator('.page__leaf--epub');
+  const scroller = leaf.locator('.page__scroll');
+  const box = leaf.locator('.epub-sheet:not([aria-hidden]) .epub__pages');
+  for (const by of [700, 1500, 2300]) {
+    await expect(leaf).toHaveAttribute('data-view', 'scroll');
+    await scroller.evaluate((element, top) => element.scrollTo({ top, behavior: 'instant' }), by);
+    const words = await placeWords(scroller);
+    expect(words.trim()).not.toBe('');
+    await page.locator('[data-command="view.pages"]:not(.page__phone *)').first().click();
+    await expect(leaf).toHaveAttribute('data-view', 'pages');
+    await expect
+      .poll(() => wordsInSight(box, words), {
+        message: `the place's words, "${words}", on the page Pages opens to (scrolled to ${by}px)`,
+      })
+      .toBe(true);
+    await page.locator('[data-command="view.scroll"]:not(.page__phone *)').first().click();
+  }
 });
