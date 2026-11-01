@@ -7,19 +7,10 @@
 // back or further on (a sibling's sibling, a child's place among its
 // siblings, what follows it), floats a block into the next, or counts.
 
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-
-const SRC = resolve(import.meta.dirname, '../src');
-
-function stylesheets(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) return stylesheets(path);
-    return entry.name.endsWith('.css') ? [path] : [];
-  });
-}
+import { SRC, stylesheets } from './stylesheets';
 
 /** Each rule in `css` as its whole prelude (commas and all) and its declarations, comments left out. */
 function rulesOf(css: string): { selector: string; body: string }[] {

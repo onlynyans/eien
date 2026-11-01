@@ -15,7 +15,7 @@ import fc from 'fast-check';
 import { page as chapterPage, handEpub, nav, opf, XHTML } from '../support/epub-parts';
 import { png } from '../support/images';
 import { longBook } from '../support/long-book';
-import { open, openChapter, putBytesOutside } from './outside';
+import { openBookOn, openChapter } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 
@@ -191,29 +191,12 @@ function sameAs(copy: Seen | null, page: Seen | null, within: number, label: str
 }
 
 async function openBook(page: Page, room: Room, bytes: Uint8Array, chapter: string) {
-  await open(page);
-  await page.evaluate(async ({ textSize, zoom, face, leading }) => {
-    await window.eien.settings.set('epub.view', 'pages');
-    // The contents beside the page in Panes where there's room, read as it reloads.
-    await window.eien.settings.set('layout.panes', 'three');
-    await window.eien.settings.set('epub.turn', 'words');
-    await window.eien.settings.set('epub.turnSpeed', '4');
-    await window.eien.settings.set('epub.appearance.textSize', textSize);
-    await window.eien.settings.set('page.zoom', zoom);
-    await window.eien.settings.set('appearance.face', face);
-    await window.eien.settings.set('appearance.leading', leading);
-  }, room);
-  await putBytesOutside(page, 'Eien/Vault/Novels/Book.epub', Buffer.from(bytes).toString('base64'));
-  await page.setViewportSize({ width: room.width, height: room.height });
-  await page.reload();
-  const back = page.locator('.phone-bar__back');
-  const row = page.locator('.tree-row--epub .tree-row__name');
-  await expect
-    .poll(async () => (await row.isVisible()) || (await back.isVisible()), { timeout: 10_000 })
-    .toBe(true);
-  if (!(await row.isVisible())) await back.click();
-  await row.click();
-  await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
+  await openBookOn(page, bytes, room, {
+    'epub.appearance.textSize': room.textSize,
+    'page.zoom': room.zoom,
+    'appearance.face': room.face,
+    'appearance.leading': room.leading,
+  });
   const words = page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter');
   await expect(words).toBeVisible();
   await openChapter(page, chapter);

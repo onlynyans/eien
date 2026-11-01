@@ -19,7 +19,7 @@
 // ./epub.css: a hidden shell of it), and a list's numbers (`value`).
 // tests/epub-copy-css.test.ts holds the stylesheets to that.
 
-import { OWN, offsetAfter } from './chapter-place';
+import { OWN } from './chapter-place';
 
 /** A node's first box, in the window's coordinates: the window's own measure, or a test's. */
 export type BoxOf = (node: Node) => Pick<DOMRect, 'left' | 'top'> | null;
@@ -180,7 +180,8 @@ function stand(spacer: HTMLElement, height: number): void {
 export function sightCopy(chapter: HTMLElement, of: SightCopyOf): SightCopy | null {
   const boxOf = of.boxOf ?? firstBox;
   const shown = shownIn(chapter);
-  const start = blockOf(shown[lastBefore(shown, of.from, boxOf, false)] ?? null, chapter);
+  const before = lastBefore(shown, of.from, boxOf, false);
+  const start = blockOf(shown[before] ?? null, chapter);
   const end = blockOf(shown[lastBefore(shown, of.past, boxOf, true) + 1] ?? null, chapter);
   const range = document.createRange();
   range.selectNodeContents(chapter);
@@ -226,13 +227,19 @@ export function sightCopy(chapter: HTMLElement, of: SightCopyOf): SightCopy | nu
   // The start's first word (or picture, or rule) on the page, and in the run.
   const word = shownIn(start)[0];
   const page = word ? boxOf(word) : null;
-  for (let tries = 1; page && startCopy && tries <= 3; tries++) {
+  // Unmeasured (a window that lays nothing out), it's left where it was reckoned to stand.
+  let settled = !page;
+  for (let tries = 1; page && startCopy && !settled && tries <= 3; tries++) {
     const copied = shownIn(startCopy)[0];
     const box = copied ? boxOf(copied) : null;
-    if (!box) break;
+    if (!box) {
+      settled = true;
+      break;
+    }
     const down = box.top - page.top;
-    if (Math.abs(down) < UNIT / 2 || tries === 3) {
+    if (Math.abs(down) < UNIT / 2) {
       shift += (box.left - page.left) / of.scale;
+      settled = true;
       break;
     }
     // A margin the start's first block collapses through it, or one a break dropped: measured away.
@@ -241,7 +248,20 @@ export function sightCopy(chapter: HTMLElement, of: SightCopyOf): SightCopy | nu
     if (!spacer.isConnected) probe.prepend(spacer);
   }
   probe.remove();
+  // Never set where the page has it: no copy, rather than one whose lines step as the page turns.
+  if (!settled) return null;
   const kept = document.createDocumentFragment();
   kept.append(...probe.childNodes);
-  return { words: kept, shift, from: offsetAfter(chapter, start) };
+  return { words: kept, shift, from: wordsBefore(shown, before, start) };
+}
+
+/** The offset of `start`'s first word: the words of `shown` before it (the start's own from `at` back). */
+function wordsBefore(shown: readonly Node[], at: number, start: Element): number {
+  let first = at;
+  while (first > 0 && start.contains(shown[first - 1] as Node)) first--;
+  let offset = 0;
+  for (const node of shown.slice(0, first)) {
+    if (node.nodeType === Node.TEXT_NODE) offset += (node as Text).length;
+  }
+  return offset;
 }

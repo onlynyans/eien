@@ -2,20 +2,13 @@
 // them; but a row is something you press, so it never goes under WCAG 2.5.8's
 // 24px target, at any Text size, in any density, wherever it's set.
 
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { settingOf } from '../src/core/config';
+import { SRC, stylesheets } from './stylesheets';
 
-const UI = resolve(import.meta.dirname, '../src/ui');
-const css = (dir: string): string[] =>
-  readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
-    entry.isDirectory()
-      ? css(join(dir, entry.name))
-      : entry.name.endsWith('.css')
-        ? [join(dir, entry.name)]
-        : [],
-  );
+const UI = join(SRC, 'ui');
 const TOKENS = readFileSync(join(UI, 'theme/tokens.css'), 'utf8');
 
 /** A length token's px, as tokens.css sets it on :root. */
@@ -26,7 +19,7 @@ const px = (token: string): number => {
 };
 
 /** Every value `--eien-row-h` is given, in every stylesheet of the window. */
-const rowHeights = css(UI).flatMap((file) =>
+const rowHeights = stylesheets(UI).flatMap((file) =>
   [...readFileSync(file, 'utf8').matchAll(/--eien-row-h:\s*([^;]+);/gu)].map(
     (match) => `${file.slice(UI.length + 1)}: ${match[1]}`,
   ),
