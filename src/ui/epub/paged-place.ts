@@ -11,17 +11,10 @@
 // (./front-matter.ts), turned back to, never opened at.
 
 import { openingSight, pageAt, pageRoles, throughSights } from '../../core/epub';
+import { zoomOf } from '../css-zoom';
 import { across, characterAt, firstOnPage, type SideOf } from './chapter-place';
 import { FRONT } from './front-matter';
-import {
-  type Columns,
-  clipAt,
-  keyOf,
-  layColumns,
-  UNLAID,
-  unlayColumns,
-  zoomOf,
-} from './page-columns';
+import { type Columns, clipAt, keyOf, layColumns, UNLAID, unlayColumns } from './page-columns';
 import { sightCut } from './page-cut';
 import { REST_MS } from './place-keeper';
 import type { PageShown, Spot } from './sight';

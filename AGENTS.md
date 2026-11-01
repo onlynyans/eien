@@ -239,6 +239,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `vault/menu-items.ts`: their choices
 - `draw-clean.ts` draws cleaned nodes (`core/html/clean.ts`) element by element, checking each element, address and part again, for the extension's story page and an EPUB's chapter (#40)
 - `quiet-button.ts`: the quiet icon button (the +, a sheet's ×, the divider's ⇄)
+- `css-zoom.ts`: the page's zoom as it draws an element, the window's own figure (a table's controls, a book's pages)
 - `shell/vault-frame.ts`: the shell the sidebar, list and page pane lie in
 - `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`)
 - With two panes, the sidebar's tree (`sidebar/tree.ts`, its styles in `sidebar/tree.css`) lists the notes

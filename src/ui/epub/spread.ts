@@ -10,7 +10,7 @@
 
 import type { SettingValues } from '../../core/config';
 import { spreadFits } from '../../core/epub';
-import { zoomOf } from './page-columns';
+import { zoomOf } from '../css-zoom';
 
 const px = (value: string) => Number.parseFloat(value) || 0;
 
