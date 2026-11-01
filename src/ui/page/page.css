@@ -38,6 +38,11 @@
 .page__format {
   grid-row: 2;
 }
+/* Over the colophon, the active page's bars above a phone's keyboard: a table's, a link's. */
+.page__under {
+  grid-row: 4;
+  min-width: 0;
+}
 /* The formatting bar's setting off (#14): outweighs each layout's look for the row. */
 .page__main > .page__format[hidden] {
   display: none;
@@ -62,7 +67,12 @@
    static thing may cast. */
 .sheet {
   --pad-x: var(--eien-sheet-pad-x);
-  width: min(100%, calc(var(--eien-measure) + 2 * var(--eien-space-8)));
+  /* Page width's step over the face's own measure (ui/settings/look-properties.ts); Narrow also
+     narrows a sheet that fills its pane, which no measure can widen past. */
+  width: min(
+    calc(100% * min(var(--look-width, 1), 1)),
+    calc(var(--eien-measure) * var(--look-width, 1) + 2 * var(--eien-space-8))
+  );
   min-height: 100%;
   margin: 0 auto;
   padding: var(--eien-sheet-pad-top) var(--pad-x) var(--eien-space-8);
@@ -154,9 +164,52 @@
   display: none;
 }
 
+/* A link in cleaned words (a story's in the extension, a book's, #40): the
+   words' own colour, a quiet underline that darkens under the pointer. One
+   rule for both; a note's links in the editor have their own. A link kept
+   as words alone has no address, and no look. */
+.prose a[href],
+.epub-chapter a[href] {
+  color: inherit;
+  text-decoration-color: var(--eien-rule-strong);
+  text-underline-offset: 0.18em;
+}
+@media (hover: hover) {
+  .prose a[href]:hover,
+  .epub-chapter a[href]:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+/* A chapter's turns at a sheet's foot: the chapters before and after, after a
+   soft rule (an EPUB's, ui/epub/chapter-foot.ts; the extension's story page),
+   the last at the right. */
+.sheet__turns {
+  display: flex;
+  align-items: center;
+  gap: var(--eien-space-4);
+  margin-top: var(--eien-space-7);
+  padding-top: var(--eien-space-4);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.sheet__turns > :last-child {
+  margin-left: auto;
+}
+/* A turn named for its chapter, a word button (system.md), its arrow beside the name. */
+.sheet__turn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--eien-space-1);
+}
+@media (hover: none) {
+  .sheet__turn {
+    min-height: var(--eien-touch);
+  }
+}
+
 .page__empty {
   margin: var(--eien-space-8) auto;
-  max-width: var(--eien-measure);
+  max-width: calc(var(--eien-measure) * var(--look-width, 1));
   text-align: center;
   font-family: var(--eien-face-text);
   font-style: italic;
@@ -180,6 +233,7 @@
   letter-spacing: var(--eien-track-label);
 }
 .colophon__state:empty,
+.colophon__page:empty,
 .colophon__zoom:empty,
 .colophon__news:empty,
 .colophon__said:empty {
@@ -212,6 +266,12 @@
 .colophon__sprint:empty,
 .colophon__counters:empty {
   display: none;
+}
+/* How far through a book: dropped first when the page is narrow (its page stays). */
+@container page (width < 560px) {
+  .colophon__through {
+    display: none;
+  }
 }
 /* Figures that change each second keep their width. */
 .colophon {

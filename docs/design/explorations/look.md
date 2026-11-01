@@ -1,6 +1,6 @@
 # A quick look, anywhere: three explorations
 
-**Decided (2026-10-28): 1 · On the bar.** Backlog #49. Nothing is built yet.
+**Decided (2026-10-28): 1 · On the bar.** Backlog #49. The notes' half is built ([quick-look.md](../../quick-look.md)); the shelf's is #40 Phase 1's.
 Changing Day or Night, or the text's size, now takes the sidebar's foot (Day
 or Night only) or Settings, behind the sidebar. Each direction puts one control
 in reach in every layout and on the phone. It opens a small popover of the

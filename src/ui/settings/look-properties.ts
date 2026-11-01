@@ -1,10 +1,11 @@
 // The settings that are custom properties on <html> (spec §6): the interface
 // font and its sizes, the Source font and its size, the weight of names, and
-// the Running head's strip ground. Worked out here, without a window, so the
+// the Running head's strip ground, and the steps of line spacing and page
+// width over each face's own leading and measure. Worked out here, without a window, so the
 // rules are tested; ./look.ts sets them. A property at its default is taken
 // off, so tokens.css's own value stands.
 
-import { FACES, faceOf, type SettingValues } from '../../core/config';
+import { epubLook, FACES, faceOf, type SettingValues } from '../../core/config';
 
 /** The heaviest weight the faces are drawn at. */
 export const HEAVIEST = 700;
@@ -42,6 +43,13 @@ function sourceFace(id: string): LookProperties {
   };
 }
 
+/** Line spacing and page width: a step either side of the face's own leading and measure. */
+const LEADING = { tight: 0.9, set: 1, loose: 1.12 } as const;
+const WIDTH = { narrow: 0.84, set: 1, wide: 1.18 } as const;
+
+/** A multiplier, taken off at 1, so `var(--look-…, 1)` stands. */
+const times = (by: number) => (by === 1 ? null : String(by));
+
 export function lookProperties(values: SettingValues): LookProperties {
   const names = values['appearance.nameWeight'];
   const titles = values['appearance.titleWeight'];
@@ -54,5 +62,30 @@ export function lookProperties(values: SettingValues): LookProperties {
     '--eien-weight-list-chosen': titles === 400 ? null : String(chosenTitleWeight(titles)),
     // One of the theme's own surfaces, so the strip follows any theme.
     '--runhead-ground': ground === 'desk' ? null : `var(--eien-${ground})`,
+    '--look-lead': times(LEADING[values['appearance.leading']]),
+    '--look-width': times(WIDTH[values['page.width']]),
+  };
+}
+
+/**
+ * A book's page's own look (#40), worn on its leaf rather than <html>: its
+ * face and frame as data attributes, always set (a leaf without one would
+ * take the notes'), and its text size, line spacing and width as the
+ * properties the notes' are, from the shelf's settings.
+ */
+export function leafLook(values: SettingValues): {
+  readonly face: string;
+  readonly frame: string;
+  readonly properties: Readonly<Record<string, string>>;
+} {
+  const worn = epubLook(values);
+  return {
+    face: worn['appearance.face'],
+    frame: worn['appearance.frame'],
+    properties: {
+      '--eien-text-scale': String(worn['appearance.textSize'] / 100),
+      '--look-lead': String(LEADING[worn['appearance.leading']]),
+      '--look-width': String(WIDTH[worn['page.width']]),
+    },
   };
 }

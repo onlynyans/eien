@@ -1,0 +1,245 @@
+/* A book's page wears its own frame (tokens.css): its ground behind the sheet. */
+.page__leaf--epub {
+  background: var(--eien-page-ground);
+}
+
+/* A book's chapter on its sheet (#40): the book's stylesheet. What the
+   cleaner keeps is drawn in the writer's own faces and the theme's colours,
+   never the publisher's; the parts it names (data-part) are drawn from the
+   book's tokens (tokens.css, "A book's parts"). Paragraphs as the scroll
+   style sets them (Phase 2): as a note's in Reading, or as a book's. */
+
+.epub-chapter {
+  font-family: var(--eien-face-text);
+  line-height: calc(var(--eien-leading-prose) * var(--look-lead, 1));
+  color: var(--eien-ink);
+  overflow-wrap: break-word;
+}
+
+.epub-chapter p,
+.epub-chapter ul,
+.epub-chapter ol,
+.epub-chapter dl,
+.epub-chapter pre,
+.epub-chapter table {
+  margin: 0 0 var(--eien-epub-paragraph-gap);
+}
+
+.epub-chapter h1,
+.epub-chapter h2,
+.epub-chapter h3,
+.epub-chapter h4,
+.epub-chapter h5,
+.epub-chapter h6 {
+  font-size: 1em;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: var(--eien-epub-paragraph-gap) 0;
+}
+
+.epub-chapter [data-part="chapter-title"] {
+  font-size: var(--eien-epub-title-size);
+  font-weight: 500;
+  text-align: center;
+  margin: var(--eien-epub-title-gap) 0;
+}
+
+.epub-chapter [data-part="first-line"]::first-line {
+  text-transform: uppercase;
+  font-size: 80%;
+  letter-spacing: var(--eien-epub-first-line-track);
+}
+
+.epub-chapter [data-part="scene-break"] {
+  margin: var(--eien-epub-break-gap) 0;
+  text-align: center;
+  color: var(--eien-pencil);
+}
+
+.epub-chapter [data-part="epigraph"],
+.epub-chapter blockquote {
+  margin: var(--eien-epub-paragraph-gap) var(--eien-epub-epigraph-indent);
+  font-style: italic;
+}
+
+.epub-chapter [data-part="plate"],
+.epub-chapter figure {
+  margin: var(--eien-epub-plate-gap) 0;
+  text-align: center;
+  break-inside: avoid;
+}
+
+.epub-chapter img {
+  max-width: 100%;
+  height: auto;
+}
+
+.epub-chapter [data-part="caption"],
+.epub-chapter figcaption {
+  margin-top: var(--eien-space-2);
+  font-size: 0.85em;
+  color: var(--eien-epub-caption-ink);
+  text-align: center;
+}
+
+.epub-chapter [data-align="center"] {
+  text-align: center;
+}
+.epub-chapter [data-align="right"] {
+  text-align: right;
+}
+
+.epub-chapter table {
+  border-collapse: collapse;
+}
+.epub-chapter td,
+.epub-chapter th {
+  border: 1px solid var(--eien-rule);
+  padding: var(--eien-space-1) var(--eien-space-2);
+}
+
+.epub-chapter pre,
+.epub-chapter code {
+  font-family: var(--eien-face-source);
+  font-size: 0.85em;
+  white-space: pre-wrap;
+}
+
+/* The scroll style As a book (Phase 2), worn on the book's leaf alone:
+   paragraphs with no gap between, a paragraph indented only after another, as
+   a book sets them (the first after a heading, a break, a picture or a
+   centred line stands flush). A named part (a title, a plate, an epigraph)
+   keeps its own gap. As a note, they keep the gap a note's have in Reading. */
+[data-scroll="book"] .epub-chapter p:not([data-part]),
+[data-view="pages"] .epub-chapter p:not([data-part]) {
+  margin: 0;
+}
+[data-scroll="book"]
+  .epub-chapter
+  p:not([data-part]):not([data-align])
+  + p:not([data-part]):not([data-align]),
+[data-view="pages"]
+  .epub-chapter
+  p:not([data-part]):not([data-align])
+  + p:not([data-part]):not([data-align]) {
+  text-indent: var(--eien-epub-indent);
+}
+
+/* Pages (Phase 3b, ./paged-place.ts): the sheet fills the pane, and the
+   chapter is laid in columns as tall as the whole lines its box holds, each
+   a page, set as a book whatever the scroll style. The box clips (never
+   hides: a hidden box can still be scrolled by the browser, which would move
+   the page under the transform). The chapter's foot gives way to turning on. */
+/* The pane clips a turn too: positioned, so a turn's pieces laid over the sheet are its own. */
+.page__leaf--epub[data-view="pages"] .page__scroll {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: clip;
+  isolation: isolate;
+  /* A finger across the page turns it (./turn/hand-events.ts): the window never pans, a pinch still zooms. */
+  touch-action: pinch-zoom;
+}
+[data-view="pages"] .epub-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+[data-view="pages"] .epub__pages {
+  /* Its gutter's hairline lies over it (./epub-spread.css). */
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: var(--eien-space-5);
+  overflow: clip;
+  column-gap: var(--eien-space-8);
+  /* Half the gap either side: a letter's overhang at the measure's edge is drawn, never cut. */
+  overflow-clip-margin: calc(var(--eien-space-8) / 2);
+}
+[data-view="pages"] .epub-chapter {
+  column-fill: auto;
+}
+/* A picture fits its page, whole: never taller than the page, never split. */
+[data-view="pages"] .epub-chapter img {
+  max-height: var(--epub-page-height);
+  object-fit: contain;
+}
+[data-view="pages"] .epub__turns {
+  display: none;
+}
+
+/* The fore-edge (./leaf-edges.ts): the pages to read stacked at the sheet's
+   right, those read at its left, each a paper edge in a hairline, a mark's
+   width apart, beneath the sheet. No sheet, no edges: Page frame Full keeps
+   only the buttons, and Scroll none of it. */
+.epub-edges {
+  display: none;
+}
+[data-view="pages"] .epub-edges {
+  display: contents;
+}
+.epub-edges__stack {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+[data-frame="full"] .epub-edges__stack {
+  display: none;
+}
+.epub-edges__edge {
+  position: absolute;
+  top: calc(var(--edge) * var(--eien-hairline));
+  bottom: calc(var(--edge) * var(--eien-hairline));
+  background: var(--eien-paper);
+  border: var(--eien-hairline) solid var(--eien-rule);
+  z-index: calc(-1 * var(--edge));
+}
+.epub-edges__stack--after .epub-edges__edge {
+  left: 0;
+  right: calc(var(--edge) * -1 * var(--eien-mark-w));
+}
+.epub-edges__stack--before .epub-edges__edge {
+  right: 0;
+  left: calc(var(--edge) * -1 * var(--eien-mark-w));
+}
+/* Where a hand reaches to turn: each side's edge is its button, in the sheet's own margin, so it's in
+   sight with no blotter round the sheet (Page frame Full, a narrow pane, the phone). */
+.epub-edges__turn {
+  appearance: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--eien-space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: e-resize;
+}
+.epub-edges__turn--after {
+  right: 0;
+}
+.epub-edges__turn--before {
+  left: 0;
+  cursor: w-resize;
+}
+
+/* A book's note over its page (Phase 2b, ./note-over.ts): a menu's raised
+   paper, as wide as the list, the note in the book's own face. */
+.epub-note {
+  max-width: var(--eien-list-w);
+  padding: var(--eien-space-2);
+}
+
+/* What a book's colophon says to the ear alone: "bookmarked" (the mark says it to the eye,
+   ./bookmark.css) and "highlighted" (the ink, ./ink.css). */
+.colophon__heard {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

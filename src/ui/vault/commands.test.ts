@@ -30,3 +30,42 @@ describe('Split Page', () => {
     expect(toggle).toHaveBeenCalledTimes(1);
   });
 });
+
+// QA (#40, Phase 4b): View → Bookmark This Page and the phone's ⋯ send 'bookmark'.
+describe('Bookmark This Page', () => {
+  it('bookmarks the page in sight when a book is the active page', () => {
+    const bookmark = vi.fn(async () => {});
+    const pages = {
+      active: { kind: 'epub', go: () => {}, marks: { bookmarks: { toggle: bookmark } } },
+    };
+    runCommand('bookmark', { pages } as unknown as CommandContext);
+    expect(bookmark).toHaveBeenCalledOnce();
+  });
+
+  it('does nothing with a note in front (the menu greys it)', () => {
+    const pages = { active: { kind: 'note', page: {}, versions: {} } };
+    expect(() => runCommand('bookmark', { pages } as unknown as CommandContext)).not.toThrow();
+  });
+});
+
+// #40, Phase 5a: Format → Highlight (⇧⌘H) with a book in front keeps its words chosen.
+describe('Format → Highlight', () => {
+  it('highlights the words chosen in the book when a book is the active page', () => {
+    const highlight = vi.fn(async () => {});
+    const pages = {
+      active: { kind: 'epub', go: () => {}, marks: { highlights: { toggle: highlight } } },
+    };
+    const ctx = { pages, parts: { outline: { open: false } } } as unknown as CommandContext;
+    runCommand('format:highlight', ctx);
+    expect(highlight).toHaveBeenCalledOnce();
+  });
+
+  it('formats a note’s words with a note in front, as before', () => {
+    const format = vi.fn();
+    const active = { kind: 'note', page: { editor: { format } }, versions: {} };
+    const pages = { active, activeNote: active };
+    const ctx = { pages, parts: { outline: { open: false } } } as unknown as CommandContext;
+    runCommand('format:highlight', ctx);
+    expect(format).toHaveBeenCalledOnce();
+  });
+});

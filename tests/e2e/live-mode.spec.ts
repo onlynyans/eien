@@ -17,7 +17,10 @@ test.use({
 /** '' while the file can't be read, so a poll tries again (./launch.ts). */
 const readIn = (vault: string | null, path: string) => readQuietly(join(vault ?? '', path));
 const checked = (app: ElectronApplication, id: string) =>
-  app.evaluate(({ Menu }, id) => Menu.getApplicationMenu()?.getMenuItemById(id)?.checked, id);
+  app.evaluate(
+    ({ Menu }, id) => Menu.getApplicationMenu()?.getMenuItemById(`toggle:${id}`)?.checked,
+    id,
+  );
 
 async function open(page: Page): Promise<void> {
   await page.locator('.note-row', { hasText: 'Table' }).click();

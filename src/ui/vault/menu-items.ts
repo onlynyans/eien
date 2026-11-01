@@ -1,7 +1,8 @@
-// What a note's and a folder's menus offer, as lists of choices (../menu/menu.ts):
+// What a note's, a book's and a folder's menus offer, as lists of choices (../menu/menu.ts):
 // pure, so each can be read and tested apart from where it opens (./menus.ts).
 
 import { EXPORT_LABELS } from '../../core/export';
+import { isInside } from '../../core/paths';
 import type { FolderNode } from '../../core/vault';
 import type { OutKind } from '../../platform/bridge';
 import type { MenuItem } from '../menu/menu';
@@ -85,6 +86,40 @@ export const noteMenu = (note: NoteMenu): MenuItem[] => {
     },
   ];
 };
+
+export interface EpubMenu {
+  readonly trashName: string;
+  /** Open to the Side: the desktop's only (a phone shows one page). */
+  openBeside?(): void;
+  rename(): void;
+  moveTo(): void;
+  trash(): void;
+}
+
+/** A book's on SHELF (#40): opened beside, renamed, moved and trashed as a note is, with the same keys. */
+export const epubMenu = (book: EpubMenu): MenuItem[] => [
+  ...(book.openBeside
+    ? [
+        {
+          label: 'Open to the Side',
+          icon: 'split',
+          keys: 'Mod-Enter',
+          run: book.openBeside,
+        } as const,
+        'separator' as const,
+      ]
+    : []),
+  { label: 'Rename', icon: 'rename', keys: 'F2', run: book.rename },
+  { label: 'Move to…', icon: 'move', run: book.moveTo },
+  'separator',
+  {
+    label: `Move to ${book.trashName}`,
+    icon: 'trash',
+    keys: TRASH_KEY,
+    danger: true,
+    run: book.trash,
+  },
+];
 
 /** The kinds `kinds` offers, as a menu that exports with `run`: a book's leaves out plain HTML. */
 export const exportMenu = (
@@ -180,8 +215,7 @@ export function destinations(
   const items: MenuItem[] = [{ label: vaultName, run: () => choose(''), disabled: here === '' }];
   const walk = (node: FolderNode, depth: number) => {
     for (const folder of node.folders) {
-      const out =
-        exclude !== null && (folder.path === exclude || folder.path.startsWith(`${exclude}/`));
+      const out = exclude !== null && isInside(folder.path, exclude);
       if (out) continue;
       items.push({
         label: folder.name,

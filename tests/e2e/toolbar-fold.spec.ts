@@ -25,6 +25,11 @@ async function narrowWithWindowsControls(page: Page, app: ElectronApplication, c
     document.documentElement.removeAttribute('data-controls-left');
     document.documentElement.style.setProperty('--controls-w', `${width}px`);
   }, controls);
+  // The bars fold again when their ResizeObserver hears the new room, in the next frame: measured
+  // before it, on a slow machine, the tools still stand where the old room had them.
+  await page.evaluate(async () => {
+    for (let frame = 0; frame < 2; frame++) await new Promise(requestAnimationFrame);
+  });
 }
 
 for (const layout of ['band', 'slip', 'runhead'] as const) {

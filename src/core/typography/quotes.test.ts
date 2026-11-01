@@ -58,6 +58,37 @@ describe('curlyQuotes', () => {
   });
 });
 
+describe('curlyQuotes after many marks', () => {
+  /** How long curling `text` ten times takes, the least of three tries, so a pause elsewhere doesn't count. */
+  const timed = (text: string): number => {
+    let least = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < 3; i++) {
+      const started = performance.now();
+      for (let j = 0; j < 10; j++) curlyQuotes(text);
+      least = Math.min(least, performance.now() - started);
+    }
+    return least;
+  };
+
+  it('takes about as long as after words, with a run of marks, or a tag and marks, before a quote', () => {
+    // Copy as HTML and the exports curl a run of words with up to 64 characters before each quote.
+    // Timed against the same text with words for the marks, on the same machine, not against a
+    // clock. A run of marks repeated (`(?:[*_~=]+)+$`) took four times as long for each two more
+    // marks: here 1,400 to 2,000 times the words. One mark at a time, 2 to 4 times, under coverage too.
+    for (const lead of ['', '<p>']) {
+      const marked = `${lead}${'*_'.repeat(8)}a "hi" `.repeat(2);
+      const worded = `${lead}${'wo'.repeat(8)}a "hi" `.repeat(2);
+      expect(timed(marked) / timed(worded), lead || 'marks').toBeLessThan(20);
+    }
+  });
+
+  it('curls a quote after marks as it would without them', () => {
+    expect(curlyQuotes(`${'*'.repeat(12)}"Hi"`)).toBe(`${'*'.repeat(12)}“Hi”`);
+    expect(curlyQuotes(`<p>${'_'.repeat(12)}"Hi"`)).toBe(`<p>${'_'.repeat(12)}“Hi”`);
+    expect(curlyQuotes(`${'*'.repeat(12)}a "hi"`)).toBe(`${'*'.repeat(12)}a “hi”`);
+  });
+});
+
 describe('revisedQuote: a quote that turns out, as typing goes on, to be the other way', () => {
   const at = (before: string, next: string) => revisedQuote(before, next);
 

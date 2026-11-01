@@ -51,7 +51,7 @@ export function pageParts(of: PagePartsOf): PageParts {
   const counts = counting({
     pane: pages.pane,
     active,
-    flushWords: () => pages.flushWords(),
+    flushWords: () => pages.notes.flushWords(),
     state,
     tell,
   });
@@ -72,7 +72,7 @@ export function pageParts(of: PagePartsOf): PageParts {
       state,
       nav: of.nav,
       openPath: () => pages.activeNote?.note.path ?? null,
-      openText: (path) => pages.session(path)?.text ?? null,
+      openText: (path) => pages.notes.session(path)?.text ?? null,
       vault: of.vault,
       out: of.out,
       settings,

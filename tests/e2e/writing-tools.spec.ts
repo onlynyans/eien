@@ -30,7 +30,10 @@ async function open(page: Page, title: string): Promise<void> {
 
 /** Whether the View menu's item is checked. */
 const checked = (app: ElectronApplication, id: string) =>
-  app.evaluate(({ Menu }, id) => Menu.getApplicationMenu()?.getMenuItemById(id)?.checked, id);
+  app.evaluate(
+    ({ Menu }, id) => Menu.getApplicationMenu()?.getMenuItemById(`toggle:${id}`)?.checked,
+    id,
+  );
 
 const deviceSettings = (userData: string) =>
   (JSON.parse(readFileSync(join(userData, 'settings.json'), 'utf8')) as { settings: unknown })
@@ -145,7 +148,7 @@ test('spellcheck: macOS’s own checker, off until asked for; not offered elsewh
   await expect(dialog.getByRole('group', { name: 'Spellcheck' })).toHaveCount(mac ? 1 : 0);
   await page.keyboard.press('Escape');
   const item = await app.evaluate(({ Menu }) =>
-    Boolean(Menu.getApplicationMenu()?.getMenuItemById('editor.spellcheck')),
+    Boolean(Menu.getApplicationMenu()?.getMenuItemById('toggle:editor.spellcheck')),
   );
   expect(item).toBe(mac);
   if (!mac) return;

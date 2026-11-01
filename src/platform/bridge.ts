@@ -101,6 +101,10 @@ export type MenuCommand =
   | 'new-window'
   | 'close-window'
   | 'settings'
+  /** Settings, open at Look: the quick look's All settings. */
+  | 'settings:look'
+  /** The quick look (#49): the active page's look, in a popover. */
+  | 'look'
   | 'search'
   | 'find'
   | 'find:replace'
@@ -113,6 +117,9 @@ export type MenuCommand =
   | 'view:live'
   | 'view:source'
   | 'view:reading'
+  | 'view:pages'
+  | 'view:scroll'
+  | 'bookmark'
   | 'view:next'
   | 'panes:sidebar'
   | 'panes:list'
@@ -184,6 +191,8 @@ export interface WindowBridge {
   close(): Promise<void>;
   /** What this window was opened on, asked once it shows its vault. */
   start(): Promise<WindowStart>;
+  /** The menu bar's commands that do nothing in this window now, greyed while it's focused (#40). */
+  greyMenu(commands: readonly MenuCommand[]): Promise<void>;
 }
 
 /** The IPC channel names, shared by the preload and the main process. */
@@ -215,6 +224,7 @@ export const CHANNEL = {
   windowOpen: 'window:open',
   windowClose: 'window:close',
   windowStart: 'window:start',
+  greyMenu: 'window:grey-menu',
 } as const;
 
 declare global {

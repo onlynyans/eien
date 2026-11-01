@@ -10,6 +10,7 @@ import type { SplitSpec } from '../chrome/splits';
 import { h, wordButton } from '../dom';
 import { Divider } from './divider';
 import type { PaneLeaf } from './page-leaf';
+import { markAt, pageMark } from './page-mark';
 
 export interface RowEvents {
   /** A page chosen in the pager, or turned to by its edge: it becomes the active one. */
@@ -18,25 +19,7 @@ export interface RowEvents {
   swap(): void;
 }
 
-const SVG = 'http://www.w3.org/2000/svg';
 const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
-
-/** The mark on the active page (Facing pages'): the ribbon or the tab is the span; a dog-ear is its drawing. */
-function markOf(): HTMLElement {
-  const svg = document.createElementNS(SVG, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  // The corner gone to the blotter, and the flap folded over the page, along the diagonal.
-  for (const [part, points] of [
-    ['page__mark-gone', '0,0 24,0 0,24'],
-    ['page__mark-flap', '24,0 24,24 0,24'],
-  ]) {
-    const polygon = document.createElementNS(SVG, 'polygon');
-    polygon.setAttribute('class', part as string);
-    polygon.setAttribute('points', points as string);
-    svg.append(polygon);
-  }
-  return h('span', { class: 'page__mark', attrs: { 'aria-hidden': 'true' } }, svg);
-}
 
 export class PagesRow {
   readonly element = h('div', { class: 'page__pages' });
@@ -51,7 +34,8 @@ export class PagesRow {
   /** Where the split's share is worn, and the furniture told which page to stand over: the pane's main grid. */
   readonly #wear: HTMLElement;
   readonly #edge: HTMLButtonElement;
-  readonly #mark = markOf();
+  /** The active page's mark (Facing pages'): its edge set as it's placed, the active page's outer one. */
+  readonly #mark = pageMark('active', 'left');
   readonly #divider: Divider;
   readonly #events: RowEvents;
   #shown: readonly PaneLeaf[] = [];
@@ -101,10 +85,16 @@ export class PagesRow {
     const [only] = differ;
     // One page put in another's place (another kind opened there): only it changes, so the
     // page beside keeps its scroll and the keyboard.
-    if (want.length === have.length && differ.length === 1 && only !== undefined)
+    if (want.length === have.length && differ.length === 1 && only !== undefined) {
+      // The page going keeps what it must while it's still laid out.
+      this.#shown.find((page) => page.element === have[only])?.taking?.();
       have[only]?.replaceWith(want[only] as Element);
-    else if (differ.length > 0 || want.length !== have.length)
+    } else if (differ.length > 0 || want.length !== have.length) {
+      // Taken out and put back, each page's scroll is at its top again: each keeps its own first.
+      for (const page of this.#shown) page.taking?.();
       this.element.replaceChildren(...want);
+      for (const page of pages) page.placed?.();
+    }
     this.#shown = pages;
     this.#active = active;
     this.#spec = right ? spec : null;
@@ -117,6 +107,7 @@ export class PagesRow {
     });
     // The mark goes into the active page anew, so it arrives there as it moves.
     if (right && spec.mark) {
+      markAt(this.#mark, pages.indexOf(active) === 1 ? 'right' : 'left');
       if (this.#mark.parentElement !== active.element) active.element.append(this.#mark);
     } else this.#mark.remove();
     this.renamed();
@@ -136,14 +127,14 @@ export class PagesRow {
       page.element.setAttribute('role', 'region');
       page.element.setAttribute(
         'aria-label',
-        `${page.name || 'No note'}${page === this.#active ? ', the active page' : ''}`,
+        `${page.name || page.unnamed}${page === this.#active ? ', the active page' : ''}`,
       );
     }
     // Drawn whether it's in sight or not: folding and unfolding only shows and hides it (#44).
     this.#drawPager();
     const other = this.#other();
     if (other) {
-      const name = other.name || 'No note';
+      const name = other.name || other.unnamed;
       this.#edgeName.textContent = name;
       this.#edge.setAttribute('aria-label', `Turn to ${name}, the facing page`);
       this.#edge.dataset.tip = `Turn to ${name}`;
@@ -206,7 +197,7 @@ export class PagesRow {
   #drawPager(): void {
     this.pager.replaceChildren(
       ...this.#shown.map((page) =>
-        wordButton(page.name || 'No note', () => this.#events.activate(page), {
+        wordButton(page.name || page.unnamed, () => this.#events.activate(page), {
           'aria-pressed': String(page === this.#active),
         }),
       ),

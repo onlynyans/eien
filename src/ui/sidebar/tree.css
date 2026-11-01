@@ -226,3 +226,9 @@
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
+
+/* SHELF (#40, ./shelf-rows.ts): a folder is FOLDERS' own row, its name in
+   pencil, on the way to its books, whose rows are in ink-soft. */
+.shelf__folder {
+  color: var(--eien-pencil);
+}

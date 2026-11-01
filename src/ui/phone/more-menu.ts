@@ -6,7 +6,10 @@
 import type { SettingValues } from '../../core/config';
 import { SPRINT_MINUTES } from '../../core/counters';
 import type { MenuCommand } from '../../platform/bridge';
+import { menuOff } from '../chrome/commands';
+import { HIGHLIGHT_LABELS } from '../epub/book-selection';
 import type { MenuItem } from '../menu/menu';
+import type { PageKind } from '../page/page-leaf';
 
 export interface MoreState {
   readonly values: SettingValues;
@@ -14,24 +17,58 @@ export interface MoreState {
   readonly sprinting: boolean;
   /** Export…: the note's own export choices (EPUB, Word, HTML), as its menu offers them. */
   exportTo(): void;
+  /** What the page holds: a note's own choices are disabled on another kind's (an EPUB's, #40). */
+  readonly kind?: PageKind;
+  /** A book's: the words chosen in it quoted in the note (#40, Phase 2c). */
+  quote?(): void;
+  /** A book's: the words chosen in it highlighted, or the highlight they lie in taken off (Phase 5a). */
+  highlight?(): void;
+  /** A book's: whether the words chosen lie in a highlight, its choice then taking it off. */
+  readonly highlighted?: boolean;
+  /** A book's: whether the page in sight is bookmarked (Phase 4b), its choice checked. */
+  readonly bookmarked?: boolean;
 }
 
 export function moreItems(state: MoreState, run: (command: MenuCommand) => void): MenuItem[] {
-  const item = (label: string, command: MenuCommand): MenuItem => ({
+  /** A note's own choices: there, but disabled, with another kind of page in front, as the menu bar's. */
+  const off = new Set<MenuCommand>(menuOff(state.kind ?? 'note'));
+  const item = (label: string, command: MenuCommand): Exclude<MenuItem, 'separator'> => ({
     label,
     run: () => run(command),
+    disabled: off.has(command) || undefined,
   });
   const toggle = (
     label: string,
     key: 'editor.focus' | 'editor.typewriter' | 'editor.marks',
   ): MenuItem => ({
-    label,
-    run: () => run(`toggle:${key}`),
+    ...item(label, `toggle:${key}`),
     checked: state.values[key] === 'on',
     toggle: true,
   });
   return [
+    // A page's command, whatever it holds (docs/page-kinds.md).
     item('Find', 'find'),
+    // A book's own, where the selection bar would be on the desktop (the system's callout is over the words).
+    ...(state.kind === 'epub' && state.highlight
+      ? [
+          {
+            label: state.highlighted ? HIGHLIGHT_LABELS.off : HIGHLIGHT_LABELS.add,
+            run: state.highlight,
+          } satisfies MenuItem,
+        ]
+      : []),
+    ...(state.kind === 'epub' && state.quote
+      ? [{ label: 'Quote in the note', run: state.quote } satisfies MenuItem]
+      : []),
+    ...(state.kind === 'epub'
+      ? [
+          {
+            ...item('Bookmark this page', 'bookmark'),
+            checked: state.bookmarked === true,
+            toggle: true,
+          } satisfies MenuItem,
+        ]
+      : []),
     'separator',
     item('Seal', 'seal'),
     item('Compare', 'compare'),
@@ -39,7 +76,8 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
     item('Outline cards', 'outline'),
     'separator',
     item('Copy as HTML', 'copy-html'),
-    { label: 'Export…', run: state.exportTo },
+    // The note's own export choices, as the menu bar's Export Note.
+    { label: 'Export…', run: state.exportTo, disabled: off.has('export-note:epub') || undefined },
     'separator',
     toggle('Focus mode', 'editor.focus'),
     toggle('Typewriter scrolling', 'editor.typewriter'),
@@ -48,6 +86,7 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
       ? [item('Stop sprint', 'sprint:stop')]
       : SPRINT_MINUTES.map((minutes) => item(`Sprint, ${minutes} minutes`, `sprint:${minutes}`))),
     'separator',
+    item('Look', 'look'),
     item('Settings', 'settings'),
   ];
 }

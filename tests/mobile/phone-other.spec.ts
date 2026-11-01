@@ -32,12 +32,12 @@ test('the note you came from is a tap away, and each keeps its place', async ({ 
   await titles(page).filter({ hasText: 'Notes' }).click();
   await expect(page.locator('.title')).toHaveText('Notes');
   await expect(other(page)).toBeVisible();
-  await expect(other(page)).toHaveAccessibleName('Switch to the other note: Chapter');
+  await expect(other(page)).toHaveAccessibleName('Switch to Chapter');
   await other(page).click();
   await expect(page.locator('.title')).toHaveText('Chapter');
   await expect.poll(() => scroll.evaluate((element) => element.scrollTop)).toBeGreaterThan(800);
   // The one you left is the other note now.
-  await expect(other(page)).toHaveAccessibleName('Switch to the other note: Notes');
+  await expect(other(page)).toHaveAccessibleName('Switch to Notes');
   await back(page).click();
   await expect(other(page)).toBeHidden(); // only with the page in sight
 });

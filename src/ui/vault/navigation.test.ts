@@ -32,6 +32,17 @@ describe('Navigation', () => {
     expect(nav.selection).toEqual({ kind: 'folder', path: 'Novel/Part 1' });
   });
 
+  it('carries SHELF’s shut folders with a rename or a move, and lets a trashed one’s go (#40)', () => {
+    localStorage.clear();
+    const nav = new Navigation();
+    nav.shelf.set('Novels/Russian', true);
+    nav.shelf.set('Zines', true);
+    nav.follow('Novels', 'Reading');
+    expect(nav.shelf.shut).toEqual(['Reading/Russian', 'Zines']);
+    nav.unselect('Reading');
+    expect(nav.shelf.shut).toEqual(['Zines']);
+  });
+
   it('never takes a tag, All Notes or Pinned for a folder of the same name', () => {
     const nav = new Navigation();
     for (const selection of [
@@ -77,5 +88,17 @@ describe('Navigation', () => {
     expect(nav.open.has('/all')).toBe(true);
     nav.toggle('/all');
     expect(nav.open.has('/all')).toBe(false);
+  });
+});
+
+describe('the book whose contents the list shows (#40)', () => {
+  it('is let go when a row is chosen, and goes with a folder trashed', () => {
+    const nav = new Navigation();
+    nav.contents = 'Books/Novels/Emma.epub';
+    nav.unselect('Books');
+    expect(nav.contents).toBeNull();
+    nav.contents = 'Emma.epub';
+    nav.choose({ kind: 'all' });
+    expect(nav.contents).toBeNull();
   });
 });

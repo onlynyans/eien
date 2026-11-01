@@ -52,7 +52,7 @@ describe('the word diff on text that isn’t spaced into words', () => {
     );
   });
 
-  it('hardening: a 50,000-word note rewritten is compared in well under a second', () => {
+  it('hardening: a 50,000-word note rewritten is compared in a bounded time', () => {
     let seed = 7;
     const next = () => {
       seed = (seed * 1103515245 + 12345) % 2147483648;
@@ -64,9 +64,18 @@ describe('the word diff on text that isn’t spaced into words', () => {
       Array.from({ length: 1000 }, () => Array.from({ length: 50 }, word).join(' ')).join('\n\n');
     const before = note();
     const after = note();
-    const started = performance.now();
+    let started = performance.now();
     const ops = wordDiff(before, after);
-    expect(performance.now() - started).toBeLessThan(1000);
+    const comparing = performance.now() - started;
+    // Timed against reading the same words into tokens on the same machine, not against a
+    // clock: CI's shared runners, under coverage, ran it fifteen times slower than a Mac and
+    // failed a one-second limit. On a Mac it's 3 times the reading, 7 to 8 under coverage
+    // (as CI runs it), where a bound six times as large made it over 50.
+    started = performance.now();
+    diffTokens(before);
+    diffTokens(after);
+    const reading = performance.now() - started;
+    expect(comparing / reading).toBeLessThan(40);
     expect(ops.filter((op) => op.kind !== 'removed').map((op) => op.key)).toEqual(
       diffTokens(after).map((t) => t.key),
     );

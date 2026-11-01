@@ -34,6 +34,7 @@ export function buildMenu(send: SendCommand): Menu {
     command: MenuCommand,
     accelerator?: string,
   ): MenuItemConstructorOptions => ({
+    id: command, // greyed by it (./menu-grey.ts)
     label,
     accelerator,
     click: (_item, window) => send(command, window),
@@ -44,7 +45,7 @@ export function buildMenu(send: SendCommand): Menu {
     key: ToggleKey,
     accelerator?: string,
   ): MenuItemConstructorOptions => ({
-    id: key,
+    id: `toggle:${key}`,
     type: 'checkbox',
     label,
     accelerator,
@@ -168,6 +169,12 @@ export function buildMenu(send: SendCommand): Menu {
         item('Source', 'view:source'),
         item('Reading', 'view:reading'),
         { type: 'separator' },
+        // A book's (#40, Phase 3b): greyed with a note in front, as a note's are with a book.
+        item('Pages', 'view:pages'),
+        item('Scroll', 'view:scroll'),
+        // B is the page's own key, never an accelerator: the letter is a note's to type.
+        item('Bookmark This Page', 'bookmark'),
+        { type: 'separator' },
         item('Next View', 'view:next', 'CmdOrCtrl+E'),
         { type: 'separator' },
         // The writing tools (spec §4), this device's settings.
@@ -175,6 +182,8 @@ export function buildMenu(send: SendCommand): Menu {
         toggle('Typewriter Scrolling', 'editor.typewriter'),
         toggle('Show Markdown Marks', 'editor.marks'),
         toggle('Formatting Bar', 'editor.formatBar', 'CmdOrCtrl+Shift+B'),
+        // The page's look, in a popover (#49): its key is the Look control's (ui/chrome/commands.ts).
+        item('Look…', 'look', 'CmdOrCtrl+Shift+L'),
         { type: 'separator' },
         // A sprint against the clock, counted in the colophon (spec §4).
         {
@@ -202,7 +211,8 @@ export function buildMenu(send: SendCommand): Menu {
         { type: 'separator' },
         // With the keyboard in the page, the page's zoom; elsewhere the whole window's (spec §4).
         item('Zoom In', 'zoom:in', 'CmdOrCtrl+='),
-        { ...item('Zoom In', 'zoom:in', 'CmdOrCtrl+Plus'), visible: false }, // ⌘+ with Shift, as well as ⌘=
+        // ⌘+ with Shift, as well as ⌘=: no id of its own, as ids are one per item.
+        { ...item('Zoom In', 'zoom:in', 'CmdOrCtrl+Plus'), id: undefined, visible: false },
         item('Zoom Out', 'zoom:out', 'CmdOrCtrl+-'),
         item('Actual Size', 'zoom:reset', 'CmdOrCtrl+0'),
       ],
@@ -218,7 +228,7 @@ export function buildMenu(send: SendCommand): Menu {
 export function checkToggles(values: SettingValues): void {
   const menu = Menu.getApplicationMenu();
   for (const key of TOGGLES) {
-    const item = menu?.getMenuItemById(key);
+    const item = menu?.getMenuItemById(`toggle:${key}`);
     if (item) item.checked = values[key] === 'on';
   }
 }

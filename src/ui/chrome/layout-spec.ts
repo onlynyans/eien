@@ -47,7 +47,7 @@ export interface HostSpec {
 }
 
 /**
- * The page's tools, as they fold: the least asked for first; the views (as one) only on a page
+ * The page's tools, as they fold: the least asked for first, the look last of the tools; the views (as one) only on a page
  * too narrow for them and a ⋯, and the seal last. Never the strip: the shut band's way back.
  */
 export const TOOL_FOLDS: readonly CommandId[] = [
@@ -55,9 +55,13 @@ export const TOOL_FOLDS: readonly CommandId[] = [
   'compare',
   'format-bar',
   'focus',
+  'bookmark',
+  'look',
   'view.live',
   'view.source',
   'view.reading',
+  'view.pages',
+  'view.scroll',
   'seal',
 ];
 
@@ -82,10 +86,10 @@ export interface LayoutSpec {
   readonly tools: string;
 }
 
-/** The page's three views, one choice. */
+/** The page's views, one choice: a note's three, or a book's two (only a page's own kind shows). */
 export const VIEWS: HostItem = {
   group: 'View',
-  ids: ['view.live', 'view.source', 'view.reading'],
+  ids: ['view.live', 'view.source', 'view.reading', 'view.pages', 'view.scroll'],
 };
 
 /**

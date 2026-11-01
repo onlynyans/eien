@@ -1,20 +1,23 @@
 # Eien — design
 
-The look and feel of Eien, and the rules the interface code follows. The
-mockups here are how to see it; `tokens.css` is the source of every value.
+The look and feel of Eien, and the rules the interface code follows. Every
+value is a token: the app's `src/ui/theme/tokens.css` is their source, and
+this file documents them.
+
+> **A snapshot:** the mockups below (specimen, desktop and phone, with their CSS, JS and `tokens.css`) are the design as approved on 2026-10-20, kept for their reasoning and never copied from. Eien's look now is [.interface-design/system.md](../../.interface-design/system.md) (AGENTS.md → Rules → How something looks).
 
 | File | What it shows |
 |---|---|
 | [specimen.html](specimen.html) | Every colour and surface, the depth stack, every ink's contrast on every surface, the four text faces side by side and the mono, the seal, rows and their states, the diff style, the spacing scale — day and night side by side |
 | [desktop.html](desktop.html) | The app window: three panes, two-pane mode, collapsing and resizing, the page's views, Compare, Seal, Versions |
 | [phone.html](phone.html) | The phone: contents → index → page, one at a time, controls behind ⋯ |
-| [tokens.css](tokens.css) | The theme contract: every `--eien-*` token, day and night. Its colours are the Washi palette. It mirrors the app's `src/ui/theme/tokens.css` (the source), with the corner scale, icon, control and weight tokens stage 3 added, and the mockups' own font names |
+| [tokens.css](tokens.css) | The mockups' tokens, day and night, in the Washi palette: a snapshot of the design pass at stage 3 (#54), frozen. The source is the app's `src/ui/theme/tokens.css`, which has the tokens added since; the snapshot keeps the mockups' own font names and the old `--eien-radius` |
 | [themes/otaku.css](themes/otaku.css) | The Otaku palette: Otaku's colours on Eien's colour tokens, day and night |
 | [choices.js](choices.js) | The mockups' settings — FACE, PALETTE (Washi · Otaku), DENSITY (Comfortable · Compact), PAGE (Sheet · Full) and CHAPTERS (i ii iii · 1 2 3): sets `data-face`, `data-palette`, `data-density`, `data-frame` and `data-numerals` before the page draws and keeps each choice |
 | [fonts.css](fonts.css), [fonts/](fonts/) | Newsreader, Literata, IBM Plex Sans, Source Sans 3, Atkinson Hyperlegible Next, Schibsted Grotesk, Hanken Grotesk, Instrument Sans and IBM Plex Mono, bundled (SIL Open Font License) |
 | [base.css](base.css) | The pieces every screen shares: the seal, labels, word-buttons, fields, focus |
 | [references.md](references.md) | The reference screenshots, what reads well in each, and the surface values that came of it |
-| [explorations/](explorations/README.md) | The design passes after these mockups (stages 2 and 3): the three layouts, Settings, tags, themes, your order; the components as built at the end of [explorations/specimen.html](explorations/specimen.html). Then editing a table in Live ([tables.md](explorations/tables.md)) and the window's corner in Band and Slip ([corner.md](explorations/corner.md)), chosen and built; and the split window, to choose ([split.md](explorations/split.md)) |
+| [explorations/](explorations/README.md) | The design passes after these mockups (stages 2 and 3): the three layouts, Settings, tags, themes, your order; the components as built at the end of [explorations/specimen.html](explorations/specimen.html). Then editing a table in Live ([tables.md](explorations/tables.md)) and the window's corner in Band and Slip ([corner.md](explorations/corner.md)), chosen and built; and the split window's four modes ([split.md](explorations/split.md), [split-alt.md](explorations/split-alt.md)), chosen and built |
 
 To view them, serve this folder (fonts don't load from `file://`):
 
@@ -125,7 +128,8 @@ count it, or do you press it?* The mono.
 
 ## Rules for the interface code
 
-1. Every colour, face, size, space and duration is a token from `tokens.css`.
+1. Every colour, face, size, space and duration is a token from
+   `src/ui/theme/tokens.css`.
    A theme or palette overrides tokens and nothing else.
 2. Depth is surface tone plus hairlines, and exactly two shadows: the sheet
    casts `--eien-shadow-sheet`, because it is the object you work on and must
@@ -185,7 +189,7 @@ A setting with two values: **Comfortable** (the default) and **Compact**,
 takes away space: narrower sheet margins, a thinner blotter round the sheet,
 tighter paragraphs and lines (each face's leading less 0.14), shorter rows,
 and the note list without its line of preview. It's expressed only in tokens
-(`--eien-sheet-pad-x`, `--eien-sheet-pad-top`, `--eien-page-gutter`,
+(`--eien-sheet-pad-x`, `--eien-sheet-pad-top`, `--eien-sheet-gutter`,
 `--eien-title-gap`, `--eien-paragraph-gap`, `--eien-leading-tighten`,
 `--eien-row-h`, `--eien-row-pad-y`, `--eien-list-preview`), so no component
 asks which density it's in.
@@ -196,8 +200,83 @@ A setting separate from density, so it works with either: **Sheet** (the
 default) lays the page on the blotter with a hairline edge and the sheet's
 shadow; **Full** (`data-frame="full"`) takes the frame away, so the third pane
 is paper from edge to edge, with no gap, edge or shadow, and the text keeps its
-line length, centred. Tokens: `--eien-page-ground`, `--eien-page-gutter`,
-`--eien-sheet-edge`, `--eien-sheet-lift`.
+line length, centred. Tokens: `--eien-page-ground`, `--eien-page-gutter` (the
+density's `--eien-sheet-gutter` with a sheet, none full), `--eien-sheet-edge`,
+`--eien-sheet-lift`. A book's page (#40) wears its own frame: the tokens are set
+on `[data-frame]` as on `<html>`, and its leaf (always marked) paints its own
+ground.
+
+A book's page wears the rest of its own look the same way, on its leaf: its
+`data-face` (always set, so it never takes the notes'), and
+`--eien-text-scale`, `--look-lead` and `--look-width`, from the shelf's
+settings (`epub.<key>`, set in the quick look with a book in front).
+
+## Line spacing and page width
+
+Two settings (#49, the quick look), each a step either side of the face's own
+tuning, so all eight faces still read alike: **Line spacing** (Tight, As set,
+Loose: × 0.9, 1, 1.12 of `--eien-leading-prose`) and **Page width** (Narrow,
+As set, Wide: × 0.84, 1, 1.18 of `--eien-measure`). No design token: two local
+multipliers on `<html>`, `--look-lead` and `--look-width`, set by
+`ui/settings/look-properties.ts` and taken off at As set, as `--runhead-ground`
+is. The editor's lines (every view), Compare's and Settings' Type sample take
+the first; the sheet's width (Narrow also narrows a sheet that fills its pane)
+and the empty page's the second.
+
+## An EPUB's parts
+
+An EPUB's chapter (#40) is drawn from cleaned nodes, its parts named by the
+cleaner (`data-part`): chapter title, scene break, epigraph, plate, caption,
+first line. One stylesheet, `ui/epub/epub.css`, draws them from tokens of
+their own, each made from a note's, so a book's look is tuned without
+touching notes: `--eien-epub-title-size` (the list's heading size),
+`--eien-epub-title-gap` (a note's title gap), `--eien-epub-paragraph-gap`,
+`--eien-epub-break-gap` (a scene break's), `--eien-epub-epigraph-indent`
+(space-6), `--eien-epub-plate-gap` (space-5), `--eien-epub-caption-ink`
+(pencil), `--eien-epub-first-line-track` (half the label's tracking: the
+first line in capitals at 80%, as the bundled faces have no small capitals),
+and for the scroll style *As a book* (Phase 2) `--eien-epub-indent`
+(space-6), a paragraph's indent with no gap, a step less (space-5) on a page
+under 520px (a phone's).
+The book is set in the writer's own faces, never the publisher's; its
+colours are the theme's, so it reads by Night.
+
+Ink over a book's words (Phase 5, `ui/epub/ink.css`), painted by the CSS
+Custom Highlight API over the page's own text: a highlight is
+`--eien-epub-highlight-ink` (pencil), `--eien-epub-highlight-w` thick (a
+mark's width), `--eien-epub-highlight-offset` (0.22em) under the words, and
+a tick in the margin in the same ink and width, `--eien-epub-tick-inset`
+(space-4) before the block's lines, its ends `--eien-epub-tick-trim` (0.35em)
+in from the block's top and foot, so it spans the lines' ink and not their
+leading. A wash is left for Find's matches, so the two never look alike.
+
+## A page turning
+
+A book's page turns (#40, Phase 3) by the Page turn setting: Curl, Slide or
+Words. At rest every page is flat paper, as Depth asks. While a page turns as
+a curl, and only then, it carries light, Depth's one exception
+(`.interface-design/system.md`), from three tokens in `tokens.css`:
+
+- `--eien-curl-shade` (by day the sheet shadow's own ink at 0.18, by night
+  black at 0.5): where paper bends away, the roll's shadow on the page
+  beneath, and the lifted paper's one soft shadow (`drop-shadow` at
+  `--eien-space-2`), a third shadow there only while the page moves;
+- `--eien-curl-light` (white at 0.6 by day, the night's ink at 0.1): the
+  crest of the roll catching the light, and the glint past it;
+- `--eien-curl-through` (0.12): how much of the words shows through the
+  paper's back.
+
+Like the shadows, the two inks are a palette's (`slate.css` has its own
+pair), never a writer's theme's: a theme's night ink is pale, and a shade
+made from it would lighten the page. The gradients are these inks ramped across the roll's strips
+(`core/epub/turn/light.ts`), each stop `color-mix` of the ink and
+transparent, never a colour of their own; the washes along the fold run
+`--eien-space-6` (the shadow) and `--eien-space-5` (the crest). Every time is
+the calm or quick time: the curl lands in 1.5 × `--eien-calm`, Slide takes
+`--eien-calm`, Words `--eien-quick` out and `--eien-calm` in, a
+`--eien-space-2` step; each times the Turn speed. With reduced motion the
+times are 0, so the page changes at once. The approved motion is
+[explorations/epub-flip-curl.html](explorations/epub-flip-curl.html).
 
 ## Chapter numbers
 

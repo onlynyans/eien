@@ -1,0 +1,219 @@
+/* A link's tools in Live (backlog #38; docs/design/explorations/link-*.html):
+   the card under it and the bar over its line, which float over the page as
+   the window's own controls, out of the editor's shadow root. In place draws
+   in the editor itself (./link-inline.ts). */
+
+.link-layer {
+  display: contents;
+}
+
+/* What a screen reader hears as the caret reaches a link: said, never seen. */
+.link-said {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A link's tool: the icon control; on a phone's card, its word beside it. */
+.link-tool--word {
+  width: auto;
+  grid-auto-flow: column;
+  gap: var(--eien-space-1);
+  padding: 0 var(--eien-space-2);
+}
+.link-tool__word {
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  text-transform: uppercase;
+}
+
+/* A field in a card or bar: the window's field, the words' in their own face, the caret the
+   seal's, as in the text (links.md: the seal's one place here). */
+.link-field {
+  min-width: 0;
+  caret-color: var(--eien-seal);
+}
+.link-field--words {
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-row);
+}
+
+/* 1 · The card: what floats, as a menu does; the note list's width; its body
+   the note's row (crumb, title, first line, words), then its tools. */
+.link-card {
+  position: fixed;
+  left: var(--link-x, 0);
+  top: var(--link-y, 0);
+  z-index: 20;
+  width: min(var(--eien-list-w), calc(100vw - 2 * var(--eien-space-4)));
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-m);
+  box-shadow: var(--eien-shadow-float);
+  font-size: var(--eien-size-row);
+  line-height: var(--eien-leading-row);
+}
+.link-card[hidden] {
+  display: none;
+}
+.link-card__body {
+  display: grid;
+  gap: var(--eien-space-1);
+  padding: var(--eien-space-3);
+  min-width: 0;
+}
+.link-card__title {
+  font-weight: 500;
+  color: var(--eien-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A note not made yet: its name in italic, as Eien's empty things are. */
+.link-card__title--none {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--eien-ink-soft);
+}
+/* A first line, or the rest of an address: two lines at most. */
+.link-card__line,
+.link-card__line {
+  font-size: var(--eien-size-preview);
+}
+/* An address is the machine's: the site in ink, the rest in pencil, broken anywhere. */
+.link-card__site,
+.link-card__path {
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  overflow-wrap: anywhere;
+}
+.link-card__site {
+  color: var(--eien-ink);
+}
+.link-card__tools {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--eien-space-1) / 2);
+  padding: var(--eien-space-1);
+  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
+}
+.link-card__hint {
+  margin-left: auto;
+  padding-right: var(--eien-space-2);
+  white-space: nowrap;
+}
+.link-card__edit {
+  display: grid;
+  gap: var(--eien-space-2);
+  padding: var(--eien-space-3);
+}
+.link-card__field .label {
+  display: block;
+  margin-bottom: calc(var(--eien-space-1) / 2);
+}
+/* No hover: tools at a finger's size, each with its word, as there are no tooltips. */
+@media (hover: none) {
+  .link-card__tools {
+    flex-wrap: wrap;
+  }
+  .link-card__tools .icon-button {
+    height: var(--eien-touch);
+    min-width: var(--eien-touch);
+  }
+  .link-card__hint {
+    display: none;
+  }
+}
+
+/* 3 · The bar: the selection bar's surface exactly, from its rule (./editor.css). */
+.link-bar {
+  left: var(--link-x, 0);
+  top: var(--link-y, 0);
+  align-items: center;
+  gap: calc(var(--eien-space-1) / 2);
+  max-width: calc(100vw - 2 * var(--eien-space-4));
+}
+.link-tip[hidden] {
+  display: none;
+}
+.link-bar__kind {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--eien-control);
+  color: var(--eien-pencil);
+}
+/* Where it goes: pressed, it's edited. An address in the mono, cut short; a note's title in the text face. */
+.link-bar__to {
+  appearance: none;
+  min-width: 0;
+  max-width: 26ch;
+  height: var(--eien-control);
+  padding: 0 var(--eien-space-2);
+  border: var(--eien-hairline) solid transparent;
+  border-radius: var(--eien-radius-s);
+  background: none;
+  cursor: text;
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.link-bar__to--note {
+  font-family: var(--eien-face-text);
+  font-size: var(--eien-size-preview);
+}
+.link-bar__to--none {
+  font-style: italic;
+  color: var(--eien-pencil);
+}
+@media (hover: hover) {
+  .link-bar__to:hover {
+    color: var(--eien-ink);
+    background: var(--eien-hover);
+  }
+}
+.link-bar__to:focus-visible {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+  outline-offset: calc(var(--eien-mark-w) * -1);
+}
+.link-bar__rule {
+  flex: none;
+  width: var(--eien-hairline);
+  align-self: stretch;
+  margin: var(--eien-space-1) calc(var(--eien-space-1) / 2);
+  background: var(--eien-rule);
+}
+.link-bar .field {
+  width: 26ch;
+}
+/* A phone: docked over the colophon (../page/page.css, .page__under), above the keyboard, as the
+   table's bar is: the band, 44px targets. */
+.link-bar--docked {
+  position: static;
+  max-width: none;
+  border-width: var(--eien-hairline) 0 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--eien-band);
+}
+.link-bar--docked .icon-button,
+.link-bar--docked .link-bar__to,
+.link-bar--docked .link-bar__kind {
+  height: var(--eien-touch);
+}
+.link-bar--docked .icon-button {
+  width: var(--eien-touch);
+}
+.link-bar--docked .link-bar__to,
+.link-bar--docked .field {
+  flex: 1;
+  max-width: none;
+  text-align: left;
+}

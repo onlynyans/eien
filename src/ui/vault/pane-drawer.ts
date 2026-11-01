@@ -6,6 +6,7 @@
 // list: in its band, it searches that list's notes; in the sidebar (no list
 // in sight, or a phone, whose contents page holds it), the whole vault.
 
+import { renderContents } from '../list/contents-list';
 import { type Arrange, canDrag, lensParts } from '../list/lens-bar';
 import { type ListActions, renderList } from '../list/list';
 import type { ShownNotes } from '../list/shown-notes';
@@ -14,6 +15,7 @@ import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import type { Sidebar } from '../sidebar/sidebar';
 import { openId } from '../sidebar/tree';
+import type { EpubWiring } from './epub-wiring';
 import type { Navigation } from './navigation';
 import type { Notice } from './notice';
 import { treeNotes } from './tree-notes';
@@ -37,6 +39,8 @@ export interface DrawnParts {
   pageNews(text: string | null): void;
   /** How the list's rows move now (Arrange mode, and whether it's arranging). */
   arrange(): Arrange;
+  /** What SHELF and the list show of the books on the pages (#40). */
+  readonly epubs: Pick<EpubWiring, 'shelf' | 'contents' | 'actions'>;
 }
 
 export class PaneDrawer {
@@ -62,8 +66,10 @@ export class PaneDrawer {
   #searchInList(): boolean {
     const { state, nav, panes } = this.#parts;
     const inList = !panes.isShut('list') && !panes.phone;
-    this.#parts.placeSearch(inList, inList ? state.nameOf(nav.selection) : state.name);
-    return inList;
+    // A book's contents in the list: the field searches the vault (a book's own Find is Phase 5's).
+    const narrow = inList && !this.#parts.epubs.contents();
+    this.#parts.placeSearch(inList, narrow ? state.nameOf(nav.selection) : state.name);
+    return narrow;
   }
 
   async sidebar(): Promise<void> {
@@ -97,6 +103,8 @@ export class PaneDrawer {
       results,
       shown: this.#parts.shown(),
       books: state.books,
+      shelf: { ...this.#parts.epubs.shelf(panes.two), shut: nav.shelf.shut },
+      elsewhere: !panes.two && !words && this.#parts.epubs.contents() !== null,
       notice: listShown ? null : notice.text,
       filter: filterFor(listKey(nav.selection)),
     });
@@ -108,6 +116,20 @@ export class PaneDrawer {
     const inList = this.#searchInList();
     if (!panes.listKept) return; // out of sight: nothing to read for it
     const words = nav.query.trim();
+    const contents = words ? null : this.#parts.epubs.contents();
+    if (contents) {
+      this.#listOrdered = false;
+      const { path } = contents.side;
+      const { actions } = this.#parts.epubs;
+      if (path)
+        renderContents(this.#parts.list, contents, this.#parts.notice.text, {
+          chapter: (spine) => actions.chapter(path, spine),
+          lens: (lens) => actions.lens(path, lens),
+          go: (row) => actions.goMark(path, row),
+          remove: (row) => actions.unmark(path, row),
+        });
+      return;
+    }
     const arrange = this.#parts.arrange();
     const key = listKey(nav.selection);
     // Subfolders' notes too (backlog #42): the list's alone; the tree already shows each folder's.

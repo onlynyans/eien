@@ -1,8 +1,9 @@
 // What a vault holds, as the storage lists it.
 
-import { isHiddenName } from '../paths';
+import { isHiddenName, titleOf } from '../paths';
 
-export type EntryKind = 'note' | 'folder' | 'file';
+/** A note, a folder, an EPUB (#40: shown only under SHELF), or any other file. */
+export type EntryKind = 'note' | 'folder' | 'epub' | 'file';
 
 export interface VaultEntry {
   /** Vault-relative, "/" separated. */
@@ -18,6 +19,20 @@ export interface VaultEntry {
 export const isNoteName = (name: string): boolean =>
   !isHiddenName(name) && name.toLowerCase().endsWith('.md');
 
+const EPUB_EXTENSION = '.epub';
+
+/** An EPUB is a visible ".epub" file (#40): a book on the shelf, never a note. */
+export const isEpubName = (name: string): boolean =>
+  !isHiddenName(name) && name.toLowerCase().endsWith(EPUB_EXTENSION);
+
+/** What the shelf calls an EPUB, as a note is called by its file's name: the name without ".epub". */
+export const epubTitleOf = (name: string): string =>
+  isEpubName(name) ? name.slice(0, -EPUB_EXTENSION.length) : name;
+
+/** What Eien calls a file where it names one: a note's title, a book's, else its name. */
+export const fileTitleOf = (name: string): string =>
+  isEpubName(name) ? epubTitleOf(name) : titleOf(name);
+
 /** Images a note shows (spec §4), by extension, with their media types. */
 const IMAGE_TYPES: Readonly<Record<string, string>> = {
   png: 'image/png',
@@ -28,6 +43,9 @@ const IMAGE_TYPES: Readonly<Record<string, string>> = {
   avif: 'image/avif',
   svg: 'image/svg+xml',
 };
+
+/** Notes larger than this are listed but not read: a stray 100 MB file mustn't stall the app. An EPUB's chapter is held to it too. */
+export const MAX_NOTE_BYTES = 8 * 1024 * 1024;
 
 /** The most bytes an image may be: one a note shows, an export carries or an import brings. */
 export const MAX_IMAGE_BYTES = 32 * 1024 * 1024;
@@ -44,7 +62,7 @@ export function imageTypeOf(name: string): string | null {
 
 /** The kind a listed file or folder is. */
 export const kindOf = (name: string, isFolder: boolean): EntryKind =>
-  isFolder ? 'folder' : isNoteName(name) ? 'note' : 'file';
+  isFolder ? 'folder' : isNoteName(name) ? 'note' : isEpubName(name) ? 'epub' : 'file';
 
 /**
  * Syncthing's copy of a file both devices changed:

@@ -4,8 +4,9 @@
 // (./layouts.ts); how it looks right now, the vault's (../vault/chrome-wiring.ts).
 
 import type { SettingValues } from '../../core/config';
+import { EXPORT_LABELS } from '../../core/export';
 import { FORMAT_COMMANDS, type FormatCommandId } from '../../core/format';
-import type { MenuCommand } from '../../platform/bridge';
+import type { ExportFormat, MenuCommand } from '../../platform/bridge';
 import type { IconName } from '../icons';
 import type { PageKind } from '../page/page-leaf';
 
@@ -104,6 +105,33 @@ export const COMMANDS = [
     sends: 'view:reading',
     on: 'note',
   },
+  // A book's two ways to read (#40, Phase 3b), in the views' place: the book's own.
+  {
+    id: 'view.pages',
+    icon: 'pages',
+    label: 'Pages',
+    tip: 'Pages: a page at a time, turned',
+    sends: 'view:pages',
+    on: 'epub',
+  },
+  {
+    id: 'view.scroll',
+    icon: 'scroll',
+    label: 'Scroll',
+    tip: 'Scroll: a chapter a sheet',
+    sends: 'view:scroll',
+    on: 'epub',
+  },
+  // A book's bookmark (#40, Phase 4b). Its key is the page's own (../epub/epub-page.ts), never the
+  // menu bar's, which would take the letter from a note.
+  {
+    id: 'bookmark',
+    icon: 'bookmark',
+    label: 'Bookmark this page',
+    key: 'b',
+    sends: 'bookmark',
+    on: 'epub',
+  },
   {
     id: 'view.next',
     icon: 'live',
@@ -154,6 +182,8 @@ export const COMMANDS = [
     sends: 'toggle:editor.focus',
     on: 'note',
   },
+  // The quick look (#49): a note's look, or with a book in front the shelf's (#40).
+  { id: 'look', icon: 'look', label: 'Look', key: 'Mod-Shift-l', sends: 'look' },
   { id: 'strip', icon: 'up', label: 'Page controls', layouts: ['band', 'slip'] },
   { id: 'scheme', icon: 'sun', label: 'Night' },
   { id: 'panes', icon: 'panes3', label: 'Two panes' },
@@ -197,6 +227,39 @@ export const actsOn = (id: CommandId, kind: PageKind): boolean => {
   const { on } = commandOf(id);
   return on === undefined || on === kind;
 };
+
+/** The format a book's words take too: Highlight, its chosen words kept (#40, Phase 5a). */
+export const BOOK_FORMAT: MenuCommand = 'format:highlight';
+
+/**
+ * The menu's commands with no control of their own that act on a note's page alone: every format
+ * (the headings' three are one control), the note's exports, the outline cards of its book, and
+ * the writing tools a note's editor wears.
+ */
+const NOTE_MENU: readonly MenuCommand[] = [
+  ...FORMAT_COMMANDS.map(({ id }) => `format:${id}` as const),
+  'export-html',
+  ...(Object.keys(EXPORT_LABELS) as (ExportFormat | 'html')[])
+    .filter((format) => format !== 'html')
+    .map((format) => `export-note:${format}` as const),
+  'outline',
+  'toggle:editor.typewriter',
+  'toggle:editor.marks',
+];
+
+/**
+ * The menu's commands that do nothing with a page of `kind` in front (#40), greyed in the menu bar
+ * (../../app/electron/menu-grey.ts) and the phone's ⋯: each control's `on`, carried over.
+ */
+export function menuOff(kind: PageKind): MenuCommand[] {
+  const others: readonly MenuCommand[] = COMMANDS.flatMap((command) =>
+    'sends' in command && 'on' in command && command.on !== kind ? [command.sends] : [],
+  );
+  // With a book in front, the format its words take too stays on, though its button is a note's.
+  return [...new Set([...others, ...(kind === 'note' ? [] : NOTE_MENU)])].filter(
+    (command) => !(kind === 'epub' && command === BOOK_FORMAT),
+  );
+}
 
 /** Whether `command` is drawn on the desktop in `layout`, with one page (a split's own are its mode's). */
 export const onDesktopIn = (command: CommandDef, layout: Layout): boolean =>

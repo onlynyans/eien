@@ -34,7 +34,7 @@ describe('opening a note beside the one open', () => {
   it('makes a second page, the active one, with the divider between', async () => {
     const { pages, area } = await split();
     expect(pages.split).toBe(true);
-    expect(pages.notes()).toEqual({ active: 'Rain.md', other: 'Snow.md' });
+    expect(pages.shown()).toEqual({ active: 'Rain.md', other: 'Snow.md' });
     expect(row(area)).toEqual(['Snow', 'divider', 'Rain, the active page']);
     expect(noted(pages.active).page.editor.text).toBe('Rain came.');
   });
@@ -43,7 +43,7 @@ describe('opening a note beside the one open', () => {
     const { pages } = await split({ 'Hail.md': 'Hail.' });
     pages.activate(pages.sides[0] as (typeof pages.sides)[number]);
     await pages.open('Hail.md', true);
-    expect(pages.notes()).toEqual({ active: 'Hail.md', other: 'Snow.md' });
+    expect(pages.shown()).toEqual({ active: 'Hail.md', other: 'Snow.md' });
     expect(pages.sides).toHaveLength(2);
   });
 
@@ -53,7 +53,7 @@ describe('opening a note beside the one open', () => {
     expect(words()).toBe('2 words');
     expect(pages.pane.head.querySelector('.running-crumbs')).toBe(pages.active.page.runningCrumbs);
     pages.activate(pages.sides[0] as (typeof pages.sides)[number]);
-    expect(pages.notes().active).toBe('Snow.md');
+    expect(pages.shown().active).toBe('Snow.md');
     expect(pages.pane.head.querySelector('.running-crumbs')).toBe(pages.active.page.runningCrumbs);
     expect(area.querySelectorAll('.colophon .colophon__words')).toHaveLength(1);
   });
@@ -74,8 +74,8 @@ describe('one note on both pages', () => {
     stops.push(() => pages.stop());
     await pages.open('Snow.md');
     await pages.toggle(); // ⌘D: the note beside itself
-    expect(pages.notes()).toEqual({ active: 'Snow.md', other: 'Snow.md' });
-    expect(pages.sessions()).toHaveLength(1);
+    expect(pages.shown()).toEqual({ active: 'Snow.md', other: 'Snow.md' });
+    expect(pages.notes.sessions()).toHaveLength(1);
     typeAtEnd(pages, ' The gate held.');
     expect(noted(pages.other).page.editor.text).toBe('Snow fell. The gate held.');
     await pages.flush();
@@ -99,12 +99,14 @@ describe('closing a page', () => {
     const destroy = vi.spyOn(rain.page.editor.view, 'destroy');
     expect(pages.close(rain)).toBe(true);
     expect(pages.split).toBe(false);
-    expect(pages.notes()).toEqual({ active: 'Snow.md', other: null });
+    expect(pages.shown()).toEqual({ active: 'Snow.md', other: null });
     expect(row(area)).toEqual(['page']);
     expect(destroy).toHaveBeenCalled();
     expect(document.querySelectorAll('.selection-bar')).toHaveLength(1);
     // Its note let go once its words are saved.
-    await vi.waitFor(() => expect(pages.sessions().map(({ path }) => path)).toEqual(['Snow.md']));
+    await vi.waitFor(() =>
+      expect(pages.notes.sessions().map(({ path }) => path)).toEqual(['Snow.md']),
+    );
   });
 
   it('saves the words typed on it, though it closes before typing pauses', async () => {
@@ -124,10 +126,10 @@ describe('closing a page', () => {
       pages.close(pages.active);
       await vi.advanceTimersByTimeAsync(0);
       expect(write).toHaveBeenCalledTimes(1);
-      expect(pages.sessions().map(({ path }) => path)).toEqual(['Snow.md', 'Rain.md']);
+      expect(pages.notes.sessions().map(({ path }) => path)).toEqual(['Snow.md', 'Rain.md']);
       await vi.advanceTimersByTimeAsync(4000); // the save tried again
       expect((await storage.read('Rain.md'))?.text).toBe('Rain came. The roof held.');
-      expect(pages.sessions().map(({ path }) => path)).toEqual(['Snow.md']);
+      expect(pages.notes.sessions().map(({ path }) => path)).toEqual(['Snow.md']);
     } finally {
       vi.useRealTimers();
     }
@@ -147,13 +149,13 @@ describe('closing a page', () => {
     expect(pages.split).toBe(false);
     expect(pages.active).toBe(pages.sides[0]);
     expect(pages.sides[0]).not.toBe(snow); // Rain was active: Snow, the other, closed
-    expect(pages.notes().active).toBe('Rain.md');
+    expect(pages.shown().active).toBe('Rain.md');
   });
 
   it('closes by its ×', async () => {
     const { pages } = await split();
     pages.sides[0]?.page.element.querySelector<HTMLElement>('.sheet__close')?.click();
-    expect(pages.notes()).toEqual({ active: 'Rain.md', other: null });
+    expect(pages.shown()).toEqual({ active: 'Rain.md', other: null });
   });
 });
 
@@ -162,7 +164,7 @@ describe('swapping and moving between pages', () => {
     const { pages, area } = await split();
     pages.swap();
     expect(row(area)).toEqual(['Rain, the active page', 'divider', 'Snow']);
-    expect(pages.notes().active).toBe('Rain.md');
+    expect(pages.shown().active).toBe('Rain.md');
   });
 
   it('takes ⌘3 to the other page', async () => {
@@ -171,7 +173,7 @@ describe('swapping and moving between pages', () => {
       .spyOn(pages.sides[0]?.page as NonNullable<(typeof pages.sides)[0]>['page'], 'focus')
       .mockImplementation(() => {}); // happy-dom has no selection to put the caret in
     pages.focusOther();
-    expect(pages.notes().active).toBe('Snow.md');
+    expect(pages.shown().active).toBe('Snow.md');
     expect(focus).toHaveBeenCalled();
   });
 });
@@ -200,7 +202,7 @@ describe('the pane too narrow for two pages', () => {
       ['Rain', 'false'],
     ]);
     pager.querySelectorAll('button')[1]?.click();
-    expect(pages.notes().active).toBe('Rain.md');
+    expect(pages.shown().active).toBe('Rain.md');
 
     width = 2 * PAGE_MIN;
     pages.swap(); // anything that lays them out

@@ -8,6 +8,7 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
+import { longBook } from '../support/long-book';
 import { ALONE, expect, ROOT, test, type VaultFiles } from './launch';
 
 /**
@@ -28,9 +29,14 @@ const FIRST_LIST_MS = 1500;
  * shut sidebar (#57) and the table editor (#58). CSS 118,374 with Two sheets and Facing
  * pages (ui/page/split.css, #66, #67); 122,671 with the split's four modes, one stylesheet
  * each (ui/page/split*.css, #66–#69). JS 1,842,280 before find and replace, 1,884,696 with it
- * (@codemirror/search and the find bar, backlog #41).
+ * (@codemirror/search and the find bar, backlog #41). CSS 137,624 with the link tooltip's
+ * three styles (editor/link.css, backlog #38). JS 2,055,752 with the link tooltip (#38),
+ * 2,063,245 with a book scrolling, a chapter a sheet (#40, Phase 2a), 2,081,698 with its
+ * links and notes (Phase 2b), 2,092,421 beside a note, with Quote (Phase 2c): Phase 2's own
+ * modules,
+ * no package (the renderer's JS ships unminified, its comments too).
  */
-const RENDERER = { js: 2_070_000, css: 134_000 };
+const RENDERER = { js: 2_270_000, css: 151_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);
@@ -186,6 +192,116 @@ test.describe('a long session', () => {
       expect(report('heap growth after 50 pages beside, bytes', growth)).toBeLessThan(HEAP_GROWTH);
     },
   );
+});
+
+/** A long book (#40): sixty chapters of two hundred paragraphs each, every one its own file. */
+const CHAPTERS = 60;
+const LONG_EPUB = longBook({ chapters: CHAPTERS, paragraphs: 200 });
+/**
+ * Elements with a long book open: its contents' rows and one chapter, never the book
+ * (measured: 1,218 at the first chapter and at the last; the whole book would be over 13,000).
+ * The heap after reading every chapter twice is held to HEAP_GROWTH (measured: 0.07 MB).
+ */
+const EPUB_ELEMENTS = 2000;
+
+test.describe('a long book open (#40)', () => {
+  test.use({ vaultFiles: { 'Novels/Long.epub': LONG_EPUB } });
+
+  const open = async (page: Page) => {
+    await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+    await expect(page.locator('.contents-row')).toHaveCount(CHAPTERS);
+  };
+  const chapter = async (page: Page, n: number) => {
+    await page.locator('.contents-row').nth(n).click();
+    await expect(page.locator('.epub-chapter h1')).toHaveText(`Chapter ${n + 1}`);
+  };
+
+  test('draws only the chapter in sight', async ({ page }) => {
+    await open(page);
+    await chapter(page, 0);
+    const first = report('elements, a long book at its first chapter', await elements(page));
+    await chapter(page, CHAPTERS - 1);
+    const last = report('elements, at its last', await elements(page));
+    expect(first).toBeLessThan(EPUB_ELEMENTS);
+    expect(last).toBeLessThan(EPUB_ELEMENTS);
+    await expect(page.locator('.epub-chapter p')).toHaveCount(200);
+  });
+
+  test('reading every chapter twice gives its memory back', ALONE, async ({ page }) => {
+    test.setTimeout(180_000);
+    const cdp = await page.context().newCDPSession(page);
+    const heap = async () => {
+      await cdp.send('HeapProfiler.collectGarbage');
+      await cdp.send('HeapProfiler.collectGarbage');
+      return (await cdp.send('Runtime.getHeapUsage')).usedSize;
+    };
+    await open(page);
+    for (let n = 0; n < CHAPTERS; n++) await chapter(page, n);
+    const before = await heap();
+    for (let n = 0; n < CHAPTERS; n++) await chapter(page, n);
+    await chapter(page, 0);
+    const growth = (await heap()) - before;
+    expect(report('heap growth over a long book read again, bytes', growth)).toBeLessThan(
+      HEAP_GROWTH,
+    );
+  });
+});
+
+/**
+ * A long book with its marks on the edge (#40, Phase 4d): the strip adds a
+ * hairline a chapter and a tab a bookmark, never the book, so the elements
+ * stay within EPUB_ELEMENTS (not yet measured with the strip: CI's first run
+ * says).
+ */
+test.describe('a long book with its marks on the edge (#40)', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': LONG_EPUB },
+    deviceFile: { settings: { 'epub.marks': 'edge' } },
+  });
+
+  test('draws the strip without the book', async ({ page }) => {
+    await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+    await expect(page.locator('.edge-strip__chapter')).toHaveCount(CHAPTERS);
+    expect(report('elements, a long book with its strip', await elements(page))).toBeLessThan(
+      EPUB_ELEMENTS,
+    );
+  });
+});
+
+/**
+ * A long book counted for its page numbers (#40, Phase 4), then put away: the
+ * window's count keeps numbers alone, so the heap stays within HEAP_GROWTH
+ * (measured: 1.2 MB with the window's other first-time costs).
+ */
+test.describe('a long book counted and put away (#40)', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': LONG_EPUB, 'Notes.md': 'The gate held.\n' },
+  });
+
+  test('gives its memory back but the count’s', ALONE, async ({ page }) => {
+    test.setTimeout(120_000);
+    const cdp = await page.context().newCDPSession(page);
+    const heap = async () => {
+      await cdp.send('HeapProfiler.collectGarbage');
+      await cdp.send('HeapProfiler.collectGarbage');
+      return (await cdp.send('Runtime.getHeapUsage')).usedSize;
+    };
+    const note = page.locator('.note-row').filter({ hasText: 'Notes' });
+    await note.click();
+    await expect(page.locator('.cm-content')).toContainText('The gate held.');
+    const before = await heap();
+    await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+    await expect(page.locator('.colophon__page')).toHaveText(/^page \d+ of 1,0\d\d$/u, {
+      timeout: 60_000,
+    });
+    await page.locator('.tree-row', { hasText: 'All Notes' }).first().click();
+    await note.click();
+    await expect(page.locator('.cm-content')).toContainText('The gate held.');
+    const growth = (await heap()) - before;
+    expect(
+      report('heap growth after a long book counted and put away, bytes', growth),
+    ).toBeLessThan(HEAP_GROWTH);
+  });
 });
 
 test('the built renderer’s code and styles stay within their budget', () => {

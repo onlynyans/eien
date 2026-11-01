@@ -80,7 +80,7 @@ export const SPLIT_SPECS: Readonly<Record<SplitMode, SplitSpec>> = {
     measure: SHARE,
     narrow: 'close',
     own: {
-      items: ['compare', 'seal', 'versions', 'copy-html', 'page.close'],
+      items: ['compare', 'seal', 'versions', 'copy-html', 'bookmark', 'page.close'],
       on: 'each',
       at: 'foot',
     },

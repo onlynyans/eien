@@ -17,7 +17,8 @@ export const editorTheme = EditorView.theme({
   '&.cm-focused': { outline: 'none' },
   '.cm-scroller': {
     fontFamily: 'var(--eien-face-text)',
-    lineHeight: 'var(--eien-leading-prose)',
+    // Line spacing's step over the face's own (ui/settings/look-properties.ts).
+    lineHeight: 'calc(var(--eien-leading-prose) * var(--look-lead, 1))',
     overflow: 'visible',
   },
   '.cm-content': {
@@ -46,7 +47,7 @@ export const editorTheme = EditorView.theme({
   '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, ::selection':
     { backgroundColor: 'var(--eien-seal-wash)' },
   '&.cm-focused .cm-selectionBackground': { backgroundColor: 'var(--eien-seal-wash)' },
-  // Find's matches (./find-bar.ts): each a neutral fill over a hairline, never the highlight's
+  // Find's matches (./find.ts): each a neutral fill over a hairline, never the highlight's
   // ochre; the current one is the selection, so the selection's wash, over the focus ink's mark.
   '.cm-searchMatch': {
     backgroundColor: 'var(--eien-selected)',
@@ -61,7 +62,7 @@ export const editorTheme = EditorView.theme({
   '&.eien-source .cm-scroller': {
     fontFamily: 'var(--eien-face-source)',
     fontSize: 'var(--eien-size-source)',
-    lineHeight: 'var(--eien-leading-prose)',
+    lineHeight: 'calc(var(--eien-leading-prose) * var(--look-lead, 1))',
   },
   // Reading: no caret, nothing to edit.
   '&.eien-reading .cm-content': { caretColor: 'transparent', cursor: 'default' },

@@ -4,10 +4,12 @@
 // only the rows in sight (src/ui/shell/windowed-rows.ts), and the keyboard
 // still reaches every row. Each runs alone (ALONE), so it measures Eien.
 
-import { readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { ALONE, expect, readQuietly, test, type VaultFiles } from './launch';
+import { handEpub, nav, opf, XHTML, page as xhtml } from '../support/epub-parts';
+import { longBook } from '../support/long-book';
+import { ALONE, clickMenu, expect, readQuietly, test, type VaultFiles } from './launch';
 
 /** The budget for anything a writer does: no task holds the window longer than this. */
 const STALL = 200;
@@ -286,4 +288,197 @@ test.describe('a long book in its own order', () => {
         .toBe(true);
     },
   );
+});
+
+/**
+ * A long chapter (#40, Phase 2): one of the book's files holding as many
+ * paragraphs as a very long chapter has (600, some 27,000 words: five times
+ * Pride and Prejudice's longest), drawn
+ * whole, scrolled through and its place kept at each rest. Measured: no long
+ * task drawing it or scrolling (none over 50 ms), 143 ms drawing it with the
+ * CPU four times slower (SLOW=4).
+ */
+const LONG_CHAPTER = handEpub('content.opf', [
+  {
+    name: 'content.opf',
+    data: opf(
+      '3.0',
+      [
+        { id: 'nav', href: 'nav.xhtml', type: XHTML, properties: 'nav' },
+        { id: 'c1', href: 'c1.xhtml', type: XHTML },
+      ],
+      ['c1'],
+    ),
+  },
+  { name: 'nav.xhtml', data: nav([['The Long Chapter', 'c1.xhtml']]) },
+  {
+    name: 'c1.xhtml',
+    data: xhtml(
+      'The Long Chapter',
+      `<h1>The Long Chapter</h1>\n${Array.from(
+        { length: 600 },
+        (_, n) =>
+          `<p>Paragraph ${n}: it is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife. <em>However little known</em> the feelings or views of such a man may be on his first entering a neighbourhood.</p>`,
+      ).join('\n')}`,
+    ),
+  },
+]);
+
+test.describe('a long chapter', () => {
+  test.use({ vaultFiles: { 'Novels/Long.epub': LONG_CHAPTER } });
+
+  test(
+    'opens, scrolls through and keeps its place without a stall',
+    ALONE,
+    async ({ page, vault }) => {
+      test.setTimeout(90_000);
+      const time = await stalls(page);
+      const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' });
+      await expect(book).toBeVisible();
+      await time.mark();
+      await book.click();
+      await expect(page.locator('.epub-chapter p')).toHaveCount(600);
+      expect(await time.longest(), 'the chapter drawn').toBeLessThan(STALL);
+      const scroller = page.locator('.page__leaf--epub .page__scroll');
+      await scroller.focus();
+      await time.mark();
+      for (let i = 0; i < 40; i++) await page.keyboard.press('PageDown');
+      await page.mouse.move(800, 400);
+      for (let i = 0; i < 20; i++) await page.mouse.wheel(0, 900);
+      // At rest, its place measured and kept.
+      const reading = join(vault ?? '', '.eien/reading');
+      await expect
+        .poll(() => (existsSync(reading) ? readdirSync(reading).length : 0), {
+          timeout: 10_000,
+        })
+        .toBe(1);
+      await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
+        '0% of the chapter',
+      );
+      expect(await time.longest(), 'scrolled and kept').toBeLessThan(STALL);
+    },
+  );
+});
+
+/**
+ * Fifty turns (#40, Phase 3b): the long chapter in pages, turned on fifty
+ * times by key under each Page turn, each turn's motion run to its end.
+ * Measured: the curl's fourteen copies of the whole chapter were 215 ms, so
+ * a turn copies the page in sight alone; now no long task (none over 50 ms)
+ * under any of the three, the CPU four times slower too (SLOW=4). Held to
+ * the same 200 ms as the rest.
+ */
+test.describe('fifty turns in a long chapter', () => {
+  for (const turn of ['curl', 'slide', 'words'] as const) {
+    test.describe(turn, () => {
+      test.use({
+        vaultFiles: { 'Novels/Long.epub': LONG_CHAPTER },
+        deviceFile: {
+          settings: { 'epub.view': 'pages', 'epub.turn': turn, 'epub.turnSpeed': '1' },
+        },
+      });
+
+      test(`turns fifty pages without a stall (${turn})`, ALONE, async ({ page }) => {
+        test.setTimeout(120_000);
+        const time = await stalls(page);
+        await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+        await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter p')).toHaveCount(
+          600,
+        );
+        const scroller = page.locator('.page__leaf--epub .page__scroll');
+        await scroller.focus();
+        await time.mark();
+        for (let i = 0; i < 50; i++) {
+          await page.keyboard.press('ArrowRight');
+          // Each turn's motion to its end, as a reader reading at its pace would leave it.
+          await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
+        }
+        // The chapter's own figure, matched whole: "10% of the chapter" holds "0% of the chapter".
+        await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
+          '0% of the chapter',
+        );
+        expect(await time.longest(), `fifty turns (${turn})`).toBeLessThan(STALL);
+      });
+    });
+  }
+});
+
+/**
+ * Fifty turns on a spread (#40, Phase 3d): the long chapter two pages at a
+ * time, justified and hyphenated where the window can, curled fifty times;
+ * then the pane widened past a spread and narrowed short of it, each laying
+ * the chapter out anew. Held to the same 200 ms as the rest.
+ */
+test.describe('fifty turns on a spread', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': LONG_CHAPTER },
+    deviceFile: { settings: { 'epub.view': 'pages', 'epub.turn': 'curl', 'epub.turnSpeed': '1' } },
+  });
+
+  test(
+    'turns fifty spreads and opens and closes one without a stall',
+    ALONE,
+    async ({ page, app }) => {
+      test.setTimeout(120_000);
+      await page.setViewportSize({ width: 1900, height: 900 });
+      const time = await stalls(page);
+      await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+      const sheet = page.locator('.page__leaf--epub .epub-sheet:not([aria-hidden])');
+      await expect(sheet.locator('.epub-chapter p')).toHaveCount(600);
+      await clickMenu(app, 'View', 'Toggle Note List');
+      await expect(sheet.locator('.epub__pages')).toHaveAttribute('data-spread', '');
+      await page.locator('.page__leaf--epub .page__scroll').focus();
+      await time.mark();
+      for (let i = 0; i < 50; i++) {
+        await page.keyboard.press('ArrowRight');
+        await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
+      }
+      await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
+        '0% of the chapter',
+      );
+      expect(await time.longest(), 'fifty turns on a spread').toBeLessThan(STALL);
+      await time.mark();
+      for (const width of [1100, 1900, 1100, 1900]) {
+        await page.setViewportSize({ width, height: 900 });
+        const pages = sheet.locator('.epub__pages');
+        if (width > 1500) await expect(pages).toHaveAttribute('data-spread', '');
+        else await expect(pages).not.toHaveAttribute('data-spread');
+      }
+      expect(await time.longest(), 'a spread opened and closed').toBeLessThan(STALL);
+    },
+  );
+});
+
+/** A book of about 3,000 steady pages (#40, Phase 4), and one chapter far longer than the rest, never drawn. */
+const COUNTED_BOOK = longBook({ chapters: 60, paragraphs: 600, large: 4000 });
+
+/**
+ * A long book counted for its page numbers (#40, Phase 4): every chapter read
+ * and counted in the background, one a task and only while no page turns, as
+ * the pages turn, fifty of them. No long task over the same 200 ms, the large
+ * chapter's included; then the steady pages said. Measured: no long task (none
+ * over 50 ms); the longest 91 ms with the CPU four times slower (SLOW=4).
+ */
+test.describe('a long book counted while its pages turn', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': COUNTED_BOOK },
+    deviceFile: { settings: { 'epub.view': 'pages', 'epub.turn': 'curl', 'epub.turnSpeed': '1' } },
+  });
+
+  test('counts it without a stall, then numbers its pages', ALONE, async ({ page }) => {
+    test.setTimeout(180_000);
+    const time = await stalls(page);
+    await time.mark();
+    await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+    await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter p')).toHaveCount(600);
+    await page.locator('.page__leaf--epub .page__scroll').focus();
+    for (let i = 0; i < 50; i++) {
+      await page.keyboard.press('ArrowRight');
+      await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
+    }
+    await expect(page.locator('.colophon__page')).toHaveText(/^page \d+ of 3,\d{3}$/u, {
+      timeout: 60_000,
+    });
+    expect(await time.longest(), 'a long book counted, fifty turns').toBeLessThan(STALL);
+  });
 });

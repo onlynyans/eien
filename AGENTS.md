@@ -13,7 +13,8 @@ Each feature has one word, in code, files, CSS and docs:
   `src/core/extension/`, `src/platform/extension/`, `src/ui/extension/`,
   `src/app/extension/` and `tests/extension/`. "Eien Reader" is only the name
   users see (the manifest, the popup's title, the frame's title).
-- **epub**: the EPUB reader in the app (backlog #40), not built yet; its
+- **epub**: the EPUB reader in the app (backlog #40), in `src/core/epub/`
+  and `src/platform/inflate.ts` (Phase 1a: reading a book safely); its
   designs are `docs/design/explorations/epub-*` and `epub.md`.
 - **reader**: only a person reading. No folder, file or CSS class is named
   for it (`tests/words.test.ts`).
@@ -35,8 +36,14 @@ Each feature has one word, in code, files, CSS and docs:
 - **Data formats.** A new file Eien keeps (in `.eien/` or beside a note)
   starts with `"version": 1`; a change an older Eien would misread is a
   breaking one. Spec §2 → Formats.
-- **Settings** are added only in `src/core/config/schema.ts`. **Theme tokens**
+- **Settings** are added only in `src/core/config/schema.ts` (a book's look
+  derives its own from them, never copied: `config/epub-look.ts`). **Theme tokens**
   only in `src/ui/theme/tokens.css`, documented in `docs/design/README.md`.
+- **How something looks** is decided by `.interface-design/system.md` first,
+  then each exploration's Decided section (`docs/design/explorations/*.md`),
+  then the code (`src/ui/theme/tokens.css` for tokens). The mockups at the top
+  of `docs/design/`, with their `tokens.css`, are a 2026-10-20 snapshot, kept
+  for their reasoning and never copied from.
 - **Verify, don't assume.** Every behavior change comes with a test that would
   fail without it. Check library APIs and versions against the installed
   package, not memory.
@@ -47,18 +54,430 @@ Each feature has one word, in code, files, CSS and docs:
 
 ## Layout
 
-| Path | What |
-|---|---|
-| `src/core/` | Rules, pure TypeScript: `paths`, `text`, `vault` (`assets.ts`: a note's own folder of images, `<note>.assets`, its links and the names images are kept under; `subfolders.ts`, a folder's list with its subfolders' notes, in groups), `saving`, `format` (the formatting commands), `table` (a GFM table's lines read and written back as they were, `line.ts`; its cells and the keys between them, `table.ts`; the table editor's changes, `edits.ts`; what's typed into a cell, `cell-input.ts`), `config` (every setting, and its files; `faces.ts`, FACES, the one list the three face settings (Typeface, Interface font, Source font) choose from, each face with its machine sizes), `markdown` (Eien's Markdown and a note's plain text, shared with the editor), `note` (`note-tags.ts`: its tags in two kinds, front matter's and the text's; `tag-id-lines.ts`, front matter's `tags:` and `id:` lines, which Hide tags and IDs keeps out of sight), `tags` (`front-tags.ts`, the page's edits to front matter's `tags:` alone; `choices.ts`, what the page's tag field offers), `search`, `versions` (ids, seal files, retention, the word diff), `typography` (quotation marks), `counters` (today's tally, a sprint), `html` (Copy as HTML and Paste: `to-html.ts` writes blocks round `inline-writer.ts` (the tags and marks it knows in `inline-tags.ts`), and `bookBlocks` the same for a book's exports; `from-html.ts` reads blocks round `html-inline.ts`, after `tidy.ts` turns styles into tags, and `marks-in-words.ts` escapes the page's own marks only where Eien's parser reads them as marks; `entities.ts`, HTML 4's named references; `clean.ts`, a page's HTML kept to what words need (the elements kept and the parts named, `clean-elements.ts`), where links go and images come from by the caller's rules, for the extension now and an EPUB later), `export` (a note as a chapter, `chapter.ts`, with its footnotes, which `markdown/footnotes.ts` finds (`markdown/fences.ts`: what's fenced code, line by line); `epub.ts`, `docx.ts` round `docx-body.ts` (its runs, paragraphs and pictures in `docx-runs.ts`), and `print-html.ts`, the PDF's page; `images.ts`, an image's kind and size from its own header; `zip.ts`, a store-only zip of Eien's own), `import` (`plan.ts`: which files of a folder from elsewhere come in, under what names, and why the rest don't), `find` (find in the note: its commands' names and keys, for the menu, the editor and the tooltips, and what its count says), `themes` (spec §7: `color.ts`, hex, HSL and WCAG contrast; `contrast-rules.ts`, Eien's contrast and the verdict; `gallery.ts`, Eien's own themes; `mix.ts`, a writer's theme from four choices, each ink fitted by `fitInk`; `tokens.ts`, the `--eien-*` overrides a palette wears and `safeTokens`, the check on them; `theme-file.ts`, a file in `.eien/themes`; `choice.ts`, which theme the Palette setting names), `extension` (the browser extension's, spec §14: `story.ts`, a work as a site's page shows it, checked as it arrives; `sites.ts`, the sites, once; `clean.ts`, its rules for `html`'s cleaner: links to the web or mail, images over https; `messages.ts`, what its pages say to each other; `places.ts`, where each chapter was left) |
-| `src/platform/` | `bridge.ts` (all the window may ask), `storage.ts` (the Storage contract), and its `electron/`, `capacitor/` and `memory/` implementations; `index/`, the vault's index over any Storage; `open-vault.ts` (a vault and its index kept in step) and `settings-store.ts` (this device's settings and the vault's), shared by the desktop and the phone; `image-write.ts`, the one file the window may write as bytes (a new image), checked by the main process and the phone's vault; `stray.ts`, what a crash can leave (temp files, each write's own, and a phone's rename steps), recovered at open by `electron/recover-strays.ts` and `capacitor/recover.ts`; `electron/import-folder.ts` copies a folder's notes and images into the vault through its storage (`Storage.writeNew` for an image's bytes), reading them with `electron/outside-folder.ts` (no link followed; the vault told apart by what it is on the disk). `capacitor/` is Storage over a plain `FilesPort` (`files.ts`): Capacitor's Filesystem on the phone (`capacitor-files.ts`), Node's in tests (`node-files.ts`), so the storage contract tests run on it; `recover.ts` puts back what a crash left; `poller.ts` looks for changes, as a phone has no watcher; `phone-trash.ts` is the phone's trash, .eien/trash. `case-twin.ts` keeps every storage from making a name its folder has in another case; `theme-files.ts` keeps the writer's themes in `.eien/themes` over any Storage (or the window's bridge to one); `tests/case-folder.ts` gives tests a disk that tells case apart (a disk image on a Mac). `electron/disk-watch.ts` is the desktop's watcher. `extension/` is the extension's: `browser.ts`, the few parts of a browser's extension API it uses, and `store.ts`, its settings (synced), places and whether it's open, in the browser's storage |
-| `src/ui/` | The window: `app.ts` holds the settings, the menu and the vault shown; `vault/vault-view.ts` wires the panes (`sidebar`, `list`, the page pane) to the vault, and `vault/pane-drawer.ts` draws them; the page pane is `page/page-pane.ts` (the layout's slots, the colophon, the versions panel beside) with its pages (`page/page.ts`, one page: its sheet, editor and its own status), run by `vault/pages.ts` (the pages, the active one the commands act on, each page's note, `vault/open-note.ts`, and its seals); a page holds a note or, from backlog #40, an EPUB ([docs/page-kinds.md](docs/page-kinds.md)): what the pane asks of any page is `page/page-leaf.ts`'s `PaneLeaf`, what the pages hold of one `vault/page-side.ts`'s `Side`, a note's `vault/note-side.ts` (`isNote`, `activeNote`), and `vault/stand-in-kind.ts` a second kind for the tests; a command for one kind is marked `on` in `chrome/commands.ts`, and how each command looks now is `vault/command-looks.ts`; a note's colophon items are `page/note-foot.ts`; a note open on any page is held once in `vault/open-notes.ts` (one session, one document, its images), however many pages show it; what the writer does to notes from any pane is `vault/note-actions.ts`, what a row and its menus do `vault/row-actions.ts`, the sidebar's actions `vault/vault-sidebar.ts`, and the list's lens and Arrange mode `vault/list-lens.ts` (Include subfolders too, kept per folder by `list/sorts.ts`); the split (spec §4, two pages side by side) is a mode as a layout is (`chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, `vault/page-hosts.ts`, what the layout's tools act on, and where each note's figures go), the pane's row laying out two pages, folded with a pager, closed to one with the other's edge, or a companion under the page, the active page marked (`page/pages-row.ts`; each page's own head and foot `page/page-leaf.ts`; styles in `page/split.css` and one sheet per mode, `split-sheets.css`, `split-facing.css`, `split-companion.css`, `split-follow.css`; the list stepping aside for a split is `shell/panes.ts`'s), the divider between (`page/divider.ts`, each mode's measure in `shell/split-state.ts`), a companion's ⋯ `vault/page-more.ts`, each note's page made and let go whole by `vault/note-side.ts`, a note dragged onto the pane by `vault/page-drop.ts`, and a row's marks for the pages' notes, chosen and beside, `list/shown-notes.ts`; a page's title is `page/page-title.ts`; a note's, folder's and tag's menus open from `vault/menus.ts`, their choices listed in `vault/menu-items.ts`; `draw-clean.ts` draws cleaned nodes (`core/html/clean.ts`) element by element, checking each element, address and part again, for the extension's story page and, later, an EPUB's; `quiet-button.ts` is the quiet icon button (the +, a sheet's ×, the divider's ⇄); `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`), and with two panes the sidebar's tree (`sidebar/tree.ts`, its styles in `sidebar/tree.css`) lists the notes (`sidebar/note-row.ts`; kept between draws, and put right in place while the rest of the tree is the same, by `sidebar/row-cache.ts`); a long list of notes there, and the note list once it is long, draws only the rows in sight (`shell/windowed-rows.ts`, the arithmetic in `shell/window-range.ts`; the keyboard reaches every row); the sync status at its foot (`sidebar/sync-status.ts`; whether a change came from elsewhere, by `vault/own-writes.ts`, the window's own writes remembered a moment; `app/electron/syncthing.ts` finds the `.stfolder`), a + beside FOLDERS and TAGS (made once, their tooltips watched alone), a new tag named in place by `sidebar/tag-field.ts` and kept by `core/tags/made.ts` in `.eien/tags.json`; folders and tags move in your order (`vault/folder-order.ts`, run by `vault/order-actions.ts`; a folder's keys and a tag's in `sidebar/row-keys.ts`, a folder's drag in `sidebar/folder-drag.ts`); the tree's long lists are `sidebar/tree-windows.ts`, and with two panes the chosen row's lens is `sidebar/lens-slot.ts`; its sections fold (`sidebar/sections.ts`, folded per device in `sidebar/folds.ts`); the lens over each list (`list/lens-bar.ts`: the sort and the tag filter, their chips; `list/tag-filter-panel.ts`, the filter's three states; its rules in `core/tags/filter.ts`; kept per list on this device by `list/sorts.ts`), drawn in the list's head and, with two panes, for the chosen row in the sidebar; `list/search-field.ts` is the one search field, on the list's band or, with no list in sight, in the sidebar (placed by `vault/pane-drawer.ts`); `vault/organize.ts` renames, moves and trashes, keeping order and pins in step (the vault's own small files, pins, tags and All Notes' order, through `vault/small-files.ts`); a note renames in its row (`vault/rename-in-row.ts`, the field laid over the row by `list/name-field.ts`, following its row through redraws); `versions/` seals the open note (`note-versions.ts`, the rules in `core/versions`), compares it with a seal and lists its seals; `menu/` is the floating menu (a row's: its name at the head, an icon, a word and a key per choice, the trash in carmine); `welcome/` before a vault is open; `editor/` is CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows); a note's text and undo history are `editor/note-doc.ts`, one document every view of the note mirrors (a view's change goes through it to the others, ⌘Z and the Edit menu's Undo run on it, and a change is told and counted once, by the view it was made in); the keys are `editor/editor-keys.ts`, the views' extensions by mode `editor-modes.ts`, a link followed `links.ts`; `editor/typing.ts` decides typed quotes and pastes on the editor's state alone, `editor/live-tables.ts` draws a table in place, row by row, its cells as outer decorations, and the table editor edits it in Live (`editor/table-editor.ts` wires it; `table-at.ts` finds the caret's table; `table-commands.ts` makes each change one step of the history and tells the colophon; `table-keys.ts`, `table-input.ts` what's typed, `table-menus.ts`, `table-tools.ts` the grips and + on the desktop, the window's own controls in a layer over the editor, made and placed by `table-controls.ts` from `table-geometry.ts`, dragged by `table-drag.ts`; `table-bar.ts` a phone's bar; their look in `editor/table.css`), `editor/front-matter-hidden.ts` keeps front matter out of sight and whole (the id alone in Live and Reading; with Hide tags and IDs, the `tags:` and `id:` lines in every view: the caret kept out, the writer's edits taken round them, find and copy passing over them), `editor/hidden-marks.ts` is Live with Show Markdown marks off (Backspace and Delete beside a hidden mark), `editor/image-drop.ts` hands a dropped or pasted image on (`vault/note-images.ts` copies it into the note's `.assets` and links it; `vault/note-assets.ts` moves and trashes that folder with its note), and `editor/writing-tools.ts` the scene break key, focus mode and typewriter scrolling; `editor/find-bar.ts` is find and replace in the note, the window's own slip over CodeMirror's search (its keys in `editor/find.ts`, from `core/find`; the count in `editor/find-matches.ts`; its look in `editor/find.css`), laid over each page's leaf; `vault/copy-html.ts` is Copy as HTML; `vault/exports.ts` exports a note or a book, with the images `vault/export-images.ts` reads (`vault/current-book.ts` finds the book, for outline cards too) and `vault/importing.ts` imports a folder; `page/page-tags.ts` puts the note's tags on the page (`page/tag-set.ts` draws them, with the + field and its menu; `editor/find-tag.ts` finds one typed in the words), in the slot the layout names; the formatting bar is the `format` slot's host, its buttons pressed by `editor/active-formats.ts`; `page/word-count.ts` counts the note's words and what the writer's own changes add, and `counters/` shows today's, the book's and a sprint's in the colophon (wired in `vault/counting.ts`); `menu/ask-number.ts` asks for a number where a menu was (a book's goal); `outline/board.ts` is outline cards, shown in the sheet's place (`vault/outline.ts`); `vault/page-parts.ts` makes what the pages share (counters, Copy as HTML, exports, outline cards, each acting on the active page) together, for `vault/vault-view.ts`; `vault/follow.ts` follows the disk, the settings and the menu's commands while a vault is shown; `menu/menu-bus.ts` carries the menu's commands, from the menu bar or a phone's ⋯; `phone/` is the phone's layout, one pane at a time (`phone-stack.ts`, its back bar, and `more-menu.ts`, the page's ⋯), and on a wider screen the room the Wide screen setting chooses (`room.ts`: Panes, One at a time, Side by side, Two pages; what's in sight and where back goes), wired in `vault/phone-view.ts`, with the note you came from a tap away in its bar (`vault/phone-other.ts`; where a page left its last note, `vault/open-note.ts`); `settings/` is Settings over the window (spec §6): `settings-screen.ts` draws the categories and tabs (`places.ts`: which schema group is which tab, This vault's apart) and each setting by its kind (`controls.ts`), the sheet moved and resized by `frame.ts` (the arithmetic, and the box kept per device, in `box.ts`), the Themes tabs in `themes-tabs.ts` (the cards in `theme-card.ts`, a custom theme's mix in `mix-panel.ts`); the look the settings set on `<html>` (`look.ts`, the custom properties in `look-properties.ts`), and which zoom ⌘+ and ⌘− change (`zoom.ts`; a phone's Interface zoom is its page's viewport, `viewport.ts`); `chrome/` is the window's controls (spec §4, Layouts): every control a command, once, in `chrome/commands.ts` (its icon, name, key and the menu's command it runs), drawn as icon buttons (`icons.ts`, Eien's own, inline SVG) by hosts (`chrome/host.ts`, with tooltips from `chrome/tooltip.ts`; short of room, a bar's tools fold behind one ⋯, `chrome/fold.ts`), each layout a list of its hosts and the slot each goes in (`chrome/band.ts`, `slip.ts`, `runhead.ts`, each with its own stylesheet and corners; `chrome/layout-spec.ts` the slots and the hosts all three share), mounted and switched by `chrome/chrome.ts` and wired to a shown vault (how each command looks now, the ones the window runs itself) in `vault/chrome-wiring.ts`; `theme/wear.ts` wears the theme chosen on `<html>`, and `theme/writer-themes.ts` keeps the vault's own themes for the window (the API Settings' Themes tabs build on); the panes' top bands drag the window (`shell/shell.css`, which also holds the corner's lengths: `--seal-x`, `--corner`, a shut sidebar's `--strip`), and whether macOS's lights stand in its top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize), is `shell/controls-left.ts`; styles in `theme/` and beside each view; `extension/` is the extension's pages (spec §14): `content.ts`, the content script, built alone as one plain script, reads the page with `sites/` (`ao3.ts`, `ffn.ts`: one module per site's markup; `page-text.ts`, an element's words and HTML, its addresses whole) and lays over it the seal and the story frame (`page-overlay.ts`); the story page is `story.html` (`story.ts`, `story-view.ts`: the band, keys and colophon; `story-sheet.ts`, the story on the sheet, its links each opening in a tab of its own; styles `story.css`, `story-page.css`), the popup `popup.html` (`popup.ts`, the settings `story-settings.ts` names, drawn by `settings/controls.ts` and `theme-card.ts`), both wearing `eien-look.css` |
-| `src/app/electron/` | Main process: window, menu, the vault and settings sessions and their IPC (`ipc.ts`: each channel listened to once, each call answered by the window that sent it), the vaults the windows hold (`vaults.ts`: each folder opened, recovered and watched once however many windows show it, each window told which changes another window here made), the device's own file (`device-settings.ts`; where it and the data folder are, for an installed, portable or separate copy, is decided in `data-folders.ts` alone), `out-session.ts` (the clipboard, the save dialog; a PDF printed by `print-pdf.ts` in a hidden window that runs nothing), and `import-session.ts` (Import Markdown Folder…); `menu.ts` builds the menu bar, its on/off settings as checks that `checkToggles` keeps in step (`TOGGLES` in `core/config`); `context-menu.ts` is the note's right-click menu (spelling suggestions on macOS, from `context-menu-of.ts`); `frame.ts` is the window with no title bar (the system's controls over the bands, painted as the window's `shell/window-controls.ts` reports them) and the whole window's zoom; the sandboxed `preload.ts` |
-| `src/app/mobile/` | The phone: `preload.ts` sets `window.eien` before the window's own script (the page is the desktop's, built by `vite.mobile.config.ts` into `out/mobile`); `mobile-vault.ts` opens the vault in Documents/Eien/Vault (exports go to Documents/Eien/Exports); `vault-home.ts` and `all-files.ts` ask for Android's access (Eien's plugins are in `android/app/src/main/java/io/github/onlynyans/eien/`: `AllFilesPlugin.java`, and `VaultFilesPlugin.java`, the flushed write and the one-step renames `capacitor-files.ts` uses on Android; `MainActivity.java` registers them and turns on the WebView's wide viewport, so Interface zoom reads as a browser's); `phone-out.ts` copies and exports (HTML, EPUB and Word; no PDF, and no import, on the phone). `android/` is the Capacitor Android project (`capacitor.config.json`); `ios/` is the Capacitor iOS project, with Eien's Swift plugin (`ios/App/App/VaultFileOps.swift`, the file operations, a save's last step coordinated with other apps (`replace`), tested by `scripts/ios/vault-file-ops-test/`, `vault-file-ops-adversarial/` and `vault-file-coordination/`; `VaultFilesPlugin.swift`, registered by its view controller) |
-| `src/app/extension/` | The extension's manifest (`manifest.ts`, Manifest V3 for Chrome and Firefox alike: storage and the story sites' pages, nothing else), written with the seal's icons into `out/extension` by `vite.extension.config.ts` |
-| `tests/` | Architecture tests (layers; `selectors.test.ts`: no style rule ends in `*` after a `:hover` or `:focus`, which restyles the whole window; `words.test.ts`: no folder, file or CSS class named for "reader", as Words says); `zip-interop.test.ts` holds Eien's zips to zlib and `unzip`; `tests/support/` holds what the tests share, Node-free so core's tests can use it: a strict zip reader, a strict XML check, an export's parts; `tests/e2e/` drives the built app on real folders with Playwright; `tests/mobile/` the phone's page in Chromium; `tests/extension/` the extension in Chromium, over AO3's and FanFiction.Net's pages as `tests/support/story-pages/` writes them; `tests/android/` Eien on an emulator or phone over adb |
-| `tsconfig.{core,web,node,mobile,e2e}.json` | One per environment: core can use neither DOM nor Node, the window can't use Node, the phone's code has the DOM and no Node |
-| `docs/design/` | The approved design and its mockups; `src/ui/theme/` is the tokens' source from phase 3 on. `.interface-design/system.md` sums it up for the interface-design skill |
-| `docs/backlog.md` | What comes after the phases: fixes, tweaks and features, each marked for the design pass or not, and the owner's open questions |
+<!-- Each module or concept has a line of its own, so pull requests that each
+add one touch different lines and don't conflict. Add a new module as its own
+line, in its place; don't join lines or wrap them. -->
+
+### `src/core/`
+
+Rules, pure TypeScript.
+
+- `paths`
+- `text`
+- `vault`
+  - `tree.ts`: the folder tree, and which folders FOLDERS (`inFolders`: all but a folder of EPUBs alone, at any depth) and SHELF (`onShelf`) list (#40)
+  - `assets.ts`: a note's own folder of images, `<note>.assets`, its links and the names images are kept under
+  - `subfolders.ts`: a folder's list with its subfolders' notes, in groups
+- `saving`
+- `format`: the formatting commands
+- `table`: a GFM table
+  - `line.ts`: its lines read and written back as they were
+  - `table.ts`: its cells and the keys between them
+  - `edits.ts`: the table editor's changes
+  - `cell-input.ts`: what's typed into a cell
+- `config`: every setting, and its files
+  - `faces.ts`: FACES, the one list the three face settings (Typeface, Interface font, Source font) choose from, each face with its machine sizes
+  - `epub-look.ts`: a book's own look (#40), each setting a page wears again under `epub.<key>`
+  - a setting's default may be a phone's own (`phoneDefault`, `PHONE_DEFAULTS`: Link editing's Bar)
+- `markdown`: Eien's Markdown and a note's plain text, shared with the editor
+  - `link-source.ts`: a link written: an address or a note's name, `[words](address)` or `[[note|words]]` (#38)
+- `note`
+  - `note-tags.ts`: its tags in two kinds, front matter's and the text's
+  - `tag-id-lines.ts`: front matter's `tags:` and `id:` lines, which Hide tags and IDs keeps out of sight
+- `tags`
+  - `front-tags.ts`: the page's edits to front matter's `tags:` alone
+  - `choices.ts`: what the page's tag field offers
+- `search`
+- `versions`: ids, seal files, retention, the word diff
+- `typography`: quotation marks
+- `counters`: today's tally, a sprint
+- `html`: Copy as HTML and Paste
+  - `to-html.ts` writes blocks round `inline-writer.ts`, and `bookBlocks` the same for a book's exports
+  - `inline-tags.ts`: the tags and marks `inline-writer.ts` knows
+  - `from-html.ts` reads blocks round `html-inline.ts`, after `tidy.ts` turns styles into tags
+  - `marks-in-words.ts` escapes the page's own marks only where Eien's parser reads them as marks
+  - `entities.ts`: HTML 4's named references
+  - `clean.ts`: a page's HTML kept to what words need, where links go and images come from by the caller's rules, for the extension now and an EPUB later
+  - `clean-elements.ts`: the elements `clean.ts` keeps and the parts it names
+  - `anchors.ts`: the places a link may name, kept as empty markers before the page is tidied
+- `export`
+  - `chapter.ts`: a note as a chapter, with its footnotes, which `markdown/footnotes.ts` finds (`markdown/fences.ts`: what's fenced code, line by line)
+  - `epub.ts`
+  - `docx.ts`, round `docx-body.ts`
+  - `docx-runs.ts`: `docx-body.ts`'s runs, paragraphs and pictures
+  - `print-html.ts`: the PDF's page
+  - `images.ts`: an image's kind and size from its own header
+  - `zip.ts`: a store-only zip of Eien's own
+- `import`
+  - `plan.ts`: which files of a folder from elsewhere come in, under what names, and why the rest don't
+- `find`: find in the note: its commands' names and keys, for the menu, the editor and the tooltips, and what its count says
+- `themes` (spec §7)
+  - `color.ts`: hex, HSL and WCAG contrast
+  - `contrast-rules.ts`: Eien's contrast and the verdict
+  - `gallery.ts`: Eien's own themes
+  - `mix.ts`: a writer's theme from four choices, each ink fitted by `fitInk`
+  - `tokens.ts`: the `--eien-*` overrides a palette wears, and `safeTokens`, the check on them
+  - `theme-file.ts`: a file in `.eien/themes`
+  - `choice.ts`: which theme the Palette setting names
+- `extension`: the browser extension's (spec §14)
+  - `story.ts`: a work as a site's page shows it, checked as it arrives
+  - `sites.ts`: the sites, once
+  - `clean.ts`: its rules for `html`'s cleaner: links to the web or mail, images over https
+  - `messages.ts`: what its pages say to each other
+  - `places.ts`: where each chapter was left
+- `epub`: an EPUB read safely (#40; the word in code, as "book" is a manuscript folder)
+  - `zip-read.ts`: Eien's own zip reader, its directory checked whole before anything is inflated, each entry counted as it inflates and its CRC checked
+  - `caps.ts`: how much of a book Eien reads: the file, entries, a text entry, a picture, the total and the ratio
+  - `zip-path.ts`: an entry's name a clean path in the zip, and every address a book gives resolved inside it
+  - `refusal.ts`: why a book won't open, and the words the window says
+  - `utf8.ts`: UTF-8 read back without TextDecoder
+  - `xml-text.ts`: a book's XML as text for `html`'s parser (Latin-1 where declared, CDATA kept)
+  - `xml-nodes.ts`: that XML's elements found by their local names
+  - `package.ts`: container.xml, the package (metadata, manifest, spine, nav or NCX), and a DRM lock refused
+  - `contents.ts`: the contents (nav, NCX, or the spine) and the printed edition's pages (page-list)
+  - `epub.ts`: a book opened (`openEpub`), its chapters and pictures read as they're shown, and its key
+  - `chapter.ts`: a chapter cleaned by `html`'s cleaner under the book's rules
+  - `epub-rules.ts`: those rules: pictures from the zip, links to the book's own chapters or the web and mail, the places they name kept, the parts named (a note and its reference too)
+  - `svg-plate.ts`: Calibre's SVG frame round a picture made a plain image
+  - `first-line.ts`: a chapter's first line, by where it stands
+  - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it; never written over when it can't be read
+  - `reading-list.ts`: a list in that file, changed in its own array, unknown items and fields kept, each field where it stood
+  - `bookmarks.ts`: its bookmarks, a list there (Phase 4b)
+  - `highlights.ts`: its highlights, a list there, and what H does to them (Phase 5a)
+  - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
+  - `progress.ts`: how far through a chapter and the book, as the colophon says it
+  - `chapter-words.ts`: a chapter's words walked once from its cleaned nodes, as a place counts them, each in its block (`BLOCK_NAMES`, the one list)
+  - `chapter-count.ts`: a chapter's words counted by that walk, and where the printed pages begin in it (Phase 4)
+  - `page-numbers.ts`: a place's page: the printed edition's (the page-list), else steady pages of 1,500 characters, and as the colophon says it
+  - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
+  - `book-link.ts`: a link to one of the book's chapters, as an address of the page's own and back
+  - `quote.ts`: a passage quoted into a note, its citation, at the note's end
+  - `pages.ts`: a chapter in pages (Phase 3b): whole lines tall, the pages counted, the page a word falls on, the fore-edge's sixths; two pages to a sight where they fit, and each page's part (front matter, opening, text) (Phase 3d)
+  - `imprint.ts`: the imprint's words, how long the book is and how it's set (Phase 3d)
+  - `turn/`: a page's turn (Phase 3), as numbers the window draws
+    - `curl.ts`: the curl's geometry: the roll over a cylinder that follows the corner, the spine held down, a strip laid by its matrix and clipped
+    - `light.ts`: the light on the roll, each strip shaded by how it faces you and ramped across, as a gradient's numbers (the inks are the window's tokens)
+    - `curl-frame.ts`: a curling page at one moment: what stays, the roll's strips, what lies back, the shadow beneath
+    - `curl-turn.ts`: a curl's states: begun, held, let go (the throw decides), flying, caught (a tap lets it fly on), finished, put down
+    - `spring.ts`: the finish, a critically damped spring that lands and never bounces
+    - `stroke.ts`: a key's hand: where it takes the edge, how high and fast it goes, wandering within bounds turn to turn
+    - `speed.ts`: each motion's time, from the calm and quick tokens and the Turn speed; 0 is instant
+
+### `src/platform/`
+
+- `bridge.ts`: all the window may ask
+- `storage.ts`: the Storage contract, and its `electron/`, `capacitor/` and `memory/` implementations
+- `inflate.ts`: raw deflate inflated by the system's DecompressionStream, for an EPUB's zip, in the window on the desktop and the phone
+- `index/`: the vault's index over any Storage
+- `open-vault.ts`: a vault and its index kept in step, shared by the desktop and the phone
+- `settings-store.ts`: this device's settings and the vault's, shared by the desktop and the phone
+- `image-write.ts`: the one file the window may write as bytes (a new image), checked by the main process and the phone's vault
+- `stray.ts`: what a crash can leave (temp files, each write's own, and a phone's rename steps), recovered at open by `electron/recover-strays.ts` and `capacitor/recover.ts`
+- `electron/import-folder.ts` copies a folder's notes and images into the vault through its storage (`Storage.writeNew` for an image's bytes)
+- `electron/outside-folder.ts` reads them for it: no link followed; the vault told apart by what it is on the disk
+- `capacitor/` is Storage over a plain `FilesPort` (`files.ts`)
+  - `capacitor-files.ts`: Capacitor's Filesystem, on the phone
+  - `node-files.ts`: Node's, in tests, so the storage contract tests run on it
+  - `recover.ts` puts back what a crash left
+  - `poller.ts` looks for changes, as a phone has no watcher
+  - `phone-trash.ts`: the phone's trash, .eien/trash
+- `case-twin.ts` keeps every storage from making a name its folder has in another case
+- `theme-files.ts` keeps the writer's themes in `.eien/themes` over any Storage (or the window's bridge to one)
+- `tests/case-folder.ts` gives tests a disk that tells case apart (a disk image on a Mac)
+- `electron/disk-watch.ts`: the desktop's watcher
+- `extension/`: the extension's
+  - `browser.ts`: the few parts of a browser's extension API it uses
+  - `store.ts`: its settings (synced), places and whether it's open, in the browser's storage
+
+### `src/ui/`
+
+The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
+
+- `app.ts` holds the settings, the menu and the vault shown
+- `vault/vault-view.ts` wires the panes (`sidebar`, `list`, the page pane) to the vault
+- `vault/pane-drawer.ts` draws them
+- `page/page-pane.ts`: the page pane (the layout's slots, the colophon, the versions panel beside), with its pages
+  - `page/page.ts`: one page: its editor, words, tags and its own status round its sheet
+  - `page/note-sheet.ts`: the page's sheet
+  - `vault/pages.ts` arranges them: the pages, the active one the commands act on, each page's note (`vault/open-note.ts`), and its seals; what each kind keeps up over its pages is the kind's
+  - `vault/note-pages.ts`: the note's kind, with what the window asks of notes alone
+- A page holds a note or, from backlog #40, an EPUB ([docs/page-kinds.md](docs/page-kinds.md))
+  - `page/page-leaf.ts`'s `PaneLeaf`: what the pane asks of any page
+  - `vault/page-side.ts`'s `Side`: what the pages hold of one
+  - `vault/note-side.ts`: a note's (`isNote`, `activeNote`)
+  - `vault/stand-in-kind.ts`: a second kind for the tests
+  - a command for one kind is marked `on` in `chrome/commands.ts`, and `menuOff` carries it to the menu bar and the phone's ⋯
+  - `vault/command-looks.ts`: how each command looks now, or set aside where the active page is another kind
+- `page/note-foot.ts`: a note's colophon items
+- `vault/open-notes.ts`: a note open on any page, held once (one session, one document, its images), however many pages show it
+- `vault/note-actions.ts`: what the writer does to notes from any pane
+- `vault/row-actions.ts`: what a row and its menus do
+- `vault/vault-sidebar.ts`: the sidebar's actions
+- `vault/epub-wiring.ts`: an EPUB's kind, what SHELF and the list show of the books on the pages, and which note a quote goes into (#40)
+- `list/contents-list.ts`: a book's contents in the list, in place of notes (#40)
+  - `list/book-lenses.ts`, `.css`: its lenses, Contents and Marks, and a bookmark's row, in the list and under a book's SHELF row (Phase 4c)
+- `vault/list-lens.ts`: the list's lens and Arrange mode (Include subfolders too, kept per folder by `list/sorts.ts`)
+- The split (spec §4, two pages side by side) is a mode as a layout is
+  - `chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, what the layout's tools act on, and where each note's figures go
+  - `vault/page-hosts.ts`: a page's own host, which those commands move onto
+  - `page/pages-row.ts`: the pane's row laying out two pages, folded with a pager, closed to one with the other's edge, or a companion under the page, the active page marked; each page's own head and foot is `page/page-leaf.ts`
+  - `page/page-mark.ts`, `page/page-mark.css`: the page's mark (the Page mark setting: ribbon, dog-ear or edge tab) at its outer edge: Facing pages' active page's, and a book's bookmark's (#40 Phase 4b)
+  - `page/split.css`, and one sheet per mode: `split-sheets.css`, `split-facing.css`, `split-companion.css`, `split-follow.css`
+  - the list stepping aside for a split is `shell/panes.ts`'s
+  - `page/divider.ts`: the divider between, each mode's measure in `shell/split-state.ts`
+  - `vault/page-more.ts`: a companion's ⋯
+  - `vault/note-side.ts`: each note's page, made and let go whole
+  - `vault/page-drop.ts`: a note dragged onto the pane
+  - `list/shown-notes.ts`: a row's marks for the pages' notes, chosen and beside
+- `page/page-title.ts`: a page's title
+- `vault/menus.ts`: a note's, a book's (on SHELF), a folder's and a tag's menus open from here
+- `vault/menu-items.ts`: their choices
+- `draw-clean.ts` draws cleaned nodes (`core/html/clean.ts`) element by element, checking each element, address and part again, for the extension's story page and an EPUB's chapter (#40)
+- `quiet-button.ts`: the quiet icon button (the +, a sheet's ×, the divider's ⇄)
+- `shell/vault-frame.ts`: the shell the sidebar, list and page pane lie in
+- `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`)
+- With two panes, the sidebar's tree (`sidebar/tree.ts`, its styles in `sidebar/tree.css`) lists the notes
+  - `sidebar/note-row.ts`: a note's row, kept between draws, and put right in place while the rest of the tree is the same, by `sidebar/row-cache.ts`
+  - a long list of notes there, and the note list once it is long, draws only the rows in sight (`shell/windowed-rows.ts`, the arithmetic in `shell/window-range.ts`; the keyboard reaches every row)
+  - `sidebar/sync-status.ts`: the sync status at its foot; whether a change came from elsewhere, by `vault/own-writes.ts`, the window's own writes remembered a moment over the bridge; `app/electron/syncthing.ts` finds the `.stfolder`
+  - a + beside FOLDERS and TAGS (made once, their tooltips watched alone)
+  - `sidebar/tag-field.ts`: a new tag named in place, kept by `core/tags/made.ts` in `.eien/tags.json`
+  - `vault/folder-order.ts`: folders and tags move in your order, run by `vault/order-actions.ts`
+  - `sidebar/row-keys.ts`: a folder's keys and a tag's
+  - `sidebar/folder-drag.ts`: a folder's drag
+  - `sidebar/tree-windows.ts`: the tree's long lists
+  - `sidebar/lens-slot.ts`: with two panes, the chosen row's lens
+  - `sidebar/sections.ts`: its sections fold, folded per device in `sidebar/folds.ts`
+  - `sidebar/tree-sections.ts`: the sections in order, LIBRARY, FOLDERS, SHELF, TAGS
+  - `sidebar/shelf-rows.ts`: SHELF's rows (#40), a lens over the folder tree: its folders FOLDERS' own folder rows, books as controls (a note's row's keys and menu, `vault/row-actions.ts`), an open book's contents with two panes
+    - `sidebar/shelf-book-rows.ts`: the rows under a book with two panes: its lenses, its chapters or its marks
+    - `sidebar/shelf-row.ts`: a SHELF row and its name, shared by both
+    - `sidebar/shelf-folds.ts`: SHELF's shut folders, per device
+    - `sidebar/folder-sides.ts`: a folder in FOLDERS, on SHELF or both: where its rename is typed and the keyboard goes back to
+    - `sidebar/twist.ts`: a row's twisty and its group, in FOLDERS, TAGS and SHELF alike
+    - moves among the folders a section shows: `vault/folder-order.ts`' `shownBeside`
+  - `sidebar/sidebar-focus.ts`: where the keyboard is in the tree, kept across its redraws
+  - `sidebar/seals.ts`: the seal that shuts the sidebar and the one that opens it, the keyboard handed across
+- The lens over each list, drawn in the list's head and, with two panes, for the chosen row in the sidebar
+  - `list/lens-bar.ts`: the sort and the tag filter, their chips
+  - `list/tag-filter-panel.ts`: the filter's three states, its rules in `core/tags/filter.ts`
+  - `list/sorts.ts`: each lens kept per list on this device
+- `list/search-field.ts`: the one search field, on the list's band or, with no list in sight, in the sidebar (placed by `vault/pane-drawer.ts`)
+- `vault/organize.ts` renames, moves and trashes, keeping order and pins in step (the vault's own small files, pins, tags and All Notes' order, through `vault/small-files.ts`)
+- `vault/rename-in-row.ts`: a note renames in its row, the field laid over the row by `list/name-field.ts`, following its row through redraws
+- `versions/` seals the open note (`note-versions.ts`, the rules in `core/versions`), compares it with a seal and lists its seals
+- `menu/`: the floating menu (a row's: its name at the head, an icon, a word and a key per choice, the trash in carmine)
+- `quick-look/`: the quick look (#49, [docs/quick-look.md](docs/quick-look.md))
+  - `quick-look/quick-look.ts`: the popover under the Look control (a sheet on the phone), drawn from the settings the schema marks `quick` with Settings' own rows, floated by `menu/menu.ts`; a subject's line at its foot (the shelf's)
+  - `quick-look/quick-keys.ts`: its keyboard
+  - `quick-look/epub-store.ts`: the shelf's look as its store, with a book in front (#40)
+  - opened for the page the layout's tools act on by `vault/look-wiring.ts`, which sits a page of another kind back (`data-back`, `page/split.css`)
+- `welcome/`: before a vault is open
+- `editor/`: CodeMirror in a shadow root (its styles load as constructed style sheets, which the CSP allows)
+  - `editor/note-doc.ts`: a note's text and undo history, one document every view of the note mirrors (a view's change goes through it to the others, ⌘Z and the Edit menu's Undo run on it, and a change is told and counted once, by the view it was made in)
+  - `editor/editor-keys.ts`: the keys
+  - `editor/editor-modes.ts`: the views' extensions by mode
+  - `editor/links.ts`: a link followed
+  - A link's tools in Live (#38)
+    - `editor/link-core.ts`: the link at a place (its words, where it goes, its kind), an edit as one step of the history, taken off, followed; no window of its own
+    - `editor/link-tooltips.ts`: when they show (a hover, the caret; never while typing), the keys (⌥↩, ⌘K, ⌥F10, Esc), and the presenter Link editing chooses, swapped live: the one place a style's name is read
+    - `editor/link-presenter.ts`: what a presenter is, and what the three share; each only draws and forwards to the core
+    - `editor/link-card.ts`, `editor/link-inline.ts` (with `linkInPlace` in `editor/preview-mode.ts`, which Live's marks follow), `editor/link-bar.ts`: Card, In place, Bar
+    - `editor/link.css`: the card's and bar's look; In place's is beside it, in the editor's shadow root
+  - `editor/typing.ts` decides typed quotes and pastes on the editor's state alone
+  - `editor/live-tables.ts` draws a table in place, row by row, its cells as outer decorations, and the table editor edits it in Live
+    - `editor/table-editor.ts` wires the table editor
+    - `editor/table-at.ts` finds the caret's table
+    - `editor/table-commands.ts` makes each change one step of the history and tells the colophon
+    - `editor/table-keys.ts`
+    - `editor/table-input.ts`: what's typed
+    - `editor/table-menus.ts`
+    - `editor/table-tools.ts`: the grips and + on the desktop, the window's own controls in a layer over the editor
+    - `editor/table-controls.ts` makes and places them, from `editor/table-geometry.ts`
+    - `editor/table-drag.ts` drags them
+    - `editor/table-bar.ts`: a phone's bar
+    - `editor/table.css`: their look
+  - `editor/front-matter-hidden.ts` keeps front matter out of sight and whole (the id alone in Live and Reading; with Hide tags and IDs, the `tags:` and `id:` lines in every view: the caret kept out, the writer's edits taken round them, find and copy passing over them)
+  - `editor/hidden-marks.ts`: Live with Show Markdown marks off (Backspace and Delete beside a hidden mark)
+  - `editor/image-drop.ts` hands a dropped or pasted image on
+    - `vault/note-images.ts` copies it into the note's `.assets` and links it
+    - `vault/note-assets.ts` moves and trashes that folder with its note
+  - `editor/writing-tools.ts`: the scene break key, focus mode and typewriter scrolling
+- `find/`: the find bar
+  - `find/find-bar.ts`: the find bar, the window's own slip laid over each page's leaf, which searches nothing itself
+  - `find/find.css`: its look
+  - `find/find-target.ts`: a `FindTarget`, what the bar searches
+  - `editor/find.ts`: a note's, CodeMirror's search and its keys, from `core/find`
+  - `editor/find-matches.ts`: the count
+  - a page offers its find to the menu's commands as `PaneLeaf.find`
+- `vault/copy-html.ts`: Copy as HTML
+- `vault/exports.ts` exports a note or a book
+  - `vault/export-images.ts` reads the images
+  - `vault/current-book.ts` finds the book, for outline cards too
+- `vault/importing.ts` imports a folder
+- `page/page-tags.ts` puts the note's tags on the page, in the slot the layout names
+  - `page/tag-set.ts` draws them, with the + field and its menu
+  - `editor/find-tag.ts` finds one typed in the words
+- the formatting bar is the `format` slot's host, its buttons pressed by `editor/active-formats.ts`
+- `page/word-count.ts` counts the note's words and what the writer's own changes add
+- `counters/` shows today's, the book's and a sprint's in the colophon (wired in `vault/counting.ts`)
+- `menu/ask-number.ts` asks for a number where a menu was (a book's goal)
+- `outline/board.ts`: outline cards, shown in the sheet's place (`vault/outline.ts`)
+- `vault/page-parts.ts` makes what the pages share (counters, Copy as HTML, exports, outline cards, each acting on the active page) together, for `vault/vault-view.ts`
+- `vault/follow.ts` follows the disk, the settings and the menu's commands while a vault is shown
+- `menu/menu-bus.ts` carries the menu's commands, from the menu bar or a phone's ⋯
+- `phone/`: the phone's layout, one pane at a time
+  - `phone/phone-stack.ts`: its back bar
+  - `phone/more-menu.ts`: the page's ⋯
+  - `phone/room.ts`: on a wider screen, the room the Wide screen setting chooses (Panes, One at a time, Side by side, Two pages); what's in sight and where back goes
+  - `vault/phone-view.ts` wires it
+  - `vault/phone-other.ts`: the note you came from, a tap away in its bar (where a page left its last note, `vault/open-note.ts`)
+- `settings/`: Settings over the window (spec §6)
+  - `settings/settings-screen.ts` draws the categories and tabs, and each setting by its kind (`settings/controls.ts`)
+  - `settings/places.ts`: which schema group is which tab, This vault's apart
+  - `settings/frame.ts`: the sheet moved and resized (the arithmetic, and the box kept per device, in `settings/box.ts`)
+  - `settings/themes-tabs.ts`: the Themes tabs (the cards in `settings/theme-card.ts`, a custom theme's mix in `settings/mix-panel.ts`)
+  - `settings/look.ts`: the look the settings set on `<html>` (the custom properties in `settings/look-properties.ts`)
+  - `settings/zoom.ts`: which zoom ⌘+ and ⌘− change (a phone's Interface zoom is its page's viewport, `settings/viewport.ts`)
+- `chrome/`: the window's controls (spec §4, Layouts)
+  - `chrome/commands.ts`: every control a command, once (its icon, name, key and the menu's command it runs)
+  - `icons.ts`: Eien's own icons, inline SVG, which the commands are drawn as
+  - `chrome/host.ts` draws them as icon buttons, with tooltips from `chrome/tooltip.ts`, a command set aside out of its row
+  - `chrome/fold.ts`: short of room, a bar's tools fold behind one ⋯
+  - `chrome/band.ts`, `slip.ts`, `runhead.ts`: each layout a list of its hosts and the slot each goes in, each with its own stylesheet and corners
+  - `chrome/layout-spec.ts`: the slots and the hosts all three share
+  - `chrome/chrome.ts` mounts and switches them
+  - `vault/chrome-wiring.ts` wires them to a shown vault (how each command looks now, the ones the window runs itself, the menu bar greyed by the kind in front)
+- `theme/wear.ts` wears the theme chosen on `<html>`
+- `theme/writer-themes.ts` keeps the vault's own themes for the window (the API Settings' Themes tabs build on)
+- `shell/shell.css`: the panes' top bands drag the window; it also holds the corner's lengths: `--seal-x`, `--corner`, a shut sidebar's `--strip`
+- `shell/controls-left.ts`: whether macOS's lights stand in the window's top-left corner (not in full screen), and how wide the system's controls are (measured once the window holds still, never mid-resize)
+- styles in `theme/` and beside each view
+- `epub/`: an EPUB's page (#40)
+  - `epub-page.ts`: the page (`PaneLeaf`): its frame (the note's sheet, its ×, a refusal in words), its colophon, the shelf's look, scroll style and Pages or Scroll worn, its keys handed to `page-keys.ts`, its bookmark's mark
+  - `chapter-sheet.ts`: the chapter on the sheet: drawn with its foot, its place kept and shown again (scrolling or in pages), its links caught, its words copied and chosen
+  - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
+  - `book-parts.ts`: its parts made together: the place said, the bookmarks, the links, the turns
+  - `epub-side-types.ts`: what a page holding a book is (`EpubSide`, `EpubSideOf`, `isEpub`)
+  - `book-place.ts`: what the page says of where it is as the place moves: the colophon's figures, the fore-edge, the page (Phase 4)
+  - `book-count.ts`: a book counted for its page numbers, in the background, never while a page turns; one per book for the window, the last few kept (Phase 4)
+  - `book-open.ts`: the book read and opened for its page (or the words it says instead), what it's called, and where it opens
+  - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
+  - `chapter-place.ts`: the first line in sight measured as an offset in the chapter's words, and shown again; the words from a place (a bookmark's)
+  - `place-keeper.ts`: the place kept as the page scrolls, measured at rest and never out of sight, shown again when laid out anew
+  - `book-links.ts`: a book's links caught on its page (the web's to the system's browser), a note's reference told apart, each named for the tooltip, a place found by its marker
+  - `book-follow.ts`: where they take the reader: the note over the page, or the chapter and place, one step back
+  - `note-over.ts`: a book's note over its page, floated as a menu
+  - `book-words.ts`: a selection's words without the page's own (a copy, a quote)
+  - `book-foot.ts`: a book's colophon items: Back, which chapter, its page, "bookmarked", how far through, a line of news
+  - `book-selection.ts`: the selection bar over a book: Quote in the note, Copy
+  - `book-quote.ts`: the words chosen in a book as a quote, cited, and sent to the note beside
+  - `test-side.ts`: a book's page over a vault the DOM tests hold
+  - `test-lines.ts`: a chapter's lines as the DOM tests lay them out, and a book's page laid out so
+  - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
+  - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
+  - `reading-store.ts`: the reading state's file, through the vault's small files, a change to its marks decided against the file as it is then and told to every page of the book
+  - `book-marks.ts`: a book's marks on its page over its reading file (which book, how the file stands, one listener, why a change wasn't kept), its two kinds:
+    - `page-bookmarks.ts`: its bookmarks: whether the page in sight has one, B and the tool, following a turn once it lands (Phase 4b)
+    - `page-highlights.ts`: its highlights: inked and ticked, H, the bar's Highlight and Format → Highlight, Put back (Phase 5a)
+  - `chapter-range.ts`: words chosen as offsets in the chapter's words, and a span of them back to the text it covers
+  - `ink.ts`, `ink.css`: ink over the words by the CSS Custom Highlight API, one Highlight per name for the window, each page's ranges its own; a turn's copy inked in elements
+  - `test-ink.ts`: that API stood in for the DOM tests
+  - `bookmark.css`: its mark (the Page mark's look), kept to the top of the sheet in sight, and Facing pages' clash
+  - `page-marks.ts`: the marks on the sheet, one page's at its right, a spread's verso's at its left (Phase 3d)
+  - Set as a book (Phase 3d, `epub-set.css`; two pages, `epub-spread.css`)
+    - `front-matter.ts`: Eien's title page and imprint before the first chapter, none of the book's words
+    - `running-heads.ts`: the running heads and folios
+    - `hyphens.ts`: whether the window hyphenates a language, which justifies the text
+  - `epub.css`: the book's stylesheet, its parts from the `--eien-epub-*` tokens
+  - `paged-place.ts`: in pages (Phase 3b), the page holding the place shown, a turn keeping its first word, a copy cut to the page in sight; a sight of two pages, and the front matter turned back to, never opened at (Phase 3d)
+    - `page-columns.ts`: the chapter laid in columns of whole lines, one page or two to a sight, its pages and the front matter's counted
+    - `sight.ts`: the pages in sight, each where its words begin and its part; where the page stands, to put back
+    - `spread.ts`: two pages or one, by the pane's room for two of 20em (never a phone's, nor a split's)
+    - `page-cut.ts`: a sight's words cut for a turn's copy, past the front matter, a paragraph cut at its foot set as on the page
+  - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back
+  - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons
+  - `edge-strip.ts`, `.css`: Marks on the edge (Phase 4d): the whole book down the page's edge, a slider, apart from the fore-edge
+  - `book-strip.ts`: the book told to the strip as shares of it (chapters, bookmarks, the place), and where a point on it goes
+  - `page-keys.ts`: the page's keys, one table: its letters (Q, B), Back, and in pages the keys that turn and a touch's tap in the outer thirds
+  - `turn/`: a page turned (Phase 3)
+    - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first
+    - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page, clipped and laid, in the curl's light
+    - `hand-events.ts`: the pointer and the finger carried to the turn (Phase 3c): a finger anywhere on the page, a mouse at the book's edges or on a page in flight, a cancelled gesture falling back, a drag that turned never also a click
+    - `turn-surface.ts`: what a page turn turns over (`TurnSurface`), and what a test stands in for
+    - `turn-hand.ts`: a hand on the page, and when its move is a drag across; `turn-queue.ts`: turns waiting for the page they turn from (a chapter drawn first)
+    - `step-turn.ts`: Slide (`slide.ts`) or Words (`words.ts`) run between the words left and the words come
+    - `page-copy.ts`: the page as it was, laid over it, never reached
+    - `turn-tokens.ts`: the tokens a turn reads (times, ease, lengths), reduced motion's 0 among them
+    - `next-frame.ts`: the next frame, or a timer where frames stall
+    - `turn.css`: the copies and the curl's pieces
+- `extension/`: the extension's pages (spec §14)
+  - `extension/content.ts`: the content script, built alone as one plain script, reads the page with `sites/` and lays over it the seal and the story frame (`extension/page-overlay.ts`)
+  - `extension/sites/ao3.ts`, `extension/sites/ffn.ts`: one module per site's markup
+  - `extension/sites/page-text.ts`: an element's words and HTML, its addresses whole
+  - `extension/story.html`: the story page
+    - `extension/story.ts`, `extension/story-view.ts`: the band, keys and colophon
+    - `extension/story-sheet.ts`: the story on the sheet, its links each opening in a tab of its own
+    - `extension/story.css`, `extension/story-page.css`: its styles
+  - `extension/popup.html`: the popup
+    - `extension/popup.ts`: the settings `extension/story-settings.ts` names, drawn by `settings/controls.ts` and `settings/theme-card.ts`
+  - `extension/eien-look.css`: what the story page and the popup both wear
+
+### `src/app/electron/`
+
+The main process: window, menu, the vault and settings sessions and their IPC.
+
+- `ipc.ts`: each channel listened to once, each call answered by the window that sent it
+- `vaults.ts`: the vaults the windows hold, each folder opened, recovered and watched once however many windows show it, each window told which changes another window here made
+- `device-settings.ts`: the device's own file
+- `data-folders.ts` alone decides where the device's file and the data folder are, for an installed, portable or separate copy
+- `out-session.ts`: the clipboard, the save dialog
+- `print-pdf.ts` prints a PDF in a hidden window that runs nothing
+- `import-session.ts`: Import Markdown Folder…
+- `menu.ts` builds the menu bar, each item's id its command, its on/off settings as checks that `checkToggles` keeps in step (`TOGGLES` in `core/config`)
+- `menu-grey.ts`: the commands a window greys (a note's, with a book in front), checked against the bar's, worn while it's focused
+- `context-menu.ts`: the note's right-click menu (spelling suggestions on macOS, from `context-menu-of.ts`)
+- `frame.ts`: the window with no title bar (the system's controls over the bands, painted as the window's `shell/window-controls.ts` reports them) and the whole window's zoom
+- `preload.ts`: the sandboxed preload
+
+### `src/app/mobile/`
+
+The phone.
+
+- `preload.ts` sets `window.eien` before the window's own script (the page is the desktop's, built by `vite.mobile.config.ts` into `out/mobile`)
+- `mobile-vault.ts` opens the vault in Documents/Eien/Vault (exports go to Documents/Eien/Exports)
+- `vault-home.ts` and `all-files.ts` ask for Android's access, with Eien's plugins in `android/app/src/main/java/io/github/onlynyans/eien/`
+  - `AllFilesPlugin.java`
+  - `VaultFilesPlugin.java`: the flushed write and the one-step renames `capacitor-files.ts` uses on Android
+  - `MainActivity.java` registers them and turns on the WebView's wide viewport, so Interface zoom reads as a browser's
+- `phone-out.ts` copies and exports (HTML, EPUB and Word; no PDF, and no import, on the phone)
+- `android/`: the Capacitor Android project (`capacitor.config.json`)
+- `ios/`: the Capacitor iOS project, with Eien's Swift plugin
+  - `ios/App/App/VaultFileOps.swift`: the file operations, a save's last step coordinated with other apps (`replace`), tested by `scripts/ios/vault-file-ops-test/`, `vault-file-ops-adversarial/` and `vault-file-coordination/`
+  - `VaultFilesPlugin.swift`: registered by its view controller
+
+### `src/app/extension/`
+
+- `manifest.ts`: the extension's manifest, Manifest V3 for Chrome and Firefox alike (storage and the story sites' pages, nothing else), written with the seal's icons into `out/extension` by `vite.extension.config.ts`
+
+### `tests/`
+
+- Architecture tests
+  - `layers.test.ts`: the layers
+  - `selectors.test.ts`: no style rule ends in `*` after a `:hover` or `:focus`, which restyles the whole window
+  - `words.test.ts`: no folder, file or CSS class named for "reader", as Words says
+- `zip-interop.test.ts` holds Eien's zips to zlib and `unzip`
+- `tests/support/` holds what the tests share, Node-free so core's tests can use it: a strict zip reader, a strict XML check, an export's parts, a long book for the budgets (`long-book.ts`)
+- `tests/e2e/` drives the built app on real folders with Playwright
+- `tests/mobile/`: the phone's page in Chromium
+- `tests/extension/`: the extension in Chromium, over AO3's and FanFiction.Net's pages as `tests/support/story-pages/` writes them
+- `tests/android/`: Eien on an emulator or phone over adb
+
+### Elsewhere
+
+- `tsconfig.{core,web,node,mobile,e2e}.json`: one per environment: core can use neither DOM nor Node, the window can't use Node, the phone's code has the DOM and no Node
+- `docs/design/`: the design's reasons and every token documented (`README.md`), and the explorations with their Decided sections; its top-level mockups and their `tokens.css` are the 2026-10-20 snapshot (Rules → How something looks). `.interface-design/system.md` is the design as it stands, for the interface-design skill too
+- `docs/backlog.md`: what comes after the phases: fixes, tweaks and features, each marked for the design pass or not, and the owner's open questions
 
 ## Tests
 
@@ -247,18 +666,14 @@ To cut a release, on a branch from `main`:
    installers with no release, keeping them as the run's artifacts.
 
 0.2.0 and 0.3.0 were written into CHANGELOG.md afterwards, each ending at
-the commit named under its heading; nothing was built for them. Their tags are
-the owner's to add, if wanted:
-`git tag v0.2.0 ab9a78c && git tag v0.3.0 2491dbd && git push origin v0.2.0 v0.3.0`.
-Each starts `release.yml`, which stops within a minute, red, at its first
-check (`package.json` at those commits still says 0.1.0, and CHANGELOG.md
-wasn't there yet), and makes no release.
+the commit named under its heading; nothing was built for them. Their tags
+(`v0.2.0` at `ab9a78c`, `v0.3.0` at `2491dbd`) mark those commits only: each
+started `release.yml`, which stopped red at its first check (`package.json`
+there still says 0.1.0), and made no release.
 
-**Next: 0.4.0, proposed.** CHANGELOG.md's Unreleased section, stage 4 (the
-extension, Wide screen, find and replace, subfolders) and the EPUB reader's
-groundwork (#40 Phases 0a and 0b), is the first build since 0.1.0. Cutting it
-before #40's next phases gives a checkpoint to go back to, and tries the
-release path once from start to end. The owner decides.
+0.4.0 (2026-10-28) is the first build since 0.1.0: stage 4, the quick look,
+and the EPUB reader's groundwork (#40 Phase 0). The reader's phases begin
+0.5.0.
 
 - **Identity.** The product name `Eien` and app id `io.github.onlynyans.eien`
   never change. Electron names the device's data folder (userData:

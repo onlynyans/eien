@@ -3,13 +3,15 @@
 // own parser, its styles turned into the tags they mean (as a paste's are),
 // then kept to what words and their shapes need (./clean-elements.ts).
 // Nothing else of it survives: no script, handler, style, class, id or form,
-// and no element the drawing (ui/draw-clean.ts) doesn't know. Pages are drawn
-// from these nodes, never from HTML.
+// and no element the drawing (ui/draw-clean.ts) doesn't know; a place a link
+// may name, where the caller asks (an EPUB's, #40), only as an empty marker
+// (./anchors.ts). Pages are drawn from these nodes, never from HTML.
 //
 // What differs between callers is where a link may go and an image come from
 // (the web for a story; the book's own zip for an EPUB), and which parts of a
 // chapter have names: those are the caller's rules.
 
+import { ANCHOR, anchored } from './anchors';
 import { ALIGNED, ALIGNS, AS, DROPPED, isPart, KEPT, type Part } from './clean-elements';
 import { declarations } from './css';
 import { type HtmlElement, type HtmlNode, type HtmlText, parseHtml } from './html';
@@ -26,13 +28,20 @@ export interface CleanRules {
    * it's kept as. Anything but one of PARTS is ignored.
    */
   readonly part?: (source: HtmlElement, name: string) => string | null;
+  /**
+   * A place in the page a link may name (an element's id, an old `a`'s
+   * name), kept or not (null). Kept, it's an empty `a` marking the place
+   * (`attrs.anchor`), never an id: a page can't name the window's own
+   * elements. Without it, no place is kept (a pasted page, a story's).
+   */
+  readonly anchor?: (id: string) => string | null;
 }
 
 export interface CleanElement {
   readonly kind: 'element';
   /** One of KEPT. */
   readonly name: string;
-  /** Only align, title, href, src and alt; href and src as the rules gave them. */
+  /** Only align, title, href, src, alt and anchor (an empty `a`'s); href and src as the rules gave them. */
   readonly attrs: Readonly<Record<string, string>>;
   readonly children: CleanNode[];
   readonly part?: Part;
@@ -56,6 +65,8 @@ function attrsFor(
   rules: CleanRules,
 ): Record<string, string> | null {
   const attrs: Record<string, string> = {};
+  const anchor = node.attrs[ANCHOR];
+  if (anchor !== undefined && rules.anchor && name === 'a') attrs.anchor = anchor;
   const align = alignOf(node, name);
   if (align) attrs.align = align;
   const title = node.attrs.title;
@@ -98,9 +109,14 @@ function cleaned(nodes: readonly HtmlNode[], rules: CleanRules): CleanNode[] {
   });
 }
 
+/** A page already parsed, kept to what may be shown under `rules`: for a caller that reshapes it first (an EPUB's SVG-wrapped pictures). */
+export function cleanParsed(nodes: readonly HtmlNode[], rules: CleanRules): CleanNode[] {
+  return cleaned(tidy(rules.anchor ? anchored(nodes, rules.anchor) : nodes), rules);
+}
+
 /** The page's `html`, kept to what may be shown under `rules`. */
 export function cleanHtml(html: string, rules: CleanRules): CleanNode[] {
-  return cleaned(tidy(parseHtml(html)), rules);
+  return cleanParsed(parseHtml(html), rules);
 }
 
 /** The words of cleaned nodes, a line between blocks: what's counted. */

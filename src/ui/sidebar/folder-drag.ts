@@ -5,7 +5,7 @@
 // It lifts and leaves a faint mark as a note's row does (../list/drag.ts);
 // Esc puts it back. The keys do the same: ⌥↑ ⌥↓ ⌥← ⌥→.
 
-import { parentOf } from '../../core/paths';
+import { isInside, parentOf } from '../../core/paths';
 import type { FolderDrop } from '../vault/folder-order';
 
 /** How far the pointer goes before a press becomes a drag, in pixels. */
@@ -14,9 +14,6 @@ const DRAG_AFTER = 5;
 const EDGE = 0.25;
 
 const FOLDER = '.tree-row__name[data-folder]';
-
-/** Whether `inside` is the folder `path` or within it. */
-const within = (inside: string, path: string) => inside === path || inside.startsWith(`${path}/`);
 
 /** Watch `tree` for folders dragged; `allowed` says whether they drag now (not in Arrange mode). */
 export function watchFolderDrags(
@@ -114,7 +111,7 @@ export function watchFolderDrags(
         }
         return;
       }
-      if (within(at, path)) return; // never into itself
+      if (isInside(at, path)) return; // never into itself
       const y = (event.clientY - rect.top) / rect.height;
       if (y < EDGE) {
         target = { before: at };

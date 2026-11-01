@@ -112,18 +112,6 @@ body {
   line-height: 1.25;
 }
 
-.story__turns {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--eien-space-4);
-  margin-top: var(--eien-space-7);
-  padding-top: var(--eien-space-4);
-  border-top: var(--eien-hairline) solid var(--eien-rule-soft);
-}
-.story__turns > :only-child {
-  margin-left: auto;
-}
-
 /* ── The story's words ─────────────────────────────────────────────────── */
 .prose {
   font-family: var(--eien-face-text);
@@ -177,16 +165,6 @@ body {
 .prose ul,
 .prose ol {
   padding-left: 1.4em;
-}
-.prose a {
-  color: inherit;
-  text-decoration-color: var(--eien-rule-strong);
-  text-underline-offset: 0.18em;
-}
-@media (hover: hover) {
-  .prose a:hover {
-    text-decoration-color: currentColor;
-  }
 }
 .prose img {
   max-width: 100%;

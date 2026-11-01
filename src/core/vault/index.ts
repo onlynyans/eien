@@ -10,11 +10,15 @@ export {
 } from './assets';
 export {
   type EntryKind,
+  epubTitleOf,
+  fileTitleOf,
   imageTypeOf,
+  isEpubName,
   isNoteName,
   isSyncConflictName,
   kindOf,
   MAX_IMAGE_BYTES,
+  MAX_NOTE_BYTES,
   syncConflictOf,
   type VaultEntry,
 } from './entries';
@@ -35,4 +39,4 @@ export {
 export { HOME_EXPORTS, HOME_FOLDER, HOME_VAULT } from './home';
 export { inYourOrder, movedPins, parsePins, pinsText, withoutPins, withPin } from './pins';
 export { type Grouped, inGroups, type Subfolder, subfoldersOf, withHeads } from './subfolders';
-export { buildTree, byName, type FolderNode } from './tree';
+export { buildTree, byName, type FolderNode, inFolders, onShelf } from './tree';

@@ -74,7 +74,12 @@ one on two synced devices read each other's files.
   describes. A bare list (`pinned.json`) becomes an object to carry it.
 - A file whose version is newer than this Eien knows is read for what it can,
   and never written over: a newer device's settings are never lost to an
-  older one.
+  older one. A reading state's file that can't be read at all (one a sync
+  broke) is never written over either, so its bookmarks are never lost
+  (#40, Phase 4b); a new field in one (its `bookmarks`, its `highlights`,
+  Phase 5a) is kept as found by an older Eien, so it isn't breaking. Each
+  write keeps every field where it stood, so a synced file changes only
+  where it was changed.
 - A change an older Eien would misread is a breaking change: its pull
   request's title carries `!` (AGENTS.md → Releases).
 
@@ -157,8 +162,10 @@ one on two synced devices read each other's files.
 ### Per-device state
 
 Cursor positions, open notes, pane widths, which of the sidebar's sections are
-folded, zoom and today's word tally are kept in the app's own storage on each
-device. They are never written into the vault,
+folded and which of Shelf's folders are shut (by their paths in the vault,
+shared by the vaults this device opens, and followed through a rename, a
+move or the trash done in Eien), zoom and today's word tally are kept in the
+app's own storage on each device. They are never written into the vault,
 so two devices never overwrite each other's state through Syncthing.
 
 ---
@@ -271,8 +278,9 @@ device setting says (`appearance.split`, Settings → Look → Appearance):
   save and last seal, mirrored on the right page as page numbers are, and
   showing while the pointer is over that page. The colophon keeps the
   book's figures and today's. In the Running head, the tags go to each
-  page's own head. The active page carries a mark, a setting of its own
-  (`appearance.facingMark`): a ribbon over its top edge, its outer corner
+  page's own head. The active page carries a mark, a setting of its own,
+  **Page mark** (`appearance.facingMark`), which a book's bookmarked page
+  wears too (#40, Phase 4): a ribbon over its top edge, its outer corner
   turned down, or a tab at its outer edge, each arriving with a short motion
   (none with reduced motion).
 - **Companion**: the page as it always is, every one of its tools acting on
@@ -335,10 +343,42 @@ Three panes, each collapsible, with a two-pane option in settings:
      to pin
    - **Folders**, nested; a book marked BOOK beside its count; a quiet + at
      the label's right (on hover or keyboard focus; always on a phone) makes
-     a folder, named in place
+     a folder, named in place. Folders is for writing (#40): it lists every
+     folder but those whose contents, at any depth, are EPUBs and nothing
+     else, which are on Shelf alone. A folder stays while a note is anywhere
+     under it, and an empty folder always shows (where it's named); "empty"
+     is what the sidebar would show, so a folder of a book and its cover
+     picture is books alone. A folder of notes and books is in both
+   - **Shelf** (#40), between Folders and Tags, once the vault holds a book
+     (an `.epub` file, in any folder): a lens over the one folder tree. Every
+     book, named by its file as a note is, under the folders on the way to
+     it at their depth. A folder there is Folders' own folder row: its
+     twisty, or a click on its name (nothing lists a folder's books), shuts
+     and opens it, open at first and remembered on this device (§2); a note
+     or folder dragged onto it lands there; and it has the folder's own
+     menu and keys (F2, ⌥ and an arrow). Its new name is typed in its row on
+     Shelf; Move up and down, ⌥↑ ⌥↓ and ⌥→ go among the folders Shelf shows
+     beside it (in Folders, among those Folders shows), stepping over those
+     only the other shows; Move to… lists every folder. A folder moved into
+     a shut one opens it. When a folder changes sections (its first note
+     arrives, or its last leaves), the keyboard stays on its row where the
+     row stays, or on the row in its place; the folder chosen stays the
+     list's until another is chosen. Opening a book from elsewhere leaves a
+     shut folder shut. A book is never in a folder's note list, count or search. A
+     click opens it on the page; with two panes, its contents are listed
+     under its row. Its row answers as a note's: right-click, the menu key
+     or Shift+F10 give its menu (Rename, Move to…, and the trash last), F2
+     or a second click on its name renames it in its row (its `.epub` kept
+     and shown faded after the field, on a phone too), ⌘⌫ (Ctrl+Delete)
+     sends it to the trash: the system's, or a phone's `.eien/trash`, and
+     the list says where; a trash that fails deletes nothing and says so.
+     A book moved or renamed is followed by its page and its contents in
+     the list, takes no place in a folder's own order, and keeps its place
+     in `.eien/reading/`, which is kept by what the book holds, not where
+     it is
    - **Tags**, nested by `/`; the + beside its label makes a tag, named in
      place (see §2, Tags)
-   - Library, Folders and Tags fold and open from their labels (a click, Enter
+   - Library, Folders, Shelf and Tags fold and open from their labels (a click, Enter
      or Space), each remembered on this device (§2). An open folder or tag has
      a hairline guide down its children.
    - At the foot: the vault's count, then three icons: day or night (a sun
@@ -360,8 +400,222 @@ Three panes, each collapsible, with a two-pane option in settings:
    list holds. Its head holds the quiet + (New note, ⌘N) and the lens's filter
    and sort: like every quiet control, they show while the head is hovered or
    one has the keyboard, the same rule as the + beside FOLDERS and TAGS.
-   Hidden in two-pane mode, where the tree lists the notes itself.
-3. **Page** — the editor, on a paper sheet. A small header shows the note's
+   Hidden in two-pane mode, where the tree lists the notes itself. A book
+   opened from the shelf (#40) puts its contents here in place of notes: its
+   title and author, then its chapters in the book's order, the one on the
+   page marked as an open note's row is (↑ ↓ Home End between them, Enter or
+   a click to open one), until a row under Library, Folders or Tags is
+   chosen. The search field then searches the vault.
+3. **Page** — the editor, on a paper sheet; or a book (#40): one chapter of
+   it on the note's own sheet, drawn from cleaned nodes in the writer's
+   faces and the theme's colours, its pictures from the book's own zip, the
+   book's folders above it. A book that won't open says why on the sheet
+   (locked with DRM, too large, damaged); its file is only read. A tool
+   shows only while the active page can use it (decided 2026-10-29): with a
+   book active, a note's tools (the views, Seal, Compare, Versions, Copy as
+   HTML, Focus, every format) are set aside in the layout's bars and the
+   phone's, not greyed, and their keys do nothing there; choosing a note
+   brings them back. The formatting bar's row stays while a note is on
+   either page, so neither page moves (beside a book, only its buttons go);
+   with a book alone it goes too. The tools every page shares (Look, Split,
+   the panes) keep their places, and a page with its own host (Facing
+   pages, Tools that follow) keeps its own tools on it. A bar that folds
+   fits again as its tools come and go. The phone's ⋯ and the menu bar
+   grey the same commands rather than hide them (the views, Seal, Compare,
+   Versions, Copy as HTML, every format, Export HTML… and Export Note,
+   Outline Cards, Focus Mode, Typewriter Scrolling, Show Markdown Marks),
+   from the one rule each control's `on` gives (`ui/chrome/commands.ts`,
+   `menuOff`): a menu lists all the app does. The menu bar is the app's: it
+   wears the focused window's, and a menu of the bar is never greyed, only
+   its items.
+   - **A chapter a sheet** (Phase 2): the chapter scrolls as a note does in
+     Reading, the usual keys once the page has the keyboard. At its foot,
+     after a soft rule, the chapters before and after it in the reading
+     order are word buttons named for them ("Previous chapter" for one the
+     contents don't name, such as a title page), "The end" at the last;
+     nothing moves on until one is pressed, which opens that chapter at its
+     top. The colophon says "3 of 61", then the page (Phase 4), then how far
+     through the chapter and the book ("40% of the chapter", "12% of the
+     book", the book by its chapters' sizes; the two dropped first on a
+     narrow page, the page kept).
+   - **Page numbers** (Phase 4a): the page the place is on, "page 212 of
+     2,450", in Scroll and in Pages. A book with a page-list (the printed
+     edition's pages) has its printed numbers, "page xii" before the first
+     numbered one, the book's pages by its last label where that's a
+     number, shown as soon as the chapter is drawn; a page whose place the
+     book lost counts for nothing. Any other book has steady pages: 1,500
+     of its characters a page, over every chapter in the reading order, so
+     a number never moves with the window, the face or the device, and only
+     rises through the book. The book is counted once, in the background,
+     a chapter at a time and never while a page turns; until it's counted
+     the colophon gives no steady page. The count is kept for the last few
+     books this window opened, never written.
+   - **Bookmarks** (Phase 4b): **B**, the bookmark tool (a ribbon, with the
+     book's own tools; on the phone, the ⋯) or View → Bookmark This Page
+     bookmarks the page in sight: in Pages the page, scrolling the lines in
+     sight. On a page that has one (or more, made at another width) they're
+     all taken off. The colophon says "Bookmarked." or "Bookmark taken off.",
+     and the tool is pressed while the page in sight has one. The page wears
+     the **Page mark** (Settings → Appearance: a ribbon over its top edge,
+     its outer corner turned down, or a tab at its outer edge), at its outer
+     top, arriving as it does on Facing pages' active page; scrolling, it
+     keeps to the top of the sheet in sight; in Pages it changes as a turn
+     lands, never mid-turn. In a split in Facing pages, where that mark says
+     which page you're in, a bookmarked page wears none, and its folio says
+     "bookmarked". Bookmarks are kept in the reading state's file with the
+     place (each a chapter, its first word and the words it begins with),
+     every other field and item kept as found; two pages on one book agree
+     at once. A book shows 1,000 at most: past that, B says to take one off
+     first. A reading file a newer Eien wrote is never written, and one
+     that can't be read is never written over: the colophon says so once,
+     and its place and marks aren't kept until it's fixed or deleted.
+   - **Highlights** (Phase 5a): words chosen in a book and **H**, the
+     selection bar's **Highlight** (first, before Quote in the note and
+     Copy), Format → Highlight (⇧⌘H, a note's own, which a book's words take
+     too) or on the phone the page's ⋯ (the words last chosen) keep them: a
+     pencil line under the words and a pencil tick in the margin beside each
+     paragraph they touch, on any page or spread and on a turn's copy of the
+     page. Words that overlap or touch another highlight join it in one.
+     The same on words that lie in a highlight (the bar and the ⋯ say "Take
+     off the highlight") takes it off, leaving its words chosen, so H keeps
+     them again; the colophon says "Highlight taken off." with **Put back**
+     beside it while it shows. With no words chosen it says "Choose some
+     words in the book to highlight." Highlights are kept in the reading
+     state's file beside the bookmarks (each a chapter, where its words begin
+     and end in it, and the words, as a row shows them), every other field
+     and item kept as found, decided against the file as it is when written
+     (another device's change synced meanwhile is kept); one in a chapter the
+     book no longer has, or past its words, is kept and never shown. They
+     hold through a new width, face, size or view, as the place does. A book
+     shows 1,000 at most. The page in sight holding one is said, not seen, in
+     the colophon ("highlighted").
+   - **Marks in the list** (Phase 4c): with a book's contents in the list,
+     two buttons under its head, **Contents** and **Marks**, each with its
+     count, the one shown pressed; Marks lists the book's bookmarks in its
+     order, each row the words its page begins with, its page, and its
+     chapter, or "Nothing kept yet. B bookmarks a page." Enter or a click
+     goes to the bookmark's page; Delete or Backspace takes it off (once,
+     however long it's held; the keyboard goes to the next row). The
+     lens is the window's, back to Contents for another book. With two
+     panes the tabs and rows are under the book's row on SHELF; on the
+     phone, on its contents page.
+   - **Marks** (Phase 4d), a book setting in the shelf's quick look: *In
+     the list* (the default, as above) or *On the edge*. On the edge, the
+     list is the book's contents alone, and down the page pane's outer edge
+     runs the whole book, top to foot: a hairline for each chapter (a
+     longer one each tenth), a pencil tab for each bookmark, the place a bar
+     across it. Pointing at it says the chapter and page there; a click
+     goes there, the keyboard back on the page; a finger drags along it to
+     scrub and goes where it's lifted (a finger's tap alone goes nowhere).
+     To the keyboard it's a slider saying the chapter and page you're on:
+     ↑ ↓ a chapter, Page Up and Page Down ten, Home the book's start and
+     End its end. A place chosen on it is shown without drawing its chapter
+     again when it's the one drawn, and Back forgets the last link. Where
+     there's no room it lies over the page's outer margin (Facing pages'
+     left page, its left); on the phone it stands a space in from the
+     screen's edge, clear of Android's Back. With no book, it isn't shown.
+   - **Pages** (Phase 3b): **Read in**, a book setting in the shelf's
+     quick look, sets a book in *Pages* or *Scroll* (the default for now),
+     as do the book's own two tools in the views' place and View → Pages
+     and View → Scroll (greyed with a note in front, as a note's views are
+     with a book). In pages the sheet fills the pane and the chapter is
+     laid in pages as tall as the whole lines it holds, so no line is cut;
+     its paragraphs are set as a book's, whatever the scroll style. The
+     arrow keys, Space and Shift+Space, Page Up and Page Down turn a page;
+     Home and End go to the chapter's ends; past a chapter's last page
+     comes the next chapter's first, and back, the last page of the one
+     before. On the sheet's sides lie the book's fore-edge, the pages read
+     at its left and still to read at its right, up to six paper edges in
+     sixths of the book; each side is a button, Previous page or Next page,
+     its tooltip saying how many of the chapter's pages are left that way.
+     On a touch screen a tap in the page's outer thirds turns it (a tap on
+     a link, or ending a selection, never does). A link the keyboard comes
+     to on another page turns there. The place is the same as Scroll's,
+     the first word in sight, so it carries between Pages and Scroll, a
+     restart, a width, a face and page zoom.
+   - **Turning the page** (Phase 3b): **Page turn**, a book setting in the
+     shelf's quick look: *Curl* (the default; the paper rolls over as it's
+     turned, its back showing the words faintly, in light only while it
+     moves), *Slide* (the words carried a page) or *Words* (only the ink
+     changes). **Turn speed**: *Instant*, *1×* (as designed), *2×* (the
+     default), *3×*, *4×*. A key pressed mid-turn finishes it at once; a
+     key held down turns at once; with reduced motion every turn is
+     instant. A turn moves the page in sight alone, so turning is as quick
+     in a long chapter as a short one. **A hand** (Phase 3c): a finger
+     takes the page anywhere on it, a mouse (or a pen) at the book's edges,
+     or anywhere on a page in flight, to catch it; under Curl
+     the corner stays under the hand, and let go, its speed decides: past a
+     quarter of the page from the spine (or flicked) it turns, short of it
+     it falls back to where it was; a gesture the system cancels (a pinch
+     beginning) falls back too. A page in flight can be caught and carried
+     on or back; a tap on it lets it fly on (and in an outer third, turns
+     the next). Under Slide and Words a drag across asks for the turn.
+     Never while words are chosen in the page, nor on a link (but to catch
+     a page in flight); a drag that turned is never also a click.
+   - **Two pages, and set as a book** (Phase 3d): in pages, where the page
+     pane holds two pages of at least 20em of the book's text, with the
+     sheet's margins and the gutter between, the book opens to two facing
+     pages; a pixel short of it, one. Never on a phone (one pane at a
+     time) or in a split. A turn, a key, the edges and a hand move both;
+     the place is the same, so one page and two show the same words. A
+     bookmark's mark sits on the page it marks; B on two pages marks the
+     first one's first word, or takes off every bookmark on the two. The
+     colophon says both pages ("pages 212–213 of 2,450"). In pages the book
+     is set as a book: justified and hyphenated where the window can
+     hyphenate its language (a Mac can; elsewhere it may be ragged), ragged
+     on a phone and a page as narrow; each chapter opening four lines low;
+     running heads (the chapter over one page; the book over the left page
+     and the chapter over the right), none on an opening page; each page's
+     number at its foot's outer corner. Before the book's first chapter
+     stand Eien's title page (the title, the author, the folders it's in)
+     and its imprint (how long the book is, how it's set as laid out, the
+     file it came from, where its place, bookmarks and highlights are kept), turned
+     back to from the first page, never opened at: a chapter, a link, a
+     bookmark or Home goes to its opening. Neither is the book's words.
+   - **The scroll style**, a book setting in the shelf's quick look (never
+     in Settings, which sets notes): *As a note* (the default), its
+     paragraphs spaced as a note's in Reading; or *As a book*, indented
+     with no space between, the first after a heading, a break or a
+     picture flush.
+   - **The place kept:** where you are, the chapter and its first line in
+     sight (an offset in the chapter's words, so it holds through a new
+     width, size, face or scroll style), is kept in
+     `.eien/reading/<key>.json` a second after the page comes to rest,
+     when the chapter changes, and when the page closes or the window
+     quits (a phone, as it goes to the background), and opens there again
+     next time. The page put back in the window (⇄) or laid out anew (a
+     new width, page zoom) shows the same line.
+   - **The book's own links and notes** (Phase 2b): a link reads as one,
+     the words' own colour with a quiet underline that darkens under the
+     pointer (the extension's story page's, one rule for both), and the
+     window's tooltip names where it goes ("Chapter III", "Note 4", or an
+     address). A link to one of the book's chapters goes there, to the
+     place it names, and **Back to Chapter I** in the colophon (or ⌘[,
+     Alt+←) returns to the line it left, one step; choosing a chapter
+     yourself forgets it. A note's reference (EPUB 3's `noteref`, or a
+     number or a sign in a sup, as EPUB 2 books write them) shows the note
+     over the page, in the book's face, from this chapter or another: Esc,
+     a click elsewhere or scrolling closes it, the keyboard back on the
+     mark, and **Go to the note** goes there. A link to the web or mail
+     (`http:`, `https:`, `mailto:`) opens in the system's browser, as a
+     note's does in Reading; anything else (a script, data, a file, out of
+     the zip) keeps its words alone, with no look of a link. A copy from a
+     book holds its words and shapes alone: no address, no note's mark, no
+     picture.
+   - **Beside a note** (Phase 2c): a book opens on one page of the split as a
+     note does: ⌘-click or ⌘Enter on its SHELF row, or its menu's Open to the
+     Side (on a phone's Two pages, a book chosen faces the note open),
+     in each of the split's modes, ⇄, the pager and the phone's slip.
+     **Quote:** words chosen in the book show the selection bar, **Quote in
+     the note** and **Copy** (on a phone, the page's ⋯ → Quote in the note;
+     on the desktop, Q too). Quote adds them at the end of the note beside
+     as a Markdown quote, `— Pride and Prejudice, Chapter III` under it (the
+     book's title and the chapter's name, no author), and never touches the
+     note's own words; one ⌘Z in the note takes it out (in Live or Source).
+     Q quotes only what's chosen now, once. On a phone with one
+     page it goes into the note you came from, which opens with it, the
+     book a tap away. With no note beside, the colophon says so.
+   A small header shows the note's
    title and its word count. A status line below shows today's words, sprint,
    and zoom, at a fixed height (`--status-h`, 40px). Each part of the page
    has its own row (bar, formatting bar, scroll, status), so a part hidden
@@ -457,8 +711,8 @@ Three layouts, a device setting (`appearance.layout`, Settings → Look → Appe
 in what they are or do ([overall.md](design/explorations/overall.md)):
 
 - **Band** (the default): the page's controls in a band above it (views,
-  Compare, Seal, Versions, the formatting bar, Focus, and the strip's own control, which hides
-  the band to a lip and brings it back). Corners 2/4/8px.
+  Compare, Seal, Versions, the formatting bar, Focus, Look after a hairline, and the strip's own
+  control, which hides the band to a lip and brings it back). Corners 2/4/8px.
 - **Slip**: no band; the page's tools float on a raised slip at the
   blotter's top right, which folds away to its fold. The panes' chevrons are
   tabs at their edges. Corners 4/8/14px; the sheet takes a 3px corner.
@@ -473,7 +727,8 @@ each command in exactly one host; switching takes one layout's hosts out and
 puts the other's in, and nothing else changes. A host draws its commands as
 icon buttons (`ui/icons.ts`), each with an accessible name, a tooltip with
 its key (after a short hover, or at once from the keyboard) and its state
-(pressed, disabled); a host is a toolbar, its arrows moving along it, and Tab
+(pressed, disabled, or set aside where the active page can't use it, #40);
+a host is a toolbar, its arrows moving along it, and Tab
 reaches every control. A switch leaves the keyboard on the same command in
 the new layout, or on the page. Whether the strip is hidden is per device.
 
@@ -481,7 +736,7 @@ the new layout, or on the page. Whether the strip is hidden is per device.
 band and its formatting row, Slip's slip, Running head's strip) never runs
 past the page, the screen, or the system's window controls. The tools that
 don't fit fold behind one ⋯ at the bar's end, as few as it takes, in one
-order: Versions, Compare, the formatting bar's toggle, Focus, the views (as
+order: Versions, Compare, the formatting bar's toggle, Focus, Look, the views (as
 one), then the Seal (the formatting row: from Table back, bold and italic
 staying). The strip's own control never folds: it's the shut band's way back.
 The ⋯ lists what folded in the bar's order, each with its icon, key and state,
@@ -505,9 +760,9 @@ the words shows on the page once the typing pauses, so nothing on the page
 moves mid-word.
 
 On a phone each layout has its own bottom for the page: Band the top bar
-(the view, Focus, ⋯), Slip a floating slip (the three views, Focus, ⋯),
-Running head a rail at the page's foot (the views, Focus, Seal, ⋯). The ⋯
-holds the rest, as the menu bar does on the desktop.
+(the view, Focus, Look, ⋯), Slip a floating slip (the three views, Focus,
+Look, ⋯), Running head a rail at the page's foot (the views, Focus, Seal,
+Look, ⋯). The ⋯ holds the rest, as the menu bar does on the desktop.
 
 The visual design (type, color, spacing) is set in the design pass. This spec
 fixes only the token names it uses (§7).
@@ -637,7 +892,35 @@ sight but on the caret's line, and always in Reading.
 
 Links: ⌘-click (Ctrl-click on Windows and Linux) follows one. A web address
 opens in the browser; a `[[wiki link]]` opens the note with that title. In
-Reading a plain click follows.
+Reading a plain click follows; in Live and Source a plain click places the
+caret.
+
+A link's tools in Live (backlog #38): resting the pointer on a link, or the
+caret in one, shows where it goes and lets you edit it and open it. The
+**Link editing** setting (Writing → Editor) chooses how; any of the three on
+any device, the Card by default on the desktop and the Bar on a phone:
+
+- **Card:** a card under the link. A note link's reads as that note's row in
+  the list (its folders, title, first line and words); a web link's is its
+  address; a note not made yet says so. Its tools: Open, Edit (two fields,
+  the words and where it goes) and Take off.
+- **In place:** the link's Markdown opens where it stands, its marks shown
+  whatever Show Markdown marks says, the address in the Source font, ↗ after
+  it to open it. You edit it as text; where it goes is said in the colophon.
+- **Bar:** a small bar over the link's line, the selection bar's sibling:
+  where it goes (pressed, it's a field), Open, Edit, Take off. A hover shows
+  only a tooltip. On a phone it's docked above the keyboard.
+
+What's typed in "goes to" says the kind: an address (`https://…`, `www.…`,
+`example.org/…`) makes `[words](address)`, anything else a note's name,
+`[[note|words]]` (or `[[note]]` when the words are its name); a name the vault
+has as a note stays a note's. Each edit is one step ⌘Z takes back; an empty
+"goes to" keeps the old one; Take off keeps the words. The keys, the same in
+all three: ⌥↩ opens the caret's link, ⌘K edits it (with words selected
+outside a link it still makes one), ⌥F10 takes the keyboard to its tools,
+Esc puts them away and brings the keyboard back. They step aside while you
+type in a link and come back when the caret moves. A screen reader hears
+where a link goes as the caret reaches it.
 
 ### Markdown supported
 
@@ -804,8 +1087,9 @@ words, as on the page.
 on the active page of a split: each page finds in its own note. Edit → Find
 holds Find…, Find and Replace… (⌥⌘F; Ctrl+H off the Mac, where Ctrl+Alt is
 AltGr), Find Next (⌘G) and Find Previous (⇧⌘G); on a phone it's the page's
-⋯ → Find. It's CodeMirror's search (`@codemirror/search`), drawn as Eien's
-own slip at the page's top right (`ui/editor/find-bar.ts`).
+⋯ → Find. It's CodeMirror's search (`@codemirror/search`, `ui/editor/find.ts`),
+drawn as Eien's own slip at the page's top right (`ui/find/find-bar.ts`),
+which searches nothing itself, so an EPUB's chapters can drive it too.
 
 - The Find field opens with the chosen words in it (a word or a phrase on one
   line), or the last query. Typing goes to the first match from the
@@ -934,9 +1218,11 @@ src/core/            (✓ = built)
   export/       ✓ a note as a chapter (headings, footnotes); EPUB, Word and the PDF's page; a store-only zip
   import/       ✓ which files of a folder from elsewhere come in, under what names, and why the rest don't
   extension/    ✓ the browser extension (Eien Reader): its story, its sites, its messages, where you stopped, its rules for cleaning a site's HTML (§14)
+  epub/         ✓ an EPUB read safely: its zip (capped, no path out), its package and contents, a chapter cleaned with its parts named, the reading state's file and its place, a chapter's neighbours and how far through (#40)
 src/platform/
   bridge.ts     ✓ what the window may ask of the system (window.eien)
   storage.ts    ✓ the Storage interface: read, write, list, watch
+  inflate.ts    ✓ raw deflate inflated by the system's DecompressionStream (an EPUB's zip)
   electron/     ✓ Storage over Node fs: durable writes, the watcher, crash recovery
   memory/       ✓ Storage in memory, for tests
   index/        ✓ the vault's index over any Storage: previews, words, tags, search
@@ -965,6 +1251,7 @@ src/ui/
   settings/     ✓ Settings over the window: categories and tabs, drawn from the schema; the Themes tabs; the look they set on <html>
   phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
   extension/    ✓ the extension's pages: the story page, the popup, the content script and each site's markup (§14)
+  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style; in pages (3b), its fore-edge, keys and taps, and the page turn (epub/turn/); two pages and set as a book (3d); its page numbers, bookmarks and Marks, in the list or on the edge (Phase 4); its highlights, inked over the page's own text (Phase 5)
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture
@@ -998,6 +1285,18 @@ src/app/
   writes is text, through the version check.
 - Pasted HTML (phase 8) goes through a sanitizer; scripts, event handlers and
   remote content never run.
+- An EPUB (#40) is read, never written, and read as hostile: its zip by Eien's
+  own reader (`core/epub`), its directory checked whole before anything is
+  inflated (no name that isn't a clean path inside it, none twice, every size
+  within the caps: the file 32 MB, a text entry 8 MB, a picture 32 MB, 256 MB
+  in all, 100 times its stored size past 64 KB), and each entry stopped at its
+  declared size as it inflates (its stored bytes fed to the system's
+  inflater 4 KB at a time, so a lying header can't make more than a step
+  past it), its CRC checked. A book locked with DRM is
+  refused, and Eien says so. Its chapters are cleaned by the extension's
+  cleaner under the book's rules (pictures only from its own zip, links keep
+  their words) and drawn element by element; nothing in a book runs or
+  reaches the network.
 
 ### Stack
 
@@ -1049,16 +1348,21 @@ does nothing.
   `Documents/Eien` for an installed copy, in a portable copy's "Eien Data" beside
   it (`src/app/electron/data-folders.ts`). They hold the scheme
   (day, night or the system's), palette, the layout (band, slip or running
-  head), text face, text size (90–130%),
+  head), text face, text size (90–130%), line spacing and page width (each a
+  step either side of the face's own, §6, A quick look), the shelf's own
+  look (#40: each of those page settings again under `epub.<key>`),
   density (comfortable or compact), page frame (sheet or full), the page's
   zoom and the interface's (each 50–200%), the interface font, the Source
   font, the weight of the sidebar's names and the list's titles, the Running head's
   ground, panes (three or two), focus mode, typewriter scrolling, the formatting bar,
   whether Live shows the Markdown marks, whether the front matter's tags and id are
-  hidden, spellcheck (macOS), and on the phone how a wide screen is used (§10). A
+  hidden, how a link shows its tools (Link editing, §4), spellcheck (macOS), and on
+  the phone how a wide screen is used (§10). A
+  setting's default may be a phone's own (`phoneDefault` in the schema: Link editing's
+  Bar); there, any choice is written, as the desktop's default isn't the phone's. A
   setting may be one system's alone (`platforms` in the schema): the screen shows it
   only there. A setting that needs panes side by side (`wide` in the schema: Panes,
-  Shut sidebar, Arranging, the formatting bar) shows only while the window has them,
+  Shut sidebar, Arranging, the formatting bar, Page width) shows only while the window has them,
   and comes and goes as that changes (a phone turned, a foldable opened, Wide screen
   set).
 - An unknown or invalid value in a file is ignored with a warning in the log,
@@ -1121,6 +1425,59 @@ larger inset (64px above and below, 112px at the sides).
   click on the dimmed window, and gives the keyboard back to what opened it.
 - **On a phone** it's a full sheet: the tabs in one strip under the head,
   nothing to move or resize; the phone's back closes it first.
+
+### A quick look
+
+Backlog #49 ([look.md](design/explorations/look.md), 1 · On the bar;
+[docs/quick-look.md](quick-look.md)): the look's everyday settings, in reach
+without Settings.
+
+- **The control** is **Look** (the Aa icon, ⇧⌘L, View → Look…), the page's
+  last tool after a hairline in each layout (before Band's and Slip's strip),
+  on a phone in the layout's bottom before the ⋯, and in the ⋯. Short of room
+  it folds after Focus; folded, the ⋯'s Look opens it under the ⋯.
+- **The popover** hangs under the control, its end lined up with it, as wide
+  as the list; on a phone (one pane at a time) it's a sheet from the screen's
+  foot, no scrim, at a finger's size, with Done. Its head says whose look it
+  sets: LOOK / NOTES, *every note*.
+- **What's in it** is what the schema marks `quick`, in its order, drawn by
+  Settings' own controls with their names alone: Day or night (marked
+  `window`: *every page*), Typeface, Text size, **Line spacing** (Tight, As
+  set, Loose: × 0.9, 1, 1.12 of the face's leading) and **Page width**
+  (Narrow, As set, Wide: × 0.84, 1, 1.18 of its measure), and Page (sheet or
+  full), each marked `page`. A setting marked later shows there with nothing
+  else to build. Page width needs room round a page (`wide`): a phone's page
+  already fills its screen, so it isn't offered there. Narrow also narrows a
+  sheet that fills its pane; Two sheets and Facing pages lay each page to
+  its half, which it doesn't change.
+- **A change shows at once**, nothing to confirm; the popover stays open,
+  Day or night turning the window with it. All settings (⌘,) at its foot
+  opens Settings at Look.
+- **The keyboard:** opened, it's on the first setting's chosen value. Each
+  setting is one stop: Tab and ⇧Tab go round them and All settings; arrows
+  choose at once (↑ ↓ a row of the faces); in the stepper they move between
+  − and +, which Enter and Space press. Esc, the key again, a click
+  elsewhere or the phone's back closes it, the keyboard back where it was
+  (the control, if it was pressed). Choosing the other page, or the keyboard
+  going on into it, closes it. With the band or slip put away, it hangs under
+  the strip's control.
+- **Whose look:** the active page's. With a note in front, the notes'
+  (LOOK / NOTES, *every note*); with a book (#40), the shelf's (LOOK / SHELF,
+  *every book on the shelf*): the same `page` settings, kept again on this
+  device under `epub.<key>` (`core/config/epub-look.ts`: no copied entries;
+  Settings doesn't draw them), with a book's own beside them (the scroll
+  style, `quick: 'shelf'`), and worn on the book's page alone, so a
+  note's look never changes a book's, nor a book's a note's. Day or night is
+  the window's, whichever; so is the frame while two pages share the pane.
+  All settings opens Settings at Look, the notes': the shelf's look is set
+  here alone, and with a book in front one line at the popover's foot, in
+  pencil, says so: "Settings sets notes; this is every book's look." The
+  sidebar's sun stays: one press for Day or Night.
+- **A note and a book side by side:** while the look is open, the page it
+  doesn't change sits back, in the tone the split gives the page you aren't
+  in: its paper takes the band's (`data-back` on its leaf). Two notes, or
+  two books, wear the one look, so neither sits back. With a companion, the
+  look opens for the page itself, which becomes the one you're in.
 
 ### Type and the Running head
 
@@ -1250,7 +1607,8 @@ converts at the edges.
 
 Quotes are converted to the quote setting on the way out. Lists, links (to
 web, mail and relative addresses only), images, code and tables go as story
-sites take them; a highlight and a wiki link go as their words. The front matter is
+sites take them; a highlight and a wiki link go as their words. A table cell's
+`\|` goes as a pipe, in its code too, as GFM reads a cell. The front matter is
 never posted.
 
 Edit → Copy as HTML (⇧⌘C, Ctrl+Shift+C) copies what's chosen, or the whole
@@ -1281,6 +1639,8 @@ the note's name. An empty note copies nothing and says so.
   are escaped. A page's brackets round its links (Google's citations,
   `[[1](…), [2](…)]`) stay as written. Should that ever show other than
   escaping all of them, all are escaped.
+- A link's or an image's address keeps its backslashes: each is escaped, so
+  none is read as an escape and the link stays a link.
 - List items a page wraps in `<div>`s or `<span>`s inside its list (Google's
   answers) are the list's items.
 - A code editor's copy (all of it in one `<pre>`, or one block set in a
@@ -1652,6 +2012,19 @@ Every rule, with the cases most likely to break it:
   its prefixes declared, and every word of the note is in each; the zip read
   back by a strict reader and by `unzip`.
 - **Import:** names kept, numbered or refused; sizes, kinds and limits.
+- **EPUB (#40):** the zip reader (stored and deflated entries, data
+  descriptors, the CRC, every cap, a header that lies), names and addresses
+  that would leave the zip, the package, nav, NCX and page-list, DRM refused,
+  the cleaning rules (pictures, links, Calibre's SVG plates, the named parts),
+  the reading state's file and its place (an offset paired with its
+  chapter), a chapter's neighbours and how far through, the book's own links
+  (only to a chapter, an address of the page's own, read back only as one)
+  and the places they name (empty markers, never an id; hostile ids and
+  links in `links-hostile.epub`), a note and its reference named; over any bytes, a
+  book or a reason and never past a cap; a place's round trip and how far
+  through never falling as you read on; and the fixture books (`tests/fixtures/epub/`, made by
+  `scripts/epub-fixtures.mjs` from Pride and Prejudice and Hugh Thomson's
+  1894 illustrations), held to the bytes their script makes.
 - **Versions:** naming, sorting, retention at day and month boundaries, time
   zones, names with forbidden characters.
 - **Settings and themes:** every invalid value falls back; unknown tokens and

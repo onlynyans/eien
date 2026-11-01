@@ -1,12 +1,12 @@
-// The sidebar's sections, a contents page's part titles. LIBRARY, FOLDERS
-// and TAGS fold from their labels (the mockup's `.section__label`): a button
+// The sidebar's sections, a contents page's part titles. LIBRARY, FOLDERS,
+// SHELF and TAGS fold from their labels (the mockup's `.section__label`): a button
 // the row's height, its twisty in sight on hover, focus, or while folded.
 // Which are folded is this device's (./folds.ts). A search's results have a
 // plain label, and don't fold.
 
 import { h } from '../dom';
 import type { Folds, SectionId } from './folds';
-import { twisty } from './tree';
+import { twisty } from './twist';
 
 /** A section: its head (the label, and a control beside it), then its rows. */
 const part = (head: HTMLElement, control: HTMLElement | undefined, tree: HTMLElement) =>

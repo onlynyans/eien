@@ -1,6 +1,9 @@
 # Reading EPUBs: nine explorations
 
-**For the owner to choose (2026-10-27).** Backlog #40. Nothing is built. Three
+**Chosen (2026-10-28), and building in phases.** Backlog #40. Phases 0, 1
+and 2 are built; Phase 3, turning pages, is built but for 3d (the spread, Set
+as a book); Phase 4, place, bookmarks and page count, is built
+([The build](#the-build)). Three
 sets of three, in one family so they share one look: turning pages, scrolling,
 and the features (page count, bookmarks, highlights, search in the book).
 
@@ -42,8 +45,10 @@ section where it and the directions below disagree.
 - **Cleaned nodes, not a sandboxed frame.** A chapter's XHTML is read by
   Eien's own parser and kept to a whitelist of elements, then drawn
   element by element, never from HTML. This is the browser extension's
-  pipeline (#47, `core/extension/clean.ts`, `ui/extension/draw-clean.ts`),
-  shared rather than copied (Phase 0). Nothing in a book can run, and the
+  pipeline (#47), shared rather than copied (Phase 0): `core/html/clean.ts`
+  and `ui/draw-clean.ts`, each caller giving its own rules (where a link may
+  go, where an image comes from, which parts have names), as
+  `core/extension/clean.ts` does for the extension. Nothing in a book can run, and the
   page turns, highlights and Find work on one DOM.
 - **Fixed-layout EPUBs aren't supported** (comics, picture books), and the
   publisher's layout is reduced to its structure. Accepted.
@@ -80,6 +85,86 @@ section where it and the directions below disagree.
 - **Books are only under SHELF,** never in a folder's note list.
 - **Reading state** (place, bookmarks, highlights) in `.eien/reading/`,
   keyed by the book's contents.
+- **Each section shows what its folders hold** (decided 2026-10-29;
+  **built**, [#126](https://github.com/onlynyans/eien/pull/126)). SHELF
+  already lists only the folders with a book somewhere in them; FOLDERS
+  lists every folder but those whose contents, at any depth, are books and
+  nothing else. FOLDERS is for writing, SHELF for reading.
+  - **Judged on the whole subtree:** a folder stays in FOLDERS while any
+    folder under it holds a note, so notes are never cut off. A folder
+    holding notes and books is in both, as before.
+  - **An empty folder is in FOLDERS:** that's where folders are made, and
+    a new one never vanishes.
+  - **What a book is, said once:** the index's book kinds (`.epub` today),
+    so a format added later joins both sections with no other change.
+  - **SHELF's folders become folder rows:** they fold and open with the
+    tree's twisty and keys, kept per device as FOLDERS' are (open at
+    first), and carry the folder's own menu (rename, move, trash), the same
+    one FOLDERS opens. Move to… still lists every folder.
+  - **When a folder changes sides** (its last note leaves, or its first
+    arrives), the keyboard stays near where it was, a chosen folder stays
+    chosen in the list until another is chosen, and a drop still lands:
+    the tree's path for a row that goes, tested for each.
+  - **Speed:** the tree already counts each folder's notes at every depth;
+    it counts its books the same way, in the same pass.
+  - **Not chosen:** a per-folder "shelf" switch (more state to keep in
+    step, and a folder can hold both), and dimming books-only folders in
+    FOLDERS (the clutter stays).
+
+### The tools, by what's in sight (decided 2026-10-29; built, [#126](https://github.com/onlynyans/eien/pull/126))
+
+- **A tool shows only while the active page can use it.** A command marked
+  for one kind of page (`on` in `chrome/commands.ts`) is set aside, not
+  greyed, while the active page is another kind: a book never takes Bold,
+  so a greyed Bold says something false. In a split, the bar shows the
+  tools of the page you're in: choose the book and the note's go, choose
+  the note and they come back (and a book's own, later, the other way).
+- **The rows stay; only buttons come and go.** The formatting bar's row
+  stays while a note is anywhere in sight, so neither page moves up or
+  down; with a book alone, the row goes too.
+
+  | In front | A note's tools | The formatting bar's row |
+  |---|---|---|
+  | A book alone | set aside | gone |
+  | A note beside a book, the book active | set aside | kept, its note-only buttons set aside |
+  | A note beside a book, the note active | shown | as before |
+  | A note | as before | as before |
+
+- **The tools every page shares keep their place** (Look, Split, the
+  panes, later Find), anchored, so only a kind's own group changes; the
+  change is instant, never animated. Where a split mode already gives each
+  page its own host (Facing pages, Tools that follow), each page's tools
+  stay on it.
+- **The menu bar greys, never hides** (#120): menus list all the app does,
+  as each system's own do; the bars show what applies. A hidden tool's key
+  does nothing on a book.
+- **A book's own tools** (contents, Pages or Scroll, bookmark) are marked
+  `on: 'epub'` and follow the same rule.
+
+### Links in a book (decided 2026-10-29; built, [#123](https://github.com/onlynyans/eien/pull/123))
+
+- **They look like links:** the words' own colour with a quiet underline in
+  `--eien-rule-strong` that darkens on hover, as the extension's story
+  page draws a link, the reading surface Eien already has. One rule, shared
+  by the story page and the book's page (both draw cleaned nodes), never a
+  second copy. A note's links in the editor keep their own look.
+- **No link card or bar in a book.** #121's card and bar are for writing
+  (where a link goes, Edit, Copy, Open), and its Link tooltip setting
+  doesn't apply here. On hover or focus, the window's own tooltip names
+  where a link goes:
+
+  | A link in a book | Hover or focus | Click or tap |
+  |---|---|---|
+  | To a chapter or a place in it | "Chapter III" (or "Chapter III · Notes") | goes there, with Back (Phase 2b) |
+  | A footnote's mark | "Note 4" | the note over the page (Phase 2b) |
+  | To the web or mail | the address, "gutenberg.org/ebooks/1342" | opens in the system's browser |
+
+- **Web and mail links open in the browser,** as a note's do in Reading:
+  only `http:`, `https:` and `mailto:`, through the same checked path a
+  note's links take; nothing loads inside Eien. Anything else (`javascript:`,
+  `data:`, files, out of the zip) stays words only, unstyled.
+- **A reading preview** (a chapter's first lines on hover) would be a
+  choice of its own, later.
 
 ### Paged
 
@@ -125,19 +210,74 @@ section where it and the directions below disagree.
 - **A marks setting:** *In the list* (Features 2: Contents, Marks, Found;
   the default) or *On the edge* (Features 3's thumb strip).
 - **Bookmark:** the same setting as Facing pages' mark (ribbon, dog-ear or
-  edge tab).
+  edge tab), renamed **Page mark** for it (2026-10-30).
   - **The clash:** only in a split in Facing pages mode with a book on one
     page. There the one mark would mean both "the page you're in" and "a
     bookmarked page".
-  - **Proposed:** there, the facing mark keeps its meaning, and a
+  - **Decided (2026-10-30):** there, the facing mark keeps its meaning, and a
     bookmarked page says "bookmarked" in its folio, with the bookmark tool
     pressed. Everywhere else the bookmark wears the mark.
 - **Highlight:** a pencil underline with a tick in the margin (Features 1).
 - **Find:** the list's own search field searches the book while it's open.
+  ⌘F (Edit → Find) opens the page's own find bar over the book (decided
+  2026-10-31), as on a note: two ways in.
+- **Phase 5's design, the owner's answers (2026-10-31):**
+  - A highlight taken off is put back by **Put back** in the colophon while
+    its news shows, or by H on its words, left chosen; ⌘Z isn't wired (the
+    Edit menu's Undo is the system's).
+  - No Highlight tool in the bars: the selection bar's Highlight, H,
+    Format → Highlight (⇧⌘H, which a book's words take too) and the phone's
+    ⋯.
 - **Page numbers:** the print edition's, from the EPUB's page-list where it
   has one, else steady pages of 1,500 characters.
   - **No real cost:** the page-list is read once with the book, and a
     chapter's page anchors are measured once as it's drawn.
+- **Phase 4's design, the owner's answers (2026-10-30):**
+  - In Scroll, a bookmark's mark keeps to the top of the sheet in sight.
+  - On the edge, the strip shows your place as a mark-wide ink-soft bar
+    across it, not a tab, so it never looks like an edge-tab bookmark; the
+    page keeps its bookmark mark.
+  - Where the strip has no room (Facing pages' narrow margin, Page frame
+    Full), it lies over the page's outer margin; on the phone, one space in
+    from the screen's edge, clear of Android's Back gesture.
+  - A reading file that can't be read is never written over, and Eien says
+    so once: its place and bookmarks aren't kept until it's fixed or
+    deleted.
+  - `]` and `[` to walk the marks come with highlights (Phase 5).
+
+### After Phase 1 (2026-10-29)
+
+The owner's answers to what Phase 1 (#112, #113, #114) and #49's shelf
+half left open.
+
+- **A book over 32 MB is refused,** as built: the storage reads a file
+  whole, and 32 MB is its cap. Most novels are under 5 MB. Revisited if a
+  real book passes it, which means changing the Storage contract.
+- **With two panes, the book's contents live under its row,** and choosing
+  another row folds them away; a click on the book brings them back. The
+  tree shows one list under one row at a time, as it does for folders.
+- **In a split, both pages wear the notes' frame** (Page: a sheet on the
+  desk, or the whole pane), so Two sheets, Facing pages and Companion draw
+  one arrangement with their marks intact. The book keeps everything else
+  of its own look: typeface, size, line spacing and width. Alone, a book
+  wears its own frame.
+- **"All settings" stays in the shelf's quick look,** opening Settings at
+  Look, which sets the notes' look. One line under the popover says so:
+  "Settings sets notes; this is every book's look." A Shelf section in
+  Settings comes only if it's missed.
+- **A book's row on SHELF gets a menu:** rename, move and trash (the system
+  trash, as a note's).
+- **The menu bar greys a note's commands** while a book is in front (they
+  already do nothing there).
+- **The page the look doesn't change sits back** while the quick look is
+  open with a note and a book side by side, in the tone the split already
+  gives the page you aren't in. Nothing new is designed.
+
+The row menu, the menu bar, the line under the popover and the page sitting
+back are built (2026-10-29; spec §4, Panes and Page, and §6, A quick look;
+docs/quick-look.md, "After Phase 1"; docs/page-kinds.md, Tools). Page width stays off the phone (its
+page is narrower than any face's measure), and the iOS simulator opening a
+book waits for a way to tap.
 
 ### Tests
 
@@ -155,22 +295,44 @@ section where it and the directions below disagree.
 
 Each phase is its own session and pull request, from main.
 
-- **Phase 0, groundwork,** with nothing new to see. Three refactors:
+- **Phase 0, groundwork,** with nothing new to see. **Built** (2026-10-28).
+  Three refactors:
   1. The cleaner and its drawing, out of the extension into shared
-     modules, used by both.
-  2. A page holds a note or a book (`vault/pages.ts`, `page/page.ts`), so
+     modules, used by both: `core/html/clean.ts` and `ui/draw-clean.ts`
+     ([#100](https://github.com/onlynyans/eien/pull/100)).
+  2. A page holds a note or a book (`PageKind`, `PaneLeaf` in
+     `page/page-leaf.ts`; `vault/page-side.ts`, `vault/note-side.ts`), so
      the split, the pager, ⇄ and Wide screen's rooms take a book with no
-     special case. Built: [page-kinds.md](../../page-kinds.md).
-  3. The find bar apart from CodeMirror, so a book's Find reuses the slip,
-     its keys and its count.
+     special case ([#101](https://github.com/onlynyans/eien/pull/101);
+     [page-kinds.md](../../page-kinds.md)).
+  3. The split's files back under 300 lines
+     ([#103](https://github.com/onlynyans/eien/pull/103)), then the find
+     bar apart from CodeMirror (`find/find-bar.ts` over a `FindTarget`,
+     `find/find-target.ts`; a page offers its `PageFind`), so a book's Find
+     reuses the slip, its keys and its count
+     ([#104](https://github.com/onlynyans/eien/pull/104)).
 
-  1 can run beside 2; 3 follows 2.
-- **#49's notes half,** once 2 has merged: the `quick` mark, Line spacing
+  With them, one `isInside` for a path in a folder
+  ([#106](https://github.com/onlynyans/eien/pull/106)), which the zip's
+  paths will use.
+- **#49's notes half.** **Built**
+  ([#105](https://github.com/onlynyans/eien/pull/105);
+  [quick-look.md](../../quick-look.md)): the `quick` mark, Line spacing
   (`appearance.leading`), Page width (`page.width`), the Look command
-  (⇧⌘L) and its popover, for notes. It's built beside 3 and Phase 1, its
-  own session and pull request, and holds to the same testing bar. Its
-  shelf half switches on in Phase 1.
-- **Phase 1, the shelf and opening a book safely:**
+  (⇧⌘L) and its popover, for notes, with `on: 'note'` until a shelf store
+  exists. Its shelf half switches on in Phase 1.
+- **Phase 1, the shelf and opening a book safely,** in three pull
+  requests: **1a, built** (2026-10-28): `core/epub` (the zip reader, its caps
+  and paths, the package and contents, DRM refused, a chapter cleaned with
+  its parts named, the reading state's file), `platform/inflate.ts`, and the
+  fixture books; **1b, built**: books in the index (an `epub` entry kind),
+  SHELF, the EPUB's page kind with a chapter and its pictures, the contents
+  in the list (under the book's row with two panes), the book's stylesheet
+  and its tokens, the reading state kept; **1c, built**: the book's look,
+  made from #49's `quick` mark (`epub.<key>`), the quick look's shelf half
+  (LOOK / SHELF), worn on the book's page alone. The iOS
+  simulator starts with a fixture book in its vault; opening it there needs a
+  UI driver the smoke test lacks (backlog).
   - the zip reader (the browser's decompression, in the window, on desktop
     and phone alike);
   - the container, its spine and contents;
@@ -183,18 +345,95 @@ Each phase is its own session and pull request, from main.
     switches on the quick look's shelf half;
   - the reading state's file;
   - the fixture books.
-- **Phase 2, scrolling:** a chapter a sheet, the scroll style, the place
-  kept; Beside a note and Quote.
-- **Phase 3, turning pages:**
-  - paging on one line grid;
-  - the leaf and its edges, and the spread when there's room;
-  - Set as a book;
-  - Page turn (Curl, Slide, Words) and its speed;
-  - the curl's tokens into `tokens.css`.
-- **Phase 3b, the reading room.**
+- **Phase 2, scrolling** (built, 2026-10-29): a chapter a sheet, the scroll style, the place
+  kept; Beside a note and Quote. In three pull requests: **2a, built**
+  (2026-10-29): a chapter a sheet with the chapters either side at its foot,
+  how far through the chapter and the book in the colophon, the scroll
+  style (*As a note*, the default, or *As a book*) in the shelf's quick
+  look, and the place kept to the line (an offset in the chapter's words,
+  in `.eien/reading/`, shown again after a restart, ⇄, a new width and page
+  zoom); **2b, built**: the book's links (to its chapters, the place they name
+  kept as a marker, never an id, with one step Back in the colophon; to
+  the web and mail in the system's browser; each a link to look at, named
+  in the window's tooltip, as decided under "Links in a book"), and its footnotes shown over the page (EPUB 3's noterefs, and
+  EPUB 2's numbers in a sup), a copy holding its words alone; **2c, built**:
+  a book beside a note, proven in each of the split's modes, its pager, ⇄,
+  the phone's slip and Wide screen's Two pages with nothing made for books,
+  and Quote (the selection bar, Q, a phone's ⋯) into the note beside, or
+  the note a phone's one page came from, cited `— Title, Chapter`, one ⌘Z;
+  a book opened beside from its SHELF row (⌘-click, ⌘Enter, its menu's Open
+  to the Side), as a note's row does.
+- **Phase 3, turning pages,** in four pull requests (re-split 2026-10-30
+  after the design review, so paging and the place in pages land and are
+  measured before the curl):
+  - **3a, built:** the turn's engine, nothing a writer sees yet: the curl's
+    geometry and light, the spring, a key's bounded arc, Slide and Words,
+    the speed and reduced motion, a curl's states (`core/epub/turn/`,
+    `ui/epub/turn/`); the curl's three tokens in `tokens.css`, beside the
+    shadows (Slate's own pair in `slate.css`; a palette's, as a shadow is,
+    never a writer's theme's);
+  - **3b, built:** Pages and Scroll (**Read in**, Scroll the default until
+    the hand's turn is in): paging in whole lines, the place in pages (the
+    same offset as Scroll's), the leaf and its fore-edge, keys, the edges'
+    clicks and a touch's taps turning as **Page turn** and **Turn speed**
+    move them, the Pages and Scroll tools and View menu; a turn copies the
+    page in sight alone (fifty turns of a 600-paragraph chapter, no long
+    task, the CPU four times slower too);
+  - **3c, built:** a hand's turn: a finger anywhere on the page, a mouse at
+    the book's edges, the curl under the hand, the throw, the catch, a tap
+    letting a page in flight fly on; under Slide and Words a drag asks;
+  - **3d, built:** the spread, and Set as a book. Two pages where the
+    pane holds two of 20em of the text with the sheet's margins and the
+    gutter (never on a phone or in a split), turned a spread at a time
+    under every Page turn, the place kept through one page and two
+    (`ui/epub/spread.ts`, `page-columns.ts`); a bookmark's mark on the page
+    it marks, the colophon saying both pages. Set as a book in pages alone:
+    justified only where the window hyphenates the book's language
+    (`hyphens.ts`: a Mac does; Electron on Windows and Linux may not, and
+    there it's ragged), ragged on a phone and on a page as narrow; a
+    chapter opening four lines low on the text's own line; running heads
+    and folios (`running-heads.ts`, the folios the page numbers' labels);
+    and Eien's title page and imprint before the first chapter
+    (`front-matter.ts`, `core/epub/imprint.ts`), turned back to, never
+    opened at, none of the book's words. CHAPTER and its numeral apart, as
+    Showcase 2 sets them, are left: a heading's words would be split, and
+    the places kept in them moved.
+- **The reading room,** after the turn (it was Phase 3b).
 - **Phase 4, place, bookmarks and page count:** print pages or steady
-  pages; Marks in the list or on the edge.
-- **Phase 5, highlights and Find.**
+  pages; Marks in the list or on the edge. In five pull requests, stacked:
+  the page's mark shared, for a bookmark to wear
+  ([#132](https://github.com/onlynyans/eien/pull/132)); **4a, built:** page
+  numbers, the printed edition's from the page-list, else steady pages of
+  1,500 characters, the book counted once in the background, a chapter a
+  task and never while a page turns (`core/epub/chapter-count.ts`,
+  `page-numbers.ts`; `ui/epub/book-count.ts`); **4b, built:** bookmarks on
+  the page: B, the tool, View → Bookmark This Page and the phone's ⋯; the
+  Page mark worn, kept to the top of the sheet in sight as it scrolls,
+  following a turn once it lands; Facing pages' clash as decided; kept in
+  the reading state beside every field it doesn't know, never over a file
+  it can't read (`core/epub/bookmarks.ts`, `ui/epub/page-bookmarks.ts`,
+  `bookmark.css`); **4c, built:** Marks in the list: Contents and Marks
+  under the book's head, the one shown pressed, its bookmarks as rows (their words, page and
+  chapter; Delete takes one off), under the book's SHELF row with two panes
+  (`list/book-lenses.ts`); **4d, built:** the Marks setting (*In the list*
+  or *On the edge*, in the shelf's quick look) and the strip down the page
+  pane's edge: chapters, bookmarks, the place as a bar, a slider to the
+  keyboard, scrubbed by a finger (`ui/epub/edge-strip.ts`, `book-strip.ts`).
+- **Phase 5, highlights and Find,** in four pull requests, stacked on 3d:
+  one walk of a chapter's words and the reading file's lists first
+  ([#139](https://github.com/onlynyans/eien/pull/139)); **5a, built:**
+  highlights on the page, a pencil line under the words painted by the CSS
+  Custom Highlight API over the page's own text (no element among the words
+  a place counts) and a tick in the margin by each paragraph; H, the
+  selection bar's Highlight, Format → Highlight (⇧⌘H, a book's words take a
+  note's own command) and the phone's ⋯; taken off, the words left chosen
+  and Put back in the colophon while it says so; kept in the reading file
+  beside the bookmarks, decided against the file as it is when written
+  (`core/epub/highlights.ts`, `ui/epub/page-highlights.ts`, `ink.ts`);
+  **5b:** highlights in Marks and on the strip, and `]` `[`; **5c:** Find,
+  the page's own find bar over the book (the owner's answer, 2026-10-31:
+  ⌘F opens the bar, as on a note) and the list's field, each a search of
+  its own over one engine, its matches in washes.
 - **Phase 6, by lamplight,** on Scroll.
 
 Each module holds one concept, and none passes about 300 lines: the zip,

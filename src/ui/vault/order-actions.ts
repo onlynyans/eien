@@ -4,6 +4,7 @@
 
 import { joinPath, parentOf } from '../../core/paths';
 import { FOLDER_SETTINGS_NAME, placedBefore } from '../../core/vault';
+import type { FolderSection } from '../sidebar/folds';
 import type { FolderMove, Sidebar } from '../sidebar/sidebar';
 import {
   dropFolder,
@@ -32,20 +33,27 @@ export function orderActions(of: OrderActionsOf) {
   const { state, organizer, nav } = of;
   const act = (operation: () => Promise<unknown>) => of.act(operation);
   const files = { state, organizer };
-  /** Where it is now: the keyboard goes there, and the open folders and selection follow it. */
+  /**
+   * Where it is now: the keyboard goes there, and the open folders and selection follow it.
+   * Moved into another folder, that one opens on SHELF too, so it's in sight there as in
+   * FOLDERS; moved among its own, a fold the writer made stays.
+   */
   const land = (path: string, to: string | null) => {
     if (to && to !== path) nav.follow(path, to);
+    if (to && parentOf(to) !== parentOf(path)) nav.shelf.openTo(parentOf(to));
     of.sidebar().refocusOn(to ?? path);
   };
   return {
-    moveFolder(path: string, how: FolderMove): void {
+    land,
+    moveFolder(path: string, how: FolderMove, section: FolderSection): void {
       void act(async () => {
         if (how === 'up' || how === 'down') {
-          await nudgeFolder(files, path, how === 'up' ? -1 : 1);
+          await nudgeFolder(files, path, how === 'up' ? -1 : 1, section);
           land(path, path);
           return;
         }
-        const to = how === 'out' ? await folderOut(files, path) : await folderInto(files, path);
+        const to =
+          how === 'out' ? await folderOut(files, path) : await folderInto(files, path, section);
         if (to && how === 'in') nav.openTo(parentOf(to));
         land(path, to);
       });

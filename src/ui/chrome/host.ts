@@ -1,6 +1,7 @@
 // A host draws a list of commands as icon buttons, each with its name, its
-// key and its tooltip (./tooltip.ts), and shows how each looks now; short of
-// room in its bar, the ones it may fold go behind a ⋯ (./fold.ts). It knows
+// key and its tooltip (./tooltip.ts), and shows how each looks now, or sets
+// it aside where it can't act (#40); short of room in its bar, the ones it
+// may fold go behind a ⋯ (./fold.ts). It knows
 // nothing of what the commands do, or of which layout it's in.
 
 import { h } from '../dom';
@@ -18,6 +19,10 @@ export interface CommandLook {
   readonly icon?: IconName;
   /** The tooltip's words now (Compare · Changes). */
   readonly tip?: string;
+  /** Its popover open or not, for a command that opens one (Look). */
+  readonly expanded?: boolean;
+  /** Set aside, not drawn: the page it acts on can't use it (a note's tools with a book, #40). */
+  readonly aside?: boolean;
 }
 
 export interface HostOf {
@@ -31,6 +36,11 @@ export interface HostOf {
 
 /** What a host draws: its name, label and commands; where it goes is its owner's (a layout's slot, a page). */
 export type HostDraw = Pick<HostSpec, 'name' | 'label' | 'items' | 'icons' | 'folds'>;
+
+/** Each written only when it changes: a write restyles, and a fit tries many. */
+const hide = (element: HTMLElement, hidden: boolean) => {
+  if (element.hidden !== hidden) element.hidden = hidden;
+};
 
 export class Host<Spec extends HostDraw = HostSpec> implements Folding {
   readonly element: HTMLElement;
@@ -78,8 +88,15 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
    */
   steps(): Step[] {
     const folds = this.spec.folds ?? [];
-    const order = folds.filter((id) => this.#buttons.get(id)?.checkVisibility());
-    const steps = [...new Set(order.map((id) => this.#groupOf(id)?.ids ?? [id]))];
+    const order = folds.filter((id) => {
+      const button = this.#buttons.get(id);
+      return button?.dataset.aside === undefined && button?.checkVisibility();
+    });
+    // A group's commands set aside (a book's views on a note's page) aren't tools here to fold.
+    const drawn = new Set(order);
+    const steps = [...new Set(order.map((id) => this.#groupOf(id)?.ids ?? [id]))].map((ids) =>
+      ids.filter((id) => drawn.has(id)),
+    );
     // A group's step comes when the first of its commands would.
     const rank = (ids: readonly CommandId[]) =>
       Math.min(...ids.map((id) => folds.indexOf(id)).filter((at) => at >= 0));
@@ -93,19 +110,22 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
 
   /** Show all but `ids`, folded behind a ⋯ (shown if `more`), and the rules that still part two runs. */
   fold(ids: readonly CommandId[], more: boolean): void {
-    // Each written only when it changes, as in refresh: a write restyles, and a fit tries many.
-    const hide = (element: HTMLElement, hidden: boolean) => {
-      if (element.hidden !== hidden) element.hidden = hidden;
-    };
     for (const [id, button] of this.#buttons) hide(button, ids.includes(id));
     if (this.more) hide(this.more, !more);
+    this.#arrange();
+  }
+
+  /**
+   * Each group out of the row with none of its buttons in it, and each rule only between two
+   * runs; the host marked empty with no tool set out in it (#40), for a floating bar to go.
+   */
+  #arrange(): void {
+    const out = (button: HTMLElement) => button.hidden || button.dataset.aside !== undefined;
     for (const group of this.element.querySelectorAll<HTMLElement>('.host__group')) {
-      hide(
-        group,
-        [...group.querySelectorAll('button')].every((button) => button.hidden),
-      );
+      hide(group, [...group.querySelectorAll('button')].every(out));
     }
     let before = false; // a tool in sight since the last rule shown
+    let any = false;
     let rule: HTMLElement | null = null;
     for (const child of this.element.children) {
       if (!(child instanceof HTMLElement) || child === this.more) continue;
@@ -113,13 +133,19 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
         if (before) rule = child;
         else hide(child, true);
         before = false;
-      } else if (!child.hidden) {
+      } else if (!out(child)) {
         if (rule) hide(rule, false); // a tool in sight on each side
         rule = null;
         before = true;
+        any = true;
       }
     }
     if (rule) hide(rule, true); // a run before it, none after
+    // Folded behind its ⋯ isn't empty: the ⋯ is in sight.
+    const empty = !any && this.more?.hidden !== false;
+    if (this.element.hasAttribute('data-empty') !== empty) {
+      this.element.toggleAttribute('data-empty', empty);
+    }
   }
 
   /** The button drawn for `id`, if this host holds it. */
@@ -127,16 +153,30 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
     return this.#buttons.get(id);
   }
 
-  /** Show each command as it is now: pressed, disabled, its icon, its tooltip. */
-  refresh(): void {
+  /**
+   * Show each command as it is now: pressed, disabled, its icon, its tooltip, or set aside.
+   * True when what's in the row changed, so its bar is fitted again.
+   */
+  refresh(): boolean {
+    let moved = false;
     for (const [id, button] of this.#buttons) {
       const def = commandOf(id);
       const look = this.#of.look(id);
+      const aside = look.aside === true;
+      if ((button.dataset.aside !== undefined) !== aside) {
+        button.toggleAttribute('data-aside', aside);
+        moved = true;
+      }
       // Each written only when it changes: a redraw runs this, and a write restyles.
       const pressed = look.pressed === undefined ? null : String(look.pressed);
       if (button.getAttribute('aria-pressed') !== pressed) {
         if (pressed === null) button.removeAttribute('aria-pressed');
         else button.setAttribute('aria-pressed', pressed);
+      }
+      const expanded = look.expanded === undefined ? null : String(look.expanded);
+      if (button.getAttribute('aria-expanded') !== expanded) {
+        if (expanded === null) button.removeAttribute('aria-expanded');
+        else button.setAttribute('aria-expanded', expanded);
       }
       const disabled = look.disabled ?? false;
       if (button.disabled !== disabled) button.disabled = disabled;
@@ -146,6 +186,8 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
       const drawn = button.querySelector<SVGElement>('svg')?.dataset.icon;
       if (name !== 'seal' && drawn !== name) button.replaceChildren(icon(name));
     }
+    if (moved) this.#arrange();
+    return moved;
   }
 
   #button(id: CommandId): HTMLButtonElement {
@@ -163,7 +205,8 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
           'data-shortcut': keys?.text,
           // Its identity across redraws and layouts: the keyboard comes back to it by this.
           'data-key': `command:${id}`,
-          'aria-haspopup': id === 'settings' ? 'dialog' : id === 'more' ? 'menu' : undefined,
+          'aria-haspopup':
+            id === 'settings' || id === 'look' ? 'dialog' : id === 'more' ? 'menu' : undefined,
         },
         on: { click: () => this.#of.press(id, button) },
       },

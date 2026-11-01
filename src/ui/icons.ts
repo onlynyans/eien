@@ -10,6 +10,12 @@ export const ICONS = {
     '<path d="M5.5 4.5L2 8l3.5 3.5"/><path d="M10.5 4.5L14 8l-3.5 3.5"/><path d="M9.2 3l-2.4 10"/>',
   reading:
     '<path d="M8 4.6C6.6 3.6 4.7 3.1 2.2 3.1v9.4c2.5 0 4.4.5 5.8 1.5 1.4-1 3.3-1.5 5.8-1.5V3.1c-2.5 0-4.4.5-5.8 1.5z"/><path d="M8 4.6V14"/>',
+  // A book's two ways to read (#40, Phase 3b): a page with its corner, and a sheet that scrolls.
+  pages: '<path d="M3.5 2.5h6l3 3v8h-9z"/><path d="M9.5 2.5v3h3"/>',
+  scroll: '<path d="M4.5 2.5h7v11h-7z"/><path d="M8 5.5v5M6.5 7L8 5.5 9.5 7M6.5 9L8 10.5 9.5 9"/>',
+  // A book's bookmark (#40, Phase 4b): a page with the silk ribbon over its top edge, its end
+  // forked, as the Page mark's; the page tells it from Pinned's banner.
+  bookmark: '<path d="M3.5 2.5h9v11h-9z"/><path d="M8.5 2.5v5.5l1.5-1.5 1.5 1.5V2.5"/>',
   compare:
     '<path d="M2.5 3h4.5v10H2.5z"/><path d="M9 3h4.5v10H9z"/><path d="M4 6h1.5M4 8.5h1.5M10.5 6h1.5M10.5 8.5h1.5M10.5 11h1.5"/>',
   versions: '<path d="M4.5 2.5h8v9.5"/><path d="M2.5 4.5h8v9h-8z"/><path d="M4.5 7.5h4M4.5 10h3"/>',
@@ -37,6 +43,12 @@ export const ICONS = {
   strip: '<path d="M2.5 3h11v10h-11z"/><path d="M2.5 6h11"/>',
   format: '<path d="M3.5 12.5L7 3.5h2l3.5 9"/><path d="M5 9h6"/>',
   link: '<path d="M6.8 9.2l2.4-2.4"/><path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/>',
+  // A link's (backlog #38, explorations/_src/link.js): follow it, take it off, a note's, the web's.
+  openLink: '<path d="M9.5 2.5h4v4"/><path d="M13.5 2.5L8 8"/><path d="M11.5 9.5v4h-9v-9h4"/>',
+  unlink:
+    '<path d="M8.6 5l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4L12 8.4"/><path d="M7.4 11l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4L4 7.6"/><path d="M3 3l1.6 1.6M13 13l-1.6-1.6"/>',
+  note: '<path d="M4 2.5h5.5L12 5v8.5H4z"/><path d="M9.5 2.5V5H12"/><path d="M6 8h4M6 10.5h3"/>',
+  web: '<circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11"/><path d="M8 2.5c1.5 1.6 2.3 3.4 2.3 5.5S9.5 11.9 8 13.5C6.5 11.9 5.7 10.1 5.7 8S6.5 4.1 8 2.5z"/>',
   quote: '<path d="M3 8.5h3.5v4H3zM3 8.5c0-2.5.8-4 3-5M9.5 8.5H13v4H9.5zM9.5 8.5c0-2.5.8-4 3-5"/>',
   bullets:
     '<path d="M6 4.5h7.5M6 8h7.5M6 11.5h7.5"/><circle cx="3.2" cy="4.5" r=".6"/><circle cx="3.2" cy="8" r=".6"/><circle cx="3.2" cy="11.5" r=".6"/>',
@@ -75,6 +87,8 @@ export const ICONS = {
     '<path d="M2.5 3.5h7"/><path d="M4.5 3.5v8.5h2M4.5 8h2"/><path d="M8.5 8h5M8.5 12h5"/>',
   palette:
     '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
+  // The quick look (#49): a capital and a small letter, as a type specimen opens.
+  look: '<path d="M1.8 13L5.2 3.5h.6L9.2 13M3 9.8h5"/><circle cx="12" cy="10.9" r="2"/><path d="M14 8.6V13"/>',
   type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
   bold: '<path d="M4.5 2.8h4.2a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 8h4.9a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 2.8v10.4"/>',
   italic: '<path d="M7.2 2.8h5M3.8 13.2h5M10 2.8L6 13.2"/>',
@@ -90,7 +104,7 @@ export const ICONS = {
   exclude: '<path d="M4 8h8"/>',
   swap: '<path d="M3 5.5h9.5M10 3l2.5 2.5L10 8"/><path d="M13 10.5H3.5M6 8l-2.5 2.5L6 13"/>',
   resize: '<path d="M13 7l-6 6M13 10.5L10.5 13"/>',
-  // Find's (ui/editor/find-bar.ts): its three options, and a line put in another's place, once or all.
+  // Find's (ui/find/find-bar.ts): its three options, and a line put in another's place, once or all.
   matchCase:
     '<path d="M1.8 12.5L4.9 3.5h.6l3.1 9M3 9.5h4.4"/><circle cx="12" cy="10.3" r="2.2"/><path d="M14.2 8v4.5"/>',
   wholeWord:

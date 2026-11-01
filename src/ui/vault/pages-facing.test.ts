@@ -88,16 +88,24 @@ describe('the active page’s mark', () => {
   it('lies in the active page alone, and moves with it', async () => {
     const { pages } = await facing();
     const mark = () =>
-      pages.sides.map(({ page }) => page.element.querySelectorAll('.page__mark').length);
+      pages.sides.map(({ page }) => page.element.querySelectorAll('.page__mark--active').length);
     expect(mark()).toEqual([0, 1]);
     pages.activate(pages.sides[0] as (typeof pages.sides)[number]);
     expect(mark()).toEqual([1, 0]);
   });
 
+  it('stands at the active page’s outer edge: the left page’s left, the right page’s right', async () => {
+    const { pages } = await facing();
+    const edge = () => document.querySelector<HTMLElement>('.page__mark--active')?.dataset.edge;
+    expect(edge()).toBe('right');
+    pages.activate(pages.sides[0] as (typeof pages.sides)[number]);
+    expect(edge()).toBe('left');
+  });
+
   it('isn’t there with Two sheets', async () => {
     const { pages, change } = await facing();
     change({ 'appearance.split': 'sheets' });
-    expect(document.querySelectorAll('.page__mark')).toHaveLength(0);
+    expect(document.querySelectorAll('.page__mark--active')).toHaveLength(0);
     expect(pages.split).toBe(true);
   });
 });
@@ -116,7 +124,7 @@ describe('the book too narrow for two pages', () => {
     expect(edge?.getAttribute('aria-label')).toBe('Turn to Snow, the facing page');
     expect(pages.pane.pager.hidden).toBe(true); // a book turns; it doesn't fold
     edge?.click();
-    expect(pages.notes().active).toBe('Snow.md');
+    expect(pages.shown().active).toBe('Snow.md');
     expect(row.dataset.activeSide).toBe('1');
   });
 });

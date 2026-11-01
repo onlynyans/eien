@@ -173,3 +173,30 @@
   border: var(--eien-hairline) solid var(--eien-rule-strong);
   border-radius: var(--eien-radius-s);
 }
+
+/* A book's page wears its own frame alone on the pane (../epub/epub.css). Two
+   pages lie in the window's frame, one arrangement of the pane (Two sheets'
+   and Facing pages' marks read it): the book keeps its own face, size, line
+   spacing and width. */
+.page__pages[data-two] > .page__leaf[data-frame] {
+  --eien-page-ground: inherit;
+  --eien-page-gutter: inherit;
+  --eien-sheet-edge: inherit;
+  --eien-sheet-lift: inherit;
+  background: none;
+}
+
+/* The quick look open with a note and a book side by side (#49): the page whose
+   look it doesn't change sits back a step (../vault/chrome-wiring.ts), as the
+   companion's page you aren't in does: its paper takes the band's tone. The
+   paper is the sheet; the leaf where the leaf is (Facing pages) or where the
+   pane is paper round the sheet's measure (Page: Full). A companion sitting
+   back is the one you aren't in, which ./split-companion.css paints already. */
+.page__pages[data-two] > .page__leaf {
+  transition: background-color var(--eien-calm) var(--eien-ease);
+}
+.page__pages[data-two] > .page__leaf[data-back] .sheet,
+:root[data-frame="full"] .page__pages[data-two] > .page__leaf[data-back],
+:root[data-split="facing"] .page__pages[data-two] > .page__leaf[data-back] {
+  background: var(--eien-band);
+}

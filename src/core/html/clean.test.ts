@@ -120,7 +120,7 @@ describe('cleanHtml: a chapter’s named parts', () => {
       if (name === 'hr') return 'scene-break';
       if (name === 'figure') return 'plate';
       if (name === 'figcaption') return 'caption';
-      if (/\bfirst\b/u.test(said)) return 'first-line';
+      if (/\bfirst\b/u.test(said)) return 'drop-cap';
       return /\bodd\b/u.test(said) ? 'constructor' : null;
     },
   };

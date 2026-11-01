@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   checkSetting,
   DEFAULT_SETTINGS,
+  EPUB_LOOK,
+  epubKey,
+  epubLook,
+  isPageLook,
   offeredOn,
+  PAGE_LOOK,
+  PHONE_DEFAULTS,
   readSettings,
   SETTING_GROUPS,
   SETTINGS,
@@ -96,6 +102,62 @@ describe('the schema', () => {
       'instrument',
     ]);
     expect(DEFAULT_SETTINGS['appearance.face']).toBe('newsreader');
+  });
+});
+
+describe('the quick look’s mark (#49)', () => {
+  it('marks Day or night for every page, five of the page’s own, and a book’s scroll style, in the decided order', () => {
+    const marked = SETTINGS.filter((setting) => 'quick' in setting).map((setting) => [
+      setting.key,
+      'quick' in setting && setting.quick,
+    ]);
+    expect(marked).toEqual([
+      ['appearance.scheme', 'window'],
+      ['appearance.face', 'page'],
+      ['appearance.textSize', 'page'],
+      ['appearance.leading', 'page'],
+      ['page.width', 'page'],
+      ['appearance.frame', 'page'],
+      ['epub.view', 'shelf'],
+      ['epub.turn', 'shelf'],
+      ['epub.turnSpeed', 'shelf'],
+      ['epub.scroll', 'shelf'],
+      ['epub.marks', 'shelf'],
+    ]);
+  });
+
+  it('keeps each marked setting on this device, as a look is', () => {
+    for (const setting of SETTINGS)
+      if ('quick' in setting) expect(setting.scope, setting.key).toBe('device');
+  });
+
+  it('adds line spacing and page width, a step either side of the face’s own, As set by default', () => {
+    const leading = settingOf('appearance.leading');
+    const width = settingOf('page.width');
+    expect(leading?.type === 'choice' && Object.keys(leading.choices)).toEqual([
+      'tight',
+      'set',
+      'loose',
+    ]);
+    expect(width?.type === 'choice' && Object.keys(width.choices)).toEqual([
+      'narrow',
+      'set',
+      'wide',
+    ]);
+    expect([DEFAULT_SETTINGS['appearance.leading'], DEFAULT_SETTINGS['page.width']]).toEqual([
+      'set',
+      'set',
+    ]);
+    expect([leading?.group, width?.group]).toEqual(['Type', 'Page']);
+    expect(valueProblem(width as never, 'huge')).not.toBeNull();
+  });
+
+  it('offers page width only where a page has room round it: never in a phone’s one pane', () => {
+    const width = settingOf('page.width');
+    if (!width) throw new Error('missing page.width');
+    expect(offeredOn(width, 'android', true)).toBe(false);
+    expect(offeredOn(width, 'android', false)).toBe(true);
+    expect(offeredOn(width, 'darwin')).toBe(true);
   });
 });
 
@@ -258,7 +320,69 @@ describe('withDefaults', () => {
       'books.numerals': 'arabic',
     });
     expect(withDefaults({ 'page.zoom': 120 }, { 'page.zoom': 80 })['page.zoom']).toBe(120);
-    expect(Object.keys(withDefaults())).toEqual(SETTINGS.map((setting) => setting.key));
+    // Every setting, and the shelf's look after them (#40), each page setting again under `epub.`.
+    expect(Object.keys(withDefaults())).toEqual([
+      ...SETTINGS.map((setting) => setting.key),
+      ...EPUB_LOOK.map((setting) => setting.key),
+    ]);
+  });
+});
+
+describe('a book’s own look (#40)', () => {
+  it('is each setting a page wears, again under epub., kept on this device', () => {
+    expect(PAGE_LOOK.map((setting) => setting.key)).toEqual([
+      'appearance.face',
+      'appearance.textSize',
+      'appearance.leading',
+      'page.width',
+      'appearance.frame',
+    ]);
+    expect(EPUB_LOOK.map((setting) => [setting.key, setting.scope])).toEqual(
+      PAGE_LOOK.map((setting) => [`epub.${setting.key}`, 'device']),
+    );
+    expect(DEFAULT_SETTINGS['epub.appearance.textSize']).toBe(
+      DEFAULT_SETTINGS['appearance.textSize'],
+    );
+  });
+
+  it('is checked, read and written as any setting is, and never as another', () => {
+    expect(checkSetting('epub.appearance.face', 'literata')).toEqual({
+      key: 'epub.appearance.face',
+      value: 'literata',
+    });
+    expect(() => checkSetting('epub.appearance.textSize', 500)).toThrow(TypeError);
+    expect(() => checkSetting('epub.appearance.scheme', 'night')).toThrow(TypeError);
+    expect(() => checkSetting('epub.editor.focus', 'on')).toThrow(TypeError);
+    const read = readSettings(
+      { 'epub.appearance.leading': 'loose', 'epub.page.width': 'huge' },
+      'device',
+    );
+    expect(read.values).toEqual({ 'epub.appearance.leading': 'loose' });
+    expect(read.problems).toEqual([expect.stringMatching(/^epub\.page\.width must be one of/u)]);
+    expect(readSettings({ 'epub.appearance.face': 'literata' }, 'vault').values).toEqual({});
+  });
+
+  it('is worn by a book as the page settings, the notes’ untouched', () => {
+    const values = withDefaults({
+      'appearance.face': 'hanken',
+      'epub.appearance.face': 'literata',
+    });
+    expect(epubLook(values)['appearance.face']).toBe('literata');
+    expect(values['appearance.face']).toBe('hanken');
+    expect(epubLook(values)['appearance.scheme']).toBe(values['appearance.scheme']);
+    expect(epubKey('page.width')).toBe('epub.page.width');
+    expect(isPageLook('appearance.leading')).toBe(true);
+    expect(isPageLook('appearance.scheme')).toBe(false);
+  });
+});
+
+describe('a phone’s defaults', () => {
+  it('are choices of their settings, and a link’s is the Bar', () => {
+    expect(PHONE_DEFAULTS).toEqual({ 'editor.links': 'bar' });
+    for (const [key, value] of Object.entries(PHONE_DEFAULTS)) {
+      const setting = SETTINGS.find((each) => each.key === key);
+      expect(setting && valueProblem(setting, value)).toBeNull();
+    }
   });
 });
 
@@ -279,6 +403,12 @@ describe('withSetting', () => {
       withSetting({ 'books.numerals': 'arabic', x: 1 }, { key: 'books.numerals', value: 'roman' }),
     ).toEqual({ x: 1 });
     expect(withSetting({}, { key: 'page.zoom', value: 100 })).toEqual({});
+  });
+
+  it('keeps every choice of a setting whose default differs by system', () => {
+    expect(withSetting({}, { key: 'editor.links', value: 'card' })).toEqual({
+      'editor.links': 'card',
+    });
   });
 
   it('starts afresh from a file that isn’t an object', () => {

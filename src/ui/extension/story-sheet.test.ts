@@ -62,13 +62,13 @@ describe('storySheet', () => {
       () => {},
     );
     expect(element.querySelector('.story__chapter-head')).toBeNull();
-    expect(element.querySelector('.story__turns')).toBeNull();
+    expect(element.querySelector('.sheet__turns')).toBeNull();
   });
 
   it('turns from its foot', () => {
     const turn = vi.fn();
     const { element } = storySheet(story({ previous: false }), 'arabic', turn);
-    const buttons = [...element.querySelectorAll<HTMLButtonElement>('.story__turns button')];
+    const buttons = [...element.querySelectorAll<HTMLButtonElement>('.sheet__turns button')];
     expect(buttons.map((b) => b.textContent)).toEqual(['Next chapter']);
     buttons[0]?.click();
     expect(turn).toHaveBeenCalledWith({ to: 'next' });

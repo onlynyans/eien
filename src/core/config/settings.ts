@@ -3,6 +3,7 @@
 // doesn't know, so an older Eien on another device never drops a newer
 // one's settings.
 
+import { EPUB_LOOK } from './epub-look';
 import {
   type NumberSetting,
   SETTINGS,
@@ -12,14 +13,17 @@ import {
   type SettingValues,
 } from './schema';
 
-const BY_KEY = new Map<string, Setting>(SETTINGS.map((setting) => [setting.key, setting]));
+/** Every setting by its key: the schema's, and the shelf's look under `epub.` (./epub-look.ts). */
+const BY_KEY = new Map<string, Setting>(
+  [...SETTINGS, ...EPUB_LOOK].map((setting) => [setting.key, setting]),
+);
 
 /** The setting called `key`, if there is one. */
 export const settingOf = (key: string): Setting | undefined => BY_KEY.get(key);
 
 /** Every setting at its default. */
 export const DEFAULT_SETTINGS = Object.fromEntries(
-  SETTINGS.map((setting) => [setting.key, setting.default]),
+  [...BY_KEY.values()].map((setting) => [setting.key, setting.default]),
 ) as SettingValues;
 
 /** Why `value` can't be `setting`'s, or null when it can. */
@@ -109,7 +113,9 @@ export function withDefaults(...chosen: readonly Partial<SettingValues>[]): Sett
  */
 export function withSetting(raw: unknown, { key, value }: SettingChange): Record<string, unknown> {
   const kept = Object.entries(isObject(raw) ? raw : {}).filter(([name]) => name !== key);
-  if (value !== settingOf(key)?.default) kept.push([key, value]);
+  const setting = settingOf(key);
+  // A setting whose default differs by system keeps every choice: what's the default here isn't there.
+  if (value !== setting?.default || setting.phoneDefault !== undefined) kept.push([key, value]);
   // fromEntries defines each key as data, so a "__proto__" in the file stays a plain key.
   return Object.fromEntries(kept);
 }

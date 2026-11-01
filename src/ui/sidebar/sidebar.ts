@@ -12,27 +12,36 @@ import { addButton } from '../add-button';
 import { h, wordButton } from '../dom';
 import type { SearchField } from '../list/search-field';
 import { FolderField } from './folder-field';
-import { Folds } from './folds';
+import { type FolderActs, FolderSides } from './folder-sides';
+import { type FolderSection, Folds } from './folds';
 import { SidebarFoot } from './foot';
 import { drawLensSlot, type LensSlot, type SlotLens } from './lens-slot';
 import { RowCache } from './row-cache';
-import { type FolderMove, folderRowEvents, tagRowEvents } from './row-keys';
-import { foldingSection, plainSection } from './sections';
+import { type FolderMove, tagRowEvents } from './row-keys';
+import { seals } from './seals';
+import { plainSection } from './sections';
+import type { ShelfActions, ShelfModel } from './shelf-rows';
+import { SidebarFocus } from './sidebar-focus';
 import { sidebarSignature } from './signature';
 import { TagField } from './tag-field';
 import { keyOf, RESULTS, type TreeActions, type TreeModel, TreeRows } from './tree';
+import { treeSections } from './tree-sections';
 import { TreeWindows } from './tree-windows';
 
 export interface SidebarModel extends TreeModel {
   /** News from the last action, when there's no note list to show it above. */
   readonly notice: string | null;
+  /** SHELF (#40): the book on the active page, and with two panes the open book's contents. */
+  readonly shelf: Omit<ShelfModel, 'tree'>;
 }
 
 export type { FolderMove } from './row-keys';
 
-export interface SidebarActions extends TreeActions {
-  /** Move a folder in your order, or out of or into a folder. */
-  moveFolder(path: string, how: FolderMove): void;
+export interface SidebarActions extends TreeActions, ShelfActions {
+  /** Move a folder in your order among the folders `section` shows beside it, or out of or into a folder. */
+  moveFolder(path: string, how: FolderMove, section: FolderSection): void;
+  /** Shut a folder on SHELF, or open it (#40). */
+  foldShelf(path: string): void;
   /** Move a tag one place up or down among the tags beside it. */
   moveTag(key: string, by: -1 | 1): void;
   /** Lay a tag over the list showing (#32): moved on to the next state, or kept out at once. */
@@ -71,10 +80,11 @@ export class Sidebar {
   /** The folder being renamed in place. */
   readonly #folderField = new FolderField({
     drawing: () => this.#drawing,
-    done: (folder, typed) => {
-      // The keyboard goes back to the folder: under its new name once the rename is done
-      // (refocusOn), under its own if the rename is refused.
-      this.#refocus = keyOf({ kind: 'folder', path: folder.path });
+    done: (folder, typed, section) => {
+      // The keyboard goes back to the folder, in the section it was renamed in: under its
+      // new name once the rename is done (refocusOn), under its own if the rename is refused.
+      this.#sides.from = section;
+      this.#focus.asked = this.#sides.keys(folder.path);
       if (typed !== null) this.#actions.renameFolder(folder.path, typed);
       else if (this.#model) this.draw(this.#model);
     },
@@ -95,7 +105,7 @@ export class Sidebar {
     },
     done: (tag) => {
       // The keyboard goes to the tag made, once it's there; or back to the +.
-      this.#refocus = tag ? keyOf({ kind: 'tag', key: tagKey(tag) }) : 'new-tag';
+      this.#focus.asked = [tag ? keyOf({ kind: 'tag', key: tagKey(tag) }) : 'new-tag'];
       if (tag) this.#actions.newTag(tag);
       else if (this.#model) this.draw(this.#model);
     },
@@ -104,10 +114,6 @@ export class Sidebar {
   readonly adders: readonly HTMLButtonElement[];
   readonly #addFolder: HTMLButtonElement;
   readonly #addTag: HTMLButtonElement;
-  /** The control to give the keyboard back to after the next redraw, by its data-key. */
-  #refocus: string | null = null;
-  /** The row the keyboard was on as the sidebar shut, by its data-key: `focusTree` goes back to it. */
-  #left: string | null = null;
   /** Whether the tree drawn whole last was a search's results. */
   #drawnResults = false;
   /** The frame last drawn (./signature.ts): the same again isn't rebuilt. */
@@ -116,11 +122,27 @@ export class Sidebar {
   readonly #rows = new RowCache();
   /** Which sections are folded, on this device. */
   readonly #folds = new Folds();
+  /** The section a folder's keys or menu were last used in (#40). */
+  readonly #sides = new FolderSides();
+  /** What a folder's menu and keys do, in FOLDERS and on SHELF alike. */
+  readonly #acts: FolderActs = {
+    menu: (path, at, section) => this.#actions.folderMenu(path, at, section),
+    rename: (path) => this.editFolder(path),
+    move: (path, how, section) => this.#actions.moveFolder(path, how, section),
+  };
   /** Long lists of notes, drawn by the rows in sight, kept from draw to draw. */
   readonly #windows = new TreeWindows();
+  /** Where the keyboard is, kept across redraws. */
+  readonly #focus = new SidebarFocus(
+    this.#body,
+    this.#windows,
+    this.searchSlot,
+    () => this.#folderField.active || this.#tagField.active,
+  );
 
   constructor(name: string, actions: SidebarActions, keys: string, search: SearchField) {
     this.#actions = actions;
+    this.#sides.watch(this.#body);
     this.#search = search;
     this.#addFolder = addButton({
       label: 'New folder',
@@ -129,26 +151,7 @@ export class Sidebar {
     });
     this.#addTag = addButton({ label: 'New tag', key: 'new-tag', run: () => this.newTag() });
     this.adders = [this.#addFolder, this.#addTag];
-    /** The seal as a button: it shuts the sidebar, and on the strip, opens it again. */
-    const seal = (label: string, extra: string) =>
-      h(
-        'button',
-        {
-          class: `seal-button ${extra}`,
-          attrs: { type: 'button', 'aria-label': label, title: `${label} (${keys})` },
-          on: {
-            click: () => {
-              const had = document.activeElement === (extra === 'sidebar__show' ? show : hide);
-              actions.toggleSidebar();
-              // The seal that had the keyboard is hidden now: the other one, in its place, takes it.
-              if (had) (extra === 'sidebar__show' ? hide : show).focus();
-            },
-          },
-        },
-        h('span', { class: 'seal', text: '永', attrs: { 'aria-hidden': 'true' } }),
-      );
-    const show = seal('Show sidebar', 'sidebar__show');
-    const hide = seal('Hide sidebar', 'sidebar__hide');
+    const { show, hide } = seals(keys, () => actions.toggleSidebar());
     this.element = h(
       'aside',
       { class: 'sidebar', attrs: { 'aria-label': 'Vault' } },
@@ -168,42 +171,29 @@ export class Sidebar {
     );
   }
 
-  /**
-   * Give the keyboard to the marked row (the selected one, or the open note),
-   * or the first; with no rows (a search that found nothing), the first
-   * control there, or the search field when it's here.
-   */
+  /** Give the keyboard to the marked row, or the first (./sidebar-focus.ts). */
   focusTree(): void {
-    const left = this.#left;
-    this.#left = null;
-    if (left !== null && this.#focusKey(left)) return;
-    const rows = this.#shown('.tree-row__name');
-    (
-      rows.find((row) => row.getAttribute('aria-current') === 'true') ??
-      rows[0] ??
-      this.#shown('.sidebar__tree button')[0] ??
-      this.searchSlot.querySelector<HTMLElement>('input')
-    )?.focus();
+    this.#focus.focusTree();
   }
 
   /** The sidebar shuts with the keyboard in it: the row it was on is where `focusTree` goes back to. */
   keepPlace(): void {
-    const active = document.activeElement;
-    this.#left =
-      active instanceof HTMLElement && this.#body.contains(active)
-        ? (active.dataset.key ?? null)
-        : null;
+    this.#focus.keepPlace();
   }
 
-  /** After a folder's rename or move: the keyboard goes to it, at `path` (or the row `key`), with the next redraw. */
+  /**
+   * After a folder's rename or move: the keyboard goes to it, at `path`, in
+   * the section it was moved in or else the other (or to the row `key`), with the next redraw.
+   */
   refocusOn(path: string | null, key?: string): void {
-    this.#refocus = key ?? keyOf({ kind: 'folder', path: path ?? '' });
+    this.#focus.asked = key ? [key] : this.#sides.keys(path ?? '');
   }
 
-  /** Rename the folder at `path` in place: its name becomes a field; Enter keeps it, Esc doesn't. */
+  /** Rename the folder at `path` in place, where it was asked from: its name becomes a field; Enter keeps it, Esc doesn't. */
   editFolder(path: string): void {
-    this.#folds.set('folders', false); // a folder made under FOLDERS folded is named in sight
-    this.#folderField.start(path);
+    const section = this.#model ? this.#sides.where(this.#model.tree, path) : 'folders';
+    this.#folds.set(section, false); // a folder made in a folded section is named in sight
+    this.#folderField.start(path, section);
     if (this.#model) this.draw(this.#model);
   }
 
@@ -224,8 +214,9 @@ export class Sidebar {
     this.#model = model;
     this.foot.draw({ notice: model.notice, noteCount: model.tree.noteCount });
     const frame = sidebarSignature(model);
-    const settled = this.#refocus === null && !this.#folderField.active && !this.#tagField.active;
-    const giveBack = this.#holdKeyboard();
+    const settled =
+      this.#focus.asked === null && !this.#folderField.active && !this.#tagField.active;
+    const giveBack = this.#focus.hold();
     const actions = this.#actions;
     this.#rows.begin();
     this.#windows.begin();
@@ -233,12 +224,7 @@ export class Sidebar {
       model,
       actions,
       {
-        folder: (path) =>
-          folderRowEvents({
-            menu: (at) => actions.folderMenu(path, at),
-            rename: () => this.editFolder(path),
-            move: (how) => actions.moveFolder(path, how),
-          }),
+        folder: (path) => this.#sides.events(path, 'folders', this.#acts),
         tag: (key) =>
           tagRowEvents({
             select: () => actions.select({ kind: 'tag', key }),
@@ -260,7 +246,8 @@ export class Sidebar {
     }
     // A tree drawn with a folder's name as a field, or to give the keyboard to, is drawn whole again.
     this.#drawn = settled ? frame : '';
-    const edit = (folder: FolderNode, depth: number) => this.#folderField.row(folder, depth);
+    const edit = (folder: FolderNode, depth: number) =>
+      this.#folderField.row(folder, depth, 'folders');
 
     const results = model.results;
     const tree = results
@@ -281,23 +268,23 @@ export class Sidebar {
               )
             : null,
         ]
-      : [
-          ...foldingSection('library', 'Library', rows.library(), this.#folds),
-          ...foldingSection(
-            'folders',
-            'Folders',
-            rows.folders(model.tree, 0, edit),
-            this.#folds,
-            this.#addFolder,
-          ),
-          ...foldingSection(
-            'tags',
-            'Tags',
-            [...rows.tags(model.tags, 0), ...this.#tagField.rows()],
-            this.#folds,
-            this.#addTag,
-          ),
-        ];
+      : treeSections({
+          rows,
+          folds: this.#folds,
+          tree: model.tree,
+          tags: model.tags,
+          edit,
+          addFolder: this.#addFolder,
+          addTag: this.#addTag,
+          madeTag: this.#tagField.rows(),
+          shelf: { tree: model.tree, ...model.shelf },
+          folders: {
+            events: (path) => this.#sides.events(path, 'shelf', this.#acts),
+            fold: (path) => actions.foldShelf(path),
+            edit: (folder, depth) => this.#folderField.row(folder, depth, 'shelf'),
+          },
+          actions,
+        });
 
     // The tree drawn whole is a new scroller: it takes the old one's scroll, or a folder opened
     // or closed would send it to the top (and the keyboard given back, a few rows from there).
@@ -319,50 +306,5 @@ export class Sidebar {
     // A redraw mustn't take the caret out of the name being typed.
     this.#folderField.restore(this.#body);
     this.#tagField.restore(this.#body);
-  }
-
-  /**
-   * Where the keyboard is, before a redraw; the function returned gives it
-   * back after. A redraw mustn't take the keyboard's place: the control that
-   * had it has it again; a row that's gone (trashed, moved away) leaves it on
-   * the row now in its place.
-   */
-  #holdKeyboard(): () => void {
-    const active = document.activeElement;
-    const inBody = active instanceof HTMLElement && this.#body.contains(active);
-    const asked = this.#refocus;
-    const focused = asked ?? (inBody ? (active.dataset.key ?? null) : null);
-    const focusedAt =
-      asked === null && inBody ? this.#shown('.tree-row__name').indexOf(active) : -1;
-    this.#refocus = null;
-    return () => {
-      if (focused === null || this.#folderField.active || this.#tagField.active) return;
-      // Still on the control it was on: rows put right around it, or not touched at all.
-      if (asked === null && document.activeElement === active) return;
-      // The control it was on, drawn anew where the scroll kept it: given back without a scroll,
-      // as a half-hidden row clicked would otherwise jump into sight. One asked for may have moved.
-      if (this.#focusKey(focused, asked !== null) || focusedAt < 0) return;
-      const rows = this.#shown('.tree-row__name');
-      rows[Math.min(focusedAt, rows.length - 1)]?.focus();
-    };
-  }
-
-  /** Give the keyboard to the control `key` names, if it's in sight or a long list holds it. */
-  #focusKey(key: string, scroll = true): boolean {
-    const same = [...this.#body.querySelectorAll<HTMLElement>('[data-key]')].find(
-      (control) => control.dataset.key === key,
-    );
-    const visible = same?.closest('[hidden]') ? undefined : same;
-    // A note's row in a long list may be out of sight, undrawn: its list brings it back.
-    if (!visible) return this.#windows.focusKey(key);
-    visible.focus({ preventScroll: !scroll });
-    return true;
-  }
-
-  /** The controls `selector` finds that are in sight: none in a folded section. */
-  #shown(selector: string): HTMLElement[] {
-    return [...this.#body.querySelectorAll<HTMLElement>(selector)].filter(
-      (control) => !control.closest('[hidden]'),
-    );
   }
 }

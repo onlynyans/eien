@@ -1,20 +1,16 @@
 // A page of another kind and the window's tools (../chrome/commands.ts,
-// `on`): a note's commands look disabled where the page they'd act on holds
-// something else, and do nothing from the menu; the window's act on any page.
+// `on`): a note's commands are set aside where the page they'd act on holds
+// something else (#40, the tools by what's in sight), and do nothing from the
+// menu; the window's act on any page.
 // A stand-in second kind (./stand-in-kind.ts) stands for the EPUB's (backlog #40).
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
-import { actsOn, COMMANDS, type CommandId } from '../chrome/commands';
-import type { MenuBus } from '../menu/menu-bus';
-import type { PaneLayout } from '../shell/panes';
-import type { Sidebar } from '../sidebar/sidebar';
-import { vaultChrome } from './chrome-wiring';
+import { actsOn, COMMANDS, menuOff } from '../chrome/commands';
 import { type CommandContext, runCommand } from './commands';
 import type { Side } from './pages';
-import { pagesWith } from './pages-harness';
-import type { PhoneView } from './phone-view';
-import { standInKind } from './stand-in-kind';
+import { chromeOver, noted, pagesWith } from './pages-harness';
+import { type StandInSide, standInKind } from './stand-in-kind';
 
 const stops: (() => void)[] = [];
 afterEach(() => {
@@ -23,46 +19,30 @@ afterEach(() => {
   localStorage.clear();
 });
 
-const NOTE_COMMANDS = COMMANDS.filter((command) => 'on' in command).map(({ id }) => id);
+const NOTE_COMMANDS = COMMANDS.filter((command) => 'on' in command && command.on === 'note').map(
+  ({ id }) => id,
+);
+/** A book's own (#40, Phase 3b): Pages and Scroll. */
+const BOOK_COMMANDS = COMMANDS.filter((command) => 'on' in command && command.on === 'epub').map(
+  ({ id }) => id,
+);
+/** Whether a button's command is one of a note's. */
+const ofNote = (id: string | undefined) =>
+  (NOTE_COMMANDS as readonly (string | undefined)[]).includes(id);
 
-/** The window's tools drawn over `made`'s pages, as the vault view draws them. */
+/** The window's tools drawn over `made`'s pages, taken down after the test. */
 function toolsOver(made: Awaited<ReturnType<typeof pagesWith>>) {
-  const { pages } = made;
-  const div = () => document.createElement('div');
-  const chrome = vaultChrome({
-    shell: document.body.appendChild(div()),
-    pages,
-    sidebar: {
-      foot: { controls: div(), sync: div() },
-      adders: [],
-      lens: { tools: div(), chips: div() },
-    } as unknown as Sidebar,
-    panes: { isShut: () => false, aside: false, two: false } as unknown as PaneLayout,
-    phone: { stack: { controls: div(), phone: false }, more: () => {} } as unknown as PhoneView,
-    settings: made.settings,
-    menu: { on: () => () => {}, run: () => {} } as unknown as MenuBus,
-    mac: false,
-  });
-  chrome.mount();
-  stops.push(() => {
-    chrome.stop();
-    pages.stop();
-  });
-  /** Whether each of `ids` drawn in the page's bar is disabled. */
-  const disabled = (ids: readonly CommandId[]) =>
-    ids.flatMap((id) => {
-      const button = pages.pane.slots.bar.querySelector<HTMLButtonElement>(
-        `[data-command="${id}"]`,
-      );
-      return button ? [[id, button.disabled] as const] : [];
-    });
-  return { chrome, disabled };
+  const tools = chromeOver(made);
+  stops.push(tools.stop);
+  return tools;
 }
 
 /** A note on the left, the stand-in beside it (the active one), and the window's tools drawn. */
-async function drawn() {
+async function drawn(layout: 'band' | 'slip' | 'runhead' = 'band') {
   const files = { 'Chapter.md': 'The gate held.' };
-  const made = await pagesWith(files, { 'appearance.layout': 'band' }, [standInKind]);
+  const made = await pagesWith(files, { 'appearance.layout': layout, 'editor.formatBar': 'on' }, [
+    standInKind,
+  ]);
   await made.pages.open('Chapter.md');
   await made.pages.open('Map.stand', true);
   return { ...made, ...toolsOver(made) };
@@ -79,21 +59,61 @@ describe('the commands for a note', () => {
     }
     expect(actsOn('page.close', 'epub')).toBe(true);
     expect(actsOn('scheme', 'epub')).toBe(true);
+    // A book's own, the other way: set aside while a note is the active page.
+    expect(BOOK_COMMANDS).toEqual(['view.pages', 'view.scroll', 'bookmark']);
+    for (const id of BOOK_COMMANDS) expect(actsOn(id, 'note')).toBe(false);
   });
 
-  it('look disabled in the layout’s bar while the page they act on holds another kind', async () => {
-    const { pages, chrome, disabled } = await drawn();
-    const views = ['view.live', 'view.source', 'view.reading', 'compare', 'seal'] as const;
-    const shown = disabled(views);
-    expect(shown.length).toBeGreaterThan(0);
-    expect(shown.every(([, off]) => off)).toBe(true);
+  for (const layout of ['band', 'slip', 'runhead'] as const) {
+    it(`are set aside in ${layout}’s bars while the active page holds another kind, and come back with the note`, async () => {
+      const { pages, chrome, inSight } = await drawn(layout);
+      const bar = inSight();
+      const format = inSight('format');
+      // The book active: none of the note's tools in sight, the shared ones where they were.
+      expect(bar.filter((id) => ofNote(id))).toEqual([]);
+      expect(bar).toContain('look');
+      expect(format).toEqual([]);
+      // The formatting bar's row stays while a note is in sight, so neither page moves.
+      expect(pages.pane.slots.format.hidden).toBe(false);
+      pages.activate(pages.sides[0] as Side);
+      chrome.refresh();
+      expect(inSight().filter((id) => ofNote(id)).length).toBeGreaterThan(0);
+      expect(inSight('format')).toContain('format.bold');
+      expect(inSight()).not.toContain('view.pages');
+      expect(inSight()).toEqual(
+        expect.arrayContaining(bar.filter((id) => !BOOK_COMMANDS.includes(id as never))),
+      );
+    });
+  }
+
+  it('take the formatting bar’s row with them when a book is the only page', async () => {
+    const files = { 'Chapter.md': 'The gate held.' };
+    const made = await pagesWith(files, { 'editor.formatBar': 'on' }, [standInKind]);
+    await made.pages.open('Chapter.md');
+    const { chrome } = toolsOver(made);
+    expect(made.pages.pane.slots.format.hidden).toBe(false);
+    await made.pages.open('Map.stand');
+    chrome.refresh();
+    expect(made.pages.active.kind).toBe('epub');
+    expect(made.pages.pane.slots.format.hidden).toBe(true);
+    expect(document.body.hasAttribute('data-format-bar')).toBe(false);
+  });
+
+  it('leave no rule standing alone in a bar where their run was set aside', async () => {
+    const { pages, chrome } = await drawn();
+    const rules = () =>
+      [...pages.pane.slots.bar.querySelectorAll<HTMLElement>('.host__rule')].map((rule) => {
+        let [before, after] = [rule.previousElementSibling, rule.nextElementSibling];
+        const seen = (el: Element | null) =>
+          el instanceof HTMLElement && !el.hidden && !el.hasAttribute('data-aside');
+        while (before && !seen(before)) before = before.previousElementSibling;
+        while (after && !seen(after)) after = after.nextElementSibling;
+        return rule.hidden || (before !== null && after !== null);
+      });
+    expect(rules().every(Boolean)).toBe(true);
     pages.activate(pages.sides[0] as Side);
     chrome.refresh();
-    expect(
-      disabled(views)
-        .filter(([id]) => id !== 'compare')
-        .every(([, off]) => !off),
-    ).toBe(true);
+    expect(rules().every(Boolean)).toBe(true);
   });
 
   it('leave the window’s alone: the sidebar’s and the list’s chevrons look the same', async () => {
@@ -120,7 +140,7 @@ describe('the commands for a note', () => {
     const { pages } = made;
     toolsOver(made);
     const seal = pages.pane.slots.bar.querySelector<HTMLButtonElement>('[data-command="seal"]');
-    expect(seal?.disabled).toBe(true);
+    expect(seal?.hasAttribute('data-aside')).toBe(true);
   });
 
   it('do nothing from the menu while the active page holds another kind', async () => {
@@ -132,10 +152,6 @@ describe('the commands for a note', () => {
       splits: () => true,
     } as unknown as CommandContext;
     const commands: MenuCommand[] = [
-      'find',
-      'find:replace',
-      'find:next',
-      'find:previous',
       'view:next',
       'view:live',
       'view:reading',
@@ -148,5 +164,90 @@ describe('the commands for a note', () => {
     expect(pages.active.kind).toBe('epub');
     runCommand('split:swap', ctx); // the window's: any page
     expect(pages.sides.map((side) => side.kind)).toEqual(['epub', 'note']);
+  });
+
+  it('grey in the menu bar while a page of another kind is in front, and come back with a note', async () => {
+    const { pages, chrome, greyMenu } = await drawn();
+    expect(greyMenu.mock.calls).toEqual([[menuOff('epub')]]);
+    pages.activate(pages.sides[0] as Side);
+    chrome.refresh();
+    chrome.refresh(); // told once for each change of kind
+    expect(greyMenu.mock.calls).toEqual([[menuOff('epub')], [menuOff('note')]]);
+  });
+
+  it('greys nothing in the menu bar once the vault is no longer shown (Open Vault…)', async () => {
+    const { chrome, greyMenu } = await drawn();
+    chrome.stop();
+    expect(greyMenu.mock.calls).toEqual([[menuOff('epub')], [[]]]);
+  });
+
+  it('greyed in the menu bar are every note’s control’s, and the menu’s own a note’s page alone has', () => {
+    // With a note in front, a book's own are greyed (#40, Phase 3b).
+    expect(menuOff('note')).toEqual(['view:pages', 'view:scroll', 'bookmark']);
+    const off = menuOff('epub');
+    const sends = COMMANDS.flatMap((command) =>
+      'on' in command && command.on === 'note' && 'sends' in command ? [command.sends] : [],
+    );
+    // Every note's control greyed, but the format a book's words take too (#40, Phase 5a).
+    expect(off).toEqual(
+      expect.arrayContaining(sends.filter((command) => command !== 'format:highlight')),
+    );
+    expect(off).toEqual(
+      expect.arrayContaining([
+        'view:next',
+        'toggle:editor.focus',
+        'copy-html',
+        'format:heading2',
+        'format:table',
+        'export-html',
+        'export-note:epub',
+        'export-note:docx',
+        'export-note:pdf',
+        'outline',
+        'toggle:editor.typewriter',
+        'toggle:editor.marks',
+      ]),
+    );
+    // A page's, the window's, and settings that are the window's stay on.
+    for (const on of [
+      'find',
+      'find:next',
+      'look',
+      'export-book:epub',
+      'split',
+      'new-note',
+      'toggle:editor.formatBar',
+      'toggle:editor.spellcheck',
+      // Format → Highlight: a book's words take it too (#40, Phase 5a).
+      'format:highlight',
+    ] as const)
+      expect(off).not.toContain(on);
+    expect(new Set(off).size).toBe(off.length);
+  });
+
+  it('find from the menu on the active page, whatever it holds', async () => {
+    const { pages } = await drawn();
+    const ctx = { pages } as unknown as CommandContext;
+    for (const command of ['find', 'find:replace', 'find:next', 'find:previous'] as const)
+      runCommand(command, ctx);
+    expect((pages.active as StandInSide).finds).toEqual(['open', 'replace', 'next', 'previous']);
+    // The note beside is never searched for it.
+    expect(document.querySelector<HTMLElement>('.find')?.hidden).toBe(true);
+  });
+
+  it('find on a note’s page only where its text is on the page', async () => {
+    const { pages } = await drawn();
+    const note = noted(pages.sides[0]);
+    pages.activate(note);
+    const bar = note.page.element.querySelector<HTMLElement>('.find');
+    const ctx = { pages } as unknown as CommandContext;
+    note.page.compare(document.createElement('div')); // a seal in the editor's place
+    // Next and Previous with nothing typed would open the bar, where they may.
+    for (const command of ['find', 'find:replace', 'find:next', 'find:previous'] as const)
+      runCommand(command, ctx);
+    expect(bar?.hidden).toBe(true);
+    note.page.compare(null);
+    runCommand('find', ctx);
+    expect(bar?.hidden).toBe(false);
   });
 });

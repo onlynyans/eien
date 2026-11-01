@@ -4,6 +4,7 @@
 // Neither ever changes the list's own order. Beside them, whether a folder's
 // list shows its subfolders' notes too (backlog #42).
 
+import { isInside } from '../../core/paths';
 import { NO_FILTER, readFilter, type TagFilter } from '../../core/tags';
 import type { NoteSort, Selection } from '../vault/vault-state';
 
@@ -70,7 +71,7 @@ export function followSorts(from: string, to: string): void {
   for (const key of [SORTS_KEY, FILTERS_KEY, NESTED_KEY]) {
     const moved = Object.entries(stored(key)).map(([list, value]) => {
       const path = list.startsWith('folder:') ? list.slice('folder:'.length) : null;
-      const inside = path !== null && (path === from || path.startsWith(`${from}/`));
+      const inside = path !== null && isInside(path, from);
       return [inside ? `folder:${to}${path.slice(from.length)}` : list, value];
     });
     store(key, Object.fromEntries(moved));

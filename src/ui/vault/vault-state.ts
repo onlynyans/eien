@@ -4,6 +4,7 @@
 import type { IndexedNote } from '../../core/note';
 import {
   baseName,
+  isInside,
   joinPath,
   nameKey,
   parentOf,
@@ -275,6 +276,11 @@ export class VaultState {
     return this.#entries.some((entry) => entry.path === path);
   }
 
+  /** The size listed for the file at `path`, or null for none (an EPUB too large to read, #40). */
+  sizeOf(path: string): number | null {
+    return this.#entries.find((entry) => entry.path === path)?.size ?? null;
+  }
+
   /**
    * The notes `selection` lists, sorted by `sort` (else its own), through
    * `filter` if one is laid over it; a book's numbered in `numerals`, by the
@@ -417,6 +423,11 @@ export class VaultState {
     };
   }
 
+  /** The note at `path` as the list shows it (a [[link]]'s card). */
+  listed(path: string): ListedNote {
+    return this.#listed(path);
+  }
+
   #listed(path: string, ordinal?: string): ListedNote {
     const note = this.#notes.get(path);
     return {
@@ -446,7 +457,7 @@ export class VaultState {
 export function findFolder(tree: FolderNode, path: string): FolderNode | undefined {
   if (tree.path === path) return tree;
   for (const child of tree.folders) {
-    if (path === child.path || path.startsWith(`${child.path}/`)) return findFolder(child, path);
+    if (isInside(path, child.path)) return findFolder(child, path);
   }
   return undefined;
 }

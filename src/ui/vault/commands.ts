@@ -7,6 +7,8 @@
 import { SPRINT_MINUTES } from '../../core/counters';
 import { formatCommand } from '../../core/format';
 import type { ExportFormat, MenuCommand } from '../../platform/bridge';
+import { BOOK_FORMAT } from '../chrome/commands';
+import { isEpub } from '../epub/epub-side-types';
 import { focusList } from '../list/list';
 import type { SearchField } from '../list/search-field';
 import type { PaneLayout } from '../shell/panes';
@@ -31,12 +33,14 @@ export interface CommandContext {
   importFolder(): void;
   /** Whether a second page may open here (not one page, the phone's way: ../phone/room.ts). */
   splits(): boolean;
+  /** Every book read in pages, or scrolled (the shelf's setting, #40 Phase 3b). */
+  bookView(view: 'pages' | 'scroll'): void;
 }
 
 export function runCommand(command: MenuCommand, ctx: CommandContext): void {
   const { panes, sidebar } = ctx;
   const { page } = ctx.pages.active;
-  // A note's own commands (find, views, seals, formats) do nothing on a page of another kind.
+  // A note's own commands (views, seals, formats) do nothing on a page of another kind; find is any page's.
   const note = ctx.pages.activeNote;
   if (command === 'new-note') ctx.newNote();
   else if (command === 'search') {
@@ -44,12 +48,17 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     if (ctx.search.isIn(sidebar.searchSlot)) panes.open('sidebar');
     ctx.search.focus();
   } else if (command === 'find' || command === 'find:replace')
-    note?.page.find(command === 'find:replace');
-  else if (command === 'find:next' && note?.page.writable) note.page.editor.find.next();
-  else if (command === 'find:previous' && note?.page.writable) note.page.editor.find.previous();
+    page.find.open(command === 'find:replace');
+  else if (command === 'find:next') page.find.next();
+  else if (command === 'find:previous') page.find.previous();
   else if (command === 'view:next') note?.page.nextMode();
   else if (command === 'view:live' || command === 'view:source' || command === 'view:reading') {
     note?.page.setMode(command.slice('view:'.length) as 'live' | 'source' | 'reading');
+  } else if (command === 'view:pages' || command === 'view:scroll') {
+    ctx.bookView(command === 'view:pages' ? 'pages' : 'scroll');
+  } else if (command === 'bookmark') {
+    const { active } = ctx.pages;
+    if (isEpub(active)) void active.marks.bookmarks.toggle();
   } else if (command === 'panes:sidebar') panes.toggle('sidebar');
   else if (command === 'panes:list') panes.toggle('list');
   else if (command === 'focus:sidebar') {
@@ -88,6 +97,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     const minutes = Number(command.slice('sprint:'.length));
     const known = SPRINT_MINUTES.find((each) => each === minutes);
     if (known) ctx.parts.counters.startSprint(known);
+  } else if (command === BOOK_FORMAT && isEpub(ctx.pages.active)) {
+    // Highlight with a book in front keeps its words chosen (#40, Phase 5a).
+    void ctx.pages.active.marks.highlights.toggle();
   } else if (command.startsWith('format:') && !ctx.parts.outline.open) {
     // Formats act on the page: never on one the outline cards are hiding.
     const format = formatCommand(command.slice('format:'.length));

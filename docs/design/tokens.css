@@ -1,4 +1,11 @@
-/* Eien — design tokens. The theme contract (spec §7): every colour, face, size
+/* A SNAPSHOT, FROZEN: the tokens the mockups here (the design as approved on
+   2026-10-20) are drawn with, last changed at stage 3 (#54). It isn't kept in
+   step with the app; how something looks is AGENTS.md → Rules.
+   The source is src/ui/theme/tokens.css: a new or changed token goes there,
+   never here. These keep what the mockups alone need: their fonts' own names
+   (fonts.css), the old --eien-radius, and none of the tokens added since.
+
+   Eien — design tokens. The theme contract (spec §7): every colour, face, size
    and space the interface uses is one of these. A theme overrides these and
    nothing else.
 

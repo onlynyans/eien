@@ -35,6 +35,19 @@ interface Common {
   readonly platforms?: readonly string[];
   /** Only on a window wide enough for panes side by side: never a phone's (spec §10). */
   readonly wide?: true;
+  /**
+   * In the quick look (#49, ui/quick-look): one value for every page (`window`), or a page's own
+   * (`page`): the notes' under this key, and from #40 Phase 1 the shelf's under `epub.<key>`,
+   * from this same entry. A book's alone (`shelf`, #40 Phase 2) shows only in the shelf's quick
+   * look, never in Settings, which sets notes.
+   */
+  readonly quick?: 'window' | 'page' | 'shelf';
+  /**
+   * On a phone's build (android, ios; web is its page in tests), the default instead of
+   * `default` (#38: a link's Bar there, its Card on the desktop). A value chosen is always kept,
+   * so choosing the desktop's default on a phone stays chosen.
+   */
+  readonly phoneDefault?: string;
 }
 
 export interface ChoiceSetting extends Common {
@@ -57,6 +70,9 @@ export interface NumberSetting extends Common {
 
 export type Setting = ChoiceSetting | NumberSetting;
 
+/** The systems a phone's build runs on (Capacitor's names; web is its page in tests). */
+export const PHONE_PLATFORMS: readonly string[] = ['android', 'ios', 'web'];
+
 export const SETTINGS = [
   {
     key: 'appearance.scheme',
@@ -67,6 +83,7 @@ export const SETTINGS = [
     type: 'choice',
     choices: { system: 'System', day: 'Day', night: 'Night' },
     default: 'system',
+    quick: 'window',
   },
   {
     key: 'appearance.palette',
@@ -98,7 +115,7 @@ export const SETTINGS = [
     description:
       'How a screen wider than a phone’s (a foldable opened, a tablet, a phone turned sideways) is used. Panes: the desktop’s panes, at a finger’s size. One at a time: as on a phone. Side by side: the pane you came from beside the one you’re in. Two pages: the notes slide over the page, and the second note chosen opens beside the first, laid out as Split says.',
     // The phone's build (web: its page in tests/mobile): the desktop's window is always panes.
-    platforms: ['android', 'ios', 'web'],
+    platforms: PHONE_PLATFORMS,
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
@@ -123,9 +140,9 @@ export const SETTINGS = [
   },
   {
     key: 'appearance.facingMark',
-    label: 'Facing pages’ mark',
+    label: 'Page mark',
     description:
-      'What marks the page you’re writing in, with Facing pages: a ribbon over its top edge, its corner turned down, or a tab at its outer edge.',
+      'What marks a page: the one you’re writing in, with Facing pages, and a bookmarked page in a book. A ribbon over its top edge, its corner turned down, or a tab at its outer edge.',
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
@@ -138,7 +155,7 @@ export const SETTINGS = [
     description:
       'Two notes stay side by side however narrow the screen (a foldable opened upright), each half of it. Off, short of room they do as Split says: fold into one page, close the book, put the companion under the page, or wait.',
     // The phone's build, where a screen can be too narrow for two and still show them.
-    platforms: ['android', 'ios', 'web'],
+    platforms: PHONE_PLATFORMS,
     scope: 'device',
     group: 'Appearance',
     type: 'choice',
@@ -184,6 +201,7 @@ export const SETTINGS = [
     // One list of faces feeds both face settings (./faces.ts).
     choices: faceChoices(TEXT_FACES),
     default: 'newsreader',
+    quick: 'page',
   },
   {
     key: 'appearance.interfaceFace',
@@ -216,6 +234,19 @@ export const SETTINGS = [
     max: 130,
     step: 10,
     default: 100,
+    quick: 'page',
+  },
+  {
+    key: 'appearance.leading',
+    label: 'Line spacing',
+    description: 'Lines a little closer or further apart than the typeface sets them.',
+    scope: 'device',
+    group: 'Type',
+    type: 'choice',
+    // A step either side of each face's own leading (ui/settings/look-properties.ts).
+    choices: { tight: 'Tight', set: 'As set', loose: 'Loose' },
+    default: 'set',
+    quick: 'page',
   },
   {
     key: 'appearance.nameWeight',
@@ -253,6 +284,20 @@ export const SETTINGS = [
     default: 'comfortable',
   },
   {
+    key: 'page.width',
+    label: 'Page width',
+    description:
+      'Lines a little shorter or longer than the typeface sets them, on a page with room round it.',
+    // A phone's page is already narrower than any face's line.
+    wide: true,
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { narrow: 'Narrow', set: 'As set', wide: 'Wide' },
+    default: 'set',
+    quick: 'page',
+  },
+  {
     key: 'appearance.frame',
     label: 'Page',
     description:
@@ -262,6 +307,67 @@ export const SETTINGS = [
     type: 'choice',
     choices: { sheet: 'Sheet', full: 'Full' },
     default: 'sheet',
+    quick: 'page',
+  },
+  {
+    key: 'epub.view',
+    label: 'Read in',
+    description:
+      'A book in pages, turned one at a time as a printed book’s are, or scrolled a chapter at a time.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { pages: 'Pages', scroll: 'Scroll' },
+    default: 'scroll',
+    quick: 'shelf',
+  },
+  {
+    key: 'epub.turn',
+    label: 'Page turn',
+    description:
+      'How a page turns in pages: it curls as paper does, the words slide on, or only the words change.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { curl: 'Curl', slide: 'Slide', words: 'Words' },
+    default: 'curl',
+    quick: 'shelf',
+  },
+  {
+    key: 'epub.turnSpeed',
+    label: 'Turn speed',
+    description:
+      'How long a turn takes, against its designed time: at once, as designed, or up to four times slower. A drag always follows your hand.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { '0': 'Instant', '1': '1×', '2': '2×', '3': '3×', '4': '4×' },
+    default: '2',
+    quick: 'shelf',
+  },
+  {
+    key: 'epub.scroll',
+    label: 'Scroll style',
+    description:
+      'A scrolling book’s paragraphs: spaced as a note’s are, or indented with no space between, as a book sets them. In pages, a book is always set as a book.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { note: 'As a note', book: 'As a book' },
+    default: 'note',
+    quick: 'shelf',
+  },
+  {
+    key: 'epub.marks',
+    label: 'Marks',
+    description:
+      'Where a book’s bookmarks are: in the list beside its contents, or down the page’s edge with the whole book.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { list: 'In the list', edge: 'On the edge' },
+    default: 'list',
+    quick: 'shelf',
   },
   {
     key: 'editor.focus',
@@ -307,6 +413,20 @@ export const SETTINGS = [
     choices: { off: 'Off', on: 'On' },
     // On, as Live has always been: the marks show the writer where a format starts and ends.
     default: 'on',
+  },
+  {
+    key: 'editor.links',
+    label: 'Link editing',
+    description:
+      'What shows when you point at a link in Live mode, or put the cursor in it, to see where it goes, edit it or open it. Card: a card under the link. In place: the link’s Markdown opens where it is. Bar: a small bar above its line.',
+    scope: 'device',
+    group: 'Editor',
+    type: 'choice',
+    choices: { card: 'Card', inline: 'In place', bar: 'Bar' },
+    // A card answers "which chapter is that?" on a hover; a phone has no hover, and its bar sits
+    // above the keyboard, as the table's does (docs/design/explorations/links.md).
+    default: 'card',
+    phoneDefault: 'bar',
   },
   {
     key: 'editor.hideTagsAndIds',
@@ -422,7 +542,11 @@ export const SETTINGS = [
 ] as const satisfies readonly Setting[];
 
 type Defined = (typeof SETTINGS)[number];
-export type SettingKey = Defined['key'];
+/** The settings a page wears of its own (`quick: 'page'`, #49): the notes' look. */
+export type PageLookKey = Extract<Defined, { readonly quick: 'page' }>['key'];
+/** The shelf's look (#40): each page setting again, under `epub.<key>` (./epub-look.ts). */
+export type EpubLookKey = `epub.${PageLookKey}`;
+export type SettingKey = Defined['key'] | EpubLookKey;
 type ValueOf<D> = D extends { readonly more: object }
   ? string
   : D extends { readonly choices: infer C }
@@ -430,7 +554,11 @@ type ValueOf<D> = D extends { readonly more: object }
     : number;
 
 /** A value for every setting, typed by its key. */
-export type SettingValues = { readonly [K in SettingKey]: ValueOf<Extract<Defined, { key: K }>> };
+export type SettingValues = {
+  readonly [K in Defined['key']]: ValueOf<Extract<Defined, { key: K }>>;
+} & {
+  readonly [K in PageLookKey as `epub.${K}`]: ValueOf<Extract<Defined, { key: K }>>;
+};
 
 /** Settings the menu turns on and off (View → Focus Mode…): each a choice of "off" and "on". */
 export const TOGGLES = [
@@ -441,6 +569,13 @@ export const TOGGLES = [
   'editor.spellcheck',
 ] as const satisfies readonly SettingKey[];
 export type ToggleKey = (typeof TOGGLES)[number];
+
+/** The defaults a phone's build has of its own (`phoneDefault`). */
+export const PHONE_DEFAULTS: Partial<SettingValues> = Object.fromEntries(
+  (SETTINGS as readonly Setting[]).flatMap((setting) =>
+    setting.phoneDefault === undefined ? [] : [[setting.key, setting.phoneDefault]],
+  ),
+);
 
 /** Whether `setting` is offered on the system named `platform` (process.platform), on a phone or not. */
 export const offeredOn = (setting: Setting, platform: string, phone = false): boolean =>

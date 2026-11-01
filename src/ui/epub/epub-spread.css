@@ -1,0 +1,39 @@
+/* Two pages (#40, Phase 3d, Pages 1's spread, ./spread.ts): with room for
+   two pages of 20em, the book lies open, two pages facing across the gutter,
+   Facing pages' soft hairline down its middle, the text blocks
+   --eien-space-8 apart (the box's own column gap, ./epub.css). One sheet,
+   its one shadow, no fold shading. */
+
+/* The sheet widens for two pages, each at most a page's measure, as Page width sets it (../page/page.css). */
+.epub-sheet:has(> .epub__pages[data-spread]) {
+  width: min(
+    calc(100% * min(var(--look-width, 1), 1)),
+    calc(2 * var(--eien-measure) * var(--look-width, 1) + 3 * var(--eien-space-8))
+  );
+}
+
+/* The gutter: a soft hairline down the middle of the gap, the box's height. */
+.epub__pages[data-spread]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--eien-hairline);
+  background: var(--eien-rule-soft);
+  pointer-events: none;
+}
+
+/* A spread's verso's bookmark: its edge tab stands past the pages read, as the recto's past those to read (./bookmark.css). */
+:root[data-facing-mark="tab"] [data-view="pages"] .page__mark--bookmark[data-edge="left"] {
+  left: calc(
+    (var(--eien-space-1) + 2 * var(--eien-hairline) + var(--edges-before, 0) * var(--eien-mark-w)) *
+    -1
+  );
+}
+:root[data-facing-mark="tab"]
+  .page__leaf--epub[data-frame="full"]
+  .page__mark--bookmark[data-edge="left"] {
+  left: 0;
+  border-radius: 0 var(--eien-radius-s) var(--eien-radius-s) 0;
+}

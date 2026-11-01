@@ -12,6 +12,12 @@ import { h } from './dom';
 export interface DrawOptions {
   /** Called with each link that goes somewhere: how it opens is the caller's. */
   readonly link?: (anchor: HTMLAnchorElement) => void;
+  /**
+   * Where an image is drawn from, given the src the cleaner kept (an EPUB's
+   * path in its zip): the window's own copy, or null for its words. What it
+   * gives is checked as any src is.
+   */
+  readonly image?: (src: string) => string | null;
 }
 
 /** Where a link may go: the web, mail, or a place on the page. */
@@ -31,7 +37,10 @@ function drawn(node: CleanNode, options: DrawOptions): Node[] {
   const element = node.name === 'hr' ? sceneBreak() : document.createElement(node.name);
   if (node.part && isPart(node.part)) element.dataset.part = node.part;
   if (node.name === 'hr') return [element];
-  const { align, href, src, alt, title } = node.attrs;
+  const { align, href, alt, title, anchor } = node.attrs;
+  // A place a link may name (#40): data, never an id, so a page can't name the window's elements.
+  if (anchor !== undefined && element instanceof HTMLAnchorElement) element.dataset.anchor = anchor;
+  const src = node.attrs.src && options.image ? options.image(node.attrs.src) : node.attrs.src;
   if (align) element.dataset.align = align;
   if (title) element.title = title;
   if (element instanceof HTMLAnchorElement && href && FOLLOWED.test(href)) {
@@ -40,8 +49,9 @@ function drawn(node: CleanNode, options: DrawOptions): Node[] {
   }
   if (element instanceof HTMLImageElement) {
     // An image from anywhere else is its words, as the cleaner makes one it won't show.
+    // Marked as Eien's, not the page's words: a place in a book counts only its own (#40).
     if (!src || !SHOWN.test(src)) {
-      return imageWords(alt).map((words) => document.createTextNode(words.text));
+      return imageWords(alt).map((words) => h('span', { class: 'image-words', text: words.text }));
     }
     element.setAttribute('alt', alt ?? '');
     element.setAttribute('loading', 'lazy');

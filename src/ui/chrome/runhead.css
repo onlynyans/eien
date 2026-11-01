@@ -90,6 +90,10 @@
   border-radius: var(--eien-radius-m);
   box-shadow: var(--eien-shadow-float);
 }
+/* Every button set aside beside a book (#40): no rail of nothing over the page. */
+[data-layout="runhead"] .host--runhead-format[data-empty] {
+  display: none;
+}
 [data-layout="runhead"] .host--runhead-format > .host__rule {
   width: var(--eien-space-4);
   height: var(--eien-hairline);

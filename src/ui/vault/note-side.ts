@@ -2,6 +2,7 @@
 // note (./open-note.ts, held in the window's open notes) and that note's
 // seals (../versions), made together when a page opens and let go together
 // when it closes, so a closed page leaves no view, timer or listener behind.
+// The note's kind, over all its pages, is ./note-pages.ts's.
 
 import type { SettingValues } from '../../core/config';
 import type { VaultBridge } from '../../platform/bridge';
@@ -11,7 +12,7 @@ import { VersionsUI } from '../versions/versions-ui';
 import { type NotePageParts, notePage } from './note-page';
 import { OpenNote } from './open-note';
 import type { OpenNotes } from './open-notes';
-import type { PageKindOf, Place, Side, SideHooks } from './page-side';
+import type { Place, Side, SideHooks } from './page-side';
 
 /** A page, the note it shows, and that note's seals. */
 export interface NoteSide extends Side {
@@ -39,14 +40,8 @@ export interface NoteSideOf extends Omit<NotePageParts, 'note' | 'close'> {
   counted(): void;
 }
 
-/** The note's kind of page: every file no other kind holds. */
-export const noteKind = (of: NoteSideOf, notes: OpenNotes): PageKindOf => ({
-  kind: 'note',
-  holds: () => true,
-  make: (hooks, left) => makeNoteSide(of, notes, hooks, left),
-});
-
-function makeNoteSide(
+/** A page for a note, the note it shows and its seals, made together. */
+export function makeNoteSide(
   of: NoteSideOf,
   notes: OpenNotes,
   hooks: SideHooks,
@@ -95,7 +90,7 @@ function makeNoteSide(
   };
 }
 
-/** A page as the settings say: the quotes typed on it, its writing tools, Live's marks, the tags and ids hidden. */
+/** A page as the settings say: the quotes typed on it, its writing tools, Live's marks, the tags and ids hidden, a link's tools. */
 function followSettings(page: PageView, values: SettingValues): void {
   page.editor.setQuotes(values['typography.quotes']);
   page.editor.setTools({
@@ -105,4 +100,5 @@ function followSettings(page: PageView, values: SettingValues): void {
   });
   page.editor.setMarks(values['editor.marks'] === 'on');
   page.editor.setTagsAndIdsHidden(values['editor.hideTagsAndIds'] === 'on');
+  page.editor.setLinkStyle(values['editor.links']);
 }

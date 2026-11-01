@@ -20,7 +20,7 @@ export interface ChromeOf extends Omit<HostOf, 'press'> {
   send(command: MenuCommand, id: CommandId): void;
   /** Run one of the window's own commands; `opener` is the button pressed. */
   local(id: LocalCommandId, opener: HTMLElement): void;
-  /** The keyboard was on a control the new layout doesn't draw: give it a place. */
+  /** The keyboard was on a control the new layout doesn't draw, or one set aside: give it a place. */
   lost(): void;
   /** Show the tooltips of a host just drawn (./tooltip.ts). */
   watch(host: HTMLElement): void;
@@ -99,14 +99,7 @@ export class Chrome {
     this.fit();
     if (active instanceof HTMLElement && !active.isConnected) {
       // The same command in the new layout, or the ⋯ it's folded behind there.
-      const twin = held
-        ? this.#hosts
-            .map((host) => {
-              const button = host.button(held);
-              return button?.hidden ? this.#moreOf(host) : button;
-            })
-            .find((button) => button?.checkVisibility())
-        : undefined;
+      const twin = held ? this.inSight(held) : undefined;
       if (twin) twin.focus();
       else this.#of.lost();
     }
@@ -159,6 +152,16 @@ export class Chrome {
     return this.#folded.get(bar) ?? [];
   }
 
+  /** The button for `id` in sight now, or the ⋯ it's folded behind: what opens under it. */
+  inSight(id: CommandId): HTMLButtonElement | undefined {
+    return this.#hosts
+      .map((host) => {
+        const button = host.button(id);
+        return button?.hidden ? this.#moreOf(host) : button;
+      })
+      .find((button) => button?.checkVisibility()) as HTMLButtonElement | undefined;
+  }
+
   /** The ⋯ the tools of `host`'s bar fold behind: its last folding host's. */
   #moreOf(host: Host): HTMLButtonElement | null {
     const bar = host.element.parentElement;
@@ -183,10 +186,16 @@ export class Chrome {
     openMenu(items, { opener }, 'More tools');
   }
 
-  /** Show every command as it is now. */
+  /** Show every command as it is now; a bar whose tools came or went (#40) is fitted again. */
   refresh(): void {
     this.#placePager();
-    for (const host of this.#hosts) host.refresh();
+    const had = document.activeElement;
+    let moved = false;
+    for (const host of this.#hosts) moved = host.refresh() || moved;
+    if (!moved) return;
+    this.fit();
+    // The tool the keyboard was on, set aside: the page takes it, never the window's body.
+    if (had instanceof HTMLElement && had.dataset.aside !== undefined) this.#of.lost();
   }
 
   /** The pager before the page's tools: the layout's, or the phone's while it goes the phone's way. */

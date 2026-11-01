@@ -12,6 +12,7 @@ import { EditorView } from '@codemirror/view';
 import type { FormatCommand, FormatCommandId } from '../../core/format';
 import type { QuoteStyle } from '../../core/typography';
 import { h } from '../dom';
+import type { FindBar } from '../find/find-bar';
 import { activeFormats } from './active-formats';
 import { editorKeys, historyInput } from './editor-keys';
 import {
@@ -21,10 +22,11 @@ import {
   tagsAndIdsExtensions,
 } from './editor-modes';
 import { writtenBy } from './eien-change';
-import { findInNote } from './find';
-import { FindBar } from './find-bar';
+import { findInNote, NoteFind } from './find';
 import { frontMatterHidden, writingStart } from './front-matter-hidden';
 import { imageDrop } from './image-drop';
+import type { LinkNote } from './link-presenter';
+import { type LinkStyle, LinkTooltips } from './link-tooltips';
 import { linkFollowing } from './links';
 import { isEcho, type NoteDoc } from './note-doc';
 import { eienMarkdown } from './syntax';
@@ -53,6 +55,8 @@ export interface EditorEvents {
   echoed?(text: string): void;
   /** A link was followed: a web address, or a [[note]] by its title. */
   follow(target: { readonly kind: 'url' | 'note'; readonly value: string }): void;
+  /** The note a [[link]] names, as the list shows it, for its card; null when there's none. */
+  about?(name: string): LinkNote | null;
   /** The caret moved, or the text changed under it: what's on at the caret may differ. */
   moved?(): void;
   /** Images were dropped at `at`, or pasted at the caret (null): add them to the note (./image-drop.ts). */
@@ -93,8 +97,21 @@ export class NoteEditor {
    */
   readonly tableTools = h('div', { class: 'table-tools quiet-own' });
 
-  /** Find and replace in the note (./find-bar.ts): the window's own slip, which the page lays over it. */
-  readonly find: FindBar = new FindBar(() => this.#view);
+  /**
+   * A link's tools in Live (./link-tooltips.ts): its card or bar float in
+   * `links.layer` and dock in `links.dock`, which the page places, outside
+   * the editor's shadow root.
+   */
+  readonly links: LinkTooltips = new LinkTooltips(() => this.#view, {
+    follow: (target) => this.#events.follow(target),
+    about: (name) => this.#events.about?.(name) ?? null,
+    tell: (words) => this.#events.said?.(words),
+  });
+
+  /** Find and replace in the note (./find.ts): what the find bar searches here. */
+  readonly #find = new NoteFind(() => this.#view);
+  /** The find bar (../find/find-bar.ts): the window's own slip, which the page lays over it. */
+  readonly find: FindBar = this.#find.bar;
 
   constructor(host: HTMLElement, events: EditorEvents) {
     this.#events = events;
@@ -121,6 +138,7 @@ export class NoteEditor {
 
   /** A note: its document's text and history (./note-doc.ts), images from `loadImage`. */
   show(doc: NoteDoc, loadImage: ImageLoader): void {
+    this.links.hide();
     this.#doc?.detach(this.#view);
     this.#doc = doc;
     const state = this.#state(doc.text, loadImage);
@@ -134,11 +152,13 @@ export class NoteEditor {
   /** The page closed: the note let go, and the view with it. */
   destroy(): void {
     this.release();
+    this.links.destroy();
     this.#view.destroy();
   }
 
   /** No note: the document is let go, and the editor holds nothing of it. */
   release(): void {
+    this.links.hide();
     this.#doc?.detach(this.#view);
     this.#doc = null;
     this.#view.setState(this.#state('', NO_IMAGES));
@@ -153,6 +173,21 @@ export class NoteEditor {
   amend(next: string, undoable: boolean): boolean {
     if (this.#locked || !this.#doc) return false;
     this.#doc.amend(this.#view, next, undoable);
+    return true;
+  }
+
+  /**
+   * Eien's addition at the note's end (a quote from a book, #40): `add` given
+   * the text, returning it with the addition. One step ⌘Z takes back, the
+   * caret after it and in sight, and the keyboard left where it is (the
+   * book). False, changing nothing, while the text is held still.
+   */
+  addAtEnd(add: (text: string) => string): boolean {
+    if (!this.amend(add(this.#view.state.doc.toString()), true)) return false;
+    this.#view.dispatch({
+      selection: { anchor: this.#view.state.doc.length },
+      scrollIntoView: true,
+    });
     return true;
   }
 
@@ -267,6 +302,11 @@ export class NoteEditor {
     this.#view.dispatch({ effects: this.#tagsAndIds.reconfigure(tagsAndIdsExtensions(hidden)) });
   }
 
+  /** How a link in Live shows where it goes, as the "Link editing" setting says (backlog #38). */
+  setLinkStyle(style: LinkStyle): void {
+    this.links.use(style);
+  }
+
   /** Hold the text still (true) or let the writer type again (false). */
   setLocked(locked: boolean): void {
     this.#locked = locked;
@@ -287,7 +327,7 @@ export class NoteEditor {
         return true;
       }),
       htmlPaste,
-      findInNote(this.find),
+      findInNote(this.#find),
       editorKeys(
         (command) => this.format(command),
         (command) => this.#doc?.run(this.#view, command) ?? false,
@@ -318,6 +358,7 @@ export class NoteEditor {
         (target) => this.#events.follow(target),
         () => this.#current,
       ),
+      this.links.extension,
     ];
     return EditorState.create({ doc: text, extensions });
   }

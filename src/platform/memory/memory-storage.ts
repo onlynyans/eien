@@ -1,6 +1,13 @@
 // A vault in memory: the Storage contract without a disk, for tests.
 
-import { baseName, isHiddenName, isWatchedPath, parentOf, vaultPath } from '../../core/paths';
+import {
+  baseName,
+  isHiddenName,
+  isInside,
+  isWatchedPath,
+  parentOf,
+  vaultPath,
+} from '../../core/paths';
 import { kindOf, type VaultEntry } from '../../core/vault';
 import { type CaseLook, caseTwin, twinError } from '../case-twin';
 import {
@@ -138,11 +145,7 @@ export class MemoryStorage implements Storage {
     }
     // Everything at or under `source` moves, kept as it was (a rename keeps the time).
     const moved = (path: string) =>
-      path === source
-        ? target
-        : path.startsWith(`${source}/`)
-          ? target + path.slice(source.length)
-          : null;
+      isInside(path, source) ? target + path.slice(source.length) : null;
     for (const [path, file] of [...this.#files]) {
       const next = moved(path);
       if (next === null) continue;
@@ -162,10 +165,9 @@ export class MemoryStorage implements Storage {
 
   async trash(path: string): Promise<void> {
     const at = vaultPath(path);
-    const inside = (candidate: string) => candidate === at || candidate.startsWith(`${at}/`);
     if (!this.#files.has(at) && !this.#folders.has(at)) throw new Error(`Nothing to trash: ${at}`);
-    for (const file of [...this.#files.keys()]) if (inside(file)) this.#files.delete(file);
-    for (const folder of [...this.#folders]) if (inside(folder)) this.#folders.delete(folder);
+    for (const file of [...this.#files.keys()]) if (isInside(file, at)) this.#files.delete(file);
+    for (const folder of [...this.#folders]) if (isInside(folder, at)) this.#folders.delete(folder);
     this.#trashed.push(at);
     this.#notify([at]);
   }

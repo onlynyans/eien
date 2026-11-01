@@ -224,7 +224,7 @@ safety net throughout.
   - **`pageParts`** splits into per-side parts (Versions, Compare) and
     window-wide parts (counters, Copy as HTML, exports, outline cards).
   - **`vault/pages.ts`:** `sides`, `active`, `open(path, 'active' | 'beside')`,
-    `close`, `swap`, `toggle`, `other`, `notes(): {active, other}`.
+    `close`, `swap`, `toggle`, `other`, `shown(): {active, other}`.
   - **Through the controller:** `vault-view.ts` hands its page side to it and
     drops under 300 lines. `runCommand`, `chrome-wiring`, the drawer and the
     organizer read the active page and `{active, other}`.

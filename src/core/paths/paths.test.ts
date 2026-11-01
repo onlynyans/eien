@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   conflictName,
   freeNoteName,
+  isInside,
   isValidName,
+  movedPath,
   nameKey,
   nameProblems,
   recoveredName,
+  renamedPath,
   resolveLinkPath,
   safeName,
   stampOf,
@@ -211,6 +214,16 @@ describe('vaultPath', () => {
   });
 });
 
+describe('isInside', () => {
+  it('holds a folder itself and what lies in it, never a name that only starts the same', () => {
+    expect(isInside('Fic', 'Fic')).toBe(true);
+    expect(isInside('Fic/Rain.md', 'Fic')).toBe(true);
+    expect(isInside('Fic/Deep/Snow.md', 'Fic')).toBe(true);
+    expect(isInside('Fiction/Rain.md', 'Fic')).toBe(false);
+    expect(isInside('Rain.md', 'Fic')).toBe(false);
+  });
+});
+
 describe('resolveLinkPath', () => {
   it.each([
     ['Fic', 'cover.png', 'Fic/cover.png'],
@@ -241,5 +254,28 @@ describe('resolveLinkPath', () => {
     ['Fic', '/'],
   ])('from %j, %j is nothing', (folder, ref) => {
     expect(resolveLinkPath(folder, ref)).toBeNull();
+  });
+});
+
+describe('a file renamed or moved keeps its extension', () => {
+  it('a book (#40) keeps .epub, as a note keeps .md', () => {
+    expect(renamedPath('Novels/Dune.epub', 'Arrakis', ['Dune.epub'], true)).toEqual({
+      ok: true,
+      path: 'Novels/Arrakis.epub',
+    });
+    expect(renamedPath('Novels/Dune.md', 'Arrakis', ['Dune.md'], true)).toEqual({
+      ok: true,
+      path: 'Novels/Arrakis.md',
+    });
+    expect(movedPath('Novels/Dune.epub', 'Shelf', ['dune.EPUB'], true)).toBe('Shelf/Dune 2.epub');
+    expect(movedPath('Novels/Dune.md', 'Shelf', ['Dune.md'], true)).toBe('Shelf/Dune 2.md');
+  });
+
+  it('a folder has none: a dot in its name is its name', () => {
+    expect(renamedPath('Fic/v1.2', 'v1.3', ['v1.2'], false)).toEqual({
+      ok: true,
+      path: 'Fic/v1.3',
+    });
+    expect(movedPath('Fic/v1.2', '', ['v1.2'], false)).toBe('v1.2 2');
   });
 });

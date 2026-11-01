@@ -1,0 +1,122 @@
+/* The whole book down the page's edge (#40, Phase 4d, ./edge-strip.ts): with
+   Marks on the edge, a strip at the page pane's outer edge, where a scroll
+   bar's marks would be, inside it far enough to leave the system's scroll bar
+   its own. Hairlines for the chapters (a longer pencil one each tenth), a
+   pencil tab for each bookmark, your place a mark-wide ink-soft bar across it,
+   never a tab, so it's never taken for an edge-tab bookmark. Where there's no
+   room it lies over the page's outer margin. Each piece stands at its share
+   of the book, --at. */
+.edge-strip {
+  display: none;
+}
+.page__leaf--epub[data-marks="edge"] .edge-strip {
+  position: absolute;
+  z-index: 2;
+  top: var(--eien-space-5);
+  right: var(--eien-space-4);
+  bottom: var(--eien-space-5);
+  display: block;
+  width: var(--strip-w, var(--eien-space-5));
+  border-radius: var(--eien-radius-s);
+  cursor: pointer;
+  /* A hand on it scrubs the book, never the page's turn or scroll. */
+  touch-action: none;
+}
+/* An outline, as a pane's edge's: forced colours keep it. */
+.page__leaf--epub[data-marks="edge"] .edge-strip:focus-visible {
+  outline: var(--eien-mark-w) solid var(--eien-focus);
+}
+/* No book on the page: nothing to show. */
+.page__leaf--epub[data-marks="edge"] .edge-strip[hidden] {
+  display: none;
+}
+/* Facing pages' left page: its outer edge is its left, and the tip opens toward the page. */
+:root[data-split="facing"] .page__pages[data-two] .page__leaf[data-side="0"] .edge-strip {
+  right: auto;
+  left: var(--eien-space-4);
+}
+:root[data-split="facing"] .page__pages[data-two] .page__leaf[data-side="0"] .edge-strip__tip {
+  right: auto;
+  left: calc(100% + var(--eien-space-2));
+}
+/* In pages, the pane keeps room for it, so it never lies over the fore-edge's turns: past every
+   split's own padding (../page/split-*.css) by specificity, and after them in the window's styles. */
+:root .page__pages .page__leaf--epub[data-view="pages"][data-marks="edge"] .page__scroll {
+  padding-right: calc(var(--strip-w, var(--eien-space-5)) + var(--eien-space-4));
+}
+.edge-strip__marks {
+  position: absolute;
+  inset: 0;
+}
+.edge-strip i {
+  position: absolute;
+  top: calc(var(--at) * 100%);
+  left: 0;
+  display: block;
+}
+.edge-strip__chapter {
+  width: var(--eien-space-2);
+  height: var(--eien-hairline);
+  background: var(--eien-rule-strong);
+}
+.edge-strip__chapter--tenth {
+  width: var(--eien-space-3);
+  background: var(--eien-pencil);
+}
+.edge-strip i.edge-strip__mark {
+  left: var(--eien-space-3);
+  width: var(--eien-space-1);
+  height: var(--eien-space-3);
+  background: var(--eien-paper);
+  border: var(--eien-hairline) solid var(--eien-pencil);
+  border-radius: 0 var(--eien-radius-s) var(--eien-radius-s) 0;
+  translate: 0 -50%;
+}
+.edge-strip i.edge-strip__here {
+  width: 100%;
+  height: var(--eien-mark-w);
+  background: var(--eien-ink-soft);
+  translate: 0 -50%;
+  transition: top var(--eien-calm) var(--eien-ease);
+}
+/* What a point on it is: the tooltip's look, beside the point. */
+.edge-strip__tip {
+  position: absolute;
+  top: calc(var(--at) * 100%);
+  right: calc(100% + var(--eien-space-2));
+  padding: var(--eien-space-1) var(--eien-space-2);
+  white-space: nowrap;
+  translate: 0 -50%;
+  background: var(--eien-paper-raised);
+  border: var(--eien-hairline) solid var(--eien-rule-strong);
+  border-radius: var(--eien-radius-s);
+  box-shadow: var(--eien-shadow-float);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-label);
+  letter-spacing: var(--eien-track-label);
+  color: var(--eien-ink-soft);
+  pointer-events: none;
+}
+.edge-strip__tip[hidden] {
+  display: none;
+}
+/* A finger: as wide as a touch, a hairline to see down its middle, the pieces on it. */
+@media (pointer: coarse) {
+  .page__leaf--epub[data-marks="edge"] {
+    --strip-w: var(--eien-touch);
+  }
+  .edge-strip::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(50% - var(--eien-hairline) / 2);
+    width: var(--eien-hairline);
+    background: var(--eien-rule);
+  }
+  .edge-strip__marks,
+  .edge-strip i.edge-strip__here {
+    left: calc(50% - var(--eien-space-5) / 2);
+    width: var(--eien-space-5);
+  }
+}

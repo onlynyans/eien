@@ -27,10 +27,11 @@ const partName = fc.option(
 
 /** Generated rules, each answer they give recorded. */
 const rules = fc
-  .tuple(fc.func(answer), fc.func(answer), fc.func(partName))
-  .map(([link, image, part]) => {
+  .tuple(fc.func(answer), fc.func(answer), fc.func(partName), fc.option(fc.func(answer)))
+  .map(([link, image, part, anchor]) => {
     const links = new Set<string>();
     const images = new Set<string>();
+    const anchors = new Set<string>();
     const given = (into: Set<string>, value: string | null) => {
       if (value !== null) into.add(value);
       return value;
@@ -39,22 +40,31 @@ const rules = fc
       link: (href) => given(links, link(href)),
       image: (src) => given(images, image(src)),
       part: (source, name) => part(source.name, source.attrs.class, name),
+      // Places kept or not, or none asked for at all (a pasted page, a story's).
+      ...(anchor ? { anchor: (id: string) => given(anchors, anchor(id)) } : {}),
     };
-    return { generated, links, images };
+    return { generated, links, images, anchors };
   });
 
-const ATTRS = new Set(['href', 'src', 'alt', 'title', 'align']);
+const ATTRS = new Set(['href', 'src', 'alt', 'title', 'align', 'anchor']);
 const TITLED = new Set(['a', 'abbr', 'img']);
 const PART_NAMES = new Set<string>(PARTS);
 
 describe('cleanHtml over generated HTML and rules', () => {
   it('hands on only the elements, attributes, addresses and parts it keeps', () => {
     fc.assert(
-      fc.property(hostileHtml, rules, (source, { generated, links, images }) => {
+      fc.property(hostileHtml, rules, (source, { generated, links, images, anchors }) => {
         for (const element of elements(cleanHtml(source, generated))) {
           expect(KEPT.has(element.name)).toBe(true);
           for (const name of Object.keys(element.attrs)) expect(ATTRS.has(name)).toBe(true);
-          const { href, src, alt, title, align } = element.attrs;
+          const { href, src, alt, title, align, anchor } = element.attrs;
+          // A place only as the rules kept it, on an empty link of its own; none unasked.
+          if (anchor !== undefined) {
+            expect(generated.anchor).toBeDefined();
+            expect(anchors.has(anchor)).toBe(true);
+            expect(element.name).toBe('a');
+            expect(element.children).toEqual([]);
+          }
           if (href !== undefined) {
             expect(element.name).toBe('a');
             expect(links.has(href)).toBe(true);

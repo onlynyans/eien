@@ -1,0 +1,98 @@
+/* The page's mark (./page-mark.ts; the Page mark setting, as data-facing-mark):
+   Facing pages' active page, and for a book's bookmark too (#40, Phase 4b). None of them the
+   seal's colour, each arriving with its own short motion (none with reduced motion,
+   ../theme). It stands at the page's outer edge (data-edge), the ribbon centred in
+   the outer margin, --mark-margin: the sheet's own, or a facing leaf's. */
+.page__mark {
+  --mark-margin: var(--pad-x, var(--leaf-x));
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+.page__mark svg {
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* 1 · The ribbon: the book's silk marker over the sheet's top edge, its end forked. */
+:root[data-facing-mark="ribbon"] .page__mark {
+  top: calc(var(--eien-hairline) * -1);
+  left: calc((var(--mark-margin) - var(--eien-space-2)) / 2);
+  width: var(--eien-space-2);
+  height: var(--eien-space-6);
+  background: var(--eien-ink-soft);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+  animation: mark-ribbon var(--eien-calm) var(--eien-ease);
+}
+@keyframes mark-ribbon {
+  from {
+    clip-path: polygon(0 0, 100% 0, 100% 0, 50% 0, 0 0);
+  }
+}
+/* 2 · A dog-ear: the outer top corner turned down, the flap the paper's back. No ink. */
+:root[data-facing-mark="dogear"] .page__mark {
+  top: calc(var(--eien-hairline) * -1);
+  left: calc(var(--eien-hairline) * -1);
+  width: var(--eien-space-5);
+  height: var(--eien-space-5);
+}
+:root[data-facing-mark="dogear"] .page__mark svg {
+  display: block;
+}
+.page__mark-gone {
+  fill: var(--eien-page-ground);
+}
+.page__mark-flap {
+  fill: var(--eien-band);
+  stroke: var(--eien-rule-strong);
+  stroke-width: var(--eien-hairline);
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+:root[data-facing-mark="dogear"] .page__mark polygon {
+  transform-origin: 0 0;
+  animation: mark-dogear var(--eien-calm) var(--eien-ease);
+}
+@keyframes mark-dogear {
+  from {
+    transform: scale(0);
+  }
+}
+/* 3 · An edge tab: an index tab standing out from the page's outer edge, near its head. */
+:root[data-facing-mark="tab"] .page__mark {
+  top: var(--eien-space-6);
+  left: calc((var(--eien-space-1) + 2 * var(--eien-hairline)) * -1);
+  width: calc(var(--eien-space-1) + var(--eien-hairline));
+  height: var(--eien-space-7);
+  background: var(--eien-ink-soft);
+  border-radius: var(--eien-radius-s) 0 0 var(--eien-radius-s);
+  animation: mark-tab var(--eien-calm) var(--eien-ease);
+}
+@keyframes mark-tab {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+@keyframes mark-tab-right {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+/* At the right edge (Facing pages' right page): each mirrored. */
+:root[data-facing-mark="ribbon"] .page__mark[data-edge="right"] {
+  left: auto;
+  right: calc((var(--mark-margin) - var(--eien-space-2)) / 2);
+}
+:root[data-facing-mark="dogear"] .page__mark[data-edge="right"] {
+  left: auto;
+  right: calc(var(--eien-hairline) * -1);
+  scale: -1 1; /* the right page's outer corner is its right */
+}
+:root[data-facing-mark="tab"] .page__mark[data-edge="right"] {
+  left: auto;
+  right: calc((var(--eien-space-1) + 2 * var(--eien-hairline)) * -1);
+  border-radius: 0 var(--eien-radius-s) var(--eien-radius-s) 0;
+  animation-name: mark-tab-right;
+}

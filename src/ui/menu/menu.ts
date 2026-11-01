@@ -11,7 +11,7 @@ import { type IconName, icon } from '../icons';
 
 const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
 /** No keyboard to press them on: a phone's menu leaves the keys out. */
-const touch = () => window.matchMedia('(pointer: coarse)').matches;
+export const touch = (): boolean => window.matchMedia('(pointer: coarse)').matches;
 
 export type MenuItem =
   | {
@@ -38,14 +38,20 @@ let open: { close(): void } | null = null;
 export interface Place {
   readonly at?: { x: number; y: number };
   readonly opener?: HTMLElement;
+  /**
+   * Under the opener, its end lined up with the opener's, and kept under it however tall (it
+   * scrolls instead, by its own max-height from --menu-y): the quick look's column.
+   */
+  readonly end?: true;
 }
 
 /**
  * Float `panel` at `place`, kept inside the window, as the one thing open:
- * whatever was open closes first. It closes on a click elsewhere, the
- * window losing focus or changing width (a shorter window moves it to stay
- * inside), or the close returned; then the
- * keyboard goes back where it was, and `closed` runs.
+ * whatever was open closes first. It closes on a click elsewhere (not on its
+ * opener, whose own click decides), the window losing focus or changing
+ * width (a shorter window moves it to stay inside), or the close returned;
+ * then the keyboard goes back where it was, unless it has gone on somewhere
+ * else (⌘3 into the other page), and `closed` runs.
  */
 export function float(panel: HTMLElement, place: Place, closed?: () => void): () => void {
   open?.close();
@@ -56,11 +62,13 @@ export function float(panel: HTMLElement, place: Place, closed?: () => void): ()
   const close = () => {
     if (open !== handle) return;
     open = null;
+    const now = document.activeElement;
+    const lost = !now || now === document.body || panel.contains(now);
     panel.remove();
     document.removeEventListener('pointerdown', outside, true);
     window.removeEventListener('blur', close);
     window.removeEventListener('resize', resized);
-    back?.focus();
+    if (lost) back?.focus();
     closed?.();
   };
   // A narrower or wider window moves things from under it: it closes. A taller or shorter one (a
@@ -72,23 +80,28 @@ export function float(panel: HTMLElement, place: Place, closed?: () => void): ()
   };
   const handle = { close };
   const outside = (event: Event) => {
-    if (!panel.contains(event.target as Node)) close();
+    const target = event.target as Node;
+    if (!panel.contains(target) && !place.opener?.contains(target)) close();
   };
   document.body.append(panel);
   open = handle;
   const anchor = place.opener?.getBoundingClientRect();
-  const x = place.at?.x ?? anchor?.left ?? 0;
   const y = place.at?.y ?? (anchor ? anchor.bottom + 4 : 0);
   const placeIn = () => {
+    const under = Boolean(place.end && anchor);
+    // Its top first, so a height held by --menu-y is the one measured.
+    if (under) panel.style.setProperty('--menu-y', `${y}px`);
     const size = panel.getBoundingClientRect();
+    const x = place.at?.x ?? (anchor ? (place.end ? anchor.right - size.width : anchor.left) : 0);
     panel.style.setProperty(
       '--menu-x',
       `${Math.max(4, Math.min(x, window.innerWidth - size.width - 4))}px`,
     );
-    panel.style.setProperty(
-      '--menu-y',
-      `${Math.max(4, Math.min(y, window.innerHeight - size.height - 4))}px`,
-    );
+    if (!under)
+      panel.style.setProperty(
+        '--menu-y',
+        `${Math.max(4, Math.min(y, window.innerHeight - size.height - 4))}px`,
+      );
   };
   placeIn();
   document.addEventListener('pointerdown', outside, true);

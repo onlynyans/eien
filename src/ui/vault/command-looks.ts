@@ -1,13 +1,15 @@
 // How each of the layout's commands looks now, for a shown vault
 // (./chrome-wiring.ts draws them): a view chosen, Focus on, the list shut,
 // Compare showing the changes. A command for one kind of page
-// (../chrome/commands.ts, `on`) looks disabled on a page of another; the
-// window's look the same whatever the page holds.
+// (../chrome/commands.ts, `on`) is set aside while the page it acts on is
+// another kind (#40): a book never takes Bold, so a greyed Bold would say
+// something false. The window's look the same whatever the page holds.
 
 import { type FormatCommandId, headingLevel } from '../../core/format';
 import type { Layout } from '../chrome/commands';
 import { actsOn, type CommandId, commandOf } from '../chrome/commands';
 import type { CommandLook } from '../chrome/host';
+import { isEpub } from '../epub/epub-side-types';
 import type { SettingsState } from '../settings/settings-state';
 import type { PaneLayout } from '../shell/panes';
 import { COMPARE_WORD } from '../versions/seal-line';
@@ -20,6 +22,8 @@ export interface LooksOf {
   layout(): Layout | null;
   /** Whether the page's controls are put away to a strip. */
   strip(): boolean;
+  /** Whether the quick look (#49) is open. */
+  lookOpen(): boolean;
 }
 
 const NAMES = { live: 'Live', source: 'Source', reading: 'Reading' } as const;
@@ -86,6 +90,17 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
     }
   };
 
+  /** A book's commands: the shelf's view pressed; the bookmark pressed on a bookmarked page. */
+  const bookLook = (id: CommandId, side: Side): CommandLook => {
+    if (id === 'view.pages' || id === 'view.scroll')
+      return { pressed: settings.values['epub.view'] === id.slice('view.'.length) };
+    if (id === 'bookmark') {
+      const on = isEpub(side) && side.marks.bookmarks.on;
+      return { pressed: on, tip: on ? 'Take the bookmark off' : undefined };
+    }
+    return {};
+  };
+
   /** The window's commands, the same whatever the page holds. */
   const windowLook = (id: CommandId): CommandLook | null => {
     switch (id) {
@@ -122,6 +137,8 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
           tip: dark ? 'Night · switch to day' : 'Day · switch to night',
         };
       }
+      case 'look':
+        return { expanded: of.lookOpen() };
       case 'panes':
         return {
           icon: two() ? 'panes2' : 'panes3',
@@ -135,7 +152,7 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
 
   return (id, side) => {
     // A command for another kind of page than the one it would act on: there, it does nothing.
-    if (!actsOn(id, side.kind)) return { disabled: true, pressed: false };
-    return windowLook(id) ?? (isNote(side) ? noteLook(id, side) : {});
+    if (!actsOn(id, side.kind)) return { aside: true };
+    return windowLook(id) ?? (isNote(side) ? noteLook(id, side) : bookLook(id, side));
   };
 }

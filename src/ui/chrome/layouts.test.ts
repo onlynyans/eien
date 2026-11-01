@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { FORMAT_COMMANDS } from '../../core/format';
 import { ICONS } from '../icons';
 import { COMMANDS, type CommandId, commandOf, LAYOUTS, onDesktopIn } from './commands';
-import { idsIn } from './layout-spec';
+import { idsIn, TOOL_FOLDS } from './layout-spec';
 import { LAYOUT_SPECS } from './layouts';
 import { SPLIT_SPECS, type SplitMode, splitHosts } from './splits';
 
@@ -109,6 +109,45 @@ describe.each(LAYOUTS)('the %s layout', (layout) => {
       const menu = FORMAT_COMMANDS.find((each) => `format:${each.id}` === command.sends);
       if (menu) expect(command.key, id).toBe(menu.key); // the menu's own key
     }
+  });
+});
+
+describe('the Look control (#49)', () => {
+  it('is the page’s last tool after a hairline in each layout, before only the strip', () => {
+    for (const layout of LAYOUTS) {
+      const spec = LAYOUT_SPECS[layout];
+      const items = spec.desktop.find((host) => host.name === spec.tools)?.items ?? [];
+      const at = items.indexOf('look');
+      expect(items[at - 1], layout).toBe('|');
+      expect(items.slice(at + 1), layout).toEqual(layout === 'runhead' ? [] : ['strip']);
+    }
+  });
+
+  it('is in every phone layout’s tools, before the ⋯ that offers it too', () => {
+    for (const layout of LAYOUTS) {
+      const phone = idsIn(LAYOUT_SPECS[layout].phone.items);
+      expect(phone.slice(-2), layout).toEqual(['look', 'more']);
+    }
+  });
+
+  it('folds last of the tools, before the views', () => {
+    const at = TOOL_FOLDS.indexOf('look');
+    // A book's bookmark (#40, Phase 4b) just before it.
+    expect(TOOL_FOLDS[at - 1]).toBe('bookmark');
+    expect(TOOL_FOLDS[at - 2]).toBe('focus');
+    expect(TOOL_FOLDS[at + 1]).toBe('view.live');
+  });
+
+  it('runs the quick look’s menu command, with its key, for a page of any kind (#40)', () => {
+    expect(commandOf('look')).toMatchObject({
+      icon: 'look',
+      label: 'Look',
+      key: 'Mod-Shift-l',
+      sends: 'look',
+    });
+    expect(commandOf('look')).not.toHaveProperty('on');
+    const keys = COMMANDS.map((command) => ('key' in command ? command.key : undefined));
+    expect(keys.filter((key) => key?.toLowerCase() === 'mod-shift-l')).toHaveLength(1);
   });
 });
 

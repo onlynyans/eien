@@ -23,12 +23,15 @@ const folderNode = (
   path: string,
   folders: FolderNode[] = [],
   notes: string[] = [],
+  epubs: string[] = [],
 ): FolderNode => ({
   name: path.split('/').at(-1) ?? '',
   path,
   folders,
   notes,
+  epubs,
   noteCount: notes.length + folders.reduce((sum, each) => sum + each.noteCount, 0),
+  epubCount: epubs.length + folders.reduce((sum, each) => sum + each.epubCount, 0),
 });
 
 const note = (path: string, extra: Partial<ListedNote> = {}): ListedNote => ({
@@ -207,6 +210,29 @@ describe('TreeRows, three panes', () => {
     expect(run.toggle).toHaveBeenCalledWith('Drafts');
     // Book has notes but no folders: with three panes nothing opens under it.
     expect(tree.querySelector('[data-key="twist:Book"]')).toBeNull();
+  });
+
+  it('keeps out of FOLDERS a folder of EPUBs alone, and no twisty opens onto one (#40)', () => {
+    const shelved = folderNode('', [
+      folderNode('Novels', [], [], ['Novels/Emma.epub']),
+      folderNode(
+        'Reading',
+        [folderNode('Reading/Russian', [], [], ['Reading/Russian/Anna.epub'])],
+        ['Reading/On Anna.md'],
+      ),
+      folderNode('Both', [], ['Both/a.md'], ['Both/b.epub']),
+      folderNode('Empty'),
+    ]);
+    const rows = rowsOf(
+      model({ tree: shelved, open: new Set(['Reading']) }),
+      actions(),
+      () => ({}),
+      new RowCache(),
+    );
+    const list = document.createElement('ul');
+    list.append(...rows.folders(shelved, 0, () => null));
+    expect(names(list)).toEqual(['folder:Reading', 'folder:Both', 'folder:Empty']);
+    expect(list.querySelector('[data-key="twist:Reading"]')).toBeNull();
   });
 
   it('lists tags with their # and, open, their children', () => {

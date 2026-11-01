@@ -28,6 +28,9 @@ documents="$(xcrun simctl get_app_container "$udid" "$APP_ID" data)/Documents"
 mkdir -p "$documents/Vault/Fic"
 printf 'Mended, never renamed.' >"$documents/Vault/Fic/.Mend.md.eien.tmp"
 printf 'Cut between the steps.' >"$documents/Vault/.Tear.md.eien-case"
+# A book on the shelf (#40): the vault lists it, and Eien still starts and recovers beside it.
+mkdir -p "$documents/Vault/Novels"
+cp tests/fixtures/epub/plain.epub "$documents/Vault/Novels/Pride and Prejudice.epub"
 
 xcrun simctl launch "$udid" "$APP_ID"
 recovered=""
@@ -52,5 +55,6 @@ fail() {
 [ ! -e "$documents/Vault/Fic/.Mend.md.eien.tmp" ] || fail "the temp file was left"
 [ -f "$documents/Vault/Tear.md" ] || fail "the half-done rename wasn't put back"
 [ "$(cat "$documents/Vault/Tear.md")" = 'Cut between the steps.' ] || fail "the note put back lost its words"
+cmp -s tests/fixtures/epub/plain.epub "$documents/Vault/Novels/Pride and Prejudice.epub" || fail "the book was changed"
 [ ! -e "$documents/Vault/.Tear.md.eien-case" ] || fail "the step was left"
 echo "ok: Eien opened Documents/Vault on iOS, and recovered what the crash left"

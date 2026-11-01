@@ -10,7 +10,11 @@ raw value.
 **Changed on 2026-10-20, by the owner:** controls are icons, not words; not
 everything is square; the machine voice's face is a setting; row names'
 weight is a setting. Each is marked below, and in `docs/backlog.md` (#24–#27).
-Where this file and the mockup disagree, this file wins.
+Where this file and the mockup disagree, this file wins: the mockups in
+`docs/design/` are a 2026-10-20 snapshot, kept for their reasoning and never
+copied from. How something looks is this file first, then each exploration's
+Decided section (`docs/design/explorations/*.md`), then the code (AGENTS.md →
+Rules).
 
 **Brought up to date on 2026-10-21, after stage 3:** the Tokens section below
 lists every token family as `src/ui/theme/tokens.css` and the layouts define
@@ -65,12 +69,15 @@ hairline borders, 4 shadows (the sheet's once, the float three times).
 - `--eien-shadow-sheet`: the sheet alone, the object lying on the blotter.
 - `--eien-shadow-float`: whatever floats above the window.
 - Panes, bands and rows cast none. No gradients.
-- **One exception, the curl's light** (approved 2026-10-28, #40; built in
-  its Phase 3): while a book's page turns as a curl, and only then, the
+- **One exception, the curl's light** (approved 2026-10-28, #40; built,
+  Phase 3a, #129): while a book's page turns as a curl, and only then, the
   paper may carry light. At rest every page is flat, with two shadows and
   no gradients.
-  - The light comes from three tokens, each a light-dark pair a theme
-    carries, added to `tokens.css` and the design README when built:
+  - The light comes from three tokens in `tokens.css` (docs/design/README.md,
+    "A page turning"; Phase 3a), beside the shadows: the two inks a
+    light-dark pair each, which a palette's sheet carries with its shadows
+    (`slate.css`), not a writer's theme (a shadow isn't a theme's either);
+    the third a fraction:
     - `--eien-curl-shade`: the sheet shadow's own ink, where paper bends
       away;
     - `--eien-curl-light`: the crest of the roll;
@@ -150,7 +157,7 @@ moves the writer didn't ask to move. None with reduced motion.
 ## Tokens
 
 Every value comes from a token. The source is `src/ui/theme/tokens.css`
-(`docs/design/tokens.css` mirrors it for the mockups). A **theme** overrides
+(`docs/design/tokens.css` is the mockups' snapshot, frozen at stage 3). A **theme** overrides
 the colour tokens alone, each `light-dark(day, night)`
 (`THEME_TOKENS` and `safeTokens` in `src/core/themes/tokens.ts`): a theme
 can't touch sizes, faces, corners or space. A **setting** overrides a few
@@ -165,6 +172,7 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Status | `--eien-added`, `-removed` (= `-danger`), `-caution`, each `-wash` | moss, carmine, ochre | theme |
 | Lines | `--eien-rule-soft`, `-rule`, `-rule-strong`; `--eien-hairline` 1px; `--eien-mark-w` 2px | ink at three strengths | theme (colours) |
 | Depth | `--eien-shadow-sheet`, `--eien-shadow-float` | two shadows, no more | – |
+| The curl's light | `--eien-curl-shade`, `--eien-curl-light`, `--eien-curl-through` | the sheet shadow's ink (0.18 by day, black 0.5 by night); white 0.6 by day, the night's ink 0.1; 0.12 | – (Depth's exception: only while a page turns as a curl) |
 | Corners | `--eien-radius-s`, `-m`, `-l` | A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10 | layout |
 | Icons | `--eien-icon` 16px, `--eien-icon-stroke` 1.25, `--eien-control` 28px (desktop), `--eien-touch` 44px | | – |
 | Faces | `--eien-family-*` (nineteen: eleven monos, plex-mono first, and the eight text faces); `--eien-face-text`, `--eien-face-mono`, `--eien-face-source`, `--eien-face-seal` | each voice points at a family | settings: Typeface, Interface font, Source font (all from one FACES list, `src/core/config/faces.ts`) |
@@ -172,15 +180,16 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Weights | `--eien-weight-tree`, `--eien-weight-list`, `--eien-weight-list-chosen`; `--eien-track-label` 0.12em | 400, 400, 500 | settings: Row weights (chosen = list + 100, at most 700) |
 | Space | `--eien-space-1` … `-8` | 4, 8, 12, 16, 24, 32, 48, 72 | – |
 | Lengths | `--eien-row-h` 30px × text scale (26 compact), `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |
-| Page rhythm | `--eien-measure` and `--eien-leading-prose` (each face's own: 29–34em, 1.5–1.76, less `--eien-leading-tighten`), `--eien-leading-row` 1.35; `--eien-title-gap`, `-paragraph-gap`, `-scene-gap`; `--eien-sheet-pad-x`, `-sheet-pad-top`, `--eien-page-gutter`; `--eien-list-preview` | comfortable: 32, 16, 1.4em; 72, 48, 24; tighten 0; preview shown. Compact: 16, 8, 0.8em; 48, 24, 8; tighten 0.14; no preview | the faces; density |
-| Frame | `--eien-page-ground`, `--eien-sheet-lift` | Sheet: the blotter, the sheet's shadow. Full: paper, none, gutter 0 | setting: Page |
+| Page rhythm | `--eien-measure` and `--eien-leading-prose` (each face's own: 29–34em, 1.5–1.76, less `--eien-leading-tighten`), `--eien-leading-row` 1.35; `--eien-title-gap`, `-paragraph-gap`, `-scene-gap`; `--eien-sheet-pad-x`, `-sheet-pad-top`, `--eien-sheet-gutter` (the density's blotter round a sheet, which `--eien-page-gutter` takes with a sheet frame); `--eien-list-preview` | comfortable: 32, 16, 1.4em; 72, 48, 24; tighten 0; preview shown. Compact: 16, 8, 0.8em; 48, 24, 8; tighten 0.14; no preview | the faces; density |
+| Frame | `--eien-page-ground`, `--eien-page-gutter`, `--eien-sheet-lift` | Sheet: the blotter, the sheet's shadow, the density's gutter. Full: paper, none, gutter 0 | setting: Page; a book's leaf its own (`[data-frame]`) |
+| A book's parts | `--eien-epub-title-size`, `-title-gap`, `-paragraph-gap`, `-break-gap`, `-epigraph-indent`, `-plate-gap`, `-caption-ink`, `-first-line-track`; `--eien-epub-indent` (Phase 2) | each from a note's: the heading size, the title, paragraph and scene gaps, space-6, space-5, pencil, half the label's tracking; As a book's indent space-6, space-5 under a 520px page | – (declared on `:root, [data-face]`, so a book in its own face resolves them in it) |
 | Layout controls | `--controls-h`, `--controls-ground`; `--controls-w`, `--controls-left`, `--controls-right`; `--corner`, `--seal-x`, `--strip` | A: `--band` on the band; B: `--band` on the page ground; C: `--runhead-h` on `--runhead-ground`. `--controls-w` is how wide the window's own controls stand: from the overlay's width, not where its free area starts (a Mac's resize moves that), and measured once still, never mid-resize (#44); `data-controls-left` puts them at the left. Left is macOS's traffic lights, right Windows' and Linux's buttons, from the window controls overlay (0 where there are none: full screen, a phone). The corner's three: "A shut sidebar" below | layout; the window |
 | Page | `--eien-zoom` (0.5–2), `--eien-dimmed` 0.32 (focus mode's faded paragraphs), `--eien-sheet-edge` | | settings: Page zoom |
 | Split | `--split-gap`, `--leaf-x`, `--pager-gap` | the divider's track a hairline (Facing pages: the book's gutter, `--eien-space-6`); a facing leaf's side margin, clamp(space-4, 7%, space-7); half of space-1 between a folded split's pager names | the split's mode |
 | C's strip | `--runhead-ground` | one of the theme's surfaces, the desk by default | setting: Running head ground |
 | Motion | `--eien-quick` 120ms, `--eien-calm` 220ms, `--eien-ease` | cubic-bezier(0.2, 0.7, 0.2, 1) | – |
 
-A new token goes in `tokens.css` (and its mirror), named for its role in the
+A new token goes in `src/ui/theme/tokens.css` alone, named for its role in the
 desk-and-paper world, never for a value (`--eien-pencil`, not `--grey-500`);
 if a theme should change it, it joins `THEME_TOKENS`.
 
@@ -290,7 +299,7 @@ if a theme should change it, it joins `THEME_TOKENS`.
 - **Dragged row:** raised paper, a rule-strong outline, the float shadow; the
   rest at 72% opacity; a hairline drop marker with a dot.
 - **Empty:** centred, the text face in italic, ink-soft.
-- **Find slip** (`.find`, `editor/find.css`, 2026-10-27): find and replace
+- **Find slip** (`.find`, `find/find.css`, 2026-10-27): find and replace
   on a slip laid at the page's top right (`--eien-space-2` down,
   `--eien-space-4` in), as wide as the list plus 48px each side and no wider
   than the page allows. Raised paper in a rule-strong hairline,
@@ -316,7 +325,10 @@ if a theme should change it, it joins `THEME_TOKENS`.
 
 ## States
 
-Every control has hover, pressed, keyboard focus and disabled. Focus is a 2px
+Every control has hover, pressed, keyboard focus and disabled. A tool the
+active page can't use isn't disabled but set aside, out of its bar (#40,
+"The tools, by what's in sight"); disabled is for one that applies but
+can't act now (Compare with no versions). Focus is a 2px
 ring in the focus ink (inset on rows). Hover styles apply only where a pointer
 hovers, so a tapped control doesn't stay lit on touch.
 
@@ -502,8 +514,10 @@ corners and colours the layout's own.
   book's tools where the layout puts them; each note's own (its number,
   words, last seal; Versions, Compare, Copy as HTML, ×, on hover) in a folio
   at its page's foot, a soft rule above, mirrored as page numbers are. The
-  active page's mark is a setting (`appearance.facingMark`, as
-  `data-facing-mark`), none of them the seal's colour, each with its own
+  active page's mark is a setting, **Page mark** (`appearance.facingMark`,
+  as `data-facing-mark`; one look in `page/page-mark.css`, which a book's
+  bookmark wears too, #40 Phase 4, at the page's outer edge, `data-edge`),
+  none of them the seal's colour, each with its own
   `--eien-calm` arrival (none with reduced motion):
   - **the ribbon** (the default): an ink-soft silk marker, `--eien-space-2`
     wide and `--eien-space-6` long, over the sheet's top edge in the outer
@@ -591,7 +605,7 @@ is always Panes.
   under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
 
-## A quick look (decided 2026-10-28, #49; not built yet)
+## A quick look (decided 2026-10-28, #49; built: notes' half #105, shelf's half #114, after #40 Phase 1 #120; docs/quick-look.md)
 
 From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
 
@@ -611,11 +625,255 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
     foot.
   - A change shows at once. Esc, the key again or a click outside closes
     it. Each setting is one stop for Tab; arrows choose within it.
-- **Two pages:** while it's open, the page it doesn't change sits back: its
-  paper takes `--eien-band`.
+- **Two pages:** while it's open with a note and a book side by side, the
+  page it doesn't change sits back, in the tone the split already gives the
+  page you aren't in (decided 2026-10-29; two notes wear the one look, so
+  only a book beside a note needs it). Built (#120): `data-back` on its
+  leaf (`vault/look-wiring.ts`), its paper `--eien-band`, the companion's
+  page-you-aren't-in tone (`page/split.css`): the sheet, or the leaf in
+  Facing pages and Page: Full, with `--eien-calm`'s transition. With a
+  companion, Look makes the page it sets the one you're in, so the
+  companion's own rule paints the other.
+- **With a book in front,** one line at the popover's foot, in pencil:
+  "Settings sets notes; this is every book's look." All settings opens
+  Settings at Look, the notes' (decided 2026-10-29). Built (#120):
+  `.quick-look__line`, the foot's first line, in the voice of
+  `.quick-look__every` (the text face, `--eien-size-preview`, italic,
+  `--eien-pencil`); the dialog is described by it.
 - **Words and the sun:** an EPUB's look is the shelf's (SHELF, never
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
+
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131, two pages and set as a book, 3d; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d; Phase 5, highlights, 5a)
+
+From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
+Later phases add paging and the turn (Phase 3), marks, highlights and Find
+in the book, each recorded here as it's built.
+
+- **SHELF** (`sidebar/shelf-rows.ts`): a sidebar section between FOLDERS and
+  TAGS, a lens over the one folder tree. A folder holding a book is
+  FOLDERS' own folder row (the tree's twisty, focus ring, hover and drop
+  target), its name in pencil, no count; it shuts and opens (open at first,
+  kept per device) and has the folder's menu. A book's row is in ink-soft,
+  and opens on the page. Books are never in a folder's note list.
+- **FOLDERS for writing, SHELF for reading** (decided 2026-10-29): FOLDERS
+  leaves out a folder of books alone (at any depth), which is on SHELF
+  only; a folder of both is in both. Nothing dims: a section shows what its
+  folders hold.
+- **A book's row menu** (#120): the Row menu (Built patterns), the book's
+  title its head: Rename (F2), Move to…, and the trash last in
+  `--eien-danger` after a rule. Right-click, the menu key or Shift+F10 open
+  it; F2 or a second click on the name renames in place with the Name
+  field, the book's `.epub` faded after it as a note's `.md`.
+- **The tools, by what's in sight** (decided 2026-10-29, replacing #120's
+  greying in the bars): a tool shows only while the active page can use
+  it. With a book active, a note's tools are set aside in the bars, never
+  greyed (a greyed Bold says something false); the shared tools (Look,
+  Split, the panes) keep their places, and the change is instant. The
+  formatting bar's row keeps its height while a note is in sight, so
+  neither page moves; with a book alone it goes. The phone's ⋯ and the
+  menu bar grey the same commands (#120): a menu lists all the app does. A
+  menu of the bar is never greyed, only its items.
+- **A book's contents** (`list/contents-list.ts`): in the list pane while a
+  book is open, a chapter's row a note's row without its preview or date
+  (`.contents-row`), a part's chapters stepped in by `--eien-space-4` a
+  level, the chapter you're in marked as a chosen note is. With two panes,
+  under the book's row in SHELF, as an open folder's notes are; choosing
+  another row folds them away.
+- **The book's page** (`ui/epub/epub.css`): a chapter on the sheet, in the
+  writer's own faces and the theme's colours, never the publisher's. The
+  cleaner's named parts (`data-part`) are drawn from "A book's parts"
+  tokens: the chapter title centred at the heading size, weight 500; the
+  first line in capitals at 80%, tracked (the faces have no small
+  capitals); a scene break centred in pencil; an epigraph indented and
+  italic; a plate centred, never split, its caption smaller in pencil.
+  Its paragraphs as the scroll style sets them (Phase 2): *As a note*, a
+  note's in Reading, the gap between; *As a book*, no gap, a paragraph
+  indented `--eien-epub-indent` only after another plain one, the first
+  after a heading, a break, a picture or a centred line flush, and a named
+  part's own gap kept. A book setting, in the shelf's quick look alone.
+- **A chapter a sheet** (Phase 2): the chapter scrolls on the note's sheet.
+  At its foot, the sheet's turns (`.sheet__turns`, shared with the
+  extension's story page): a `--eien-rule-soft` hairline, `--eien-space-7`
+  above it and `--eien-space-4` under, the chapters before and after as word
+  buttons (label type, an arrow beside the name, `--eien-touch` high on a
+  phone), the last one at the right; "The end" in label type at the last
+  chapter. The colophon's items: "3 of 61", the page (Phase 4a: "page 212
+  of 2,450", "page xii"; `.colophon__page`, a count, gone while none is
+  known), "40% of the chapter", "12% of the book", the two percents
+  dropped first under a 560px page pane, the page kept. In Facing pages
+  they're the book's folio, as a note's figures are.
+- **A bookmark** (Phase 4b, `epub/bookmark.css`): the Page mark's own look
+  (`page/page-mark.css`: the ink-soft ribbon, the dog-ear with no ink, or
+  the ink-soft edge tab), `.page__mark--bookmark`, at the sheet's outer top
+  (`data-edge="right"`), the ribbon centred in the sheet's own margin
+  (`--pad-x`). It hangs from a holder of no height that sticks to the top
+  of the sheet in sight (`.epub-sheet__mark`), so scrolling it keeps to the
+  page you see. In pages the edge tab stands past the fore-edge's pages
+  still to read (`--edges-after` × `--eien-mark-w`); with Page frame Full,
+  inside the page's edge. It arrives with the mark's own `--eien-calm`
+  motion as it appears, none with reduced motion, and is hidden while a
+  page curls (the turning page is a copy, which leaves it out). The word
+  "bookmarked" is heard (visually hidden) where it isn't seen. **The
+  clash** (decided 2026-10-30): with Facing pages and two pages, the mark
+  says "the page you're in", so a bookmark wears none and the book's folio
+  says "bookmarked" in its figures (`.colophon__bookmarked`, shown there
+  alone). The tool, a ribbon icon pressed on a bookmarked page ("Take the
+  bookmark off"), is a book's own (`on: 'epub'`), among the page's tools
+  before Look; in Facing pages, in each page's folio. Its icon is a page
+  with the ribbon over its top edge, filled while pressed: the page tells
+  it from Pinned's banner.
+- **A highlight** (Phase 5a, `epub/ink.ts`, `ink.css`; Features 1): a
+  pencil line under the words (`--eien-epub-highlight-ink`, a mark's width,
+  0.22em below, ink not skipped) and a pencil tick in the margin
+  `--eien-epub-tick-inset` before each paragraph it touches, a border so
+  forced colours keep it, in its own column's margin on a spread. Quieter
+  than a wash, which is Find's. Painted over the page's own text by name
+  (`::highlight(epub-highlight)`), never an element among the words; a turn's
+  copy carries the same ink in elements of its own. The selection bar's
+  first word is **Highlight**, "Take off the highlight" on words in one;
+  taken off, the colophon's news offers **Put back** (a word button, last
+  among the figures) while it shows. "highlighted" is heard, never seen, as
+  "bookmarked" is (`.colophon__heard`).
+- **Marks in the list** (Phase 4c, `list/book-lenses.ts`, `.css`): under
+  the book's head in the list, Contents and Marks as word buttons, each
+  with its count in a `.count`, the one shown pressed (every chosen word
+  button's look: ink in a `--eien-rule-strong` hairline), as the views are
+  a chosen one of a set. A bookmark's row is a contents row: its words in
+  the text face at row size, the list's weight and leading, two lines at
+  most; its page a count at the right; its chapter in pencil at preview
+  size under them. None kept: the list's empty line, italic in pencil.
+  With two panes the buttons are a line of their own (not a row) under the
+  book's SHELF row, its bookmarks tree rows with their page as the count,
+  and none kept the tree's own hint.
+- **Marks on the edge** (Phase 4d, `epub/edge-strip.ts`, `.css`): the
+  whole book down the page pane's outer edge, `--eien-space-5` wide,
+  `--eien-space-4` in from it (the system's scroll bar keeps its own),
+  `--eien-space-5` from the pane's top and foot; in pages the pane keeps
+  room for it beside the fore-edge. A `--eien-rule-strong` hairline
+  `--eien-space-2` long for each chapter, `--eien-space-3` in pencil each
+  tenth; each bookmark a pencil tab (`--eien-paper` in a pencil hairline,
+  `--eien-space-1` × `--eien-space-3`, its outer corners
+  `--eien-radius-s`); the place an ink-soft bar `--eien-mark-w` high
+  across the strip, never a tab (decided 2026-10-30, so it's never taken
+  for an edge-tab bookmark), moving with `--eien-calm`. Pointing, the
+  tooltip's look beside the point (raised paper, a rule-strong hairline,
+  the float shadow, label type). Focused, the focus ink's outline (as a
+  pane's edge's, kept by forced colours). On a touch screen,
+  `--eien-touch` wide with a `--eien-rule` hairline down its middle, and
+  in pages the pane keeps that much room. On Facing pages' left page it
+  stands at the left. The list shows the contents alone.
+- **The place is kept to the line**, never drawn: a page put back, laid out
+  anew or zoomed shows the same line at its top.
+- **A note over the page** (Phase 2b, `ui/epub/note-over.ts`): a note's
+  reference pressed floats the note under it as a menu floats (`.menu`:
+  raised paper, a `--eien-rule-strong` hairline, `--eien-radius-m`, the
+  float shadow), as wide as the list at most, `--eien-space-2` round the
+  note's words in the book's own face (`data-face`); **Go to the note**, a
+  word button, under them. A dialog that takes the keyboard; Esc, a click
+  elsewhere or the page scrolling closes it.
+- **A link in a book** looks as a link on the extension's story page does,
+  one rule for both (`page/page.css`, `.prose a[href]`, `.epub-chapter
+  a[href]`): the words' own colour, a `--eien-rule-strong` underline 0.18em
+  below them, `currentColor` under the pointer. The window's tooltip names
+  where it goes. A link kept as words alone has no look of one.
+- **Back** after a link: a word button first in the colophon's figures
+  ("Back to Chapter I"), there only while there's a step back.
+- **Quote** (Phase 2c): words chosen in a book show the selection bar
+  (spec §4's, `.selection-bar`: raised paper above the selection, the
+  float shadow) with its commands as words, **Quote in the note** and
+  **Copy**; never on a touch screen, whose own callout is over the words
+  (the page's ⋯ has Quote). The quote arrives in the note as Markdown, `>`
+  and the citation in an em dash: `— Pride and Prejudice, Chapter III`.
+  What happened is said in the colophon ("Quoted in At the Assembly.").
+- **A note's reference and a note** are named (`note-ref`, `note`) to open
+  the note over the page, and drawn as the book sets them: the reference
+  in the publisher's own superscript, the note as its paragraphs. No style
+  of their own (Phase 2b); one comes if they're missed.
+- **The book's look is the shelf's:** its typeface, text size, line spacing,
+  width and frame, set in the quick look with a book in front, worn on its
+  leaf (`data-face`, `data-frame`, `--eien-text-scale`, `--look-lead`,
+  `--look-width`), never on `<html>`. Day or night stays the window's.
+- **In a split,** both pages lie in the window's frame (the notes' Page), so
+  the modes' marks read as one arrangement; the book keeps the rest of its
+  look (decided 2026-10-29).
+- **Pages** (Phase 3b, Pages 2's leaf): the sheet fills the pane, the
+  chapter in pages as tall as the whole lines they hold, its paragraphs a
+  book's, its foot gone (turning goes on). The fore-edge lies under the
+  sheet's sides, up to six paper edges in `--eien-rule` hairlines on
+  `--eien-paper`, `--eien-mark-w` apart, in sixths of the book read and to
+  go; none in Page frame Full. Each side, `--eien-space-3` wide beside the
+  sheet, is a button (Previous page, Next page) with the `e-resize` and
+  `w-resize` cursors. The book's own tools, Pages and Scroll (a page with
+  its corner, a sheet that scrolls), stand in the views' place, a note's
+  set aside with a book, and theirs with a note.
+- **The turn** (Phase 3a, 3b): Curl (the default), Slide or Words, each
+  as the approved explorations move them, on `--eien-ease`, each time a
+  multiple of `--eien-calm` (or `--eien-quick`) times the Turn speed,
+  instant with reduced motion. The curl's light is the one exception
+  under Depth: its pieces are copies of the page in sight, clipped to the
+  pane.
+
+- **Two pages** (Phase 3d, Pages 1's spread, `ui/epub/epub-spread.css`):
+  where the pane holds two pages of 20em of the text, with the sheet's
+  margins and the gutter, the sheet widens to two pages, each at most the
+  measure (Page width still narrows them), the text blocks
+  `--eien-space-8` apart and Facing pages' `--eien-rule-soft` hairline down
+  the gutter's middle. One sheet, its one shadow, no fold shading. Never on
+  a phone (one pane at a time) or in a split. A turn moves the spread, the
+  curl lifting it as one leaf; the fore-edge stands at its outer sides
+  (Previous pages, Next pages). A bookmark's mark sits on the page it
+  marks: the verso's at its left, its edge tab past the pages read
+  (`--edges-before`). The colophon says "pages 212–213 of 2,450".
+- **Set as a book** (Phase 3d, Showcase 2, `ui/epub/epub-set.css`), in
+  pages alone: justified and hyphenated (`hyphenate-limit-chars: 6 3 2`),
+  `text-wrap: pretty`, widows and orphans 2; ragged but hyphenated on a
+  phone and on a page under 520px; ragged where the window can't hyphenate
+  the book's language (`ui/epub/hyphens.ts`). A chapter opens four lines
+  low (two on a phone), on the text's own line (`--line`). The running
+  heads in label type, off an opening page: the chapter's over one page;
+  the book's title over the verso and the chapter's over the recto. The
+  folios in counts at the outer corners, the page numbers' own labels.
+  Each keeps its line when empty; in pages they take the folders' crumbs'
+  place. Before the first chapter, Eien's **title page** (the title at 1.5 ×
+  the title size, a `--eien-space-7` hairline in `--eien-rule` under it, the
+  author in tracked capitals at preview size in ink-soft, the folders at the
+  foot in label type) and, facing it, the **imprint** at its foot: "This
+  copy" in label type, then its lines in the mono at meta size in pencil,
+  the title in italic and the face's name in the text face. Neither is the
+  book's words: never chosen, counted or marked.
+
+## A link in Live (decided 2026-10-29, #38; built)
+
+From `docs/design/explorations/links.md`: all three, as one setting of the
+editor's, **Link editing** (`editor.links`): the Card by default on the
+desktop, the Bar on a phone (`phoneDefault`). A plain click places the caret;
+⌘-click follows; the tools' Open is the plain way. A link stays as Live draws
+it: ink, a `--eien-rule-strong` underline, no colour of its own.
+
+- **Card** (`.link-card`): what floats, as a menu: raised paper, a
+  `--eien-rule-strong` hairline, `--eien-radius-m`, the float shadow; the
+  list's width (`--eien-list-w`), a phone's sheet less `--eien-space-4` each
+  side. Its body is the note row's anatomy, `--eien-space-3` round: the
+  folders in label type, the title (text face, 500), the first line in pencil
+  at preview size, the words as a count; a web link's site in the mono in ink
+  and the rest in pencil; a note not made yet, NO NOTE YET and its name in
+  italic. Its tools after a `--eien-rule-soft` rule: Open, Edit, Take off, and
+  "⌘-click opens" in label type. Edit turns it into two `.field`s, Words in
+  the text face and Goes to in the mono, ↩ keeps, Esc puts back, leaving
+  keeps. On `hover: none` the tools are 44px with their words.
+- **In place**: no surface. The caret's link opens its own marks
+  (`linkInPlace`), the address in `--eien-face-source`, Rename's 2px focus
+  mark under the part with the caret, ↗ a step short of a control after it
+  (its reach a finger's on a phone). A hover is said in the colophon.
+- **Bar** (`.link-bar`): the selection bar's surface exactly; the kind's icon
+  in pencil, where it goes (a note's title in the text face, an address in
+  the mono, cut at 26ch), a rule, Open, Edit, Take off. A hover gets a
+  tooltip in the window's own look. On `hover: none` it docks over the
+  colophon on the band, a rule above, no shadow, 44px, as the table's bar.
+- **Every way:** ⌥↩ opens, ⌘K edits, ⌥F10 to the tools (one tab stop, the
+  arrows along them), Esc back; they step aside while you type; a screen
+  reader hears where a link goes as the caret reaches it.
 
 ## Built patterns (stage 3, wave 2, 2026-10-21)
 
@@ -679,7 +937,7 @@ As shipped; see `docs/design/explorations/specimen.html`, As built.
   is a host on the band (its rules `host__rule`, its buttons at
   `--eien-touch`) docked under the sheet. A column's alignment shows: right
   in tabular figures.
-- **Find** (`ui/editor/find-bar.ts`, `editor/find.css`, #41): a slip laid
+- **Find** (`ui/find/find-bar.ts`, `find/find.css`, #41): a slip laid
   at the page's top right (under a companion's head), `--eien-space-2` from
   its top, `--eien-space-4` from its edge: raised paper in a `--eien-rule-strong`
   hairline, `--eien-radius-m`, and no shadow (borders only: it lies on the

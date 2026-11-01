@@ -7,7 +7,7 @@
 
 import { h } from '../dom';
 
-/** What a page holds: a note, or an EPUB (not built yet: ../../../docs/page-kinds.md). */
+/** What a page holds: a note, or an EPUB (../epub/, ../../../docs/page-kinds.md). */
 export type PageKind = 'note' | 'epub';
 
 export interface PageLeaf {
@@ -32,10 +32,23 @@ export interface LeafFoot {
   readonly said: HTMLElement;
 }
 
+/**
+ * Find on a page (the find bar, ../find/find-bar.ts, over what it holds): each
+ * does nothing where there's nothing to find in now (a note's outline cards).
+ */
+export interface PageFind {
+  /** Open the bar, Replace unfolded for `replace` where the page's text can change. */
+  open(replace: boolean): void;
+  next(): void;
+  previous(): void;
+}
+
 /** What the page pane (./page-pane.ts, ./pages-row.ts) asks of a page, whatever it holds. */
 export interface PaneLeaf extends PageLeaf {
   /** The name the pager, the closed book's edge and the page's label call it; '' with nothing open. */
   readonly name: string;
+  /** What those call it with nothing open: "No note", "No book". */
+  readonly unnamed: string;
   /** Its crumbs, for a running head across the window (C's): the pane shows the active page's. */
   readonly runningCrumbs: HTMLElement;
   /** Beside the pane, the active page's (a note's versions panel). */
@@ -43,12 +56,22 @@ export interface PaneLeaf extends PageLeaf {
   /** Over the colophon, the active page's (a note's table bar, above a phone's keyboard). */
   readonly under: HTMLElement;
   readonly foot: LeafFoot;
+  /** Find on it: the menu's Find, Find and Replace, Find Next and Previous. */
+  readonly find: PageFind;
   /** Its controls with tooltips, for the window to watch once (its ×, a note's tags' +). */
   readonly tipped: readonly HTMLElement[];
   /** The keyboard to it; on a touch screen only `typing` brings the phone's keyboard up. */
   focus(typing?: boolean): void;
   /** A key on the pane outside the words and any field (a note's #, its tags). */
   key(event: KeyboardEvent): void;
+  /**
+   * About to be taken out of the pane and put back (the pages swapped, a
+   * page opened beside or closed), which begins its scroll again at the top:
+   * `taking` while it's still laid out, `placed` once it's back. An EPUB's
+   * keeps its place and shows it again; a note's editor keeps its own.
+   */
+  taking?(): void;
+  placed?(): void;
   /** The page closed: all it holds let go, its parts out of the window. */
   dispose(): void;
 }

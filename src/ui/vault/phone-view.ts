@@ -6,6 +6,7 @@
 // bring up the phone's keyboard.
 
 import type { MenuCommand } from '../../platform/bridge';
+import { isEpub } from '../epub/epub-side-types';
 import { focusList } from '../list/list';
 import { closeMenu, openMenu } from '../menu/menu';
 import type { MenuBus } from '../menu/menu-bus';
@@ -66,7 +67,21 @@ export function phoneView(of: PhoneViewOf): PhoneView {
         'Export',
       );
     const { values } = of.settings;
-    const state = { values, sprinting: of.parts().counters.sprinting, exportTo };
+    const { active } = of.pages;
+    // A book's own choices act on the words last chosen, which the ⋯'s tap may have dropped.
+    const book = isEpub(active) ? active : null;
+    const state = {
+      values,
+      sprinting: of.parts().counters.sprinting,
+      exportTo,
+      kind: active.kind,
+      ...(book && {
+        quote: () => void book.quote(true),
+        highlight: () => void book.marks.highlights.toggle(true),
+        highlighted: book.marks.highlights.holdsChosen(true),
+        bookmarked: book.marks.bookmarks.on,
+      }),
+    };
     openMenu(moreItems(state, run), { opener }, 'More');
   };
   const stack = new PhoneStack({

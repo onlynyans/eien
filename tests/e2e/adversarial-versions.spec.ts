@@ -260,6 +260,7 @@ test.describe('the versions panel', () => {
   test('deleting the seal Changes is showing doesn’t leave its words on show', async ({
     app,
     page,
+    vault,
   }) => {
     // Compare shows the changes since the newest seal; that seal goes to the trash, and the view stays.
     await fakeTrash(app);
@@ -269,6 +270,9 @@ test.describe('the versions panel', () => {
     await typeAtEnd(page, ' Second.');
     await seal(app);
     await expect.poll(() => panelOf(page).isHidden()).toBe(true);
+    // The second seal made before more is typed: it reads the words once its disk work is done,
+    // so on a slow disk (Windows' runner) words typed meanwhile would be sealed too.
+    await expect.poll(() => sealsOf(vault, ID)).toHaveLength(2);
     await typeAtEnd(page, ' Third.');
     await clickMenu(app, 'View', 'Compare');
     await expect(page.locator('.compare ins.diff')).toHaveText(['Third.']);

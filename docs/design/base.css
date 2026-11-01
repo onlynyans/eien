@@ -19,6 +19,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Each page's first line: this folder is a snapshot (README). */
+.snapshot {
+  margin: 0;
+  padding: var(--eien-space-1) var(--eien-space-4);
+  background: var(--eien-caution-wash);
+  border-bottom: var(--eien-hairline) solid var(--eien-rule);
+  font-family: var(--eien-face-mono);
+  font-size: var(--eien-size-meta);
+  color: var(--eien-ink-soft);
+}
+.snapshot a {
+  color: inherit;
+}
+
 ::selection {
   background: var(--eien-seal-wash);
 }

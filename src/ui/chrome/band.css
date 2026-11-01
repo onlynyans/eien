@@ -38,8 +38,9 @@
 [data-layout="band"] .page:hover .host--band-views,
 [data-layout="band"] .page:hover .host--band-tools,
 [data-layout="band"] .host--band-views:focus-within,
-[data-layout="band"] .host--band-tools:focus-within {
-  opacity: 1;
+[data-layout="band"] .host--band-tools:focus-within,
+[data-layout="band"] .page__bar:has([aria-expanded="true"]) .host {
+  opacity: 1; /* and while the quick look it opened is open */
 }
 
 /* Hidden (#16): the band goes, the sheet reaches the top, and a lip stays to bring it back. */
@@ -134,6 +135,8 @@
    Shown while the setting is on, not only on hover: the writer asked for it. */
 [data-layout="band"] .page__format {
   display: flex;
+  /* Its buttons set aside beside a book (#40), the row keeps its height: neither page moves. */
+  min-height: calc(var(--eien-control) + var(--eien-space-1) + var(--eien-hairline));
   justify-content: center;
   padding: calc(var(--eien-space-1) / 2) var(--eien-space-3);
   background: var(--eien-band);

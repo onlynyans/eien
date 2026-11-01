@@ -2,18 +2,6 @@
    colophon's last seal, Compare in the editor's place, and the versions
    panel — raised paper beside the page, over it when the page is narrow. */
 
-.page__seals {
-  display: flex;
-  gap: var(--eien-space-1);
-  margin-right: calc(var(--eien-space-2) * -1);
-}
-.compare-state {
-  color: var(--eien-pencil);
-}
-.word-button[aria-pressed="true"] .compare-state {
-  color: inherit;
-}
-
 /* The colophon's last seal: the small seal, pressed in when the note is sealed. */
 .seal-line:empty {
   display: none;
@@ -71,7 +59,7 @@
 /* Compare's text: the prose, read only, in the writer's face. */
 .compare {
   font-family: var(--eien-face-text);
-  line-height: var(--eien-leading-prose);
+  line-height: calc(var(--eien-leading-prose) * var(--look-lead, 1));
   color: var(--eien-ink);
   overflow-wrap: break-word;
 }
@@ -80,7 +68,7 @@
   outline-offset: var(--eien-space-2);
 }
 .compare p {
-  margin: 0 0 calc(var(--eien-leading-prose) * 0.6em);
+  margin: 0 0 calc(var(--eien-leading-prose) * var(--look-lead, 1) * 0.6em);
 }
 
 /* Removed words struck and tinted; added words underlined and tinted. */
