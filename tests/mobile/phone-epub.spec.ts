@@ -748,5 +748,18 @@ test('a curl lies exactly over the sheet through the page’s zoom', async ({ pa
   expect(Math.abs(curl.height / sheet.height - 1)).toBeLessThan(0.03);
   // Its copies zoomed once, as the sheet is: the page's words where they stand.
   expect(Math.abs(copy.width / sheet.width - 1)).toBeLessThan(0.03);
+  // A copy beneath its piece's paper (a copy laid over the sheet stands at 3): a page's back shows
+  // its words faintly.
+  const stacked = await page
+    .locator('.turn-curl__back')
+    .first()
+    .evaluate((back) => {
+      const z = (part: string) => {
+        const found = back.querySelector(`:scope > ${part}`);
+        return found ? getComputedStyle(found).zIndex : null;
+      };
+      return { copy: z('.turn-curl__page'), paper: z('.turn-curl__paper') };
+    });
+  expect(stacked).toEqual({ copy: '0', paper: '1' });
   await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
 });

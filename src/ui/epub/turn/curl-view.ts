@@ -48,17 +48,10 @@ function pieceOf(
   ...names: string[]
 ): HTMLElement {
   copy.classList.add('turn-curl__page');
+  // Laid where the leaf's part of it fills the piece; the rest of how it stands is ./turn.css's.
   Object.assign(copy.style, {
-    position: 'absolute',
     left: `${-leaf.x}px`,
-    top: '0',
     width: `${sheetWidth}px`,
-    height: '100%',
-    margin: '0',
-    // The curl wears the sheet's zoom already (CurlView): a copy of the sheet isn't zoomed again.
-    zoom: '1',
-    // Beneath its piece's paper and light, whatever a copy laid over the sheet stands at (./turn.css).
-    zIndex: '0',
     transform: leaf.mirrored ? 'scaleX(-1)' : '',
     transformOrigin: leaf.mirrored ? `${leaf.x + leaf.width / 2}px 0` : '',
   });
@@ -154,18 +147,13 @@ export class CurlView {
       Object.assign(turning.style, {
         left: `${leaf.x}px`,
         width: `${leaf.width}px`,
-        right: 'auto',
         transform: leaf.mirrored ? 'scaleX(-1)' : '',
-        zIndex: '1',
       });
       this.element.append(stillPiece, turning);
     } else {
       this.element.append(...stacked);
     }
     layOver(this.element, to);
-    // The sheet's zoom (the page's, ../../page/page.css), as a copy laid over it wears it: the curl's
-    // lengths are the sheet's own pixels (offsets and sizes aren't zoomed), so it lies over it exactly.
-    this.element.style.zoom = getComputedStyle(to).zoom || '';
   }
 
   /** The page as `frame` has it. */

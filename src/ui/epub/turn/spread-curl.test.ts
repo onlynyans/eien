@@ -149,13 +149,12 @@ describe('a curl on two facing pages', () => {
 });
 
 describe('a curl’s copies', () => {
-  it('lie beneath their piece’s paper and light, so a page’s back shows its words faintly', () => {
+  it('each sit in a piece with the paper over them, so a page’s back shows its words faintly', () => {
     const b = spread(() => null);
     b.turn.key(1);
     const back = b.curl()?.querySelector<HTMLElement>('.turn-curl__back') as HTMLElement;
-    const copy = back.querySelector<HTMLElement>(':scope > .turn-curl__page') as HTMLElement;
-    // A copy laid over the sheet stands at 3 (./turn.css); in a piece, under its paper (1).
-    expect(copy.style.zIndex).toBe('0');
+    // How they stack is ./turn.css's, which the phone's page checks laid out (tests/mobile).
+    expect(back.querySelector(':scope > .turn-curl__page')).not.toBeNull();
     expect(back.querySelector(':scope > .turn-curl__paper')).not.toBeNull();
   });
 });

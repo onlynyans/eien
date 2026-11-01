@@ -113,7 +113,9 @@ export class ChapterSheet {
    */
   get gutter(): number | null {
     if (!this.paged || !this.box.hasAttribute('data-spread')) return null;
-    return this.box.offsetLeft + this.box.offsetWidth / 2;
+    // From the sheet's outer edge, where the curl is laid: past its hairline edge too.
+    const sheet = this.box.offsetParent as HTMLElement | null;
+    return (sheet?.clientLeft ?? 0) + this.box.offsetLeft + this.box.offsetWidth / 2;
   }
 
   /** In pages: the chapter's first page, or its last. */
