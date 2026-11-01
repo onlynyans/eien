@@ -557,7 +557,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      default), *3×*, *4×*. A key pressed mid-turn finishes it at once; a
      key held down turns at once; with reduced motion every turn is
      instant. A turn moves the page in sight alone, so turning is as quick
-     in a long chapter as a short one. **A hand** (Phase 3c): a finger
+     in a long chapter as a short one, each line where the page has it
+     (#60). **A hand** (Phase 3c): a finger
      takes the page anywhere on it, a mouse (or a pen) at the book's edges,
      or anywhere on a page in flight, to catch it; under Curl
      the corner stays under the hand, and let go, its speed decides: past a

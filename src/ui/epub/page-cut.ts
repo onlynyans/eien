@@ -23,6 +23,51 @@ function begunBefore(at: Range): boolean {
   return before.toString().trim() !== '';
 }
 
+/** How many blocks `at` ends, the innermost first: their words all on the page before. */
+function endedBy(at: Range, chapter: HTMLElement): number {
+  const { endContainer, endOffset } = at;
+  let ended = 0;
+  let block = endContainer instanceof Element ? endContainer : endContainer.parentElement;
+  for (; block && block !== chapter && chapter.contains(block); block = block.parentElement) {
+    const rest = document.createRange();
+    rest.setStart(endContainer, endOffset);
+    rest.setEnd(block, block.childNodes.length);
+    if (rest.toString().trim() !== '' || rest.cloneContents().querySelector('img')) break;
+    ended++;
+  }
+  return ended;
+}
+
+/**
+ * `words`, a page's after a break, set as the page in sight sets them (#60).
+ * The `ended` blocks the page before finished come first as empty copies:
+ * hidden, their gaps that page's, though still there for what follows (a
+ * paragraph after another is indented). And what stands at the page's head
+ * has no gap above it, as a break drops it in sight.
+ */
+function afterBreak(words: DocumentFragment, ended: number): void {
+  const opened: HTMLElement[] = [];
+  for (let node = words.firstChild; node instanceof HTMLElement; node = node.firstChild) {
+    opened.push(node);
+  }
+  for (const shell of opened.slice(opened.length - ended)) shell.style.display = 'none';
+  // The first thing shown: words, or a picture. A hidden copy's are passed over.
+  const walk = document.createTreeWalker(words, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
+    acceptNode: (node) =>
+      node instanceof HTMLElement && node.style.display === 'none'
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT,
+  });
+  for (let node = walk.nextNode(); node; node = walk.nextNode()) {
+    const shown =
+      node instanceof HTMLImageElement ||
+      (node.nodeType === Node.TEXT_NODE && node.textContent?.trim() !== '');
+    if (!shown) continue;
+    for (let at = node.parentElement; at; at = at.parentElement) at.style.marginTop = '0';
+    return;
+  }
+}
+
 /**
  * `chapter`'s words from just after `after` (the page before's last
  * character; its start for none) to `to` (the next page's first; its end for
@@ -66,6 +111,7 @@ export function pageCut(
   for (let text = texts.nextNode(); text; text = texts.nextNode()) end = text;
   const last = end?.parentElement?.closest<HTMLElement>(BLOCKS);
   if (to && last && begunBefore(to)) last.setAttribute(CUT_END, '');
+  if (after) afterBreak(words, endedBy(after, chapter));
   return words;
 }
 

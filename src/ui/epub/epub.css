@@ -115,18 +115,20 @@
    paragraphs with no gap between, a paragraph indented only after another, as
    a book sets them (the first after a heading, a break, a picture or a
    centred line stands flush). A named part (a title, a plate, an epigraph)
-   keeps its own gap. As a note, they keep the gap a note's have in Reading. */
-[data-scroll="book"] .epub-chapter p:not([data-part]),
-[data-view="pages"] .epub-chapter p:not([data-part]) {
+   keeps its own gap; the first line is a paragraph's, its capitals alone its
+   own, so a turn's copy that begins inside it sets it as the page does (#60).
+   As a note, they keep the gap a note's have in Reading. */
+[data-scroll="book"] .epub-chapter p:is(:not([data-part]), [data-part="first-line"]),
+[data-view="pages"] .epub-chapter p:is(:not([data-part]), [data-part="first-line"]) {
   margin: 0;
 }
 [data-scroll="book"]
   .epub-chapter
-  p:not([data-part]):not([data-align])
+  p:is(:not([data-part]), [data-part="first-line"]):not([data-align])
   + p:not([data-part]):not([data-align]),
 [data-view="pages"]
   .epub-chapter
-  p:not([data-part]):not([data-align])
+  p:is(:not([data-part]), [data-part="first-line"]):not([data-align])
   + p:not([data-part]):not([data-align]) {
   text-indent: var(--eien-epub-indent);
 }

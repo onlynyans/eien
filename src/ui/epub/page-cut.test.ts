@@ -69,4 +69,40 @@ describe('a sight’s words cut for a turn’s copy', () => {
     const marked = cut(chapter, 0, 'One.Two'.length).querySelector(`[${CUT_END}]`);
     expect(marked?.localName).toBe('blockquote');
   });
+
+  it('hides each block the page before ended: its gap was that page’s, dropped at the break (#60)', () => {
+    const chapter = chapterOf(
+      '<p data-part="first-line">It is a truth.</p><blockquote><p>Quoted.</p></blockquote><p>Next.</p>',
+    );
+    const after = cut(chapter, 'It is a truth.'.length, null);
+    // Still there, so the paragraph after it is set as one after another (indented).
+    const ended = after.querySelector<HTMLElement>('[data-part="first-line"]');
+    expect(ended?.textContent).toBe('');
+    expect(ended?.style.display).toBe('none');
+    expect(after.querySelector('blockquote')?.style.display).toBe('');
+    const past = cut(chapter, 'It is a truth.Quoted.'.length, null);
+    expect(
+      [...past.querySelectorAll<HTMLElement>('blockquote, p')].map((block) => block.style.display),
+    ).toEqual(['none', 'none', '']);
+  });
+
+  it('drops the gap above what stands at the page’s head, as a break does in sight', () => {
+    const chapter = chapterOf('<p>One.</p><blockquote><p>Quoted.</p></blockquote><p>Two.</p>');
+    const page = cut(chapter, 'One.'.length, null);
+    expect(page.querySelector('blockquote')?.style.marginTop).toBe('0px');
+    expect(page.querySelector<HTMLElement>('blockquote p')?.style.marginTop).toBe('0px');
+    expect([...page.querySelectorAll<HTMLElement>('p')].at(-1)?.style.marginTop).toBe('');
+    // The chapter's own first page follows no break: its gaps stand.
+    const opening = cut(chapterOf('<blockquote><p>Epigraph.</p></blockquote>'), 0, null);
+    expect(opening.querySelector('blockquote')?.style.marginTop).toBe('');
+  });
+
+  it('still brings a picture that begins the page, with no gap above it', () => {
+    const chapter = chapterOf('<p>One.</p><div data-part="plate"><img alt=""></div><p>Two.</p>');
+    const plate = cut(chapter, 'One.'.length, null).querySelector<HTMLElement>(
+      '[data-part="plate"]',
+    );
+    expect(plate?.querySelector('img')).not.toBeNull();
+    expect(plate?.style.marginTop).toBe('0px');
+  });
 });
