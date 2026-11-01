@@ -226,7 +226,9 @@ building, its fixes taken.
 
 A book has settings with no note's to copy, each in the schema marked
 `quick: 'shelf'`, in this order: **Read in** (`epub.view`: *Pages*,
-*Scroll*), **Page turn** (`epub.turn`: *Curl*, *Slide*, *Words*), **Turn
+*Scroll*), **Pages, landscape** and **Pages, portrait** (`epub.landscape`,
+`epub.portrait`, decided 2026-10-31: *Auto*, *One*, *Two*, for the screen
+held each way), **Page turn** (`epub.turn`: *Curl*, *Slide*, *Words*), **Turn
 speed** (`epub.turnSpeed`: *Instant*, *1×* to *4×*, short so they fit the
 popover's width, the meaning in the description), the **scroll style**
 (`epub.scroll`: *As a note*, *As a book*) and **Marks** (`epub.marks`, Phase

@@ -729,12 +729,17 @@ for (const [name, screen, room, zoom, two] of [
   });
 }
 
-// Two pages when narrow (decided 2026-10-31): the phone's setting that keeps two notes side by
-// side however narrow keeps a book's two pages so too, each half the screen; off, the width decides.
-test('a Fold 5 upright at its own size: two pages with Two pages when narrow, one without', async ({
+// Pages, landscape and Pages, portrait (decided 2026-10-31): one page, two, or Auto, for the
+// screen held each way, so two pages never wait on a zoom or a width. A Fold 5 upright at its own
+// size, Two chosen held tall: two pages, ragged as a phone's one; turned on its side with One
+// chosen held wide: one page; Auto, the width decides (one, upright).
+test('a Fold 5 at its own size: the pages chosen for the screen held each way', async ({
   page,
 }) => {
-  const box = await bookOn(page, FOLD5_UPRIGHT, 'one', 100, { 'appearance.narrowPages': 'on' });
+  const box = await bookOn(page, FOLD5_UPRIGHT, 'one', 100, {
+    'epub.portrait': 'two',
+    'epub.landscape': 'one',
+  });
   await expect(box).toHaveAttribute('data-spread', '');
   const set = () =>
     box.evaluate((element) => {
@@ -747,24 +752,20 @@ test('a Fold 5 upright at its own size: two pages with Two pages when narrow, on
   // Ragged still: a phone's two pages are set as its one.
   expect(await set()).toEqual({ columns: '2', align: 'start' });
   expect(await seriousViolations(page), 'two narrow pages on a phone').toEqual([]);
-  // Turned off (the device's setting, worn from the start): the width decides again, and an
-  // upright Fold holds one page.
-  await page.evaluate(() => window.eien.settings.set('appearance.narrowPages', 'off'));
-  await page.reload();
-  const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
-  await expect
-    .poll(async () => (await book.isVisible()) || (await back(page).isVisible()), {
-      timeout: 10_000,
-    })
-    .toBe(true);
-  if (!(await book.isVisible())) await back(page).click();
-  await book.click();
-  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  // Turned on its side: the landscape choice, One, though the wider screen holds two no better.
+  await page.setViewportSize(FOLD5_SIDEWAYS);
   await expect(box).not.toHaveAttribute('data-spread');
-  expect((await set()).columns).toBe('1');
+  // Back upright: two again.
+  await page.setViewportSize(FOLD5_UPRIGHT);
+  await expect(box).toHaveAttribute('data-spread', '');
 });
 
-// QA (#40, Two pages when narrow): an upright phone at its own size lays two
+test('a Fold 5 upright at its own size on Auto: one page, the width deciding', async ({ page }) => {
+  const box = await bookOn(page, FOLD5_UPRIGHT, 'one', 100);
+  await expect(box).not.toHaveAttribute('data-spread');
+});
+
+// QA (#40, Two pages chosen): an upright phone at its own size lays two
 // pages of a few words each, its picture fitting its page; zoomed so far that
 // two would each be narrower than a letter (a Pixel 7 at 200%: a 92px box,
 // the gutter 72px), one page.
@@ -783,10 +784,10 @@ const laidIn = (box: Locator) =>
     };
   });
 
-test('a Pixel 7 upright with Two pages when narrow: two pages a letter wide or more, its picture on its page', async ({
+test('a Pixel 7 upright with Two chosen: two pages a letter wide or more, its picture on its page', async ({
   page,
 }) => {
-  const box = await bookOn(page, PIXEL7, 'one', 100, { 'appearance.narrowPages': 'on' });
+  const box = await bookOn(page, PIXEL7, 'one', 100, { 'epub.portrait': 'two' });
   await expect(box).toHaveAttribute('data-spread', '');
   const two = await laidIn(box);
   expect(two.count).toBe('2');
@@ -802,10 +803,10 @@ test('a Pixel 7 upright with Two pages when narrow: two pages a letter wide or m
   expect(drawn?.height ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(two.height + 1);
 });
 
-test('a Pixel 7 at 200% with Two pages when narrow: one page, as two would each be narrower than a letter', async ({
+test('a Pixel 7 at 200% with Two chosen: one page, as two would each be narrower than a letter', async ({
   page,
 }) => {
-  const box = await bookOn(page, PIXEL7, 'one', 200, { 'appearance.narrowPages': 'on' });
+  const box = await bookOn(page, PIXEL7, 'one', 200, { 'epub.portrait': 'two' });
   await expect(box).not.toHaveAttribute('data-spread');
   const one = await laidIn(box);
   expect(one.count).toBe('1');

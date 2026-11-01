@@ -10,7 +10,6 @@
 // note's does where its text isn't shown.
 
 import type { SettingValues } from '../../core/config';
-import { twoAtAnyWidth } from '../chrome/splits';
 import { h } from '../dom';
 import { type PageFind, type PaneLeaf, pageLeaf } from '../page/page-leaf';
 import { quietButton } from '../quiet-button';
@@ -22,6 +21,7 @@ import { LeafEdges } from './leaf-edges';
 import { type BookKeysOf, bookKey, pageTap } from './page-keys';
 import { PageMarks } from './page-marks';
 import { RunningHeads } from './running-heads';
+import { type PagesChoices, pagesChoices, pagesNow } from './spread';
 
 export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
   /** Close this page (its ×, ⌘W). */
@@ -66,8 +66,8 @@ export class EpubPage implements PaneLeaf {
   #name = '';
   /** The page's zoom last worn; null before the first. */
   #zoom: number | null = null;
-  /** Two pages however narrow (Two pages when narrow), as last worn. */
-  #anyWidth = false;
+  /** One page or two for the screen held wide and held tall, as last worn. */
+  #pages: PagesChoices = { landscape: 'auto', portrait: 'auto' };
 
   /** What its keys do (./page-keys.ts). */
   readonly #keys: BookKeysOf;
@@ -99,7 +99,7 @@ export class EpubPage implements PaneLeaf {
     this.sheet = new ChapterSheet({
       ...of,
       scroller: this.#scroll,
-      anyWidth: () => this.#anyWidth,
+      pages: () => pagesNow(this.#pages),
     });
     this.edges = new LeafEdges((way) => of.turn(way, false));
     // The pointer a click came from, by its pointerdown: WebKit's click may not say.
@@ -247,15 +247,15 @@ export class EpubPage implements PaneLeaf {
       marks: values['epub.marks'],
     };
     // Only what changed: setting an attribute again restyles the page (as ../settings/look.ts says).
-    const anyWidth = twoAtAnyWidth(values);
+    const pages = pagesChoices(values);
     const changed =
       Object.entries(wanted).filter(([name, value]) => leaf.dataset[name] !== value).length +
       Object.entries(properties).filter(
         ([name, value]) => leaf.style.getPropertyValue(name) !== value,
       ).length +
-      Number(anyWidth !== this.#anyWidth);
+      Number(pages.landscape !== this.#pages.landscape || pages.portrait !== this.#pages.portrait);
     if (changed === 0) return;
-    this.#anyWidth = anyWidth;
+    this.#pages = pages;
     // The lines move: the place is kept as it stood, and shown again in the new look.
     this.sheet.keep();
     for (const [name, value] of Object.entries(wanted)) leaf.dataset[name] = value;

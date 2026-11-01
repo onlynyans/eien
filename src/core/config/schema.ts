@@ -153,7 +153,7 @@ export const SETTINGS = [
     key: 'appearance.narrowPages',
     label: 'Two pages when narrow',
     description:
-      'Two notes, or a book’s two pages, stay side by side however narrow the screen (a foldable opened upright), each half of it. Off, short of room a book shows one page, and two notes do as Split says: fold into one page, close the book, put the companion under the page, or wait.',
+      'Two notes stay side by side however narrow the screen (a foldable opened upright), each half of it. Off, short of room they do as Split says: fold into one page, close the book, put the companion under the page, or wait.',
     // The phone's build, where a screen can be too narrow for two and still show them.
     platforms: PHONE_PLATFORMS,
     scope: 'device',
@@ -319,6 +319,30 @@ export const SETTINGS = [
     type: 'choice',
     choices: { pages: 'Pages', scroll: 'Scroll' },
     default: 'scroll',
+    quick: 'shelf',
+  },
+  {
+    key: 'epub.landscape',
+    label: 'Pages, landscape',
+    description:
+      'In pages, with the screen wider than it is tall: one page, two facing pages whatever the width, or Auto, two where each can hold 20em of the text.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { auto: 'Auto', one: 'One', two: 'Two' },
+    default: 'auto',
+    quick: 'shelf',
+  },
+  {
+    key: 'epub.portrait',
+    label: 'Pages, portrait',
+    description:
+      'In pages, with the screen taller than it is wide: one page, two facing pages whatever the width, or Auto, two where each can hold 20em of the text.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { auto: 'Auto', one: 'One', two: 'Two' },
+    default: 'auto',
     quick: 'shelf',
   },
   {

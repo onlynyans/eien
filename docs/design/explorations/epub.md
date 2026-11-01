@@ -179,11 +179,12 @@ section where it and the directions below disagree.
   of 20em of 22px text, with the margins and the gutter, need a page some
   1,144px wide; with Marks on the edge, 50% either way). Ragged, two pages
   or one. A split stays one page.
-- **Two pages when narrow** (decided 2026-10-31): the phone's setting that
-  keeps two notes side by side however narrow keeps a book's two pages so
-  too, at any width while each page holds a letter of the text (narrower,
-  the gutter leaves the columns no width); off, the width decides as above.
-  One reading of the setting for both (`ui/chrome/splits.ts` `twoAtAnyWidth`).
+- **Pages, landscape and Pages, portrait** (decided 2026-10-31): one page
+  or two is the writer's choice, so it never waits on a zoom or a width:
+  two book settings in the shelf's quick look, for the screen held wide and
+  held tall, each *One*, *Two* (at any width, each half the page, while
+  each holds a letter of the text) or *Auto* (the default: the 20em rule
+  above). Two pages when narrow stays the notes' setting alone.
 - **The reading room** (Showcase 1) is built after Pages, as a one-key
   mode.
 

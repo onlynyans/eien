@@ -15,7 +15,7 @@ import { offsetAfter } from './chapter-place';
 import { PagedPlace } from './paged-place';
 import { PlaceKeeper } from './place-keeper';
 import type { PageShown, Spot } from './sight';
-import { spreadOf } from './spread';
+import { type PagesChoice, spreadOf } from './spread';
 
 export interface ChapterSheetOf {
   /** The page's scroller, which the chapter scrolls in. */
@@ -30,8 +30,8 @@ export interface ChapterSheetOf {
   follow(anchor: HTMLAnchorElement, link: ZipAddress): void;
   /** Quote the words chosen in it in the note beside (Phase 2c). */
   quote(): void;
-  /** In pages, two pages however narrow (Two pages when narrow). */
-  anyWidth?(): boolean;
+  /** In pages, one page, two, or as the width allows (./spread.ts). */
+  pages?(): PagesChoice;
 }
 
 export class ChapterSheet {
@@ -67,7 +67,7 @@ export class ChapterSheet {
       ...told,
       box: this.box,
       room: of.scroller,
-      per: () => spreadOf(this.box, this.element, of.scroller, of.anyWidth?.() ?? false),
+      per: () => spreadOf(this.box, this.element, of.scroller, of.pages?.()),
     });
     this.#keeper = this.#scrolled;
   }

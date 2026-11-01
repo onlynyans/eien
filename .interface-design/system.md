@@ -810,11 +810,12 @@ in the book, each recorded here as it's built.
   margins and the gutter, the sheet widens to two pages, each at most the
   measure (Page width still narrows them), the text blocks
   `--eien-space-8` apart and Facing pages' `--eien-rule-soft` hairline down
-  the gutter's middle. One sheet, its one shadow, no fold shading. A
-  phone's width decides as the desktop's does (decided 2026-10-31: a
-  foldable opened, a tablet), and with Two pages when narrow at any width,
-  each half the page, as two notes are; its two pages ragged as its one
-  is. Never in a split. A turn moves the spread, the
+  the gutter's middle. One sheet, its one shadow, no fold shading. One or
+  two is the writer's choice (decided 2026-10-31): Pages, landscape and Pages,
+  portrait, each One, Two (at any width, each half the page) or Auto (the
+  20em rule above, a phone's width deciding as the desktop's does), the
+  quick look's word buttons as every book setting's. A phone's two pages
+  are ragged as its one is. Never in a split. A turn moves the spread, the
   curl lifting it as one leaf; the fore-edge stands at its outer sides
   (Previous pages, Next pages). A bookmark's mark sits on the page it
   marks: the verso's at its left, its edge tab past the pages read

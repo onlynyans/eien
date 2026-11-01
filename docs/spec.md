@@ -530,18 +530,19 @@ Three panes, each collapsible, with a two-pane option in settings:
      the next). Under Slide and Words a drag across asks for the turn.
      Never while words are chosen in the page, nor on a link (but to catch
      a page in flight); a drag that turned is never also a click.
-   - **Two pages, and set as a book** (Phase 3d): in pages, where the page
-     pane holds two pages of at least 20em of the book's text, with the
-     sheet's margins and the gutter between, the book opens to two facing
-     pages; a pixel short of it, one. A phone's width decides as the
-     desktop's does (decided 2026-10-31): an upright phone holds one page, a
-     Galaxy Z Fold 5 opened holds two sideways with Interface zoom at 60%
-     (upright at 50%; with Marks on the edge, whose strip keeps a finger's
-     width, at 50% either way), and a tablet one pane at a time may. With
-     **Two pages when narrow** on (the phone's setting, below), a book shows
-     two pages however narrow, each half the page, as two notes stay side
-     by side (decided 2026-10-31), while each holds a letter of its text
-     (a Pixel 7 at 200% Interface zoom holds one). Never in a split
+   - **Two pages, and set as a book** (Phase 3d): in pages, a book shows
+     one page or two facing pages as **Pages, landscape** and **Pages,
+     portrait** say (book settings in the shelf's quick look, decided
+     2026-10-31), the one for the screen as it's held now: *One*, *Two*
+     (whatever the width, each half the page, while each holds a letter of
+     its text: a Pixel 7 at 200% Interface zoom holds one), or *Auto* (the
+     default): two where the page pane holds two pages of at least 20em of
+     the book's text, with the sheet's margins and the gutter between, a
+     pixel short of it one. On Auto a phone's width decides as the
+     desktop's does: an upright phone holds one page, a Galaxy Z Fold 5
+     opened holds two sideways with Interface zoom at 60% (upright at 50%;
+     with Marks on the edge, whose strip keeps a finger's width, at 50%
+     either way). Turning the screen takes the other's choice. Never in a split
      (Facing pages is two pages of its own; Wide screen's Two pages with a
      note beside is a split). A turn, a key, the edges and a hand move both;
      the place is the same, so one page and two show the same words. A
@@ -1927,8 +1928,7 @@ Compare or Restore finishes lands on a note opened meanwhile.
     **Two pages when narrow** (`appearance.narrowPages`, the phone's, this
     device's, off by default) keeps them side by side however narrow, in
     every Split mode, each half the room while it's short of the mode's own
-    (the divider moves them again once there's room); a book in pages shows
-    its two pages so too (#40, decided 2026-10-31).
+    (the divider moves them again once there's room).
     The notes over the page are never under its scrim.
   - Folding, turning the phone, or choosing a room with one page closes the
     page you're not in, never its note: it's the other note, ⇄, where it was

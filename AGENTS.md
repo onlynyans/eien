@@ -217,7 +217,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `list/book-lenses.ts`, `.css`: its lenses, Contents and Marks, and a bookmark's row, in the list and under a book's SHELF row (Phase 4c)
 - `vault/list-lens.ts`: the list's lens and Arrange mode (Include subfolders too, kept per folder by `list/sorts.ts`)
 - The split (spec §4, two pages side by side) is a mode as a layout is
-  - `chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, what the layout's tools act on, and where each note's figures go; whether two pages stay side by side at any width (`twoAtAnyWidth`, Two pages when narrow, a book's two pages too)
+  - `chrome/splits.ts`: Two sheets, Facing pages, Companion, Tools that follow; the room two pages need and what the divider measures, what's too narrow does, which commands move onto a page's own host, what the layout's tools act on, and where each note's figures go
   - `vault/page-hosts.ts`: a page's own host, which those commands move onto
   - `page/pages-row.ts`: the pane's row laying out two pages, folded with a pager, closed to one with the other's edge, or a companion under the page, the active page marked; each page's own head and foot is `page/page-leaf.ts`
   - `page/page-mark.ts`, `page/page-mark.css`: the page's mark (the Page mark setting: ribbon, dog-ear or edge tab) at its outer edge: Facing pages' active page's, and a book's bookmark's (#40 Phase 4b)
@@ -387,7 +387,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `paged-place.ts`: in pages (Phase 3b), the page holding the place shown, a turn keeping its first word, a copy cut to the page in sight; a sight of two pages, and the front matter turned back to, never opened at (Phase 3d)
     - `page-columns.ts`: the chapter laid in columns of whole lines, one page or two to a sight, its pages and the front matter's counted
     - `sight.ts`: the pages in sight, each where its words begin and its part; where the page stands, to put back
-    - `spread.ts`: two pages or one, by the pane's room for two of 20em, a phone's too, or at any width with Two pages when narrow (never a split's)
+    - `spread.ts`: one page or two, as Pages, landscape and Pages, portrait choose for the screen as it's held: One, Two, or Auto, by the pane's room for two of 20em (never a split's)
     - `page-cut.ts`: a sight's words cut for a turn's copy, past the front matter, a paragraph cut at its foot set as on the page
   - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back
   - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons

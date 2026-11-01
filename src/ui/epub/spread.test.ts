@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
-import { splitSpecOf, twoAtAnyWidth } from '../chrome/splits';
-import { spreadOf } from './spread';
+import { type PagesChoice, pagesChoices, pagesNow, spreadOf } from './spread';
 import { laidOut } from './test-lines';
 import { sideWith } from './test-side';
 
@@ -35,7 +34,7 @@ function pane(width: number, zoom = 1, look = 1, boxWidth = 600) {
     room,
     box,
     chapter,
-    per: (anyWidth = false) => spreadOf(box, chapter, room, anyWidth),
+    per: (choice: PagesChoice = 'auto') => spreadOf(box, chapter, room, choice),
   };
 }
 
@@ -89,39 +88,50 @@ describe('two pages or one (Phase 3d)', () => {
   });
 });
 
-describe('Two pages when narrow, a book’s two pages too (decided 2026-10-31)', () => {
-  it('opens two pages at a phone’s narrow width with the setting on, one with it off', () => {
+describe('Pages, landscape and portrait: one, two or Auto (decided 2026-10-31)', () => {
+  it('shows two pages at a phone’s narrow width when Two is chosen, one when One is, the width deciding Auto', () => {
     const narrow = pane(412);
     document.querySelector('.shell')?.setAttribute('data-phone', '');
-    expect(narrow.per(true)).toBe(2);
-    expect(narrow.per(false)).toBe(1);
+    expect(narrow.per('two')).toBe(2);
+    expect(narrow.per('auto')).toBe(1);
+    const wide = pane(THRESHOLD);
+    expect(wide.per('one')).toBe(1);
+    expect(wide.per('auto')).toBe(2);
   });
 
-  it('never in a split, nor scrolling', () => {
-    const split = pane(412);
+  it('never two in a split, nor scrolling, whatever is chosen', () => {
+    const split = pane(THRESHOLD * 2);
     document.querySelector('.page__pages')?.setAttribute('data-two', '');
-    expect(split.per(true)).toBe(1);
-    const scroll = pane(412);
+    expect(split.per('two')).toBe(1);
+    const scroll = pane(THRESHOLD * 2);
     scroll.room.parentElement?.setAttribute('data-view', 'scroll');
-    expect(scroll.per(true)).toBe(1);
+    expect(scroll.per('two')).toBe(1);
   });
 
-  it('reads the one setting notes do, from one place', () => {
-    const values = (narrowPages: 'on' | 'off') =>
-      ({ ...DEFAULT_SETTINGS, 'appearance.narrowPages': narrowPages }) as SettingValues;
-    expect(twoAtAnyWidth(values('on'))).toBe(true);
-    expect(twoAtAnyWidth(values('off'))).toBe(false);
-    // The split's own spec follows the same reading: side by side at any width.
-    expect(splitSpecOf('sheets', twoAtAnyWidth(values('on'))).least).toBe(0);
+  it('takes the choice for the screen as it’s held: portrait’s when taller than wide', () => {
+    const choices = pagesChoices({
+      ...DEFAULT_SETTINGS,
+      'epub.landscape': 'two',
+      'epub.portrait': 'one',
+    } as SettingValues);
+    const held = (portrait: boolean) =>
+      vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: portrait } as MediaQueryList);
+    held(true);
+    expect(pagesNow(choices)).toBe('one');
+    held(false);
+    expect(pagesNow(choices)).toBe('two');
+    vi.restoreAllMocks();
+    // Both Auto unless chosen: as a book was laid out before the choice.
+    expect(pagesChoices(DEFAULT_SETTINGS)).toEqual({ landscape: 'auto', portrait: 'auto' });
   });
 
-  // QA (#40, Two pages when narrow): a box short of the gutter and a letter
+  // QA (#40, Two pages chosen): a box short of the gutter and a letter
   // each side (a 360px phone at 200% Interface zoom: 66px, the gutter 72px)
   // gave the columns no width, so the chapter counted one page and its words
   // past it were out of reach; a page narrower than a letter breaks every word.
   it('keeps one page where two would each be narrower than a letter of the text', () => {
     // The gutter 72px, the text 22px: two pages need a box of 72 + 2 × 22.
-    const box = (width: number) => pane(412, 1, 1, width).per(true);
+    const box = (width: number) => pane(412, 1, 1, width).per('two');
     expect(box(72 + 2 * 22)).toBe(2);
     expect(box(72 + 2 * 22 - 1)).toBe(1);
     expect(box(66)).toBe(1);
@@ -164,10 +174,10 @@ describe('two pages or one, the pane as it’s worn', () => {
   });
 });
 
-// QA (#40, Two pages when narrow): the setting switched on a book's page lays
+// QA (#40, Two pages chosen): the setting switched on a book's page lays
 // it out anew in two pages and back, the place kept, and the same settings
 // again lay nothing out.
-describe('Two pages when narrow, switched on a book’s page', () => {
+describe('Pages, landscape, switched on a book’s page', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -177,14 +187,16 @@ describe('Two pages when narrow, switched on a book’s page', () => {
     laidOut(side.page);
     await side.open('a.epub');
     const { sheet } = side.page;
-    // A narrow pane (happy-dom's is 0 wide): one page unless the setting says two.
+    // A narrow pane (happy-dom's is 0 wide): one page unless Two is chosen.
     Object.defineProperty(sheet.box, 'clientWidth', { value: 600 });
     Object.defineProperty(sheet.box, 'clientHeight', { value: 600 });
     sheet.box.getBoundingClientRect = () =>
       ({ left: 0, width: 600, top: 0, height: 600 }) as DOMRect;
     const pages = { ...DEFAULT_SETTINGS, 'epub.view': 'pages' } as SettingValues;
+    // Held wide: Pages, landscape decides.
+    vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList);
     const narrow = (on: 'on' | 'off') =>
-      side.follow({ ...pages, 'appearance.narrowPages': on } as SettingValues);
+      side.follow({ ...pages, 'epub.landscape': on === 'on' ? 'two' : 'auto' } as SettingValues);
     narrow('off');
     sheet.showPlace(300);
     expect(sheet.box.hasAttribute('data-spread')).toBe(false);
