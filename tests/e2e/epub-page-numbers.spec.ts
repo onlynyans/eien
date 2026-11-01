@@ -32,7 +32,10 @@ test.describe('a book’s page numbers', () => {
     await expect(pageFigure(page)).toHaveText('page xii of 5');
     await page.locator('.contents-row').nth(1).click();
     await expect(pageFigure(page)).toHaveText('page 2 of 5');
-    await page.locator('[data-command="view.pages"]:not(.page__phone *)').first().click();
+    await page
+      .locator('[data-command="view.pages"]:not(.page__phone *, .phone-bar *)')
+      .first()
+      .click();
     await expect(pageFigure(page)).toHaveText('page 2 of 5');
   });
 

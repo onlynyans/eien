@@ -4,7 +4,7 @@
 // Android's, tried on the emulator (tests/android).
 
 import { devices, expect, type Page, test } from '@playwright/test';
-import { listOutside, open, putOutside, readOutside, titles } from './outside';
+import { listOutside, open, putOutside, readOutside, threePanes, titles } from './outside';
 
 test.use({ ...devices['Pixel 7'] });
 
@@ -31,6 +31,7 @@ async function onlyShown(page: Page, name: Pane): Promise<void> {
 
 async function withNotes(page: Page): Promise<void> {
   await open(page);
+  await threePanes(page);
   await putOutside(page, 'Eien/Vault/Fic/Tear.md', 'The scarf caught on the gate, and tore.\n');
   await putOutside(page, 'Eien/Vault/Fic/Mend.md', '# Mend\n\nShe mended it by the fire.\n');
   await putOutside(page, 'Eien/Vault/Ideas.md', 'An idea.\n');

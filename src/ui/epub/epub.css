@@ -262,3 +262,31 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Words chosen on a touch screen (#65, ./book-selection.ts): the selection bar docked at the
+   page's foot, laid over the colophon's own row and out of flow, so the page is never shortened
+   and its pages never laid out anew while a choice stands. It rises from that row's foot: C's
+   rail, the row under, stays clear, and B's slip already stands above it. Both its lines named:
+   out of flow, an `auto` end would be the page's own foot. */
+.epub__under {
+  position: absolute;
+  grid-row: 5 / 6;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 5;
+}
+/* The link bar's docked look (../editor/link.css): the band, a rule above, no shadow, a finger's
+   height; its three words share the width as their words need, each a finger's reach, on one
+   line where the screen has room for them. */
+.selection-bar.selection-bar--docked {
+  position: static;
+  padding: 0 var(--eien-space-2);
+  border-width: var(--eien-hairline) 0 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--eien-band);
+}
+.selection-bar--docked .word-button {
+  flex: 1 1 auto;
+  height: var(--eien-touch);
+}

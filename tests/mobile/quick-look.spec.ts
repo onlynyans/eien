@@ -7,7 +7,15 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
-import { catchBackButton, open, putBytesOutside, putOutside, systemBack, titles } from './outside';
+import {
+  catchBackButton,
+  open,
+  putBytesOutside,
+  putOutside,
+  systemBack,
+  threePanes,
+  titles,
+} from './outside';
 
 test.use({ ...devices['Pixel 7'] });
 
@@ -21,6 +29,7 @@ const phoneControl = (page: Page) =>
 /** A note open on the phone's page, in `layout`, the room chosen. */
 async function onPage(page: Page, layout = 'band', room = 'panes'): Promise<void> {
   await open(page);
+  await threePanes(page);
   await page.evaluate(
     async ([layout, room]) => {
       await window.eien.settings.set('appearance.layout', layout as never);

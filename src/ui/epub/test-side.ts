@@ -69,6 +69,7 @@ export function sideWith(
       listed.includes(path) ? (files[path]?.length ?? 64 * 1024 * 1024) : null,
     changed,
     quote: async () => ({ not: 'Open a note beside the book to quote into it.' }),
+    copy: vi.fn(async () => {}),
   };
   const close = vi.fn();
   const side = makeEpubSide(of, { close, caret: () => {} }, null);

@@ -39,6 +39,8 @@ export interface EpubSideOf extends BookOpenOf {
     quote: string,
     from: EpubSide,
   ): Promise<{ readonly into: string } | { readonly not: string }>;
+  /** Put `text` (plain) and `html` on the clipboard (the window's own, through its bridge). */
+  copy(text: string, html: string): Promise<void>;
 }
 
 export interface EpubSide extends Side {
@@ -51,6 +53,8 @@ export interface EpubSide extends Side {
   readonly spine: number;
   /** Draw the spine item `index`, and keep it as the place to come back to. */
   go(index: number): Promise<void>;
+  /** Back where a link or a swipe took it from (⌘[, the system's back, #70): whether there was a step. */
+  back(): boolean;
   /**
    * Show a place in spine item `index` (a bookmark's, the strip's: Phase 4),
    * at an offset or the one it gives once drawn, kept as the place.

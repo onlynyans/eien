@@ -26,6 +26,7 @@ test('a book at 150% keeps its page laid out anew between a turn on and back, de
   await open(page);
   await page.evaluate(async () => {
     await window.eien.settings.set('appearance.room', 'panes');
+    await window.eien.settings.set('layout.panes', 'three');
     await window.eien.settings.set('epub.view', 'pages');
     await window.eien.settings.set('epub.turnSpeed', '0');
     await window.eien.settings.set('page.zoom', 150);

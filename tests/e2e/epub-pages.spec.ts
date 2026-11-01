@@ -125,8 +125,12 @@ test.describe('a book in pages', () => {
   }) => {
     await shelfEpub(page, 'Pride and Prejudice').click();
     await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
-    const pagesTool = page.locator('[data-command="view.pages"]:not(.page__phone *)').first();
-    const scrollTool = page.locator('[data-command="view.scroll"]:not(.page__phone *)').first();
+    const pagesTool = page
+      .locator('[data-command="view.pages"]:not(.page__phone *, .phone-bar *)')
+      .first();
+    const scrollTool = page
+      .locator('[data-command="view.scroll"]:not(.page__phone *, .phone-bar *)')
+      .first();
     await expect(pagesTool).toHaveAttribute('aria-pressed', 'true');
     await scroller(page).focus();
     await page.keyboard.press('ArrowRight');

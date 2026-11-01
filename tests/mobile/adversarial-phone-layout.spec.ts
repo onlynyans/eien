@@ -7,7 +7,15 @@
 // (./outside.ts, systemBack).
 
 import { devices, expect, type Page, test } from '@playwright/test';
-import { catchBackButton, listOutside, open, putOutside, systemBack, titles } from './outside';
+import {
+  catchBackButton,
+  listOutside,
+  open,
+  putOutside,
+  systemBack,
+  threePanes,
+  titles,
+} from './outside';
 
 test.use({ ...devices['Pixel 7'] });
 
@@ -39,6 +47,7 @@ const keyboardAt = (page: Page) =>
 
 async function withNotes(page: Page): Promise<void> {
   await open(page);
+  await threePanes(page);
   await putOutside(page, 'Eien/Vault/Fic/Tear.md', 'The scarf caught on the gate, and tore.\n');
   await putOutside(page, 'Eien/Vault/Fic/Mend.md', '# Mend\n\nShe mended it by the fire.\n');
   await putOutside(page, 'Eien/Vault/Ideas.md', 'An idea.\n');

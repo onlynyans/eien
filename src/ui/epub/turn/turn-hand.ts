@@ -38,8 +38,8 @@ export const handAt = (at: Point, holding: CurlRun | null): Hand => ({
 /** Whether the hand has moved past a tap. */
 export const moved = ([dx, dy]: Point): boolean => Math.hypot(dx, dy) >= DRAG_START;
 
-/** The way a move asks to turn: across past the drag's start, more across than down; drawn leftward, on. */
-export function acrossOf([dx, dy]: Point): Way | null {
-  if (Math.abs(dx) < DRAG_START || Math.abs(dx) < Math.abs(dy)) return null;
+/** The way a move asks to turn: across past `min` (the drag's start), more across than down; drawn leftward, on. */
+export function acrossOf([dx, dy]: Point, min = DRAG_START): Way | null {
+  if (Math.abs(dx) < min || Math.abs(dx) < Math.abs(dy)) return null;
   return dx < 0 ? 1 : -1;
 }
