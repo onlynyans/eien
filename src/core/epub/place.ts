@@ -37,3 +37,9 @@ export function offsetOf(lengths: readonly number[], spot: Spot): number {
   }
   return offset + spot.within;
 }
+
+/**
+ * Where the words in sight end, from `from` up to (not at) `to`: a page of no
+ * words (a picture's) holds the place it stands at, its own word.
+ */
+export const sightEnd = (from: number, to: number): number => Math.max(to, from + 1);

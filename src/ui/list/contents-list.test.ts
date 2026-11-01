@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { BookLens, MarkRow } from './book-lenses';
-import { type ContentsModel, NO_MARKS, renderContents } from './contents-list';
+import { NO_MARKS } from './book-lenses';
+import { type ContentsModel, renderContents } from './contents-list';
 
 const MODEL: ContentsModel = {
   title: 'Pride and Prejudice',
@@ -79,12 +80,16 @@ describe('a book’s contents in the list', () => {
 describe('a book’s lenses in the list (Phase 4c)', () => {
   const ROWS: MarkRow[] = [
     {
+      kind: 'bookmark' as const,
+      offset: 40,
       mark: { chapter: 'c1.xhtml', offset: 40, words: 'It is a truth universally acknowledged' },
       spine: 1,
       page: '3',
       chapter: 'Chapter I',
     },
     {
+      kind: 'bookmark' as const,
+      offset: 0,
       mark: { chapter: 'c2.xhtml', offset: 0, words: '' },
       spine: 2,
       page: null,
@@ -129,7 +134,7 @@ describe('a book’s lenses in the list (Phase 4c)', () => {
       'It is a truth universally acknowledged',
     );
     expect(first?.querySelector('.mark-row__page')?.textContent).toBe('3');
-    expect(first?.querySelector('.mark-row__chapter')?.textContent).toBe('Chapter I');
+    expect(first?.querySelector('.mark-row__chapter')?.textContent).toBe('Chapter I · bookmark');
     // No words kept: called by its chapter.
     expect(second?.querySelector('.mark-row__words')?.textContent).toBe('Chapter II');
     first?.click();
@@ -178,6 +183,8 @@ describe('a book’s Marks in the list, as QA tried them (Phase 4c)', () => {
   /** `count` bookmarks in one chapter, a page each. */
   const many = (count: number): MarkRow[] =>
     Array.from({ length: count }, (_, i) => ({
+      kind: 'bookmark' as const,
+      offset: i * 100,
       mark: { chapter: 'c1.xhtml', offset: i * 100, words: `Bookmark ${i}` },
       spine: 1,
       page: String(i + 1),
@@ -194,7 +201,7 @@ describe('a book’s Marks in the list, as QA tried them (Phase 4c)', () => {
   it('are a list of their own, named for the book, that the arrow keys move through', () => {
     const { container } = drawn(marksOf(many(3)));
     expect(container.querySelector('ul')?.getAttribute('aria-label')).toBe(
-      'Bookmarks in Pride and Prejudice',
+      'Marks in Pride and Prejudice',
     );
     const [first, second, third] = rows(container);
     first?.focus();
@@ -261,6 +268,64 @@ describe('a book’s Marks in the list, as QA tried them (Phase 4c)', () => {
     renderContents(container, marksOf(marks.filter((_, i) => i !== 500)), null, actions);
     expect(document.activeElement?.querySelector('.mark-row__words')?.textContent).toBe(
       'Bookmark 501',
+    );
+  });
+});
+
+// QA (#40, Phase 5b): a book's marks of both kinds in the list, a bookmark and
+// a highlight at one word among them.
+describe('a book’s Marks of both kinds, as QA tried them (Phase 5b)', () => {
+  const bookmarkAt = (offset: number, words: string): MarkRow => ({
+    kind: 'bookmark',
+    offset,
+    mark: { chapter: 'c1.xhtml', offset, words },
+    spine: 1,
+    page: '3',
+    chapter: 'Chapter I',
+  });
+  const highlightAt = (from: number, words: string): MarkRow => ({
+    kind: 'highlight',
+    offset: from,
+    mark: { chapter: 'c1.xhtml', from, to: from + 20, words },
+    spine: 1,
+    page: '3',
+    chapter: 'Chapter I',
+  });
+  const BOTH = [bookmarkAt(40, 'Its page'), highlightAt(40, 'Its words'), highlightAt(90, 'Later')];
+  const marksOf = (marks: readonly MarkRow[]): ContentsModel => ({
+    ...MODEL,
+    lens: 'marks',
+    marks,
+  });
+  const words = (container: HTMLElement) =>
+    rows(container).map((row) => row.querySelector('.mark-row__words')?.textContent);
+
+  it('are each a row in the order given, its kind said, counted together under Marks', () => {
+    const { container, actions } = drawn(marksOf(BOTH));
+    expect(words(container)).toEqual(['Its page', 'Its words', 'Later']);
+    expect(
+      rows(container).map((row) => row.querySelector('.mark-row__chapter')?.textContent),
+    ).toEqual(['Chapter I · bookmark', 'Chapter I · highlight', 'Chapter I · highlight']);
+    expect(new Set(rows(container).map((row) => row.dataset.key)).size).toBe(3);
+    expect(container.querySelectorAll('.book-lens')[1]?.textContent).toBe('Marks 3');
+    rows(container)[1]?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }),
+    );
+    expect(actions.remove).toHaveBeenCalledExactlyOnceWith(BOTH[1]);
+  });
+
+  it('keep the keyboard on a highlight’s row, never the bookmark’s at its word, as rows come and go', () => {
+    const { container, actions } = drawn(marksOf(BOTH));
+    rows(container)[1]?.focus();
+    // A bookmark made before it: the highlight's row moves down, the keyboard with it.
+    renderContents(container, marksOf([bookmarkAt(0, 'First'), ...BOTH]), null, actions);
+    expect(document.activeElement?.querySelector('.mark-row__words')?.textContent).toBe(
+      'Its words',
+    );
+    // The bookmark at its word taken off: the keyboard stays on the highlight.
+    renderContents(container, marksOf(BOTH.slice(1)), null, actions);
+    expect(document.activeElement?.querySelector('.mark-row__words')?.textContent).toBe(
+      'Its words',
     );
   });
 });

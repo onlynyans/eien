@@ -165,7 +165,7 @@ test.describe('Marks in the list (Phase 4c)', () => {
     const row = page.locator('.mark-row');
     await expect(row).toHaveCount(1);
     await expect(row.locator('.mark-row__words')).toContainText('Not all that Mrs. Bennet');
-    await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter III');
+    await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter III · bookmark');
     await expect(row.locator('.mark-row__page')).toHaveText(/^\d+$/u);
     await page.getByRole('button', { name: /^Contents \d+$/u }).click();
     await page.locator('.contents-row').nth(0).click();
@@ -177,7 +177,9 @@ test.describe('Marks in the list (Phase 4c)', () => {
     await row.focus();
     await page.keyboard.press('Delete');
     await expect(row).toHaveCount(0);
-    await expect(page.locator('.list__empty')).toHaveText('Nothing kept yet. B bookmarks a page.');
+    await expect(page.locator('.list__empty')).toHaveText(
+      'Nothing kept yet. B bookmarks a page; H keeps the words you choose.',
+    );
     await expect(mark(page)).toBeHidden();
   });
 
@@ -204,7 +206,9 @@ test.describe('Marks in the list (Phase 4c)', () => {
     await row.focus();
     await page.keyboard.press('Delete');
     await expect(row).toHaveCount(0);
-    await expect(page.locator('.tree-hint')).toHaveText('Nothing kept yet. B bookmarks a page.');
+    await expect(page.locator('.tree-hint')).toHaveText(
+      'Nothing kept yet. B bookmarks a page; H keeps the words you choose.',
+    );
     await expect(mark(page)).toBeHidden();
   });
 
@@ -232,16 +236,16 @@ test.describe('Marks in the list (Phase 4c)', () => {
     await page.getByRole('button', { name: /^Marks \d+$/u }).click();
     const rows = page.locator('.mark-row');
     await expect(rows.locator('.mark-row__chapter')).toHaveText([
-      'Chapter I',
-      'Chapter II',
-      'Chapter III',
+      'Chapter I · bookmark',
+      'Chapter II · bookmark',
+      'Chapter III · bookmark',
     ]);
     // Delete on the first: the keyboard goes to the row now first, Chapter II's.
     await rows.nth(0).focus();
     await page.keyboard.press('Delete');
     await expect(rows).toHaveCount(2);
     await expect(rows.nth(0)).toBeFocused();
-    await expect(rows.nth(0).locator('.mark-row__chapter')).toHaveText('Chapter II');
+    await expect(rows.nth(0).locator('.mark-row__chapter')).toHaveText('Chapter II · bookmark');
     // Held down: the first press takes Chapter II's off, the repeats nothing.
     await page.keyboard.down('Delete');
     await page.keyboard.down('Delete');
@@ -258,7 +262,9 @@ test.describe('Marks in the list (Phase 4c)', () => {
     await leaf(page).locator('.page__scroll').focus();
     await page.keyboard.press('b');
     await expect.poll(() => bookmarksIn(vault).length).toBe(0);
-    await expect(page.locator('.list__empty')).toHaveText('Nothing kept yet. B bookmarks a page.');
+    await expect(page.locator('.list__empty')).toHaveText(
+      'Nothing kept yet. B bookmarks a page; H keeps the words you choose.',
+    );
     await expect(shelfEpub(page)).toBeVisible();
     expect(existsSync(join(vault, 'Novels/Pride and Prejudice.epub'))).toBe(true);
   });

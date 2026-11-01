@@ -232,3 +232,14 @@
   max-width: var(--eien-list-w);
   padding: var(--eien-space-2);
 }
+
+/* What a book's colophon says to the ear alone: "bookmarked" (the mark says it to the eye,
+   ./bookmark.css) and "highlighted" (the ink, ./ink.css). */
+.colophon__heard {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

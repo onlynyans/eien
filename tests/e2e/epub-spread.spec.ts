@@ -8,6 +8,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ElectronApplication, Page } from '@playwright/test';
+import { wordsInSight } from './book-sight';
 import { clickMenu, expect, ROOT, test } from './launch';
 
 const BOOK = new Uint8Array(readFileSync(join(ROOT, 'tests/fixtures/epub/plain.epub')));
@@ -84,33 +85,6 @@ async function openSpread(page: Page): Promise<void> {
   await expect(box(page)).toHaveAttribute('data-spread', '');
 }
 
-/** Whether `words` (as `pageTops` reads them) stand in the pages in sight, wherever on them. */
-const wordsInSight = (page: Page, words: string) =>
-  box(page).evaluate((element, wanted) => {
-    const sight = element.getBoundingClientRect();
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-      const at = (node.textContent ?? '').indexOf(wanted);
-      if (at < 0) continue;
-      const range = document.createRange();
-      range.setStart(node, at);
-      range.setEnd(node, at + wanted.length);
-      // A page turned away is laid out beside the one in sight, only clipped: its words are outside.
-      // The words' last box: a word hyphenated across a page break has its hyphen's box on the page
-      // before, which would say the words were there.
-      const rect = [...range.getClientRects()].at(-1);
-      return (
-        rect !== undefined &&
-        rect.width > 0 &&
-        rect.left >= sight.left - 1 &&
-        rect.right <= sight.right + 1 &&
-        rect.top >= sight.top - 1 &&
-        rect.bottom <= sight.bottom + 1
-      );
-    }
-    return false;
-  }, words);
-
 /** The words at the top left of each page in sight. */
 const pageTops = (page: Page) =>
   box(page).evaluate((element) => {
@@ -179,7 +153,7 @@ test.describe('two pages', () => {
       '2',
     );
     // Two pages of another width lay the words out anew: the place's words are in sight, wherever.
-    await expect.poll(() => wordsInSight(page, top)).toBe(true);
+    await expect.poll(() => wordsInSight(box(page), top)).toBe(true);
     // The gutter: a soft hairline down the middle of the gap.
     const gutter = await box(page).evaluate((element) => {
       const after = getComputedStyle(element, '::after');
@@ -190,7 +164,7 @@ test.describe('two pages', () => {
     // Short of it again: one page, the place's words still in sight, at its top as they were.
     await pastSpread(page, -8);
     await expect(box(page)).not.toHaveAttribute('data-spread');
-    await expect.poll(() => wordsInSight(page, top)).toBe(true);
+    await expect.poll(() => wordsInSight(box(page), top)).toBe(true);
     await expect.poll(async () => (await pageTops(page))[0]).toBe(top);
   });
 

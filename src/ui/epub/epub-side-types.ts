@@ -1,9 +1,10 @@
 // What a page holding an EPUB is (#40; ./epub-side.ts makes one), apart
 // from how it's made: what the pages, the list and the shelf ask of it.
 
-import type { Bookmark, Epub } from '../../core/epub';
+import type { Epub } from '../../core/epub';
 import type { Place, Side } from '../vault/page-side';
 import type { BookCounts } from './book-count';
+import type { BookMarks } from './book-marks';
 import type { BookOpenOf } from './book-open';
 import type { EpubPage } from './epub-page';
 import type { ReadingStore } from './reading-store';
@@ -54,14 +55,8 @@ export interface EpubSide extends Side {
   reload(): Promise<void>;
   /** Its place, if on its way to rest, kept now: the window is quitting. */
   keep(): void;
-  /** Whether the page in sight holds a bookmark (Phase 4b). */
-  readonly bookmarked: boolean;
-  /** The book's bookmarks, in the file's order. */
-  readonly bookmarks: readonly Bookmark[];
-  /** The page in sight bookmarked, or its bookmark taken off. */
-  bookmark(): Promise<void>;
-  /** One bookmark taken off (a Marks row's Delete, Phase 4c). */
-  unmark(mark: Bookmark): Promise<void>;
+  /** Its marks (Phase 4b, 5a): its bookmarks and its highlights, over the book's reading file. */
+  readonly marks: BookMarks;
   /** The page `offset` into spine item `spine` is on, as its label says it (a Marks row's); null for none known. */
   labelAt(spine: number, offset: number): string | null;
   /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */

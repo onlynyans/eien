@@ -54,7 +54,7 @@ export function frontMatter(epub: Epub, path: string, crumbs: string): HTMLEleme
         '.',
       ),
       h('div', { text: `From ${baseName(path)}.` }),
-      h('div', { text: 'Your place and bookmarks are kept in .eien/reading/.' }),
+      h('div', { text: 'Your place, bookmarks and highlights are kept in .eien/reading/.' }),
     ),
   );
 }

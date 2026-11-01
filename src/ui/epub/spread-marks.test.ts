@@ -37,26 +37,21 @@ function marked(sight: readonly PageShown[], kept: readonly Bookmark[]) {
   };
   // The book's reading file, as the store would change it.
   let file: string | null = JSON.stringify({ version: 1, bookmarks: kept });
-  const change = vi.fn(async (_key: string, edit: MarksEdit) => {
+  const change = vi.fn(async (edit: MarksEdit) => {
     const next = edit(file);
     if (next === null) return null;
     file = next;
-    return { bookmarks: bookmarksOf(file) };
+    return { bookmarks: bookmarksOf(file), highlights: [] };
   });
   const marks = new PageBookmarks({
     page: page as never,
-    store: { listen: () => () => {}, change } as never,
+    change,
     chapter: () => CHAPTER,
     still: (then) => then(),
     land: () => {},
     changed: () => {},
-    listed: () => {},
   });
-  marks.opened('k', {
-    reading: { chapter: null, offset: 0 },
-    marks: { bookmarks: kept },
-    kept: 'kept',
-  });
+  marks.set(kept);
   return { marks, page, change, kept: () => bookmarksOf(file) };
 }
 
@@ -106,7 +101,10 @@ describe('a bookmark on a spread', () => {
 describe('a spread’s pages in the colophon', () => {
   /** A book's place over a page whose sight is `sight`, its count steady pages of 6,000 characters. */
   function placed(sight: readonly PageShown[]) {
-    const foot = new BookFoot(() => {});
+    const foot = new BookFoot(
+      () => {},
+      () => {},
+    );
     const heads = new RunningHeads();
     const place = bookPlace({
       page: {
@@ -196,7 +194,10 @@ describe('the imprint’s figures', () => {
     let count: BookCount | null = null;
     const place = bookPlace({
       page: {
-        foot: new BookFoot(() => {}),
+        foot: new BookFoot(
+          () => {},
+          () => {},
+        ),
         heads: new RunningHeads(),
         element: document.createElement('div'),
         chapter,

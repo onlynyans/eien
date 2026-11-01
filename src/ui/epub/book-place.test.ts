@@ -8,7 +8,10 @@ import { RunningHeads } from './running-heads';
 
 /** A book's place over a foot, its count steady pages of a book of 4,500 characters in one chapter. */
 function placed() {
-  const foot = new BookFoot(() => {});
+  const foot = new BookFoot(
+    () => {},
+    () => {},
+  );
   const count = { lengths: [4500], print: [] } as unknown as BookCount;
   const place = bookPlace({
     page: {
@@ -49,7 +52,10 @@ describe('the page a book’s place says', () => {
 
 describe('a page a bookmark is on, as its row says it', () => {
   it('is none known for a printed book’s chapter not yet counted, never the page before it', () => {
-    const foot = new BookFoot(() => {});
+    const foot = new BookFoot(
+      () => {},
+      () => {},
+    );
     const count = {
       lengths: [1000, null],
       print: [
@@ -78,7 +84,10 @@ describe('a page a bookmark is on, as its row says it', () => {
   const placeOver = (count: unknown) =>
     bookPlace({
       page: {
-        foot: new BookFoot(() => {}),
+        foot: new BookFoot(
+          () => {},
+          () => {},
+        ),
         element: document.createElement('div'),
         sheet: { sight: [] },
         heads: new RunningHeads(),

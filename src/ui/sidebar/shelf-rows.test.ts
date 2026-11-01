@@ -158,7 +158,14 @@ describe('SHELF’s rows', () => {
 
   it('lists the book’s lenses first under it, and under Marks its bookmarks (Phase 4c)', () => {
     const mark = { chapter: 'c1.xhtml', offset: 5, words: 'It is a truth' };
-    const row = { mark, spine: 1, page: '3', chapter: 'Chapter I' };
+    const row = {
+      kind: 'bookmark' as const,
+      offset: 5,
+      mark,
+      spine: 1,
+      page: '3',
+      chapter: 'Chapter I',
+    };
     const { list, actions } = draw('Loose.epub', {
       path: 'Loose.epub',
       lens: 'marks',
@@ -187,7 +194,9 @@ describe('SHELF’s rows', () => {
       rows: [],
       spine: 1,
     });
-    expect(texts(list, '.tree-hint')).toEqual(['Nothing kept yet. B bookmarks a page.']);
+    expect(texts(list, '.tree-hint')).toEqual([
+      'Nothing kept yet. B bookmarks a page; H keeps the words you choose.',
+    ]);
     // Not a row: it neither lights nor presses as one.
     expect(list.querySelectorAll('.tree-row--empty')).toHaveLength(0);
   });
@@ -281,6 +290,8 @@ describe('SHELF’s rows', () => {
 describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
   const BOOK = 'Cooking/Boston.epub';
   const markRowOf = (offset: number, page: string | null): MarkRow => ({
+    kind: 'bookmark',
+    offset,
     mark: { chapter: 'c1.xhtml', offset, words: `At ${offset}` },
     spine: 1,
     page,
@@ -320,7 +331,7 @@ describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
     expect(known?.querySelector('.count')?.textContent).toBe('7');
     expect(unknown?.querySelector('.count')).toBeNull();
     expect(unknown?.textContent).toBe('At 50');
-    expect(unknown?.title).toBe('Chapter I');
+    expect(unknown?.title).toBe('Chapter I · bookmark');
     expect(unknown?.getAttribute('aria-keyshortcuts')).toBe('Delete Backspace');
   });
 
@@ -363,6 +374,54 @@ describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
     again();
     // The row now in its place: the next folder's (Fic), never lost to the window.
     expect((document.activeElement as HTMLElement).dataset.key).toBe('shelf:Fic');
+    body.remove();
+  });
+
+  // QA (#40, Phase 5b): a highlight's row under the book, beside a bookmark's at its word.
+  it('lists a highlight beside a bookmark at its word, each its own row, its kind its tooltip', () => {
+    const bookmark = markRowOf(40, '3');
+    const highlight: MarkRow = {
+      kind: 'highlight',
+      offset: 40,
+      mark: { chapter: 'c1.xhtml', from: 40, to: 60, words: 'universally acknowledged' },
+      spine: 1,
+      page: '3',
+      chapter: 'Chapter I',
+    };
+    const { list, actions } = draw(BOOK, contentsOf([bookmark, highlight]));
+    const [first, second] = markNames(list);
+    expect(second?.textContent).toBe('universally acknowledged 3');
+    expect(second?.title).toBe('Chapter I · highlight');
+    expect(first?.title).toBe('Chapter I · bookmark');
+    expect(first?.dataset.key).not.toBe(second?.dataset.key);
+    expect(list.querySelector('.tree-lenses .book-lens:last-child')?.textContent).toBe('Marks 2');
+    second?.click();
+    expect(actions.goMark).toHaveBeenCalledExactlyOnceWith(BOOK, highlight);
+    second?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    expect(actions.unmark).toHaveBeenCalledExactlyOnceWith(BOOK, highlight);
+  });
+
+  it('keeps the keyboard on the highlight’s row through a redraw, never the bookmark’s at its word', () => {
+    const body = document.body.appendChild(document.createElement('ul'));
+    const noWindows = { focusKey: () => false } as unknown as TreeWindows;
+    const focus = new SidebarFocus(body, noWindows, document.createElement('div'), () => false);
+    const highlight: MarkRow = {
+      kind: 'highlight',
+      offset: 40,
+      mark: { chapter: 'c1.xhtml', from: 40, to: 60, words: 'Its words' },
+      spine: 1,
+      page: '3',
+      chapter: 'Chapter I',
+    };
+    const drawWith = (shown: MarkRow[]) =>
+      body.replaceChildren(...draw(BOOK, contentsOf(shown)).list.children);
+    drawWith([markRowOf(40, '3'), highlight]);
+    markNames(body)[1]?.focus();
+    const giveBack = focus.hold();
+    // A bookmark made before both: the highlight's row two down.
+    drawWith([markRowOf(0, '1'), markRowOf(40, '3'), highlight]);
+    giveBack();
+    expect(document.activeElement).toBe(markNames(body)[2]);
     body.remove();
   });
 });

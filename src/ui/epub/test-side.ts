@@ -6,6 +6,7 @@ import { afterEach, type Mock, vi } from 'vitest';
 import type { Reading } from '../../core/epub';
 import { MemoryStorage } from '../../platform/memory/memory-storage';
 import { BookCounts } from './book-count';
+import { boundsOf, rangeOver, walked } from './chapter-range';
 import { makeEpubSide } from './epub-side';
 import type { EpubSide, EpubSideOf } from './epub-side-types';
 import { readingStore } from './reading-store';
@@ -76,4 +77,19 @@ export function sideWith(
   made.add(side);
   document.body.append(side.page.element);
   return { side, kept, reads, changed, close, of, writes, disk, files, listed };
+}
+
+/** `words` chosen in the chapter on `side`'s page, as a hand leaves them. */
+export function choose(side: EpubSide, words: string): void {
+  // The chapter's text as a place counts it is its pieces': the fixture's first chapter has no blank ones but between blocks.
+  const walk = walked(side.page.chapter);
+  const offset = walk.pieces
+    .map((piece) => piece.data)
+    .join('')
+    .indexOf(words);
+  const bounds = offset < 0 ? null : boundsOf(walk, { from: offset, to: offset + words.length });
+  if (!bounds) throw new Error(`no “${words}” on the page`);
+  const selection = document.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(rangeOver(bounds));
 }

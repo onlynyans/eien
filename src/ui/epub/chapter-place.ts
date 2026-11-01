@@ -142,6 +142,34 @@ export function offsetAfter(chapter: HTMLElement, node: Node): number {
 const BLOCK = BLOCK_NAMES.join(', ');
 
 /**
+ * The words of `pieces` from piece `index`, `within` it, on, a space between
+ * those of two blocks, as they read: of each piece, what `take` takes (given
+ * its offset in the chapter and the words so far), until it takes none.
+ */
+function joined(
+  pieces: readonly Text[],
+  index: number,
+  within: number,
+  take: (piece: Text, at: number, words: string) => string | null,
+): string {
+  let words = '';
+  let block: Element | null = null;
+  let at = 0;
+  for (let i = 0; i < index; i++) at += (pieces[i] as Text).length;
+  for (let i = index; i < pieces.length; i++) {
+    const piece = pieces[i] as Text;
+    const part = take(piece, at, words);
+    at += piece.length;
+    if (part === null) break;
+    const own = piece.parentElement?.closest(BLOCK) ?? null;
+    if (words !== '' && own !== block) words += ' ';
+    block = own;
+    words += i === index ? part.slice(within) : part;
+  }
+  return words;
+}
+
+/**
  * About `length` of the chapter's words from `offset` on (a bookmark's page's
  * first words, Phase 4b), a space between those of two blocks, as they read.
  */
@@ -156,14 +184,23 @@ export function wordsFrom(chapter: HTMLElement, offset: number, length: number):
   const first = pieces[spot.index] as Text;
   let within = spot.within;
   while (within > 0 && /[\p{L}\p{N}]/u.test(first.data[within - 1] ?? '')) within--;
-  let words = '';
-  let block: Element | null = null;
-  for (let i = spot.index; i < pieces.length && words.length < length; i++) {
-    const piece = pieces[i] as Text;
-    const own = piece.parentElement?.closest(BLOCK) ?? null;
-    if (words !== '' && own !== block) words += ' ';
-    block = own;
-    words += piece.data.slice(i === spot.index ? within : 0);
-  }
-  return words.slice(0, length);
+  return joined(pieces, spot.index, within, (piece, _at, words) =>
+    words.length < length ? piece.data : null,
+  ).slice(0, length);
+}
+
+/**
+ * The chapter's words from `from` to `to` (a highlight's, Phase 5a), a space
+ * between those of two blocks, at most `max` of them (a long one's start).
+ */
+export function wordsBetween(chapter: HTMLElement, from: number, to: number, max: number): string {
+  const pieces = piecesOf(chapter);
+  const spot = spotOf(
+    pieces.map((text) => text.length),
+    from,
+  );
+  if (!spot || to <= from) return '';
+  return joined(pieces, spot.index, spot.within, (piece, at, words) =>
+    at >= to || words.length >= max ? null : piece.data.slice(0, to - at),
+  ).slice(0, max);
 }

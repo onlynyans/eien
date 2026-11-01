@@ -274,9 +274,11 @@ export class PagedPlace {
    * cut to the words in sight and laid as its first sight: a turn moves one
    * sight, never the whole chapter (fourteen copies of a long one would stall
    * the window). A front page's copy is the front matter alone, where it stood.
+   * The offset of the copy's first word in the chapter, or null for a copy
+   * of none of the book's words (the front matter's, or none cut).
    */
-  trim(copy: HTMLElement): void {
-    if (this.#idle || !this.#shown) return;
+  trim(copy: HTMLElement): number | null {
+    if (this.#idle || !this.#shown) return null;
     const { chapter } = this.#of;
     const at = this.#onFront ? this.#page * this.#laid.step : 0;
     const { from, to } = this.#range();
@@ -287,6 +289,7 @@ export class PagedPlace {
     );
     copy.style.transform = at ? `translateX(${-at}px)` : '';
     copy.style.clipPath = clipAt(at, this.#laid.gap);
+    return this.#onFront ? null : from;
   }
 
   /** Whether the sight shown is Eien's front matter: none of the book's words in it. */

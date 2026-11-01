@@ -1,0 +1,40 @@
+/* Ink over a book's words (#40, Phase 5, ./ink.ts): a highlight is a pencil
+   line under its words and a pencil tick in the margin beside its lines
+   (Features 1), quieter than a wash, which is left for Find's. Painted over
+   the drawn text by name (`::highlight()`), never an element among the
+   words; a turn's copy carries the same ink in elements of its own, each in
+   a rule of its own, as a selector list would drop both where
+   `::highlight()` is unknown. Every value a book token (tokens.css). */
+::highlight(epub-highlight) {
+  text-decoration-line: underline;
+  text-decoration-color: var(--eien-epub-highlight-ink);
+  text-decoration-thickness: var(--eien-epub-highlight-w);
+  text-underline-offset: var(--eien-epub-highlight-offset);
+  text-decoration-skip-ink: none;
+}
+.turn-copy [data-ink="epub-highlight"] {
+  text-decoration-line: underline;
+  text-decoration-color: var(--eien-epub-highlight-ink);
+  text-decoration-thickness: var(--eien-epub-highlight-w);
+  text-underline-offset: var(--eien-epub-highlight-offset);
+  text-decoration-skip-ink: none;
+}
+/* The tick: a border, so forced colours keep it, on the block itself, so a
+   turn's copy (a copy of the chapter too) carries it, and a spread's page
+   has its own in its own margin. */
+.epub-chapter [data-highlighted] {
+  position: relative;
+}
+.epub-chapter [data-highlighted]::before {
+  content: "";
+  position: absolute;
+  inset-block: var(--eien-epub-tick-trim);
+  inset-inline-start: calc(-1 * var(--eien-epub-tick-inset));
+  border-inline-start: var(--eien-epub-highlight-w) solid var(--eien-epub-highlight-ink);
+}
+
+@media (forced-colors: active) {
+  ::highlight(epub-highlight) {
+    text-decoration-color: CanvasText;
+  }
+}
