@@ -204,6 +204,15 @@ describe('a chapter in pages', () => {
     expect(first?.textContent).toBe('c'.repeat(300));
     // Its column the page's fourth (index 3): the copy moved one page across, not four.
     expect(copy.style.transform).toBe(`translateX(${-STEP}px)`);
+    // And clipped where it's moved to, so the page in sight shows and nothing either side.
+    expect(copy.style.clipPath).toBe(`inset(0px ${-(STEP + GAP / 2)}px 0px ${STEP - GAP / 2}px)`);
+  });
+
+  it('gives no copy of a page inside a paragraph longer than a copy may hold', () => {
+    const { chapter, place } = laidOut(['a'.repeat(20_000)]);
+    place.show(10_000);
+    const copy = chapter.cloneNode(true) as HTMLElement;
+    expect(place.trim(copy)).toBeNull();
   });
 
   it('carries a picture that begins the page in the turn’s copy', () => {

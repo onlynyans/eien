@@ -410,7 +410,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
     - `page-columns.ts`: the chapter laid in columns of whole lines, one page or two to a sight, its pages and the front matter's counted
     - `sight.ts`: the pages in sight, each where its words begin and its part; where the page stands, to put back
     - `spread.ts`: one page or two, as Pages, landscape and Pages, portrait choose for the screen as it's held: One, Two, or Auto, by the pane's room for two of 20em (never a split's)
-    - `page-cut.ts`: a sight's words cut for a turn's copy, past the front matter, a paragraph cut at its foot set as on the page
+    - `sight-copy.ts`: a sight's words for a turn's copy, the page as laid: the whole blocks round the sight in the chapter's own columns, laid once out of sight and set on the page's place by measure
   - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back; in Scroll, a chapter turned stepping its words in
   - `chapter-swipe.ts`: a finger swiped across a book in Scroll turns the chapter, never a scroll, a press or the system's edge (#71)
   - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons

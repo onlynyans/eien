@@ -186,7 +186,13 @@ export function sightCopy(chapter: HTMLElement, of: SightCopyOf): SightCopy | nu
   range.selectNodeContents(chapter);
   if (start) range.setStartBefore(start);
   // An end before the start (boxes out of order) keeps the rest of the chapter: never too little.
-  if (end && !(start && start.compareDocumentPosition(end) & Node.DOCUMENT_POSITION_PRECEDING)) {
+  // One holding the start (a block's own words past the sight, after the block the start is) ends
+  // after it.
+  const placed = start ? start.compareDocumentPosition(end ?? start) : 0;
+  if (
+    end &&
+    (!(placed & Node.DOCUMENT_POSITION_PRECEDING) || placed & Node.DOCUMENT_POSITION_CONTAINS)
+  ) {
     range.setEndAfter(end);
   }
   const words = cloned(range, chapter);
@@ -195,7 +201,9 @@ export function sightCopy(chapter: HTMLElement, of: SightCopyOf): SightCopy | nu
   const first = start ? boxOf(start) : null;
   const column = first ? Math.round((first.left - laid.left) / of.scale / of.pitch) : 0;
   // From the chapter's start, the run lies in the chapter's own columns already.
-  if (!start || !first) return { words, shift: of.at, from: 0 };
+  if (!start) return { words, shift: of.at, from: 0 };
+  // A start with no box can't be set where the page has it.
+  if (!first) return null;
   const copies = opened(words, start, chapter);
   const startCopy = copies.at(-1)?.[1];
   copies.forEach(([element, copy], i) => {
