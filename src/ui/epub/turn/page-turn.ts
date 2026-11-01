@@ -34,17 +34,28 @@ import { pageCopy } from './page-copy';
 import { type Stepping, stepTurn } from './step-turn';
 import { acrossOf, type Hand, handAt, moved } from './turn-hand';
 import { TurnQueue } from './turn-queue';
-import type { PageTurnOf, TurnStyle, TurnSurface } from './turn-surface';
+import type { PageTurnOf, TurnLeaf, TurnStyle, TurnSurface } from './turn-surface';
 import { type TurnTokens, turnTokens } from './turn-tokens';
 
 /** The book stepped on: the page left (copied, if anything will move), the one now on the sheet. */
 interface Begun {
   readonly copy: HTMLElement | null;
   readonly sheet: HTMLElement;
+  /** One page of two that turns (a spread), measured before the step; null, the whole sheet. */
+  readonly leaf: TurnLeaf | null;
   readonly tokens: TurnTokens;
   readonly scale: number;
   readonly style: TurnStyle;
 }
+
+/**
+ * The box a curl turns: the leaf's, one page of a spread (a curl on it always
+ * turns on, a back turn's mirrored), or the whole sheet.
+ */
+const pageOf = (sheet: HTMLElement, leaf: TurnLeaf | null) => ({
+  width: leaf ? leaf.width : sheet.offsetWidth,
+  height: sheet.offsetHeight,
+});
 
 export class PageTurn {
   readonly #surface: TurnSurface;
@@ -206,12 +217,13 @@ export class PageTurn {
     const copy = moves
       ? pageCopy(before, this.#surface.words, (words) => this.#surface.trim?.(words))
       : null;
+    const leaf = moves && style === 'curl' ? (this.#surface.leaf?.(way) ?? null) : null;
     this.#begun = true;
     const stepped = (moved: boolean) => {
       this.#begun = false;
       const sheet = this.#surface.sheet();
       if (moved && sheet && !this.#disposed) {
-        then({ copy, sheet, tokens: this.#tokens(sheet), scale, style });
+        then({ copy, sheet, leaf, tokens: this.#tokens(sheet), scale, style });
       }
       this.#settled();
     };
@@ -221,13 +233,13 @@ export class PageTurn {
   }
 
   /** A key's turn, the book stepped on: a hand's stroke under Curl, else the setting's motion. */
-  #keyTurn(way: Way, { copy, sheet, tokens, scale, style }: Begun): void {
+  #keyTurn(way: Way, { copy, sheet, leaf, tokens, scale, style }: Begun): void {
     if (!copy) return;
     if (style === 'curl') {
       this.#stroke = nextStroke(this.#stroke, this.#random);
       const time = curlTime(tokens.calm, scale, this.#stroke.pace);
-      const page = { width: sheet.offsetWidth, height: sheet.offsetHeight };
-      this.#curlOn(keyCurl(page, way, this.#stroke, time), copy, sheet, tokens).fly();
+      const turn = keyCurl(pageOf(sheet, leaf), leaf ? 1 : way, this.#stroke, time);
+      this.#curlOn(turn, copy, sheet, leaf, tokens).fly();
       return;
     }
     const steps = stepTurn({
@@ -247,10 +259,10 @@ export class PageTurn {
   }
 
   /** A hand's curl, the book stepped on: held where the hand is now, or thrown if it's lifted already. */
-  #hold(hand: Hand, way: Way, { copy, sheet, tokens }: Begun): void {
+  #hold(hand: Hand, way: Way, { copy, sheet, leaf, tokens }: Begun): void {
     if (!copy) return;
-    const page = { width: sheet.offsetWidth, height: sheet.offsetHeight };
-    const curl = this.#curlOn(beginCurl(page, way, hand.at[1]), copy, sheet, tokens);
+    const turn = beginCurl(pageOf(sheet, leaf), leaf ? 1 : way, hand.at[1]);
+    const curl = this.#curlOn(turn, copy, sheet, leaf, tokens);
     hand.holding = curl;
     curl.drag(hand.offset, hand.time);
     // Gone before its page came: thrown if let go, home if the gesture was cancelled.
@@ -270,10 +282,17 @@ export class PageTurn {
     curl.fly(curlTime(curl.tokens.calm, turnScale(this.#surface.how().speed)));
   }
 
-  #curlOn(turn: CurlTurn, copy: HTMLElement, sheet: HTMLElement, tokens: TurnTokens): CurlRun {
+  #curlOn(
+    turn: CurlTurn,
+    copy: HTMLElement,
+    sheet: HTMLElement,
+    leaf: TurnLeaf | null,
+    tokens: TurnTokens,
+  ): CurlRun {
     const curl = new CurlRun(turn, {
       copy,
       sheet,
+      leaf,
       words: this.#surface.words,
       trim: (words) => this.#surface.trim?.(words),
       tokens,

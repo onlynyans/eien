@@ -385,7 +385,9 @@ Each phase is its own session and pull request, from main.
   - **3d, built:** the spread, and Set as a book. Two pages where the
     pane holds two of 20em of the text with the sheet's margins and the
     gutter (never on a phone or in a split), turned a spread at a time
-    under every Page turn, the place kept through one page and two
+    under every Page turn (under Curl one page round the gutter, its head
+    with it, the other lying still: decided 2026-10-31, where the Phase 3
+    review had the spread curl as one leaf), the place kept through one page and two
     (`ui/epub/spread.ts`, `page-columns.ts`); a bookmark's mark on the page
     it marks, the colophon saying both pages. Set as a book in pages alone:
     justified only where the window hyphenates the book's language
