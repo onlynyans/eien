@@ -230,7 +230,8 @@ export const SETTINGS = [
     scope: 'device',
     group: 'Type',
     type: 'number',
-    min: 90,
+    // Down to half (#72): the words alone; controls and rows keep a target's size (tokens.css).
+    min: 50,
     max: 130,
     step: 10,
     default: 100,

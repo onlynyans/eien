@@ -3,40 +3,11 @@
 // handling runs (its implicit pointer capture, touch-action, its cancels),
 // which synthetic PointerEvents skip. Motion on, so the hand holds a curl.
 
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
-import { open, putBytesOutside, swipe } from './outside';
+import { bookInPages, box, firstWords, touchAt } from './book-hand';
+import { swipe } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
-
-const FIXTURE = join(import.meta.dirname, '../fixtures/epub/plain.epub');
-const back = (page: Page) => page.locator('.phone-bar__back');
-const box = (page: Page) => page.locator('.epub-sheet:not([aria-hidden]) .epub__pages');
-
-/** The first words on the page in sight. */
-const firstWords = (page: Page) =>
-  box(page).evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    const at = document.caretRangeFromPoint(rect.left + 2, rect.top + 4);
-    return at?.startContainer.textContent?.slice(at.startOffset, at.startOffset + 30) ?? '';
-  });
-
-/** A book open in pages on the phone. */
-async function bookInPages(page: Page): Promise<void> {
-  await open(page);
-  await putBytesOutside(
-    page,
-    'Eien/Vault/Novels/Pride and Prejudice.epub',
-    readFileSync(FIXTURE).toString('base64'),
-  );
-  await back(page).click();
-  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
-  await page.locator('.phone-bar__controls [data-command="look"]').click();
-  await page.locator('[data-setting="epub.view"] [data-value="pages"]').click();
-  await page.keyboard.press('Escape');
-  await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
-}
 
 /**
  * Whether the curl is held under the finger: there, and still between two
@@ -52,8 +23,6 @@ const held = async (page: Page): Promise<boolean> => {
   if ((await back.count()) === 0) return false;
   return before === (await back.evaluate((element) => (element as HTMLElement).style.transform));
 };
-
-const touchAt = (x: number, y: number) => [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: 1 }];
 
 test('a finger drawn across the words, well inside the screen, turns the page', async ({
   page,

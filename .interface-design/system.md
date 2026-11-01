@@ -107,7 +107,8 @@ and 48 rarely.
   `--band` = space-7 + space-2 (56px); the shut sidebar's strip, `--strip`,
   as wide as the band is tall (none for the seal alone); tree
   indent 16px a level; the twisty 12px; a row `--eien-row-h` 30px (26px
-  compact); sidebar 264px, list 316px, versions panel 284px; a touch target at
+  compact) × Text size, never under `--eien-target` 24px (WCAG 2.5.8, #72);
+  sidebar 264px, list 316px, versions panel 284px; a touch target at
   least `--eien-touch` 44px.
 - Density (Comfortable or Compact) changes only tokens: the sheet's margins,
   gaps, row heights and the list's preview line. No component asks which
@@ -174,12 +175,12 @@ overrides the corners and its own lengths (`src/ui/chrome/*.css`).
 | Depth | `--eien-shadow-sheet`, `--eien-shadow-float` | two shadows, no more | – |
 | The curl's light | `--eien-curl-shade`, `--eien-curl-light`, `--eien-curl-through` | the sheet shadow's ink (0.18 by day, black 0.5 by night); white 0.6 by day, the night's ink 0.1; 0.12 | – (Depth's exception: only while a page turns as a curl) |
 | Corners | `--eien-radius-s`, `-m`, `-l` | A · Band 2/4/8, B · Slip 4/8/14, C · Running head 3/6/10 | layout |
-| Icons | `--eien-icon` 16px, `--eien-icon-stroke` 1.25, `--eien-control` 28px (desktop), `--eien-touch` 44px | | – |
+| Icons | `--eien-icon` 16px, `--eien-icon-stroke` 1.25, `--eien-control` 28px (desktop), `--eien-target` 24px (a pointer's least, WCAG 2.5.8), `--eien-touch` 44px | | – |
 | Faces | `--eien-family-*` (nineteen: eleven monos, plex-mono first, and the eight text faces); `--eien-face-text`, `--eien-face-mono`, `--eien-face-source`, `--eien-face-seal` | each voice points at a family | settings: Typeface, Interface font, Source font (all from one FACES list, `src/core/config/faces.ts`) |
-| Sizes | `--eien-size-prose`, `-title`, `-heading`, `-row`, `-preview` (each face's own, × `--eien-text-scale`); `--eien-size-label` 10px, `-meta` 11px (the interface font's own), `-source` 14px (the Source font's own) | Newsreader: 22, 36, 23, 16, 14 | settings: Text size (`--eien-text-scale`, 0.9–1.3), the faces |
+| Sizes | `--eien-size-prose`, `-title`, `-heading`, `-row`, `-preview` (each face's own, × `--eien-text-scale`); `--eien-size-label` 10px, `-meta` 11px (the interface font's own), `-source` 14px (the Source font's own) | Newsreader: 22, 36, 23, 16, 14 | settings: Text size (`--eien-text-scale`, 0.5–1.3), the faces |
 | Weights | `--eien-weight-tree`, `--eien-weight-list`, `--eien-weight-list-chosen`; `--eien-track-label` 0.12em | 400, 400, 500 | settings: Row weights (chosen = list + 100, at most 700) |
 | Space | `--eien-space-1` … `-8` | 4, 8, 12, 16, 24, 32, 48, 72 | – |
-| Lengths | `--eien-row-h` 30px × text scale (26 compact), `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |
+| Lengths | `--eien-row-h` 30px × text scale (26 compact), at least `--eien-target` 24px, `--eien-row-pad-y`, `--eien-sidebar-w` 264, `--eien-list-w` 316, `--eien-panel-w` 284; `--band` 56px (space-7 + space-2), `--status-h` 40px, `--runhead-h` 40px, `--settings-inset` 64px 112px | | density; C sets `--band` 48px |
 | Page rhythm | `--eien-measure` and `--eien-leading-prose` (each face's own: 29–34em, 1.5–1.76, less `--eien-leading-tighten`), `--eien-leading-row` 1.35; `--eien-title-gap`, `-paragraph-gap`, `-scene-gap`; `--eien-sheet-pad-x`, `-sheet-pad-top`, `--eien-sheet-gutter` (the density's blotter round a sheet, which `--eien-page-gutter` takes with a sheet frame); `--eien-list-preview` | comfortable: 32, 16, 1.4em; 72, 48, 24; tighten 0; preview shown. Compact: 16, 8, 0.8em; 48, 24, 8; tighten 0.14; no preview | the faces; density |
 | Frame | `--eien-page-ground`, `--eien-page-gutter`, `--eien-sheet-lift` | Sheet: the blotter, the sheet's shadow, the density's gutter. Full: paper, none, gutter 0 | setting: Page; a book's leaf its own (`[data-frame]`) |
 | A book's parts | `--eien-epub-title-size`, `-title-gap`, `-paragraph-gap`, `-break-gap`, `-epigraph-indent`, `-plate-gap`, `-caption-ink`, `-first-line-track`; `--eien-epub-indent` (Phase 2) | each from a note's: the heading size, the title, paragraph and scene gaps, space-6, space-5, pencil, half the label's tracking; As a book's indent space-6, space-5 under a 520px page | – (declared on `:root, [data-face]`, so a book in its own face resolves them in it) |
@@ -614,7 +615,9 @@ is always Panes.
 
 From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
 
-- **The control:** **Aa** (the `look` icon), the page's last tool after a
+- **The control:** **Aa** (the `look` icon: a serif since #73, as the page's
+  own face is, foot serifs under the A and a two-storey a; Find's Match case
+  keeps the sans Aa, so the two never read as one), the page's last tool after a
   hairline, in A's band, B's slip and C's running head; on the phone, the
   bar, slip or rail as the layout keeps them, and the ⋯. Named "Look", key
   ⇧⌘L, View → Look…; it folds last of the tools.
