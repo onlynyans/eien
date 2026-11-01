@@ -149,4 +149,51 @@ describe('a sight’s words cut for a turn’s copy', () => {
     expect(own.querySelector('.scene-break')).not.toBeNull();
     expect(own.querySelector('img')).not.toBeNull();
   });
+
+  describe('by where each mark is drawn (#60, as review found)', () => {
+    /** `body` in a box whose page in sight runs from 100 to 300, each `img` drawn at its left. */
+    function laid(body: string, lefts: readonly number[]) {
+      const box = document.createElement('div');
+      const chapter = chapterOf(body);
+      box.append(chapter);
+      document.body.append(box);
+      const at = (element: Element, left: number, width: number) => {
+        element.getBoundingClientRect = () => ({ left, width, right: left + width }) as DOMRect;
+      };
+      at(box, 100, 200);
+      for (const [i, img] of [...chapter.querySelectorAll('img')].entries())
+        at(img, lefts[i] ?? 0, 80);
+      return chapter;
+    }
+    const plates = (count: number) =>
+      Array.from(
+        { length: count },
+        (_, n) => `<div data-part="plate"><img alt="" title="${n}"></div>`,
+      ).join('');
+
+    it('keeps a chapter of pictures alone to the one in sight, no gap above it', () => {
+      const chapter = laid(plates(3), [-120, 150, 360]);
+      const page = cut(chapter, 0, null);
+      expect([...page.querySelectorAll('img')].map((img) => img.title)).toEqual(['1']);
+      // The plate the page before ended comes hidden; the one in sight stands at the head.
+      const [ended, own] = [...page.querySelectorAll<HTMLElement>('[data-part="plate"]')];
+      expect(ended?.style.display).toBe('none');
+      expect(own?.style.marginTop).toBe('0px');
+    });
+
+    it('keeps the pictures before a chapter’s words to their own pages', () => {
+      const chapter = laid(`${plates(2)}<p>Words.</p>`, [150, 360]);
+      const page = cut(chapter, 0, 0);
+      expect([...page.querySelectorAll('img')].map((img) => img.title)).toEqual(['0']);
+    });
+
+    it('hides the block a picture on the page before ended, not what’s inside it', () => {
+      const chapter = laid('<p data-part="plate"><img alt=""><br></p><p>Words.</p>', [-120]);
+      const page = cut(chapter, 0, null);
+      const [ended, words] = [...page.querySelectorAll<HTMLElement>('p')];
+      expect(ended?.style.display).toBe('none');
+      expect(words?.textContent).toBe('Words.');
+      expect(words?.style.marginTop).toBe('0px');
+    });
+  });
 });
