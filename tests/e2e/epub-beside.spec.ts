@@ -136,3 +136,20 @@ test('with no note beside, Quote says where to open one', async ({ page }) => {
     'Open a note beside the book to quote into it.',
   );
 });
+
+test('the bar’s Copy puts the words chosen on the clipboard, the words alone (#65)', async ({
+  app,
+  page,
+}) => {
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await choose(page, 'Mr. Bennet replied');
+  await chapter(page).dispatchEvent('mouseup');
+  const bar = page.getByRole('toolbar', { name: 'The selection' });
+  await bar.getByRole('button', { name: 'Copy' }).click();
+  // Through the window's own clipboard, as Copy as HTML's is.
+  await expect
+    .poll(() => app.evaluate(({ clipboard }) => clipboard.readText()))
+    .toContain('Mr. Bennet replied');
+  await expect(bar).toBeHidden();
+});

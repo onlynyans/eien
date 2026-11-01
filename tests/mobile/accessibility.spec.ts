@@ -1,10 +1,11 @@
 // axe-core over the phone's page (../e2e/axe.ts): each layout, by day and by
 // night, on the notes, the page, its table bar, a link's bar, its ⋯ menu, the
-// quick look and Settings. No serious or critical violation, colour contrast
+// quick look and Settings, and a book's words chosen by touch. No serious or critical violation, colour contrast
 // included.
 
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
+import { bookInPages, longPress } from './book-hand';
 import { open, putOutside, titles } from './outside';
 
 // Motion reduced from the start, so no fade is under way when axe looks (../e2e/axe.ts).
@@ -98,6 +99,31 @@ for (const room of ['side', 'pages'] as const) {
       await page.locator('.phone-bar__back').click();
       await expect(titles(page)).toBeVisible();
       expect(await seriousViolations(page), 'the notes beside or over the page').toEqual([]);
+    });
+  }
+}
+
+// Words chosen in a book by touch (#65): the selection bar docked over the colophon, in each layout
+// (B's slip and C's rail beside it), by day and by night.
+for (const layout of ['band', 'slip', 'runhead'] as const) {
+  for (const scheme of ['day', 'night'] as const) {
+    test(`${layout} by ${scheme}: a book’s words chosen, its bar docked at the foot`, async ({
+      page,
+    }) => {
+      await bookInPages(page);
+      await openSettings(page);
+      const settings = page.locator('dialog[open]');
+      await settings
+        .getByRole('group', { name: 'Layout' })
+        .locator(`[data-value="${layout}"]`)
+        .click();
+      await settings.locator(`[data-value="${scheme}"]`).click();
+      await page.keyboard.press('Escape');
+      await expect(settings).toBeHidden();
+      await expect(page.locator('html')).toHaveAttribute('data-layout', layout);
+      await longPress(page, await page.context().newCDPSession(page));
+      await expect(page.getByRole('toolbar', { name: 'The selection' })).toBeVisible();
+      expect(await seriousViolations(page), 'the docked selection bar').toEqual([]);
     });
   }
 }

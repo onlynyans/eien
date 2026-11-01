@@ -3,9 +3,11 @@
 // Highlight (Phase 5a; "Take off the highlight" on words that lie in one),
 // Quote in the note and Copy just above its start, as words. It never shows
 // while the pointer is down, and goes on Esc, a scroll, the page losing the
-// keyboard, or the selection gone. Not on a touch screen, where the
-// system's own callout is over the words: there the page's ⋯ offers Quote,
-// and quotes the words last chosen, which a tap on the ⋯ may have dropped.
+// keyboard, or the selection gone. On a touch screen (#65), where the
+// system's own menu stands by the words, it docks at the page's foot over
+// the colophon while words are chosen, clear of that menu, and acts on the
+// words last chosen, which a tap on it may have dropped (as the page's ⋯
+// does); its choice made, the words are let go, as the system's Copy does.
 // A selection reaching past the chapter counts for the part inside it.
 
 import { FORMAT_COMMANDS } from '../../core/format';
@@ -24,12 +26,16 @@ const HIGHLIGHT_KEYS = ['H', FORMAT_COMMANDS.find((command) => command.id === 'h
 
 export interface BookSelectionOf {
   readonly chapter: HTMLElement;
-  /** The page's scroller: a scroll, Esc or the keyboard leaving it takes the bar away. */
+  /** The page's scroller: a scroll, Esc or the keyboard leaving it takes the floating bar away. */
   readonly scroller: HTMLElement;
-  /** Quote the selection in the note beside. */
-  quote(): void;
-  /** Highlight the selection, or take off the highlight it lies in. */
-  highlight(): void;
+  /** Where the bar docks on a touch screen: the page's foot, over its colophon (./epub.css). */
+  readonly dock: HTMLElement;
+  /** Quote the selection (or, `kept`, the words last chosen) in the note beside. */
+  quote(kept: boolean): void;
+  /** Highlight the selection (or, `kept`, the words last chosen), or take off the highlight it lies in. */
+  highlight(kept: boolean): void;
+  /** Copy `range`'s words alone (./book-words.ts), as the page's own copy gives them. */
+  copy(range: Range): void;
   /** Whether `range`'s words lie in one highlight. */
   inHighlight(range: Range): boolean;
 }
@@ -53,14 +59,20 @@ export class BookSelection {
   readonly element: HTMLElement;
   readonly #of: BookSelectionOf;
   #timer: ReturnType<typeof setTimeout> | undefined;
+  /** A lift off the docked bar, waiting for its click. */
+  #lift: ReturnType<typeof setTimeout> | undefined;
   /** The words last chosen in the chapter: what the phone's ⋯ quotes. */
   #kept: Range | null = null;
   /** Highlight, or Take off the highlight. */
   readonly #highlight: HTMLButtonElement;
+  /** A finger on the docked bar: the choice it may drop meanwhile doesn't take the bar away. */
+  #pressing = false;
+  /** Taken off with its page: a mouseup on the scroller after it puts nothing back. */
+  #removed = false;
 
   constructor(of: BookSelectionOf) {
     this.#of = of;
-    const button = (text: string, keys: string, run: () => void) =>
+    const button = (text: string, keys: string, run: (kept: boolean) => void) =>
       h('button', {
         class: 'word-button',
         text,
@@ -69,22 +81,38 @@ export class BookSelection {
           // The selection stays while a choice is pressed.
           mousedown: (event) => event.preventDefault(),
           click: () => {
-            run();
+            const docked = this.docked;
+            this.#pressing = false;
+            run(docked);
             this.hide();
+            // Docked, its choice ends the choosing, the system's menu with it.
+            if (docked) document.getSelection()?.removeAllRanges();
           },
         },
       });
-    this.#highlight = button(HIGHLIGHT_LABELS.add, HIGHLIGHT_KEYS, () => of.highlight());
+    this.#highlight = button(HIGHLIGHT_LABELS.add, HIGHLIGHT_KEYS, (kept) => of.highlight(kept));
     this.element = h(
       'div',
       {
         class: 'selection-bar',
         attrs: { role: 'toolbar', 'aria-label': 'The selection', hidden: true },
+        on: {
+          // A finger's or a pen's: its lift or cancel always reaches the bar (the browser holds the
+          // pointer where it came down). Not a mouse's, let go anywhere; its mousedown keeps the choice.
+          pointerdown: (event) => {
+            this.#pressing = event.pointerType !== 'mouse';
+          },
+          // A finger lifted off the bar, no click: the choice it dropped takes the bar away now.
+          pointerup: () => this.#released(),
+          pointercancel: () => this.#released(),
+        },
       },
       this.#highlight,
-      button('Quote in the note', 'Q', () => of.quote()),
-      // The page's own copy (./book-words.ts) gives the words alone.
-      button('Copy', 'Meta+C Control+C', () => document.execCommand('copy')),
+      button('Quote in the note', 'Q', (kept) => of.quote(kept)),
+      button('Copy', 'Meta+C Control+C', (kept) => {
+        const range = kept ? this.kept : this.range;
+        if (range) of.copy(range);
+      }),
     );
     document.body.append(this.element);
     // On the scroller, so a drag that runs past the chapter's last words still shows the bar.
@@ -99,14 +127,20 @@ export class BookSelection {
     of.scroller.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') this.hide();
     });
-    of.scroller.addEventListener('scroll', () => this.hide(), { passive: true });
+    // Docked, the bar stays while the words scroll with their choice, or the keyboard is elsewhere.
+    of.scroller.addEventListener('scroll', () => this.#afloat(), { passive: true });
     of.scroller.addEventListener('focusout', (event) => {
       if (!(event.relatedTarget instanceof Node && this.element.contains(event.relatedTarget)))
-        this.hide();
+        this.#afloat();
     });
     document.addEventListener('selectionchange', this.#changed);
     // The window laid out anew (a resize, the pages moving): the bar would stand where the words were.
     window.addEventListener('resize', this.#hidden);
+  }
+
+  /** Whether the bar is docked at the page's foot (a touch screen's) rather than floating. */
+  get docked(): boolean {
+    return this.element.classList.contains('selection-bar--docked');
   }
 
   /** The words chosen in the chapter now; null for none. */
@@ -130,36 +164,64 @@ export class BookSelection {
 
   hide(): void {
     clearTimeout(this.#timer);
+    clearTimeout(this.#lift);
     this.element.hidden = true;
   }
 
   remove(): void {
+    this.#removed = true;
     this.forget();
     document.removeEventListener('selectionchange', this.#changed);
     window.removeEventListener('resize', this.#hidden);
     this.element.remove();
   }
 
-  readonly #hidden = () => this.hide();
+  readonly #hidden = () => this.#afloat();
+
+  /** The floating bar taken away: it stood by words that moved, or the keyboard left. */
+  #afloat(): void {
+    if (!this.docked) this.hide();
+  }
 
   readonly #changed = () => {
     const range = this.range;
-    if (range) this.#kept = range;
-    else this.hide();
+    if (range) {
+      this.#kept = range;
+      // A touch screen's choosing has no mouseup: the bar follows the choice, settled.
+      if (touch()) this.#later();
+    } else if (!this.#pressing) this.hide();
   };
 
-  #later(): void {
-    if (touch()) return;
-    clearTimeout(this.#timer);
-    this.#timer = setTimeout(() => {
-      const range = this.range;
-      if (range)
-        this.#highlight.textContent = this.#of.inHighlight(range)
-          ? HIGHLIGHT_LABELS.off
-          : HIGHLIGHT_LABELS.add;
-      // Just above where the selection starts: its first line's box, not the whole block's.
-      const start = range?.getClientRects()[0] ?? range?.getBoundingClientRect();
-      if (start) placeBar(this.element, start);
+  #released(): void {
+    if (!this.#pressing) return;
+    // After the click a lift makes, which runs the choice (and says so) first.
+    clearTimeout(this.#lift);
+    this.#lift = setTimeout(() => {
+      this.#pressing = false;
+      if (!this.range) this.hide();
     }, SHOW_AFTER_MS);
+  }
+
+  #later(): void {
+    clearTimeout(this.#timer);
+    this.#timer = setTimeout(() => this.#show(), SHOW_AFTER_MS);
+  }
+
+  #show(): void {
+    const range = this.range;
+    if (!range || this.#removed) return;
+    this.#highlight.textContent = this.#of.inHighlight(range)
+      ? HIGHLIGHT_LABELS.off
+      : HIGHLIGHT_LABELS.add;
+    const docked = touch();
+    this.element.classList.toggle('selection-bar--docked', docked);
+    const home = docked ? this.#of.dock : document.body;
+    if (this.element.parentElement !== home) home.append(this.element);
+    if (docked) {
+      this.element.hidden = false;
+      return;
+    }
+    // Just above where the selection starts: its first line's box, not the whole block's.
+    placeBar(this.element, range.getClientRects()[0] ?? range.getBoundingClientRect());
   }
 }

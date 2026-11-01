@@ -555,7 +555,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      sixths of the book; each side is a button, Previous page or Next page,
      its tooltip saying how many of the chapter's pages are left that way.
      On a touch screen a tap in the page's outer thirds turns it (a tap on
-     a link, or ending a selection, never does). A link the keyboard comes
+     a link, or ending a selection, never does), and a long press chooses
+     words with the system's own handles and menu, as in Scroll (#65). A link the keyboard comes
      to on another page turns there. The place is the same as Scroll's,
      the first word in sight, so it carries between Pages and Scroll, a
      restart, a width, a face and page zoom.
@@ -578,7 +579,9 @@ Three panes, each collapsible, with a two-pane option in settings:
      on or back; a tap on it lets it fly on (and in an outer third, turns
      the next). Under Slide and Words a drag across asks for the turn.
      Never while words are chosen in the page, nor on a link (but to catch
-     a page in flight); a drag that turned is never also a click.
+     a page in flight); a drag that turned is never also a click. A finger
+     held still is let go as the system's long press begins choosing (#65),
+     but not one holding a page it caught in flight.
    - **Two pages, and set as a book** (Phase 3d): in pages, a book shows
      one page or two facing pages as **Pages, landscape** and **Pages,
      portrait** say (book settings in the shelf's quick look, decided
@@ -647,7 +650,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      Side (on a phone's Two pages, a book chosen faces the note open),
      in each of the split's modes, ⇄, the pager and the phone's slip.
      **Quote:** words chosen in the book show the selection bar, **Quote in
-     the note** and **Copy** (on a phone, the page's ⋯ → Quote in the note;
+     the note** and **Copy** (on a touch screen docked at the page's foot
+     while words are chosen, #65; the page's ⋯ → Quote in the note too;
      on the desktop, Q too). Quote adds them at the end of the note beside
      as a Markdown quote, `— Pride and Prejudice, Chapter III` under it (the
      book's title and the chapter's name, no author), and never touches the
