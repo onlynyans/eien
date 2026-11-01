@@ -323,6 +323,12 @@ if a theme should change it, it joins `THEME_TOKENS`.
   its hosts, in the order the layout's `folds` lists give (the views as one
   step); what no list names never folds (the strip's toggle, the way back
   from a shut band). In C, the breadcrumb gives way first, then the tools.
+  A phone's bar folds too (#64, `PHONE_FOLDS`), behind the ⋯ it already
+  holds, which offers every tool it folds, so no second ⋯: Focus, Seal,
+  Marks, Find, the bookmark, Look last; never the views or the ⋯. Back and
+  ⇄ give way first, to a finger's reach. A bar's room is read with every
+  tool in sight, so a bar its tools size (a phone's) fits the same whatever
+  folded before.
 
 ## States
 
@@ -762,6 +768,16 @@ in the book, each recorded here as it's built.
   selection's `--eien-seal-wash`): washes, never the highlight's pencil
   line; forced colours the system's Mark and Highlight. Scrolling, the
   match stands clear of the bar.
+- **Find and Marks as tools** (#64, decided 2026-11-01): **Find** is every
+  page's tool (a note's too), the list's search icon, last of the page's
+  run before the hairline to Look, so Look stays the last tool; it opens
+  the page's find bar (⌘F). **Marks** is a book's own (`on: 'epub'`, set
+  aside with a note), beside the bookmark: the list's three lines with the
+  bookmark's ribbon at their right. It shows the book's marks where they're
+  listed: the list on its Marks lens, a shut list opened, or with two panes
+  the sidebar's SHELF row on it; on a phone that pane, a Back from the page,
+  as Contents is. Not a toggle. With marks On the edge it's set aside: the
+  strip is the marks, in sight. The phone's ⋯ offers Marks after Bookmark.
 - **Found in the list** (Phase 5c, `list/found-rows.ts`): a third lens,
   Found, after Contents and Marks, disabled (no count) with nothing
   searched. A match's row is a Marks row: its words with the match marked

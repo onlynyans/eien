@@ -55,6 +55,7 @@ async function shown(beside: boolean | string = false, split: 'sheets' | 'compan
     settings: made.settings,
     menu,
     mac: true,
+    marks: () => {},
     platform: 'darwin',
   });
   chrome.mount();

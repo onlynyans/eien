@@ -132,6 +132,15 @@ export const COMMANDS = [
     sends: 'bookmark',
     on: 'epub',
   },
+  // Its marks where they're listed (#64): the list on its Marks lens, a pane away on a phone. The
+  // window's own, so no menu bar item: the list's lenses are the desktop's way.
+  {
+    id: 'marks',
+    icon: 'marks',
+    label: 'Marks',
+    tip: 'Marks: your bookmarks and highlights',
+    on: 'epub',
+  },
   {
     id: 'view.next',
     icon: 'live',
@@ -182,6 +191,8 @@ export const COMMANDS = [
     sends: 'toggle:editor.focus',
     on: 'note',
   },
+  // Find on the page (#64), a note's or a book's: Edit → Find's, the list's search drawn.
+  { id: 'find', icon: 'search', label: 'Find', key: 'Mod-f', sends: 'find' },
   // The quick look (#49): a note's look, or with a book in front the shelf's (#40).
   { id: 'look', icon: 'look', label: 'Look', key: 'Mod-Shift-l', sends: 'look' },
   { id: 'strip', icon: 'up', label: 'Page controls', layouts: ['band', 'slip'] },

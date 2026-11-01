@@ -41,6 +41,8 @@ export interface VaultChromeOf {
   readonly platform: string;
   /** A note in a window of its own: the desktop's only (a companion's ⋯ offers it). */
   readonly openInNewWindow?: (path: string) => void;
+  /** A book's Marks (#64): its marks where they're listed. */
+  marks(): void;
   /** The menu bar's commands that do nothing now, greyed: the desktop's only (#40). */
   readonly greyMenu?: (commands: readonly MenuCommand[]) => void;
 }
@@ -117,6 +119,7 @@ export function vaultChrome(of: VaultChromeOf): VaultChrome {
         .catch(console.error),
     panes: () => void settings.set('layout.panes', two() ? 'three' : 'two').catch(console.error),
     more: (opener) => of.phone.more(opener),
+    marks: () => of.marks(),
     // The bar's one heading control: the caret's line a level down each press.
     'format.heading': () => {
       const on = notePage();

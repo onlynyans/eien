@@ -263,6 +263,20 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     expect(redraw).toHaveBeenCalledOnce();
   });
 
+  it('are what the tools’ Marks shows: the active page’s book, on its Marks lens, drawn (#64)', () => {
+    const book = { kind: 'epub', go: () => {}, path: 'Novels/Emma.epub' };
+    const { nav, epubs, redraw } = watched('Novels/Dune.epub', { active: book, sides: [book] });
+    expect(epubs.showMarks()).toBe(true);
+    expect([nav.contents, nav.bookLens]).toEqual(['Novels/Emma.epub', 'marks']);
+    expect(redraw).toHaveBeenCalledOnce();
+    // A note in front, or no book open: nothing to show, and nothing changed.
+    const note = { kind: 'note', path: 'Note.md' };
+    const notes = watched('Novels/Dune.epub', { active: note, sides: [note] });
+    expect(notes.epubs.showMarks()).toBe(false);
+    expect([notes.nav.contents, notes.nav.bookLens]).toEqual(['Novels/Dune.epub', 'contents']);
+    expect(notes.redraw).not.toHaveBeenCalled();
+  });
+
   it('begin at Contents for another book even from Marks, and stay on Marks for the same one opened again', () => {
     const { nav, epubs } = watched('Novels/Dune.epub', { active: {}, sides: [] });
     nav.bookLens = 'marks';

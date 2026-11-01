@@ -30,6 +30,7 @@ describe('the commands', () => {
     const local = COMMANDS.filter((command) => !('sends' in command)).map((command) => command.id);
     expect(sorted(local)).toEqual([
       'format.heading',
+      'marks',
       'more',
       'page.close',
       'page.more',
@@ -141,9 +142,8 @@ describe('the Look control (#49)', () => {
 
   it('folds last of the tools, before the views', () => {
     const at = TOOL_FOLDS.indexOf('look');
-    // A book's bookmark (#40, Phase 4b) just before it.
-    expect(TOOL_FOLDS[at - 1]).toBe('bookmark');
-    expect(TOOL_FOLDS[at - 2]).toBe('focus');
+    // Find (#64) just before it, a book's bookmark (#40, Phase 4b) and its Marks before that.
+    expect(TOOL_FOLDS.slice(at - 4, at)).toEqual(['focus', 'marks', 'bookmark', 'find']);
     expect(TOOL_FOLDS[at + 1]).toBe('view.live');
   });
 

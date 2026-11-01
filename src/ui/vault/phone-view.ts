@@ -34,6 +34,8 @@ export interface PhoneViewOf {
   parts(): PageParts;
   /** The pane shown changed, or the window became a phone's or stopped being one. */
   changed(): void;
+  /** A book's marks where they're listed (#64), the ⋯'s Marks. */
+  marks(): void;
 }
 
 export interface PhoneView {
@@ -80,6 +82,8 @@ export function phoneView(of: PhoneViewOf): PhoneView {
         highlight: () => void book.marks.highlights.toggle(true),
         highlighted: book.marks.highlights.holdsChosen(true),
         bookmarked: book.marks.bookmarks.on,
+        // In the list; on the edge, the strip down the page is the marks.
+        ...(values['epub.marks'] === 'list' && { marks: () => of.marks() }),
       }),
     };
     openMenu(moreItems(state, run), { opener }, 'More');

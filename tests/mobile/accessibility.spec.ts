@@ -1,10 +1,11 @@
 // axe-core over the phone's page (../e2e/axe.ts): each layout, by day and by
 // night, on the notes, the page, its table bar, a link's bar, its ⋯ menu, the
-// quick look and Settings. No serious or critical violation, colour contrast
+// quick look and Settings, and a book's tools. No serious or critical violation, colour contrast
 // included.
 
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
+import { bookInPages } from './book-hand';
 import { open, putOutside, titles } from './outside';
 
 // Motion reduced from the start, so no fade is under way when axe looks (../e2e/axe.ts).
@@ -98,6 +99,28 @@ for (const room of ['side', 'pages'] as const) {
       await page.locator('.phone-bar__back').click();
       await expect(titles(page)).toBeVisible();
       expect(await seriousViolations(page), 'the notes beside or over the page').toEqual([]);
+    });
+  }
+}
+
+// A book's tools on the phone (#64): Find and Marks among them, in each layout, by day and night.
+for (const layout of ['band', 'slip', 'runhead'] as const) {
+  for (const scheme of ['day', 'night'] as const) {
+    test(`${layout} by ${scheme}: a book’s tools, Find and Marks among them`, async ({ page }) => {
+      await bookInPages(page);
+      await openSettings(page);
+      const settings = page.locator('dialog[open]');
+      await settings
+        .getByRole('group', { name: 'Layout' })
+        .locator(`[data-value="${layout}"]`)
+        .click();
+      await settings.locator(`[data-value="${scheme}"]`).click();
+      await page.keyboard.press('Escape');
+      await expect(settings).toBeHidden();
+      const tools = page.locator('.phone-bar__controls, .page__phone');
+      await expect(tools.getByRole('button', { name: 'Find', exact: true })).toBeVisible();
+      await expect(tools.getByRole('button', { name: 'Marks', exact: true })).toBeVisible();
+      expect(await seriousViolations(page), 'a book’s tools').toEqual([]);
     });
   }
 }

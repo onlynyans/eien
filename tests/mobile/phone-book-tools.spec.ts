@@ -1,7 +1,9 @@
 // A book's tools in every room (#63): One at a time, Side by side and Two
 // pages draw the layout's phone tools, which hold a book's own (Pages and
-// Scroll, the bookmark) as Panes' bars do, set aside while a note is in front.
-// And the phone's bar holds them, with the note you came from, on a narrow phone.
+// Scroll, the bookmark, Marks) as Panes' bars do, set aside while a note is in
+// front, and Find, every page's (#64). And the phone's bar holds them, with
+// the note you came from, on a narrow phone: short of room its tools fold into
+// the ⋯, which offers them all.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,14 +28,16 @@ async function noteThenBook(
   room: 'one' | 'side' | 'pages',
   layout: 'band' | 'slip' | 'runhead',
   screen: { width: number; height: number },
+  marks: 'list' | 'edge' = 'list',
 ): Promise<void> {
   await open(page);
   await page.evaluate(
-    async ([room, layout]) => {
+    async ([room, layout, marks]) => {
       await window.eien.settings.set('appearance.room', room);
       await window.eien.settings.set('appearance.layout', layout);
+      await window.eien.settings.set('epub.marks', marks);
     },
-    [room, layout] as const,
+    [room, layout, marks] as const,
   );
   await putOutside(page, 'Eien/Vault/Notes.md', 'Notes on the book.\n');
   await putBytesOutside(
@@ -104,16 +108,10 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
   });
 }
 
-// A book's tools are one more than a note's in A's bar, beside the back word and the note you
-// came from (⇄): on the narrowest phones (a Fold 5's cover, 344px; many Galaxies, 360) every
-// control is in the bar, none over another, and back stays a finger's reach.
-for (const screen of [{ width: 344, height: 882 }, { width: 360, height: 800 }, PHONE]) {
-  test(`${screen.width}px: the book’s tools, back and the note you came from fit the bar`, async ({
-    page,
-  }) => {
-    await noteThenBook(page, 'one', 'band', screen);
-    await expect(page.locator('.phone-bar__other')).toBeVisible();
-    const drawn = await page.locator('.phone-bar').evaluate((bar) => {
+/** Every control in sight in the phone's bar and at the page's foot: none past its bar or over another. */
+const drawnIn = (page: Page) =>
+  page.locator('.shell').evaluate((shell) =>
+    [...shell.querySelectorAll<HTMLElement>('.phone-bar, .page__phone')].map((bar) => {
       const box = bar.getBoundingClientRect();
       const controls = [...bar.querySelectorAll<HTMLElement>('button')]
         .filter((button) => button.checkVisibility())
@@ -131,13 +129,99 @@ for (const screen of [{ width: 344, height: 882 }, { width: 360, height: 800 }, 
             .filter(({ box }) => box.left < one.box.right - 0.5 && one.box.left < box.right - 0.5)
             .map(({ name }) => `${one.name} over ${name}`),
         ),
-        back: bar.querySelector('.phone-bar__back')?.getBoundingClientRect().width ?? 0,
+        back: bar.querySelector('.phone-bar__back')?.getBoundingClientRect().width ?? 44,
         over: document.documentElement.scrollWidth - innerWidth,
       };
-    });
+    }),
+  );
+
+/** Nothing past its bar or over another, nothing past the screen, back a finger's reach. */
+async function fits(page: Page): Promise<void> {
+  for (const drawn of await drawnIn(page)) {
     expect(drawn.outside).toEqual([]);
     expect(drawn.overlapping).toEqual([]);
     expect(drawn.over).toBe(0);
     expect(drawn.back).toBeGreaterThanOrEqual(44);
+  }
+}
+
+/** What the page's ⋯ offers, by name. */
+async function inMore(page: Page): Promise<string[]> {
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  const names = await page.locator('.menu [role^="menuitem"]').allTextContents();
+  await page.keyboard.press('Escape');
+  return names.map((name) => name.trim());
+}
+
+// On the narrowest phones (a Fold 5's cover, 344px; many Galaxies, 360) beside the back word and
+// the note you came from (⇄), in every layout: every control in its bar, none over another, back
+// a finger's reach; what didn't fit folded into the ⋯, which offers it (#64).
+for (const layout of ['band', 'slip', 'runhead'] as const) {
+  for (const screen of [{ width: 344, height: 882 }, { width: 360, height: 800 }, PHONE]) {
+    test(`${layout}, ${screen.width}px: a book’s tools and a note’s fit, back and the note you came from too`, async ({
+      page,
+    }) => {
+      await noteThenBook(page, 'one', layout, screen);
+      await expect(page.locator('.phone-bar__other')).toBeVisible();
+      await fits(page);
+      // The book's views and the ⋯ never fold; what did, the ⋯ offers.
+      const bar = tools(page);
+      for (const name of ['Pages', 'Scroll', 'More'])
+        await expect(bar.getByRole('button', { name, exact: true })).toBeVisible();
+      const more = await inMore(page);
+      for (const name of ['Find', 'Bookmark this page', 'Marks', 'Look'])
+        expect(more).toContain(name);
+      // The ⋯'s Marks does what the bar's does: the book's marks, a pane away.
+      await page.getByRole('button', { name: 'More', exact: true }).click();
+      await page.locator('.menu [role^="menuitem"]', { hasText: /^Marks$/u }).click();
+      await expect(page.locator('.book-lens[aria-pressed="true"]').first()).toContainText('Marks');
+      // Back to the page by a chapter of its contents.
+      await page.getByRole('button', { name: /^Contents/u }).click();
+      await page.locator('.contents-row').first().click();
+      await expect(page.locator('.epub-chapter')).toBeVisible();
+      // The note you came from, a tap away: its tools fit as well.
+      await page.locator('.phone-bar__other').click();
+      await expect(page.locator('.page .title').first()).toHaveText('Notes');
+      await fits(page);
+      await expect(bar.getByRole('button', { name: 'More', exact: true })).toBeVisible();
+    });
+  }
+}
+
+// Find and Marks among a book's tools (#64): Find the page's own find bar, Marks the book's marks
+// where they're listed, a pane away on a phone.
+for (const layout of ['band', 'slip', 'runhead'] as const) {
+  test(`${layout}: Find opens the book’s find bar, Marks its marks`, async ({ page }) => {
+    // Room for every tool beside back and the note you came from.
+    await noteThenBook(page, 'one', layout, FOLD5_UPRIGHT);
+    const bar = tools(page);
+    await bar.getByRole('button', { name: 'Find', exact: true }).click();
+    const find = page.getByRole('search', { name: 'Find in the book' });
+    await expect(find).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(find).toBeHidden();
+    await bar.getByRole('button', { name: 'Marks', exact: true }).click();
+    await expect(page.locator('.shell')).not.toHaveAttribute('data-shown', 'page');
+    await expect(page.locator('.book-lens[aria-pressed="true"]').first()).toContainText('Marks');
   });
 }
+
+test('a note has Find among its tools too, and no Marks', async ({ page }) => {
+  await noteThenBook(page, 'one', 'band', PHONE);
+  await page.locator('.phone-bar__other').click();
+  await expect(page.locator('.page .title').first()).toHaveText('Notes');
+  const bar = tools(page);
+  await expect(bar.getByRole('button', { name: 'Marks', exact: true })).toBeHidden();
+  await bar.getByRole('button', { name: 'Find', exact: true }).click();
+  await expect(page.getByRole('search', { name: 'Find in the note' })).toBeVisible();
+});
+
+test('with marks on the edge, the strip is the marks: Marks set aside, in the bar and the ⋯', async ({
+  page,
+}) => {
+  await noteThenBook(page, 'one', 'band', FOLD5_UPRIGHT, 'edge');
+  const bar = tools(page);
+  await expect(bar.getByRole('button', { name: 'Marks', exact: true })).toBeHidden();
+  await expect(bar.getByRole('button', { name: 'Find', exact: true })).toBeVisible();
+  expect(await inMore(page)).not.toContain('Marks');
+});

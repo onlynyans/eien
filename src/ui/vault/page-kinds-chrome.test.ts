@@ -61,7 +61,7 @@ describe('the commands for a note', () => {
     expect(actsOn('page.close', 'epub')).toBe(true);
     expect(actsOn('scheme', 'epub')).toBe(true);
     // A book's own, the other way: set aside while a note is the active page.
-    expect(BOOK_COMMANDS).toEqual(['view.pages', 'view.scroll', 'bookmark']);
+    expect(BOOK_COMMANDS).toEqual(['view.pages', 'view.scroll', 'bookmark', 'marks']);
     for (const id of BOOK_COMMANDS) expect(actsOn(id, 'note')).toBe(false);
   });
 
@@ -107,6 +107,28 @@ describe('the commands for a note', () => {
       expect(phone().filter((id) => BOOK_COMMANDS.includes(id as never))).toEqual([]);
     });
   }
+
+  it('give a book Marks, which shows its marks, set aside with marks on the edge; Find every page (#64)', async () => {
+    const made = await drawn('band');
+    const { pages, chrome, inSight, marks, change } = made;
+    const marksTool = () =>
+      [...document.querySelectorAll<HTMLButtonElement>('[data-command="marks"]')].filter(
+        (button) => !button.hasAttribute('data-aside'),
+      );
+    expect(inSight()).toEqual(expect.arrayContaining(['marks', 'find']));
+    marksTool()[0]?.click();
+    expect(marks).toHaveBeenCalledOnce();
+    change({ 'epub.marks': 'edge' });
+    chrome.refresh();
+    expect(marksTool()).toEqual([]);
+    expect(inSight()).toContain('find');
+    // A note in front: Find still, a book's Marks aside.
+    change({ 'epub.marks': 'list' });
+    pages.activate(pages.sides[0] as Side);
+    chrome.refresh();
+    expect(inSight()).toContain('find');
+    expect(marksTool()).toEqual([]);
+  });
 
   it('give A’s phone bar one view control a page, never a note’s views in a well (#63)', async () => {
     const { pages, chrome } = await drawn('band');

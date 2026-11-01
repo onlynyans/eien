@@ -43,8 +43,9 @@ export class Chrome {
   /** The split the hosts were drawn for: none with one page. */
   #split: SplitSpec | null = null;
   /**
-   * Watches the bars the folding hosts stand in, whose room the page and the window give them:
-   * folding changes a host, never its bar, so fitting never makes it fire again.
+   * Watches the bars the folding hosts stand in, whose room the page and the window give them
+   * (a phone's, what back and ⇄ leave): a fit measures each with every tool in sight, so the
+   * fold it lands on is the same whatever a fit before it folded.
    */
   readonly #bars =
     typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => this.fit());
@@ -142,7 +143,9 @@ export class Chrome {
     for (const [bar, hosts] of bars) {
       if (bar.getClientRects().length === 0) continue;
       this.#folded.set(bar, fitBar(hosts, bar, this.#of.fits));
-      const more = hosts.at(-1)?.more;
+      // A phone's bar folds behind its own ⋯ (PHONE_FOLDS).
+      const last = hosts.at(-1);
+      const more = last?.more ?? last?.button('more');
       if (had instanceof HTMLElement && had.hidden && bar.contains(had)) more?.focus();
     }
   }
@@ -168,7 +171,7 @@ export class Chrome {
     const last = this.#hosts
       .filter((each) => each.spec.folds && each.element.parentElement === bar)
       .at(-1);
-    return last?.more ?? null;
+    return last?.more ?? last?.button('more') ?? null;
   }
 
   /** A ⋯ pressed: its bar's folded tools, as a menu under it. */
