@@ -703,7 +703,9 @@ in the book, each recorded here as it's built.
   note's in Reading, the gap between; *As a book*, no gap, a paragraph
   indented `--eien-epub-indent` only after another plain one, the first
   after a heading, a break, a picture or a centred line flush, and a named
-  part's own gap kept. A book setting, in the shelf's quick look alone.
+  part's own gap kept. The first line's paragraph is a plain one there
+  (#60): no gap under it, and the one after it indented; Pages sets them
+  so too. A book setting, in the shelf's quick look alone.
 - **A chapter a sheet** (Phase 2): the chapter scrolls on the note's sheet.
   At its foot, the sheet's turns (`.sheet__turns`, shared with the
   extension's story page): a `--eien-rule-soft` hairline, `--eien-space-7`
@@ -750,8 +752,10 @@ in the book, each recorded here as it's built.
   taken off, the colophon's news offers **Put back** (a word button, last
   among the figures) while it shows. "highlighted" is heard, never seen, as
   "bookmarked" is (`.colophon__heard`).
-- **Marks in the list** (Phase 4c, `list/book-lenses.ts`, `.css`): under
-  the book's head in the list, Contents and Marks as word buttons, each
+- **Marks in the list** (Phase 4c, `list/book-lenses.ts`, `.css`): the
+  book's head its title across the whole line, its author and chapters
+  under it, then the lenses a row of their own at `--eien-row-h` (#61):
+  Contents and Marks as word buttons, each
   with its count in a `.count`, the one shown pressed (every chosen word
   button's look: ink in a `--eien-rule-strong` hairline), as the views are
   a chosen one of a set. A bookmark's row is a contents row: its words in
@@ -771,8 +775,8 @@ in the book, each recorded here as it's built.
   line; forced colours the system's Mark and Highlight. Scrolling, the
   match stands clear of the bar.
 - **Found in the list** (Phase 5c, `list/found-rows.ts`): a third lens,
-  Found, after Contents and Marks, disabled (no count) with nothing
-  searched. A match's row is a Marks row: its words with the match marked
+  Found, after Contents and Marks, only while a search is on, its count
+  0 while it looks or finds none (#61): never one with nothing to choose. A match's row is a Marks row: its words with the match marked
   as a note's Find match is (`--eien-selected` over a `--eien-rule-strong`
   hairline, `--eien-radius-s`), its page a count, its chapter in pencil. The
   search's line is the list's empty line, italic in pencil; it's a status
@@ -818,10 +822,30 @@ in the book, each recorded here as it's built.
 - **Quote** (Phase 2c): words chosen in a book show the selection bar
   (spec §4's, `.selection-bar`: raised paper above the selection, the
   float shadow) with its commands as words, **Quote in the note** and
-  **Copy**; never on a touch screen, whose own callout is over the words
-  (the page's ⋯ has Quote). The quote arrives in the note as Markdown, `>`
+  **Copy**. On a touch screen it docks instead (below). The quote arrives in the note as Markdown, `>`
   and the citation in an em dash: `— Pride and Prejudice, Chapter III`.
   What happened is said in the colophon ("Quoted in At the Assembly.").
+- **Words chosen by touch** (#65, decided 2026-11-01): the system chooses,
+  in Pages as in Scroll (its handles, its own menu with Copy and Share,
+  which no page can add to on Android or iOS): a finger held still is let
+  go of as its long press begins; one that moved past the drag's start
+  turns the page and chooses nothing; a tap that ends a choice never turns.
+  Eien's three, **Highlight**, **Quote in the note** and **Copy**, are the
+  selection bar's own, **docked at the page's foot over the colophon**
+  while words are chosen (`.selection-bar--docked`, in the book page's
+  `.epub__under`): the link Bar's docked look (the band, a `--eien-rule`
+  hairline above, no shadow, no radius, `--eien-touch` high), its words
+  sharing the width as they need. Unlike the link's and the table's bars,
+  which take a row above the colophon, it lies over the colophon's own row,
+  out of flow, so a page in Pages is never shortened and laid out anew
+  while a choice stands; it rises from that row's foot, C's rail under it
+  and B's slip above it both clear. The system's menu stands by the words,
+  the bar at the foot: never one over the other. A press acts on the words
+  last chosen (a tap may drop the choice first), then lets the choice go,
+  as the system's Copy does; but Take off the highlight leaves its words
+  chosen, as on the desktop (Phase 5a), so the bar docks again offering
+  Highlight to put it back. Copy gives the words alone, through the
+  window's clipboard. The page's ⋯ keeps Highlight and Quote.
 - **A note's reference and a note** are named (`note-ref`, `note`) to open
   the note over the page, and drawn as the book sets them: the reference
   in the publisher's own superscript, the note as its paragraphs. No style

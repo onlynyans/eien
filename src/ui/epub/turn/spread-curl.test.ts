@@ -226,6 +226,8 @@ describe('a sheet’s gutter', () => {
     const scroller = document.createElement('div');
     const sheet = new ChapterSheet({
       scroller,
+      dock: document.createElement('div'),
+      copy: () => {},
       moved: () => {},
       rested: () => {},
       inSight: () => {},

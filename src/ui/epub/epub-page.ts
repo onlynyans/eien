@@ -17,12 +17,12 @@ import { BookFoot } from './book-foot';
 import { ChapterSheet, type ChapterSheetOf } from './chapter-sheet';
 import { hyphenates } from './hyphens';
 import { LeafEdges } from './leaf-edges';
-import { type BookKeysOf, bookKey, pageTap } from './page-keys';
+import { type BookKeysOf, bookKey, pageTap, type TapDown, tapDown } from './page-keys';
 import { PageMarks } from './page-marks';
 import { RunningHeads } from './running-heads';
 import { type PagesChoices, pagesChoices, pagesNow } from './spread';
 
-export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
+export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller' | 'dock'> {
   /** Close this page (its ×, ⌘W). */
   close(): void;
   /** In pages (Phase 3b): a page turned `way`, by a key (`held`, repeating) or the edges. */
@@ -33,8 +33,6 @@ export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
   back(): void;
   /** B: the page in sight bookmarked, or its bookmark taken off (Phase 4b). */
   bookmark(): void;
-  /** H: the words chosen highlighted, or the highlight they lie in taken off (Phase 5a). */
-  highlight(): void;
   /** `]` or `[`: to the next mark, or the one before (Phase 5b). */
   walk(way: 1 | -1): void;
   /** Find in the book: the window's find bar over it (Phase 5c). */
@@ -107,16 +105,17 @@ export class EpubPage implements PaneLeaf {
     this.sheet = new ChapterSheet({
       ...of,
       scroller: this.#scroll,
+      dock: this.under,
       pages: () => pagesNow(this.#pages),
     });
     this.edges = new LeafEdges((way) => of.turn(way, false));
     // The pointer a click came from, by its pointerdown: WebKit's click may not say.
-    let pointer = '';
+    let down: TapDown = { pointer: '', chosen: false };
     this.sheet.box.addEventListener('pointerdown', (event) => {
-      pointer = event.pointerType;
+      down = tapDown(event, this.sheet.box);
     });
     this.sheet.box.addEventListener('click', (event) => {
-      if (this.sheet.paged) pageTap(event, pointer, this.sheet.box, of);
+      if (this.sheet.paged) pageTap(event, down, this.sheet.box, of);
     });
     // The chapter's links too, each named for the tooltip (./book-links.ts nameLinks).
     this.tipped = [closer, this.chapter, ...this.edges.turns];
