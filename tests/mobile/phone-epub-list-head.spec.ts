@@ -14,7 +14,12 @@ const FIXTURE = join(import.meta.dirname, '../fixtures/epub/plain.epub');
 /** The book open, then its contents in the list (behind the page's back bar, or beside it in Panes): the list's head. */
 async function bookInList(page: Page, room?: 'panes'): Promise<Locator> {
   await open(page);
-  if (room) await page.evaluate((room) => window.eien.settings.set('appearance.room', room), room);
+  if (room)
+    await page.evaluate(async (room) => {
+      await window.eien.settings.set('appearance.room', room);
+      // The list beside the page (a phone starts with two panes, #69), read as it reloads.
+      await window.eien.settings.set('layout.panes', 'three');
+    }, room);
   await putBytesOutside(
     page,
     'Eien/Vault/Novels/Pride and Prejudice.epub',
