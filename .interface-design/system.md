@@ -735,8 +735,10 @@ in the book, each recorded here as it's built.
   taken off, the colophon's news offers **Put back** (a word button, last
   among the figures) while it shows. "highlighted" is heard, never seen, as
   "bookmarked" is (`.colophon__heard`).
-- **Marks in the list** (Phase 4c, `list/book-lenses.ts`, `.css`): under
-  the book's head in the list, Contents and Marks as word buttons, each
+- **Marks in the list** (Phase 4c, `list/book-lenses.ts`, `.css`): the
+  book's head its title across the whole line, its author and chapters
+  under it, then the lenses a row of their own at `--eien-row-h` (#61):
+  Contents and Marks as word buttons, each
   with its count in a `.count`, the one shown pressed (every chosen word
   button's look: ink in a `--eien-rule-strong` hairline), as the views are
   a chosen one of a set. A bookmark's row is a contents row: its words in
@@ -756,8 +758,8 @@ in the book, each recorded here as it's built.
   line; forced colours the system's Mark and Highlight. Scrolling, the
   match stands clear of the bar.
 - **Found in the list** (Phase 5c, `list/found-rows.ts`): a third lens,
-  Found, after Contents and Marks, disabled (no count) with nothing
-  searched. A match's row is a Marks row: its words with the match marked
+  Found, after Contents and Marks, only while a search has found
+  something (#61). A match's row is a Marks row: its words with the match marked
   as a note's Find match is (`--eien-selected` over a `--eien-rule-strong`
   hairline, `--eien-radius-s`), its page a count, its chapter in pencil. The
   search's line is the list's empty line, italic in pencil; it's a status

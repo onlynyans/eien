@@ -189,7 +189,7 @@ export function renderContents(
   container.replaceChildren(
     h(
       'header',
-      { class: 'list__head' },
+      { class: 'list__head list__head--book' },
       h('h2', { class: 'list__heading', text: model.title }),
       h('p', { class: 'label list__count', text: countOf(model) }),
       ...(marks ? [lensButtons(lens, counts, (chosen) => actions.lens(chosen))] : []),

@@ -35,8 +35,9 @@ const LENS_NAMES: Record<BookLens, string> = {
 export const lensKey = (lens: BookLens): string => `lens:${lens}`;
 
 /**
- * The lenses, `lens` pressed, each with its count: Found's null while
- * nothing is searched, when it's there but can't be chosen (Features 2).
+ * The lenses, `lens` pressed, each with its count; Found only while a search
+ * has found something (its count null with nothing searched), as there's
+ * nothing to choose there before (#61).
  */
 export function lensButtons(
   lens: BookLens,
@@ -46,8 +47,9 @@ export function lensButtons(
   return h(
     'div',
     { class: 'book-lenses', attrs: { role: 'group', 'aria-label': 'The book’s index' } },
-    ...(['contents', 'marks', 'found'] as const).map((each) => {
+    ...(['contents', 'marks', 'found'] as const).flatMap((each) => {
       const count = counts[each];
+      if (each === 'found' && !count) return [];
       return h(
         'button',
         {
@@ -56,13 +58,13 @@ export function lensButtons(
             type: 'button',
             'aria-pressed': String(each === lens),
             'data-key': lensKey(each),
-            disabled: count === null,
           },
           on: { click: () => choose(each) },
         },
         // A space between, so a screen reader says "Marks 2", as the eye reads it.
         LENS_NAMES[each],
-        ...(count === null ? [] : [' ', h('span', { class: 'count', text: String(count) })]),
+        ' ',
+        h('span', { class: 'count', text: String(count) }),
       );
     }),
   );

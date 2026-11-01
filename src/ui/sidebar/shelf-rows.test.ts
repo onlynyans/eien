@@ -186,7 +186,7 @@ describe('SHELF’s rows', () => {
       spine: 1,
     });
     const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
-    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
+    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
     expect(texts(list, '.tree-row--chapter')).toEqual([]);
     const name = list.querySelector<HTMLButtonElement>('.tree-row--mark .tree-row__name');
     expect(name?.textContent).toBe('It is a truth 3');
@@ -539,12 +539,19 @@ describe('a book’s Found on SHELF, with two panes (#40, Phase 5c, as QA tried 
     expect(texts(none, '.tree-hint')).toEqual(['No “Bennet” in Pride and Prejudice.']);
   });
 
-  it('shows the chapters again once nothing is searched, Found there but not to choose', () => {
+  it('shows the chapters again once nothing is searched, Found gone till a search finds something (#61)', () => {
     const { list } = draw(BOOK, contentsOf({ found: null }));
     expect(texts(list, '.tree-row--chapter')).toEqual(['Chapter I']);
-    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
-    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
-    expect(tabs[2]?.disabled).toBe(true);
+    const tabs = (drawn: HTMLElement) =>
+      [...drawn.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')].map(
+        (tab) => tab.textContent,
+      );
+    expect(tabs(list)).toEqual(['Contents 1', 'Marks 0']);
+    expect(tabs(draw(BOOK, contentsOf({ found: found({ rows: [] }) })).list)).toEqual([
+      'Contents 1',
+      'Marks 0',
+    ]);
+    expect(tabs(draw(BOOK, contentsOf()).list)).toEqual(['Contents 1', 'Marks 0', 'Found 2']);
   });
 
   it('with Marks on the edge, puts Found’s rows in the chapters’ place while there are words', () => {
