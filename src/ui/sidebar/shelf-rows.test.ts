@@ -554,6 +554,21 @@ describe('a book’s Found on SHELF, with two panes (#40, Phase 5c, as QA tried 
     expect(tabs(draw(BOOK, contentsOf()).list)).toEqual(['Contents 1', 'Marks 0', 'Found 2']);
   });
 
+  it('keeps the keyboard on the lenses when the search is cleared under Found (#61)', () => {
+    const body = document.body.appendChild(document.createElement('ul'));
+    const noWindows = { focusKey: () => false } as unknown as TreeWindows;
+    const focus = new SidebarFocus(body, noWindows, document.createElement('div'), () => false);
+    const drawWith = (over: Parameters<typeof contentsOf>[0]) =>
+      body.replaceChildren(...draw(BOOK, contentsOf(over)).list.children);
+    drawWith({});
+    body.querySelector<HTMLElement>('[data-key="lens:found"]')?.focus();
+    const giveBack = focus.hold();
+    drawWith({ found: null, lens: 'contents' });
+    giveBack();
+    expect((document.activeElement as HTMLElement).dataset.key).toBe('lens:contents');
+    body.remove();
+  });
+
   it('with Marks on the edge, puts Found’s rows in the chapters’ place while there are words', () => {
     const searched = draw(BOOK, contentsOf({ marks: null, lens: 'contents' })).list;
     expect(searched.querySelector('.tree-lenses')).toBeNull();

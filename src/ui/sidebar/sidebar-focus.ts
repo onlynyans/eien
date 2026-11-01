@@ -5,6 +5,7 @@
 // made) takes it, the first of those asked for that's there; and the row it
 // was on as the sidebar shut is where it goes back to when it opens.
 
+import { isLensKey } from '../list/book-lenses';
 import type { TreeWindows } from './tree-windows';
 
 export class SidebarFocus {
@@ -78,7 +79,13 @@ export class SidebarFocus {
       if (asked === null && document.activeElement === active) return;
       // The control it was on, drawn anew where the scroll kept it: given back without a scroll,
       // as a half-hidden row clicked would otherwise jump into sight. One asked for may have moved.
-      if (focused.some((key) => this.focusKey(key, asked !== null)) || focusedAt < 0) return;
+      if (focused.some((key) => this.focusKey(key, asked !== null))) return;
+      // A book's lens gone (Found, its search cleared): the lens shown now.
+      if (focused.some(isLensKey)) {
+        this.#shown('.book-lens[aria-pressed="true"]')[0]?.focus();
+        return;
+      }
+      if (focusedAt < 0) return;
       const rows = this.#shown('.tree-row__name');
       rows[Math.min(focusedAt, rows.length - 1)]?.focus();
     };
