@@ -1347,7 +1347,7 @@ test('a curl lies exactly over the sheet through the page’s zoom', async ({ pa
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('.turn-curl')).toHaveCount(1);
   const [sheet, curl, copy] = await page.evaluate(() =>
-    ['.epub-sheet:not([aria-hidden])', '.turn-curl', '.turn-curl__piece > .turn-curl__page'].map(
+    ['.epub-sheet:not([aria-hidden])', '.turn-curl', '.turn-curl__front .turn-curl__page'].map(
       (selector) => {
         const rect = document.querySelector(selector)?.getBoundingClientRect();
         return rect
@@ -1363,14 +1363,14 @@ test('a curl lies exactly over the sheet through the page’s zoom', async ({ pa
   expect(Math.abs(curl.height / sheet.height - 1)).toBeLessThan(0.03);
   // Its copies zoomed once, as the sheet is: the page's words where they stand.
   expect(Math.abs(copy.width / sheet.width - 1)).toBeLessThan(0.03);
-  // A copy beneath its piece's paper (a copy laid over the sheet stands at 3): a page's back shows
+  // A copy beneath its band's paper (a copy laid over the sheet stands at 3): a page's back shows
   // its words faintly.
   const stacked = await page
     .locator('.turn-curl__back')
     .first()
     .evaluate((back) => {
       const z = (part: string) => {
-        const found = back.querySelector(`:scope > ${part}`);
+        const found = back.querySelector(`:scope > .turn-curl__inside > ${part}`);
         return found ? getComputedStyle(found).zIndex : null;
       };
       return { copy: z('.turn-curl__page'), paper: z('.turn-curl__paper') };

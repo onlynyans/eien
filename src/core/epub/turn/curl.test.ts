@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  corners,
-  cut,
   heldAt,
   lay,
   onFold,
@@ -45,7 +43,7 @@ describe('the roll', () => {
   it('lays a strip with its ends where the roll puts them', () => {
     const roll = rollOf(page, rest, [100, 500]);
     const [from, to] = [5, 15];
-    const { matrix } = lay(page, roll, from, to);
+    const matrix = lay(roll, from, to);
     for (const s of [from, to]) {
       const laid = transform(matrix, onFold(roll, s));
       expect(laid[0]).toBeCloseTo(roll.fold[0] + rolledAt(s, roll.radius), 6);
@@ -65,17 +63,5 @@ describe('the paper never stretches', () => {
 
   it('leaves the hand where it is while the spine stays down', () => {
     expect(heldAt(page, rest, [200, 480])).toEqual([200, 480]);
-  });
-});
-
-describe('a polygon cut by a line', () => {
-  it('keeps the side the normal points to, with the line’s crossings', () => {
-    expect(cut(corners(page), [100, 0], [1, 0])).toEqual([
-      [100, 0],
-      [400, 0],
-      [400, 600],
-      [100, 600],
-    ]);
-    expect(cut(corners(page), [1000, 0], [1, 0])).toEqual([]);
   });
 });

@@ -4,12 +4,10 @@
 // on itself beyond. The roll is laid as strips of the live page, each a flat
 // piece where its part of the cylinder falls, so the free edges curve.
 // Everything is in the page's own pixels (0..width × 0..height), with the
-// spine at its left; the window turns these numbers into transforms and
-// clip-paths. The approved motion: docs/design/explorations/epub-flip-curl.html.
+// spine at its left; the window turns these numbers into transforms alone
+// (./band.ts). The approved motion: docs/design/explorations/epub-flip-curl.html.
 
 export type Point = readonly [number, number];
-/** A clip, as the points of a convex polygon in order. */
-export type Polygon = readonly Point[];
 /** An affine transform, CSS's matrix(a, b, c, d, e, f). */
 export type Matrix = readonly [number, number, number, number, number, number];
 
@@ -55,27 +53,6 @@ export const onFold = (roll: Roll, t: number): Point => [
   roll.fold[0] + roll.normal[0] * t,
   roll.fold[1] + roll.normal[1] * t,
 ];
-
-export const corners = ({ width, height }: PageBox): Polygon => [
-  [0, 0],
-  [width, 0],
-  [width, height],
-  [0, height],
-];
-
-/** `polygon` cut by the line through `point` square to `normal`: the part where (p − point)·normal ≥ 0. */
-export function cut(polygon: Polygon, point: Point, normal: Point): Polygon {
-  const kept: Point[] = [];
-  const side = (p: Point) => dot(minus(p, point), normal);
-  polygon.forEach((a, i) => {
-    const b = polygon[(i + 1) % polygon.length] as Point;
-    const sa = side(a);
-    const sb = side(b);
-    if (sa >= 0) kept.push(a);
-    if (sa >= 0 !== sb >= 0) kept.push(along(a, b, sa / (sa - sb)));
-  });
-  return kept;
-}
 
 /** How round the roll is `travel` from rest: flat at rest and once turned (two widths on), roundest half way. */
 export const radiusAt = (page: PageBox, travel: number): number =>
@@ -129,18 +106,12 @@ export function heldAt(page: PageBox, rest: Point, hand: Point): Point {
 export const rolledAt = (s: number, radius: number): number =>
   radius > 0 && s <= Math.PI * radius ? radius * Math.sin(s / radius) : Math.PI * radius - s;
 
-/** A piece of the page laid by the roll: the matrix that lays it, and the clip that keeps it to its part. */
-export interface Laid {
-  readonly matrix: Matrix;
-  readonly clip: Polygon;
-}
-
 /**
  * The paper from `from` to `to` past the fold, laid as one flat piece where
  * the roll puts its ends: squeezed along the normal where the cylinder turns
  * it away, mirrored where it comes back over.
  */
-export function lay(page: PageBox, roll: Roll, from: number, to: number): Laid {
+export function lay(roll: Roll, from: number, to: number): Matrix {
   const { normal: n, radius } = roll;
   const [a0, b0] = [rolledAt(from, radius), rolledAt(to, radius)];
   const k = (b0 - a0) / (to - from);
@@ -148,11 +119,7 @@ export function lay(page: PageBox, roll: Roll, from: number, to: number): Laid {
   const a = 1 + (k - 1) * n[0] * n[0];
   const b = (k - 1) * n[0] * n[1];
   const d = 1 + (k - 1) * n[1] * n[1];
-  const clip = cut(cut(corners(page), onFold(roll, from - SEAM), n), onFold(roll, to + SEAM), [
-    -n[0],
-    -n[1],
-  ]);
-  return { matrix: [a, b, b, d, n[0] * shift, n[1] * shift], clip };
+  return [a, b, b, d, n[0] * shift, n[1] * shift];
 }
 
 /** Where `matrix` takes `point`. */

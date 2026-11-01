@@ -1,11 +1,22 @@
 // What holds for any turn (#40, Phase 3): a key's arc never leaves its
 // bounds nor jumps, the spring never carries the corner past its mark, the
-// spine never lifts, a frame stays on its page, and speed 0 is instant.
+// spine never lifts, a frame's bands cross the whole page, and speed 0 is instant.
 
 import fc from 'fast-check';
 import { describe, it } from 'vitest';
-import { heldAt, type Point, spineDown } from './curl';
-import { curlFrame } from './curl-frame';
+import { BAND_BOX } from './band';
+import {
+  CURL_STRIPS,
+  dot,
+  heldAt,
+  minus,
+  type Point,
+  rollOf,
+  SEAM,
+  spineDown,
+  transform,
+} from './curl';
+import { curlFrame, reachOf } from './curl-frame';
 import { keyCurl, tickCurl } from './curl-turn';
 import { curlTime, isInstant, slideTime, wordsTime } from './speed';
 import { omegaFor, springStep } from './spring';
@@ -109,7 +120,9 @@ describe('the paper', () => {
     );
   });
 
-  it('keeps every clip of a frame on its page', () => {
+  // A band is cut only by its own edges across the fold, never along it: every corner of the page
+  // lies within its reach either side, wherever the fold is.
+  it('reaches every band across the whole page, along its fold', () => {
     fc.assert(
       fc.property(box, unit, unit, unit, (page, grip, x, y) => {
         const frame = curlFrame(
@@ -119,15 +132,63 @@ describe('the paper', () => {
           { cast: 32, crest: 24 },
         );
         if (frame.resting) return true;
-        const clips = [
-          frame.front,
-          frame.cast.clip,
-          frame.back.clip,
-          ...frame.strips.map((s) => s.clip),
+        const reach = 2 * reachOf(page);
+        const corners: Point[] = [
+          [0, 0],
+          [page.width, 0],
+          [page.width, page.height],
+          [0, page.height],
         ];
-        const on = ([px, py]: Point) =>
-          px >= -1e-6 && px <= page.width + 1e-6 && py >= -1e-6 && py <= page.height + 1e-6;
-        return clips.every((clip) => clip.every(on));
+        // The page's corners in each band's box (where its paper puts them): within its length.
+        return [frame.front, frame.cast, frame.back, frame.crest, ...frame.strips].every((band) => {
+          return corners.every((corner) => {
+            const along = transform(band.paper, corner)[1];
+            return along >= 0 && along <= reach;
+          });
+        });
+      }),
+    );
+  });
+});
+
+// A band's box holds a point of the page exactly where its cuts across the fold say: what stays up
+// to the fold, each strip its own part of the roll (and a hair either side), what lies back past it.
+describe('a frame’s bands', () => {
+  it('each hold the page between their cuts, and nothing else of it', () => {
+    fc.assert(
+      fc.property(box, unit, unit, unit, unit, unit, (page, grip, x, y, px, py) => {
+        const rest: Point = [page.width, grip * page.height];
+        const frame = curlFrame(page, rest, [(2 * x - 1) * page.width, y * page.height], {
+          cast: 32,
+          crest: 24,
+        });
+        if (frame.resting) return true;
+        const roll = rollOf(page, rest, frame.corner);
+        const point: Point = [px * page.width, py * page.height];
+        const past = dot(minus(point, roll.fold), roll.normal);
+        const height = 2 * reachOf(page);
+        const holds = (band: (typeof frame.strips)[number]) => {
+          const [u, v] = transform(band.paper, point);
+          return u >= 0 && u <= BAND_BOX && v >= 0 && v <= height;
+        };
+        // Points on a cut, within rounding, could fall either way.
+        const near = (at: number) => Math.abs(past - at) < 1e-6;
+        const half = Math.PI * roll.radius;
+        const step = half / CURL_STRIPS;
+        const cuts = [
+          SEAM,
+          half - SEAM,
+          ...frame.strips.flatMap((_, i) => [i * step - SEAM, (i + 1) * step + SEAM]),
+        ];
+        if (cuts.some(near)) return true;
+        return (
+          holds(frame.front) === past <= SEAM &&
+          holds(frame.back) === past >= half - SEAM &&
+          frame.strips.every(
+            (strip, i) =>
+              holds(strip) === (past >= i * step - SEAM && past <= (i + 1) * step + SEAM),
+          )
+        );
       }),
     );
   });

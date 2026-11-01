@@ -3,23 +3,16 @@
 // Depth's exception). Each strip of the roll is shaded by how it faces you,
 // edge-on darkest and facing you not at all, with a glint where its back
 // tops the roll; ramped across the strip from one edge's angle to the
-// other's, so the roll reads as one curve, not bands. The inks are the
+// other's, so the roll reads as one curve, not bands. A strip always spans
+// the same angles of the roll, so its light is the same at every moment:
+// drawn once, it only moves with its strip (./band.ts). The inks are the
 // theme's tokens (--eien-curl-shade, --eien-curl-light); here a light is
-// only where along the page and how strong, as a linear gradient's numbers.
+// only how strong, at a strip's first edge and its last.
 
-import { dot, minus, onFold, type PageBox, type Point, type Roll } from './curl';
+import { CURL_STRIPS } from './curl';
 
-/** A stop of a light: `at` pixels along its gradient line, the ink at `strength` (0 to 1). */
-export interface Stop {
-  readonly at: number;
-  readonly strength: number;
-}
-
-/** A linear gradient across the page: its angle in degrees, as CSS measures it, and its stops. */
-export interface Light {
-  readonly angle: number;
-  readonly stops: readonly Stop[];
-}
+/** A ramp across a strip: the ink's strength (0 to 1) at its first edge, nearer the fold, and its last. */
+export type Ramp = readonly [number, number];
 
 /** Where past the crest the glint sits, of a half turn. */
 const GLINT_AT = 0.78;
@@ -33,52 +26,14 @@ export const shadeAt = (angle: number): number => 1 - Math.abs(Math.cos(angle));
 export const glintAt = (angle: number): number =>
   Math.max(0, Math.cos(angle - GLINT_AT * Math.PI)) ** GLINT_TIGHT;
 
-/** A gradient running toward `toward` over the page: CSS's angle, and how long its line is. */
-function lineOf(page: PageBox, toward: Point): { angle: number; length: number } {
-  const radians = Math.atan2(toward[0], -toward[1]);
+/** Whether the `i`th strip is the roll's back, coming over. */
+export const isBack = (i: number): boolean => i >= CURL_STRIPS / 2;
+
+/** The `i`th strip's light: its shade, and on the back its glint. */
+export function stripLight(i: number): { readonly shade: Ramp; readonly glint: Ramp | null } {
+  const [start, end] = [(i * Math.PI) / CURL_STRIPS, ((i + 1) * Math.PI) / CURL_STRIPS];
   return {
-    angle: (radians * 180) / Math.PI,
-    length: Math.abs(page.width * Math.sin(radians)) + Math.abs(page.height * Math.cos(radians)),
-  };
-}
-
-/** How far along a gradient line `point` falls. */
-const atOn = (page: PageBox, toward: Point, length: number, point: Point): number =>
-  dot(minus(point, [page.width / 2, page.height / 2]), toward) + length / 2;
-
-/** A wash starts whole at the fold, from nothing this far (in pixels) before it: a hard edge, never a blur. */
-const HARD_EDGE = 0.5;
-
-/** A wash along the fold: the ink whole at `from`, gone `length` pixels on toward `toward`. */
-export function washFrom(page: PageBox, from: Point, toward: Point, length: number): Light {
-  const line = lineOf(page, toward);
-  const at = atOn(page, toward, line.length, from);
-  return {
-    angle: line.angle,
-    stops: [
-      { at: at - HARD_EDGE, strength: 0 },
-      { at, strength: 1 },
-      { at: at + length, strength: 0 },
-    ],
-  };
-}
-
-/** The ink across the strip `from` to `to` past the fold: `start` of it at one edge, `end` at the other. */
-export function rampOver(
-  page: PageBox,
-  roll: Roll,
-  from: number,
-  to: number,
-  start: number,
-  end: number,
-): Light {
-  const line = lineOf(page, roll.normal);
-  const at = (t: number) => atOn(page, roll.normal, line.length, onFold(roll, t));
-  return {
-    angle: line.angle,
-    stops: [
-      { at: at(from), strength: start },
-      { at: at(to), strength: end },
-    ],
+    shade: [shadeAt(start), shadeAt(end)],
+    glint: isBack(i) ? [glintAt(start), glintAt(end)] : null,
   };
 }

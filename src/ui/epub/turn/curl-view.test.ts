@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CURL_STRIPS, curlFrame } from '../../../core/epub';
-import { CurlView, clipOf, gradientOf } from './curl-view';
+import { rampOf } from './band-box';
+import { CurlView } from './curl-view';
 import { pageCopy } from './page-copy';
 import { millisecondsOf, turnTokens } from './turn-tokens';
 
@@ -16,18 +17,54 @@ function sheet(): HTMLElement {
 
 afterEach(() => {
   document.body.replaceChildren();
+  vi.restoreAllMocks();
 });
 
 describe('the curl drawn', () => {
-  it('lays the page as its pieces: what stays, twelve strips, what lies back, all in the curl’s inks', () => {
+  it('lays the page as its bands: what stays, twelve strips, what lies back, each moved, none clipped', () => {
     const to = sheet();
     const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
     view.draw(curlFrame(page, [400, 500], [0, 500], lengths));
     const strips = view.element.querySelectorAll<HTMLElement>('.turn-curl__strip');
     expect(strips).toHaveLength(CURL_STRIPS);
-    expect(strips[0]?.style.transform).toMatch(/^matrix\(/);
-    expect(strips[0]?.style.clipPath).toMatch(/^polygon\(/);
+    for (const strip of strips) {
+      expect(strip.style.transform).toMatch(/^matrix\(/);
+      expect(strip.querySelector<HTMLElement>('.turn-curl__inside')?.style.transform).toMatch(
+        /^matrix\(/,
+      );
+    }
     expect(view.element.querySelectorAll('.turn-curl__glint')).toHaveLength(CURL_STRIPS / 2);
+    expect(view.element.querySelectorAll('[style*="clip-path"]')).toHaveLength(0);
+  });
+
+  // What keeps a phone's curl smooth: a frame moves what was drawn, and draws nothing anew. A clip,
+  // a gradient or a size changed each frame was drawn again each frame, and the curl stuttered.
+  it('changes only transforms from one frame to the next as the hand moves', () => {
+    const to = sheet();
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
+    view.draw(curlFrame(page, [400, 500], [380, 490], lengths));
+    // Each element's style but its transform: a frame may move things, and do nothing else.
+    const unmoved = (style: string | null | undefined) =>
+      (style ?? '').replace(/(^|;)\s*transform:[^;]*/g, '$1').trim();
+    const styles = () =>
+      [view.element, ...view.element.querySelectorAll('*')].map((element) =>
+        unmoved(element.getAttribute('style')),
+      );
+    const drawn = styles();
+    const changed: string[] = [];
+    const watch = new MutationObserver((records) => {
+      for (const record of records) {
+        const element = record.target as HTMLElement;
+        if (unmoved(record.oldValue) !== unmoved(element.getAttribute('style')))
+          changed.push(element.className);
+      }
+    });
+    watch.observe(view.element, { attributes: true, attributeOldValue: true, subtree: true });
+    for (const x of [300, 150, 0, -200, -380])
+      view.draw(curlFrame(page, [400, 500], [x, 470], lengths));
+    watch.disconnect();
+    expect(changed).toEqual([]);
+    expect(styles()).toEqual(drawn);
   });
 
   it('at rest, shows the page flat and nothing else', () => {
@@ -36,6 +73,73 @@ describe('the curl drawn', () => {
     view.draw(curlFrame(page, [400, 500], [400, 500], lengths));
     const flap = view.element.querySelector<HTMLElement>('.turn-curl__flap');
     expect(flap?.style.visibility).toBe('hidden');
+    const strips = [...view.element.querySelectorAll<HTMLElement>('.turn-curl__strip')];
+    expect(strips.map((strip) => strip.style.visibility)).toEqual(strips.map(() => 'hidden'));
+    expect(view.element.querySelector<HTMLElement>('.turn-curl__front')?.style.transform).toMatch(
+      /^matrix\(/,
+    );
+  });
+
+  // A hand that brings the corner home and takes it again: the roll and its shadow go as it lands
+  // flat, and come back with the next pull.
+  it('hides the roll again when the page comes to rest, and shows it as it lifts again', () => {
+    const to = sheet();
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
+    const flap = () =>
+      view.element.querySelector<HTMLElement>('.turn-curl__flap')?.style.visibility;
+    const hidden = () =>
+      [...view.element.querySelectorAll<HTMLElement>('.turn-curl__cast, .turn-curl__strip')].filter(
+        (band) => band.style.visibility === 'hidden',
+      ).length;
+    view.draw(curlFrame(page, [400, 500], [150, 470], lengths));
+    expect([flap(), hidden()]).toEqual(['', 0]);
+    view.draw(curlFrame(page, [400, 500], [400, 500], lengths));
+    expect([flap(), hidden()]).toEqual(['hidden', 1 + CURL_STRIPS]);
+    view.draw(curlFrame(page, [400, 500], [150, 470], lengths));
+    expect([flap(), hidden()]).toEqual(['', 0]);
+  });
+
+  // The curl clips itself (its bands reach far past the page) where the pane round the sheet cuts,
+  // so a flap pulled off the sheet still shows on the blotter. Its margin is in its own pixels:
+  // measured on the screen, divided by the page's zoom it wears.
+  it('cuts as far past the sheet as the pane reaches, in its own zoomed pixels', () => {
+    const pane = document.createElement('div');
+    document.body.append(pane);
+    const to = document.createElement('article');
+    to.innerHTML = '<p class="words">Words</p>';
+    pane.append(to);
+    const rect = (left: number, top: number, right: number, bottom: number) =>
+      ({
+        left,
+        top,
+        right,
+        bottom,
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top,
+      }) as DOMRect;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (this === pane) return rect(100, 40, 1300, 900);
+      if (this.classList.contains('turn-curl')) return rect(400, 70, 1000, 870);
+      return rect(0, 0, 0, 0);
+    });
+    Object.defineProperty(HTMLElement.prototype, 'currentCSSZoom', {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.classList.contains('turn-curl') ? 1.5 : 1;
+      },
+    });
+    try {
+      const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
+      expect(view.element.parentElement).toBe(pane);
+      // 300 px to the pane's left and right, the most it reaches: 200 of the curl's own.
+      expect(view.element.style.overflowClipMargin).toBe('200px');
+    } finally {
+      delete (HTMLElement.prototype as { currentCSSZoom?: number }).currentCSSZoom;
+    }
   });
 
   it('stacks its pieces in order, whatever the page’s own rules would', () => {
@@ -51,28 +155,10 @@ describe('the curl drawn', () => {
 });
 
 describe('its CSS', () => {
-  it('wears a light as the ink at each stop’s strength, never a colour of its own', () => {
-    const light = {
-      angle: 90,
-      stops: [
-        { at: 10, strength: 0 },
-        { at: 42, strength: 1 },
-      ],
-    };
-    expect(gradientOf(light, 'var(--eien-curl-shade)')).toBe(
-      'linear-gradient(90.00deg, color-mix(in srgb, var(--eien-curl-shade) 0.0%, transparent) 10.0px, color-mix(in srgb, var(--eien-curl-shade) 100.0%, transparent) 42.0px)',
+  it('wears a ramp as the ink at each edge’s strength, never a colour of its own', () => {
+    expect(rampOf('var(--eien-curl-shade)', [0, 1])).toBe(
+      'linear-gradient(90deg, color-mix(in srgb, var(--eien-curl-shade) 0.0%, transparent), color-mix(in srgb, var(--eien-curl-shade) 100.0%, transparent))',
     );
-  });
-
-  it('clips to a polygon, and hides what an empty one clips', () => {
-    expect(
-      clipOf([
-        [0, 0],
-        [10, 0],
-        [10, 5],
-      ]),
-    ).toBe('polygon(0.00px 0.00px, 10.00px 0.00px, 10.00px 5.00px)');
-    expect(clipOf([])).toBe('polygon(0 0, 0 0, 0 0)');
   });
 });
 

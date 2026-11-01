@@ -30,74 +30,93 @@
   /* The sheet's own zoom (../../page/page.css): the curl's lengths are the sheet's own pixels
      (offsets and sizes aren't zoomed), so it lies over the sheet exactly. */
   zoom: var(--eien-zoom);
-}
-.turn-curl > *,
-.turn-curl__leaf > *,
-.turn-curl__flap > * {
-  position: absolute;
-  inset: 0;
+  /* Its bands reach far past the page: cut where the pane cuts them (its margin measured, ./curl-view.ts),
+     so a flap off the page shows as far as before and the bounds never change as they move (they
+     did, mirrored, and repainted the whole window each move). */
+  overflow: clip;
 }
 /* A spread's turning page (./curl-view.ts): its box over the sheet (its left and width measured),
    the curl laid in it, over the page lying still. */
 .turn-curl__leaf {
-  right: auto;
+  position: absolute;
+  top: 0;
+  bottom: 0;
   z-index: 1;
   transform-origin: 50% 0;
 }
-
-/* Each piece holds the whole page, clipped to its part (laid by ./curl-view.ts, its left and width
-   measured): its own paper, as the phone's page has none of its own; beneath its piece's paper and
-   light, whatever a copy laid over the sheet stands at; the curl's zoom already the sheet's. */
-.turn-curl__page {
-  max-width: none;
-  box-shadow: none;
-  background: var(--eien-paper);
+.turn-curl__under,
+.turn-curl__flap {
+  position: absolute;
+  inset: 0;
 }
-.turn-curl__piece > .turn-curl__page {
+
+/* A copy of the page (laid by ./curl-view.ts, its left and width measured): its own paper, as the
+   phone's page has none of its own; whatever a copy laid over the sheet stands at; the curl's zoom
+   already the sheet's. */
+.turn-curl__page {
   position: absolute;
   top: 0;
-  height: 100%;
+  height: var(--curl-page-height);
+  max-width: none;
   margin: 0;
-  z-index: 0;
+  box-shadow: none;
+  background: var(--eien-paper);
   zoom: 1;
+  /* Beneath the band's veil and light, whatever a copy laid over the sheet stands at. */
+  z-index: 0;
 }
-.turn-curl__strip,
-.turn-curl__back {
+
+/* A band (./band-box.ts): a box whose edges are the band's cuts, the page laid back inside it.
+   Each is a layer of its own, drawn once as the turn begins: a frame moves the band and the page
+   inside it, and the compositor lays them, so nothing is drawn again while the page curls. A clip
+   or a gradient changed each frame was drawn anew each frame, a phone's whole page of it, and the
+   curl stuttered (backlog #55, then this). Tested in tests/mobile/curl-layers.spec.ts. */
+.turn-curl__band {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
   transform-origin: 0 0;
+  will-change: transform;
 }
-/* The curl is a layer of its own, so a move repaints it alone and never the window beneath; on a
-   spread its turning page is one and its still page another, painted once. Nothing inside the
-   turning page is one: its pieces are clipped anew every frame, and a clip is painted in its layer,
-   so a layer each was made anew and repainted every frame, which flickered a phone's whole screen
-   (backlog #55). Tested in tests/mobile/curl-layers.spec.ts. */
+/* Inside it, the page's box, which cuts what's drawn across the band to the page; then the box
+   again, laid back over the page, where the band's veil and light are drawn. */
+.turn-curl__inside,
+.turn-curl__over {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.turn-curl__inside {
+  overflow: hidden;
+}
+.turn-curl__over {
+  z-index: 1;
+}
+/* The curl is a layer over the window, so nothing beneath it is painted again as it moves (#55); on
+   a spread its turning page is one too, and the page lying still one, drawn once. */
 .turn-curl,
 .turn-curl__leaf,
 .turn-curl__still {
   will-change: transform;
 }
 
-/* Inside a piece, over the page's own parts: the paper over its words, then the light. A piece's
-   own stacking context keeps the page's parts beneath them. */
-.turn-curl__piece {
-  isolation: isolate;
+/* Over the band's page: its paper (the back's), then its shade and its light, drawn across it. */
+.turn-curl__paper,
+.turn-curl__tone,
+.turn-curl__glint,
+.turn-curl__wash {
+  position: absolute;
+  inset: 0;
 }
 
 /* The back: its own paper over its mirrored words, so they show through faintly. */
 .turn-curl__paper {
-  position: absolute;
-  inset: 0;
+  z-index: 1;
   background: var(--eien-paper);
   opacity: calc(1 - var(--eien-curl-through));
-  z-index: 1;
-}
-
-/* A strip's shade, its glint, and the washes along the fold, over the page's words. */
-.turn-curl__tone,
-.turn-curl__glint,
-.turn-curl__piece > .turn-curl__wash {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
 }
 
 /* What comes back over casts the lifted paper's one soft shadow: the exception's third. */

@@ -1,10 +1,11 @@
-// The curl's layers while a book's page turns on the phone (backlog #55): a
-// slow drag flickered a phone's whole screen once each of the curl's pieces
-// was a layer of its own (#144). A piece's clip, new every frame, is painted
-// in its layer, so every move made its layers anew and repainted them, and
-// the window beneath too. Watched through CDP's LayerTree, under real touches
-// (CDP's Input.dispatchTouchEvent): a move repaints the turning page alone,
-// its layers the same throughout.
+// The curl's layers while a book's page turns on the phone (backlog #55, then
+// the curl made smooth): a slow drag flickered a phone's whole screen once
+// each of the curl's pieces was a layer of its own (#144), and once they were
+// one layer, it stuttered: a piece's clip and light, new every frame, were
+// painted in its layer, so every frame painted the whole page again. Now each
+// piece is a band drawn once and only moved. Watched through CDP's LayerTree,
+// under real touches (CDP's Input.dispatchTouchEvent): while a page curls,
+// no layer is painted again, and none made anew.
 
 import { readFileSync } from 'node:fs';
 import { type CDPSession, devices, expect, type Page, test } from '@playwright/test';
@@ -13,10 +14,8 @@ import { open, putBytesOutside } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 
-/** The curl's layers on one page: the curl alone. */
-const ONE = ['turn-curl'];
-/** On two facing pages: the turning page, and the one lying still. */
-const TWO = ['turn-curl__leaf', 'turn-curl__piece turn-curl__still'];
+/** The page lying still on two facing pages: a layer of its own, painted once. */
+const STILL = 'turn-curl__under turn-curl__still';
 
 /** What a composited layer's snapshot says of it (CDP's LayerTree.Layer), as far as these use. */
 interface Layer {
@@ -239,54 +238,46 @@ async function bookOnTwoPages(page: Page): Promise<void> {
 }
 
 /**
- * The curl's layers `curl` throughout, and `turning` (its turning page's) the
- * only one repainted, again and again, never made anew.
+ * The curl's pages layers of their own (and `still`, a spread's page lying
+ * still), none painted again while the page curls, and made anew at most as
+ * the roll's strips come (a crease rounding) and go (landing flat).
  */
-function expectAlone(
-  { curl, repainted, remade }: Turning,
-  layers: string[],
-  turning: string,
-): void {
-  expect(curl).toEqual(layers);
-  expect([...repainted.keys()]).toEqual([turning]);
-  expect(repainted.get(turning)).toBeGreaterThan(10);
-  expect(remade).toBeLessThanOrEqual(1);
+function expectOnlyMoved({ curl, repainted, remade }: Turning, still = false): void {
+  expect(curl).toContain('turn-curl__inside');
+  expect(curl.includes(STILL)).toBe(still);
+  expect(Object.fromEntries(repainted)).toEqual({});
+  expect(remade).toBeLessThanOrEqual(2);
 }
 
-test('a slow drag repaints the turning page alone', async ({ page }) => {
+test('a slow drag repaints nothing: the curl only moves', async ({ page }) => {
   await bookInPages(page);
-  expectAlone(await layersWhileHeld(page), ONE, 'turn-curl');
+  expectOnlyMoved(await layersWhileHeld(page));
 });
 
-// Back, the page before is a piece beneath the curl and the sheet hidden: in
-// the turning page's layer too, never one of its own.
-test('a slow drag back repaints the turning page alone, the page beneath in it', async ({
-  page,
-}) => {
+// Back, the page before lies beneath the curl and the sheet is hidden: painted once.
+test('a slow drag back repaints nothing, the page beneath painted once', async ({ page }) => {
   await bookInPages(page);
   await turnedOn(page);
-  expectAlone(await layersWhileHeld(page, -1), ONE, 'turn-curl');
+  expectOnlyMoved(await layersWhileHeld(page, -1));
 });
 
-test('a slow drag on two facing pages repaints the turning page alone, the other lying still', async ({
+test('a slow drag on two facing pages repaints nothing, the other page lying still', async ({
   page,
 }) => {
   await bookOnTwoPages(page);
-  expectAlone(await layersWhileHeld(page), TWO, 'turn-curl__leaf');
+  expectOnlyMoved(await layersWhileHeld(page), true);
 });
 
-// Back on two pages the left page turns, its leaf mirrored: one layer still.
-test('a slow drag back on two facing pages repaints the left page alone, mirrored', async ({
-  page,
-}) => {
+// Back on two pages the left page turns, its leaf mirrored.
+test('a slow drag back on two facing pages repaints nothing, mirrored', async ({ page }) => {
   await bookOnTwoPages(page);
   await turnedOn(page);
-  expectAlone(await layersWhileHeld(page, -1), TWO, 'turn-curl__leaf');
+  expectOnlyMoved(await layersWhileHeld(page, -1), true);
 });
 
-// A key's (or a tap's) turn flies by the same pieces as a drag, for a moment
-// rather than seconds: its layers the same throughout too.
-test('a key’s turn flies with the turning page alone repainting', async ({ page }) => {
+// A key's (or a tap's) turn flies by the same bands as a drag, for a moment
+// rather than seconds: nothing repainted there either.
+test('a key’s turn flies repainting nothing', async ({ page }) => {
   await bookInPages(page);
   await page.locator('.phone-bar__controls [data-command="look"]').click();
   await page.locator('[data-setting="epub.turnSpeed"] [data-value="4"]').click();
@@ -297,5 +288,5 @@ test('a key’s turn flies with the turning page alone repainting', async ({ pag
     .poll(() => page.evaluate(async () => (await window.eien.settings.read())['epub.turnSpeed']))
     .toBe('4');
   await page.locator('.page__leaf--epub .page__scroll').focus();
-  expectAlone(await layersInFlight(page, 'ArrowRight'), ONE, 'turn-curl');
+  expectOnlyMoved(await layersInFlight(page, 'ArrowRight'));
 });

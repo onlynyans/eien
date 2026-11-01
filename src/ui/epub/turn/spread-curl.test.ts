@@ -91,7 +91,7 @@ describe('a curl on two facing pages', () => {
     expect(leaf.style.width).toBe(`${WIDTH - GUTTER}px`);
     expect(leaf.style.transform).toBe('');
     // Each piece holds the whole page laid so the right page fills the leaf: its running head too.
-    const copy = leaf.querySelector<HTMLElement>('.turn-curl__strip > .turn-curl__page');
+    const copy = leaf.querySelector<HTMLElement>('.turn-curl__strip .turn-curl__page');
     expect(copy?.style.left).toBe(`${-GUTTER}px`);
     expect(copy?.querySelector('.heads')?.textContent).toBe('Chapter I');
     // The left page, as it was, over the new one until the turn lands.
@@ -112,9 +112,7 @@ describe('a curl on two facing pages', () => {
     expect(leaf.style.width).toBe(`${GUTTER}px`);
     expect(leaf.style.transform).toBe('scaleX(-1)');
     // Its words read the right way round: mirrored again, about the leaf's middle.
-    const copy = leaf.querySelector<HTMLElement>(
-      '.turn-curl__front > .turn-curl__page, .turn-curl__piece > .turn-curl__page',
-    );
+    const copy = leaf.querySelector<HTMLElement>('.turn-curl__front .turn-curl__page');
     expect(copy?.style.transform).toBe('scaleX(-1)');
     expect(copy?.style.transformOrigin).toBe(`${GUTTER / 2}px 0`);
     const still = curl.querySelector<HTMLElement>('.turn-curl__still') as HTMLElement;
@@ -143,19 +141,20 @@ describe('a curl on two facing pages', () => {
     const curl = b.curl() as HTMLElement;
     expect(curl.querySelector('.turn-curl__leaf')).toBeNull();
     expect(curl.querySelector('.turn-curl__still')).toBeNull();
-    const copy = curl.querySelector<HTMLElement>('.turn-curl__strip > .turn-curl__page');
+    const copy = curl.querySelector<HTMLElement>('.turn-curl__strip .turn-curl__page');
     expect(copy?.style.left).toBe('0px');
   });
 });
 
 describe('a curl’s copies', () => {
-  it('each sit in a piece with the paper over them, so a page’s back shows its words faintly', () => {
+  it('each sit in a band with the paper over them, so a page’s back shows its words faintly', () => {
     const b = spread(() => null);
     b.turn.key(1);
     const back = b.curl()?.querySelector<HTMLElement>('.turn-curl__back') as HTMLElement;
     // How they stack is ./turn.css's, which the phone's page checks laid out (tests/mobile).
-    expect(back.querySelector(':scope > .turn-curl__page')).not.toBeNull();
-    expect(back.querySelector(':scope > .turn-curl__paper')).not.toBeNull();
+    const inside = ':scope > .turn-curl__inside';
+    expect(back.querySelector(`${inside} > .turn-curl__page`)).not.toBeNull();
+    expect(back.querySelector(`${inside} > .turn-curl__paper`)).not.toBeNull();
   });
 });
 
@@ -199,7 +198,7 @@ describe('a curl on one page', () => {
     const curl = b.curl() as HTMLElement;
     const pieces = [...curl.children] as HTMLElement[];
     expect(pieces.map((piece) => piece.style.zIndex)).toEqual(pieces.map((_, i) => String(i)));
-    expect(pieces[0]?.classList.contains('turn-curl__piece')).toBe(true);
+    expect(pieces[0]?.classList.contains('turn-curl__under')).toBe(true);
     expect(curl.querySelector<HTMLElement>('.turn-curl__flap')?.style.zIndex).toBe(
       String(pieces.length - 1),
     );
