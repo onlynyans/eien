@@ -83,18 +83,20 @@ export class QuickLook {
     const of = this.#of;
     const phone = of.phone();
     const storeOf = (setting: Setting) => (setting.quick === 'window' ? of.window : subject.store);
-    const rows = quickIn(of.platform, phone, subject.kind, of.roomy()).map((setting) => {
-      const set = (key: SettingKey, value: string | number) =>
-        void storeOf(setting)
-          .set(key, value as never)
-          .catch(console.error);
-      const row = settingRow(setting, set, 'quick');
-      if (setting.quick === 'window')
-        row.element
-          .querySelector('.setting__label')
-          ?.append(h('span', { class: 'quick-look__aside', text: 'every page' }));
-      return { setting, ...row };
-    });
+    const rows = quickIn(of.platform, phone, subject.kind, of.roomy(), subject.store.values).map(
+      (setting) => {
+        const set = (key: SettingKey, value: string | number) =>
+          void storeOf(setting)
+            .set(key, value as never)
+            .catch(console.error);
+        const row = settingRow(setting, set, 'quick');
+        if (setting.quick === 'window')
+          row.element
+            .querySelector('.setting__label')
+            ?.append(h('span', { class: 'quick-look__aside', text: 'every page' }));
+        return { setting, ...row };
+      },
+    );
     // Settings' own key, shown as a menu shows keys: not where there's no keyboard to press it.
     const keys = touch() ? null : keysOf(commandOf('settings'), of.mac);
     const allSettings = h(

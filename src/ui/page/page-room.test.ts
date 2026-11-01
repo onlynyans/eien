@@ -16,11 +16,32 @@ describe('room round a page', () => {
     expect(roomForWidths(pageOf(830, 830))).toBe(false);
   });
 
+  it('measures the page as its zoom draws it', () => {
+    // 400px of page drawn at twice the size: 800px, room for a 700px line.
+    const page = pageOf(400, 700);
+    Object.defineProperty(page, 'currentCSSZoom', { value: 2 });
+    expect(roomForWidths(page)).toBe(true);
+  });
+
+  it('measures a book’s two pages as two, its ruler laid as the sheet in sight is', () => {
+    // One page's line at Wide is 830px; two pages', 1,650px.
+    const page = pageOf(1200, (ruler) =>
+      ruler.querySelector('.epub__pages[data-spread]') ? 1650 : 830,
+    );
+    const sheet = page.appendChild(document.createElement('article'));
+    sheet.className = 'sheet epub-sheet';
+    const pages = sheet.appendChild(document.createElement('div'));
+    pages.className = 'epub__pages';
+    expect(roomForWidths(page)).toBe(true);
+    pages.toggleAttribute('data-spread', true);
+    expect(roomForWidths(page)).toBe(false);
+  });
+
   it('measures with a sheet it takes away again', () => {
     const page = pageOf(600, 830);
     roomForWidths(page);
     expect(page.querySelector('.page-ruler')).toBeNull();
-    expect(page.childElementCount).toBe(0);
+    expect(page.querySelector('.page-ruler')).toBeNull();
   });
 
   it('says nothing of a page not laid out: as it was', () => {
