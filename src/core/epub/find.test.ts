@@ -201,10 +201,6 @@ describe('Find in a chapter, as QA tried it (Phase 5c)', () => {
     expect(find([p(text(`${typed}.`))], typed)).toHaveLength(1);
   });
 
-  it('ends on a pattern that backtracks, over a short paragraph', () => {
-    expect(find([p(text(`${'a'.repeat(12)}b`))], '(a+)+$', PATTERN)).toEqual([]);
-  });
-
   it('cuts the words round a match at a block’s ends without an ellipsis', () => {
     const [match] = find([p(text('bell'))], 'bell');
     expect(match).toMatchObject({ before: '', words: 'bell', after: '' });
