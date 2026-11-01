@@ -40,8 +40,12 @@ export interface PhoneView {
   readonly stack: PhoneStack;
   /** The window drawn: the back word named anew, and the other note's slip as it is now. */
   drawn(): void;
-  /** The system's back: a menu closes, else one pane back; false when there was nothing to do. */
-  back(): boolean;
+  /**
+   * The system's back: a menu closes, else a book's own step back, else one
+   * pane back; false when there was nothing to do. A `gesture` (a trackpad's)
+   * presses no Esc.
+   */
+  back(gesture: boolean): boolean;
   /** The page's ⋯ menu, under `opener`. */
   more(opener: HTMLElement): void;
   stop(): void;
@@ -144,6 +148,11 @@ export function phoneView(of: PhoneViewOf): PhoneView {
     else return false;
     return true;
   };
+  /** A book in sight goes back where a link or a swipe took it from (#70), as ⌘[ does. */
+  const bookBack = (): boolean => {
+    const { active } = of.pages;
+    return stack.inSight('page') && isEpub(active) && active.back();
+  };
   const putAwayNotes = (): boolean => {
     if (stack.room !== 'pages' || stack.shown === 'page') return false;
     stack.show('page');
@@ -156,7 +165,13 @@ export function phoneView(of: PhoneViewOf): PhoneView {
       other.sync();
     },
     // With two pages, the notes over the page go first: back puts them away, the page still there.
-    back: () => closeMenu() || pressEsc() || closeOver() || putAwayNotes() || stack.back(),
+    back: (gesture) =>
+      closeMenu() ||
+      (!gesture && pressEsc()) ||
+      closeOver() ||
+      putAwayNotes() ||
+      bookBack() ||
+      stack.back(),
     more,
     stop() {
       stopRoom();

@@ -358,6 +358,16 @@ describe('a phone’s Panes with no room for three (#68)', () => {
     expect(parts.changed).toHaveBeenCalledTimes(2);
   });
 
+  it('Back (#70) opens the sidebar while crowded, never a list there’s no room for', () => {
+    resizeTo(THREE_LEAST - 1);
+    const panes = make(false, true);
+    panes.toggle('sidebar');
+    expect(panes.reopen()).toBe(true);
+    expect(panes.isShut('sidebar')).toBe(false);
+    expect(panes.isShut('list')).toBe(true);
+    expect(panes.reopen()).toBe(false);
+  });
+
   it('hands the keyboard on when the list goes with it inside', () => {
     resizeTo(1024);
     make(false, true);
@@ -401,5 +411,52 @@ describe('a phone’s Panes with no room for three (#68)', () => {
     resizeTo(1024);
     expect(panes.aside).toBe(true);
     expect(panes.isShut('list')).toBe(true);
+  });
+});
+
+describe('back reopening the panes (#70)', () => {
+  it('opens the list, then the sidebar, then has nothing left to open', () => {
+    const panes = make();
+    panes.toggle('sidebar');
+    panes.toggle('list');
+    expect(panes.reopen()).toBe(true);
+    expect(panes.isShut('list')).toBe(false);
+    expect(panes.isShut('sidebar')).toBe(true);
+    expect(panes.reopen()).toBe(true);
+    expect(panes.isShut('sidebar')).toBe(false);
+    expect(panes.reopen()).toBe(false);
+  });
+
+  it('opens the sidebar alone with two panes, where there is no list', () => {
+    const panes = make(true);
+    panes.toggle('sidebar');
+    expect(panes.reopen()).toBe(true);
+    expect(panes.isShut('sidebar')).toBe(false);
+    expect(panes.reopen()).toBe(false);
+  });
+
+  it('with two panes and the list stepped aside, opens the sidebar and leaves the split as it is', () => {
+    const panes = make(true);
+    panes.stepAside(true);
+    panes.toggle('sidebar');
+    expect(panes.reopen()).toBe(true);
+    expect(panes.isShut('sidebar')).toBe(false);
+    expect(panes.aside).toBe(true);
+    expect(panes.reopen()).toBe(false);
+  });
+
+  it('brings back the list a split stepped aside, as its toggle does', () => {
+    const panes = make();
+    panes.stepAside(true);
+    expect(panes.reopen()).toBe(true);
+    expect(panes.isShut('list')).toBe(false);
+    expect(panes.aside).toBe(false);
+  });
+
+  it('leaves back to the stack the phone’s way', () => {
+    phone = 'page';
+    const panes = make();
+    expect(panes.reopen()).toBe(false);
+    expect(parts.showPhone).not.toHaveBeenCalled();
   });
 });

@@ -76,7 +76,7 @@
   clip-path: polygon(0 0, 100% 50%, 0 100%);
   transition: transform var(--eien-quick) var(--eien-ease);
 }
-[aria-expanded="true"] > .twisty::before {
+:is([aria-expanded="true"], [data-open="true"]) > .twisty::before {
   transform: rotate(90deg);
 }
 .tree-row__name {

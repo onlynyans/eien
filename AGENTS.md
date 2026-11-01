@@ -110,6 +110,8 @@ Rules, pure TypeScript.
   - `zip.ts`: a store-only zip of Eien's own
 - `import`
   - `plan.ts`: which files of a folder from elsewhere come in, under what names, and why the rest don't
+- `swipe`
+  - `wheel-swipe.ts`: a trackpad's two fingers across, read from the wheel events they come as: far enough, far more across than down, once a swipe (#70)
 - `find`: find in the note: its commands' names and keys, for the menu, the editor and the tooltips, and what its count says
 - `themes` (spec §7)
   - `color.ts`: hex, HSL and WCAG contrast
@@ -170,6 +172,7 @@ Rules, pure TypeScript.
 
 - `bridge.ts`: all the window may ask
 - `storage.ts`: the Storage contract, and its `electron/`, `capacitor/` and `memory/` implementations
+- `backs.ts`: the system's back asked of the window's handlers, the newest first, for both preloads (#70)
 - `inflate.ts`: raw deflate inflated by the system's DecompressionStream, for an EPUB's zip, in the window on the desktop and the phone
 - `index/`: the vault's index over any Storage
 - `open-vault.ts`: a vault and its index kept in step, shared by the desktop and the phone
@@ -241,7 +244,9 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `quiet-button.ts`: the quiet icon button (the +, a sheet's ×, the divider's ⇄)
 - `css-zoom.ts`: the page's zoom as it draws an element, the window's own figure (a table's controls, a book's pages)
 - `shell/vault-frame.ts`: the shell the sidebar, list and page pane lie in
-- `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`)
+- `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`); back opens the one shut nearest the page (`reopen`, #70)
+- `shell/swipe-back.ts`: a Mac trackpad's two fingers swiped back across the window (#70), the same back as the bridge's, but no Esc
+- `shell/scrolls-across.ts`: whether a gesture's element scrolls sideways itself, which a swipe then leaves alone
 - With two panes, the sidebar's tree (`sidebar/tree.ts`, its styles in `sidebar/tree.css`) lists the notes
   - `sidebar/note-row.ts`: a note's row, kept between draws, and put right in place while the rest of the tree is the same, by `sidebar/row-cache.ts`
   - a long list of notes there, and the note list once it is long, draws only the rows in sight (`shell/windowed-rows.ts`, the arithmetic in `shell/window-range.ts`; the keyboard reaches every row)
@@ -403,7 +408,8 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
     - `sight.ts`: the pages in sight, each where its words begin and its part; where the page stands, to put back
     - `spread.ts`: one page or two, as Pages, landscape and Pages, portrait choose for the screen as it's held: One, Two, or Auto, by the pane's room for two of 20em (never a split's)
     - `page-cut.ts`: a sight's words cut for a turn's copy, past the front matter, a paragraph cut at its foot set as on the page
-  - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back
+  - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back; in Scroll, a chapter turned stepping its words in
+  - `chapter-swipe.ts`: a finger swiped across a book in Scroll turns the chapter, never a scroll, a press or the system's edge (#71)
   - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons
   - `edge-strip.ts`, `.css`: Marks on the edge (Phase 4d): the whole book down the page's edge, a slider, apart from the fore-edge
   - `book-strip.ts`: the book told to the strip as shares of it (chapters, marks of both kinds, the place), and where a point on it goes
@@ -442,6 +448,7 @@ The main process: window, menu, the vault and settings sessions and their IPC.
 - `out-session.ts`: the clipboard, the save dialog
 - `print-pdf.ts` prints a PDF in a hidden window that runs nothing
 - `import-session.ts`: Import Markdown Folder…
+- `swipe-session.ts`: a Mac trackpad's swipe back, three fingers by the window's `swipe`, and whether two fingers swipe (#70)
 - `menu.ts` builds the menu bar, each item's id its command, its on/off settings as checks that `checkToggles` keeps in step (`TOGGLES` in `core/config`)
 - `menu-grey.ts`: the commands a window greys (a note's, with a book in front), checked against the bar's, worn while it's focused
 - `context-menu.ts`: the note's right-click menu (spelling suggestions on macOS, from `context-menu-of.ts`)

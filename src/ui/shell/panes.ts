@@ -137,10 +137,23 @@ export class PaneLayout {
       this.#parts.showPhone(pane);
       return true;
     }
+    // With two panes chosen there's no list to bring back: a split's step aside is left as it is.
+    if (pane === 'list' && this.#two) return false;
     if (pane === 'list' && this.#aside) this.#stepBack();
     if (pane === 'list' && this.two) return false;
     if (this.isShut(pane)) this.#set(pane, false);
     return true;
+  }
+
+  /**
+   * Back with the panes (#70): the nearest pane shut opens, the list, then
+   * the sidebar; with two panes, the sidebar alone. Whether one opened: the
+   * phone's way, back is its stack's.
+   */
+  reopen(): boolean {
+    if (this.#parts.phone()) return false;
+    if (this.isShut('list') && this.open('list')) return true;
+    return this.isShut('sidebar') && this.open('sidebar');
   }
 
   /** On a phone, bring the page into sight; elsewhere it always is. */
