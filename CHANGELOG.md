@@ -11,6 +11,45 @@ Releases).
 nothing was built or published for them, and each ends at the commit named
 under its heading.
 
+## 0.5.0 — 2026-11-01
+
+The EPUB reader: books on a shelf of their own, read in pages or by scrolling,
+with bookmarks, highlights and Find, on the desktop and the phone. Tested on a
+Galaxy Z Fold 5, and fitted to it.
+
+### Features
+
+- **epub:** read an EPUB: it's opened safely (its zip and its pages checked before anything is shown), and SHELF lists your books, apart from FOLDERS, which keeps to writing (#112, #113, #120, #126)
+- **epub:** a book's own look, from the quick look: its typeface, size, spacing and width, apart from your notes' (#114)
+- **epub:** read by scrolling, a chapter a sheet, or in pages turned by key, click, tap or a finger's curl; one page or two as the screen allows, set as a printed book with running heads and folios (#122, #129, #130, #131, #138, #143)
+- **epub:** a book's links and footnotes work, and its notes open over the page (#123)
+- **epub:** a book beside a note, and Quote: chosen words go into the note, cited (#125)
+- **epub:** page numbers: the printed edition's where the book has them, else the chapter's own pages, and a shorter colophon that says where you are (#133, #155)
+- **epub:** bookmarks and highlights, listed under Marks or down the page's edge, and ] and [ to walk them (#134, #135, #136, #140, #141)
+- **epub:** Find in a book, from the list's search or the page's find bar, and Find and Marks among a book's tools (#142, #166)
+- **epub:** on a touch screen, a long press chooses words, with Highlight, Quote and Copy in a bar at the page's foot (#157)
+- **phone:** a new install opens with two panes; a foldable opened shows the panes at any zoom; back opens shut panes; a swipe turns the chapter while scrolling (#148, #153, #156)
+- **editor:** a link's tools in Live, in three styles to choose from (#121)
+- **settings:** text size down to 50% (#150)
+- **icons:** the quick look's Aa drawn as a serif (#151)
+
+### Fixes
+
+- **epub:** a page turned by a finger on Android, and a turn let go falls back home (#137)
+- **epub:** a page turn never flickers, never shifts a line, and turns one page round the gutter on two (#144, #152, #160, #169)
+- **epub:** a picture alone never brings a blank page before it, an SVG's included (#159, #170)
+- **epub:** a book's page uses the height it's given on a phone, and its head names the book (#163, #164)
+- **phone:** a book's tools in every Wide screen room (#154)
+- **list:** a book's title runs the whole line, its Contents, Marks and Found on their own row (#161)
+- **settings:** Page width is offered only where it changes the page (#162)
+- **sidebar:** SHELF's triangle turns as its folder opens (#158)
+
+### Other
+
+- the end-to-end tests run on macOS and Windows in halves, and tests that outgrew the app made whole (#116, #165, #168)
+- a long book's search kept quick (#149)
+- dependencies updated (#98)
+
 ## 0.4.0 — 2026-10-28
 
 The first version built since 0.1.0. The EPUB reader's groundwork is in it;
