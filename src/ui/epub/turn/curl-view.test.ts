@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CURL_STRIPS, curlFrame } from '../../../core/epub';
 import { rampOf } from './band-box';
 import { CurlView } from './curl-view';
@@ -17,6 +17,7 @@ function sheet(): HTMLElement {
 
 afterEach(() => {
   document.body.replaceChildren();
+  vi.restoreAllMocks();
 });
 
 describe('the curl drawn', () => {
@@ -77,6 +78,68 @@ describe('the curl drawn', () => {
     expect(view.element.querySelector<HTMLElement>('.turn-curl__front')?.style.transform).toMatch(
       /^matrix\(/,
     );
+  });
+
+  // A hand that brings the corner home and takes it again: the roll and its shadow go as it lands
+  // flat, and come back with the next pull.
+  it('hides the roll again when the page comes to rest, and shows it as it lifts again', () => {
+    const to = sheet();
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+    const flap = () =>
+      view.element.querySelector<HTMLElement>('.turn-curl__flap')?.style.visibility;
+    const hidden = () =>
+      [...view.element.querySelectorAll<HTMLElement>('.turn-curl__cast, .turn-curl__strip')].filter(
+        (band) => band.style.visibility === 'hidden',
+      ).length;
+    view.draw(curlFrame(page, [400, 500], [150, 470], lengths));
+    expect([flap(), hidden()]).toEqual(['', 0]);
+    view.draw(curlFrame(page, [400, 500], [400, 500], lengths));
+    expect([flap(), hidden()]).toEqual(['hidden', 1 + CURL_STRIPS]);
+    view.draw(curlFrame(page, [400, 500], [150, 470], lengths));
+    expect([flap(), hidden()]).toEqual(['', 0]);
+  });
+
+  // The curl clips itself (its bands reach far past the page) where the pane round the sheet cuts,
+  // so a flap pulled off the sheet still shows on the blotter. Its margin is in its own pixels:
+  // measured on the screen, divided by the page's zoom it wears.
+  it('cuts as far past the sheet as the pane reaches, in its own zoomed pixels', () => {
+    const pane = document.createElement('div');
+    document.body.append(pane);
+    const to = document.createElement('article');
+    to.innerHTML = '<p class="words">Words</p>';
+    pane.append(to);
+    const rect = (left: number, top: number, right: number, bottom: number) =>
+      ({
+        left,
+        top,
+        right,
+        bottom,
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top,
+      }) as DOMRect;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (this === pane) return rect(100, 40, 1300, 900);
+      if (this.classList.contains('turn-curl')) return rect(400, 70, 1000, 870);
+      return rect(0, 0, 0, 0);
+    });
+    Object.defineProperty(HTMLElement.prototype, 'currentCSSZoom', {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.classList.contains('turn-curl') ? 1.5 : 1;
+      },
+    });
+    try {
+      const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+      expect(view.element.parentElement).toBe(pane);
+      // 300 px to the pane's left and right, the most it reaches: 200 of the curl's own.
+      expect(view.element.style.overflowClipMargin).toBe('200px');
+    } finally {
+      delete (HTMLElement.prototype as { currentCSSZoom?: number }).currentCSSZoom;
+    }
   });
 
   it('stacks its pieces in order, whatever the page’s own rules would', () => {
