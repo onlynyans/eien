@@ -144,7 +144,7 @@ describe('a book’s lenses', () => {
           'button',
         ),
       ].map((button) => button.getAttribute('aria-pressed'));
-    // Found only once a search has found something (#61).
+    // Found only while a search is on (#61).
     expect(pressed('contents')).toEqual(['true', 'false']);
     expect(pressed('marks')).toEqual(['false', 'true']);
     const choose = vi.fn();

@@ -34,10 +34,13 @@ const LENS_NAMES: Record<BookLens, string> = {
 /** A lens's lasting name: the keyboard stays on it through a redraw, chosen or not. */
 export const lensKey = (lens: BookLens): string => `lens:${lens}`;
 
+/** Whether `key` is a lens's. */
+export const isLensKey = (key: string | undefined): boolean => key?.startsWith('lens:') ?? false;
+
 /**
  * The lenses, `lens` pressed, each with its count; Found only while a search
- * has found something (its count null with nothing searched), as there's
- * nothing to choose there before (#61).
+ * is on (its count null with none), 0 while it looks or finds nothing, so the
+ * lens pressed always names the rows shown (#61).
  */
 export function lensButtons(
   lens: BookLens,
@@ -49,7 +52,7 @@ export function lensButtons(
     { class: 'book-lenses', attrs: { role: 'group', 'aria-label': 'The book’s index' } },
     ...(['contents', 'marks', 'found'] as const).flatMap((each) => {
       const count = counts[each];
-      if (each === 'found' && !count) return [];
+      if (count === null) return [];
       return h(
         'button',
         {

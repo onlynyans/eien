@@ -760,8 +760,8 @@ in the book, each recorded here as it's built.
   line; forced colours the system's Mark and Highlight. Scrolling, the
   match stands clear of the bar.
 - **Found in the list** (Phase 5c, `list/found-rows.ts`): a third lens,
-  Found, after Contents and Marks, only while a search has found
-  something (#61). A match's row is a Marks row: its words with the match marked
+  Found, after Contents and Marks, only while a search is on, its count
+  0 while it looks or finds none (#61): never one with nothing to choose. A match's row is a Marks row: its words with the match marked
   as a note's Find match is (`--eien-selected` over a `--eien-rule-strong`
   hairline, `--eien-radius-s`), its page a count, its chapter in pencil. The
   search's line is the list's empty line, italic in pencil; it's a status

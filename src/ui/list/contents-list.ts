@@ -9,6 +9,7 @@
 import { h } from '../dom';
 import {
   type BookLens,
+  isLensKey,
   lensButtons,
   lensKey,
   type MarkRow,
@@ -209,6 +210,11 @@ export function renderContents(
   );
   if (same) {
     same.focus();
+    return;
+  }
+  // A lens gone (Found, its search cleared): the one shown now.
+  if (isLensKey(focused)) {
+    container.querySelector<HTMLElement>(`[data-key="${lensKey(lens)}"]`)?.focus();
     return;
   }
   if (at < 0) return;
