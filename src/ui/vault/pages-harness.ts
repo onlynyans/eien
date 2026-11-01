@@ -115,7 +115,11 @@ export function chromeOver(made: Awaited<ReturnType<typeof pagesWith>>) {
       lens: { tools: div(), chips: div() },
     } as unknown as Sidebar,
     panes: { isShut: () => false, aside: false, two: false } as unknown as PaneLayout,
-    phone: { stack: { controls: div(), phone: false }, more: () => {} } as unknown as PhoneView,
+    // The phone's bar in the window, as the page's foot is, so its tools are there to be found.
+    phone: {
+      stack: { controls: document.body.appendChild(div()), phone: false },
+      more: () => {},
+    } as unknown as PhoneView,
     settings: made.settings,
     menu: { on: () => () => {}, run: () => {} } as unknown as MenuBus,
     mac: false,

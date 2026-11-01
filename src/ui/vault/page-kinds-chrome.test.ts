@@ -7,6 +7,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
 import { actsOn, COMMANDS, menuOff } from '../chrome/commands';
+import { LAYOUT_SPECS } from '../chrome/layouts';
 import { type CommandContext, runCommand } from './commands';
 import type { Side } from './pages';
 import { chromeOver, noted, pagesWith } from './pages-harness';
@@ -83,6 +84,27 @@ describe('the commands for a note', () => {
       expect(inSight()).toEqual(
         expect.arrayContaining(bar.filter((id) => !BOOK_COMMANDS.includes(id as never))),
       );
+    });
+  }
+
+  for (const layout of ['band', 'slip', 'runhead'] as const) {
+    it(`leave a book its own tools in ${layout}’s phone bar, every room but Panes’ (#63)`, async () => {
+      const { pages, chrome } = await drawn(layout);
+      const phone = () =>
+        [
+          ...document.querySelectorAll<HTMLButtonElement>(
+            `.host--${LAYOUT_SPECS[layout].phone.name} [data-command]`,
+          ),
+        ]
+          .filter((button) => !button.hasAttribute('data-aside'))
+          .map((button) => button.dataset.command);
+      // The book in front: its views, its bookmark and the look; none of a note's.
+      expect(phone()).toEqual(expect.arrayContaining([...BOOK_COMMANDS, 'look']));
+      expect(phone().filter((id) => ofNote(id))).toEqual([]);
+      pages.activate(pages.sides[0] as Side);
+      chrome.refresh();
+      expect(phone()).toContain('focus');
+      expect(phone().filter((id) => BOOK_COMMANDS.includes(id as never))).toEqual([]);
     });
   }
 

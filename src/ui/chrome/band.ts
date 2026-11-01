@@ -3,6 +3,7 @@
 // on a phone, the page's tools in the top bar. Styles in ./band.css.
 
 import {
+  BOOK_VIEWS,
   CHEVRONS,
   FOOT,
   FORMAT_FOLDS,
@@ -43,6 +44,7 @@ export const BAND: LayoutSpec = {
     name: 'phone-band',
     slot: 'phoneBar',
     label: 'Page',
-    items: ['view.next', 'focus', 'look', 'more'],
+    // A note's views as one button, a book's two; each set aside with the other kind in front.
+    items: ['view.next', BOOK_VIEWS, 'focus', 'bookmark', 'look', 'more'],
   },
 };

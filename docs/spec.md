@@ -451,7 +451,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      the colophon gives no steady page. The count is kept for the last few
      books this window opened, never written.
    - **Bookmarks** (Phase 4b): **B**, the bookmark tool (a ribbon, with the
-     book's own tools; on the phone, the ⋯) or View → Bookmark This Page
+     book's own tools, in every room on a phone too, backlog #63; and the
+     phone's ⋯) or View → Bookmark This Page
      bookmarks the page in sight: in Pages the page, scrolling the lines in
      sight. On a page that has one (or more, made at another width) they're
      all taken off. The colophon says "Bookmarked." or "Bookmark taken off.",
