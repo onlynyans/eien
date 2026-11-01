@@ -305,7 +305,7 @@ section where it and the directions below disagree.
     deleted.
   - `]` and `[` to walk the marks come with highlights (Phase 5).
 
-### Touch and tools, after the foldable (decided 2026-11-01, #64, #65)
+### Touch and tools, after the foldable (decided 2026-11-01, #64, #65; built, [#157](https://github.com/onlynyans/eien/pull/157), [#166](https://github.com/onlynyans/eien/pull/166))
 
 - **Choosing words by touch (#65).** The owner: keep the system's choosing,
   in Pages and Scroll alike, for its handles and its Copy and Share; put
@@ -329,7 +329,9 @@ section where it and the directions below disagree.
   its Marks lens, or with two panes the SHELF row's), on a phone a pane
   away as Contents is; set aside with marks On the edge, where the strip is
   the marks in sight. A phone's bar short of room folds its tools into its
-  own ⋯, which lists them all already.
+  own ⋯, which lists them all already. The formatting bar's switch is a
+  note's (the orchestrator's call): a book's tools are its views, the
+  bookmark, Marks, Find and Look.
 
 ### After Phase 1 (2026-10-29)
 

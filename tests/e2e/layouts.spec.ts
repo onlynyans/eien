@@ -24,6 +24,7 @@ const COMMANDS = [
   'versions',
   'format-bar',
   'focus',
+  'find', // every page's (#64), a note's too
   'look',
   'scheme',
   'panes',

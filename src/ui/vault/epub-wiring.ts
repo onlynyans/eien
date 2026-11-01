@@ -73,6 +73,8 @@ export interface EpubWiring {
   typed(words: string): void;
   /** Enter in the search field while it searches a book: on to the next match (⇧Enter, back); false for none. */
   stepFound(way: 1 | -1): boolean;
+  /** The active page's book's marks the list's lens (#64), the list and SHELF drawn so; whether there's a book. */
+  showMarks(): boolean;
 }
 
 /** Why a quote has nowhere to go. */
@@ -205,6 +207,14 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
       // The words just typed searched first: Enter may come before the panes draw.
       found.sync(side, of.nav.query);
       return found.step(side, way);
+    },
+    showMarks: () => {
+      const { active } = of.pages();
+      if (!isEpub(active) || active.path === null) return false;
+      of.nav.contents = active.path;
+      of.nav.bookLens = 'marks';
+      of.redraw();
+      return true;
     },
     shelf: (two, withFound) => {
       const active = of.pages().active;

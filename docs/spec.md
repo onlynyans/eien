@@ -523,7 +523,9 @@ Three panes, each collapsible, with a two-pane option in settings:
      at one word), each row its words (those its page begins with, or those
      highlighted), its page, and its chapter and kind ("Chapter III ·
      highlight"), or "Nothing kept yet. B bookmarks a page; H keeps the
-     words you choose." Enter or a click goes to the mark; Delete or
+     words you choose." The page's **Marks** tool (#64) shows them from the
+     page: the list on its Marks lens (opened if shut), with two panes the
+     sidebar's, on a phone a pane away; set aside with marks On the edge. Enter or a click goes to the mark; Delete or
      Backspace takes it off (once, however long it's held; the keyboard
      goes to the next row), a highlight with Put back in the book's
      colophon. The
@@ -789,8 +791,8 @@ the new layout, or on the page. Whether the strip is hidden is per device.
 band and its formatting row, Slip's slip, Running head's strip) never runs
 past the page, the screen, or the system's window controls. The tools that
 don't fit fold behind one ⋯ at the bar's end, as few as it takes, in one
-order: Versions, Compare, the formatting bar's toggle, Focus, Look, the views (as
-one), then the Seal (the formatting row: from Table back, bold and italic
+order: Versions, Compare, the formatting bar's toggle, Focus, a book's Marks
+and bookmark, Find, Look, the views (as one), then the Seal (the formatting row: from Table back, bold and italic
 staying). The strip's own control never folds: it's the shut band's way back.
 The ⋯ lists what folded in the bar's order, each with its icon, key and state,
 and runs it; arrows reach it, and the keyboard on a tool that folds goes to
@@ -813,9 +815,13 @@ the words shows on the page once the typing pauses, so nothing on the page
 moves mid-word.
 
 On a phone each layout has its own bottom for the page: Band the top bar
-(the view, Focus, Look, ⋯), Slip a floating slip (the three views, Focus,
-Look, ⋯), Running head a rail at the page's foot (the views, Focus, Seal,
-Look, ⋯). The ⋯ holds the rest, as the menu bar does on the desktop.
+(the view, Focus, Find, Look, ⋯), Slip a floating slip (the three views,
+Focus, Find, Look, ⋯), Running head a rail at the page's foot (the views,
+Focus, Seal, Find, Look, ⋯); with a book in front, its two views, its
+bookmark, Marks, Find, Look and ⋯ (#63, #64). The ⋯ holds the rest, as the
+menu bar does on the desktop. Short of room (a Fold 5's cover, 344px) the bar
+folds its tools into that ⋯, which offers them all (Focus, Seal, Marks, Find,
+the bookmark, then Look), Back and ⇄ giving way first to a finger's reach.
 
 The visual design (type, color, spacing) is set in the design pass. This spec
 fixes only the token names it uses (§7).
@@ -1139,8 +1145,9 @@ words, as on the page.
 ⌘F (Ctrl+F elsewhere) finds in the open note, in Live, Source and Reading,
 on the active page of a split: each page finds in its own note. Edit → Find
 holds Find…, Find and Replace… (⌥⌘F; Ctrl+H off the Mac, where Ctrl+Alt is
-AltGr), Find Next (⌘G) and Find Previous (⇧⌘G); on a phone it's the page's
-⋯ → Find. It's CodeMirror's search (`@codemirror/search`, `ui/editor/find.ts`),
+AltGr), Find Next (⌘G) and Find Previous (⇧⌘G); and Find among the page's
+tools (#64), a note's or a book's, on the desktop and the phone (where the
+page's ⋯ → Find too). It's CodeMirror's search (`@codemirror/search`, `ui/editor/find.ts`),
 drawn as Eien's own slip at the page's top right (`ui/find/find-bar.ts`),
 which searches nothing itself, so an EPUB's chapters can drive it too.
 

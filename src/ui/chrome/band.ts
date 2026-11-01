@@ -9,6 +9,7 @@ import {
   FORMAT_FOLDS,
   formatBar,
   type LayoutSpec,
+  PHONE_FOLDS,
   TOOL_FOLDS,
   VIEWS,
 } from './layout-spec';
@@ -28,6 +29,8 @@ export const BAND: LayoutSpec = {
         'format-bar',
         'focus',
         'bookmark',
+        'marks',
+        'find',
         '|',
         'look',
         'strip',
@@ -45,6 +48,7 @@ export const BAND: LayoutSpec = {
     slot: 'phoneBar',
     label: 'Page',
     // A note's views as one button, a book's two; each set aside with the other kind in front.
-    items: ['view.next', BOOK_VIEWS, 'focus', 'bookmark', 'look', 'more'],
+    items: ['view.next', BOOK_VIEWS, 'focus', 'bookmark', 'marks', 'find', 'look', 'more'],
+    folds: PHONE_FOLDS,
   },
 };

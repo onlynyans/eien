@@ -105,6 +105,7 @@ export async function pagesWith(
 export function chromeOver(made: Awaited<ReturnType<typeof pagesWith>>) {
   const { pages } = made;
   const greyMenu = vi.fn<(commands: readonly MenuCommand[]) => void>();
+  const marks = vi.fn<() => void>();
   const div = () => document.createElement('div');
   const chrome = vaultChrome({
     shell: document.body.appendChild(div()),
@@ -124,6 +125,7 @@ export function chromeOver(made: Awaited<ReturnType<typeof pagesWith>>) {
     menu: { on: () => () => {}, run: () => {} } as unknown as MenuBus,
     mac: false,
     platform: 'linux',
+    marks,
     greyMenu,
   });
   chrome.mount();
@@ -140,7 +142,7 @@ export function chromeOver(made: Awaited<ReturnType<typeof pagesWith>>) {
     ]
       .filter((button) => !button.hasAttribute('data-aside'))
       .map((button) => button.dataset.command);
-  return { chrome, inSight, greyMenu, stop };
+  return { chrome, inSight, greyMenu, marks, stop };
 }
 
 /** Type at the end of the active page's note, as the writer does. */

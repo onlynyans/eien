@@ -25,6 +25,7 @@ function make(room: Room, back = vi.fn(() => true), outline = { open: false, tog
     has: () => true,
     parts: () => ({ outline }) as never,
     changed: vi.fn(),
+    marks: vi.fn(),
   });
   return { view, back };
 }

@@ -3,6 +3,8 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SETTINGS } from '../../core/config';
+import { actsOn, commandOf } from '../chrome/commands';
+import { PHONE_FOLDS } from '../chrome/layout-spec';
 import type { MenuItem } from '../menu/menu';
 import { moreItems } from './more-menu';
 
@@ -61,6 +63,43 @@ describe('the ⋯’s Quote (#40, Phase 2c)', () => {
     expect(words(moreItems({ ...state, kind: 'note' }, () => {}))).not.toContain(
       'Quote in the note',
     );
+  });
+});
+
+// #64: a book's Marks, and every tool a phone's bar folds short of room, offered in its ⋯.
+describe('the ⋯ and the phone’s bar (#64)', () => {
+  const state = { values: DEFAULT_SETTINGS, sprinting: false, exportTo: () => {} };
+  const labels = (items: readonly MenuItem[]) =>
+    items.flatMap((item) => (item === 'separator' ? [] : [item.label]));
+
+  it('offers a book’s Marks after its bookmark, there only where the page gives one', () => {
+    const marks = vi.fn();
+    const items = moreItems({ ...state, kind: 'epub', marks }, () => {});
+    const names = labels(items);
+    expect(names.indexOf('Marks')).toBe(names.indexOf('Bookmark this page') + 1);
+    const item = items.find((one) => one !== 'separator' && one.label === 'Marks');
+    if (!item || item === 'separator') throw new Error('no Marks');
+    item.run();
+    expect(marks).toHaveBeenCalledOnce();
+    // Marks on the edge (no callback), or a note in front: none.
+    expect(labels(moreItems({ ...state, kind: 'epub' }, () => {}))).not.toContain('Marks');
+    expect(labels(moreItems({ ...state, kind: 'note', marks }, () => {}))).not.toContain('Marks');
+  });
+
+  it('offers every tool a phone’s bar may fold, so folding there loses nothing', () => {
+    for (const kind of ['note', 'epub'] as const) {
+      const sent: string[] = [];
+      const items = moreItems(
+        { ...state, kind, marks: () => sent.push('marks'), highlight: () => {}, quote: () => {} },
+        (command) => sent.push(command),
+      );
+      for (const item of items) if (item !== 'separator') item.run();
+      for (const id of PHONE_FOLDS) {
+        const command = commandOf(id);
+        if (!actsOn(id, kind)) continue;
+        expect(sent, `${kind}: ${id}`).toContain(command.sends ?? id);
+      }
+    }
   });
 });
 
