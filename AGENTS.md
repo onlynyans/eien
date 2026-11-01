@@ -161,9 +161,10 @@ Rules, pure TypeScript.
   - `pages.ts`: a chapter in pages (Phase 3b): whole lines tall, the pages counted, the page a word falls on, the fore-edge's sixths; two pages to a sight where they fit, and each page's part (front matter, opening, text) (Phase 3d)
   - `imprint.ts`: the imprint's words, how long the book is and how it's set (Phase 3d)
   - `turn/`: a page's turn (Phase 3), as numbers the window draws
-    - `curl.ts`: the curl's geometry: the roll over a cylinder that follows the corner, the spine held down, a strip laid by its matrix and clipped
-    - `light.ts`: the light on the roll, each strip shaded by how it faces you and ramped across, as a gradient's numbers (the inks are the window's tokens)
-    - `curl-frame.ts`: a curling page at one moment: what stays, the roll's strips, what lies back, the shadow beneath
+    - `curl.ts`: the curl's geometry: the roll over a cylinder that follows the corner, the spine held down, a strip laid by its matrix
+    - `band.ts`: a piece of the curl as a band across the fold, a box only moved: where it lies, and the page laid back inside it, so a frame is transforms alone
+    - `light.ts`: the light on the roll, each strip shaded by how it faces you and ramped across, the same at every moment (the inks are the window's tokens)
+    - `curl-frame.ts`: a curling page at one moment, as bands: what stays, the roll's strips, what lies back, the shadow beneath
     - `curl-turn.ts`: a curl's states: begun, held, let go (the throw decides), flying, caught (a tap lets it fly on), finished, put down
     - `spring.ts`: the finish, a critically damped spring that lands and never bounces
     - `stroke.ts`: a key's hand: where it takes the edge, how high and fast it goes, wandering within bounds turn to turn
@@ -419,7 +420,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `page-keys.ts`: the page's keys, one table: its letters (Q, B, H), `]` and `[`, Back, and in pages the keys that turn and a touch's tap in the outer thirds
   - `turn/`: a page turned (Phase 3)
     - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first
-    - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page, clipped and laid, in the curl's light; on a spread one page's (a `TurnLeaf`) round the gutter, the other still, a back turn mirrored
+    - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page as bands (`band-box.ts`: drawn once, only moved), in the curl's light; on a spread one page's (a `TurnLeaf`) round the gutter, the other still, a back turn mirrored
     - `hand-events.ts`: the pointer and the finger carried to the turn (Phase 3c): a finger anywhere on the page, a mouse at the book's edges or on a page in flight, a cancelled gesture falling back, a drag that turned never also a click
     - `turn-surface.ts`: what a page turn turns over (`TurnSurface`, its `TurnLeaf` on a spread), and what a test stands in for
     - `turn-hand.ts`: a hand on the page, and when its move is a drag across; `turn-queue.ts`: turns waiting for the page they turn from (a chapter drawn first)
