@@ -1373,7 +1373,7 @@ test('a curl lies exactly over the sheet through the page’s zoom', async ({ pa
         const found = back.querySelector(`:scope > .turn-curl__inside > ${part}`);
         return found ? getComputedStyle(found).zIndex : null;
       };
-      return { copy: z('.turn-curl__page'), paper: z('.turn-curl__over') };
+      return { copy: z('.turn-curl__page'), paper: z('.turn-curl__paper') };
     });
   expect(stacked).toEqual({ copy: '0', paper: '1' });
   await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });

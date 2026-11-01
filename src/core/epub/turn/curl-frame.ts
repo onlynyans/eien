@@ -40,8 +40,13 @@ const BEYOND = 4;
 /** Below this radius, in pixels, the roll is a crease: no strips are drawn. */
 const SLIGHT = 1;
 
-/** How far a band reaches either side of the fold's point: past every corner of the page, wherever the fold is. */
-export const reachOf = (page: PageBox): number => 2 * (page.width + page.height);
+/**
+ * How far a band reaches either side of the fold's point: past every corner
+ * of the page, wherever the fold is. The fold's point is on the normal
+ * through the corner's rest, so along the fold, and back from it, no corner
+ * is further than the page's diagonal.
+ */
+export const reachOf = (page: PageBox): number => Math.hypot(page.width, page.height);
 
 /** The page with its corner resting at `rest` and the hand at `hand`. */
 export function curlFrame(
@@ -68,7 +73,7 @@ export function curlFrame(
   return {
     resting: false,
     corner,
-    front: bandOf(roll, SEAM - 2 * reach, SEAM, reach),
+    front: bandOf(roll, -reach, SEAM, reach),
     cast: bandOf(roll, roll.radius, roll.radius + lengths.cast, reach),
     strips,
     back: bandOf(roll, half - SEAM, beyond, reach, over),

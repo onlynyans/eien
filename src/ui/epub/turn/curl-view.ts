@@ -11,6 +11,7 @@
 // forward one seen in a mirror.
 
 import { CURL_STRIPS, type CurlFrame, isBack, reachOf, stripLight } from '../../../core/epub';
+import { zoomOf } from '../../css-zoom';
 import { h } from '../../dom';
 import { BandBox, part, rampOf } from './band-box';
 import { layOver, pageCopy } from './page-copy';
@@ -41,10 +42,6 @@ function pageIn(
   return copy;
 }
 
-/** A layer of the curl that's only ever shown or hidden. */
-const still = (name: string, ...children: HTMLElement[]) =>
-  h('div', { class: `turn-curl__${name}` }, ...children);
-
 export class CurlView {
   readonly element = h('div', { class: 'turn-curl', attrs: { 'aria-hidden': 'true' } });
   readonly #to: HTMLElement;
@@ -53,7 +50,7 @@ export class CurlView {
   readonly #strips: readonly BandBox[];
   readonly #back: BandBox;
   readonly #crest: BandBox;
-  readonly #flap = still('flap');
+  readonly #flap = part('flap');
   #moving: boolean | null = null;
 
   /**
@@ -79,7 +76,7 @@ export class CurlView {
     const lying = leaf ? (leaving.cloneNode(true) as HTMLElement) : null;
     const moving = way > 0 || leaf ? leaving : pageCopy(to, words, trim);
     // Back on one page, the page left lies beneath them all, and the sheet is hidden until it lands.
-    const under = way < 0 && !leaf ? still('under', pageIn(leaving, box, sheetWidth)) : null;
+    const under = way < 0 && !leaf ? part('under', pageIn(leaving, box, sheetWidth)) : null;
     if (under) {
       under.style.zIndex = '0';
       to.style.visibility = 'hidden';
@@ -90,20 +87,20 @@ export class CurlView {
       element.style.backgroundImage = rampOf(ink, [1, 0]);
       return element;
     };
-    this.#cast = new BandBox('cast', page, reach, null, wash(CURL_INK.shade));
-    this.#front = new BandBox('front', page, reach, pageIn(moving, box, sheetWidth));
+    this.#cast = new BandBox('cast', page, reach, null, false, wash(CURL_INK.shade));
+    this.#front = new BandBox('front', page, reach, pageIn(moving, box, sheetWidth), false);
     this.#strips = Array.from({ length: CURL_STRIPS }, (_, i) => {
       const light = stripLight(i);
       const tone = part('tone');
       tone.style.backgroundImage = rampOf(CURL_INK.shade, light.shade);
-      if (!light.glint) return new BandBox('strip', page, reach, copy(), tone);
+      if (!light.glint) return new BandBox('strip', page, reach, copy(), false, tone);
       // The back half: its own paper over its mirrored words, so they show through faintly.
       const glint = part('glint');
       glint.style.backgroundImage = rampOf(CURL_INK.light, light.glint);
-      return new BandBox('strip', page, reach, copy(), part('paper'), tone, glint);
+      return new BandBox('strip', page, reach, copy(), true, tone, glint);
     });
-    this.#back = new BandBox('back', page, reach, copy(), part('paper'));
-    this.#crest = new BandBox('crest', page, reach, null, wash(CURL_INK.light));
+    this.#back = new BandBox('back', page, reach, copy(), true);
+    this.#crest = new BandBox('crest', page, reach, null, false, wash(CURL_INK.light));
     const roll = (back: boolean) =>
       this.#strips.filter((_, i) => isBack(i) === back).map((strip) => strip.element);
     this.#flap.append(...roll(true), this.#back.element, this.#crest.element);
@@ -115,7 +112,7 @@ export class CurlView {
     if (under) layers.unshift(under);
     if (leaf && lying) {
       // The page lying still: the other side of the gutter from the leaf.
-      const lyingPage = still('under', pageIn(lying, { ...WHOLE, width: sheetWidth }, sheetWidth));
+      const lyingPage = part('under', pageIn(lying, { ...WHOLE, width: sheetWidth }, sheetWidth));
       lyingPage.classList.add('turn-curl__still');
       lyingPage.style.clipPath = leaf.mirrored
         ? `inset(0 0 0 ${leaf.x + leaf.width}px)`
@@ -131,6 +128,26 @@ export class CurlView {
       this.element.append(...layers);
     }
     layOver(this.element, to);
+    this.#cutAtPane();
+  }
+
+  /**
+   * Cut where the pane the sheet lies in cuts: the curl's clip as far past
+   * its own box as the pane reaches past it, on the side it reaches furthest
+   * (the pane cuts the rest). Measured once, in the curl's own zoomed pixels.
+   */
+  #cutAtPane(): void {
+    const pane = this.element.parentElement?.getBoundingClientRect();
+    const own = this.element.getBoundingClientRect();
+    if (!pane) return;
+    const reach = Math.max(
+      0,
+      own.left - pane.left,
+      own.top - pane.top,
+      pane.right - own.right,
+      pane.bottom - own.bottom,
+    );
+    this.element.style.overflowClipMargin = `${reach / zoomOf(this.element)}px`;
   }
 
   /** The page as `frame` has it. */

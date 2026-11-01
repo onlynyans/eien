@@ -24,8 +24,9 @@ export const rampOf = (ink: string, [start, end]: Ramp): string =>
     )
     .join(', ')})`;
 
-/** One of the curl's parts that isn't a band: the paper's veil, a shade, a light. */
-export const part = (name: string) => h('div', { class: `turn-curl__${name}` });
+/** One of the curl's parts that isn't a band (a shade, a light, a layer of them), holding `children`. */
+export const part = (name: string, ...children: HTMLElement[]) =>
+  h('div', { class: `turn-curl__${name}` }, ...children);
 
 export class BandBox {
   readonly element: HTMLElement;
@@ -36,14 +37,16 @@ export class BandBox {
   /**
    * A band named `name` (a class, `turn-curl__<name>`) over `page`, `reach`
    * either side of the fold's point, holding `copy` (a copy of the page, laid
-   * inside) if any and `over` it: the veil and lights, drawn once across the
-   * band.
+   * inside) if any, `veiled` by its own paper (a page's back, its words
+   * faint through it), and `over` it the band's shade and light, drawn once
+   * across the band.
    */
   constructor(
     name: string,
     page: PageBox,
     reach: number,
     copy: HTMLElement | null,
+    veiled: boolean,
     ...over: HTMLElement[]
   ) {
     const height = `${2 * reach}px`;
@@ -52,11 +55,14 @@ export class BandBox {
     this.#inside = h('div', { class: 'turn-curl__inside' });
     Object.assign(this.#inside.style, { width: `${page.width}px`, height: `${page.height}px` });
     if (copy) this.#inside.append(copy);
+    // Over the page alone, unscaled: plain paper needs no band's box.
+    if (veiled) this.#inside.append(part('paper'));
     this.#over = over.length > 0 ? h('div', { class: 'turn-curl__over' }, ...over) : null;
     if (this.#over) {
-      // A band's box and as much again either side: drawn once at the band's first width, a sliver
-      // as the roll begins, its few pixels blend with nothing at their edges; the band's edges then
-      // fall inside, where stretching them is exact.
+      // A band's box and as much again either side. It's a layer of its own (./turn.css), which
+      // Chromium keeps at the scale it was first drawn at: a sliver as the roll begins, its few
+      // pixels blending with nothing at their edges, which let the words through a back's veil.
+      // Three boxes wide, the band's edges fall inside, where stretching a ramp is exact.
       Object.assign(this.#over.style, { width: `${3 * BAND_BOX}px`, height });
       this.#inside.append(this.#over);
     }

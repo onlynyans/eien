@@ -154,7 +154,7 @@ describe('a curl’s copies', () => {
     // How they stack is ./turn.css's, which the phone's page checks laid out (tests/mobile).
     const inside = ':scope > .turn-curl__inside';
     expect(back.querySelector(`${inside} > .turn-curl__page`)).not.toBeNull();
-    expect(back.querySelector(`${inside} > .turn-curl__over > .turn-curl__paper`)).not.toBeNull();
+    expect(back.querySelector(`${inside} > .turn-curl__paper`)).not.toBeNull();
   });
 });
 

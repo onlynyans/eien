@@ -30,11 +30,10 @@
   /* The sheet's own zoom (../../page/page.css): the curl's lengths are the sheet's own pixels
      (offsets and sizes aren't zoomed), so it lies over the sheet exactly. */
   zoom: var(--eien-zoom);
-  /* Its bands reach far past the page; cut where the pane would cut them, the page's gutter round
-     the sheet, so a flap pulled off the page shows as far as before and the window's own bounds
-     never change as they move (they did, mirrored, and repainted the whole window each move). */
+  /* Its bands reach far past the page: cut where the pane cuts them (its margin measured, ./curl-view.ts),
+     so a flap off the page shows as far as before and the bounds never change as they move (they
+     did, mirrored, and repainted the whole window each move). */
   overflow: clip;
-  overflow-clip-margin: var(--eien-page-gutter);
 }
 /* A spread's turning page (./curl-view.ts): its box over the sheet (its left and width measured),
    the curl laid in it, over the page lying still. */
@@ -115,6 +114,7 @@
 
 /* The back: its own paper over its mirrored words, so they show through faintly. */
 .turn-curl__paper {
+  z-index: 1;
   background: var(--eien-paper);
   opacity: calc(1 - var(--eien-curl-through));
 }
