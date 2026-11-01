@@ -1,5 +1,5 @@
-// How the window uses its room (spec §10, the Wide screen setting): a
-// phone's is one pane at a time; wider, the phone's build does as the writer
+// How the window uses its room (spec §10, the Wide screen setting): a phone
+// held upright is one pane at a time; on a wider screen, the phone's build does as the writer
 // chose (the desktop's panes, one at a time still, the pane you came from
 // beside the one you're in, or two pages with the notes sliding over them),
 // and the desktop is always panes. The rules alone, for ./phone-stack.ts and
@@ -16,42 +16,56 @@ export type Room = SettingValues['appearance.room'];
 
 /**
  * Narrower than any desktop window (app/electron/window.ts: 640, less a Windows frame's 16): no
- * room for the desktop's panes.
+ * room for the desktop's panes. The desktop's rule alone; a phone's build goes by its screen.
  */
 export const NARROW = '(max-width: 599.98px)';
 
 /**
- * A phone held upright (440px at most), or a foldable's cover screen: one pane at a time, whatever
- * is chosen. A foldable opened is wider (a Galaxy Z Fold 5's inner screen upright, about 590px).
+ * A phone held upright, or a foldable's cover screen: a screen taller than 7:12 (a phone's 9:16 to
+ * 9:21, a Galaxy Z Fold 5's cover 904×2316), never a tablet upright (an 8.7" one is 800×1340, 3:5)
+ * or a foldable opened (the Fold 5's 1812×2176, 5:6). The screen's shape, which neither Interface
+ * zoom nor the system's own screen zoom changes, nor the keyboard coming up (it shrinks the
+ * window, not the screen). Upright too: iOS keeps an iPhone's screen upright when it's turned.
  */
-export const UPRIGHT_PHONE = '(max-width: 519.98px)';
+export const TALL = '(max-device-aspect-ratio: 7/12) and (orientation: portrait)';
 
-/** What the window's width has room for: the desktop's panes (600px), two panes the phone's way (520px). */
-export interface Width {
+/**
+ * Narrower than a phone held upright (440px at most), whatever the screen's shape: zoomed in that
+ * far, or a window that small beside another, there's nothing to keep beside the pane you're in.
+ */
+export const CRAMPED = '(max-width: 439.98px)';
+
+/** The queries a room changes at, each listened to by what follows the room. */
+export const ROOM_QUERIES: readonly string[] = [NARROW, TALL, CRAMPED];
+
+/** What the screen has room for: the desktop's panes (600px); one pane only, tall or cramped. */
+export interface Screen {
   readonly panes: boolean;
-  readonly two: boolean;
+  readonly tall: boolean;
+  readonly cramped: boolean;
 }
 
-/** The window's width now. */
-export const widthNow = (): Width => ({
+/** The screen now. */
+export const screenNow = (): Screen => ({
   panes: !matchMedia(NARROW).matches,
-  two: !matchMedia(UPRIGHT_PHONE).matches,
+  tall: matchMedia(TALL).matches,
+  cramped: matchMedia(CRAMPED).matches,
 });
 
 const wide = settingOf('appearance.room');
 
 /** Whether this system has Wide screen: the phone's build. */
-const phoneBuild = (platform: string): boolean => wide !== undefined && offeredOn(wide, platform);
+export const phoneBuild = (platform: string): boolean =>
+  wide !== undefined && offeredOn(wide, platform);
 
 /**
  * The room now. The desktop: its panes, or one at a time under 600px. The phone's build: one at a
- * time held upright; wider, the choice, but Panes only with the desktop's room for them.
+ * time on a tall screen or a cramped one; else the choice, Panes at any width (the panes showing
+ * what fits, ../shell/pane-state.ts).
  */
-export function roomOf(width: Width, platform: string, values: SettingValues): Room {
-  if (!phoneBuild(platform)) return width.panes ? 'panes' : 'one';
-  const chosen = values['appearance.room'];
-  if (!width.two || (chosen === 'panes' && !width.panes)) return 'one';
-  return chosen;
+export function roomOf(screen: Screen, platform: string, values: SettingValues): Room {
+  if (!phoneBuild(platform)) return screen.panes ? 'panes' : 'one';
+  return screen.tall || screen.cramped ? 'one' : values['appearance.room'];
 }
 
 /**

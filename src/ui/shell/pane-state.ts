@@ -33,6 +33,13 @@ export const DEFAULT_PANES: Panes = Object.freeze({
 /** In a narrow window the list, then the sidebar, give way until the page has this much. */
 export const PAGE_MIN = 360;
 
+/**
+ * The narrowest window three panes fit, each at its narrowest beside the page. A phone's Panes
+ * narrower (a Galaxy Z Fold 5 opened, at its own size) shows two, the tree listing the notes
+ * (#68); a desktop window that narrow keeps its three, giving way as `shownWidths` says.
+ */
+export const THREE_LEAST = LIMITS.sidebar[0] + LIMITS.list[0] + PAGE_MIN;
+
 /** Side by side, the phone's way (../phone/room.ts): the page beside a pane keeps a phone's width at least. */
 export const BESIDE_PAGE_MIN = 240;
 

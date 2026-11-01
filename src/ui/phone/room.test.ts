@@ -21,36 +21,46 @@ const choosing = (room: Room): SettingValues => ({ ...DEFAULT_SETTINGS, 'appeara
 const sight = (room: Room, shown: PhonePane) =>
   PHONE_ORDER.filter((pane) => inSight(room, shown, pane));
 
-/** An upright phone; a foldable opened upright (a Galaxy Z Fold 5, about 590px); a tablet, or a fold sideways. */
-const PHONE = { panes: false, two: false };
-const FOLD = { panes: false, two: true };
-const WIDE = { panes: true, two: true };
+/**
+ * Screens (./room.ts): a phone upright (412px, 9:20); the same at 50% zoom (824px, still 9:20);
+ * a Galaxy Z Fold 5 opened at its own size (about 518px, 5:6) or a tablet upright; a window that
+ * small beside another, or zoomed in that far; a tablet, or a fold sideways.
+ */
+const PHONE = { panes: false, tall: true, cramped: false };
+const PHONE_ZOOMED_OUT = { panes: true, tall: true, cramped: false };
+const FOLD = { panes: false, tall: false, cramped: false };
+const CRAMPED = { panes: false, tall: false, cramped: true };
+const WIDE = { panes: true, tall: false, cramped: false };
+const PHONES = ['android', 'ios', 'web'];
+const DESKTOPS = ['darwin', 'win32', 'linux'];
 
 describe('the room', () => {
-  it('is one pane at a time on a phone held upright, whatever is chosen, on any system', () => {
+  it('is one pane at a time on a tall screen (a phone upright), whatever is chosen, at any zoom', () => {
     for (const room of ROOMS) {
-      expect(roomOf(PHONE, 'android', choosing(room))).toBe('one');
+      for (const phone of PHONES) {
+        expect(roomOf(PHONE, phone, choosing(room))).toBe('one');
+        expect(roomOf(PHONE_ZOOMED_OUT, phone, choosing(room))).toBe('one');
+      }
       expect(roomOf(PHONE, 'darwin', choosing(room))).toBe('one');
     }
   });
 
+  it('is one pane at a time on a cramped screen, whatever its shape', () => {
+    for (const room of ROOMS) expect(roomOf(CRAMPED, 'android', choosing(room))).toBe('one');
+  });
+
   it('is the writer’s choice on a wider phone’s screen, and always panes on a wide desktop', () => {
     for (const room of ROOMS) {
-      for (const phone of ['android', 'ios', 'web'])
-        expect(roomOf(WIDE, phone, choosing(room))).toBe(room);
-      for (const desktop of ['darwin', 'win32', 'linux'])
-        expect(roomOf(WIDE, desktop, choosing(room))).toBe('panes');
+      for (const phone of PHONES) expect(roomOf(WIDE, phone, choosing(room))).toBe(room);
+      for (const desktop of DESKTOPS) expect(roomOf(WIDE, desktop, choosing(room))).toBe('panes');
     }
   });
 
-  it('on a foldable opened upright, is any room but the desktop’s panes, which need 600px', () => {
-    expect(ROOMS.map((room) => roomOf(FOLD, 'android', choosing(room)))).toEqual([
-      'one',
-      'one',
-      'side',
-      'pages',
-    ]);
-    expect(roomOf(FOLD, 'darwin', choosing('side'))).toBe('one'); // a desktop window that narrow
+  it('on a foldable opened, short of the desktop’s 600px, is still the choice: Panes too (#68)', () => {
+    for (const room of ROOMS) expect(roomOf(FOLD, 'android', choosing(room))).toBe(room);
+    // A desktop window that narrow goes by its width alone.
+    expect(roomOf(FOLD, 'darwin', choosing('side'))).toBe('one');
+    expect(roomOf(PHONE_ZOOMED_OUT, 'darwin', choosing('one'))).toBe('panes');
   });
 
   it('is today’s panes until the writer chooses', () => {
