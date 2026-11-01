@@ -16,7 +16,7 @@ export type BookLens = 'contents' | 'marks' | 'found';
 
 /** A mark as its row shows it: where it is (core/epub/marks.ts), its page, and its chapter. */
 export type MarkRow = Mark & {
-  /** Its page as the book numbers them, or null for none known yet. */
+  /** Its printed page, else how far through the book ("21%"); null for none known yet. */
   readonly page: string | null;
   /** Its chapter's name. */
   readonly chapter: string;

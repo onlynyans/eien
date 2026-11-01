@@ -229,6 +229,11 @@ describe('Chrome', () => {
     // A book's bookmark (#40, Phase 4b): drawn here, with no page to set it aside.
     arrow('ArrowRight');
     expect(ids()).toBe('bookmark');
+    // A book's Marks and every page's Find (#64), before the hairline to Look.
+    arrow('ArrowRight');
+    expect(ids()).toBe('marks');
+    arrow('ArrowRight');
+    expect(ids()).toBe('find');
     arrow('ArrowRight');
     expect(ids()).toBe('look');
     arrow('ArrowRight');

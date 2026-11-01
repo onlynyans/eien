@@ -2,7 +2,15 @@
 // folds away (#16); the panes have tabs at their edges; on a phone, a slip
 // floats at the page's foot. Styles in ./slip.css.
 
-import { CHEVRONS, FOOT, formatBar, type LayoutSpec, TOOL_FOLDS, VIEWS } from './layout-spec';
+import {
+  CHEVRONS,
+  FOOT,
+  formatBar,
+  type LayoutSpec,
+  PHONE_FOLDS,
+  TOOL_FOLDS,
+  VIEWS,
+} from './layout-spec';
 
 export const SLIP: LayoutSpec = {
   desktop: [
@@ -18,6 +26,8 @@ export const SLIP: LayoutSpec = {
         'format-bar',
         'focus',
         'bookmark',
+        'marks',
+        'find',
         '|',
         'look',
         'strip',
@@ -34,6 +44,7 @@ export const SLIP: LayoutSpec = {
     name: 'phone-slip',
     slot: 'phoneFoot',
     label: 'Page',
-    items: [VIEWS, 'focus', 'bookmark', 'look', 'more'],
+    items: [VIEWS, 'focus', 'bookmark', 'marks', 'find', 'look', 'more'],
+    folds: PHONE_FOLDS,
   },
 };

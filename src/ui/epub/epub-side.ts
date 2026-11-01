@@ -249,10 +249,10 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       stopCount = counted.run(
         epub,
         (then) => pages.whenStill(then),
-        () => {
+        (item) => {
           placing.counted();
-          // Whole: the list's Marks have their pages now.
-          if (counted.whole) of.changed();
+          // A chapter more counted: its marks and matches have their places now.
+          if (path) of.counted(path, item);
         },
       );
     },

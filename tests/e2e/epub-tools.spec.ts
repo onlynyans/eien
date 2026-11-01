@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { type Box, boxOf, expect, ROOT, test } from './launch';
+import { type Box, boxOf, clickMenu, expect, ROOT, test } from './launch';
 
 const PLAIN = readFileSync(join(ROOT, 'tests/fixtures/epub/plain.epub'));
 const book = (page: Page) =>
@@ -35,7 +35,7 @@ test('a book alone sets a note’s tools aside, and the formatting bar’s row w
   await expect(page.locator('.page__format')).toBeVisible();
   await book(page).click();
   await expect(chapter(page)).toContainText('It is a truth');
-  for (const id of ['seal', 'compare', 'versions', 'focus', 'format.bold']) {
+  for (const id of ['seal', 'compare', 'versions', 'focus', 'format-bar', 'format.bold']) {
     await expect(tool(page, id), id).toBeHidden();
   }
   await expect(page.locator('.page__format')).toBeHidden();
@@ -131,4 +131,30 @@ test.describe('with a companion', () => {
     await note.click();
     await expect(more).toBeVisible();
   });
+});
+
+test('a book’s Find opens its find bar, and its Marks the list on its Marks lens, a shut list opened (#64)', async ({
+  app,
+  page,
+}) => {
+  await book(page).click();
+  await expect(chapter(page)).toContainText('It is a truth');
+  await tool(page, 'find').click();
+  const find = page.getByRole('search', { name: 'Find in the book' });
+  await expect(find).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(find).toBeHidden();
+  // The list shut: Marks opens it on the book's marks.
+  await clickMenu(app, 'View', 'Toggle Note List');
+  await expect(page.locator('.list')).toBeHidden();
+  await tool(page, 'marks').click();
+  await expect(page.locator('.list')).toBeVisible();
+  await expect(page.locator('.list .book-lens[aria-pressed="true"]')).toContainText('Marks');
+});
+
+test('a note has Find among its tools too, and no Marks (#64)', async ({ page }) => {
+  await noteRow(page, 'Notes').click();
+  await expect(tool(page, 'marks')).toBeHidden();
+  await tool(page, 'find').click();
+  await expect(page.getByRole('search', { name: 'Find in the note' })).toBeVisible();
 });

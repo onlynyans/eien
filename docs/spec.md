@@ -444,22 +444,30 @@ Three panes, each collapsible, with a two-pane option in settings:
      larger, over what scrolls sideways, or what the system takes at the
      screen's edge. A chapter turned so, or at the foot, steps its words in
      from the side it comes from as Words does, at the Turn speed (none at
-     0 or with reduced motion); any other jump is at once. The colophon says "3 of 61", then the page (Phase 4), then how far
-     through the chapter and the book ("40% of the chapter", "12% of the
-     book", the book by its chapters' sizes; the two dropped first on a
-     narrow page, the page kept).
-   - **Page numbers** (Phase 4a): the page the place is on, "page 212 of
-     2,450", in Scroll and in Pages. A book with a page-list (the printed
-     edition's pages) has its printed numbers, "page xii" before the first
+     0 or with reduced motion); any other jump is at once. The colophon says "3 of 61", then
+     where in the chapter (the page,
+     below), then how far through the book ("12% of the book", by its
+     chapters' sizes; dropped first on a narrow page, where in the chapter
+     kept). Today's words aren't in a book's colophon (none are written
+     there): they're set aside while a book is the page in front, as a
+     note's tools are, and kept where each page's figures stand at its own
+     foot and a note is beside; a sprint under way still counts down.
+   - **Page numbers** (Phase 4a, #67): where in the chapter. A book with a
+     page-list (the printed edition's pages) has its printed numbers, in
+     Scroll and in Pages, "page 212 of 2,450", "page xii" before the first
      numbered one, the book's pages by its last label where that's a
      number, shown as soon as the chapter is drawn; a page whose place the
-     book lost counts for nothing. Any other book has steady pages: 1,500
-     of its characters a page, over every chapter in the reading order, so
-     a number never moves with the window, the face or the device, and only
-     rises through the book. The book is counted once, in the background,
-     a chapter at a time and never while a page turns; until it's counted
-     the colophon gives no steady page. The count is kept for the last few
-     books this window opened, never written.
+     book lost counts for nothing. Any other book, in Pages, is numbered by
+     the chapter's own pages as laid out now: "page 3 of 12", the next turn
+     "page 4 of 12", a spread "pages 3–4 of 12"; scrolling, where there are
+     no pages, it says how far through the chapter, "40% of the chapter".
+     The folios say the same numbers. A place elsewhere in the book (a
+     Marks or Found row, the edge strip) is named by its printed page, else
+     how far through the book ("21%"), by its chapter's words: steady
+     across the window, the face and the device. The book is counted once,
+     in the background, a chapter at a time and never while a page turns;
+     a place in a chapter not yet counted has no name. The count is kept
+     for the last few books this window opened, never written.
    - **Bookmarks** (Phase 4b): **B**, the bookmark tool (a ribbon, with the
      book's own tools, in every room on a phone too, backlog #63; and the
      phone's ⋯) or View → Bookmark This Page
@@ -516,7 +524,9 @@ Three panes, each collapsible, with a two-pane option in settings:
      at one word), each row its words (those its page begins with, or those
      highlighted), its page, and its chapter and kind ("Chapter III ·
      highlight"), or "Nothing kept yet. B bookmarks a page; H keeps the
-     words you choose." Enter or a click goes to the mark; Delete or
+     words you choose." The page's **Marks** tool (#64) shows them from the
+     page: the list on its Marks lens (opened if shut), with two panes the
+     sidebar's, on a phone a pane away; set aside with marks On the edge. Enter or a click goes to the mark; Delete or
      Backspace takes it off (once, however long it's held; the keyboard
      goes to the next row), a highlight with Put back in the book's
      colophon. The
@@ -604,7 +614,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      lands. The place is the same, so one page and two show the same words. A
      bookmark's mark sits on the page it marks; B on two pages marks the
      first one's first word, or takes off every bookmark on the two. The
-     colophon says both pages ("pages 212–213 of 2,450"). In pages the book
+     colophon says both pages ("pages 3–4 of 12", a printed book's
+     "pages 212–213 of 2,450"). In pages the book
      is set as a book: justified and hyphenated where the window can
      hyphenate its language (a Mac can; elsewhere it may be ragged), ragged
      on a phone and a page as narrow; each chapter opening four lines low;
@@ -781,8 +792,8 @@ the new layout, or on the page. Whether the strip is hidden is per device.
 band and its formatting row, Slip's slip, Running head's strip) never runs
 past the page, the screen, or the system's window controls. The tools that
 don't fit fold behind one ⋯ at the bar's end, as few as it takes, in one
-order: Versions, Compare, the formatting bar's toggle, Focus, Look, the views (as
-one), then the Seal (the formatting row: from Table back, bold and italic
+order: Versions, Compare, the formatting bar's toggle, Focus, a book's Marks
+and bookmark, Find, Look, the views (as one), then the Seal (the formatting row: from Table back, bold and italic
 staying). The strip's own control never folds: it's the shut band's way back.
 The ⋯ lists what folded in the bar's order, each with its icon, key and state,
 and runs it; arrows reach it, and the keyboard on a tool that folds goes to
@@ -805,9 +816,13 @@ the words shows on the page once the typing pauses, so nothing on the page
 moves mid-word.
 
 On a phone each layout has its own bottom for the page: Band the top bar
-(the view, Focus, Look, ⋯), Slip a floating slip (the three views, Focus,
-Look, ⋯), Running head a rail at the page's foot (the views, Focus, Seal,
-Look, ⋯). The ⋯ holds the rest, as the menu bar does on the desktop.
+(the view, Focus, Find, Look, ⋯), Slip a floating slip (the three views,
+Focus, Find, Look, ⋯), Running head a rail at the page's foot (the views,
+Focus, Seal, Find, Look, ⋯); with a book in front, its two views, its
+bookmark, Marks, Find, Look and ⋯ (#63, #64). The ⋯ holds the rest, as the
+menu bar does on the desktop. Short of room (a Fold 5's cover, 344px) the bar
+folds its tools into that ⋯, which offers them all (Focus, Seal, Marks, Find,
+the bookmark, then Look), Back and ⇄ giving way first to a finger's reach.
 
 The visual design (type, color, spacing) is set in the design pass. This spec
 fixes only the token names it uses (§7).
@@ -1131,8 +1146,9 @@ words, as on the page.
 ⌘F (Ctrl+F elsewhere) finds in the open note, in Live, Source and Reading,
 on the active page of a split: each page finds in its own note. Edit → Find
 holds Find…, Find and Replace… (⌥⌘F; Ctrl+H off the Mac, where Ctrl+Alt is
-AltGr), Find Next (⌘G) and Find Previous (⇧⌘G); on a phone it's the page's
-⋯ → Find. It's CodeMirror's search (`@codemirror/search`, `ui/editor/find.ts`),
+AltGr), Find Next (⌘G) and Find Previous (⇧⌘G); and Find among the page's
+tools (#64), a note's or a book's, on the desktop and the phone (where the
+page's ⋯ → Find too). It's CodeMirror's search (`@codemirror/search`, `ui/editor/find.ts`),
 drawn as Eien's own slip at the page's top right (`ui/find/find-bar.ts`),
 which searches nothing itself, so an EPUB's chapters can drive it too.
 

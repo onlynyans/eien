@@ -269,9 +269,38 @@ section where it and the directions below disagree.
     Format → Highlight (⇧⌘H, which a book's words take too) and the phone's
     ⋯.
 - **Page numbers:** the print edition's, from the EPUB's page-list where it
-  has one, else steady pages of 1,500 characters.
+  has one; else the chapter's own pages as laid out now (decided
+  2026-11-01, #67, after a Fold 5: steady pages of 1,500 characters, Phase
+  4a's first answer, read 7–8, 8, 8, 9, 9–10 as a phone's smaller pages
+  turned, the number not the page turned).
+  - **One number, the page turned:** the colophon's page and the folio say
+    the same; it moves on by one each turn ("page 3 of 12"), two on a
+    spread ("pages 3–4 of 12"; the last spread's lone page "page 12 of
+    12"). The front matter has none.
+  - **A printed edition's pages** stay its own everywhere, Scroll and Pages:
+    citable, the same on every screen. On a small page one may hold for a
+    turn, as a printed page does over two of a phone's.
+  - **Scrolling** has no pages: where in the chapter is how far through it,
+    "40% of the chapter", in the page's place.
+  - **A place elsewhere in the book** (a Marks or Found row, the edge strip)
+    isn't laid out: it's named by its printed page, else how far through
+    the book ("21%"; the strip "Chapter IV, 21% of the book"), by its
+    chapter's words once that chapter is counted. It never moves with the
+    window, the face or the device.
   - **No real cost:** the page-list is read once with the book, and a
-    chapter's page anchors are measured once as it's drawn.
+    chapter's page anchors are measured once as it's drawn; the chapter's
+    pages are the sight already measured each turn, counted, not measured
+    again.
+- **A book's colophon** (decided 2026-11-01, #66): `4 of 9`, where in the
+  chapter, and `21% of the book`, in that order, with Back, "bookmarked",
+  "highlighted" and the news where they apply. "% of the chapter" leaves Pages (the
+  chapter's page says it). The book's figure keeps its words: the zoom's
+  "110%" can stand in the same colophon, and two bare percents would read
+  alike. Today's tally is set aside while a book is in front, as a note's
+  tools are (no words are written in a book); with each page's figures at
+  its own foot, the window's colophon keeps it for a note beside. A sprint
+  under way still counts down: it's the writer's clock, and Start Sprint
+  isn't a note's command.
 - **Phase 4's design, the owner's answers (2026-10-30):**
   - In Scroll, a bookmark's mark keeps to the top of the sheet in sight.
   - On the edge, the strip shows your place as a mark-wide ink-soft bar
@@ -285,7 +314,7 @@ section where it and the directions below disagree.
     deleted.
   - `]` and `[` to walk the marks come with highlights (Phase 5).
 
-### Touch and tools, after the foldable (decided 2026-11-01, #64, #65)
+### Touch and tools, after the foldable (decided 2026-11-01, #64, #65; built, [#157](https://github.com/onlynyans/eien/pull/157), [#166](https://github.com/onlynyans/eien/pull/166))
 
 - **Choosing words by touch (#65).** The owner: keep the system's choosing,
   in Pages and Scroll alike, for its handles and its Copy and Share; put
@@ -309,7 +338,9 @@ section where it and the directions below disagree.
   its Marks lens, or with two panes the SHELF row's), on a phone a pane
   away as Contents is; set aside with marks On the edge, where the strip is
   the marks in sight. A phone's bar short of room folds its tools into its
-  own ⋯, which lists them all already.
+  own ⋯, which lists them all already. The formatting bar's switch is a
+  note's (the orchestrator's call): a book's tools are its views, the
+  bookmark, Marks, Find and Look.
 
 ### After Phase 1 (2026-10-29)
 
@@ -468,13 +499,16 @@ Each phase is its own session and pull request, from main.
     the places kept in them moved.
 - **The reading room,** after the turn (it was Phase 3b).
 - **Phase 4, place, bookmarks and page count:** print pages or steady
-  pages; Marks in the list or on the edge. In five pull requests, stacked:
+  pages (the chapter's own since #67); Marks in the list or on the edge. In five pull requests, stacked:
   the page's mark shared, for a bookmark to wear
   ([#132](https://github.com/onlynyans/eien/pull/132)); **4a, built:** page
-  numbers, the printed edition's from the page-list, else steady pages of
-  1,500 characters, the book counted once in the background, a chapter a
+  numbers, the printed edition's from the page-list, else (until #67)
+  steady pages of 1,500 characters, the book counted once in the background, a chapter a
   task and never while a page turns (`core/epub/chapter-count.ts`,
-  `page-numbers.ts`; `ui/epub/book-count.ts`); **4b, built:** bookmarks on
+  `page-numbers.ts`; `ui/epub/book-count.ts`); steady pages gave way to
+  the chapter's own as laid out (#67, 2026-11-01, `ui/epub/book-place.ts`),
+  the count kept for the printed pages' places and each chapter's words;
+  **4b, built:** bookmarks on
   the page: B, the tool, View → Bookmark This Page and the phone's ⋯; the
   Page mark worn, kept to the top of the sheet in sight as it scrolls,
   following a turn once it lands; Facing pages' clash as decided; kept in
@@ -544,8 +578,8 @@ included, is held to the same bar.
 
 | Kind | What it holds |
 |---|---|
-| Unit (`core/epub`) | The zip reader: stored and deflated entries, data descriptors, the CRC, every cap. The container: OPF, spine, manifest, nav and NCX, page-list. Paths inside the zip. The EPUB's cleaning rules: whitelist, SVG-wrapped pictures, named parts. Page numbers (print and steady). The reading state's file, keyed by the book's contents. The marks |
-| Property (fast-check) | On any bytes, the zip reader ends in a book or a reason, never an unchecked throw, never past a cap. No path ever leaves the zip. The cleaner never lets out an element or attribute it doesn't keep. A place survives a round trip to a page and back. Steady page numbers only rise. A key turn's variation stays in its bounds |
+| Unit (`core/epub`) | The zip reader: stored and deflated entries, data descriptors, the CRC, every cap. The container: OPF, spine, manifest, nav and NCX, page-list. Paths inside the zip. The EPUB's cleaning rules: whitelist, SVG-wrapped pictures, named parts. Page numbers (printed, else the chapter's own; a place's share of the book). The reading state's file, keyed by the book's contents. The marks |
+| Property (fast-check) | On any bytes, the zip reader ends in a book or a reason, never an unchecked throw, never past a cap. No path ever leaves the zip. The cleaner never lets out an element or attribute it doesn't keep. A place survives a round trip to a page and back. A place's share of the book only rises. A key turn's variation stays in its bounds |
 | Adversarial | A zip bomb (by ratio and by total), a path out of the zip, duplicate names, a huge chapter, deep nesting. Script, handlers, style, iframe, object and form in a chapter. `javascript:` and remote addresses. Malformed XML. No `container.xml`. A DRM-locked book, refused and said so |
 | DOM unit (happy-dom) | SHELF's rows and keys, the contents list, the book page's parts. A turn's states: begin, hold, let go, catch, finish, reduced motion. The settings' controls. The quick look (#49) |
 | End to end (Electron, the fixture books in a real vault) | Opening from SHELF, reading, turning by key, click and drag. The place kept across a restart. Bookmarks, highlights, Find. Pictures shown. A book beside a note, Quote and its undo. The book's look apart from the notes'. The hostile books refused safely. Timed and dragging tests `ALONE` |
@@ -779,6 +813,12 @@ Shared by all three:
   Where one does, its numbers match the paper copy, for citing.
 - **Recommended:** Print where the book has it, else Steady, and the screen's
   turns underneath (a page number may then hold for a turn or two).
+- **Decided otherwise (2026-11-01, #67):** a number that holds for a turn
+  reads as broken on a phone, where it held for two or three. Print where
+  the book has it, else the screen's, counted within the chapter, so
+  "page 3" is always the page in sight; a place you go back to (a mark, a
+  match) is named by Print, else how far through the book, which is
+  steady.
 
 ### Recommendation: 2 · In the list, with 1's marks on the page
 
@@ -791,7 +831,8 @@ Shared by all three:
   - The **pencil underline** with its margin tick for a highlight: quieter
     than a wash, and it leaves the wash to Find's matches, so the two never
     look alike (2 has to outline its matches to tell them apart).
-  - 1's **page numbers**: Print, else Steady.
+  - 1's **page numbers**: Print, else Steady (decided otherwise, #67: Print,
+    else the chapter's own pages, above).
 - **3's strip** is the most original, and Found's dots on it are the best map
   of a word. It's a lot of new furniture for a first build: keep it for later,
   perhaps as the scroll bar's marks.

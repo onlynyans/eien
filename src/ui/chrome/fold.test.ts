@@ -6,9 +6,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chrome, type ChromeOf } from './chrome';
 import { actsOn, type CommandId } from './commands';
-import { contentBox, folded, within } from './fold';
+import { contentBox, fitBar, folded, within } from './fold';
 import type { SlotName } from './layout-spec';
-import { FORMAT_FOLDS } from './layout-spec';
+import { FORMAT_FOLDS, PHONE_FOLDS } from './layout-spec';
 
 const SLOTS: readonly SlotName[] = [
   'top',
@@ -103,13 +103,14 @@ describe('A · Band’s bar', () => {
       'versions',
       'format-bar',
       'focus',
+      'find',
       'look',
       'strip',
     ]);
   });
 
   it('folds the least asked for first, behind one ⋯ at the bar’s end', () => {
-    fitTo(9); // three views, four tools, the strip and the ⋯
+    fitTo(10); // three views, five tools, the strip and the ⋯
     expect(chrome.folded(bar())).toEqual(['compare', 'versions']);
     expect(mores().filter((button) => !button.hidden)).toHaveLength(1);
     expect(bar().lastElementChild?.contains(more() ?? null)).toBe(true);
@@ -129,13 +130,21 @@ describe('A · Band’s bar', () => {
       'versions',
       'format-bar',
       'focus',
+      'find',
       'look',
     ]);
   });
 
   it('folds the look last of the tools, before the views (#49)', () => {
     fitTo(6); // three views, seal, strip, ⋯
-    expect(chrome.folded(bar())).toEqual(['compare', 'versions', 'format-bar', 'focus', 'look']);
+    expect(chrome.folded(bar())).toEqual([
+      'compare',
+      'versions',
+      'format-bar',
+      'focus',
+      'find',
+      'look',
+    ]);
     fitTo(7); // the look in sight still
     expect(shown()).toEqual(['view.live', 'view.source', 'view.reading', 'seal', 'look', 'strip']);
   });
@@ -149,11 +158,11 @@ describe('A · Band’s bar', () => {
 
   it('hides a rule with no tool in sight on one side of it', () => {
     const [rule, last] = bar().querySelectorAll<HTMLElement>('.host__rule');
-    // compare seal versions | format-bar focus | look strip
+    // compare seal versions | format-bar focus find | look strip
     expect([rule?.hidden, last?.hidden]).toEqual([false, false]);
-    fitTo(8); // views, seal | focus | look strip ⋯: versions, compare, format-bar folded
+    fitTo(8); // views, seal | find | look strip ⋯: versions, compare, format-bar, focus folded
     expect([rule?.hidden, last?.hidden]).toEqual([false, false]);
-    fitTo(7); // views, seal | look strip ⋯: focus folded, the run between gone with its rule
+    fitTo(7); // views, seal | look strip ⋯: find folded, the run between gone with its rule
     expect([rule?.hidden, last?.hidden]).toEqual([false, true]);
     fitTo(3); // seal | strip ⋯: a run on each side still
     expect([rule?.hidden, last?.hidden]).toEqual([false, true]);
@@ -167,6 +176,37 @@ describe('A · Band’s bar', () => {
     bar().getClientRects = () => [] as never;
     fitTo(20);
     expect(chrome.folded(bar())).toEqual(before);
+  });
+
+  it('folds a book’s tools Marks first, then its bookmark and Find, Look last (#64)', () => {
+    // A book in front (../vault/command-looks.ts): a note's own set aside, a book's in sight.
+    of.look = (id) => (actsOn(id, 'epub') ? {} : { aside: true });
+    chrome.refresh();
+    expect(shown()).toEqual([
+      'view.pages',
+      'view.scroll',
+      'bookmark',
+      'marks',
+      'find',
+      'look',
+      'strip',
+    ]);
+    const steps: (readonly string[])[] = [];
+    for (let controls = 7; controls >= 4; controls--) {
+      fitTo(controls); // the ⋯ takes one
+      steps.push(chrome.folded(bar()));
+    }
+    // Seven tools fit seven controls. Short of that, in the bar's order: Marks first (the list's
+    // lenses reach the marks too) with the bookmark (one alone would only make room for the ⋯),
+    // then Find, and Look; the book's views and the strip stay. The formatting bar's switch is a
+    // note's.
+    expect(steps).toEqual([
+      [],
+      ['bookmark', 'marks'],
+      ['bookmark', 'marks', 'find'],
+      ['bookmark', 'marks', 'find', 'look'],
+    ]);
+    expect(shown()).toEqual(['view.pages', 'view.scroll', 'strip']);
   });
 });
 
@@ -184,6 +224,7 @@ describe('the ⋯', () => {
       'Versions',
       'Formatting bar',
       'Focus mode',
+      'Find',
       'Look',
     ]);
     const checked = [...document.querySelectorAll('.menu [aria-checked="true"]')].map(
@@ -225,6 +266,103 @@ describe('B · Slip and C · Running head', () => {
       if (layout === 'slip') expect(shown()).toContain('strip');
       chrome.unmount();
     }
+  });
+});
+
+describe('a phone’s bar (#64)', () => {
+  it('folds behind the ⋯ it holds, which offers it all: no second ⋯, the views and the ⋯ staying', () => {
+    for (const layout of ['band', 'slip', 'runhead'] as const) {
+      chrome.mount(layout);
+      const phone = layout === 'band' ? slots.phoneBar : slots.phoneFoot;
+      // A note's page: its views, Focus mode, (C's seal), Find, Look and the ⋯.
+      room = 3;
+      chrome.fit();
+      const folded = chrome.folded(phone);
+      expect(folded.length, layout).toBeGreaterThan(0);
+      expect(
+        folded.every((id) => PHONE_FOLDS.includes(id)),
+        layout,
+      ).toBe(true);
+      expect(folded[0], layout).toBe('focus');
+      expect(phone.querySelector('.host__more'), layout).toBeNull();
+      expect(shown(phone), layout).toContain('more');
+      chrome.unmount();
+    }
+  });
+
+  it('gives the keyboard on a tool that folds to the ⋯ it went into', () => {
+    chrome.mount('band');
+    chrome.buttons('focus').at(-1)?.focus();
+    room = 3;
+    chrome.fit();
+    expect((document.activeElement as HTMLElement | null)?.dataset.command).toBe('more');
+  });
+
+  it('is fitted again as back or ⇄ beside it changes, which take room come back before it does', () => {
+    // A's bar in the phone's top bar, after back and before ⇄ (../phone/phone-stack.ts).
+    const top = document.createElement('nav');
+    const [back, other] = [document.createElement('button'), document.createElement('button')];
+    top.append(back, slots.phoneBar, other);
+    document.body.append(top);
+    const watched: Element[] = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = (element: Element) => watched.push(element);
+        disconnect = () => {};
+      },
+    );
+    try {
+      const watching = new Chrome(of);
+      watching.mount('band');
+      expect(watched).toEqual(expect.arrayContaining([slots.phoneBar, back, other]));
+      watching.unmount();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+describe('a bar its tools size (a phone’s, beside back and ⇄)', () => {
+  /** Five tools 20 wide from the bar's left; the bar 100 wide with all in sight, back taking 20 more as one folds. */
+  function sized() {
+    const element = document.createElement('div');
+    const ids = ['focus', 'seal', 'marks', 'find', 'look'] as const;
+    const buttons = ids.map((id) => {
+      const button = document.createElement('button');
+      button.dataset.command = id;
+      element.append(button);
+      return button;
+    });
+    const drawn = () => buttons.filter((button) => !button.hidden);
+    for (const button of buttons) {
+      button.getBoundingClientRect = () => {
+        const at = drawn().indexOf(button);
+        return at < 0 ? new DOMRect() : new DOMRect(at * 20, 0, 20, 20);
+      };
+    }
+    const bar = document.createElement('div');
+    // Its padding and edges said, as a laid-out bar's are (contentBox reads them).
+    bar.style.cssText = 'padding: 0px; border: 0px solid';
+    bar.append(element);
+    document.body.append(bar);
+    bar.getBoundingClientRect = () => new DOMRect(0, 0, drawn().length === 5 ? 100 : 80, 20);
+    const host = {
+      element,
+      commands: () => [...ids],
+      steps: () => ids.map((id, rank) => ({ ids: [id], rank })),
+      fold: (folded: readonly string[]) => {
+        for (const button of buttons) button.hidden = folded.includes(button.dataset.command ?? '');
+      },
+    };
+    return { bar, host };
+  }
+
+  it('reads its room with every tool in sight, so a fit lands the same whatever folded before', () => {
+    const { bar, host } = sized();
+    host.fold(['focus']); // folded by a fit before: back took the room back, the bar 80 wide
+    expect(fitBar([host], bar)).toEqual([]);
+    expect(fitBar([host], bar)).toEqual([]);
   });
 });
 

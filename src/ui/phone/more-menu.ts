@@ -27,6 +27,8 @@ export interface MoreState {
   readonly highlighted?: boolean;
   /** A book's: whether the page in sight is bookmarked (Phase 4b), its choice checked. */
   readonly bookmarked?: boolean;
+  /** A book's: its marks where they're listed (#64), as the bar's Marks; none with marks on the edge. */
+  marks?(): void;
 }
 
 export function moreItems(state: MoreState, run: (command: MenuCommand) => void): MenuItem[] {
@@ -68,6 +70,9 @@ export function moreItems(state: MoreState, run: (command: MenuCommand) => void)
             toggle: true,
           } satisfies MenuItem,
         ]
+      : []),
+    ...(state.kind === 'epub' && state.marks
+      ? [{ label: 'Marks', run: state.marks } satisfies MenuItem]
       : []),
     'separator',
     item('Seal', 'seal'),

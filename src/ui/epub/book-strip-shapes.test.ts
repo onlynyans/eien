@@ -57,7 +57,7 @@ function shaped(shape: Shape) {
         epub.spine.map((item) => item.path),
       ),
     goTo,
-    pageAt: (_, offset) => `page ${offset + 1}`,
+    wordsAt: (_, offset) => `page ${offset + 1}`,
   });
   document.body.append(element);
   strip.drawn();

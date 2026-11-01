@@ -154,7 +154,7 @@ Rules, pure TypeScript.
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
   - `chapter-words.ts`: a chapter's words walked once from its cleaned nodes, as a place counts them, each in its block (`BLOCK_NAMES`, the one list)
   - `chapter-count.ts`: a chapter's words counted by that walk, and where the printed pages begin in it (Phase 4)
-  - `page-numbers.ts`: a place's page: the printed edition's (the page-list), else steady pages of 1,500 characters, and as the colophon says it
+  - `page-numbers.ts`: a place's page: the printed edition's (the page-list), else how far through the book (a row's, the strip's), and as the colophon says it (#67)
   - `chapters.ts`: what a chapter is called, and the chapters either side of it in the reading order
   - `book-link.ts`: a link to one of the book's chapters, as an address of the page's own and back
   - `quote.ts`: a passage quoted into a note, its citation, at the note's end
@@ -373,7 +373,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `epub-side.ts`: one page holding a book (`Side`): a chapter at a time, moved between, its place kept in the reading state and shown again
   - `book-parts.ts`: its parts made together: the place said, the bookmarks, the links, the turns
   - `epub-side-types.ts`: what a page holding a book is (`EpubSide`, `EpubSideOf`, `isEpub`)
-  - `book-place.ts`: what the page says of where it is as the place moves: the colophon's figures, the fore-edge, the page (Phase 4)
+  - `book-place.ts`: what the page says of where it is as the place moves: the colophon's figures, the fore-edge, the page: printed, else the chapter's own as laid out, else scrolling its percent (Phase 4, #67)
   - `book-count.ts`: a book counted for its page numbers, in the background, never while a page turns; one per book for the window, the last few kept (Phase 4)
   - `book-open.ts`: the book read and opened for its page (or the words it says instead), what it's called, and where it opens
   - `chapter-foot.ts`: a chapter's foot, the chapters either side as word buttons (the sheet's turns, `page/page.css`)
@@ -383,7 +383,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `book-follow.ts`: where they take the reader: the note over the page, or the chapter and place, one step back
   - `note-over.ts`: a book's note over its page, floated as a menu
   - `book-words.ts`: a selection's words without the page's own (a copy, a quote)
-  - `book-foot.ts`: a book's colophon items: Back, which chapter, its page, "bookmarked", how far through, a line of news
+  - `book-foot.ts`: a book's colophon items: Back, which chapter, where in it, "bookmarked", how far through the book, a line of news; no Today (#66)
   - `book-selection.ts`: the selection bar over a book: Quote in the note, Copy
   - `book-quote.ts`: the words chosen in a book as a quote, cited, and sent to the note beside
   - `test-side.ts`: a book's page over a vault the DOM tests hold
@@ -485,7 +485,7 @@ The phone.
   - `selectors.test.ts`: no style rule ends in `*` after a `:hover` or `:focus`, which restyles the whole window
   - `words.test.ts`: no folder, file or CSS class named for "reader", as Words says
 - `zip-interop.test.ts` holds Eien's zips to zlib and `unzip`
-- `tests/support/` holds what the tests share, Node-free so core's tests can use it: a strict zip reader, a strict XML check, an export's parts, a long book for the budgets (`long-book.ts`)
+- `tests/support/` holds what the tests share, Node-free so core's tests can use it: a strict zip reader, a strict XML check, an export's parts, a long book for the budgets (`long-book.ts`) and its reading file with a mark in its last chapter, which the budgets wait on to know it's counted (`marked-book.ts`)
 - `tests/e2e/` drives the built app on real folders with Playwright
 - `tests/mobile/`: the phone's page in Chromium
 - `tests/extension/`: the extension in Chromium, over AO3's and FanFiction.Net's pages as `tests/support/story-pages/` writes them

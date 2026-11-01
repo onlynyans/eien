@@ -9,6 +9,7 @@ import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { longBook } from '../support/long-book';
+import { markedAtEnd } from '../support/marked-book';
 import { ALONE, expect, ROOT, test, type VaultFiles } from './launch';
 
 /**
@@ -276,7 +277,11 @@ test.describe('a long book with its marks on the edge (#40)', () => {
  */
 test.describe('a long book counted and put away (#40)', () => {
   test.use({
-    vaultFiles: { 'Novels/Long.epub': LONG_EPUB, 'Notes.md': 'The gate held.\n' },
+    vaultFiles: {
+      'Novels/Long.epub': LONG_EPUB,
+      'Notes.md': 'The gate held.\n',
+      ...markedAtEnd(LONG_EPUB, `c${CHAPTERS - 1}.xhtml`),
+    },
   });
 
   test('gives its memory back but the count’s', ALONE, async ({ page }) => {
@@ -292,9 +297,9 @@ test.describe('a long book counted and put away (#40)', () => {
     await expect(page.locator('.cm-content')).toContainText('The gate held.');
     const before = await heap();
     await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
-    await expect(page.locator('.colophon__page')).toHaveText(/^page \d+ of 1,0\d\d$/u, {
-      timeout: 60_000,
-    });
+    // The whole book counted: the mark in its last chapter has its place.
+    await page.getByRole('button', { name: /^Marks \d+$/u }).click();
+    await expect(page.locator('.mark-row__page')).toHaveText(/^\d+%$/u, { timeout: 60_000 });
     await page.locator('.tree-row', { hasText: 'All Notes' }).first().click();
     await note.click();
     await expect(page.locator('.cm-content')).toContainText('The gate held.');
