@@ -218,3 +218,63 @@ describe('Pages, landscape, switched on a book’s page', () => {
     expect(sheet.place).toBe(300);
   });
 });
+
+// QA (#40, pages chosen): the screen turned (a phone, or a desktop window
+// made taller than wide) with the book's box the same size: the pane's
+// resize alone tells the page, and the choice for the screen as it's now held
+// lays it out anew, one page or two, the place kept.
+describe('Pages, landscape and portrait, the screen turned', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('takes the other choice when the screen turns, though the box is the same size', async () => {
+    const resized: ResizeObserverCallback[] = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resized.push(callback);
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    let portrait = false;
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      () => ({ matches: portrait }) as MediaQueryList,
+    );
+    const { side } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
+    laidOut(side.page);
+    await side.open('a.epub');
+    const { sheet } = side.page;
+    Object.defineProperty(sheet.box, 'clientWidth', { value: 600 });
+    Object.defineProperty(sheet.box, 'clientHeight', { value: 600 });
+    sheet.box.getBoundingClientRect = () =>
+      ({ left: 0, width: 600, top: 0, height: 600 }) as DOMRect;
+    side.follow({
+      ...DEFAULT_SETTINGS,
+      'epub.view': 'pages',
+      'epub.landscape': 'two',
+      'epub.portrait': 'one',
+    } as SettingValues);
+    sheet.showPlace(300);
+    expect(sheet.page.per).toBe(2);
+    const turned = () => {
+      for (const callback of resized) callback([], {} as ResizeObserver);
+    };
+    // Turned upright: portrait's One.
+    portrait = true;
+    turned();
+    expect(sheet.box.hasAttribute('data-spread')).toBe(false);
+    expect(sheet.page.per).toBe(1);
+    expect(sheet.place).toBe(300);
+    // And back: landscape's Two.
+    portrait = false;
+    turned();
+    expect(sheet.box.hasAttribute('data-spread')).toBe(true);
+    expect(sheet.page.per).toBe(2);
+    expect(sheet.place).toBe(300);
+  });
+});
