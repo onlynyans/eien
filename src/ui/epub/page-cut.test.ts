@@ -105,4 +105,48 @@ describe('a sight’s words cut for a turn’s copy', () => {
     expect(plate?.querySelector('img')).not.toBeNull();
     expect(plate?.style.marginTop).toBe('0px');
   });
+
+  it('takes a scene break at the page’s head as what stands there: its gap dropped, the words after keep theirs', () => {
+    const chapter = chapterOf(
+      '<p>One.</p><hr data-part="scene-break"><p data-part="epigraph">Two.</p>',
+    );
+    const page = cut(chapter, 'One.'.length, null);
+    expect(page.querySelector('hr')?.style.marginTop).toBe('0px');
+    expect(page.querySelector('p')?.style.marginTop).toBe('');
+  });
+
+  it('never hides a block whose scene break is still to come', () => {
+    const chapter = chapterOf('<blockquote><p>One.</p><hr></blockquote><p>Two.</p>');
+    const page = cut(chapter, 'One.'.length, null);
+    expect(page.querySelector('blockquote')?.style.display).toBe('');
+    expect(page.querySelector('hr')).not.toBeNull();
+  });
+
+  it('leaves a break or a picture on the page it’s drawn on, never the head of the next or the foot of this', () => {
+    // The page in sight from 100 to 300; the break before its words drawn on the page before, the
+    // picture after them on the page after.
+    const box = document.createElement('div');
+    const chapter = chapterOf(
+      '<p>One.</p><div class="scene-break">***</div><p>Two.</p><figure><img alt=""></figure><p>Three.</p>',
+    );
+    box.append(chapter);
+    document.body.append(box);
+    const at = (element: Element | null, left: number, width: number) => {
+      if (element)
+        element.getBoundingClientRect = () => ({ left, width, right: left + width }) as DOMRect;
+    };
+    at(box, 100, 200);
+    at(chapter.querySelector('.scene-break'), 0, 80);
+    at(chapter.querySelector('img'), 320, 80);
+    const page = cut(chapter, 'One.'.length, 'One.Two.'.length);
+    expect(page.querySelector('.scene-break')).toBeNull();
+    expect(page.querySelector('img')).toBeNull();
+    expect(page.textContent).toBe('Two.');
+    // Drawn on this page, they come with it.
+    at(chapter.querySelector('.scene-break'), 100, 200);
+    at(chapter.querySelector('img'), 150, 80);
+    const own = cut(chapter, 'One.'.length, 'One.Two.'.length);
+    expect(own.querySelector('.scene-break')).not.toBeNull();
+    expect(own.querySelector('img')).not.toBeNull();
+  });
 });

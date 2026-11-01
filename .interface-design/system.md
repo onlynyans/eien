@@ -691,7 +691,9 @@ in the book, each recorded here as it's built.
   note's in Reading, the gap between; *As a book*, no gap, a paragraph
   indented `--eien-epub-indent` only after another plain one, the first
   after a heading, a break, a picture or a centred line flush, and a named
-  part's own gap kept. A book setting, in the shelf's quick look alone.
+  part's own gap kept. The first line's paragraph is a plain one there
+  (#60): no gap under it, and the one after it indented; Pages sets them
+  so too. A book setting, in the shelf's quick look alone.
 - **A chapter a sheet** (Phase 2): the chapter scrolls on the note's sheet.
   At its foot, the sheet's turns (`.sheet__turns`, shared with the
   extension's story page): a `--eien-rule-soft` hairline, `--eien-space-7`
