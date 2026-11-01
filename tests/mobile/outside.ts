@@ -75,6 +75,21 @@ export async function threePanes(page: Page): Promise<void> {
   await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
 }
 
+/**
+ * Open the chapter `name` of the book on the page from its contents, wherever the room keeps them:
+ * the list a step back, one pane at a time; beside the page with three panes; under the book's
+ * SHELF row with two (a Fold opened upright, #68).
+ */
+export async function openChapter(page: Page, name: string): Promise<void> {
+  const back = page.locator('.phone-bar__back');
+  if (await back.isVisible()) await back.click();
+  await page
+    .locator('.contents-row:visible, .tree-row--chapter:visible')
+    .filter({ hasText: name })
+    .first()
+    .click();
+}
+
 export async function open(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('.shell')).toBeVisible();

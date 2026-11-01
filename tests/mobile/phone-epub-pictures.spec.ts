@@ -6,7 +6,7 @@
 import { devices, expect, type Page, test } from '@playwright/test';
 import { page as chapterPage, handEpub, nav, opf, XHTML } from '../support/epub-parts';
 import { png } from '../support/images';
-import { open, putBytesOutside } from './outside';
+import { open, openChapter, putBytesOutside } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'reduce' });
 
@@ -70,7 +70,7 @@ const sight = (page: Page) =>
     };
   });
 
-/** The book in pages on `screen`, open at its first chapter; the back bar to its contents. */
+/** The book in pages on `screen`, open at its first chapter, in the room the screen has (#68). */
 async function openNovel(page: Page, bytes: Uint8Array, screen: { width: number; height: number }) {
   await open(page);
   await page.evaluate(() => window.eien.settings.set('epub.view', 'pages'));
@@ -89,7 +89,6 @@ async function openNovel(page: Page, bytes: Uint8Array, screen: { width: number;
   if (!(await row.isVisible())) await back.click();
   await row.click();
   await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
-  return back;
 }
 
 for (const screen of [
@@ -99,10 +98,10 @@ for (const screen of [
   test(`a picture alone is a page of its own, ${screen.width}×${screen.height}`, async ({
     page,
   }) => {
-    const back = await openNovel(page, book(), screen);
+    // A Fold upright is Panes now (#68), two of them: the page beside the tree, narrower.
+    await openNovel(page, book(), screen);
     for (const name of NAMES.slice(1)) {
-      await back.click();
-      await page.locator('.contents-row', { hasText: name }).click();
+      await openChapter(page, name);
       await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter img')).toHaveCount(1);
       await expect.poll(() => sight(page), { message: name }).toEqual({ pages: 1, inSight: true });
     }
@@ -131,7 +130,7 @@ test('a chapter of two pictures is two pages, a picture on each, no blank page b
   page,
 }) => {
   // Two plates as a light novel's colour pages come: blank lines above, between and after.
-  const back = await openNovel(
+  await openNovel(
     page,
     book({
       Prologue: CHAPTERS.Prologue ?? '',
@@ -139,8 +138,7 @@ test('a chapter of two pictures is two pages, a picture on each, no blank page b
     }),
     { width: 590, height: 706 },
   );
-  await back.click();
-  await page.locator('.contents-row', { hasText: 'Colour pages' }).click();
+  await openChapter(page, 'Colour pages');
   await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter img')).toHaveCount(2);
   await expect.poll(() => pictures(page)).toEqual({ pages: 2, inSight: [true, false] });
   // The keys turn the page they're in.
