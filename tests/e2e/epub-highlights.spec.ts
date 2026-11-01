@@ -193,10 +193,12 @@ test.describe('a book’s highlights among its marks (Phase 5b)', () => {
     // A bookmark at the third chapter's top.
     await page.locator('.contents-row').nth(2).click();
     await leaf(page).locator('.page__scroll').focus();
+    const said = page.locator('.colophon__said');
     await page.keyboard.press('b');
+    // Kept before going on: a slow machine went back to the first chapter, and walked, first.
+    await expect(said).toHaveText('Bookmarked.');
     await page.locator('.contents-row').nth(0).click();
     await leaf(page).locator('.page__scroll').focus();
-    const said = page.locator('.colophon__said');
     // The highlight's in sight: ] goes past it, to the bookmark.
     // Each chapter headed by an h1, as Eien's export writes it (core/export/epub.ts).
     await page.keyboard.press(']');
