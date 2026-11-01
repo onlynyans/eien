@@ -2,6 +2,13 @@
 .page__leaf--epub {
   background: var(--eien-page-ground);
 }
+/* Where a finger reads (a phone, a foldable, a tablet), a book's sheet ends as it begins: its foot
+   margin its head's, not the desk's 72px, so the page takes the height it's given (#58). */
+@media (pointer: coarse) {
+  .page__leaf--epub .epub-sheet {
+    padding-bottom: var(--eien-sheet-pad-top);
+  }
+}
 /* Its head names the book (#57): one line, cut short with an ellipsis. */
 .epub-sheet > .sheet__head .crumbs {
   min-width: 0;
