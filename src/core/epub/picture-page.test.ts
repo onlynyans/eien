@@ -26,6 +26,23 @@ describe('a chapter that’s only a picture (#59)', () => {
     );
   });
 
+  it('keeps each of its pictures, in order, the blank lines between them gone too', () => {
+    const chapter = read(
+      `<p>&#160;</p><div><img src="p1.jpg"/></div><p><br/></p><p>&#160;</p><div><img src="p2.jpg"/></div>`,
+    );
+    expect(shape(chapter)).toBe('<div:plate><img><div:plate><img>');
+    const sources = chapter.flatMap((node) =>
+      node.kind === 'element'
+        ? node.children.map((child) => child.kind === 'element' && child.attrs.src)
+        : [],
+    );
+    expect(sources).toEqual(['text/p1.jpg', 'text/p2.jpg']);
+  });
+
+  it('takes a Japanese book’s blank line, an ideographic space, as blank', () => {
+    expect(shape(read(`<p>　</p>${FRAME}`))).toBe('<div:plate><img>');
+  });
+
   it('keeps a place a link names in it', () => {
     expect(shape(read(`<p id="p12">&#160;</p>${FRAME}`))).toBe('<p><a#p12><div:plate><img>');
   });
