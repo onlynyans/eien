@@ -408,8 +408,9 @@ Three panes, each collapsible, with a two-pane option in settings:
    chosen. The search field then searches the vault.
 3. **Page** — the editor, on a paper sheet; or a book (#40): one chapter of
    it on the note's own sheet, drawn from cleaned nodes in the writer's
-   faces and the theme's colours, its pictures from the book's own zip, the
-   book's folders above it. A book that won't open says why on the sheet
+   faces and the theme's colours, its pictures from the book's own zip, its
+   head naming the book, "Pride and Prejudice · Jane Austen" (the title
+   alone with no author; its folders are on its title page) (#57). A book that won't open says why on the sheet
    (locked with DRM, too large, damaged); its file is only read. A tool
    shows only while the active page can use it (decided 2026-10-29): with a
    book active, a note's tools (the views, Seal, Compare, Versions, Copy as

@@ -238,3 +238,24 @@ test('a page that begins on a picture: the copy lays the picture, and the lines 
   }
   expect(headed, 'pages begun on a picture').toBeGreaterThan(0);
 });
+
+// #60 again: on a narrow page (a small phone; a Fold's page beside the tree, about 278px) more of
+// a page's lines end in a space, and its first word was found a line late now and then, the copy
+// stepping every line up. One at a time here, under either room rule.
+for (const width of [300, 278]) {
+  test(`a narrow page, ${width}px: each turn’s copy lays every line where the page has it`, async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await openBook(page, partsBook(), { width, height: 706 }, 100);
+    await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
+      'Before.',
+    );
+    await page.locator('.phone-bar__back').click();
+    await page.locator('.contents-row', { hasText: 'The quay' }).click();
+    await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
+      'The rain kept on',
+    );
+    await turnsMatch(page, 14);
+  });
+}

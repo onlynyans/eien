@@ -1,8 +1,15 @@
 // A place in a drawn chapter (#40, Phase 2), on the tests' own layout
 // (./test-lines.ts).
 
-import { afterEach, describe, expect, it } from 'vitest';
-import { firstInSight, piecesOf, showOffset, wordsFrom } from './chapter-place';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  across,
+  firstInSight,
+  firstOnPage,
+  piecesOf,
+  showOffset,
+  wordsFrom,
+} from './chapter-place';
 import { linesOf } from './test-lines';
 
 /** A chapter of paragraphs, with Eien's own scene break and a picture's words between. */
@@ -103,5 +110,79 @@ describe('the words from a place inside a word', () => {
     chapter.innerHTML = '<p>incompre<em>hensible</em> words</p>';
     expect(wordsFrom(chapter, 'incompre'.length, 200)).toBe('hensible words');
     expect(wordsFrom(chapter, 'incomprehen'.length, 200)).toBe('hensible words');
+  });
+});
+
+// #60: a space at a line's end is two empty boxes in Chromium, one at the end
+// of its line and one at the next line's start, at the page's own left edge.
+// Read by the second, every such space on a page counted for the page before,
+// and the search for a page's first word could land on one and begin the page
+// a line late: a turn's copy then stepped each line up by one.
+describe('a page’s first word, its lines ending in spaces', () => {
+  /** Lines of 17 characters (16 letters and a space), 11 lines a page, each 10px a letter, pages 20px apart. */
+  const PER = 17;
+  const LINES = 11;
+  const WIDTH = PER * 10;
+  const GAP = 20;
+  const pageLeft = (page: number) => page * (WIDTH + GAP);
+
+  /** Each character's boxes as Chromium gives them: a line-end space's two, empty. */
+  function boxesOf(index: number, count: number): DOMRect[] {
+    const line = Math.floor(index / PER);
+    const left = pageLeft(Math.floor(line / LINES)) + (index % PER) * 10;
+    const box = (from: number, to: number) =>
+      ({ left: from, right: to, width: to - from }) as DOMRect;
+    if (index % PER === PER - 1 && index < count - 1) {
+      const next = pageLeft(Math.floor((line + 1) / LINES));
+      return [box(left, left), box(next, next)];
+    }
+    return [box(left, left + 10)];
+  }
+
+  function laidInPages(count: number): HTMLElement {
+    const chapter = document.createElement('div');
+    const line = 'abcdefghijklmnop ';
+    chapter.innerHTML = `<p>${line.repeat(Math.ceil(count / PER)).slice(0, count)}</p>`;
+    document.body.append(chapter);
+    vi.spyOn(Range.prototype, 'getClientRects').mockImplementation(function (this: Range) {
+      const boxes: DOMRect[] = [];
+      for (let at = this.startOffset; at < this.endOffset; at++) boxes.push(...boxesOf(at, count));
+      return boxes as unknown as DOMRectList;
+    });
+    vi.spyOn(Range.prototype, 'getBoundingClientRect').mockImplementation(function (this: Range) {
+      const boxes = [...this.getClientRects()];
+      const left = Math.min(...boxes.map((box) => box.left));
+      const right = Math.max(...boxes.map((box) => box.right));
+      return { left, right, width: right - left } as DOMRect;
+    });
+    return chapter;
+  }
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('is the page’s own first word, whatever the search lands on', () => {
+    // A paragraph of 262 characters begun at the page's head: the search's halves land on the
+    // first line's closing space, which the page before never had.
+    const chapter = laidInPages(262);
+    expect(firstOnPage(chapter, pageLeft(0))).toBe(0);
+    expect(firstOnPage(chapter, pageLeft(1))).toBe(PER * LINES);
+  });
+
+  it('reads a line-end space by the line it ends, and a letter after a hyphen by its own line', () => {
+    const chapter = laidInPages(PER * 2);
+    const text = chapter.querySelector('p')?.firstChild as Text;
+    const one = (at: number) => {
+      const range = document.createRange();
+      range.setStart(text, at);
+      range.setEnd(text, at + 1);
+      return range;
+    };
+    expect(across(one(PER - 1)).right).toBe(WIDTH - 10); // the space closing the first line
+    // A letter just after a hyphenated break: the hyphen's box at the line before's end, its own on the next.
+    vi.spyOn(Range.prototype, 'getClientRects').mockReturnValue([
+      { left: 160, right: 166, width: 6 },
+      { left: 0, right: 10, width: 10 },
+    ] as unknown as DOMRectList);
+    expect(across(one(3)).right).toBe(10);
   });
 });

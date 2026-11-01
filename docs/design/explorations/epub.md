@@ -202,6 +202,11 @@ section where it and the directions below disagree.
   - **Quote's citation:** `— Pride and Prejudice, Chapter III`, with no
     author.
 - **By lamplight** (Showcase 3), as a mode on Scroll, later.
+- **The sheet's head names the book** (#57, decided 2026-11-01): where a
+  note's folders stand, in label type and pencil on one line, "PRIDE AND
+  PREJUDICE · JANE AUSTEN" (the title alone with no author, an ellipsis
+  when long), as the story page's running head names a work; C's running
+  head the same. The folders are on Eien's title page and SHELF.
 
 ### Turning the page
 
