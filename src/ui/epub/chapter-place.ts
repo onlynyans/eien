@@ -83,12 +83,16 @@ export type SideOf = (range: Range) => Pick<DOMRect, 'left' | 'right'>;
  * A range's box across, as the window lays it out. A character just after the point a word was
  * hyphenated at (Set as a book) stands at the next line's start, but its range holds the inserted
  * hyphen too, at the end of the line before (Chromium's): on the page before, which a place would
- * open a page early at. A character's own box is its range's last.
+ * open a page early at. A character's own box is its range's last that has width. A space a line
+ * ends at has none: two empty boxes, at its line's end and the next line's start, the page's left
+ * edge, which would count it for the page before and begin a page a line late (#60). It's read by
+ * its first, the line it ends.
  */
 export const across: SideOf = (range) => {
   const one =
     range.startContainer === range.endContainer && range.endOffset - range.startOffset === 1;
-  const own = one ? [...range.getClientRects()].at(-1) : undefined;
+  const boxes = one ? [...range.getClientRects()] : [];
+  const own = boxes.filter((box) => box.width > 0).at(-1) ?? boxes[0];
   return own ?? range.getBoundingClientRect();
 };
 
