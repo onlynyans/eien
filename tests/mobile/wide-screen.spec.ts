@@ -584,6 +584,28 @@ test.describe('a Galaxy Z Fold 5 at its own size, 1812×2176 pixels', () => {
     await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
   });
 
+  test('the foot’s Panes says two are here for the room, and follows the room as it turns', async ({
+    page,
+  }) => {
+    await withRoom(page, 'panes', FOLD5, { 'window.zoom': 70 });
+    const toggle = page.locator('.host--foot [data-command="panes"]');
+    const crowded = async () => {
+      await expect(toggle).toHaveAttribute(
+        'data-tip',
+        'Three panes, two here for the room · switch to two',
+      );
+      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    };
+    await crowded();
+    await page.setViewportSize({ width: FOLD5.height, height: FOLD5.width }); // room for three
+    await expect(toggle).toHaveAttribute('data-tip', 'Three panes · switch to two');
+    await page.setViewportSize(FOLD5);
+    await crowded();
+    await toggle.click(); // Two chosen, as it said
+    await expect(toggle).toHaveAttribute('data-tip', 'Two panes · switch to three');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  });
+
   for (const room of ['panes', 'side', 'pages'] as const)
     test(`folded, its cover screen is one at a time with ${room} chosen`, async ({ page }) => {
       await withRoom(page, room, FOLD5_COVER);
@@ -598,4 +620,44 @@ test('a phone upright zoomed out to 50%, 824px wide, is still one at a time: tal
   await expect.poll(() => page.evaluate(() => innerWidth)).toBe(PHONE.width * 2);
   await expect(page.locator('.shell')).toHaveAttribute('data-room', 'one');
   await inSight(page, 'list');
+});
+
+// #68: the room follows each of its queries as the window changes, the window and Settings alike.
+// Each step changes one query alone: the screen's shape (600px wide or more either side), or a
+// window under 440px (narrower than 600px either side, and never tall).
+test.describe('the room follows each of its queries live', () => {
+  const NEAR_SQUARE = { width: 900, height: 1000 };
+  /** As tall as a phone, wider than 600px: a phone upright, zoomed out. */
+  const TALL_WIDE = { width: 700, height: 1300 };
+  const SMALL = { width: 500, height: 700 };
+  /** Under 440px, not a phone's shape: a small window beside another. */
+  const CRAMPED = { width: 420, height: 600 };
+
+  test('a screen turned tall is one at a time, and back', async ({ page }) => {
+    await withRoom(page, 'panes', NEAR_SQUARE);
+    await page.setViewportSize(TALL_WIDE);
+    await expect(page.locator('.shell')).toHaveAttribute('data-room', 'one');
+    await page.setViewportSize(NEAR_SQUARE);
+    await expect(page.locator('.shell')).toHaveAttribute('data-room', 'panes');
+  });
+
+  test('a window under 440px is one at a time, and back', async ({ page }) => {
+    await withRoom(page, 'side', SMALL);
+    await page.setViewportSize(CRAMPED);
+    await expect(page.locator('.shell')).toHaveAttribute('data-room', 'one');
+    await page.setViewportSize(SMALL);
+    await expect(page.locator('.shell')).toHaveAttribute('data-room', 'side');
+  });
+
+  test('Settings, open, offers the panes’ settings as the shape changes', async ({ page }) => {
+    await withRoom(page, 'panes', NEAR_SQUARE);
+    await page.getByRole('button', { name: 'Settings' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Settings' });
+    const lists = sheet.getByRole('navigation').getByRole('button', { name: 'Lists', exact: true });
+    await expect(lists).toBeVisible();
+    await page.setViewportSize(TALL_WIDE);
+    await expect(lists).toBeHidden();
+    await page.setViewportSize(NEAR_SQUARE);
+    await expect(lists).toBeVisible();
+  });
 });

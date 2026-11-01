@@ -375,6 +375,17 @@ describe('a phone’s Panes with no room for three (#68)', () => {
     expect(two.crowded).toBe(false); // two chosen: nothing to say about three
   });
 
+  it('hands the keyboard on when one pane at a time becomes Panes too narrow for three', () => {
+    resizeTo(600);
+    phone = 'list'; // one at a time, the keyboard in the list
+    const panes = make(false, true);
+    parts.list.querySelector('button')?.focus();
+    phone = null; // Wide screen set to Panes, or the window unfolded
+    panes.relayout();
+    expect(panes.crowded).toBe(true);
+    expect(parts.leave).toHaveBeenCalledWith('list');
+  });
+
   it('crowds nothing one pane at a time, the phone’s way', () => {
     resizeTo(600);
     phone = 'list';
