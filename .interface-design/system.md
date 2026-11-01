@@ -823,7 +823,9 @@ in the book, each recorded here as it's built.
   and B's slip above it both clear. The system's menu stands by the words,
   the bar at the foot: never one over the other. A press acts on the words
   last chosen (a tap may drop the choice first), then lets the choice go,
-  as the system's Copy does. Copy gives the words alone, through the
+  as the system's Copy does; but Take off the highlight leaves its words
+  chosen, as on the desktop (Phase 5a), so the bar docks again offering
+  Highlight to put it back. Copy gives the words alone, through the
   window's clipboard. The page's ⋯ keeps Highlight and Quote.
 - **A note's reference and a note** are named (`note-ref`, `note`) to open
   the note over the page, and drawn as the book sets them: the reference

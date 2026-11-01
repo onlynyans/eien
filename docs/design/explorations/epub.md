@@ -270,7 +270,8 @@ section where it and the directions below disagree.
     the note, Copy. On a touch screen it docks at the page's foot over the
     colophon while words are chosen (the link Bar's docked look), laid over
     the colophon's row out of flow so a page is never laid out anew under a
-    choice. It acts on the words last chosen and then lets them go. Neither
+    choice. It acts on the words last chosen and then lets them go (but
+    Take off the highlight leaves them chosen, so Highlight puts it back). Neither
     WebView lets a page add to the system's menu, so this is the same on
     Android and iOS. The phone's ⋯ keeps Highlight and Quote.
 - **Find and Marks as tools (#64).** Find is one command, every page's (a
