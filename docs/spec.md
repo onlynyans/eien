@@ -1968,7 +1968,8 @@ Compare or Restore finishes lands on a note opened meanwhile.
   turned sideways) ([tablet.md](design/explorations/tablet.md)). The rules are
   `src/ui/phone/room.ts`; the desktop is always Panes.
   - **Panes** (the default, as before): the desktop's three panes, or two, and
-    the split, as on the desktop, with every control and row a finger's
+    the split, as on the desktop (a phone starts with two, the tree listing
+    the notes, `layout.panes`'s `phoneDefault`; the writer's choice stands), with every control and row a finger's
     (`--eien-touch`, 44 px; a compact row 36 px) where a finger is the
     pointer. They need the desktop's 600 px: narrower, one at a time. Tools
     that don't fit their bar scroll in it under a finger; the page never runs

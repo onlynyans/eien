@@ -65,6 +65,16 @@ export const listOutside = (page: Page, path: string) =>
 
 export const titles = (page: Page) => page.locator('.note-row__title');
 
+/**
+ * Three panes, the note list between the tree and the page, in place of a phone's own two (#69):
+ * for the tests of the list beside the page. One pane at a time, it changes nothing.
+ */
+export async function threePanes(page: Page): Promise<void> {
+  await page.evaluate(() => window.eien.settings.set('layout.panes', 'three'));
+  await page.reload(); // the settings as this device keeps them, read as the window starts
+  await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
+}
+
 export async function open(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('.shell')).toBeVisible();

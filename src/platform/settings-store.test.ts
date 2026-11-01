@@ -48,6 +48,21 @@ describe('SettingsStore', () => {
     expect(mine.data()).toEqual({ settings: { 'editor.links': 'card' } });
   });
 
+  it('opens a new phone with two panes, and keeps Three once it’s chosen (#69)', async () => {
+    const mine = device();
+    const phone = new SettingsStore(mine.store, () => null, PHONE_DEFAULTS);
+    expect((await phone.all())['layout.panes']).toBe('two');
+    expect((await new SettingsStore(device().store, () => null).all())['layout.panes']).toBe(
+      'three',
+    );
+    await phone.set('layout.panes', 'three');
+    // Read again, as the phone starts next: the choice stands over the phone's default.
+    expect(
+      (await new SettingsStore(mine.store, () => null, PHONE_DEFAULTS).all())['layout.panes'],
+    ).toBe('three');
+    expect(mine.data()).toEqual({ settings: { 'layout.panes': 'three' } });
+  });
+
   it('refuses a bad value, a vault setting with no vault, and a vault file it can’t read', async () => {
     const vault = new MemoryStorage();
     const settings = new SettingsStore(device().store, () => vault);
