@@ -67,20 +67,23 @@
   }
 }
 /* A thousand matches (Phase 5c): a Found row out of sight is neither styled nor laid out, so
-   drawing them, or a key typed in the field, lays out the few in sight and not the thousand.
-   A row seen once keeps its height; one never seen is as tall as two lines of words and its
-   chapter's, in the list, or a tree row on SHELF. */
+   drawing them, or a key typed in the field, lays out the few in sight and not the thousand
+   (each small change laid them all out again, 45 ms on CI's machines). Still in the page, so the
+   keyboard, find and a screen reader reach every one. Until it's drawn, a row is as tall as two
+   lines of words and its chapter's line, in the list, or a tree row's on SHELF. */
 .rows--found > li {
   content-visibility: auto;
-  contain-intrinsic-size: auto
+  contain-intrinsic-block-size: auto
     calc(
-      var(--eien-row-pad-y) *
-      2 +
+      2 *
+      var(--eien-row-pad-y) +
       var(--eien-leading-row) *
-      (var(--eien-size-row) * 2 + var(--eien-size-preview))
+      (2 * var(--eien-size-row) + var(--eien-size-preview)) +
+      3 *
+      var(--eien-hairline)
     );
 }
 .tree-row--found {
   content-visibility: auto;
-  contain-intrinsic-size: auto var(--eien-row-h);
+  contain-intrinsic-block-size: auto var(--eien-row-h);
 }

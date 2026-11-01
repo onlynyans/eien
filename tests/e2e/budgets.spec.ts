@@ -6,7 +6,7 @@
 
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { handEpub, nav, opf, XHTML, page as xhtml } from '../support/epub-parts';
 import { longBook } from '../support/long-book';
 import { ALONE, clickMenu, expect, readQuietly, test, type VaultFiles } from './launch';
@@ -486,11 +486,12 @@ test.describe('a long book counted while its pages turn', () => {
 /**
  * A long book searched (#40, Phase 5c), the same one: the list's field finds a
  * word in every paragraph (the count's limit reached in the second chapter, a
- * thousand rows drawn), then one in each chapter's last paragraph, so every
- * chapter is read, the 4,000-paragraph one too, a chapter a task and never
- * while a page turns, as fifty pages turn. No long task over the same
- * 200 ms. Measured on CI with BUDGETS=1 (and SLOW=4) before it was set; the
- * numbers are in the pull request.
+ * thousand rows drawn, those out of sight never laid out, and End reaching the
+ * last), then one in each chapter's last paragraph, so every chapter is read,
+ * the 4,000-paragraph one too, a chapter a task and never while a page turns,
+ * as fifty pages turn. No long task over the same 200 ms. The field and the
+ * lens are found by CSS: a role query walks every element, the thousand rows'
+ * too, and was itself a long task of up to 250 ms. Measured: MEASURED.
  */
 test.describe('a long book searched while its pages turn', () => {
   test.use({
@@ -504,65 +505,34 @@ test.describe('a long book searched while its pages turn', () => {
     const time = await stalls(page);
     await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
     await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter p')).toHaveCount(600);
-    // MEASURE (throwaway): a trace of the window from the mark to the first turn.
-    const cdp = await page.context().newCDPSession(page);
-    const traced: unknown[] = [];
-    cdp.on('Tracing.dataCollected', (e) => traced.push(...(e.value as unknown[])));
-    const traceDone = new Promise((done) => cdp.once('Tracing.tracingComplete', done));
-    if (!process.env.NOTRACE)
-      await cdp.send('Tracing.start', {
-        transferMode: 'ReportEvents',
-        traceConfig: {
-          includedCategories: [
-            'devtools.timeline',
-            'disabled-by-default-devtools.timeline',
-            'disabled-by-default-devtools.timeline.stack',
-            'v8.execute',
-            'blink',
-            'blink.user_timing',
-            'v8',
-            'cppgc',
-            'loading',
-            'toplevel',
-            'accessibility',
-            'disabled-by-default-v8.gc',
-          ],
-        },
-      });
     await time.mark();
-    const search =
-      process.env.LOCATORS === 'css'
-        ? page.locator('input[type="search"][aria-label="Search Pride and Prejudice"]')
-        : page.getByRole('searchbox', { name: 'Search Pride and Prejudice' });
+    const search = page.locator(
+      '.list input[type="search"][aria-label="Search Pride and Prejudice"]',
+    );
     // In every paragraph: stops at the count's limit, its thousand rows drawn as they come.
     await search.fill('universally');
     await expect(page.locator('.list__empty')).toHaveText(/^More than 1,000/u, { timeout: 60_000 });
-    await expect(page.locator('.found-row')).toHaveCount(1000);
+    const rows = page.locator('.found-row');
+    await expect(rows).toHaveCount(1000);
+    // The rows out of sight skipped (book-lenses.css), and still the keyboard's.
+    const skipped = (row: Locator) =>
+      row.evaluate((button) => !button.checkVisibility({ contentVisibilityAuto: true }));
+    expect(await skipped(rows.first())).toBe(false);
+    expect(await skipped(rows.last())).toBe(true);
+    await rows.first().focus();
+    await page.keyboard.press('End');
+    await expect(rows.last()).toBeFocused();
+    await expect(rows.last()).toBeInViewport();
     // Once a chapter, the last paragraph's: every chapter read, the large one's too.
     await search.fill('Paragraph 599:');
     await page.locator('.page__leaf--epub .page__scroll').focus();
     for (let i = 0; i < 50; i++) {
       await page.keyboard.press('ArrowRight');
       await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
-      if (i === 3 && !process.env.NOTRACE) {
-        await cdp.send('Tracing.end');
-        await traceDone;
-        writeFileSync(
-          join(test.info().outputPath(), 'trace.json'),
-          JSON.stringify({ traceEvents: traced }),
-        );
-      }
     }
-    await expect(
-      process.env.LOCATORS === 'css'
-        ? page.locator('[data-key="lens:found"] .count', { hasText: /^61$/u })
-        : page.getByRole('button', { name: 'Found 61' }),
-    ).toBeVisible({ timeout: 120_000 });
-    const longest = await time.longest();
-    const out = test.info().outputPath();
-    const record = await page.evaluate(() => (window as unknown as { long: unknown }).long);
-    writeFileSync(join(out, 'frames.json'), JSON.stringify({ longest, long: record }));
-    console.log(`MEASURE ${JSON.stringify({ longest, long: record })}`);
-    expect(longest, 'a long book searched, fifty turns').toBeLessThan(STALL);
+    await expect(page.locator('.list__head [data-key="lens:found"] .count')).toHaveText('61', {
+      timeout: 120_000,
+    });
+    expect(await time.longest(), 'a long book searched, fifty turns').toBeLessThan(STALL);
   });
 });

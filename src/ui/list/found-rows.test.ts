@@ -124,6 +124,16 @@ describe('a book’s Found in the list', () => {
     expect(document.activeElement?.classList.contains('found-row')).toBe(true);
   });
 
+  it('marks its rows as Found’s, which lays out only those in sight (book-lenses.css), and no other lens’s', () => {
+    const { container } = drawn(model());
+    const rows = container.querySelector('.rows--found');
+    expect(rows?.getAttribute('aria-label')).toBe('Found in Pride and Prejudice');
+    expect(rows?.querySelector(':scope > li > .found-row')).not.toBeNull();
+    document.body.replaceChildren();
+    for (const lens of ['contents', 'marks'] as const)
+      expect(drawn(model({ lens })).container.querySelector('.rows--found')).toBeNull();
+  });
+
   it('with Marks on the edge, draws Found’s rows in the contents’ place, with no lenses', () => {
     const { container } = drawn(model({ marks: null, lens: 'contents' }));
     expect(container.querySelector('.book-lenses')).toBeNull();

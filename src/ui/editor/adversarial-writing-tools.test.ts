@@ -257,13 +257,18 @@ describe('focus mode: what holds', () => {
     expect(lit).toContain(state.doc.lineAt(doc.length >> 1).number);
     // The work counted, not the clock: about a millisecond, but coverage's counters make it six
     // times that, and a busy runner more (50 ms on CI's, 2026-11-01). Each line lit is looked at
-    // twice, walking to the paragraph's edge and marking it; none past them.
+    // twice, walking to the paragraph's edge and marking it; none past them, and the note's
+    // text never read whole.
     const line = vi.spyOn(state.doc, 'line');
     const lineAt = vi.spyOn(state.doc, 'lineAt');
+    const whole = (['toString', 'sliceString', 'iter', 'iterLines', 'iterRange'] as const).map(
+      (method) => vi.spyOn(state.doc, method),
+    );
     currentParagraph(state);
     expect(line.mock.calls.length + lineAt.mock.calls.length).toBeLessThanOrEqual(
       2 * lit.length + 4,
     );
+    for (const method of whole) expect(method).not.toHaveBeenCalled();
   });
 
   it('follows the text as it changes when the caret doesn’t move', () => {
