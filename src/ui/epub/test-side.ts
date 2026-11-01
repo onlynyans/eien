@@ -6,6 +6,7 @@ import { afterEach, type Mock, vi } from 'vitest';
 import type { Reading } from '../../core/epub';
 import { MemoryStorage } from '../../platform/memory/memory-storage';
 import { BookCounts } from './book-count';
+import { BookTexts } from './book-search';
 import { boundsOf, rangeOver, walked } from './chapter-range';
 import { makeEpubSide } from './epub-side';
 import type { EpubSide, EpubSideOf } from './epub-side-types';
@@ -61,6 +62,8 @@ export function sideWith(
       },
     },
     counts: new BookCounts(),
+    texts: new BookTexts(),
+    still: (then) => then(),
     looks: vi.fn(),
     sizeOf: (path: string) =>
       listed.includes(path) ? (files[path]?.length ?? 64 * 1024 * 1024) : null,

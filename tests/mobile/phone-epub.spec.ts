@@ -279,6 +279,94 @@ test('a highlight made and taken off from the ⋯, the words last chosen, Put ba
   await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter I · highlight');
 });
 
+test('Find from the ⋯ on a book: the page’s find bar searching the whole book, Enter on to the next (#40, Phase 5c)', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click(); // the list's back: the sidebar
+  const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
+  await expect(book).toBeVisible({ timeout: 10_000 });
+  await book.click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('menuitem', { name: 'Find', exact: true }).click();
+  const bar = page.getByRole('search', { name: 'Find in the book' });
+  await expect(bar).toBeVisible();
+  const field = bar.getByRole('textbox', { name: 'Find' });
+  await field.fill('Netherfield');
+  const count = bar.locator('.find__count');
+  await expect(count).toHaveText(/^1 of \d+$/u);
+  const total = Number((await count.textContent())?.split(' of ')[1]);
+  expect(total).toBeGreaterThan(1);
+  await field.press('Enter');
+  await expect(count).toHaveText(`2 of ${total}`);
+  // Painted by the window's own Highlight API: every match in sight, and the one it's on.
+  expect(await page.evaluate(() => CSS.highlights.get('epub-found-current')?.size)).toBe(1);
+  expect(await seriousViolations(page), 'the find bar over a book on the phone').toEqual([]);
+  await field.press('Escape');
+  await expect(bar).toBeHidden();
+  expect(await page.evaluate(() => document.getSelection()?.toString())).toBe('Netherfield');
+});
+
+/** A book and a note on the phone, the book opened from the shelf and its contents behind the page. */
+async function bookAndNote(page: Page) {
+  await open(page);
+  await putOutside(page, 'Eien/Vault/Truths.md', 'A truth about the vault.\n');
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
+  await back(page).click(); // the sidebar
+  const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
+  await expect(book).toBeVisible({ timeout: 10_000 });
+  await book.click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  return book;
+}
+
+test('Find on a phone: the field beside a book’s contents searches the vault, never the book (#40, Phase 5c, QA)', async ({
+  page,
+}) => {
+  await bookAndNote(page);
+  await back(page).click(); // the book's contents
+  await back(page).click(); // the sidebar, where the phone's field is
+  const field = page.locator('.sidebar').getByRole('searchbox');
+  // Named for the vault, as before: no book's rows are beside it here.
+  await expect(field).not.toHaveAttribute('placeholder', 'Search Pride and Prejudice');
+  await expect(field).toHaveAttribute('placeholder', /^Search /u);
+  await field.fill('truth');
+  await expect(page.locator('.sidebar').getByText('Truths')).toBeVisible();
+  await expect(page.locator('.found-row, .tree-row--found')).toHaveCount(0);
+});
+
+// QA (Phase 5c) found every word typed handed to the book's Found even where the field searches the
+// vault (a phone), the reader's chosen Marks lost. Fixed: the lens follows only a book searched.
+test('Find on a phone: a search of the vault leaves the book’s lens as it was chosen (#40, Phase 5c, QA)', async ({
+  page,
+}) => {
+  const book = await bookAndNote(page);
+  await back(page).click(); // the book's contents
+  const marks = page.getByRole('button', { name: /^Marks \d+$/u });
+  await marks.click();
+  await expect(marks).toHaveAttribute('aria-pressed', 'true');
+  await back(page).click(); // the sidebar
+  const field = page.locator('.sidebar').getByRole('searchbox');
+  await field.fill('truth');
+  await expect(page.locator('.sidebar').getByText('Truths')).toBeVisible();
+  await field.fill('');
+  await book.click();
+  await expect(chapter(page)).toBeInViewport();
+  await back(page).click(); // the book's contents again
+  await expect(marks).toHaveAttribute('aria-pressed', 'true', { timeout: 3000 });
+});
+
 test('a book’s row menu renames it in its row, and trashes it to .eien/trash, whole', async ({
   page,
 }) => {

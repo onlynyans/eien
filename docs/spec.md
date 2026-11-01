@@ -1125,6 +1125,38 @@ which searches nothing itself, so an EPUB's chapters can drive it too.
 - Esc, from the bar or the text, shuts it, and gives the keyboard back to
   the text on the current match. Showing another note shuts it too.
 
+**In a book** (#40, Phase 5c; the owner's answer, 2026-10-31): the same
+keys and the same bar, over the book's page, with no Replace
+(`ui/epub/book-find.ts`). It searches the whole book, a chapter at a time in
+the background and never while a page turns, its matches in the book's
+order; the count is the bar's own ("3 of 41", up to 1,000). Typing goes to
+the first match at or past the place; Enter, ⇧Enter, ⌘G and ⇧⌘G step on and
+back across chapters, round the book, drawing the chapter a match is in.
+Match case, Whole word and Pattern are the bar's; without Pattern, curly and
+straight quotes are alike and any run of white space is a space, and a match
+never runs across two paragraphs or a line break. Every match in the chapter
+drawn is in the chosen row's wash, the one it's on in the selection's;
+scrolling, it stands clear of the bar. Esc chooses the match it was on in
+the page (to quote or highlight) and gives the keyboard back to the page.
+Another book on the page shuts it.
+
+**The list's field, beside a book** (Phase 5c, Features 2): while the list
+shows a book's contents, its search field searches that book ("Search Pride
+and Prejudice"), as written and in any case, from two letters: the list
+turns to **Found**, a third lens beside Contents and Marks (there with
+nothing searched, but not to choose), each match a row in its words (the
+match among the words round it, cut on whole words, an ellipsis where they
+go on), its page and its chapter. While it searches, "Searching… chapter 12
+of 61" (never announced each time); with none, "No “xyz” in Pride and
+Prejudice."; past 1,000, "More than 1,000: type more to narrow it." A row
+goes to its match and chooses it on the page; Enter in the field goes to the
+next match past the place (⇧Enter back), said in the colophon ("Match 3 of
+41."). Clearing the field turns the list back to Contents. With two panes,
+the field is the sidebar's and Found's rows stand under the book's SHELF row;
+with Marks on the edge, Found's rows take the contents' place while there
+are words. On a phone, or with one pane and the list shut, the field
+searches the vault as before, and the page's ⋯ → Find opens the bar.
+
 ### Writing tools
 
 - **Scene break:** Enter on an empty line after an empty line inserts `***`,

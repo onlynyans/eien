@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countWords, FIND_COMMANDS, findKey } from '.';
+import { countWords, escapePattern, FIND_COMMANDS, findKey } from '.';
 
 describe('the find bar’s count', () => {
   it('says nothing with nothing typed', () => {
@@ -47,5 +47,25 @@ describe('find’s keys', () => {
       const keys = FIND_COMMANDS.map((command) => findKey(command.id, mac));
       expect(new Set(keys).size).toBe(keys.length);
     }
+  });
+});
+
+describe('words as a pattern', () => {
+  it('escapes what a pattern reads as more than itself, and reads back as the words, even under u', () => {
+    const words = 'a.b*c+d?(e)[f]{g}|h/i\\j^k$l-m';
+    const pattern = new RegExp(`^${escapePattern(words)}$`, 'u');
+    expect(pattern.test(words)).toBe(true);
+    expect(pattern.test('aXb*c+d?(e)[f]{g}|h/i\\j^k$l-m')).toBe(false);
+  });
+});
+
+describe('the count while a book is searched', () => {
+  it('says it’s searching, not that there are none, while it hasn’t found one yet', () => {
+    expect(countWords('bell', { current: 0, total: 0, more: false, searching: true })).toBe(
+      'Searching…',
+    );
+    expect(countWords('bell', { current: 0, total: 0, more: false, searching: false })).toBe(
+      'No matches',
+    );
   });
 });

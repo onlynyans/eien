@@ -4,7 +4,8 @@
 // list in sight (two panes, or the list shut), the tree shows what the list
 // would: the notes, or what a search finds. The search field goes with the
 // list: in its band, it searches that list's notes; in the sidebar (no list
-// in sight, or a phone, whose contents page holds it), the whole vault.
+// in sight, or a phone, whose contents page holds it), the whole vault; and
+// beside a book's rows, that book (#40, Phase 5c).
 
 import { renderContents } from '../list/contents-list';
 import { type Arrange, canDrag, lensParts } from '../list/lens-bar';
@@ -40,7 +41,7 @@ export interface DrawnParts {
   /** How the list's rows move now (Arrange mode, and whether it's arranging). */
   arrange(): Arrange;
   /** What SHELF and the list show of the books on the pages (#40). */
-  readonly epubs: Pick<EpubWiring, 'shelf' | 'contents' | 'actions'>;
+  readonly epubs: Pick<EpubWiring, 'shelf' | 'contents' | 'actions' | 'showsBook' | 'syncFound'>;
 }
 
 export class PaneDrawer {
@@ -62,13 +63,35 @@ export class PaneDrawer {
     await Promise.all([this.sidebar(), this.list()]);
   }
 
-  /** Whether the search field is in the list's band, and so searches only that list's notes. */
+  /**
+   * Whether the search field searches the book whose contents are shown
+   * (#40, Phase 5c): where its rows are in sight beside the field, the list's
+   * band or, with two panes, under its row on SHELF. On a phone, or with one
+   * pane and the list shut, it searches the vault, as no book's rows are
+   * beside it there (the page's own find bar finds in the book).
+   */
+  searchesBook(): boolean {
+    const { panes } = this.#parts;
+    return !panes.phone && (panes.two || !panes.isShut('list')) && this.#parts.epubs.showsBook();
+  }
+
+  /** The list's search of the book, as the panes about to draw show it: for the field's words, or stopped. */
+  #syncFound(): boolean {
+    const book = this.searchesBook();
+    this.#parts.epubs.syncFound(book ? this.#parts.nav.query : null);
+    return book;
+  }
+
+  /** Whether the search field is in the list's band, and so searches only that list's notes (or its book). */
   #searchInList(): boolean {
     const { state, nav, panes } = this.#parts;
     const inList = !panes.isShut('list') && !panes.phone;
-    // A book's contents in the list: the field searches the vault (a book's own Find is Phase 5's).
-    const narrow = inList && !this.#parts.epubs.contents();
-    this.#parts.placeSearch(inList, narrow ? state.nameOf(nav.selection) : state.name);
+    const book = this.searchesBook() ? this.#parts.epubs.contents() : null;
+    const narrow = inList && !book;
+    this.#parts.placeSearch(
+      inList,
+      book ? book.title : narrow ? state.nameOf(nav.selection) : state.name,
+    );
     return narrow;
   }
 
@@ -78,9 +101,11 @@ export class PaneDrawer {
     this.#searchInList();
     const words = nav.query.trim();
     const listShown = !panes.isShut('list');
+    const book = this.#syncFound();
     const [notes, results] = await Promise.all([
       panes.two ? treeNotes(state, nav.open, settings.values['books.numerals']) : new Map(),
-      words && !listShown ? state.search(words) : null,
+      // A book searched: its Found under its row, the tree left as it is.
+      words && !listShown && !book ? state.search(words) : null,
     ]);
     if (turn !== this.#sidebarTurn) return;
     // The news shows above the list; with no list, at the sidebar's foot; with neither, on the page.
@@ -103,8 +128,11 @@ export class PaneDrawer {
       results,
       shown: this.#parts.shown(),
       books: state.books,
-      shelf: { ...this.#parts.epubs.shelf(panes.two), shut: nav.shelf.shut },
-      elsewhere: !panes.two && !words && this.#parts.epubs.contents() !== null,
+      shelf: {
+        ...this.#parts.epubs.shelf(panes.two, book),
+        shut: nav.shelf.shut,
+      },
+      elsewhere: !panes.two && (!words || book) && this.#parts.epubs.showsBook(),
       notice: listShown ? null : notice.text,
       filter: filterFor(listKey(nav.selection)),
     });
@@ -116,7 +144,9 @@ export class PaneDrawer {
     const inList = this.#searchInList();
     if (!panes.listKept) return; // out of sight: nothing to read for it
     const words = nav.query.trim();
-    const contents = words ? null : this.#parts.epubs.contents();
+    // A book's contents stay while its own words are searched (its Found); else words search notes.
+    const book = this.#syncFound();
+    const contents = words && !book ? null : this.#parts.epubs.contents(book);
     if (contents) {
       this.#listOrdered = false;
       const { path } = contents.side;
@@ -127,6 +157,7 @@ export class PaneDrawer {
           lens: (lens) => actions.lens(path, lens),
           go: (row) => actions.goMark(path, row),
           remove: (row) => actions.unmark(path, row),
+          goFound: (row) => actions.goFound(path, row),
         });
       return;
     }

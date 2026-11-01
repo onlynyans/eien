@@ -54,6 +54,7 @@ function draw(
     lens: vi.fn(),
     goMark: vi.fn(),
     unmark: vi.fn(),
+    goFound: vi.fn(),
   };
   const list = document.createElement('ul');
   list.append(...shelfRows({ tree: TREE, current, contents, shut }, actions, folders));
@@ -141,6 +142,7 @@ describe('SHELF’s rows', () => {
       path: 'Loose.epub',
       lens: 'contents',
       marks: null,
+      found: null,
       rows: [
         { title: 'Part One', depth: 0, spine: 1 },
         { title: 'Chapter 1', depth: 1, spine: 2 },
@@ -170,11 +172,12 @@ describe('SHELF’s rows', () => {
       path: 'Loose.epub',
       lens: 'marks',
       marks: [row],
+      found: null,
       rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
       spine: 1,
     });
     const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
-    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
+    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
     expect(texts(list, '.tree-row--chapter')).toEqual([]);
     const name = list.querySelector<HTMLButtonElement>('.tree-row--mark .tree-row__name');
     expect(name?.textContent).toBe('It is a truth 3');
@@ -191,6 +194,7 @@ describe('SHELF’s rows', () => {
       path: 'Loose.epub',
       lens: 'marks',
       marks: [],
+      found: null,
       rows: [],
       spine: 1,
     });
@@ -206,6 +210,7 @@ describe('SHELF’s rows', () => {
       path: 'Loose.epub',
       lens: 'contents',
       marks: null,
+      found: null,
       rows: [
         { title: 'Part One', depth: 0, spine: 1 },
         { title: 'Chapter 1', depth: 1, spine: 1 },
@@ -277,6 +282,7 @@ describe('SHELF’s rows', () => {
       spine: 0,
       lens: 'contents' as const,
       marks: null,
+      found: null,
     };
     const { list, actions } = draw('Loose.epub', contents);
     const chapter = list.querySelector('.tree-row--chapter .tree-row__name') as HTMLElement;
@@ -303,6 +309,7 @@ describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
     spine: 1,
     lens,
     marks,
+    found: null,
   });
   const markNames = (list: HTMLElement) => [
     ...list.querySelectorAll<HTMLButtonElement>('.tree-row--mark .tree-row__name'),
@@ -394,7 +401,7 @@ describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
     expect(second?.title).toBe('Chapter I · highlight');
     expect(first?.title).toBe('Chapter I · bookmark');
     expect(first?.dataset.key).not.toBe(second?.dataset.key);
-    expect(list.querySelector('.tree-lenses .book-lens:last-child')?.textContent).toBe('Marks 2');
+    expect(list.querySelectorAll('.tree-lenses .book-lens')[1]?.textContent).toBe('Marks 2');
     second?.click();
     expect(actions.goMark).toHaveBeenCalledExactlyOnceWith(BOOK, highlight);
     second?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
@@ -423,5 +430,120 @@ describe('a book’s Marks on SHELF, as QA tried them (#40, Phase 4c)', () => {
     giveBack();
     expect(document.activeElement).toBe(markNames(body)[2]);
     body.remove();
+  });
+});
+
+// #40, Phase 5c: with two panes, what the field finds stands under the book's row.
+describe('a book’s Found on SHELF', () => {
+  it('lists each match from its words, the match marked, its page its count; a click goes there', () => {
+    const match = {
+      spine: 1,
+      from: 40,
+      to: 46,
+      before: 'a long run of words before it, said his lady to Mr. ',
+      words: 'Bennet',
+      after: ' one day',
+      page: '3',
+      chapter: 'Chapter I',
+    };
+    const { list, actions } = draw('Loose.epub', {
+      path: 'Loose.epub',
+      lens: 'found',
+      marks: [],
+      found: {
+        rows: [match],
+        words: 'Bennet',
+        title: 'Loose',
+        searched: 1,
+        chapters: 1,
+        done: true,
+        more: false,
+      },
+      rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
+      spine: 1,
+    });
+    const row = list.querySelector<HTMLButtonElement>('.tree-row--found .tree-row__name');
+    // One line, so it begins at the match: never cut off before it.
+    expect(row?.querySelector('.tree-row__label')?.textContent).toBe('Bennet one day');
+    expect(row?.querySelector('.found-row__match')?.textContent).toBe('Bennet');
+    expect(row?.querySelector('.count')?.textContent).toBe('3');
+    expect(row?.title).toBe(`Chapter I: ${match.before}Bennet one day`);
+    row?.click();
+    expect(actions.goFound).toHaveBeenCalledWith('Loose.epub', match);
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Contents 1', 'Marks 0', 'Found 1']);
+  });
+});
+
+describe('a book’s Found on SHELF, with two panes (#40, Phase 5c, as QA tried it)', () => {
+  const BOOK = 'Loose.epub';
+  const match = (from: number, page: string | null) => ({
+    spine: 1,
+    from,
+    to: from + 6,
+    before: '…said to Mr. ',
+    words: 'Bennet',
+    after: ' one day',
+    page,
+    chapter: 'Chapter I',
+  });
+  const found = (over = {}) => ({
+    rows: [match(10, '3'), match(90, null)],
+    words: 'Bennet',
+    title: 'Pride and Prejudice',
+    searched: 3,
+    chapters: 3,
+    done: true,
+    more: false,
+    ...over,
+  });
+  const contentsOf = (over: Partial<NonNullable<Parameters<typeof draw>[1]>> = {}) => ({
+    path: BOOK,
+    lens: 'found' as BookLens,
+    marks: [] as MarkRow[],
+    found: found(),
+    rows: [{ title: 'Chapter I', depth: 0, spine: 1 }],
+    spine: 1,
+    ...over,
+  });
+
+  it('lists each match under the book in its words with its page, its chapter its tooltip; a click goes there', () => {
+    const { list, actions } = draw(BOOK, contentsOf());
+    const names = [...list.querySelectorAll<HTMLButtonElement>('.tree-row--found .tree-row__name')];
+    // One line, so each begins at its match (the review, Phase 5c); the words before in its tooltip.
+    expect(names.map((name) => name.textContent)).toEqual(['Bennet one day 3', 'Bennet one day']);
+    expect(names[0]?.title).toBe('Chapter I: …said to Mr. Bennet one day');
+    expect(new Set(names.map((name) => name.dataset.key)).size).toBe(2);
+    expect(texts(list, '.tree-row--chapter')).toEqual([]);
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Contents 1', 'Marks 0', 'Found 2']);
+    expect(tabs[2]?.getAttribute('aria-pressed')).toBe('true');
+    names[1]?.click();
+    expect(actions.goFound).toHaveBeenCalledExactlyOnceWith(BOOK, match(90, null));
+  });
+
+  it('says under its rows that it’s still searching, or that there are none, as the tree’s hint', () => {
+    const searching = draw(BOOK, contentsOf({ found: found({ done: false, searched: 1 }) })).list;
+    expect(texts(searching, '.tree-hint')).toEqual(['Searching… chapter 2 of 3']);
+    const none = draw(BOOK, contentsOf({ found: found({ rows: [] }) })).list;
+    expect(texts(none, '.tree-row--found')).toEqual([]);
+    expect(texts(none, '.tree-hint')).toEqual(['No “Bennet” in Pride and Prejudice.']);
+  });
+
+  it('shows the chapters again once nothing is searched, Found there but not to choose', () => {
+    const { list } = draw(BOOK, contentsOf({ found: null }));
+    expect(texts(list, '.tree-row--chapter')).toEqual(['Chapter I']);
+    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
+    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
+    expect(tabs[2]?.disabled).toBe(true);
+  });
+
+  it('with Marks on the edge, puts Found’s rows in the chapters’ place while there are words', () => {
+    const searched = draw(BOOK, contentsOf({ marks: null, lens: 'contents' })).list;
+    expect(searched.querySelector('.tree-lenses')).toBeNull();
+    expect(texts(searched, '.tree-row--found')).toHaveLength(2);
+    expect(texts(searched, '.tree-row--chapter')).toEqual([]);
+    const cleared = draw(BOOK, contentsOf({ marks: null, lens: 'contents', found: null })).list;
+    expect(texts(cleared, '.tree-row--chapter')).toEqual(['Chapter I']);
   });
 });

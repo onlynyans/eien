@@ -49,14 +49,13 @@ describe('walking the marks', () => {
           const step = walkMarks(marks, i === 0 ? { spine: -1, from: 0, to: 0 } : sight, 1);
           if (!step) throw new Error('no mark');
           visited.push(step.index);
-          sight = { spine: step.mark.spine, from: step.mark.offset, to: step.mark.offset + 1 };
+          sight = { spine: step.to.spine, from: step.to.offset, to: step.to.offset + 1 };
         }
         expect(visited).toEqual(marks.map((_, i) => i));
         for (let i = marks.length - 1; i > 0; i--) {
           const back = walkMarks(marks, sight, -1);
           expect(back?.index).toBe(i - 1);
-          if (back)
-            sight = { spine: back.mark.spine, from: back.mark.offset, to: back.mark.offset + 1 };
+          if (back) sight = { spine: back.to.spine, from: back.to.offset, to: back.to.offset + 1 };
         }
       }),
     );
@@ -115,7 +114,7 @@ describe('the marks in the book’s order, and a walk from any sight', () => {
         expect(on).toMatchObject(
           next >= 0 ? { index: next, round: false } : { index: 0, round: true },
         );
-        expect(on?.mark).toBe(marks[on?.index ?? -1]);
+        expect(on?.to).toBe(marks[on?.index ?? -1]);
         const last = marks.findLastIndex((mark) => isBefore(mark, at.spine, at.from));
         expect(back).toMatchObject(
           last >= 0 ? { index: last, round: false } : { index: marks.length - 1, round: true },
@@ -124,7 +123,7 @@ describe('the marks in the book’s order, and a walk from any sight', () => {
         for (const step of [on, back])
           if (step && !step.round) {
             const inSight =
-              step.mark.spine === at.spine && step.mark.offset >= at.from && step.mark.offset < end;
+              step.to.spine === at.spine && step.to.offset >= at.from && step.to.offset < end;
             expect(inSight).toBe(false);
           }
       }),

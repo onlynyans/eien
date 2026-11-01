@@ -79,6 +79,8 @@ export async function showVault(
     nav,
     tell,
     redraw: () => void redraw(),
+    // Found's rows are the list's, or with two panes the sidebar's: only that pane drawn.
+    drawRows: () => void (panes.two ? draw.sidebar() : draw.list()),
     looks: () => chrome.refresh(),
     marksAt: () => settings.values['epub.marks'],
     pages: () => pages,
@@ -104,10 +106,16 @@ export async function showVault(
     settings,
     redraw: () => void redraw(),
   });
-  const search = new SearchField((words) => {
-    nav.query = words;
-    void redraw();
-  });
+  const search = new SearchField(
+    (words) => {
+      nav.query = words;
+      // Beside a book's rows its lens follows the words; searching the vault, it's left as it was.
+      if (draw.searchesBook()) epubs.typed(words);
+      void redraw();
+    },
+    // Beside a book's rows, Enter goes to its next match (#40, Phase 5c).
+    (back) => draw.searchesBook() && epubs.stepFound(back ? -1 : 1),
+  );
 
   // The sidebar's moves in your order (./order-actions.ts); `sidebar` and `draw` come after.
   const order = orderActions({
