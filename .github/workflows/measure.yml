@@ -29,12 +29,7 @@ jobs:
         shell: bash
         env:
           BUDGETS: '1'
-        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum' || '' }} npx playwright test tests/e2e/budgets.spec.ts -g "searched while" --workers=1 --repeat-each=3 --retries=0 || true
-      - name: Search, four times slower
-        shell: bash
-        env:
-          SLOW: '4'
-        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum' || '' }} npx playwright test tests/e2e/budgets.spec.ts -g "searched while" --workers=1 --retries=0 --output=test-results-slow || true
+        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum' || '' }} npx playwright test tests/e2e/budgets.spec.ts -g "searched while" --workers=1 --repeat-each=2 --retries=0 || true
       - uses: actions/upload-artifact@v7
         if: always()
         with:

@@ -504,48 +504,29 @@ test.describe('a long book searched while its pages turn', () => {
     const time = await stalls(page);
     await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
     await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter p')).toHaveCount(600);
-    // MEASURE (throwaway): a CPU profile and long animation frames over the test.
+    // MEASURE (throwaway): a trace of the window from the mark to the first turn.
     const cdp = await page.context().newCDPSession(page);
-    await cdp.send('Profiler.enable');
-    await cdp.send('Profiler.setSamplingInterval', { interval: 250 });
-    await cdp.send('Profiler.start');
-    await page.evaluate(() => {
-      const w = window as unknown as { loaf: unknown[] };
-      w.loaf = [];
-      new PerformanceObserver((list) => {
-        for (const e of list.getEntries() as unknown as {
-          startTime: number;
-          duration: number;
-          renderStart: number;
-          styleAndLayoutStart: number;
-          blockingDuration: number;
-          scripts: {
-            invoker: string;
-            sourceFunctionName: string;
-            sourceURL: string;
-            sourceCharPosition: number;
-            startTime: number;
-            duration: number;
-            forcedStyleAndLayoutDuration: number;
-          }[];
-        }[])
-          if (e.duration > 60)
-            w.loaf.push({
-              start: Math.round(e.startTime),
-              ms: Math.round(e.duration),
-              blocking: Math.round(e.blockingDuration),
-              render: Math.round(e.startTime + e.duration - e.renderStart),
-              styleLayout: Math.round(e.startTime + e.duration - e.styleAndLayoutStart),
-              scripts: e.scripts.map((s) => ({
-                invoker: s.invoker,
-                fn: s.sourceFunctionName,
-                at: s.sourceCharPosition,
-                start: Math.round(s.startTime),
-                ms: Math.round(s.duration),
-                forced: Math.round(s.forcedStyleAndLayoutDuration),
-              })),
-            });
-      }).observe({ type: 'long-animation-frame', buffered: false });
+    const traced: unknown[] = [];
+    cdp.on('Tracing.dataCollected', (e) => traced.push(...(e.value as unknown[])));
+    const traceDone = new Promise((done) => cdp.once('Tracing.tracingComplete', done));
+    await cdp.send('Tracing.start', {
+      transferMode: 'ReportEvents',
+      traceConfig: {
+        includedCategories: [
+          'devtools.timeline',
+          'disabled-by-default-devtools.timeline',
+          'disabled-by-default-devtools.timeline.stack',
+          'v8.execute',
+          'blink',
+          'blink.user_timing',
+          'v8',
+          'cppgc',
+          'loading',
+          'toplevel',
+          'accessibility',
+          'disabled-by-default-v8.gc',
+        ],
+      },
     });
     await time.mark();
     const search = page.getByRole('searchbox', { name: 'Search Pride and Prejudice' });
@@ -559,27 +540,18 @@ test.describe('a long book searched while its pages turn', () => {
     for (let i = 0; i < 50; i++) {
       await page.keyboard.press('ArrowRight');
       await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
+      if (i === 3) {
+        await cdp.send('Tracing.end');
+        await traceDone;
+        writeFileSync(join(test.info().outputPath(), 'trace.json'), JSON.stringify({ traceEvents: traced }));
+      }
     }
     await expect(page.getByRole('button', { name: 'Found 61' })).toBeVisible({ timeout: 120_000 });
     const longest = await time.longest();
-    // MEASURE (throwaway): a busy stretch to line the profile up with the window's clock.
-    const align = await page.evaluate(() => {
-      function eienAlignMarker() {
-        const s = performance.now();
-        while (performance.now() - s < 40) {}
-        return s;
-      }
-      return eienAlignMarker();
-    });
-    const { profile } = await cdp.send('Profiler.stop');
     const out = test.info().outputPath();
-    writeFileSync(join(out, 'search.cpuprofile'), JSON.stringify(profile));
-    const record = await page.evaluate(() => {
-      const w = window as unknown as { long: unknown; loaf: unknown };
-      return { long: w.long, loaf: w.loaf };
-    });
-    writeFileSync(join(out, 'frames.json'), JSON.stringify({ align, longest, ...record }));
-    console.log(`MEASURE ${JSON.stringify({ longest, ...record })}`);
+    const record = await page.evaluate(() => (window as unknown as { long: unknown }).long);
+    writeFileSync(join(out, 'frames.json'), JSON.stringify({ longest, long: record }));
+    console.log(`MEASURE ${JSON.stringify({ longest, long: record })}`);
     expect(longest, 'a long book searched, fifty turns').toBeLessThan(STALL);
   });
 });
