@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
 import { page as chapterPage, handEpub, nav, opf, XHTML } from '../support/epub-parts';
 import { png } from '../support/images';
-import { open, putBytesOutside } from './outside';
+import { open, openChapter, putBytesOutside } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 
@@ -141,14 +141,13 @@ for (const screen of [FOLD, { width: 1180, height: 820 }]) {
     page,
   }) => {
     test.setTimeout(90_000);
+    // Each screen in the room it opens in: a Fold upright, two panes, its page under 300px (#68).
     await openBook(page, partsBook(), screen, 100);
     await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
       'Before.',
     );
-    // The phone's list is a step back; Panes shows it beside the page.
-    const back = page.locator('.phone-bar__back');
-    if (await back.isVisible()) await back.click();
-    await page.locator('.contents-row', { hasText: 'The quay' }).click();
+    // The contents a step back, beside the page, or under the book on SHELF, as the room has them.
+    await openChapter(page, 'The quay');
     await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
       'The rain kept on',
     );
@@ -206,12 +205,11 @@ test('a page that begins on a picture: the copy lays the picture, and the lines 
   page,
 }) => {
   test.setTimeout(60_000);
-  await openBook(page, platesBook(), FOLD, 100);
+  await openBook(page, platesBook(), FOLD, 100); // two panes, the page beside the tree (#68)
   await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
     'Before.',
   );
-  await page.locator('.phone-bar__back').click();
-  await page.locator('.contents-row', { hasText: 'The harbour' }).click();
+  await openChapter(page, 'The harbour');
   const chapter = '.epub-sheet:not([aria-hidden]) .epub-chapter';
   const copied = '.turn-copy [data-turn-words]';
   await expect(page.locator(chapter)).toContainText('The rain kept on');
@@ -234,7 +232,7 @@ test('a page that begins on a picture: the copy lays the picture, and the lines 
 
 // #60 again: on a narrow page (a small phone; a Fold's page beside the tree, about 278px) more of
 // a page's lines end in a space, and its first word was found a line late now and then, the copy
-// stepping every line up. One at a time here, under either room rule.
+// stepping every line up. One at a time here: narrower than a phone upright.
 for (const width of [300, 278]) {
   test(`a narrow page, ${width}px: each turn’s copy lays every line where the page has it`, async ({
     page,

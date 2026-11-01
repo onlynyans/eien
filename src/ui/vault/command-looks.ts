@@ -111,6 +111,12 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
         return { pressed: !shut, tip: shut ? 'Show the sidebar' : 'Hide the sidebar' };
       }
       case 'pane.list': {
+        // No room for the list beside the page: stepped aside or not, it can't come back here.
+        if (panes.crowded)
+          return {
+            disabled: true,
+            tip: 'No room for three panes here: the sidebar lists the notes',
+          };
         if (panes.aside) return { pressed: false, tip: 'Show the note list' };
         const shut = panes.isShut('list');
         if (panes.two)
@@ -142,6 +148,13 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
       case 'look':
         return { expanded: of.lookOpen() };
       case 'panes':
+        // Three chosen, two shown for the room (#68): the choice is still Three, to switch from.
+        if (panes.crowded)
+          return {
+            icon: 'panes3',
+            pressed: false,
+            tip: 'Three panes, two here for the room · switch to two',
+          };
         return {
           icon: two() ? 'panes2' : 'panes3',
           pressed: two(),

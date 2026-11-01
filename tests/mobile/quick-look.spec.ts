@@ -39,8 +39,10 @@ async function onPage(page: Page, layout = 'band', room = 'panes'): Promise<void
   );
   await putOutside(page, 'Eien/Vault/Ideas.md', 'An idea, and a line of words after it.\n');
   await page.reload();
-  await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
-  await titles(page).first().click();
+  // In the list, or with no room for three panes (a Fold upright, #68) in the tree beside the page.
+  const note = titles(page).or(page.locator('.sidebar .tree-row--note .tree-row__label'));
+  await expect(note).toHaveCount(1, { timeout: 10_000 });
+  await note.click();
   await expect(page.locator('.page .title').first()).toHaveText('Ideas');
 }
 

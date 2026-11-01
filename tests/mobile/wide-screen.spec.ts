@@ -23,6 +23,18 @@ const PHONE = { width: 412, height: 915 };
 const FOLD5_UPRIGHT = { width: 590, height: 706 };
 const FOLD5_SIDEWAYS = { width: 706, height: 590 };
 
+/**
+ * A Galaxy Z Fold 5's inner screen, 1812×2176 pixels, at the density the owner's showed (one pane
+ * at a time at 100%, panes at 90%, under the old 520px rule: so 468 to 519px wide), 3.5 a pixel.
+ */
+const FOLD5 = { width: 518, height: 622 };
+const FOLD5_DENSITY = 3.5;
+/** Its cover screen, 904×2316 pixels at 2.625 a pixel: a phone's shape, taller still. */
+const FOLD5_COVER = { width: 344, height: 882 };
+/** Taller than 7:12, held upright (../../src/ui/phone/room.ts, TALL). */
+const tall = (screen: { width: number; height: number }) =>
+  screen.width / screen.height <= 7 / 12 && screen.height >= screen.width;
+
 const pane = (page: Page, name: Pane) => page.locator(`.shell > .${name}`);
 /** The width the panes give the pane beside the page, side by side (not its box, which slides there). */
 const besideWidth = (page: Page, name: 'sidebar' | 'list') =>
@@ -46,7 +58,7 @@ async function withRoom(
   page: Page,
   room: Room,
   screen: { width: number; height: number },
-  more: Record<string, string> = {},
+  more: Record<string, string | number> = {},
 ): Promise<void> {
   await open(page);
   await threePanes(page); // the list beside the page, which these tests look at; `more` may say two
@@ -67,10 +79,13 @@ async function withRoom(
   await putOutside(page, 'Eien/Vault/Ideas.md', 'An idea.\n');
   await page.setViewportSize(screen);
   await page.reload(); // the settings as this device keeps them, read as the window starts
-  // An upright phone is one at a time (under 520px); the desktop's panes need 600px.
-  const fits = screen.width >= 600 || (screen.width >= 520 && room !== 'panes');
+  // A tall screen (a phone upright, by its shape) is one at a time, as is one under 440px.
+  const fits = !tall(screen) && screen.width >= 440;
   await expect(page.locator('.shell')).toHaveAttribute('data-room', fits ? room : 'one');
-  await expect(titles(page)).toHaveCount(3, { timeout: 10_000 }); // All Notes, at first
+  // The vault drawn: All Notes in the list at first, or, with two panes, the folders in the tree.
+  if ((await page.locator('.shell').getAttribute('data-panes')) === 'two' && fits)
+    await expect(page.locator('.sidebar').getByText('Fic', { exact: true })).toBeVisible();
+  else await expect(titles(page)).toHaveCount(3, { timeout: 10_000 });
 }
 
 /** Into Fic, and its note `title`. */
@@ -199,6 +214,12 @@ test.describe('side by side', () => {
     await withRoom(page, 'side', OPEN_FOLD);
     await openInFic(page, 'Tear');
     await expect.poll(() => besideWidth(page, 'list')).toBe('316px'); // the list's own width
+    // The list slides in beside the page: its edge taken hold of once it rests at the list's width.
+    const edgeAt = async () => {
+      const box = await page.locator('.pane-edge--list').boundingBox();
+      return box && Math.round(box.x + box.width / 2);
+    };
+    await expect.poll(edgeAt).toBe(316);
     const edge = await page.locator('.pane-edge--list').boundingBox();
     if (!edge) throw new Error('no edge beside the page');
     expect(edge.width).toBeGreaterThanOrEqual(44); // a finger's to take hold of
@@ -439,9 +460,12 @@ test.describe('a Galaxy Z Fold 5 opened upright, about 590px', () => {
     });
   }
 
-  test('panes, which need 600px, are one at a time here', async ({ page }) => {
+  test('panes, short of the desktop’s 600px, show what fits: two, the tree listing the notes', async ({
+    page,
+  }) => {
     await withRoom(page, 'panes', FOLD5_UPRIGHT);
-    await inSight(page, 'list');
+    await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
+    await inSight(page, 'sidebar', 'page');
   });
 });
 
@@ -454,8 +478,11 @@ test.describe('the desktop’s panes on a Fold 5 sideways', () => {
         'appearance.layout': layout,
         'editor.formatBar': 'on',
       });
-      await titles(page).filter({ hasText: 'Ideas' }).click();
-      await expect(titlesOnPage(page)).toHaveText('Ideas');
+      // Two panes here for the room (#68): Fic's notes in the tree.
+      await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
+      await page.locator('.sidebar').getByText('Fic', { exact: true }).click();
+      await page.locator('.sidebar').getByText('Tear', { exact: true }).click();
+      await expect(titlesOnPage(page)).toHaveText('Tear');
       const bar = page.locator(layout === 'runhead' ? '.window-head' : '.page__bar');
       const more = bar.getByRole('button', { name: 'More tools' });
       const drawn = await bar.evaluate((bar) => {
@@ -522,5 +549,121 @@ test.describe('the desktop’s panes on a Fold 5 sideways', () => {
     await withRoom(page, 'panes', TABLET, { 'appearance.density': 'compact' });
     const row = page.locator('.sidebar .tree-row').first();
     expect((await row.boundingBox())?.height).toBe(36);
+  });
+});
+
+// #68: the room by the screen's shape, which zoom doesn't change. A Fold 5 opened is near square
+// (5:6), a phone upright tall (9:20), so a Fold 5 at its own size has Wide screen's every room.
+test.describe('a Galaxy Z Fold 5 at its own size, 1812×2176 pixels', () => {
+  test.use({ deviceScaleFactor: FOLD5_DENSITY });
+
+  for (const room of ['side', 'pages', 'one'] as const)
+    test(`opened, upright: ${room} as chosen`, async ({ page }) => {
+      await withRoom(page, room, FOLD5);
+      await expect(page.locator('.shell')).toHaveAttribute('data-room', room);
+      await expect
+        .poll(() => page.evaluate(() => [screen.width * devicePixelRatio, devicePixelRatio]))
+        .toEqual([FOLD5.width * FOLD5_DENSITY, FOLD5_DENSITY]);
+    });
+
+  test('opened, upright: Panes shows two, the tree listing the notes, with Three chosen', async ({
+    page,
+  }) => {
+    await withRoom(page, 'panes', FOLD5);
+    await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
+    await inSight(page, 'sidebar', 'page');
+    await page.locator('.sidebar').getByText('Fic', { exact: true }).click();
+    await page.locator('.sidebar').getByText('Tear', { exact: true }).click();
+    await expect(titlesOnPage(page).first()).toHaveText('Tear');
+    await inSight(page, 'sidebar', 'page'); // the page beside the tree, no step to it
+  });
+
+  test('at 70%, turned on its side (889px), three panes fit; upright again (740px), two', async ({
+    page,
+  }) => {
+    await withRoom(page, 'panes', FOLD5, { 'window.zoom': 70 });
+    await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
+    await page.setViewportSize({ width: FOLD5.height, height: FOLD5.width });
+    await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
+    await inSight(page, 'sidebar', 'list', 'page');
+    await page.setViewportSize(FOLD5);
+    await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
+  });
+
+  test('the foot’s Panes says two are here for the room, and follows the room as it turns', async ({
+    page,
+  }) => {
+    await withRoom(page, 'panes', FOLD5, { 'window.zoom': 70 });
+    const toggle = page.locator('.host--foot [data-command="panes"]');
+    const crowded = async () => {
+      await expect(toggle).toHaveAttribute(
+        'data-tip',
+        'Three panes, two here for the room · switch to two',
+      );
+      await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    };
+    await crowded();
+    await page.setViewportSize({ width: FOLD5.height, height: FOLD5.width }); // room for three
+    await expect(toggle).toHaveAttribute('data-tip', 'Three panes · switch to two');
+    await page.setViewportSize(FOLD5);
+    await crowded();
+    await toggle.click(); // Two chosen, as it said
+    await expect(toggle).toHaveAttribute('data-tip', 'Two panes · switch to three');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  for (const room of ['panes', 'side', 'pages'] as const)
+    test(`folded, its cover screen is one at a time with ${room} chosen`, async ({ page }) => {
+      await withRoom(page, room, FOLD5_COVER);
+      await inSight(page, 'list');
+    });
+});
+
+test('a phone upright zoomed out to 50%, 824px wide, is still one at a time: tall', async ({
+  page,
+}) => {
+  await withRoom(page, 'panes', PHONE, { 'window.zoom': 50 });
+  await expect.poll(() => page.evaluate(() => innerWidth)).toBe(PHONE.width * 2);
+  await expect(page.locator('.shell')).toHaveAttribute('data-room', 'one');
+  await inSight(page, 'list');
+});
+
+// #68: the room follows each of its queries as the window changes, the window and Settings alike.
+// Each step changes one query alone: the screen's shape (600px wide or more either side), or a
+// window under 440px (narrower than 600px either side, and never tall).
+test.describe('the room follows each of its queries live', () => {
+  const NEAR_SQUARE = { width: 900, height: 1000 };
+  /** As tall as a phone, wider than 600px: a phone upright, zoomed out. */
+  const TALL_WIDE = { width: 700, height: 1300 };
+  const SMALL = { width: 500, height: 700 };
+  /** Under 440px, not a phone's shape: a small window beside another. */
+  const CRAMPED = { width: 420, height: 600 };
+
+  test('a screen turned tall is one at a time, and back', async ({ page }) => {
+    await withRoom(page, 'panes', NEAR_SQUARE);
+    await page.setViewportSize(TALL_WIDE);
+    await expect(page.locator('.shell')).toHaveAttribute('data-room', 'one');
+    await page.setViewportSize(NEAR_SQUARE);
+    await expect(page.locator('.shell')).toHaveAttribute('data-room', 'panes');
+  });
+
+  test('a window under 440px is one at a time, and back', async ({ page }) => {
+    await withRoom(page, 'side', SMALL);
+    await page.setViewportSize(CRAMPED);
+    await expect(page.locator('.shell')).toHaveAttribute('data-room', 'one');
+    await page.setViewportSize(SMALL);
+    await expect(page.locator('.shell')).toHaveAttribute('data-room', 'side');
+  });
+
+  test('Settings, open, offers the panes’ settings as the shape changes', async ({ page }) => {
+    await withRoom(page, 'panes', NEAR_SQUARE);
+    await page.getByRole('button', { name: 'Settings' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Settings' });
+    const lists = sheet.getByRole('navigation').getByRole('button', { name: 'Lists', exact: true });
+    await expect(lists).toBeVisible();
+    await page.setViewportSize(TALL_WIDE);
+    await expect(lists).toBeHidden();
+    await page.setViewportSize(NEAR_SQUARE);
+    await expect(lists).toBeVisible();
   });
 });

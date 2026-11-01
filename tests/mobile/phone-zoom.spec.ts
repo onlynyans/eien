@@ -59,8 +59,13 @@ test('zoomed in, everything is larger and laid out again: nothing runs past the 
 test('a Galaxy Z Fold 5 sideways at 80% gives the page more room beside the panes', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 706, height: 590 }); // Panes, the default room
-  await titles(page).first().click();
+  await putOutside(page, 'Eien/Vault/Fic/Tear.md', 'The scarf caught on the gate.\n');
+  // Panes, the default room, as two: a phone's own (#69), and all that fits at 706px (#68).
+  await page.evaluate(() => window.eien.settings.set('layout.panes', 'two'));
+  await page.setViewportSize({ width: 706, height: 590 });
+  await page.reload();
+  await page.locator('.sidebar').getByText('Fic', { exact: true }).click();
+  await page.locator('.sidebar').getByText('Tear', { exact: true }).click();
   const pageWidth = () => page.locator('.shell > .page').evaluate((pane) => pane.clientWidth);
   const before = await pageWidth(); // the panes giving way, the page squeezed
   await zoomBy(page, -1, 2);
