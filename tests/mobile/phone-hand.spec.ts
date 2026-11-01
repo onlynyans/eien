@@ -136,3 +136,132 @@ test('a gesture the system cancels lets the page fall back home, flying', async 
   await expect(page.locator('.turn-curl')).toHaveCount(0);
   expect(await firstWords(page)).toBe(first);
 });
+
+/** What a composited layer's snapshot says of it (CDP's LayerTree.Layer), as far as these use. */
+interface Layer {
+  readonly layerId: string;
+  readonly drawsContent: boolean;
+  readonly paintCount: number;
+  readonly backendNodeId?: number;
+}
+
+/** The composited layers that draw, by id, each with its paint count and its element's classes. */
+async function drawnLayers(
+  cdp: CDPSession,
+  layers: readonly Layer[],
+): Promise<Map<string, { paints: number; name: string }>> {
+  const drawn = new Map<string, { paints: number; name: string }>();
+  for (const layer of layers) {
+    if (!layer.drawsContent) continue;
+    let name = '';
+    if (layer.backendNodeId) {
+      const { node } = await cdp.send('DOM.describeNode', { backendNodeId: layer.backendNodeId });
+      const attributes = node.attributes ?? [];
+      const at = attributes.indexOf('class');
+      name = at >= 0 ? (attributes[at + 1] ?? '') : node.nodeName;
+    }
+    drawn.set(layer.layerId, { paints: layer.paintCount, name });
+  }
+  return drawn;
+}
+
+/**
+ * A slow finger drawn across the page and held, the layers watched as it moves:
+ * the curl's, by their elements' classes; which repainted, and how often; and
+ * how often the layers that draw were made anew.
+ */
+async function layersWhileHeld(
+  page: Page,
+): Promise<{ curl: string[]; repainted: Map<string, number>; remade: number }> {
+  const rect = await box(page).boundingBox();
+  if (!rect) throw new Error('no page');
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('DOM.getDocument', { depth: 0 });
+  let tree: readonly Layer[] = [];
+  let drawing = '';
+  let remade = 0;
+  cdp.on('LayerTree.layerTreeDidChange', ({ layers }) => {
+    if (!layers) return;
+    tree = layers;
+    const ids = layers
+      .filter((layer) => layer.drawsContent)
+      .map((layer) => layer.layerId)
+      .sort()
+      .join();
+    if (ids !== drawing) remade++;
+    drawing = ids;
+  });
+  await cdp.send('LayerTree.enable');
+  const y = rect.y + rect.height * 0.6;
+  const x = rect.x + rect.width * 0.9;
+  let step = 0;
+  const moves = async (count: number) => {
+    for (let i = 0; i < count; i++) {
+      step++;
+      // Slowly, and never quite straight: a finger's way.
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: touchAt(x - step * 2, y + (step % 2)),
+      });
+      await page.waitForTimeout(16);
+    }
+  };
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: touchAt(x, y) });
+  await moves(10);
+  await expect(page.locator('.turn-curl')).toHaveCount(1);
+  const before = await drawnLayers(cdp, tree);
+  remade = 0;
+  await moves(40);
+  const after = await drawnLayers(cdp, tree);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(page.locator('.turn-curl')).toHaveCount(0);
+  const repainted = new Map<string, number>();
+  for (const [id, { paints, name }] of after) {
+    // A paint or two as it settles is no repaint a move.
+    const times = paints - (before.get(id)?.paints ?? 0);
+    if (times > 2) repainted.set(name, (repainted.get(name) ?? 0) + times);
+  }
+  const curl = [...after.values()]
+    .map(({ name }) => name)
+    .filter((name) => name.includes('turn-curl'));
+  return { curl: curl.sort(), repainted, remade };
+}
+
+// Backlog #55: a slow drag flickered a phone's whole screen once each of the
+// curl's pieces was a layer of its own (#144): a piece's clip, new every
+// frame, is painted in its layer, so every move made its layers anew and
+// repainted them, and the window beneath too. A move repaints the turning
+// page alone, its layers the same throughout.
+test('a slow drag repaints the turning page alone', async ({ page }) => {
+  await bookInPages(page);
+  const { curl, repainted, remade } = await layersWhileHeld(page);
+  expect(curl).toEqual(['turn-curl']);
+  expect([...repainted.keys()]).toEqual(['turn-curl']);
+  expect(repainted.get('turn-curl')).toBeGreaterThan(10);
+  expect(remade).toBeLessThanOrEqual(1);
+});
+
+test('a slow drag on two facing pages repaints the turning page alone, the other lying still', async ({
+  page,
+}) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'panes');
+    await window.eien.settings.set('epub.view', 'pages');
+    await window.eien.settings.set('epub.turn', 'curl');
+  });
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.setViewportSize({ width: 2000, height: 900 });
+  await page.reload();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(box(page)).toHaveAttribute('data-spread', '');
+  const { curl, repainted, remade } = await layersWhileHeld(page);
+  expect(curl).toEqual(['turn-curl__leaf', 'turn-curl__piece turn-curl__still']);
+  expect([...repainted.keys()]).toEqual(['turn-curl__leaf']);
+  expect(repainted.get('turn-curl__leaf')).toBeGreaterThan(10);
+  expect(remade).toBeLessThanOrEqual(1);
+});
