@@ -1143,7 +1143,8 @@ readers, and what it costs Eien.
     fifth of the page), flat again as it lands.
   - **The paper can't stretch:** the spine's edge always stays down.
   - **Cuts of the live page:** what stays, the roll's strips, what lies back
-    on top (its back showing the words faintly through the paper) and the
+    on top (on one page, its back showing the words faintly through the
+    paper; on two, the page it reveals: Decided, Turning the page) and the
     page beneath.
   - **No snapshot:** nothing is pictured, so the book's sandboxed frame could
     be drawn the same way in the app.

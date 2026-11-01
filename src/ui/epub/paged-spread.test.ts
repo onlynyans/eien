@@ -8,7 +8,6 @@ import fc from 'fast-check';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { piecesOf } from './chapter-place';
 import { FRONT_PAGES } from './front-matter';
-import { CUT_END } from './page-cut';
 import { PagedPlace } from './paged-place';
 
 const WIDTH = 300;
@@ -60,10 +59,29 @@ function laidOut(paragraphs: readonly string[], options: { per?: 1 | 2; front?: 
     const end = baseOf(last) + (range.endContainer === last ? range.endOffset : last.length) - 1;
     return { left: xOf(start), right: xOf(Math.max(start, end)) + 1 };
   };
+  /** A node's first box: the first character in it or after it. */
+  const boxOf = (node: Node) => {
+    const piece = piecesOf(chapter).find(
+      (text) =>
+        text === node ||
+        node.contains(text) ||
+        node.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    return piece ? { left: xOf(baseOf(piece)), top: 0 } : null;
+  };
   const moved = vi.fn();
   const rested = vi.fn();
   const inSight = vi.fn();
-  const place = new PagedPlace({ box, chapter, moved, rested, inSight, sideOf, per: () => per });
+  const place = new PagedPlace({
+    box,
+    chapter,
+    moved,
+    rested,
+    inSight,
+    sideOf,
+    boxOf,
+    per: () => per,
+  });
   const pages = (next: 1 | 2) => {
     per = next;
     place.reshow();
@@ -134,13 +152,15 @@ describe('a spread (Phase 3d)', () => {
     );
   });
 
-  it('opens its copy for a turn to the whole sight, both pages', () => {
+  it('opens its copy for a turn to the whole sight, both pages, in the page’s own columns', () => {
     const { chapter, place } = laidOut(['a'.repeat(150), 'b'.repeat(350)]);
     place.show(0);
     place.turn(1);
     const copy = chapter.cloneNode(true) as HTMLElement;
-    place.trim(copy);
-    expect(copy.textContent).toBe('b'.repeat(200));
+    expect(place.trim(copy)).toBe(150);
+    expect(copy.textContent).toBe('b'.repeat(350));
+    // Its first block begins on the second page: the copy moved a sight less that page.
+    expect(copy.style.transform).toBe(`translateX(${-(2 * STEP - STEP)}px)`);
   });
 });
 
@@ -204,35 +224,19 @@ describe('the front matter (Phase 3d)', () => {
     expect(place.page).toBe(1);
   });
 
-  it('turns as the front alone on its pages, and never in the opening’s copy', () => {
+  it('copies its front matter with the chapter’s start, where they stand', () => {
     const { chapter, place } = laidOut(['a'.repeat(250)], { per: 1, front: true });
     place.show(0);
     const opening = chapter.cloneNode(true) as HTMLElement;
-    place.trim(opening);
-    expect(opening.querySelector('.epub-front')).toBeNull();
-    expect(opening.textContent).toBe('a'.repeat(100));
+    expect(place.trim(opening)).toBe(0);
+    expect(opening.querySelector('.epub-front')).not.toBeNull();
+    expect(opening.textContent).toContain('a'.repeat(250));
+    // The opening is the third page: the copy moved as the page is.
+    expect(opening.style.transform).toBe(`translateX(${-FRONT_PAGES * STEP}px)`);
     place.turn(-1);
     const imprint = chapter.cloneNode(true) as HTMLElement;
-    place.trim(imprint);
-    expect(imprint.querySelector('.epub-front')).not.toBeNull();
-    expect(imprint.querySelector('p')).toBeNull();
-    // Laid where the imprint stands: its page, second of the front's.
+    expect(place.trim(imprint)).toBe(0);
     expect(imprint.style.transform).toBe(`translateX(${-STEP}px)`);
-  });
-});
-
-describe('a turn’s copy of a paragraph cut at the page’s foot', () => {
-  it('is marked to set its lines as the page does; one that ends with the page isn’t', () => {
-    const { chapter, place } = laidOut(['a'.repeat(150), 'b'.repeat(50)], { per: 1 });
-    place.show(0);
-    const cut = chapter.cloneNode(true) as HTMLElement;
-    place.trim(cut);
-    expect(cut.querySelector('p')?.hasAttribute(CUT_END)).toBe(true);
-    const whole = laidOut(['a'.repeat(100), 'b'.repeat(150)], { per: 1 });
-    whole.place.show(0);
-    const copy = whole.chapter.cloneNode(true) as HTMLElement;
-    whole.place.trim(copy);
-    expect(copy.querySelector(`[${CUT_END}]`)).toBeNull();
   });
 });
 

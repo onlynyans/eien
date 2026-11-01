@@ -14,7 +14,7 @@ import { CURL_STRIPS, type CurlFrame, isBack, reachOf, stripLight } from '../../
 import { zoomOf } from '../../css-zoom';
 import { h } from '../../dom';
 import { BandBox, type BandHolds, part, rampOf } from './band-box';
-import { layOver, pageCopy } from './page-copy';
+import { layOver } from './page-copy';
 import type { TurnLeaf } from './turn-surface';
 import { CURL_INK } from './turn-tokens';
 
@@ -43,22 +43,15 @@ function pageIn(
 }
 
 /**
- * A copy of the sheet now made a spread's turning page's back: the page the
- * turn reveals on the gutter's other side, laid so the leaf's back at `u`
- * shows the sheet where `u` lands once turned (on, `x = gutter − u`; back,
- * the leaf in its mirror, `x = gutter + u`), mirrored as paper's back is.
+ * The page facing `leaf` across the gutter, as a leaf of its own laid so its
+ * copy shows the sheet where the turning page's back lands once turned:
+ * turned on, the left page mirrored (`u` shows `x = gutter − u`); turned
+ * back, the leaf seen in its mirror, the right page as it is.
  */
-function backIn(copy: HTMLElement, leaf: TurnLeaf, sheetWidth: number): HTMLElement {
-  copy.classList.add('turn-curl__page');
-  const gutter = leaf.mirrored ? leaf.x + leaf.width : leaf.x;
-  Object.assign(copy.style, {
-    left: '0px',
-    width: `${sheetWidth}px`,
-    transformOrigin: '0 0',
-    transform: leaf.mirrored ? `translateX(${-gutter}px)` : `matrix(-1, 0, 0, 1, ${gutter}, 0)`,
-  });
-  return copy;
-}
+const facing = (leaf: TurnLeaf, sheetWidth: number): TurnLeaf =>
+  leaf.mirrored
+    ? { x: leaf.x + leaf.width, width: sheetWidth - leaf.x - leaf.width, mirrored: false }
+    : { x: 0, width: leaf.x, mirrored: true };
 
 export class CurlView {
   readonly element = h('div', { class: 'turn-curl', attrs: { 'aria-hidden': 'true' } });
@@ -75,28 +68,33 @@ export class CurlView {
 
   /**
    * Over `to`, the sheet now; `leaving`, a copy of the one before the turn;
-   * `leaf`, one page of a spread that turns (on, always: a back turn's mirrored),
-   * or null for the whole sheet.
+   * `coming`, a copy of `to`: for a whole sheet turned back, the page come to
+   * that curls back over the one left; on a spread, the page the turn
+   * reveals, on the turning page's back; `leaf`, one page of a spread that
+   * turns (on, always: a back turn's mirrored), or null for the whole sheet.
    */
   constructor(
     leaving: HTMLElement,
     to: HTMLElement,
     way: 1 | -1,
-    words: string,
-    trim?: (words: HTMLElement) => void,
+    coming: HTMLElement | null,
     leaf: TurnLeaf | null = null,
   ) {
     this.#to = to;
-    const sheetWidth = to.offsetWidth;
+    // Over the sheet first, its size the sheet's own box as laid (a part of a pixel under Page
+    // zoom), which every copy and band is measured by.
+    layOver(this.element, to);
+    const sheetWidth = Number.parseFloat(this.element.style.width);
+    const sheetHeight = Number.parseFloat(this.element.style.height);
     const box = leaf ?? { ...WHOLE, width: sheetWidth };
-    const page = { width: box.width, height: to.offsetHeight };
+    const page = { width: box.width, height: sheetHeight };
     const reach = reachOf(page);
-    this.element.style.setProperty('--curl-page-height', `${to.offsetHeight}px`);
+    this.element.style.setProperty('--curl-page-height', `${sheetHeight}px`);
     // A spread: the page that doesn't turn lies still, as it was, until the turning one lands on it.
     const lying = leaf ? (leaving.cloneNode(true) as HTMLElement) : null;
-    const moving = way > 0 || leaf ? leaving : pageCopy(to, words, trim);
+    const moving = way > 0 || leaf || !coming ? leaving : coming;
     // Back on one page, the page left lies beneath them all, and the sheet is hidden until it lands.
-    const under = way < 0 && !leaf ? part('under', pageIn(leaving, box, sheetWidth)) : null;
+    const under = moving !== leaving ? part('under', pageIn(leaving, box, sheetWidth)) : null;
     if (under) {
       under.style.zIndex = '0';
       to.style.visibility = 'hidden';
@@ -104,10 +102,14 @@ export class CurlView {
     const copy = () => pageIn(moving.cloneNode(true) as HTMLElement, box, sheetWidth);
     // A spread's page turns over to show its back, the page the turn reveals, printed on it; one
     // page's back is its own words faint through its paper.
-    const turned = leaf ? pageCopy(to, words, trim) : null;
+    // Without a copy of the page come to (one refused, #174), its own words, as one page's.
     const back = (): BandHolds =>
-      turned && leaf
-        ? { page: [backIn(turned.cloneNode(true) as HTMLElement, leaf, sheetWidth)] }
+      leaf && coming
+        ? {
+            page: [
+              pageIn(coming.cloneNode(true) as HTMLElement, facing(leaf, sheetWidth), sheetWidth),
+            ],
+          }
         : { page: [copy()], veiled: true };
     const wash = (ink: string) => {
       const element = part('wash');
@@ -163,7 +165,6 @@ export class CurlView {
     } else {
       this.element.append(...layers);
     }
-    layOver(this.element, to);
     this.#cutAtPane();
   }
 
@@ -193,7 +194,7 @@ export class CurlView {
     if (frame.resting) return;
     this.#cast.place(frame.cast);
     this.#shadow.place(frame.back);
-    for (const shadow of [this.#cast, this.#shadow]) shadow.fade(frame.height);
+    for (const shadow of [this.#cast, this.#shadow]) shadow.fade(frame.raised);
     this.#strips.forEach((strip, i) => {
       const band = frame.strips[i];
       strip.show(band !== undefined);

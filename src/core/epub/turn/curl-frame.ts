@@ -37,7 +37,7 @@ export type CurlFrame =
        * 0 to 1, as the roll's radius. The shadows are as strong, so a page
        * lying flat (just taken, or landing) casts none.
        */
-      readonly height: number;
+      readonly raised: number;
       /** What stays flat: the page up to the fold. */
       readonly front: Band;
       /** The roll's shadow on the page beneath, from where the roll stands. */
@@ -89,7 +89,7 @@ export function curlFrame(
   return {
     resting: false,
     corner,
-    height: roll.radius / radiusAt(page, page.width),
+    raised: roll.radius / radiusAt(page, page.width),
     front: bandOf(roll, -reach, SEAM, reach),
     cast: bandOf(roll, roll.radius, roll.radius + lengths.cast, reach),
     strips,

@@ -173,8 +173,13 @@ describe('a spread’s back', () => {
     const curl = b.curl() as HTMLElement;
     expect(new Set(words(curl, backs))).toEqual(new Set(['Page 4']));
     expect(new Set(words(curl, fronts))).toEqual(new Set(['Page 3']));
+    // The left page, mirrored about its own middle: the back at `u` shows the sheet at gutter − u.
     const back = curl.querySelector<HTMLElement>('.turn-curl__back .turn-curl__page');
-    expect(back?.style.transform).toBe(`matrix(-1, 0, 0, 1, ${GUTTER}, 0)`);
+    expect([back?.style.left, back?.style.transform, back?.style.transformOrigin]).toEqual([
+      '0px',
+      'scaleX(-1)',
+      `${GUTTER / 2}px 0`,
+    ]);
     expect(veils(curl, backs)).toHaveLength(0);
   });
 
@@ -183,8 +188,9 @@ describe('a spread’s back', () => {
     b.turn.key(-1);
     const curl = b.curl() as HTMLElement;
     expect(new Set(words(curl, backs))).toEqual(new Set(['Page 2']));
+    // The right page as it is, from the gutter on: the leaf's own mirror reads it.
     const back = curl.querySelector<HTMLElement>('.turn-curl__back .turn-curl__page');
-    expect(back?.style.transform).toBe(`translateX(${-GUTTER}px)`);
+    expect([back?.style.left, back?.style.transform]).toEqual([`${-GUTTER}px`, '']);
   });
 
   it('on one page, is its own words through the paper', () => {

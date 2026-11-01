@@ -27,9 +27,8 @@ export interface CurlRunOf {
   readonly sheet: HTMLElement;
   /** One page of two that turns (a spread), or null: the whole sheet. */
   readonly leaf?: TurnLeaf | null;
-  readonly words: string;
-  /** A copy's words cut to what's in sight. */
-  readonly trim?: (words: HTMLElement) => void;
+  /** A copy of the sheet now: the page come to, curling back over (a whole sheet turned back) or on a spread's back. */
+  readonly coming: HTMLElement | null;
   readonly tokens: TurnTokens;
   readonly frames: Frames;
   /** Landed: turned, or fallen back. */
@@ -47,7 +46,7 @@ export class CurlRun {
   constructor(turn: CurlTurn, of: CurlRunOf) {
     this.#turn = turn;
     this.#of = of;
-    this.#view = new CurlView(of.copy, of.sheet, turn.way, of.words, of.trim, of.leaf ?? null);
+    this.#view = new CurlView(of.copy, of.sheet, turn.way, of.coming, of.leaf ?? null);
     this.#draw();
   }
 

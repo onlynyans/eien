@@ -266,8 +266,9 @@ a curl, and only then, it carries light, Depth's one exception
 
 - `--eien-curl-shade` (by day the sheet shadow's own ink at 0.18, by night
   black at 0.5): where paper bends away, the roll's shadow on the page
-  beneath, and the lifted paper's one soft shadow (`drop-shadow` at
-  `--eien-space-2`), a third shadow there only while the page moves;
+  beneath, and the lifted paper's one soft shadow (`--eien-space-2` round
+  its free edges), a third shadow there only while the page moves; both as
+  strong as the paper is high, none as it's taken or lands flat;
 - `--eien-curl-light` (white at 0.6 by day, the night's ink at 0.1): the
   crest of the roll catching the light, and the glint past it;
 - `--eien-curl-through` (0.12): how much of the words shows through the

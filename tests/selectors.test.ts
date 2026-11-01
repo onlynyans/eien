@@ -9,19 +9,10 @@
 // one named by nothing but :not() or "*" restyles every element under it
 // each time the attribute is set.
 
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-
-const SRC = resolve(import.meta.dirname, '../src');
-
-function stylesheets(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) return stylesheets(path);
-    return entry.name.endsWith('.css') ? [path] : [];
-  });
-}
+import { SRC, stylesheets } from './stylesheets';
 
 /** Every selector in `css`, comments and declarations left out. */
 function selectorsOf(css: string): string[] {

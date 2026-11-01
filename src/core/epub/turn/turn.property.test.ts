@@ -194,6 +194,23 @@ describe('a frame’s bands', () => {
   });
 });
 
+describe('a frame’s paper', () => {
+  // The shadows are as strong as it's raised: never less than none, nor more than whole.
+  it('is raised between flat and its highest, wherever the hand is', () => {
+    fc.assert(
+      fc.property(box, unit, unit, unit, (page, grip, x, y) => {
+        const frame = curlFrame(
+          page,
+          [page.width, grip * page.height],
+          [(2 * x - 1) * page.width, y * page.height],
+          { cast: 32, crest: 24 },
+        );
+        return frame.resting || (frame.raised >= 0 && frame.raised <= 1 + 1e-9);
+      }),
+    );
+  });
+});
+
 describe('the speed', () => {
   it('at 0, or with the tokens at 0 (reduced motion), every motion is instant', () => {
     fc.assert(

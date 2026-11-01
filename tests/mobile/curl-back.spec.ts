@@ -6,18 +6,16 @@
 // on the sheet's new left page.
 
 import { readFileSync } from 'node:fs';
-import { devices, expect, test } from '@playwright/test';
+import { devices, expect, type Page, test } from '@playwright/test';
 import { box, FIXTURE } from './book-hand';
 import { open, putBytesOutside } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 
-/** Two words of a line on the next spread's left page, the fixture's, found nowhere else. */
-const LINE = ['replied', 'wife,'] as const;
+type Seen = { back: number[]; sheet: number[] };
 
-test('a spread’s page turned on lands its back’s words where the sheet has them', async ({
-  page,
-}) => {
+/** A book in pages on two facing pages, the desktop's panes on a wide screen, turning slowly. */
+async function bookOnTwoPages(page: Page): Promise<void> {
   await open(page);
   await page.evaluate(async () => {
     await window.eien.settings.set('appearance.room', 'panes');
@@ -35,12 +33,18 @@ test('a spread’s page turned on lands its back’s words where the sheet has t
   await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
   await expect(box(page)).toHaveAttribute('data-spread', '');
   await page.locator('.page__leaf--epub .page__scroll').focus();
-  // Every frame of the turn: where the two words stand on the curl's back, and on the sheet's left
-  // page (the page come to, beneath the curl).
+}
+
+/**
+ * A key's turn watched every frame: where two words of a line (`first` and
+ * `last`, found in one text and nowhere else) stand on the curl's back, and
+ * on the sheet beneath (the page come to).
+ */
+async function turnWatched(page: Page, key: string, [first, last]: readonly [string, string]) {
   const frames = page.evaluate(
     ([first, last]) =>
-      new Promise<{ back: number[]; sheet: number[] }[]>((done) => {
-        const seen: { back: number[]; sheet: number[] }[] = [];
+      new Promise<Seen[]>((done) => {
+        const seen: Seen[] = [];
         let begun = false;
         /** The words' middles in the first text of `root` holding both. */
         const wordsIn = (root: Element): number[] | null => {
@@ -72,18 +76,41 @@ test('a spread’s page turned on lands its back’s words where the sheet has t
         };
         requestAnimationFrame(tick);
       }),
-    LINE,
+    [first, last] as const,
   );
-  await page.keyboard.press('ArrowRight');
-  const seen = await frames;
+  await page.keyboard.press(key);
+  return frames;
+}
+
+/** The back seen through a turn: read left to right as it comes over, landing on the sheet's words. */
+function expectLanded(seen: Seen[]): void {
   expect(seen.length).toBeGreaterThan(10);
-  const last = seen.at(-1) as { back: number[]; sheet: number[] };
-  // Landing: each word within a few pixels of the sheet's, the line read left to right.
+  // Every frame the line reads left to right: the back is mirrored, as paper's is, and turned over.
+  for (const { back } of seen) expect(back[0]).toBeLessThan(back[2] as number);
+  // Landing: each word within a few pixels of the sheet's.
+  const last = seen.at(-1) as Seen;
   last.back.forEach((at, i) => {
     expect(Math.abs(at - (last.sheet[i] as number))).toBeLessThan(6);
   });
-  expect(last.back[0]).toBeLessThan(last.back[2] as number);
   // And the back was elsewhere as the page rose: what lands is what turned over.
-  const first = seen[0] as { back: number[]; sheet: number[] };
+  const first = seen[0] as Seen;
   expect(Math.abs((first.back[0] as number) - (first.sheet[0] as number))).toBeGreaterThan(50);
+}
+
+test('a spread’s page turned on lands its back’s words where the sheet has them', async ({
+  page,
+}) => {
+  await bookOnTwoPages(page);
+  // A line of the next spread's left page.
+  expectLanded(await turnWatched(page, 'ArrowRight', ['replied', 'wife,']));
+});
+
+test('a spread’s page turned back lands its back’s words where the sheet has them', async ({
+  page,
+}) => {
+  await bookOnTwoPages(page);
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 20_000 });
+  // A line of the spread before's right page.
+  expectLanded(await turnWatched(page, 'ArrowLeft', ['married', 'single?']));
 });

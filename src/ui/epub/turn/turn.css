@@ -89,8 +89,11 @@
   transform-origin: 0 0;
   will-change: transform;
 }
-.turn-curl__inside:not(.turn-curl__inside--uncut) {
+.turn-curl__inside {
   overflow: hidden;
+}
+.turn-curl__inside--uncut {
+  overflow: visible;
 }
 .turn-curl__over {
   z-index: 1;
