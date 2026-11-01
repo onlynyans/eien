@@ -265,6 +265,26 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     expect(redraw).toHaveBeenCalledOnce();
   });
 
+  it('are what the tools’ Marks shows: the active page’s book, on its Marks lens, drawn (#64)', () => {
+    const book = { kind: 'epub', go: () => {}, path: 'Novels/Emma.epub' };
+    const { nav, epubs, redraw } = watched('Novels/Dune.epub', { active: book, sides: [book] });
+    expect(epubs.showMarks()).toBe(true);
+    expect([nav.contents, nav.bookLens]).toEqual(['Novels/Emma.epub', 'marks']);
+    expect(redraw).toHaveBeenCalledOnce();
+    // A note in front, or no book open: nothing to show, and nothing changed.
+    const note = { kind: 'note', path: 'Note.md' };
+    const notes = watched('Novels/Dune.epub', { active: note, sides: [note] });
+    expect(notes.epubs.showMarks()).toBe(false);
+    expect([notes.nav.contents, notes.nav.bookLens]).toEqual(['Novels/Dune.epub', 'contents']);
+    expect(notes.redraw).not.toHaveBeenCalled();
+    // A book's page with no book on it (one trashed under it, its page cleared): the same.
+    const empty = { kind: 'epub', go: () => {}, path: null };
+    const none = watched('Novels/Dune.epub', { active: empty, sides: [empty] });
+    expect(none.epubs.showMarks()).toBe(false);
+    expect([none.nav.contents, none.nav.bookLens]).toEqual(['Novels/Dune.epub', 'contents']);
+    expect(none.redraw).not.toHaveBeenCalled();
+  });
+
   it('begin at Contents for another book even from Marks, and stay on Marks for the same one opened again', () => {
     const { nav, epubs } = watched('Novels/Dune.epub', { active: {}, sides: [] });
     nav.bookLens = 'marks';
@@ -314,8 +334,8 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
   });
 
   // None until then is ../epub/book-place.test.ts's: here the count runs on its own time.
-  it('have their steady pages once a book with no page-list is counted, rising through the book', async () => {
-    // The sample's chapters thirty times over: a book of several steady pages, not one.
+  it('say how far through the book, with no page-list, once their chapters are counted, rising through it (#67)', async () => {
+    // The sample's chapters thirty times over: long enough that a share is more than a few words.
     const long = fixtureEpubs({
       ...SAMPLE_SOURCES,
       chapters: SAMPLE_SOURCES.chapters.map((paras) =>
@@ -342,9 +362,11 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     await vi.waitFor(() => expect(pages().every((page) => page !== null)).toBe(true), {
       timeout: 5000,
     });
-    const [first, last] = pages().map(Number);
-    expect(first).toBe(1);
-    expect(last).toBeGreaterThan(first as number);
+    const [first, last] = pages();
+    expect(first).toMatch(/^\d+%$/u);
+    // Past its chapter's end, it stands at that chapter's end: the last chapter's, the book's.
+    expect(last).toBe('100%');
+    expect(Number.parseInt(first ?? '', 10)).toBeLessThan(100);
   });
 });
 

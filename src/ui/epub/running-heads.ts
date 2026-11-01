@@ -10,7 +10,7 @@
 import type { Epub } from '../../core/epub';
 import { chapterTitle } from '../../core/epub';
 import { h } from '../dom';
-import type { PageShown } from './sight';
+import { holdsWords, type PageShown } from './sight';
 
 /** Two slots, the verso's and the recto's (one page uses the first's head and the second's folio). */
 const pair = (cls: string, item: string) =>
@@ -22,13 +22,14 @@ export class RunningHeads {
 
   /**
    * The pages in `sight` of spine item `spine` of `epub`: their heads, and
-   * their folios by `labelAt` (the page numbers', decided once); none for no sight.
+   * their folios by `folioOf` (the page numbers', decided once: ./book-place.ts,
+   * given each page and where it stands in the sight); none for no sight.
    */
   show(
     sight: readonly PageShown[],
     epub: Epub | null,
     spine: number,
-    labelAt: (offset: number) => string | null,
+    folioOf: (page: PageShown, at: number) => string | null,
   ): void {
     const [verso, recto] = sight;
     if (!epub || !verso) {
@@ -38,15 +39,15 @@ export class RunningHeads {
     const chapter = chapterTitle(epub.contents, spine) ?? epub.title;
     const head = (page: PageShown | undefined, words: string) =>
       page?.role === 'text' ? words : '';
-    const folio = (page: PageShown | undefined) =>
-      page && (page.role === 'text' || page.role === 'opening') ? (labelAt(page.from) ?? '') : '';
+    const folio = (page: PageShown | undefined, at: number) =>
+      holdsWords(page) ? (folioOf(page, at) ?? '') : '';
     if (!recto) {
-      this.#put([head(verso, chapter), ''], ['', folio(verso)]);
+      this.#put([head(verso, chapter), ''], ['', folio(verso, 0)]);
       return;
     }
-    const left = folio(verso);
-    const right = folio(recto);
-    // Steady pages may begin both pages on one number: the verso's says it.
+    const left = folio(verso, 0);
+    const right = folio(recto, 1);
+    // Printed pages may begin both pages on one number: the verso's says it.
     this.#put([head(verso, epub.title), head(recto, chapter)], [left, right === left ? '' : right]);
   }
 

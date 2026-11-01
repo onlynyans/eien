@@ -15,14 +15,14 @@ import { crumbsOf } from '../vault/open-note';
 import type { Place, SideHooks } from '../vault/page-side';
 import type { BookCount } from './book-count';
 import { nameLinks } from './book-links';
-import { nameOf, openBook, startOf } from './book-open';
+import { headOf, nameOf, openBook, startOf } from './book-open';
 import { bookParts } from './book-parts';
 import { quoteChosen } from './book-quote';
 import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
 import { EpubPage } from './epub-page';
 import type { EpubPlace, EpubSide, EpubSideOf } from './epub-side-types';
-import { frontMatter } from './front-matter';
+import { FRONT, frontMatter } from './front-matter';
 
 export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | null): EpubSide {
   const page = new EpubPage({
@@ -225,7 +225,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       epub = null;
       spine = -1;
       letGo();
-      page.loading(nameOf(null, next), crumbsOf(next));
+      page.loading(nameOf(null, next), headOf(null, next));
       const read = await openBook(of, next);
       if (opening !== turn || disposed) return;
       if ('notice' in read) {
@@ -236,7 +236,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       letTexts = of.texts.hold(epub.key);
       const counted = of.counts.of(epub);
       count = counted;
-      page.show(nameOf(epub, next), crumbsOf(next), epub.language);
+      page.show(nameOf(epub, next), headOf(epub, next), epub.language);
       // Its bookmarks whatever place it opens at (⇄, a second page); the place kept only if none was given.
       const state = await of.reading.read(epub.key);
       if (opening !== turn || disposed) return;
@@ -249,10 +249,10 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       stopCount = counted.run(
         epub,
         (then) => pages.whenStill(then),
-        () => {
+        (item) => {
           placing.counted();
-          // Whole: the list's Marks have their pages now.
-          if (counted.whole) of.changed();
+          // A chapter more counted: its marks and matches have their places now.
+          if (path) of.counted(path, item);
         },
       );
     },
@@ -284,7 +284,10 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     moved(to) {
       path = to;
       // A book with no title of its own is called by its file: renamed, its new name.
-      page.show(nameOf(epub, to), crumbsOf(to), epub?.language ?? '');
+      page.show(nameOf(epub, to), headOf(epub, to), epub?.language ?? '');
+      // Its title page names the folders it's in and its file (#57: nowhere else on the page now).
+      const front = page.chapter.querySelector(`:scope > ${FRONT}`);
+      if (front && epub) front.replaceWith(frontMatter(epub, to, crumbsOf(to)));
     },
     clear() {
       links.forget();

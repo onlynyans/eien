@@ -117,13 +117,14 @@ export class EdgeStrip {
   }
 
   /**
-   * The place in the book now, as a share of it and in `words` (its chapter
-   * and page): the bar, and what the slider says. Told every scroll frame, so
-   * only what changed is set.
+   * The place in the book now, as a share of it and in `words` (its chapter,
+   * and its printed page or share of the book): the bar, and what the slider
+   * says. Told every scroll frame, so only what changed is set.
    */
   place(share: number, words: string): void {
     const now = String(within(share));
-    const percent = String(Math.round(within(share) * 100));
+    // Rounded down, as its words are (core/epub/progress.ts percent): never 22 beside "21%".
+    const percent = String(Math.floor(within(share) * 100 + 1e-9));
     if (this.#here.style.getPropertyValue('--at') !== now)
       this.#here.style.setProperty('--at', now);
     if (this.element.getAttribute('aria-valuenow') !== percent)

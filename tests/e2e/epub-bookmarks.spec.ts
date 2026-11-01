@@ -166,7 +166,9 @@ test.describe('Marks in the list (Phase 4c)', () => {
     await expect(row).toHaveCount(1);
     await expect(row.locator('.mark-row__words')).toContainText('Not all that Mrs. Bennet');
     await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter III · bookmark');
-    await expect(row.locator('.mark-row__page')).toHaveText(/^\d+$/u);
+    // A book with no page-list: the row names how far through the book it is (#67), as its
+    // chapter's pages are laid out only while it's on the page.
+    await expect(row.locator('.mark-row__page')).toHaveText(/^\d+%$/u);
     await page.getByRole('button', { name: /^Contents \d+$/u }).click();
     await page.locator('.contents-row').nth(0).click();
     await expect(leaf(page).locator('.epub-chapter')).toContainText('It is a truth');

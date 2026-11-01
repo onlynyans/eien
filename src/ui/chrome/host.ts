@@ -9,7 +9,7 @@ import { type IconName, icon } from '../icons';
 import { type CommandId, commandOf } from './commands';
 import type { Folding, Step } from './fold';
 import { keysOf } from './keys';
-import type { HostSpec } from './layout-spec';
+import { type HostSpec, idsIn } from './layout-spec';
 
 /** How a command looks right now; what's left out is as its definition has it. */
 export interface CommandLook {
@@ -64,7 +64,8 @@ export class Host<Spec extends HostDraw = HostSpec> implements Folding {
               ...item.ids.map((id) => this.#button(id)),
             ),
     );
-    this.more = spec.folds ? this.#moreButton() : null;
+    // A phone's bar folds behind the ⋯ it holds already, which offers all it folds (PHONE_FOLDS).
+    this.more = spec.folds && !idsIn(spec.items).includes('more') ? this.#moreButton() : null;
     this.element = h(
       'div',
       {

@@ -184,6 +184,14 @@ export async function showVault(
     refresh: () => void refresh(),
   });
   const { parts } = pages;
+  /**
+   * A book's Marks (#64): its marks where they're listed, the list on its Marks lens brought into
+   * sight (on a phone, a pane away); with two panes, or no list, the sidebar's SHELF row's.
+   */
+  const showMarks = () => {
+    if (!epubs.showMarks()) return;
+    if (panes.two || !panes.open('list')) panes.open('sidebar');
+  };
   const phone = phoneView({
     shell,
     platform: bridge.platform,
@@ -195,6 +203,7 @@ export async function showVault(
     pages,
     has: (path) => state.has(path),
     changed: () => panes.relayout(),
+    marks: showMarks,
   });
   const panes = new PaneLayout(
     {
@@ -226,6 +235,7 @@ export async function showVault(
     mac: keys.sidebar.startsWith('⌘'),
     platform: bridge.platform,
     openInNewWindow,
+    marks: showMarks,
     greyMenu:
       bridge.window && ((commands) => void bridge.window?.greyMenu(commands).catch(console.error)),
   });

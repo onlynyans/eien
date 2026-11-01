@@ -36,6 +36,12 @@ interface Common {
   /** Only on a window wide enough for panes side by side: never a phone's (spec §10). */
   readonly wide?: true;
   /**
+   * Only while the page has room round its sheet for the line at its widest (ui/page/page-room.ts),
+   * where each choice sets a line of its own: never a page that fills its pane (#62). Chosen
+   * otherwise than its default, it's offered anywhere, so a choice can always be put back.
+   */
+  readonly roomy?: true;
+  /**
    * In the quick look (#49, ui/quick-look): one value for every page (`window`), or a page's own
    * (`page`): the notes' under this key, and from #40 Phase 1 the shelf's under `epub.<key>`,
    * from this same entry. A book's alone (`shelf`, #40 Phase 2) shows only in the shelf's quick
@@ -289,8 +295,9 @@ export const SETTINGS = [
     label: 'Page width',
     description:
       'Lines a little shorter or longer than the typeface sets them, on a page with room round it.',
-    // A phone's page is already narrower than any face's line.
+    // A phone's page is already narrower than any face's line; so is a narrow pane's, anywhere.
     wide: true,
+    roomy: true,
     scope: 'device',
     group: 'Page',
     type: 'choice',
@@ -604,7 +611,17 @@ export const PHONE_DEFAULTS: Partial<SettingValues> = Object.fromEntries(
   ),
 );
 
-/** Whether `setting` is offered on the system named `platform` (process.platform), on a phone or not. */
-export const offeredOn = (setting: Setting, platform: string, phone = false): boolean =>
+/**
+ * Whether `setting` is offered on the system named `platform` (process.platform), on a phone or
+ * not, with the page `roomy` (room round its sheet) or not, its value `value`.
+ */
+export const offeredOn = (
+  setting: Setting,
+  platform: string,
+  phone = false,
+  roomy = true,
+  value: unknown = setting.default,
+): boolean =>
   (setting.platforms === undefined || setting.platforms.includes(platform)) &&
-  !(phone && setting.wide);
+  !(phone && setting.wide) &&
+  !(setting.roomy && !roomy && value === setting.default);

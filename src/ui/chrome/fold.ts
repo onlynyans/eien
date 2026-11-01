@@ -36,18 +36,21 @@ export function folded<T>(order: readonly T[], fits: (folded: readonly T[]) => b
 
 /**
  * Fold `hosts`, the folding hosts of one bar in its order, as few as it takes for each to fit
- * `bar`, from all unfolded (its room may have grown); what folded, in the bar's order.
+ * `bar`, from all unfolded (its room may have grown); what folded, in the bar's order. The bar's
+ * room is read with every tool in sight: a bar its tools size (a phone's, beside back and ⇄, which
+ * give way first) is at its widest then, and folding would only narrow it.
  */
 export function fitBar(
   hosts: readonly Folding[],
   bar: HTMLElement,
-  fits: (host: HTMLElement, bar: HTMLElement) => boolean = within(contentBox(bar)),
+  given?: (host: HTMLElement, bar: HTMLElement) => boolean,
 ): CommandId[] {
   const last = hosts.at(-1);
   const apply = (ids: readonly CommandId[]) => {
     for (const host of hosts) host.fold(ids, host === last && ids.length > 0);
   };
   apply([]); // all in sight, to know what's drawn; folding none again below writes nothing
+  const fits = given ?? within(contentBox(bar));
   const steps = hosts.flatMap((host) => host.steps()).sort((a, b) => a.rank - b.rank);
   const chosen = folded(steps, (some) => {
     apply(some.flatMap((step) => step.ids));
@@ -59,8 +62,7 @@ export function fitBar(
 
 /**
  * The bar's content box, left to right: its padding keeps clear of the window's corner and the
- * system's controls, so inside it is clear of them too. The bar's, whose width the page gives
- * it, not a host's; read once a fit, as folding never changes it.
+ * system's controls, so inside it is clear of them too. The bar's, not a host's; read once a fit.
  */
 export function contentBox(bar: HTMLElement): { readonly left: number; readonly right: number } {
   const box = bar.getBoundingClientRect();

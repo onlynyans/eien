@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { handEpub, nav, opf, XHTML, page as xhtml } from '../../../tests/support/epub-parts';
+import type { Epub } from '../../core/epub';
 import { BookCount } from './book-count';
 import { epubKind } from './epub-kind';
 import { EpubPage } from './epub-page';
@@ -30,12 +31,17 @@ describe('a book counted for its page numbers (Phase 4a)', () => {
     return stops;
   }
 
-  it('redraws the panes once the book is wholly counted: Marks rows have their pages then (Phase 4c)', async () => {
-    const { side, changed } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
+  it('tells the window each chapter counted, never redrawing the panes: Marks rows have their places then (Phase 4c, #67)', async () => {
+    const { side, changed, of } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
     await side.open('a.epub');
     changed.mockClear();
-    await vi.waitFor(() => expect(side.labelAt(1, 0)).not.toBeNull());
-    expect(changed).toHaveBeenCalled();
+    await vi.waitFor(() => expect(of.counted).toHaveBeenCalledWith('a.epub', expect.any(Number)));
+    const count = of.counts.of(side.epub as Epub);
+    await vi.waitFor(() => expect(count.whole).toBe(true));
+    // Each chapter in the background told, the chapter drawn counted as it was drawn.
+    expect(vi.mocked(of.counted).mock.calls.length).toBe((side.epub?.spine.length ?? 0) - 1);
+    expect(side.labelAt(1, 0)).not.toBeNull();
+    expect(changed).not.toHaveBeenCalled();
   });
 
   it('counts once the chapter is drawn, and stops for another book, a cleared page or one gone', async () => {
@@ -85,13 +91,22 @@ describe('a book counted for its page numbers (Phase 4a)', () => {
 });
 
 describe('a book’s page', () => {
-  it('opens the book at its first chapter, named by its title, its folders above', async () => {
+  it('opens the book at its first chapter, named by its title, its head the title and author (#57)', async () => {
     const { side, changed } = sideWith({
       'Novels/P and P.epub': EPUBS['plain.epub'] as Uint8Array,
     });
     await side.open('Novels/P and P.epub');
     expect(side.page.name).toBe('Pride and Prejudice');
-    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Novels');
+    // The book, not the folder it's in, as its row on SHELF names it; the folders on its title page.
+    // This one says no author: its title alone.
+    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Pride and Prejudice');
+    expect(side.page.runningCrumbs.textContent).toBe('Pride and Prejudice');
+    const { side: by } = sideWith({ 'Novels/P.epub': EPUBS['epub2.epub'] as Uint8Array });
+    await by.open('Novels/P.epub');
+    expect(by.page.element.querySelector('.crumbs')?.textContent).toBe(
+      'Pride and Prejudice · Jane Austen',
+    );
+    expect(by.page.runningCrumbs.textContent).toBe('Pride and Prejudice · Jane Austen');
     expect(chapterText(side)).toContain('It is a truth universally acknowledged');
     expect(side.page.chapter.lang).toBe('en');
     expect(side.spine).toBe(1); // the title page before it isn't in the contents
@@ -200,10 +215,15 @@ describe('the EPUB’s kind', () => {
     const { side, of } = sideWith({ 'Novels/a.epub': EPUBS['plain.epub'] as Uint8Array });
     const kind = epubKind(of);
     await side.open('Novels/a.epub');
+    await side.go(0); // Eien's title page, which names the folders, before it
     kind.moved('Novels', 'Books/Novels');
     kind.followMoves([side]);
     expect(side.path).toBe('Books/Novels/a.epub');
-    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Books / Novels');
+    // Its head is the book's, wherever it's moved; its title page names the folders it's in now.
+    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Pride and Prejudice');
+    expect(side.page.chapter.querySelector('.epub-front__shelf')?.textContent).toBe(
+      'Books / Novels',
+    );
     kind.sync([side]); // the vault lists the old path only: the book's gone
     expect(side.path).toBeNull();
   });
@@ -220,6 +240,20 @@ describe('the EPUB’s kind', () => {
     kind.moved('Novels/b.epub', 'Novels/First Impressions.epub');
     kind.followMoves([side]);
     expect(side.page.name).toBe('First Impressions');
+  });
+
+  it('names a renamed book with no title of its own by its new file in its head, its author kept (#57)', async () => {
+    const { side, of } = sideWith({ 'Novels/a.epub': EPUBS['epub2.epub'] as Uint8Array });
+    const kind = epubKind(of);
+    await side.open('Novels/a.epub');
+    Object.assign(side.epub as object, { title: '' });
+    kind.moved('Novels/a.epub', 'Novels/First Impressions.epub');
+    kind.followMoves([side]);
+    // Its head and the running head alike, never the folder it's in.
+    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe(
+      'First Impressions · Jane Austen',
+    );
+    expect(side.page.runningCrumbs.textContent).toBe('First Impressions · Jane Austen');
   });
 
   it('reads a book again when its file changes, and waits for its place to be kept', async () => {

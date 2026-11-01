@@ -7,6 +7,7 @@
 import { offeredOn, type SettingKey, type SettingValues } from '../../core/config';
 import { h } from '../dom';
 import { icon } from '../icons';
+import { notesPage, roomForWidths } from '../page/page-room';
 import { NARROW, onePane, roomOf, UPRIGHT_PHONE, widthNow } from '../phone/room';
 import { reasonOf } from '../reason';
 import type { WriterThemes } from '../theme/writer-themes';
@@ -23,8 +24,11 @@ interface Drawn {
   readonly button: HTMLButtonElement;
   readonly body: HTMLElement;
   show(values: SettingValues): void;
-  /** Its rows as offered `phone` or not (one pane, the phone's way, offers no panes): whether any shows. */
-  fit(phone: boolean): boolean;
+  /**
+   * Its rows as offered `phone` or not (one pane, the phone's way, offers no panes), with the
+   * notes' page `roomy` or not (../page/page-room.ts), at `values`: whether any shows.
+   */
+  fit(phone: boolean, roomy: boolean, values: SettingValues): boolean;
   flush?(): Promise<void>;
 }
 
@@ -134,12 +138,24 @@ export class SettingsScreen {
     settings.onChange((values) => this.#show(values));
     // Folded or opened, turned, with Settings open: what the room offers follows.
     for (const width of [NARROW, UPRIGHT_PHONE])
-      matchMedia(width).addEventListener('change', () => this.#fit(settings.values));
+      matchMedia(width).addEventListener('change', () => {
+        this.#measure();
+        this.#fit(settings.values);
+      });
     this.#show(settings.values);
     this.#choose(this.#shown);
   }
 
   readonly #place: () => void;
+
+  /** Whether the notes' page had room round its sheet, as Settings opened (../page/page-room.ts). */
+  #roomy = true;
+
+  /** The notes' page in sight measured, as Settings sets notes; with none, nothing to measure. */
+  #measure(): void {
+    const page = notesPage();
+    this.#roomy = !page || roomForWidths(page);
+  }
 
   get isOpen(): boolean {
     return this.#dialog.open;
@@ -149,6 +165,7 @@ export class SettingsScreen {
   open(category?: string): void {
     if (this.#dialog.open) return;
     this.#problem.hidden = true;
+    this.#measure();
     this.#fit(this.#settings.values); // the window may have turned, or unfolded, since
     const at = this.#tabs.find((tab) => tab.category.name === category && !tab.button.hidden);
     if (at) this.#choose(at);
@@ -223,8 +240,15 @@ export class SettingsScreen {
     const show = (values: SettingValues) => {
       for (const row of rows) row.show(values);
     };
-    const fit = (phone: boolean) => {
-      for (const row of rows) row.element.hidden = !offeredOn(row.setting, platform, phone);
+    const fit = (phone: boolean, roomy: boolean, values: SettingValues) => {
+      for (const row of rows)
+        row.element.hidden = !offeredOn(
+          row.setting,
+          platform,
+          phone,
+          roomy,
+          values[row.setting.key as SettingKey],
+        );
       return rows.some((row) => !row.element.hidden);
     };
     return { body, show, fit };
@@ -256,7 +280,7 @@ export class SettingsScreen {
   /** Show what's offered in the room the window uses now: one pane, the phone's way, offers no panes. */
   #fit(values: SettingValues): void {
     const phone = onePane(roomOf(widthNow(), this.#platform, values));
-    for (const tab of this.#tabs) tab.button.hidden = !tab.fit(phone);
+    for (const tab of this.#tabs) tab.button.hidden = !tab.fit(phone, this.#roomy, values);
     for (const part of this.#dialog.querySelectorAll<HTMLElement>('.settings__part')) {
       part.hidden = [...part.querySelectorAll<HTMLElement>('.settings__tab')].every(
         (b) => b.hidden,

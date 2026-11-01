@@ -11,7 +11,7 @@ import { h } from '../dom';
 
 /** A match as its row shows it. */
 export type FoundRow = Found & {
-  /** Its page as the book numbers them, or null for none known yet. */
+  /** Its printed page, else how far through the book ("21%"); null for none known yet. */
   readonly page: string | null;
   /** Its chapter's name. */
   readonly chapter: string;

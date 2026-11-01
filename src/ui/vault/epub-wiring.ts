@@ -73,6 +73,8 @@ export interface EpubWiring {
   typed(words: string): void;
   /** Enter in the search field while it searches a book: on to the next match (⇧Enter, back); false for none. */
   stepFound(way: 1 | -1): boolean;
+  /** The active page's book's marks the list's lens (#64), the list and SHELF drawn so; whether there's a book. */
+  showMarks(): boolean;
 }
 
 /** Why a quote has nowhere to go. */
@@ -110,6 +112,20 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
     looks: () => of.looks(),
     sizeOf: (path) => of.state.sizeOf(path),
     changed: () => of.redraw(),
+    // Only for a row the list shows, in the chapter counted: a chapter is counted a task at a time,
+    // and a row's place hangs on its own chapter's count alone.
+    counted(path, spine) {
+      const side = sideOf(path);
+      const epub = side?.epub;
+      if (!side || !epub || of.nav.contents !== path) return;
+      // On the edge, the marks are the strip's: the list holds Found's rows alone, while it searches.
+      const lens = of.marksAt() === 'edge' ? 'found' : of.nav.bookLens;
+      const named =
+        lens === 'marks'
+          ? side.marks.inOrder().some((mark) => mark.spine === spine)
+          : lens === 'found' && found.foundIn(epub.key, spine);
+      if (named) of.drawRows();
+    },
     copy: (text, html) => of.copy(text, html),
     async quote(text, from) {
       const note = await noteFor(from);
@@ -191,6 +207,14 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
       // The words just typed searched first: Enter may come before the panes draw.
       found.sync(side, of.nav.query);
       return found.step(side, way);
+    },
+    showMarks: () => {
+      const { active } = of.pages();
+      if (!isEpub(active) || active.path === null) return false;
+      of.nav.contents = active.path;
+      of.nav.bookLens = 'marks';
+      of.redraw();
+      return true;
     },
     shelf: (two, withFound) => {
       const active = of.pages().active;
