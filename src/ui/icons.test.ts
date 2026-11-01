@@ -105,6 +105,28 @@ describe('the quick look’s Aa (#73)', () => {
     }
   });
 
+  // The sans a is a ring and a stem, Match case's still: a serif face's small a
+  // has two storeys, an arch over into the stem and a bowl under it, so its
+  // half of the icon is strokes alone, at least two of them.
+  it('has a two-storey a: an arch and a bowl, where Match case has a ring and a stem', () => {
+    const smallA = (name: IconName) => {
+      const svg = icon(name);
+      const inHalf = (d: string) =>
+        segments(d).every(({ from, to }) => from[0] > 9.5 && to[0] > 9.5);
+      return {
+        rings: [...svg.querySelectorAll('circle')].filter((c) => Number(c.getAttribute('cx')) > 9.5)
+          .length,
+        strokes: [...svg.querySelectorAll('path')]
+          .map((path) => path.getAttribute('d') ?? '')
+          .filter(inHalf)
+          .flatMap((d) => d.match(/m/giu) ?? []).length,
+      };
+    };
+    expect(smallA('look').rings).toBe(0);
+    expect(smallA('look').strokes).toBeGreaterThanOrEqual(2);
+    expect(smallA('matchCase')).toEqual({ rings: 1, strokes: 1 });
+  });
+
   it('is drawn apart from Find’s Match case, which keeps its sans Aa', () => {
     expect(ICONS.look).not.toBe(ICONS.matchCase);
     expect(footSerifs('matchCase')).toHaveLength(0);
