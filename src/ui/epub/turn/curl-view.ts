@@ -101,8 +101,8 @@ export class CurlView {
     }
     const copy = () => pageIn(moving.cloneNode(true) as HTMLElement, box, sheetWidth);
     // A spread's page turns over to show its back, the page the turn reveals, printed on it; one
-    // page's back is its own words faint through its paper.
-    // Without a copy of the page come to (one refused, #174), its own words, as one page's.
+    // page's back (or a spread's without a copy of that page, one refused) is its own words faint
+    // through its paper.
     const back = (): BandHolds =>
       leaf && coming
         ? {
