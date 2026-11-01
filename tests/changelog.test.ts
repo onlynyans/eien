@@ -152,6 +152,12 @@ describe('a release’s notes', () => {
     }
     expect(notesOf('## 0.4.0 — 2026-12-01\n\n', '0.4.0')).toBeNull();
   });
+
+  it('are found in a checkout with Windows line endings, as the release workflow’s Windows job has', () => {
+    const windows = CHANGELOG.replaceAll('\n', '\r\n');
+    expect(notesOf(windows, '0.10.0')).toBe('### Fixes\n\n- ten (#10)\n');
+    expect(notesOf(windows, '0.1.0')).toBe('### Features\n\n- first (#1)\n');
+  });
 });
 
 describe('CHANGELOG.md', () => {
