@@ -150,7 +150,10 @@ count it, or do you press it?* The mono.
    (checked; the specimen measures it live). Faded is only for placeholders
    and disabled things, and reaches 3:1.
 6. Every control has hover, pressed, keyboard focus and disabled states, and
-   works from the keyboard. Touch targets are at least 44px.
+   works from the keyboard. Touch targets are at least 44px (`--eien-touch`);
+   a pointer's at least 24px (`--eien-target`, WCAG 2.5.8), whatever Text
+   size makes the words (it goes down to 50%, #72): a tree row's height
+   (`--eien-row-h`) and Settings' tabs hold to it.
 7. Nothing moves the writer didn't ask to move. Transitions are quick and
    quiet, and none with reduced motion.
 

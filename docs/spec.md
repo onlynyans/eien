@@ -1218,7 +1218,9 @@ searches the vault as before, and the page's ⋯ → Find opens the bar.
   page's zoom when it isn't 100%, as it's the page's; the interface's shows in
   its own size, and in Settings → Look → Appearance. The phone has the page's alone.
 - **Text size:** a setting that scales the text face from its tuned size
-  (90%–130%), separately from zoom.
+  (50%–130%), separately from zoom. It scales the words alone: controls keep
+  their size, and a row never goes under a pointer's target (24px, WCAG
+  2.5.8).
 - **Outline cards:** a book's notes as cards on a board; drag to reorder.
   View → Outline Cards (⌘⇧O) lays out, in the page's place, the book the open
   note is a chapter of (or, with none open there, the book chosen): index
@@ -1414,7 +1416,7 @@ does nothing.
   `Documents/Eien` for an installed copy, in a portable copy's "Eien Data" beside
   it (`src/app/electron/data-folders.ts`). They hold the scheme
   (day, night or the system's), palette, the layout (band, slip or running
-  head), text face, text size (90–130%), line spacing and page width (each a
+  head), text face, text size (50–130%), line spacing and page width (each a
   step either side of the face's own, §6, A quick look), the shelf's own
   look (#40: each of those page settings again under `epub.<key>`),
   density (comfortable or compact), page frame (sheet or full), the page's
