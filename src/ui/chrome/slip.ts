@@ -34,6 +34,6 @@ export const SLIP: LayoutSpec = {
     name: 'phone-slip',
     slot: 'phoneFoot',
     label: 'Page',
-    items: [VIEWS, 'focus', 'look', 'more'],
+    items: [VIEWS, 'focus', 'bookmark', 'look', 'more'],
   },
 };
