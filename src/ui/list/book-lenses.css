@@ -8,6 +8,15 @@
   gap: var(--eien-space-1);
   margin-top: var(--eien-space-2);
 }
+/* A book's head in the list (#61): its title across the whole line, its author under it, and the
+   lenses a row of their own at the list's row height, never beside the author. */
+.list__head--book > * {
+  grid-column: 1 / -1;
+}
+.list__head--book .book-lenses {
+  align-items: center;
+  min-height: var(--eien-row-h);
+}
 .book-lens .count {
   margin-left: var(--eien-space-1);
   color: inherit;

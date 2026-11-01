@@ -9,6 +9,7 @@
 import { h } from '../dom';
 import {
   type BookLens,
+  isLensKey,
   lensButtons,
   lensKey,
   type MarkRow,
@@ -189,7 +190,7 @@ export function renderContents(
   container.replaceChildren(
     h(
       'header',
-      { class: 'list__head' },
+      { class: 'list__head list__head--book' },
       h('h2', { class: 'list__heading', text: model.title }),
       h('p', { class: 'label list__count', text: countOf(model) }),
       ...(marks ? [lensButtons(lens, counts, (chosen) => actions.lens(chosen))] : []),
@@ -209,6 +210,11 @@ export function renderContents(
   );
   if (same) {
     same.focus();
+    return;
+  }
+  // A lens gone (Found, its search cleared): the one shown now.
+  if (isLensKey(focused)) {
+    container.querySelector<HTMLElement>(`[data-key="${lensKey(lens)}"]`)?.focus();
     return;
   }
   if (at < 0) return;
