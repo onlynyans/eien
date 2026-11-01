@@ -15,7 +15,7 @@ import fc from 'fast-check';
 import { page as chapterPage, handEpub, nav, opf, XHTML } from '../support/epub-parts';
 import { png } from '../support/images';
 import { longBook } from '../support/long-book';
-import { open, putBytesOutside } from './outside';
+import { open, openChapter, putBytesOutside } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 
@@ -216,8 +216,7 @@ async function openBook(page: Page, room: Room, bytes: Uint8Array, chapter: stri
   await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
   const words = page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter');
   await expect(words).toBeVisible();
-  if (await back.isVisible()) await back.click();
-  await page.locator('.contents-row', { hasText: chapter }).click();
+  await openChapter(page, chapter);
   await expect(page.locator('.colophon .colophon__page').first()).toContainText('page');
   // Every picture drawn and sized before a page is compared.
   await expect
