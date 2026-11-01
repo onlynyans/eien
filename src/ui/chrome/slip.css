@@ -87,9 +87,9 @@
   opacity: 1;
 }
 
-/* On a phone: the page's tools float on a slip above its foot. */
-/* Its room the page's less its insets, not its tools': short of it they fold into the ⋯ (#64,
-   ./fold.ts), and a wider page fits them again. The slip at its right takes a touch, not the room. */
+/* On a phone: the page's tools float on a slip above its foot, at its right. Their room is the
+   page's less its insets, not theirs: short of it they fold into the ⋯ (#64, ./fold.ts), and a
+   wider page fits them again. Only the slip takes a touch, not the room round it. */
 [data-layout="slip"] .page__phone {
   position: absolute;
   left: var(--eien-space-4);
