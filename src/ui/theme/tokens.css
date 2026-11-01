@@ -330,7 +330,7 @@
    prose leading has --eien-leading-tighten taken off it. */
 :root {
   --eien-sheet-pad-x: var(--eien-space-8); /* the sheet's side margins */
-  --eien-sheet-pad-top: var(--eien-space-7); /* the sheet's top margin */
+  --eien-sheet-pad-top: var(--eien-space-7); /* the sheet's top margin; a book's foot too, under a finger (#58) */
   --eien-sheet-gutter: var(--eien-space-5); /* the blotter showing round the sheet */
   --eien-title-gap: var(--eien-space-6); /* above and below a note's title */
   --eien-paragraph-gap: var(--eien-space-4); /* between paragraphs */
