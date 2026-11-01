@@ -229,6 +229,27 @@ describe('valueProblem', () => {
   });
 });
 
+describe('Text size', () => {
+  const size = settingOf('appearance.textSize');
+  if (size?.type !== 'number') throw new Error('Text size is a number');
+
+  it('goes from half the face’s size to 130%, in steps of 10 (#72)', () => {
+    for (const good of [50, 60, 80, 90, 100, 130]) expect(valueProblem(size, good)).toBeNull();
+    for (const bad of [40, 45, 55, 140]) expect(valueProblem(size, bad)).not.toBeNull();
+    expect(stepped(size, 90, -1)).toBe(80);
+    expect(stepped(size, 60, -1)).toBe(50);
+    expect(stepped(size, 50, -1)).toBe(50);
+  });
+
+  it('goes as low for a book, whose own is the same setting', () => {
+    expect(checkSetting('epub.appearance.textSize', 50)).toEqual({
+      key: 'epub.appearance.textSize',
+      value: 50,
+    });
+    expect(() => checkSetting('epub.appearance.textSize', 40)).toThrow(TypeError);
+  });
+});
+
 describe('stepped', () => {
   it('moves by whole steps and stops at the ends', () => {
     const zoom = settingOf('page.zoom');

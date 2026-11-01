@@ -3,7 +3,7 @@
 // share are here; each layout's own are in ./band.ts, ./slip.ts, ./runhead.ts.
 
 import type { IconName } from '../icons';
-import type { CommandId } from './commands';
+import { type CommandId, commandOf } from './commands';
 
 /**
  * The places a host can go, each an element the window keeps (../vault/vault-view.ts):
@@ -86,10 +86,24 @@ export interface LayoutSpec {
   readonly tools: string;
 }
 
+const VIEW_IDS: readonly CommandId[] = [
+  'view.live',
+  'view.source',
+  'view.reading',
+  'view.pages',
+  'view.scroll',
+];
+
 /** The page's views, one choice: a note's three, or a book's two (only a page's own kind shows). */
-export const VIEWS: HostItem = {
+export const VIEWS: HostItem = { group: 'View', ids: VIEW_IDS };
+
+/**
+ * A book's views alone, the commands marked for a book (#63): for a phone's bar that gives a
+ * note's views one button that steps through them (A's `view.next`).
+ */
+export const BOOK_VIEWS: HostItem = {
   group: 'View',
-  ids: ['view.live', 'view.source', 'view.reading', 'view.pages', 'view.scroll'],
+  ids: VIEW_IDS.filter((id) => commandOf(id).on === 'epub'),
 };
 
 /**
