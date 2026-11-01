@@ -185,7 +185,6 @@ describe('A · Band’s bar', () => {
     expect(shown()).toEqual([
       'view.pages',
       'view.scroll',
-      'format-bar',
       'bookmark',
       'marks',
       'find',
@@ -197,13 +196,15 @@ describe('A · Band’s bar', () => {
       fitTo(controls); // the ⋯ takes one
       steps.push(chrome.folded(bar()));
     }
-    // In the bar's order: the formatting bar's switch went first, then Marks (the list's lenses
-    // reach the marks too), the bookmark, Find, and Look; the book's views and the strip stay.
+    // Seven tools fit seven controls. Short of that, in the bar's order: Marks first (the list's
+    // lenses reach the marks too) with the bookmark (one alone would only make room for the ⋯),
+    // then Find, and Look; the book's views and the strip stay. The formatting bar's switch is a
+    // note's.
     expect(steps).toEqual([
-      ['format-bar', 'marks'],
-      ['format-bar', 'bookmark', 'marks'],
-      ['format-bar', 'bookmark', 'marks', 'find'],
-      ['format-bar', 'bookmark', 'marks', 'find', 'look'],
+      [],
+      ['bookmark', 'marks'],
+      ['bookmark', 'marks', 'find'],
+      ['bookmark', 'marks', 'find', 'look'],
     ]);
     expect(shown()).toEqual(['view.pages', 'view.scroll', 'strip']);
   });

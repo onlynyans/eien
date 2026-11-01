@@ -35,7 +35,7 @@ test('a book alone sets a note’s tools aside, and the formatting bar’s row w
   await expect(page.locator('.page__format')).toBeVisible();
   await book(page).click();
   await expect(chapter(page)).toContainText('It is a truth');
-  for (const id of ['seal', 'compare', 'versions', 'focus', 'format.bold']) {
+  for (const id of ['seal', 'compare', 'versions', 'focus', 'format-bar', 'format.bold']) {
     await expect(tool(page, id), id).toBeHidden();
   }
   await expect(page.locator('.page__format')).toBeHidden();

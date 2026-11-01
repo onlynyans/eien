@@ -141,10 +141,10 @@ describe('the commands for a note', () => {
           .map((button) => button.dataset.command as CommandId)
           .filter((id) => !('split' in commandOf(id)));
       const strip = layout === 'runhead' ? [] : ['strip'];
-      // The book in front: its views, the formatting bar's switch, its bookmark, Marks, Find, Look.
+      // The book in front: its views, its bookmark, Marks, Find, Look; never the formatting bar's
+      // switch, a note's as its bar is (the orchestrator's call).
       expect(tools()).toEqual([
         ...(layout === 'band' ? [] : ['view.pages', 'view.scroll']),
-        'format-bar',
         'bookmark',
         'marks',
         'find',
@@ -333,6 +333,8 @@ describe('the commands for a note', () => {
         'outline',
         'toggle:editor.typewriter',
         'toggle:editor.marks',
+        // The formatting bar's switch, a note's as its bar is (#64).
+        'toggle:editor.formatBar',
       ]),
     );
     // A page's, the window's, and settings that are the window's stay on.
@@ -343,7 +345,6 @@ describe('the commands for a note', () => {
       'export-book:epub',
       'split',
       'new-note',
-      'toggle:editor.formatBar',
       'toggle:editor.spellcheck',
       // Format → Highlight: a book's words take it too (#40, Phase 5a).
       'format:highlight',

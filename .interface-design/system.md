@@ -786,6 +786,10 @@ in the book, each recorded here as it's built.
   the sidebar's SHELF row on it; on a phone that pane, a Back from the page,
   as Contents is. Not a toggle. With marks On the edge it's set aside: the
   strip is the marks, in sight. The phone's ⋯ offers Marks after Bookmark.
+  The formatting bar's switch is a note's (`on: 'note'`, the orchestrator's
+  call, 2026-11-01): a book can't use the bar, so a book's tools are its
+  views, the bookmark, Marks, Find and Look, and the menu bar greys
+  Formatting Bar with a book in front.
 - **Found in the list** (Phase 5c, `list/found-rows.ts`): a third lens,
   Found, after Contents and Marks, disabled (no count) with nothing
   searched. A match's row is a Marks row: its words with the match marked

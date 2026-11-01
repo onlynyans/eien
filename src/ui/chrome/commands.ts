@@ -200,12 +200,15 @@ export const COMMANDS = [
   { id: 'panes', icon: 'panes3', label: 'Two panes' },
   { id: 'settings', icon: 'settings', label: 'Settings', key: 'Mod-,', sends: 'settings' },
   { id: 'more', icon: 'more', label: 'More', phone: true },
+  // The formatting bar's switch: a note's, as its bar is (#64; a book alone has no row, and beside
+  // a note its buttons are set aside, so a book can't use it).
   {
     id: 'format-bar',
     icon: 'format',
     label: 'Formatting bar',
     key: 'Mod-Shift-b',
     sends: 'toggle:editor.formatBar',
+    on: 'note',
   },
   ...(Object.keys(BAR_FORMATS) as BarFormat[]).map(formatControl),
   // One control for the three headings: each press a level down (core/format, nextHeading).
