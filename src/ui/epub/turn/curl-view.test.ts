@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { CURL_STRIPS, curlFrame } from '../../../core/epub';
-import { CurlView, clipOf, gradientOf } from './curl-view';
+import { rampOf } from './band-box';
+import { CurlView } from './curl-view';
 import { pageCopy } from './page-copy';
 import { millisecondsOf, turnTokens } from './turn-tokens';
 
@@ -19,15 +20,50 @@ afterEach(() => {
 });
 
 describe('the curl drawn', () => {
-  it('lays the page as its pieces: what stays, twelve strips, what lies back, all in the curl’s inks', () => {
+  it('lays the page as its bands: what stays, twelve strips, what lies back, each moved, none clipped', () => {
     const to = sheet();
     const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
     view.draw(curlFrame(page, [400, 500], [0, 500], lengths));
     const strips = view.element.querySelectorAll<HTMLElement>('.turn-curl__strip');
     expect(strips).toHaveLength(CURL_STRIPS);
-    expect(strips[0]?.style.transform).toMatch(/^matrix\(/);
-    expect(strips[0]?.style.clipPath).toMatch(/^polygon\(/);
+    for (const strip of strips) {
+      expect(strip.style.transform).toMatch(/^matrix\(/);
+      expect(strip.querySelector<HTMLElement>('.turn-curl__inside')?.style.transform).toMatch(
+        /^matrix\(/,
+      );
+    }
     expect(view.element.querySelectorAll('.turn-curl__glint')).toHaveLength(CURL_STRIPS / 2);
+    expect(view.element.querySelectorAll('[style*="clip-path"]')).toHaveLength(0);
+  });
+
+  // What keeps a phone's curl smooth: a frame moves what was drawn, and draws nothing anew. A clip,
+  // a gradient or a size changed each frame was drawn again each frame, and the curl stuttered.
+  it('changes only transforms from one frame to the next as the hand moves', () => {
+    const to = sheet();
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+    view.draw(curlFrame(page, [400, 500], [380, 490], lengths));
+    // Each element's style but its transform: a frame may move things, and do nothing else.
+    const unmoved = (style: string | null | undefined) =>
+      (style ?? '').replace(/(^|;)\s*transform:[^;]*/g, '$1').trim();
+    const styles = () =>
+      [view.element, ...view.element.querySelectorAll('*')].map((element) =>
+        unmoved(element.getAttribute('style')),
+      );
+    const drawn = styles();
+    const changed: string[] = [];
+    const watch = new MutationObserver((records) => {
+      for (const record of records) {
+        const element = record.target as HTMLElement;
+        if (unmoved(record.oldValue) !== unmoved(element.getAttribute('style')))
+          changed.push(element.className);
+      }
+    });
+    watch.observe(view.element, { attributes: true, attributeOldValue: true, subtree: true });
+    for (const x of [300, 150, 0, -200, -380])
+      view.draw(curlFrame(page, [400, 500], [x, 470], lengths));
+    watch.disconnect();
+    expect(changed).toEqual([]);
+    expect(styles()).toEqual(drawn);
   });
 
   it('at rest, shows the page flat and nothing else', () => {
@@ -36,6 +72,11 @@ describe('the curl drawn', () => {
     view.draw(curlFrame(page, [400, 500], [400, 500], lengths));
     const flap = view.element.querySelector<HTMLElement>('.turn-curl__flap');
     expect(flap?.style.visibility).toBe('hidden');
+    const strips = [...view.element.querySelectorAll<HTMLElement>('.turn-curl__strip')];
+    expect(strips.map((strip) => strip.style.visibility)).toEqual(strips.map(() => 'hidden'));
+    expect(view.element.querySelector<HTMLElement>('.turn-curl__front')?.style.transform).toMatch(
+      /^matrix\(/,
+    );
   });
 
   it('stacks its pieces in order, whatever the page’s own rules would', () => {
@@ -51,28 +92,10 @@ describe('the curl drawn', () => {
 });
 
 describe('its CSS', () => {
-  it('wears a light as the ink at each stop’s strength, never a colour of its own', () => {
-    const light = {
-      angle: 90,
-      stops: [
-        { at: 10, strength: 0 },
-        { at: 42, strength: 1 },
-      ],
-    };
-    expect(gradientOf(light, 'var(--eien-curl-shade)')).toBe(
-      'linear-gradient(90.00deg, color-mix(in srgb, var(--eien-curl-shade) 0.0%, transparent) 10.0px, color-mix(in srgb, var(--eien-curl-shade) 100.0%, transparent) 42.0px)',
+  it('wears a ramp as the ink at each edge’s strength across the middle third, never a colour of its own', () => {
+    expect(rampOf('var(--eien-curl-shade)', [0, 1])).toBe(
+      'linear-gradient(90deg, color-mix(in srgb, var(--eien-curl-shade) 0.0%, transparent) 33.333%, color-mix(in srgb, var(--eien-curl-shade) 100.0%, transparent) 66.667%)',
     );
-  });
-
-  it('clips to a polygon, and hides what an empty one clips', () => {
-    expect(
-      clipOf([
-        [0, 0],
-        [10, 0],
-        [10, 5],
-      ]),
-    ).toBe('polygon(0.00px 0.00px, 10.00px 0.00px, 10.00px 5.00px)');
-    expect(clipOf([])).toBe('polygon(0 0, 0 0, 0 0)');
   });
 });
 

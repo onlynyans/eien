@@ -1,11 +1,11 @@
 // What holds for any turn (#40, Phase 3): a key's arc never leaves its
 // bounds nor jumps, the spring never carries the corner past its mark, the
-// spine never lifts, a frame stays on its page, and speed 0 is instant.
+// spine never lifts, a frame's bands cross the whole page, and speed 0 is instant.
 
 import fc from 'fast-check';
 import { describe, it } from 'vitest';
-import { heldAt, type Point, spineDown } from './curl';
-import { curlFrame } from './curl-frame';
+import { heldAt, type Point, spineDown, transform } from './curl';
+import { curlFrame, reachOf } from './curl-frame';
 import { keyCurl, tickCurl } from './curl-turn';
 import { curlTime, isInstant, slideTime, wordsTime } from './speed';
 import { omegaFor, springStep } from './spring';
@@ -109,7 +109,9 @@ describe('the paper', () => {
     );
   });
 
-  it('keeps every clip of a frame on its page', () => {
+  // A band is cut only by its own edges across the fold, never along it: every corner of the page
+  // lies within its reach either side, wherever the fold is.
+  it('reaches every band across the whole page, along its fold', () => {
     fc.assert(
       fc.property(box, unit, unit, unit, (page, grip, x, y) => {
         const frame = curlFrame(
@@ -119,15 +121,20 @@ describe('the paper', () => {
           { cast: 32, crest: 24 },
         );
         if (frame.resting) return true;
-        const clips = [
-          frame.front,
-          frame.cast.clip,
-          frame.back.clip,
-          ...frame.strips.map((s) => s.clip),
+        const reach = 2 * reachOf(page);
+        const corners: Point[] = [
+          [0, 0],
+          [page.width, 0],
+          [page.width, page.height],
+          [0, page.height],
         ];
-        const on = ([px, py]: Point) =>
-          px >= -1e-6 && px <= page.width + 1e-6 && py >= -1e-6 && py <= page.height + 1e-6;
-        return clips.every((clip) => clip.every(on));
+        // The page's corners in each band's box (where its paper puts them): within its length.
+        return [frame.front, frame.cast, frame.back, frame.crest, ...frame.strips].every((band) => {
+          return corners.every((corner) => {
+            const along = transform(band.paper, corner)[1];
+            return along >= 0 && along <= reach;
+          });
+        });
       }),
     );
   });

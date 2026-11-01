@@ -94,8 +94,9 @@ export {
   withReading,
 } from './reading';
 export { isRefusal, type Refusal, type RefusalKind, refusalWords } from './refusal';
-export { CURL_STRIPS, type Matrix, type PageBox, type Point, type Polygon } from './turn/curl';
-export { type CurlFrame, type CurlLengths, type CurlStrip, curlFrame } from './turn/curl-frame';
+export { BAND_BOX, type Band } from './turn/band';
+export { CURL_STRIPS, type Matrix, type PageBox, type Point } from './turn/curl';
+export { type CurlFrame, type CurlLengths, curlFrame, reachOf } from './turn/curl-frame';
 export {
   beginCurl,
   type CurlPhase,
@@ -112,7 +113,7 @@ export {
   turned,
   type Way,
 } from './turn/curl-turn';
-export type { Light, Stop } from './turn/light';
+export { isBack, type Ramp, stripLight } from './turn/light';
 export {
   curlTime,
   isInstant,
