@@ -80,7 +80,12 @@ export const titles = (page: Page) => page.locator('.note-row__title');
 export async function threePanes(page: Page): Promise<void> {
   await page.evaluate(() => window.eien.settings.set('layout.panes', 'three'));
   await page.reload(); // the settings as this device keeps them, read as the window starts
-  await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
+  // Three chosen, read by the window: the foot's Panes tool says so in every room, though a
+  // phone's Panes with no room for three shows two (#68).
+  await expect(page.locator('[data-command="panes"]').first()).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
 }
 
 /**
