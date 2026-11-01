@@ -6,7 +6,15 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
-import { catchBackButton, open, putBytesOutside, putOutside, swipe, systemBack } from './outside';
+import {
+  catchBackButton,
+  open,
+  putBytesOutside,
+  putOutside,
+  swipe,
+  systemBack,
+  threePanes,
+} from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'reduce' });
 test.beforeEach(({ page }) => catchBackButton(page));
@@ -23,10 +31,8 @@ test('with the panes shut, back opens the list, then the sidebar, then leaves th
   page,
 }) => {
   await open(page);
-  await page.evaluate(async () => {
-    await window.eien.settings.set('appearance.room', 'panes');
-    await window.eien.settings.set('layout.panes', 'three');
-  });
+  await page.evaluate(() => window.eien.settings.set('appearance.room', 'panes'));
+  await threePanes(page); // the note list too (a phone starts with two, #69), read as the window starts
   await putOutside(page, 'Eien/Vault/Fic/Tear.md', 'The words.\n');
   await page.setViewportSize(TABLET);
   await page.locator('.note-row__title', { hasText: 'Tear' }).click();
@@ -189,10 +195,8 @@ test('a trackpad’s two fingers swiped back open a pane, and press no Esc: the 
 }) => {
   await asDesktopWindow(page);
   await open(page);
-  await page.evaluate(async () => {
-    await window.eien.settings.set('appearance.room', 'panes');
-    await window.eien.settings.set('layout.panes', 'three');
-  });
+  await page.evaluate(() => window.eien.settings.set('appearance.room', 'panes'));
+  await threePanes(page); // the note list too (a phone starts with two, #69), read as the window starts
   await putOutside(page, 'Eien/Vault/Fic/Tear.md', 'The words, the words.\n');
   await page.setViewportSize(TABLET);
   await page.locator('.note-row__title', { hasText: 'Tear' }).click();

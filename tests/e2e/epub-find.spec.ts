@@ -90,7 +90,7 @@ test.describe('Found in the list', () => {
     // Cleared: the list is the book's contents again.
     await search.fill('');
     await expect(page.locator('.contents-row').first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Found' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: /^Found/u })).toHaveCount(0);
   });
 
   test('says when the book holds none of the words', async ({ page }) => {

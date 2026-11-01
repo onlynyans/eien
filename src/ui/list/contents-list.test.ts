@@ -115,17 +115,19 @@ describe('a book’s lenses in the list (Phase 4c)', () => {
   it('are Contents and Marks under the head, each with its count, the one shown pressed', () => {
     const { container } = drawn(withMarks('contents'));
     // A space between the name and its count: a screen reader says "Marks 2", as the eye reads it.
-    expect(lenses(container).map((lens) => lens.textContent)).toEqual([
-      'Contents 3',
-      'Marks 2',
-      'Found',
-    ]);
-    // Found with nothing searched: there, never chosen (Phase 5c).
-    expect(lenses(container)[2]?.disabled).toBe(true);
+    // Found only while a search is on (#61): never a Found with nothing to choose.
+    expect(lenses(container).map((lens) => lens.textContent)).toEqual(['Contents 3', 'Marks 2']);
     expect(lenses(container).map((lens) => lens.getAttribute('aria-pressed'))).toEqual([
       'true',
       'false',
-      'false',
+    ]);
+    // A row of their own under the author, the title across the line above (./book-lenses.css).
+    const head = container.querySelector('.list__head');
+    expect(head?.classList.contains('list__head--book')).toBe(true);
+    expect([...(head?.children ?? [])].map((part) => part.className)).toEqual([
+      'list__heading',
+      'label list__count',
+      'book-lenses',
     ]);
     expect(container.querySelector('[role="group"]')?.getAttribute('aria-label')).toBe(
       'The book’s index',

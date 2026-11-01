@@ -144,9 +144,9 @@ describe('a book’s lenses', () => {
           'button',
         ),
       ].map((button) => button.getAttribute('aria-pressed'));
-    // Found is there with nothing searched, but can't be chosen: it has no count (Phase 5c).
-    expect(pressed('contents')).toEqual(['true', 'false', 'false']);
-    expect(pressed('marks')).toEqual(['false', 'true', 'false']);
+    // Found only while a search is on (#61).
+    expect(pressed('contents')).toEqual(['true', 'false']);
+    expect(pressed('marks')).toEqual(['false', 'true']);
     const choose = vi.fn();
     const group = lensButtons('marks', { contents: 61, marks: 0, found: null }, choose);
     const [contents, marks] = [...group.querySelectorAll('button')];
