@@ -671,7 +671,11 @@ in the book, each recorded here as it's built.
   greyed (a greyed Bold says something false); the shared tools (Look,
   Split, the panes) keep their places, and the change is instant. The
   formatting bar's row keeps its height while a note is in sight, so
-  neither page moves; with a book alone it goes. The phone's ⋯ and the
+  neither page moves; with a book alone it goes. The phone's bar, slip and
+  rail hold a book's tools as the desktop's bars do, in every room (#63): A's
+  a note's views as one button and a book's two in the views' well. Short of
+  room, the ⇄ slip beside the back word gives way first, its name trailing
+  off, so back keeps `--eien-touch`. The phone's ⋯ and the
   menu bar grey the same commands (#120): a menu lists all the app does. A
   menu of the bar is never greyed, only its items.
 - **A book's contents** (`list/contents-list.ts`): in the list pane while a
