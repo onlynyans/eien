@@ -4,7 +4,7 @@
 import { h } from '../dom';
 import { atDepth } from './depth';
 
-/** The disclosure triangle, drawn so it turns (to its button's aria-expanded) rather than swaps. */
+/** The disclosure triangle, drawn so it turns (to its button's aria-expanded or data-open) rather than swaps. */
 export const twisty = (): HTMLElement =>
   h('span', { class: 'twisty', attrs: { 'aria-hidden': 'true' } });
 
@@ -12,7 +12,7 @@ export const twisty = (): HTMLElement =>
  * The twisty as a row's own button: it opens the row, or closes it. `pointer`
  * when the row's name does the same (SHELF's folders): one control for the
  * keyboard and assistive tech, the twisty a target for the pointer alone,
- * which never takes the keyboard from where it is.
+ * which never takes the keyboard from where it is, and turns by `data-open`.
  */
 export const twistButton = (
   key: string,
@@ -28,6 +28,7 @@ export const twistButton = (
       attrs: {
         type: 'button',
         'aria-expanded': pointer ? undefined : String(open),
+        'data-open': pointer ? String(open) : undefined,
         'aria-label': pointer ? undefined : `${open ? 'Close' : 'Open'} ${name}`,
         'aria-hidden': pointer ? 'true' : undefined,
         tabindex: pointer ? '-1' : undefined,
