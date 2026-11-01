@@ -812,8 +812,9 @@ in the book, each recorded here as it's built.
   `--eien-space-8` apart and Facing pages' `--eien-rule-soft` hairline down
   the gutter's middle. One sheet, its one shadow, no fold shading. A
   phone's width decides as the desktop's does (decided 2026-10-31: a
-  foldable opened, a tablet), its two pages ragged as its one is. Never in
-  a split. A turn moves the spread, the
+  foldable opened, a tablet), and with Two pages when narrow at any width,
+  each half the page, as two notes are; its two pages ragged as its one
+  is. Never in a split. A turn moves the spread, the
   curl lifting it as one leaf; the fore-edge stands at its outer sides
   (Previous pages, Next pages). A bookmark's mark sits on the page it
   marks: the verso's at its left, its edge tab past the pages read

@@ -537,9 +537,12 @@ Three panes, each collapsible, with a two-pane option in settings:
      desktop's does (decided 2026-10-31): an upright phone holds one page, a
      Galaxy Z Fold 5 opened holds two sideways with Interface zoom at 60%
      (upright at 50%; with Marks on the edge, whose strip keeps a finger's
-     width, at 50% either way), and a tablet one pane at a time may. Never in a
-     split (Facing pages is two pages of its own; Wide screen's Two pages
-     with a note beside is a split). A turn, a key, the edges and a hand move both;
+     width, at 50% either way), and a tablet one pane at a time may. With
+     **Two pages when narrow** on (the phone's setting, below), a book shows
+     two pages however narrow, each half the page, as two notes stay side
+     by side (decided 2026-10-31). Never in a split (Facing pages is two
+     pages of its own; Wide screen's Two pages with a note beside is a
+     split). A turn, a key, the edges and a hand move both;
      the place is the same, so one page and two show the same words. A
      bookmark's mark sits on the page it marks; B on two pages marks the
      first one's first word, or takes off every bookmark on the two. The
@@ -1923,7 +1926,8 @@ Compare or Restore finishes lands on a note opened meanwhile.
     **Two pages when narrow** (`appearance.narrowPages`, the phone's, this
     device's, off by default) keeps them side by side however narrow, in
     every Split mode, each half the room while it's short of the mode's own
-    (the divider moves them again once there's room).
+    (the divider moves them again once there's room); a book in pages shows
+    its two pages so too (#40, decided 2026-10-31).
     The notes over the page are never under its scrim.
   - Folding, turning the phone, or choosing a room with one page closes the
     page you're not in, never its note: it's the other note, ⇄, where it was

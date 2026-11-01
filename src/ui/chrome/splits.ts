@@ -128,6 +128,13 @@ const ANY_WIDTH: Readonly<Record<SplitMode, SplitSpec>> = Object.fromEntries(
   Object.entries(SPLIT_SPECS).map(([mode, spec]) => [mode, { ...spec, least: 0 }]),
 ) as Record<SplitMode, SplitSpec>;
 
+/**
+ * Whether two pages stay side by side however narrow (Two pages when narrow, the phone's setting):
+ * two notes in a split, and a book's two pages (#40, decided 2026-10-31). Read here alone.
+ */
+export const twoAtAnyWidth = (values: SettingValues): boolean =>
+  values['appearance.narrowPages'] === 'on';
+
 /** How `mode` lays two pages out; `anyWidth`, side by side however narrow. Each the same object every time. */
 export const splitSpecOf = (mode: SplitMode, anyWidth: boolean): SplitSpec =>
   (anyWidth ? ANY_WIDTH : SPLIT_SPECS)[mode];

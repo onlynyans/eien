@@ -10,7 +10,7 @@
 
 import { isInside } from '../../core/paths';
 import type { OutBridge } from '../../platform/bridge';
-import { type SplitSpec, splitSpecOf } from '../chrome/splits';
+import { type SplitSpec, splitSpecOf, twoAtAnyWidth } from '../chrome/splits';
 import type { ShownNotes } from '../list/shown-notes';
 import { PagePane } from '../page/page-pane';
 import type { Written } from '../page/word-count';
@@ -40,7 +40,7 @@ export interface PagesOf extends Omit<NoteSideOf, 'wrote' | 'counted'> {
 
 /** How two pages are laid out, as `values` say (appearance.split, appearance.narrowPages). */
 const specFor = (values: SettingsState['values']): SplitSpec =>
-  splitSpecOf(values['appearance.split'], values['appearance.narrowPages'] === 'on');
+  splitSpecOf(values['appearance.split'], twoAtAnyWidth(values));
 
 export class Pages {
   readonly pane: PagePane;

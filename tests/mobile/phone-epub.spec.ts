@@ -729,6 +729,41 @@ for (const [name, screen, room, zoom, two] of [
   });
 }
 
+// Two pages when narrow (decided 2026-10-31): the phone's setting that keeps two notes side by
+// side however narrow keeps a book's two pages so too, each half the screen; off, the width decides.
+test('a Fold 5 upright at its own size: two pages with Two pages when narrow, one without', async ({
+  page,
+}) => {
+  const box = await bookOn(page, FOLD5_UPRIGHT, 'one', 100, { 'appearance.narrowPages': 'on' });
+  await expect(box).toHaveAttribute('data-spread', '');
+  const set = () =>
+    box.evaluate((element) => {
+      const words = element.querySelector('.epub-chapter') as HTMLElement;
+      return {
+        columns: getComputedStyle(words).columnCount,
+        align: getComputedStyle(words.querySelector('p:not([data-part])') as HTMLElement).textAlign,
+      };
+    });
+  // Ragged still: a phone's two pages are set as its one.
+  expect(await set()).toEqual({ columns: '2', align: 'start' });
+  expect(await seriousViolations(page), 'two narrow pages on a phone').toEqual([]);
+  // Turned off (the device's setting, worn from the start): the width decides again, and an
+  // upright Fold holds one page.
+  await page.evaluate(() => window.eien.settings.set('appearance.narrowPages', 'off'));
+  await page.reload();
+  const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
+  await expect
+    .poll(async () => (await book.isVisible()) || (await back(page).isVisible()), {
+      timeout: 10_000,
+    })
+    .toBe(true);
+  if (!(await book.isVisible())) await back(page).click();
+  await book.click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  await expect(box).not.toHaveAttribute('data-spread');
+  expect((await set()).columns).toBe('1');
+});
+
 test('two pages on a Fold 5: a finger turns both, B marks the left one, the strip stands clear', async ({
   page,
 }) => {

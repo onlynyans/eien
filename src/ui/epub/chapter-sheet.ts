@@ -30,6 +30,8 @@ export interface ChapterSheetOf {
   follow(anchor: HTMLAnchorElement, link: ZipAddress): void;
   /** Quote the words chosen in it in the note beside (Phase 2c). */
   quote(): void;
+  /** In pages, two pages however narrow (Two pages when narrow). */
+  anyWidth?(): boolean;
 }
 
 export class ChapterSheet {
@@ -65,7 +67,7 @@ export class ChapterSheet {
       ...told,
       box: this.box,
       room: of.scroller,
-      per: () => spreadOf(this.box, this.element, of.scroller),
+      per: () => spreadOf(this.box, this.element, of.scroller, of.anyWidth?.() ?? false),
     });
     this.#keeper = this.#scrolled;
   }

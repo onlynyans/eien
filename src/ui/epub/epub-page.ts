@@ -10,6 +10,7 @@
 // note's does where its text isn't shown.
 
 import type { SettingValues } from '../../core/config';
+import { twoAtAnyWidth } from '../chrome/splits';
 import { h } from '../dom';
 import { type PageFind, type PaneLeaf, pageLeaf } from '../page/page-leaf';
 import { quietButton } from '../quiet-button';
@@ -65,6 +66,8 @@ export class EpubPage implements PaneLeaf {
   #name = '';
   /** The page's zoom last worn; null before the first. */
   #zoom: number | null = null;
+  /** Two pages however narrow (Two pages when narrow), as last worn. */
+  #anyWidth = false;
 
   /** What its keys do (./page-keys.ts). */
   readonly #keys: BookKeysOf;
@@ -93,7 +96,11 @@ export class EpubPage implements PaneLeaf {
       // A stop of its own: the keyboard scrolls the chapter (no editor in it takes the keyboard).
       { class: 'page__scroll', attrs: { tabindex: '0', role: 'region' } },
     );
-    this.sheet = new ChapterSheet({ ...of, scroller: this.#scroll });
+    this.sheet = new ChapterSheet({
+      ...of,
+      scroller: this.#scroll,
+      anyWidth: () => this.#anyWidth,
+    });
     this.edges = new LeafEdges((way) => of.turn(way, false));
     // The pointer a click came from, by its pointerdown: WebKit's click may not say.
     let pointer = '';
@@ -240,12 +247,15 @@ export class EpubPage implements PaneLeaf {
       marks: values['epub.marks'],
     };
     // Only what changed: setting an attribute again restyles the page (as ../settings/look.ts says).
+    const anyWidth = twoAtAnyWidth(values);
     const changed =
       Object.entries(wanted).filter(([name, value]) => leaf.dataset[name] !== value).length +
       Object.entries(properties).filter(
         ([name, value]) => leaf.style.getPropertyValue(name) !== value,
-      ).length;
+      ).length +
+      Number(anyWidth !== this.#anyWidth);
     if (changed === 0) return;
+    this.#anyWidth = anyWidth;
     // The lines move: the place is kept as it stood, and shown again in the new look.
     this.sheet.keep();
     for (const [name, value] of Object.entries(wanted)) leaf.dataset[name] = value;

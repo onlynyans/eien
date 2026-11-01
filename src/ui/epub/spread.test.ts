@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
+import { splitSpecOf, twoAtAnyWidth } from '../chrome/splits';
 import { spreadOf } from './spread';
 
 /** A book's page in pages, its pane `width` wide (24px of blotter each side), Newsreader's 22px text. */
@@ -21,7 +23,12 @@ function pane(width: number, zoom = 1, look = 1) {
   Object.defineProperty(room, 'clientWidth', { value: width });
   Object.defineProperty(box, 'clientWidth', { value: 600 });
   box.getBoundingClientRect = () => ({ width: 600 * zoom }) as DOMRect;
-  return { room, box, chapter, per: () => spreadOf(box, chapter, room) };
+  return {
+    room,
+    box,
+    chapter,
+    per: (anyWidth = false) => spreadOf(box, chapter, room, anyWidth),
+  };
 }
 
 // Two 20em pages of 22px, the sheet's margins and the gutter: 880 + 144 + 72, and the blotter.
@@ -71,6 +78,33 @@ describe('two pages or one (Phase 3d)', () => {
     phone();
     document.querySelector('.page__pages')?.setAttribute('data-two', '');
     expect(split.per()).toBe(1);
+  });
+});
+
+describe('Two pages when narrow, a book’s two pages too (decided 2026-10-31)', () => {
+  it('opens two pages at a phone’s narrow width with the setting on, one with it off', () => {
+    const narrow = pane(412);
+    document.querySelector('.shell')?.setAttribute('data-phone', '');
+    expect(narrow.per(true)).toBe(2);
+    expect(narrow.per(false)).toBe(1);
+  });
+
+  it('never in a split, nor scrolling', () => {
+    const split = pane(412);
+    document.querySelector('.page__pages')?.setAttribute('data-two', '');
+    expect(split.per(true)).toBe(1);
+    const scroll = pane(412);
+    scroll.room.parentElement?.setAttribute('data-view', 'scroll');
+    expect(scroll.per(true)).toBe(1);
+  });
+
+  it('reads the one setting notes do, from one place', () => {
+    const values = (narrowPages: 'on' | 'off') =>
+      ({ ...DEFAULT_SETTINGS, 'appearance.narrowPages': narrowPages }) as SettingValues;
+    expect(twoAtAnyWidth(values('on'))).toBe(true);
+    expect(twoAtAnyWidth(values('off'))).toBe(false);
+    // The split's own spec follows the same reading: side by side at any width.
+    expect(splitSpecOf('sheets', twoAtAnyWidth(values('on'))).least).toBe(0);
   });
 });
 
