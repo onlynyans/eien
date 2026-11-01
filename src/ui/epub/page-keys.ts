@@ -121,11 +121,16 @@ export interface TapDown {
   readonly chosen: boolean;
 }
 
-/** What `event`'s pointerdown says of it, for its click. */
-export const tapDown = (event: PointerEvent): TapDown => ({
-  pointer: event.pointerType,
-  chosen: document.getSelection()?.isCollapsed === false,
-});
+/** What `event`'s pointerdown on the page `box` says of it, for its click: words chosen there alone count (not a note's beside). */
+export function tapDown(event: PointerEvent, box: HTMLElement): TapDown {
+  const selection = document.getSelection();
+  const chosen =
+    selection !== null &&
+    !selection.isCollapsed &&
+    selection.anchorNode !== null &&
+    box.contains(selection.anchorNode);
+  return { pointer: event.pointerType, chosen };
+}
 
 /**
  * In pages, a click on the page `box`, from a pointer that came `down` so: a

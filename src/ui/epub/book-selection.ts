@@ -59,6 +59,8 @@ export class BookSelection {
   readonly element: HTMLElement;
   readonly #of: BookSelectionOf;
   #timer: ReturnType<typeof setTimeout> | undefined;
+  /** A lift off the docked bar, waiting for its click. */
+  #lift: ReturnType<typeof setTimeout> | undefined;
   /** The words last chosen in the chapter: what the phone's ⋯ quotes. */
   #kept: Range | null = null;
   /** Highlight, or Take off the highlight. */
@@ -162,6 +164,7 @@ export class BookSelection {
 
   hide(): void {
     clearTimeout(this.#timer);
+    clearTimeout(this.#lift);
     this.element.hidden = true;
   }
 
@@ -192,7 +195,8 @@ export class BookSelection {
   #released(): void {
     if (!this.#pressing) return;
     // After the click a lift makes, which runs the choice (and says so) first.
-    setTimeout(() => {
+    clearTimeout(this.#lift);
+    this.#lift = setTimeout(() => {
       this.#pressing = false;
       if (!this.range) this.hide();
     }, SHOW_AFTER_MS);

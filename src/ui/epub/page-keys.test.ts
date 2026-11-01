@@ -88,14 +88,18 @@ describe('a tap in pages', () => {
     expect(tap(250, 'touch', undefined, true)).not.toHaveBeenCalled();
   });
 
-  it('reads at the pointerdown whether words were chosen', () => {
-    const words = document.createElement('p');
-    words.textContent = 'Chosen words';
-    document.body.append(words);
+  it('reads at the pointerdown whether words were chosen on the page, never a note’s beside', () => {
+    const page = document.createElement('div');
+    page.innerHTML = '<p>Chosen words</p>';
+    const note = document.createElement('p');
+    note.textContent = 'A note’s words';
+    document.body.append(page, note);
     const down = new PointerEvent('pointerdown', { pointerType: 'touch' });
-    expect(tapDown(down)).toEqual({ pointer: 'touch', chosen: false });
-    document.getSelection()?.selectAllChildren(words);
-    expect(tapDown(down)).toEqual({ pointer: 'touch', chosen: true });
+    expect(tapDown(down, page)).toEqual({ pointer: 'touch', chosen: false });
+    document.getSelection()?.selectAllChildren(note);
+    expect(tapDown(down, page)).toEqual({ pointer: 'touch', chosen: false });
+    document.getSelection()?.selectAllChildren(page.querySelector('p') as Node);
+    expect(tapDown(down, page)).toEqual({ pointer: 'touch', chosen: true });
   });
 });
 

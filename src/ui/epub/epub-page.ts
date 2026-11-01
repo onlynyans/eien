@@ -112,7 +112,7 @@ export class EpubPage implements PaneLeaf {
     // The pointer a click came from, by its pointerdown: WebKit's click may not say.
     let down: TapDown = { pointer: '', chosen: false };
     this.sheet.box.addEventListener('pointerdown', (event) => {
-      down = tapDown(event);
+      down = tapDown(event, this.sheet.box);
     });
     this.sheet.box.addEventListener('click', (event) => {
       if (this.sheet.paged) pageTap(event, down, this.sheet.box, of);
