@@ -148,3 +148,30 @@ test('a chapter of two pictures is two pages, a picture on each, no blank page b
   await page.keyboard.press('ArrowRight');
   await expect.poll(() => pictures(page)).toEqual({ pages: 2, inSight: [false, true] });
 });
+
+test('a chapter of SVG pictures turns one picture a page, forwards and back', async ({ page }) => {
+  // An SVG's size isn't read from its header, as a PNG's is: the picture takes it only once
+  // decoded, after the chapter is first laid in pages.
+  const back = await openNovel(
+    page,
+    book({
+      Prologue: CHAPTERS.Prologue ?? '',
+      Plates: '<div><img src="images/tall.svg" alt=""/></div>'.repeat(3),
+    }),
+    { width: 590, height: 706 },
+  );
+  await back.click();
+  await page.locator('.contents-row', { hasText: 'Plates' }).click();
+  await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter img')).toHaveCount(3);
+  await expect.poll(() => pictures(page)).toEqual({ pages: 3, inSight: [true, false, false] });
+  await page.locator('.page__leaf--epub .page__scroll').first().focus();
+  for (const [key, inSight] of [
+    ['ArrowRight', [false, true, false]],
+    ['ArrowRight', [false, false, true]],
+    ['ArrowLeft', [false, true, false]],
+    ['ArrowLeft', [true, false, false]],
+  ] as const) {
+    await page.keyboard.press(key);
+    await expect.poll(() => pictures(page), { message: key }).toEqual({ pages: 3, inSight });
+  }
+});

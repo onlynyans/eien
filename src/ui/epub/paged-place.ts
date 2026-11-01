@@ -61,6 +61,8 @@ export class PagedPlace {
     this.#resized?.observe(of.box);
     if (of.room) this.#resized?.observe(of.room);
     of.chapter.addEventListener('focusin', this.#focused);
+    // A load doesn't bubble: caught on its way down.
+    of.chapter.addEventListener('load', this.#loaded, true);
     document.fonts?.addEventListener?.('loadingdone', this.#again);
   }
 
@@ -194,6 +196,7 @@ export class PagedPlace {
     this.keep();
     this.#resized?.disconnect();
     this.#of.chapter.removeEventListener('focusin', this.#focused);
+    this.#of.chapter.removeEventListener('load', this.#loaded, true);
     document.fonts?.removeEventListener?.('loadingdone', this.#again);
   }
 
@@ -307,6 +310,15 @@ export class PagedPlace {
   }
 
   readonly #again = () => this.reshow();
+
+  /**
+   * A picture Eien couldn't size from its header (an SVG, ./chapter-view.ts)
+   * takes its room only once loaded: the pages counted again. One sized
+   * already moves nothing.
+   */
+  readonly #loaded = ({ target }: Event) => {
+    if (!(target instanceof HTMLImageElement && target.hasAttribute('height'))) this.reshow();
+  };
 
   readonly #focused = (event: FocusEvent) => {
     if (event.target instanceof Element) this.reveal(event.target);

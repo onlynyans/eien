@@ -31,6 +31,7 @@ function laidOut(paragraphs: readonly string[], picture = -1) {
   box.getBoundingClientRect = () => ({ left: 0, width: WIDTH, top: 0, height: 610 }) as DOMRect;
   Object.defineProperty(chapter, 'scrollWidth', {
     get: () => Math.ceil(total / PER_PAGE) * STEP - GAP,
+    configurable: true,
   });
   const shown = () => -Number.parseFloat(chapter.style.transform.replace('translateX(', '') || '0');
   chapter.getBoundingClientRect = () => ({ left: -shown() }) as DOMRect;
@@ -77,6 +78,27 @@ describe('a chapter in pages', () => {
     expect(chapter.style.columnWidth).toBe(`${WIDTH}px`);
     expect(place.pages).toBe(3);
     expect(place.page).toBe(0);
+  });
+
+  it('counts its pages again once a picture it couldn’t size loads', () => {
+    const { chapter, place } = laidOut(['a'.repeat(150)], 0);
+    place.show(0);
+    expect(place.pages).toBe(2);
+    // The picture's room arrives with it (an SVG): a page of its own.
+    Object.defineProperty(chapter, 'scrollWidth', { value: 3 * STEP - GAP });
+    chapter.querySelector('img')?.dispatchEvent(new Event('load'));
+    expect(place.pages).toBe(3);
+    expect(place.turn(1)).toBe(true);
+    expect(place.turn(1)).toBe(true);
+  });
+
+  it('leaves its pages be when a picture sized from its header loads', () => {
+    const { chapter, place, moved } = laidOut(['a'.repeat(150)], 0);
+    chapter.querySelector('img')?.setAttribute('height', '1200');
+    place.show(0);
+    moved.mockClear();
+    chapter.querySelector('img')?.dispatchEvent(new Event('load'));
+    expect(moved).not.toHaveBeenCalled();
   });
 
   it('shows the page holding its place, and only that page', () => {
