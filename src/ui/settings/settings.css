@@ -84,6 +84,8 @@
   position: relative;
   display: block;
   width: 100%;
+  /* A target's height however small Text size makes its words (#72); a button centres them. */
+  min-height: var(--eien-target);
   padding: 6px 10px 6px 28px;
   border: 0;
   border-radius: var(--eien-radius-s);

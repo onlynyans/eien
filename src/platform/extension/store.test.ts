@@ -55,6 +55,16 @@ describe('extensionStore: settings', () => {
     expect(values['appearance.face']).toBe(DEFAULT_SETTINGS['appearance.face']);
     expect(values['appearance.textSize']).toBe(110);
   });
+
+  it('keeps Text size at 50%, synced from another browser, and leaves out 40% (#72)', async () => {
+    const storage = memoryStorage();
+    storage.areas.sync = { settings: { 'appearance.textSize': 50 } };
+    expect((await extensionStore(storage).settings())['appearance.textSize']).toBe(50);
+    storage.areas.sync = { settings: { 'appearance.textSize': 40 } };
+    expect((await extensionStore(storage).settings())['appearance.textSize']).toBe(
+      DEFAULT_SETTINGS['appearance.textSize'],
+    );
+  });
 });
 
 describe('extensionStore: places and the story page open', () => {
