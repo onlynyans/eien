@@ -22,7 +22,7 @@ export const QUIET_MS = 150;
 const STILL = 4;
 /** How many dying events in a row end a glide, so a slow stroke speeding up is still the one. */
 const DYING = 3;
-/** A new swipe rising in a dead glide: this far in one event, and twice the last. */
+/** A new swipe rising in a dead glide: this far in one event (twice a dying glide's most). */
 const RISE = 8;
 
 export class WheelSwipe {
@@ -33,7 +33,6 @@ export class WheelSwipe {
   /** Swiped already: the rest of this gesture is its glide. */
   #spent = false;
   #dying = 0;
-  #before = 0;
 
   /** A wheel event's deltas (CSS pixels) at `time` (ms): the way it swiped, once, or null. */
   wheel(dx: number, dy: number, time: number): SwipeWay | null {
@@ -41,12 +40,11 @@ export class WheelSwipe {
     if (time - this.#last >= QUIET_MS) this.#begin();
     else if (this.#spent) {
       // A glide that died down, then a stroke rising in it: a new swipe.
-      const risen = this.#dying >= DYING && across >= RISE && across >= 2 * this.#before;
+      const risen = this.#dying >= DYING && across >= RISE;
       this.#dying = across <= STILL ? this.#dying + 1 : 0;
       if (risen) this.#begin();
     }
     this.#last = time;
-    this.#before = across;
     if (this.#spent) return null;
     this.#x += dx;
     this.#y += dy;

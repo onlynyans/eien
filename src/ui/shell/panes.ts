@@ -118,6 +118,8 @@ export class PaneLayout {
       this.#parts.showPhone(pane);
       return true;
     }
+    // With two panes chosen there's no list to bring back: a split's step aside is left as it is.
+    if (pane === 'list' && this.#two) return false;
     if (pane === 'list' && this.#aside) this.#stepBack();
     if (pane === 'list' && this.two) return false;
     if (this.isShut(pane)) this.#set(pane, false);
@@ -131,7 +133,7 @@ export class PaneLayout {
    */
   reopen(): boolean {
     if (this.#parts.phone()) return false;
-    if (!this.#two && this.isShut('list')) return this.open('list');
+    if (this.isShut('list') && this.open('list')) return true;
     return this.isShut('sidebar') && this.open('sidebar');
   }
 
