@@ -66,6 +66,7 @@ async function countedWith(
     openChosen: async () => {},
     showPage: () => {},
     phone: () => false,
+    copy: async () => {},
   });
   const side = kind.make({ close: () => {}, caret: () => {} }, null) as EpubSide;
   pages.sides.push(side);
