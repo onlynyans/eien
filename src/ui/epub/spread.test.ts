@@ -1,10 +1,18 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
 import { splitSpecOf, twoAtAnyWidth } from '../chrome/splits';
 import { spreadOf } from './spread';
+import { laidOut } from './test-lines';
+import { sideWith } from './test-side';
 
-/** A book's page in pages, its pane `width` wide (24px of blotter each side), Newsreader's 22px text. */
-function pane(width: number, zoom = 1, look = 1) {
+const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
+
+/**
+ * A book's page in pages, its pane `width` wide (24px of blotter each side), Newsreader's 22px text,
+ * its box `boxWidth` in its own pixels.
+ */
+function pane(width: number, zoom = 1, look = 1, boxWidth = 600) {
   document.body.innerHTML = `
     <div class="shell"><div class="page__pages">
       <div class="page__leaf" data-view="pages">
@@ -21,8 +29,8 @@ function pane(width: number, zoom = 1, look = 1) {
   const box = document.querySelector('.epub__pages') as HTMLElement;
   const chapter = document.querySelector('.epub-chapter') as HTMLElement;
   Object.defineProperty(room, 'clientWidth', { value: width });
-  Object.defineProperty(box, 'clientWidth', { value: 600 });
-  box.getBoundingClientRect = () => ({ width: 600 * zoom }) as DOMRect;
+  Object.defineProperty(box, 'clientWidth', { value: boxWidth });
+  box.getBoundingClientRect = () => ({ width: boxWidth * zoom }) as DOMRect;
   return {
     room,
     box,
@@ -106,6 +114,18 @@ describe('Two pages when narrow, a book’s two pages too (decided 2026-10-31)',
     // The split's own spec follows the same reading: side by side at any width.
     expect(splitSpecOf('sheets', twoAtAnyWidth(values('on'))).least).toBe(0);
   });
+
+  // QA (#40, Two pages when narrow): a box short of the gutter and a letter
+  // each side (a 360px phone at 200% Interface zoom: 66px, the gutter 72px)
+  // gave the columns no width, so the chapter counted one page and its words
+  // past it were out of reach; a page narrower than a letter breaks every word.
+  it('keeps one page where two would each be narrower than a letter of the text', () => {
+    // The gutter 72px, the text 22px: two pages need a box of 72 + 2 × 22.
+    const box = (width: number) => pane(412, 1, 1, width).per(true);
+    expect(box(72 + 2 * 22)).toBe(2);
+    expect(box(72 + 2 * 22 - 1)).toBe(1);
+    expect(box(66)).toBe(1);
+  });
 });
 
 // QA (#40, Phase 3d): the pane's own padding is no page's, the edge strip's
@@ -141,5 +161,48 @@ describe('two pages or one, the pane as it’s worn', () => {
     const bare = pane(THRESHOLD * 2);
     document.querySelector('.sheet')?.classList.remove('sheet');
     expect(bare.per()).toBe(1);
+  });
+});
+
+// QA (#40, Two pages when narrow): the setting switched on a book's page lays
+// it out anew in two pages and back, the place kept, and the same settings
+// again lay nothing out.
+describe('Two pages when narrow, switched on a book’s page', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('lays the page out in two and back as it’s switched, the place kept, and nothing anew unchanged', async () => {
+    const { side } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
+    laidOut(side.page);
+    await side.open('a.epub');
+    const { sheet } = side.page;
+    // A narrow pane (happy-dom's is 0 wide): one page unless the setting says two.
+    Object.defineProperty(sheet.box, 'clientWidth', { value: 600 });
+    Object.defineProperty(sheet.box, 'clientHeight', { value: 600 });
+    sheet.box.getBoundingClientRect = () =>
+      ({ left: 0, width: 600, top: 0, height: 600 }) as DOMRect;
+    const pages = { ...DEFAULT_SETTINGS, 'epub.view': 'pages' } as SettingValues;
+    const narrow = (on: 'on' | 'off') =>
+      side.follow({ ...pages, 'appearance.narrowPages': on } as SettingValues);
+    narrow('off');
+    sheet.showPlace(300);
+    expect(sheet.box.hasAttribute('data-spread')).toBe(false);
+    expect(sheet.page.per).toBe(1);
+    const reshow = vi.spyOn(sheet, 'reshow');
+    narrow('on');
+    expect(reshow).toHaveBeenCalledTimes(1);
+    expect(sheet.box.hasAttribute('data-spread')).toBe(true);
+    expect(sheet.page.per).toBe(2);
+    expect(side.page.chapter.style.columnCount).toBe('2');
+    expect(sheet.place).toBe(300);
+    // The same settings again: nothing laid out anew.
+    narrow('on');
+    expect(reshow).toHaveBeenCalledTimes(1);
+    narrow('off');
+    expect(reshow).toHaveBeenCalledTimes(2);
+    expect(sheet.box.hasAttribute('data-spread')).toBe(false);
+    expect(sheet.page.per).toBe(1);
+    expect(sheet.place).toBe(300);
   });
 });

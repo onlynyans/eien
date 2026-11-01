@@ -181,8 +181,9 @@ section where it and the directions below disagree.
   or one. A split stays one page.
 - **Two pages when narrow** (decided 2026-10-31): the phone's setting that
   keeps two notes side by side however narrow keeps a book's two pages so
-  too, at any width; off, the width decides as above. One reading of the
-  setting for both (`ui/chrome/splits.ts` `twoAtAnyWidth`).
+  too, at any width while each page holds a letter of the text (narrower,
+  the gutter leaves the columns no width); off, the width decides as above.
+  One reading of the setting for both (`ui/chrome/splits.ts` `twoAtAnyWidth`).
 - **The reading room** (Showcase 1) is built after Pages, as a one-key
   mode.
 

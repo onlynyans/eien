@@ -3,7 +3,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { devices, expect, type Page, test } from '@playwright/test';
+import { devices, expect, type Locator, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
 import {
   bytesOutside,
@@ -762,6 +762,54 @@ test('a Fold 5 upright at its own size: two pages with Two pages when narrow, on
   await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
   await expect(box).not.toHaveAttribute('data-spread');
   expect((await set()).columns).toBe('1');
+});
+
+// QA (#40, Two pages when narrow): an upright phone at its own size lays two
+// pages of a few words each, its picture fitting its page; zoomed so far that
+// two would each be narrower than a letter (a Pixel 7 at 200%: a 92px box,
+// the gutter 72px), one page.
+const PIXEL7 = { width: 412, height: 915 };
+
+/** The chapter's columns as laid in `box`, and its text's size. */
+const laidIn = (box: Locator) =>
+  box.evaluate((element) => {
+    const words = element.querySelector('.epub-chapter') as HTMLElement;
+    const style = getComputedStyle(words);
+    return {
+      count: style.columnCount,
+      column: Number.parseFloat(words.style.columnWidth),
+      height: Number.parseFloat(words.style.height),
+      em: Number.parseFloat(style.fontSize),
+    };
+  });
+
+test('a Pixel 7 upright with Two pages when narrow: two pages a letter wide or more, its picture on its page', async ({
+  page,
+}) => {
+  const box = await bookOn(page, PIXEL7, 'one', 100, { 'appearance.narrowPages': 'on' });
+  await expect(box).toHaveAttribute('data-spread', '');
+  const two = await laidIn(box);
+  expect(two.count).toBe('2');
+  expect(two.column).toBeGreaterThanOrEqual(two.em);
+  // Chapter III's picture fits its page, as on one page.
+  await back(page).click();
+  await page.locator('.contents-row').nth(2).click();
+  const picture = chapter(page).locator('img');
+  await expect(picture).toHaveAttribute('src', /^blob:/u);
+  await expect.poll(async () => (await picture.boundingBox())?.width ?? 0).toBeGreaterThan(0);
+  const drawn = await picture.boundingBox();
+  expect(drawn?.width ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(two.column + 1);
+  expect(drawn?.height ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(two.height + 1);
+});
+
+test('a Pixel 7 at 200% with Two pages when narrow: one page, as two would each be narrower than a letter', async ({
+  page,
+}) => {
+  const box = await bookOn(page, PIXEL7, 'one', 200, { 'appearance.narrowPages': 'on' });
+  await expect(box).not.toHaveAttribute('data-spread');
+  const one = await laidIn(box);
+  expect(one.count).toBe('1');
+  expect(one.column).toBeGreaterThan(one.em);
 });
 
 test('two pages on a Fold 5: a finger turns both, B marks the left one, the strip stands clear', async ({

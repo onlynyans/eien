@@ -5,8 +5,8 @@
 // A phone's width decides as the desktop's does (decided 2026-10-31): an
 // upright phone never holds two, a foldable opened or a tablet may. With Two
 // pages when narrow on, a book shows two pages however narrow, as two notes
-// stay side by side (decided 2026-10-31). A split is a spread of its own
-// (Facing pages): it never opens one.
+// stay side by side (decided 2026-10-31), while each holds a letter. A split
+// is a spread of its own (Facing pages): it never opens one.
 
 import { spreadFits } from '../../core/epub';
 import { zoomOf } from './page-columns';
@@ -15,7 +15,8 @@ const px = (value: string) => Number.parseFloat(value) || 0;
 
 /**
  * How many pages the book's `box` shows: two where `room` (the pane) holds a spread of `chapter`'s
- * text, or at any width (`anyWidth`, ../chrome/splits.ts twoAtAnyWidth).
+ * text, or at any width (`anyWidth`, ../chrome/splits.ts twoAtAnyWidth) while each page holds a
+ * letter.
  */
 export function spreadOf(
   box: HTMLElement,
@@ -25,7 +26,11 @@ export function spreadOf(
 ): 1 | 2 {
   if (!box.closest('[data-view="pages"]')) return 1;
   if (box.closest('.page__pages[data-two]')) return 1;
-  if (anyWidth) return 2;
+  const em = px(getComputedStyle(chapter).fontSize);
+  const gap = px(getComputedStyle(box).columnGap);
+  // However narrow, while each page holds a letter: a box short of the gutter would lay columns of
+  // no width, the chapter counted one page and its words past it out of reach.
+  if (anyWidth) return (box.clientWidth - gap) / 2 >= em ? 2 : 1;
   const sheet = box.closest<HTMLElement>('.sheet');
   if (!sheet) return 1;
   const pane = getComputedStyle(room);
@@ -35,8 +40,6 @@ export function spreadOf(
   const width = (room.clientWidth - px(pane.paddingLeft) - px(pane.paddingRight)) * share;
   // The sheet's zoom draws each of its pixels larger: its room counted in its own.
   const zoom = zoomOf(box);
-  const em = px(getComputedStyle(chapter).fontSize);
   const padX = px(getComputedStyle(sheet).paddingLeft);
-  const gap = px(getComputedStyle(box).columnGap);
   return spreadFits(width / zoom, em, padX, gap) ? 2 : 1;
 }

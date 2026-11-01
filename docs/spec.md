@@ -540,9 +540,10 @@ Three panes, each collapsible, with a two-pane option in settings:
      width, at 50% either way), and a tablet one pane at a time may. With
      **Two pages when narrow** on (the phone's setting, below), a book shows
      two pages however narrow, each half the page, as two notes stay side
-     by side (decided 2026-10-31). Never in a split (Facing pages is two
-     pages of its own; Wide screen's Two pages with a note beside is a
-     split). A turn, a key, the edges and a hand move both;
+     by side (decided 2026-10-31), while each holds a letter of its text
+     (a Pixel 7 at 200% Interface zoom holds one). Never in a split
+     (Facing pages is two pages of its own; Wide screen's Two pages with a
+     note beside is a split). A turn, a key, the edges and a hand move both;
      the place is the same, so one page and two show the same words. A
      bookmark's mark sits on the page it marks; B on two pages marks the
      first one's first word, or takes off every bookmark on the two. The
