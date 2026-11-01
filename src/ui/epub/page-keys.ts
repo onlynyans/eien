@@ -115,19 +115,31 @@ export function pageKey(event: KeyboardEvent, of: PageKeysOf): void {
   else of.turn(way, event.repeat);
 }
 
+/** A pointer as it came down on the page: its type (WebKit's click may not say), and whether words were chosen then. */
+export interface TapDown {
+  readonly pointer: string;
+  readonly chosen: boolean;
+}
+
+/** What `event`'s pointerdown on the page `box` says of it, for its click: words chosen there alone count (not a note's beside). */
+export function tapDown(event: PointerEvent, box: HTMLElement): TapDown {
+  const selection = document.getSelection();
+  const chosen =
+    selection !== null &&
+    !selection.isCollapsed &&
+    selection.anchorNode !== null &&
+    box.contains(selection.anchorNode);
+  return { pointer: event.pointerType, chosen };
+}
+
 /**
- * In pages, a click on the page `box`, from a pointer of `pointer` type (its
- * pointerdown's: WebKit's click may not say): a touch's tap in an outer third
- * turns it.
+ * In pages, a click on the page `box`, from a pointer that came `down` so: a
+ * touch's tap in an outer third turns it. A tap that ends a choice never does,
+ * though the system has dropped the choice by its click (Android's does).
  */
-export function pageTap(
-  event: MouseEvent,
-  pointer: string,
-  box: HTMLElement,
-  of: PageKeysOf,
-): void {
+export function pageTap(event: MouseEvent, down: TapDown, box: HTMLElement, of: PageKeysOf): void {
   // A mouse's click is for choosing words; a reader taps.
-  if (pointer !== 'touch') return;
+  if (down.pointer !== 'touch' || down.chosen) return;
   if (event.target instanceof Element && event.target.closest('a[href], button')) return;
   if (document.getSelection()?.isCollapsed === false) return;
   const { left, width } = box.getBoundingClientRect();

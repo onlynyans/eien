@@ -186,7 +186,7 @@ describe('SHELF’s rows', () => {
       spine: 1,
     });
     const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
-    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false']);
+    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
     expect(texts(list, '.tree-row--chapter')).toEqual([]);
     const name = list.querySelector<HTMLButtonElement>('.tree-row--mark .tree-row__name');
     expect(name?.textContent).toBe('It is a truth 3');
@@ -539,12 +539,34 @@ describe('a book’s Found on SHELF, with two panes (#40, Phase 5c, as QA tried 
     expect(texts(none, '.tree-hint')).toEqual(['No “Bennet” in Pride and Prejudice.']);
   });
 
-  it('shows the chapters again once nothing is searched, Found there but not to choose', () => {
+  it('shows the chapters again once nothing is searched, Found there only while a search is on (#61)', () => {
     const { list } = draw(BOOK, contentsOf({ found: null }));
     expect(texts(list, '.tree-row--chapter')).toEqual(['Chapter I']);
-    const tabs = [...list.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')];
-    expect(tabs.map((tab) => tab.getAttribute('aria-pressed'))).toEqual(['true', 'false', 'false']);
-    expect(tabs[2]?.disabled).toBe(true);
+    const tabs = (drawn: HTMLElement) =>
+      [...drawn.querySelectorAll<HTMLButtonElement>('.tree-lenses .book-lens')].map(
+        (tab) => tab.textContent,
+      );
+    expect(tabs(list)).toEqual(['Contents 1', 'Marks 0']);
+    // None found: Found 0, still the lens pressed over its line.
+    const none = draw(BOOK, contentsOf({ found: found({ rows: [] }) })).list;
+    expect(tabs(none)).toEqual(['Contents 1', 'Marks 0', 'Found 0']);
+    expect(none.querySelector('.tree-lenses [aria-pressed="true"]')?.textContent).toBe('Found 0');
+    expect(tabs(draw(BOOK, contentsOf()).list)).toEqual(['Contents 1', 'Marks 0', 'Found 2']);
+  });
+
+  it('keeps the keyboard on the lenses when the search is cleared under Found (#61)', () => {
+    const body = document.body.appendChild(document.createElement('ul'));
+    const noWindows = { focusKey: () => false } as unknown as TreeWindows;
+    const focus = new SidebarFocus(body, noWindows, document.createElement('div'), () => false);
+    const drawWith = (over: Parameters<typeof contentsOf>[0]) =>
+      body.replaceChildren(...draw(BOOK, contentsOf(over)).list.children);
+    drawWith({});
+    body.querySelector<HTMLElement>('[data-key="lens:found"]')?.focus();
+    const giveBack = focus.hold();
+    drawWith({ found: null, lens: 'contents' });
+    giveBack();
+    expect((document.activeElement as HTMLElement).dataset.key).toBe('lens:contents');
+    body.remove();
   });
 
   it('with Marks on the edge, puts Found’s rows in the chapters’ place while there are words', () => {

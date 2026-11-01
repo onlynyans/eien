@@ -39,6 +39,8 @@ export interface EpubSideOf extends BookOpenOf {
     quote: string,
     from: EpubSide,
   ): Promise<{ readonly into: string } | { readonly not: string }>;
+  /** Put `text` (plain) and `html` on the clipboard (the window's own, through its bridge). */
+  copy(text: string, html: string): Promise<void>;
 }
 
 export interface EpubSide extends Side {

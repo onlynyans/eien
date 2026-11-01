@@ -18,7 +18,8 @@ async function smallest(page: Page, density: 'comfortable' | 'compact'): Promise
   await open(page);
   await page.evaluate(async (density) => {
     await window.eien.settings.set('appearance.room', 'panes');
-    await window.eien.settings.set('layout.panes', 'three'); // the note list too (#69)
+    // The note list too (a phone starts with two panes, #69), read as the window starts below.
+    await window.eien.settings.set('layout.panes', 'three');
     await window.eien.settings.set('appearance.density', density);
     await window.eien.settings.set('appearance.textSize', 50);
   }, density);
@@ -32,6 +33,7 @@ async function smallest(page: Page, density: 'comfortable' | 'compact'): Promise
   );
   await page.reload();
   await expect(page.locator('.shell')).toHaveAttribute('data-room', 'panes');
+  await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
   await expect(titles(page)).toHaveCount(3, { timeout: 10_000 });
   await expect(page.locator('html')).toHaveCSS('--eien-text-scale', '0.5');
 }
