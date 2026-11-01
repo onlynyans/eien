@@ -20,6 +20,7 @@ import { LeafEdges } from './leaf-edges';
 import { type BookKeysOf, bookKey, pageTap } from './page-keys';
 import { PageMarks } from './page-marks';
 import { RunningHeads } from './running-heads';
+import { type PagesChoices, pagesChoices, pagesNow } from './spread';
 
 export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
   /** Close this page (its ×, ⌘W). */
@@ -70,6 +71,8 @@ export class EpubPage implements PaneLeaf {
   #name = '';
   /** The page's zoom last worn; null before the first. */
   #zoom: number | null = null;
+  /** One page or two for the screen held wide and held tall, as last worn. */
+  #pages: PagesChoices = { landscape: 'auto', portrait: 'auto' };
 
   /** What its keys do (./page-keys.ts). */
   readonly #keys: BookKeysOf;
@@ -101,7 +104,11 @@ export class EpubPage implements PaneLeaf {
       // A stop of its own: the keyboard scrolls the chapter (no editor in it takes the keyboard).
       { class: 'page__scroll', attrs: { tabindex: '0', role: 'region' } },
     );
-    this.sheet = new ChapterSheet({ ...of, scroller: this.#scroll });
+    this.sheet = new ChapterSheet({
+      ...of,
+      scroller: this.#scroll,
+      pages: () => pagesNow(this.#pages),
+    });
     this.edges = new LeafEdges((way) => of.turn(way, false));
     // The pointer a click came from, by its pointerdown: WebKit's click may not say.
     let pointer = '';
@@ -251,12 +258,15 @@ export class EpubPage implements PaneLeaf {
       marks: values['epub.marks'],
     };
     // Only what changed: setting an attribute again restyles the page (as ../settings/look.ts says).
+    const pages = pagesChoices(values);
     const changed =
       Object.entries(wanted).filter(([name, value]) => leaf.dataset[name] !== value).length +
       Object.entries(properties).filter(
         ([name, value]) => leaf.style.getPropertyValue(name) !== value,
-      ).length;
+      ).length +
+      Number(pages.landscape !== this.#pages.landscape || pages.portrait !== this.#pages.portrait);
     if (changed === 0) return;
+    this.#pages = pages;
     // The lines move: the place is kept as it stood, and shown again in the new look.
     this.sheet.keep();
     for (const [name, value] of Object.entries(wanted)) leaf.dataset[name] = value;

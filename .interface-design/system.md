@@ -767,7 +767,10 @@ in the book, each recorded here as it's built.
   whole book down the page pane's outer edge, `--eien-space-5` wide,
   `--eien-space-4` in from it (the system's scroll bar keeps its own),
   `--eien-space-5` from the pane's top and foot; in pages the pane keeps
-  room for it beside the fore-edge. A `--eien-rule-strong` hairline
+  room for it beside the fore-edge, and `--eien-space-3` more, so the
+  fore-edge's Next turn keeps a target's room (WCAG 2.5.8's 24px) from
+  it. Facing pages' left page, whose strip is at its left, doesn't yet
+  (backlog). A `--eien-rule-strong` hairline
   `--eien-space-2` long for each chapter, `--eien-space-3` in pencil each
   tenth; each bookmark a pencil tab (`--eien-paper` in a pencil hairline,
   `--eien-space-1` × `--eien-space-3`, its outer corners
@@ -837,8 +840,12 @@ in the book, each recorded here as it's built.
   margins and the gutter, the sheet widens to two pages, each at most the
   measure (Page width still narrows them), the text blocks
   `--eien-space-8` apart and Facing pages' `--eien-rule-soft` hairline down
-  the gutter's middle. One sheet, its one shadow, no fold shading. Never on
-  a phone (one pane at a time) or in a split. A turn moves the spread.
+  the gutter's middle. One sheet, its one shadow, no fold shading. One or
+  two is the writer's choice (decided 2026-10-31): Pages, landscape and Pages,
+  portrait, each One, Two (at any width, each half the page) or Auto (the
+  20em rule above, a phone's width deciding as the desktop's does), the
+  quick look's word buttons as every book setting's. A phone's two pages
+  are ragged as its one is. Never in a split. A turn moves the spread.
   Under Curl one page turns round the gutter (decided 2026-10-31), its
   running head and folio with it: on, the right page; back, the left; the
   other lies still until it lands. The fore-edge stands at its outer sides

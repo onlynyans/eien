@@ -15,7 +15,7 @@ import { offsetAfter } from './chapter-place';
 import { PagedPlace } from './paged-place';
 import { PlaceKeeper } from './place-keeper';
 import type { PageShown, Spot } from './sight';
-import { spreadOf } from './spread';
+import { type PagesChoice, spreadOf } from './spread';
 
 export interface ChapterSheetOf {
   /** The page's scroller, which the chapter scrolls in. */
@@ -36,6 +36,8 @@ export interface ChapterSheetOf {
   inHighlight(range: Range): boolean;
   /** A turn's copy of the chapter, cut to the page in sight whose first word is `from`: inked as the page is. */
   copied(copy: HTMLElement, from: number): void;
+  /** In pages, one page, two, or as the width allows (./spread.ts). */
+  pages?(): PagesChoice;
 }
 
 export class ChapterSheet {
@@ -75,7 +77,7 @@ export class ChapterSheet {
       ...told,
       box: this.box,
       room: of.scroller,
-      per: () => spreadOf(this.box, this.element, of.scroller),
+      per: () => spreadOf(this.box, this.element, of.scroller, of.pages?.()),
     });
     this.#keeper = this.#scrolled;
   }

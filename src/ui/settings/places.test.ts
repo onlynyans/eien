@@ -59,6 +59,8 @@ describe('the quick look’s settings (#49)', () => {
     expect(quickIn('darwin', false, 'epub').map((setting) => setting.key)).toEqual([
       ...notes,
       'epub.view',
+      'epub.landscape',
+      'epub.portrait',
       'epub.turn',
       'epub.turnSpeed',
       'epub.scroll',
@@ -72,6 +74,8 @@ describe('the quick look’s settings (#49)', () => {
     expect(shown).not.toContain('epub.scroll');
     expect(SETTINGS.filter(isShelfs).map((setting) => setting.key)).toEqual([
       'epub.view',
+      'epub.landscape',
+      'epub.portrait',
       'epub.turn',
       'epub.turnSpeed',
       'epub.scroll',

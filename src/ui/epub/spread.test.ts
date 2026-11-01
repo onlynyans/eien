@@ -1,8 +1,17 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { spreadOf } from './spread';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
+import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
+import { type PagesChoice, pagesChoices, pagesNow, spreadOf } from './spread';
+import { laidOut } from './test-lines';
+import { sideWith } from './test-side';
 
-/** A book's page in pages, its pane `width` wide (24px of blotter each side), Newsreader's 22px text. */
-function pane(width: number, zoom = 1, look = 1) {
+const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
+
+/**
+ * A book's page in pages, its pane `width` wide (24px of blotter each side), Newsreader's 22px text,
+ * its box `boxWidth` in its own pixels.
+ */
+function pane(width: number, zoom = 1, look = 1, boxWidth = 600) {
   document.body.innerHTML = `
     <div class="shell"><div class="page__pages">
       <div class="page__leaf" data-view="pages">
@@ -19,9 +28,14 @@ function pane(width: number, zoom = 1, look = 1) {
   const box = document.querySelector('.epub__pages') as HTMLElement;
   const chapter = document.querySelector('.epub-chapter') as HTMLElement;
   Object.defineProperty(room, 'clientWidth', { value: width });
-  Object.defineProperty(box, 'clientWidth', { value: 600 });
-  box.getBoundingClientRect = () => ({ width: 600 * zoom }) as DOMRect;
-  return { room, box, chapter, per: () => spreadOf(box, chapter, room) };
+  Object.defineProperty(box, 'clientWidth', { value: boxWidth });
+  box.getBoundingClientRect = () => ({ width: boxWidth * zoom }) as DOMRect;
+  return {
+    room,
+    box,
+    chapter,
+    per: (choice: PagesChoice = 'auto') => spreadOf(box, chapter, room, choice),
+  };
 }
 
 // Two 20em pages of 22px, the sheet's margins and the gutter: 880 + 144 + 72, and the blotter.
@@ -49,16 +63,78 @@ describe('two pages or one (Phase 3d)', () => {
     expect(pane(THRESHOLD - 1, 1, 1.2).per()).toBe(1);
   });
 
-  it('is one page scrolling, on a phone, and in a split', () => {
+  it('is one page scrolling, and in a split', () => {
     const scroll = pane(THRESHOLD * 2);
     scroll.room.parentElement?.setAttribute('data-view', 'scroll');
     expect(scroll.per()).toBe(1);
-    const phone = pane(THRESHOLD * 2);
-    document.querySelector('.shell')?.setAttribute('data-phone', '');
-    expect(phone.per()).toBe(1);
     const split = pane(THRESHOLD * 2);
     document.querySelector('.page__pages')?.setAttribute('data-two', '');
     expect(split.per()).toBe(1);
+  });
+
+  it('on a phone, opens where its width holds two pages, as the desktop’s does (decided 2026-10-31)', () => {
+    const phone = () => document.querySelector('.shell')?.setAttribute('data-phone', '');
+    const wide = pane(THRESHOLD);
+    phone();
+    expect(wide.per()).toBe(2);
+    const narrow = pane(THRESHOLD - 1);
+    phone();
+    expect(narrow.per()).toBe(1);
+    // A phone's two pages side by side (Wide screen's Two pages) are a split: never a spread more.
+    const split = pane(THRESHOLD * 2);
+    phone();
+    document.querySelector('.page__pages')?.setAttribute('data-two', '');
+    expect(split.per()).toBe(1);
+  });
+});
+
+describe('Pages, landscape and portrait: one, two or Auto (decided 2026-10-31)', () => {
+  it('shows two pages at a phone’s narrow width when Two is chosen, one when One is, the width deciding Auto', () => {
+    const narrow = pane(412);
+    document.querySelector('.shell')?.setAttribute('data-phone', '');
+    expect(narrow.per('two')).toBe(2);
+    expect(narrow.per('auto')).toBe(1);
+    const wide = pane(THRESHOLD);
+    expect(wide.per('one')).toBe(1);
+    expect(wide.per('auto')).toBe(2);
+  });
+
+  it('never two in a split, nor scrolling, whatever is chosen', () => {
+    const split = pane(THRESHOLD * 2);
+    document.querySelector('.page__pages')?.setAttribute('data-two', '');
+    expect(split.per('two')).toBe(1);
+    const scroll = pane(THRESHOLD * 2);
+    scroll.room.parentElement?.setAttribute('data-view', 'scroll');
+    expect(scroll.per('two')).toBe(1);
+  });
+
+  it('takes the choice for the screen as it’s held: portrait’s when taller than wide', () => {
+    const choices = pagesChoices({
+      ...DEFAULT_SETTINGS,
+      'epub.landscape': 'two',
+      'epub.portrait': 'one',
+    } as SettingValues);
+    const held = (portrait: boolean) =>
+      vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: portrait } as MediaQueryList);
+    held(true);
+    expect(pagesNow(choices)).toBe('one');
+    held(false);
+    expect(pagesNow(choices)).toBe('two');
+    vi.restoreAllMocks();
+    // Both Auto unless chosen: as a book was laid out before the choice.
+    expect(pagesChoices(DEFAULT_SETTINGS)).toEqual({ landscape: 'auto', portrait: 'auto' });
+  });
+
+  // QA (#40, Two pages chosen): a box short of the gutter and a letter
+  // each side (a 360px phone at 200% Interface zoom: 66px, the gutter 72px)
+  // gave the columns no width, so the chapter counted one page and its words
+  // past it were out of reach; a page narrower than a letter breaks every word.
+  it('keeps one page where two would each be narrower than a letter of the text', () => {
+    // The gutter 72px, the text 22px: two pages need a box of 72 + 2 × 22.
+    const box = (width: number) => pane(412, 1, 1, width).per('two');
+    expect(box(72 + 2 * 22)).toBe(2);
+    expect(box(72 + 2 * 22 - 1)).toBe(1);
+    expect(box(66)).toBe(1);
   });
 });
 
@@ -95,5 +171,110 @@ describe('two pages or one, the pane as it’s worn', () => {
     const bare = pane(THRESHOLD * 2);
     document.querySelector('.sheet')?.classList.remove('sheet');
     expect(bare.per()).toBe(1);
+  });
+});
+
+// QA (#40, Two pages chosen): the setting switched on a book's page lays
+// it out anew in two pages and back, the place kept, and the same settings
+// again lay nothing out.
+describe('Pages, landscape, switched on a book’s page', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('lays the page out in two and back as it’s switched, the place kept, and nothing anew unchanged', async () => {
+    const { side } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
+    laidOut(side.page);
+    await side.open('a.epub');
+    const { sheet } = side.page;
+    // A narrow pane (happy-dom's is 0 wide): one page unless Two is chosen.
+    Object.defineProperty(sheet.box, 'clientWidth', { value: 600 });
+    Object.defineProperty(sheet.box, 'clientHeight', { value: 600 });
+    sheet.box.getBoundingClientRect = () =>
+      ({ left: 0, width: 600, top: 0, height: 600 }) as DOMRect;
+    const pages = { ...DEFAULT_SETTINGS, 'epub.view': 'pages' } as SettingValues;
+    // Held wide: Pages, landscape decides.
+    vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList);
+    const narrow = (on: 'on' | 'off') =>
+      side.follow({ ...pages, 'epub.landscape': on === 'on' ? 'two' : 'auto' } as SettingValues);
+    narrow('off');
+    sheet.showPlace(300);
+    expect(sheet.box.hasAttribute('data-spread')).toBe(false);
+    expect(sheet.page.per).toBe(1);
+    const reshow = vi.spyOn(sheet, 'reshow');
+    narrow('on');
+    expect(reshow).toHaveBeenCalledTimes(1);
+    expect(sheet.box.hasAttribute('data-spread')).toBe(true);
+    expect(sheet.page.per).toBe(2);
+    expect(side.page.chapter.style.columnCount).toBe('2');
+    expect(sheet.place).toBe(300);
+    // The same settings again: nothing laid out anew.
+    narrow('on');
+    expect(reshow).toHaveBeenCalledTimes(1);
+    narrow('off');
+    expect(reshow).toHaveBeenCalledTimes(2);
+    expect(sheet.box.hasAttribute('data-spread')).toBe(false);
+    expect(sheet.page.per).toBe(1);
+    expect(sheet.place).toBe(300);
+  });
+});
+
+// QA (#40, pages chosen): the screen turned (a phone, or a desktop window
+// made taller than wide) with the book's box the same size: the pane's
+// resize alone tells the page, and the choice for the screen as it's now held
+// lays it out anew, one page or two, the place kept.
+describe('Pages, landscape and portrait, the screen turned', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('takes the other choice when the screen turns, though the box is the same size', async () => {
+    const resized: ResizeObserverCallback[] = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resized.push(callback);
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    let portrait = false;
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      () => ({ matches: portrait }) as MediaQueryList,
+    );
+    const { side } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
+    laidOut(side.page);
+    await side.open('a.epub');
+    const { sheet } = side.page;
+    Object.defineProperty(sheet.box, 'clientWidth', { value: 600 });
+    Object.defineProperty(sheet.box, 'clientHeight', { value: 600 });
+    sheet.box.getBoundingClientRect = () =>
+      ({ left: 0, width: 600, top: 0, height: 600 }) as DOMRect;
+    side.follow({
+      ...DEFAULT_SETTINGS,
+      'epub.view': 'pages',
+      'epub.landscape': 'two',
+      'epub.portrait': 'one',
+    } as SettingValues);
+    sheet.showPlace(300);
+    expect(sheet.page.per).toBe(2);
+    const turned = () => {
+      for (const callback of resized) callback([], {} as ResizeObserver);
+    };
+    // Turned upright: portrait's One.
+    portrait = true;
+    turned();
+    expect(sheet.box.hasAttribute('data-spread')).toBe(false);
+    expect(sheet.page.per).toBe(1);
+    expect(sheet.place).toBe(300);
+    // And back: landscape's Two.
+    portrait = false;
+    turned();
+    expect(sheet.box.hasAttribute('data-spread')).toBe(true);
+    expect(sheet.page.per).toBe(2);
+    expect(sheet.place).toBe(300);
   });
 });

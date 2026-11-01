@@ -97,6 +97,36 @@ describe('the quick look', () => {
     expect(button('epub.scroll', 'book')?.getAttribute('aria-pressed')).toBe('true');
   });
 
+  // QA (#40, pages chosen): with a book in front, Pages, landscape and Pages,
+  // portrait follow Read in, each Auto, One, Two as word buttons, and a choice
+  // is the shelf's at once; a note in front offers neither.
+  it('offers a book’s pages for the screen held each way after Read in, with a book in front alone', async () => {
+    new QuickLook(of).open(subject, opener);
+    expect(rowKeys()).not.toContain('epub.landscape');
+    closeMenu();
+    new QuickLook(of).open({ ...subject, kind: 'epub', crumb: 'Shelf' }, opener);
+    const keys = rowKeys();
+    expect(keys.slice(keys.indexOf('epub.view'), keys.indexOf('epub.view') + 4)).toEqual([
+      'epub.view',
+      'epub.landscape',
+      'epub.portrait',
+      'epub.turn',
+    ]);
+    for (const setting of ['epub.landscape', 'epub.portrait']) {
+      const words = [
+        ...(panel()?.querySelectorAll<HTMLElement>(`[data-setting="${setting}"] [data-value]`) ??
+          []),
+      ].map((choice) => choice.textContent);
+      expect(words).toEqual(['Auto', 'One', 'Two']);
+      expect(button(setting, 'auto')?.getAttribute('aria-pressed')).toBe('true');
+    }
+    button('epub.portrait', 'two')?.click();
+    await settled();
+    expect(settings.values['epub.portrait']).toBe('two');
+    expect(settings.values['epub.landscape']).toBe('auto');
+    expect(button('epub.portrait', 'two')?.getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('leaves page width out on the phone’s one pane, as Settings does', () => {
     phone = true;
     new QuickLook({ ...of, platform: 'android' }).open(subject, opener);

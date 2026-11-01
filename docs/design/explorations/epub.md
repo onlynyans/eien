@@ -173,6 +173,18 @@ section where it and the directions below disagree.
 - **Set as a book** (Showcase 2): justified and hyphenated, a title page
   and its imprint, chapters opening low, a capitals first line, running
   heads and folios. The phone stays ragged.
+- **Two pages on a phone** (decided 2026-10-31): the width decides there
+  as on the desktop. An upright phone never holds two; a Galaxy Z Fold 5
+  opened does sideways at 60% Interface zoom and upright at 50% (two pages
+  of 20em of 22px text, with the margins and the gutter, need a page some
+  1,144px wide; with Marks on the edge, 50% either way). Ragged, two pages
+  or one. A split stays one page.
+- **Pages, landscape and Pages, portrait** (decided 2026-10-31): one page
+  or two is the writer's choice, so it never waits on a zoom or a width:
+  two book settings in the shelf's quick look, for the screen held wide and
+  held tall, each *One*, *Two* (at any width, each half the page, while
+  each holds a letter of the text) or *Auto* (the default: the 20em rule
+  above). Two pages when narrow stays the notes' setting alone.
 - **The reading room** (Showcase 1) is built after Pages, as a one-key
   mode.
 
@@ -384,7 +396,7 @@ Each phase is its own session and pull request, from main.
     letting a page in flight fly on; under Slide and Words a drag asks;
   - **3d, built:** the spread, and Set as a book. Two pages where the
     pane holds two of 20em of the text with the sheet's margins and the
-    gutter (never on a phone or in a split), turned a spread at a time
+    gutter (never in a split; on a phone too, decided 2026-10-31), turned a spread at a time
     under every Page turn (under Curl one page round the gutter, its head
     with it, the other lying still: decided 2026-10-31, where the Phase 3
     review had the spread curl as one leaf), the place kept through one page and two
@@ -834,7 +846,7 @@ gradient or accent. The seal stays in its five places.
   printed book does. Each keeps its line, so the text never moves. Pages are
   counted from the title page, so Chapter I starts on page 3. Two pages show
   when each can have 20em (Facing pages' rule), else one.
-- **Phone:** one page, set the same, but ragged right (hyphenated): a phone's
+- **Phone** (superseded 2026-10-31: two pages where the width holds them, as Decided says): one page, set the same, but ragged right (hyphenated): a phone's
   measure is too short to justify without rivers.
 - **Intent:** a writer who cares how a page is set, reading in their own
   face. *Palette:* paper and ink; pencil for heads, folios and imprint;

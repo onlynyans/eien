@@ -565,11 +565,21 @@ Three panes, each collapsible, with a two-pane option in settings:
      the next). Under Slide and Words a drag across asks for the turn.
      Never while words are chosen in the page, nor on a link (but to catch
      a page in flight); a drag that turned is never also a click.
-   - **Two pages, and set as a book** (Phase 3d): in pages, where the page
-     pane holds two pages of at least 20em of the book's text, with the
-     sheet's margins and the gutter between, the book opens to two facing
-     pages; a pixel short of it, one. Never on a phone (one pane at a
-     time) or in a split. A turn, a key, the edges and a hand move both;
+   - **Two pages, and set as a book** (Phase 3d): in pages, a book shows
+     one page or two facing pages as **Pages, landscape** and **Pages,
+     portrait** say (book settings in the shelf's quick look, decided
+     2026-10-31), the one for the screen as it's held now: *One*, *Two*
+     (whatever the width, each half the page, while each holds a letter of
+     its text: a Pixel 7 at 200% Interface zoom holds one), or *Auto* (the
+     default): two where the page pane holds two pages of at least 20em of
+     the book's text, with the sheet's margins and the gutter between, a
+     pixel short of it one. On Auto a phone's width decides as the
+     desktop's does: an upright phone holds one page, a Galaxy Z Fold 5
+     opened holds two sideways with Interface zoom at 60% (upright at 50%;
+     with Marks on the edge, whose strip keeps a finger's width, at 50%
+     either way). Turning the screen takes the other's choice. Never in a split
+     (Facing pages is two pages of its own; Wide screen's Two pages with a
+     note beside is a split). A turn, a key, the edges and a hand move both;
      under Curl one page turns round the gutter as a printed page does, its
      running head and number with it (on, the right page; back, the left,
      a hand drawn rightward across it), the other lying still until it

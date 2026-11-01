@@ -79,7 +79,18 @@ export const firstInSight = (chapter: HTMLElement, top: number, rectOf = measure
 /** A piece of the page's box across, measured: the window's own, or a test's. */
 export type SideOf = (range: Range) => Pick<DOMRect, 'left' | 'right'>;
 
-const across: SideOf = (range) => range.getBoundingClientRect();
+/**
+ * A range's box across, as the window lays it out. A character just after the point a word was
+ * hyphenated at (Set as a book) stands at the next line's start, but its range holds the inserted
+ * hyphen too, at the end of the line before (Chromium's): on the page before, which a place would
+ * open a page early at. A character's own box is its range's last.
+ */
+export const across: SideOf = (range) => {
+  const one =
+    range.startContainer === range.endContainer && range.endOffset - range.startOffset === 1;
+  const own = one ? [...range.getClientRects()].at(-1) : undefined;
+  return own ?? range.getBoundingClientRect();
+};
 
 /**
  * In pages (Phase 3b), the offset of the first word on the page whose left

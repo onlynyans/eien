@@ -6,6 +6,7 @@
 
 import type { EditorView } from '@codemirror/view';
 import { bodyRowsOf, columnsOf, lineOfRow } from '../../core/table';
+import { zoomOf } from '../css-zoom';
 import type { TableAt } from './table-at';
 
 export interface TableGeometry {
@@ -28,10 +29,6 @@ function lineElement(view: EditorView, pos: number): HTMLElement | null {
   const element = node instanceof HTMLElement ? node : node.parentElement;
   return element?.closest<HTMLElement>('.cm-line') ?? null;
 }
-
-/** How much the page's zoom scales what's measured in `layer`. */
-export const zoomOf = (layer: HTMLElement): number =>
-  (layer as HTMLElement & { currentCSSZoom?: number }).currentCSSZoom ?? 1;
 
 /** A point on the screen in `layer`'s own coordinates. */
 export function inLayer(layer: HTMLElement, x: number, y: number): { x: number; y: number } {

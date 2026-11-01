@@ -11,17 +11,10 @@
 // (./front-matter.ts), turned back to, never opened at.
 
 import { openingSight, pageAt, pageRoles, throughSights } from '../../core/epub';
-import { characterAt, firstOnPage, type SideOf } from './chapter-place';
+import { zoomOf } from '../css-zoom';
+import { across, characterAt, firstOnPage, type SideOf } from './chapter-place';
 import { FRONT } from './front-matter';
-import {
-  type Columns,
-  clipAt,
-  keyOf,
-  layColumns,
-  UNLAID,
-  unlayColumns,
-  zoomOf,
-} from './page-columns';
+import { type Columns, clipAt, keyOf, layColumns, UNLAID, unlayColumns } from './page-columns';
 import { sightCut } from './page-cut';
 import { REST_MS } from './place-keeper';
 import type { PageShown, Spot } from './sight';
@@ -44,8 +37,6 @@ export interface PagedPlaceOf {
   readonly sideOf?: SideOf;
 }
 
-const measured: SideOf = (range) => range.getBoundingClientRect();
-
 export class PagedPlace {
   readonly #of: PagedPlaceOf;
   readonly #sideOf: SideOf;
@@ -64,7 +55,7 @@ export class PagedPlace {
 
   constructor(of: PagedPlaceOf) {
     this.#of = of;
-    this.#sideOf = of.sideOf ?? measured;
+    this.#sideOf = of.sideOf ?? across;
     this.#resized =
       typeof ResizeObserver === 'function' ? new ResizeObserver(() => this.#laidOut()) : null;
     this.#resized?.observe(of.box);

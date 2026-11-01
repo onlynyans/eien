@@ -322,6 +322,30 @@ export const SETTINGS = [
     quick: 'shelf',
   },
   {
+    key: 'epub.landscape',
+    label: 'Pages, landscape',
+    description:
+      'In pages, with the screen wider than it is tall: one page, two facing pages whatever the width, or Auto, two where each can hold 20em of the text.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { auto: 'Auto', one: 'One', two: 'Two' },
+    default: 'auto',
+    quick: 'shelf',
+  },
+  {
+    key: 'epub.portrait',
+    label: 'Pages, portrait',
+    description:
+      'In pages, with the screen taller than it is wide: one page, two facing pages whatever the width, or Auto, two where each can hold 20em of the text.',
+    scope: 'device',
+    group: 'Page',
+    type: 'choice',
+    choices: { auto: 'Auto', one: 'One', two: 'Two' },
+    default: 'auto',
+    quick: 'shelf',
+  },
+  {
     key: 'epub.turn',
     label: 'Page turn',
     description:
