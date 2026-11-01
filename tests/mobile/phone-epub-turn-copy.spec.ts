@@ -1,10 +1,13 @@
 // A turn's copy of the page laid exactly as the page in sight (#60): every
-// line where it stood, so none steps up or down as the page turns. The copy
-// is the same under every Page turn (./page-copy.ts); Words shows it still.
+// line where it stood, so none steps up or down as the page turns, whatever
+// begins the page (a paragraph's middle or start, a scene break, an
+// epigraph). The copy is the same under every Page turn (./page-copy.ts);
+// Words shows it still.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
+import { page as chapterPage, handEpub, nav, opf, XHTML } from '../support/epub-parts';
 import { open, putBytesOutside } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
@@ -31,32 +34,89 @@ const lines = (page: Page, words: string) =>
     return [...feet].sort((a, b) => a - b);
   }, words);
 
+const LINE =
+  'The rain kept on through the evening, and the lamps along the quay were lit before the boats came in, one by one, low in the water.';
+/** A chapter whose pages begin on every kind of block: paragraphs, scene breaks, epigraphs. */
+const PARTS = Array.from(
+  { length: 30 },
+  (_, n) =>
+    `<p>${LINE.repeat(1 + (n % 3))}</p>\n<p>${LINE}</p>\n<hr class="transition"/>\n<blockquote epub:type="epigraph"><p>${LINE}</p></blockquote>`,
+).join('\n');
+const partsBook = () =>
+  handEpub('content.opf', [
+    {
+      name: 'content.opf',
+      data: opf(
+        '3.0',
+        [
+          { id: 'nav', href: 'nav.xhtml', type: XHTML, properties: 'nav' },
+          { id: 'c0', href: 'c0.xhtml', type: XHTML },
+          { id: 'c1', href: 'c1.xhtml', type: XHTML },
+        ],
+        ['c0', 'c1'],
+      ),
+    },
+    {
+      name: 'nav.xhtml',
+      data: nav([
+        ['Opening', 'c0.xhtml'],
+        ['The quay', 'c1.xhtml'],
+      ]),
+    },
+    // The first chapter carries Eien's title page: the parts are the second's.
+    { name: 'c0.xhtml', data: chapterPage('Opening', '<h1>Opening</h1><p>Before.</p>') },
+    { name: 'c1.xhtml', data: chapterPage('The quay', `<h1>The quay</h1>${PARTS}`) },
+  ]);
+
+/** A book in pages, turned by Words slowly enough to read its copy, at `textSize`, on `screen`. */
+async function openBook(
+  page: Page,
+  bytes: Uint8Array,
+  screen: { width: number; height: number },
+  textSize: number,
+) {
+  await open(page);
+  await page.evaluate(async (size) => {
+    await window.eien.settings.set('epub.view', 'pages');
+    await window.eien.settings.set('epub.turn', 'words');
+    await window.eien.settings.set('epub.turnSpeed', '4');
+    await window.eien.settings.set('epub.appearance.textSize', size);
+  }, textSize);
+  await putBytesOutside(page, 'Eien/Vault/Novels/Book.epub', Buffer.from(bytes).toString('base64'));
+  await page.setViewportSize(screen);
+  await page.reload();
+  const back = page.locator('.phone-bar__back');
+  const row = page.locator('.tree-row--epub .tree-row__name');
+  await expect
+    .poll(async () => (await row.isVisible()) || (await back.isVisible()), { timeout: 10_000 })
+    .toBe(true);
+  if (!(await row.isVisible())) await back.click();
+  await row.click();
+  await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'pages');
+}
+
+/** `turns` turns on, each copy's lines held to the page's as it was. */
+async function turnsMatch(page: Page, turns: number) {
+  const copy = page.locator('.turn-copy [data-turn-words]').first();
+  // The keys turn the page they're in, not the list beside it.
+  await page.locator('.page__leaf--epub .page__scroll').first().focus();
+  for (let turn = 1; turn <= turns; turn++) {
+    const inSight = await lines(page, '.epub-sheet:not([aria-hidden]) .epub-chapter');
+    await page.keyboard.press('ArrowRight');
+    await expect(copy).toBeAttached();
+    expect(await lines(page, '.turn-copy [data-turn-words]'), `turn ${turn}`).toEqual(inSight);
+    await expect(copy).not.toBeAttached({ timeout: 10_000 });
+  }
+}
+
+const FOLD = { width: 590, height: 706 };
+
 for (const textSize of [100, 120]) {
   test(`a turn’s copy lays every line where the page has it, text at ${textSize}%`, async ({
     page,
   }) => {
     test.setTimeout(60_000);
-    await open(page);
-    await page.evaluate(async (size) => {
-      await window.eien.settings.set('epub.view', 'pages');
-      await window.eien.settings.set('epub.turn', 'words');
-      await window.eien.settings.set('epub.turnSpeed', '4');
-      await window.eien.settings.set('epub.appearance.textSize', size);
-    }, textSize);
-    await putBytesOutside(
-      page,
-      'Eien/Vault/Novels/Pride and Prejudice.epub',
-      readFileSync(FIXTURE).toString('base64'),
-    );
-    await page.setViewportSize({ width: 590, height: 706 });
-    await page.reload();
-    const back = page.locator('.phone-bar__back');
-    const row = page.locator('.tree-row--epub .tree-row__name');
-    await expect
-      .poll(async () => (await row.isVisible()) || (await back.isVisible()), { timeout: 10_000 })
-      .toBe(true);
-    if (!(await row.isVisible())) await back.click();
-    await row.click();
+    await openBook(page, readFileSync(FIXTURE), FOLD, textSize);
     await expect(page.locator('.epub-chapter').first()).toContainText('It is a truth');
     // Set as a book: the first paragraph is a paragraph, no gap under it, the next indented after it.
     const [first, second] = await page
@@ -69,13 +129,26 @@ for (const textSize of [100, 120]) {
       );
     expect(first).toEqual({ gap: '0px', indent: '0px' });
     expect(second?.indent).not.toBe('0px');
-    const copy = page.locator('.turn-copy [data-turn-words]').first();
-    for (let turn = 1; turn <= 6; turn++) {
-      const inSight = await lines(page, '.epub-sheet:not([aria-hidden]) .epub-chapter');
-      await page.keyboard.press('ArrowRight');
-      await expect(copy).toBeAttached();
-      expect(await lines(page, '.turn-copy [data-turn-words]'), `turn ${turn}`).toEqual(inSight);
-      await expect(copy).not.toBeAttached({ timeout: 10_000 });
-    }
+    await turnsMatch(page, 6);
+  });
+}
+
+for (const screen of [FOLD, { width: 1180, height: 820 }]) {
+  test(`a page that begins on a scene break or an epigraph, its copy too, ${screen.width}px`, async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await openBook(page, partsBook(), screen, 100);
+    await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
+      'Before.',
+    );
+    // The phone's list is a step back; Panes shows it beside the page.
+    const back = page.locator('.phone-bar__back');
+    if (await back.isVisible()) await back.click();
+    await page.locator('.contents-row', { hasText: 'The quay' }).click();
+    await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter')).toContainText(
+      'The rain kept on',
+    );
+    await turnsMatch(page, 14);
   });
 }

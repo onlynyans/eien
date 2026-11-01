@@ -7,7 +7,7 @@
 // One it ends inside of is set to its end as on the page: justified, its
 // last line too.
 
-import { characterAt } from './chapter-place';
+import { characterAt, OWN } from './chapter-place';
 import { FRONT } from './front-matter';
 
 /** The blocks a page may begin inside of. */
@@ -23,16 +23,45 @@ function begunBefore(at: Range): boolean {
   return before.toString().trim() !== '';
 }
 
-/** How many blocks `at` ends, the innermost first: their words all on the page before. */
+/** What a page shows that isn't the book's words: a picture, a scene break. */
+const MARKS = `img, hr, ${OWN}`;
+
+/**
+ * `range` kept to what the page in sight draws (#60): between two pages'
+ * words, a picture or a scene break stands on the page it's drawn on, never
+ * brought to the head of the next or the foot of the one before. Measured in
+ * the chapter's box, where the page in sight is; nothing laid, nothing moved.
+ */
+function keptToSight(range: Range, chapter: HTMLElement, from: Range | null): void {
+  const sight = chapter.parentElement?.getBoundingClientRect();
+  if (!sight || sight.width === 0) return;
+  // A mark with no box (a picture not yet drawn) stays where the words put it.
+  const outside = (mark: Element) => {
+    const at = mark.getBoundingClientRect();
+    return at.width > 0 && (at.right <= sight.left || at.left >= sight.left + sight.width);
+  };
+  const marks = [...chapter.querySelectorAll(MARKS)].filter(
+    (mark) => range.intersectsNode(mark) && outside(mark),
+  );
+  for (const mark of marks) {
+    if (from && from.comparePoint(mark, 0) < 0) range.setStartAfter(mark);
+    else {
+      range.setEndBefore(mark);
+      return;
+    }
+  }
+}
+
+/** How many blocks the cut's start ends, the innermost first: their words all on the page before. */
 function endedBy(at: Range, chapter: HTMLElement): number {
-  const { endContainer, endOffset } = at;
+  const { startContainer, startOffset } = at;
   let ended = 0;
-  let block = endContainer instanceof Element ? endContainer : endContainer.parentElement;
+  let block = startContainer instanceof Element ? startContainer : startContainer.parentElement;
   for (; block && block !== chapter && chapter.contains(block); block = block.parentElement) {
     const rest = document.createRange();
-    rest.setStart(endContainer, endOffset);
+    rest.setStart(startContainer, startOffset);
     rest.setEnd(block, block.childNodes.length);
-    if (rest.toString().trim() !== '' || rest.cloneContents().querySelector('img')) break;
+    if (rest.toString().trim() !== '' || rest.cloneContents().querySelector(MARKS)) break;
     ended++;
   }
   return ended;
@@ -51,7 +80,7 @@ function afterBreak(words: DocumentFragment, ended: number): void {
     opened.push(node);
   }
   for (const shell of opened.slice(opened.length - ended)) shell.style.display = 'none';
-  // The first thing shown: words, or a picture. A hidden copy's are passed over.
+  // The first thing shown: words, a picture or a break. A hidden copy's are passed over.
   const walk = document.createTreeWalker(words, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
     acceptNode: (node) =>
       node instanceof HTMLElement && node.style.display === 'none'
@@ -59,11 +88,11 @@ function afterBreak(words: DocumentFragment, ended: number): void {
         : NodeFilter.FILTER_ACCEPT,
   });
   for (let node = walk.nextNode(); node; node = walk.nextNode()) {
-    const shown =
-      node instanceof HTMLImageElement ||
-      (node.nodeType === Node.TEXT_NODE && node.textContent?.trim() !== '');
-    if (!shown) continue;
-    for (let at = node.parentElement; at; at = at.parentElement) at.style.marginTop = '0';
+    const mark = node instanceof HTMLElement && node.matches(MARKS);
+    if (!mark && !(node.nodeType === Node.TEXT_NODE && node.textContent?.trim())) continue;
+    for (let at = mark ? (node as HTMLElement) : node.parentElement; at; at = at.parentElement) {
+      at.style.marginTop = '0';
+    }
     return;
   }
 }
@@ -85,6 +114,7 @@ export function pageCut(
   if (after) range.setStart(after.endContainer, after.endOffset);
   else if (front) range.setStartAfter(front);
   if (to) range.setEnd(to.startContainer, to.startOffset);
+  keptToSight(range, chapter, from);
   // Inside one paragraph, the cut holds its words alone: they're put back in its elements, shallow.
   let cut: Node = range.cloneContents();
   for (
@@ -111,7 +141,7 @@ export function pageCut(
   for (let text = texts.nextNode(); text; text = texts.nextNode()) end = text;
   const last = end?.parentElement?.closest<HTMLElement>(BLOCKS);
   if (to && last && begunBefore(to)) last.setAttribute(CUT_END, '');
-  if (after) afterBreak(words, endedBy(after, chapter));
+  if (after) afterBreak(words, endedBy(range, chapter));
   return words;
 }
 
