@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { bookKey, pageKey, pageTap } from './page-keys';
+import { bookKey, pageKey, pageTap, tapDown } from './page-keys';
 
 const press = (key: string, init: KeyboardEventInit = {}, target?: Element) => {
   const of = { turn: vi.fn(), edge: vi.fn() };
@@ -56,13 +56,13 @@ describe('a tap in pages', () => {
     document.body.append(element);
     return element;
   };
-  const tap = (x: number, pointerType = 'touch', target?: Element) => {
+  const tap = (x: number, pointer = 'touch', target?: Element, chosen = false) => {
     const element = box();
     const of = { turn: vi.fn(), edge: vi.fn() };
     // A plain click, as WebKit's is: the pointer's type is its pointerdown's.
     const event = new MouseEvent('click', { clientX: x });
     Object.defineProperty(event, 'target', { value: target ?? element.querySelector('p') });
-    pageTap(event, pointerType, element, of);
+    pageTap(event, { pointer, chosen }, element, of);
     return of.turn;
   };
 
@@ -82,6 +82,24 @@ describe('a tap in pages', () => {
     document.body.append(words);
     document.getSelection()?.selectAllChildren(words);
     expect(tap(250)).not.toHaveBeenCalled();
+  });
+
+  it('never turns on the tap that ends a choice, though the system dropped it before the click (#65)', () => {
+    expect(tap(250, 'touch', undefined, true)).not.toHaveBeenCalled();
+  });
+
+  it('reads at the pointerdown whether words were chosen on the page, never a note’s beside', () => {
+    const page = document.createElement('div');
+    page.innerHTML = '<p>Chosen words</p>';
+    const note = document.createElement('p');
+    note.textContent = 'A note’s words';
+    document.body.append(page, note);
+    const down = new PointerEvent('pointerdown', { pointerType: 'touch' });
+    expect(tapDown(down, page)).toEqual({ pointer: 'touch', chosen: false });
+    document.getSelection()?.selectAllChildren(note);
+    expect(tapDown(down, page)).toEqual({ pointer: 'touch', chosen: false });
+    document.getSelection()?.selectAllChildren(page.querySelector('p') as Node);
+    expect(tapDown(down, page)).toEqual({ pointer: 'touch', chosen: true });
   });
 });
 

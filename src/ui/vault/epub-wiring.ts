@@ -37,6 +37,8 @@ export interface EpubWiringOf {
   looks(): void;
   /** Where a book's marks are (the Marks setting, Phase 4d): in the list, or on the page's edge. */
   marksAt(): 'list' | 'edge';
+  /** Put `text` (plain) and `html` on the clipboard: a book's selection bar's Copy. */
+  copy(text: string, html: string): Promise<void>;
   pages(): Pages;
   /**
    * Open `path` as a note chosen from a row is (./note-actions.ts, 'chosen'):
@@ -110,6 +112,7 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
     looks: () => of.looks(),
     sizeOf: (path) => of.state.sizeOf(path),
     changed: () => of.redraw(),
+    copy: (text, html) => of.copy(text, html),
     async quote(text, from) {
       const note = await noteFor(from);
       if (!note) return { not: NO_NOTE };
