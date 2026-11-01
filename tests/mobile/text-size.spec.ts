@@ -18,6 +18,7 @@ async function smallest(page: Page, density: 'comfortable' | 'compact'): Promise
   await open(page);
   await page.evaluate(async (density) => {
     await window.eien.settings.set('appearance.room', 'panes');
+    await window.eien.settings.set('layout.panes', 'three'); // the note list too (#69)
     await window.eien.settings.set('appearance.density', density);
     await window.eien.settings.set('appearance.textSize', 50);
   }, density);
