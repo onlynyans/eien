@@ -85,13 +85,22 @@ describe('a book counted for its page numbers (Phase 4a)', () => {
 });
 
 describe('a book’s page', () => {
-  it('opens the book at its first chapter, named by its title, its folders above', async () => {
+  it('opens the book at its first chapter, named by its title, its head the title and author (#57)', async () => {
     const { side, changed } = sideWith({
       'Novels/P and P.epub': EPUBS['plain.epub'] as Uint8Array,
     });
     await side.open('Novels/P and P.epub');
     expect(side.page.name).toBe('Pride and Prejudice');
-    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Novels');
+    // The book, not the folder it's in, as its row on SHELF names it; the folders on its title page.
+    // This one says no author: its title alone.
+    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Pride and Prejudice');
+    expect(side.page.runningCrumbs.textContent).toBe('Pride and Prejudice');
+    const { side: by } = sideWith({ 'Novels/P.epub': EPUBS['epub2.epub'] as Uint8Array });
+    await by.open('Novels/P.epub');
+    expect(by.page.element.querySelector('.crumbs')?.textContent).toBe(
+      'Pride and Prejudice · Jane Austen',
+    );
+    expect(by.page.runningCrumbs.textContent).toBe('Pride and Prejudice · Jane Austen');
     expect(chapterText(side)).toContain('It is a truth universally acknowledged');
     expect(side.page.chapter.lang).toBe('en');
     expect(side.spine).toBe(1); // the title page before it isn't in the contents
@@ -203,7 +212,8 @@ describe('the EPUB’s kind', () => {
     kind.moved('Novels', 'Books/Novels');
     kind.followMoves([side]);
     expect(side.path).toBe('Books/Novels/a.epub');
-    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Books / Novels');
+    // Its head is the book's, wherever it's moved.
+    expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Pride and Prejudice');
     kind.sync([side]); // the vault lists the old path only: the book's gone
     expect(side.path).toBeNull();
   });

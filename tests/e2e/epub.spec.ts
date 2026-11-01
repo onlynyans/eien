@@ -193,7 +193,8 @@ test.describe('a book’s folder renamed', () => {
     await page.keyboard.type('Austen');
     await page.keyboard.press('Enter');
     await expect(page.locator('[data-key="shelf:Austen"]')).toBeFocused();
-    await expect(page.locator('.page__leaf--epub .crumbs')).toHaveText('Austen');
+    // Its head names the book, not its folder (#57), wherever the folder goes.
+    await expect(page.locator('.page__leaf--epub .crumbs')).toHaveText('Pride and Prejudice');
     await expect(chapter(page)).toContainText('Mr. Bennet was among the earliest');
     await expect(page.locator('.contents-row').nth(1)).toHaveAttribute('aria-current', 'true');
   });

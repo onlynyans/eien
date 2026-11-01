@@ -50,6 +50,13 @@ export async function openBook(
 export const nameOf = (epub: Epub | null, path: string): string =>
   epub?.title || epubTitleOf(baseName(path));
 
+/**
+ * Its sheet's head, where a note's folders stand: the book, its title and author, as its row on
+ * SHELF names it (#57). The folders it's shelved in are on its title page.
+ */
+export const headOf = (epub: Epub | null, path: string): string =>
+  [nameOf(epub, path), epub?.author].filter(Boolean).join(' · ');
+
 /** Where `epub` opens: the spine item `at` a page left, else the reading state's `kept`, else its first chapter. */
 export function startOf(
   epub: Epub,

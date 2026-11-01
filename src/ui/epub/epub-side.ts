@@ -15,7 +15,7 @@ import { crumbsOf } from '../vault/open-note';
 import type { Place, SideHooks } from '../vault/page-side';
 import type { BookCount } from './book-count';
 import { nameLinks } from './book-links';
-import { nameOf, openBook, startOf } from './book-open';
+import { headOf, nameOf, openBook, startOf } from './book-open';
 import { bookParts } from './book-parts';
 import { quoteChosen } from './book-quote';
 import { chapterFoot } from './chapter-foot';
@@ -220,7 +220,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       epub = null;
       spine = -1;
       letGo();
-      page.loading(nameOf(null, next), crumbsOf(next));
+      page.loading(nameOf(null, next), headOf(null, next));
       const read = await openBook(of, next);
       if (opening !== turn || disposed) return;
       if ('notice' in read) {
@@ -231,7 +231,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       letTexts = of.texts.hold(epub.key);
       const counted = of.counts.of(epub);
       count = counted;
-      page.show(nameOf(epub, next), crumbsOf(next), epub.language);
+      page.show(nameOf(epub, next), headOf(epub, next), epub.language);
       // Its bookmarks whatever place it opens at (⇄, a second page); the place kept only if none was given.
       const state = await of.reading.read(epub.key);
       if (opening !== turn || disposed) return;
@@ -274,7 +274,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     moved(to) {
       path = to;
       // A book with no title of its own is called by its file: renamed, its new name.
-      page.show(nameOf(epub, to), crumbsOf(to), epub?.language ?? '');
+      page.show(nameOf(epub, to), headOf(epub, to), epub?.language ?? '');
     },
     clear() {
       links.forget();

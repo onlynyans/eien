@@ -2,6 +2,13 @@
 .page__leaf--epub {
   background: var(--eien-page-ground);
 }
+/* Its head names the book (#57): one line, cut short with an ellipsis. */
+.epub-sheet > .sheet__head .crumbs {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* A book's chapter on its sheet (#40): the book's stylesheet. What the
    cleaner keeps is drawn in the writer's own faces and the theme's colours,
