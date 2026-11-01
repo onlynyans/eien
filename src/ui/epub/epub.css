@@ -73,6 +73,12 @@
   max-width: 100%;
   height: auto;
 }
+/* A plate's picture stands as a block: inline, the line it sat on (its descent too) was taller
+   than the picture, and a picture fitted to the page moved on a page, leaving one blank (#59). */
+.epub-chapter [data-part="plate"] img {
+  display: block;
+  margin-inline: auto;
+}
 
 .epub-chapter [data-part="caption"],
 .epub-chapter figcaption {
@@ -161,10 +167,14 @@
 [data-view="pages"] .epub-chapter {
   column-fill: auto;
 }
-/* A picture fits its page, whole: never taller than the page, never split. */
+/* A picture fits its page, whole: never taller than the page, never split; a plate's with its gaps,
+   which stand above it at a chapter's head. */
 [data-view="pages"] .epub-chapter img {
   max-height: var(--epub-page-height);
   object-fit: contain;
+}
+[data-view="pages"] .epub-chapter [data-part="plate"] img {
+  max-height: calc(var(--epub-page-height) - 2 * var(--eien-epub-plate-gap));
 }
 [data-view="pages"] .epub__turns {
   display: none;
