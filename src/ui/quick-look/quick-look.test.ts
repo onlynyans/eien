@@ -144,6 +144,12 @@ describe('the quick look', () => {
     expect(roomy).toHaveBeenCalledTimes(2);
   });
 
+  it('offers page width with no room while it’s chosen otherwise than As set, to put it back (#62)', async () => {
+    await settings.set('page.width', 'narrow');
+    new QuickLook({ ...of, roomy: () => false }).open(subject, opener);
+    expect(rowKeys()).toContain('page.width');
+  });
+
   it('sets a value at once and shows it chosen, with nothing to confirm', async () => {
     new QuickLook(of).open(subject, opener);
     button('appearance.leading', 'loose')?.click();

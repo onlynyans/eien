@@ -209,11 +209,15 @@ describe('the EPUB’s kind', () => {
     const { side, of } = sideWith({ 'Novels/a.epub': EPUBS['plain.epub'] as Uint8Array });
     const kind = epubKind(of);
     await side.open('Novels/a.epub');
+    await side.go(0); // Eien's title page, which names the folders, before it
     kind.moved('Novels', 'Books/Novels');
     kind.followMoves([side]);
     expect(side.path).toBe('Books/Novels/a.epub');
-    // Its head is the book's, wherever it's moved.
+    // Its head is the book's, wherever it's moved; its title page names the folders it's in now.
     expect(side.page.element.querySelector('.crumbs')?.textContent).toBe('Pride and Prejudice');
+    expect(side.page.chapter.querySelector('.epub-front__shelf')?.textContent).toBe(
+      'Books / Novels',
+    );
     kind.sync([side]); // the vault lists the old path only: the book's gone
     expect(side.path).toBeNull();
   });
