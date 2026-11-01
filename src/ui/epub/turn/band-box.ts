@@ -28,6 +28,18 @@ export const rampOf = (ink: string, [start, end]: Ramp): string =>
 export const part = (name: string, ...children: HTMLElement[]) =>
   h('div', { class: `turn-curl__${name}` }, ...children);
 
+/** What a band holds, all of it drawn once. */
+export interface BandHolds {
+  /** In the page's place, laid back inside the band: a copy of the page, or what's cut to it. */
+  readonly page?: readonly HTMLElement[];
+  /** Its own paper over the page (a page's back, its words faint through it). */
+  readonly veiled?: boolean;
+  /** Not cut to the page: a shadow falls past it. */
+  readonly uncut?: boolean;
+  /** Over it all, the band's shade and light, drawn across the band. */
+  readonly over?: readonly HTMLElement[];
+}
+
 export class BandBox {
   readonly element: HTMLElement;
   readonly #inside: HTMLElement;
@@ -36,27 +48,19 @@ export class BandBox {
 
   /**
    * A band named `name` (a class, `turn-curl__<name>`) over `page`, `reach`
-   * either side of the fold's point, holding `copy` (a copy of the page, laid
-   * inside) if any, `veiled` by its own paper (a page's back, its words
-   * faint through it), and `over` it the band's shade and light, drawn once
-   * across the band.
+   * either side of the fold's point, holding what `holds` says.
    */
-  constructor(
-    name: string,
-    page: PageBox,
-    reach: number,
-    copy: HTMLElement | null,
-    veiled: boolean,
-    ...over: HTMLElement[]
-  ) {
+  constructor(name: string, page: PageBox, reach: number, holds: BandHolds = {}) {
     const height = `${2 * reach}px`;
     this.element = h('div', { class: `turn-curl__band turn-curl__${name}` });
     Object.assign(this.element.style, { width: `${BAND_BOX}px`, height });
     this.#inside = h('div', { class: 'turn-curl__inside' });
     Object.assign(this.#inside.style, { width: `${page.width}px`, height: `${page.height}px` });
-    if (copy) this.#inside.append(copy);
+    if (holds.uncut) this.#inside.classList.add('turn-curl__inside--uncut');
+    this.#inside.append(...(holds.page ?? []));
     // Over the page alone, unscaled: plain paper needs no band's box.
-    if (veiled) this.#inside.append(part('paper'));
+    if (holds.veiled) this.#inside.append(part('paper'));
+    const over = holds.over ?? [];
     this.#over = over.length > 0 ? h('div', { class: 'turn-curl__over' }, ...over) : null;
     if (this.#over) {
       // A band's box and as much again either side. It's a layer of its own (./turn.css), which
@@ -75,6 +79,11 @@ export class BandBox {
     this.#inside.style.transform = matrixOf(band.paper);
     // Its middle third on the band's box.
     if (this.#over) this.#over.style.transform = `${matrixOf(band.box)} translateX(-${BAND_BOX}px)`;
+  }
+
+  /** As strong as `strength` (0 to 1): a shadow as high as the paper is. The compositor's alone. */
+  fade(strength: number): void {
+    this.element.style.opacity = strength.toFixed(3);
   }
 
   /** Shown or hidden; told only when that changes, as any other style is drawn again. */

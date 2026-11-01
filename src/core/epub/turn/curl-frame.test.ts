@@ -44,6 +44,17 @@ describe('a frame', () => {
     expect(Math.abs((crest[1] ?? 0) - (crest[0] ?? 0))).toBeCloseTo(lengths.crest, 6);
   });
 
+  // The shadows are as strong as the paper is high: none as it's taken or lands flat.
+  it('stands the paper as high as its roll: barely just taken, highest half over, barely landing', () => {
+    const heights = [399, 0, -399].map((x) => {
+      const frame = curlFrame(page, rest, [x, 500], lengths);
+      return frame.resting ? 0 : frame.height;
+    });
+    expect(heights[0]).toBeLessThan(0.01);
+    expect(heights[1]).toBeCloseTo(1, 9);
+    expect(heights[2]).toBeLessThan(0.01);
+  });
+
   it('a crease too slight to round draws no strips', () => {
     const frame = curlFrame(page, rest, [399, 500], lengths);
     if (frame.resting) throw new Error('moving');

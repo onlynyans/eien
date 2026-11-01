@@ -13,7 +13,7 @@
 import { CURL_STRIPS, type CurlFrame, isBack, reachOf, stripLight } from '../../../core/epub';
 import { zoomOf } from '../../css-zoom';
 import { h } from '../../dom';
-import { BandBox, part, rampOf } from './band-box';
+import { BandBox, type BandHolds, part, rampOf } from './band-box';
 import { layOver, pageCopy } from './page-copy';
 import type { TurnLeaf } from './turn-surface';
 import { CURL_INK } from './turn-tokens';
@@ -42,6 +42,24 @@ function pageIn(
   return copy;
 }
 
+/**
+ * A copy of the sheet now made a spread's turning page's back: the page the
+ * turn reveals on the gutter's other side, laid so the leaf's back at `u`
+ * shows the sheet where `u` lands once turned (on, `x = gutter − u`; back,
+ * the leaf in its mirror, `x = gutter + u`), mirrored as paper's back is.
+ */
+function backIn(copy: HTMLElement, leaf: TurnLeaf, sheetWidth: number): HTMLElement {
+  copy.classList.add('turn-curl__page');
+  const gutter = leaf.mirrored ? leaf.x + leaf.width : leaf.x;
+  Object.assign(copy.style, {
+    left: '0px',
+    width: `${sheetWidth}px`,
+    transformOrigin: '0 0',
+    transform: leaf.mirrored ? `translateX(${-gutter}px)` : `matrix(-1, 0, 0, 1, ${gutter}, 0)`,
+  });
+  return copy;
+}
+
 export class CurlView {
   readonly element = h('div', { class: 'turn-curl', attrs: { 'aria-hidden': 'true' } });
   readonly #to: HTMLElement;
@@ -50,6 +68,8 @@ export class CurlView {
   readonly #strips: readonly BandBox[];
   readonly #back: BandBox;
   readonly #crest: BandBox;
+  /** The lifted paper's soft shadow, round what lies back on top. */
+  readonly #shadow: BandBox;
   readonly #flap = part('flap');
   #moving: boolean | null = null;
 
@@ -82,29 +102,45 @@ export class CurlView {
       to.style.visibility = 'hidden';
     }
     const copy = () => pageIn(moving.cloneNode(true) as HTMLElement, box, sheetWidth);
+    // A spread's page turns over to show its back, the page the turn reveals, printed on it; one
+    // page's back is its own words faint through its paper.
+    const turned = leaf ? pageCopy(to, words, trim) : null;
+    const back = (): BandHolds =>
+      turned && leaf
+        ? { page: [backIn(turned.cloneNode(true) as HTMLElement, leaf, sheetWidth)] }
+        : { page: [copy()], veiled: true };
     const wash = (ink: string) => {
       const element = part('wash');
       element.style.backgroundImage = rampOf(ink, [1, 0]);
       return element;
     };
-    this.#cast = new BandBox('cast', page, reach, null, false, wash(CURL_INK.shade));
-    this.#front = new BandBox('front', page, reach, pageIn(moving, box, sheetWidth), false);
+    this.#cast = new BandBox('cast', page, reach, { over: [wash(CURL_INK.shade)] });
+    this.#front = new BandBox('front', page, reach, { page: [pageIn(moving, box, sheetWidth)] });
     this.#strips = Array.from({ length: CURL_STRIPS }, (_, i) => {
       const light = stripLight(i);
       const tone = part('tone');
       tone.style.backgroundImage = rampOf(CURL_INK.shade, light.shade);
-      if (!light.glint) return new BandBox('strip', page, reach, copy(), false, tone);
-      // The back half: its own paper over its mirrored words, so they show through faintly.
+      if (!light.glint) return new BandBox('strip', page, reach, { page: [copy()], over: [tone] });
+      // The back half, coming over: the page's back.
       const glint = part('glint');
       glint.style.backgroundImage = rampOf(CURL_INK.light, light.glint);
-      return new BandBox('strip', page, reach, copy(), true, tone, glint);
+      return new BandBox('strip', page, reach, { ...back(), over: [tone, glint] });
     });
-    this.#back = new BandBox('back', page, reach, copy(), true);
-    this.#crest = new BandBox('crest', page, reach, null, false, wash(CURL_INK.light));
+    this.#back = new BandBox('back', page, reach, back());
+    this.#crest = new BandBox('crest', page, reach, { over: [wash(CURL_INK.light)] });
+    // The page's edges, its shadow round them past the page; cut at the crest by the band's box,
+    // where the paper rolls over rather than leaving the page.
+    this.#shadow = new BandBox('shadow', page, reach, { page: [part('edge')], uncut: true });
     const roll = (back: boolean) =>
       this.#strips.filter((_, i) => isBack(i) === back).map((strip) => strip.element);
     this.#flap.append(...roll(true), this.#back.element, this.#crest.element);
-    const layers = [this.#cast.element, this.#front.element, ...roll(false), this.#flap];
+    const layers = [
+      this.#cast.element,
+      this.#front.element,
+      ...roll(false),
+      this.#shadow.element,
+      this.#flap,
+    ];
     // Stacked in this order whatever the page's own rules say.
     layers.forEach((element, i) => {
       element.style.zIndex = String(i + 1);
@@ -156,6 +192,8 @@ export class CurlView {
     this.#show(!frame.resting);
     if (frame.resting) return;
     this.#cast.place(frame.cast);
+    this.#shadow.place(frame.back);
+    for (const shadow of [this.#cast, this.#shadow]) shadow.fade(frame.height);
     this.#strips.forEach((strip, i) => {
       const band = frame.strips[i];
       strip.show(band !== undefined);
@@ -170,7 +208,7 @@ export class CurlView {
     if (moving === this.#moving) return;
     this.#moving = moving;
     this.#flap.style.visibility = moving ? '' : 'hidden';
-    for (const band of [this.#cast, ...this.#strips]) band.show(moving);
+    for (const band of [this.#cast, this.#shadow, ...this.#strips]) band.show(moving);
   }
 
   /** Gone, and the sheet beneath shown again. */

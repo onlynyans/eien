@@ -38,13 +38,14 @@ describe('the curl drawn', () => {
 
   // What keeps a phone's curl smooth: a frame moves what was drawn, and draws nothing anew. A clip,
   // a gradient or a size changed each frame was drawn again each frame, and the curl stuttered.
-  it('changes only transforms from one frame to the next as the hand moves', () => {
+  it('changes only transforms, and the shadows’ strength, from one frame to the next as the hand moves', () => {
     const to = sheet();
     const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
     view.draw(curlFrame(page, [400, 500], [380, 490], lengths));
-    // Each element's style but its transform: a frame may move things, and do nothing else.
+    // Each element's style but its transform and opacity: a frame may move things and fade the
+    // shadows (the compositor's alone), and do nothing else.
     const unmoved = (style: string | null | undefined) =>
-      (style ?? '').replace(/(^|;)\s*transform:[^;]*/g, '$1').trim();
+      (style ?? '').replace(/(^|;)\s*(transform|opacity):[^;]*/g, '$1').trim();
     const styles = () =>
       [view.element, ...view.element.querySelectorAll('*')].map((element) =>
         unmoved(element.getAttribute('style')),
@@ -64,6 +65,24 @@ describe('the curl drawn', () => {
     watch.disconnect();
     expect(changed).toEqual([]);
     expect(styles()).toEqual(drawn);
+  });
+
+  // Only the shadows fade: the paper itself is never seen through.
+  it('fades only the shadows, as the paper is high: none just taken, whole half over', () => {
+    const to = sheet();
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+    const strength = () =>
+      [...view.element.querySelectorAll<HTMLElement>('[style*="opacity"]')].map((element) => [
+        element.classList[1],
+        Number(element.style.opacity),
+      ]);
+    view.draw(curlFrame(page, [400, 500], [399, 500], lengths));
+    for (const [, opacity] of strength()) expect(opacity).toBeLessThan(0.02);
+    view.draw(curlFrame(page, [400, 500], [0, 500], lengths));
+    expect(strength()).toEqual([
+      ['turn-curl__cast', 1],
+      ['turn-curl__shadow', 1],
+    ]);
   });
 
   it('at rest, shows the page flat and nothing else', () => {

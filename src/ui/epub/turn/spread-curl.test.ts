@@ -30,6 +30,7 @@ function spread(
   host.append(sheet);
   document.body.append(host);
   let page = 3;
+  (sheet.querySelector('.words') as HTMLElement).textContent = `Page ${page}`;
   let started = page;
   const queue = new Set<(now: number) => void>();
   const frames: Frames = (run) => {
@@ -44,6 +45,9 @@ function spread(
       step: (way) => {
         started = page;
         page += way;
+        // The sheet now holds the page come to, as a book's does.
+        const words = sheet.querySelector('.words');
+        if (words) words.textContent = `Page ${page}`;
         return true;
       },
       unstep: () => {
@@ -143,6 +147,52 @@ describe('a curl on two facing pages', () => {
     expect(curl.querySelector('.turn-curl__still')).toBeNull();
     const copy = curl.querySelector<HTMLElement>('.turn-curl__strip .turn-curl__page');
     expect(copy?.style.left).toBe('0px');
+  });
+});
+
+// A spread's turning page shows, on its back, the page the turn reveals across the gutter, printed
+// there and mirrored as paper's back is, so it lands where the sheet has it; its front keeps the
+// page left. One page's back is its own words faint through the paper, as before.
+describe('a spread’s back', () => {
+  /** The words in the bands `selector` finds. */
+  const words = (curl: HTMLElement, selector: string) =>
+    [...curl.querySelectorAll(selector)].flatMap((band) =>
+      [...band.querySelectorAll('.turn-curl__page p.words')].map((p) => p.textContent),
+    );
+  /** The veils over the bands `selector` finds. */
+  const veils = (curl: HTMLElement, selector: string) =>
+    [...curl.querySelectorAll(selector)].flatMap((band) => [
+      ...band.querySelectorAll('.turn-curl__paper'),
+    ]);
+  const backs = '.turn-curl__back, .turn-curl__flap > .turn-curl__strip';
+  const fronts = '.turn-curl__front, .turn-curl__leaf > .turn-curl__strip';
+
+  it('turned on, is the page come to, mirrored about the gutter, printed, not veiled', () => {
+    const b = spread();
+    b.turn.key(1);
+    const curl = b.curl() as HTMLElement;
+    expect(new Set(words(curl, backs))).toEqual(new Set(['Page 4']));
+    expect(new Set(words(curl, fronts))).toEqual(new Set(['Page 3']));
+    const back = curl.querySelector<HTMLElement>('.turn-curl__back .turn-curl__page');
+    expect(back?.style.transform).toBe(`matrix(-1, 0, 0, 1, ${GUTTER}, 0)`);
+    expect(veils(curl, backs)).toHaveLength(0);
+  });
+
+  it('turned back, is the page come to from the gutter on, the leaf’s own mirror reading it', () => {
+    const b = spread();
+    b.turn.key(-1);
+    const curl = b.curl() as HTMLElement;
+    expect(new Set(words(curl, backs))).toEqual(new Set(['Page 2']));
+    const back = curl.querySelector<HTMLElement>('.turn-curl__back .turn-curl__page');
+    expect(back?.style.transform).toBe(`translateX(${-GUTTER}px)`);
+  });
+
+  it('on one page, is its own words through the paper', () => {
+    const b = spread(() => null);
+    b.turn.key(1);
+    const curl = b.curl() as HTMLElement;
+    expect(new Set(words(curl, backs))).toEqual(new Set(['Page 3']));
+    expect(veils(curl, backs).length).toBeGreaterThan(0);
   });
 });
 
