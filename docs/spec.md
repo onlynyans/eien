@@ -1444,7 +1444,9 @@ does nothing.
   only there. A setting that needs panes side by side (`wide` in the schema: Panes,
   Shut sidebar, Arranging, the formatting bar, Page width) shows only while the window has them,
   and comes and goes as that changes (a phone turned, a foldable opened, Wide screen
-  set).
+  set). One that needs room round the page (`roomy`: Page width) shows only while the
+  notes' page in sight has it, measured as Settings opens, or while it's chosen otherwise
+  than its default, so a choice can always be put back (#62).
 - An unknown or invalid value in a file is ignored with a warning in the log,
   and the default is used. A bad config never stops the app from opening.
 - Writing a file changes one key and keeps every other key as it is, even ones
@@ -1526,8 +1528,11 @@ without Settings.
   set, Loose: × 0.9, 1, 1.12 of the face's leading) and **Page width**
   (Narrow, As set, Wide: × 0.84, 1, 1.18 of its measure), and Page (sheet or
   full), each marked `page`. A setting marked later shows there with nothing
-  else to build. Page width needs room round a page (`wide`): a phone's page
-  already fills its screen, so it isn't offered there. Narrow also narrows a
+  else to build. Page width needs room round a page (`wide`, `roomy`): it's
+  offered only while the page in sight, a note's or a book's, is wider than
+  its line at Wide, so each choice sets a line of its own; a phone's page, a
+  foldable's in Panes, or one beside three panes in a narrow window fills
+  its pane already, and it isn't offered there (#62). Narrow also narrows a
   sheet that fills its pane; Two sheets and Facing pages lay each page to
   its half, which it doesn't change.
 - **A change shows at once**, nothing to confirm; the popover stays open,

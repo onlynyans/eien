@@ -77,6 +77,8 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
     });
 
     test('shows each change on the page at once, and stays open', async ({ page }) => {
+      // Room round the page beside three panes, so Page width is offered (#62).
+      await page.setViewportSize({ width: 1600, height: 900 });
       await ready(page);
       const [lead, width] = [await lineHeight(page), await sheetWidth(page)];
       await control(page).click();

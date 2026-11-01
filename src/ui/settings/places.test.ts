@@ -89,4 +89,14 @@ describe('the quick look’s settings (#49)', () => {
     );
     expect(quickIn('android', false, 'note').map((setting) => setting.key)).toContain('page.width');
   });
+
+  it('leave out page width, a note’s or a book’s, where the page has no room round it (#62)', () => {
+    for (const kind of ['note', 'epub'] as const) {
+      const keys = (roomy: boolean) =>
+        quickIn('android', false, kind, roomy).map((setting) => setting.key);
+      expect(keys(false)).not.toContain('page.width');
+      expect(keys(true)).toContain('page.width');
+      expect(keys(false)).toEqual(keys(true).filter((key) => key !== 'page.width'));
+    }
+  });
 });

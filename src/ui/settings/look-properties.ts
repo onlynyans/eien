@@ -45,7 +45,7 @@ function sourceFace(id: string): LookProperties {
 
 /** Line spacing and page width: a step either side of the face's own leading and measure. */
 const LEADING = { tight: 0.9, set: 1, loose: 1.12 } as const;
-const WIDTH = { narrow: 0.84, set: 1, wide: 1.18 } as const;
+export const PAGE_WIDTH = { narrow: 0.84, set: 1, wide: 1.18 } as const;
 
 /** A multiplier, taken off at 1, so `var(--look-…, 1)` stands. */
 const times = (by: number) => (by === 1 ? null : String(by));
@@ -63,7 +63,7 @@ export function lookProperties(values: SettingValues): LookProperties {
     // One of the theme's own surfaces, so the strip follows any theme.
     '--runhead-ground': ground === 'desk' ? null : `var(--eien-${ground})`,
     '--look-lead': times(LEADING[values['appearance.leading']]),
-    '--look-width': times(WIDTH[values['page.width']]),
+    '--look-width': times(PAGE_WIDTH[values['page.width']]),
   };
 }
 
@@ -85,7 +85,7 @@ export function leafLook(values: SettingValues): {
     properties: {
       '--eien-text-scale': String(worn['appearance.textSize'] / 100),
       '--look-lead': String(LEADING[worn['appearance.leading']]),
-      '--look-width': String(WIDTH[worn['page.width']]),
+      '--look-width': String(PAGE_WIDTH[worn['page.width']]),
     },
   };
 }

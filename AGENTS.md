@@ -239,6 +239,8 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `vault/page-drop.ts`: a note dragged onto the pane
   - `list/shown-notes.ts`: a row's marks for the pages' notes, chosen and beside
 - `page/page-title.ts`: a page's title
+- `page/page-room.ts`: whether a page has room round its sheet for Page width's choices (#62), measured with a sheet laid at Wide
+  - `page/test-page-room.ts`: a page the DOM tests hold, measured as the window would
 - `vault/menus.ts`: a note's, a book's (on SHELF), a folder's and a tag's menus open from here
 - `vault/menu-items.ts`: their choices
 - `draw-clean.ts` draws cleaned nodes (`core/html/clean.ts`) element by element, checking each element, address and part again, for the extension's story page and an EPUB's chapter (#40)
