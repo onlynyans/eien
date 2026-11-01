@@ -74,6 +74,8 @@ export function withSection(changelog, section) {
  * @param {string} version
  */
 export function notesOf(changelog, version) {
+  // A Windows checkout's CRLF, which a heading's `.*` never crosses to its `\n`.
+  changelog = changelog.replaceAll('\r\n', '\n');
   const escaped = version.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
   const heading = new RegExp(`^## ${escaped}(?: — .*)?\n`, 'mu').exec(changelog);
   if (!heading) return null;
