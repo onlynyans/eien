@@ -155,9 +155,9 @@ describe('the curl drawn', () => {
 });
 
 describe('its CSS', () => {
-  it('wears a ramp as the ink at each edge’s strength across the middle third, never a colour of its own', () => {
+  it('wears a ramp as the ink at each edge’s strength, never a colour of its own', () => {
     expect(rampOf('var(--eien-curl-shade)', [0, 1])).toBe(
-      'linear-gradient(90deg, color-mix(in srgb, var(--eien-curl-shade) 0.0%, transparent) 33.333%, color-mix(in srgb, var(--eien-curl-shade) 100.0%, transparent) 66.667%)',
+      'linear-gradient(90deg, color-mix(in srgb, var(--eien-curl-shade) 0.0%, transparent), color-mix(in srgb, var(--eien-curl-shade) 100.0%, transparent))',
     );
   });
 });

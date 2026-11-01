@@ -11,17 +11,10 @@ import { h } from '../../dom';
 
 const matrixOf = (m: Matrix) => `matrix(${m.join(', ')})`;
 
-/**
- * A ramp across a band, in `ink`: its strength at the band's first edge,
- * nearer the fold, and its last. Drawn across the middle third of what's
- * over the band (./turn.css), held either side.
- */
+/** A ramp across a band, in `ink`: its strength at the band's first edge, nearer the fold, and its last. */
 export const rampOf = (ink: string, [start, end]: Ramp): string =>
   `linear-gradient(90deg, ${[start, end]
-    .map(
-      (strength, i) =>
-        `color-mix(in srgb, ${ink} ${(strength * 100).toFixed(1)}%, transparent) ${i ? '66.667%' : '33.333%'}`,
-    )
+    .map((strength) => `color-mix(in srgb, ${ink} ${(strength * 100).toFixed(1)}%, transparent)`)
     .join(', ')})`;
 
 /** One of the curl's parts that isn't a band (a shade, a light, a layer of them), holding `children`. */
@@ -59,11 +52,7 @@ export class BandBox {
     if (veiled) this.#inside.append(part('paper'));
     this.#over = over.length > 0 ? h('div', { class: 'turn-curl__over' }, ...over) : null;
     if (this.#over) {
-      // A band's box and as much again either side. It's a layer of its own (./turn.css), which
-      // Chromium keeps at the scale it was first drawn at: a sliver as the roll begins, its few
-      // pixels blending with nothing at their edges, which let the words through a back's veil.
-      // Three boxes wide, the band's edges fall inside, where stretching a ramp is exact.
-      Object.assign(this.#over.style, { width: `${3 * BAND_BOX}px`, height });
+      Object.assign(this.#over.style, { width: `${BAND_BOX}px`, height });
       this.#inside.append(this.#over);
     }
     this.element.append(this.#inside);
@@ -73,8 +62,7 @@ export class BandBox {
   place(band: Band): void {
     this.element.style.transform = matrixOf(band.place);
     this.#inside.style.transform = matrixOf(band.paper);
-    // Its middle third on the band's box.
-    if (this.#over) this.#over.style.transform = `${matrixOf(band.box)} translateX(-${BAND_BOX}px)`;
+    if (this.#over) this.#over.style.transform = matrixOf(band.box);
   }
 
   /** Shown or hidden; told only when that changes, as any other style is drawn again. */

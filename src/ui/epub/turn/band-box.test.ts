@@ -20,23 +20,11 @@ const transform = (m: Matrix, [x, y]: Point): Point => [
   m[1] * x + m[3] * y + m[5],
 ];
 
-/** A transform as written (`matrix(…)`, then any `translateX(…px)`), as one matrix. */
-function matrixOf(written: string): Matrix {
-  let m: Matrix = [1, 0, 0, 1, 0, 0];
-  for (const [, name, args] of written.matchAll(/(\w+)\(([^)]*)\)/g)) {
-    const numbers = (args ?? '').split(',').map((n) => Number.parseFloat(n));
-    const next: Matrix =
-      name === 'matrix'
-        ? (numbers as unknown as Matrix)
-        : name === 'translateX'
-          ? [1, 0, 0, 1, numbers[0] ?? 0, 0]
-          : (() => {
-              throw new Error(`unread: ${name}`);
-            })();
-    m = times(m, next);
-  }
-  return m;
-}
+/** A transform as written, `matrix(…)`, as its matrix. */
+const matrixOf = (written: string): Matrix =>
+  (/^matrix\(([^)]*)\)$/.exec(written)?.[1] ?? '')
+    .split(',')
+    .map((n) => Number.parseFloat(n)) as unknown as Matrix;
 
 const near = (a: Point, b: Point) => {
   expect(Math.hypot(a[0] - b[0], a[1] - b[1])).toBeLessThan(1e-6);
@@ -65,9 +53,9 @@ describe('a band drawn', () => {
     expect(band.element.style.visibility).toBe('');
   });
 
-  // The ramp is held across the middle third of what's over the band (./turn.css, rampOf), so
-  // that third must lie on the band's own box: its cuts, wherever the roll lays it.
-  it('lays what’s over its page with its middle third on the band’s box', () => {
+  // The ramp runs across what's over the band (rampOf), so that must lie on the band's own box:
+  // its cuts, wherever the roll lays it.
+  it('lays what’s over its page on the band’s box', () => {
     const frame = curlFrame(page, [400, 500], [150, 420], { cast: 32, crest: 24 });
     // A strip of the roll: laid by the roll, not only moved.
     const placed = frame.resting ? undefined : frame.strips[3];
@@ -77,15 +65,15 @@ describe('a band drawn', () => {
     const inside = band.element.querySelector<HTMLElement>('.turn-curl__inside');
     const over = band.element.querySelector<HTMLElement>('.turn-curl__over');
     if (!inside || !over) throw new Error('no inside or over');
-    expect(over.style.width).toBe(`${3 * BAND_BOX}px`);
+    expect(over.style.width).toBe(`${BAND_BOX}px`);
     const element = matrixOf(band.element.style.transform);
     const drawn = times(
       element,
       times(matrixOf(inside.style.transform), matrixOf(over.style.transform)),
     );
     for (const v of [0, reach, 2 * reach]) {
-      near(transform(drawn, [BAND_BOX, v]), transform(element, [0, v]));
-      near(transform(drawn, [2 * BAND_BOX, v]), transform(element, [BAND_BOX, v]));
+      near(transform(drawn, [0, v]), transform(element, [0, v]));
+      near(transform(drawn, [BAND_BOX, v]), transform(element, [BAND_BOX, v]));
     }
   });
 
