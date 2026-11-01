@@ -610,7 +610,9 @@ is always Panes.
 
 From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
 
-- **The control:** **Aa** (the `look` icon), the page's last tool after a
+- **The control:** **Aa** (the `look` icon: a serif since #73, as the page's
+  own face is, foot serifs under the A and a two-storey a; Find's Match case
+  keeps the sans Aa, so the two never read as one), the page's last tool after a
   hairline, in A's band, B's slip and C's running head; on the phone, the
   bar, slip or rail as the layout keeps them, and the ⋯. Named "Look", key
   ⇧⌘L, View → Look…; it folds last of the tools.
