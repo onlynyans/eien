@@ -210,6 +210,68 @@ test('a bookmark made and taken off from the ⋯, kept in the reading file betwe
   await page.keyboard.press('Escape');
 });
 
+test('a highlight made and taken off from the ⋯, the words last chosen, Put back restoring it (#40, Phase 5a)', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click(); // the list's back: the sidebar
+  const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
+  await expect(book).toBeVisible({ timeout: 10_000 });
+  await book.click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  /** The highlights in the book's one reading file. */
+  const highlights = async () => {
+    const [name] = await listOutside(page, 'Eien/Vault/.eien/reading');
+    if (!name) return [];
+    const text = await readOutside(page, `Eien/Vault/.eien/reading/${name}`);
+    return text ? (JSON.parse(text).highlights ?? []) : [];
+  };
+  const said = page.locator('.colophon__said');
+  /** Words chosen as a long press leaves them: the ⋯'s tap may drop them, its choice acts on them still. */
+  const choose = (words: string) =>
+    page.evaluate((words) => {
+      const walker = document.createTreeWalker(
+        document.querySelector('.epub-chapter') as Node,
+        NodeFilter.SHOW_TEXT,
+      );
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const at = (node as Text).data.indexOf(words);
+        if (at < 0) continue;
+        const range = document.createRange();
+        range.setStart(node, at);
+        range.setEnd(node, at + words.length);
+        document.getSelection()?.removeAllRanges();
+        document.getSelection()?.addRange(range);
+        return;
+      }
+    }, words);
+
+  await choose('universally acknowledged');
+  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('menuitem', { name: 'Highlight', exact: true }).click();
+  await expect(said).toHaveText('Highlighted.');
+  await expect
+    .poll(async () => (await highlights()).map((h: { words: string }) => h.words))
+    .toEqual(['universally acknowledged']);
+  await expect(page.locator('.epub-chapter [data-highlighted]')).toHaveCount(1);
+  // Painted by the window's own Highlight API, over the page's text.
+  expect(await page.evaluate(() => CSS.highlights.get('epub-highlight')?.size)).toBe(1);
+
+  await choose('acknowledged');
+  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('menuitem', { name: 'Take off the highlight' }).click();
+  await expect(said).toHaveText('Highlight taken off.');
+  await expect.poll(async () => (await highlights()).length).toBe(0);
+  await page.getByRole('button', { name: 'Put back' }).click();
+  await expect.poll(async () => (await highlights()).length).toBe(1);
+  await expect(said).toHaveText('Highlight put back.');
+});
+
 test('a book’s row menu renames it in its row, and trashes it to .eien/trash, whole', async ({
   page,
 }) => {

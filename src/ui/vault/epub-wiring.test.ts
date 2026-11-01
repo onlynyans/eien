@@ -194,17 +194,17 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     path,
     go: () => {},
     goTo: vi.fn(async () => {}),
-    unmark: vi.fn(async () => {}),
+    marks: { bookmarks: { remove: vi.fn(async () => {}) } },
   });
 
   it('take a bookmark off on the book’s own page, the note beside it staying the active one', () => {
     const book = bookSide('a.epub');
-    const note = { kind: 'note', path: 'Note.md', unmark: vi.fn() };
+    const note = { kind: 'note', path: 'Note.md', marks: { bookmarks: { remove: vi.fn() } } };
     const activate = vi.fn();
     const { epubs, showPage } = watched('a.epub', { active: note, sides: [note, book], activate });
     epubs.actions.unmark('a.epub', ROW);
-    expect(book.unmark).toHaveBeenCalledExactlyOnceWith(ROW.mark);
-    expect(note.unmark).not.toHaveBeenCalled();
+    expect(book.marks.bookmarks.remove).toHaveBeenCalledExactlyOnceWith(ROW.mark);
+    expect(note.marks.bookmarks.remove).not.toHaveBeenCalled();
     // Taken off from the list: the keyboard and the page stay where they are.
     expect(activate).not.toHaveBeenCalled();
     expect(showPage).not.toHaveBeenCalled();

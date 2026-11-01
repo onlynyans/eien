@@ -1,5 +1,6 @@
 // The selection bar over a book (#40, Phase 2c; spec §4's selection bar,
 // its look and its place): a selection in the chapter, left still, shows
+// Highlight (Phase 5a; "Take off the highlight" on words that lie in one),
 // Quote in the note and Copy just above its start, as words. It never shows
 // while the pointer is down, and goes on Esc, a scroll, the page losing the
 // keyboard, or the selection gone. Not on a touch screen, where the
@@ -7,11 +8,19 @@
 // and quotes the words last chosen, which a tap on the ⋯ may have dropped.
 // A selection reaching past the chapter counts for the part inside it.
 
+import { FORMAT_COMMANDS } from '../../core/format';
+import { ariaKeys, MAC } from '../chrome/keys';
 import { h } from '../dom';
 import { placeBar } from '../editor/selection-bar';
 import { touch } from '../menu/menu';
 
 const SHOW_AFTER_MS = 250;
+
+/** Highlight's keys: H, and a note's own Format → Highlight, which a book's words take too. */
+const HIGHLIGHT_KEYS = ['H', FORMAT_COMMANDS.find((command) => command.id === 'highlight')?.key]
+  .filter((key): key is string => key !== undefined)
+  .map((key) => (key === 'H' ? key : ariaKeys(key, MAC)))
+  .join(' ');
 
 export interface BookSelectionOf {
   readonly chapter: HTMLElement;
@@ -19,7 +28,14 @@ export interface BookSelectionOf {
   readonly scroller: HTMLElement;
   /** Quote the selection in the note beside. */
   quote(): void;
+  /** Highlight the selection, or take off the highlight it lies in. */
+  highlight(): void;
+  /** Whether `range`'s words lie in one highlight. */
+  inHighlight(range: Range): boolean;
 }
+
+/** The bar's Highlight, as it reads on words that lie in a highlight and on others. */
+export const HIGHLIGHT_LABELS = { add: 'Highlight', off: 'Take off the highlight' } as const;
 
 /** The part of the window's selection inside `root`, or null for none. */
 function chosenIn(root: HTMLElement): Range | null {
@@ -39,6 +55,8 @@ export class BookSelection {
   #timer: ReturnType<typeof setTimeout> | undefined;
   /** The words last chosen in the chapter: what the phone's ⋯ quotes. */
   #kept: Range | null = null;
+  /** Highlight, or Take off the highlight. */
+  readonly #highlight: HTMLButtonElement;
 
   constructor(of: BookSelectionOf) {
     this.#of = of;
@@ -56,12 +74,14 @@ export class BookSelection {
           },
         },
       });
+    this.#highlight = button(HIGHLIGHT_LABELS.add, HIGHLIGHT_KEYS, () => of.highlight());
     this.element = h(
       'div',
       {
         class: 'selection-bar',
         attrs: { role: 'toolbar', 'aria-label': 'The selection', hidden: true },
       },
+      this.#highlight,
       button('Quote in the note', 'Q', () => of.quote()),
       // The page's own copy (./book-words.ts) gives the words alone.
       button('Copy', 'Meta+C Control+C', () => document.execCommand('copy')),
@@ -133,6 +153,10 @@ export class BookSelection {
     clearTimeout(this.#timer);
     this.#timer = setTimeout(() => {
       const range = this.range;
+      if (range)
+        this.#highlight.textContent = this.#of.inHighlight(range)
+          ? HIGHLIGHT_LABELS.off
+          : HIGHLIGHT_LABELS.add;
       // Just above where the selection starts: its first line's box, not the whole block's.
       const start = range?.getClientRects()[0] ?? range?.getBoundingClientRect();
       if (start) placeBar(this.element, start);

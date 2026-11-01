@@ -370,6 +370,13 @@
   --eien-epub-caption-ink: var(--eien-pencil); /* a picture's caption */
   --eien-epub-first-line-track: calc(var(--eien-track-label) / 2); /* the first line's capitals */
   --eien-epub-indent: var(--eien-space-6); /* a paragraph's indent, scrolled as a book (Phase 2) */
+  /* Ink over the words (Phase 5, ui/epub/ink.css): a highlight in pencil. */
+  --eien-epub-highlight-ink: var(--eien-pencil); /* a highlight's line, and its margin tick */
+  --eien-epub-highlight-w: var(--eien-mark-w); /* a mark, not a rule: both as thick */
+  --eien-epub-highlight-offset: 0.22em; /* the line under the words, clear of their descenders */
+  /* The tick, in the margin before the block's lines. */
+  --eien-epub-tick-inset: var(--eien-space-4);
+  --eien-epub-tick-trim: 0.35em; /* its ends, in from the block's top and foot to its lines' ink */
 }
 /* A step less on a narrow page (a phone's, one of a split's): the page's own scroll is its measure. */
 @container (width < 520px) {

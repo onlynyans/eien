@@ -644,7 +644,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131, two pages and set as a book, 3d; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d)
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131, two pages and set as a book, 3d; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d; Phase 5, highlights, 5a)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add paging and the turn (Phase 3), marks, highlights and Find
@@ -723,6 +723,18 @@ in the book, each recorded here as it's built.
   before Look; in Facing pages, in each page's folio. Its icon is a page
   with the ribbon over its top edge, filled while pressed: the page tells
   it from Pinned's banner.
+- **A highlight** (Phase 5a, `epub/ink.ts`, `ink.css`; Features 1): a
+  pencil line under the words (`--eien-epub-highlight-ink`, a mark's width,
+  0.22em below, ink not skipped) and a pencil tick in the margin
+  `--eien-epub-tick-inset` before each paragraph it touches, a border so
+  forced colours keep it, in its own column's margin on a spread. Quieter
+  than a wash, which is Find's. Painted over the page's own text by name
+  (`::highlight(epub-highlight)`), never an element among the words; a turn's
+  copy carries the same ink in elements of its own. The selection bar's
+  first word is **Highlight**, "Take off the highlight" on words in one;
+  taken off, the colophon's news offers **Put back** (a word button, last
+  among the figures) while it shows. "highlighted" is heard, never seen, as
+  "bookmarked" is (`.colophon__heard`).
 - **Marks in the list** (Phase 4c, `list/book-lenses.ts`, `.css`): under
   the book's head in the list, Contents and Marks as word buttons, each
   with its count in a `.count`, the one shown pressed (every chosen word

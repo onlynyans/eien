@@ -30,6 +30,12 @@ export interface ChapterSheetOf {
   follow(anchor: HTMLAnchorElement, link: ZipAddress): void;
   /** Quote the words chosen in it in the note beside (Phase 2c). */
   quote(): void;
+  /** Highlight the words chosen in it, or take off the highlight they lie in (Phase 5a). */
+  highlight(): void;
+  /** Whether `range`'s words lie in one highlight: the bar's Highlight then takes it off. */
+  inHighlight(range: Range): boolean;
+  /** A turn's copy of the chapter, cut to the page in sight whose first word is `from`: inked as the page is. */
+  copied(copy: HTMLElement, from: number): void;
 }
 
 export class ChapterSheet {
@@ -45,14 +51,18 @@ export class ChapterSheet {
   #drawn = false;
   readonly #selection: BookSelection;
   readonly #stopCopy: () => void;
+  readonly #copied: ChapterSheetOf['copied'];
 
   constructor(of: ChapterSheetOf) {
+    this.#copied = (copy, from) => of.copied(copy, from);
     catchLinks(this.element, (anchor, link) => of.follow(anchor, link));
     this.#stopCopy = copyWords(this.element);
     this.#selection = new BookSelection({
       chapter: this.element,
       scroller: of.scroller,
       quote: () => of.quote(),
+      highlight: () => of.highlight(),
+      inHighlight: (range) => of.inHighlight(range),
     });
     const told = {
       chapter: this.element,
@@ -102,9 +112,13 @@ export class ChapterSheet {
     this.#selection.forget();
   }
 
-  /** In pages: a copy of the chapter cut to the page in sight (a turn's). */
+  /** In pages: a copy of the chapter cut to the page in sight (a turn's), inked as the page is. */
   trim(copy: HTMLElement): void {
-    if (this.paged) this.#paged.trim(copy);
+    if (!this.paged) return;
+    // Inked from where the cut begins, not the place kept, which may stand mid-page; a copy of
+    // Eien's front matter holds none of the book's words.
+    const from = this.#paged.trim(copy);
+    if (from !== null) this.#copied(copy, from);
   }
 
   /** In pages: the chapter's first page, or its last. */

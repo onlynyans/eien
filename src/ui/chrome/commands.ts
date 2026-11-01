@@ -228,6 +228,9 @@ export const actsOn = (id: CommandId, kind: PageKind): boolean => {
   return on === undefined || on === kind;
 };
 
+/** The format a book's words take too: Highlight, its chosen words kept (#40, Phase 5a). */
+export const BOOK_FORMAT: MenuCommand = 'format:highlight';
+
 /**
  * The menu's commands with no control of their own that act on a note's page alone: every format
  * (the headings' three are one control), the note's exports, the outline cards of its book, and
@@ -252,7 +255,10 @@ export function menuOff(kind: PageKind): MenuCommand[] {
   const others: readonly MenuCommand[] = COMMANDS.flatMap((command) =>
     'sends' in command && 'on' in command && command.on !== kind ? [command.sends] : [],
   );
-  return [...new Set([...others, ...(kind === 'note' ? [] : NOTE_MENU)])];
+  // With a book in front, the format its words take too stays on, though its button is a note's.
+  return [...new Set([...others, ...(kind === 'note' ? [] : NOTE_MENU)])].filter(
+    (command) => !(kind === 'epub' && command === BOOK_FORMAT),
+  );
 }
 
 /** Whether `command` is drawn on the desktop in `layout`, with one page (a split's own are its mode's). */

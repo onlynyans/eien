@@ -1,6 +1,6 @@
 // The parts of a page holding a book (#40), made together for its side
 // (./epub-side.ts): what it says of where it is (./book-place.ts), its
-// bookmarks (./page-bookmarks.ts), the links it follows (./book-follow.ts)
+// marks (./book-marks.ts), the links it follows (./book-follow.ts)
 // and its turns (./book-pages.ts), each asking the side for the book, the
 // chapter drawn, and another drawn.
 
@@ -8,11 +8,11 @@ import type { SettingValues } from '../../core/config';
 import type { Epub } from '../../core/epub';
 import type { BookCount } from './book-count';
 import { bookFollow } from './book-follow';
+import { BookMarks } from './book-marks';
 import { bookPages } from './book-pages';
 import { bookPlace } from './book-place';
 import type { EpubPage } from './epub-page';
 import type { EpubSide, EpubSideOf } from './epub-side-types';
-import { PageBookmarks } from './page-bookmarks';
 
 export interface BookPartsOf {
   readonly page: EpubPage;
@@ -37,10 +37,10 @@ export function bookParts(parts: BookPartsOf) {
   const placing = bookPlace({
     ...book,
     count: parts.count,
-    marks: () => marks.all,
+    marks: () => marks.bookmarks.all,
     goTo: (index, at) => void side().goTo(index, at),
   });
-  const marks = new PageBookmarks({
+  const marks = new BookMarks({
     page,
     store: of.reading,
     chapter: () => (spine() >= 0 ? (epub()?.spine[spine()]?.path ?? null) : null),

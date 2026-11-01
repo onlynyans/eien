@@ -4,7 +4,7 @@
 // chapter, and the line in it, Phase 2) kept in the reading state's file
 // whenever the writer moves to another chapter or the page comes to rest;
 // words chosen in it quoted in a note (Phase 2c); the book counted for its
-// page numbers (Phase 4, ./book-count.ts); its bookmarks, the turn and
+// page numbers (Phase 4, ./book-count.ts); its marks, the turn and
 // links (./book-parts.ts); and before its first chapter, in pages, Eien's
 // title page and imprint (Phase 3d). The book's file is only ever read. What
 // a side is: ./epub-side-types.ts.
@@ -32,7 +32,10 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       placing.inSight(from, to);
       marks.inSight(from, to);
     },
-    bookmark: () => void marks.toggle(),
+    bookmark: () => void marks.bookmarks.toggle(),
+    highlight: () => void marks.highlights.toggle(),
+    inHighlight: (range) => marks.highlights.holds(range),
+    copied: (copy, from) => marks.highlights.inkCopy(copy, from),
     turn: (way, held) => pages.turn(way, held),
     edge: (last) => pages.edge(last),
     rested: (offset) => keep(offset),
@@ -136,6 +139,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       given,
     );
     nameLinks(page.chapter, opened);
+    marks.highlights.paint();
     const offset = typeof place === 'number' ? place : place();
     if (offset !== given) page.sheet.showPlace(offset);
     of.changed();
@@ -268,14 +272,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       page.nothing();
     },
     keep: () => page.sheet.keep(),
-    get bookmarked() {
-      return marks.on;
-    },
-    get bookmarks() {
-      return marks.all;
-    },
-    bookmark: () => marks.toggle(),
-    unmark: (mark) => marks.remove(mark),
+    marks,
     labelAt: (at, offset) => placing.labelAt(at, offset),
     quote,
     follow(next) {

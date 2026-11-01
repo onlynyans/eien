@@ -33,6 +33,8 @@ export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
   back(): void;
   /** B: the page in sight bookmarked, or its bookmark taken off (Phase 4b). */
   bookmark(): void;
+  /** H: the words chosen highlighted, or the highlight they lie in taken off (Phase 5a). */
+  highlight(): void;
 }
 
 export class EpubPage implements PaneLeaf {
@@ -75,6 +77,7 @@ export class EpubPage implements PaneLeaf {
       edge: (last) => of.edge(last),
       quote: () => of.quote(),
       bookmark: () => of.bookmark(),
+      highlight: () => of.highlight(),
       back: () => of.back(),
       chosen: () => this.sheet.selection !== null,
       shown: () => !this.#sheet.hidden,
@@ -121,7 +124,10 @@ export class EpubPage implements PaneLeaf {
     this.#scroll.append(this.#sheet, this.#empty);
     ({ element: this.element, head: this.head, folio: this.folio } = pageLeaf(this.#scroll));
     this.element.classList.add('page__leaf--epub');
-    this.foot = new BookFoot(() => of.back());
+    this.foot = new BookFoot(
+      () => of.back(),
+      () => this.focus(),
+    );
     this.nothing();
   }
 

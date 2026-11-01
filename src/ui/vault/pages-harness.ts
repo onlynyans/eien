@@ -4,14 +4,19 @@
 import { vi } from 'vitest';
 import type { SettingValues } from '../../core/config';
 import { withDefaults } from '../../core/config/settings';
-import type { OutBridge, VaultBridge } from '../../platform/bridge';
+import type { MenuCommand, OutBridge, VaultBridge } from '../../platform/bridge';
 import { VaultIndex } from '../../platform/index';
 import { MemoryStorage } from '../../platform/memory/memory-storage';
+import type { MenuBus } from '../menu/menu-bus';
 import type { SettingsState } from '../settings/settings-state';
+import type { PaneLayout } from '../shell/panes';
+import type { Sidebar } from '../sidebar/sidebar';
+import { vaultChrome } from './chrome-wiring';
 import { Navigation } from './navigation';
 import type { Organizer } from './organize';
 import type { PageKindOf } from './page-side';
 import { isNote, type NoteSide, Pages, type Side } from './pages';
+import type { PhoneView } from './phone-view';
 import { VaultState } from './vault-state';
 
 /** Pages over a vault in memory, with settings that can change; `kinds`, besides a note's. */
@@ -91,6 +96,47 @@ export async function pagesWith(
     rearranged: () => rearranged,
     told: () => told,
   };
+}
+
+/**
+ * The window's tools drawn over `made`'s pages in the layout its settings
+ * name, as the vault view draws them; `stop` takes them and the pages down.
+ */
+export function chromeOver(made: Awaited<ReturnType<typeof pagesWith>>) {
+  const { pages } = made;
+  const greyMenu = vi.fn<(commands: readonly MenuCommand[]) => void>();
+  const div = () => document.createElement('div');
+  const chrome = vaultChrome({
+    shell: document.body.appendChild(div()),
+    pages,
+    sidebar: {
+      foot: { controls: div(), sync: div() },
+      adders: [],
+      lens: { tools: div(), chips: div() },
+    } as unknown as Sidebar,
+    panes: { isShut: () => false, aside: false, two: false } as unknown as PaneLayout,
+    phone: { stack: { controls: div(), phone: false }, more: () => {} } as unknown as PhoneView,
+    settings: made.settings,
+    menu: { on: () => () => {}, run: () => {} } as unknown as MenuBus,
+    mac: false,
+    platform: 'linux',
+    greyMenu,
+  });
+  chrome.mount();
+  const stop = () => {
+    chrome.stop();
+    pages.stop();
+  };
+  /** The commands drawn in the window (or the formatting bar) and in sight there: none set aside. */
+  const inSight = (slot?: 'format') =>
+    [
+      ...(slot ? pages.pane.slots[slot] : document.body).querySelectorAll<HTMLButtonElement>(
+        '[data-command]',
+      ),
+    ]
+      .filter((button) => !button.hasAttribute('data-aside'))
+      .map((button) => button.dataset.command);
+  return { chrome, inSight, greyMenu, stop };
 }
 
 /** Type at the end of the active page's note, as the writer does. */
