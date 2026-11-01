@@ -193,6 +193,41 @@ describe('the selection bar over a book', () => {
     expect(bar()?.classList.contains('selection-bar--docked')).toBe(false);
   });
 
+  it('docked, words chosen outside the chapter (a note beside) never show it, and take it away', () => {
+    touchScreen();
+    made();
+    const note = document.createElement('p');
+    note.textContent = 'A note beside the book.';
+    document.body.append(note);
+    const chooseInNote = () => {
+      document.getSelection()?.selectAllChildren(note);
+      document.dispatchEvent(new Event('selectionchange'));
+      vi.advanceTimersByTime(250);
+    };
+    chooseInNote();
+    expect(bar()?.hidden).toBe(true);
+    chooseByTouch();
+    vi.advanceTimersByTime(250);
+    expect(bar()?.hidden).toBe(false);
+    chooseInNote();
+    expect(bar()?.hidden).toBe(true);
+  });
+
+  // QA (#65): a press on the floating bar a mouse lets go off it has no click, nor a pointerup there.
+  it('floating, a press let go off the bar never keeps it over words no longer chosen', () => {
+    made();
+    choose();
+    vi.advanceTimersByTime(250);
+    const [first] = [...(bar()?.querySelectorAll('button') ?? [])];
+    first?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' }));
+    window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'mouse' }));
+    vi.advanceTimersByTime(250);
+    // The words go some way the bar doesn't hear of: H kept them, or a press in a note beside.
+    document.getSelection()?.removeAllRanges();
+    document.dispatchEvent(new Event('selectionchange'));
+    expect(bar()?.hidden).toBe(true);
+  });
+
   it('keeps the words last chosen for a phone’s ⋯, until another chapter or a press in this one', () => {
     const selection = made();
     choose();

@@ -95,8 +95,10 @@ export class BookSelection {
         class: 'selection-bar',
         attrs: { role: 'toolbar', 'aria-label': 'The selection', hidden: true },
         on: {
-          pointerdown: () => {
-            this.#pressing = true;
+          // A finger's or a pen's: its lift or cancel always reaches the bar (the browser holds the
+          // pointer where it came down). Not a mouse's, let go anywhere; its mousedown keeps the choice.
+          pointerdown: (event) => {
+            this.#pressing = event.pointerType !== 'mouse';
           },
           // A finger lifted off the bar, no click: the choice it dropped takes the bar away now.
           pointerup: () => this.#released(),

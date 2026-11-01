@@ -46,7 +46,7 @@ interface Held {
   readonly from: Point;
   /** The sheet's pixels to the window's: rects are zoomed, the page's own sizes aren't. */
   readonly scale: number;
-  /** A finger's: held still, a long press is the system's, to choose words. */
+  /** A finger's on a page at rest: held still, a long press is the system's, to choose words. */
   readonly touch: boolean;
   /** Moved past a tap (the drag's start): no longer a press the system may take. */
   moved: boolean;
@@ -87,7 +87,8 @@ export function handEvents(turn: PageTurn, of: HandEventsOf): () => void {
       id: event.pointerId,
       from: [event.clientX, event.clientY],
       scale,
-      touch,
+      // A page caught in flight is in the hand, not words pressed: let go, it would fall back.
+      touch: touch && !turn.catchable,
       moved: false,
     };
     turn.grab([(event.clientX - box.left) / scale, (event.clientY - box.top) / scale]);

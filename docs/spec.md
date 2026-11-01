@@ -566,7 +566,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      the next). Under Slide and Words a drag across asks for the turn.
      Never while words are chosen in the page, nor on a link (but to catch
      a page in flight); a drag that turned is never also a click. A finger
-     held still is let go as the system's long press begins choosing (#65).
+     held still is let go as the system's long press begins choosing (#65),
+     but not one holding a page it caught in flight.
    - **Two pages, and set as a book** (Phase 3d): in pages, a book shows
      one page or two facing pages as **Pages, landscape** and **Pages,
      portrait** say (book settings in the shelf's quick look, decided
