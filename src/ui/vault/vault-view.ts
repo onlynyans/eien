@@ -83,6 +83,7 @@ export async function showVault(
     drawRows: () => void (panes.two ? draw.sidebar() : draw.list()),
     looks: () => chrome.refresh(),
     marksAt: () => settings.values['epub.marks'],
+    copy: (text, html) => bridge.out.copy(text, html),
     pages: () => pages,
     openChosen: (path) => actions.openNote(path, 'chosen'),
     showPage: () => phone.stack.show('page'),

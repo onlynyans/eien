@@ -33,7 +33,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       marks.inSight(from, to);
     },
     bookmark: () => void marks.bookmarks.toggle(),
-    highlight: () => void marks.highlights.toggle(),
+    highlight: (kept) => void marks.highlights.toggle(kept),
+    copy: (text, html) => void of.copy(text, html).catch(console.error),
     walk: (way) => marks.walk(way),
     inHighlight: (range) => marks.highlights.holds(range),
     copied: (copy, from) => parts.inkCopy(copy, from),
@@ -47,7 +48,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     rested: (offset) => keep(offset),
     follow: (anchor, link) => void links.follow(anchor, link),
     back: () => void links.back(),
-    quote: () => void quote(),
+    quote: (kept) => void quote(kept),
   });
   let path: string | null = null;
   let epub: Epub | null = null;

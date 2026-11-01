@@ -70,6 +70,7 @@ export function sideWith(
     changed,
     counted: vi.fn(),
     quote: async () => ({ not: 'Open a note beside the book to quote into it.' }),
+    copy: vi.fn(async () => {}),
   };
   const close = vi.fn();
   const side = makeEpubSide(of, { close, caret: () => {} }, null);

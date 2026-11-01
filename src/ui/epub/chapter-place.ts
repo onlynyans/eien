@@ -16,7 +16,7 @@ export type RectOf = (range: Range) => Pick<DOMRect, 'top' | 'bottom'>;
 const measured: RectOf = (range) => range.getBoundingClientRect();
 
 /** What Eien draws in the book's place, not the book's words: a break's marks, a picture's words, its front matter (./front-matter.ts). */
-const OWN = `.scene-break, .image-words, ${FRONT}`;
+export const OWN = `.scene-break, .image-words, ${FRONT}`;
 
 /** The chapter's words, piece by piece, in the order they read. */
 export function piecesOf(chapter: HTMLElement): Text[] {

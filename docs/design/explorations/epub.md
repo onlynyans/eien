@@ -305,6 +305,32 @@ section where it and the directions below disagree.
     deleted.
   - `]` and `[` to walk the marks come with highlights (Phase 5).
 
+### Touch and tools, after the foldable (decided 2026-11-01, #64, #65)
+
+- **Choosing words by touch (#65).** The owner: keep the system's choosing,
+  in Pages and Scroll alike, for its handles and its Copy and Share; put
+  Eien's own where a touch reader finds them, clear of the system's menu.
+  - Pages: a finger held still is let go as the system's long press begins
+    choosing (its `selectstart`; on iOS its cancel), so the system decides
+    what a long press is. A finger that moves past the drag's start (6px)
+    turns, and chooses nothing. A tap that ends a choice never turns.
+  - Eien's actions are the selection bar's, one bar: Highlight, Quote in
+    the note, Copy. On a touch screen it docks at the page's foot over the
+    colophon while words are chosen (the link Bar's docked look), laid over
+    the colophon's row out of flow so a page is never laid out anew under a
+    choice. It acts on the words last chosen and then lets them go (but
+    Take off the highlight leaves them chosen, so Highlight puts it back). Neither
+    WebView lets a page add to the system's menu, so this is the same on
+    Android and iOS. The phone's ⋯ keeps Highlight and Quote.
+- **Find and Marks as tools (#64).** Find is one command, every page's (a
+  note's too), the list's search icon, among the shared tools before Look,
+  as "The tools, by what's in sight" foresaw. Marks is a book's own, with
+  the bookmark: it shows the book's marks where they're listed (the list on
+  its Marks lens, or with two panes the SHELF row's), on a phone a pane
+  away as Contents is; set aside with marks On the edge, where the strip is
+  the marks in sight. A phone's bar short of room folds its tools into its
+  own ⋯, which lists them all already.
+
 ### After Phase 1 (2026-10-29)
 
 The owner's answers to what Phase 1 (#112, #113, #114) and #49's shelf

@@ -201,6 +201,105 @@ describe('a hand on a page in pages', () => {
     expect(start.defaultPrevented).toBe(true);
   });
 
+  it('lets a finger held still go as the system’s long press begins choosing words (#65)', () => {
+    const { turn, on } = page();
+    on('.words').dispatchEvent(
+      pointer('pointerdown', { pointerType: 'touch', clientX: 200, clientY: 300 }),
+    );
+    // A finger never lies quite still: under the drag's start, it's still a press.
+    window.dispatchEvent(
+      pointer('pointermove', { pointerType: 'touch', clientX: 203, clientY: 302 }),
+    );
+    const start = new Event('selectstart', { bubbles: true, cancelable: true });
+    on('.words').dispatchEvent(start);
+    expect(start.defaultPrevented).toBe(false);
+    expect(turn.cancel).toHaveBeenCalledOnce();
+    // The finger lifted from the words it chose: no turn, and its moves carry nothing.
+    window.dispatchEvent(
+      pointer('pointermove', { pointerType: 'touch', clientX: 120, clientY: 302 }),
+    );
+    window.dispatchEvent(
+      pointer('pointerup', { pointerType: 'touch', clientX: 120, clientY: 302 }),
+    );
+    expect(turn.drag).toHaveBeenCalledOnce();
+    expect(turn.letGo).not.toHaveBeenCalled();
+  });
+
+  it('a finger drawn across the page turns it, choosing nothing on its way', () => {
+    const { turn, on } = page();
+    on('.words').dispatchEvent(
+      pointer('pointerdown', { pointerType: 'touch', clientX: 380, clientY: 300 }),
+    );
+    window.dispatchEvent(
+      pointer('pointermove', { pointerType: 'touch', clientX: 340, clientY: 302 }),
+    );
+    const start = new Event('selectstart', { bubbles: true, cancelable: true });
+    on('.words').dispatchEvent(start);
+    expect(start.defaultPrevented).toBe(true);
+    expect(turn.cancel).not.toHaveBeenCalled();
+    window.dispatchEvent(
+      pointer('pointerup', { pointerType: 'touch', clientX: 300, clientY: 302 }),
+    );
+    expect(turn.letGo).toHaveBeenCalledOnce();
+  });
+
+  it('a mouse holding the edge never lets go for a choice', () => {
+    const { turn, on } = page();
+    on('.edge').dispatchEvent(pointer('pointerdown', { pointerType: 'mouse', clientX: 402 }));
+    const start = new Event('selectstart', { bubbles: true, cancelable: true });
+    on('.words').dispatchEvent(start);
+    expect(start.defaultPrevented).toBe(true);
+    expect(turn.cancel).not.toHaveBeenCalled();
+  });
+
+  // QA (#65): a page caught in flight is held, not pressed: falling back for a choice would take it from the hand.
+  it('a finger that caught a page in flight and holds it still keeps it: its long press chooses nothing', () => {
+    const { turn, on } = page({ catchable: true });
+    on('.words').dispatchEvent(
+      pointer('pointerdown', { pointerType: 'touch', clientX: 200, clientY: 300 }),
+    );
+    expect(turn.grab).toHaveBeenCalledOnce();
+    const start = new Event('selectstart', { bubbles: true, cancelable: true });
+    on('.words').dispatchEvent(start);
+    expect(start.defaultPrevented).toBe(true);
+    expect(turn.cancel).not.toHaveBeenCalled();
+    window.dispatchEvent(
+      pointer('pointerup', { pointerType: 'touch', clientX: 200, clientY: 300 }),
+    );
+    expect(turn.letGo).toHaveBeenCalledOnce();
+  });
+
+  it('a mouse over the words still chooses them: the hand never held it', () => {
+    const { turn, on } = page();
+    on('.words').dispatchEvent(pointer('pointerdown', { pointerType: 'mouse', clientX: 200 }));
+    const start = new Event('selectstart', { bubbles: true, cancelable: true });
+    on('.words').dispatchEvent(start);
+    expect(start.defaultPrevented).toBe(false);
+    expect(turn.cancel).not.toHaveBeenCalled();
+  });
+
+  it('a second finger’s moves never make the first’s still press a drag', () => {
+    const { turn, on } = page();
+    on('.words').dispatchEvent(
+      pointer('pointerdown', { pointerType: 'touch', clientX: 200, clientY: 300 }),
+    );
+    on('.words').dispatchEvent(
+      pointer('pointerdown', {
+        pointerType: 'touch',
+        pointerId: 2,
+        isPrimary: false,
+        clientX: 100,
+      }),
+    );
+    window.dispatchEvent(
+      pointer('pointermove', { pointerType: 'touch', pointerId: 2, isPrimary: false, clientX: 20 }),
+    );
+    const start = new Event('selectstart', { bubbles: true, cancelable: true });
+    on('.words').dispatchEvent(start);
+    expect(start.defaultPrevented).toBe(false);
+    expect(turn.cancel).toHaveBeenCalledOnce();
+  });
+
   it('words chosen elsewhere (a note beside) never stop the book’s hand', () => {
     const { turn, on } = page();
     const note = document.createElement('p');
