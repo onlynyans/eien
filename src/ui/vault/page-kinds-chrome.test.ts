@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
-import { actsOn, COMMANDS, menuOff } from '../chrome/commands';
+import { actsOn, COMMANDS, type CommandId, commandOf, menuOff } from '../chrome/commands';
 import { LAYOUT_SPECS } from '../chrome/layouts';
 import { type CommandContext, runCommand } from './commands';
 import type { Side } from './pages';
@@ -129,6 +129,44 @@ describe('the commands for a note', () => {
     expect(inSight()).toContain('find');
     expect(marksTool()).toEqual([]);
   });
+
+  for (const layout of ['band', 'slip', 'runhead'] as const) {
+    it(`leave ${layout}’s page tools a note’s with Find, and a book’s with Find and Marks (#64)`, async () => {
+      const { pages, chrome } = await drawn(layout);
+      const spec = LAYOUT_SPECS[layout];
+      /** The layout's page tools in sight, by command, less what a split adds for its pages. */
+      const tools = () =>
+        [...document.querySelectorAll<HTMLButtonElement>(`.host--${spec.tools} [data-command]`)]
+          .filter((button) => !button.hasAttribute('data-aside') && !button.hidden)
+          .map((button) => button.dataset.command as CommandId)
+          .filter((id) => !('split' in commandOf(id)));
+      const strip = layout === 'runhead' ? [] : ['strip'];
+      // The book in front: its views, the formatting bar's switch, its bookmark, Marks, Find, Look.
+      expect(tools()).toEqual([
+        ...(layout === 'band' ? [] : ['view.pages', 'view.scroll']),
+        'format-bar',
+        'bookmark',
+        'marks',
+        'find',
+        'look',
+        ...strip,
+      ]);
+      pages.activate(pages.sides[0] as Side);
+      chrome.refresh();
+      // The note in front: its own tools, with Find; no Marks.
+      expect(tools()).toEqual([
+        ...(layout === 'band' ? [] : ['view.live', 'view.source', 'view.reading']),
+        'compare',
+        'seal',
+        'versions',
+        'format-bar',
+        'focus',
+        'find',
+        'look',
+        ...strip,
+      ]);
+    });
+  }
 
   it('give A’s phone bar one view control a page, never a note’s views in a well (#63)', async () => {
     const { pages, chrome } = await drawn('band');
