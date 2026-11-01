@@ -7,14 +7,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
 import { actsOn, COMMANDS, menuOff } from '../chrome/commands';
-import type { MenuBus } from '../menu/menu-bus';
-import type { PaneLayout } from '../shell/panes';
-import type { Sidebar } from '../sidebar/sidebar';
-import { vaultChrome } from './chrome-wiring';
 import { type CommandContext, runCommand } from './commands';
 import type { Side } from './pages';
-import { noted, pagesWith } from './pages-harness';
-import type { PhoneView } from './phone-view';
+import { chromeOver, noted, pagesWith } from './pages-harness';
 import { type StandInSide, standInKind } from './stand-in-kind';
 
 const stops: (() => void)[] = [];
@@ -35,42 +30,11 @@ const BOOK_COMMANDS = COMMANDS.filter((command) => 'on' in command && command.on
 const ofNote = (id: string | undefined) =>
   (NOTE_COMMANDS as readonly (string | undefined)[]).includes(id);
 
-/** The window's tools drawn over `made`'s pages, as the vault view draws them. */
+/** The window's tools drawn over `made`'s pages, taken down after the test. */
 function toolsOver(made: Awaited<ReturnType<typeof pagesWith>>) {
-  const { pages } = made;
-  const greyMenu = vi.fn<(commands: readonly MenuCommand[]) => void>();
-  const div = () => document.createElement('div');
-  const chrome = vaultChrome({
-    shell: document.body.appendChild(div()),
-    pages,
-    sidebar: {
-      foot: { controls: div(), sync: div() },
-      adders: [],
-      lens: { tools: div(), chips: div() },
-    } as unknown as Sidebar,
-    panes: { isShut: () => false, aside: false, two: false } as unknown as PaneLayout,
-    phone: { stack: { controls: div(), phone: false }, more: () => {} } as unknown as PhoneView,
-    settings: made.settings,
-    menu: { on: () => () => {}, run: () => {} } as unknown as MenuBus,
-    mac: false,
-    platform: 'linux',
-    greyMenu,
-  });
-  chrome.mount();
-  stops.push(() => {
-    chrome.stop();
-    pages.stop();
-  });
-  /** The commands drawn in the window (or the formatting bar) and in sight there: none set aside. */
-  const inSight = (slot?: 'format') =>
-    [
-      ...(slot ? pages.pane.slots[slot] : document.body).querySelectorAll<HTMLButtonElement>(
-        '[data-command]',
-      ),
-    ]
-      .filter((button) => !button.hasAttribute('data-aside'))
-      .map((button) => button.dataset.command);
-  return { chrome, inSight, greyMenu };
+  const tools = chromeOver(made);
+  stops.push(tools.stop);
+  return tools;
 }
 
 /** A note on the left, the stand-in beside it (the active one), and the window's tools drawn. */

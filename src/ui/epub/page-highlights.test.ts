@@ -9,13 +9,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { type Highlight, highlightsOf, MAX_HIGHLIGHTS, readingPath } from '../../core/epub';
 import { NOT_KEPT } from './book-marks';
-import { boundsOf, rangeOver, walked } from './chapter-range';
+import { walked } from './chapter-range';
 import { makeEpubSide } from './epub-side';
 import type { EpubSide } from './epub-side-types';
 import { CHOOSE_WORDS, HIGHLIGHTED } from './page-highlights';
 import { inkCount, inked, withInk } from './test-ink';
 import { laidOut } from './test-lines';
-import { sideWith } from './test-side';
+import { choose, sideWith } from './test-side';
 
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
 const CHAPTER = 'OEBPS/chapter-1.xhtml';
@@ -45,24 +45,6 @@ async function opened(before?: (key: string) => object) {
   const key = at.side.epub?.key ?? '';
   const file = async () => (await at.disk.read(readingPath(key)))?.text ?? null;
   return { ...at, key, file };
-}
-
-/** `words` chosen in the chapter on the page, as a hand leaves them. */
-function choose(side: EpubSide, words: string): void {
-  const chapter = side.page.chapter;
-  const text = chapter.textContent ?? '';
-  const at = text.indexOf(words);
-  expect(at, words).toBeGreaterThanOrEqual(0);
-  // The chapter's text as a place counts it is its pieces': the fixture's first chapter has no blank ones but between blocks.
-  const walk = walked(chapter);
-  const offset = walk.pieces
-    .map((piece) => piece.data)
-    .join('')
-    .indexOf(words);
-  const bounds = boundsOf(walk, { from: offset, to: offset + words.length });
-  const selection = document.getSelection();
-  selection?.removeAllRanges();
-  if (bounds) selection?.addRange(rangeOver(bounds));
 }
 
 const pressH = (side: EpubSide, init: KeyboardEventInit = {}) =>
