@@ -509,25 +509,26 @@ test.describe('a long book searched while its pages turn', () => {
     const traced: unknown[] = [];
     cdp.on('Tracing.dataCollected', (e) => traced.push(...(e.value as unknown[])));
     const traceDone = new Promise((done) => cdp.once('Tracing.tracingComplete', done));
-    if (!process.env.NOTRACE) await cdp.send('Tracing.start', {
-      transferMode: 'ReportEvents',
-      traceConfig: {
-        includedCategories: [
-          'devtools.timeline',
-          'disabled-by-default-devtools.timeline',
-          'disabled-by-default-devtools.timeline.stack',
-          'v8.execute',
-          'blink',
-          'blink.user_timing',
-          'v8',
-          'cppgc',
-          'loading',
-          'toplevel',
-          'accessibility',
-          'disabled-by-default-v8.gc',
-        ],
-      },
-    });
+    if (!process.env.NOTRACE)
+      await cdp.send('Tracing.start', {
+        transferMode: 'ReportEvents',
+        traceConfig: {
+          includedCategories: [
+            'devtools.timeline',
+            'disabled-by-default-devtools.timeline',
+            'disabled-by-default-devtools.timeline.stack',
+            'v8.execute',
+            'blink',
+            'blink.user_timing',
+            'v8',
+            'cppgc',
+            'loading',
+            'toplevel',
+            'accessibility',
+            'disabled-by-default-v8.gc',
+          ],
+        },
+      });
     await time.mark();
     const search =
       process.env.LOCATORS === 'css'
@@ -546,7 +547,10 @@ test.describe('a long book searched while its pages turn', () => {
       if (i === 3 && !process.env.NOTRACE) {
         await cdp.send('Tracing.end');
         await traceDone;
-        writeFileSync(join(test.info().outputPath(), 'trace.json'), JSON.stringify({ traceEvents: traced }));
+        writeFileSync(
+          join(test.info().outputPath(), 'trace.json'),
+          JSON.stringify({ traceEvents: traced }),
+        );
       }
     }
     await expect(

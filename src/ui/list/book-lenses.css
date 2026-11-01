@@ -74,7 +74,9 @@
   content-visibility: auto;
   contain-intrinsic-size: auto
     calc(
-      var(--eien-row-pad-y) * 2 + var(--eien-leading-row) *
+      var(--eien-row-pad-y) *
+      2 +
+      var(--eien-leading-row) *
       (var(--eien-size-row) * 2 + var(--eien-size-preview))
     );
 }
