@@ -7,6 +7,7 @@
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { PHONE_DEFAULTS } from '../../core/config';
+import { Backs } from '../../platform/backs';
 import type { Bridge } from '../../platform/bridge';
 import { preferencesStore } from '../../platform/capacitor/preferences-store';
 import { SettingsStore } from '../../platform/settings-store';
@@ -24,10 +25,9 @@ function mobileBridge(): Bridge {
     PHONE_DEFAULTS,
   );
   void App.addListener('resume', () => vault.lookNow());
-  const backs: (() => boolean)[] = [];
+  const backs = new Backs();
   void App.addListener('backButton', () => {
-    for (const handler of [...backs].reverse()) if (handler()) return;
-    void App.minimizeApp().catch(() => undefined); // nothing to go back to: step aside
+    if (!backs.run()) void App.minimizeApp().catch(() => undefined); // nothing to go back to: step aside
   });
   return {
     platform,
@@ -43,13 +43,7 @@ function mobileBridge(): Bridge {
     },
     out: phoneOut(home.exports, home.exportFolder),
     onMenu: () => () => undefined, // no menu bar on a phone: the page's ⋯ (ui/phone)
-    onBack(handler) {
-      backs.push(handler);
-      return () => {
-        const at = backs.lastIndexOf(handler);
-        if (at >= 0) backs.splice(at, 1);
-      };
-    },
+    onBack: (handler) => backs.add(handler),
     onBeforeClose(save) {
       void App.addListener('pause', () => void save().catch(console.error));
     },

@@ -67,6 +67,15 @@ describe.each(LAYOUTS)('the %s layout', (layout) => {
     expect(desktopIds(layout).filter((id) => commandOf(id).phone)).toEqual([]);
   });
 
+  it('draws a book’s every tool in every room: its phone’s bar and its desktop’s (#63)', () => {
+    const book = COMMANDS.filter((command) => 'on' in command && command.on === 'epub');
+    expect(book.length).toBeGreaterThan(0);
+    for (const { id } of book) {
+      expect(idsIn(spec.phone.items), id).toContain(id);
+      expect(desktopIds(layout), id).toContain(id);
+    }
+  });
+
   it('gives a phone Focus mode (#30) and the ⋯ that reaches the rest, each once', () => {
     const phone = idsIn(spec.phone.items);
     expect(new Set(phone).size).toBe(phone.length);

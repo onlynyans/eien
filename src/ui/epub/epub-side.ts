@@ -33,7 +33,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       marks.inSight(from, to);
     },
     bookmark: () => void marks.bookmarks.toggle(),
-    highlight: () => void marks.highlights.toggle(),
+    highlight: (kept) => void marks.highlights.toggle(kept),
+    copy: (text, html) => void of.copy(text, html).catch(console.error),
     walk: (way) => marks.walk(way),
     inHighlight: (range) => marks.highlights.holds(range),
     copied: (copy, from) => parts.inkCopy(copy, from),
@@ -47,7 +48,7 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     rested: (offset) => keep(offset),
     follow: (anchor, link) => void links.follow(anchor, link),
     back: () => void links.back(),
-    quote: () => void quote(),
+    quote: (kept) => void quote(kept),
   });
   let path: string | null = null;
   let epub: Epub | null = null;
@@ -175,10 +176,14 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
     );
 
   /** A chapter chosen at the foot: drawn, the keyboard staying on the page (its button is gone). */
-  const turnTo = (index: number) =>
+  const turnTo = (index: number) => {
+    const way = index > spine ? 1 : -1;
     void side.go(index).then(() => {
-      if (!disposed) page.focus();
+      if (disposed) return;
+      if (spine === index) pages.stepIn(way);
+      page.focus();
     });
+  };
 
   const side: EpubSide = {
     kind: 'epub',
@@ -265,6 +270,11 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       // A chapter the reader chose: no step back to where a link was followed from.
       links.forget();
       await draw(index, true);
+    },
+    back() {
+      if (!links.canGoBack) return false;
+      void links.back();
+      return true;
     },
     reload() {
       const here = side.place;

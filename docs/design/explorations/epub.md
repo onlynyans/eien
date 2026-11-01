@@ -225,6 +225,25 @@ section where it and the directions below disagree.
 - **The curl's light is approved.** Three tokens, used only while a page
   moves, as the exception in `.interface-design/system.md` sets out:
   `--eien-curl-shade`, `--eien-curl-light` and `--eien-curl-through`.
+- **A swipe turns the chapter in Scroll** (decided 2026-11-01, #71): a
+  finger swiped across the page goes to the next chapter or the one
+  before, at its top, as the foot's word buttons do. Nothing moves while
+  the finger does (Scroll has no page to hold, and a sheet sliding sideways
+  under a vertical reader would be the loudest thing on the screen); let go
+  a quarter of the page across, the chapter's words step in from the side
+  they come from as Words' do (`--eien-space-2`, the calm time at the Turn
+  speed, none at 0 or with reduced motion), whatever the Page turn: there's
+  only ink to move in Scroll. The foot's buttons step the same; a jump (the
+  contents, a link, a mark, Find) stays instant. The place left is a step
+  back (**Back to Chapter I**), as a stray swipe in a long chapter would
+  lose it. A scroll is never a swipe: more across than down, the page not
+  scrolled under the finger, no words chosen, one finger, the system's
+  edge left to Android's back.
+- **Back is never a turn** (decided 2026-11-01, #70): Android's back and a
+  Mac trackpad's swipe back go back through the book's own step (a link,
+  a swiped chapter), then the panes; never a page. A trackpad's swipe over
+  a book is Back too, not a turn: one meaning for one hand. The screen's
+  edge in pages stays the system's (backlog #51).
 
 ### Marks
 
@@ -265,6 +284,32 @@ section where it and the directions below disagree.
     so once: its place and bookmarks aren't kept until it's fixed or
     deleted.
   - `]` and `[` to walk the marks come with highlights (Phase 5).
+
+### Touch and tools, after the foldable (decided 2026-11-01, #64, #65)
+
+- **Choosing words by touch (#65).** The owner: keep the system's choosing,
+  in Pages and Scroll alike, for its handles and its Copy and Share; put
+  Eien's own where a touch reader finds them, clear of the system's menu.
+  - Pages: a finger held still is let go as the system's long press begins
+    choosing (its `selectstart`; on iOS its cancel), so the system decides
+    what a long press is. A finger that moves past the drag's start (6px)
+    turns, and chooses nothing. A tap that ends a choice never turns.
+  - Eien's actions are the selection bar's, one bar: Highlight, Quote in
+    the note, Copy. On a touch screen it docks at the page's foot over the
+    colophon while words are chosen (the link Bar's docked look), laid over
+    the colophon's row out of flow so a page is never laid out anew under a
+    choice. It acts on the words last chosen and then lets them go (but
+    Take off the highlight leaves them chosen, so Highlight puts it back). Neither
+    WebView lets a page add to the system's menu, so this is the same on
+    Android and iOS. The phone's ⋯ keeps Highlight and Quote.
+- **Find and Marks as tools (#64).** Find is one command, every page's (a
+  note's too), the list's search icon, among the shared tools before Look,
+  as "The tools, by what's in sight" foresaw. Marks is a book's own, with
+  the bookmark: it shows the book's marks where they're listed (the list on
+  its Marks lens, or with two panes the SHELF row's), on a phone a pane
+  away as Contents is; set aside with marks On the edge, where the strip is
+  the marks in sight. A phone's bar short of room folds its tools into its
+  own ⋯, which lists them all already.
 
 ### After Phase 1 (2026-10-29)
 

@@ -3,7 +3,7 @@
 // stepper; kept, and worn from the start.
 
 import { devices, expect, type Page, test } from '@playwright/test';
-import { open, putOutside, titles } from './outside';
+import { open, putOutside, threePanes, titles } from './outside';
 
 test.use({ ...devices['Pixel 7'] });
 
@@ -32,6 +32,7 @@ const measure = (page: Page) =>
 
 test.beforeEach(async ({ page }) => {
   await open(page);
+  await threePanes(page);
   await putOutside(page, 'Eien/Vault/Ideas.md', 'An idea.\n');
   await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
   await page.locator('.phone-bar__back').click(); // the contents, with Settings at their foot

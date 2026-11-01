@@ -65,7 +65,11 @@ export function bookParts(parts: BookPartsOf) {
     open: (place) => side().open(place.path, place),
     keep: parts.keep,
   });
-  const pages = bookPages({ ...book, values: parts.values });
+  const pages = bookPages({
+    ...book,
+    values: parts.values,
+    turnTo: (index) => links.turnTo(index),
+  });
   const find = new BookFind({
     page,
     search: (changed) => new BookSearch({ texts: of.texts, changed }),

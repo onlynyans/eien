@@ -605,6 +605,11 @@ is always Panes.
   narrow, nothing folds: every mode's `least` is 0 (`splitSpecOf`), and
   under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
+- **Back** (#70): Android's back and a Mac trackpad's swipe back go back
+  the way the panes came: a book's own step back, the phone's stack, then
+  with the panes a pane shut opens, the list, then the sidebar, as its
+  toggle opens it (its calm arrival), the keyboard left where it was. No
+  word, token or control of its own.
 
 ## A quick look (decided 2026-10-28, #49; built: notes' half #105, shelf's half #114, after #40 Phase 1 #120; docs/quick-look.md)
 
@@ -674,7 +679,11 @@ in the book, each recorded here as it's built.
   greyed (a greyed Bold says something false); the shared tools (Look,
   Split, the panes) keep their places, and the change is instant. The
   formatting bar's row keeps its height while a note is in sight, so
-  neither page moves; with a book alone it goes. The phone's ⋯ and the
+  neither page moves; with a book alone it goes. The phone's bar, slip and
+  rail hold a book's tools as the desktop's bars do, in every room (#63): A's
+  a note's views as one button and a book's two in the views' well. Short of
+  room, the ⇄ slip beside the back word gives way first, its name trailing
+  off, so back keeps `--eien-touch`. The phone's ⋯ and the
   menu bar grey the same commands (#120): a menu lists all the app does. A
   menu of the bar is never greyed, only its items.
 - **A book's contents** (`list/contents-list.ts`): in the list pane while a
@@ -703,7 +712,10 @@ in the book, each recorded here as it's built.
   above it and `--eien-space-4` under, the chapters before and after as word
   buttons (label type, an arrow beside the name, `--eien-touch` high on a
   phone), the last one at the right; "The end" in label type at the last
-  chapter. The colophon's items: "3 of 61", the page (Phase 4a: "page 212
+  chapter. A finger swiped across the page turns the chapter too (#71):
+  nothing moves under it; the chapter's words step in from the side they
+  come from (Words' step in, `--eien-space-2`, calm × Turn speed, none with
+  reduced motion), as they do from the foot's turns. The colophon's items: "3 of 61", the page (Phase 4a: "page 212
   of 2,450", "page xii"; `.colophon__page`, a count, gone while none is
   known), "40% of the chapter", "12% of the book", the two percents
   dropped first under a 560px page pane, the page kept. In Facing pages
@@ -810,10 +822,30 @@ in the book, each recorded here as it's built.
 - **Quote** (Phase 2c): words chosen in a book show the selection bar
   (spec §4's, `.selection-bar`: raised paper above the selection, the
   float shadow) with its commands as words, **Quote in the note** and
-  **Copy**; never on a touch screen, whose own callout is over the words
-  (the page's ⋯ has Quote). The quote arrives in the note as Markdown, `>`
+  **Copy**. On a touch screen it docks instead (below). The quote arrives in the note as Markdown, `>`
   and the citation in an em dash: `— Pride and Prejudice, Chapter III`.
   What happened is said in the colophon ("Quoted in At the Assembly.").
+- **Words chosen by touch** (#65, decided 2026-11-01): the system chooses,
+  in Pages as in Scroll (its handles, its own menu with Copy and Share,
+  which no page can add to on Android or iOS): a finger held still is let
+  go of as its long press begins; one that moved past the drag's start
+  turns the page and chooses nothing; a tap that ends a choice never turns.
+  Eien's three, **Highlight**, **Quote in the note** and **Copy**, are the
+  selection bar's own, **docked at the page's foot over the colophon**
+  while words are chosen (`.selection-bar--docked`, in the book page's
+  `.epub__under`): the link Bar's docked look (the band, a `--eien-rule`
+  hairline above, no shadow, no radius, `--eien-touch` high), its words
+  sharing the width as they need. Unlike the link's and the table's bars,
+  which take a row above the colophon, it lies over the colophon's own row,
+  out of flow, so a page in Pages is never shortened and laid out anew
+  while a choice stands; it rises from that row's foot, C's rail under it
+  and B's slip above it both clear. The system's menu stands by the words,
+  the bar at the foot: never one over the other. A press acts on the words
+  last chosen (a tap may drop the choice first), then lets the choice go,
+  as the system's Copy does; but Take off the highlight leaves its words
+  chosen, as on the desktop (Phase 5a), so the bar docks again offering
+  Highlight to put it back. Copy gives the words alone, through the
+  window's clipboard. The page's ⋯ keeps Highlight and Quote.
 - **A note's reference and a note** are named (`note-ref`, `note`) to open
   the note over the page, and drawn as the book sets them: the reference
   in the publisher's own superscript, the note as its paragraphs. No style
