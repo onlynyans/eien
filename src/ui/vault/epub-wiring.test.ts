@@ -31,6 +31,7 @@ function wired(
     nav,
     tell: () => {},
     redraw: () => {},
+    drawRows: () => {},
     looks: () => {},
     marksAt: () => marksAt,
     pages: () => pages as Pages,
@@ -182,6 +183,7 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
       nav,
       tell: () => {},
       redraw,
+      drawRows: () => {},
       looks: () => {},
       marksAt: () => 'list',
       pages: () => pages as Pages,
@@ -285,10 +287,10 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     await side.reload();
     const { epubs, nav } = watched('a.epub', { active: side, sides: [side] });
     nav.bookLens = 'marks';
-    const shelf = epubs.shelf(true);
+    const shelf = epubs.shelf(true, false);
     expect(shelf.contents?.lens).toBe('marks');
     expect(shelf.contents?.marks?.map((row) => row.mark.words)).toEqual(['first']);
-    expect(epubs.shelf(false).contents).toBeNull();
+    expect(epubs.shelf(false, false).contents).toBeNull();
   });
 
   it('call a bookmark in a spine item no contents row names by the book’s name', async () => {
@@ -458,6 +460,7 @@ describe('a book’s Marks of both kinds over its page (Phase 5b)', () => {
     renderContents(container, { ...contents, lens: 'marks' }, null, {
       chapter: () => {},
       lens: () => {},
+      goFound: () => {},
       go: (row) => epubs.actions.goMark('a.epub', row),
       remove: (row) => epubs.actions.unmark('a.epub', row),
     });
@@ -475,5 +478,91 @@ describe('a book’s Marks of both kinds over its page (Phase 5b)', () => {
     expect(putBack?.hidden).toBe(false);
     putBack?.click();
     await vi.waitFor(async () => expect((await file()).highlights).toHaveLength(3));
+  });
+});
+
+describe('a book’s Found, wired (Phase 5c, as QA tried it)', () => {
+  function foundWiring(pages: unknown, contents: string | null = 'a.epub') {
+    const nav = new Navigation();
+    nav.contents = contents;
+    const drawRows = vi.fn();
+    const redraw = vi.fn();
+    const showPage = vi.fn();
+    const epubs = epubWiring({
+      vault: { readBytes: vi.fn(async () => null), read: async () => null } as never,
+      state: { sizeOf: () => 1024, has: () => false },
+      nav,
+      tell: () => {},
+      redraw,
+      drawRows,
+      looks: () => {},
+      marksAt: () => 'list',
+      pages: () => pages as Pages,
+      openChosen: async () => {},
+      showPage,
+      phone: () => false,
+    });
+    return { nav, epubs, drawRows, redraw, showPage };
+  }
+
+  it('goes to a Found row’s match on the active page holding the book, shown', () => {
+    const book = () => ({
+      kind: 'epub',
+      path: 'a.epub',
+      go: () => {},
+      find: { goToMatch: vi.fn(async () => {}) },
+    });
+    const left = book();
+    const right = book();
+    const activate = vi.fn();
+    const { epubs, showPage } = foundWiring({ active: right, sides: [left, right], activate });
+    const row = {
+      spine: 3,
+      from: 40,
+      to: 46,
+      before: '',
+      words: 'Bennet',
+      after: '',
+      page: null,
+      chapter: 'Chapter III',
+    };
+    epubs.actions.goFound('a.epub', row);
+    expect(right.find.goToMatch).toHaveBeenCalledExactlyOnceWith(row, true);
+    expect(left.find.goToMatch).not.toHaveBeenCalled();
+    expect(activate).toHaveBeenCalledWith(right);
+    expect(showPage).toHaveBeenCalledOnce();
+  });
+
+  it('gives the list and SHELF the field’s matches, chapter-named, drawing only the rows as they arrive', async () => {
+    const { side } = sideWith({ 'a.epub': BOOK });
+    await side.open('a.epub');
+    const { epubs, drawRows, redraw, nav } = foundWiring({ active: side, sides: [side] });
+    expect(epubs.contents(true)?.found).toBeNull();
+    epubs.typed('Bingley');
+    expect(nav.bookLens).toBe('found');
+    epubs.syncFound('Bingley');
+    await vi.waitFor(() => expect(epubs.contents(true)?.found?.done).toBe(true));
+    const found = epubs.contents(true)?.found;
+    expect(found?.rows.length).toBe(
+      SAMPLE_SOURCES.chapters.flat().join('\n').split('Bingley').length - 1,
+    );
+    expect(new Set(found?.rows.map((row) => row.chapter))).toEqual(
+      new Set(['Chapter II', 'Chapter III']),
+    );
+    expect(drawRows).toHaveBeenCalled();
+    // Matches arriving draw the rows, never the whole window.
+    expect(redraw).not.toHaveBeenCalled();
+    expect(epubs.shelf(true, true).contents?.found?.rows).toEqual(found?.rows);
+    expect(epubs.shelf(true, false).contents?.found).toBeNull();
+    // No rows in sight: the search stopped, its rows gone.
+    epubs.syncFound(null);
+    expect(epubs.contents(true)?.found).toBeNull();
+  });
+
+  it('steps through nothing with no book’s contents in the list', () => {
+    const { epubs } = foundWiring({ active: {}, sides: [] }, null);
+    epubs.syncFound('Bennet');
+    expect(epubs.contents(true)).toBeNull();
+    expect(epubs.stepFound(1)).toBe(false);
   });
 });

@@ -644,7 +644,7 @@ From `docs/design/explorations/look.md` (`look-bar.html`): 1 · On the bar.
   BOOKS: a book is a writer's manuscript). The sidebar foot's sun stays,
   one press for Day or Night, beside the popover's.
 
-## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131, two pages and set as a book, 3d; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d; Phase 5, highlights, 5a; among the marks, 5b)
+## Reading EPUBs (decided 2026-10-28, #40; built: Phase 1, #112–#114; after Phase 1, #120; Phase 2, #122, #123, #125; FOLDERS for writing, SHELF for reading, #126; Phase 3, turning pages: the turn #129, pages #130, a hand #131, two pages and set as a book, 3d; Phase 4, page numbers, 4a; bookmarks, 4b; Marks in the list, 4c; on the edge, 4d; Phase 5, highlights, 5a; among the marks, 5b; Find, 5c)
 
 From `docs/design/explorations/epub.md` ("Decided" and "After Phase 1").
 Later phases add paging and the turn (Phase 3), marks, highlights and Find
@@ -748,6 +748,21 @@ in the book, each recorded here as it's built.
   With two panes the buttons are a line of their own (not a row) under the
   book's SHELF row, its bookmarks tree rows with their page as the count,
   and none kept the tree's own hint.
+- **Find in a book** (Phase 5c): the window's own find bar (Built
+  patterns, Find) over the book's page, unchanged, with no Replace. Every
+  match in the chapter drawn is `--eien-epub-found` (the chosen row's
+  `--eien-selected`), the one it's on `--eien-epub-found-current` (the
+  selection's `--eien-seal-wash`): washes, never the highlight's pencil
+  line; forced colours the system's Mark and Highlight. Scrolling, the
+  match stands clear of the bar.
+- **Found in the list** (Phase 5c, `list/found-rows.ts`): a third lens,
+  Found, after Contents and Marks, disabled (no count) with nothing
+  searched. A match's row is a Marks row: its words with the match marked
+  as a note's Find match is (`--eien-selected` over a `--eien-rule-strong`
+  hairline, `--eien-radius-s`), its page a count, its chapter in pencil. The
+  search's line is the list's empty line, italic in pencil; it's a status
+  only once the search is through. With two panes, tree rows under the
+  book's SHELF row, the line the tree's hint.
 - **Marks on the edge** (Phase 4d, `epub/edge-strip.ts`, `.css`): the
   whole book down the page pane's outer edge, `--eien-space-5` wide,
   `--eien-space-4` in from it (the system's scroll bar keeps its own),

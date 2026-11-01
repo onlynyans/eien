@@ -16,12 +16,10 @@ import {
   type PageCount,
   type PrintAt,
 } from '../../core/epub';
+import { allStill, type Still } from './still';
 
 /** How many books' counts the window keeps. */
 const KEPT_BOOKS = 4;
-
-/** Run `then` once no page is turning. */
-export type Still = (then: () => void) => void;
 
 export class BookCount implements PageCount {
   readonly #lengths: (number | null)[];
@@ -123,34 +121,12 @@ export class BookCount implements PageCount {
     this.#timer = setTimeout(() => {
       this.#timer = undefined;
       this.#busy = true;
-      this.#allStill(() => void this.#count(spine));
+      // Every page asking for the count still at once (./still.ts).
+      allStill(
+        () => [...this.#runs.values()].map((run) => run.still),
+        () => void this.#count(spine),
+      );
     }, 0);
-  }
-
-  /**
-   * `then` once every page asking for the count is still at once: each asked
-   * in turn, and if any had to be waited for, all asked again (one may have
-   * begun a turn meanwhile, or another page joined), until a pass finds every
-   * one still as it's asked.
-   */
-  #allStill(then: () => void): void {
-    const waits = [...this.#runs.values()].map((run) => run.still);
-    let waited = false;
-    const step = (i: number): void => {
-      const wait = waits[i];
-      if (!wait) {
-        if (waited) this.#allStill(then);
-        else then();
-        return;
-      }
-      let now = true;
-      wait(() => {
-        if (!now) waited = true;
-        step(i + 1);
-      });
-      now = false;
-    };
-    step(0);
   }
 
   async #count(spine: number): Promise<void> {

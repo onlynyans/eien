@@ -139,13 +139,16 @@ describe('a bookmark’s row', () => {
 describe('a book’s lenses', () => {
   it('are pressed one at a time, and answer each click with its own lens', () => {
     const pressed = (lens: 'contents' | 'marks') =>
-      [...lensButtons(lens, { contents: 1, marks: 1 }, () => {}).querySelectorAll('button')].map(
-        (button) => button.getAttribute('aria-pressed'),
-      );
-    expect(pressed('contents')).toEqual(['true', 'false']);
-    expect(pressed('marks')).toEqual(['false', 'true']);
+      [
+        ...lensButtons(lens, { contents: 1, marks: 1, found: null }, () => {}).querySelectorAll(
+          'button',
+        ),
+      ].map((button) => button.getAttribute('aria-pressed'));
+    // Found is there with nothing searched, but can't be chosen: it has no count (Phase 5c).
+    expect(pressed('contents')).toEqual(['true', 'false', 'false']);
+    expect(pressed('marks')).toEqual(['false', 'true', 'false']);
     const choose = vi.fn();
-    const group = lensButtons('marks', { contents: 61, marks: 0 }, choose);
+    const group = lensButtons('marks', { contents: 61, marks: 0, found: null }, choose);
     const [contents, marks] = [...group.querySelectorAll('button')];
     // None kept still says how many: 0.
     expect(marks?.textContent).toBe('Marks 0');

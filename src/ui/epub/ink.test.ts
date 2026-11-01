@@ -87,11 +87,16 @@ describe('a turn’s copy, inked', () => {
     // The page in sight began at "a truth universally acknowledged.", 16 into the chapter above.
     copy.innerHTML =
       '<p>a <em>truth</em> universally acknowledged.</p><p>However little known.</p>';
-    inkCopy(walked(copy), 16, 'epub-highlight', [
-      { from: 18, to: 23 },
-      { from: 23, to: 31 },
-      { from: 49, to: 56 },
-      { from: 0, to: 5 },
+    inkCopy(walked(copy), 16, [
+      {
+        name: 'epub-highlight',
+        spans: [
+          { from: 18, to: 23 },
+          { from: 23, to: 31 },
+          { from: 49, to: 56 },
+          { from: 0, to: 5 },
+        ],
+      },
     ]);
     const ink = [...copy.querySelectorAll(`[${INKED}="epub-highlight"]`)].map(
       (each) => each.textContent,
@@ -101,16 +106,45 @@ describe('a turn’s copy, inked', () => {
     expect(copy.textContent).toBe('a truth universally acknowledged.However little known.');
   });
 
-  it('joins spans that overlap, so none is wrapped inside another', () => {
+  it('wraps words two spans share once, never one ink inside the same ink', () => {
     const copy = document.createElement('div');
     copy.innerHTML = '<p>abcdefghij</p>';
-    inkCopy(walked(copy), 0, 'epub-highlight', [
-      { from: 2, to: 6 },
-      { from: 4, to: 8 },
+    inkCopy(walked(copy), 0, [
+      {
+        name: 'epub-highlight',
+        spans: [
+          { from: 2, to: 6 },
+          { from: 4, to: 8 },
+        ],
+      },
     ]);
-    expect([...copy.querySelectorAll(`[${INKED}]`)].map((each) => each.textContent)).toEqual([
-      'cdefgh',
+    const inked = [...copy.querySelectorAll(`[${INKED}]`)];
+    expect(inked.map((each) => each.textContent).join('')).toBe('cdefgh');
+    expect(copy.querySelector(`[${INKED}] [${INKED}]`)).toBeNull();
+    expect(copy.textContent).toBe('abcdefghij');
+  });
+
+  // The review (Phase 5c): a highlight's wrapping never shifts Find's marks on the same copy.
+  it('inks a highlight and Find’s matches on one copy, each where its words are, shared words in both', () => {
+    const copy = document.createElement('div');
+    copy.innerHTML = '<p>He said <em>no</em> and Bennet said yes</p>';
+    // "He said " 0–8, "no" 8–10, " and Bennet said yes" 10–30.
+    inkCopy(walked(copy), 0, [
+      { name: 'epub-highlight', spans: [{ from: 3, to: 7 }] },
+      {
+        name: 'epub-found',
+        spans: [
+          { from: 3, to: 7 },
+          { from: 15, to: 21 },
+          { from: 22, to: 26 },
+        ],
+      },
     ]);
+    const of = (name: string) =>
+      [...copy.querySelectorAll(`[${INKED}="${name}"]`)].map((each) => each.textContent);
+    expect(of('epub-highlight')).toEqual(['said']);
+    expect(of('epub-found')).toEqual(['said', 'Bennet', 'said']);
+    expect(copy.textContent).toBe('He said no and Bennet said yes');
   });
 });
 
@@ -122,7 +156,7 @@ describe('a turn’s copy, inked at its edges', () => {
   it('wraps a span across pieces of several elements, each piece’s part in its own wrap', () => {
     const copy = document.createElement('div');
     copy.innerHTML = '<p>ab<em>cd</em><strong>ef</strong></p><p>gh</p>';
-    inkCopy(walked(copy), 0, 'epub-highlight', [{ from: 1, to: 7 }]);
+    inkCopy(walked(copy), 0, [{ name: 'epub-highlight', spans: [{ from: 1, to: 7 }] }]);
     expect(inks(copy)).toEqual(['b', 'cd', 'ef', 'g']);
     // Each wrap where its piece was: the em's words in the em, the strong's in the strong.
     expect(copy.querySelector('em')?.innerHTML).toBe(`<span ${INKED}="epub-highlight">cd</span>`);
@@ -133,7 +167,7 @@ describe('a turn’s copy, inked at its edges', () => {
   it('wraps a span from a piece’s first character to a piece’s last, leaving no empty wrap', () => {
     const copy = document.createElement('div');
     copy.innerHTML = '<p>ab</p><p>cd</p><p>ef</p>';
-    inkCopy(walked(copy), 0, 'epub-highlight', [{ from: 2, to: 4 }]);
+    inkCopy(walked(copy), 0, [{ name: 'epub-highlight', spans: [{ from: 2, to: 4 }] }]);
     expect(inks(copy)).toEqual(['cd']);
     expect(copy.querySelectorAll('p')[1]?.textContent).toBe('cd');
     expect(copy.textContent).toBe('abcdef');
@@ -143,18 +177,18 @@ describe('a turn’s copy, inked at its edges', () => {
     const copy = document.createElement('div');
     copy.innerHTML = '<p>ab</p><p>cd</p>';
     // The page began 10 into the chapter: a span from 6 to 13 holds its first three characters.
-    inkCopy(walked(copy), 10, 'epub-highlight', [{ from: 6, to: 13 }]);
+    inkCopy(walked(copy), 10, [{ name: 'epub-highlight', spans: [{ from: 6, to: 13 }] }]);
     expect(inks(copy)).toEqual(['ab', 'c']);
     const before = document.createElement('div');
     before.innerHTML = '<p>ab</p><p>cd</p>';
-    inkCopy(walked(before), 10, 'epub-highlight', [{ from: 0, to: 10 }]);
+    inkCopy(walked(before), 10, [{ name: 'epub-highlight', spans: [{ from: 0, to: 10 }] }]);
     expect(inks(before)).toEqual([]);
   });
 
   it('passes over Eien’s own words in it: a break’s marks are never inked', () => {
     const copy = document.createElement('div');
     copy.innerHTML = '<p>ab</p><p class="scene-break">* * *</p><p>cd</p>';
-    inkCopy(walked(copy), 0, 'epub-highlight', [{ from: 0, to: 4 }]);
+    inkCopy(walked(copy), 0, [{ name: 'epub-highlight', spans: [{ from: 0, to: 4 }] }]);
     expect(inks(copy)).toEqual(['ab', 'cd']);
   });
 });

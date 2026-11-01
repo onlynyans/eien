@@ -18,8 +18,13 @@ export class SearchField {
   readonly #search: (query: string) => void;
   #timer: ReturnType<typeof setTimeout> | undefined;
 
-  /** `search` gets the field's words a moment after typing stops; "" when it's cleared. */
-  constructor(search: (query: string) => void) {
+  /**
+   * `search` gets the field's words a moment after typing stops; "" when it's
+   * cleared. `enter` (Enter, ⇧Enter `back`) takes the words as they are, and
+   * says whether it did anything with them (a book's Found steps through its
+   * matches, #40 Phase 5c).
+   */
+  constructor(search: (query: string) => void, enter?: (back: boolean) => boolean) {
     this.#search = search;
     this.#input = h('input', {
       class: 'field',
@@ -33,9 +38,22 @@ export class SearchField {
         input: () => {
           this.#clear.hidden = !this.#input.value;
           clearTimeout(this.#timer);
-          this.#timer = setTimeout(() => search(this.#input.value), SEARCH_AFTER_MS);
+          this.#timer = setTimeout(() => {
+            this.#timer = undefined;
+            search(this.#input.value);
+          }, SEARCH_AFTER_MS);
         },
         keydown: (event) => {
+          if (event.key === 'Enter' && enter && !event.isComposing) {
+            // The words as typed, the pause before searching cut short: Enter never walks the last ones.
+            if (this.#timer !== undefined) {
+              clearTimeout(this.#timer);
+              this.#timer = undefined;
+              search(this.#input.value);
+            }
+            if (enter(event.shiftKey)) event.preventDefault();
+            return;
+          }
           if (event.key !== 'Escape') return;
           if (!this.#input.value) this.#input.blur();
           else {

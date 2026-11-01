@@ -72,6 +72,7 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
 
       test('a book open, its contents in the list, has no serious violation (#40)', async ({
         page,
+        app,
       }) => {
         await page
           .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
@@ -119,6 +120,21 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.getByRole('button', { name: /^Marks \d+$/u }).click();
         await expect(page.locator('.mark-row')).toHaveCount(2);
         expect(await violationsUnder(page, ['.list']), 'Marks in the list').toEqual([]);
+        // Find (Phase 5c): the list's field searching the book, its matches under Found; and the
+        // page's own find bar over the book, its matches inked.
+        const searchBook = page.getByRole('searchbox', { name: 'Search Pride and Prejudice' });
+        await searchBook.fill('the');
+        await expect(page.locator('.found-row').first()).toBeVisible();
+        expect(await violationsUnder(page, ['.list']), 'Found in the list').toEqual([]);
+        await searchBook.fill('');
+        await page.locator('.page__leaf--epub .page__scroll').focus();
+        // ⌘F is the menu's, which Playwright's keys never reach: its Find, clicked.
+        await clickMenu(app, 'Edit', 'Find', 'Find…');
+        const findBar = page.getByRole('search', { name: 'Find in the book' });
+        await findBar.getByRole('textbox', { name: 'Find' }).fill('Bennet');
+        await expect(findBar.locator('.find__count')).toHaveText(/of/u);
+        expect(await violationsUnder(page, ['.page']), 'the find bar over a book').toEqual([]);
+        await findBar.getByRole('textbox', { name: 'Find' }).press('Escape');
         await page.getByRole('button', { name: /^Contents \d+$/u }).click();
         // Marks on the edge (Phase 4d), from the shelf's look: the strip beside the page.
         const lookTool = page.locator(

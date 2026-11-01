@@ -482,3 +482,42 @@ test.describe('a long book counted while its pages turn', () => {
     expect(await time.longest(), 'a long book counted, fifty turns').toBeLessThan(STALL);
   });
 });
+
+/**
+ * A long book searched (#40, Phase 5c), the same one: the list's field finds a
+ * word in every paragraph (the count's limit reached in the second chapter, a
+ * thousand rows drawn), then one in each chapter's last paragraph, so every
+ * chapter is read, the 4,000-paragraph one too, a chapter a task and never
+ * while a page turns, as fifty pages turn. No long task over the same
+ * 200 ms. Measured on CI with BUDGETS=1 (and SLOW=4) before it was set; the
+ * numbers are in the pull request.
+ */
+test.describe('a long book searched while its pages turn', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': COUNTED_BOOK },
+    deviceFile: { settings: { 'epub.view': 'pages', 'epub.turn': 'curl', 'epub.turnSpeed': '1' } },
+  });
+
+  test('finds a word through the whole book without a stall', ALONE, async ({ page }) => {
+    test.setTimeout(240_000);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const time = await stalls(page);
+    await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Long' }).click();
+    await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter p')).toHaveCount(600);
+    await time.mark();
+    const search = page.getByRole('searchbox', { name: 'Search Pride and Prejudice' });
+    // In every paragraph: stops at the count's limit, its thousand rows drawn as they come.
+    await search.fill('universally');
+    await expect(page.locator('.list__empty')).toHaveText(/^More than 1,000/u, { timeout: 60_000 });
+    await expect(page.locator('.found-row')).toHaveCount(1000);
+    // Once a chapter, the last paragraph's: every chapter read, the large one's too.
+    await search.fill('Paragraph 599:');
+    await page.locator('.page__leaf--epub .page__scroll').focus();
+    for (let i = 0; i < 50; i++) {
+      await page.keyboard.press('ArrowRight');
+      await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
+    }
+    await expect(page.getByRole('button', { name: 'Found 61' })).toBeVisible({ timeout: 120_000 });
+    expect(await time.longest(), 'a long book searched, fifty turns').toBeLessThan(STALL);
+  });
+});

@@ -1,7 +1,8 @@
 // The rows under a book on SHELF with two panes (#40): its lenses (Phase
 // 4c), then what the lens shows, its chapters in the book's order (the one on
-// the page marked as an open note's row is) or its marks, as the list
-// shows them with the list in sight (../list/contents-list.ts).
+// the page marked as an open note's row is), its marks, or what the field
+// finds in it (Phase 5c), as the list shows them with the list in sight
+// (../list/contents-list.ts).
 
 import { h } from '../dom';
 import {
@@ -15,24 +16,15 @@ import {
   markWhere,
   NO_MARKS,
 } from '../list/book-lenses';
-import { chapterKey, marked } from '../list/contents-list';
+import { type ContentsModel, chapterKey, lensShown, marked } from '../list/contents-list';
+import { type FoundModel, type FoundRow, foundKey, foundLine } from '../list/found-rows';
 import { atDepth } from './depth';
 import { shelfButton as button, shelfRow as row } from './shelf-row';
 
-/** A book's contents, as a row under it lists them (two panes). */
-export interface ShelfContents {
+/** A book's contents, as the rows under it list them (two panes): the list's own model, and its path. */
+export type ShelfContents = Pick<ContentsModel, 'rows' | 'spine' | 'lens' | 'marks' | 'found'> & {
   readonly path: string;
-  readonly rows: readonly {
-    readonly title: string;
-    readonly depth: number;
-    readonly spine: number;
-  }[];
-  /** The spine item on the page: its row is marked. */
-  readonly spine: number;
-  /** Its lens, and its bookmarks; null for no lenses (Marks on the edge, Phase 4d). */
-  readonly lens: BookLens;
-  readonly marks: readonly MarkRow[] | null;
-}
+};
 
 /** What the rows under a book do. */
 export interface ShelfBookActions {
@@ -43,21 +35,53 @@ export interface ShelfBookActions {
   /** A mark's row chosen: where it is; or Delete on it: taken off. */
   goMark(path: string, row: MarkRow): void;
   unmark(path: string, row: MarkRow): void;
+  /** A match's row chosen: its words shown and chosen on the page (Phase 5c). */
+  goFound(path: string, row: FoundRow): void;
 }
 
 /** With Marks in the list, the book's lenses as the first row under it (Phase 4c). */
 function lensRow(path: string, contents: ShelfContents, actions: ShelfBookActions, depth: number) {
-  const { marks } = contents;
+  const { marks, found } = contents;
   if (!marks) return [];
-  const counts = { contents: contents.rows.length, marks: marks.length };
-  const lenses = lensButtons(contents.lens, counts, (lens) => actions.lens(path, lens));
+  const counts = {
+    contents: contents.rows.length,
+    marks: marks.length,
+    found: found ? found.rows.length : null,
+  };
+  const lenses = lensButtons(lensShown(contents), counts, (lens) => actions.lens(path, lens));
   // Not a row: it neither lights nor presses as one; its buttons do.
   return [atDepth(h('li', { class: 'tree-lenses' }, lenses), depth + 1)];
 }
 
-/** The rows the book's lens shows under it: its chapters, or its bookmarks. */
+/** Found's rows under a book (Phase 5c): each match in its words, its page its count; then what the search says. */
+function foundRows(path: string, found: FoundModel, actions: ShelfBookActions, depth: number) {
+  const line = foundLine(found);
+  return [
+    ...found.rows.map((each) => {
+      const name = button(
+        `${path}:${foundKey(each)}`,
+        '',
+        false,
+        { click: () => actions.goFound(path, each) },
+        { title: `${each.chapter}: ${each.before}${each.words}${each.after}` },
+      );
+      // A tree row is one line: it begins at the match, marked as the list marks it, so it's never cut off.
+      name
+        .querySelector('.tree-row__label')
+        ?.replaceChildren(h('mark', { class: 'found-row__match', text: each.words }), each.after);
+      if (each.page) name.append(' ', h('span', { class: 'count', text: each.page }));
+      return row(depth + 1, name, 'found');
+    }),
+    // The tree's own hint, as with no marks kept.
+    ...(line ? [atDepth(h('li', { class: 'tree-hint', text: line }), depth + 1)] : []),
+  ];
+}
+
+/** The rows the book's lens shows under it: its chapters, its marks, or what's found. */
 function listed(path: string, contents: ShelfContents, actions: ShelfBookActions, depth: number) {
-  if (contents.marks && contents.lens === 'marks') {
+  const lens = lensShown(contents);
+  if (lens === 'found' && contents.found) return foundRows(path, contents.found, actions, depth);
+  if (contents.marks && lens === 'marks') {
     // None kept: the tree's own hint, as a tag with no notes says how to give it some.
     if (contents.marks.length === 0)
       return [atDepth(h('li', { class: 'tree-hint', text: NO_MARKS }), depth + 1)];
