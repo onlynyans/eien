@@ -137,12 +137,17 @@ const drawnIn = (page: Page) =>
 
 /** Nothing past its bar or over another, nothing past the screen, back a finger's reach. */
 async function fits(page: Page): Promise<void> {
-  for (const drawn of await drawnIn(page)) {
-    expect(drawn.outside).toEqual([]);
-    expect(drawn.overlapping).toEqual([]);
-    expect(drawn.over).toBe(0);
-    expect(drawn.back).toBeGreaterThanOrEqual(44);
-  }
+  // Settled: the bar fits again a frame after its room changes (its ResizeObserver), later under load.
+  await expect
+    .poll(async () =>
+      (await drawnIn(page)).flatMap((drawn) => [
+        ...drawn.outside.map((name) => `${name} past its bar`),
+        ...drawn.overlapping,
+        ...(drawn.over > 0 ? [`${drawn.over}px past the screen`] : []),
+        ...(drawn.back < 44 ? [`back ${drawn.back}px`] : []),
+      ]),
+    )
+    .toEqual([]);
 }
 
 /** The tools folded into the ⋯ now. */
