@@ -133,6 +133,36 @@ test('a new install’s panes are two, the sidebar listing the notes; Three, cho
   await inSight(page, 'sidebar', 'list', 'page');
 });
 
+// What Settings says of it: Two, the phone's own, chosen; Three chosen there stays after a restart.
+test('Settings shows a new install’s panes as Two, and Three chosen there stays', async ({
+  page,
+}) => {
+  await open(page);
+  await page.setViewportSize(TABLET);
+  await page.reload();
+  const panes = async () => {
+    await page.getByRole('button', { name: 'Settings' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Settings' });
+    await sheet.getByRole('navigation').getByRole('button', { name: 'Lists', exact: true }).click();
+    return { sheet, group: sheet.getByRole('group', { name: 'Panes' }) };
+  };
+  const { sheet, group } = await panes();
+  await expect(group.getByRole('button', { name: 'Two', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await group.getByRole('button', { name: 'Three', exact: true }).click();
+  await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
+  await sheet.getByRole('button', { name: 'Close settings' }).click();
+  await page.reload();
+  await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
+  const again = await panes();
+  await expect(again.group.getByRole('button', { name: 'Three', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+});
+
 test.describe('one at a time', () => {
   test('the phone, wider: one pane, and back', async ({ page }) => {
     await withRoom(page, 'one', TABLET);
