@@ -6,6 +6,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
+import { placeWords, wordsInSight } from './book-sight';
 import { clickMenu, closeApp, expect, launchApp, ROOT, test } from './launch';
 
 const epub = (name: string) =>
@@ -138,37 +139,22 @@ test.describe('a book in pages', () => {
     await clickMenu(app, 'View', 'Pages');
     await expect(leaf(page)).toHaveAttribute('data-view', 'pages');
     await expect.poll(() => firstWords(page)).toBe(turnedTo);
-    // Scrolled on and switched before the scroll rests: Pages opens where the scroll was.
+    // Scrolled on and switched before the scroll rests (a second): Pages opens where the scroll was.
+    // Scrolled at once, by a reader's 1,500px: a wheel's glide on a Mac may still be moving when
+    // the place is read, and the test would read a line the app never kept.
     await scrollTool.click();
-    await page.mouse.move(1000, 400);
-    await page.mouse.wheel(0, 1500);
-    // The wheel's own glide done (the place still well short of its rest's second): then switched.
-    let last = -1;
-    await expect
-      .poll(async () => {
-        const top = await scroller(page).evaluate((element) => element.scrollTop);
-        const still = top > 0 && top === last;
-        last = top;
-        return still;
-      })
-      .toBe(true);
-    const { scrolled, before } = await scroller(page).evaluate((element) => {
-      const box = element.getBoundingClientRect();
-      const words = element.querySelector('.epub-chapter')?.getBoundingClientRect();
-      // The line at the very top, half in sight or not: the place is the first line in sight.
-      const at = document.caretRangeFromPoint((words?.left ?? box.left) + 4, box.top + 2);
-      // The place is the first line whose foot is past the top: two pixels short, the line above,
-      // which may end the paragraph before (and the page, in pages).
-      const paragraph = at?.startContainer.parentElement?.closest('p');
-      return {
-        scrolled: at?.startContainer.textContent ?? '',
-        before: paragraph?.previousElementSibling?.textContent ?? '',
-      };
-    });
+    await expect(leaf(page)).toHaveAttribute('data-view', 'scroll');
+    await scroller(page).evaluate((element) =>
+      element.scrollBy({ top: 1500, behavior: 'instant' }),
+    );
+    // The place's words, by the app's own rule: the first whose line ends below the top.
+    const words = await placeWords(scroller(page));
+    expect(words.trim()).not.toBe('');
     await pagesTool.click();
-    // The page holding that line, which may begin a few lines before it.
     await expect
-      .poll(async () => (await onPage(page, scrolled)) || (before !== '' && onPage(page, before)))
+      .poll(() => wordsInSight(box(page), words), {
+        message: `the place's words, "${words}", on the page Pages opens to`,
+      })
       .toBe(true);
   });
 
