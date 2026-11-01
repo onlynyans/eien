@@ -94,7 +94,7 @@ export function phoneView(of: PhoneViewOf): PhoneView {
   };
   const stack = new PhoneStack({
     shell: of.shell,
-    room: (width) => roomOf(width, of.platform, of.settings.values),
+    room: (screen) => roomOf(screen, of.platform, of.settings.values),
     backName: (to) =>
       to === 'sidebar'
         ? 'Library'

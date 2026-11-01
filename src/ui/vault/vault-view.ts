@@ -8,6 +8,7 @@ import type { Bridge } from '../../platform/bridge';
 import { keepPlace } from '../list/list';
 import { SearchField } from '../list/search-field';
 import type { MenuBus } from '../menu/menu-bus';
+import { phoneBuild } from '../phone/room';
 import type { SettingsState } from '../settings/settings-state';
 import { PaneLayout, paneKeys } from '../shell/panes';
 import { vaultFrame } from '../shell/vault-frame';
@@ -222,6 +223,7 @@ export async function showVault(
       showPhone: (pane) => phone.stack.show(pane),
     },
     settings.values['layout.panes'] === 'two',
+    phoneBuild(bridge.platform),
   );
   // Made before the page's parts, which tell it when a seal's controls change; drawn after.
   const chrome = vaultChrome({

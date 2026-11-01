@@ -76,8 +76,9 @@ test('a book’s head: the title across the line, the author under it, the lense
 test('a search joins Found to the lenses’ row, the title still across the line; cleared, Found goes', async ({
   page,
 }) => {
-  // A Galaxy Z Fold 5 opened upright, in Panes: the list beside the page, its search field on its band.
-  await page.setViewportSize({ width: 690, height: 829 });
+  // A Galaxy Z Fold 5 opened on its side, in Panes: the list beside the page, its search field on
+  // its band. Upright, three panes don't fit and the tree takes the notes (#68).
+  await page.setViewportSize({ width: 829, height: 690 });
   const head = await bookInList(page, 'panes');
   const search = page.getByRole('searchbox', { name: 'Search Pride and Prejudice' });
   await search.fill('Bennet');

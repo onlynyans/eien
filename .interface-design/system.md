@@ -581,11 +581,18 @@ corners and colours the layout's own.
 
 From `docs/design/explorations/tablet.md`: the owner chose all three, as one
 setting of the phone's, **Wide screen** (`appearance.room`, as `data-room` on
-the shell; the rules in `src/ui/phone/room.ts`). Under 520px (a phone held
-upright) the phone is the phone; Panes needs the desktop's 600px; the desktop
-is always Panes.
+the shell; the rules in `src/ui/phone/room.ts`). A phone held upright is the
+phone, told by its screen's shape (taller than 7:12, upright), which zoom and
+the keyboard never change (#68, 2026-11-01); so is a window under 440px. Any
+other screen, a Galaxy Z Fold 5 opened at its own size too, has the rooms. The
+desktop is always Panes.
 
-- **Panes** (the default): the desktop's panes and split, as built. Where a
+- **Panes** (the default; a phone's panes start as two, #69): the desktop's
+  panes and split, as built. Short of three panes' room (820px,
+  `THREE_LEAST`), a phone's Panes shows two, the tree listing the notes, as
+  the list stepping aside for a split does, never saved; the foot's Panes
+  tool says "Three panes, two here for the room", the list's chevron "No
+  room for three panes here". Where a
   finger is the pointer (`pointer: coarse`), `--eien-control` and
   `--eien-row-h` are `--eien-touch` on the shell (a compact row
   `--eien-touch` less `--eien-space-2`), a pane's edge is `--eien-touch` wide

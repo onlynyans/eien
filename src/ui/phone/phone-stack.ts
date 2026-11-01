@@ -2,30 +2,29 @@
 // notes, then the page. Choosing goes forward; back (the bar's word, or
 // Android's back gesture) goes the other way. The page's tools are the
 // layout's (../chrome): in the bar's `controls` (A's), or at the page's foot. A window narrower than any
-// desktop window can be is a phone's, whatever the system: an upright phone
-// (430 px at most), not a tablet; and the phone's page in tests. Wider, the
-// room (./room.ts) says how: the desktop's panes, one at a time still, the
-// pane before kept in sight beside, or the notes over two pages.
+// desktop window can be is a phone's, whatever the system; on a phone's build, a
+// screen held upright is (./room.ts, by its shape). Otherwise the room says how:
+// the desktop's panes, one at a time still, the pane before kept in sight beside,
+// or the notes over two pages.
 
 import { h, wordButton } from '../dom';
 import {
   backTo,
   inSight,
-  NARROW,
   onePane,
   PHONE_ORDER,
   type PhonePane,
+  ROOM_QUERIES,
   type Room,
+  type Screen,
+  screenNow,
   twoPages,
-  UPRIGHT_PHONE,
-  type Width,
-  widthNow,
 } from './room';
 
 export interface PhoneParts {
   readonly shell: HTMLElement;
-  /** The room this window uses at `width` (./room.ts). */
-  room(width: Width): Room;
+  /** The room this window uses on `screen` (./room.ts). */
+  room(screen: Screen): Room;
   /** What the bar's back names: where it goes. */
   backName(to: PhonePane): string;
   /** The keyboard to the pane now shown (never left in one gone from sight). */
@@ -45,15 +44,15 @@ export class PhoneStack {
   readonly controls = h('div', { class: 'phone-bar__controls' });
   readonly #parts: PhoneParts;
   readonly #back: HTMLButtonElement;
-  /** The widths a room changes at: the desktop's panes', and an upright phone's. */
-  readonly #widths = [window.matchMedia(NARROW), window.matchMedia(UPRIGHT_PHONE)];
+  /** Where a room changes: the desktop's panes' width, a tall screen, a cramped one. */
+  readonly #widths = ROOM_QUERIES.map((query) => window.matchMedia(query));
   readonly #onWidth = () => this.roomChanged();
   #shown: PhonePane = 'list';
   #room: Room;
 
   constructor(parts: PhoneParts) {
     this.#parts = parts;
-    this.#room = parts.room(widthNow());
+    this.#room = parts.room(screenNow());
     this.#back = wordButton('', () => this.back());
     this.#back.classList.add('phone-bar__back');
     this.bar = h(
@@ -118,7 +117,7 @@ export class PhoneStack {
 
   /** The room may have changed (the window turned or unfolded, or Wide screen was set): lay it out again. */
   roomChanged(): void {
-    const room = this.#parts.room(widthNow());
+    const room = this.#parts.room(screenNow());
     if (room === this.#room) return;
     if (this.#leaves(room, this.#shown)) this.#parts.leavingPage();
     this.#room = room;
