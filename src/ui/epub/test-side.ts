@@ -68,6 +68,7 @@ export function sideWith(
     sizeOf: (path: string) =>
       listed.includes(path) ? (files[path]?.length ?? 64 * 1024 * 1024) : null,
     changed,
+    counted: vi.fn(),
     quote: async () => ({ not: 'Open a note beside the book to quote into it.' }),
   };
   const close = vi.fn();

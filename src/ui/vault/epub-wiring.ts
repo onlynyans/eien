@@ -108,6 +108,10 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
     looks: () => of.looks(),
     sizeOf: (path) => of.state.sizeOf(path),
     changed: () => of.redraw(),
+    // Only while the list shows that book's marks or matches: a chapter is counted a task at a time.
+    counted(path) {
+      if (of.nav.contents === path && of.nav.bookLens !== 'contents') of.drawRows();
+    },
     async quote(text, from) {
       const note = await noteFor(from);
       if (!note) return { not: NO_NOTE };

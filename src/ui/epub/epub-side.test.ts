@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { handEpub, nav, opf, XHTML, page as xhtml } from '../../../tests/support/epub-parts';
+import type { Epub } from '../../core/epub';
 import { BookCount } from './book-count';
 import { epubKind } from './epub-kind';
 import { EpubPage } from './epub-page';
@@ -30,12 +31,17 @@ describe('a book counted for its page numbers (Phase 4a)', () => {
     return stops;
   }
 
-  it('redraws the panes once the book is wholly counted: Marks rows have their pages then (Phase 4c)', async () => {
-    const { side, changed } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
+  it('tells the window each chapter counted, never redrawing the panes: Marks rows have their places then (Phase 4c, #67)', async () => {
+    const { side, changed, of } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
     await side.open('a.epub');
     changed.mockClear();
-    await vi.waitFor(() => expect(side.labelAt(1, 0)).not.toBeNull());
-    expect(changed).toHaveBeenCalled();
+    await vi.waitFor(() => expect(of.counted).toHaveBeenCalledWith('a.epub'));
+    const count = of.counts.of(side.epub as Epub);
+    await vi.waitFor(() => expect(count.whole).toBe(true));
+    // Each chapter in the background told, the chapter drawn counted as it was drawn.
+    expect(vi.mocked(of.counted).mock.calls.length).toBe((side.epub?.spine.length ?? 0) - 1);
+    expect(side.labelAt(1, 0)).not.toBeNull();
+    expect(changed).not.toHaveBeenCalled();
   });
 
   it('counts once the chapter is drawn, and stops for another book, a cleared page or one gone', async () => {

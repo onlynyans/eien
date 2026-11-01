@@ -267,7 +267,13 @@
 .colophon__counters:empty {
   display: none;
 }
-/* How far through a book: dropped first when the page is narrow (its page stays). */
+/* Today's tally set aside while a book is in front (#66), as a note's tools are; with nothing
+   else to say (no sprint), the counters' place too, so no gap is left for it. */
+.colophon__counters[data-untallied] .colophon__today,
+.colophon__counters[data-untallied]:not(:has(:is(.colophon__book, .colophon__sprint):not(:empty))) {
+  display: none;
+}
+/* How far through the book: dropped first when the page is narrow (where in the chapter stays). */
 @container page (width < 560px) {
   .colophon__through {
     display: none;

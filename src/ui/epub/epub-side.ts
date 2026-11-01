@@ -246,8 +246,8 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
         (then) => pages.whenStill(then),
         () => {
           placing.counted();
-          // Whole: the list's Marks have their pages now.
-          if (counted.whole) of.changed();
+          // A chapter more counted: its marks and matches have their places now.
+          if (path) of.counted(path);
         },
       );
     },

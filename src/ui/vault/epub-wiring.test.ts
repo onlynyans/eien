@@ -312,8 +312,8 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
   });
 
   // None until then is ../epub/book-place.test.ts's: here the count runs on its own time.
-  it('have their steady pages once a book with no page-list is counted, rising through the book', async () => {
-    // The sample's chapters thirty times over: a book of several steady pages, not one.
+  it('say how far through the book, with no page-list, once their chapters are counted, rising through it (#67)', async () => {
+    // The sample's chapters thirty times over: long enough that a share is more than a few words.
     const long = fixtureEpubs({
       ...SAMPLE_SOURCES,
       chapters: SAMPLE_SOURCES.chapters.map((paras) =>
@@ -340,9 +340,11 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     await vi.waitFor(() => expect(pages().every((page) => page !== null)).toBe(true), {
       timeout: 5000,
     });
-    const [first, last] = pages().map(Number);
-    expect(first).toBe(1);
-    expect(last).toBeGreaterThan(first as number);
+    const [first, last] = pages();
+    expect(first).toMatch(/^\d+%$/u);
+    // Past its chapter's end, it stands at that chapter's end: the last chapter's, the book's.
+    expect(last).toBe('100%');
+    expect(Number.parseInt(first ?? '', 10)).toBeLessThan(100);
   });
 });
 

@@ -22,6 +22,10 @@ export interface Spot {
   readonly key: string;
 }
 
+/** Whether `page` holds the chapter's words (its opening or one of its pages), so has a number. */
+export const holdsWords = (page: PageShown | undefined): page is PageShown =>
+  page?.role === 'text' || page?.role === 'opening';
+
 /** Whether `sight` is Eien's front matter alone: none of the book's words to count, mark or name. */
 export const allFront = (sight: readonly PageShown[]): boolean =>
   sight.length > 0 && sight.every((page) => page.role === 'front');

@@ -63,8 +63,8 @@ test.describe('a chapter a sheet', () => {
     await shelfEpub(page, 'Pride and Prejudice').click();
     await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
     const colophon = page.locator('.colophon');
-    // The chapter's own figure, whole: "0%" is in "100%" too.
-    const chapterFigure = colophon.locator('.colophon__through').first();
+    // The chapter's own figure, in the page's place scrolling (#67), whole: "0%" is in "100%" too.
+    const chapterFigure = colophon.locator('.colophon__page');
     await expect(chapterFigure).toHaveText('0% of the chapter');
     await expect(colophon).toContainText(/\d+% of the book/u);
     const turns = leaf(page).getByRole('navigation', { name: 'Chapters' });

@@ -99,8 +99,11 @@ describe('a bookmark on a spread', () => {
 });
 
 describe('a spread’s pages in the colophon', () => {
-  /** A book's place over a page whose sight is `sight`, its count steady pages of 6,000 characters. */
-  function placed(sight: readonly PageShown[]) {
+  /**
+   * A book's place over a page in pages whose sight is `sight`, `at` the
+   * chapter's own page first in it, of four; its count `print`'s pages where given.
+   */
+  function placed(sight: readonly PageShown[], at = 0, print: readonly unknown[] = []) {
     const foot = new BookFoot(
       () => {},
       () => {},
@@ -112,11 +115,11 @@ describe('a spread’s pages in the colophon', () => {
         heads,
         element: document.createElement('div'),
         chapter: document.createElement('div'),
-        sheet: { sight },
+        sheet: { sight, paged: true, page: { at, of: 4, per: 2 } },
       } as unknown as EpubPage,
       epub: () => ({ title: 'Book', spine: [{ path: CHAPTER }], contents: [] }) as unknown as Epub,
       spine: () => 0,
-      count: () => ({ lengths: [6000], print: [] }) as unknown as BookCount,
+      count: () => ({ lengths: [6000], print }) as unknown as BookCount,
       marks: () => [],
       goTo: () => {},
     });
@@ -124,17 +127,29 @@ describe('a spread’s pages in the colophon', () => {
     return { place, said, heads };
   }
 
-  it('says both its pages, or one where both begin on it', () => {
-    const two = placed(SPREAD);
+  it('says both its pages, the chapter’s own as laid out (#67)', () => {
+    const two = placed(SPREAD, 2);
     two.place.inSight(1000, 2200);
-    expect(two.said()).toBe('pages 1–2 of 4');
-    expect(two.heads.folio.textContent).toBe('12');
-    const one = placed([
-      { role: 'text', from: 100 },
-      { role: 'text', from: 900 },
-    ]);
+    expect(two.said()).toBe('pages 3–4 of 4');
+    expect(two.heads.folio.textContent).toBe('34');
+  });
+
+  it('says one printed page where both begin on it, its folio once', () => {
+    const print = [
+      { label: '7', spine: 0, offset: 0 },
+      { label: '8', spine: 0, offset: 2000 },
+    ];
+    const one = placed(
+      [
+        { role: 'text', from: 100 },
+        { role: 'text', from: 900 },
+      ],
+      0,
+      print,
+    );
     one.place.inSight(100, 1400);
-    expect(one.said()).toBe('page 1 of 4');
+    expect(one.said()).toBe('page 7 of 8');
+    expect(one.heads.folio.textContent).toBe('7');
   });
 
   it('says no page on the front matter, and numbers none of it', () => {
@@ -201,7 +216,7 @@ describe('the imprint’s figures', () => {
         heads: new RunningHeads(),
         element: document.createElement('div'),
         chapter,
-        sheet: { sight },
+        sheet: { sight, paged: true, page: { at: 0, of: 4, per: 2 } },
       } as unknown as EpubPage,
       epub: () => epub,
       spine: () => 0,
@@ -210,19 +225,24 @@ describe('the imprint’s figures', () => {
       goTo: () => {},
     });
     const length = () => chapter.querySelector('[data-imprint="length"]')?.textContent;
-    const counted = () => {
-      count = { lengths: [6000, 3000], print: [] } as unknown as BookCount;
+    /** Counted, a printed edition's pages in it where `print`. */
+    const counted = (print = false) => {
+      const pages = print ? [{ label: '212', spine: 1, offset: 0 }] : [];
+      count = { lengths: [6000, 3000], print: pages } as unknown as BookCount;
       place.counted();
     };
     return { place, length, counted };
   }
 
-  it('says the contents’ rows, then the pages once the book is counted', () => {
+  it('says the contents’ rows, and a printed edition’s pages (#67)', () => {
     const front = imprinted(FRONT);
     front.place.inSight(0, 0);
     expect(front.length()).toBe('3 chapters.');
+    // A book with no page-list has no pages of its own to count: a chapter's are laid out, not kept.
     front.counted();
-    expect(front.length()).toBe('3 chapters, 6 pages.');
+    expect(front.length()).toBe('3 chapters.');
+    front.counted(true);
+    expect(front.length()).toBe('3 chapters, 212 pages.');
   });
 
   it('is left alone while the book’s own pages are in sight', () => {

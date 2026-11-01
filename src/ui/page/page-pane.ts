@@ -135,9 +135,19 @@ export class PagePane {
    * (../chrome/splits.ts). In the colophon, its tags first and the counters
    * between, in the order a single page always had: the active note's, or
    * the first page's with the second's at its own foot; or each at its own
-   * page's foot, the colophon keeping the book's figures and today's.
+   * page's foot, the colophon keeping the book's figures and today's
+   * (today's set aside for a page no words are written on, a book's).
    */
   #placeFigures(pages: readonly PaneLeaf[], where: SplitSpec['figures']): void {
+    // The page whose figures the colophon holds: the active one's, or a companion's first page's.
+    const { foot } = where === 'second' ? (pages[0] ?? this.#active) : this.#active;
+    // Today's tally beside a page words are written on: that page's, or with each page's figures
+    // at its own foot, the window's for any shown (a note beside a book keeps it).
+    const tallied = (page: PaneLeaf) => page.foot.tally !== false;
+    this.#counters.toggleAttribute(
+      'data-untallied',
+      where === 'pages' ? !pages.some(tallied) : foot.tally === false,
+    );
     const onFoot = where === 'pages' ? pages : where === 'second' ? pages.slice(1) : [];
     for (const page of pages) {
       const { figures, trail } = page.foot;
@@ -153,7 +163,6 @@ export class PagePane {
       );
       return;
     }
-    const { foot } = where === 'second' ? (pages[0] ?? this.#active) : this.#active;
     this.#colophon.replaceChildren(
       foot.lead,
       ...foot.figures,

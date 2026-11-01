@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { handEpub, nav, opf, XHTML, page as xhtml } from '../support/epub-parts';
 import { longBook } from '../support/long-book';
+import { markedAtEnd } from '../support/marked-book';
 import { ALONE, clickMenu, expect, readQuietly, test, type VaultFiles } from './launch';
 
 /** The budget for anything a writer does: no task holds the window longer than this. */
@@ -352,7 +353,8 @@ test.describe('a long chapter', () => {
           timeout: 10_000,
         })
         .toBe(1);
-      await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
+      // Where in the chapter, scrolling (#67), matched whole: "10% of the chapter" holds "0% of …".
+      await expect(page.locator('.colophon .colophon__page').first()).not.toHaveText(
         '0% of the chapter',
       );
       expect(await time.longest(), 'scrolled and kept').toBeLessThan(STALL);
@@ -393,9 +395,12 @@ test.describe('fifty turns in a long chapter', () => {
           // Each turn's motion to its end, as a reader reading at its pace would leave it.
           await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
         }
-        // The chapter's own figure, matched whole: "10% of the chapter" holds "0% of the chapter".
-        await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
-          '0% of the chapter',
+        // The chapter's own page (#67): on from the first, a page a turn.
+        await expect(page.locator('.colophon .colophon__page').first()).toHaveText(
+          /^page \d+ of \d+$/u,
+        );
+        await expect(page.locator('.colophon .colophon__page').first()).not.toHaveText(
+          /^page 1 of/u,
         );
         expect(await time.longest(), `fifty turns (${turn})`).toBeLessThan(STALL);
       });
@@ -433,8 +438,11 @@ test.describe('fifty turns on a spread', () => {
         await page.keyboard.press('ArrowRight');
         await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
       }
-      await expect(page.locator('.colophon .colophon__through').first()).not.toHaveText(
-        '0% of the chapter',
+      await expect(page.locator('.colophon .colophon__page').first()).toHaveText(
+        /^pages? \d+(–\d+)? of \d+$/u,
+      );
+      await expect(page.locator('.colophon .colophon__page').first()).not.toHaveText(
+        /^pages 1–2 of/u,
       );
       expect(await time.longest(), 'fifty turns on a spread').toBeLessThan(STALL);
       await time.mark();
@@ -449,23 +457,23 @@ test.describe('fifty turns on a spread', () => {
   );
 });
 
-/** A book of about 3,000 steady pages (#40, Phase 4), and one chapter far longer than the rest, never drawn. */
+/** A book of sixty long chapters (#40, Phase 4), and one far longer than the rest at its end, never drawn. */
 const COUNTED_BOOK = longBook({ chapters: 60, paragraphs: 600, large: 4000 });
 
 /**
  * A long book counted for its page numbers (#40, Phase 4): every chapter read
  * and counted in the background, one a task and only while no page turns, as
  * the pages turn, fifty of them. No long task over the same 200 ms, the large
- * chapter's included; then the steady pages said. Measured: no long task (none
+ * chapter's included; then its last chapter's mark named. Measured: no long task (none
  * over 50 ms); the longest 91 ms with the CPU four times slower (SLOW=4).
  */
 test.describe('a long book counted while its pages turn', () => {
   test.use({
-    vaultFiles: { 'Novels/Long.epub': COUNTED_BOOK },
+    vaultFiles: { 'Novels/Long.epub': COUNTED_BOOK, ...markedAtEnd(COUNTED_BOOK, 'c60.xhtml') },
     deviceFile: { settings: { 'epub.view': 'pages', 'epub.turn': 'curl', 'epub.turnSpeed': '1' } },
   });
 
-  test('counts it without a stall, then numbers its pages', ALONE, async ({ page }) => {
+  test('counts it without a stall, then names its last chapter’s mark', ALONE, async ({ page }) => {
     test.setTimeout(180_000);
     const time = await stalls(page);
     await time.mark();
@@ -476,9 +484,9 @@ test.describe('a long book counted while its pages turn', () => {
       await page.keyboard.press('ArrowRight');
       await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
     }
-    await expect(page.locator('.colophon__page')).toHaveText(/^page \d+ of 3,\d{3}$/u, {
-      timeout: 60_000,
-    });
+    // The whole book counted: the mark in its last chapter has its place.
+    await page.getByRole('button', { name: /^Marks \d+$/u }).click();
+    await expect(page.locator('.mark-row__page')).toHaveText(/^\d+%$/u, { timeout: 60_000 });
     expect(await time.longest(), 'a long book counted, fifty turns').toBeLessThan(STALL);
   });
 });

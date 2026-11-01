@@ -1,12 +1,13 @@
-// A book's page numbers (#40, Phase 4): the printed edition's where the
-// book has a page-list, at once; else steady pages of 1,500 characters, once
-// the book is counted, the same across a restart and a new width.
+// A book's page numbers (#40, Phase 4; #67): the printed edition's where
+// the book has a page-list, at once; else, in Pages, the chapter's own pages
+// as laid out, a page a turn and the folios the same number, one page or a
+// spread's two; scrolling, how far through the chapter.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { longBook } from '../support/long-book';
-import { closeApp, expect, launchApp, ROOT, test } from './launch';
+import { expect, ROOT, test } from './launch';
 
 const epub = (name: string) =>
   new Uint8Array(readFileSync(join(ROOT, 'tests/fixtures/epub', name)));
@@ -36,29 +37,19 @@ test.describe('a book’s page numbers', () => {
     await expect(pageFigure(page)).toHaveText('page 2 of 5');
   });
 
-  test('are steady ones otherwise, the same across a restart and a new width', async ({
+  test('say how far through the chapter otherwise, scrolling, and through the book', async ({
     page,
-    app,
-    vault,
-    userData,
   }) => {
-    if (!vault) throw new Error('no vault');
     await shelfEpub(page, 'Long').click();
     await page.locator('.contents-row').nth(30).click();
     await expect(page.locator('.epub-chapter h1')).toHaveText('Chapter 31');
-    // Thirty chapters of 200 paragraphs before it: page 529 or so of 1,056.
-    await expect(pageFigure(page)).toHaveText(/^page \d{3} of 1,0\d\d$/u, { timeout: 30_000 });
-    const said = await pageFigure(page).textContent();
-    await page.setViewportSize({ width: 1100, height: 700 });
-    await expect(pageFigure(page)).toHaveText(said ?? '');
-    await closeApp(app);
-    const again = await launchApp(userData, vault);
-    const next = await again.firstWindow();
-    await next.setViewportSize({ width: 1600, height: 900 });
-    await shelfEpub(next, 'Long').click();
-    await expect(next.locator('.epub-chapter h1')).toHaveText('Chapter 31');
-    await expect(pageFigure(next)).toHaveText(said ?? '', { timeout: 30_000 });
-    await closeApp(again);
+    await expect(pageFigure(page)).toHaveText('0% of the chapter');
+    // The book's figure, worded, and no other figure of the chapter's.
+    await expect(page.locator('.colophon .colophon__through')).toHaveCount(1);
+    await expect(page.locator('.colophon .colophon__through')).toHaveText(/^\d+% of the book$/u);
+    await page.locator('.page__leaf--epub .page__scroll').focus();
+    await page.keyboard.press('End');
+    await expect(pageFigure(page)).toHaveText('100% of the chapter');
   });
 });
 
@@ -88,28 +79,69 @@ test.describe('a book’s page number beside a note, in Facing pages', () => {
   });
 });
 
-test.describe('a book’s steady page in Pages, motion reduced', () => {
+/** The folios' words on the book's own sheet, the verso's then the recto's (one page: its number second). */
+const folios = (page: Page) =>
+  page
+    .locator('.page__leaf--epub .epub-sheet:not([aria-hidden]) .epub-folios__item')
+    .allTextContents();
+
+test.describe('a book’s own pages in Pages, motion reduced (#67)', () => {
   test.use({
     vaultFiles: { 'Novels/Long.epub': longBook({ chapters: 3, paragraphs: 200 }) },
-    deviceFile: { settings: { 'epub.view': 'pages' } },
+    deviceFile: { settings: { 'epub.view': 'pages', 'epub.landscape': 'one' } },
   });
 
-  test('follows each turn, only rising', async ({ page }) => {
+  test('are the chapter’s, one a turn, the folio the same, and start again in the next', async ({
+    page,
+  }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 1600, height: 900 });
     await shelfEpub(page, 'Long').click();
-    await expect(pageFigure(page)).toHaveText(/^page 1 of \d+$/u, { timeout: 30_000 });
-    const said = async () => Number((await pageFigure(page).textContent())?.match(/\d+/u)?.[0]);
+    await expect(pageFigure(page)).toHaveText(/^page 1 of \d+$/u);
+    const pages = Number((await pageFigure(page).textContent())?.match(/of (\d+)/u)?.[1]);
+    expect(pages).toBeGreaterThan(8);
+    expect(await folios(page)).toEqual(['', '1']);
     await page.locator('.page__leaf--epub .page__scroll').focus();
-    let last = 1;
-    for (let i = 0; i < 8; i++) {
+    for (let at = 2; at <= 8; at++) {
       await page.keyboard.press('ArrowRight');
-      await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
-      const now = await said();
-      expect(now).toBeGreaterThanOrEqual(last);
-      last = now;
+      await expect(pageFigure(page)).toHaveText(`page ${at} of ${pages}`);
+      expect(await folios(page)).toEqual(['', String(at)]);
     }
-    // Eight pages turned hold more than one steady page's 1,500 characters.
-    expect(last).toBeGreaterThan(1);
+    await page.keyboard.press('End');
+    await expect(pageFigure(page)).toHaveText(`page ${pages} of ${pages}`);
+    // On into the next chapter: its own first page.
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.epub-sheet:not([aria-hidden]) .epub-chapter h1')).toHaveText(
+      'Chapter 2',
+    );
+    await expect(pageFigure(page)).toHaveText(/^page 1 of \d+$/u);
+  });
+});
+
+test.describe('a spread’s own pages in Pages, motion reduced (#67)', () => {
+  test.use({
+    vaultFiles: { 'Novels/Long.epub': longBook({ chapters: 3, paragraphs: 200 }) },
+    deviceFile: { settings: { 'epub.view': 'pages', 'epub.landscape': 'two' } },
+  });
+
+  test('say both of its pages, two a turn, each folio its own', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await shelfEpub(page, 'Long').click();
+    await expect(page.locator('.page__leaf--epub .epub__pages')).toHaveAttribute('data-spread', '');
+    await expect(pageFigure(page)).toHaveText(/^pages 1–2 of \d+$/u);
+    const pages = Number((await pageFigure(page).textContent())?.match(/of (\d+)/u)?.[1]);
+    expect(await folios(page)).toEqual(['1', '2']);
+    await page.locator('.page__leaf--epub .page__scroll').focus();
+    for (let at = 3; at <= 7; at += 2) {
+      await page.keyboard.press('ArrowRight');
+      await expect(pageFigure(page)).toHaveText(`pages ${at}–${at + 1} of ${pages}`);
+      expect(await folios(page)).toEqual([String(at), String(at + 1)]);
+    }
+    // The last spread: both its pages, or its last page alone where the chapter's pages are odd.
+    await page.keyboard.press('End');
+    await expect(pageFigure(page)).toHaveText(
+      pages % 2 === 0 ? `pages ${pages - 1}–${pages} of ${pages}` : `page ${pages} of ${pages}`,
+    );
   });
 });

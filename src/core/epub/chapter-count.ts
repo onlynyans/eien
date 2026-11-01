@@ -1,6 +1,6 @@
 // A chapter's words counted as a place counts them (#40, Phase 4), from its
 // cleaned nodes by the one walk of them (./chapter-words.ts): how long it
-// is, for steady page numbers, and where the printed edition's pages begin
+// is, for a place's share of the book (#67), and where the printed edition's pages begin
 // in it.
 
 import type { CleanNode } from '../html';

@@ -31,6 +31,8 @@ export interface EpubSideOf extends BookOpenOf {
   looks(): void;
   /** Another book or chapter is on the page: the list and the shelf mark it. */
   changed(): void;
+  /** More of the book at `path` counted (Phase 4, #67): the rows naming its places say them. */
+  counted(path: string): void;
   /**
    * `quote` (Markdown) put in the note beside this page (Phase 2c): the
    * note's name; or why not, in words.
@@ -68,7 +70,7 @@ export interface EpubSide extends Side {
   readonly find: BookFind;
   /** `then` once no page of it turns: when a search may take a task. */
   readonly whenStill: Still;
-  /** The page `offset` into spine item `spine` is on, as its label says it (a Marks row's); null for none known. */
+  /** Where `offset` into spine item `spine` is, as a Marks or Found row says it: its printed page, else "21%"; null for none known. */
   labelAt(spine: number, offset: number): string | null;
   /** The words chosen in its chapter (or, `kept`, last chosen: a phone's ⋯) quoted in the note beside (Phase 2c), or why not, said. */
   quote(kept?: boolean): Promise<void>;

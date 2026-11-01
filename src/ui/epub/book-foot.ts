@@ -1,13 +1,14 @@
 // A book's own items in the colophon (#40; ../page/page-leaf.ts, LeafFoot),
 // as a note's are (../page/note-foot.ts): Back, after a link was followed
 // (Phase 2b), first, so where the split gives each page its own foot it goes
-// there with them; which chapter of how many; the page (Phase 4: the printed
-// edition's, else a steady one); how far through the chapter and the book
-// (Phase 2); and a line of news for a while (Quote's, Phase 2c), with a word
-// button to undo what it says, as long as it shows (Put back, a highlight
-// taken off, Phase 5a).
+// there with them; which chapter of how many; where in the chapter (#67:
+// the printed edition's page, else the chapter's page in Pages, else how far
+// through it scrolling); how far through the book (Phase 2); and a line of
+// news for a while (Quote's, Phase 2c), with a word button to undo what it
+// says, as long as it shows (Put back, a highlight taken off, Phase 5a).
+// Today's tally isn't a book's (#66): no words are written here.
 
-import { percent } from '../../core/epub';
+import { bookWords } from '../../core/epub';
 import { h } from '../dom';
 import type { LeafFoot } from '../page/page-leaf';
 import { Notice } from '../vault/notice';
@@ -18,7 +19,13 @@ export interface Undo {
   run(): void;
 }
 
+/** Only what changed: told each scroll frame, and setting it again restyles the colophon. */
+const put = (element: HTMLElement, words: string) => {
+  if (element.textContent !== words) element.textContent = words;
+};
+
 export class BookFoot implements LeafFoot {
+  readonly tally = false;
   readonly lead = h('span');
   readonly trail = h('span');
   readonly said = h('span', { class: 'colophon__said', attrs: { role: 'status' } });
@@ -35,7 +42,6 @@ export class BookFoot implements LeafFoot {
   readonly #highlighted = h('span', { class: 'colophon__heard count' });
   /** What the news offers to undo, while it shows. */
   readonly #undo: HTMLButtonElement;
-  readonly #inChapter = h('span', { class: 'colophon__through count' });
   readonly #inBook = h('span', { class: 'colophon__through count' });
   readonly #saying = new Notice(() => {
     this.said.textContent = this.#saying.text ?? '';
@@ -74,7 +80,6 @@ export class BookFoot implements LeafFoot {
       this.#page,
       this.#bookmarked,
       this.#highlighted,
-      this.#inChapter,
       this.#inBook,
       // Last, beside the news it undoes.
       this.#undo,
@@ -91,9 +96,9 @@ export class BookFoot implements LeafFoot {
     this.#at.textContent = words;
   }
 
-  /** The page the place is on, as said ("page 212 of 2,450"), or nothing: none known yet. */
+  /** Where in the chapter, as said ("page 3 of 12", "page 212 of 2,450", "40% of the chapter"), or nothing: none known yet. */
   page(words: string): void {
-    this.#page.textContent = words;
+    put(this.#page, words);
   }
 
   /** Whether the page in sight is bookmarked (Phase 4b). */
@@ -106,10 +111,9 @@ export class BookFoot implements LeafFoot {
     this.#highlighted.textContent = on ? 'highlighted' : '';
   }
 
-  /** How far through the chapter and the book, 0 to 1 each. */
-  through(chapter: number, book: number): void {
-    this.#inChapter.textContent = `${percent(chapter)} of the chapter`;
-    this.#inBook.textContent = `${percent(book)} of the book`;
+  /** How far through the book, 0 to 1. */
+  through(book: number): void {
+    put(this.#inBook, bookWords(book));
   }
 
   /** Back where a link was followed from, named (its chapter), or none. */
@@ -135,14 +139,7 @@ export class BookFoot implements LeafFoot {
 
   /** No chapter: nothing said of one. */
   clear(): void {
-    for (const figure of [
-      this.#at,
-      this.#page,
-      this.#bookmarked,
-      this.#highlighted,
-      this.#inChapter,
-      this.#inBook,
-    ])
+    for (const figure of [this.#at, this.#page, this.#bookmarked, this.#highlighted, this.#inBook])
       figure.textContent = '';
     this.backTo(null);
   }
