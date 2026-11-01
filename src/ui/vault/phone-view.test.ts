@@ -9,7 +9,7 @@ import { type PhoneView, phoneView } from './phone-view';
 let view: PhoneView | undefined;
 
 /** A vault's phone view in `room`, its active page a book whose step back is `back`. */
-function make(room: Room, back = vi.fn(() => true)) {
+function make(room: Room, back = vi.fn(() => true), outline = { open: false, toggle: vi.fn() }) {
   const values: SettingValues = { ...DEFAULT_SETTINGS, 'appearance.room': room };
   const shell = document.createElement('div');
   const page = { kind: 'epub', go: () => {}, back, page: { focus: vi.fn() }, path: 'Book.epub' };
@@ -23,7 +23,7 @@ function make(room: Room, back = vi.fn(() => true)) {
     sidebar: { focusTree: vi.fn() } as never,
     pages: { active: page, activeNote: null, other: null, split: false } as never,
     has: () => true,
-    parts: () => ({ outline: { open: false } }) as never,
+    parts: () => ({ outline }) as never,
     changed: vi.fn(),
   });
   return { view, back };
@@ -86,5 +86,24 @@ describe('the system’s back on the vault (#70)', () => {
     expect(esc).not.toHaveBeenCalled();
     expect(view.back(false)).toBe(true);
     expect(esc).toHaveBeenCalledOnce();
+  });
+
+  it('with two pages, puts the notes over the book away before the book’s step back', () => {
+    const { view, back } = make('pages');
+    view.stack.show('list');
+    expect(view.back(false)).toBe(true);
+    expect(view.stack.shown).toBe('page');
+    expect(back).not.toHaveBeenCalled();
+    expect(view.back(false)).toBe(true);
+    expect(back).toHaveBeenCalledOnce();
+  });
+
+  it('closes what lies over the page before the book’s step back', () => {
+    const outline = { open: true, toggle: vi.fn() };
+    const { view, back } = make('one', undefined, outline);
+    view.stack.show('page');
+    expect(view.back(false)).toBe(true);
+    expect(outline.toggle).toHaveBeenCalledOnce();
+    expect(back).not.toHaveBeenCalled();
   });
 });

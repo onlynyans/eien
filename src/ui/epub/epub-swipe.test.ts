@@ -11,8 +11,8 @@ import { sideWith } from './test-side';
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
 const book = () => ({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
 
-/** What `animate` was asked, and what it cancelled. */
-function animated() {
+/** What `animate` was asked, and what it cancelled; each animation finishes when `finished` resolves. */
+function animated(finished: () => Promise<void> = () => new Promise(() => {})) {
   const asked: { keyframes: Keyframe[]; options: KeyframeAnimationOptions }[] = [];
   const cancelled = vi.fn();
   vi.spyOn(Element.prototype, 'animate').mockImplementation((keyframes, options) => {
@@ -20,7 +20,7 @@ function animated() {
       keyframes: keyframes as Keyframe[],
       options: options as KeyframeAnimationOptions,
     });
-    return { finished: new Promise(() => {}), cancel: cancelled } as unknown as Animation;
+    return { finished: finished(), cancel: cancelled } as unknown as Animation;
   });
   return { asked, cancelled };
 }
@@ -134,5 +134,51 @@ describe('a swipe across a book in Scroll', () => {
     swipe(side, -150);
     await new Promise((done) => setTimeout(done, 20));
     expect(side.spine).toBe(1);
+  });
+
+  it('lets the words go once they’ve stepped in, so nothing holds them there', async () => {
+    let land = () => {};
+    const { asked, cancelled } = animated(
+      () =>
+        new Promise<void>((done) => {
+          land = done;
+        }),
+    );
+    const side = await scrolling();
+    swipe(side, -150);
+    await vi.waitFor(() => expect(asked).toHaveLength(1));
+    expect(cancelled).not.toHaveBeenCalled();
+    land();
+    await vi.waitFor(() => expect(cancelled).toHaveBeenCalledOnce());
+  });
+
+  it('steps in the chapter before from the left, pressed at the foot', async () => {
+    const { asked } = animated();
+    const side = await scrolling();
+    await side.go(2);
+    side.page.element.querySelector<HTMLButtonElement>('[data-turn="previous"]')?.click();
+    await vi.waitFor(() => expect(asked).toHaveLength(1));
+    expect(side.spine).toBe(1);
+    expect(asked[0]?.keyframes[0]?.translate).toBe('-8px 0');
+  });
+
+  it('never steps in a chapter a jump overtook on its way', async () => {
+    const { asked } = animated();
+    const side = await scrolling();
+    swipe(side, -150);
+    await side.goTo(3, 0);
+    await new Promise((done) => setTimeout(done, 20));
+    expect(side.spine).toBe(3);
+    expect(asked).toHaveLength(0);
+  });
+
+  it('never steps in a chapter pressed at the foot in pages: the turn there is its own', async () => {
+    const { asked } = animated();
+    const side = await scrolling();
+    side.follow({ ...DEFAULT_SETTINGS, 'epub.view': 'pages' });
+    side.page.element.querySelector<HTMLButtonElement>('[data-turn="next"]')?.click();
+    await vi.waitFor(() => expect(side.spine).toBe(2));
+    await new Promise((done) => setTimeout(done, 20));
+    expect(asked.filter((each) => each.keyframes[0]?.opacity === 0)).toEqual([]);
   });
 });

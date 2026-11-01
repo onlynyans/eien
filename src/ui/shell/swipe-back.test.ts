@@ -45,8 +45,12 @@ describe('two fingers swiped back across the window', () => {
     expect(back).not.toHaveBeenCalled();
   });
 
-  it('never for a pinch, or a mouse’s wheel by lines', () => {
+  it('never for a pinch', () => {
     across(-20, page, { ctrlKey: true });
+    expect(back).not.toHaveBeenCalled();
+  });
+
+  it('never for a mouse’s wheel by lines', () => {
     across(-20, page, { deltaMode: 1 });
     expect(back).not.toHaveBeenCalled();
   });

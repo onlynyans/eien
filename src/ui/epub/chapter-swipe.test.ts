@@ -105,4 +105,62 @@ describe('a finger across a book’s page in Scroll (#71)', () => {
     fire('touchend', [], [touch(150, 200)]);
     expect(turn).not.toHaveBeenCalled();
   });
+
+  it('never turns with words chosen as the finger came down', () => {
+    const words = sheet.querySelector('p') as HTMLElement;
+    document.getSelection()?.selectAllChildren(words);
+    fire('touchstart', [touch(300, 200)]);
+    document.getSelection()?.removeAllRanges();
+    fire('touchmove', [touch(150, 200)]);
+    fire('touchend', [], [touch(150, 200)]);
+    expect(turn).not.toHaveBeenCalled();
+  });
+
+  it('never turns with the page pinched larger: the finger moves the view', () => {
+    const scaled = (scale: number) =>
+      Object.defineProperty(window, 'visualViewport', { configurable: true, value: { scale } });
+    try {
+      scaled(2);
+      swipe([300, 200], [150, 200]);
+      scaled(1);
+      swipe([300, 200], [150, 200]);
+    } finally {
+      Reflect.deleteProperty(window, 'visualViewport');
+    }
+    expect(turn.mock.calls).toEqual([[1]]);
+  });
+
+  it('never turns once a second finger joined on the way', () => {
+    fire('touchstart', [touch(300, 200)]);
+    fire('touchmove', [touch(200, 200), touch(320, 260, 2)]);
+    fire('touchend', [], [touch(150, 200)]);
+    expect(turn).not.toHaveBeenCalled();
+  });
+
+  it('turns for the finger that came down, never another lifting', () => {
+    fire('touchstart', [touch(300, 200)]);
+    fire('touchend', [], [touch(150, 200, 2)]);
+    expect(turn).not.toHaveBeenCalled();
+  });
+
+  it('never turns for a swipe begun in pages and lifted in Scroll', () => {
+    paged = true;
+    fire('touchstart', [touch(300, 200)]);
+    paged = false;
+    fire('touchend', [], [touch(150, 200)]);
+    expect(turn).not.toHaveBeenCalled();
+  });
+
+  it('never turns for a swipe begun in Scroll and lifted in pages', () => {
+    fire('touchstart', [touch(300, 200)]);
+    paged = true;
+    fire('touchend', [], [touch(150, 200)]);
+    expect(turn).not.toHaveBeenCalled();
+  });
+
+  it('stops listening when stopped', () => {
+    stop();
+    swipe([300, 200], [150, 200]);
+    expect(turn).not.toHaveBeenCalled();
+  });
 });
