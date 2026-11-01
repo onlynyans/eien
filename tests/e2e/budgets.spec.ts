@@ -491,7 +491,10 @@ test.describe('a long book counted while its pages turn', () => {
  * the 4,000-paragraph one too, a chapter a task and never while a page turns,
  * as fifty pages turn. No long task over the same 200 ms. The field and the
  * lens are found by CSS: a role query walks every element, the thousand rows'
- * too, and was itself a long task of up to 250 ms. Measured: MEASURED.
+ * too, and was itself a long task of up to 250 ms. Measured on CI: no long task
+ * (none over 50 ms) on macOS or Linux; the longest 130 ms with the CPU four
+ * times slower (SLOW=4). Before the rows out of sight were skipped, 180 to
+ * 264 ms on macOS, 167 on Linux; 311 and 923 four times slower.
  */
 test.describe('a long book searched while its pages turn', () => {
   test.use({
