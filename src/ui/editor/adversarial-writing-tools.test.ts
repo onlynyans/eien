@@ -21,7 +21,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state';
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readSettings, SETTINGS, TOGGLES, valueProblem, withDefaults } from '../../core/config';
 import { frontMatterEnd } from '../../core/text';
 import { frontMatterHidden } from './front-matter-hidden';
@@ -247,18 +247,23 @@ describe('focus mode: what holds', () => {
     );
   });
 
-  it('a 1 MB note with no blank lines: a few milliseconds a keystroke, and a bounded paragraph', () => {
+  it('a 1 MB note with no blank lines: a keystroke looks at a bounded paragraph, not the note', () => {
     const doc = Array.from({ length: 20_000 }, (_, i) => `Line ${i} of a note with no breaks.`)
       .join('\n')
       .padEnd(1_000_000, 'x');
     const state = EditorState.create({ doc, selection: { anchor: doc.length >> 1 } });
-    // Once before the clock: a keystroke's cost is the warmed code's, not its first compile.
-    let lit = bright(state);
-    const started = performance.now();
-    for (let i = 0; i < 10; i++) lit = bright(state);
-    expect((performance.now() - started) / 10).toBeLessThan(50);
+    const lit = bright(state);
     expect(lit.length).toBeLessThanOrEqual(4001);
     expect(lit).toContain(state.doc.lineAt(doc.length >> 1).number);
+    // The work counted, not the clock: about a millisecond, but coverage's counters make it six
+    // times that, and a busy runner more (50 ms on CI's, 2026-11-01). Each line lit is looked at
+    // twice, walking to the paragraph's edge and marking it; none past them.
+    const line = vi.spyOn(state.doc, 'line');
+    const lineAt = vi.spyOn(state.doc, 'lineAt');
+    currentParagraph(state);
+    expect(line.mock.calls.length + lineAt.mock.calls.length).toBeLessThanOrEqual(
+      2 * lit.length + 4,
+    );
   });
 
   it('follows the text as it changes when the caret doesn’t move', () => {
