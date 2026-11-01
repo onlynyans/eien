@@ -141,6 +141,27 @@ describe('a book’s Found in the list', () => {
     expect(document.activeElement?.classList.contains('found-row')).toBe(true);
   });
 
+  it('marks its rows as Found’s, which lays out only those in sight (book-lenses.css), wherever they are', () => {
+    const { container } = drawn(model());
+    const rows = container.querySelector('.rows--found');
+    expect(rows?.getAttribute('aria-label')).toBe('Found in Pride and Prejudice');
+    expect(rows?.querySelectorAll(':scope > li > .found-row')).toHaveLength(1);
+    // Never the line under them, which says what the search found.
+    const more = drawn(model({ found: found({ more: true }) })).container;
+    expect(more.querySelector('.rows--found .list__empty')).toBeNull();
+    expect(more.querySelector('.rows--found + .list__empty')?.textContent).toMatch(/^More than/u);
+    // In the contents' place, with Marks on the edge, too.
+    const edge = drawn(model({ marks: null, lens: 'contents' })).container;
+    expect(edge.querySelectorAll('.rows--found .found-row')).toHaveLength(1);
+  });
+
+  it('skips no other lens’s rows, and has none to skip while nothing is found', () => {
+    for (const lens of ['contents', 'marks'] as const)
+      expect(drawn(model({ lens })).container.querySelector('.rows--found')).toBeNull();
+    const early = model({ found: found({ rows: [], done: false, searched: 0 }) });
+    expect(drawn(early).container.querySelector('.rows--found')).toBeNull();
+  });
+
   it('with Marks on the edge, draws Found’s rows in the contents’ place, with no lenses', () => {
     const { container } = drawn(model({ marks: null, lens: 'contents' }));
     expect(container.querySelector('.book-lenses')).toBeNull();

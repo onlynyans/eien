@@ -60,6 +60,18 @@ describe('SettingsStore', () => {
     expect((await vault.read(VAULT_CONFIG))?.text).toBe('{ "half": '); // never written over
   });
 
+  it('keeps Text size at 50% for the notes and a book, and refuses 40% (#72)', async () => {
+    const mine = device();
+    const settings = new SettingsStore(mine.store, () => null);
+    await settings.set('appearance.textSize', 50);
+    await settings.set('epub.appearance.textSize', 50);
+    await expect(settings.set('appearance.textSize', 40)).rejects.toThrow(TypeError);
+    // Read back as a phone or another window would, from the device's file alone.
+    const again = await new SettingsStore(device(mine.data()).store, () => null).all();
+    expect(again['appearance.textSize']).toBe(50);
+    expect(again['epub.appearance.textSize']).toBe(50);
+  });
+
   it('reads a bad file as defaults, with a warning, and never stops', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const vault = new MemoryStorage();
