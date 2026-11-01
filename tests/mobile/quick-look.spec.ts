@@ -142,6 +142,29 @@ test.describe('Wide screen', () => {
     });
   }
 
+  // Settings measures the notes' page as the quick look does (#62): its Page width under Look too.
+  test('Settings leaves out Page width beside a Fold’s note’s page in Panes, and offers it once there’s room', async ({
+    page,
+  }) => {
+    const settings = page.getByRole('dialog', { name: 'Settings' });
+    const pageTab = async () => {
+      await openLook(page);
+      await look(page).getByRole('button', { name: 'All settings' }).click();
+      await settings.getByRole('button', { name: 'Page', exact: true }).click();
+      await expect(settings.locator('[data-setting="appearance.frame"]')).toBeVisible();
+    };
+    await page.setViewportSize({ width: 690, height: 829 }); // a Galaxy Z Fold 5 opened upright
+    await onPage(page, 'band', 'panes');
+    await pageTab();
+    await expect(settings.locator('[data-setting="page.width"]')).toBeHidden();
+    await settings.getByRole('button', { name: 'Close settings' }).click();
+    // A wide tablet's page has room round it: asked again as Settings opens.
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await expect(page.locator('.page__bar [data-command="look"]')).toBeVisible();
+    await pageTab();
+    await expect(settings.locator('[data-setting="page.width"]')).toBeVisible();
+  });
+
   test('One at a time is the phone’s: the sheet', async ({ page }) => {
     await page.setViewportSize(TABLET);
     await onPage(page, 'band', 'one');
