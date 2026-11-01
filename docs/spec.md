@@ -533,7 +533,10 @@ Three panes, each collapsible, with a two-pane option in settings:
      and View → Scroll (greyed with a note in front, as a note's views are
      with a book). In pages the sheet fills the pane and the chapter is
      laid in pages as tall as the whole lines it holds, so no line is cut;
-     its paragraphs are set as a book's, whatever the scroll style. The
+     its paragraphs are set as a book's, whatever the scroll style. A
+     picture fits its page whole; a chapter that's only a picture is one
+     page, the empty paragraphs and line breaks a publisher sets round it
+     left out (#59). The
      arrow keys, Space and Shift+Space, Page Up and Page Down turn a page;
      Home and End go to the chapter's ends; past a chapter's last page
      comes the next chapter's first, and back, the last page of the one
