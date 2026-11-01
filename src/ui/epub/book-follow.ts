@@ -83,8 +83,11 @@ export function bookFollow(of: BookFollowOf): BookFollow {
     return noteIn(read.words, name)?.cloneNode(true) ?? null;
   }
 
-  /** The place `name` in the spine item `index`, gone to, the place it was left at one step back; whether it was. */
-  async function goTo(index: number, name: string): Promise<boolean> {
+  /**
+   * The place `name` in the spine item `index`, gone to, the place it was left at one step back
+   * (or, `kept`, the step back there was already); whether it was.
+   */
+  async function goTo(index: number, name: string, kept = false): Promise<boolean> {
     const mine = ++asked;
     const from = of.place();
     const at = () => (name ? (page.sheet.offsetOf(name) ?? 0) : 0);
@@ -95,9 +98,9 @@ export function bookFollow(of: BookFollowOf): BookFollow {
       of.keep(page.sheet.place);
     }
     const epub = of.epub();
-    back = from;
+    back = kept && back ? back : from;
     page.foot.backTo(
-      from && epub ? (chapterTitle(epub.contents, from.spine) ?? 'the last place') : null,
+      back && epub ? (chapterTitle(epub.contents, back.spine) ?? 'the last place') : null,
     );
     return true;
   }
@@ -140,9 +143,10 @@ export function bookFollow(of: BookFollowOf): BookFollow {
 
   return {
     follow,
+    // Swipe after swipe, the place the first one left stays the step back.
     turnTo(index) {
       shut();
-      return goTo(index, '');
+      return goTo(index, '', true);
     },
     get canGoBack() {
       return back !== null;

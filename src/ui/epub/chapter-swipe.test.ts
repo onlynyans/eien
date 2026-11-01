@@ -116,16 +116,25 @@ describe('a finger across a book’s page in Scroll (#71)', () => {
     expect(turn).not.toHaveBeenCalled();
   });
 
-  it('never turns with the page pinched larger: the finger moves the view', () => {
-    const scaled = (scale: number) =>
-      Object.defineProperty(window, 'visualViewport', { configurable: true, value: { scale } });
+  it('never turns with the page pinched larger, whatever Interface zoom scales it to', () => {
+    // The page laid out 400 wide; Interface zoom at 110% scales the view 1.1 without pinching it.
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 400,
+    });
+    const view = (width: number, scale: number) =>
+      Object.defineProperty(window, 'visualViewport', {
+        configurable: true,
+        value: { width, scale },
+      });
     try {
-      scaled(2);
+      view(200, 2.2); // pinched to twice the zoom: half the page in sight
       swipe([300, 200], [150, 200]);
-      scaled(1);
+      view(400, 1.1); // Interface zoom alone
       swipe([300, 200], [150, 200]);
     } finally {
       Reflect.deleteProperty(window, 'visualViewport');
+      Reflect.deleteProperty(document.documentElement, 'clientWidth');
     }
     expect(turn.mock.calls).toEqual([[1]]);
   });

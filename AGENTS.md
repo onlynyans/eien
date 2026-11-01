@@ -246,6 +246,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
 - `shell/vault-frame.ts`: the shell the sidebar, list and page pane lie in
 - `shell/panes.ts` resizes and shuts them (widths per device, `shell/pane-state.ts`); back opens the one shut nearest the page (`reopen`, #70)
 - `shell/swipe-back.ts`: a Mac trackpad's two fingers swiped back across the window (#70), the same back as the bridge's, but no Esc
+- `shell/scrolls-across.ts`: whether a gesture's element scrolls sideways itself, which a swipe then leaves alone
 - With two panes, the sidebar's tree (`sidebar/tree.ts`, its styles in `sidebar/tree.css`) lists the notes
   - `sidebar/note-row.ts`: a note's row, kept between draws, and put right in place while the rest of the tree is the same, by `sidebar/row-cache.ts`
   - a long list of notes there, and the note list once it is long, draws only the rows in sight (`shell/windowed-rows.ts`, the arithmetic in `shell/window-range.ts`; the keyboard reaches every row)

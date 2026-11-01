@@ -5,16 +5,7 @@
 // (app/electron/swipe-session.ts); three fingers come by the bridge.
 
 import { WheelSwipe } from '../../core/swipe/wheel-swipe';
-
-/** Whether `from` or a box it lies in scrolls sideways now. */
-export function scrollsAcross(from: EventTarget | null): boolean {
-  for (let at = from instanceof Element ? from : null; at; at = at.parentElement) {
-    if (at.scrollWidth <= at.clientWidth) continue;
-    const { overflowX } = getComputedStyle(at);
-    if (overflowX === 'auto' || overflowX === 'scroll') return true;
-  }
-  return false;
-}
+import { scrollsAcross } from './scrolls-across';
 
 /** `back` on two fingers swiped back across `target`; the returned function stops it. */
 export function swipeBack(target: EventTarget, back: () => void): () => void {
@@ -23,7 +14,8 @@ export function swipeBack(target: EventTarget, back: () => void): () => void {
     // A pinch is a wheel with Ctrl; a wheel by lines is a mouse's, never a trackpad's.
     if (event.ctrlKey || event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL)
       return swipe.pass(event.timeStamp);
-    if (scrollsAcross(event.target)) return swipe.pass(event.timeStamp);
+    // Only a sideways move asks the layout what's under it: a scroll down never does.
+    if (event.deltaX !== 0 && scrollsAcross(event.target)) return swipe.pass(event.timeStamp);
     if (swipe.wheel(event.deltaX, event.deltaY, event.timeStamp) === 'back') back();
   };
   target.addEventListener('wheel', wheel as EventListener, { passive: true });

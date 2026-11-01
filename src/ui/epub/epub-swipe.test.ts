@@ -70,6 +70,18 @@ describe('a swipe across a book in Scroll', () => {
     expect(side.back()).toBe(false);
   });
 
+  it('swipe after swipe, keeps the place the first one left as the step back', async () => {
+    animated();
+    const side = await scrolling();
+    swipe(side, -150);
+    await vi.waitFor(() => expect(side.spine).toBe(2));
+    swipe(side, -150);
+    await vi.waitFor(() => expect(side.spine).toBe(3));
+    expect(backWord(side)).toBe('Back to Chapter I');
+    expect(side.back()).toBe(true);
+    await vi.waitFor(() => expect(side.spine).toBe(1));
+  });
+
   it('turns back to the chapter before, and at the first nothing happens', async () => {
     animated();
     const side = await scrolling();

@@ -10,7 +10,7 @@
 // turn's own (./turn/hand-events.ts).
 
 import type { Way } from '../../core/epub';
-import { scrollsAcross } from '../shell/swipe-back';
+import { scrollsAcross } from '../shell/scrolls-across';
 import { chosenIn } from './turn/hand-events';
 import { acrossOf } from './turn/turn-hand';
 
@@ -35,8 +35,13 @@ interface Held {
   readonly top: number;
 }
 
-/** Whether the window is pinched larger than its page: a finger then moves the view. */
-const pinched = () => (window.visualViewport?.scale ?? 1) > 1.01;
+/**
+ * Whether the window is pinched larger than its page: a finger then moves the view. By the view's
+ * width against the page's, never its scale, which a phone's Interface zoom sets (../settings/viewport.ts).
+ */
+const pinched = () =>
+  (window.visualViewport?.width ?? Number.POSITIVE_INFINITY) <
+  document.documentElement.clientWidth - 1;
 
 /** Fingers across `of.target` turning the chapter; the returned function stops them. */
 export function chapterSwipe(of: ChapterSwipeOf): () => void {
