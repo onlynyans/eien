@@ -1,9 +1,10 @@
 // A book is counted a chapter at a time (#67, ../epub/book-count.ts), and a
-// Marks or Found row names its place only once its chapter is: so each
-// chapter counted draws the rows again, but only while the list shows that
-// book's Marks or Found. Its Contents name no place, and another book's rows
-// aren't this one's; drawing them then would be a task's work for nothing,
-// as many times as the book has chapters.
+// Marks or Found row names its place only once its chapter is: so a chapter
+// counted draws the rows again, but only while the list shows that book's
+// Marks or Found and a row is in that chapter. Its Contents name no place,
+// another book's rows aren't this one's, and a chapter with no row changes
+// none; drawing them then would be a task's work for nothing, as many times
+// as the book has chapters.
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
@@ -20,22 +21,47 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-/** The book at PATH opened on a page the wiring made, the list showing `shown` in `lens`; once it's all counted, how often its rows were drawn. */
-async function countedWith(shown: string | null, lens: BookLens) {
+/** The book's last chapter, counted last: its bookmark's row is named once it is. */
+const LAST = 'OEBPS/chapter-3.xhtml';
+
+/**
+ * The book at PATH opened on a page the wiring made, the list showing `shown`
+ * in `lens`, its marks `at` (on the edge: the strip's); once it's all counted,
+ * how often its rows were drawn.
+ */
+async function countedWith(
+  shown: string | null,
+  lens: BookLens,
+  marked: readonly string[] = [LAST],
+  at: 'list' | 'edge' = 'list',
+) {
   const nav = new Navigation();
   nav.contents = shown;
   nav.bookLens = lens;
   const drawRows = vi.fn();
   const pages = { active: {}, sides: [] as unknown[] };
   const { kind } = epubWiring({
-    vault: { readBytes: async () => BOOK.slice(), read: async () => null } as never,
+    vault: {
+      readBytes: async () => BOOK.slice(),
+      // The book's reading file, whatever its key: a bookmark at the start of each chapter `marked`.
+      read: async (path: string) =>
+        path.startsWith('.eien/reading/')
+          ? {
+              text: JSON.stringify({
+                version: 1,
+                bookmarks: marked.map((chapter) => ({ chapter, offset: 0, words: 'It' })),
+              }),
+              version: null,
+            }
+          : null,
+    } as never,
     state: { sizeOf: () => 1024, has: () => false },
     nav,
     tell: () => {},
     redraw: () => {},
     drawRows,
     looks: () => {},
-    marksAt: () => 'list',
+    marksAt: () => at,
     pages: () => pages as unknown as Pages,
     openChosen: async () => {},
     showPage: () => {},
@@ -53,14 +79,20 @@ async function countedWith(shown: string | null, lens: BookLens) {
 }
 
 describe('a book counted, a chapter at a time', () => {
-  it('draws the rows again as each is counted, while the list shows its Marks or its Found', async () => {
-    expect(await countedWith(PATH, 'marks')).toBeGreaterThan(0);
-    expect(await countedWith(PATH, 'found')).toBeGreaterThan(0);
+  it('draws the rows again once a chapter holding a mark is counted, while the list shows its Marks', async () => {
+    expect(await countedWith(PATH, 'marks')).toBe(1);
   });
 
   it('draws nothing while the list shows its Contents, another book, or notes', async () => {
     expect(await countedWith(PATH, 'contents')).toBe(0);
     expect(await countedWith('Novels/Other.epub', 'marks')).toBe(0);
     expect(await countedWith(null, 'marks')).toBe(0);
+  });
+
+  it('draws nothing for a chapter no row is in, nor marks the list doesn’t hold', async () => {
+    expect(await countedWith(PATH, 'marks', [])).toBe(0);
+    // On the edge, the marks are the strip's; with no search, Found has no rows to name.
+    expect(await countedWith(PATH, 'marks', [LAST], 'edge')).toBe(0);
+    expect(await countedWith(PATH, 'found')).toBe(0);
   });
 });

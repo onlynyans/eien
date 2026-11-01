@@ -35,7 +35,7 @@ describe('a book counted for its page numbers (Phase 4a)', () => {
     const { side, changed, of } = sideWith({ 'a.epub': EPUBS['plain.epub'] as Uint8Array });
     await side.open('a.epub');
     changed.mockClear();
-    await vi.waitFor(() => expect(of.counted).toHaveBeenCalledWith('a.epub'));
+    await vi.waitFor(() => expect(of.counted).toHaveBeenCalledWith('a.epub', expect.any(Number)));
     const count = of.counts.of(side.epub as Epub);
     await vi.waitFor(() => expect(count.whole).toBe(true));
     // Each chapter in the background told, the chapter drawn counted as it was drawn.

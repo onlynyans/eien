@@ -31,8 +31,8 @@ export interface EpubSideOf extends BookOpenOf {
   looks(): void;
   /** Another book or chapter is on the page: the list and the shelf mark it. */
   changed(): void;
-  /** More of the book at `path` counted (Phase 4, #67): the rows naming its places say them. */
-  counted(path: string): void;
+  /** Spine item `spine` of the book at `path` counted (Phase 4, #67): the rows naming its places say them. */
+  counted(path: string, spine: number): void;
   /**
    * `quote` (Markdown) put in the note beside this page (Phase 2c): the
    * note's name; or why not, in words.

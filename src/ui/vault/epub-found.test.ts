@@ -85,6 +85,18 @@ describe('a book’s Found', () => {
     expect(found.model(side, epub)).toBeNull();
   });
 
+  it('says which chapters it found something in, for that book alone (#67: their rows named as they’re counted)', async () => {
+    const { side, found, epub } = await opened();
+    expect(found.foundIn(epub.key, 1)).toBe(false);
+    found.sync(side, 'Bennet');
+    await vi.waitFor(() => expect(found.model(side, epub)?.done).toBe(true));
+    const spines = new Set(found.model(side, epub)?.rows.map((row) => row.spine));
+    expect(spines.size).toBeGreaterThan(0);
+    for (const spine of epub.spine.keys())
+      expect(found.foundIn(epub.key, spine)).toBe(spines.has(spine));
+    expect(found.foundIn('another book', [...spines][0] as number)).toBe(false);
+  });
+
   it('says the result once, in the book’s colophon, as the list’s line is never announced', async () => {
     const { side, found, epub } = await opened();
     found.sync(side, 'zebra crossing');
