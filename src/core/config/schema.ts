@@ -522,6 +522,8 @@ export const SETTINGS = [
     type: 'choice',
     choices: { three: 'Three', two: 'Two' },
     default: 'three',
+    // A phone's panes (a foldable opened, a tablet) start as two: the page has more of the room.
+    phoneDefault: 'two',
   },
   {
     key: 'lists.arranging',

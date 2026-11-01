@@ -5,7 +5,7 @@
 // there it's the desktop's column; One at a time is the phone's sheet.
 
 import { devices, expect, type Page, test } from '@playwright/test';
-import { catchBackButton, open, putOutside, systemBack, titles } from './outside';
+import { catchBackButton, open, putOutside, systemBack, threePanes, titles } from './outside';
 
 test.use({ ...devices['Pixel 7'] });
 test.beforeEach(({ page }) => catchBackButton(page));
@@ -17,6 +17,7 @@ const phoneControl = (page: Page) =>
 /** A note open on the phone's page, in `layout`, the room chosen. */
 async function onPage(page: Page, layout = 'band', room = 'panes'): Promise<void> {
   await open(page);
+  await threePanes(page);
   await page.evaluate(
     async ([layout, room]) => {
       await window.eien.settings.set('appearance.layout', layout as never);

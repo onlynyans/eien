@@ -400,8 +400,8 @@ describe('a book’s own look (#40)', () => {
 });
 
 describe('a phone’s defaults', () => {
-  it('are choices of their settings, and a link’s is the Bar', () => {
-    expect(PHONE_DEFAULTS).toEqual({ 'editor.links': 'bar' });
+  it('are choices of their settings: a link’s is the Bar, and the panes are two', () => {
+    expect(PHONE_DEFAULTS).toEqual({ 'editor.links': 'bar', 'layout.panes': 'two' });
     for (const [key, value] of Object.entries(PHONE_DEFAULTS)) {
       const setting = SETTINGS.find((each) => each.key === key);
       expect(setting && valueProblem(setting, value)).toBeNull();
