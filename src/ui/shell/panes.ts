@@ -4,11 +4,12 @@
 // head (../chrome), the seal).
 // With two panes the list is gone and the sidebar's tree holds the notes; so
 // while a split with Tools that follow has the list step aside, not saved as
-// shut, until it's brought back.
+// shut, until it's brought back; and a phone's Panes too narrow for three
+// shows two, until it's wider (#68).
 // Widths and what's shut are remembered on this device (./pane-state.ts).
 
-import { h } from '../dom';
 import type { PhonePane } from '../phone/room';
+import { type EdgeFrom, type EdgeOf, paneEdge } from './pane-edge';
 import {
   besideWidth,
   dragged,
@@ -16,9 +17,9 @@ import {
   LIMITS,
   type Panes,
   readPanes,
-  STEP,
   shownWidths,
   sidebarEdge,
+  THREE_LEAST,
 } from './pane-state';
 
 const KEY = 'eien.panes';
@@ -53,17 +54,32 @@ export class PaneLayout {
   readonly #edges: Record<Shuttable, HTMLElement>;
   #panes: Panes;
   #two: boolean;
+  /** A phone's build: its Panes show two where three don't fit (./pane-state.ts, THREE_LEAST). */
+  readonly #crowds: boolean;
+  /** Whether the panes were last laid out as two: crowding follows the window's width live. */
+  #laidTwo = false;
   /** The list stepped aside for a split (Tools that follow): out of sight, never saved as shut. */
   #aside = false;
   /** What the split last asked: a list brought back stays back until the split asks again. */
   #asideAsked = false;
   readonly #onResize = () => this.#fit();
 
-  constructor(parts: PaneParts, two: boolean) {
+  constructor(parts: PaneParts, two: boolean, crowds = false) {
     this.#parts = parts;
     this.#two = two;
+    this.#crowds = crowds;
     this.#panes = readPanes(stored());
-    this.#edges = { sidebar: this.#edge('sidebar'), list: this.#edge('list') };
+    const edgeOf = (pane: Shuttable): EdgeOf => ({
+      shell: parts.shell,
+      width: () => this.#shown()[pane],
+      panes: () => this.#panes,
+      move: (from, by) => this.#move(pane, from, by),
+      save: () => this.#save(),
+    });
+    this.#edges = {
+      sidebar: paneEdge('sidebar', edgeOf('sidebar')),
+      list: paneEdge('list', edgeOf('list')),
+    };
     parts.shell.append(this.#edges.sidebar, this.#edges.list);
     window.addEventListener('resize', this.#onResize);
     this.#apply();
@@ -71,7 +87,12 @@ export class PaneLayout {
 
   /** Two panes (or the list stepped aside): the tree lists the notes. Never on a phone, one pane at a time. */
   get two(): boolean {
-    return (this.#two || this.#aside) && !this.#parts.phone();
+    return this.#listGone() && !this.#parts.phone();
+  }
+
+  /** Three panes chosen, and two shown: a phone's Panes with no room for three. */
+  get crowded(): boolean {
+    return this.#crowds && !this.#two && !this.#parts.phone() && innerWidth < THREE_LEAST;
   }
 
   /** The note list's width on screen: none while it's out of sight. */
@@ -92,9 +113,7 @@ export class PaneLayout {
   /** Whether `pane` is out of sight: shut, or, for the list, there are two panes; the phone's way, not in sight. */
   isShut(pane: Shuttable): boolean {
     if (this.#parts.phone()) return !this.#parts.inSight(pane);
-    return pane === 'list'
-      ? this.#two || this.#aside || this.#panes.listShut
-      : this.#panes.sidebarShut;
+    return pane === 'list' ? this.#listGone() || this.#panes.listShut : this.#panes.sidebarShut;
   }
 
   /** Shut `pane` if it's open, open it if it's shut. The list has nothing to do with two panes. */
@@ -136,17 +155,15 @@ export class PaneLayout {
 
   /** Lay the panes out again, and draw them: the window became a phone's, or the pane shown changed. */
   relayout(): void {
-    this.#apply();
-    this.#parts.changed();
+    this.#relay(() => this.#apply(), true);
   }
 
   setTwo(two: boolean): void {
     if (two === this.#two) return;
-    const hadFocus = this.#holds('list');
-    this.#two = two;
-    this.#apply();
-    if (two && hadFocus) this.#parts.leave('list'); // the list is gone, with the keyboard in it
-    this.#parts.changed();
+    this.#relay(() => {
+      this.#two = two;
+      this.#apply();
+    }, true);
   }
 
   /** A split with Tools that follow begins (true) or ends (false): the list steps aside, or back. */
@@ -154,11 +171,10 @@ export class PaneLayout {
     if (on === this.#asideAsked) return;
     this.#asideAsked = on;
     if (on === this.#aside) return;
-    const hadFocus = this.#holds('list');
-    this.#aside = on;
-    this.#apply();
-    if (on && hadFocus) this.#parts.leave('list'); // the list stepped aside with the keyboard in it
-    this.#parts.changed();
+    this.#relay(() => {
+      this.#aside = on;
+      this.#apply();
+    }, true);
   }
 
   stop(): void {
@@ -170,6 +186,23 @@ export class PaneLayout {
     this.#aside = false;
     this.#apply();
     this.#parts.changed();
+  }
+
+  /** The list gone, its notes in the tree: two panes, stepped aside for a split, or crowded. */
+  #listGone(): boolean {
+    return this.#two || this.#aside || this.crowded;
+  }
+
+  /**
+   * Lay the panes out as `change` does, and draw them again (`always`, or with three changed to
+   * two or back); the list gone with the keyboard in it, the keyboard goes on.
+   */
+  #relay(change: () => void, always: boolean): void {
+    const was = this.#laidTwo;
+    const hadFocus = this.#holds('list');
+    change();
+    if (this.two && hadFocus) this.#parts.leave('list');
+    if (always || this.two !== was) this.#parts.changed();
   }
 
   /** Whether the keyboard is in `pane`, or on its edge. */
@@ -196,11 +229,13 @@ export class PaneLayout {
    */
   #fit(): void {
     const { shell } = this.#parts;
-    shell.classList.add('is-fitting');
-    this.#apply();
-    // The new widths are styled while nothing slides; taken off after, they're already there.
-    void getComputedStyle(shell).gridTemplateColumns;
-    shell.classList.remove('is-fitting');
+    this.#relay(() => {
+      shell.classList.add('is-fitting');
+      this.#apply();
+      // The new widths are styled while nothing slides; taken off after, they're already there.
+      void getComputedStyle(shell).gridTemplateColumns;
+      shell.classList.remove('is-fitting');
+    }, false);
   }
 
   #apply(): void {
@@ -209,7 +244,8 @@ export class PaneLayout {
     // Through the style API: the security policy refuses style attributes.
     shell.style.setProperty('--pane-sidebar', `${shown.sidebar}px`);
     shell.style.setProperty('--pane-list', `${shown.list}px`);
-    shell.dataset.panes = this.two ? 'two' : 'three';
+    this.#laidTwo = this.two;
+    shell.dataset.panes = this.#laidTwo ? 'two' : 'three';
     shell.toggleAttribute('data-sidebar-shut', this.isShut('sidebar'));
     shell.toggleAttribute('data-list-shut', this.isShut('list'));
     list.inert = this.isShut('list');
@@ -240,11 +276,7 @@ export class PaneLayout {
   }
 
   /** Move `pane`'s edge `by` pixels from `shown`, its width on screen when the move began. */
-  #move(
-    pane: Shuttable,
-    from: { readonly panes: Panes; readonly shown: number },
-    by: number,
-  ): void {
+  #move(pane: Shuttable, from: EdgeFrom, by: number): void {
     this.#panes = dragged(from.panes, this.#edgeOf(pane), from.shown, by);
     this.#apply();
   }
@@ -255,58 +287,6 @@ export class PaneLayout {
     } catch {
       // Storage refused: the panes hold until the window closes.
     }
-  }
-
-  /** A pane's edge: a hairline that darkens under the pointer, dragged or stepped with ← →. */
-  #edge(pane: Shuttable): HTMLElement {
-    const edge = h('div', {
-      class: `pane-edge pane-edge--${pane}`,
-      attrs: {
-        role: 'separator',
-        tabindex: '0',
-        'aria-orientation': 'vertical',
-        'aria-label': pane === 'sidebar' ? 'Sidebar width' : 'Note list width',
-      },
-    });
-    const width = () => this.#shown()[pane];
-    edge.addEventListener('pointerdown', (down) => {
-      if (down.button !== 0) return;
-      down.preventDefault(); // no text selected on the way
-      const from = { x: down.clientX, panes: this.#panes, shown: width() };
-      this.#parts.shell.classList.add('is-resizing');
-      edge.classList.add('is-dragging');
-      // Followed on the document, as a note's drag is (../list/drag.ts): the edge moving out
-      // from under the pointer, or its capture lost to another window, doesn't end it.
-      // A move with the button up was let go where the window didn't hear it.
-      const move = (event: PointerEvent) => {
-        if ((event.buttons & 1) === 0) end();
-        else this.#move(pane, from, event.clientX - from.x);
-      };
-      // Let go: where it was let go counts, though its last move may have come only with the release.
-      const up = (event: PointerEvent) => {
-        this.#move(pane, from, event.clientX - from.x);
-        end();
-      };
-      const end = () => {
-        document.removeEventListener('pointermove', move);
-        document.removeEventListener('pointerup', up);
-        document.removeEventListener('pointercancel', end);
-        this.#parts.shell.classList.remove('is-resizing');
-        edge.classList.remove('is-dragging');
-        this.#save();
-      };
-      document.addEventListener('pointermove', move);
-      document.addEventListener('pointerup', up);
-      document.addEventListener('pointercancel', end);
-    });
-    edge.addEventListener('keydown', (event) => {
-      const by = event.key === 'ArrowLeft' ? -STEP : event.key === 'ArrowRight' ? STEP : 0;
-      if (by === 0 || event.altKey || event.metaKey || event.ctrlKey) return;
-      event.preventDefault();
-      this.#move(pane, { panes: this.#panes, shown: width() }, by);
-      this.#save();
-    });
-    return edge;
   }
 }
 

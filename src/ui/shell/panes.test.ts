@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import type { PhonePane } from '../phone/room';
-import { DEFAULT_PANES, LIMITS, STEP } from './pane-state';
+import { DEFAULT_PANES, LIMITS, STEP, THREE_LEAST } from './pane-state';
 import { PaneLayout, type PaneParts, paneKeys, type Shuttable } from './panes';
 
 const KEY = 'eien.panes';
@@ -12,9 +12,16 @@ let parts: PaneParts & { leave: Mock<(pane: Shuttable) => void>; changed: Mock<(
 let phone: PhonePane | null;
 let layout: PaneLayout | undefined;
 
-const make = (two = false) => {
-  layout = new PaneLayout(parts, two);
+const make = (two = false, crowds = false) => {
+  layout = new PaneLayout(parts, two, crowds);
   return layout;
+};
+const WIDTH = Object.getOwnPropertyDescriptor(window, 'innerWidth') ??
+  Object.getOwnPropertyDescriptor(Object.getPrototypeOf(window), 'innerWidth') ?? { value: 1024 };
+/** The window resized to `width`, as a foldable opens or turns. */
+const resizeTo = (width: number) => {
+  Object.defineProperty(window, 'innerWidth', { value: width, configurable: true });
+  window.dispatchEvent(new Event('resize'));
 };
 const shell = () => parts.shell;
 const edge = (pane: 'sidebar' | 'list') =>
@@ -47,6 +54,7 @@ beforeEach(() => {
 afterEach(() => {
   layout?.stop();
   layout = undefined;
+  Object.defineProperty(window, 'innerWidth', WIDTH); // happy-dom's own again
 });
 
 describe('PaneLayout', () => {
@@ -324,6 +332,63 @@ describe('the list stepping aside for a split (Tools that follow)', () => {
     panes.stepAside(true);
     panes.stepAside(false);
     expect(panes.two).toBe(true);
+    expect(panes.isShut('list')).toBe(true);
+  });
+});
+
+describe('a phone’s Panes with no room for three (#68)', () => {
+  it('shows two, the tree listing the notes, never saved; three again once there’s room', () => {
+    resizeTo(THREE_LEAST);
+    const panes = make(false, true);
+    expect(panes.two).toBe(false);
+    resizeTo(THREE_LEAST - 1); // a Galaxy Z Fold 5 opened, turned on its side
+    expect(panes.crowded).toBe(true);
+    expect(panes.two).toBe(true);
+    expect(panes.isShut('list')).toBe(true);
+    expect(parts.list.inert).toBe(true);
+    expect(shell().dataset.panes).toBe('two');
+    expect(shell().hasAttribute('data-list-shut')).toBe(true);
+    expect(parts.changed).toHaveBeenCalledTimes(1); // drawn again, the tree with its notes
+    expect(stored()?.listShut ?? false).toBe(false);
+    resizeTo(THREE_LEAST - 100); // narrower still: two as they were, nothing drawn again
+    expect(parts.changed).toHaveBeenCalledTimes(1);
+    resizeTo(THREE_LEAST);
+    expect(panes.two).toBe(false);
+    expect(panes.isShut('list')).toBe(false);
+    expect(parts.changed).toHaveBeenCalledTimes(2);
+  });
+
+  it('hands the keyboard on when the list goes with it inside', () => {
+    resizeTo(1024);
+    make(false, true);
+    parts.list.querySelector('button')?.focus();
+    resizeTo(600);
+    expect(parts.leave).toHaveBeenCalledWith('list');
+  });
+
+  it('keeps a desktop window that narrow at three, giving way, and two chosen as it is', () => {
+    resizeTo(600);
+    expect(make().two).toBe(false);
+    layout?.stop();
+    const two = make(true, true);
+    expect(two.two).toBe(true);
+    expect(two.crowded).toBe(false); // two chosen: nothing to say about three
+  });
+
+  it('crowds nothing one pane at a time, the phone’s way', () => {
+    resizeTo(600);
+    phone = 'list';
+    const panes = make(false, true);
+    expect(panes.crowded).toBe(false);
+    expect(panes.isShut('list')).toBe(false); // in sight, the phone's pane
+  });
+
+  it('keeps the list aside for a split once there’s room again', () => {
+    resizeTo(600);
+    const panes = make(false, true);
+    panes.stepAside(true);
+    resizeTo(1024);
+    expect(panes.aside).toBe(true);
     expect(panes.isShut('list')).toBe(true);
   });
 });

@@ -32,3 +32,34 @@ describe('a book’s bookmark tool', () => {
     expect(looks('bookmark', { kind: 'note' } as unknown as Side)).toEqual({ aside: true });
   });
 });
+
+describe('the panes’ tools with three chosen and two shown (#68)', () => {
+  const crowdedLooks = (crowded: boolean) =>
+    commandLooks({
+      panes: { crowded, two: crowded, aside: false, isShut: () => crowded },
+      settings: { values: DEFAULT_SETTINGS } as never,
+      layout: () => 'band',
+      strip: () => false,
+      lookOpen: () => false,
+    } as never);
+  const note = { kind: 'note' } as unknown as Side;
+
+  it('say there’s no room for three, the choice still Three to switch from', () => {
+    const looks = crowdedLooks(true);
+    expect(looks('panes', note)).toEqual({
+      icon: 'panes3',
+      pressed: false,
+      tip: 'Three panes, two here for the room · switch to two',
+    });
+    expect(looks('pane.list', note)).toEqual({
+      disabled: true,
+      tip: 'No room for three panes here: the sidebar lists the notes',
+    });
+  });
+
+  it('are three panes’ with the room for them', () => {
+    const looks = crowdedLooks(false);
+    expect(looks('panes', note)).toMatchObject({ icon: 'panes3', pressed: false });
+    expect(looks('pane.list', note)).toMatchObject({ pressed: true });
+  });
+});

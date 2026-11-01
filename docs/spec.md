@@ -1960,18 +1960,28 @@ Compare or Restore finishes lands on a note opened meanwhile.
   installing it on a device needs Xcode and an Apple ID.
 - **The phone layout** is one pane at a time: tree → list → page. A window
   narrower than 600 px (narrower than any desktop window can be) is a
-  phone's, whatever the system.
+  phone's, whatever the system; on the phone's build, so is a screen held
+  upright, by its shape.
 - **Wide screen** (backlog #46; `appearance.room`, Settings → Look →
-  Appearance, the phone's alone, this device's): wider than a phone held
-  upright (520 px; a Galaxy Z Fold 5 opened upright is about 590), the phone
-  uses the room as the writer chooses (a foldable opened, a tablet, a phone
-  turned sideways) ([tablet.md](design/explorations/tablet.md)). The rules are
-  `src/ui/phone/room.ts`; the desktop is always Panes.
+  Appearance, the phone's alone, this device's): on any screen but a phone
+  held upright, the phone uses the room as the writer chooses (a foldable
+  opened, a tablet, a phone turned sideways)
+  ([tablet.md](design/explorations/tablet.md)). A phone upright is told by
+  its screen's shape, which neither Interface zoom nor the system's screen
+  zoom changes, nor the keyboard coming up (backlog #68): taller than 7:12
+  and held upright (a phone's 9:16 to 9:21, a foldable's cover screen), never
+  a tablet upright (3:5 and squarer) or a foldable opened (a Galaxy Z Fold 5's
+  5:6). A window under 440 px, narrower than a phone upright, is one at a
+  time too. The rules are `src/ui/phone/room.ts`; the desktop is always
+  Panes.
   - **Panes** (the default, as before): the desktop's three panes, or two, and
     the split, as on the desktop (a phone starts with two, the tree listing
     the notes, `layout.panes`'s `phoneDefault`; the writer's choice stands), with every control and row a finger's
     (`--eien-touch`, 44 px; a compact row 36 px) where a finger is the
-    pointer. They need the desktop's 600 px: narrower, one at a time. Tools
+    pointer. Short of three panes' room (820 px, each at its narrowest beside
+    the page) they show two, the tree listing the notes, as the list does
+    stepping aside for a split, the setting still Three; with the room, three
+    again. Tools
     that don't fit their bar scroll in it under a finger; the page never runs
     past the screen, and a phone's browser never zooms out to show it.
   - **One at a time:** the phone, wider.
