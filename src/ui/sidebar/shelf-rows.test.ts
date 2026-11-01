@@ -107,6 +107,15 @@ describe('SHELF’s rows', () => {
     expect(twist.hasAttribute('aria-expanded')).toBe(false);
   });
 
+  it('turns a folder’s twisty as it opens and shuts, from the row’s own state (#56)', () => {
+    const { list } = draw(null, null, ['Fic']);
+    const twist = (path: string) =>
+      list.querySelector(`[data-key="twist:/shelf/${path}"]`) as HTMLElement;
+    // What ./tree.css turns it by, as no aria-expanded is there to.
+    expect(twist('Cooking').dataset.open).toBe('true');
+    expect(twist('Fic').dataset.open).toBe('false');
+  });
+
   it('shuts and opens a folder by its twisty or a click on its name, and draws a shut one’s rows not at all', () => {
     const { list, folders } = draw(null, null, ['Fic']);
     expect(texts(list, '.tree-row--shelf-folder')).toEqual(['Cooking', 'Fic']);

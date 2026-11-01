@@ -313,3 +313,36 @@ test('Interface zoom lays the page out again in Android’s WebView, smaller and
   await step('Larger', 7); // 150%: narrower, laid out again, nothing past the screen
   await expect.poll(() => at(1.5)).toBe(true);
 });
+
+test('Android’s back with the panes shut opens the list, then the sidebar, then Eien steps aside (#70)', async ({
+  device,
+}) => {
+  // Sideways: room for the desktop's panes, as Wide screen's Panes lays them out.
+  await shell(device, 'settings put system accelerometer_rotation 0');
+  await shell(device, 'settings put system user_rotation 1');
+  try {
+    const page = await startEien(device);
+    await page.evaluate(async () => {
+      await window.eien.settings.set('appearance.room', 'panes');
+      await window.eien.settings.set('layout.panes', 'three');
+    });
+    await putOnPhone(device, `${VAULT}/Fic/Tear.md`, 'The scarf tore.\n');
+    await titles(page).filter({ hasText: 'Tear' }).click();
+    await page.locator('[data-command="pane.list"]:visible').first().click();
+    await page.locator('[data-command="pane.sidebar"]:visible').first().click();
+    const list = page.locator('.shell > .list');
+    const panes = page.locator('.shell');
+    await expect(list).toHaveAttribute('inert', '');
+    const backKey = () => shell(device, 'input keyevent KEYCODE_BACK');
+    await backKey();
+    await expect(list).not.toHaveAttribute('inert', '');
+    await expect(panes).toHaveAttribute('data-sidebar-shut', '');
+    await backKey();
+    await expect(panes).not.toHaveAttribute('data-sidebar-shut');
+    await backKey();
+    await expect.poll(() => resumed(device)).not.toContain(PKG);
+  } finally {
+    await shell(device, 'settings put system user_rotation 0');
+    await shell(device, 'settings put system accelerometer_rotation 1');
+  }
+});

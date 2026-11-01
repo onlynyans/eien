@@ -362,7 +362,7 @@ export const SETTINGS = [
     key: 'epub.turnSpeed',
     label: 'Turn speed',
     description:
-      'How long a turn takes, against its designed time: at once, as designed, or up to four times slower. A drag always follows your hand.',
+      'How long a turn takes, a page’s or, in Scroll, a chapter’s, against its designed time: at once, as designed, or up to four times slower. A drag always follows your hand.',
     scope: 'device',
     group: 'Page',
     type: 'choice',

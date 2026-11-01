@@ -51,6 +51,8 @@ export interface EpubSide extends Side {
   readonly spine: number;
   /** Draw the spine item `index`, and keep it as the place to come back to. */
   go(index: number): Promise<void>;
+  /** Back where a link or a swipe took it from (⌘[, the system's back, #70): whether there was a step. */
+  back(): boolean;
   /**
    * Show a place in spine item `index` (a bookmark's, the strip's: Phase 4),
    * at an offset or the one it gives once drawn, kept as the place.

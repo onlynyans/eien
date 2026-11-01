@@ -39,8 +39,8 @@ export interface ShownVault {
   flush(): Promise<void>;
   /** Save, and stop following the vault. */
   stop(): Promise<void>;
-  /** The system's back (a phone's): whether it went back. */
-  back(): boolean;
+  /** The system's back (a phone's; a `gesture`, a trackpad's swipe): whether it went back. */
+  back(gesture: boolean): boolean;
   /** The open note, or none. */
   notePath(): string | null;
   /** Show the note at `path`. */
@@ -325,7 +325,8 @@ export async function showVault(
   });
   await refresh();
   return {
-    back: () => phone.back(),
+    // Past the phone's steps, a pane shut opens (#70): the list, then the sidebar.
+    back: (gesture) => phone.back(gesture) || panes.reopen(),
     notePath: () => pages.activeNote?.note.path ?? null, // New Window opens a note
     closePage: () => pages.close(pages.active),
     openNote: (path) => actions.openNote(path),
