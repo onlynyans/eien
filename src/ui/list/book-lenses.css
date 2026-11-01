@@ -1,4 +1,4 @@
-/* A book's lenses (#40, Phase 4c, ./book-lenses.ts): Contents and Marks, word
+/* A book's lenses (#40, Phase 4c, ./book-lenses.ts): Contents, Marks and Found, word
    buttons under the list's head, the one shown pressed (every chosen word
    button's look, ../theme/base.css), each with its count; and a bookmark's
    row: a contents row whose words take two lines, its page at the right, its
@@ -50,5 +50,19 @@
 @media (pointer: coarse) {
   .book-lens {
     min-height: var(--eien-touch);
+  }
+}
+/* A match in its Found row (Phase 5c, ./found-rows.ts): a note's Find match, the chosen row's wash
+   over a strong hairline, its words the row's own ink. */
+.found-row__match {
+  color: inherit;
+  background: var(--eien-selected);
+  box-shadow: 0 0 0 var(--eien-hairline) var(--eien-rule-strong);
+  border-radius: var(--eien-radius-s);
+}
+@media (forced-colors: active) {
+  .found-row__match {
+    background: Mark;
+    color: MarkText;
   }
 }

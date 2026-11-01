@@ -15,12 +15,12 @@ import {
   walkMarks,
 } from '../../core/epub';
 import { MARK_KINDS, NO_MARKS } from '../list/book-lenses';
-import type { Still } from './book-count';
 import type { EpubPage } from './epub-page';
 import { PageBookmarks } from './page-bookmarks';
 import { PageHighlights } from './page-highlights';
 import type { MarksEdit, ReadingMarks, ReadingRead, ReadingStore } from './reading-store';
 import { allFront } from './sight';
+import type { Still } from './still';
 
 /** What the colophon says of a reading file this Eien won't write over. */
 export const NOT_KEPT: Partial<Record<ReadingKept, string>> = {
@@ -127,7 +127,7 @@ export class BookMarks {
       page.foot.say(NO_MARKS);
       return;
     }
-    const { mark, index, round } = walked;
+    const { to: mark, index, round } = walked;
     this.#walked = mark;
     this.#of.goTo(mark.spine, mark.offset);
     const count = `${marks.length} ${marks.length === 1 ? 'mark' : 'marks'}`;

@@ -33,10 +33,11 @@ const FIRST_LIST_MS = 1500;
  * three styles (editor/link.css, backlog #38). JS 2,055,752 with the link tooltip (#38),
  * 2,063,245 with a book scrolling, a chapter a sheet (#40, Phase 2a), 2,081,698 with its
  * links and notes (Phase 2b), 2,092,421 beside a note, with Quote (Phase 2c): Phase 2's own
- * modules,
- * no package (the renderer's JS ships unminified, its comments too).
+ * modules, no package (the renderer's JS ships unminified, its comments too). JS 2,231,346 and
+ * CSS 149,814 through Phases 3 and 4; JS 2,277,489 and CSS 151,772 with a book's highlights,
+ * marks and Find (#40, Phase 5): its own modules, each bundled once, no package.
  */
-const RENDERER = { js: 2_270_000, css: 151_000 };
+const RENDERER = { js: 2_506_000, css: 167_000 };
 
 const report = (what: string, value: number) => {
   if (process.env.BUDGETS) console.log(`${what}: ${value.toLocaleString()}`);

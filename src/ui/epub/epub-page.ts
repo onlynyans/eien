@@ -4,10 +4,9 @@
 // its place kept, its links and words); its colophon (./book-foot.ts); the
 // shelf's look worn on its leaf, the scroll style among it; its bookmark's
 // mark (Phase 4b, the Page mark's look), on each page of a spread (Phase
-// 3d); in pages, its running heads and folios; and its keys, Q to quote, B to
-// bookmark, and ⌘[ or Alt+← back. A book that won't open says why on the
-// sheet. Find comes with Phase 5: until then it does nothing here, as a
-// note's does where its text isn't shown.
+// 3d); in pages, its running heads and folios; its keys (./page-keys.ts);
+// and its Find (Phase 5c, ./book-find.ts), the window's find bar over the
+// book. A book that won't open says why on the sheet.
 
 import type { SettingValues } from '../../core/config';
 import { h } from '../dom';
@@ -38,6 +37,8 @@ export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
   highlight(): void;
   /** `]` or `[`: to the next mark, or the one before (Phase 5b). */
   walk(way: 1 | -1): void;
+  /** Find in the book: the window's find bar over it (Phase 5c). */
+  readonly find: PageFind;
 }
 
 export class EpubPage implements PaneLeaf {
@@ -48,7 +49,7 @@ export class EpubPage implements PaneLeaf {
   readonly aside = h('div', { class: 'page__aside' });
   readonly under = h('div', { class: 'epub__under' });
   readonly foot: BookFoot;
-  readonly find: PageFind = { open: () => {}, next: () => {}, previous: () => {} };
+  readonly find: PageFind;
   readonly tipped: readonly HTMLElement[];
   readonly #crumbs = h('p', { class: 'crumbs label' });
   readonly #notice = h('p', { class: 'notice', attrs: { role: 'status', hidden: true } });
@@ -77,6 +78,7 @@ export class EpubPage implements PaneLeaf {
   readonly #keys: BookKeysOf;
 
   constructor(of: EpubPageOf) {
+    this.find = of.find;
     this.#keys = {
       turn: (way, held) => of.turn(way, held),
       edge: (last) => of.edge(last),

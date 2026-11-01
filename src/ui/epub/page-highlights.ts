@@ -27,7 +27,7 @@ import type { ChangeMarks } from './book-marks';
 import { wordsBetween } from './chapter-place';
 import { boundsOf, rangeOver, spanOf, walked } from './chapter-range';
 import type { EpubPage } from './epub-page';
-import { Ink, inkCopy } from './ink';
+import { type CopyInk, Ink } from './ink';
 
 /** A word's block (core's one list). */
 const BLOCK = BLOCK_NAMES.join(', ');
@@ -126,10 +126,9 @@ export class PageHighlights {
     this.#heard();
   }
 
-  /** A turn's copy of the page, its words from `from` on, inked as the page is. */
-  inkCopy(copy: HTMLElement, from: number): void {
-    const spans = this.#mine();
-    if (spans.length > 0) inkCopy(walked(copy), from, 'epub-highlight', spans);
+  /** What a turn's copy of the page carries of the highlights: their spans in the chapter drawn. */
+  copySpans(): readonly CopyInk[] {
+    return [{ name: 'epub-highlight', spans: this.#mine() }];
   }
 
   /** Whether `range`'s words lie in one highlight: Highlight then takes it off. */

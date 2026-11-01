@@ -22,16 +22,17 @@ class TestHighlight extends Set<AbstractRange> {}
 
 const registry = new Map<string, TestHighlight>();
 
-/** The words a range covers. */
-function wordsOf(range: AbstractRange): string {
-  const live = document.createRange();
-  live.setStart(range.startContainer, range.startOffset);
-  live.setEnd(range.endContainer, range.endOffset);
-  return live.toString();
-}
+/** The ranges the ink `name` covers now, as live ranges, in the order they were added. */
+export const inkRanges = (name: string): Range[] =>
+  [...(registry.get(name) ?? [])].map((range) => {
+    const live = document.createRange();
+    live.setStart(range.startContainer, range.startOffset);
+    live.setEnd(range.endContainer, range.endOffset);
+    return live;
+  });
 
 /** The words the ink `name` covers now, range by range, in the order they were added. */
-export const inked = (name: string): string[] => [...(registry.get(name) ?? [])].map(wordsOf);
+export const inked = (name: string): string[] => inkRanges(name).map((range) => range.toString());
 
 /** How many ranges the ink `name` holds now, every page's. */
 export const inkCount = (name: string): number => registry.get(name)?.size ?? 0;

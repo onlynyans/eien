@@ -14,12 +14,19 @@ const MODEL: ContentsModel = {
   spine: 1,
   lens: 'contents',
   marks: null,
+  found: null,
 };
 
 function drawn(model = MODEL) {
   const container = document.body.appendChild(document.createElement('section'));
   const choose = vi.fn();
-  const actions = { chapter: choose, lens: vi.fn(), go: vi.fn(), remove: vi.fn() };
+  const actions = {
+    chapter: choose,
+    lens: vi.fn(),
+    go: vi.fn(),
+    remove: vi.fn(),
+    goFound: vi.fn(),
+  };
   renderContents(container, model, null, actions);
   return { container, choose, actions };
 }
@@ -108,9 +115,16 @@ describe('a book’s lenses in the list (Phase 4c)', () => {
   it('are Contents and Marks under the head, each with its count, the one shown pressed', () => {
     const { container } = drawn(withMarks('contents'));
     // A space between the name and its count: a screen reader says "Marks 2", as the eye reads it.
-    expect(lenses(container).map((lens) => lens.textContent)).toEqual(['Contents 3', 'Marks 2']);
+    expect(lenses(container).map((lens) => lens.textContent)).toEqual([
+      'Contents 3',
+      'Marks 2',
+      'Found',
+    ]);
+    // Found with nothing searched: there, never chosen (Phase 5c).
+    expect(lenses(container)[2]?.disabled).toBe(true);
     expect(lenses(container).map((lens) => lens.getAttribute('aria-pressed'))).toEqual([
       'true',
+      'false',
       'false',
     ]);
     expect(container.querySelector('[role="group"]')?.getAttribute('aria-label')).toBe(

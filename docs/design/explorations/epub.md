@@ -1,8 +1,8 @@
 # Reading EPUBs: nine explorations
 
 **Chosen (2026-10-28), and building in phases.** Backlog #40. Phases 0, 1
-and 2 are built; Phase 3, turning pages, is built but for 3d (the spread, Set
-as a book); Phase 4, place, bookmarks and page count, is built
+and 2 are built; Phase 3, turning pages, is built; Phase 4, place,
+bookmarks and page count, is built; Phase 5, highlights and Find, is built
 ([The build](#the-build)). Three
 sets of three, in one family so they share one look: turning pages, scrolling,
 and the features (page count, bookmarks, highlights, search in the book).
@@ -449,7 +449,11 @@ Each phase is its own session and pull request, from main.
   Next Mark and Previous Mark (`core/epub/marks.ts`); **5c:** Find,
   the page's own find bar over the book (the owner's answer, 2026-10-31:
   ⌘F opens the bar, as on a note) and the list's field, each a search of
-  its own over one engine, its matches in washes.
+  its own over one engine, its matches in washes: the book's chapters
+  read in the background a slice a task, never while a page turns, and
+  kept for the book searched (`core/epub/book-text.ts`, `find.ts`;
+  `ui/epub/book-search.ts`, `book-find.ts`; `vault/epub-found.ts`,
+  `list/found-rows.ts`).
 - **Phase 6, by lamplight,** on Scroll.
 
 Each module holds one concept, and none passes about 300 lines: the zip,

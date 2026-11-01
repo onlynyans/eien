@@ -60,33 +60,52 @@ export interface InSight {
 /** The words in sight on a page before a chapter's first word (Eien's title page), or none measured. */
 export const BEFORE_WORDS = { from: -1, to: 0 } as const;
 
-/** The mark `]` or `[` goes to, its place among them all, and whether the walk went round the book. */
-export interface MarkWalk {
-  readonly mark: Mark;
+/** Where a thing stands in the book: its chapter's place in the reading order, and an offset in its words. */
+export interface Placed {
+  readonly spine: number;
+  readonly offset: number;
+}
+
+/** Where a walk came to: the thing, its place among them all, and whether it went round the book. */
+export interface Walk<T> {
+  readonly to: T;
   readonly index: number;
   readonly round: boolean;
 }
 
 /**
- * `]` (`way` 1): the first mark past the words in sight; `[` (-1): the last
- * before them. Past either end of the book, round to the other. Null for a
- * book with none. `marks` in the book's order (`marksInOrder`).
+ * Forward (`way` 1): the first of `items` past the words in sight; back
+ * (-1): the last before them. Past either end of the book, round to the
+ * other. Null for none. `items` in the book's order, each placed by
+ * `placeOf`: the walk `]` and `[` take over the marks, and Find's next and
+ * previous over its matches.
  */
-export function walkMarks(marks: readonly Mark[], sight: InSight, way: 1 | -1): MarkWalk | null {
-  if (marks.length === 0) return null;
-  const before = (mark: Mark, spine: number, offset: number) =>
-    mark.spine < spine || (mark.spine === spine && mark.offset < offset);
+export function walkPlaces<T>(
+  items: readonly T[],
+  placeOf: (item: T) => Placed,
+  sight: InSight,
+  way: 1 | -1,
+): Walk<T> | null {
+  if (items.length === 0) return null;
+  const before = (item: T, spine: number, offset: number) => {
+    const place = placeOf(item);
+    return place.spine < spine || (place.spine === spine && place.offset < offset);
+  };
+  const at = (index: number, round: boolean): Walk<T> => ({
+    to: items[index] as T,
+    index,
+    round,
+  });
   if (way > 0) {
     // At or past the words after those in sight.
     const end = sightEnd(sight.from, sight.to);
-    const index = marks.findIndex((mark) => !before(mark, sight.spine, end));
-    return index >= 0
-      ? { mark: marks[index] as Mark, index, round: false }
-      : { mark: marks[0] as Mark, index: 0, round: true };
+    const index = items.findIndex((item) => !before(item, sight.spine, end));
+    return index >= 0 ? at(index, false) : at(0, true);
   }
-  const index = marks.findLastIndex((mark) => before(mark, sight.spine, sight.from));
-  const last = marks.length - 1;
-  return index >= 0
-    ? { mark: marks[index] as Mark, index, round: false }
-    : { mark: marks[last] as Mark, index: last, round: true };
+  const index = items.findLastIndex((item) => before(item, sight.spine, sight.from));
+  return index >= 0 ? at(index, false) : at(items.length - 1, true);
 }
+
+/** `]` (`way` 1) or `[` (-1) over the book's marks, in its order (`marksInOrder`). */
+export const walkMarks = (marks: readonly Mark[], sight: InSight, way: 1 | -1): Walk<Mark> | null =>
+  walkPlaces(marks, (mark) => mark, sight, way);

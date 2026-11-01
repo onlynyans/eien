@@ -7,10 +7,11 @@
 // The bar is the window's own and searches nothing itself: what it
 // searches (a `FindTarget`, ./find-target.ts) finds, counts, highlights and
 // replaces, and tells the bar when it's shown and when its count may have
-// moved. A note's is CodeMirror's search (../editor/find.ts); an EPUB's
-// chapters, later (backlog #40), bring their own matcher and no Replace.
+// moved. A note's is CodeMirror's search (../editor/find.ts); a book's
+// (#40, Phase 5c, ../epub/book-find.ts) searches the whole book, with no
+// Replace.
 
-import { countWords, type FindCommandId, findKey, findLabel } from '../../core/find';
+import { countWords, escapePattern, type FindCommandId, findKey, findLabel } from '../../core/find';
 import { h } from '../dom';
 import type { IconName } from '../icons';
 import { iconButton, quietButton } from '../quiet-button';
@@ -260,6 +261,3 @@ export class FindBar {
     for (const act of replace.acts) act.disabled = locked;
   }
 }
-
-/** Chosen words, as a pattern that matches them as written. */
-const escapePattern = (words: string): string => words.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&');

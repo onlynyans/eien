@@ -11,6 +11,8 @@ export interface FindCount {
   readonly total: number;
   /** More than COUNT_LIMIT. */
   readonly more: boolean;
+  /** Still looking (a book searched in the background, #40): none found yet isn't none. */
+  readonly searching?: boolean;
 }
 
 const number = (n: number): string => n.toLocaleString('en');
@@ -22,7 +24,7 @@ const number = (n: number): string => n.toLocaleString('en');
 export function countWords(query: string, count: FindCount | 'invalid'): string {
   if (query === '') return '';
   if (count === 'invalid') return 'Not a valid pattern';
-  if (count.total === 0) return 'No matches';
+  if (count.total === 0) return count.searching ? 'Searching…' : 'No matches';
   const total = `${number(count.total)}${count.more ? '+' : ''}`;
   if (count.current === 0) return count.total === 1 && !count.more ? '1 match' : `${total} matches`;
   return `${number(count.current)} of ${total}`;

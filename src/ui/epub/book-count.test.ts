@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { countChapter, type Epub, isRefusal, openEpub, pageOf } from '../../core/epub';
 import { inflateRaw } from '../../platform/inflate';
-import { BookCount, BookCounts, type Still } from './book-count';
+import { BookCount, BookCounts } from './book-count';
+import type { Still } from './still';
 
 const EPUBS = fixtureEpubs(SAMPLE_SOURCES);
 

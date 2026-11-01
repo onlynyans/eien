@@ -48,8 +48,8 @@ describe('] and [ walking the marks', () => {
 
   it('] goes to the first past the words in sight, [ to the last before them', () => {
     const sight = { spine: 0, from: 50, to: 150 };
-    expect(where(walkMarks(marks, sight, 1)?.mark)).toBe('highlight 1:40');
-    expect(where(walkMarks(marks, sight, -1)?.mark)).toBe('highlight 0:10');
+    expect(where(walkMarks(marks, sight, 1)?.to)).toBe('highlight 1:40');
+    expect(where(walkMarks(marks, sight, -1)?.to)).toBe('highlight 0:10');
   });
 
   it('passes over a mark in sight, either way', () => {
@@ -72,9 +72,7 @@ describe('] and [ walking the marks', () => {
   it('counts a page of no words as its own word, so ] leaves it', () => {
     // A picture's page: its words in sight begin and end at one offset.
     const picture = marksInOrder([bookmark(1, 40)], [highlight(1, 41)], SPINE);
-    expect(where(walkMarks(picture, { spine: 1, from: 40, to: 40 }, 1)?.mark)).toBe(
-      'highlight 1:41',
-    );
+    expect(where(walkMarks(picture, { spine: 1, from: 40, to: 40 }, 1)?.to)).toBe('highlight 1:41');
   });
 
   it('finds none in a book with no marks', () => {
@@ -95,22 +93,22 @@ describe('] and [ from the sights a page gives, as QA tried them', () => {
   it('passes over a mark on a spread’s recto: the two pages are one sight', () => {
     // The verso from 1000, the recto from 1600, the next spread from 2200.
     const spread = { spine: 0, from: 1000, to: 2200 };
-    expect(where(walkMarks(marks, spread, 1)?.mark)).toBe('highlight 0:2500');
+    expect(where(walkMarks(marks, spread, 1)?.to)).toBe('highlight 0:2500');
     expect(walkMarks(marks, spread, -1)).toMatchObject({ index: 3, round: true });
   });
 
   it('goes on to the next chapter from a chapter’s last page, whose words run to its end', () => {
     const last = { spine: 0, from: 2400, to: Number.POSITIVE_INFINITY };
-    expect(where(walkMarks(marks, last, 1)?.mark)).toBe('bookmark 1:0');
-    expect(where(walkMarks(marks, last, -1)?.mark)).toBe('highlight 0:1600');
+    expect(where(walkMarks(marks, last, 1)?.to)).toBe('bookmark 1:0');
+    expect(where(walkMarks(marks, last, -1)?.to)).toBe('highlight 0:1600');
   });
 
   it('takes a bookmark and a highlight at one word as one stop each, the bookmark first', () => {
     const both = marksInOrder([bookmark(1, 30)], [highlight(1, 30)], SPINE);
     const before = { spine: 1, from: 0, to: 10 };
-    expect(walkMarks(both, before, 1)?.mark.kind).toBe('bookmark');
+    expect(walkMarks(both, before, 1)?.to.kind).toBe('bookmark');
     const after = { spine: 1, from: 200, to: 300 };
-    expect(walkMarks(both, after, -1)?.mark.kind).toBe('highlight');
+    expect(walkMarks(both, after, -1)?.to.kind).toBe('highlight');
   });
 
   it('says the one mark of a book round from itself, either way', () => {
