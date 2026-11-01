@@ -187,6 +187,10 @@ section where it and the directions below disagree.
   above). Two pages when narrow stays the notes' setting alone.
 - **The reading room** (Showcase 1) is built after Pages, as a one-key
   mode.
+- **The sheet's foot where a finger reads** (#58, decided 2026-11-01): on a
+  phone, a foldable or a tablet (`pointer: coarse`), a book's sheet ends as
+  it begins, its foot margin `--eien-sheet-pad-top` rather than 72px, a
+  gutter above the colophon, in Pages and Scroll. The head's room stays.
 
 ### Scrolling
 
