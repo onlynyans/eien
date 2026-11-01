@@ -75,15 +75,16 @@ export const isShelfs = (setting: Setting): boolean =>
 
 /**
  * The settings the quick look (#49) offers on the system named `platform`, `phone` or not, for a
- * page of `kind`: those marked `quick` in the schema, in its order, a book's own (`shelf`) with a
- * book in front alone. A setting marked later shows there with nothing to build.
+ * page of `kind`, `roomy` or not (../page/page-room.ts): those marked `quick` in the schema, in its
+ * order, a book's own (`shelf`) with a book in front alone. A setting marked later shows there with
+ * nothing to build.
  */
-export function quickIn(platform: string, phone: boolean, kind: PageKind): Setting[] {
+export function quickIn(platform: string, phone: boolean, kind: PageKind, roomy = true): Setting[] {
   return SETTINGS.filter(
     (setting) =>
       'quick' in setting &&
       (kind === 'epub' || !isShelfs(setting)) &&
-      offeredOn(setting, platform, phone),
+      offeredOn(setting, platform, phone, roomy),
   );
 }
 

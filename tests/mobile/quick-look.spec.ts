@@ -4,10 +4,14 @@
 // system's back, closes it. Wide screen's Panes is the desktop's window, so
 // there it's the desktop's column; One at a time is the phone's sheet.
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
-import { catchBackButton, open, putOutside, systemBack, titles } from './outside';
+import { catchBackButton, open, putBytesOutside, putOutside, systemBack, titles } from './outside';
 
 test.use({ ...devices['Pixel 7'] });
+
+const BOOK = join(import.meta.dirname, '../fixtures/epub/plain.epub');
 test.beforeEach(({ page }) => catchBackButton(page));
 
 const look = (page: Page) => page.getByRole('dialog', { name: 'Look: Notes' });
@@ -29,6 +33,14 @@ async function onPage(page: Page, layout = 'band', room = 'panes'): Promise<void
   await expect(titles(page)).toHaveCount(1, { timeout: 10_000 });
   await titles(page).first().click();
   await expect(page.locator('.page .title').first()).toHaveText('Ideas');
+}
+
+/** The page bar's Look, or on a page too narrow for it, its ⋯'s. */
+async function openLook(page: Page): Promise<void> {
+  const control = page.locator('.page__bar [data-command="look"]');
+  if (await control.isVisible()) return control.click();
+  await page.locator('.page__bar').getByRole('button', { name: 'More tools' }).click();
+  await page.getByRole('menuitem', { name: /^Look/u }).click();
 }
 
 /** Whether the popover is the phone's sheet: across the screen, its foot on the screen's. */
@@ -95,8 +107,40 @@ test.describe('Wide screen', () => {
     expect(await isSheet(page)).toBe(false);
     const [at, under] = [await control.boundingBox(), await look(page).boundingBox()];
     expect(under?.y).toBeGreaterThanOrEqual((at?.y ?? 0) + (at?.height ?? 0));
-    await expect(look(page).locator('[data-setting="page.width"]')).toHaveCount(1);
+    // Three panes leave the page narrower than the line at Wide: no Page width to choose (#62).
+    await expect(look(page).locator('[data-setting="page.width"]')).toHaveCount(0);
   });
+
+  // Page width only where its choices each set a line of their own (#62): a page with room round it.
+  for (const [screen, room] of [
+    [{ width: 690, height: 829 }, false], // a Galaxy Z Fold 5 opened upright, in Panes
+    [{ width: 1600, height: 1000 }, true], // a wide tablet: room round the page
+  ] as const) {
+    test(`Page width ${room ? 'is' : 'isn’t'} offered on a ${screen.width}px page in Panes, a note’s or a book’s`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(screen);
+      await onPage(page, 'band', 'panes');
+      await expect(page.locator('.shell')).toHaveAttribute('data-room', 'panes');
+      await openLook(page);
+      await expect(look(page)).toBeVisible();
+      await expect(look(page).locator('[data-setting="page.width"]')).toHaveCount(room ? 1 : 0);
+      await page.keyboard.press('Escape');
+      await putBytesOutside(
+        page,
+        'Eien/Vault/Novels/Pride and Prejudice.epub',
+        readFileSync(BOOK).toString('base64'),
+      );
+      await page.reload();
+      const book = page.locator('.tree-row--epub .tree-row__name');
+      await book.click({ timeout: 10_000 });
+      await expect(page.locator('.epub-chapter')).toContainText('It is a truth');
+      await openLook(page);
+      const shelf = page.getByRole('dialog', { name: 'Look: Shelf' });
+      await expect(shelf).toBeVisible();
+      await expect(shelf.locator('[data-setting="page.width"]')).toHaveCount(room ? 1 : 0);
+    });
+  }
 
   test('One at a time is the phone’s: the sheet', async ({ page }) => {
     await page.setViewportSize(TABLET);

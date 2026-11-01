@@ -5,6 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS, type SettingValues } from '../../core/config';
 import type { SettingsBridge, VaultBridge } from '../../platform/bridge';
+import { pageOf } from '../page/test-page-room';
 import { WriterThemes } from '../theme/writer-themes';
 import { SettingsScreen } from './settings-screen';
 import { SettingsState } from './settings-state';
@@ -71,6 +72,19 @@ describe('Wide screen, on a phone wider than 600px', () => {
     screen.open();
     expect(tab('Lists')?.getAttribute('aria-current')).toBe('false');
     expect(document.querySelector('.settings__tab[aria-current="true"]')).not.toBeNull();
+  });
+});
+
+describe('Page width (#62)', () => {
+  it('shows only while the notes’ page has room round its sheet, as it opens', async () => {
+    pageOf(600, 830); // a foldable in Panes: the line at Wide fills it
+    const screen = await screenOn('darwin');
+    expect(row('page.width')?.hidden).toBe(true);
+    expect(row('appearance.frame')?.hidden).toBe(false);
+    document.querySelector('.page__leaf')?.remove();
+    pageOf(1000, 830);
+    screen.open('Look');
+    expect(row('page.width')?.hidden).toBe(false);
   });
 });
 

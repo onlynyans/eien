@@ -36,6 +36,7 @@ beforeEach(async () => {
     mac: true,
     window: settings,
     phone: () => phone,
+    roomy: () => true,
     allSettings: vi.fn(),
     changed: vi.fn(),
   };
@@ -131,6 +132,16 @@ describe('the quick look', () => {
     phone = true;
     new QuickLook({ ...of, platform: 'android' }).open(subject, opener);
     expect(rowKeys()).not.toContain('page.width');
+  });
+
+  it('leaves page width out, a note’s and a book’s, where the page has no room round it (#62)', () => {
+    const roomy = vi.fn(() => false);
+    new QuickLook({ ...of, roomy }).open(subject, opener);
+    expect(rowKeys()).not.toContain('page.width');
+    new QuickLook({ ...of, roomy }).open({ ...subject, kind: 'epub', crumb: 'Shelf' }, opener);
+    expect(rowKeys()).not.toContain('page.width');
+    // Asked as it opens: the page may have narrowed since.
+    expect(roomy).toHaveBeenCalledTimes(2);
   });
 
   it('sets a value at once and shows it chosen, with nothing to confirm', async () => {

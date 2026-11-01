@@ -47,6 +47,8 @@ export interface QuickLookOf {
   readonly window: LookStore;
   /** Whether the window goes the phone's way: a sheet from the screen's foot, with Done. */
   phone(): boolean;
+  /** Whether the page whose look it is has room round its sheet (../page/page-room.ts). */
+  roomy(): boolean;
   /** All settings: Settings, at Look. */
   allSettings(): void;
   /** Opened or closed: the control says which. */
@@ -81,7 +83,7 @@ export class QuickLook {
     const of = this.#of;
     const phone = of.phone();
     const storeOf = (setting: Setting) => (setting.quick === 'window' ? of.window : subject.store);
-    const rows = quickIn(of.platform, phone, subject.kind).map((setting) => {
+    const rows = quickIn(of.platform, phone, subject.kind, of.roomy()).map((setting) => {
       const set = (key: SettingKey, value: string | number) =>
         void storeOf(setting)
           .set(key, value as never)

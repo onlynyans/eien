@@ -7,6 +7,7 @@
 import { offeredOn, type SettingKey, type SettingValues } from '../../core/config';
 import { h } from '../dom';
 import { icon } from '../icons';
+import { notesPage, roomForWidths } from '../page/page-room';
 import { NARROW, onePane, roomOf, UPRIGHT_PHONE, widthNow } from '../phone/room';
 import { reasonOf } from '../reason';
 import type { WriterThemes } from '../theme/writer-themes';
@@ -23,8 +24,11 @@ interface Drawn {
   readonly button: HTMLButtonElement;
   readonly body: HTMLElement;
   show(values: SettingValues): void;
-  /** Its rows as offered `phone` or not (one pane, the phone's way, offers no panes): whether any shows. */
-  fit(phone: boolean): boolean;
+  /**
+   * Its rows as offered `phone` or not (one pane, the phone's way, offers no panes), and with the
+   * notes' page `roomy` or not (../page/page-room.ts): whether any shows.
+   */
+  fit(phone: boolean, roomy: boolean): boolean;
   flush?(): Promise<void>;
 }
 
@@ -223,8 +227,8 @@ export class SettingsScreen {
     const show = (values: SettingValues) => {
       for (const row of rows) row.show(values);
     };
-    const fit = (phone: boolean) => {
-      for (const row of rows) row.element.hidden = !offeredOn(row.setting, platform, phone);
+    const fit = (phone: boolean, roomy: boolean) => {
+      for (const row of rows) row.element.hidden = !offeredOn(row.setting, platform, phone, roomy);
       return rows.some((row) => !row.element.hidden);
     };
     return { body, show, fit };
@@ -256,7 +260,10 @@ export class SettingsScreen {
   /** Show what's offered in the room the window uses now: one pane, the phone's way, offers no panes. */
   #fit(values: SettingValues): void {
     const phone = onePane(roomOf(widthNow(), this.#platform, values));
-    for (const tab of this.#tabs) tab.button.hidden = !tab.fit(phone);
+    // The notes' page in sight, as Settings sets notes; with none, nothing to measure.
+    const page = notesPage();
+    const roomy = !page || roomForWidths(page);
+    for (const tab of this.#tabs) tab.button.hidden = !tab.fit(phone, roomy);
     for (const part of this.#dialog.querySelectorAll<HTMLElement>('.settings__part')) {
       part.hidden = [...part.querySelectorAll<HTMLElement>('.settings__tab')].every(
         (b) => b.hidden,

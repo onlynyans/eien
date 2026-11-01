@@ -26,8 +26,10 @@ readonly quick?: 'window' | 'page';
 - **Line spacing**, `appearance.leading` (Type): `tight` Tight, `set` As
   set, `loose` Loose; default `set`.
 - **Page width**, `page.width` (Page): `narrow` Narrow, `set` As set, `wide`
-  Wide; default `set`. Marked `wide`: a phone's page is already narrower
-  than any face's measure. Narrow also narrows a sheet that fills its pane;
+  Wide; default `set`. Marked `wide` and `roomy`: offered only while the
+  page it's for is wider than its line at Wide (`ui/page/page-room.ts`, measured
+  as the look opens), as a phone's page, a foldable's in Panes, and a narrow
+  pane's are narrower than that already (#62). Narrow also narrows a sheet that fills its pane;
   Two sheets and Facing pages lay each page to its half, which it doesn't
   change. In the schema before `appearance.frame`, so the
   popover's order (the schema's) is the decided one: Day or night, Typeface,

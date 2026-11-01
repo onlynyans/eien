@@ -83,6 +83,15 @@
   border: var(--eien-sheet-edge);
   box-shadow: var(--eien-sheet-lift);
 }
+/* A sheet laid to be measured (./page-room.ts): its width alone, never seen. */
+.sheet.page-ruler {
+  min-height: 0;
+  height: 0;
+  padding-block: 0;
+  border-block-width: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
 @container (width < 760px) {
   .sheet {
     --pad-x: min(var(--eien-space-6), var(--eien-sheet-pad-x));

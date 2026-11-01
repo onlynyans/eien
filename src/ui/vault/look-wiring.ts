@@ -7,6 +7,7 @@
 import { actsOn } from '../chrome/commands';
 import type { MenuBus } from '../menu/menu-bus';
 import type { PageKind } from '../page/page-leaf';
+import { roomForWidths } from '../page/page-room';
 import { epubStore } from '../quick-look/epub-store';
 import { type LookSubject, QuickLook } from '../quick-look/quick-look';
 import type { SettingsState } from '../settings/settings-state';
@@ -65,6 +66,11 @@ export function lookWiring(of: LookWiringOf): LookWiring {
     mac: of.mac,
     window: settings,
     phone: of.phone,
+    // The page whose look opens: a book's in its own look, a note's in the notes'.
+    roomy: () => {
+      const scroll = of.target().page.element.querySelector<HTMLElement>('.page__scroll');
+      return !scroll || roomForWidths(scroll);
+    },
     allSettings: () => of.menu.run('settings:look'),
     changed: () => {
       sitBack();
