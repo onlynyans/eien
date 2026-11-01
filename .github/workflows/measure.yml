@@ -25,22 +25,14 @@ jobs:
       - run: npm run build
       - if: runner.os == 'Linux'
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-      - name: Fixed, role locators
+      - name: Final
         shell: bash
-        env: { BUDGETS: '1', NOTRACE: '1' }
-        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum' || '' }} npx playwright test tests/e2e/budgets.spec.ts -g "searched while" --workers=1 --retries=0 --repeat-each=3 --output=r-role || true
-      - name: Fixed, CSS locators
+        env: { BUDGETS: '1' }
+        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum' || '' }} npx playwright test tests/e2e/budgets.spec.ts -g "searched while" --workers=1 --retries=0 --repeat-each=4 --output=r-final || true
+      - name: Final, four times slower
         shell: bash
-        env: { BUDGETS: '1', NOTRACE: '1', LOCATORS: css }
-        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum' || '' }} npx playwright test tests/e2e/budgets.spec.ts -g "searched while" --workers=1 --retries=0 --repeat-each=3 --output=r-css || true
-      - name: Fixed, CSS locators, four times slower
-        shell: bash
-        env: { SLOW: '4', NOTRACE: '1', LOCATORS: css }
-        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum' || '' }} npx playwright test tests/e2e/budgets.spec.ts -g "searched while" --workers=1 --retries=0 --output=r-slow || true
-      - name: Fixed, traced
-        shell: bash
-        env: { BUDGETS: '1', LOCATORS: css }
-        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum' || '' }} npx playwright test tests/e2e/budgets.spec.ts -g "searched while" --workers=1 --retries=0 --output=r-trace || true
+        env: { SLOW: '4' }
+        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum' || '' }} npx playwright test tests/e2e/budgets.spec.ts -g "searched while" --workers=1 --retries=0 --repeat-each=2 --output=r-slow || true
       - uses: actions/upload-artifact@v7
         if: always()
         with:
