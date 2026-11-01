@@ -12,6 +12,7 @@ import {
   putBytesOutside,
   putOutside,
   readOutside,
+  threePanes,
   titles,
 } from './outside';
 
@@ -19,6 +20,7 @@ test.use({ viewport: { width: 1100, height: 800 } });
 
 test('the vault opens at once: on the phone there is no folder to choose', async ({ page }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await expect(page.locator('.welcome')).toHaveCount(0);
   expect(await page.evaluate(() => window.eien.platform)).toBe('web');
   // No Syncthing marker in the vault here: no sync status.
@@ -32,6 +34,7 @@ test('a new note is written into Documents/Eien/Vault, and is there after a rest
   page,
 }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await page.getByRole('button', { name: 'New note' }).click();
   await expect(page.locator('.cm-content')).toBeFocused();
   await page.keyboard.type('A first line, on the phone.');
@@ -44,6 +47,7 @@ test('a new note is written into Documents/Eien/Vault, and is there after a rest
 
 test('a note another device synced in shows up without a restart', async ({ page }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await putOutside(page, 'Eien/Vault/Tear.md', 'The scarf caught on the gate.\n');
   await expect(titles(page)).toHaveText(['Tear'], { timeout: 10_000 });
 });
@@ -52,6 +56,7 @@ test('going to the background saves what was typed', async ({ page }) => {
   // Android may end an app in the background: the window saves on "pause", not 800 ms later.
   await page.clock.install();
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await page.getByRole('button', { name: 'New note' }).click();
   await expect(page.locator('.cm-content')).toBeFocused();
   await page.keyboard.type('Saved on the way out.');
@@ -71,6 +76,7 @@ test('going to the background saves what was typed', async ({ page }) => {
 
 test('words a crash left in a temp file are kept as a recovered note', async ({ page }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await putOutside(page, 'Eien/Vault/Fic/.Mend.md.eien.tmp', 'Mended, but never renamed.');
   await page.reload();
   await expect(page.locator('.shell')).toBeVisible();
@@ -84,6 +90,7 @@ test('this device’s settings stay in Preferences; the vault’s go in its fold
   page,
 }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await page.evaluate(async () => {
     await window.eien.settings.set('appearance.scheme', 'night');
     await window.eien.settings.set('typography.quotes', 'straight');
@@ -100,6 +107,7 @@ test('trash goes to .eien/trash in the vault, from where any device can take it 
   page,
 }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await putOutside(page, 'Eien/Vault/Tear.md', 'Words to keep.');
   await page.evaluate(() => window.eien.vault.trash('Tear.md'));
   const stamps = await listOutside(page, 'Eien/Vault/.eien/trash');
@@ -112,6 +120,7 @@ test('trash goes to .eien/trash in the vault, from where any device can take it 
 
 test('a rename that changes only case', async ({ page }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await putOutside(page, 'Eien/Vault/tear.md', 'Words.');
   expect(await page.evaluate(() => window.eien.vault.move('tear.md', 'Tear.md'))).toEqual({
     ok: true,
@@ -122,6 +131,7 @@ test('a rename that changes only case', async ({ page }) => {
 
 test('the window cannot reach outside its vault', async ({ page }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await putOutside(page, 'Secret.md', 'Not the vault’s.');
   const outcomes = await page.evaluate(async () => {
     const tries = ['../Secret.md', '/DOCUMENTS/Secret.md', 'Fic/../../Secret.md', '..'];
@@ -139,6 +149,7 @@ test('the window cannot reach outside its vault', async ({ page }) => {
 
 test('an export goes to Eien/Exports, never over another', async ({ page }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   const saved = await page.evaluate(async () => [
     await window.eien.out.saveAs('Tear', { kind: 'html', text: '<p>One.</p>' }),
     await window.eien.out.saveAs('Tear.html', { kind: 'html', text: '<p>Two.</p>' }),
@@ -151,6 +162,7 @@ test('a note’s menu exports it as EPUB or Word into Eien/Exports; no PDF on th
   page,
 }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await putOutside(page, 'Eien/Vault/Tear.md', 'The scarf ==caught== on the gate.\n');
   await expect(titles(page)).toHaveText(['Tear'], { timeout: 10_000 });
   for (const label of ['EPUB…', 'Word (.docx)…']) {
@@ -171,6 +183,7 @@ test('a note’s menu exports it as EPUB or Word into Eien/Exports; no PDF on th
 
 test('the phone’s EPUB carries the note’s image from the vault', async ({ page }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   // A 1×1 GIF, as Syncthing would bring it.
   const gif = 'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
   await putBytesOutside(page, 'Eien/Vault/art/dot.gif', gif);
@@ -187,6 +200,7 @@ test('the phone’s EPUB carries the note’s image from the vault', async ({ pa
 
 test('the phone makes no PDF and imports no folder, and says so', async ({ page }) => {
   await open(page);
+  await threePanes(page); // the note list, beside the page
   const outcomes = await page.evaluate(async () => ({
     kinds: window.eien.out.kinds,
     pdf: await window.eien.out
@@ -206,6 +220,7 @@ test('the phone makes no PDF and imports no folder, and says so', async ({ page 
 test('Copy as HTML puts the HTML on the clipboard', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await open(page);
+  await threePanes(page); // the note list, beside the page
   await page.evaluate(() => window.eien.out.copy('<p>“Hi.”</p>', '<p>“Hi.”</p>'));
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('<p>“Hi.”</p>');
 });

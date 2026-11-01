@@ -77,6 +77,7 @@ function firstChapter() {
     spine: () => spine,
     draw,
     values: () => DEFAULT_SETTINGS,
+    turnTo: vi.fn(async () => true),
   });
   const surface = surfaces.at(-1) as TurnSurface;
   return { sheet, surface, draw, at: () => page };

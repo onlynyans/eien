@@ -434,7 +434,16 @@ Three panes, each collapsible, with a two-pane option in settings:
      order are word buttons named for them ("Previous chapter" for one the
      contents don't name, such as a title page), "The end" at the last;
      nothing moves on until one is pressed, which opens that chapter at its
-     top. The colophon says "3 of 61", then the page (Phase 4), then how far
+     top. A finger swiped across the page (#71), leftward or rightward,
+     turns to the next chapter or the one before, at its top, as those do;
+     the place it left is a step back (**Back to Chapter I**, ⌘[, or the
+     system's back), as a stray swipe would lose it. A swipe is a quarter
+     of the page across, more across than down, the page not scrolled
+     under it; never with words chosen, two fingers, the page pinched
+     larger, over what scrolls sideways, or what the system takes at the
+     screen's edge. A chapter turned so, or at the foot, steps its words in
+     from the side it comes from as Words does, at the Turn speed (none at
+     0 or with reduced motion); any other jump is at once. The colophon says "3 of 61", then the page (Phase 4), then how far
      through the chapter and the book ("40% of the chapter", "12% of the
      book", the book by its chapters' sizes; the two dropped first on a
      narrow page, the page kept).
@@ -451,7 +460,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      the colophon gives no steady page. The count is kept for the last few
      books this window opened, never written.
    - **Bookmarks** (Phase 4b): **B**, the bookmark tool (a ribbon, with the
-     book's own tools; on the phone, the ⋯) or View → Bookmark This Page
+     book's own tools, in every room on a phone too, backlog #63; and the
+     phone's ⋯) or View → Bookmark This Page
      bookmarks the page in sight: in Pages the page, scrolling the lines in
      sight. On a page that has one (or more, made at another width) they're
      all taken off. The colophon says "Bookmarked." or "Bookmark taken off.",
@@ -545,7 +555,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      sixths of the book; each side is a button, Previous page or Next page,
      its tooltip saying how many of the chapter's pages are left that way.
      On a touch screen a tap in the page's outer thirds turns it (a tap on
-     a link, or ending a selection, never does). A link the keyboard comes
+     a link, or ending a selection, never does), and a long press chooses
+     words with the system's own handles and menu, as in Scroll (#65). A link the keyboard comes
      to on another page turns there. The place is the same as Scroll's,
      the first word in sight, so it carries between Pages and Scroll, a
      restart, a width, a face and page zoom.
@@ -568,7 +579,9 @@ Three panes, each collapsible, with a two-pane option in settings:
      on or back; a tap on it lets it fly on (and in an outer third, turns
      the next). Under Slide and Words a drag across asks for the turn.
      Never while words are chosen in the page, nor on a link (but to catch
-     a page in flight); a drag that turned is never also a click.
+     a page in flight); a drag that turned is never also a click. A finger
+     held still is let go as the system's long press begins choosing (#65),
+     but not one holding a page it caught in flight.
    - **Two pages, and set as a book** (Phase 3d): in pages, a book shows
      one page or two facing pages as **Pages, landscape** and **Pages,
      portrait** say (book settings in the shelf's quick look, decided
@@ -637,7 +650,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      Side (on a phone's Two pages, a book chosen faces the note open),
      in each of the split's modes, ⇄, the pager and the phone's slip.
      **Quote:** words chosen in the book show the selection bar, **Quote in
-     the note** and **Copy** (on a phone, the page's ⋯ → Quote in the note;
+     the note** and **Copy** (on a touch screen docked at the page's foot
+     while words are chosen, #65; the page's ⋯ → Quote in the note too;
      on the desktop, Q too). Quote adds them at the end of the note beside
      as a Markdown quote, `— Pride and Prejudice, Chapter III` under it (the
      book's title and the chapter's name, no author), and never touches the
@@ -1282,11 +1296,13 @@ src/core/            (✓ = built)
   export/       ✓ a note as a chapter (headings, footnotes); EPUB, Word and the PDF's page; a store-only zip
   import/       ✓ which files of a folder from elsewhere come in, under what names, and why the rest don't
   extension/    ✓ the browser extension (Eien Reader): its story, its sites, its messages, where you stopped, its rules for cleaning a site's HTML (§14)
+  swipe/        ✓ a trackpad's two fingers across, read from the wheel events they come as (#70)
   epub/         ✓ an EPUB read safely: its zip (capped, no path out), its package and contents, a chapter cleaned with its parts named, the reading state's file and its place, a chapter's neighbours and how far through (#40)
 src/platform/
   bridge.ts     ✓ what the window may ask of the system (window.eien)
   storage.ts    ✓ the Storage interface: read, write, list, watch
   inflate.ts    ✓ raw deflate inflated by the system's DecompressionStream (an EPUB's zip)
+  backs.ts      ✓ the system's back asked of the window's handlers, the newest first (#70)
   electron/     ✓ Storage over Node fs: durable writes, the watcher, crash recovery
   memory/       ✓ Storage in memory, for tests
   index/        ✓ the vault's index over any Storage: previews, words, tags, search
@@ -1979,7 +1995,8 @@ Compare or Restore finishes lands on a note opened meanwhile.
   turned sideways) ([tablet.md](design/explorations/tablet.md)). The rules are
   `src/ui/phone/room.ts`; the desktop is always Panes.
   - **Panes** (the default, as before): the desktop's three panes, or two, and
-    the split, as on the desktop, with every control and row a finger's
+    the split, as on the desktop (a phone starts with two, the tree listing
+    the notes, `layout.panes`'s `phoneDefault`; the writer's choice stands), with every control and row a finger's
     (`--eien-touch`, 44 px; a compact row 36 px) where a finger is the
     pointer. They need the desktop's 600 px: narrower, one at a time. Tools
     that don't fit their bar scroll in it under a finger; the page never runs
@@ -2025,11 +2042,22 @@ Compare or Restore finishes lands on a note opened meanwhile.
     you came from a tap away at its right (⇄ and its name): a tap goes back
     to it where you left it (its caret and how far it was scrolled), and the
     one you were in becomes the other note.
-    Android's back gesture first closes a menu or the settings, then does
-    what Esc does where the keyboard is (a rename being typed stops, keeping
-    nothing), then closes what lies over the page (Compare gives the draft
-    back, the outline cards, the versions), then goes back a pane; at the
-    tree it leaves Eien in the background.
+    Android's back (its button or its edge's swipe) first closes a menu or
+    the settings, then does what Esc does where the keyboard is (a rename
+    being typed stops, keeping nothing), then closes what lies over the page
+    (Compare gives the draft back, the outline cards, the versions), then
+    takes a book's own step back (a link followed, or a chapter swiped to,
+    #70) while its page is in sight, then goes back a pane; with the panes
+    (Wide screen's Panes) it opens a pane shut, the list, then the sidebar
+    (with two panes, the sidebar); with nothing left it leaves Eien in the
+    background. It never turns a book's page.
+  - A Mac trackpad's swipe back (#70) is the same back, but no Esc (a
+    guessed gesture never stops what's typed): three fingers, as the
+    system's Swipe between pages sends them, or two where that setting
+    says two fingers swipe, read from the sideways wheel they come as (far
+    enough across, far more across than down, once a swipe, never over
+    what scrolls sideways). Over a book too: a trackpad never turns its
+    pages or chapters. With nothing to go back to, nothing happens.
   - The page's ⋯ offers what the menu bar does on the desktop: Seal,
     Compare, Versions, Outline cards, Copy as HTML, Export… (the note's own
     choices), Focus mode, Typewriter scrolling, a sprint (Stop while one is

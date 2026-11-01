@@ -41,6 +41,6 @@ export const RUNHEAD: LayoutSpec = {
     name: 'phone-rail',
     slot: 'phoneFoot',
     label: 'Page',
-    items: [VIEWS, '|', 'focus', 'seal', 'look', 'more'],
+    items: [VIEWS, '|', 'focus', 'seal', 'bookmark', 'look', 'more'],
   },
 };
