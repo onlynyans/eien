@@ -9,6 +9,18 @@ import type { TurnTokens } from './turn-tokens';
 /** The Page turn setting's motions. */
 export type TurnStyle = Motion;
 
+/**
+ * The part of the sheet a curl turns, in the sheet's own pixels: one page of
+ * two facing (a spread, #40 Phase 3d), turned round the gutter, the other
+ * page lying still until it lands. `mirrored`: the left page, turned back,
+ * curled as the right page turns on, seen in a mirror.
+ */
+export interface TurnLeaf {
+  readonly x: number;
+  readonly width: number;
+  readonly mirrored: boolean;
+}
+
 export interface TurnSurface {
   /** The sheet in sight now: what turns. It clips what lies outside its box. */
   sheet(): HTMLElement | null;
@@ -26,6 +38,8 @@ export interface TurnSurface {
   unstep(): void | Promise<void>;
   /** The Page turn and Turn speed now. */
   how(): { readonly style: TurnStyle; readonly speed: number };
+  /** The page that turns `way`, when the sheet holds two (else the whole sheet turns). */
+  leaf?(way: Way): TurnLeaf | null;
 }
 
 export interface PageTurnOf {

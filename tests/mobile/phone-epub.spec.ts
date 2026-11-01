@@ -1231,6 +1231,117 @@ test('an upright phone in pages with marks on the edge: the fore-edge’s turn k
   expect(await seriousViolations(page), 'a book in pages with its marks on the edge').toEqual([]);
 });
 
+// A curl on two facing pages (#40, Phase 3d): the desktop's panes on a wide
+// screen open a spread, and a page turns round the gutter, not the whole
+// sheet: on, the right page; back, the left, in a mirror; the other lying
+// still until it lands.
+test('a curl on two facing pages turns one page round the gutter', async ({ page }) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'panes');
+    await window.eien.settings.set('epub.view', 'pages');
+    await window.eien.settings.set('epub.turn', 'curl');
+    // As slow as a turn goes, to be caught in flight.
+    await window.eien.settings.set('epub.turnSpeed', '4');
+  });
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 2000, height: 900 });
+  await page.reload();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page).first()).toContainText('It is a truth universally acknowledged');
+  const box = page.locator('.epub-sheet:not([aria-hidden]) .epub__pages');
+  await expect(box).toHaveAttribute('data-spread', '');
+  const gutter = await box.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return rect.left + rect.width / 2;
+  });
+  const sheet = await page.locator('.epub-sheet:not([aria-hidden])').boundingBox();
+  if (!sheet) throw new Error('no sheet');
+  await page.locator('.page__leaf--epub .page__scroll').focus();
+  const leafBox = () =>
+    page.locator('.turn-curl__leaf').evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, right: rect.right };
+    });
+  // On: the right page, from the gutter to the sheet's right edge.
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.turn-curl__leaf')).toHaveCount(1);
+  const on = await leafBox();
+  expect(Math.abs(on.left - gutter)).toBeLessThan(2);
+  expect(Math.abs(on.right - (sheet.x + sheet.width))).toBeLessThan(2);
+  await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
+  // Back: the left page, from the sheet's left edge to the gutter.
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.locator('.turn-curl__leaf')).toHaveCount(1);
+  const back = await leafBox();
+  expect(Math.abs(back.left - sheet.x)).toBeLessThan(2);
+  expect(Math.abs(back.right - gutter)).toBeLessThan(2);
+  await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
+});
+
+// QA (#40, spread curl): the curl is laid in the sheet's own pixels (its
+// offsets and sizes, which the page's zoom doesn't scale), so it wears the
+// sheet's zoom, or it lies shrunk in the sheet's corner at 150%.
+test('a curl lies exactly over the sheet through the page’s zoom', async ({ page }) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'panes');
+    await window.eien.settings.set('epub.view', 'pages');
+    await window.eien.settings.set('epub.turn', 'curl');
+    await window.eien.settings.set('epub.turnSpeed', '4');
+    await window.eien.settings.set('page.zoom', 150);
+  });
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.reload();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page).first()).toContainText('It is a truth universally acknowledged');
+  await page.locator('.page__leaf--epub .page__scroll').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.turn-curl')).toHaveCount(1);
+  const [sheet, curl, copy] = await page.evaluate(() =>
+    ['.epub-sheet:not([aria-hidden])', '.turn-curl', '.turn-curl__piece > .turn-curl__page'].map(
+      (selector) => {
+        const rect = document.querySelector(selector)?.getBoundingClientRect();
+        return rect
+          ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+          : null;
+      },
+    ),
+  );
+  if (!sheet || !curl || !copy) throw new Error('no curl');
+  expect(Math.abs(curl.left - sheet.left)).toBeLessThan(3);
+  expect(Math.abs(curl.top - sheet.top)).toBeLessThan(3);
+  expect(Math.abs(curl.width / sheet.width - 1)).toBeLessThan(0.03);
+  expect(Math.abs(curl.height / sheet.height - 1)).toBeLessThan(0.03);
+  // Its copies zoomed once, as the sheet is: the page's words where they stand.
+  expect(Math.abs(copy.width / sheet.width - 1)).toBeLessThan(0.03);
+  // A copy beneath its piece's paper (a copy laid over the sheet stands at 3): a page's back shows
+  // its words faintly.
+  const stacked = await page
+    .locator('.turn-curl__back')
+    .first()
+    .evaluate((back) => {
+      const z = (part: string) => {
+        const found = back.querySelector(`:scope > ${part}`);
+        return found ? getComputedStyle(found).zIndex : null;
+      };
+      return { copy: z('.turn-curl__page'), paper: z('.turn-curl__paper') };
+    });
+  expect(stacked).toEqual({ copy: '0', paper: '1' });
+  await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
+});
+
 // The place carried from Scroll to Pages before the scroll rests (#40, Phase 3b): Pages opens on the
 // page holding the first line in sight, read by the app's own rule, wherever the scroll stands. The
 // end-to-end test's twin, headless, laid out by Chromium as the desktop lays a book out (two

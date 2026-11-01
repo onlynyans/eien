@@ -580,7 +580,10 @@ Three panes, each collapsible, with a two-pane option in settings:
      either way). Turning the screen takes the other's choice. Never in a split
      (Facing pages is two pages of its own; Wide screen's Two pages with a
      note beside is a split). A turn, a key, the edges and a hand move both;
-     the place is the same, so one page and two show the same words. A
+     under Curl one page turns round the gutter as a printed page does, its
+     running head and number with it (on, the right page; back, the left,
+     a hand drawn rightward across it), the other lying still until it
+     lands. The place is the same, so one page and two show the same words. A
      bookmark's mark sits on the page it marks; B on two pages marks the
      first one's first word, or takes off every bookmark on the two. The
      colophon says both pages ("pages 212–213 of 2,450"). In pages the book
