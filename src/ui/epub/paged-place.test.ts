@@ -55,10 +55,20 @@ function laidOut(paragraphs: readonly string[], picture = -1) {
     const end = baseOf(last) + (range.endContainer === last ? range.endOffset : last.length) - 1;
     return { left: xOf(start), right: xOf(Math.max(start, end)) + 1 };
   };
+  /** A node's first box: the first character in it or after it (a picture stands at the next word). */
+  const boxOf = (node: Node) => {
+    const piece = pieces().find(
+      (text) =>
+        text === node ||
+        node.contains(text) ||
+        node.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    return piece ? { left: xOf(baseOf(piece)), top: 0 } : null;
+  };
   const moved = vi.fn();
   const rested = vi.fn();
   const inSight = vi.fn();
-  const place = new PagedPlace({ box, chapter, moved, rested, inSight, sideOf });
+  const place = new PagedPlace({ box, chapter, moved, rested, inSight, sideOf, boxOf });
   return { box, chapter, place, moved, rested, inSight, shown };
 }
 
@@ -169,42 +179,31 @@ describe('a chapter in pages', () => {
     expect(place.page).toBe(1);
   });
 
-  it('cuts a turn’s copy to the page in sight, a paragraph begun before it unindented', () => {
-    const { chapter, place } = laidOut(['a'.repeat(150), 'b'.repeat(100)]);
+  it('keeps a turn’s copy to the whole blocks round the page in sight, moved as the page is', () => {
+    const { chapter, place } = laidOut(['a'.repeat(150), 'b'.repeat(100), 'c'.repeat(400), 'd']);
     place.show(0);
     place.turn(1);
     const copy = chapter.cloneNode(true) as HTMLElement;
-    place.trim(copy);
-    expect(copy.textContent).toBe(`${'a'.repeat(50)}${'b'.repeat(50)}`);
-    const [first] = copy.querySelectorAll('p');
-    expect(first?.style.textIndent).toBe('0px');
-    expect(copy.style.transform).toBe('');
-    // A page beginning with its paragraph keeps the paragraph's own indent.
-    const fresh = laidOut(['a'.repeat(100), 'b'.repeat(150)]);
-    fresh.place.show(0);
-    fresh.place.turn(1);
-    const whole = fresh.chapter.cloneNode(true) as HTMLElement;
-    fresh.place.trim(whole);
-    expect(whole.querySelector('p')?.style.textIndent).toBe('');
-    // A page inside one paragraph: its words still in the paragraph, which began before it.
-    const long = laidOut(['a'.repeat(250)]);
-    long.place.show(0);
-    long.place.turn(1);
-    const middle = long.chapter.cloneNode(true) as HTMLElement;
-    long.place.trim(middle);
-    expect(middle.querySelector('p')?.textContent).toBe('a'.repeat(100));
-    expect(middle.querySelector('p')?.style.textIndent).toBe('0px');
+    expect(place.trim(copy)).toBe(0);
+    // From the paragraph the page before ends in to the one a page past its end, each whole.
+    expect([...copy.querySelectorAll('p')].map((p) => p.textContent?.[0])).toEqual(['a', 'b', 'c']);
+    expect(copy.querySelector('p')?.textContent).toBe('a'.repeat(150));
+    // From the chapter's first column: moved as the page is.
+    expect(copy.style.transform).toBe(`translateX(${-STEP}px)`);
   });
 
-  // Phase 5a's review: a copy is inked from where its cut begins, which the kept place, mid-page
-  // after a show or a relayout, isn't.
-  it('says where a turn’s copy begins in the chapter: its page’s first word, wherever the place', () => {
-    const { chapter, place } = laidOut(['a'.repeat(250)]);
-    place.show(130);
-    expect(place.offset).toBe(130);
+  it('begins a turn’s copy in the column its first block begins in, inked from its first word', () => {
+    const { chapter, place } = laidOut(['a'.repeat(250), 'b'.repeat(100), 'c'.repeat(300), 'd']);
+    place.show(400);
+    expect(place.page).toBe(4);
     const copy = chapter.cloneNode(true) as HTMLElement;
-    expect(place.trim(copy)).toBe(PER_PAGE);
-    expect(copy.textContent).toBe('a'.repeat(PER_PAGE));
+    expect(place.trim(copy)).toBe(350);
+    const [shell, first] = copy.querySelectorAll('p');
+    // The paragraph before, a hidden shell: the first is set as one after another.
+    expect(shell?.style.display).toBe('none');
+    expect(first?.textContent).toBe('c'.repeat(300));
+    // Its column the page's fourth (index 3): the copy moved one page across, not four.
+    expect(copy.style.transform).toBe(`translateX(${-STEP}px)`);
   });
 
   it('carries a picture that begins the page in the turn’s copy', () => {
@@ -214,7 +213,7 @@ describe('a chapter in pages', () => {
     const copy = chapter.cloneNode(true) as HTMLElement;
     place.trim(copy);
     expect(copy.querySelector('img')).not.toBeNull();
-    expect(copy.textContent).toBe('b'.repeat(100));
+    expect(copy.textContent).toBe(`${'a'.repeat(100)}${'b'.repeat(150)}`);
   });
 
   it('shows any place on the page holding it, and turned on and back keeps its page’s first word', () => {

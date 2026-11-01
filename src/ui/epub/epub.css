@@ -130,7 +130,7 @@
    a book sets them (the first after a heading, a break, a picture or a
    centred line stands flush). A named part (a title, a plate, an epigraph)
    keeps its own gap; the first line is a paragraph's, its capitals alone its
-   own, so a turn's copy that begins inside it sets it as the page does (#60).
+   own (#60).
    As a note, they keep the gap a note's have in Reading. */
 [data-scroll="book"] .epub-chapter p:is(:not([data-part]), [data-part="first-line"]),
 [data-view="pages"] .epub-chapter p:is(:not([data-part]), [data-part="first-line"]) {

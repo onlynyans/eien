@@ -11,7 +11,7 @@
 
 import { CURL_STRIPS, type CurlFrame, type Light, type Polygon } from '../../../core/epub';
 import { h } from '../../dom';
-import { layOver, pageCopy } from './page-copy';
+import { layOver } from './page-copy';
 import type { TurnLeaf } from './turn-surface';
 import { CURL_INK } from './turn-tokens';
 
@@ -83,15 +83,15 @@ export class CurlView {
 
   /**
    * Over `to`, the sheet now; `leaving`, a copy of the one before the turn;
-   * `leaf`, one page of a spread that turns (on, always: a back turn's mirrored),
-   * or null for the whole sheet.
+   * `coming`, a copy of `to`, for a whole sheet turned back (the page come to
+   * curls back over the one left); `leaf`, one page of a spread that turns
+   * (on, always: a back turn's mirrored), or null for the whole sheet.
    */
   constructor(
     leaving: HTMLElement,
     to: HTMLElement,
     way: 1 | -1,
-    words: string,
-    trim?: (words: HTMLElement) => void,
+    coming: HTMLElement | null,
     leaf: TurnLeaf | null = null,
   ) {
     this.#to = to;
@@ -105,8 +105,8 @@ export class CurlView {
     ]);
     // A spread: the page that doesn't turn lies still, as it was, until the turning one lands on it.
     const still = leaf ? (leaving.cloneNode(true) as HTMLElement) : null;
-    const moving = way > 0 || leaf ? leaving : pageCopy(to, words, trim);
-    if (way < 0 && !leaf) {
+    const moving = way > 0 || leaf || !coming ? leaving : coming;
+    if (moving !== leaving) {
       this.element.append(pieceOf(leaving, box, sheetWidth));
       to.style.visibility = 'hidden';
     }

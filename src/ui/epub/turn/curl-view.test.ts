@@ -21,7 +21,7 @@ afterEach(() => {
 describe('the curl drawn', () => {
   it('lays the page as its pieces: what stays, twelve strips, what lies back, all in the curl’s inks', () => {
     const to = sheet();
-    const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
     view.draw(curlFrame(page, [400, 500], [0, 500], lengths));
     const strips = view.element.querySelectorAll<HTMLElement>('.turn-curl__strip');
     expect(strips).toHaveLength(CURL_STRIPS);
@@ -32,7 +32,7 @@ describe('the curl drawn', () => {
 
   it('at rest, shows the page flat and nothing else', () => {
     const to = sheet();
-    const view = new CurlView(pageCopy(to, '.words'), to, 1, '.words');
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
     view.draw(curlFrame(page, [400, 500], [400, 500], lengths));
     const flap = view.element.querySelector<HTMLElement>('.turn-curl__flap');
     expect(flap?.style.visibility).toBe('hidden');
@@ -40,7 +40,7 @@ describe('the curl drawn', () => {
 
   it('stacks its pieces in order, whatever the page’s own rules would', () => {
     const to = sheet();
-    const view = new CurlView(pageCopy(to, '.words'), to, -1, '.words');
+    const view = new CurlView(pageCopy(to, '.words'), to, -1, pageCopy(to, '.words'));
     const order = [...view.element.children].map((child) => (child as HTMLElement).style.zIndex);
     expect(order[0]).toBe('0');
     expect(order.slice(1)).toEqual(order.slice(1).map((_, i) => String(i + 1)));
