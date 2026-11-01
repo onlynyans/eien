@@ -66,3 +66,19 @@
     color: MarkText;
   }
 }
+/* A thousand matches (Phase 5c): a Found row out of sight is neither styled nor laid out, so
+   drawing them, or a key typed in the field, lays out the few in sight and not the thousand.
+   A row seen once keeps its height; one never seen is as tall as two lines of words and its
+   chapter's, in the list, or a tree row on SHELF. */
+.rows--found > li {
+  content-visibility: auto;
+  contain-intrinsic-size: auto
+    calc(
+      var(--eien-row-pad-y) * 2 + var(--eien-leading-row) *
+      (var(--eien-size-row) * 2 + var(--eien-size-preview))
+    );
+}
+.tree-row--found {
+  content-visibility: auto;
+  contain-intrinsic-size: auto var(--eien-row-h);
+}

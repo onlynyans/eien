@@ -509,7 +509,7 @@ test.describe('a long book searched while its pages turn', () => {
     const traced: unknown[] = [];
     cdp.on('Tracing.dataCollected', (e) => traced.push(...(e.value as unknown[])));
     const traceDone = new Promise((done) => cdp.once('Tracing.tracingComplete', done));
-    await cdp.send('Tracing.start', {
+    if (!process.env.NOTRACE) await cdp.send('Tracing.start', {
       transferMode: 'ReportEvents',
       traceConfig: {
         includedCategories: [
@@ -529,7 +529,10 @@ test.describe('a long book searched while its pages turn', () => {
       },
     });
     await time.mark();
-    const search = page.getByRole('searchbox', { name: 'Search Pride and Prejudice' });
+    const search =
+      process.env.LOCATORS === 'css'
+        ? page.locator('input[type="search"][aria-label="Search Pride and Prejudice"]')
+        : page.getByRole('searchbox', { name: 'Search Pride and Prejudice' });
     // In every paragraph: stops at the count's limit, its thousand rows drawn as they come.
     await search.fill('universally');
     await expect(page.locator('.list__empty')).toHaveText(/^More than 1,000/u, { timeout: 60_000 });
@@ -540,13 +543,17 @@ test.describe('a long book searched while its pages turn', () => {
     for (let i = 0; i < 50; i++) {
       await page.keyboard.press('ArrowRight');
       await expect(page.locator('.turn-curl, .turn-copy')).toHaveCount(0);
-      if (i === 3) {
+      if (i === 3 && !process.env.NOTRACE) {
         await cdp.send('Tracing.end');
         await traceDone;
         writeFileSync(join(test.info().outputPath(), 'trace.json'), JSON.stringify({ traceEvents: traced }));
       }
     }
-    await expect(page.getByRole('button', { name: 'Found 61' })).toBeVisible({ timeout: 120_000 });
+    await expect(
+      process.env.LOCATORS === 'css'
+        ? page.locator('[data-key="lens:found"] .count', { hasText: /^61$/u })
+        : page.getByRole('button', { name: 'Found 61' }),
+    ).toBeVisible({ timeout: 120_000 });
     const longest = await time.longest();
     const out = test.info().outputPath();
     const record = await page.evaluate(() => (window as unknown as { long: unknown }).long);
