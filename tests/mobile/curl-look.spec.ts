@@ -7,94 +7,11 @@
 // curl clipped itself; and the shade and light, drawn across bands far
 // longer than the page, never fall on the blotter round it.
 
-import { readFileSync } from 'node:fs';
-import { type CDPSession, devices, expect, type Page, test } from '@playwright/test';
-import { bookInPages, box, FIXTURE, touchAt } from './book-hand';
-import { open, putBytesOutside } from './outside';
+import { devices, expect, type Page, test } from '@playwright/test';
+import { bookInPages, box } from './book-hand';
+import { bookOnASheet, holdCurl, lightness, median, type Point } from './curl-sight';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
-
-type Point = readonly [number, number];
-interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-/**
- * The screen's lightness (0 to 255) at each point, in CSS pixels, read from a
- * screenshot at the device's own pixels. Decoded in a blank page of its own,
- * as the phone's page allows no image from elsewhere.
- */
-async function lightness(page: Page, points: readonly Point[]): Promise<number[]> {
-  const shot = await page.screenshot();
-  const ratio = await page.evaluate(() => devicePixelRatio);
-  const blank = await page.context().newPage();
-  try {
-    return await blank.evaluate(
-      async ([png, points, ratio]) => {
-        const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
-        const image = await createImageBitmap(new Blob([bytes]));
-        const canvas = new OffscreenCanvas(image.width, image.height);
-        const context = canvas.getContext('2d');
-        if (!context) throw new Error('no canvas');
-        context.drawImage(image, 0, 0);
-        const { data } = context.getImageData(0, 0, image.width, image.height);
-        return points.map(([x, y]) => {
-          const at = (Math.round(y * ratio) * image.width + Math.round(x * ratio)) * 4;
-          return (
-            0.2126 * (data[at] ?? 0) + 0.7152 * (data[at + 1] ?? 0) + 0.0722 * (data[at + 2] ?? 0)
-          );
-        });
-      },
-      [shot.toString('base64'), points, ratio] as const,
-    );
-  } finally {
-    await blank.close();
-  }
-}
-
-const median = (values: readonly number[]) =>
-  [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)] ?? Number.NaN;
-
-/**
- * A finger put on the page at `from` and drawn slowly to `to`, then held
- * there: the curl stands still under it (its bands no longer moving) before
- * anything is read. Lifted by the function returned.
- */
-async function holdCurl(page: Page, from: Point, to: Point): Promise<() => Promise<void>> {
-  const cdp: CDPSession = await page.context().newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: touchAt(...from) });
-  const steps = Math.ceil(Math.hypot(to[0] - from[0], to[1] - from[1]) / 8);
-  for (let i = 1; i <= steps; i++) {
-    const x = from[0] + ((to[0] - from[0]) * i) / steps;
-    const y = from[1] + ((to[1] - from[1]) * i) / steps;
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: touchAt(x, y) });
-    await page.waitForTimeout(16);
-  }
-  await expect(page.locator('.turn-curl')).toHaveCount(1);
-  const placed = () =>
-    page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('.turn-curl__band')]
-        .map((band) => band.style.transform)
-        .join(),
-    );
-  await expect
-    .poll(
-      async () => {
-        const before = await placed();
-        await page.waitForTimeout(100);
-        return (await placed()) === before;
-      },
-      { intervals: [0] },
-    )
-    .toBe(true);
-  return async () => {
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
-  };
-}
 
 /**
  * Points on the screen inside the bands `selector` names, each in the middle
@@ -128,34 +45,9 @@ const insideBands = (page: Page, selector: string) =>
     return points;
   }, selector);
 
-const sheetOf = async (page: Page): Promise<Rect> => {
-  const sheet = await page.locator('.epub-sheet:not([aria-hidden])').boundingBox();
-  if (!sheet) throw new Error('no sheet');
-  return sheet;
-};
-
-/** A book in pages on the desktop's panes, one page on a sheet with the blotter round it. */
-async function bookOnASheet(page: Page): Promise<Rect> {
-  await open(page);
-  await page.evaluate(async () => {
-    await window.eien.settings.set('appearance.room', 'panes');
-    await window.eien.settings.set('appearance.frame', 'sheet');
-    await window.eien.settings.set('epub.view', 'pages');
-    await window.eien.settings.set('epub.turn', 'curl');
-    await window.eien.settings.set('epub.landscape', 'one');
-  });
-  await putBytesOutside(
-    page,
-    'Eien/Vault/Novels/Pride and Prejudice.epub',
-    readFileSync(FIXTURE).toString('base64'),
-  );
-  await page.setViewportSize({ width: 1400, height: 900 });
-  await page.reload();
-  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
-  await expect(box(page)).toBeVisible();
-  await expect(box(page)).not.toHaveAttribute('data-spread', '');
-  const sheet = await sheetOf(page);
-  // Room for a flap to the sheet's left, on the blotter, inside the pane.
+/** A book in pages on one page on a sheet, with room for a flap to its left on the blotter. */
+async function bookBesideBlotter(page: Page) {
+  const sheet = await bookOnASheet(page);
   const pane = await page
     .locator('.epub-sheet:not([aria-hidden])')
     .evaluate((element) => element.parentElement?.getBoundingClientRect().left ?? 0);
@@ -194,7 +86,7 @@ test('a page’s back, mid-roll, shows its words only faintly', async ({ page })
 test('a flap pulled past the sheet’s edge shows on the blotter, as far as the pane', async ({
   page,
 }) => {
-  const sheet = await bookOnASheet(page);
+  const sheet = await bookBesideBlotter(page);
   const y = sheet.y + sheet.height * 0.6;
   // Beside the sheet on the blotter, along the flap's middle, and on the sheet's margin.
   const beside: Point[] = [];
@@ -217,7 +109,7 @@ test('a flap pulled past the sheet’s edge shows on the blotter, as far as the 
 // the fold crosses the sheet's top and bottom edges, the blotter just past
 // them is as it was before the page lifted.
 test('the curl’s shade and light stop at the page’s edges', async ({ page }) => {
-  const sheet = await bookOnASheet(page);
+  const sheet = await bookBesideBlotter(page);
   const rows: Point[] = [];
   // Clear of the flap's own soft shadow, and of the book's fore-edge at the sheet's right.
   for (let x = sheet.x; x < sheet.x + sheet.width - 30; x += 3) {

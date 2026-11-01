@@ -21,6 +21,7 @@ function spread(
     way > 0
       ? { x: GUTTER, width: WIDTH - GUTTER, mirrored: false }
       : { x: 0, width: GUTTER, mirrored: true },
+  trim?: (words: HTMLElement) => boolean,
 ) {
   const host = document.createElement('div');
   const sheet = document.createElement('article');
@@ -55,6 +56,7 @@ function spread(
       },
       how: () => ({ style: 'curl', speed: 1 }),
       leaf: leafOf,
+      ...(trim ? { trim } : {}),
     },
     { frames, tokens: () => TOKENS, random: () => 0.5 },
   );
@@ -191,6 +193,36 @@ describe('a spread’s back', () => {
     // The right page as it is, from the gutter on: the leaf's own mirror reads it.
     const back = curl.querySelector<HTMLElement>('.turn-curl__back .turn-curl__page');
     expect([back?.style.left, back?.style.transform]).toEqual([`${-GUTTER}px`, '']);
+  });
+
+  // A copy kept to the words round the sight can be refused (#174): the page still turns, as one
+  // page's does, rather than at once with no curl.
+  describe('without a copy of the page come to', () => {
+    const refusing = () => spread(undefined, (words) => words.textContent !== 'Page 4');
+
+    it('turned by a key, curls on, its back its own words through the paper', () => {
+      const b = refusing();
+      b.turn.key(1);
+      const curl = b.curl() as HTMLElement;
+      expect(new Set(words(curl, backs))).toEqual(new Set(['Page 3']));
+      expect(new Set(words(curl, fronts))).toEqual(new Set(['Page 3']));
+      expect(veils(curl, backs).length).toBeGreaterThan(0);
+      b.run();
+      expect(b.curl()).toBeNull();
+      expect(b.page()).toBe(4);
+    });
+
+    it('under a hand, curls as it’s drawn', () => {
+      const b = refusing();
+      b.turn.grab([780, 300]);
+      b.turn.drag([-8, 0], 0);
+      b.turn.drag([-200, 0], 10);
+      const curl = b.curl() as HTMLElement;
+      expect(new Set(words(curl, backs))).toEqual(new Set(['Page 3']));
+      expect(b.turn.letGo()).toBe(true);
+      b.run();
+      expect(b.page()).toBe(4);
+    });
   });
 
   it('on one page, is its own words through the paper', () => {

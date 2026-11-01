@@ -105,7 +105,7 @@ async function watchLayers(page: Page) {
         .toBe(true);
     },
     drawn: () => trees.length - 1 - first,
-    between: (): Turning => {
+    between: async (): Promise<Turning> => {
       // The turn's layers: the curl's, and any made while one of them still drew (the page's own
       // are the first tree's others). The turn ends with the first tree that has none of them.
       const curlIds = [...before].filter(([, { name }]) => name.includes('turn-curl'));
@@ -115,11 +115,21 @@ async function watchLayers(page: Page) {
       const newIn = (layers: readonly Layer[]) =>
         layers.filter((layer) => layer.drawsContent && !base.has(layer.layerId));
       const turns = new Set(curlIds.map(([id]) => id));
+      // Each of the turn's layers as first and last seen drawing: one shown only once the page has
+      // lifted (a strip, a shadow, the flap) is held from then on, as the first tree's are.
+      const seen = new Map<string, { from: Layer; to: Layer }>();
+      for (const layer of trees[first] ?? []) {
+        if (turns.has(layer.layerId)) seen.set(layer.layerId, { from: layer, to: layer });
+      }
       let last = first;
       for (let i = first + 1; i < trees.length; i++) {
         const made = newIn(trees[i] ?? []);
         if (!made.some((layer) => turns.has(layer.layerId))) break;
-        for (const layer of made) turns.add(layer.layerId);
+        for (const layer of made) {
+          turns.add(layer.layerId);
+          const was = seen.get(layer.layerId);
+          seen.set(layer.layerId, { from: was?.from ?? layer, to: layer });
+        }
         last = i;
       }
       let remade = 0;
@@ -127,12 +137,12 @@ async function watchLayers(page: Page) {
         if (drawingIds(trees[i] ?? []) !== drawingIds(trees[i - 1] ?? [])) remade++;
       }
       const repainted = new Map<string, number>();
-      for (const layer of trees[last] ?? []) {
-        const was = before.get(layer.layerId);
-        if (!was) continue;
+      for (const [id, { from, to }] of seen) {
         // A paint or two as it settles is no repaint a move.
-        const times = layer.paintCount - was.paints;
-        if (times > 2) repainted.set(was.name, (repainted.get(was.name) ?? 0) + times);
+        const times = to.paintCount - from.paintCount;
+        if (times <= 2) continue;
+        const name = before.get(id)?.name ?? (await drawnLayers(cdp, [to])).get(id)?.name ?? id;
+        repainted.set(name, (repainted.get(name) ?? 0) + times);
       }
       const curl = curlIds.map(([, { name }]) => name).sort();
       return { curl, repainted, remade };
@@ -173,7 +183,7 @@ async function layersWhileHeld(page: Page, way: 1 | -1 = 1): Promise<Turning> {
   await watch.curlDrawn();
   // Two pixels a move, to at most 70% of the page's width: a slow drag still.
   while (watch.drawn() < FRAMES && step < rect.width * 0.35) await move();
-  const turning = watch.between();
+  const turning = await watch.between();
   await watch.cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await expect(page.locator('.turn-curl')).toHaveCount(0);
   return turning;
@@ -206,7 +216,7 @@ async function layersInFlight(page: Page, key: string): Promise<Turning> {
   await watch.curlDrawn();
   await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 20_000 });
   expect(watch.drawn()).toBeGreaterThanOrEqual(FRAMES);
-  return watch.between();
+  return await watch.between();
 }
 
 /** A page turned on by a key, and landed: a page before it to turn back to. */
