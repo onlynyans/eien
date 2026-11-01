@@ -652,3 +652,56 @@ test('a book in pages on the phone is one page, ragged and hyphenated, on a tabl
   await expect(page.locator('.colophon__page').first()).toHaveText('');
   expect(await seriousViolations(page), 'Eien’s title page on the phone').toEqual([]);
 });
+
+// A curl on two facing pages (#40, Phase 3d): the desktop's panes on a wide
+// screen open a spread, and a page turns round the gutter, not the whole
+// sheet: on, the right page; back, the left, in a mirror; the other lying
+// still until it lands.
+test('a curl on two facing pages turns one page round the gutter', async ({ page }) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'panes');
+    await window.eien.settings.set('epub.view', 'pages');
+    await window.eien.settings.set('epub.turn', 'curl');
+    // As slow as a turn goes, to be caught in flight.
+    await window.eien.settings.set('epub.turnSpeed', '4');
+  });
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 2000, height: 900 });
+  await page.reload();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page).first()).toContainText('It is a truth universally acknowledged');
+  const box = page.locator('.epub-sheet:not([aria-hidden]) .epub__pages');
+  await expect(box).toHaveAttribute('data-spread', '');
+  const gutter = await box.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return rect.left + rect.width / 2;
+  });
+  const sheet = await page.locator('.epub-sheet:not([aria-hidden])').boundingBox();
+  if (!sheet) throw new Error('no sheet');
+  await page.locator('.page__leaf--epub .page__scroll').focus();
+  const leafBox = () =>
+    page.locator('.turn-curl__leaf').evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, right: rect.right };
+    });
+  // On: the right page, from the gutter to the sheet's right edge.
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.turn-curl__leaf')).toHaveCount(1);
+  const on = await leafBox();
+  expect(Math.abs(on.left - gutter)).toBeLessThan(2);
+  expect(Math.abs(on.right - (sheet.x + sheet.width))).toBeLessThan(2);
+  await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
+  // Back: the left page, from the sheet's left edge to the gutter.
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.locator('.turn-curl__leaf')).toHaveCount(1);
+  const back = await leafBox();
+  expect(Math.abs(back.left - sheet.x)).toBeLessThan(2);
+  expect(Math.abs(back.right - gutter)).toBeLessThan(2);
+  await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
+});

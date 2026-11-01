@@ -29,12 +29,17 @@
   pointer-events: none;
 }
 .turn-curl > *,
+.turn-curl__leaf > *,
 .turn-curl__flap > * {
   position: absolute;
   inset: 0;
 }
+/* A spread's turning page (./curl-view.ts): its box over the sheet, the curl laid in it. */
+.turn-curl__leaf {
+  transform-origin: 50% 0;
+}
 
-/* Each piece is the whole page, clipped to its part (laid by ./curl-view.ts): its own paper, as
+/* Each piece holds the whole page, clipped to its part (laid by ./curl-view.ts): its own paper, as
    the phone's page has none of its own. */
 .turn-curl__page {
   max-width: none;
@@ -45,12 +50,17 @@
 .turn-curl__back {
   transform-origin: 0 0;
 }
+/* Moved every frame, or (a spread's still page) lying under what is: each its own layer, its words
+   drawn once and only moved and clipped after. */
+.turn-curl__strip,
+.turn-curl__back,
+.turn-curl__still {
+  will-change: transform;
+}
 
 /* Inside a piece, over the page's own parts: the paper over its words, then the light. A piece's
    own stacking context keeps the page's parts beneath them. */
-.turn-curl__strip,
-.turn-curl__back,
-.turn-curl__page {
+.turn-curl__piece {
   isolation: isolate;
 }
 
@@ -66,7 +76,7 @@
 /* A strip's shade, its glint, and the washes along the fold, over the page's words. */
 .turn-curl__tone,
 .turn-curl__glint,
-.turn-curl__page > .turn-curl__wash {
+.turn-curl__piece > .turn-curl__wash {
   position: absolute;
   inset: 0;
   z-index: 2;

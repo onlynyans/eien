@@ -808,8 +808,10 @@ in the book, each recorded here as it's built.
   measure (Page width still narrows them), the text blocks
   `--eien-space-8` apart and Facing pages' `--eien-rule-soft` hairline down
   the gutter's middle. One sheet, its one shadow, no fold shading. Never on
-  a phone (one pane at a time) or in a split. A turn moves the spread, the
-  curl lifting it as one leaf; the fore-edge stands at its outer sides
+  a phone (one pane at a time) or in a split. A turn moves the spread.
+  Under Curl one page turns round the gutter (decided 2026-10-31), its
+  running head and folio with it: on, the right page; back, the left; the
+  other lies still until it lands. The fore-edge stands at its outer sides
   (Previous pages, Next pages). A bookmark's mark sits on the page it
   marks: the verso's at its left, its edge tab past the pages read
   (`--edges-before`). The colophon says "pages 212–213 of 2,450".

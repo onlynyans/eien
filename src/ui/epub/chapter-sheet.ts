@@ -107,6 +107,15 @@ export class ChapterSheet {
     if (this.paged) this.#paged.trim(copy);
   }
 
+  /**
+   * In pages, two facing (Phase 3d): the gutter's middle across the sheet, in its own pixels, where
+   * a turning page is held; null for one page (the box's own offsets: the sheet is its offset parent).
+   */
+  get gutter(): number | null {
+    if (!this.paged || !this.box.hasAttribute('data-spread')) return null;
+    return this.box.offsetLeft + this.box.offsetWidth / 2;
+  }
+
   /** In pages: the chapter's first page, or its last. */
   edge(last: boolean): void {
     if (!this.paged) return;

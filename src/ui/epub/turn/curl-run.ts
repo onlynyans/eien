@@ -19,11 +19,14 @@ import {
 } from '../../../core/epub';
 import { CurlView } from './curl-view';
 import type { Frames } from './next-frame';
+import type { TurnLeaf } from './turn-surface';
 import type { TurnTokens } from './turn-tokens';
 
 export interface CurlRunOf {
   readonly copy: HTMLElement;
   readonly sheet: HTMLElement;
+  /** One page of two that turns (a spread), or null: the whole sheet. */
+  readonly leaf?: TurnLeaf | null;
   readonly words: string;
   /** A copy's words cut to what's in sight. */
   readonly trim?: (words: HTMLElement) => void;
@@ -44,7 +47,7 @@ export class CurlRun {
   constructor(turn: CurlTurn, of: CurlRunOf) {
     this.#turn = turn;
     this.#of = of;
-    this.#view = new CurlView(of.copy, of.sheet, turn.way, of.words, of.trim);
+    this.#view = new CurlView(of.copy, of.sheet, turn.way, of.words, of.trim, of.leaf ?? null);
     this.#draw();
   }
 
@@ -60,7 +63,10 @@ export class CurlRun {
   /** Held: the hand `offset` from where it took the corner, at `time`. */
   drag(offset: Point, time: number): void {
     if (this.#over) return;
-    this.#turn = dragCurl(this.#turn, offset, time);
+    // A mirrored leaf (a spread's left page turned back) is curled as the right turns on: a hand
+    // drawn rightward is, in its mirror, drawn leftward.
+    const [dx, dy] = offset;
+    this.#turn = dragCurl(this.#turn, this.#of.leaf?.mirrored ? [-dx, dy] : offset, time);
     if (this.#drawing) return;
     this.#drawing = true;
     this.#stop = this.#of.frames(() => {

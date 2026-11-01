@@ -71,6 +71,15 @@ export function bookPages(of: BookPagesOf): BookPages {
       // Back into the chapter it came from: the next turn waits for it to be drawn.
       else return of.draw(was.spine, was.spot.offset).then(() => {});
     },
+    // On a spread one page turns round the gutter: on, the right; back, the left, in a mirror.
+    leaf(way) {
+      const gutter = page.sheet.gutter;
+      if (gutter === null) return null;
+      const width = page.leaf.offsetWidth;
+      return way > 0
+        ? { x: gutter, width: width - gutter, mirrored: false }
+        : { x: 0, width: gutter, mirrored: true };
+    },
     how() {
       const values = of.values();
       return {
