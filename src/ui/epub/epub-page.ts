@@ -154,23 +154,23 @@ export class EpubPage implements PaneLeaf {
     return this.#name;
   }
 
-  /** A book on the page: its name (the pager's, the label's), the folders above it, its language. */
-  show(name: string, crumbs: string, language: string): void {
+  /** A book on the page: its name (the pager's, the label's), its sheet's head (./book-open.ts headOf), its language. */
+  show(name: string, head: string, language: string): void {
     this.#name = name;
     this.#sheet.hidden = false;
     this.#empty.hidden = true;
     this.#sheet.setAttribute('aria-label', name);
     this.#scroll.setAttribute('aria-label', name);
-    this.#crumbs.textContent = this.runningCrumbs.textContent = crumbs;
+    this.#crumbs.textContent = this.runningCrumbs.textContent = head;
     if (language) this.chapter.lang = language;
     else this.chapter.removeAttribute('lang');
     // Set as a book justifies only where its words can break at a hyphen (./hyphens.ts).
     this.element.toggleAttribute('data-hyphens', hyphenates(language));
   }
 
-  /** Another book on its way: its name and folders, and nothing of the last one's left meanwhile. */
-  loading(name: string, crumbs: string): void {
-    this.show(name, crumbs, '');
+  /** Another book on its way: its name and head, and nothing of the last one's left meanwhile. */
+  loading(name: string, head: string): void {
+    this.show(name, head, '');
     this.notice(null);
     this.#clearChapter();
   }
