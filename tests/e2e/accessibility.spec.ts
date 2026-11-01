@@ -43,6 +43,26 @@ async function shutViolations(page: Page) {
   return found;
 }
 
+/** Pride and Prejudice open at its third chapter, which has a picture. */
+async function openBook(page: Page): Promise<void> {
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await page.locator('.contents-row').nth(2).click();
+  await expect(page.locator('.epub-chapter img')).toBeVisible();
+}
+
+/** The chapter's first words chosen, as a hand leaves them. */
+const chooseWords = (page: Page) =>
+  page.evaluate(() => {
+    const chapter = document.querySelector('.page__leaf--epub .epub-chapter p');
+    const words = chapter?.firstChild;
+    if (!words) throw new Error('no words');
+    const range = document.createRange();
+    range.setStart(words, 0);
+    range.setEnd(words, Math.min(12, words.textContent?.length ?? 0));
+    document.getSelection()?.removeAllRanges();
+    document.getSelection()?.addRange(range);
+  });
+
 for (const layout of ['band', 'slip', 'runhead'] as const) {
   for (const scheme of ['day', 'night'] as const) {
     test.describe(`${layout} by ${scheme}`, () => {
@@ -70,15 +90,12 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         expect(await violationsUnder(page, ['dialog[open]']), 'Settings').toEqual([]);
       });
 
-      test('a book open, its contents in the list, has no serious violation (#40)', async ({
+      // A book's states, four tests rather than one: each well inside the 30s a test may take,
+      // as the one they were outgrew it on CI's slower machines, phase by phase.
+      test('a book open, a bookmark and a highlight, its marks in the list and on SHELF, have no serious violation (#40)', async ({
         page,
-        app,
       }) => {
-        await page
-          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
-          .click();
-        await page.locator('.contents-row').nth(2).click();
-        await expect(page.locator('.epub-chapter img')).toBeVisible();
+        await openBook(page);
         // A chapter a sheet (Phase 2): its foot in sight, the chapter before and "The end".
         const turns = page.getByRole('navigation', { name: 'Chapters' });
         await turns.scrollIntoViewIfNeeded();
@@ -93,24 +110,12 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         expect(await violationsUnder(page, ['.page']), 'a bookmarked page').toEqual([]);
         // A highlight (Phase 5a): words chosen and H, their tick in the margin; then taken off,
         // the colophon's Put back offered.
-        /** The chapter's first words chosen, as a hand leaves them. */
-        const chooseWords = () =>
-          page.evaluate(() => {
-            const chapter = document.querySelector('.page__leaf--epub .epub-chapter p');
-            const words = chapter?.firstChild;
-            if (!words) throw new Error('no words');
-            const range = document.createRange();
-            range.setStart(words, 0);
-            range.setEnd(words, Math.min(12, words.textContent?.length ?? 0));
-            document.getSelection()?.removeAllRanges();
-            document.getSelection()?.addRange(range);
-          });
-        await chooseWords();
+        await chooseWords(page);
         await page.keyboard.press('h');
         await expect(page.locator('.epub-chapter [data-highlighted]')).toHaveCount(1);
         expect(await violationsUnder(page, ['.page']), 'a highlighted page').toEqual([]);
         // Kept, its words are let go: chosen again, H takes it off.
-        await chooseWords();
+        await chooseWords(page);
         await page.keyboard.press('h');
         await expect(page.getByRole('button', { name: 'Put back' })).toBeVisible();
         expect(await violationsUnder(page, ['.page']), 'Put back in the colophon').toEqual([]);
@@ -120,8 +125,27 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.getByRole('button', { name: /^Marks \d+$/u }).click();
         await expect(page.locator('.mark-row')).toHaveCount(2);
         expect(await violationsUnder(page, ['.list']), 'Marks in the list').toEqual([]);
-        // Find (Phase 5c): the list's field searching the book, its matches under Found; and the
-        // page's own find bar over the book, its matches inked.
+        await page.getByRole('button', { name: /^Contents \d+$/u }).click();
+        await page.locator('[data-command="panes"]').click();
+        await expect(page.locator('.tree-row--chapter')).toHaveCount(3);
+        expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);
+        // Marks on SHELF with two panes (Phase 4c, 5b): the lenses a line under the book's row, the
+        // bookmark and highlight made above tree rows, each its page its count.
+        await page
+          .locator('.tree-lenses')
+          .getByRole('button', { name: /^Marks \d+$/u })
+          .click();
+        await expect(page.locator('.tree-row--mark')).toHaveCount(2);
+        expect(await violationsUnder(page, ['.sidebar']), 'Marks on SHELF').toEqual([]);
+      });
+
+      test('a book searched, in the list and by its find bar, has no serious violation (#40, Phase 5c)', async ({
+        page,
+        app,
+      }) => {
+        await openBook(page);
+        // The list's field searching the book, its matches under Found; and the page's own find
+        // bar over the book, its matches inked.
         const searchBook = page.getByRole('searchbox', { name: 'Search Pride and Prejudice' });
         await searchBook.fill('the');
         await expect(page.locator('.found-row').first()).toBeVisible();
@@ -134,8 +158,12 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await findBar.getByRole('textbox', { name: 'Find' }).fill('Bennet');
         await expect(findBar.locator('.find__count')).toHaveText(/of/u);
         expect(await violationsUnder(page, ['.page']), 'the find bar over a book').toEqual([]);
-        await findBar.getByRole('textbox', { name: 'Find' }).press('Escape');
-        await page.getByRole('button', { name: /^Contents \d+$/u }).click();
+      });
+
+      test('the strip, the shelf’s look, a folder on SHELF and the book’s menus have no serious violation (#40)', async ({
+        page,
+      }) => {
+        await openBook(page);
         // Marks on the edge (Phase 4d), from the shelf's look: the strip beside the page.
         const lookTool = page.locator(
           '[data-command="look"]:not(.phone-bar__controls *, .page__phone *)',
@@ -153,9 +181,7 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.locator('[data-setting="epub.marks"] [data-value="list"]').click();
         await page.keyboard.press('Escape');
         // The shelf's look (#40, Phase 1c): LOOK / SHELF, with a book in front.
-        await page
-          .locator('[data-command="look"]:not(.phone-bar__controls *, .page__phone *)')
-          .click();
+        await lookTool.click();
         await expect(page.getByRole('dialog', { name: 'Look: Shelf' })).toBeVisible();
         await expect(page.locator('[data-setting="epub.scroll"]')).toBeVisible();
         // With its line at the foot: Settings sets notes.
@@ -179,7 +205,11 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
           .click({ button: 'right' });
         await expect(page.getByRole('menu', { name: 'Pride and Prejudice' })).toBeVisible();
         expect(await violationsUnder(page, ['.menu']), 'the book’s row menu').toEqual([]);
-        await page.keyboard.press('Escape');
+      });
+
+      test('a book’s note over the page, Back, and Marks with none kept have no serious violation (#40)', async ({
+        page,
+      }) => {
         // A note over the page (Phase 2b), and Back in the colophon after a link.
         await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Links' }).click();
         // Marks with none kept (Phase 4c): the list's empty line, in pencil.
@@ -196,20 +226,6 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.getByRole('link', { name: 'see Chapter III' }).click();
         await expect(page.getByRole('button', { name: 'Back to Chapter I' })).toBeVisible();
         expect(await violationsUnder(page, ['.page']), 'Back in the colophon').toEqual([]);
-        await page
-          .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
-          .click();
-        await page.locator('[data-command="panes"]').click();
-        await expect(page.locator('.tree-row--chapter')).toHaveCount(3);
-        expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);
-        // Marks on SHELF with two panes (Phase 4c, 5b): the lenses a line under the book's row, the
-        // bookmark and highlight made above tree rows, each its page its count.
-        await page
-          .locator('.tree-lenses')
-          .getByRole('button', { name: /^Marks \d+$/u })
-          .click();
-        await expect(page.locator('.tree-row--mark')).toHaveCount(2);
-        expect(await violationsUnder(page, ['.sidebar']), 'Marks on SHELF').toEqual([]);
       });
 
       test('a book in pages, its edges and the Pages and Scroll tools, has no serious violation (#40, Phase 3b)', async ({
