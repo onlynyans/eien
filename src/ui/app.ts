@@ -11,6 +11,7 @@ import { SettingsState } from './settings/settings-state';
 import { fitViewport, followViewport } from './settings/viewport';
 import { isZoomCommand, keyboardInPage, zoomedBy, zoomKeyFor } from './settings/zoom';
 import { followControlsLeft } from './shell/controls-left';
+import { swipeBack } from './shell/swipe-back';
 import { paintWindowControls } from './shell/window-controls';
 import { wear, wornFor } from './theme/wear';
 import { WriterThemes } from './theme/writer-themes';
@@ -87,12 +88,19 @@ export async function startApp(root: HTMLElement, bridge: Bridge): Promise<void>
       void settings.set(key, settings.values[key] === 'on' ? 'off' : 'on').catch(console.error);
     }
   });
-  // A phone's back: the settings close first, then the vault goes back a pane.
-  bridge.onBack(() => {
-    if (!screen.isOpen) return shown?.back() ?? false;
+  // Back (a phone's, or a Mac trackpad's swipe, #70): the settings close first, then the vault
+  // goes back. A desktop's is a hand's gesture, never a key, so it presses no Esc.
+  const gesture = bridge.window !== undefined;
+  const back = () => {
+    if (!screen.isOpen) return shown?.back(gesture) ?? false;
     screen.close();
     return true;
-  });
+  };
+  bridge.onBack(back);
+  void bridge.window
+    ?.swipes()
+    .then((two) => two && swipeBack(window, back))
+    .catch(console.error);
   bridge.onBeforeClose(async () => {
     await shown?.flush();
   });

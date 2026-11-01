@@ -11,7 +11,7 @@ import type { Point } from '../../../core/epub';
 import type { PageTurn } from './page-turn';
 
 /** Whether words are chosen in `sheet`: a selection elsewhere (a note beside) never stops its hand. */
-function chosenIn(sheet: HTMLElement): boolean {
+export function chosenIn(sheet: HTMLElement): boolean {
   const selection = document.getSelection();
   return (
     selection !== null &&

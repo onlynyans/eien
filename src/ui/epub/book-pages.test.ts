@@ -44,6 +44,7 @@ function book(pages = 2) {
     spine: () => spine,
     draw,
     values: () => ({ ...DEFAULT_SETTINGS, 'epub.turnSpeed': '0' }),
+    turnTo: vi.fn(async () => true),
   });
   const setSpine = (index: number) => {
     spine = index;

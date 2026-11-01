@@ -605,6 +605,11 @@ is always Panes.
   narrow, nothing folds: every mode's `least` is 0 (`splitSpecOf`), and
   under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
+- **Back** (#70): Android's back and a Mac trackpad's swipe back go back
+  the way the panes came: a book's own step back, the phone's stack, then
+  with the panes a pane shut opens, the list, then the sidebar, as its
+  toggle opens it (its calm arrival), the keyboard left where it was. No
+  word, token or control of its own.
 
 ## A quick look (decided 2026-10-28, #49; built: notes' half #105, shelf's half #114, after #40 Phase 1 #120; docs/quick-look.md)
 
@@ -705,7 +710,10 @@ in the book, each recorded here as it's built.
   above it and `--eien-space-4` under, the chapters before and after as word
   buttons (label type, an arrow beside the name, `--eien-touch` high on a
   phone), the last one at the right; "The end" in label type at the last
-  chapter. The colophon's items: "3 of 61", the page (Phase 4a: "page 212
+  chapter. A finger swiped across the page turns the chapter too (#71):
+  nothing moves under it; the chapter's words step in from the side they
+  come from (Words' step in, `--eien-space-2`, calm × Turn speed, none with
+  reduced motion), as they do from the foot's turns. The colophon's items: "3 of 61", the page (Phase 4a: "page 212
   of 2,450", "page xii"; `.colophon__page`, a count, gone while none is
   known), "40% of the chapter", "12% of the book", the two percents
   dropped first under a 560px page pane, the page kept. In Facing pages
