@@ -5,8 +5,8 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { type CDPSession, devices, expect, type Page, test } from '@playwright/test';
-import { open, putBytesOutside } from './outside';
+import { devices, expect, type Page, test } from '@playwright/test';
+import { open, putBytesOutside, swipe } from './outside';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 
@@ -54,26 +54,6 @@ const held = async (page: Page): Promise<boolean> => {
 };
 
 const touchAt = (x: number, y: number) => [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: 1 }];
-
-/** One finger down at `from`, drawn to `to` in `steps`, and lifted: the browser's own touch. */
-async function swipe(
-  cdp: CDPSession,
-  from: { x: number; y: number },
-  to: { x: number; y: number },
-  steps: number,
-): Promise<void> {
-  const point = (x: number, y: number) => [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: 1 }];
-  await cdp.send('Input.dispatchTouchEvent', {
-    type: 'touchStart',
-    touchPoints: point(from.x, from.y),
-  });
-  for (let i = 1; i <= steps; i++) {
-    const x = from.x + ((to.x - from.x) * i) / steps;
-    const y = from.y + ((to.y - from.y) * i) / steps;
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: point(x, y) });
-  }
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-}
 
 test('a finger drawn across the words, well inside the screen, turns the page', async ({
   page,

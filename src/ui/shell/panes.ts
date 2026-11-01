@@ -124,6 +124,17 @@ export class PaneLayout {
     return true;
   }
 
+  /**
+   * Back with the panes (#70): the nearest pane shut opens, the list, then
+   * the sidebar; with two panes, the sidebar alone. Whether one opened: the
+   * phone's way, back is its stack's.
+   */
+  reopen(): boolean {
+    if (this.#parts.phone()) return false;
+    if (!this.#two && this.isShut('list')) return this.open('list');
+    return this.isShut('sidebar') && this.open('sidebar');
+  }
+
   /** On a phone, bring the page into sight; elsewhere it always is. */
   openPage(): void {
     if (this.#parts.phone()) this.#parts.showPhone('page');

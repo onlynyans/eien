@@ -1,4 +1,5 @@
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from 'electron';
+import { Backs } from '../../platform/backs';
 import { type Bridge, CHANNEL, type MenuCommand } from '../../platform/bridge';
 
 // The window's only door to the system. It runs sandboxed: nothing here may
@@ -10,6 +11,10 @@ function listen<T>(channel: string, listener: (value: T) => void): () => void {
   ipcRenderer.on(channel, handler);
   return () => ipcRenderer.removeListener(channel, handler);
 }
+
+/** A Mac's swipe back with three fingers (./swipe-session.ts): the window's handlers, newest first. */
+const backs = new Backs();
+ipcRenderer.on(CHANNEL.back, () => backs.run());
 
 const bridge: Bridge = {
   platform: process.platform,
@@ -46,7 +51,7 @@ const bridge: Bridge = {
     saveAs: (name, file) => ipcRenderer.invoke(CHANNEL.outSaveAs, name, file),
   },
   onMenu: (listener) => listen<MenuCommand>(CHANNEL.menu, listener),
-  onBack: () => () => undefined, // a desktop window has no system back
+  onBack: (handler) => backs.add(handler),
   onBeforeClose: (save) => {
     ipcRenderer.on(CHANNEL.beforeClose, () => {
       save().finally(() => ipcRenderer.send(CHANNEL.closeReady));
@@ -58,6 +63,7 @@ const bridge: Bridge = {
     close: () => ipcRenderer.invoke(CHANNEL.windowClose),
     start: () => ipcRenderer.invoke(CHANNEL.windowStart),
     greyMenu: (commands) => ipcRenderer.invoke(CHANNEL.greyMenu, commands),
+    swipes: () => ipcRenderer.invoke(CHANNEL.windowSwipes),
   },
 };
 
