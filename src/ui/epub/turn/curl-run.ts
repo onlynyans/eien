@@ -27,7 +27,7 @@ export interface CurlRunOf {
   readonly sheet: HTMLElement;
   /** One page of two that turns (a spread), or null: the whole sheet. */
   readonly leaf?: TurnLeaf | null;
-  /** A copy of the sheet now, for a whole sheet turned back: the page come to curls back over. */
+  /** A copy of the sheet now: the page come to, curling back over (a whole sheet turned back) or on a spread's back. */
   readonly coming: HTMLElement | null;
   readonly tokens: TurnTokens;
   readonly frames: Frames;

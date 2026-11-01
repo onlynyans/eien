@@ -37,7 +37,7 @@ afterEach(() => {
 describe('a band drawn', () => {
   // A style written again is drawn again, each frame on a phone, even when it says the same.
   it('writes whether it’s shown only when that changes', () => {
-    const band = new BandBox('strip', page, reach, null, false);
+    const band = new BandBox('strip', page, reach);
     document.body.append(band.element);
     const watch = new MutationObserver(() => {});
     watch.observe(band.element, { attributes: true, attributeFilter: ['style'] });
@@ -60,7 +60,7 @@ describe('a band drawn', () => {
     // A strip of the roll: laid by the roll, not only moved.
     const placed = frame.resting ? undefined : frame.strips[3];
     if (!placed) throw new Error('no strip');
-    const band = new BandBox('strip', page, reach, null, false, part('tone'));
+    const band = new BandBox('strip', page, reach, { over: [part('tone')] });
     band.place(placed);
     const inside = band.element.querySelector<HTMLElement>('.turn-curl__inside');
     const over = band.element.querySelector<HTMLElement>('.turn-curl__over');
@@ -81,7 +81,11 @@ describe('a band drawn', () => {
   // page's box (the inside). The paper is the page's size, never scaled with the band.
   it('veils its copy inside the page’s box, between the copy and its shade', () => {
     const copy = document.createElement('article');
-    const band = new BandBox('strip', page, reach, copy, true, part('tone'));
+    const band = new BandBox('strip', page, reach, {
+      page: [copy],
+      veiled: true,
+      over: [part('tone')],
+    });
     const inside = band.element.querySelector<HTMLElement>('.turn-curl__inside');
     expect([...(inside?.children ?? [])].map((child) => child.className)).toEqual([
       '',

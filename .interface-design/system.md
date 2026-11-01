@@ -86,6 +86,11 @@ hairline borders, 4 shadows (the sheet's once, the float three times).
   - The gradients are those tokens ramped across the roll, and the lifted
     paper casts one soft shadow in `--eien-curl-shade`: a third shadow,
     there only while the page moves.
+  - Each shadow is as strong as the paper is high off the page (decided
+    2026-11-01): none as a page is taken or lands flat, whole half way
+    over. The roll's shadow lies on the page beneath, beyond the roll; the
+    lifted paper's (`--eien-space-2` soft) round what lies back on top, its
+    free edges, never along the roll, so the two never fall on one edge.
   - Nothing else may use these tokens. The motion is
     `docs/design/explorations/epub-flip-curl.html`.
 - **Corners: not everything is square** (changed 2026-10-20, #27). Three
@@ -921,7 +926,10 @@ in the book, each recorded here as it's built.
   are ragged as its one is. Never in a split. A turn moves the spread.
   Under Curl one page turns round the gutter (decided 2026-10-31), its
   running head and folio with it: on, the right page; back, the left; the
-  other lies still until it lands. The fore-edge stands at its outer sides
+  other lies still until it lands. Its back is the page the turn reveals
+  across the gutter (decided 2026-11-01), printed there and mirrored as
+  paper's back is, so it lands where the sheet has it; one page's back is
+  its own words faint through the paper. The fore-edge stands at its outer sides
   (Previous pages, Next pages). A bookmark's mark sits on the page it
   marks: the verso's at its left, its edge tab past the pages read
   (`--edges-before`). The colophon says "pages 3–4 of 12" (a printed

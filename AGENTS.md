@@ -421,7 +421,7 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `page-keys.ts`: the page's keys, one table: its letters (Q, B, H), `]` and `[`, Back, and in pages the keys that turn and a touch's tap in the outer thirds
   - `turn/`: a page turned (Phase 3)
     - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first
-    - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page as bands (`band-box.ts`: drawn once, only moved), in the curl's light; on a spread one page's (a `TurnLeaf`) round the gutter, the other still, a back turn mirrored
+    - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page as bands (`band-box.ts`: drawn once, only moved), in the curl's light, its shadows as strong as the paper is high; on a spread one page's (a `TurnLeaf`) round the gutter, its back the page it reveals, the other still, a back turn mirrored
     - `hand-events.ts`: the pointer and the finger carried to the turn (Phase 3c): a finger anywhere on the page, a mouse at the book's edges or on a page in flight, a cancelled gesture falling back, a drag that turned never also a click
     - `turn-surface.ts`: what a page turn turns over (`TurnSurface`, its `TurnLeaf` on a spread), and what a test stands in for
     - `turn-hand.ts`: a hand on the page, and when its move is a drag across; `turn-queue.ts`: turns waiting for the page they turn from (a chapter drawn first)

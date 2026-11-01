@@ -575,8 +575,9 @@ Three panes, each collapsible, with a two-pane option in settings:
      restart, a width, a face and page zoom.
    - **Turning the page** (Phase 3b): **Page turn**, a book setting in the
      shelf's quick look: *Curl* (the default; the paper rolls over as it's
-     turned, its back showing the words faintly, in light only while it
-     moves), *Slide* (the words carried a page) or *Words* (only the ink
+     turned, its back showing the words faintly (on two pages, the page the
+     turn reveals, printed on its back), in light only while it moves, its
+     shadows as strong as the paper is high), *Slide* (the words carried a page) or *Words* (only the ink
      changes). **Turn speed**: *Instant*, *1×* (as designed), *2×* (the
      default), *3×*, *4×*. A key pressed mid-turn finishes it at once; a
      key held down turns at once; with reduced motion every turn is
@@ -615,8 +616,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      note beside is a split). A turn, a key, the edges and a hand move both;
      under Curl one page turns round the gutter as a printed page does, its
      running head and number with it (on, the right page; back, the left,
-     a hand drawn rightward across it), the other lying still until it
-     lands. The place is the same, so one page and two show the same words. A
+     a hand drawn rightward across it), its back the page across the
+     gutter that it reveals, the other lying still until it lands. The place is the same, so one page and two show the same words. A
      bookmark's mark sits on the page it marks; B on two pages marks the
      first one's first word, or takes off every bookmark on the two. The
      colophon says both pages ("pages 3–4 of 12", a printed book's

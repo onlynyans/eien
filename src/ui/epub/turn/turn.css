@@ -92,6 +92,9 @@
 .turn-curl__inside {
   overflow: hidden;
 }
+.turn-curl__inside--uncut {
+  overflow: visible;
+}
 .turn-curl__over {
   z-index: 1;
 }
@@ -119,9 +122,18 @@
   opacity: calc(1 - var(--eien-curl-through));
 }
 
-/* What comes back over casts the lifted paper's one soft shadow: the exception's third. */
-.turn-curl__flap {
-  filter: drop-shadow(0 0 var(--eien-space-2) var(--eien-curl-shade));
+/* The shadows: the roll's on the page beneath, and what comes back over casting the lifted
+   paper's one soft shadow (the exception's third), round the page's edges as it lies back. Each as
+   strong as the paper is high (./curl-view.ts), so a page taken or landing flat casts none: their
+   opacity changes each frame, the compositor's alone. */
+.turn-curl__cast,
+.turn-curl__shadow {
+  will-change: transform, opacity;
+}
+.turn-curl__edge {
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 var(--eien-space-2) var(--eien-curl-shade);
 }
 
 /* What stays as the page turns (a book's fore-edge) stays in sight, the sheet beneath hidden or not. */

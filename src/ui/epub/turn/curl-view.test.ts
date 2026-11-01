@@ -39,13 +39,14 @@ describe('the curl drawn', () => {
 
   // What keeps a phone's curl smooth: a frame moves what was drawn, and draws nothing anew. A clip,
   // a gradient or a size changed each frame was drawn again each frame, and the curl stuttered.
-  it('changes only transforms from one frame to the next as the hand moves', () => {
+  it('changes only transforms, and the shadows’ strength, from one frame to the next as the hand moves', () => {
     const to = sheet();
     const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
     view.draw(curlFrame(page, [400, 500], [380, 490], lengths));
-    // Each element's style but its transform: a frame may move things, and do nothing else.
+    // Each element's style but its transform and opacity: a frame may move things and fade the
+    // shadows (the compositor's alone), and do nothing else.
     const unmoved = (style: string | null | undefined) =>
-      (style ?? '').replace(/(^|;)\s*transform:[^;]*/g, '$1').trim();
+      (style ?? '').replace(/(^|;)\s*(transform|opacity):[^;]*/g, '$1').trim();
     const styles = () =>
       [view.element, ...view.element.querySelectorAll('*')].map((element) =>
         unmoved(element.getAttribute('style')),
@@ -65,6 +66,39 @@ describe('the curl drawn', () => {
     watch.disconnect();
     expect(changed).toEqual([]);
     expect(styles()).toEqual(drawn);
+  });
+
+  // Only the shadows fade: the paper itself is never seen through.
+  it('fades only the shadows, as the paper is high: none just taken, whole half over', () => {
+    const to = sheet();
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
+    const strength = () =>
+      [...view.element.querySelectorAll<HTMLElement>('[style*="opacity"]')].map((element) => [
+        element.classList[1],
+        Number(element.style.opacity),
+      ]);
+    view.draw(curlFrame(page, [400, 500], [399, 500], lengths));
+    for (const [, opacity] of strength()) expect(opacity).toBeLessThan(0.02);
+    view.draw(curlFrame(page, [400, 500], [0, 500], lengths));
+    expect(strength()).toEqual([
+      ['turn-curl__cast', 1],
+      ['turn-curl__shadow', 1],
+    ]);
+  });
+
+  // The lifted paper's shadow is round what lies back on top: laid exactly as it is.
+  it('lays the lifted paper’s shadow as what lies back, past the page', () => {
+    const to = sheet();
+    const view = new CurlView(pageCopy(to, '.words'), to, 1, null);
+    view.draw(curlFrame(page, [400, 500], [100, 450], lengths));
+    const laid = (name: string) => {
+      const band = view.element.querySelector<HTMLElement>(`.turn-curl__${name}`);
+      const inside = band?.querySelector<HTMLElement>('.turn-curl__inside');
+      return [band?.style.transform, inside?.style.transform];
+    };
+    expect(laid('shadow')).toEqual(laid('back'));
+    const inside = view.element.querySelector('.turn-curl__shadow .turn-curl__inside');
+    expect(inside?.classList.contains('turn-curl__inside--uncut')).toBe(true);
   });
 
   it('at rest, shows the page flat and nothing else', () => {

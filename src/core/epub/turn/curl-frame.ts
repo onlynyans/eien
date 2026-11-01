@@ -6,7 +6,17 @@
 // pictured (the words stay the book's own) and a frame is transforms alone.
 
 import { type Band, bandOf, flatBand } from './band';
-import { AT_REST, CURL_STRIPS, heldAt, lay, type PageBox, type Point, rollOf, SEAM } from './curl';
+import {
+  AT_REST,
+  CURL_STRIPS,
+  heldAt,
+  lay,
+  type PageBox,
+  type Point,
+  radiusAt,
+  rollOf,
+  SEAM,
+} from './curl';
 
 /** How far the washes along the fold run, in pixels: the window's tokens (--eien-space-6, -5). */
 export interface CurlLengths {
@@ -22,6 +32,12 @@ export type CurlFrame =
       readonly resting: false;
       /** Where the corner is: the hand's place, or as far as the spine lets it. */
       readonly corner: Point;
+      /**
+       * How high the paper stands off the page, of its highest (half way over):
+       * 0 to 1, as the roll's radius. The shadows are as strong, so a page
+       * lying flat (just taken, or landing) casts none.
+       */
+      readonly raised: number;
       /** What stays flat: the page up to the fold. */
       readonly front: Band;
       /** The roll's shadow on the page beneath, from where the roll stands. */
@@ -73,6 +89,7 @@ export function curlFrame(
   return {
     resting: false,
     corner,
+    raised: roll.radius / radiusAt(page, page.width),
     front: bandOf(roll, -reach, SEAM, reach),
     cast: bandOf(roll, roll.radius, roll.radius + lengths.cast, reach),
     strips,

@@ -225,6 +225,17 @@ section where it and the directions below disagree.
 - **The curl's light is approved.** Three tokens, used only while a page
   moves, as the exception in `.interface-design/system.md` sets out:
   `--eien-curl-shade`, `--eien-curl-light` and `--eien-curl-through`.
+- **The curl's shadows are as strong as the paper is high** (decided
+  2026-11-01): the roll's on the page beneath and the lifted paper's soft
+  one, each faded by the roll's radius, so neither is there as a page is
+  taken or lands flat (they were whole to the last frame, then gone). The
+  lifted paper's lies round its free edges only: it was a glow round the
+  whole lifted group, which doubled the roll's own along the roll.
+- **On two pages, a page turned over shows its back** (decided 2026-11-01):
+  the page the turn reveals across the gutter, printed there and mirrored as
+  paper's back is, so as the page lands its words lie where the sheet has
+  them. Its front keeps the page left. One page's back is unchanged: its own
+  words faint through the paper.
 - **A swipe turns the chapter in Scroll** (decided 2026-11-01, #71): a
   finger swiped across the page goes to the next chapter or the one
   before, at its top, as the foot's word buttons do. Nothing moves while
@@ -1132,7 +1143,8 @@ readers, and what it costs Eien.
     fifth of the page), flat again as it lands.
   - **The paper can't stretch:** the spine's edge always stays down.
   - **Cuts of the live page:** what stays, the roll's strips, what lies back
-    on top (its back showing the words faintly through the paper) and the
+    on top (on one page, its back showing the words faintly through the
+    paper; on two, the page it reveals: Decided, Turning the page) and the
     page beneath.
   - **No snapshot:** nothing is pictured, so the book's sandboxed frame could
     be drawn the same way in the app.

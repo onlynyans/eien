@@ -288,8 +288,10 @@ export class PageTurn {
   }
 
   /**
-   * The curl over `sheet`, from `copy` of the page left; null where a whole
-   * sheet turned back has no copy of the page come to, which curls back over it.
+   * The curl over `sheet`, from `copy` of the page left and a copy of the
+   * page come to: curling back over it (a whole sheet turned back), or on the
+   * turning page's back (a spread). Null where a whole sheet turned back has
+   * none; a spread without one shows its own words on its back.
    */
   #curlOn(
     turn: CurlTurn,
@@ -298,8 +300,9 @@ export class PageTurn {
     leaf: TurnLeaf | null,
     tokens: TurnTokens,
   ): CurlRun | null {
-    const coming = turn.way < 0 && !leaf ? this.#copy(sheet) : null;
-    if (turn.way < 0 && !leaf && !coming) return null;
+    const whole = turn.way < 0 && !leaf;
+    const coming = whole || leaf ? this.#copy(sheet) : null;
+    if (whole && !coming) return null;
     const curl = new CurlRun(turn, {
       copy,
       sheet,
