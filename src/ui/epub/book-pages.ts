@@ -3,14 +3,26 @@
 // chapter, or past its end into the next chapter's first page (back, the
 // last page of the one before), as the Page turn and Turn speed settings
 // move it. A turn that falls back (a hand let go short) is put back where it
-// began, and only a turn that lands is kept as the place.
+// began, and only a turn that lands is kept as the place. In Scroll a finger
+// swiped across turns the chapter (#71, ./chapter-swipe.ts), and a chapter
+// turned there steps its words in as Words does, at the Turn speed.
 
 import type { SettingValues } from '../../core/config';
-import { chapterBeside, type Epub, type Way } from '../../core/epub';
+import {
+  chapterBeside,
+  type Epub,
+  isInstant,
+  turnScale,
+  type Way,
+  wordsTime,
+} from '../../core/epub';
+import { chapterSwipe } from './chapter-swipe';
 import type { EpubPage } from './epub-page';
 import type { Spot } from './sight';
 import { handEvents } from './turn/hand-events';
 import { PageTurn } from './turn/page-turn';
+import { turnTokens } from './turn/turn-tokens';
+import { stepIn } from './turn/words';
 
 export interface BookPagesOf {
   readonly page: EpubPage;
@@ -21,6 +33,8 @@ export interface BookPagesOf {
   draw(index: number, place: number | (() => number)): Promise<boolean>;
   /** The shelf's settings now. */
   values(): SettingValues;
+  /** The spine item `index` at its start, turned to by a hand, its place left a step back; whether it's drawn. */
+  turnTo(index: number): Promise<boolean>;
 }
 
 export interface BookPages {
@@ -30,6 +44,8 @@ export interface BookPages {
   edge(last: boolean): void;
   /** The turn in flight landed now. */
   finish(): void;
+  /** In Scroll, the chapter just turned to `way` steps its words in. */
+  stepIn(way: Way): void;
   /** `run` once no turn shows a copy of a page (now, if none is turning). */
   whenStill(run: () => void): void;
   dispose(): void;
@@ -97,16 +113,56 @@ export function bookPages(of: BookPagesOf): BookPages {
     edges: '.epub-edges__turn',
   });
 
+  /** A chapter's words stepping in (Scroll): put down by any draw, landed or not. */
+  let stepping: Animation | null = null;
+  const still = () => {
+    stepping?.cancel();
+    stepping = null;
+  };
+  const steps = (way: Way) => {
+    still();
+    const words = page.chapter;
+    const tokens = turnTokens(words);
+    const time = wordsTime(
+      tokens.quick,
+      tokens.calm,
+      turnScale(Number(of.values()['epub.turnSpeed'])),
+    );
+    if (page.sheet.paged || isInstant(time.in)) return;
+    const step = stepIn(words, way, tokens.step, time.in, tokens.ease);
+    stepping = step;
+    void step.finished.then(
+      () => stepping === step && still(),
+      () => {},
+    );
+  };
+  const stopSwipes = chapterSwipe({
+    target: page.scroller,
+    sheet: () => page.leaf,
+    paged: () => page.sheet.paged,
+    async turn(way) {
+      const epub = of.epub();
+      const next = epub ? chapterBeside(epub.spine, of.spine(), way) : null;
+      if (next !== null && (await of.turnTo(next))) steps(way);
+    },
+  });
+
   return {
     turn: (way, held) => turn.key(way, held),
     edge: (last) => {
       turn.finish();
       if (of.spine() >= 0) page.sheet.edge(last);
     },
-    finish: () => turn.finish(),
+    finish: () => {
+      still();
+      turn.finish();
+    },
+    stepIn: steps,
     whenStill: (run) => turn.whenStill(run),
     dispose: () => {
       stopHands();
+      stopSwipes();
+      still();
       turn.dispose();
     },
   };

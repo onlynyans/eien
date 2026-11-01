@@ -605,6 +605,11 @@ is always Panes.
   narrow, nothing folds: every mode's `least` is 0 (`splitSpecOf`), and
   under it the two share the room evenly.
 - Settings shows a `wide` setting only while the room has panes, live.
+- **Back** (#70): Android's back and a Mac trackpad's swipe back go back
+  the way the panes came: a book's own step back, the phone's stack, then
+  with the panes a pane shut opens, the list, then the sidebar, as its
+  toggle opens it (its calm arrival), the keyboard left where it was. No
+  word, token or control of its own.
 
 ## A quick look (decided 2026-10-28, #49; built: notes' half #105, shelf's half #114, after #40 Phase 1 #120; docs/quick-look.md)
 
@@ -674,7 +679,11 @@ in the book, each recorded here as it's built.
   greyed (a greyed Bold says something false); the shared tools (Look,
   Split, the panes) keep their places, and the change is instant. The
   formatting bar's row keeps its height while a note is in sight, so
-  neither page moves; with a book alone it goes. The phone's ⋯ and the
+  neither page moves; with a book alone it goes. The phone's bar, slip and
+  rail hold a book's tools as the desktop's bars do, in every room (#63): A's
+  a note's views as one button and a book's two in the views' well. Short of
+  room, the ⇄ slip beside the back word gives way first, its name trailing
+  off, so back keeps `--eien-touch`. The phone's ⋯ and the
   menu bar grey the same commands (#120): a menu lists all the app does. A
   menu of the bar is never greyed, only its items.
 - **A book's contents** (`list/contents-list.ts`): in the list pane while a
@@ -701,7 +710,11 @@ in the book, each recorded here as it's built.
   above it and `--eien-space-4` under, the chapters before and after as word
   buttons (label type, an arrow beside the name, `--eien-touch` high on a
   phone), the last one at the right; "The end" in label type at the last
-  chapter. The colophon's items (#66): "3 of 61", where in the chapter
+  chapter. A finger swiped across the page turns the chapter too (#71):
+  nothing moves under it; the chapter's words step in from the side they
+  come from (Words' step in, `--eien-space-2`, calm × Turn speed, none with
+  reduced motion), as they do from the foot's turns. The colophon's items
+  (#66): "3 of 61", where in the chapter
   (`.colophon__page`, a count, gone while none is known: the printed page,
   "page 212 of 2,450", "page xii"; else in Pages the chapter's own, "page
   3 of 12", a spread's "pages 3–4 of 12"; else scrolling "40% of the

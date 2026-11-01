@@ -1,8 +1,8 @@
 // What the phone-page tests share: files put and read "from outside"
 // through Capacitor's Filesystem itself, as Syncthing would on the phone;
-// the list's titles; and the page opened, its vault shown.
+// the list's titles; the page opened, its vault shown; Android's back; and a finger's swipe.
 
-import { expect, type Page } from '@playwright/test';
+import { type CDPSession, expect, type Page } from '@playwright/test';
 
 /** The Filesystem plugin's calls these tests make, as the page registered it. */
 interface FilesystemCalls {
@@ -65,6 +65,16 @@ export const listOutside = (page: Page, path: string) =>
 
 export const titles = (page: Page) => page.locator('.note-row__title');
 
+/**
+ * Three panes, the note list between the tree and the page, in place of a phone's own two (#69):
+ * for the tests of the list beside the page. One pane at a time, it changes nothing.
+ */
+export async function threePanes(page: Page): Promise<void> {
+  await page.evaluate(() => window.eien.settings.set('layout.panes', 'three'));
+  await page.reload(); // the settings as this device keeps them, read as the window starts
+  await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
+}
+
 export async function open(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('.shell')).toBeVisible();
@@ -121,3 +131,23 @@ export const systemBack = (page: Page) =>
     if (holding.length === 0) throw new Error('nothing listens for the back button');
     for (const plugin of holding) plugin.notifyListeners('backButton', { canGoBack: false });
   });
+
+/** One finger down at `from`, drawn to `to` in `steps`, and lifted: the browser's own touch (CDP's). */
+export async function swipe(
+  cdp: CDPSession,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  steps: number,
+): Promise<void> {
+  const point = (x: number, y: number) => [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: 1 }];
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: point(from.x, from.y),
+  });
+  for (let i = 1; i <= steps; i++) {
+    const x = from.x + ((to.x - from.x) * i) / steps;
+    const y = from.y + ((to.y - from.y) * i) / steps;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: point(x, y) });
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+}

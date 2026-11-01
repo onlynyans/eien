@@ -4,7 +4,7 @@
 // A finger here, as on a Pixel 7: hasTouch makes the pointer coarse.
 
 import { devices, expect, type Page, test } from '@playwright/test';
-import { catchBackButton, open, putOutside, systemBack, titles } from './outside';
+import { catchBackButton, open, putOutside, systemBack, threePanes, titles } from './outside';
 
 test.use({ ...devices['Pixel 7'] });
 test.beforeEach(({ page }) => catchBackButton(page));
@@ -49,6 +49,7 @@ async function withRoom(
   more: Record<string, string> = {},
 ): Promise<void> {
   await open(page);
+  await threePanes(page); // the list beside the page, which these tests look at; `more` may say two
   await page.evaluate(
     async ([room, more]) => {
       await window.eien.settings.set('appearance.room', room);
@@ -112,6 +113,54 @@ test.describe('panes, as before', () => {
     expect(tool.height).toBeGreaterThanOrEqual(44);
     expect(tool.y + tool.height).toBeLessThanOrEqual(strip.y + strip.height + 0.5);
   });
+});
+
+// A phone's own default (#69): a new install's panes are two, the tree listing the notes, so the
+// page has the room; Three, once chosen, stands.
+test('a new install’s panes are two, the sidebar listing the notes; Three, chosen, stays', async ({
+  page,
+}) => {
+  await open(page);
+  await putOutside(page, 'Eien/Vault/Fic/Tear.md', '# Tear\n\nThe scarf caught on the gate.\n');
+  await page.setViewportSize(TABLET);
+  await page.reload();
+  await expect(page.locator('.shell')).toHaveAttribute('data-room', 'panes');
+  await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
+  await inSight(page, 'sidebar', 'page');
+  await page.locator('.sidebar').getByText('Fic', { exact: true }).click();
+  await expect(page.locator('.sidebar').getByText('Tear', { exact: true })).toBeVisible();
+  await threePanes(page);
+  await inSight(page, 'sidebar', 'list', 'page');
+});
+
+// What Settings says of it: Two, the phone's own, chosen; Three chosen there stays after a restart.
+test('Settings shows a new install’s panes as Two, and Three chosen there stays', async ({
+  page,
+}) => {
+  await open(page);
+  await page.setViewportSize(TABLET);
+  await page.reload();
+  const panes = async () => {
+    await page.getByRole('button', { name: 'Settings' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Settings' });
+    await sheet.getByRole('navigation').getByRole('button', { name: 'Lists', exact: true }).click();
+    return { sheet, group: sheet.getByRole('group', { name: 'Panes' }) };
+  };
+  const { sheet, group } = await panes();
+  await expect(group.getByRole('button', { name: 'Two', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await group.getByRole('button', { name: 'Three', exact: true }).click();
+  await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
+  await sheet.getByRole('button', { name: 'Close settings' }).click();
+  await page.reload();
+  await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'three');
+  const again = await panes();
+  await expect(again.group.getByRole('button', { name: 'Three', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 });
 
 test.describe('one at a time', () => {

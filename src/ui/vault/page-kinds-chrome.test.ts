@@ -7,6 +7,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
 import { actsOn, COMMANDS, menuOff } from '../chrome/commands';
+import { LAYOUT_SPECS } from '../chrome/layouts';
 import { type CommandContext, runCommand } from './commands';
 import type { Side } from './pages';
 import { chromeOver, noted, pagesWith } from './pages-harness';
@@ -85,6 +86,45 @@ describe('the commands for a note', () => {
       );
     });
   }
+
+  for (const layout of ['band', 'slip', 'runhead'] as const) {
+    it(`leave a book its own tools in ${layout}’s phone bar, every room but Panes’ (#63)`, async () => {
+      const { pages, chrome } = await drawn(layout);
+      const phone = () =>
+        [
+          ...document.querySelectorAll<HTMLButtonElement>(
+            `.host--${LAYOUT_SPECS[layout].phone.name} [data-command]`,
+          ),
+        ]
+          .filter((button) => !button.hasAttribute('data-aside'))
+          .map((button) => button.dataset.command);
+      // The book in front: its views, its bookmark and the look; none of a note's.
+      expect(phone()).toEqual(expect.arrayContaining([...BOOK_COMMANDS, 'look']));
+      expect(phone().filter((id) => ofNote(id))).toEqual([]);
+      pages.activate(pages.sides[0] as Side);
+      chrome.refresh();
+      expect(phone()).toContain('focus');
+      expect(phone().filter((id) => BOOK_COMMANDS.includes(id as never))).toEqual([]);
+    });
+  }
+
+  it('give A’s phone bar one view control a page, never a note’s views in a well (#63)', async () => {
+    const { pages, chrome } = await drawn('band');
+    const host = document.querySelector('.host--phone-band') as HTMLElement;
+    const shown = (selector: string) =>
+      [...host.querySelectorAll<HTMLElement>(selector)].filter(
+        (element) => !element.hidden && !element.hasAttribute('data-aside'),
+      );
+    const views = () => shown('[data-command^="view."]').map((button) => button.dataset.command);
+    // The book in front: Pages and Scroll in their well, a note's one button set aside.
+    expect(views()).toEqual(['view.pages', 'view.scroll']);
+    expect(shown('.host__group')).toHaveLength(1);
+    pages.activate(pages.sides[0] as Side);
+    chrome.refresh();
+    // The note in front: its one button that steps through its views, and no well drawn empty.
+    expect(views()).toEqual(['view.next']);
+    expect(shown('.host__group')).toEqual([]);
+  });
 
   it('take the formatting bar’s row with them when a book is the only page', async () => {
     const files = { 'Chapter.md': 'The gate held.' };

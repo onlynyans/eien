@@ -1408,13 +1408,19 @@ test('a book switched from Scroll to Pages before the scroll rests opens on the 
     await scroller.evaluate((element, top) => element.scrollTo({ top, behavior: 'instant' }), by);
     const words = await placeWords(scroller);
     expect(words.trim()).not.toBe('');
-    await page.locator('[data-command="view.pages"]:not(.page__phone *)').first().click();
+    await page
+      .locator('[data-command="view.pages"]:not(.page__phone *, .phone-bar *)')
+      .first()
+      .click();
     await expect(leaf).toHaveAttribute('data-view', 'pages');
     await expect
       .poll(() => wordsInSight(box, words), {
         message: `the place's words, "${words}", on the page Pages opens to (scrolled to ${by}px)`,
       })
       .toBe(true);
-    await page.locator('[data-command="view.scroll"]:not(.page__phone *)').first().click();
+    await page
+      .locator('[data-command="view.scroll"]:not(.page__phone *, .phone-bar *)')
+      .first()
+      .click();
   }
 });

@@ -10,6 +10,7 @@ import { serveMenuGrey } from './menu-grey';
 import { isAppUrl, isExternalLink } from './navigation';
 import { serveOut } from './out-session';
 import { deviceSettings, serveSettings, zoomFactorOf } from './settings-session';
+import { serveSwipe } from './swipe-session';
 import { serveVault } from './vault-session';
 import { serveWindow, type WindowPlace } from './window-session';
 
@@ -86,6 +87,7 @@ export async function createMainWindow(
   serveContextMenu(window);
   serveFrame(window);
   serveMenuGrey(window);
+  serveSwipe(window);
   window.once('ready-to-show', () => window.show());
   void window.loadURL(url);
   return window;

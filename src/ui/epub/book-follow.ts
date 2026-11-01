@@ -2,8 +2,10 @@
 // reference shows the note over the page (./note-over.ts), from this chapter
 // or another (the last read for a note kept, as notes often live together in
 // one file); any other link goes to its chapter and place, and the place it
-// was followed from is kept, one step back (⌘[, Alt+←, or Back in the
-// colophon). Choosing a chapter yourself forgets it.
+// was followed from is kept, one step back (⌘[, Alt+←, Back in the
+// colophon, or the system's back, #70). So is the place a hand's swipe
+// turned the chapter from (#71), as a stray one in Scroll would lose it.
+// Choosing a chapter yourself forgets it.
 
 import { chapterTitle, type Epub, isRefusal, type ZipAddress } from '../../core/epub';
 import { drawClean } from '../draw-clean';
@@ -35,6 +37,10 @@ export interface BookFollowOf {
 
 export interface BookFollow {
   follow(anchor: HTMLAnchorElement, link: ZipAddress): Promise<void>;
+  /** The spine item `index` at its start, turned to by a hand; whether it's drawn. */
+  turnTo(index: number): Promise<boolean>;
+  /** Whether there's a step back to take. */
+  readonly canGoBack: boolean;
   back(): Promise<void>;
   /** Another chapter chosen, or another book: no step back, no note open, nothing read for one kept. */
   forget(): void;
@@ -77,22 +83,26 @@ export function bookFollow(of: BookFollowOf): BookFollow {
     return noteIn(read.words, name)?.cloneNode(true) ?? null;
   }
 
-  /** The place `name` in the spine item `index`, gone to, the place it was left at one step back. */
-  async function goTo(index: number, name: string): Promise<void> {
+  /**
+   * The place `name` in the spine item `index`, gone to, the place it was left at one step back
+   * (or, `kept`, the step back there was already); whether it was.
+   */
+  async function goTo(index: number, name: string, kept = false): Promise<boolean> {
     const mine = ++asked;
     const from = of.place();
     const at = () => (name ? (page.sheet.offsetOf(name) ?? 0) : 0);
     if (index !== of.spine()) {
-      if (!(await of.draw(index, at)) || mine !== asked) return;
+      if (!(await of.draw(index, at)) || mine !== asked) return false;
     } else {
       page.sheet.showPlace(at());
       of.keep(page.sheet.place);
     }
     const epub = of.epub();
-    back = from;
+    back = kept && back ? back : from;
     page.foot.backTo(
-      from && epub ? (chapterTitle(epub.contents, from.spine) ?? 'the last place') : null,
+      back && epub ? (chapterTitle(epub.contents, back.spine) ?? 'the last place') : null,
     );
+    return true;
   }
 
   /** A link pressed, on the page or in a note over it. */
@@ -133,6 +143,14 @@ export function bookFollow(of: BookFollowOf): BookFollow {
 
   return {
     follow,
+    // Swipe after swipe, the place the first one left stays the step back.
+    turnTo(index) {
+      shut();
+      return goTo(index, '', true);
+    },
+    get canGoBack() {
+      return back !== null;
+    },
     async back() {
       const to = back;
       if (!to) return;

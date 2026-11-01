@@ -162,9 +162,10 @@ export interface Bridge {
   readonly window?: WindowBridge;
   onMenu(listener: (command: MenuCommand) => void): () => void;
   /**
-   * The system's back (Android's back button or gesture). Each handler is
-   * asked, the newest first, until one went back (true); when none did, the
-   * app steps aside, as Android apps do. The desktop has none. Returns a
+   * The system's back (Android's back button or gesture; a Mac's swipe
+   * between pages with three fingers, #70). Each handler is asked, the newest
+   * first, until one went back (true); when none did, a phone's app steps
+   * aside, as Android apps do, and a desktop's window stays. Returns a
    * function to stop.
    */
   onBack(handler: () => boolean): () => void;
@@ -195,6 +196,8 @@ export interface WindowBridge {
   start(): Promise<WindowStart>;
   /** The menu bar's commands that do nothing in this window now, greyed while it's focused (#40). */
   greyMenu(commands: readonly MenuCommand[]): Promise<void>;
+  /** Whether two fingers across a trackpad are the system's swipe back (a Mac's Swipe between pages, #70). */
+  swipes(): Promise<boolean>;
 }
 
 /** The IPC channel names, shared by the preload and the main process. */
@@ -227,6 +230,8 @@ export const CHANNEL = {
   windowClose: 'window:close',
   windowStart: 'window:start',
   greyMenu: 'window:grey-menu',
+  windowSwipes: 'window:swipes',
+  back: 'app:back',
 } as const;
 
 declare global {

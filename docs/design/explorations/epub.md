@@ -216,6 +216,25 @@ section where it and the directions below disagree.
 - **The curl's light is approved.** Three tokens, used only while a page
   moves, as the exception in `.interface-design/system.md` sets out:
   `--eien-curl-shade`, `--eien-curl-light` and `--eien-curl-through`.
+- **A swipe turns the chapter in Scroll** (decided 2026-11-01, #71): a
+  finger swiped across the page goes to the next chapter or the one
+  before, at its top, as the foot's word buttons do. Nothing moves while
+  the finger does (Scroll has no page to hold, and a sheet sliding sideways
+  under a vertical reader would be the loudest thing on the screen); let go
+  a quarter of the page across, the chapter's words step in from the side
+  they come from as Words' do (`--eien-space-2`, the calm time at the Turn
+  speed, none at 0 or with reduced motion), whatever the Page turn: there's
+  only ink to move in Scroll. The foot's buttons step the same; a jump (the
+  contents, a link, a mark, Find) stays instant. The place left is a step
+  back (**Back to Chapter I**), as a stray swipe in a long chapter would
+  lose it. A scroll is never a swipe: more across than down, the page not
+  scrolled under the finger, no words chosen, one finger, the system's
+  edge left to Android's back.
+- **Back is never a turn** (decided 2026-11-01, #70): Android's back and a
+  Mac trackpad's swipe back go back through the book's own step (a link,
+  a swiped chapter), then the panes; never a page. A trackpad's swipe over
+  a book is Back too, not a turn: one meaning for one hand. The screen's
+  edge in pages stays the system's (backlog #51).
 
 ### Marks
 
