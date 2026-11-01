@@ -88,6 +88,7 @@ features that came after, and the plan for them (below the table).
 | 71 | A swipe turns the chapter in Scroll | feature | Page | In Scroll, a swipe left or right goes to the next or previous chapter, as Pages' turns do. Not the system's back gesture at the screen's edge. | Open | no | the owner, 2026-11-01 |
 | 72 | Text size below 90% | tweak | Settings | Text size stops at 90%; let it go to 50%, for the page and a book's own (`appearance.textSize`, one setting, which a book's look derives from). | Open | no | the owner, 2026-11-01 |
 | 73 | A serif Aa | tweak | Icons | The quick look's Aa (`icons.ts`'s `look`) drawn as a serif, as `docs/design/explorations/specimen.html`'s icons are, through the interface-design skill. | Open | yes | the owner, 2026-11-01 |
+| 74 | A dropped image's link slow to save on Windows | fix | Page | Once, on Windows CI (run [41299961286](https://github.com/onlynyans/eien/actions/runs/41299961286), `tests/e2e/note-images.spec.ts:61`, 2026-11-01, on #148, which changes only a phone's defaults): the image was written and its link shown in the editor, but the note on disk didn't hold the link 5 s later, on both tries. The first time in the e2e history. Find what a save waits behind there (the watcher seeing the new `.assets` folder, the index, an antivirus scan of the new file) before calling it the machine. | Open | no | the orchestrator, 2026-11-01 |
 
 ## Plan
 
