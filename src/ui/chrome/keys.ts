@@ -2,6 +2,9 @@
 // "Mod" being ⌘ on a Mac and Ctrl elsewhere), shown two ways: as a tooltip
 // says it (⇧⌘D, Ctrl+Shift+D) and as aria-keyshortcuts names it.
 
+/** Whether the window runs on a Mac (or an iPhone or iPad): ⌘ is its modifier. */
+export const MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+
 const MAC_SIGNS: Record<string, string> = { Ctrl: '⌃', Alt: '⌥', Shift: '⇧', Mod: '⌘' };
 /** The order a Mac writes its modifiers in. */
 const MAC_ORDER = ['Ctrl', 'Alt', 'Shift', 'Mod'];

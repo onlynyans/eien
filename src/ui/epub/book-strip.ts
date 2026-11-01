@@ -1,12 +1,12 @@
 // A book on its page's edge (#40, Phase 4d): the strip (./edge-strip.ts)
-// told the book's chapters (its contents' rows), bookmarks and place as
-// shares of it, by its chapters' sizes as the colophon's percent and the
+// told the book's chapters (its contents' rows), marks (bookmarks, and
+// highlights from Phase 5b) and place as shares of it, by its chapters' sizes as the colophon's percent and the
 // fore-edge are (core/epub/progress.ts), a bookmark within its chapter once
 // that's counted; and what a point on it is, and where it goes. Worn on the
 // leaf only with Marks on the edge (./edge-strip.css, data-marks), drawn
 // either way; hidden with no book.
 
-import { type Bookmark, bookFraction, chapterTitle, type Epub, placeAt } from '../../core/epub';
+import { bookFraction, chapterTitle, type Epub, type Mark, placeAt } from '../../core/epub';
 import type { BookCount } from './book-count';
 import { EdgeStrip } from './edge-strip';
 import type { EpubPage } from './epub-page';
@@ -17,8 +17,8 @@ export interface BookStripOf {
   /** The spine item drawn. */
   spine(): number;
   count(): BookCount | null;
-  /** The book's bookmarks. */
-  marks(): readonly Bookmark[];
+  /** The book's marks, in its order. */
+  marks(): readonly Mark[];
   /** A place shown: spine item `index` at an offset, or the one it gives once drawn (its words counted then). */
   goTo(index: number, at: number | (() => number)): void;
   /** The page a place is on, as the colophon says it ("page 12 of 2,450"), or ''. */
@@ -88,15 +88,12 @@ export function bookStrip(of: BookStripOf): BookStrip {
       const epub = of.epub();
       strip.element.hidden = !epub;
       if (!epub) return strip.draw({ chapters: [], marks: [] });
-      const index = new Map(epub.spine.map((item, i) => [item.path, i]));
       strip.draw({
         chapters: chapters(epub).map((spine) => bookFraction(epub.spine, spine, 0)),
-        marks: of.marks().flatMap((mark) => {
-          const spine = index.get(mark.chapter);
-          return spine === undefined
-            ? []
-            : [bookFraction(epub.spine, spine, into(spine, mark.offset))];
-        }),
+        marks: of.marks().map((mark) => ({
+          kind: mark.kind,
+          share: bookFraction(epub.spine, mark.spine, into(mark.spine, mark.offset)),
+        })),
       });
     },
     place(share, from) {

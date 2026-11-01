@@ -17,7 +17,7 @@ const looks = commandLooks({
 
 /** A page holding a book, bookmarked or not. */
 const book = (bookmarked: boolean) =>
-  ({ kind: 'epub', go: () => {}, bookmarked }) as unknown as Side;
+  ({ kind: 'epub', go: () => {}, marks: { bookmarks: { on: bookmarked } } }) as unknown as Side;
 
 describe('a book’s bookmark tool', () => {
   it('is pressed on a bookmarked page, its tooltip saying a press takes it off', () => {

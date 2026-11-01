@@ -5,7 +5,7 @@
 // vault again, so never as a page scrolls. The writes are the store's, one
 // after another, so a page closed just after a chapter changed is still
 // waited for by a quit (the kind's flush). A book's marks (its bookmarks,
-// Phase 4b) change in the same file, one change a write, each decided
+// Phase 4b, and highlights, Phase 5a) change in the same file, one change a write, each decided
 // against the file as it is then (another device's change synced meanwhile
 // included); every page of that book in the window is told, so two pages on
 // one book, the list and the tools agree. One store for the window.
@@ -13,6 +13,8 @@
 import {
   type Bookmark,
   bookmarksOf,
+  type Highlight,
+  highlightsOf,
   parseReading,
   type Reading,
   type ReadingKept,
@@ -26,10 +28,14 @@ import { SmallFiles } from '../vault/small-files';
 /** A book's marks, as its file holds them. */
 export interface ReadingMarks {
   readonly bookmarks: readonly Bookmark[];
+  readonly highlights: readonly Highlight[];
 }
 
 /** The marks the file's text holds, every kind. */
-const marksOf = (text: string | null): ReadingMarks => ({ bookmarks: bookmarksOf(text) });
+const marksOf = (text: string | null): ReadingMarks => ({
+  bookmarks: bookmarksOf(text),
+  highlights: highlightsOf(text),
+});
 
 /** What the file holds of a book: the place, its marks, and how the file stands. */
 export interface ReadingRead {

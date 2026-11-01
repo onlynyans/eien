@@ -7,14 +7,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MenuCommand } from '../../platform/bridge';
 import { actsOn, COMMANDS, menuOff } from '../chrome/commands';
-import type { MenuBus } from '../menu/menu-bus';
-import type { PaneLayout } from '../shell/panes';
-import type { Sidebar } from '../sidebar/sidebar';
-import { vaultChrome } from './chrome-wiring';
 import { type CommandContext, runCommand } from './commands';
 import type { Side } from './pages';
-import { noted, pagesWith } from './pages-harness';
-import type { PhoneView } from './phone-view';
+import { chromeOver, noted, pagesWith } from './pages-harness';
 import { type StandInSide, standInKind } from './stand-in-kind';
 
 const stops: (() => void)[] = [];
@@ -35,42 +30,11 @@ const BOOK_COMMANDS = COMMANDS.filter((command) => 'on' in command && command.on
 const ofNote = (id: string | undefined) =>
   (NOTE_COMMANDS as readonly (string | undefined)[]).includes(id);
 
-/** The window's tools drawn over `made`'s pages, as the vault view draws them. */
+/** The window's tools drawn over `made`'s pages, taken down after the test. */
 function toolsOver(made: Awaited<ReturnType<typeof pagesWith>>) {
-  const { pages } = made;
-  const greyMenu = vi.fn<(commands: readonly MenuCommand[]) => void>();
-  const div = () => document.createElement('div');
-  const chrome = vaultChrome({
-    shell: document.body.appendChild(div()),
-    pages,
-    sidebar: {
-      foot: { controls: div(), sync: div() },
-      adders: [],
-      lens: { tools: div(), chips: div() },
-    } as unknown as Sidebar,
-    panes: { isShut: () => false, aside: false, two: false } as unknown as PaneLayout,
-    phone: { stack: { controls: div(), phone: false }, more: () => {} } as unknown as PhoneView,
-    settings: made.settings,
-    menu: { on: () => () => {}, run: () => {} } as unknown as MenuBus,
-    mac: false,
-    platform: 'linux',
-    greyMenu,
-  });
-  chrome.mount();
-  stops.push(() => {
-    chrome.stop();
-    pages.stop();
-  });
-  /** The commands drawn in the window (or the formatting bar) and in sight there: none set aside. */
-  const inSight = (slot?: 'format') =>
-    [
-      ...(slot ? pages.pane.slots[slot] : document.body).querySelectorAll<HTMLButtonElement>(
-        '[data-command]',
-      ),
-    ]
-      .filter((button) => !button.hasAttribute('data-aside'))
-      .map((button) => button.dataset.command);
-  return { chrome, inSight, greyMenu };
+  const tools = chromeOver(made);
+  stops.push(tools.stop);
+  return tools;
 }
 
 /** A note on the left, the stand-in beside it (the active one), and the window's tools drawn. */
@@ -219,12 +183,22 @@ describe('the commands for a note', () => {
 
   it('greyed in the menu bar are every note’s control’s, and the menu’s own a note’s page alone has', () => {
     // With a note in front, a book's own are greyed (#40, Phase 3b).
-    expect(menuOff('note')).toEqual(['view:pages', 'view:scroll', 'bookmark']);
+    expect(menuOff('note')).toEqual([
+      'view:pages',
+      'view:scroll',
+      'bookmark',
+      // Walking a book's marks (Phase 5b): the menu's own, no control of their own.
+      'mark:next',
+      'mark:previous',
+    ]);
     const off = menuOff('epub');
     const sends = COMMANDS.flatMap((command) =>
       'on' in command && command.on === 'note' && 'sends' in command ? [command.sends] : [],
     );
-    expect(off).toEqual(expect.arrayContaining(sends));
+    // Every note's control greyed, but the format a book's words take too (#40, Phase 5a).
+    expect(off).toEqual(
+      expect.arrayContaining(sends.filter((command) => command !== 'format:highlight')),
+    );
     expect(off).toEqual(
       expect.arrayContaining([
         'view:next',
@@ -251,6 +225,12 @@ describe('the commands for a note', () => {
       'new-note',
       'toggle:editor.formatBar',
       'toggle:editor.spellcheck',
+      // Format → Highlight: a book's words take it too (#40, Phase 5a).
+      'format:highlight',
+      // A book's own walk, never greyed with the book in front (QA, Phase 5b).
+      'mark:next',
+      'mark:previous',
+      'bookmark',
     ] as const)
       expect(off).not.toContain(on);
     expect(new Set(off).size).toBe(off.length);

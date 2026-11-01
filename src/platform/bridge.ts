@@ -120,6 +120,8 @@ export type MenuCommand =
   | 'view:pages'
   | 'view:scroll'
   | 'bookmark'
+  | 'mark:next'
+  | 'mark:previous'
   | 'view:next'
   | 'panes:sidebar'
   | 'panes:list'

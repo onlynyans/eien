@@ -143,6 +143,8 @@ Rules, pure TypeScript.
   - `reading.ts`: the reading state's file, `.eien/reading/<key>.json`: the chapter, and the place in it paired with it; never written over when it can't be read
   - `reading-list.ts`: a list in that file, changed in its own array, unknown items and fields kept, each field where it stood
   - `bookmarks.ts`: its bookmarks, a list there (Phase 4b)
+  - `highlights.ts`: its highlights, a list there, and what H does to them (Phase 5a)
+  - `marks.ts`: both kinds in the book's order, and where `]` and `[` go (Phase 5b)
   - `place.ts`: a place in a chapter, an offset in its words, and the piece of text it falls in
   - `progress.ts`: how far through a chapter and the book, as the colophon says it
   - `chapter-words.ts`: a chapter's words walked once from its cleaned nodes, as a place counts them, each in its block (`BLOCK_NAMES`, the one list)
@@ -375,8 +377,13 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `test-lines.ts`: a chapter's lines as the DOM tests lay them out, and a book's page laid out so
   - `epub-kind.ts`: its kind of page (`PageKindOf`): `.epub` files, a moved book followed, a changed one read again, a gone one let go
   - `chapter-view.ts`: a chapter drawn, its pictures the window's own copies (`blob:`) at their size, settled (pictures, fonts) before a place is shown, let go with it
-  - `reading-store.ts`: the reading state's file, through the vault's small files, its bookmarks' changes told to every page of the book
-  - `page-bookmarks.ts`: a book's bookmarks on its page: whether the page in sight has one, B and the tool, following a turn once it lands (Phase 4b)
+  - `reading-store.ts`: the reading state's file, through the vault's small files, a change to its marks decided against the file as it is then and told to every page of the book
+  - `book-marks.ts`: a book's marks on its page over its reading file (which book, how the file stands, one listener, why a change wasn't kept), `]` and `[` walking them, its two kinds:
+    - `page-bookmarks.ts`: its bookmarks: whether the page in sight has one, B and the tool, following a turn once it lands (Phase 4b)
+    - `page-highlights.ts`: its highlights: inked and ticked, H, the bar's Highlight and Format → Highlight, Put back (Phase 5a)
+  - `chapter-range.ts`: words chosen as offsets in the chapter's words, and a span of them back to the text it covers
+  - `ink.ts`, `ink.css`: ink over the words by the CSS Custom Highlight API, one Highlight per name for the window, each page's ranges its own; a turn's copy inked in elements
+  - `test-ink.ts`: that API stood in for the DOM tests
   - `bookmark.css`: its mark (the Page mark's look), kept to the top of the sheet in sight, and Facing pages' clash
   - `page-marks.ts`: the marks on the sheet, one page's at its right, a spread's verso's at its left (Phase 3d)
   - Set as a book (Phase 3d, `epub-set.css`; two pages, `epub-spread.css`)
@@ -392,8 +399,8 @@ The window. Paths are from `src/ui/`, or from `src/` for `core/` and `app/`.
   - `book-pages.ts`: the page turn over a book's page, on into the next chapter and back
   - `leaf-edges.ts`: the fore-edge either side of the sheet, its two sides the turn's buttons
   - `edge-strip.ts`, `.css`: Marks on the edge (Phase 4d): the whole book down the page's edge, a slider, apart from the fore-edge
-  - `book-strip.ts`: the book told to the strip as shares of it (chapters, bookmarks, the place), and where a point on it goes
-  - `page-keys.ts`: the page's keys, one table: its letters (Q, B), Back, and in pages the keys that turn and a touch's tap in the outer thirds
+  - `book-strip.ts`: the book told to the strip as shares of it (chapters, marks of both kinds, the place), and where a point on it goes
+  - `page-keys.ts`: the page's keys, one table: its letters (Q, B, H), `]` and `[`, Back, and in pages the keys that turn and a touch's tap in the outer thirds
   - `turn/`: a page turned (Phase 3)
     - `page-turn.ts`: the turn (`PageTurn`) over a `TurnSurface`: a key's, a click's or a hand's, the Page turn's motion, a key mid-turn finishing it, a chapter drawn first
     - `curl-run.ts`: one curl from its first frame to landing, `curl-view.ts` its copies of the page, clipped and laid, in the curl's light; on a spread one page's (a `TurnLeaf`) round the gutter, the other still, a back turn mirrored

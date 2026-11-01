@@ -5,7 +5,6 @@ export {
   bookmarksOf,
   bookmarksOn,
   firstWords,
-  inBookOrder,
   MAX_BOOKMARKS,
   sameMark,
   withBookmarks,
@@ -17,7 +16,30 @@ export { BLOCK_NAMES, type ChapterVisit, walkChapter } from './chapter-words';
 export { chapterBeside, chapterTitle } from './chapters';
 export type { ContentsEntry, PrintPage } from './contents';
 export { type Epub, type EpubImage, type EpubSpineItem, epubKey, openEpub } from './epub';
+export {
+  HIGHLIGHT_WORDS,
+  type Highlight,
+  type HighlightChange,
+  highlightChange,
+  highlightsIn,
+  highlightsOf,
+  MAX_HIGHLIGHTS,
+  type Pressed,
+  pressHighlight,
+  type Span,
+  sameHighlight,
+  withHighlights,
+  withRestored,
+} from './highlights';
 export { lengthWords, type SetAs, setAsWords } from './imprint';
+export {
+  BEFORE_WORDS,
+  type InSight,
+  type Mark,
+  type MarkWalk,
+  marksInOrder,
+  walkMarks,
+} from './marks';
 export type { SpineItem } from './package';
 export {
   type Lengths,
@@ -47,7 +69,7 @@ export {
   throughSights,
   wholeLines,
 } from './pages';
-export { offsetOf, type Spot, spotOf } from './place';
+export { offsetOf, type Spot, sightEnd, spotOf } from './place';
 export { bookFraction, chapterFraction, percent, placeAt } from './progress';
 export { citation, type QuoteSource, quoted, withQuote } from './quote';
 export {

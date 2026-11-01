@@ -8,6 +8,7 @@ import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtur
 import { readingPath } from '../../core/epub';
 import type { EpubSide } from '../epub/epub-side-types';
 import { sideWith } from '../epub/test-side';
+import { renderContents } from '../list/contents-list';
 import { epubWiring } from './epub-wiring';
 import { Navigation } from './navigation';
 import type { Pages } from './pages';
@@ -143,7 +144,14 @@ describe('a book’s Marks in the list (Phase 4c)', () => {
     const activate = vi.fn();
     const { epubs } = wired('a.epub', { active: note, sides: [note, book], activate });
     const mark = { chapter: 'OEBPS/chapter-3.xhtml', offset: 40, words: 'later' };
-    epubs.actions.goMark('a.epub', { mark, spine: 3, page: '2', chapter: 'Chapter III' });
+    epubs.actions.goMark('a.epub', {
+      kind: 'bookmark',
+      offset: 40,
+      mark,
+      spine: 3,
+      page: '2',
+      chapter: 'Chapter III',
+    });
     expect(activate).toHaveBeenCalledWith(book);
     expect(goTo).toHaveBeenCalledWith(3, 40);
   });
@@ -184,6 +192,8 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     return { nav, epubs, redraw, showPage };
   }
   const ROW = {
+    kind: 'bookmark' as const,
+    offset: 40,
     mark: { chapter: 'OEBPS/chapter-3.xhtml', offset: 40, words: 'later' },
     spine: 3,
     page: '2',
@@ -194,20 +204,33 @@ describe('a book’s Marks, as QA tried them (Phase 4c)', () => {
     path,
     go: () => {},
     goTo: vi.fn(async () => {}),
-    unmark: vi.fn(async () => {}),
+    marks: { bookmarks: { remove: vi.fn(async () => {}) } },
   });
 
   it('take a bookmark off on the book’s own page, the note beside it staying the active one', () => {
     const book = bookSide('a.epub');
-    const note = { kind: 'note', path: 'Note.md', unmark: vi.fn() };
+    const note = { kind: 'note', path: 'Note.md', marks: { bookmarks: { remove: vi.fn() } } };
     const activate = vi.fn();
     const { epubs, showPage } = watched('a.epub', { active: note, sides: [note, book], activate });
     epubs.actions.unmark('a.epub', ROW);
-    expect(book.unmark).toHaveBeenCalledExactlyOnceWith(ROW.mark);
-    expect(note.unmark).not.toHaveBeenCalled();
+    expect(book.marks.bookmarks.remove).toHaveBeenCalledExactlyOnceWith(ROW.mark);
+    expect(note.marks.bookmarks.remove).not.toHaveBeenCalled();
     // Taken off from the list: the keyboard and the page stay where they are.
     expect(activate).not.toHaveBeenCalled();
     expect(showPage).not.toHaveBeenCalled();
+  });
+
+  it('take a highlight off from its row, through the page’s highlights (Phase 5b)', () => {
+    const book = {
+      ...bookSide('a.epub'),
+      marks: { bookmarks: { remove: vi.fn() }, highlights: { remove: vi.fn(async () => {}) } },
+    };
+    const { epubs } = watched('a.epub', { active: book, sides: [book], activate: vi.fn() });
+    const highlight = { chapter: 'OEBPS/chapter-3.xhtml', from: 40, to: 50, words: 'later' };
+    const row = { ...ROW, kind: 'highlight' as const, mark: highlight };
+    epubs.actions.unmark('a.epub', row);
+    expect(book.marks.highlights.remove).toHaveBeenCalledExactlyOnceWith(highlight);
+    expect(book.marks.bookmarks.remove).not.toHaveBeenCalled();
   });
 
   it('go to a bookmark on the active page when two pages hold the book', () => {
@@ -375,5 +398,82 @@ describe('a quote', () => {
     pages.sides.splice(0, 1, elsewhere);
     await elsewhere.quote();
     expect(note.added).toHaveLength(1);
+  });
+});
+
+// QA (#40, Phase 5b): a book's Marks of both kinds over a real page: the rows
+// the list draws from them, a highlight's row going to its words, and Delete
+// on it taking it off from the file with Put back in the page's colophon.
+describe('a book’s Marks of both kinds over its page (Phase 5b)', () => {
+  async function marked() {
+    const { side, disk } = sideWith({ 'a.epub': BOOK });
+    await side.open('a.epub');
+    const key = side.epub?.key ?? '';
+    await disk.write(
+      readingPath(key),
+      JSON.stringify({
+        version: 1,
+        bookmarks: [{ chapter: 'OEBPS/chapter-3.xhtml', offset: 10, words: 'its page' }],
+        highlights: [
+          { chapter: 'OEBPS/chapter-3.xhtml', from: 10, to: 30, words: 'its words' },
+          { chapter: 'OEBPS/chapter-1.xhtml', from: 50, to: 70, words: 'first' },
+          { chapter: 'OEBPS/gone.xhtml', from: 0, to: 5, words: 'not in the book' },
+        ],
+      }),
+      null,
+    );
+    await side.reload();
+    const pages = { active: side, sides: [side], activate: vi.fn() };
+    const { epubs } = wired('a.epub', pages);
+    const file = async () => JSON.parse((await disk.read(readingPath(key)))?.text ?? '{}');
+    return { side, epubs, file };
+  }
+
+  it('are its bookmarks and highlights in its order, a bookmark first at one word, each with its chapter', async () => {
+    const { epubs } = await marked();
+    const rows = epubs.contents()?.marks ?? [];
+    expect(
+      rows.map((row) => [row.kind, row.mark.words, row.spine, row.offset, row.chapter]),
+    ).toEqual([
+      ['highlight', 'first', 1, 50, 'Chapter I'],
+      ['bookmark', 'its page', 3, 10, 'Chapter III'],
+      ['highlight', 'its words', 3, 10, 'Chapter III'],
+    ]);
+  });
+
+  it('go to a highlight where its words begin', async () => {
+    const { side, epubs } = await marked();
+    const goTo = vi.spyOn(side, 'goTo');
+    const row = epubs.contents()?.marks?.[2];
+    if (!row) throw new Error('no row');
+    epubs.actions.goMark('a.epub', row);
+    expect(goTo).toHaveBeenCalledExactlyOnceWith(3, 10);
+  });
+
+  it('take a highlight off by Delete on its row, the bookmark at its word kept, Put back in the colophon', async () => {
+    const { side, epubs, file } = await marked();
+    const contents = epubs.contents();
+    if (!contents) throw new Error('no contents');
+    const container = document.body.appendChild(document.createElement('section'));
+    renderContents(container, { ...contents, lens: 'marks' }, null, {
+      chapter: () => {},
+      lens: () => {},
+      go: (row) => epubs.actions.goMark('a.epub', row),
+      remove: (row) => epubs.actions.unmark('a.epub', row),
+    });
+    const rows = [...container.querySelectorAll<HTMLElement>('.mark-row')];
+    rows[2]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    await vi.waitFor(async () =>
+      expect((await file()).highlights.map((each: { words: string }) => each.words)).toEqual([
+        'first',
+        'not in the book',
+      ]),
+    );
+    expect((await file()).bookmarks).toHaveLength(1);
+    expect(side.page.foot.said.textContent).toBe('Highlight taken off.');
+    const putBack = side.page.foot.figures.find((figure) => figure.textContent === 'Put back');
+    expect(putBack?.hidden).toBe(false);
+    putBack?.click();
+    await vi.waitFor(async () => expect((await file()).highlights).toHaveLength(3));
   });
 });

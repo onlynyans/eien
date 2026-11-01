@@ -109,3 +109,25 @@ describe('the View menu’s Bookmark This Page (#40, Phase 4b)', () => {
     expect(keys(menu).filter((key) => key.toUpperCase() === 'B')).toEqual([]);
   });
 });
+
+// QA (#40, Phase 5b): ] and [ are the page's own keys, so the menu's items take neither.
+describe('the View menu’s Next Mark and Previous Mark (#40, Phase 5b)', () => {
+  it('follow Bookmark This Page, send the walk’s commands, and have no key of their own', () => {
+    const sent: string[] = [];
+    const menu = buildMenu((command) => sent.push(command)) as unknown as Item[];
+    const view = named(menu, 'View')?.submenu ?? [];
+    const labels = view.map((item) => item.label);
+    const at = labels.indexOf('Bookmark This Page');
+    expect(labels.slice(at, at + 3)).toEqual(['Bookmark This Page', 'Next Mark', 'Previous Mark']);
+    for (const label of ['Next Mark', 'Previous Mark']) {
+      const item = named(view, label);
+      expect(item?.accelerator, label).toBeUndefined();
+      item?.click?.(undefined, undefined);
+    }
+    expect(sent).toEqual(['mark:next', 'mark:previous']);
+    // No item anywhere takes a bare bracket, which a note's editor types.
+    const keys = (items: Item[]): string[] =>
+      items.flatMap((each) => [each.accelerator ?? '', ...keys(each.submenu ?? [])]);
+    expect(keys(menu).filter((key) => /^(Shift\+)?[[\]]$/u.test(key))).toEqual([]);
+  });
+});

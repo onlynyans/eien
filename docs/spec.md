@@ -76,8 +76,10 @@ one on two synced devices read each other's files.
   and never written over: a newer device's settings are never lost to an
   older one. A reading state's file that can't be read at all (one a sync
   broke) is never written over either, so its bookmarks are never lost
-  (#40, Phase 4b); a new field in one (its `bookmarks`) is kept as found by
-  an older Eien, so it isn't breaking.
+  (#40, Phase 4b); a new field in one (its `bookmarks`, its `highlights`,
+  Phase 5a) is kept as found by an older Eien, so it isn't breaking. Each
+  write keeps every field where it stood, so a synced file changes only
+  where it was changed.
 - A change an older Eien would misread is a breaking change: its pull
   request's title carries `!` (AGENTS.md → Releases).
 
@@ -466,14 +468,47 @@ Three panes, each collapsible, with a two-pane option in settings:
      at once. A book shows 1,000 at most: past that, B says to take one off
      first. A reading file a newer Eien wrote is never written, and one
      that can't be read is never written over: the colophon says so once,
-     and its place and bookmarks aren't kept until it's fixed or deleted.
+     and its place and marks aren't kept until it's fixed or deleted.
+   - **Highlights** (Phase 5a): words chosen in a book and **H**, the
+     selection bar's **Highlight** (first, before Quote in the note and
+     Copy), Format → Highlight (⇧⌘H, a note's own, which a book's words take
+     too) or on the phone the page's ⋯ (the words last chosen) keep them: a
+     pencil line under the words and a pencil tick in the margin beside each
+     paragraph they touch, on any page or spread and on a turn's copy of the
+     page. Words that overlap or touch another highlight join it in one.
+     The same on words that lie in a highlight (the bar and the ⋯ say "Take
+     off the highlight") takes it off, leaving its words chosen, so H keeps
+     them again; the colophon says "Highlight taken off." with **Put back**
+     beside it while it shows. With no words chosen it says "Choose some
+     words in the book to highlight." Highlights are kept in the reading
+     state's file beside the bookmarks (each a chapter, where its words begin
+     and end in it, and the words, as a row shows them), every other field
+     and item kept as found, decided against the file as it is when written
+     (another device's change synced meanwhile is kept); one in a chapter the
+     book no longer has, or past its words, is kept and never shown. They
+     hold through a new width, face, size or view, as the place does. A book
+     shows 1,000 at most. The page in sight holding one is said, not seen, in
+     the colophon ("highlighted").
+   - **`]` and `[`** (Phase 5b) walk the book's marks, bookmarks and
+     highlights, in its order: `]` to the first past the words in sight, `[`
+     to the last before them (on Eien's title page, none of the chapter's
+     yet; a key pressed again before a page is measured walks on from the
+     mark it just went to), round the book past either end; the colophon
+     says which ("Highlight, 3 of 7 marks.", "Round to the first: …"), or
+     that none is kept. Typed however a keyboard's layout types a bracket;
+     ⌘[ (Ctrl+[) stays Back. View → Next Mark and Previous Mark do the same,
+     greyed with a note in front.
    - **Marks in the list** (Phase 4c): with a book's contents in the list,
      two buttons under its head, **Contents** and **Marks**, each with its
-     count, the one shown pressed; Marks lists the book's bookmarks in its
-     order, each row the words its page begins with, its page, and its
-     chapter, or "Nothing kept yet. B bookmarks a page." Enter or a click
-     goes to the bookmark's page; Delete or Backspace takes it off (once,
-     however long it's held; the keyboard goes to the next row). The
+     count, the one shown pressed; Marks lists the book's bookmarks and
+     highlights (Phase 5b) in its order (a bookmark first where both begin
+     at one word), each row its words (those its page begins with, or those
+     highlighted), its page, and its chapter and kind ("Chapter III ·
+     highlight"), or "Nothing kept yet. B bookmarks a page; H keeps the
+     words you choose." Enter or a click goes to the mark; Delete or
+     Backspace takes it off (once, however long it's held; the keyboard
+     goes to the next row), a highlight with Put back in the book's
+     colophon. The
      lens is the window's, back to Contents for another book. With two
      panes the tabs and rows are under the book's row on SHELF; on the
      phone, on its contents page.
@@ -481,8 +516,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      the list* (the default, as above) or *On the edge*. On the edge, the
      list is the book's contents alone, and down the page pane's outer edge
      runs the whole book, top to foot: a hairline for each chapter (a
-     longer one each tenth), a pencil tab for each bookmark, the place a bar
-     across it. Pointing at it says the chapter and page there; a click
+     longer one each tenth), a pencil tab for each bookmark, a pencil tick
+     for each highlight (Phase 5b), the place a bar across it. Pointing at it says the chapter and page there; a click
      goes there, the keyboard back on the page; a finger drags along it to
      scrub and goes where it's lifted (a finger's tap alone goes nowhere).
      To the keyboard it's a slider saying the chapter and page you're on:
@@ -550,7 +585,7 @@ Three panes, each collapsible, with a two-pane option in settings:
      number at its foot's outer corner. Before the book's first chapter
      stand Eien's title page (the title, the author, the folders it's in)
      and its imprint (how long the book is, how it's set as laid out, the
-     file it came from, where its place and bookmarks are kept), turned
+     file it came from, where its place, bookmarks and highlights are kept), turned
      back to from the first page, never opened at: a chapter, a link, a
      bookmark or Home goes to its opening. Neither is the book's words.
    - **The scroll style**, a book setting in the shelf's quick look (never
@@ -1232,7 +1267,7 @@ src/ui/
   settings/     ✓ Settings over the window: categories and tabs, drawn from the schema; the Themes tabs; the look they set on <html>
   phone/        ✓ the phone's layout: one pane at a time, back; the layout's tools for the page
   extension/    ✓ the extension's pages: the story page, the popup, the content script and each site's markup (§14)
-  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style; in pages (3b), its fore-edge, keys and taps, and the page turn (epub/turn/); two pages and set as a book (3d); its page numbers, bookmarks and Marks, in the list or on the edge (Phase 4)
+  epub/         ✓ an EPUB's page (#40): a chapter a sheet with its pictures and its foot, the place kept to the line, its kind of page, the reading state's store, the book's stylesheet and scroll style; in pages (3b), its fore-edge, keys and taps, and the page turn (epub/turn/); two pages and set as a book (3d); its page numbers, bookmarks and Marks, in the list or on the edge (Phase 4); its highlights, inked over the page's own text (Phase 5)
 src/app/
   electron/     ✓ main process, preload, window, menus, the vault and settings sessions, saving and printing exports, importing a folder
   mobile/       ✓ the phone's preload (window.eien over Capacitor), the vault's place and Android's access, the back gesture

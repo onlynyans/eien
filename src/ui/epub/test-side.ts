@@ -2,13 +2,25 @@
 // bytes, their reading states kept in memory, and what the page told. For
 // the DOM tests of ui/epub, which run in happy-dom.
 
-import { type Mock, vi } from 'vitest';
+import { afterEach, type Mock, vi } from 'vitest';
 import type { Reading } from '../../core/epub';
 import { MemoryStorage } from '../../platform/memory/memory-storage';
 import { BookCounts } from './book-count';
+import { boundsOf, rangeOver, walked } from './chapter-range';
 import { makeEpubSide } from './epub-side';
 import type { EpubSide, EpubSideOf } from './epub-side-types';
 import { readingStore } from './reading-store';
+
+/**
+ * Every page made here, let go after each test: a book's count goes on in the background, and a
+ * page left open would draw its edge strip into a document already gone (an unhandled error that
+ * fails the run, though every test passed). A test that lets its page go itself is let be.
+ */
+const made = new Set<EpubSide>();
+afterEach(() => {
+  for (const side of made) side.dispose();
+  made.clear();
+});
 
 /** A vault of `files` (bytes), its reading states kept in memory, and what the page told. */
 export function sideWith(
@@ -57,6 +69,27 @@ export function sideWith(
   };
   const close = vi.fn();
   const side = makeEpubSide(of, { close, caret: () => {} }, null);
+  // Let go once, whether the test or the hook above does it.
+  const letGo = side.dispose.bind(side);
+  side.dispose = () => {
+    if (made.delete(side)) letGo();
+  };
+  made.add(side);
   document.body.append(side.page.element);
   return { side, kept, reads, changed, close, of, writes, disk, files, listed };
+}
+
+/** `words` chosen in the chapter on `side`'s page, as a hand leaves them. */
+export function choose(side: EpubSide, words: string): void {
+  // The chapter's text as a place counts it is its pieces': the fixture's first chapter has no blank ones but between blocks.
+  const walk = walked(side.page.chapter);
+  const offset = walk.pieces
+    .map((piece) => piece.data)
+    .join('')
+    .indexOf(words);
+  const bounds = offset < 0 ? null : boundsOf(walk, { from: offset, to: offset + words.length });
+  if (!bounds) throw new Error(`no “${words}” on the page`);
+  const selection = document.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(rangeOver(bounds));
 }

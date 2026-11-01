@@ -10,7 +10,9 @@ import {
   type MarkRow,
   markKey,
   markKeys,
+  markName,
   markRow,
+  markWhere,
 } from './book-lenses';
 
 afterEach(() => {
@@ -63,7 +65,9 @@ describe('a bookmark’s row’s keys', () => {
 });
 
 describe('a bookmark’s row', () => {
-  const row = (over: Partial<MarkRow> = {}): MarkRow => ({
+  const row = (over: { page?: string | null } = {}): MarkRow => ({
+    kind: 'bookmark' as const,
+    offset: 40,
     mark: { chapter: 'c3.xhtml', offset: 40, words: 'Not all that Mrs. Bennet' },
     spine: 3,
     page: null,
@@ -93,15 +97,42 @@ describe('a bookmark’s row', () => {
 
   it('has a name of its own per place, so the keyboard comes back to the right one', () => {
     const keys = [
-      markKey({ chapter: 'c1.xhtml', offset: 0, words: '' }),
-      markKey({ chapter: 'c1.xhtml', offset: 40, words: '' }),
-      markKey({ chapter: 'c2.xhtml', offset: 0, words: '' }),
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 0,
+        mark: { chapter: 'c1.xhtml', offset: 0, words: '' },
+      }),
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 40,
+        mark: { chapter: 'c1.xhtml', offset: 40, words: '' },
+      }),
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 0,
+        mark: { chapter: 'c2.xhtml', offset: 0, words: '' },
+      }),
       // A chapter whose name ends as another's offset begins.
-      markKey({ chapter: 'c1.xhtml:4', offset: 0, words: '' }),
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 0,
+        mark: { chapter: 'c1.xhtml:4', offset: 0, words: '' },
+      }),
     ];
     expect(new Set(keys).size).toBe(keys.length);
     // Its words aren't its name: they may be read again differently, and it's the same bookmark.
-    expect(markKey({ chapter: 'c1.xhtml', offset: 0, words: 'a' })).toBe(keys[0]);
+    expect(
+      markKey({
+        kind: 'bookmark',
+        spine: 0,
+        offset: 0,
+        mark: { chapter: 'c1.xhtml', offset: 0, words: 'a' },
+      }),
+    ).toBe(keys[0]);
   });
 });
 
@@ -121,5 +152,61 @@ describe('a book’s lenses', () => {
     contents?.click();
     marks?.click();
     expect(choose.mock.calls).toEqual([['contents'], ['marks']]);
+  });
+});
+
+// QA (#40, Phase 5b): a highlight's row beside a bookmark's, at one place too.
+describe('a mark’s row of either kind', () => {
+  const bookmarkAt = (offset: number): MarkRow => ({
+    kind: 'bookmark',
+    offset,
+    spine: 3,
+    mark: { chapter: 'c3.xhtml', offset, words: 'Not all that Mrs. Bennet' },
+    page: '12',
+    chapter: 'Chapter III',
+  });
+  const highlightAt = (from: number, to: number, words = 'universally acknowledged'): MarkRow => ({
+    kind: 'highlight',
+    offset: from,
+    spine: 3,
+    mark: { chapter: 'c3.xhtml', from, to, words },
+    page: '12',
+    chapter: 'Chapter III',
+  });
+
+  it('says its chapter and its kind under its words', () => {
+    expect(markWhere(bookmarkAt(40))).toBe('Chapter III · bookmark');
+    expect(markWhere(highlightAt(40, 60))).toBe('Chapter III · highlight');
+    const button = markRow(
+      highlightAt(40, 60),
+      'k',
+      () => {},
+      () => {},
+    );
+    expect(button.querySelector('.mark-row__words')?.textContent).toBe('universally acknowledged');
+    expect(button.querySelector('.mark-row__chapter')?.textContent).toBe('Chapter III · highlight');
+    // No words kept: called by its chapter, as a bookmark is.
+    expect(markName(highlightAt(40, 60, ''))).toBe('Chapter III');
+  });
+
+  it('has a name of its own beside a bookmark at its word, and beside a highlight that ends elsewhere', () => {
+    const keys = [
+      markKey(bookmarkAt(40)),
+      markKey(highlightAt(40, 60)),
+      markKey(highlightAt(40, 90)),
+      markKey(highlightAt(60, 90)),
+    ];
+    expect(new Set(keys).size).toBe(keys.length);
+    // Its words aren't its name: read again differently, it's the same highlight.
+    expect(markKey(highlightAt(40, 60, 'other words'))).toBe(keys[1]);
+  });
+
+  it('takes itself off by Delete, whichever kind it is', () => {
+    for (const row of [bookmarkAt(40), highlightAt(40, 60)]) {
+      const remove = vi.fn();
+      const button = markRow(row, markKey(row), () => {}, remove);
+      button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+      expect(remove, row.kind).toHaveBeenCalledOnce();
+    }
   });
 });

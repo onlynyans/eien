@@ -174,6 +174,17 @@ describe('a chapter in pages', () => {
     expect(middle.querySelector('p')?.style.textIndent).toBe('0px');
   });
 
+  // Phase 5a's review: a copy is inked from where its cut begins, which the kept place, mid-page
+  // after a show or a relayout, isn't.
+  it('says where a turn’s copy begins in the chapter: its page’s first word, wherever the place', () => {
+    const { chapter, place } = laidOut(['a'.repeat(250)]);
+    place.show(130);
+    expect(place.offset).toBe(130);
+    const copy = chapter.cloneNode(true) as HTMLElement;
+    expect(place.trim(copy)).toBe(PER_PAGE);
+    expect(copy.textContent).toBe('a'.repeat(PER_PAGE));
+  });
+
   it('carries a picture that begins the page in the turn’s copy', () => {
     const { chapter, place } = laidOut(['a'.repeat(100), 'b'.repeat(150)], 0);
     place.show(0);

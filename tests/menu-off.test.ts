@@ -24,7 +24,8 @@ const { menuOff } = (await import(/* @vite-ignore */ WINDOW_COMMANDS)) as {
 /**
  * The commands that act with any page in front: the window's (new, open, close, Settings, the
  * panes, the split, zoom, sprints, the formatting bar's and spelling's settings), a page's own
- * (Find, Look), and a book's export, which takes the book chosen.
+ * (Find, Look), a book's export, which takes the book chosen, and Highlight, which a book's words
+ * take too (#40, Phase 5a).
  */
 const ANY_PAGE = new RegExp(
   `^(${[
@@ -45,6 +46,7 @@ const ANY_PAGE = new RegExp(
     'focus:.+',
     'zoom:.+',
     'toggle:editor\\.(formatBar|spellcheck)',
+    'format:highlight',
   ].join('|')})$`,
   'u',
 );
@@ -68,7 +70,8 @@ describe('the commands greyed with a book in front', () => {
         expect(
           [...menu].filter((id) => !off.includes(id) && !book.includes(id) && !ANY_PAGE.test(id)),
         ).toEqual([]);
-        for (const { id } of FORMAT_COMMANDS) expect(off).toContain(`format:${id}`);
+        for (const { id } of FORMAT_COMMANDS)
+          if (!ANY_PAGE.test(`format:${id}`)) expect(off).toContain(`format:${id}`);
       } finally {
         Object.defineProperty(process, 'platform', { value: real });
       }

@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
+import { placeWords, wordsInSight } from '../e2e/book-sight';
 import {
   bytesOutside,
   listOutside,
@@ -109,7 +110,7 @@ test('a book’s Marks on its contents page: lenses a finger high, a row tapped 
   await expect(marks).toHaveAttribute('aria-pressed', 'true');
   const row = page.locator('.mark-row');
   await expect(row).toHaveCount(1);
-  await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter I');
+  await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter I · bookmark');
   await row.click();
   // The page comes into sight at the bookmark, its mark on it.
   await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
@@ -208,6 +209,74 @@ test('a bookmark made and taken off from the ⋯, kept in the reading file betwe
   await page.getByRole('button', { name: 'More' }).click();
   await expect(choice()).toHaveAttribute('aria-checked', 'false');
   await page.keyboard.press('Escape');
+});
+
+test('a highlight made and taken off from the ⋯, the words last chosen, Put back restoring it, then among the Marks (#40, Phase 5a, 5b)', async ({
+  page,
+}) => {
+  await open(page);
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await back(page).click(); // the list's back: the sidebar
+  const book = page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' });
+  await expect(book).toBeVisible({ timeout: 10_000 });
+  await book.click();
+  await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
+  /** The highlights in the book's one reading file. */
+  const highlights = async () => {
+    const [name] = await listOutside(page, 'Eien/Vault/.eien/reading');
+    if (!name) return [];
+    const text = await readOutside(page, `Eien/Vault/.eien/reading/${name}`);
+    return text ? (JSON.parse(text).highlights ?? []) : [];
+  };
+  const said = page.locator('.colophon__said');
+  /** Words chosen as a long press leaves them: the ⋯'s tap may drop them, its choice acts on them still. */
+  const choose = (words: string) =>
+    page.evaluate((words) => {
+      const walker = document.createTreeWalker(
+        document.querySelector('.epub-chapter') as Node,
+        NodeFilter.SHOW_TEXT,
+      );
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const at = (node as Text).data.indexOf(words);
+        if (at < 0) continue;
+        const range = document.createRange();
+        range.setStart(node, at);
+        range.setEnd(node, at + words.length);
+        document.getSelection()?.removeAllRanges();
+        document.getSelection()?.addRange(range);
+        return;
+      }
+    }, words);
+
+  await choose('universally acknowledged');
+  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('menuitem', { name: 'Highlight', exact: true }).click();
+  await expect(said).toHaveText('Highlighted.');
+  await expect
+    .poll(async () => (await highlights()).map((h: { words: string }) => h.words))
+    .toEqual(['universally acknowledged']);
+  await expect(page.locator('.epub-chapter [data-highlighted]')).toHaveCount(1);
+  // Painted by the window's own Highlight API, over the page's text.
+  expect(await page.evaluate(() => CSS.highlights.get('epub-highlight')?.size)).toBe(1);
+
+  await choose('acknowledged');
+  await page.getByRole('button', { name: 'More' }).click();
+  await page.getByRole('menuitem', { name: 'Take off the highlight' }).click();
+  await expect(said).toHaveText('Highlight taken off.');
+  await expect.poll(async () => (await highlights()).length).toBe(0);
+  await page.getByRole('button', { name: 'Put back' }).click();
+  await expect.poll(async () => (await highlights()).length).toBe(1);
+  await expect(said).toHaveText('Highlight put back.');
+  // Among the book's Marks on its contents page (Phase 5b), in its words.
+  await back(page).click();
+  await page.getByRole('button', { name: /^Marks \d+$/u }).click();
+  const row = page.locator('.mark-row');
+  await expect(row.locator('.mark-row__words')).toHaveText('universally acknowledged');
+  await expect(row.locator('.mark-row__chapter')).toHaveText('Chapter I · highlight');
 });
 
 test('a book’s row menu renames it in its row, and trashes it to .eien/trash, whole', async ({
@@ -762,4 +831,44 @@ test('a curl lies exactly over the sheet through the page’s zoom', async ({ pa
     });
   expect(stacked).toEqual({ copy: '0', paper: '1' });
   await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
+});
+
+// The place carried from Scroll to Pages before the scroll rests (#40, Phase 3b): Pages opens on the
+// page holding the first line in sight, read by the app's own rule, wherever the scroll stands. The
+// end-to-end test's twin, headless, laid out by Chromium as the desktop lays a book out (two
+// panes, a page wide enough to justify where the system hyphenates).
+test('a book switched from Scroll to Pages before the scroll rests opens on the page it was at', async ({
+  page,
+}) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'panes');
+    await window.eien.settings.set('epub.view', 'scroll');
+  });
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.setViewportSize({ width: 1400, height: 800 });
+  await page.reload();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page).first()).toContainText('It is a truth universally acknowledged');
+  const leaf = page.locator('.page__leaf--epub');
+  const scroller = leaf.locator('.page__scroll');
+  const box = leaf.locator('.epub-sheet:not([aria-hidden]) .epub__pages');
+  for (const by of [700, 1500, 2300]) {
+    await expect(leaf).toHaveAttribute('data-view', 'scroll');
+    await scroller.evaluate((element, top) => element.scrollTo({ top, behavior: 'instant' }), by);
+    const words = await placeWords(scroller);
+    expect(words.trim()).not.toBe('');
+    await page.locator('[data-command="view.pages"]:not(.page__phone *)').first().click();
+    await expect(leaf).toHaveAttribute('data-view', 'pages');
+    await expect
+      .poll(() => wordsInSight(box, words), {
+        message: `the place's words, "${words}", on the page Pages opens to (scrolled to ${by}px)`,
+      })
+      .toBe(true);
+    await page.locator('[data-command="view.scroll"]:not(.page__phone *)').first().click();
+  }
 });

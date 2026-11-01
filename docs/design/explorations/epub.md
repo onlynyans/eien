@@ -219,6 +219,15 @@ section where it and the directions below disagree.
     pressed. Everywhere else the bookmark wears the mark.
 - **Highlight:** a pencil underline with a tick in the margin (Features 1).
 - **Find:** the list's own search field searches the book while it's open.
+  ⌘F (Edit → Find) opens the page's own find bar over the book (decided
+  2026-10-31), as on a note: two ways in.
+- **Phase 5's design, the owner's answers (2026-10-31):**
+  - A highlight taken off is put back by **Put back** in the colophon while
+    its news shows, or by H on its words, left chosen; ⌘Z isn't wired (the
+    Edit menu's Undo is the system's).
+  - No Highlight tool in the bars: the selection bar's Highlight, H,
+    Format → Highlight (⇧⌘H, which a book's words take too) and the phone's
+    ⋯.
 - **Page numbers:** the print edition's, from the EPUB's page-list where it
   has one, else steady pages of 1,500 characters.
   - **No real cost:** the page-list is read once with the book, and a
@@ -412,7 +421,25 @@ Each phase is its own session and pull request, from main.
   or *On the edge*, in the shelf's quick look) and the strip down the page
   pane's edge: chapters, bookmarks, the place as a bar, a slider to the
   keyboard, scrubbed by a finger (`ui/epub/edge-strip.ts`, `book-strip.ts`).
-- **Phase 5, highlights and Find.**
+- **Phase 5, highlights and Find,** in four pull requests, stacked on 3d:
+  one walk of a chapter's words and the reading file's lists first
+  ([#139](https://github.com/onlynyans/eien/pull/139)); **5a, built:**
+  highlights on the page, a pencil line under the words painted by the CSS
+  Custom Highlight API over the page's own text (no element among the words
+  a place counts) and a tick in the margin by each paragraph; H, the
+  selection bar's Highlight, Format → Highlight (⇧⌘H, a book's words take a
+  note's own command) and the phone's ⋯; taken off, the words left chosen
+  and Put back in the colophon while it says so; kept in the reading file
+  beside the bookmarks, decided against the file as it is when written
+  (`core/epub/highlights.ts`, `ui/epub/page-highlights.ts`, `ink.ts`);
+  **5b, built:** highlights among the marks: Marks rows of both kinds in
+  the book's order, each saying its kind, Delete taking a highlight off
+  with Put back; a highlight a pencil tick on the strip; `]` and `[`
+  walking both kinds round the book, said in the colophon, and View →
+  Next Mark and Previous Mark (`core/epub/marks.ts`); **5c:** Find,
+  the page's own find bar over the book (the owner's answer, 2026-10-31:
+  ⌘F opens the bar, as on a note) and the list's field, each a search of
+  its own over one engine, its matches in washes.
 - **Phase 6, by lamplight,** on Scroll.
 
 Each module holds one concept, and none passes about 300 lines: the zip,

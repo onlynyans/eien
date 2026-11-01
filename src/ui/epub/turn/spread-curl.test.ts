@@ -231,6 +231,9 @@ describe('a sheet’s gutter', () => {
       inSight: () => {},
       follow: () => {},
       quote: () => {},
+      highlight: () => {},
+      inHighlight: () => false,
+      copied: () => {},
     });
     Object.defineProperty(sheet.box, 'offsetLeft', { value: 32 });
     Object.defineProperty(sheet.box, 'offsetWidth', { value: 640 });

@@ -5,7 +5,7 @@
 // the note you came from, opened again. Made before the pages, which take
 // its kind; the pages come in later.
 
-import { chapterTitle, type Epub, inBookOrder, withQuote } from '../../core/epub';
+import { chapterTitle, type Epub, withQuote } from '../../core/epub';
 import { baseName, isInside } from '../../core/paths';
 import { isNoteName } from '../../core/vault';
 import type { VaultBridge } from '../../platform/bridge';
@@ -48,8 +48,6 @@ export interface EpubWiring {
   readonly kind: EpubKind;
   /** Choosing a book or a chapter; a book's menu and keys are a row's (./row-actions.ts). */
   readonly actions: Pick<ShelfActions, 'openEpub' | 'chapter' | 'lens' | 'goMark' | 'unmark'>;
-  /** Quote the words chosen on the active page, if it holds a book (the phone's ⋯). */
-  quote(): void;
   /** What SHELF marks: the book on the active page, and with `two` panes the open book's contents. */
   shelf(two: boolean): Omit<ShelfModel, 'tree' | 'shut'>;
   /** The contents the list shows in place of notes, or null. */
@@ -126,19 +124,13 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
       ) ?? null
     );
   };
-  /** The book's bookmarks as their rows show them, in its order (Phase 4c). */
-  const marksOf = (side: EpubSide, epub: Epub): MarkRow[] => {
-    const spine = epub.spine.map((item) => item.path);
-    return inBookOrder(side.bookmarks, spine).map((mark) => {
-      const at = spine.indexOf(mark.chapter);
-      return {
-        mark,
-        spine: at,
-        page: side.labelAt(at, mark.offset),
-        chapter: chapterTitle(epub.contents, at) ?? side.page.name,
-      };
-    });
-  };
+  /** The book's marks, bookmarks and highlights, as their rows show them, in its order (Phase 4c, 5b). */
+  const marksOf = (side: EpubSide, epub: Epub): MarkRow[] =>
+    side.marks.inOrder().map((mark) => ({
+      ...mark,
+      page: side.labelAt(mark.spine, mark.offset),
+      chapter: chapterTitle(epub.contents, mark.spine) ?? side.page.name,
+    }));
   const contents = () => {
     const side = sideOf(of.nav.contents);
     const epub = side?.epub;
@@ -157,11 +149,6 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
   return {
     kind,
     contents,
-    quote: () => {
-      const active = of.pages().active;
-      // The phone's ⋯: the words last chosen, which its tap may have dropped.
-      if (isEpub(active)) void active.quote(true);
-    },
     shelf: (two) => {
       const active = of.pages().active;
       const shown = two ? contents() : null;
@@ -191,8 +178,12 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
         of.nav.bookLens = lens;
         of.redraw();
       },
-      goMark: (path, row) => void toBook(path)?.goTo(row.spine, row.mark.offset),
-      unmark: (path, row) => void sideOf(path)?.unmark(row.mark),
+      goMark: (path, row) => void toBook(path)?.goTo(row.spine, row.offset),
+      unmark: (path, row) => {
+        const marks = sideOf(path)?.marks;
+        if (row.kind === 'bookmark') void marks?.bookmarks.remove(row.mark);
+        else void marks?.highlights.remove(row.mark);
+      },
     },
   };
 }

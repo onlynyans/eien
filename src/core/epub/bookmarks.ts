@@ -4,6 +4,7 @@
 // begins with, for the list; kept as every list in the file is
 // (./reading-list.ts).
 
+import { sightEnd } from './place';
 import { type ListChange, type ListKind, listIn, withList } from './reading-list';
 
 export interface Bookmark {
@@ -69,26 +70,11 @@ export const bookmarksOn = (
   from: number,
   to: number,
 ): Bookmark[] => {
-  const end = Math.max(to, from + 1);
+  const end = sightEnd(from, to);
   return marks.filter(
     (mark) => mark.chapter === chapter && mark.offset >= from && mark.offset < end,
   );
 };
-
-/**
- * The bookmarks in the book's order, by their chapters' places in `spine`
- * (its files' paths) and then their words; one whose chapter isn't in it is
- * left out (kept in the file, never shown).
- */
-export function inBookOrder(marks: readonly Bookmark[], spine: readonly string[]): Bookmark[] {
-  const at = new Map(spine.map((path, i) => [path, i]));
-  return marks
-    .filter((mark) => at.has(mark.chapter))
-    .sort(
-      (a, b) =>
-        (at.get(a.chapter) as number) - (at.get(b.chapter) as number) || a.offset - b.offset,
-    );
-}
 
 /** A page's first words as a bookmark keeps them: whole words, its space run together, an ellipsis where it goes on. */
 export function firstWords(text: string, max = BOOKMARK_WORDS): string {

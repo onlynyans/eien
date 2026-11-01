@@ -11,7 +11,7 @@ import { readingStore } from './reading-store';
 const KEY = '0123456789abcdef';
 const mark = (offset: number): Bookmark => ({ chapter: 'c1', offset, words: 'words' });
 /** The book's marks with these bookmarks. */
-const marks = (...bookmarks: Bookmark[]) => ({ bookmarks });
+const marks = (...bookmarks: Bookmark[]) => ({ bookmarks, highlights: [] });
 
 function store(before?: string) {
   const disk = new MemoryStorage();

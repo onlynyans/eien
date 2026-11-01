@@ -95,7 +95,7 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
     if (id === 'view.pages' || id === 'view.scroll')
       return { pressed: settings.values['epub.view'] === id.slice('view.'.length) };
     if (id === 'bookmark') {
-      const on = isEpub(side) && side.bookmarked;
+      const on = isEpub(side) && side.marks.bookmarks.on;
       return { pressed: on, tip: on ? 'Take the bookmark off' : undefined };
     }
     return {};
