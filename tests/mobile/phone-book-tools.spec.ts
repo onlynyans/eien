@@ -14,6 +14,8 @@ const FIXTURE = join(import.meta.dirname, '../fixtures/epub/plain.epub');
 const PHONE = { width: 412, height: 915 };
 /** A Galaxy Z Fold 5 opened upright, as the other phone specs size it. */
 const FOLD5_UPRIGHT = { width: 590, height: 706 };
+/** A tablet on its side: room for two pages facing. */
+const TABLET = { width: 1180, height: 820 };
 /** The phone's tools: in its bar (A's), or at the page's foot (B's slip, C's rail). */
 const tools = (page: Page) => page.locator('.phone-bar__controls, .page__phone');
 const back = (page: Page) => page.locator('.phone-bar__back');
@@ -75,6 +77,31 @@ for (const [room, screen] of ROOMS) {
       await expect(page.locator('.page__leaf--epub')).toHaveAttribute('data-view', 'scroll');
     });
   }
+}
+
+// Two pages, the note and the book facing: the phone's tools are the active page's, the book's
+// set aside while the note is chosen, and back with the book.
+for (const layout of ['band', 'slip', 'runhead'] as const) {
+  test(`pages, ${layout}: the tools follow the page chosen, a note or the book`, async ({
+    page,
+  }) => {
+    await noteThenBook(page, 'pages', layout, TABLET);
+    await expect(page.locator('.page__leaf--epub')).toBeVisible();
+    await expect(page.locator('.page .cm-content')).toBeVisible(); // the note, facing
+    const bar = tools(page);
+    const bookmark = bar.getByRole('button', { name: 'Bookmark this page', exact: true });
+    const pages = bar.getByRole('button', { name: 'Pages', exact: true });
+    const focus = bar.getByRole('button', { name: 'Focus mode' });
+    await expect(bookmark).toBeVisible();
+    await page.locator('.page .cm-content').click();
+    await expect(focus).toBeVisible();
+    await expect(bookmark).toBeHidden();
+    await expect(pages).toBeHidden();
+    await page.locator('.epub-chapter').click();
+    await expect(bookmark).toBeVisible();
+    await expect(pages).toBeVisible();
+    await expect(focus).toBeHidden();
+  });
 }
 
 // A book's tools are one more than a note's in A's bar, beside the back word and the note you

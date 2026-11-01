@@ -108,6 +108,24 @@ describe('the commands for a note', () => {
     });
   }
 
+  it('give A’s phone bar one view control a page, never a note’s views in a well (#63)', async () => {
+    const { pages, chrome } = await drawn('band');
+    const host = document.querySelector('.host--phone-band') as HTMLElement;
+    const shown = (selector: string) =>
+      [...host.querySelectorAll<HTMLElement>(selector)].filter(
+        (element) => !element.hidden && !element.hasAttribute('data-aside'),
+      );
+    const views = () => shown('[data-command^="view."]').map((button) => button.dataset.command);
+    // The book in front: Pages and Scroll in their well, a note's one button set aside.
+    expect(views()).toEqual(['view.pages', 'view.scroll']);
+    expect(shown('.host__group')).toHaveLength(1);
+    pages.activate(pages.sides[0] as Side);
+    chrome.refresh();
+    // The note in front: its one button that steps through its views, and no well drawn empty.
+    expect(views()).toEqual(['view.next']);
+    expect(shown('.host__group')).toEqual([]);
+  });
+
   it('take the formatting bar’s row with them when a book is the only page', async () => {
     const files = { 'Chapter.md': 'The gate held.' };
     const made = await pagesWith(files, { 'editor.formatBar': 'on' }, [standInKind]);
