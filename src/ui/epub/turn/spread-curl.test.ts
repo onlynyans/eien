@@ -5,6 +5,7 @@
 // paper, so a page's back shows its words faintly.
 
 import { afterEach, describe, expect, it } from 'vitest';
+import { ChapterSheet } from '../chapter-sheet';
 import type { Frames } from './next-frame';
 import { PageTurn } from './page-turn';
 import type { TurnLeaf } from './turn-surface';
@@ -68,6 +69,8 @@ function spread(
     sheet,
     run,
     page: () => page,
+    /** `count` frames run, no more: a turn caught in flight. */
+    frames: (count: number) => run(count),
     curl: () => host.querySelector<HTMLElement>('.turn-curl'),
   };
 }
@@ -154,5 +157,103 @@ describe('a curl’s copies', () => {
     // A copy laid over the sheet stands at 3 (./turn.css); in a piece, under its paper (1).
     expect(copy.style.zIndex).toBe('0');
     expect(back.querySelector(':scope > .turn-curl__paper')).not.toBeNull();
+  });
+});
+
+describe('a curl caught on two facing pages', () => {
+  // QA (#40, spread curl): a mirrored page caught in flight follows the hand as in its mirror: drawn
+  // leftward, back the way it came, so the turn falls back home.
+  it('falls back home under a hand drawn leftward across the left page caught mid-turn', () => {
+    const b = spread();
+    b.turn.key(-1);
+    b.frames(4);
+    expect(b.turn.catchable).toBe(true);
+    b.turn.grab([200, 300]);
+    b.turn.drag([-8, 0], 100);
+    b.turn.drag([-200, 0], 110);
+    b.turn.drag([-400, 0], 120);
+    b.turn.letGo();
+    b.run();
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(3);
+  });
+
+  // QA (#40, spread curl): caught and let go without a drag, it flies on and lands where it was going.
+  it('flies on, caught and let go without a drag', () => {
+    const b = spread();
+    b.turn.key(-1);
+    b.frames(4);
+    b.turn.grab([200, 300]);
+    expect(b.turn.letGo()).toBe(false);
+    b.run();
+    expect(b.curl()).toBeNull();
+    expect(b.page()).toBe(2);
+  });
+});
+
+describe('a curl on one page', () => {
+  // QA (#40, spread curl): one page's back turn as before the spread's: the page left beneath them all
+  // (z 0), the page come laid over it as the curl's pieces from 1, the sheet hidden until it lands.
+  it('turns back with the page left beneath, the sheet hidden until it lands', () => {
+    const b = spread(() => null);
+    b.turn.key(-1);
+    const curl = b.curl() as HTMLElement;
+    const pieces = [...curl.children] as HTMLElement[];
+    expect(pieces.map((piece) => piece.style.zIndex)).toEqual(pieces.map((_, i) => String(i)));
+    expect(pieces[0]?.classList.contains('turn-curl__piece')).toBe(true);
+    expect(curl.querySelector<HTMLElement>('.turn-curl__flap')?.style.zIndex).toBe(
+      String(pieces.length - 1),
+    );
+    expect(b.sheet.style.visibility).toBe('hidden');
+    b.run();
+    expect(b.sheet.style.visibility).toBe('');
+    expect(b.page()).toBe(2);
+  });
+
+  // QA (#40, spread curl): and its turn on, the curl's pieces from 1 over the sheet, which isn't hidden.
+  it('turns on over the sheet, which stays in sight beneath', () => {
+    const b = spread(() => null);
+    b.turn.key(1);
+    const pieces = [...(b.curl() as HTMLElement).children] as HTMLElement[];
+    expect(pieces.map((piece) => piece.style.zIndex)).toEqual(pieces.map((_, i) => String(i + 1)));
+    expect(b.sheet.style.visibility).toBe('');
+  });
+});
+
+// QA (#40, spread curl): the gutter a curl turns round is only a spread's, in pages: one page or
+// Scroll turns the whole sheet; on a spread, the middle of the pages' box across the sheet.
+describe('a sheet’s gutter', () => {
+  const sheetOf = () => {
+    const scroller = document.createElement('div');
+    const sheet = new ChapterSheet({
+      scroller,
+      moved: () => {},
+      rested: () => {},
+      inSight: () => {},
+      follow: () => {},
+      quote: () => {},
+    });
+    Object.defineProperty(sheet.box, 'offsetLeft', { value: 32 });
+    Object.defineProperty(sheet.box, 'offsetWidth', { value: 640 });
+    return sheet;
+  };
+
+  it('is none in Scroll, even with two pages marked', () => {
+    const sheet = sheetOf();
+    sheet.box.setAttribute('data-spread', '');
+    expect(sheet.gutter).toBeNull();
+  });
+
+  it('is none in pages one at a time', () => {
+    const sheet = sheetOf();
+    sheet.paged = true;
+    expect(sheet.gutter).toBeNull();
+  });
+
+  it('is the middle of the pages’ box on a spread', () => {
+    const sheet = sheetOf();
+    sheet.paged = true;
+    sheet.box.setAttribute('data-spread', '');
+    expect(sheet.gutter).toBe(32 + 320);
   });
 });

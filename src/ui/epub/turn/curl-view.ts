@@ -55,6 +55,8 @@ function pieceOf(
     width: `${sheetWidth}px`,
     height: '100%',
     margin: '0',
+    // The curl wears the sheet's zoom already (CurlView): a copy of the sheet isn't zoomed again.
+    zoom: '1',
     // Beneath its piece's paper and light, whatever a copy laid over the sheet stands at (./turn.css).
     zIndex: '0',
     transform: leaf.mirrored ? 'scaleX(-1)' : '',
@@ -161,6 +163,9 @@ export class CurlView {
       this.element.append(...stacked);
     }
     layOver(this.element, to);
+    // The sheet's zoom (the page's, ../../page/page.css), as a copy laid over it wears it: the curl's
+    // lengths are the sheet's own pixels (offsets and sizes aren't zoomed), so it lies over it exactly.
+    this.element.style.zoom = getComputedStyle(to).zoom || '';
   }
 
   /** The page as `frame` has it. */

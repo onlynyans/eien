@@ -705,3 +705,48 @@ test('a curl on two facing pages turns one page round the gutter', async ({ page
   expect(Math.abs(back.right - gutter)).toBeLessThan(2);
   await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
 });
+
+// QA (#40, spread curl): the curl is laid in the sheet's own pixels (its
+// offsets and sizes, which the page's zoom doesn't scale), so it wears the
+// sheet's zoom, or it lies shrunk in the sheet's corner at 150%.
+test('a curl lies exactly over the sheet through the page’s zoom', async ({ page }) => {
+  await open(page);
+  await page.evaluate(async () => {
+    await window.eien.settings.set('appearance.room', 'panes');
+    await window.eien.settings.set('epub.view', 'pages');
+    await window.eien.settings.set('epub.turn', 'curl');
+    await window.eien.settings.set('epub.turnSpeed', '4');
+    await window.eien.settings.set('page.zoom', 150);
+  });
+  await putBytesOutside(
+    page,
+    'Eien/Vault/Novels/Pride and Prejudice.epub',
+    readFileSync(FIXTURE).toString('base64'),
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.reload();
+  await page.locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' }).click();
+  await expect(chapter(page).first()).toContainText('It is a truth universally acknowledged');
+  await page.locator('.page__leaf--epub .page__scroll').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.turn-curl')).toHaveCount(1);
+  const [sheet, curl, copy] = await page.evaluate(() =>
+    ['.epub-sheet:not([aria-hidden])', '.turn-curl', '.turn-curl__piece > .turn-curl__page'].map(
+      (selector) => {
+        const rect = document.querySelector(selector)?.getBoundingClientRect();
+        return rect
+          ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+          : null;
+      },
+    ),
+  );
+  if (!sheet || !curl || !copy) throw new Error('no curl');
+  expect(Math.abs(curl.left - sheet.left)).toBeLessThan(3);
+  expect(Math.abs(curl.top - sheet.top)).toBeLessThan(3);
+  expect(Math.abs(curl.width / sheet.width - 1)).toBeLessThan(0.03);
+  expect(Math.abs(curl.height / sheet.height - 1)).toBeLessThan(0.03);
+  // Its copies zoomed once, as the sheet is: the page's words where they stand.
+  expect(Math.abs(copy.width / sheet.width - 1)).toBeLessThan(0.03);
+  await expect(page.locator('.turn-curl')).toHaveCount(0, { timeout: 10_000 });
+});
