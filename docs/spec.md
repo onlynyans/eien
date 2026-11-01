@@ -546,7 +546,9 @@ Three panes, each collapsible, with a two-pane option in settings:
      its paragraphs are set as a book's, whatever the scroll style. A
      picture fits its page whole; a chapter that's only a picture is one
      page, the empty paragraphs and line breaks a publisher sets round it
-     left out (#59). The
+     left out (#59). A picture whose size Eien can't read from its header
+     (an SVG) has its pages counted again once it loads, so each turns as
+     a PNG's would. The
      arrow keys, Space and Shift+Space, Page Up and Page Down turn a page;
      Home and End go to the chapter's ends; past a chapter's last page
      comes the next chapter's first, and back, the last page of the one
