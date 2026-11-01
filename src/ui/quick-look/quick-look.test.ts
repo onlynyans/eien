@@ -277,8 +277,13 @@ describe('the quick look’s keyboard', () => {
     expect(document.activeElement).toBe(larger);
     expect(settings.values['appearance.textSize']).toBe(100);
     smaller?.focus();
-    smaller?.click(); // 90: its end
-    await settled();
+    // Five steps down to 50%, its end (#72): 90% is a step on the way, − still pressable there.
+    for (const size of [90, 80, 70, 60, 50]) {
+      expect(smaller?.disabled).toBe(false);
+      smaller?.click();
+      await settled();
+      expect(settings.values['appearance.textSize']).toBe(size);
+    }
     expect(smaller?.disabled).toBe(true);
     expect(document.activeElement).toBe(larger);
     expect(larger?.tabIndex).toBe(0);

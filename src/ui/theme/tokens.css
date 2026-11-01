@@ -190,7 +190,9 @@
   --eien-sidebar-w: 264px;
   --eien-list-w: 316px;
   --eien-panel-w: 284px; /* a side panel on the page: versions */
-  --eien-row-h: calc(30px * var(--eien-text-scale)); /* a tree or list row, desktop */
+  /* A tree or list row, desktop: its text's scale, never under a target's size (Text size goes to 50%). */
+  --eien-row-h: max(var(--eien-target), calc(30px * var(--eien-text-scale)));
+  --eien-target: 24px; /* the smallest thing a pointer presses (WCAG 2.5.8) */
   --eien-touch: 44px; /* the smallest thing a finger presses */
   --eien-seal-size: 22px; /* the app's mark */
   /* Corners (#27): paper stays square; what you press takes -s, what floats -m,
@@ -223,7 +225,7 @@
    size is multiplied by --eien-text-scale, the Text size setting. Only the
    text voice changes; the machine voice keeps its own face and sizes. */
 :root {
-  --eien-text-scale: 1; /* Text size, 0.9 to 1.3: set from the settings */
+  --eien-text-scale: 1; /* Text size, 0.5 to 1.3: set from the settings */
   --eien-zoom: 1; /* the page's zoom, 0.5 to 2: set from the settings */
 }
 :root,
@@ -349,7 +351,7 @@
   --eien-leading-tighten: 0.14;
   --eien-row-pad-y: var(--eien-space-2);
   --eien-list-preview: none;
-  --eien-row-h: calc(26px * var(--eien-text-scale));
+  --eien-row-h: max(var(--eien-target), calc(26px * var(--eien-text-scale)));
 }
 
 /* A book's parts (#40, ui/epub/epub.css), named by the cleaner: its chapter
