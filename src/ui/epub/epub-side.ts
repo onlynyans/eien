@@ -22,7 +22,7 @@ import { chapterFoot } from './chapter-foot';
 import { type DrawnChapter, drawChapter } from './chapter-view';
 import { EpubPage } from './epub-page';
 import type { EpubPlace, EpubSide, EpubSideOf } from './epub-side-types';
-import { frontMatter } from './front-matter';
+import { FRONT, frontMatter } from './front-matter';
 
 export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | null): EpubSide {
   const page = new EpubPage({
@@ -275,6 +275,9 @@ export function makeEpubSide(of: EpubSideOf, hooks: SideHooks, left: Place | nul
       path = to;
       // A book with no title of its own is called by its file: renamed, its new name.
       page.show(nameOf(epub, to), headOf(epub, to), epub?.language ?? '');
+      // Its title page names the folders it's in and its file (#57: nowhere else on the page now).
+      const front = page.chapter.querySelector(`:scope > ${FRONT}`);
+      if (front && epub) front.replaceWith(frontMatter(epub, to, crumbsOf(to)));
     },
     clear() {
       links.forget();
