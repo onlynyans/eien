@@ -1,10 +1,9 @@
-// Choosing words in a book by touch (#65): Chromium's own long press
-// (CDP's Input.synthesizeTapGesture held a second), so the browser's touch,
-// its gesture and its choosing of the word run as on Android. Eien's actions
+// Choosing words in a book by touch (#65): a finger held on the page while
+// the system's long press chooses (./book-hand.ts, longPress). Eien's actions
 // then dock at the page's foot, over the colophon.
 
-import { type CDPSession, devices, expect, type Locator, type Page, test } from '@playwright/test';
-import { bookInPages, box, firstWords } from './book-hand';
+import { devices, expect, type Page, test } from '@playwright/test';
+import { bookInPages, box, firstWords, longPress } from './book-hand';
 
 test.use({ ...devices['Pixel 7'], reducedMotion: 'no-preference' });
 
@@ -12,23 +11,6 @@ const bar = (page: Page) => page.locator('.epub__under .selection-bar--docked');
 
 /** The words chosen now. */
 const chosen = (page: Page) => page.evaluate(() => document.getSelection()?.toString() ?? '');
-
-/** A finger held a second in the middle of `area` (the page in sight), and lifted: the system's long press. */
-async function pressAndHold(
-  page: Page,
-  cdp: CDPSession,
-  area: Locator = box(page),
-): Promise<string> {
-  const rect = await area.boundingBox();
-  if (!rect) throw new Error('no page');
-  await cdp.send('Input.synthesizeTapGesture', {
-    x: rect.x + rect.width / 2,
-    y: rect.y + rect.height / 3,
-    duration: 1000,
-    gestureSourceType: 'touch',
-  });
-  return chosen(page);
-}
 
 /** Words at `x`, `y` chosen by script, as a long press leaves them. */
 const choose = (page: Page, x: number, y: number) =>
@@ -55,7 +37,7 @@ test('in Pages a long press chooses words, the page held still; Eien’s actions
   const tall = await height(page);
   const cdp = await page.context().newCDPSession(page);
 
-  expect(await pressAndHold(page, cdp)).not.toBe('');
+  expect(await longPress(page, cdp)).not.toBe('');
   await expect(bar(page)).toBeVisible();
   await expect(page.locator('.turn-curl')).toHaveCount(0);
   expect(await firstWords(page)).toBe(first);
@@ -81,7 +63,7 @@ test('in Pages a long press chooses words, the page held still; Eien’s actions
   expect(await page.evaluate(() => document.getSelection()?.isCollapsed)).toBe(true);
 
   // Highlight keeps them, the page still where it was.
-  expect(await pressAndHold(page, cdp)).not.toBe('');
+  expect(await longPress(page, cdp)).not.toBe('');
   await bar(page).getByRole('button', { name: 'Highlight' }).tap();
   await expect(page.locator('.epub-chapter [data-highlighted]')).toHaveCount(1);
   await expect(bar(page)).toBeHidden();
@@ -117,7 +99,7 @@ test('in Scroll the system’s choosing docks the same bar', async ({ page }) =>
   await page.keyboard.press('Escape');
   const scroller = page.locator('.page__leaf--epub .page__scroll');
   const cdp = await page.context().newCDPSession(page);
-  expect(await pressAndHold(page, cdp, scroller)).not.toBe('');
+  expect(await longPress(page, cdp, scroller)).not.toBe('');
   await expect(bar(page)).toBeVisible();
   // The words scroll with their choice: the bar stays.
   await scroller.evaluate((element) => {

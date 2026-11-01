@@ -5,7 +5,7 @@
 
 import { devices, expect, type Page, test } from '@playwright/test';
 import { seriousViolations } from '../e2e/axe';
-import { bookInPages } from './book-hand';
+import { bookInPages, longPress } from './book-hand';
 import { open, putOutside, titles } from './outside';
 
 // Motion reduced from the start, so no fade is under way when axe looks (../e2e/axe.ts).
@@ -121,15 +121,7 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
       await page.keyboard.press('Escape');
       await expect(settings).toBeHidden();
       await expect(page.locator('html')).toHaveAttribute('data-layout', layout);
-      const rect = await page.locator('.epub-sheet:not([aria-hidden]) .epub__pages').boundingBox();
-      if (!rect) throw new Error('no page');
-      const cdp = await page.context().newCDPSession(page);
-      await cdp.send('Input.synthesizeTapGesture', {
-        x: rect.x + rect.width / 2,
-        y: rect.y + rect.height / 3,
-        duration: 1000,
-        gestureSourceType: 'touch',
-      });
+      await longPress(page, await page.context().newCDPSession(page));
       await expect(page.getByRole('toolbar', { name: 'The selection' })).toBeVisible();
       expect(await seriousViolations(page), 'the docked selection bar').toEqual([]);
     });
