@@ -75,3 +75,24 @@
     color: MarkText;
   }
 }
+/* A thousand matches (Phase 5c): a Found row out of sight is neither styled nor laid out, so
+   drawing them, or a key typed in the field, lays out the few in sight and not the thousand
+   (each small change laid them all out again, 45 ms on CI's machines). Still in the page, so the
+   keyboard, find and a screen reader reach every one. Until it's drawn, a row is as tall as two
+   lines of words and its chapter's line, in the list, or a tree row's on SHELF. */
+.rows--found > li {
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto
+    calc(
+      2 *
+      var(--eien-row-pad-y) +
+      var(--eien-leading-row) *
+      (2 * var(--eien-size-row) + var(--eien-size-preview)) +
+      3 *
+      var(--eien-hairline)
+    );
+}
+.tree-row--found {
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto var(--eien-row-h);
+}

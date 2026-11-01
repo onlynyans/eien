@@ -87,8 +87,10 @@ export const ICONS = {
     '<path d="M2.5 3.5h7"/><path d="M4.5 3.5v8.5h2M4.5 8h2"/><path d="M8.5 8h5M8.5 12h5"/>',
   palette:
     '<path d="M8 2.5a5.5 5.5 0 1 0 0 11c1 0 1.3-.7.9-1.5-.5-1 .1-1.8 1.1-1.8h1.4c1.3 0 2.1-.9 2.1-2.2 0-3-2.5-5.5-5.5-5.5z"/><circle cx="5.2" cy="7" r=".7"/><circle cx="7.5" cy="5" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/>',
-  // The quick look (#49): a capital and a small letter, as a type specimen opens.
-  look: '<path d="M1.8 13L5.2 3.5h.6L9.2 13M3 9.8h5"/><circle cx="12" cy="10.9" r="2"/><path d="M14 8.6V13"/>',
+  // The quick look (#49): a capital and a small letter, as a type specimen opens, in a serif (#73),
+  // as the page's own face is: foot serifs under the A, and a two-storey a, its arch hooked at its
+  // end and its stem tailed. Find's Match case keeps the sans Aa, so the two never read as one.
+  look: '<path d="M2 13L4.7 3.4h.6L8 13M3.1 9.6h4"/><path d="M1.2 13h1.6M7.2 13h1.6"/><path d="M10.7 9.7c-.1-1 .7-1.7 1.7-1.7 1.1 0 1.8.6 1.8 1.7v2.7c0 .4.3.6.7.6"/><path d="M14.2 10.4c-2.3 0-3.6.6-3.6 1.6 0 .6.5 1 1.2 1 1.3 0 2.4-.6 2.4-1.6"/>',
   type: '<path d="M3 4.5V3h10v1.5M8 3v10M6.2 13h3.6"/>',
   bold: '<path d="M4.5 2.8h4.2a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 8h4.9a2.6 2.6 0 0 1 0 5.2H4.5z"/><path d="M4.5 2.8v10.4"/>',
   italic: '<path d="M7.2 2.8h5M3.8 13.2h5M10 2.8L6 13.2"/>',

@@ -503,3 +503,36 @@ for (const layout of ['band', 'slip'] as const) {
     });
   }
 }
+
+// Text size at its smallest (#72): the words at half, every row and control still a target's size,
+// in both densities (a compact row is the smaller).
+for (const density of ['comfortable', 'compact'] as const) {
+  test.describe(`text size 50%, ${density}`, () => {
+    test.use({
+      deviceFile: { settings: { 'appearance.textSize': 50, 'appearance.density': density } },
+    });
+
+    test('three panes, two panes, a book’s contents and Settings have no serious violation', async ({
+      page,
+    }) => {
+      await ready(page);
+      await expect(page.locator('html')).toHaveCSS('--eien-text-scale', '0.5');
+      expect(await violationsUnder(page, ['.sidebar', '.list', '.page']), 'three panes').toEqual(
+        [],
+      );
+      await page
+        .locator('.tree-row--epub .tree-row__name', { hasText: 'Pride and Prejudice' })
+        .click();
+      await expect(page.locator('.contents-row').first()).toBeVisible();
+      expect(await violationsUnder(page, ['.sidebar', '.list']), 'a book’s contents').toEqual([]);
+
+      await page.locator('[data-command="panes"]').click();
+      await expect(page.locator('.shell')).toHaveAttribute('data-panes', 'two');
+      expect(await violationsUnder(page, ['.sidebar']), 'two panes').toEqual([]);
+
+      await page.getByRole('button', { name: 'Settings' }).click();
+      await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
+      expect(await violationsUnder(page, ['dialog[open]']), 'Settings').toEqual([]);
+    });
+  });
+}
