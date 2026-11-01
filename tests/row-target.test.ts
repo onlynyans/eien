@@ -74,3 +74,17 @@ describe('a row’s height', () => {
     expect(resolved(value, 0.5)).toBe(px('--eien-target'));
   });
 });
+
+// Settings' tabs are rows of the text voice too, at 92% of a row's words, with
+// no row height of their own: at 50% their words and padding come to under 24px.
+describe('a Settings tab', () => {
+  const sheet = readFileSync(join(UI, 'settings/settings.css'), 'utf8').replace(
+    /\/\*[\s\S]*?\*\//gu,
+    '',
+  );
+  const rule = /(?:^|\n)\.settings__tab\s*\{([^}]*)\}/u.exec(sheet)?.[1] ?? '';
+
+  it('is at least a pointer’s target high', () => {
+    expect(rule).toContain('min-height: var(--eien-target);');
+  });
+});
