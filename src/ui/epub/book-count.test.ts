@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
-import { countChapter, type Epub, isRefusal, openEpub, pageOf } from '../../core/epub';
+import { countChapter, type Epub, isRefusal, openEpub } from '../../core/epub';
 import { inflateRaw } from '../../platform/inflate';
 import { BookCount, BookCounts } from './book-count';
 import type { Still } from './still';
@@ -239,8 +239,6 @@ describe('a book counted, at its edges', () => {
     count.run(epub, always, () => {});
     await vi.waitFor(() => expect(count.whole).toBe(true));
     expect(count.lengths).toEqual([1000, 700, 1]);
-    // The third item starts past 1,700 characters: the second page, the note's words among them.
-    expect(pageOf(count, 2, 0)).toEqual({ label: 2, of: 2 });
   });
 
   it('counts a chapter that won’t open as no words, and goes on to the rest', async () => {

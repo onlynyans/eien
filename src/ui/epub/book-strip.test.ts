@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtures';
 import { oneChapter } from '../../../tests/support/epub-parts';
 import { DEFAULT_SETTINGS } from '../../core/config';
-import { type Epub, type Highlight, readingPath } from '../../core/epub';
+import { type Epub, type Highlight, percent, readingPath } from '../../core/epub';
 import { laidOut } from './test-lines';
 import { sideWith } from './test-side';
 
@@ -153,18 +153,51 @@ describe('a book on its page’s edge, as the page holds it (QA)', () => {
     expect(strip.querySelectorAll('.edge-strip__chapter')).toHaveLength(3);
   });
 
-  it('says a printed book’s page at once, and a book’s own steady page once it’s counted', async () => {
+  it('says a printed book’s page at once, and how far through the book otherwise (#67)', async () => {
     const printed = sideWith({ 'a.epub': EPUBS['page-list.epub'] as Uint8Array });
     laidOut(printed.side.page);
     await printed.side.open('a.epub');
     const strip = (at: ReturnType<typeof sideWith>) =>
       at.side.page.element.querySelector('.edge-strip') as HTMLElement;
     expect(strip(printed).getAttribute('aria-valuetext')).toBe('Chapter I, page xii of 5');
-    // No page-list: the count gives its pages, and the slider says them without a scroll.
+    // No page-list: how far through the book, as the colophon says it, without a scroll.
     const { side } = await opened();
-    const steady = side.page.element.querySelector('.edge-strip') as HTMLElement;
+    const share = side.page.element.querySelector('.edge-strip') as HTMLElement;
     await vi.waitFor(() =>
-      expect(steady.getAttribute('aria-valuetext')).toMatch(/^Chapter I, page 1 of \d+$/u),
+      expect(share.getAttribute('aria-valuetext')).toMatch(/^Chapter I, \d+% of the book$/u),
+    );
+    expect(share.getAttribute('aria-valuetext')).toContain(
+      side.page.foot.figures.find((each) => each.classList.contains('colophon__through'))
+        ?.textContent ?? 'none',
+    );
+  });
+
+  it('ticks a mark where its row says it is, within its chapter once that’s counted (#67)', async () => {
+    const { side, strip, disk, of } = await opened();
+    const epub = side.epub as Epub;
+    await vi.waitFor(() => expect(of.counts.of(epub).whole).toBe(true));
+    // Halfway into Chapter III by its counted words: a share of the book well past the chapter's start.
+    const spine = epub.spine.findIndex((item) => item.path === 'OEBPS/chapter-3.xhtml');
+    const offset = Math.floor((of.counts.of(epub).lengths[spine] ?? 0) / 2);
+    await disk.write(
+      readingPath(epub.key),
+      JSON.stringify({
+        version: 1,
+        bookmarks: [{ chapter: 'OEBPS/chapter-3.xhtml', offset, words: 'halfway' }],
+      }),
+      null,
+    );
+    await side.reload();
+    const mark = () => strip.querySelector<HTMLElement>('.edge-strip__mark');
+    await vi.waitFor(() => expect(mark()).not.toBeNull());
+    const share = Number(mark()?.style.getPropertyValue('--at'));
+    expect(percent(share)).toBe(side.labelAt(spine, offset));
+    expect(share).toBeGreaterThan(
+      Number(
+        strip
+          .querySelectorAll<HTMLElement>('.edge-strip__chapter')[2]
+          ?.style.getPropertyValue('--at'),
+      ),
     );
   });
 });

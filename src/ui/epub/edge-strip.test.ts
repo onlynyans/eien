@@ -51,7 +51,8 @@ describe('the strip down a book’s edge', () => {
     expect(element.getAttribute('role')).toBe('slider');
     expect(element.getAttribute('aria-orientation')).toBe('vertical');
     made.place(0.256, 'Chapter III, page 12 of 2,450');
-    expect(element.getAttribute('aria-valuenow')).toBe('26');
+    // Rounded down, as "25% of the book" is (#67): never 26 beside it.
+    expect(element.getAttribute('aria-valuenow')).toBe('25');
     expect(element.getAttribute('aria-valuetext')).toBe('Chapter III, page 12 of 2,450');
     // The same share in another book: its own words, never the last one's.
     made.place(0.256, 'Chapter I');

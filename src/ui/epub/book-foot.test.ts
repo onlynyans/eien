@@ -3,6 +3,8 @@
 // shows: another line of news without one takes it away, a click runs it
 // once, and the keyboard on it goes back to the page as it goes; and
 // "highlighted" is said of the page in sight, and nothing once cleared.
+// Where in the chapter and the book (#67) are set only when their words
+// change, as Scroll tells them every frame; and no tally is kept (#66).
 
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { BookFoot } from './book-foot';
@@ -113,5 +115,37 @@ describe('“highlighted” in a book’s colophon', () => {
     foot.highlighted(true);
     foot.clear();
     expect(heard()).toBe(false);
+  });
+});
+
+describe('where in the chapter and the book, in a book’s colophon', () => {
+  const byClass = (name: string) => foot.figures.find((figure) => figure.classList.contains(name));
+
+  it('changes the colophon only when the words change: told each scroll frame, a set restyles it', () => {
+    foot.page('40% of the chapter');
+    foot.through(0.21);
+    const changes = new MutationObserver(() => {});
+    for (const figure of foot.figures)
+      changes.observe(figure, { childList: true, characterData: true, subtree: true });
+    foot.page('40% of the chapter');
+    foot.through(0.21);
+    expect(changes.takeRecords()).toEqual([]);
+    foot.page('41% of the chapter');
+    foot.through(0.22);
+    expect(changes.takeRecords()).not.toEqual([]);
+    changes.disconnect();
+    expect(byClass('colophon__page')?.textContent).toBe('41% of the chapter');
+    expect(byClass('colophon__through')?.textContent).toBe('22% of the book');
+  });
+
+  it('says how far through the book once, and nothing of the chapter’s share beside its page', () => {
+    foot.page('page 3 of 12');
+    foot.through(0.21);
+    const said = foot.figures.map((figure) => figure.textContent).filter(Boolean);
+    expect(said).toEqual(['page 3 of 12', '21% of the book']);
+  });
+
+  it('keeps no tally of today’s words: none are written in a book', () => {
+    expect(foot.tally).toBe(false);
   });
 });

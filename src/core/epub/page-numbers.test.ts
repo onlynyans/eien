@@ -1,61 +1,59 @@
 import { describe, expect, it } from 'vitest';
 import {
+  bookWords,
+  chapterWords,
   type PrintAt,
-  pageOf,
   pageWords,
+  placeLabel,
+  placeWords,
   printAt,
   printPages,
-  STEADY_CHARS,
+  shareAt,
   spreadWords,
-  steadyAt,
-  steadyPages,
-  steadyStart,
 } from './page-numbers';
 
-describe('steady pages, 1,500 characters of the book', () => {
-  const lengths = [1000, 2500, 0, 1500];
+/** Three chapters in the reading order, of equal size, and a fourth out of it (a note). */
+const SPINE = [
+  { linear: true, size: 1000 },
+  { linear: true, size: 1000 },
+  { linear: true, size: 1000 },
+  { linear: false, size: 1000 },
+];
 
-  it('counts the book’s pages, at least one, once every item is counted', () => {
-    expect(steadyPages(lengths)).toBe(4);
-    expect(steadyPages([3000])).toBe(2);
-    expect(steadyPages([])).toBe(1);
-    expect(steadyPages([0, 0])).toBe(1);
-    expect(steadyPages([1000, null])).toBeNull();
+describe('a place in a book with no printed pages (#67)', () => {
+  const count = { lengths: [400, 1000, 0, 200], print: [] };
+
+  it('is named by how far through the book it is, by its chapter’s words', () => {
+    expect(placeLabel(count, SPINE, 0, 0)).toBe('0%');
+    // Half of the first of three chapters.
+    expect(placeLabel(count, SPINE, 0, 200)).toBe('16%');
+    expect(placeLabel(count, SPINE, 1, 500)).toBe('50%');
+    expect(placeLabel(count, SPINE, 2, 0)).toBe('66%');
+    expect(placeWords(count, SPINE, 1, 500)).toBe('50% of the book');
   });
 
-  it('numbers a place by the characters before it in the book', () => {
-    expect(steadyAt(lengths, 0, 0)).toBe(1);
-    expect(steadyAt(lengths, 0, 999)).toBe(1);
-    // 1,000 before it and 500 into the next: the second page begins.
-    expect(steadyAt(lengths, 1, 500)).toBe(2);
-    expect(steadyAt(lengths, 1, 2499)).toBe(3);
-    expect(steadyAt(lengths, 3, 0)).toBe(3);
+  it('is the same share the colophon and the strip go by', () => {
+    expect(shareAt(SPINE, count.lengths, 1, 500)).toBeCloseTo(0.5);
+    // A chapter of no words: its start.
+    expect(shareAt(SPINE, count.lengths, 2, 10)).toBeCloseTo(2 / 3);
+    // Past its chapter's end (the window and the count disagreeing): its end, never past the book's.
+    expect(shareAt(SPINE, count.lengths, 2, Number.POSITIVE_INFINITY)).toBeLessThanOrEqual(1);
+    expect(shareAt(SPINE, count.lengths, 1, 99_999)).toBeCloseTo(2 / 3);
   });
 
-  it('never numbers past the last page, at the book’s very end', () => {
-    expect(steadyAt([3000], 0, 3000)).toBe(2);
-    expect(steadyAt([3000], 0, 2999)).toBe(2);
-    expect(steadyAt(lengths, 3, 1500)).toBe(4);
+  it('is named nothing until its chapter is counted, or for a chapter the book hasn’t', () => {
+    expect(placeLabel({ lengths: [400, null], print: [] }, SPINE, 1, 10)).toBeNull();
+    expect(placeWords({ lengths: [400, null], print: [] }, SPINE, 1, 10)).toBe('');
+    expect(shareAt(SPINE, [400], 5, 0)).toBeNull();
+    // Only its own chapter: the rest of the book uncounted doesn't hold it back.
+    expect(placeLabel({ lengths: [null, 1000, null], print: [] }, SPINE, 1, 500)).toBe('50%');
   });
 
-  it('holds a place past its item’s end at its end', () => {
-    expect(steadyAt([1000, 2000], 0, 99_999)).toBe(1);
-  });
-
-  it('numbers nothing until the book is counted, or for an item it hasn’t', () => {
-    expect(steadyAt([1000, null], 0, 0)).toBeNull();
-    expect(steadyAt(lengths, -1, 0)).toBeNull();
-    expect(steadyAt(lengths, 4, 0)).toBeNull();
-  });
-
-  it('finds where a page begins', () => {
-    expect(steadyStart(lengths, 1)).toEqual({ spine: 0, offset: 0 });
-    expect(steadyStart(lengths, 2)).toEqual({ spine: 1, offset: STEADY_CHARS - 1000 });
-    // 4,500 characters on: past items of 1,000, 2,500 and none, 1,000 into the last.
-    expect(steadyStart(lengths, 4)).toEqual({ spine: 3, offset: 1000 });
-    expect(steadyStart(lengths, 5)).toBeNull();
-    expect(steadyStart(lengths, 0)).toBeNull();
-    expect(steadyStart([], 1)).toEqual({ spine: 0, offset: 0 });
+  it('says how far through the chapter or the book as the colophon does', () => {
+    expect(bookWords(0.214)).toBe('21% of the book');
+    expect(bookWords(1)).toBe('100% of the book');
+    expect(chapterWords(0.4)).toBe('40% of the chapter');
+    expect(chapterWords(0.999)).toBe('99% of the chapter');
   });
 });
 
@@ -120,19 +118,21 @@ describe('the printed edition’s pages', () => {
   });
 });
 
-describe('a place’s page', () => {
-  it('is the printed edition’s where the book has one, else steady', () => {
-    const print = [{ label: '1', spine: 0, offset: 0 }];
-    expect(pageOf({ lengths: [3000], print }, 0, 2000)).toEqual({ label: '1', of: 1 });
-    expect(pageOf({ lengths: [3000], print: [] }, 0, 2000)).toEqual({ label: 2, of: 2 });
-  });
-
-  it('is said as the colophon says it', () => {
+describe('a place’s page, as the colophon says it', () => {
+  it('is said as the colophon says it, a printed page or the chapter’s own (#67)', () => {
     expect(pageWords(212, 2450)).toBe('page 212 of 2,450');
     expect(pageWords(3, 1_204_000)).toBe('page 3 of 1,204,000');
     expect(pageWords('xii', null)).toBe('page xii');
     expect(pageWords('34', 412)).toBe('page 34 of 412');
     expect(pageWords(null, 9)).toBe('');
+    // The chapter's own pages, as laid out: the last of them.
+    expect(pageWords('12', 12)).toBe('page 12 of 12');
+  });
+
+  it('is the printed one in a printed book, at once, wherever it is', () => {
+    const print = [{ label: '1', spine: 0, offset: 0 }];
+    expect(placeLabel({ lengths: [3000], print }, SPINE, 0, 2000)).toBe('1');
+    expect(placeWords({ lengths: [3000], print }, SPINE, 0, 2000)).toBe('page 1 of 1');
   });
 
   it('says a spread’s two pages, or one where both begin on the same page (Phase 3d)', () => {
@@ -145,46 +145,6 @@ describe('a place’s page', () => {
   });
 });
 
-// QA (#40, Phase 4a): the edges a book meets that the cases above pass by.
-describe('steady pages at a book’s edges', () => {
-  it('ends a book of exactly so many pages on its last, the next item’s start a new page', () => {
-    const exact = [STEADY_CHARS, STEADY_CHARS, STEADY_CHARS];
-    expect(steadyPages(exact)).toBe(3);
-    // Each item's first character is the next page's: no page 0, and no page 4 at the very end.
-    expect(steadyAt(exact, 0, STEADY_CHARS - 1)).toBe(1);
-    expect(steadyAt(exact, 1, 0)).toBe(2);
-    expect(steadyAt(exact, 2, STEADY_CHARS - 1)).toBe(3);
-    expect(steadyAt(exact, 2, STEADY_CHARS)).toBe(3);
-    expect(steadyStart(exact, 3)).toEqual({ spine: 2, offset: 0 });
-    expect(steadyStart(exact, 4)).toBeNull();
-  });
-
-  it('numbers chapters shorter than a page by the book’s characters, not a page each', () => {
-    // Three short chapters, 600 characters in all: one page, however many chapters.
-    expect(steadyPages([100, 200, 300])).toBe(1);
-    expect(steadyAt([100, 200, 300], 2, 299)).toBe(1);
-    // A short chapter a page begins in the middle of.
-    expect(steadyAt([1400, 200], 1, 99)).toBe(1);
-    expect(steadyAt([1400, 200], 1, 100)).toBe(2);
-    expect(steadyStart([1400, 200], 2)).toEqual({ spine: 1, offset: 100 });
-  });
-
-  it('holds a place the window can’t measure to its item: never NaN, never before or past it', () => {
-    const lengths = [1000, 2000];
-    expect(steadyAt(lengths, 1, Number.NaN)).toBe(1);
-    expect(steadyAt(lengths, 1, -500)).toBe(1);
-    // A last page's end is told as Number.POSITIVE_INFINITY: held at the item's end.
-    expect(steadyAt(lengths, 1, Number.POSITIVE_INFINITY)).toBe(2);
-    expect(steadyAt(lengths, 1, 499.9)).toBe(1);
-  });
-
-  it('starts only a whole page', () => {
-    expect(steadyStart([3000], 1.5)).toBeNull();
-    expect(steadyStart([3000], Number.NaN)).toBeNull();
-    expect(steadyStart([3000, null], 1)).toBeNull();
-  });
-});
-
 describe('a book’s printed pages at its edges', () => {
   it('has no count of pages when its labels aren’t numbers, each still said', () => {
     const roman: PrintAt[] = [
@@ -193,8 +153,7 @@ describe('a book’s printed pages at its edges', () => {
       { label: 'iii', spine: 1, offset: 0 },
     ];
     expect(printPages(roman)).toBeNull();
-    const { label, of } = pageOf({ lengths: [100, 100], print: roman }, 1, 10);
-    expect(pageWords(label, of)).toBe('page iii');
+    expect(placeWords({ lengths: [100, 100], print: roman }, SPINE, 1, 10)).toBe('page iii');
     // Numbers, then a last page that isn't one (an index's "A-1"): no count, as the last says.
     expect(
       printPages([
@@ -210,14 +169,22 @@ describe('a book’s printed pages at its edges', () => {
       { label: '2', spine: 1, offset: 40 },
     ];
     // Nothing counted but the chapter drawn (item 1).
-    expect(pageOf({ lengths: [null, 300, null], print }, 1, 50)).toEqual({ label: '2', of: 2 });
+    expect(placeLabel({ lengths: [null, 300, null], print }, SPINE, 1, 50)).toBe('2');
+    expect(placeWords({ lengths: [null, 300, null], print }, SPINE, 1, 50)).toBe('page 2 of 2');
   });
 
-  it('never falls back to steady pages before the first printed one', () => {
+  it('never falls back to how far through the book before the first printed page', () => {
     const print: PrintAt[] = [{ label: '1', spine: 1, offset: 0 }];
-    const placed = pageOf({ lengths: [3000, 3000], print }, 0, 2000);
-    expect(placed).toEqual({ label: null, of: 1 });
-    expect(pageWords(placed.label, placed.of)).toBe('');
+    expect(placeLabel({ lengths: [3000, 3000], print }, SPINE, 0, 2000)).toBeNull();
+    expect(placeWords({ lengths: [3000, 3000], print }, SPINE, 0, 2000)).toBe('');
+  });
+
+  it('names nothing in a printed book’s chapter not yet counted: the page before would be wrong', () => {
+    const print: PrintAt[] = [
+      { label: '1', spine: 0, offset: 0 },
+      { label: '2', spine: 1, offset: null },
+    ];
+    expect(placeLabel({ lengths: [100, null], print }, SPINE, 1, 50)).toBeNull();
   });
 });
 

@@ -8,12 +8,13 @@ import { fixtureEpubs, SAMPLE_SOURCES } from '../../../tests/support/epub-fixtur
 import { handEpub, nav, opf, XHTML, page as xhtml } from '../../../tests/support/epub-parts';
 import { longBook } from '../../../tests/support/long-book';
 import { DEFAULT_SETTINGS } from '../../core/config';
-import { countChapter, type Epub, isRefusal, steadyPages } from '../../core/epub';
+import { bookFraction, countChapter, type Epub, isRefusal, percent } from '../../core/epub';
 import { BookCount } from './book-count';
 import { ChapterSheet } from './chapter-sheet';
 import { epubKind } from './epub-kind';
 import type { EpubPage } from './epub-page';
 import { makeEpubSide } from './epub-side';
+import type { EpubSide } from './epub-side-types';
 import { REST_MS } from './place-keeper';
 import { laidOut } from './test-lines';
 import { sideWith } from './test-side';
@@ -103,8 +104,9 @@ describe('the place in a chapter', () => {
     const through = side.page.foot.figures.filter((each) =>
       each.classList.contains('colophon__through'),
     );
+    // Where in the chapter, scrolling, in the page's place (#67); the book's alone after it.
+    expect(figure('colophon__page')).toBe('20% of the chapter');
     expect(through.map((each) => each.textContent)).toEqual([
-      '20% of the chapter',
       expect.stringMatching(/^\d+% of the book$/u),
     ]);
   });
@@ -124,7 +126,7 @@ describe('the place in a chapter', () => {
     expect(page()).toBe('page 1 of 5');
   });
 
-  it('says the steady page it’s on once the book is counted, nothing before (Phase 4)', async () => {
+  it('says how far through the chapter with no page-list, at once, none of it waiting on the count (#67)', async () => {
     const { side } = sideWith(book());
     await side.open('a.epub');
     const scroller = laidOut(side.page);
@@ -132,10 +134,14 @@ describe('the place in a chapter', () => {
       side.page.foot.figures.find((each) => each.classList.contains('colophon__page'))?.textContent;
     scrollTo(scroller, 0);
     vi.advanceTimersByTime(REST_MS);
-    expect(page()).toBe('');
-    // Each item counted in a task of its own, its chapter read meanwhile.
-    for (let i = 0; i < 40 && page() === ''; i++) await vi.advanceTimersByTimeAsync(1);
-    expect(page()).toBe('page 1 of 1');
+    expect(page()).toBe('0% of the chapter');
+    scrollTo(scroller, 1000);
+    // Told on the next frame, as it scrolls.
+    vi.advanceTimersByTime(20);
+    expect(page()).toBe('50% of the chapter');
+    // At rest, its lines measured again: still the chapter's share, never a page of the book.
+    vi.advanceTimersByTime(REST_MS);
+    expect(page()).toBe('50% of the chapter');
   });
 
   it('is shown again when the book opens, from the reading state or the place a page left', async () => {
@@ -181,10 +187,12 @@ describe('the place in a chapter', () => {
   });
 });
 
-// QA (#40, Phase 4a): the page said over a book of several pages, two pages
-// on one book, a book opened again, and a chapter that won't open.
-describe('the page it’s on, over a whole book', () => {
-  const pageSaid = (page: EpubPage) => page.foot.figures[2]?.textContent;
+// QA (#40, Phase 4a; #67): a place named by how far through the book, as a
+// row names it, over a book of several chapters, two pages on one book, a
+// book opened again, and a chapter that won't open.
+describe('a place in a whole book, as a row names it', () => {
+  /** A chapter's top, as a Marks row names it: how far through the book, once it's counted. */
+  const rowSaid = (side: EpubSide, spine = 0) => side.labelAt(spine, 0) ?? '';
   /**
    * The count's tasks run, each chapter read meanwhile, until `done`. Reading a chapter inflates
    * it in real time, so each step also gives the real clock a turn, and the wait is bounded by
@@ -213,36 +221,32 @@ describe('the page it’s on, over a whole book', () => {
       }),
     );
 
-  it('numbers a later chapter’s top by every chapter’s characters before it', async () => {
+  it('names a later chapter’s place by how far through the book, by the chapters before it', async () => {
     const { side } = sideWith({ 'a.epub': longBook({ chapters: 4, paragraphs: 30 }) });
     await side.open('a.epub');
     atRest(side.page);
-    await until(() => pageSaid(side.page) !== '');
-    expect(pageSaid(side.page)).toMatch(/^page 1 of \d+$/u);
-    await side.go(3);
-    atRest(side.page);
-    const lengths = await lengthsOf(side.epub as Epub);
-    const sum = (items: readonly number[]) => items.reduce((all, length) => all + length, 0);
-    const before = sum(lengths.slice(0, 3));
-    const total = sum(lengths);
-    expect(Math.floor(before / 1500) + 1).toBeGreaterThan(1);
-    expect(pageSaid(side.page)).toBe(
-      `page ${Math.floor(before / 1500) + 1} of ${Math.ceil(total / 1500)}`,
+    const epub = side.epub as Epub;
+    await until(() => rowSaid(side, 3) !== '');
+    expect(rowSaid(side)).toBe('0%');
+    const lengths = await lengthsOf(epub);
+    expect(side.labelAt(3, Math.floor((lengths[3] as number) / 2))).toBe(
+      percent(bookFraction(epub.spine, 3, 0.5)),
     );
+    expect(rowSaid(side, 3)).not.toBe('0%');
   });
 
   it('says the page at once on a second page of the same book: one count, not two', async () => {
     const { side, of } = sideWith(book());
     await side.open('a.epub');
     atRest(side.page);
-    await until(() => pageSaid(side.page) !== '');
+    await until(() => rowSaid(side) !== '');
     const again = makeEpubSide(of, { close: () => {}, caret: () => {} }, null);
     document.body.append(again.page.element);
     await again.open('a.epub');
     atRest(again.page);
     // No count's task has run for it (each reads a chapter, which takes more than a timer's tick):
     // the window's count of the book was whole already, and is the one both pages read.
-    expect(pageSaid(again.page)).toBe('page 1 of 1');
+    expect(rowSaid(again)).toBe('0%');
     expect(of.counts.of(again.epub as Epub)).toBe(of.counts.of(side.epub as Epub));
   });
 
@@ -250,34 +254,34 @@ describe('the page it’s on, over a whole book', () => {
     const { side } = sideWith(book());
     await side.open('a.epub');
     atRest(side.page);
-    await until(() => pageSaid(side.page) !== '');
+    await until(() => rowSaid(side) !== '');
     side.clear();
-    expect(pageSaid(side.page)).toBe('');
+    expect(rowSaid(side)).toBe('');
     const runs = vi.spyOn(BookCount.prototype, 'run');
     await side.open('a.epub');
     atRest(side.page);
-    expect(pageSaid(side.page)).toBe('page 1 of 1');
+    expect(rowSaid(side)).toBe('0%');
     // Asked to go on, it had nothing left to read.
     expect(runs).toHaveBeenCalledOnce();
     expect((runs.mock.contexts[0] as BookCount).whole).toBe(true);
   });
 
-  it('says no page on a chapter that won’t open, which counts as no words', async () => {
+  it('says nothing of where on a chapter that won’t open, which counts as no words', async () => {
     const { side, of } = sideWith({ 'a.epub': brokenMiddle() });
     await side.open('a.epub');
     atRest(side.page);
     const count = of.counts.of(side.epub as Epub);
     await until(() => count.whole);
     expect(count.lengths[1]).toBe(0);
-    expect(pageSaid(side.page)).toMatch(/^page 1 of \d+$/u);
+    const pageSaid = () => side.page.foot.figures[2]?.textContent;
+    expect(pageSaid()).toBe('0% of the chapter');
     await side.go(1);
-    expect(pageSaid(side.page)).toBe('');
+    expect(pageSaid()).toBe('');
     await side.go(2);
     atRest(side.page);
-    const before = count.lengths[0] as number;
-    expect(pageSaid(side.page)).toBe(
-      `page ${Math.floor(before / 1500) + 1} of ${steadyPages(count.lengths)}`,
-    );
+    expect(pageSaid()).toBe('0% of the chapter');
+    // Its places named at its start, where it stands in the book: the broken chapter takes its room.
+    expect(rowSaid(side, 2)).toBe(percent(bookFraction((side.epub as Epub).spine, 2, 0)));
   });
 });
 

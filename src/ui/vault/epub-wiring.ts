@@ -110,6 +110,20 @@ export function epubWiring(of: EpubWiringOf): EpubWiring {
     looks: () => of.looks(),
     sizeOf: (path) => of.state.sizeOf(path),
     changed: () => of.redraw(),
+    // Only for a row the list shows, in the chapter counted: a chapter is counted a task at a time,
+    // and a row's place hangs on its own chapter's count alone.
+    counted(path, spine) {
+      const side = sideOf(path);
+      const epub = side?.epub;
+      if (!side || !epub || of.nav.contents !== path) return;
+      // On the edge, the marks are the strip's: the list holds Found's rows alone, while it searches.
+      const lens = of.marksAt() === 'edge' ? 'found' : of.nav.bookLens;
+      const named =
+        lens === 'marks'
+          ? side.marks.inOrder().some((mark) => mark.spine === spine)
+          : lens === 'found' && found.foundIn(epub.key, spine);
+      if (named) of.drawRows();
+    },
     copy: (text, html) => of.copy(text, html),
     async quote(text, from) {
       const note = await noteFor(from);

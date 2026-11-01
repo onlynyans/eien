@@ -715,11 +715,18 @@ in the book, each recorded here as it's built.
   chapter. A finger swiped across the page turns the chapter too (#71):
   nothing moves under it; the chapter's words step in from the side they
   come from (Words' step in, `--eien-space-2`, calm × Turn speed, none with
-  reduced motion), as they do from the foot's turns. The colophon's items: "3 of 61", the page (Phase 4a: "page 212
-  of 2,450", "page xii"; `.colophon__page`, a count, gone while none is
-  known), "40% of the chapter", "12% of the book", the two percents
-  dropped first under a 560px page pane, the page kept. In Facing pages
-  they're the book's folio, as a note's figures are.
+  reduced motion), as they do from the foot's turns. The colophon's items
+  (#66): "3 of 61", where in the chapter
+  (`.colophon__page`, a count, gone while none is known: the printed page,
+  "page 212 of 2,450", "page xii"; else in Pages the chapter's own, "page
+  3 of 12", a spread's "pages 3–4 of 12"; else scrolling "40% of the
+  chapter", #67), "12% of the book" (`.colophon__through`, worded, as the
+  zoom's percent may stand beside it), dropped first under a 560px page
+  pane, where in the chapter kept. No Today while a book is in front
+  (`.colophon__counters[data-untallied]`, `page/page-pane.ts`; a sprint
+  stays). In Facing pages they're the book's folio, as a note's figures
+  are. A Marks or Found row's figure and the strip's words: the printed
+  page, else how far through the book ("21%").
 - **A bookmark** (Phase 4b, `epub/bookmark.css`): the Page mark's own look
   (`page/page-mark.css`: the ink-soft ribbon, the dog-ear with no ink, or
   the ink-soft edge tab), `.page__mark--bookmark`, at the sheet's outer top
@@ -890,7 +897,8 @@ in the book, each recorded here as it's built.
   other lies still until it lands. The fore-edge stands at its outer sides
   (Previous pages, Next pages). A bookmark's mark sits on the page it
   marks: the verso's at its left, its edge tab past the pages read
-  (`--edges-before`). The colophon says "pages 212–213 of 2,450".
+  (`--edges-before`). The colophon says "pages 3–4 of 12" (a printed
+  book's "pages 212–213 of 2,450").
 - **Set as a book** (Phase 3d, Showcase 2, `ui/epub/epub-set.css`), in
   pages alone: justified and hyphenated (`hyphenate-limit-chars: 6 3 2`),
   `text-wrap: pretty`, widows and orphans 2; ragged but hyphenated on a
@@ -899,7 +907,8 @@ in the book, each recorded here as it's built.
   low (two on a phone), on the text's own line (`--line`). The running
   heads in label type, off an opening page: the chapter's over one page;
   the book's title over the verso and the chapter's over the recto. The
-  folios in counts at the outer corners, the page numbers' own labels.
+  folios in counts at the outer corners, the colophon's numbers: the
+  printed page's label, else the chapter's own page (#67).
   Each keeps its line when empty; in pages they take the folders' crumbs'
   place. Before the first chapter, Eien's **title page** (the title at 1.5 ×
   the title size, a `--eien-space-7` hairline in `--eien-rule` under it, the

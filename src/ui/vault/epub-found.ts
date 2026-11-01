@@ -33,6 +33,8 @@ export interface EpubFound {
   typed(words: string): void;
   /** Before the panes draw: the search for the book on `side` and `words` (both null: no rows in sight, stopped). */
   sync(side: EpubSide | null, words: string | null): void;
+  /** Whether the search of the book `key` found anything in spine item `spine` (a row there to name, #67). */
+  foundIn(key: string, spine: number): boolean;
   /** What's found in the book on `side`, as its rows show it; null for no search of it. */
   model(side: EpubSide, epub: Epub): FoundModel | null;
   /** Enter in the field (⇧Enter back): the next match past the place, shown; false for none. */
@@ -122,6 +124,8 @@ export function epubFound(of: EpubFoundOf): EpubFound {
       const matcher = matcherOf(looked, AS_WRITTEN);
       search.search(epub, matcher === 'invalid' ? null : matcher, of.still);
     },
+    foundIn: (key, spine) =>
+      asked?.key === key && search.found.some((match) => match.spine === spine),
     model(side, epub) {
       if (!asked || asked.key !== epub.key) return null;
       return {

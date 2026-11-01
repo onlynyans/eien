@@ -46,8 +46,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await book.click();
       await expect(chapter(page)).toContainText('It is a truth universally acknowledged');
       await expect(chapter(page)).toBeInViewport();
-      // Its page (#40, Phase 4): a steady one, once the book is counted.
-      await expect(page.locator('.colophon__page')).toHaveText(/^page 1 of \d+$/u);
+      // Where in the chapter (#40, Phase 4; #67): scrolling, how far through it.
+      await expect(page.locator('.colophon__page')).toHaveText('0% of the chapter');
       // Bookmarked from the page's ⋯ (Phase 4b): its mark, and the choice checked after.
       await page.getByRole('button', { name: 'More' }).click();
       await page.getByRole('menuitemcheckbox', { name: 'Bookmark this page' }).click();
@@ -558,7 +558,7 @@ test('a printed book’s page shows on the phone’s narrow colophon, how far th
   const figure = page.locator('.colophon__page');
   await expect(figure).toHaveText('page xii of 5');
   await expect(figure).toBeVisible();
-  await expect(page.locator('.colophon__through')).toHaveCount(2);
+  await expect(page.locator('.colophon__through')).toHaveCount(1);
   for (const through of await page.locator('.colophon__through').all())
     await expect(through).toBeHidden();
   await back(page).click();
@@ -1055,6 +1055,43 @@ const tapAcross = (
   rect: { x: number; y: number; width: number; height: number },
   across: number,
 ) => page.touchscreen.tap(rect.x + rect.width * across, rect.y + rect.height / 2);
+
+// #67, as the owner met it on a Fold 5: the page said is the page turned, the colophon's and the
+// folio's one number, moving on by one a tap (two on a spread), and no tally of today's words
+// (#66) while a book is in front.
+test('a Fold 5’s pages: the chapter’s own, a page a tap, the folio the same, and no Today', async ({
+  page,
+}) => {
+  // Two pages held sideways, chosen before the window opens; upright, Auto's one.
+  const box = await bookOn(page, FOLD5_UPRIGHT, 'one', 100, { 'epub.landscape': 'two' });
+  await expect(box).not.toHaveAttribute('data-spread');
+  const figure = page.locator('.colophon__page').first();
+  const folio = page.locator('.epub-sheet:not([aria-hidden]) .epub-folios__item').nth(1);
+  await expect(figure).toHaveText(/^page 1 of \d+$/u);
+  const pages = Number((await figure.textContent())?.match(/of (\d+)/u)?.[1]);
+  expect(pages).toBeGreaterThan(3);
+  await expect(folio).toHaveText('1');
+  await expect(page.locator('.colophon__today')).toBeHidden();
+  const rect = await box.boundingBox();
+  if (!rect) throw new Error('no page');
+  for (let at = 2; at <= 3; at++) {
+    await tapAcross(page, rect, 0.9);
+    await expect(figure).toHaveText(`page ${at} of ${pages}`);
+    await expect(folio).toHaveText(String(at));
+  }
+  // Sideways, two pages: both said, each its folio, two a tap.
+  await page.setViewportSize(FOLD5_SIDEWAYS);
+  await expect(box).toHaveAttribute('data-spread', '');
+  await expect(figure).toHaveText(/^pages \d+–\d+ of \d+$/u);
+  const [, verso, recto] = (await figure.textContent())?.match(/^pages (\d+)–(\d+)/u) ?? [];
+  expect(Number(recto)).toBe(Number(verso) + 1);
+  const folios = page.locator('.epub-sheet:not([aria-hidden]) .epub-folios__item');
+  await expect(folios).toHaveText([verso ?? '', recto ?? '']);
+  const wide = await box.boundingBox();
+  if (!wide) throw new Error('no page');
+  await tapAcross(page, wide, 0.9);
+  await expect(folios).toHaveText([String(Number(verso) + 2), String(Number(recto) + 2)]);
+});
 
 // QA (#40, phone spread): the phone's ragged rule (epub-set.css) holds on both of its two pages,
 // which the Fold tests above can't show where the window never hyphenates (Chromium on Linux, as

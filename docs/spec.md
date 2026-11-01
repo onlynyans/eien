@@ -443,22 +443,30 @@ Three panes, each collapsible, with a two-pane option in settings:
      larger, over what scrolls sideways, or what the system takes at the
      screen's edge. A chapter turned so, or at the foot, steps its words in
      from the side it comes from as Words does, at the Turn speed (none at
-     0 or with reduced motion); any other jump is at once. The colophon says "3 of 61", then the page (Phase 4), then how far
-     through the chapter and the book ("40% of the chapter", "12% of the
-     book", the book by its chapters' sizes; the two dropped first on a
-     narrow page, the page kept).
-   - **Page numbers** (Phase 4a): the page the place is on, "page 212 of
-     2,450", in Scroll and in Pages. A book with a page-list (the printed
-     edition's pages) has its printed numbers, "page xii" before the first
+     0 or with reduced motion); any other jump is at once. The colophon says "3 of 61", then
+     where in the chapter (the page,
+     below), then how far through the book ("12% of the book", by its
+     chapters' sizes; dropped first on a narrow page, where in the chapter
+     kept). Today's words aren't in a book's colophon (none are written
+     there): they're set aside while a book is the page in front, as a
+     note's tools are, and kept where each page's figures stand at its own
+     foot and a note is beside; a sprint under way still counts down.
+   - **Page numbers** (Phase 4a, #67): where in the chapter. A book with a
+     page-list (the printed edition's pages) has its printed numbers, in
+     Scroll and in Pages, "page 212 of 2,450", "page xii" before the first
      numbered one, the book's pages by its last label where that's a
      number, shown as soon as the chapter is drawn; a page whose place the
-     book lost counts for nothing. Any other book has steady pages: 1,500
-     of its characters a page, over every chapter in the reading order, so
-     a number never moves with the window, the face or the device, and only
-     rises through the book. The book is counted once, in the background,
-     a chapter at a time and never while a page turns; until it's counted
-     the colophon gives no steady page. The count is kept for the last few
-     books this window opened, never written.
+     book lost counts for nothing. Any other book, in Pages, is numbered by
+     the chapter's own pages as laid out now: "page 3 of 12", the next turn
+     "page 4 of 12", a spread "pages 3–4 of 12"; scrolling, where there are
+     no pages, it says how far through the chapter, "40% of the chapter".
+     The folios say the same numbers. A place elsewhere in the book (a
+     Marks or Found row, the edge strip) is named by its printed page, else
+     how far through the book ("21%"), by its chapter's words: steady
+     across the window, the face and the device. The book is counted once,
+     in the background, a chapter at a time and never while a page turns;
+     a place in a chapter not yet counted has no name. The count is kept
+     for the last few books this window opened, never written.
    - **Bookmarks** (Phase 4b): **B**, the bookmark tool (a ribbon, with the
      book's own tools, in every room on a phone too, backlog #63; and the
      phone's ⋯) or View → Bookmark This Page
@@ -603,7 +611,8 @@ Three panes, each collapsible, with a two-pane option in settings:
      lands. The place is the same, so one page and two show the same words. A
      bookmark's mark sits on the page it marks; B on two pages marks the
      first one's first word, or takes off every bookmark on the two. The
-     colophon says both pages ("pages 212–213 of 2,450"). In pages the book
+     colophon says both pages ("pages 3–4 of 12", a printed book's
+     "pages 212–213 of 2,450"). In pages the book
      is set as a book: justified and hyphenated where the window can
      hyphenate its language (a Mac can; elsewhere it may be ragged), ragged
      on a phone and a page as narrow; each chapter opening four lines low;

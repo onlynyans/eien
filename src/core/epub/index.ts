@@ -54,18 +54,18 @@ export {
 } from './marks';
 export type { SpineItem } from './package';
 export {
+  bookWords,
+  chapterWords,
   type Lengths,
   type PageCount,
   type PrintAt,
-  pageOf,
   pageWords,
+  placeLabel,
+  placeWords,
   printAt,
   printPages,
-  STEADY_CHARS,
+  shareAt,
   spreadWords,
-  steadyAt,
-  steadyPages,
-  steadyStart,
 } from './page-numbers';
 export {
   EDGES,
