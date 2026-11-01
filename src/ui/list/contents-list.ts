@@ -91,7 +91,7 @@ function foundRows(
   const rows = h(
     'ul',
     {
-      class: 'rows rows--contents',
+      class: 'rows rows--contents rows--found',
       attrs: { 'aria-label': `Found in ${model.title}` },
       on: { keydown: moveBetween('.contents-row') },
     },
