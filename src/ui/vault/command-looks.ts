@@ -109,13 +109,14 @@ export function commandLooks(of: LooksOf): (id: CommandId, side: Side) => Comman
         return { pressed: !shut, tip: shut ? 'Show the sidebar' : 'Hide the sidebar' };
       }
       case 'pane.list': {
-        if (panes.aside) return { pressed: false, tip: 'Show the note list' };
-        const shut = panes.isShut('list');
+        // No room for the list beside the page: stepped aside or not, it can't come back here.
         if (panes.crowded)
           return {
             disabled: true,
             tip: 'No room for three panes here: the sidebar lists the notes',
           };
+        if (panes.aside) return { pressed: false, tip: 'Show the note list' };
+        const shut = panes.isShut('list');
         if (panes.two)
           return { disabled: true, tip: 'Off with two panes: the sidebar lists the notes' };
         return { pressed: !shut, tip: shut ? 'Show the note list' : 'Hide the note list' };

@@ -57,6 +57,17 @@ describe('the panes’ tools with three chosen and two shown (#68)', () => {
     });
   });
 
+  it('offer no way back for the list stepped aside for a split, with no room for it', () => {
+    const looks = commandLooks({
+      panes: { crowded: true, two: true, aside: true, isShut: () => true },
+      settings: { values: DEFAULT_SETTINGS } as never,
+      layout: () => 'band',
+      strip: () => false,
+      lookOpen: () => false,
+    } as never);
+    expect(looks('pane.list', note)).toMatchObject({ disabled: true });
+  });
+
   it('are three panes’ with the room for them', () => {
     const looks = crowdedLooks(false);
     expect(looks('panes', note)).toMatchObject({ icon: 'panes3', pressed: false });
