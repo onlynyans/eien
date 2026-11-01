@@ -183,7 +183,14 @@ describe('the commands for a note', () => {
 
   it('greyed in the menu bar are every note’s control’s, and the menu’s own a note’s page alone has', () => {
     // With a note in front, a book's own are greyed (#40, Phase 3b).
-    expect(menuOff('note')).toEqual(['view:pages', 'view:scroll', 'bookmark']);
+    expect(menuOff('note')).toEqual([
+      'view:pages',
+      'view:scroll',
+      'bookmark',
+      // Walking a book's marks (Phase 5b): the menu's own, no control of their own.
+      'mark:next',
+      'mark:previous',
+    ]);
     const off = menuOff('epub');
     const sends = COMMANDS.flatMap((command) =>
       'on' in command && command.on === 'note' && 'sends' in command ? [command.sends] : [],
@@ -220,6 +227,10 @@ describe('the commands for a note', () => {
       'toggle:editor.spellcheck',
       // Format → Highlight: a book's words take it too (#40, Phase 5a).
       'format:highlight',
+      // A book's own walk, never greyed with the book in front (QA, Phase 5b).
+      'mark:next',
+      'mark:previous',
+      'bookmark',
     ] as const)
       expect(off).not.toContain(on);
     expect(new Set(off).size).toBe(off.length);

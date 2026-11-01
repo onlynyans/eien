@@ -1,27 +1,25 @@
 // A book's lenses over its rows (#40, Phase 4c, epub.md → Marks: In the
 // list): Contents and Marks, two word buttons, the one shown pressed (the
 // app's chosen-of-a-set look, as Live, Source and Reading are), each with
-// its count; and a bookmark's row: the words its page begins with, its page,
-// and its chapter in pencil under them. Drawn in the list's head and, with
-// two panes, under the book's row on SHELF (../sidebar/shelf-rows.ts). Found
-// joins them with Find (Phase 5).
+// its count; and a mark's row (a bookmark's or, Phase 5b, a highlight's):
+// its words (the words a bookmarked page begins with, or those highlighted),
+// its page, and its chapter and kind in pencil under them. Drawn in the
+// list's head and, with two panes, under the book's row on SHELF
+// (../sidebar/shelf-book-rows.ts). Found joins them with Find (Phase 5c).
 
-import type { Bookmark } from '../../core/epub';
+import type { Mark } from '../../core/epub';
 import { h } from '../dom';
 
 /** Which of a book's lenses the list shows. */
 export type BookLens = 'contents' | 'marks';
 
-/** A bookmark as its row shows it. */
-export interface MarkRow {
-  readonly mark: Bookmark;
-  /** The spine item it's in. */
-  readonly spine: number;
+/** A mark as its row shows it: where it is (core/epub/marks.ts), its page, and its chapter. */
+export type MarkRow = Mark & {
   /** Its page as the book numbers them, or null for none known yet. */
   readonly page: string | null;
   /** Its chapter's name. */
   readonly chapter: string;
-}
+};
 
 /** What the lenses answer: one chosen. */
 export type ChooseLens = (lens: BookLens) => void;
@@ -61,11 +59,11 @@ export function lensButtons(
   );
 }
 
-/** A bookmark's row's own keys. */
+/** A mark's row's own keys. */
 export const MARK_SHORTCUTS = 'Delete Backspace';
 
 /**
- * Delete or Backspace on a bookmark's row: it's taken off. Plain, and once:
+ * Delete or Backspace on a mark's row: it's taken off. Plain, and once:
  * a key held down never takes off the rows that come under it, and ⌘⌫ is a
  * row's trash elsewhere, never this.
  */
@@ -79,12 +77,24 @@ export const markKeys =
     if (!event.repeat) remove();
   };
 
-/** What a bookmark's row is called: its words, or with none kept its chapter's name. */
+/** What a mark's row is called: its words, or with none kept its chapter's name. */
 export const markName = (row: MarkRow): string => row.mark.words || row.chapter;
 
+/** What each kind of mark is called, in words: a row's, and what `]` and `[` say. */
+export const MARK_KINDS: Readonly<Record<Mark['kind'], string>> = {
+  bookmark: 'bookmark',
+  highlight: 'highlight',
+};
+
+/** What Marks, and `]` or `[`, say with none kept. */
+export const NO_MARKS = 'Nothing kept yet. B bookmarks a page; H keeps the words you choose.';
+
+/** What a mark's row says under its words: its chapter, and which kind of mark it is. */
+export const markWhere = (row: MarkRow): string => `${row.chapter} · ${MARK_KINDS[row.kind]}`;
+
 /**
- * A bookmark's row: Enter or a click goes to its page, Delete or Backspace
- * takes it off. `key` is its lasting name, for the keyboard kept across a redraw.
+ * A mark's row: Enter or a click goes to it, Delete or Backspace takes it
+ * off. `key` is its lasting name, for the keyboard kept across a redraw.
  */
 export function markRow(
   row: MarkRow,
@@ -103,9 +113,12 @@ export function markRow(
     ' ',
     h('span', { class: 'mark-row__page count', text: row.page ?? '' }),
     ' ',
-    h('span', { class: 'mark-row__chapter', text: row.chapter }),
+    h('span', { class: 'mark-row__chapter', text: markWhere(row) }),
   );
 }
 
-/** A mark row's lasting name: its chapter and place. */
-export const markKey = (mark: Bookmark): string => `mark:${mark.chapter}:${mark.offset}`;
+/** A mark row's lasting name: its kind, chapter and place (a highlight's, where it ends too). */
+export const markKey = (row: Mark): string =>
+  row.kind === 'bookmark'
+    ? `mark:bookmark:${row.mark.chapter}:${row.mark.offset}`
+    : `mark:highlight:${row.mark.chapter}:${row.mark.from}:${row.mark.to}`;

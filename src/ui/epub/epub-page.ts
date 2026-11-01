@@ -35,6 +35,8 @@ export interface EpubPageOf extends Omit<ChapterSheetOf, 'scroller'> {
   bookmark(): void;
   /** H: the words chosen highlighted, or the highlight they lie in taken off (Phase 5a). */
   highlight(): void;
+  /** `]` or `[`: to the next mark, or the one before (Phase 5b). */
+  walk(way: 1 | -1): void;
 }
 
 export class EpubPage implements PaneLeaf {
@@ -78,6 +80,7 @@ export class EpubPage implements PaneLeaf {
       quote: () => of.quote(),
       bookmark: () => of.bookmark(),
       highlight: () => of.highlight(),
+      walk: (way) => of.walk(way),
       back: () => of.back(),
       chosen: () => this.sheet.selection !== null,
       shown: () => !this.#sheet.hidden,

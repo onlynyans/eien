@@ -97,6 +97,9 @@ export function runCommand(command: MenuCommand, ctx: CommandContext): void {
     const minutes = Number(command.slice('sprint:'.length));
     const known = SPRINT_MINUTES.find((each) => each === minutes);
     if (known) ctx.parts.counters.startSprint(known);
+  } else if (command === 'mark:next' || command === 'mark:previous') {
+    const { active } = ctx.pages;
+    if (isEpub(active)) void active.marks.walk(command === 'mark:next' ? 1 : -1);
   } else if (command === BOOK_FORMAT && isEpub(ctx.pages.active)) {
     // Highlight with a book in front keeps its words chosen (#40, Phase 5a).
     void ctx.pages.active.marks.highlights.toggle();

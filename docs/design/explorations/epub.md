@@ -430,7 +430,11 @@ Each phase is its own session and pull request, from main.
   and Put back in the colophon while it says so; kept in the reading file
   beside the bookmarks, decided against the file as it is when written
   (`core/epub/highlights.ts`, `ui/epub/page-highlights.ts`, `ink.ts`);
-  **5b:** highlights in Marks and on the strip, and `]` `[`; **5c:** Find,
+  **5b, built:** highlights among the marks: Marks rows of both kinds in
+  the book's order, each saying its kind, Delete taking a highlight off
+  with Put back; a highlight a pencil tick on the strip; `]` and `[`
+  walking both kinds round the book, said in the colophon, and View →
+  Next Mark and Previous Mark (`core/epub/marks.ts`); **5c:** Find,
   the page's own find bar over the book (the owner's answer, 2026-10-31:
   ⌘F opens the bar, as on a note) and the list's field, each a search of
   its own over one engine, its matches in washes.

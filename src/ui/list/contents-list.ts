@@ -3,11 +3,19 @@
 // the book's order, the one on the page marked as an open note's row is.
 // ↑ ↓ Home End move between them; Enter or a click opens one. A row is no
 // note's: nothing drags it, and it has no menu. With Marks in the list
-// (Phase 4c), its lenses under the head: Contents, or its bookmarks
-// (./book-lenses.ts).
+// (Phase 4c), its lenses under the head: Contents, or its marks, bookmarks
+// and highlights (Phase 5b) (./book-lenses.ts).
 
 import { h } from '../dom';
-import { type BookLens, lensButtons, lensKey, type MarkRow, markKey, markRow } from './book-lenses';
+import {
+  type BookLens,
+  lensButtons,
+  lensKey,
+  type MarkRow,
+  markKey,
+  markRow,
+  NO_MARKS,
+} from './book-lenses';
 import { moveBetween } from './list';
 
 export interface ContentsModel {
@@ -22,20 +30,17 @@ export interface ContentsModel {
   readonly spine: number;
   /** The lens shown. */
   readonly lens: BookLens;
-  /** The book's bookmarks in its order; null for no lenses (Marks on the edge, Phase 4d). */
+  /** The book's marks (bookmarks and highlights) in its order; null for no lenses (Marks on the edge, Phase 4d). */
   readonly marks: readonly MarkRow[] | null;
 }
 
-/** What the list's rows do: a chapter opened, a lens chosen, a bookmark gone to or taken off. */
+/** What the list's rows do: a chapter opened, a lens chosen, a mark gone to or taken off. */
 export interface ContentsActions {
   chapter(spine: number): void;
   lens(lens: BookLens): void;
   go(row: MarkRow): void;
   remove(row: MarkRow): void;
 }
-
-/** What Marks says with none kept yet. */
-export const NO_MARKS = 'Nothing kept yet. B bookmarks a page.';
 
 /** The words under the heading: "Jane Austen · 61 chapters". */
 const countOf = (model: ContentsModel) => {
@@ -56,7 +61,7 @@ export function marked(model: Pick<ContentsModel, 'rows' | 'spine'>): boolean[] 
   return model.rows.map((_, i) => i === at);
 }
 
-/** The rows under Marks: each bookmark, or the line that says there are none. */
+/** The rows under Marks: each mark, or the line that says there are none. */
 function markRows(model: ContentsModel, actions: ContentsActions): HTMLElement {
   const marks = model.marks ?? [];
   if (marks.length === 0) return h('p', { class: 'list__empty', text: NO_MARKS });
@@ -64,7 +69,7 @@ function markRows(model: ContentsModel, actions: ContentsActions): HTMLElement {
     'ul',
     {
       class: 'rows rows--contents',
-      attrs: { 'aria-label': `Bookmarks in ${model.title}` },
+      attrs: { 'aria-label': `Marks in ${model.title}` },
       on: { keydown: moveBetween('.contents-row') },
     },
     ...marks.map((row) =>
@@ -73,7 +78,7 @@ function markRows(model: ContentsModel, actions: ContentsActions): HTMLElement {
         {},
         markRow(
           row,
-          markKey(row.mark),
+          markKey(row),
           () => actions.go(row),
           () => actions.remove(row),
         ),

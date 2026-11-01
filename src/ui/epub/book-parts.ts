@@ -37,11 +37,14 @@ export function bookParts(parts: BookPartsOf) {
   const placing = bookPlace({
     ...book,
     count: parts.count,
-    marks: () => marks.bookmarks.all,
+    marks: () => marks.inOrder(),
     goTo: (index, at) => void side().goTo(index, at),
   });
   const marks = new BookMarks({
     page,
+    epub,
+    spine,
+    goTo: (index, offset) => void side().goTo(index, offset),
     store: of.reading,
     chapter: () => (spine() >= 0 ? (epub()?.spine[spine()]?.path ?? null) : null),
     still: (then) => pages.whenStill(then),

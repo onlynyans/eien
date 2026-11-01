@@ -174,6 +174,9 @@ export function buildMenu(send: SendCommand): Menu {
         item('Scroll', 'view:scroll'),
         // B is the page's own key, never an accelerator: the letter is a note's to type.
         item('Bookmark This Page', 'bookmark'),
+        // ] and [ are the page's own keys, as B is (#40, Phase 5b).
+        item('Next Mark', 'mark:next'),
+        item('Previous Mark', 'mark:previous'),
         { type: 'separator' },
         item('Next View', 'view:next', 'CmdOrCtrl+E'),
         { type: 'separator' },

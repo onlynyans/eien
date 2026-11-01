@@ -23,9 +23,17 @@ const pointer = (type: string, clientY: number, pointerType = 'mouse') =>
 afterEach(() => document.body.replaceChildren());
 
 describe('the strip down a book’s edge', () => {
-  it('draws each chapter at its share of the book, a longer one each tenth, and each bookmark', () => {
+  it('draws each chapter at its share of the book, a longer one each tenth, and each mark of its kind', () => {
     const { made, element } = strip();
-    made.draw({ chapters: Array.from({ length: 12 }, (_, i) => i / 12), marks: [0.5, 2] });
+    made.draw({
+      chapters: Array.from({ length: 12 }, (_, i) => i / 12),
+      marks: [
+        { kind: 'bookmark', share: 0.5 },
+        { kind: 'bookmark', share: 2 },
+        { kind: 'highlight', share: 0.25 },
+      ],
+    });
+    expect(element.querySelectorAll('.edge-strip__highlight')).toHaveLength(1);
     const chapters = [...element.querySelectorAll<HTMLElement>('.edge-strip__chapter')];
     expect(chapters).toHaveLength(12);
     expect(chapters.map((each) => each.classList.contains('edge-strip__chapter--tenth'))).toEqual(

@@ -115,9 +115,9 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         expect(await violationsUnder(page, ['.page']), 'Put back in the colophon').toEqual([]);
         await page.getByRole('button', { name: 'Put back' }).click();
         await expect(page.locator('.epub-chapter [data-highlighted]')).toHaveCount(1);
-        // Marks in the list (Phase 4c): the book's lenses, its bookmark a row.
+        // Marks in the list (Phase 4c, 5b): the book's lenses, its bookmark and highlight rows.
         await page.getByRole('button', { name: /^Marks \d+$/u }).click();
-        await expect(page.locator('.mark-row')).toHaveCount(1);
+        await expect(page.locator('.mark-row')).toHaveCount(2);
         expect(await violationsUnder(page, ['.list']), 'Marks in the list').toEqual([]);
         await page.getByRole('button', { name: /^Contents \d+$/u }).click();
         // Marks on the edge (Phase 4d), from the shelf's look: the strip beside the page.
@@ -169,7 +169,7 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         // Marks with none kept (Phase 4c): the list's empty line, in pencil.
         await page.getByRole('button', { name: /^Marks \d+$/u }).click();
         await expect(page.locator('.list__empty')).toHaveText(
-          'Nothing kept yet. B bookmarks a page.',
+          'Nothing kept yet. B bookmarks a page; H keeps the words you choose.',
         );
         expect(await violationsUnder(page, ['.list']), 'Marks with none kept').toEqual([]);
         await page.getByRole('button', { name: /^Contents \d+$/u }).click();
@@ -186,13 +186,13 @@ for (const layout of ['band', 'slip', 'runhead'] as const) {
         await page.locator('[data-command="panes"]').click();
         await expect(page.locator('.tree-row--chapter')).toHaveCount(3);
         expect(await violationsUnder(page, ['.sidebar', '.page']), 'two panes').toEqual([]);
-        // Marks on SHELF with two panes (Phase 4c): the lenses a line under the book's row, the
-        // bookmark made above a tree row, its page its count.
+        // Marks on SHELF with two panes (Phase 4c, 5b): the lenses a line under the book's row, the
+        // bookmark and highlight made above tree rows, each its page its count.
         await page
           .locator('.tree-lenses')
           .getByRole('button', { name: /^Marks \d+$/u })
           .click();
-        await expect(page.locator('.tree-row--mark')).toHaveCount(1);
+        await expect(page.locator('.tree-row--mark')).toHaveCount(2);
         expect(await violationsUnder(page, ['.sidebar']), 'Marks on SHELF').toEqual([]);
       });
 
