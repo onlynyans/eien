@@ -5,10 +5,13 @@
 // flight anywhere on it. A drag across turns or falls back as the hand's
 // speed decides; a cancelled gesture falls back. A drag that turned is never
 // also a click on what it began on. Never while words are chosen in the
-// page, so a long press that chooses them keeps them.
+// page, so a long press that chooses them keeps them; and a finger held
+// still is let go as the system's long press begins choosing (#65), so
+// Pages chooses words by touch as Scroll does.
 
 import type { Point } from '../../../core/epub';
 import type { PageTurn } from './page-turn';
+import { moved } from './turn-hand';
 
 /** Whether words are chosen in `sheet`: a selection elsewhere (a note beside) never stops its hand. */
 function chosenIn(sheet: HTMLElement): boolean {
@@ -43,6 +46,10 @@ interface Held {
   readonly from: Point;
   /** The sheet's pixels to the window's: rects are zoomed, the page's own sizes aren't. */
   readonly scale: number;
+  /** A finger's: held still, a long press is the system's, to choose words. */
+  readonly touch: boolean;
+  /** Moved past a tap (the drag's start): no longer a press the system may take. */
+  moved: boolean;
 }
 
 /** The hand's events on `of.target` carried to `turn`; the returned function stops them. */
@@ -76,7 +83,13 @@ export function handEvents(turn: PageTurn, of: HandEventsOf): () => void {
     if (target.closest('a[href]') && !turn.catchable) return;
     const box = sheet.getBoundingClientRect();
     const scale = sheet.offsetWidth > 0 ? box.width / sheet.offsetWidth || 1 : 1;
-    held = { id: event.pointerId, from: [event.clientX, event.clientY], scale };
+    held = {
+      id: event.pointerId,
+      from: [event.clientX, event.clientY],
+      scale,
+      touch,
+      moved: false,
+    };
     turn.grab([(event.clientX - box.left) / scale, (event.clientY - box.top) / scale]);
   };
 
@@ -86,6 +99,7 @@ export function handEvents(turn: PageTurn, of: HandEventsOf): () => void {
       (event.clientX - held.from[0]) / held.scale,
       (event.clientY - held.from[1]) / held.scale,
     ];
+    if (moved(offset)) held.moved = true;
     turn.drag(offset, event.timeStamp);
     // Held once it's a turn, not before: a tap's click still reaches its own target.
     if (turn.turning && !of.target.hasPointerCapture(event.pointerId)) {
@@ -123,9 +137,15 @@ export function handEvents(turn: PageTurn, of: HandEventsOf): () => void {
     event.preventDefault();
   };
 
-  /** While the page is held, a drag over the words never chooses them, nor drags a picture. */
+  /**
+   * While the page is held, a drag over the words never chooses them, nor drags a picture. A
+   * finger still held where it came down is the system's long press choosing words (it decides
+   * when, Android's and iOS's own): the page is let go, and the choosing goes on.
+   */
   const still = (event: Event) => {
-    if (held) event.preventDefault();
+    if (!held) return;
+    if (event.type === 'selectstart' && held.touch && !held.moved) lost();
+    else event.preventDefault();
   };
 
   const listening: [EventTarget, string, EventListener, boolean][] = [

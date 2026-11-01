@@ -10,7 +10,7 @@ import type { ZipAddress } from '../../core/epub';
 import { h } from '../dom';
 import { catchLinks, markerIn } from './book-links';
 import { BookSelection } from './book-selection';
-import { copyWords } from './book-words';
+import { copyWords, markupOf, plainText, wordsIn } from './book-words';
 import { offsetAfter } from './chapter-place';
 import { PagedPlace } from './paged-place';
 import { PlaceKeeper } from './place-keeper';
@@ -20,6 +20,8 @@ import { type PagesChoice, spreadOf } from './spread';
 export interface ChapterSheetOf {
   /** The page's scroller, which the chapter scrolls in. */
   readonly scroller: HTMLElement;
+  /** Where the selection bar docks on a touch screen: the page's foot (#65). */
+  readonly dock: HTMLElement;
   /** As it scrolls or turns: how far through the chapter (0 to 1). */
   moved(fraction: number): void;
   /** Its place came to rest somewhere new: an offset in the chapter's words. */
@@ -28,10 +30,12 @@ export interface ChapterSheetOf {
   inSight(from: number, to: number): void;
   /** One of the book's own links pressed. */
   follow(anchor: HTMLAnchorElement, link: ZipAddress): void;
-  /** Quote the words chosen in it in the note beside (Phase 2c). */
-  quote(): void;
-  /** Highlight the words chosen in it, or take off the highlight they lie in (Phase 5a). */
-  highlight(): void;
+  /** Quote the words chosen in it (or, `kept`, last chosen) in the note beside (Phase 2c). */
+  quote(kept?: boolean): void;
+  /** Highlight the words chosen in it (or, `kept`, last chosen), or take off the highlight they lie in (Phase 5a). */
+  highlight(kept?: boolean): void;
+  /** Put `text` (plain) and `html` on the clipboard: the selection bar's Copy. */
+  copy(text: string, html: string): void;
   /** Whether `range`'s words lie in one highlight: the bar's Highlight then takes it off. */
   inHighlight(range: Range): boolean;
   /** A turn's copy of the chapter, cut to the page in sight whose first word is `from`: inked as the page is. */
@@ -62,8 +66,13 @@ export class ChapterSheet {
     this.#selection = new BookSelection({
       chapter: this.element,
       scroller: of.scroller,
-      quote: () => of.quote(),
-      highlight: () => of.highlight(),
+      dock: of.dock,
+      quote: (kept) => of.quote(kept),
+      highlight: (kept) => of.highlight(kept),
+      copy: (range) => {
+        const words = wordsIn(range);
+        of.copy(plainText(words), markupOf(words));
+      },
       inHighlight: (range) => of.inHighlight(range),
     });
     const told = {
